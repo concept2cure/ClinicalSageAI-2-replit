@@ -111,3 +111,27 @@ describe('citation choices and incomplete resolution', () => {
     expect(marker()?.textContent).toMatch(/read|check/i);
   });
 });
+
+describe('a refused citation catalogue offers no retry (2026-11-06)', () => {
+  /* DocumentWorkbench passes onRetry only when the catalogue read can be retried
+     (useProjectSourceCatalog's `retryable`): a refusal — not licensed, not in this
+     release, a role — is said in its own words with nothing to retry. */
+  it('shows a refusal in its words and no Try again', () => {
+    const api = { sources, precedingSourceIds: [], resolutionState: 'error' as const,
+      resolutionError: 'This feature is not enabled for your organization, so the project source catalogue was not read.' };
+    render(<RichSectionEditor {...base} citationsApi={api} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Cite a source/ }));
+    expect(screen.getByRole('alert').textContent).toMatch(/not enabled for your organization/);
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+  });
+
+  it('keeps Try again for a failed read', () => {
+    const onRetry = vi.fn();
+    const api = { sources, precedingSourceIds: [], resolutionState: 'error' as const,
+      resolutionError: 'The project source catalogue could not be read.', onRetry };
+    render(<RichSectionEditor {...base} citationsApi={api} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Cite a source/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
+});

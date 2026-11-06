@@ -5550,7 +5550,8 @@ export function DocumentWorkbench({
                       precedingSourceIds: precedingCitations.ids,
                       resolutionState: citationResolutionState,
                       resolutionError: projectCatalogue.error ?? citationAdmission.error,
-                      onRetry: () => { loadProjectSources(); citationAdmission.retry(); },
+                      // A refused catalogue read (not licensed, not in this release, a role) offers no retry: none can change it.
+                      onRetry: projectCatalogue.error && !projectCatalogue.retryable ? undefined : () => { loadProjectSources(); citationAdmission.retry(); },
                       scopeKey: citationScope,
                       onCite: sourceId => citeSource(Number(sourceId)),
                     }}
