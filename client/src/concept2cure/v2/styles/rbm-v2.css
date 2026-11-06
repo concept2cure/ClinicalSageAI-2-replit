@@ -431,6 +431,10 @@
     .rbm-pt-cols{grid-template-columns:1fr;}
   }
   @media(max-width:800px){
+    /* The project picker holds a full project name; at phone width it ran off
+       the right edge (J5-08, measured right edge 487px at 390). */
+    .rbm-study{align-items:stretch;flex-shrink:1;min-width:0;max-width:100%;}
+    .rbm-study-sel{width:100%;max-width:100%;min-width:0;text-overflow:ellipsis;}
     .rbm-tiles{grid-template-columns:repeat(2,1fr);}
     .rbm-kri-grid{grid-template-columns:1fr;}
     .rbm-board{grid-template-columns:1fr;}
