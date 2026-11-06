@@ -2,7 +2,7 @@ import type { AssemblySourceIntent } from './assemblySourceIntent';
 
 export type WorkbenchLeaveTarget =
   | { kind: 'section'; id: string; mode?: 'section' | 'document'; module?: string; draftReview?: boolean }
-  | { kind: 'document'; id: string; sectionId?: string; module?: string; assemblyIntent?: AssemblySourceIntent }
+  | { kind: 'document'; id: string; sectionId?: string; module?: string; assemblyIntent?: AssemblySourceIntent; current?: () => boolean }
   | { kind: 'external-document'; id: string; module?: string; assemblyIntent?: AssemblySourceIntent }
   | { kind: 'program'; id: string; label: string; onContinue: () => void; onCancel: () => void; module?: string }
   | { kind: 'host-back'; label: string; onContinue: () => void; module?: never }
@@ -23,6 +23,7 @@ export function workbenchAlreadyThere(target: WorkbenchLeaveTarget, state: { vie
 }
 export function admitWorkbenchNavigation(target: WorkbenchLeaveTarget, projectSwitchHeld: boolean, onBlocked: () => void,
   admitSources: (intent: AssemblySourceIntent, adopt: boolean) => boolean): boolean {
+  if (target.kind === 'document' && target.current && (projectSwitchHeld || !target.current())) { onBlocked(); return false; }
   if (target.kind === 'document-start' && (projectSwitchHeld || !target.current())) {
     target.onCancel(); onBlocked(); return false;
   }
@@ -32,6 +33,7 @@ export function admitWorkbenchNavigation(target: WorkbenchLeaveTarget, projectSw
 }
 
 export function workbenchNavigationRefusal(target: WorkbenchLeaveTarget): string {
+  if (target.kind === 'document' && target.current) return 'The linked filing is no longer current. Retry it from the original project; nothing else was selected.';
   return target.kind === 'document-start'
     ? 'The selected-source start is no longer current. Select the sources again before creating a document.'
     : 'Finish the project switch before opening a conversation.';

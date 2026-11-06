@@ -1956,6 +1956,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       const uploadChecksums = new Map<string, string | null>();
       const contentReadIds = new Set<string>();
       let unreadableSources = 0;
+      let nativeSourceBeforeDispatch: (() => Promise<void>) | undefined;
       if (Array.isArray(req.body.file_ids)) {
         for (const id of req.body.file_ids) {
           if (typeof id === 'string' && id && !streamFileIds.includes(id)) streamFileIds.push(id);
@@ -1970,12 +1971,15 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
             Number(orgId),
             req.body.source_ids as Array<number | string>
           );
-          const { readRetainedSourceContexts } = await import(
+          const { readRetainedSourceContexts, nativeSourceDispatchGuard } = await import(
             '../../services/clinical-regulatory-evidence/retained-source-context.js'
           );
+          const nativeSourceScope = { organizationId: Number(orgId), programId: programIdForThread(streamProjectId),
+            userId: guardUserId ?? undefined };
           const retained = await readRetainedSourceContexts(
-            Number(orgId), programIdForThread(streamProjectId), req.body.source_ids, { userId: guardUserId ?? undefined },
+            nativeSourceScope.organizationId, nativeSourceScope.programId, req.body.source_ids, { userId: nativeSourceScope.userId },
           );
+          nativeSourceBeforeDispatch = nativeSourceDispatchGuard(nativeSourceScope, retained);
           for (const source of retained) {
             const identity = `cre_source:${source.sourceId}`;
             messages.push({ role: 'user', content:
@@ -2581,6 +2585,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
         promptCache: { enabled: true, type: 'ephemeral' },
         // Stop means stop generating, not just stop rendering.
         signal: runSignal,
+        beforeDispatch: nativeSourceBeforeDispatch,
         apiEffort,
         ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
         ...(streamTools.length > 0 ? { tools: streamTools } : {}),
@@ -3777,6 +3782,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
               : {}),
             promptCache: { enabled: true, type: 'ephemeral' },
             signal: runSignal,
+            beforeDispatch: nativeSourceBeforeDispatch,
             // Pinned per TURN, not per round: changing effort mid-conversation
             // invalidates the messages cache, and the follow-up rounds are the
             // same piece of work as the first.

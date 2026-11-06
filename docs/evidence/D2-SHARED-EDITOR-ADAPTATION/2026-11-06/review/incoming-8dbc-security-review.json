@@ -1,0 +1,120 @@
+{
+  "observedAt": "2026-11-06T21:09:57.012722+00:00",
+  "reviewerTask": "/root/editor_context_security_review",
+  "delegatedAdvisoryReviewer": "/root/editor_context_security_review/regional_advisory_review",
+  "package": "F1",
+  "comparisonBase": "7d771e124a4dba820fbbd26d8919c7c69cd1a9d4",
+  "incomingCanonical": "8dbc9d589ff1370c97d2166646a03d68489a8311",
+  "reviewedIntegrationMerge": "16fe9e08e2ce0ef482c633415090f4a9fa116ec0",
+  "coordinationHeadAtReview": "16fe9e08e2ce0ef482c633415090f4a9fa116ec0",
+  "status": "passed_no_scoped_integration_blocker",
+  "method": "Read-only combined-template/caller, advisory and RBM schema/migration source inspection plus exact owner continuity checks. Only these evidence files were written. No tests/compiler/browser/git mutations by reviewers.",
+  "findings": [
+    "Auto-merge retained actual saved-agency matching, unsupported/Notified Body and manual-preparation holds, exact selected assembly source, and the full saved-reference block. Regional descriptor construction runs after admitDraftReference succeeds.",
+    "The existing authoring route passes admitted template/filing region and the descriptor into advisory presentation; a regional marker/descriptor is not source or project authorization.",
+    "Regional therapeutic roles require a supported registry and exact catalog row plus matching section identity; malformed/conflicting/unknown regional identities suppress clinical fallback. CMC/toxicology exclusions and recorded-unqualified/caller-declared status remain.",
+    "The RBM schema uses its existing uniqueIndex import. The existing migration replay repairs the intended organization/program/subject key without replacing or deleting rows, preserves NULL-distinct program behavior and refuses wrong named indexes or existing conflicting triples. This does not add a tenant admission path.",
+    "Both final SDK boundary guard files exactly match the independently reviewed f429 repair. Source-intake, projection and editor guard owners listed below are unchanged."
+  ],
+  "unchangedFromF429": [
+    "server/services/authoring/authoring-program-access.ts",
+    "server/services/authoring/authoring-draft-region-projection.ts",
+    "server/services/authoring/authoring-source-import.ts",
+    "server/services/authoring/workflow-source-import.ts",
+    "server/services/authoring/artifact-workflow-source.ts",
+    "server/services/authoring/workflow-import-governance.ts",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+    "client/src/concept2cure/v2/editor/writingAgencyPresentation.ts",
+    "client/src/concept2cure/v2/editor/filingSectionTarget.ts",
+    "client/src/concept2cure/v2/surfaces/Vault.tsx"
+  ],
+  "sdkRepairContinuity": {
+    "reviewedRepair": "f4295889ca0297e115fcd88b334c98804c7c2fbc",
+    "gatewayUnchanged": true,
+    "providerClientsUnchanged": true,
+    "followupReview": "final-sdk-boundary-security-review.json"
+  },
+  "selectedUiPinOverlap": {
+    "browser": {
+      "selectedPinCount": 45,
+      "incomingIntersections": []
+    },
+    "live": {
+      "selectedPinCount": 25,
+      "incomingIntersections": []
+    }
+  },
+  "limits": [
+    "No current regional test, compiler or build success is asserted by this review; the catalogue owner and lead execute those checks.",
+    "The earlier f429 full gate and browser receipts retain their own exact checkpoints and transitive exclusions. Zero selected intersections do not qualify new regional advisory behavior, RBM deployment or an entire dependency graph.",
+    "No live model, scientific sufficiency, agency applicability, real client acceptance, deployment or broader MDX workflow completeness is qualified."
+  ],
+  "sourceFiles": [
+    {
+      "path": "server/services/authoring/authoring-draft-template.ts",
+      "sha256": "b16879734790f80c2bef8fec03e08b450ef3c2987210bda579ba81bbaca9a170",
+      "bytes": 21009
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "7f3cea7caec3f0474787ecb3a95cf7175585628e02c72290c5c43b414f53f358",
+      "bytes": 435873
+    },
+    {
+      "path": "server/services/ana/AnaDocumentDraftingService.ts",
+      "sha256": "f1f8b9cbad317f89b4cafc7594cabc57856af99e726e00e658e090f5c8577c98",
+      "bytes": 79008
+    },
+    {
+      "path": "server/services/ana/draft-product-advisory.ts",
+      "sha256": "075023efba6b48cbd9f4f9d38172f9513a44f5557594a950cde62be46a261fc5",
+      "bytes": 18340
+    },
+    {
+      "path": "server/services/ana/therapeutic-area-profiles/index.ts",
+      "sha256": "52a7356bae78e91689b432741c2befa8b410d55fbe3e23ec14377409b0c8c67a",
+      "bytes": 22057
+    },
+    {
+      "path": "server/services/regulatory/registry/blueprints/canadaCtaBlueprint.ts",
+      "sha256": "aa4119d16e12c17bbf1bcd653d816113af2f9c41216aa776ccdce73a75c5b9f9",
+      "bytes": 13894
+    },
+    {
+      "path": "server/services/regulatory/registry/blueprints/euCtaBlueprint.ts",
+      "sha256": "1b732e9137c87a58eb3e67d44ef408259bc2bb65ea151c3e7fa7e250e516b076",
+      "bytes": 11851
+    },
+    {
+      "path": "shared/regulatory/document-taxonomy.ts",
+      "sha256": "4383ec406c9e448cadd76021798c067b87296b08062a5b0bf78cb832f573429b",
+      "bytes": 11090
+    },
+    {
+      "path": "shared/regulatory/uk-cta-authoring.ts",
+      "sha256": "bc6cc087d0219bf0c85636984116ffe9a3584287d014b2eb1d27f045ed999667",
+      "bytes": 21256
+    },
+    {
+      "path": "shared/schema.ts",
+      "sha256": "8c4fcbbc7501c84383f7a32f20163be274355065b350ae1e48aa1c6ef339e42c",
+      "bytes": 872969
+    },
+    {
+      "path": "migrations/20260701_rbm_patient_profiles.sql",
+      "sha256": "dadba8a1c436a414a3080f3e661f60d2ad56cdc0af7dcedb7657ea987f402f47",
+      "bytes": 3158
+    },
+    {
+      "path": "server/services/ai-gateway/gateway.ts",
+      "sha256": "09d187427e7dece2beec0b5a6d2e39391f94152909f291ca5c7a59a881427ff7",
+      "bytes": 239345
+    },
+    {
+      "path": "server/services/ai-gateway/providers/clients.ts",
+      "sha256": "0e3a3b26808709947a182c0fb4a96abb6fc2b02437ed54e0cf3fce4987227eb2",
+      "bytes": 9895
+    }
+  ],
+  "canonicalPinManifestSha256": "93f14e5a3299ea1591feeb731658464bdffc650e6b46c144aa5eee8c02228dbf"
+}

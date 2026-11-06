@@ -1,0 +1,11 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/c2c/project-vault.ts
+   792:1   warning  File has too many lines (2278). Maximum allowed is 500                                 max-lines
+  1473:16  warning  Function 'createProjectVaultRoutes' has too many lines (1294). Maximum allowed is 100  max-lines-per-function
+  1657:58  warning  Async arrow function has too many lines (268). Maximum allowed is 100                  max-lines-per-function
+  1657:58  warning  Async arrow function has a complexity of 44. Maximum allowed is 15                     complexity
+  1917:53  warning  Arrow function has a complexity of 24. Maximum allowed is 15                           complexity
+  2366:89  warning  Async arrow function has a complexity of 21. Maximum allowed is 15                     complexity
+
+✖ 6 problems (0 errors, 6 warnings)
+

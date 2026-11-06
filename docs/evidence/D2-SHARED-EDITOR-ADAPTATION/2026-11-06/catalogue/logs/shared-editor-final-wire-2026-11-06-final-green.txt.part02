@@ -1,0 +1,514 @@
+til then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > contains a credential revoked after selection at the fresh SDK boundary, without platform fallback
+{
+  "timestamp": "2026-11-06T20:42:53.913Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:53.913Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > contains a credential revoked after selection at the fresh SDK boundary, without platform fallback
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 1ms org=101 user=- caller=- req=29ee6420-1933-4402-91f1-f7fc13330a05
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > contains a credential revoked after selection at the fresh SDK boundary, without platform fallback
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > refuses a supplied invalid actor instead of interpreting it as background work
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 1ms org=101 user=invalid-actor caller=- req=12cd6b13-4291-4abf-b368-2b8805a40da3
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > refuses a supplied invalid actor instead of interpreting it as background work
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > keeps arbitrary SDK error text out of the final error and failure ledger
+{
+  "timestamp": "2026-11-06T20:42:53.918Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: Model provider request failed (HTTP 400).",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > keeps arbitrary SDK error text out of the final error and failure ledger
+[AI Gateway Audit] ✗ openai/gpt-4o task=chat tokens=0 1ms org=- user=- caller=- req=0d1d9ab4-1c4c-493c-b6bc-ee5ef5a920f5
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > keeps arbitrary SDK error text out of the final error and failure ledger
+{
+  "timestamp": "2026-11-06T20:42:53.919Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o-mini failed: Model provider request failed (HTTP 400).",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > keeps arbitrary SDK error text out of the final error and failure ledger
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37213) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > rechecks evidence after an awaited source checkpoint, before the real dispatch boundary 6ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses evidence changed in the platform-client resolution continuation before any SDK call 7ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > captures the caller pin before any await so later mutation cannot change the version 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > never accepts a header-only PASS or an unreviewed alias 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > lists verified qualified pins, while the real pending registry offers none 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > enables existing rows separately for two tenants without global keys or global registry mutation 8ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > refuses revoked cards without using an enabled platform key or silently substituting another model 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > preserves explicitly disabled providers and canonically disabled rows even with an active tenant key 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > contains a credential revoked after selection at the fresh SDK boundary, without platform fallback 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > refuses a supplied invalid actor instead of interpreting it as background work 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > keeps arbitrary SDK error text out of the final error and failure ledger 3ms
+stdout | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+{
+  "timestamp": "2026-11-06T20:42:55.639Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:55.641Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+{
+  "timestamp": "2026-11-06T20:42:55.641Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant keeps current-source SDK dispatch reachable
+{
+  "timestamp": "2026-11-06T20:42:55.764Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/usage-recorder.ts:104:16",
+    "queryPreview": "INSERT INTO api_usage_logs (organization_id, user_id, module, endpoint, model, request_count, tokens_used, cost_cents, metadata, created_at) VALUES ($1, $2, ...",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant refuses source revocation after credential work without retry or disclosure 13ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant refuses source revocation after credential work without retry or disclosure 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / platform refuses source revocation after credential work without retry or disclosure 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / platform refuses source revocation after credential work without retry or disclosure 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant cancels during credential work before any SDK call 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant cancels during credential work before any SDK call 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / platform cancels during credential work before any SDK call 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / platform cancels during credential work before any SDK call 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant keeps current-source SDK dispatch reachable 18ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant keeps current-source SDK dispatch reachable 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / platform keeps current-source SDK dispatch reachable 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / platform keeps current-source SDK dispatch reachable 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant rechecks cancellation after the final source read awaits 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant rechecks cancellation after the final source read awaits 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / platform rechecks cancellation after the final source read awaits 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / platform rechecks cancellation after the final source read awaits 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > platform-client continuation at the actual SDK boundary > anthropic checks cancellation in the platform-client promise continuation before SDK create 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > platform-client continuation at the actual SDK boundary > openai checks cancellation in the platform-client promise continuation before SDK create 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > leaves ordinary no-source calls on the existing path 1ms
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback
+{
+  "timestamp": "2026-11-06T20:42:55.857Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: Model provider request failed (HTTP 400).",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > also rechecks before retrying a fallback provider
+{
+  "timestamp": "2026-11-06T20:42:55.859Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: Model provider request failed (HTTP 400).",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > runs the guard after capacity is granted, refuses queued revocation, and releases the permit 57ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > captures the original guard before the first route await 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a synchronous guard refusal terminal and safe without provider-health accounting 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a asynchronous guard refusal terminal and safe without provider-health accounting 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback null before placement or dispatch 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback "pretend guard" before placement or dispatch 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback 7 before placement or dispatch 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback {} before placement or dispatch 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > sanitizes a callback getter failure before any await 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > rechecks before a primary retry and never dispatches revoked retry work 9ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > also rechecks before retrying a fallback provider 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > preserves a transient retry when the source remains current 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > honors cancellation during a guard wait (resolve), releases capacity and never dispatches canceled work 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > honors cancellation during a guard wait (reject), releases capacity and never dispatches canceled work 1ms
+stdout | server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+{
+  "timestamp": "2026-11-06T20:42:58.036Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:58.038Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+{
+  "timestamp": "2026-11-06T20:42:58.039Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > uses the recorded Canadian CTA for an omitted or blank filing choice: undefined 147ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > uses the recorded Canadian CTA for an omitted or blank filing choice: "" 41ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > uses the recorded Canadian CTA for an omitted or blank filing choice: "   " 45ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > keeps recorded TA/modality/stage/population above conflicting declarations without calling them scientific evidence 32ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > preserves an explicit filing choice and states its disagreement with the recorded application 34ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > keeps ambiguous charters and declared fallback distinct instead of choosing a charter 60ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > keeps a recorded broad biologic unassessed even when a caller supplies a specific modality 63ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > carries exact ICH_PROTOCOL identity into the shared clinical profile selection 52ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > carries exact ICH_CSR identity into the shared clinical profile selection 43ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > refuses unauthorized project access before dispatch: {"projectId":"11111111-2222-4333-8444-000000000021","userId":7} 14ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > refuses unauthorized project access before dispatch: {"projectId":"11111111-2222-4333-8444-000000000011","userId":8} 20ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > emits successful recorded-project chunks in order after the post-provider check 42ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > emits no chunks when charter changes after provider streaming begins 46ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > emits no chunks when access changes after provider streaming begins 44ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > preserves live streaming for an ordinary request without a project 16ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses a charter changed while the outbound call waits, before model effect 32ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses changed charter after provider response instead of returning draft text 46ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses changed access after provider response instead of returning draft text 48ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses changed filing after provider response instead of returning draft text 64ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded UK CTA uses shared drafting with explicit IRAS boundaries > prepares content for external combined review without inventing IRAS form formatting 59ms
+stdout | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > issues routing tiers from saved metadata and rejects copied authority
+{
+  "timestamp": "2026-11-06T20:43:13.416Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:43:13.417Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > issues routing tiers from saved metadata and rejects copied authority
+{
+  "timestamp": "2026-11-06T20:43:13.418Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > issues routing tiers from saved metadata and rejects copied authority
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > issues routing tiers from saved metadata and rejects copied authority
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > issues routing tiers from saved metadata and rejects copied authority
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > issues routing tiers from saved metadata and rejects copied authority 1108ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed when source sensitivity changes while content is unchanged 2ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs 3ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > never calls records without selected IDs and labels absence unassessed 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection undefined 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "10000000-0000-4000-8000-000000000001" 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "raw client text" 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "10000000-0000-4000-8000-000000000001" 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > requires a resolved open project rather than organization-wide evidence 2ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > refuses another project before retrieving its extracted text 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source null 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"missing","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 2ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":null} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"status":"extraction_failed"}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"supersede","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"remove_data","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects version change between metadata and content reads 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > honestly bounds excerpts and preserves OCR/withdrawal caveats 3ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > does not silently drop selected sources when the total text budget is exhausted 2ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > grounds a section in the stretch its terms name, deep in the document, and the span says where (S5d) 7ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > keeps the opening, and says so, when the section names nothing the document holds 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > retains text identities in audit metadata without raw evidence or shared span objects 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > rejects a same-length extraction change between metadata and text, including outside the window 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses a claimed extraction digest that does not hash the actual loaded text 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: null 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":false,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":false,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"keep_data","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"remove_data","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"supersede","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":false},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > rechecks the first source after reading a later source, rather than relying on its earlier admission 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > pins caller IDs, actor, project and request executor before the first await 5ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses if final source authority revalidation fails 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses if final program authority revalidation fails 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > moves a window end inward by one original UTF-16 unit instead of splitting a legitimate pair 3ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses ill-formed source text rather than inventing a Unicode replacement identity 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses an ill-formed final extraction even when UTF-8 replacement yields the prior digest and length 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > keeps an unchanged astral extraction exact through final rechecking 2ms
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+{
+  "timestamp": "2026-11-06T20:43:16.172Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+{
+  "timestamp": "2026-11-06T20:43:20.712Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:43:20.713Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+{
+  "timestamp": "2026-11-06T20:43:20.713Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a Health Canada CTA section is drafted with its recorded application and requirements
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > leaves a legacy CTD number unindexed for UK CTA and states the requested writing-region mismatch
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a project whose application cannot be resolved is told so, and no jurisdiction is assumed
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a US IND section is drafted for FDA with the US IND record, as before
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > carries the charter and product facts into the actual gateway prompt as unqualified records
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not choose an arbitrary charter when more than one is recorded
+[turn-record] could not write the turn record: pool.connect is not a function
+
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a Health Canada CTA section is drafted with its recorded application and requirements 2199ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > leaves a legacy CTD number unindexed for UK CTA and states the requested writing-region mismatch 29ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a project whose application cannot be resolved is told so, and no jurisdiction is assumed 13ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a US IND section is drafted for FDA with the US IND record, as before 11ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > carries the charter and product facts into the actual gateway prompt as unqualified records 26ms
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not retain a response after the charter changes during generation
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the one editor receives the cited UK preparation outline > uses UK protocol preparation and scope from the recorded filing, without a new editor path
+[turn-record] could not write the turn record: pool.connect is not a function
+
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not choose an arbitrary charter when more than one is recorded 20ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not call a provider or park a draft if the recorded facts cannot be read 24ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not retain a response after the charter changes during generation 11ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the one editor receives the cited UK preparation outline > uses UK protocol preparation and scope from the recorded filing, without a new editor path 14ms
+stdout | server/services/authoring/__tests__/authoring-draft-template.test.ts
+{
+  "timestamp": "2026-11-06T20:43:28.014Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:43:28.018Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-draft-template.test.ts
+{
+  "timestamp": "2026-11-06T20:43:28.018Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-draft-template.test.ts
+[database] Database connection successful
+
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > calls the existing validator for the captured document/project and one saved section without extra SQL 5ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > honors an assembled section’s identity, region and limits over a different/manual parent 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > keeps exact Unicode, quotes, newlines and checklist text without shortening the reference 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > preserves null for an unbound document instead of inventing a program sentinel 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > keeps an ad-hoc document available without inventing a template or eligibility record 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"aiDraftable":false} 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"kind":"preparation"} 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"authoringMode":"manual"} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses a selected manual section even when its parent permits drafting 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > does not infer complete source fields or eligibility from current-reference text 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > does not treat current E3 reference identity as a retained historical section policy 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > retains historical identity-only source fields without filling missing eligibility 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > still enforces an explicit negative restriction in historical identity-only fields 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > reports canonical validation failure as unavailable instead of using another/current template 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a CSR drafts as a CSR whatever template it was made from > drafts the component CSR New document offers as a CSR, though its source records no registry id 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a CSR drafts as a CSR whatever template it was made from > keeps a non-CSR document as it was 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses unsupported actual notified-body agency for component:performance_evaluation_report without substituting EMA 76ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses unsupported actual notified-body agency for registry:EU_PER without substituting EMA 54ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > keeps the actual IVDR technical-document manual limit ahead of any writing preference 46ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > does not interpret an unsupported recorded agency as a geographic region code 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives US writing control only when the caller omitted it 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives CA writing control only when the caller omitted it 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives EU writing control only when the caller omitted it 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives JP writing control only when the caller omitted it 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an explicit region conflicting with the recorded section 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > does not inherit a receiving region from the parent when the selected section is GLOBAL 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > requires an explicit writing region when the saved reference has no receiving region 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > requires an explicit writing region when the saved reference has no receiving region 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "" 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "unknown" 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "GLOBAL" 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region null 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region {} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region 7 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_CSR template identity for the document kind 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_PROTOCOL template identity for the document kind 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_IB template identity for the document kind 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the entire mandatory reference block has one UTF-8 byte budget > accepts the exact full-block ASCII boundary and refuses the next byte without clipping 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the entire mandatory reference block has one UTF-8 byte budget > counts multibyte Unicode rather than JavaScript character length 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the one prompt composer retains caller and evidence inputs separately > keeps exact tone/context/requirements and the source-attribution envelope, with a working-draft instruction 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > appends to the one prompt and changes nothing before it; without a revision the prompt is the same 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > reads the revise field: absent is no revision; a malformed one is refused, trimmed instructions are kept 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > admits a live, current, complete base and names what the revision is derived from 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the draft route’s revision parts > reads nothing for a request that is not a revision, and spreads empty parts 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the draft route’s revision parts > reads the named candidate once and refuses before reading when the request is malformed 2ms
+stdout | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+{
+  "timestamp": "2026-11-06T20:43:30.260Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:43:30.265Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+{
+  "timestamp": "2026-11-06T20:43:30.266Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+[database] Database connection successful
+
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source component:performance_evaluation_report 100ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source registry:EU_PER 71ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source registry:EU_IVDR 60ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > validates the complete admitted batch once and returns only section agency/state 6ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > honors a Japanese assembled section over its US parent and does not affect another section 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > preserves GLOBAL assembled scope instead of inheriting the parent 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > keeps a truly unrecorded template distinct from a failed source read 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > does not promote identity-only source fields into a recorded receiving region 0ms
+stdout | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts
+{
+  "timestamp": "2026-11-06T20:43:32.027Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": 

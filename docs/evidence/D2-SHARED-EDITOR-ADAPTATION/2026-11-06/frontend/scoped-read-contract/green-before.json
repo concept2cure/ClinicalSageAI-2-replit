@@ -1,0 +1,80 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/editor/useScopedDocuments.ts",
+    "bytes": 4547,
+    "sha256": "74015b1a86e423c6ffde74cad6e849aa1efe6ef5a77e417b0fa992737427af43",
+    "gitBlob": "30dfe4bae01114c545a8e0f1864468909b32a301"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+    "bytes": 5026,
+    "sha256": "3706ad63db825de52f3e8effe1ae643f399bb4b7a80764b294e5297ec3d28564",
+    "gitBlob": "a08a61b3b519b46c2f7912e9cb0bfcf2eb7d7a43"
+  },
+  {
+    "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+    "bytes": 347313,
+    "sha256": "3e7bae441a5b31728c396dfe98b455d64dca4f6488b268b42de57e06f7f7c007",
+    "gitBlob": "157a989f72565daef59e077d928b7038355b4b19"
+  },
+  {
+    "path": "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx",
+    "bytes": 31480,
+    "sha256": "63e3d682bb30f549570e891f76c4e52a1d6d9cf97dfc9ee2cd8ac861f0d7343b",
+    "gitBlob": "4e8020d6594d3ff4403eedc734baea3aca23f7e3"
+  },
+  {
+    "path": "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx",
+    "bytes": 21777,
+    "sha256": "f09a3cb13bf0009e2b84924871b9f2a573243c734fbca667ff0cd155c7f65f11",
+    "gitBlob": "2f07b38d8c9e336ba122407fa0913f2fa3a7ed24"
+  },
+  {
+    "path": "client/src/concept2cure/v2/editor/SourceImportDialog.tsx",
+    "bytes": 13290,
+    "sha256": "eaaa4754499bea5971fb18d6f970d24d3fb91aaa000d7da9303024c8a4362b27",
+    "gitBlob": "de9eb8271fcdcac0dad279472be7ff693294c9db"
+  },
+  {
+    "path": "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx",
+    "bytes": 7540,
+    "sha256": "459a9ecd258b42cbdab494a3770747d65fa40df0ff07536bf0cc20edd19cf47e",
+    "gitBlob": "a6fbe7bdf710fbd9e70a44bf0c0b09eb28fdfa1e"
+  },
+  {
+    "path": "client/src/concept2cure/v2/authoringHandoff.ts",
+    "bytes": 36948,
+    "sha256": "66accd6a93a661a928dc844457b07cd454b5d3283f4cfd16a23646eade21eeec",
+    "gitBlob": "95f253d3b8fedc3ccfbf842da98737d6e1925824"
+  },
+  {
+    "path": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+    "bytes": 3869,
+    "sha256": "eeb1c7f6670a9372216bbb844bc11f52632e74e127260a3e9a29d50586a657d7",
+    "gitBlob": "93ad8226bd095ee6ce82b7d6e050efedaf3ba9a5"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+    "bytes": 21120,
+    "sha256": "a5b39a9d66be6127f0b41731ec1506d74240cf0868543492213b5d9f7c5cc41d",
+    "gitBlob": "25d4c4eb3951a745b471d685c4dc0a199556d142"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx",
+    "bytes": 10544,
+    "sha256": "196a5d19838aed576780ce98dcc620be5409eae9f4b78ccd2154cb31b510ef25",
+    "gitBlob": "e6d90123d929312b4538738fe7256dbb3a3233dd"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx",
+    "bytes": 18743,
+    "sha256": "fe1e53350f62f73840907d93f9568dd7a032512d1dd6520dbeccaf03b37cff34",
+    "gitBlob": "a7b7b571559fdece43142f4b860b7290e0eb70fb"
+  },
+  {
+    "path": "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx",
+    "bytes": 20248,
+    "sha256": "bfaadba7f96fb453ce1e9a3040dd70d8ad0fe6aade88175caeb56328ce603bfc",
+    "gitBlob": "9ccc3c72be5c76aa35cc0bf01574f1fdd225abe0"
+  }
+]

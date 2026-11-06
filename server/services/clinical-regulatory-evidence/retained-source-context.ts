@@ -18,6 +18,33 @@ export interface RetainedSourceContext {
   representationId: string;
 }
 
+/** Bind dispatch to the exact native text already admitted for this turn.
+ * Legacy retained-only selections keep their existing behavior. Nothing from
+ * the caller's mutable selection or context objects is reread by this closure. */
+export function nativeSourceDispatchGuard(
+  scope: { organizationId: number; programId: string | null; userId: number | undefined },
+  contexts: readonly RetainedSourceContext[],
+): (() => Promise<void>) | undefined {
+  const native = contexts.filter(source => source.origin === 'native_record_snapshot');
+  if (!native.length) return undefined;
+  const { organizationId, programId, userId } = scope;
+  const sourceIds = native.map(source => source.sourceId);
+  const admitted = native.map(nativeContextIdentity).sort();
+  return async () => {
+    const current = (await readRetainedSourceContexts(organizationId, programId, sourceIds, { userId }))
+      .filter(source => source.origin === 'native_record_snapshot');
+    if (JSON.stringify(current.map(nativeContextIdentity).sort()) !== JSON.stringify(admitted)) {
+      throw new SourceReadAccessError(409, 'NATIVE_SOURCE_CHANGED',
+        'Selected native Quality sources changed. Refresh the project catalogue.');
+    }
+  };
+}
+
+function nativeContextIdentity(source: RetainedSourceContext): string {
+  return JSON.stringify([source.sourceId, source.origin, source.sha256, source.textSha256,
+    source.representationId, source.title, source.text, source.truncated, source.originalFileAvailable]);
+}
+
 export async function readRetainedSourceContexts(
   organizationId: number,
   programId: string | null,

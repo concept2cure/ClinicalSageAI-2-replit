@@ -1,34 +1,9 @@
 // @vitest-environment jsdom
-/**
- * "Open in editor" must open the document the user selected.
- *
- * ── The defect ───────────────────────────────────────────────────────────────
- * Vault.tsx:270 — the whole handler was
- *
- *   const openDoc = () => { onNav && onNav('document-authoring'); };
- *
- * `sel`, the document the user had just clicked in the dossier tree, was never
- * read. They picked §3.2.P.8 out of a 71-section filing, pressed the one button
- * that promises to open it, and arrived at the editor's default view with the
- * selection silently gone — the failure a user is least likely to report,
- * because it looks like the editor simply opened.
- *
- * The deep-link channel for exactly this already existed and had one sender:
- * v2/editorTarget.ts (one-shot, TTL-guarded, consumed by DocumentAuthoring on
- * mount, which resolves by section code then title and posts an honest notice
- * on a miss).
- *
- * ── What this asserts ────────────────────────────────────────────────────────
- * The CHAIN: that the click publishes a target carrying the SELECTED section's
- * code and label before the navigation, that the document family is named only
- * when it is one the channel can express (a governed IND dossier is not — and
- * naming it anyway would make the editor REFUSE the target), and that the
- * target reaches the channel's own reader, `peekEditorTarget`, rather than some
- * private global this surface invented.
- */
+/** The actual Vault sends exact recorded filing or source identity into the
+ * one editor. HTTP, records and credentials below are explicitly synthetic. */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -182,6 +157,9 @@ describe('Vault — Open in editor carries the selected document', () => {
     expect(navigated).toEqual(['document-authoring']);
   });
 
+});
+
+describe('Vault governed section navigation', () => {
   it('publishes the selected section on the editor deep-link channel before navigating', async () => {
     mount();
     await openInEditor('Device Description', 'Acme Cutter');
@@ -198,7 +176,7 @@ describe('Vault — Open in editor carries the selected document', () => {
     expect(navigated).toEqual(['document-authoring']);
   });
 
-  it('carries the section but NOT an invented family for a dossier the channel cannot name', async () => {
+  it('retains the recorded IND family on the common editor channel', async () => {
     mount();
     await openInEditor('Summary of Clinical Efficacy', 'BX204 — IND');
 
@@ -206,11 +184,8 @@ describe('Vault — Open in editor carries the selected document', () => {
     expect(target).not.toBeNull();
     expect(target!.sectionCode).toBe('2.7.3');
     expect(target!.sectionLabel).toBe('Summary of Clinical Efficacy');
-    // 'ind' is a governed doc_type but not one this channel spells. Naming a
-    // near neighbour ('k510', 'cer') would make DocumentAuthoring answer
-    // "this project's governed dossier is IND, not 510(k)" and refuse a target
-    // that was never wrong — so the claim is dropped, not guessed.
-    expect(target!.docType).toBeNull();
+    // The shared editor accepts the recorded family for every client type.
+    expect(target!.docType).toBe('ind');
     expect(navigated).toEqual(['document-authoring']);
   });
 
@@ -224,5 +199,203 @@ describe('Vault — Open in editor carries the selected document', () => {
     clearEditorTarget();
     expect(consumed).not.toBeNull();
     expect(peekEditorTarget()).toBeNull();
+  });
+});
+
+
+function useTree(tree: unknown[]) {
+  apiRequest.mockImplementation(async () => ok({ success: true, data: { ...VAULT_PAYLOAD.data, tree } }));
+}
+function filingTree(facts: Record<string, unknown> = {}, docFacts: Record<string, unknown> = {}) {
+  return [{ id: 'vaultdoc-synthetic', code: 'CER', label: 'Recorded filing', ...facts,
+    children: [{ ...leaf('recorded-section', 'display-code', 'Recorded section'), ...docFacts }] }];
+}
+
+describe('Vault exact governed filing identity', () => {
+  it.each(['IND', 'NDA', 'BLA', 'MAA', 'CER', 'IVDR'])('retains the recorded %s family', async family => {
+    useTree(filingTree({ code: family }));
+    mount(); await openInEditor('Recorded section', 'Recorded filing');
+    expect(peekEditorTarget()).toMatchObject({ docType: family.toLowerCase(), programId: PROJECT_ID });
+  });
+  it.each(['vaultdoc-display-only', 'presentation-folder'])('uses explicit filing identity independent of folder id %s', async id => {
+    useTree(filingTree({ id, filingDocumentId: 'doc_exact_cer' }));
+    mount(); await openInEditor('Recorded section', 'Recorded filing');
+    expect(peekEditorTarget()).toMatchObject({ filingDocumentId: 'doc_exact_cer', docType: 'cer' });
+  });
+  it.each([null, 12, '', '../invalid-filing'])('refuses an explicit invalid filing identity %s', async filingDocumentId => {
+    useTree(filingTree({ filingDocumentId }));
+    mount(); await openInEditor('Recorded section', 'Recorded filing');
+    expect(peekEditorTarget()).toBeNull(); expect(navigated).toEqual([]);
+    expect(await screen.findByText(/recorded filing identity could not be verified/)).toBeTruthy();
+  });
+});
+
+describe('Vault whole document and exact section intents', () => {
+  it('carries whole-filing intent without a presentation code or title', async () => {
+    useTree(filingTree({ filingDocumentId: 'doc_exact_cer' }, { filingSectionKey: null }));
+    mount(); await openInEditor('Recorded section', 'Recorded filing');
+    expect(peekEditorTarget()).toMatchObject({ filingDocumentId: 'doc_exact_cer', docType: 'cer', sectionCode: null, sectionLabel: null });
+    expect(navigated).toEqual(['document-authoring']);
+  });
+  it('uses the recorded section key instead of its display number', async () => {
+    useTree(filingTree({ filingDocumentId: 'doc_exact_cer' }, { filingSectionKey: 'clinical.evaluation' }));
+    mount(); await openInEditor('Recorded section', 'Recorded filing');
+    expect(peekEditorTarget()).toMatchObject({ filingDocumentId: 'doc_exact_cer', sectionCode: 'clinical.evaluation' });
+  });
+  it('refuses whole-filing intent without exact filing identity', async () => {
+    useTree(filingTree({}, { filingSectionKey: null }));
+    mount(); await openInEditor('Recorded section', 'Recorded filing');
+    expect(peekEditorTarget()).toBeNull(); expect(navigated).toEqual([]);
+  });
+  it('refuses an explicit malformed section claim', async () => {
+    useTree(filingTree({ filingDocumentId: 'doc_exact_cer' }, { filingSectionKey: 7 }));
+    mount(); await openInEditor('Recorded section', 'Recorded filing');
+    expect(peekEditorTarget()).toBeNull(); expect(navigated).toEqual([]);
+  });
+  it('does not dispatch a retained button after the selected project changed', async () => {
+    useTree(filingTree({ filingDocumentId: 'doc_exact_cer' }));
+    mount();
+    await openInEditor('Recorded section', 'Recorded filing');
+    clearEditorTarget(); navigated.length = 0;
+    await act(async () => {
+      window.C2C_PROJECT = { id: 'other-project', title: 'Another project' };
+      fireEvent.click(screen.getByText(/Open in editor/));
+    });
+    expect(peekEditorTarget()).toBeNull(); expect(navigated).toEqual([]);
+  });
+});
+
+const ARTIFACT_SOURCE = { kind: 'artifact', artifactId: 'logical-artifact_cer', version: 3 };
+function artifactTree(version: unknown) {
+  return [{ id: 'artifacts', code: '', label: 'Governed artifacts', children: [{
+    ...leaf('artifact-display', 'display-section', 'Saved clinical evidence'), src: 'artifact', ver: 'v999',
+    artifact: { artifactId: ARTIFACT_SOURCE.artifactId, version, kind: 'CER', format: 'html', model: null,
+      origin: null, author: null, contentHash: 'ac'.repeat(32), ctdSection: null, signature: 'none',
+      signedVersion: null, reviewed: false, sourceCount: 0 },
+  }] }];
+}
+function artifactOrigin(version = 3) {
+  return { kind: 'artifact', id: ARTIFACT_SOURCE.artifactId, version: String(version), programId: PROJECT_ID,
+    title: 'Saved clinical evidence', documentType: null, sectionCode: null, fingerprint: 'ac'.repeat(32),
+    selection: { ...ARTIFACT_SOURCE, version }, conversion: 'artifact-snapshot', gaps: [],
+    sourceScope: { level: 'program', programId: PROJECT_ID, projectId: 11 }, association: { mode: 'recorded', reason: null },
+    sectionOrigins: [{ code: 'artifact.content', sourceRowId: 'concept2cure_artifact_versions:33', contentSha256: 'ef'.repeat(32),
+      originalAuthorship: 'unknown', model: null, modelEvidence: 'unrecorded' }] };
+}
+function artifactReplies(wrongVersion = false) {
+  apiRequest.mockImplementation(async (method: string, url: string, body?: Record<string, unknown>) => {
+    if (method !== 'POST' || url !== '/api/authoring/import/source') return ok({ success: true, data: { ...VAULT_PAYLOAD.data, tree: artifactTree(3) } });
+    const origin = artifactOrigin(wrongVersion ? 4 : 3);
+    if (body?.previewOnly) return ok({ success: true, data: { preview: true, origin, fingerprint: origin.fingerprint,
+      sections: [{ code: 'artifact.content', title: origin.title, contentSha256: 'ef'.repeat(32) }], gaps: [], warnings: [],
+      target: { programId: PROJECT_ID, projectId: 11 }, association: { mode: 'recorded', required: false, reasonRequired: false,
+        sourceProgramId: PROJECT_ID, sourceProjectId: 11, targetProgramId: PROJECT_ID } } });
+    const id = '44444444-4444-4444-8444-444444444444';
+    return ok({ success: true, data: { doc: { id, title: origin.title, tenant_id: ORG_ID, client_program_id: PROJECT_ID,
+      created_by: USER_ID, status: 'DRAFT', c2c_document_id: null,
+      provenance: { source: 'import', importSource: { ...origin, reason: 'Revise saved clinical evidence', warnings: [] } } },
+      sections: [{ id: '55555555-5555-4555-8555-555555555555', doc_id: id, tenant_id: ORG_ID, code: 'artifact.content',
+        title: origin.title, content: '<p>Saved clinical evidence</p>', order_index: 0 }], origin, warnings: [], reused: false } });
+  });
+}
+async function chooseArtifact() {
+  const folder = await waitFor(() => {
+    const item = Array.from(document.querySelectorAll('.vd-folder')).find(b => b.textContent?.includes('Governed artifacts'));
+    if (!item) throw new Error('artifact folder not rendered'); return item;
+  });
+  fireEvent.click(folder);
+  const row = await waitFor(() => {
+    const item = Array.from(document.querySelectorAll('.vd-row')).find(b => b.textContent?.includes('Saved clinical evidence'));
+    if (!item) throw new Error('artifact row not rendered'); return item;
+  });
+  fireEvent.click(row);
+  fireEvent.click(screen.getByRole('button', { name: /Work on document/ }));
+}
+
+describe('Vault governed artifacts use the existing verified source intake', () => {
+  it('opens the exact version as a source-linked working copy', async () => {
+    artifactReplies(); mount(); await chooseArtifact();
+    await screen.findByTestId('workflow-import-preview');
+    expect(navigated).toEqual([]);
+    fireEvent.change(screen.getByLabelText('Reason for creating a working copy'), { target: { value: 'Revise saved clinical evidence' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create working copy' }));
+    await screen.findByTestId('source-import-result');
+    fireEvent.click(screen.getByRole('button', { name: 'Open working copy' }));
+    expect(peekEditorTarget()).toMatchObject({ docId: '44444444-4444-4444-8444-444444444444', programId: PROJECT_ID, sectionCode: 'artifact.content' });
+    expect(navigated).toEqual(['document-authoring']);
+    const posts = apiRequest.mock.calls.filter(([method]) => method === 'POST');
+    expect(posts).toHaveLength(2);
+    expect(posts[0][2]).toMatchObject({ previewOnly: true, source: ARTIFACT_SOURCE });
+    expect(posts[1][2]).toMatchObject({ source: ARTIFACT_SOURCE, expectedFingerprint: 'ac'.repeat(32) });
+  });
+  it.each([undefined, '3', 0, 1.5])('refuses missing or malformed numeric artifact version %s', async version => {
+    useTree(artifactTree(version)); mount(); await chooseArtifact();
+    expect(screen.queryByTestId('source-import-dialog')).toBeNull(); expect(navigated).toEqual([]);
+    expect(await screen.findByText(/recorded source identity and version could not be verified/)).toBeTruthy();
+    expect(apiRequest.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(0);
+  });
+  it('refuses a preview for another recorded version', async () => {
+    artifactReplies(true); mount(); await chooseArtifact();
+    await screen.findByText(/source.*could not be verified/i);
+    expect(navigated).toEqual([]);
+    const create = screen.queryByRole('button', { name: 'Create working copy' }) as HTMLButtonElement | null;
+    expect(!create || create.disabled).toBe(true);
+  });
+});
+
+
+describe('Vault governed handoff retains the current account owner', () => {
+  it('refuses a retained editor action during an account transition', async () => {
+    useTree(filingTree({ filingDocumentId: 'doc_exact_cer' }));
+    mount(); await openInEditor('Recorded section', 'Recorded filing');
+    clearEditorTarget(); navigated.length = 0;
+    const previousButton = screen.getByText(/Open in editor/);
+    await act(async () => {
+      authService.setToken(TOKEN, { id: '8', organizationId: String(ORG_ID), roles: ['author'], permissions: [] }, 'other-refresh', 3600);
+      fireEvent.click(previousButton);
+    });
+    expect(peekEditorTarget()).toBeNull(); expect(navigated).toEqual([]);
+  });
+  it('does not hydrate a previous account’s delayed project tree', async () => {
+    let settlePrevious!: (value: Response) => void;
+    let reads = 0;
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      if (!url.startsWith('/api/c2c/project-vault/')) return ok({ success: true, data: null });
+      if (++reads === 1) return new Promise<Response>(resolve => { settlePrevious = resolve; });
+      return ok({ success: true, data: { ...VAULT_PAYLOAD.data,
+        tree: filingTree({ label: 'Current actor filing' }, { title: 'Current actor section' }) } });
+    });
+    mount(); await waitFor(() => expect(reads).toBe(1));
+    act(() => { authService.setToken(TOKEN, { id: '8', organizationId: String(ORG_ID), roles: ['author'], permissions: [] }, 'other-refresh', 3600); });
+    await waitFor(() => expect(document.body.textContent).toContain('Current actor filing'));
+    await act(async () => { settlePrevious(ok(VAULT_PAYLOAD)); });
+    expect(document.body.textContent).not.toContain('Acme Cutter');
+    expect(document.body.textContent).toContain('Current actor filing');
+  });
+});
+
+
+describe('Vault organization artifacts retain their numeric source version', () => {
+  it('uses sourceVersion from the row rather than its displayed v999 label', async () => {
+    artifactReplies();
+    const previous = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string, body?: Record<string, unknown>) => {
+      if (url.startsWith('/api/artifacts-center?')) return ok({ success: true, data: [{
+        id: ARTIFACT_SOURCE.artifactId, name: 'Saved clinical evidence', ver: 'v999', sourceVersion: 3,
+        prog: 'BX204', kind: 'CER', fmt: 'html', size: '1 KB', model: null, when: 'today',
+        sig: false, reviewed: false, sourceCount: 0,
+      }], meta: { scope: 'accessible-projects', total: 1, listed: 1, truncated: false } });
+      return previous(method, url, body);
+    });
+    mount();
+    fireEvent.click(await screen.findByRole('tab', { name: 'Governed artifacts' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Show governed artifacts across your projects/ }));
+    const row = await screen.findByTestId(`vault-org-artifact-${ARTIFACT_SOURCE.artifactId}`);
+    fireEvent.click(Array.from(row.querySelectorAll('button')).find(button => button.textContent?.includes('Work on document'))!);
+    await screen.findByTestId('workflow-import-preview');
+    const posts = apiRequest.mock.calls.filter(([method]) => method === 'POST');
+    expect(posts).toHaveLength(1);
+    expect(posts[0][2]).toMatchObject({ previewOnly: true, source: ARTIFACT_SOURCE });
+    expect(navigated).toEqual([]);
   });
 });
