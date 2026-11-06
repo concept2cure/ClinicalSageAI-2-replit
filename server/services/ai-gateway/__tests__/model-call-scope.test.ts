@@ -18,7 +18,11 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { AIGateway, resetGateway, GatewayAbortedError, GatewayPolicyError } from '../gateway';
 import { isTerminalGatewayError } from '../gateway-outcome';
 import { modelCallRefusal, runRefusingModelCalls, createRunSourceAuthority, runWithSourceAuthority, recordCurrentRunSource,
-  captureCurrentRunSourceGate, SourceRunAuthorityError, type RunSourceAuthority } from '../model-call-scope';
+  captureCurrentRunSourceGate, SourceRunAuthorityError, type RunSourceAuthority,
+  issueOwnerPrivateModelContext, runWithOwnerPrivateModelContexts, prepareOwnerPrivateModelContexts,
+  captureOwnerPrivateModelGate, bindOwnerPrivateModelChildRequest, OwnerPrivateModelContextError,
+  type OwnerPrivateModelContextCapsule } from '../model-call-scope';
+import { runWithTenantScope } from '../../../db/tenantStore';
 import type { AuditLogEntry, GatewayConfig, GatewayRequest, ModelConfig } from '../types';
 
 const SCOPE = { runId: 'agent_00000000-0000-4000-8000-000000000001', parentRunId: 'run_p', tool: 'search_literature' };
@@ -285,4 +289,104 @@ describe('scoped and unscoped work in flight at the same time', () => {
     const outside = await lazyInit();
     expect([inside, outside]).toEqual(['refused', 'refused']);
   });
+});
+
+
+// These unit callbacks exercise capability integrity; DB issuers and SDK bodies
+// have separate real SQL/AES and transport-boundary fixtures.
+const PRIVATE_SCOPE = { organizationId: 7, userId: 3, projectId: 42, runId: 'run_private', threadId: 'thread_private' };
+const ownerScope = <T>(work: () => T, accountId = 3) => runWithTenantScope({ tenantId: '7', accountId, source: 'test' }, work);
+function privateCapsule(overrides: Partial<Parameters<typeof issueOwnerPrivateModelContext>[0]> = {}) {
+  const calls: string[] = [];
+  const capsule = issueOwnerPrivateModelContext({ scope: PRIVATE_SCOPE, sourceRef: 'a'.repeat(64),
+    activate: async () => { calls.push('activate'); }, expand: async () => { calls.push('expand'); return 'private rule canary'; },
+    recheck: async () => { calls.push('recheck'); }, ...overrides });
+  return { capsule, calls };
+}
+describe('opaque owner-private model capsules', () => {
+  it('serializes no private content and prepares encrypted capture without expansion', async () => ownerScope(async () => {
+    const { capsule, calls } = privateCapsule();
+    expect(JSON.stringify(capsule)).toBe('{}');
+    await prepareOwnerPrivateModelContexts([capsule]);
+    expect(calls).toEqual(['activate', 'recheck']);
+    await runWithOwnerPrivateModelContexts([capsule], async () => {
+      const gate = captureOwnerPrivateModelGate(PRIVATE_SCOPE)!;
+      expect(gate.sourceRefs).toEqual(['a'.repeat(64)]);
+      expect(await gate.expand()).toBe('private rule canary');
+      expect(captureCurrentRunSourceGate(PRIVATE_SCOPE)?.tiers).toEqual([3]);
+    });
+    expect(captureOwnerPrivateModelGate(PRIVATE_SCOPE)).toBeUndefined();
+  }));
+  it('refuses serialized, copied and forged capsules', () => ownerScope(() => {
+    const { capsule } = privateCapsule();
+    for (const forged of [{}, { ...capsule }, JSON.parse(JSON.stringify(capsule))]) {
+      expect(() => runWithOwnerPrivateModelContexts([forged as OwnerPrivateModelContextCapsule], () => null)).toThrow(OwnerPrivateModelContextError);
+    }
+  }));
+  it('requires the verified owner and refuses a changed tenant/account', async () => ownerScope(async () => {
+    const { capsule } = privateCapsule();
+    expect(() => ownerScope(() => runWithOwnerPrivateModelContexts([capsule], () => null), 4)).toThrow(OwnerPrivateModelContextError);
+    expect(() => runWithTenantScope({ tenantId: '8', accountId: 3, source: 'test' },
+      () => runWithOwnerPrivateModelContexts([capsule], () => null))).toThrow(OwnerPrivateModelContextError);
+    await runWithOwnerPrivateModelContexts([capsule], async () => {
+      const gate = captureOwnerPrivateModelGate(PRIVATE_SCOPE)!;
+      await expect(ownerScope(() => gate.recheck(), 4)).rejects.toBeInstanceOf(OwnerPrivateModelContextError);
+    });
+  }));
+  it('requires exact parent run and privately issued child lineage, including after copies', () => ownerScope(() => {
+    const { capsule } = privateCapsule();
+    runWithOwnerPrivateModelContexts([capsule], () => {
+      expect(() => captureOwnerPrivateModelGate({})).toThrow(OwnerPrivateModelContextError);
+      const child = { ...PRIVATE_SCOPE, runId: 'agent_private', parentRunId: PRIVATE_SCOPE.runId };
+      expect(() => captureOwnerPrivateModelGate(child)).toThrow(OwnerPrivateModelContextError);
+      const issued = bindOwnerPrivateModelChildRequest(child);
+      expect(captureOwnerPrivateModelGate({ ...issued })?.scope.runId).toBe(PRIVATE_SCOPE.runId);
+      expect(() => captureOwnerPrivateModelGate(JSON.parse(JSON.stringify(issued)))).toThrow(OwnerPrivateModelContextError);
+      expect(() => captureOwnerPrivateModelGate({ ...issued, runId: 'agent_other' })).toThrow(OwnerPrivateModelContextError);
+      expect(() => captureOwnerPrivateModelGate({ ...PRIVATE_SCOPE, projectId: 43 })).toThrow(OwnerPrivateModelContextError);
+    });
+  }));
+  it('refuses mismatched source scopes, invalid hashes and excess capsules', () => ownerScope(() => {
+    const { capsule } = privateCapsule();
+    const foreign = privateCapsule({ scope: { ...PRIVATE_SCOPE, threadId: 'other' } }).capsule;
+    expect(() => runWithOwnerPrivateModelContexts([capsule, foreign], () => null)).toThrow(OwnerPrivateModelContextError);
+    expect(() => privateCapsule({ sourceRef: 'not-a-sha' })).toThrow(OwnerPrivateModelContextError);
+    const many = Array.from({ length: 9 }, (_, i) => privateCapsule({ sourceRef: String(i).padStart(64, '0') }).capsule);
+    expect(() => runWithOwnerPrivateModelContexts(many, () => null)).toThrow(OwnerPrivateModelContextError);
+  }));
+  it('rechecks a withdrawal both before and after private expansion', async () => ownerScope(async () => {
+    let current = true;
+    const { capsule } = privateCapsule({ recheck: async () => { if (!current) throw new Error('withdrawn'); },
+      expand: async () => { current = false; return 'must never leave the capsule'; } });
+    await runWithOwnerPrivateModelContexts([capsule], async () => {
+      const gate = captureOwnerPrivateModelGate(PRIVATE_SCOPE)!;
+      await expect(gate.expand()).rejects.toThrow('withdrawn');
+      await expect(gate.expand()).rejects.toThrow('withdrawn');
+    });
+  }));
+  it('bounds each expanded context and the total without truncating private instructions', async () => ownerScope(async () => {
+    const huge = privateCapsule({ expand: async () => 'x'.repeat(32769) }).capsule;
+    await expect(runWithOwnerPrivateModelContexts([huge], () => captureOwnerPrivateModelGate(PRIVATE_SCOPE)!.expand()))
+      .rejects.toBeInstanceOf(OwnerPrivateModelContextError);
+    const many = Array.from({ length: 3 }, (_, i) => privateCapsule({ sourceRef: String(i).padStart(64, '0'), expand: async () => 'x'.repeat(24000) }).capsule);
+    await expect(runWithOwnerPrivateModelContexts(many, () => captureOwnerPrivateModelGate(PRIVATE_SCOPE)!.expand()))
+      .rejects.toBeInstanceOf(OwnerPrivateModelContextError);
+  }));
+  it('refreshes an existing source capsule without exhausting the bound on repeated rounds', () => ownerScope(() => {
+    const { capsule } = privateCapsule();
+    runWithOwnerPrivateModelContexts([capsule], () => {
+      const refreshed = Array.from({ length: 8 }, () => privateCapsule().capsule);
+      runWithOwnerPrivateModelContexts(refreshed, () => {
+        expect(captureOwnerPrivateModelGate(PRIVATE_SCOPE)?.sourceRefs).toEqual(['a'.repeat(64)]);
+      });
+    });
+  }));
+  it('supports no-thread runs without inventing a thread and keeps concurrent calls scoped', async () => ownerScope(async () => {
+    const capsule = privateCapsule({ scope: { ...PRIVATE_SCOPE, threadId: null } }).capsule;
+    const [inside, outside] = await Promise.all([
+      runWithOwnerPrivateModelContexts([capsule], async () => { await Promise.resolve(); return captureOwnerPrivateModelGate(PRIVATE_SCOPE)?.scope.threadId; }),
+      Promise.resolve().then(() => captureOwnerPrivateModelGate(PRIVATE_SCOPE)),
+    ]);
+    expect(inside).toBeNull(); expect(outside).toBeUndefined();
+  }));
 });

@@ -74,7 +74,7 @@ function host(over: Partial<SubAgentHost> = {}): SubAgentHost & { frames: AgentE
 const CTX = { organizationId: 7, userId: 3, sqlClient: SQL_CLIENT, projectId: null, projectRef: '10000000-0000-4000-8000-000000000001', humanConfirmed: true } as any;
 const RESEARCH = { role: 'research', objective: 'Find the pivotal trial', instructions: 'Search PubMed for the pivotal trial of drug X.' };
 const inTenant = <T>(fn: () => Promise<T>, tenantId = '7') =>
-  runWithTenantScope({ tenantId, source: 'test', caller: 'sub-agent-test' } as any, fn);
+  runWithTenantScope({ tenantId, accountId: CTX.userId, source: 'test', caller: 'sub-agent-test' }, fn);
 const run = (input: object, h = host(), ctx = CTX) => inTenant(() => runSubAgent(input as any, ctx, h)).then(s => JSON.parse(s));
 const toolCall = (name: string, input: object = {}, id = `c${Math.random()}`) => ({
   content: 'working',
@@ -302,7 +302,7 @@ describe('caps', () => {
     };
     const org = (id: number) => ({ ...CTX, organizationId: id });
     const runAs = (id: number) =>
-      runWithTenantScope({ tenantId: String(id), source: 'test' } as any, () => runSubAgent(RESEARCH, org(id), host({ organizationId: id })));
+      runWithTenantScope({ tenantId: String(id), accountId: CTX.userId, source: 'test' }, () => runSubAgent(RESEARCH, org(id), host({ organizationId: id })));
     const live = [...Array.from({ length: 6 }, () => runAs(7)), ...Array.from({ length: 4 }, () => runAs(8))];
     await vi.waitFor(() => expect(liveAgentCounts().total).toBe(10));
     expect(JSON.parse(await runAs(9)).error).toBe('AGENTS_BUSY');

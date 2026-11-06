@@ -405,3 +405,64 @@ describe('reviewed derivative references reach the existing AnA conversation', (
     fireEvent.click(button); expect(onAsk).not.toHaveBeenCalled();
   });
 });
+
+const learningView = () => ({ ...handoffMetadata(), learningContribution: { policy: { enabled: true, version: 3 },
+  classes: [{ key: 'independent_review', label: 'Independent review', count: 2 }],
+  sources: [{ id: '60000000-0000-4000-8000-000000000006', recordedAt: '2026-11-06T12:00:00Z', correctionText: 'PRIVATE_SOURCE_UI_CANARY' }],
+  library: [{ name: 'Reviewed learning: Independent review', donorText: 'PRIVATE_DONOR_UI_CANARY',
+    receipt: { schemaVersion: 1, libraryVersionId: '70000000-0000-4000-8000-000000000007', artifactSha256: 'a'.repeat(64), signatureHash: 'b'.repeat(64) } }] } });
+function serveLearning() {
+  vi.mocked(globalThis.fetch).mockImplementation(async (input, init) => {
+    const method = String(init?.method ?? 'GET');
+    sent.push({ method, url: String(input), body: init?.body ? JSON.parse(String(init.body)) : null });
+    return json(200, method === 'GET' ? learningView() : { organizationId: TOKEN_ORG, audited: true, learningContribution: { id: 12 } });
+  });
+}
+function learningAuth() {
+  fireEvent.change(screen.getByLabelText(/^Reason \(recorded/), { target: { value: 'Current client administration decision' } });
+  fireEvent.change(screen.getByLabelText(/^Your password/), { target: { value: 'DERIVATIVE_REAUTH_UI_CANARY' } });
+}
+describe('reviewed learning shares only typed classes and verified public receipts', () => {
+  it('selects a private correction reference from history without exposing correction prose', async () => {
+    serveLearning(); render(<AiPlacementPolicyCard />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Contribute a pattern class…' }));
+    fireEvent.change(screen.getByLabelText(/^Pattern class/), { target: { value: 'independent_review' } });
+    fireEvent.change(screen.getByLabelText(/^Your recorded correction/), { target: { value: learningView().learningContribution.sources[0].id } });
+    learningAuth(); fireEvent.click(screen.getByRole('button', { name: 'Contribute a pattern class' }));
+    await waitFor(() => expect(sent.some(row => row.method === 'PUT')).toBe(true));
+    expect(sent.find(row => row.method === 'PUT')?.body).toMatchObject({ action: 'learning_contribute', classKey: 'independent_review',
+      sourceAuditEventId: learningView().learningContribution.sources[0].id, reauth: { password: 'DERIVATIVE_REAUTH_UI_CANARY' } });
+    expect(JSON.stringify(sent.find(row => row.method === 'PUT')?.body)).not.toMatch(/PRIVATE_SOURCE|PRIVATE_DONOR/);
+    expect(document.body.innerHTML).not.toMatch(/PRIVATE_SOURCE|PRIVATE_DONOR/);
+  });
+  it('binds an install to the selected current immutable artifact hash and actual reauthentication', async () => {
+    serveLearning(); render(<AiPlacementPolicyCard />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Install reviewed learning…' }));
+    const receipt = learningView().learningContribution.library[0].receipt;
+    fireEvent.change(screen.getByLabelText(/^Reviewed library version/), { target: { value: receipt.libraryVersionId } });
+    learningAuth(); fireEvent.click(screen.getByRole('button', { name: 'Install reviewed learning' }));
+    await waitFor(() => expect(sent.some(row => row.method === 'PUT')).toBe(true));
+    expect(sent.find(row => row.method === 'PUT')?.body).toEqual({ action: 'learning_install', libraryVersionId: receipt.libraryVersionId,
+      expectedArtifactSha256: receipt.artifactSha256, reasonForChange: 'Current client administration decision',
+      reauth: { password: 'DERIVATIVE_REAUTH_UI_CANARY', totp: undefined } });
+    expect(document.body.innerHTML).not.toMatch(/PRIVATE_SOURCE|PRIVATE_DONOR/);
+  });
+  it('binds consent changes to the current policy version', async () => {
+    serveLearning(); render(<AiPlacementPolicyCard />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Change pattern contributions…' }));
+    fireEvent.change(screen.getByLabelText(/^Contribute controlled pattern classes/), { target: { value: 'no' } });
+    learningAuth(); fireEvent.click(screen.getByRole('button', { name: 'Change pattern contributions' }));
+    await waitFor(() => expect(sent.some(row => row.method === 'PUT')).toBe(true));
+    expect(sent.find(row => row.method === 'PUT')?.body).toMatchObject({ action: 'learning_policy', enabled: false, expectedVersion: 3 });
+  });
+  it('clears reauthentication at a session boundary', async () => {
+    serveLearning(); const view = render(<AiPlacementPolicyCard />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Change pattern contributions…' }));
+    learningAuth();
+    handoffOwner.value = { actor: '7:admin', key: handoffOwner.value.key + 1, sameRevision: () => true };
+    view.rerender(<AiPlacementPolicyCard />);
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(sent.filter(row => row.method === 'PUT')).toEqual([]);
+    expect(document.body.innerHTML).not.toContain('DERIVATIVE_REAUTH_UI_CANARY');
+  });
+});

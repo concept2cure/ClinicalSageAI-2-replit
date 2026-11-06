@@ -406,6 +406,9 @@ export interface GatewayRequest {
    * repeated after outbound capacity is granted for every dispatch attempt.
    * Never a wire input, metadata field or serialized source authority. */
   beforeDispatch?: () => Promise<void>;
+  /** @internal Notification after durable owner-private capture is active.
+   * Tightens output buffering only; it grants no read/write/model authority. */
+  onOwnerPrivateCapture?: () => void;
 
   /**
    * The caller's risk classification for this request, where it has one — the

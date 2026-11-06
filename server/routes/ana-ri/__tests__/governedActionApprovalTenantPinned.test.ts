@@ -16,11 +16,13 @@ import request from 'supertest';
 import { Router } from 'express';
 import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import { runWithTenantScope } from '../../../db/tenantStore';
 
 const policyHarness = vi.hoisted(() => ({ enabled: false, database: null as PGlite | null, readFails: false, driftAfterSignoff: false as false | 'version' | 'revocation', contexts: [] as object[] }));
 const audits: Array<{ action: string; details: Record<string, unknown> }> = [];
 const ORG = 1;
 const USER = 42;
+const inOwnerScope = <T>(fn: () => T): T => runWithTenantScope({ tenantId: String(ORG), accountId: USER, source: 'request', caller: 'mandatory-rule-fixture' }, fn);
 const ORG_A = 1;
 const ORG_B = 2;
 
@@ -89,7 +91,7 @@ beforeAll(async () => {
   app.use((req, _res, next) => {
     (req as any).tenantId = callerOrgId;
     (req as any).userId = 42;
-    next();
+    runWithTenantScope({ tenantId: String(callerOrgId), accountId: USER, source: 'request', caller: 'held-approval-fixture' }, next);
   });
   app.use('/api/ana-ri', router);
 });
@@ -153,12 +155,13 @@ async function createMandatorySkillFixture(pg: PGlite, source: string) {
       CREATE TABLE concept2cure_artifacts (id INTEGER, organization_id INTEGER, project_id INTEGER);
       CREATE TABLE concept2cure_review_assignments (artifact_id INTEGER, reviewer_id INTEGER, organization_id INTEGER, status TEXT);
       CREATE TABLE account_skill_bundles (id SERIAL PRIMARY KEY, bundle_id TEXT, organization_id INTEGER, project_id INTEGER, version INTEGER, status TEXT, policy_bindings JSON, metadata JSON);
-      CREATE TABLE audit_logs (id UUID PRIMARY KEY, tenant_id INTEGER, table_name TEXT, record_id TEXT, action TEXT, user_id INTEGER, new_values JSON);
+      CREATE TABLE audit_logs (id UUID PRIMARY KEY, tenant_id INTEGER, table_name TEXT, record_id TEXT, action TEXT, user_id INTEGER, new_values JSON, occurred_at timestamptz DEFAULT now());
+      CREATE TABLE user_intelligence_profiles(id SERIAL PRIMARY KEY,user_id INTEGER,organization_id INTEGER,workflow_preferences JSONB NOT NULL DEFAULT '{}',UNIQUE(user_id,organization_id));
       INSERT INTO organizations VALUES (1, 'active'), (2, 'active');
       INSERT INTO users VALUES (42, 'active');
       INSERT INTO organization_users VALUES (1, 42, 'member');
       INSERT INTO projects VALUES (5, 1, NULL, 42, 42, '{}'), (6, 1, NULL, 42, 42, '{}'), (9, 2, NULL, 42, 42, '{}');
-      INSERT INTO audit_logs VALUES ('${source}', 1, 'organization_skill_settings', 'labeling', 'ana_skill.library_disabled', 42, '{}');`);
+      INSERT INTO audit_logs(id,tenant_id,table_name,record_id,action,user_id,new_values) VALUES ('${source}', 1, 'organization_skill_settings', 'labeling', 'ana_skill.library_disabled', 42, '{}');`);
 }
 
 let pg: PGlite;
@@ -177,7 +180,7 @@ async function addRule(tool: string, projectId: number | null = null, organizati
 async function hold(tool = 'search_document', params: Record<string, unknown> = { query: 'recorded protocol' }, project: number | null = null) {
   const { loadToolSkillGates, skillPolicyApprovalFor } = await import('../../../services/ana/governed-tool-gate.js');
   const scope = { organizationId: ORG, userId: USER, projectId: project, projectRef: project === null ? null : String(project), sqlClient: requestClient() };
-  const snapshot = await loadToolSkillGates(scope, { name: tool, input: params });
+  const snapshot = await inOwnerScope(() => loadToolSkillGates(scope, { name: tool, input: params }));
   pending = { toolUseId: 'tu-policy', command: tool, params, tier: 'confirm', requestedAt: new Date().toISOString(),
     toolContext: { projectId: project, projectRef: scope.projectRef, servingModel: null }, skillPolicyApproval: skillPolicyApprovalFor({ name: tool, input: params }, snapshot!) };
 }
@@ -204,6 +207,7 @@ describe('mandatory skill rules reach the real held approval and tool dispatcher
     policyHarness.database = pg;
     actualCalls.length = 0;
     await pg.exec('TRUNCATE account_skill_bundles RESTART IDENTITY');
+    await pg.query("SELECT set_config('app.current_tenant_id',$1,false),set_config('app.current_account_id',$2,false)", [String(ORG), String(USER)]);
     await addRule('search_document');
   });
   it('a correction-backed read pauses, executes only its exact held arguments, and retains both policy hashes in audit', async () => {
@@ -216,7 +220,7 @@ describe('mandatory skill rules reach the real held approval and tool dispatcher
   it('the actual current-policy classifier turns an ordinary read into the held approval contract', async () => {
     const { classifyToolCall, loadToolSkillGates } = await import('../../../services/ana/governed-tool-gate.js');
     const call = { name: 'search_document', input: { query: 'recorded protocol' } };
-    const gates = await loadToolSkillGates({ organizationId: ORG, userId: USER, sqlClient: requestClient() }, call);
+    const gates = await inOwnerScope(() => loadToolSkillGates({ organizationId: ORG, userId: USER, sqlClient: requestClient() }, call));
     expect(classifyToolCall(call, gates)).toMatchObject({ kind: 'NEEDS_APPROVAL', tier: 'confirm', command: call.name,
       params: call.input, skillPolicyApproval: { actionHash: expect.stringMatching(/^[a-f0-9]{64}$/), rulesHash: gates?.ruleHash } });
   });
@@ -251,8 +255,8 @@ describe('mandatory skill rules reach the real held approval and tool dispatcher
     await hold();
     const { getToolHandler } = await import('../../../services/ana/AnaToolExecutor.js');
     const context = { organizationId: ORG, userId: USER, sqlClient: requestClient(), humanConfirmed: true, skillPolicyApproval: (pending as any).skillPolicyApproval };
-    const parent = JSON.parse(await getToolHandler('search_document')!((pending as any).params, context));
-    const child = JSON.parse(await getToolHandler('search_document')!((pending as any).params, { ...context, agentDepth: 1 }));
+    const parent = JSON.parse(await inOwnerScope(() => getToolHandler('search_document')!((pending as any).params, context)));
+    const child = JSON.parse(await inOwnerScope(() => getToolHandler('search_document')!((pending as any).params, { ...context, agentDepth: 1 })));
     expect(parent.error).toBe('SKILL_POLICY_APPROVAL_REQUIRED');
     expect(child.error).toBe('SUB_AGENT_READ_ONLY');
     expect(actualCalls).toEqual([]);
@@ -261,7 +265,7 @@ describe('mandatory skill rules reach the real held approval and tool dispatcher
     await hold();
     expect((await approve()).status).toBe(200);
     const { getToolHandler } = await import('../../../services/ana/AnaToolExecutor.js');
-    const replay = JSON.parse(await getToolHandler('search_document')!((pending as any).params, policyHarness.contexts[0] as any));
+    const replay = JSON.parse(await inOwnerScope(() => getToolHandler('search_document')!((pending as any).params, policyHarness.contexts[0] as any)));
     expect(replay.error).toBe('SKILL_POLICY_APPROVAL_REQUIRED');
     expect(actualCalls).toHaveLength(1);
   });
@@ -277,7 +281,7 @@ describe('mandatory skill rules reach the real held approval and tool dispatcher
     policyHarness.readFails = true;
     expect((await approve()).status).toBe(503);
     const { getToolHandler } = await import('../../../services/ana/AnaToolExecutor.js');
-    const result = JSON.parse(await getToolHandler('search_document')!({}, { organizationId: ORG, userId: USER, sqlClient: requestClient() }));
+    const result = JSON.parse(await inOwnerScope(() => getToolHandler('search_document')!({}, { organizationId: ORG, userId: USER, sqlClient: requestClient() })));
     expect(result.error).toBe('SKILL_POLICY_UNAVAILABLE');
     expect(actualCalls).toEqual([]);
   });
@@ -286,7 +290,7 @@ describe('mandatory skill rules reach the real held approval and tool dispatcher
     await hold('check_dossier_consistency', { project_id: 5, draft_content: 'The recorded draft.' });
     expect((await approve()).status).toBe(200);
     const { loadToolSkillGates } = await import('../../../services/ana/governed-tool-gate.js');
-    await expect(loadToolSkillGates({ organizationId: ORG, userId: USER, projectId: 6, sqlClient: requestClient() }, { name: 'check_dossier_consistency', input: { project_id: 5 } })).rejects.toThrow();
-    await expect(loadToolSkillGates({ organizationId: ORG, userId: USER, sqlClient: requestClient() }, { name: 'check_dossier_consistency', input: { project_id: 9 } })).rejects.toThrow();
+    await expect(inOwnerScope(() => loadToolSkillGates({ organizationId: ORG, userId: USER, projectId: 6, sqlClient: requestClient() }, { name: 'check_dossier_consistency', input: { project_id: 5 } }))).rejects.toThrow();
+    await expect(inOwnerScope(() => loadToolSkillGates({ organizationId: ORG, userId: USER, sqlClient: requestClient() }, { name: 'check_dossier_consistency', input: { project_id: 9 } }))).rejects.toThrow();
   });
 });

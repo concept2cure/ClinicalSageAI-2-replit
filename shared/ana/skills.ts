@@ -302,6 +302,69 @@ export interface HumanCorrectionInput {
   intent: string;
 }
 
+export interface PrivateUserRuleReference { ruleId: string; version: number }
+export interface PrivateUserRuleDto {
+  ruleId: string;
+  version: number;
+  scope: 'user';
+  level: StandingRuleLevel;
+  state: 'active' | 'revoked' | 'superseded';
+  name: string;
+  instructions: string;
+  conflictKey: string;
+  policyBindings: SkillApprovalBinding[];
+  source: { correctionId: string; sourceAuditEventId: string; correctionSha256: string };
+  supersedes: PrivateUserRuleReference[];
+  createdAt: string;
+  updatedAt: string;
+}
+export interface PrivateUserRuleLedgerDto {
+  schemaVersion: 1;
+  organizationId: number;
+  userId: number;
+  revision: number;
+  /** Restriction only; actual use still requires capture and a permitted qualified dispatch. */
+  promptUse: 'held_privacy_boundary' | 'protected_turns_only';
+  rules: PrivateUserRuleDto[];
+  conflicts: Array<{ conflictKey: string; ruleRefs: PrivateUserRuleReference[] }>;
+  receipts: Array<{ intentId: string; payloadSha256: string; ruleId: string; version: number; revision: number }>;
+}
+export interface PrivateUserRuleInput {
+  name: string;
+  instructions: string;
+  level: StandingRuleLevel;
+  conflictKey: string;
+  policyBindings?: SkillApprovalBinding[];
+  supersedes?: PrivateUserRuleReference[];
+}
+export type PrivateUserRuleAction = {
+  intentId: string;
+  reason: string;
+} & (
+  | { action: 'create_rule'; rule: PrivateUserRuleInput; correction: HumanCorrectionInput }
+  | { action: 'update_rule'; ruleId: string; expectedVersion: number; rule: PrivateUserRuleInput }
+  | { action: 'revoke_rule'; ruleId: string; expectedVersion: number }
+);
+export interface PrivateUserRuleWriteDto {
+  success: true;
+  audited: true;
+  replayed: boolean;
+  intentId: string;
+  privateRules: PrivateUserRuleLedgerDto;
+}
+
+/** Metadata only. The server also requires its private in-process issuance proof. */
+export interface PrivateRuleContextReceipt {
+  readonly schemaVersion: 1;
+  readonly organizationId: number;
+  readonly ownerUserId: number;
+  readonly profileId: number | null;
+  readonly revision: number;
+  readonly ruleSetSha256: string;
+  readonly ruleRefs: ReadonlyArray<Readonly<{ ruleId: string; version: number; sourceAuditEventId: string }>>;
+  readonly promptUse: 'held_privacy_boundary' | 'protected_turns_only';
+}
+
 /** Project gates require a tool whose canonical project target is provable. */
 export const PROJECT_SKILL_APPROVAL_TOOLS = ['check_dossier_consistency'] as const;
 
@@ -312,6 +375,8 @@ export interface SkillPolicyApproval {
 }
 
 export interface OrgSkillDto extends SkillFacets {
+  /** Public immutable library provenance; no donor, source or client-content metadata. */
+  libraryReceipt?: { schemaVersion: 1; libraryVersionId: string; artifactSha256: string; signatureHash: string };
   standingRule?: StandingRuleRecord | null;
   policyBindings?: SkillApprovalBinding[];
   sourceAuditEventId?: string | null;

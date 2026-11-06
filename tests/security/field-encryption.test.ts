@@ -17,7 +17,7 @@ import {
   decryptField,
   isEncrypted,
   sealTenantPayload, openTenantPayload, tenantDataKeyOpsFromSdk,
-  type TenantDataKeyOps, type TenantEnvelopeContext,
+  type TenantDataKeyOps, type TenantEnvelopeContext, type OwnerPrivateEnvelopeContext,
 } from '../../server/services/security/field-encryption';
 
 describe('field-encryption', () => {
@@ -187,6 +187,28 @@ describe('tenant derivative envelope custody', () => {
     }
     await expect(sealTenantPayload('secret', context, arn.replace(':key/', ':alias/'), ops)).rejects.toThrow();
     await expect(sealTenantPayload('secret', context, arn, { ...ops, generate: async () => ({ plaintext: new Uint8Array(32), ciphertext: new Uint8Array([1]), keyId: 'other' }) })).rejects.toThrow();
+  });
+  it('separates peer bodies from derivative purpose and binds their exact owner in AAD', async () => {
+    const peer = { ...context, purpose: 'run_coordination' as const, ownerUserId: 5 };
+    const encrypted = await sealTenantPayload('private peer body', peer, arn, ops);
+    expect(await openTenantPayload(encrypted, peer, arn, ops)).toBe('private peer body');
+    await expect(openTenantPayload(encrypted, context, arn, ops)).rejects.toThrow();
+    await expect(openTenantPayload(encrypted, { ...peer, ownerUserId: 6 }, arn, ops)).rejects.toThrow();
+    const derivative = await sealTenantPayload('derivative map', context, arn, ops);
+    await expect(openTenantPayload(derivative, peer, arn, ops)).rejects.toThrow();
+  });
+  it('binds owner-private turn ciphertext to owner, actual run, thread and nullable project without accepting another purpose',async()=>{
+    const privateContext:OwnerPrivateEnvelopeContext={purpose:'owner_private_turn',organizationId:7,ownerUserId:5,projectId:null,
+      runId:'owned-run',threadId:null,recordId:context.derivativeId,sourceHash:context.sourceHash,policyVersion:1};
+    const encrypted=await sealTenantPayload('complete private prompt and derived record',privateContext,arn,ops);
+    expect(await openTenantPayload(encrypted,privateContext,arn,ops)).toBe('complete private prompt and derived record');
+    for(const change of [{ownerUserId:6},{runId:'different-run'},{threadId:'different-thread'},{projectId:42},{organizationId:8}]){
+      await expect(openTenantPayload(encrypted,{...privateContext,...change},arn,ops)).rejects.toThrow();
+    }
+    await expect(openTenantPayload(encrypted,context,arn,ops)).rejects.toThrow();
+    await expect(openTenantPayload(encrypted,{...context,purpose:'run_coordination',ownerUserId:5},arn,ops)).rejects.toThrow();
+    const derivative=await sealTenantPayload('source token map',context,arn,ops);
+    await expect(openTenantPayload(derivative,privateContext,arn,ops)).rejects.toThrow();
   });
   it('pins real SDK GenerateDataKey/Decrypt commands to the immutable ARN and encryption context', async () => {
     const sdk = await import('@aws-sdk/client-kms');

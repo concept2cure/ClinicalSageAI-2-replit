@@ -18,7 +18,9 @@ import {
 } from '../../services/ana-ri/enforcement.js';
 import { decisionLifecycleService } from '../../services/decision-lifecycle-service.js';
 import { getSinceLastVisit } from '../../services/ana/since-last-visit.js';
-import { loadAgentActivity } from '../../services/ana/agent-activity.js';
+import { loadAgentActivity, loadProjectTeamActivity } from '../../services/ana/agent-activity.js';
+import { AnaProjectScopeError } from '../../services/ana/project-scope-admission';
+import { ProgramReadAccessError } from '../../services/c2c/current-program-access';
 import { resolveDriveState } from '../../services/ana-ri/live-drive.js';
 import { executeCommands, type CommandContext } from '../../services/ana-ri/command-executor.js';
 import {
@@ -53,6 +55,25 @@ import { proposalAsConfirmed } from './proposal-as-confirmed.js';
 import { claimRefusal, giveBackClaim, handBackResult, releaseWaitingRun } from './held-run-release.js';
 
 const log = createScopedLogger('ana-ri/utility');
+
+async function sendProjectTeamActivity(req: Request, res: Response) {
+  const { numericOrgId,userId } = extractRequestContext(req);
+  if (!numericOrgId || !userId) return sendError(res,401,'Current organization and actor are required.',null,'NO_ORG_CONTEXT');
+  const projectRef = req.query.project_ref;
+  const runId = req.query.run_id;
+  if (typeof projectRef !== 'string' || !projectRef.trim() || projectRef.length > 100 ||
+    runId !== undefined && (typeof runId !== 'string' || !/^[A-Za-z0-9_.:-]{1,200}$/.test(runId))) {
+    return sendError(res,400,'Choose one exact project and optional run.',null,'ANA_PROJECT_SCOPE_INVALID');
+  }
+  try {
+    const snapshot = await loadProjectTeamActivity(requestPgClient(req),{organizationId: numericOrgId,userId,projectRef,
+      ...(typeof runId === 'string' ? {runId} : {})});
+    return sendSuccess(res,snapshot);
+  } catch (error) {
+    if (error instanceof AnaProjectScopeError || error instanceof ProgramReadAccessError) return sendError(res,error.status,error.message,null,error.code);
+    return sendError(res,503,'Project team activity could not be verified. Refresh the project before continuing.',null,'PROJECT_TEAM_UNAVAILABLE');
+  }
+}
 
 /**
  * Resolve WHAT this request is authorising.
@@ -492,6 +513,8 @@ export function mountUtilityRoutes(router: Router): void {
   // read, never an empty queue presented as "nothing is running".
   // ─────────────────────────────────────────────────────────────────────────
   router.get('/agent-activity', async (req: Request, res: Response) => {
+    if (req.query.view === 'team') return sendProjectTeamActivity(req,res);
+    if (req.query.view !== undefined) return sendError(res,400,'Choose a supported activity view.',null,'INVALID_ACTIVITY_VIEW');
     const { numericOrgId } = extractRequestContext(req);
     if (!numericOrgId) {
       return sendError(res, 401, 'Organization context required', null, 'NO_ORG_CONTEXT');

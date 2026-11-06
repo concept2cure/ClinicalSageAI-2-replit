@@ -45,6 +45,7 @@ import { requestConnectable, requestPgClient } from '../db/requestDb';
 import { clientIpOf } from '../utils/client-ip';
 import { createScopedLogger } from '../utils/logger';
 import { requireGovernedReason } from './governed-reason';
+import { AggregateLearningRefusedError } from '../services/intelligence/ana-failure-learning';
 import {
   OrgSkillRefusal,
   createOrgSkill,
@@ -105,6 +106,7 @@ function actorOf(req: Request, res: Response): SkillActor | null {
 
 /** A refusal the store stated, or a failure that says only what did not happen. */
 function failed(res: Response, err: unknown, message: string): Response {
+  if (err instanceof AggregateLearningRefusedError) return res.status(err.status).json({ error: { code: err.code, message: err.message } });
   if (err instanceof OrgSkillRefusal) {
     return res.status(err.status).json({ error: { code: err.code, message: err.message,
       ...(err.decisionPackage ? { decisionPackage: err.decisionPackage } : {}) } });

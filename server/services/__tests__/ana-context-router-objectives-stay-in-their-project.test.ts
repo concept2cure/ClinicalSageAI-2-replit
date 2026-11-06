@@ -31,7 +31,7 @@ vi.mock('../../db', () => {
   return { db: { select: () => chain([]) } };
 });
 
-import { buildMergedContext, buildWisdomRouterContext } from '../ana-context-router';
+import { buildMergedContext, buildWisdomRouterContext, buildUserContext } from '../ana-context-router';
 
 const dialect = new PgDialect();
 const objectivesWhere = () => dialect.sqlToQuery(h.wheres[0] as never).sql.toLowerCase();
@@ -79,5 +79,18 @@ describe('instruction scope in the live context assembly', () => {
     expect(result.contextBlock).toContain('A hard gate at any scope remains binding');
     expect(result.contextBlock).toContain('surface the conflict for a human decision before the affected action');
     expect(result.contextBlock).toContain('governed actions still require their runtime gates');
+  });
+});
+
+
+describe('owner-private user preferences never enter generic prompt capture', () => {
+  it('does not read or render the private profile before a protected SDK context is admitted', async () => {
+    const block = await buildUserContext(3, 5);
+    expect(block).toContain('not included in the shared context');
+    expect(h.tables).not.toContain('user_intelligence_profiles');
+    const merged = await buildMergedContext({ organizationId: 5, projectId: 7, userId: 3 });
+    expect(merged.layers.user).toContain('protected owner context');
+    expect(merged.contextBlock).toContain('Private approval rules remain enforced independently');
+    expect(h.tables).not.toContain('user_intelligence_profiles');
   });
 });

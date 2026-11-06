@@ -13,6 +13,15 @@ import { isTerminalGatewayError } from '../ai-gateway/gateway-outcome.js';
 import { describeToolPlan } from './agentic-loop.js';
 import type { CheckReading, VerifyVerdict } from './sub-agent-result.js';
 import type { AgentBrief } from './sub-agent-limits.js';
+import type { RunCoordinationHost } from './run-events.js';
+
+/** Recorded operational context only. Encrypted message bodies stay held until
+ * a private final-SDK capture and derived-output ownership wall admits them. */
+export function recordedTeamContext(board: Awaited<ReturnType<RunCoordinationHost['snapshot']>>): string {
+  return JSON.stringify({ workers: board.workers, messages: board.messages.map(message => ({ sender: message.sender,
+    recipient: message.recipient, kind: message.kind, receipt: message.receipt,
+    ...(message.text || message.held ? { held: true } : {}) })) });
+}
 
 export type AgentStatus = 'completed' | 'incomplete' | 'cancelled';
 /** Which budget stopped an incomplete agent. */
@@ -172,7 +181,26 @@ export function runAgentViewForModel(full: string): string {
   }
 }
 
-export type AgentFailureCode = 'MODEL_NOT_APPROVED' | 'MODEL_DECLINED' | 'RATE_OR_POLICY_LIMIT' | 'ERROR';
+/** The live operational wire carries aliases and fixed states; the retained
+ * record and the parent's model context keep the original brief and report. */
+export function runAgentInputForWire(input: Record<string, unknown>, assignment: string): Record<string, unknown> {
+  const action = input.action === undefined ? 'spawn' : String(input.action);
+  return { action: ['spawn','team','message','revision'].includes(action) ? action : 'unknown', assignment,
+    ...(input.role === 'research' || input.role === 'verify' ? { role: input.role } : {}) };
+}
+export function runAgentResultForWire(full: string): string {
+  try {
+    const raw: unknown = JSON.parse(full);
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('AGENT_RESULT_UNAVAILABLE');
+    const result = raw as Record<string, unknown>;
+    const status = ['completed','incomplete','cancelled','failed'].includes(String(result.status)) ? result.status : result.error ? 'failed' : 'unknown';
+    const role = result.agent && typeof result.agent === 'object' ? (result.agent as { role?: unknown }).role : null;
+    return JSON.stringify({ status, ...(role === 'research' || role === 'verify' ? { agent: { role } } : {}),
+      reportDisposition: 'pending', message: 'The recorded worker result is available for AnA review.' });
+  } catch { return JSON.stringify({ status: 'unknown', reportDisposition: 'pending', message: 'The worker result could not be read.' }); }
+}
+
+export type AgentFailureCode = 'MODEL_NOT_APPROVED' | 'MODEL_DECLINED' | 'RATE_OR_POLICY_LIMIT' | 'RUN_COORDINATION_UNAVAILABLE' | 'ERROR';
 
 /**
  * D8: by code and name, never instanceof — route tests mock the gateway with

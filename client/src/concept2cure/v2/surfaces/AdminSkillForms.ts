@@ -1,3 +1,4 @@
+import { ApiRequestError, serverMessage } from '@/lib/queryClient';
 import type { C2CFormConfig, C2CFormField, C2CFormFieldOption } from '../C2CForm';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { THERAPEUTIC_AREAS } from '@shared/constants/domain/therapeutic-areas';
@@ -292,4 +293,20 @@ function correctionSourceRefusal(values: Record<string, string>): string | null 
   if (!values.correctionText.trim() || values.correctionText.trim().length > 500) return 'State the correction in 1–500 characters.';
   return values.correctionAgency.trim() && values.correctionDocumentType.trim() && values.correctionIntent.trim()
     ? null : 'State the correction’s agency, document type and intended future behavior.';
+}
+
+/** One fixed request to AnA: nothing stored by a member is spliced into it. */
+export const DESIGN_WITH_ANA =
+  'Help me design an AnA skill for this organization. Ask me what work it is for, then draft its name, one or two sentences on when to use it, trigger phrases as people type them, and its method under a "## Method" heading: numbered steps, naming the platform tool in backticks wherever a figure, verdict, date or citation is needed.';
+
+export function refusalOf(e: unknown, fallback: string): string {
+  return (e instanceof ApiRequestError ? serverMessage(e.payload) : null) ?? fallback;
+}
+
+
+export function approvalRuleStatus(skill: OrgSkillDto): string {
+  if (skill.standingRule && skill.standingRule.state !== 'active') return 'These approval actions are retained in history. This rule no longer applies to future work.';
+  return skill.status === 'active' || skill.status === 'locked'
+    ? 'Approval is required for these actions even when this skill is not selected or is turned off for prompts in a project.'
+    : 'These saved rules apply when this skill is active, regardless of whether it is selected for a prompt.';
 }

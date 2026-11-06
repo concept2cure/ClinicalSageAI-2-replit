@@ -89,7 +89,7 @@ import {
 import { governServerTools, webToolsForModel } from './server-tool-policy';
 import { isTerminalGatewayError } from './gateway-outcome';
 import { assertDeterministicServingAllowed, isDeterministicModeRequested } from './deterministic-mode';
-import { captureCurrentRunSourceGate, modelCallRefusal, type ModelCallRefusalScope } from './model-call-scope.js';
+import { captureCurrentRunSourceGate, captureOwnerPrivateModelGate, modelCallRefusal, type ModelCallRefusalScope, type OwnerPrivateModelGate } from './model-call-scope.js';
 import {
   decideSensitivePlacement,
   decideInputTierPlacement,
@@ -166,7 +166,48 @@ function derivativeVerificationMetadata(response: GatewayResponse): Record<strin
   return response.derivativeVerification ? { derivativeVerification: response.derivativeVerification } : {};
 }
 function withoutVerifiedGeneration(metadata?: Record<string, unknown>): Record<string, unknown> | undefined {
-  return metadata ? Object.fromEntries(Object.entries(metadata).filter(([key]) => key !== 'verifiedDerivativeGeneration')) : undefined;
+  return metadata ? Object.fromEntries(Object.entries(metadata).filter(([key]) => !['verifiedDerivativeGeneration', 'ownerPrivateContext'].includes(key))) : undefined;
+}
+const ownerPrivateAuthority = Symbol('ownerPrivateAuthority');
+const issuedOwnerPrivateGates = new WeakSet<OwnerPrivateModelGate>();
+const privateSdkProofs = new WeakMap<OwnerPrivateModelGate, Readonly<{ provider: string; model: string; sha256: string; state: 'prepared_not_delivery_evidence' }>>();
+type OwnerPrivateRequest = GatewayRequest & { [ownerPrivateAuthority]?: OwnerPrivateModelGate };
+function ownerPrivateOf(request: GatewayRequest): OwnerPrivateModelGate | undefined {
+  const gate = (request as OwnerPrivateRequest)[ownerPrivateAuthority];
+  return gate && issuedOwnerPrivateGates.has(gate) ? gate : undefined;
+}
+function ownerPrivateRefusal(): GatewayPolicyError & { code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE' } {
+  return Object.assign(new GatewayPolicyError('Private context and encrypted capture could not be verified. Nothing was released.'),
+    { code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE' as const });
+}
+function captureOwnerGate(request: GatewayRequest): OwnerPrivateModelGate | undefined {
+  try { return captureOwnerPrivateModelGate(request); } catch { throw ownerPrivateRefusal(); }
+}
+function ownerPrivateMetadata(request: GatewayRequest): Record<string, unknown> {
+  const gate = ownerPrivateOf(request);
+  return gate ? { ownerPrivateContext: { sourceRefs: gate.sourceRefs, runId: gate.scope.runId, threadId: gate.scope.threadId,
+    ownerUserId: gate.scope.userId, resultingContentTier: 3, preparedSdkPayload: privateSdkProofs.get(gate) } } : {};
+}
+/** Keep all caller metadata and detector excerpts out of the ordinary ledger
+ * for private calls. Their full record is retained only in encrypted custody. */
+function safePrivateAuditDetail(request: GatewayRequest, detail: Record<string, unknown>): Record<string, unknown> {
+  return ownerPrivateOf(request) ? ownerPrivateMetadata(request) : detail;
+}
+interface PrivateSdkParams { messages?: unknown[]; system?: unknown; stream?: boolean }
+function appendPrivateSdkContext(params: PrivateSdkParams, content: string, anthropic: boolean): void {
+  if (anthropic) {
+    params.system = Array.isArray(params.system) ? [...params.system, { type: 'text', text: content }]
+      : [params.system, content].filter(value => typeof value === 'string' && value.length).join('\n\n');
+    return;
+  }
+  if (!Array.isArray(params.messages)) throw ownerPrivateRefusal();
+  params.messages = [...params.messages, { role: 'system', content }];
+}
+async function assertOwnerPrivateResponse(request: GatewayRequest, response: GatewayResponse): Promise<void> {
+  const gate = ownerPrivateOf(request);
+  if (!gate) return;
+  if (response.cached !== false || response.deterministic !== false) throw ownerPrivateRefusal();
+  try { await gate.recheck(); } catch { throw ownerPrivateRefusal(); }
 }
 function verifiedDerivativeGeneration(request: GatewayRequest, response: GatewayResponse, success: boolean): Record<string, unknown> {
   const authority = derivativeOf(request);
@@ -1581,7 +1622,9 @@ export class AIGateway {
     // Only C custody rebuilds every context channel. Ordinary provenance JSON
     // cannot opt out of the private run's source/history ceiling.
     const sourceGate = request.signal?.aborted || modelCallRefusal() || derivativeOf(request) ? undefined : captureRunSourceGate(request);
-    const beforeDispatch = sourceGate ? async () => { await callback?.(); await sourceGate.recheck(); } : callback;
+    const ownerGate = request.signal?.aborted || modelCallRefusal() || derivativeOf(request) ? undefined : captureOwnerGate(request);
+    const privateNotice = request.onOwnerPrivateCapture;
+    const beforeDispatch = sourceGate || ownerGate ? async () => { await callback?.(); await sourceGate?.recheck(); await ownerGate?.recheck(); } : callback;
     if (sourceGate?.identity) {
       const actor = sourceGate.identity;
       request = { ...request, organizationId: request.organizationId ?? actor.organizationId, userId: request.userId ?? actor.userId,
@@ -1593,6 +1636,12 @@ export class AIGateway {
     }
     if (sourceGate) request = { ...request, inputSensitivityTiers: Object.freeze([...sourceGate.tiers,
       ...(request.inputSensitivityTiers === undefined ? [] : Array.isArray(request.inputSensitivityTiers) ? request.inputSensitivityTiers : [3 as const])]) };
+    if (ownerGate) {
+      issuedOwnerPrivateGates.add(ownerGate);
+      request = { ...request, [ownerPrivateAuthority]: ownerGate, organizationId: ownerGate.scope.organizationId, userId: ownerGate.scope.userId,
+        projectId: ownerGate.scope.projectId ?? ownerGate.scope.programId ?? undefined, inputSensitivityTiers: Object.freeze([3 as const]),
+        stream: false, onStream: undefined, promptCache: undefined, metadata: undefined } as OwnerPrivateRequest;
+    }
     request = { ...request, metadata: withoutVerifiedGeneration(request.metadata) };
     if (request.qualifiedModelPin !== undefined) {
       request = { ...request, qualifiedModelPin: Object.freeze({ ...request.qualifiedModelPin }) };
@@ -1620,6 +1669,14 @@ export class AIGateway {
         `[ai-gateway] refused a model call from a sub-agent's tool (${refusal.tool}, run ${refusal.runId}, parent ${refusal.parentRunId}); nothing was sent`,
       );
       throw new SubAgentToolModelCallError(refusal);
+    }
+
+    if (ownerGate) {
+      try {
+        await ownerGate.prepare();
+        if (privateNotice !== undefined && typeof privateNotice !== 'function') throw ownerPrivateRefusal();
+        privateNotice?.();
+      } catch { throw ownerPrivateRefusal(); }
     }
 
     // Apply the org's default placement policy (residency / zero-retention) when
@@ -1661,7 +1718,7 @@ export class AIGateway {
       await this.logRateLimitRefusal(request, { strategy, requestId, startTime }, policyResult.rateLimit);
       throw policyResult.rateLimit
         ? new RateLimitError(policyResult.reason || 'Rate limit exceeded', policyResult.rateLimit)
-        : new GatewayPolicyError(policyResult.reason || 'Request blocked by policy');
+        : new GatewayPolicyError(ownerGate ? 'Owner-private request was blocked by policy.' : policyResult.reason || 'Request blocked by policy');
     }
 
     // PII/PHI content pass (async — governed ai-governance classifier).
@@ -1672,7 +1729,7 @@ export class AIGateway {
       await this.logContentPolicyBlock(
         request, strategy, requestId, startTime, piiVerdict.reason, piiVerdict.findings
       );
-      throw new GatewayPolicyError(piiVerdict.reason || 'Request blocked by PII policy');
+      throw new GatewayPolicyError(ownerGate ? 'Owner-private request was blocked by the data policy.' : piiVerdict.reason || 'Request blocked by PII policy');
     }
     if (piiVerdict.action === 'redact' && piiVerdict.messages) {
       request = { ...request, messages: piiVerdict.messages };
@@ -1703,6 +1760,7 @@ export class AIGateway {
     // Outside production it is unchanged.
     await this.prepareTenantModels(request, { strategy, requestId, startTime });
     if (this.config.deterministicMode) {
+      if (ownerGate) throw ownerPrivateRefusal();
       if (request.qualifiedModelPin !== undefined) {
         const error = new QualifiedModelPinError('deterministic');
         await this.auditSelectionRefusal(error, request, { strategy, requestId, startTime });
@@ -1716,6 +1774,7 @@ export class AIGateway {
     // Select model — fall back to deterministic if no providers available
     const selectedModel = await this.selectOrRefuse(request, { strategy, requestId, startTime });
     if (!selectedModel) {
+      if (ownerGate) throw ownerPrivateRefusal();
       // Fail closed in production: serving demo-mode ("[KNOWN]"/placeholder)
       // regulatory text from a keyless prod deploy would silently present
       // fabricated content as a real AI response. Demo fallback is for dev only;
@@ -1777,6 +1836,7 @@ export class AIGateway {
           () => this.executeProvider(selectedModel, request, requestId, startTime, beforeDispatch), primaryRetries, 1000, overloadPolicy
         );
         await this.assertQualifiedResponse(request, response, strategy, triedModels, contentPolicy);
+        await assertOwnerPrivateResponse(request, response);
         response = await this.finishDerivative(request, response);
         this.recordSuccess(selectedModel.provider, response.latencyMs);
         this.recordTenantUsage(request, response, true);
@@ -1823,6 +1883,7 @@ export class AIGateway {
           () => this.executeProvider(fallback, request, requestId, startTime, beforeDispatch), primaryRetries, 1000, overloadPolicy
         );
         await this.assertQualifiedResponse(request, response, strategy, triedModels, contentPolicy);
+        await assertOwnerPrivateResponse(request, response);
         response = await this.finishDerivative(request, response);
         this.recordSuccess(fallback.provider, response.latencyMs);
         this.recordTenantUsage(request, response, true);
@@ -2161,9 +2222,7 @@ export class AIGateway {
     try {
       return JSON.parse(response.content) as T;
     } catch {
-      throw new Error(
-        `AI Gateway: Failed to parse structured output as JSON: ${response.content.slice(0, 200)}`
-      );
+      throw new Error('AI Gateway: structured output could not be parsed as JSON.');
     }
   }
 
@@ -2522,6 +2581,29 @@ export class AIGateway {
     };
   }
 
+  /** Expand only into the local SDK payload, after credentials and placement.
+   * Generic requests, caches, policy routing and ordinary records retain refs. */
+  private async expandOwnerPrivateSdkPayload(request: GatewayRequest, model: ModelConfig,
+    params: PrivateSdkParams, anthropic = false): Promise<void> {
+    const gate = ownerPrivateOf(request);
+    if (!gate) return;
+    if (params.stream === true || request.promptCache?.enabled) throw ownerPrivateRefusal();
+    try {
+      const text = await gate.expand();
+      const privateRequest: GatewayRequest = { ...request, messages: [{ role: 'system', content: text }] };
+      const combined = { ...request, messages: [...request.messages, ...privateRequest.messages] };
+      if (!this.policyEngine.evaluateContent(combined).allowed || !fitsContextWindow(combined, model).fits) throw ownerPrivateRefusal();
+      const verdict = await this.policyEngine.evaluatePiiPolicy(privateRequest);
+      if (!verdict.allowed) throw ownerPrivateRefusal();
+      const content = verdict.messages?.[0]?.content ?? text;
+      if (typeof content !== 'string') throw ownerPrivateRefusal();
+      await recheckDispatchSources(request); await gate.recheck(); request.signal?.throwIfAborted();
+      appendPrivateSdkContext(params, content, anthropic);
+      privateSdkProofs.set(gate, Object.freeze({ provider: model.provider, model: model.model,
+        sha256: createHash('sha256').update(JSON.stringify(params)).digest('hex'), state: 'prepared_not_delivery_evidence' }));
+    } catch { throw ownerPrivateRefusal(); }
+  }
+
   private async dispatchProvider(
     modelConfig: ModelConfig,
     request: GatewayRequest,
@@ -2637,6 +2719,7 @@ export class AIGateway {
 
     await this.assertDerivativeCurrent(request);
     await recheckDispatchSources(request);
+    await this.expandOwnerPrivateSdkPayload(request, modelConfig, params);
     request.signal?.throwIfAborted();
     this.pinDerivativeSdkPayload(request, params);
     this.assertQualifiedModel(request, modelConfig);
@@ -2910,6 +2993,7 @@ export class AIGateway {
 
     await this.assertDerivativeCurrent(request);
     await recheckDispatchSources(request);
+    await this.expandOwnerPrivateSdkPayload(request, modelConfig, params, true);
     request.signal?.throwIfAborted();
     this.pinDerivativeSdkPayload(request, params, true);
     this.assertQualifiedModel(request, modelConfig);
@@ -3134,6 +3218,7 @@ export class AIGateway {
     // cost — which is what stream.ts's own comment used to say.
     if (request.signal) streamOptions.signal = request.signal;
     await recheckDispatchSources(request);
+    await this.expandOwnerPrivateSdkPayload(request, modelConfig, params, true);
     request.signal?.throwIfAborted();
     const stream = await client.messages.create(
       params,
@@ -3376,6 +3461,7 @@ export class AIGateway {
 
     await this.assertDerivativeCurrent(request);
     await recheckDispatchSources(request);
+    await this.expandOwnerPrivateSdkPayload(request, modelConfig, params);
     request.signal?.throwIfAborted();
     this.pinDerivativeSdkPayload(request, params);
     this.assertQualifiedModel(request, modelConfig);
@@ -3462,6 +3548,7 @@ export class AIGateway {
     applyOpenAIToolParams(params, request, modelConfig);
 
     await recheckDispatchSources(request);
+    await this.expandOwnerPrivateSdkPayload(request, modelConfig, params);
     request.signal?.throwIfAborted();
     const stream = await client.chat.completions.create(
       params,
@@ -4394,7 +4481,7 @@ export class AIGateway {
         estimatedCostUsd: response.usage.estimatedCostUsd,
         latencyMs: response.latencyMs,
         success,
-        error,
+        error: ownerPrivateOf(request) && error ? 'OWNER_PRIVATE_GATEWAY_FAILURE' : error,
         cached: response.cached,
         deterministic: response.deterministic,
         // Reproducibility: which params + prompt produced this output.
@@ -4438,8 +4525,9 @@ export class AIGateway {
         // classifier-redacted excerpts — never raw content (the prompt itself
         // is represented by promptHash alone).
         metadata: {
-          ...(withoutVerifiedGeneration(request.metadata) ?? {}),
-          ...(contentPolicy ? { contentPolicy } : {}),
+          ...(ownerPrivateOf(request) ? {} : withoutVerifiedGeneration(request.metadata) ?? {}),
+          ...(contentPolicy ? safePrivateAuditDetail(request, { contentPolicy }) : {}),
+          ...ownerPrivateMetadata(request),
           ...(request.qualifiedModelPin ? { qualifiedModelPin: request.qualifiedModelPin } : {}),
           ...derivativeVerificationMetadata(response),
           ...verifiedDerivativeGeneration(request, response, success),
@@ -4561,7 +4649,7 @@ export class AIGateway {
         deterministic: false,
         promptHash: this.hashPrompt(request),
         ...ledgerProvenance(request),
-        metadata: { ...(request.metadata ?? {}), ...detail },
+        metadata: safePrivateAuditDetail(request, { ...(request.metadata ?? {}), ...detail }),
       });
     } catch (auditError: any) {
       log.error(`[AI Gateway] Refusal audit log failed (${code}): ${auditError.message}`);
@@ -4605,17 +4693,17 @@ export class AIGateway {
         estimatedCostUsd: 0,
         latencyMs: Date.now() - startTime,
         success: false,
-        error: reason,
+        error: ownerPrivateOf(request) ? 'OWNER_PRIVATE_POLICY_BLOCKED' : reason,
         cached: false,
         deterministic: false,
         promptHash: this.hashPrompt(request),
         ...ledgerProvenance(request),
         // A placement refusal's reason code; other content blocks keep theirs in `error`.
         ...(reason && /^DENY_/.test(reason) ? { placementReasonCode: reason } : {}),
-        metadata: {
+        metadata: safePrivateAuditDetail(request, {
           ...(request.metadata ?? {}),
           contentPolicy: { action: 'block' as ContentPolicyAction, findings },
-        },
+        }),
       });
     } catch (auditError: any) {
       log.error(`[AI Gateway] Content-policy audit log failed: ${auditError.message}`);

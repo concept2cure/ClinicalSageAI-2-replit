@@ -366,6 +366,18 @@ describe('how often AnA used each skill', () => {
 });
 
 describe('sourced approval rules in the existing skill studio', () => {
+  it('shows only public immutable reviewed-library provenance in the existing version ledger', async () => {
+    const receipt = { schemaVersion: 1 as const, libraryVersionId: '11111111-1111-4111-8111-111111111111',
+      artifactSha256: 'a'.repeat(64), signatureHash: 'b'.repeat(64) };
+    routes({ 'GET /api/ana-skills/organization': () => ok({ skills: [{ ...SOURCED_SKILL, libraryReceipt: { ...receipt, donorText: 'PRIVATE_DONOR_UI_CANARY' } }] }),
+      'GET /api/ana-skills/organization/42/history': () => ok({ history: [SOURCE_HISTORY] }) });
+    render(<AdminSkills />); fireEvent.click(await screen.findByRole('button', { name: /Our stability review/ }));
+    const provenance = await screen.findByRole('region', { name: 'Reviewed library provenance' });
+    for (const field of [receipt.libraryVersionId, receipt.artifactSha256, receipt.signatureHash]) expect(provenance.textContent).toContain(field);
+    expect(within(provenance).queryByRole('textbox')).toBeNull();
+    expect(provenance.textContent).toContain('rechecks current approval');
+    expect(document.body.innerHTML).not.toContain('PRIVATE_DONOR_UI_CANARY');
+  });
   it('shows mandatory rules independently of prompt selection and links their source audit record', async () => {
     routes({
       'GET /api/ana-skills/organization': () => ok({ skills: [SOURCED_SKILL] }),

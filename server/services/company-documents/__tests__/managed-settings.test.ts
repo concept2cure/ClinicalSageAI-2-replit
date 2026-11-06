@@ -40,7 +40,7 @@ vi.mock('../../auditService', () => ({
   },
 }));
 
-import { CompanyDocumentsSettingRefusedError, DerivativeCustodySettingRefusedError, generalSettingsView, writeTenantSettings } from '../../tenant/tenant-settings-writer';
+import { CompanyDocumentsSettingRefusedError, DerivativeCustodySettingRefusedError, LearningContributionSettingRefusedError, generalSettingsView, overlaySettings, writeTenantSettings } from '../../tenant/tenant-settings-writer';
 import type { SettingsWrite } from '../../tenant/tenant-settings-writer';
 
 const req = { user: { id: 3 }, ip: '192.0.2.3', headers: {}, get: () => undefined } as unknown as Request;
@@ -75,6 +75,25 @@ beforeEach(() => {
     } }),
   }) }));
   client.query.mockClear();
+});
+
+describe('learning opt-in is managed independently of general and model settings', () => {
+  const policy = { enabled: false, version: 4 };
+  it.each(['enable', 'remove', 'null', 'mutate'] as const)('refuses %s without writing or auditing a generic settings change', async mode => {
+    h.stored.learningContributionPolicy = { ...policy };
+    await expect(writeTenantSettings(req, 7, change(current => {
+      if (mode === 'enable') return { ...current, learningContributionPolicy: { enabled: true, version: 5 } };
+      if (mode === 'null') return { ...current, learningContributionPolicy: null };
+      if (mode === 'mutate') { (current.learningContributionPolicy as { enabled: boolean }).enabled = true; return current; }
+      const next = { ...current }; delete next.learningContributionPolicy; return next;
+    }))).rejects.toBeInstanceOf(LearningContributionSettingRefusedError);
+    expect(h.stored.learningContributionPolicy).toEqual(policy);
+    expect(h.log).not.toContain('UPDATE'); expect(h.audit).not.toHaveBeenCalled();
+  });
+  it('keeps the managed policy during a reset and removes it from general/model views', () => {
+    expect(overlaySettings({ learningContributionPolicy: policy, security: { mfaRequired: true } }, { security: {} })).toMatchObject({ learningContributionPolicy: policy });
+    expect(generalSettingsView({ learningContributionPolicy: policy, publicSetting: true })).toEqual({ publicSetting: true });
+  });
 });
 
 describe('companyDocuments is a managed organization setting', () => {

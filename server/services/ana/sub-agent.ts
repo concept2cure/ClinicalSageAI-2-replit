@@ -32,7 +32,7 @@
  * @module server/services/ana/sub-agent
  */
 
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 
 import {
   CHILD_ACTIVE_MS,
@@ -42,11 +42,12 @@ import {
   CHILD_WRAP_UP_MS,
 } from '@shared/ana/run-control-limits';
 import { getTenantScope } from '../../db/tenantStore.js';
-import { runRefusingModelCalls } from '../ai-gateway/model-call-scope.js';
+import { runRefusingModelCalls, bindOwnerPrivateModelChildRequest } from '../ai-gateway/model-call-scope.js';
+import type { CoordinationModel, RunCoordinationHost } from './run-events.js';
+import { startAgentCoordination, queueAgentProgress, flushAgentProgress, agentModelContext, recordAgentReport, beginAgentRun, type AgentRun } from './sub-agent-stream.js';
 import type { AnyAnaTool, GatewayRequest } from '../ai-gateway/types.js';
 import type { AgenticToolEvent } from './agentic-tool-dispatch.js';
 import type { DraftSourceContext } from './draft-project-sources.js';
-import { notifyObserver } from './agentic-tool-dispatch.js';
 import type { LoopStopDirective, ToolResultEntry } from './agentic-loop.js';
 import type { ToolContext } from './AnaToolExecutor.js';
 import type { RunHoldAnnounce, RunHoldOutcome } from './run-hold.js';
@@ -112,6 +113,14 @@ export interface SubAgentHost {
   /** Time the run has spent held, as the run hold counts it. */
   heldMs(): number;
   emit(frame: AgentEventFrame): void;
+  /** Opened only by the authenticated parent run, never from the brief. */
+  coordination?: () => Promise<RunCoordinationHost>;
+  worker?: string;
+  parentStep?: string;
+  task?: string | null;
+  parentModel?: CoordinationModel;
+  /** Tightens the parent wire sink after an actual private activation. */
+  onOwnerPrivateCapture?: () => void;
 }
 
 /** The refusal shape, as a tool result string. */
@@ -218,18 +227,18 @@ async function runHarnessChecks(
   childCtx: ToolContext,
   offered: ReadonlySet<string>,
   ids: { runId: string; parentRunId: string },
-  evidence?: { sourceSpans?: readonly AgentSourceSpan[]; steps: AgentStep[] },
+  evidence?: { sourceSpans?: readonly AgentSourceSpan[]; steps: AgentStep[]; onReading?: (reading: CheckReading) => void },
 ): Promise<{ readings: CheckReading[]; outputs: Array<{ check: CheckReading['check']; output: string }> }> {
   const { getToolHandler } = await import('./AnaToolExecutor.js');
   const readings: CheckReading[] = [];
   const outputs: Array<{ check: CheckReading['check']; output: string }> = [];
   for (const check of HARNESS_CHECKS) {
     if (!offered.has(check)) {
-      readings.push({ check, outcome: 'not_assessed', statement: `${CHECK_SUBJECT[check]}: not checked; the check is not available in this conversation.` });
+      addCheckReading(readings, { check, outcome: 'not_assessed', statement: `${CHECK_SUBJECT[check]}: not checked; the check is not available in this conversation.` }, evidence?.onReading);
       continue;
     }
     if (check === 'check_dossier_consistency' && !Number.isInteger(childCtx.projectId)) {
-      readings.push(dossierCheckSkipped(Boolean(childCtx.projectRef)));
+      addCheckReading(readings, dossierCheckSkipped(Boolean(childCtx.projectRef)), evidence?.onReading);
       continue;
     }
     const handler = getToolHandler(check);
@@ -244,14 +253,17 @@ async function runHarnessChecks(
       output = JSON.stringify({ error: err instanceof Error ? err.message : String(err) });
     }
     outputs.push({ check, output });
-    readings.push(CHECK_READER[check](output));
+    addCheckReading(readings, CHECK_READER[check](output), evidence?.onReading);
   }
   if (evidence?.sourceSpans?.length) {
     const result = await runSourceSpanChecks(text, evidence.sourceSpans, childCtx, { offered, ids, steps: evidence.steps });
-    readings.push(result.reading);
+    addCheckReading(readings, result.reading, evidence?.onReading);
     outputs.push(result.output);
   }
   return { readings, outputs };
+}
+function addCheckReading(readings: CheckReading[], reading: CheckReading, notify?: (reading: CheckReading) => void): void {
+  readings.push(reading); notify?.(reading);
 }
 
 /** Read each referenced source through the same scoped, read-only tool boundary as the child. */
@@ -403,38 +415,6 @@ async function modelRecorder(): Promise<(response: { provider?: string | null; m
   };
 }
 
-/** One agent's state while it runs. */
-interface AgentRun {
-  runId: string; brief: AgentBrief; host: SubAgentHost; ctx: ToolContext;
-  timer: ReturnType<typeof createActiveTimer>;
-  signal: AbortSignal;
-  steps: AgentStep[]; models: AgentModelRecord[];
-  usage: { inputTokens: number; outputTokens: number; modelCalls: number };
-  budget: AgentBudget | null;
-  /** What the run hold last answered when it was not 'running': the person's own outcome. */
-  heldOutcome: RunHoldOutcome | null;
-  finished: AgentEventFrame;
-  emit(frame: AgentEventFrame): void;
-}
-
-function beginAgentRun(brief: AgentBrief, host: SubAgentHost, ctx: ToolContext): AgentRun {
-  const runId = `agent_${randomUUID()}`;
-  const timer = createActiveTimer(() => host.heldMs(), CHILD_ACTIVE_MS);
-  const run: AgentRun = {
-    runId, brief, host, ctx,
-    timer,
-    signal: AbortSignal.any([timer.signal, host.expiredSignal, ...(ctx.signal ? [ctx.signal] : [])]),
-    steps: [], models: [],
-    usage: { inputTokens: 0, outputTokens: 0, modelCalls: 0 },
-    budget: null,
-    heldOutcome: null,
-    finished: { phase: 'finished', runId, status: 'failed' },
-    emit: frame => notifyObserver('agent emit', () => host.emit(frame)),
-  };
-  run.emit({ phase: 'started', runId, role: brief.role, objective: brief.objective });
-  return run;
-}
-
 /** Wait while the person has the run paused. False when it will not go on. */
 async function holdFor(run: AgentRun): Promise<boolean> {
   const outcome = await run.host.hold({ reason: 'person' }, run.signal);
@@ -493,9 +473,12 @@ function recordStagedResults(steps: AgentStep[], entries: readonly Readonly<Tool
 async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: CheckReading[], source: SourceClaimCheck | null) {
   const { host: h, runId } = run;
   const tools = childToolsFrom(h.governedTools);
-  const pin = await childPin();
-  const recordModel = await modelRecorder();
-  const request: GatewayRequest = {
+  if (run.coordination) {
+    const { CHILD_COORDINATION_TOOL } = await import('./agentic-workflow-tools.js');
+    tools.push(CHILD_COORDINATION_TOOL);
+  }
+  const pin = await childPin(), recordModel = await modelRecorder();
+  const request: GatewayRequest = bindOwnerPrivateModelChildRequest({
     taskType: 'regulatory_review',
     riskTier: 'high',
     messages: childMessages(run.brief, readings),
@@ -506,12 +489,13 @@ async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: Chec
     runId,
     parentRunId: h.parentRunId,
     callerModule: 'ana-sub-agent',
+    onOwnerPrivateCapture: h.onOwnerPrivateCapture,
     // The self-contained brief has no independently issued classification.
     // Loaded sources can raise its floor; neither fields nor model prose lower it.
     inputSensitivityTiers: Object.freeze([3, ...(source?.tiers ?? [])]),
     ...(source ? { beforeDispatch: source.assertCurrent } : {}),
-  };
-  const { executeAgenticLoop } = await import('./AnaToolExecutor.js');
+  });
+  const { executeAgenticLoop, servedModelOf } = await import('./AnaToolExecutor.js');
   const { runWithRunScope } = await import('../ai-gateway/run-scope.js');
   /* The child's own run, named as the parent's child. A tool's gateway calls
      carry no run id of their own (an embedding is one), so the gateway reads
@@ -528,6 +512,7 @@ async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: Chec
     toolModelCalls: 'refuse',
     stopWhen: childStopWhen(run),
     checkpoint: async () => ((await holdFor(run)) ? 'continue' : 'abort'),
+    modelContext: () => agentModelContext(run),
     onToolEvent: (e: AgenticToolEvent) => {
       /* A handler that cannot do the thing RETURNS `{error}`; it does not
          throw, and the dispatch sets `errorMessage` only for a throw, a tool
@@ -537,11 +522,13 @@ async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: Chec
          one judgment of a refusal, and the parent's own path uses it. */
       const ok = !e.errorMessage && refusalOf(e.result ?? '') === null;
       if (e.phase === 'end') run.steps.push({ round: e.round, tool: e.call.name, toolUseId: e.call.id, input: e.call.input, result: e.result ?? '', ok });
+      if (e.phase === 'end' && ok && run.brief.role === 'research') run.measured.completed++;
+      queueAgentProgress(run, 'started');
       run.emit({ phase: 'step', runId, step: e.phase, tool: e.call.name, round: e.round, ...(e.phase === 'end' ? { ok } : {}) });
     },
     onToolResultsForModel: (entries, round) => recordStagedResults(run.steps, entries, round),
     onModelResponse: response => {
-      run.usage.modelCalls += 1;
+      childCtx.servingModel = servedModelOf(response); run.usage.modelCalls += 1;
       run.usage.inputTokens += response.usage?.inputTokens ?? 0;
       run.usage.outputTokens += response.usage?.outputTokens ?? 0;
       run.models.push(recordModel(response));
@@ -551,12 +538,22 @@ async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: Chec
 
 async function prepareAgentChecks(run: AgentRun, childCtx: ToolContext) {
   const offered = new Set(run.host.governedTools.map(t => t.name));
+  if (run.brief.textToCheck !== undefined) {
+    run.measured.total = HARNESS_CHECKS.length + Number(Boolean(run.brief.sourceSpans?.length)) + Number(Boolean(run.brief.sourceDocumentIds?.length));
+    queueAgentProgress(run, 'checking');
+  }
+  const onReading = (reading: CheckReading) => {
+    if (reading.outcome !== 'not_assessed' && reading.outcome !== 'error') run.measured.completed++;
+    queueAgentProgress(run, 'checking');
+  };
   const checks =
     run.brief.textToCheck !== undefined
-      ? await runHarnessChecks(run.brief.textToCheck, childCtx, offered, { runId: run.runId, parentRunId: run.host.parentRunId }, { sourceSpans: run.brief.sourceSpans, steps: run.steps })
+      ? await runHarnessChecks(run.brief.textToCheck, childCtx, offered, { runId: run.runId, parentRunId: run.host.parentRunId },
+        { sourceSpans: run.brief.sourceSpans, steps: run.steps, onReading })
       : null;
   const source = run.brief.sourceDocumentIds ? await runSourceClaimChecks(run, childCtx, offered) : null;
-  if (source && checks) { checks.readings.push(source.reading); checks.outputs.push(source.output); }
+  if (source && checks) { checks.readings.push(source.reading); checks.outputs.push(source.output); onReading(source.reading); }
+  await flushAgentProgress(run);
   return { checks, source };
 }
 async function runAdvisory(run: AgentRun, childCtx: ToolContext, prepared: Awaited<ReturnType<typeof prepareAgentChecks>>) {
@@ -570,6 +567,10 @@ async function runAdvisory(run: AgentRun, childCtx: ToolContext, prepared: Await
 async function driveAgent(run: AgentRun): Promise<string> {
   if (!(await holdFor(run))) return stoppedResult(run);
   const childCtx = childContext(run.ctx, run.signal);
+  if (run.coordination) {
+    const { bindWorkerCoordination } = await import('./agentic-workflow-tools.js');
+    bindWorkerCoordination(childCtx, run.coordination.host, run.coordination.handle);
+  }
   const prepared = await prepareAgentChecks(run, childCtx), { checks, source } = prepared;
   const { response, advisoryFailure } = await runAdvisory(run, childCtx, prepared);
   await recheckSourceClaims(source, run.signal);
@@ -611,16 +612,19 @@ export async function runSubAgent(
   if ('error' in start) return refused(start);
   const slot = claimAgentSlot(start.host.agents, start.host.round, start.host.organizationId);
   if ('error' in slot) return refused(slot);
-  const run = beginAgentRun(start.brief, start.host, ctx);
+  const run = beginAgentRun(start.brief, start.host, ctx, createActiveTimer(() => start.host.heldMs(), CHILD_ACTIVE_MS));
   try {
-    return await driveAgent(run);
-  } catch (err) {
-    // A Stop, an expired hold or the active-time budget aborted a call in flight.
-    if (run.signal.aborted) return stoppedResult(run);
-    return agentFailure(run.runId, run.brief, classifyAgentFailure(err, run.usage.modelCalls), run.models, run.steps);
+    let result: string;
+    try { await startAgentCoordination(run); result = await driveAgent(run); }
+    catch (err) {
+      // A Stop, an expired hold or the active-time budget aborted a call in flight.
+      result = run.signal.aborted ? stoppedResult(run) : agentFailure(run.runId, run.brief, classifyAgentFailure(err, run.usage.modelCalls), run.models, run.steps);
+    }
+    try { await recordAgentReport(run, result); }
+    catch { return agentFailure(run.runId, run.brief, { code: 'RUN_COORDINATION_UNAVAILABLE', message: 'The work could not be durably recorded. Its report was held.', started: run.usage.modelCalls > 0 }, run.models, run.steps); }
+    return result;
   } finally {
-    run.timer.clear();
-    slot.release();
+    run.timer.clear(); slot.release();
     run.emit(run.finished);
   }
 }

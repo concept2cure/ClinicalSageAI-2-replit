@@ -22,6 +22,63 @@ export const FAILURE_LEARNING_VERSION = '1.1.0';
 /** A cohort alone cannot authorize sharing client-derived language. */
 export const SHARED_LEARNING_HOLD = 'deidentification_and_human_promotion_required' as const;
 
+export const LEARNING_CLASSES = [
+  { key: 'source_identity_check', label: 'Current source identity', instruction: 'Recheck the current source version and exact extraction identity before using a source-derived statement.' },
+  { key: 'cross_section_consistency', label: 'Cross-section consistency', instruction: 'Compare repeated statements across saved sections and resolve discrepancies against current source evidence.' },
+  { key: 'independent_review', label: 'Independent review', instruction: 'Obtain an independent evidence review before requesting human approval. Keep drafting, verification and approval separate.' },
+] as const;
+export type LearningClassKey = typeof LEARNING_CLASSES[number]['key'];
+export interface LearningContributionPolicy { enabled: boolean; version: number }
+export const LEARNING_COHORT_MINIMUM = 3;
+export class AggregateLearningRefusedError extends Error {
+  readonly code = 'AGGREGATE_LEARNING_REFUSED';
+  constructor(readonly status: 400 | 403 | 409 | 503 = 403) {
+    super('Current learning permission, source evidence, cohort support or reviewed artifact could not be verified. Nothing was shared.');
+    this.name = 'AggregateLearningRefusedError';
+  }
+}
+export function learningClassOf(value: unknown): typeof LEARNING_CLASSES[number] {
+  const entry = LEARNING_CLASSES.find(item => item.key === value);
+  if (!entry) throw new AggregateLearningRefusedError(400);
+  return entry;
+}
+export function learningContributionPolicyOf(settings: unknown): LearningContributionPolicy {
+  const raw = settings && typeof settings === 'object' ? (settings as Record<string, unknown>).learningContributionPolicy : undefined;
+  if (raw === undefined) return { enabled: false, version: 0 };
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new AggregateLearningRefusedError();
+  const value = raw as Record<string, unknown>;
+  if (Object.keys(value).some(key => !['enabled', 'version'].includes(key)) || typeof value.enabled !== 'boolean' ||
+      !Number.isSafeInteger(value.version) || Number(value.version) < 1) throw new AggregateLearningRefusedError();
+  return { enabled: value.enabled, version: Number(value.version) };
+}
+
+/** Latest chained consent must match storage; historical opt-in cannot be replayed after opt-out. */
+export async function assertRecordedLearningConsent(client: InteractionExecutor, organizationId: number, policy: LearningContributionPolicy): Promise<void> {
+  const consent = await client.query(`SELECT new_values::jsonb->'policy' AS policy FROM audit_logs
+    WHERE tenant_id=$1 AND action='ana_pattern.contribution_policy' AND table_name='aggregate_learning'
+      AND record_id=$1::text AND chain_seq IS NOT NULL ORDER BY chain_seq DESC LIMIT 1`, [organizationId]);
+  const recorded = learningContributionPolicyOf({ learningContributionPolicy: consent.rows[0]?.policy });
+  if (recorded.enabled !== policy.enabled || recorded.version !== policy.version) throw new AggregateLearningRefusedError();
+}
+
+/** Only the tenant's own classes/counts leave this reader; source references stay private. */
+export async function readLearningContributionMetadata(client: InteractionExecutor, organizationId: number, userId?: number) {
+  const org = await client.query("SELECT settings FROM organizations WHERE id=$1 AND status='active'", [organizationId]);
+  if (org.rows.length !== 1) throw new AggregateLearningRefusedError();
+  const policy = learningContributionPolicyOf(org.rows[0].settings);
+  await assertRecordedLearningConsent(client, organizationId, policy);
+  const counts = await client.query(`SELECT new_values::jsonb->>'classKey' AS class_key,COUNT(*)::int AS count
+    FROM audit_logs WHERE tenant_id=$1 AND action='ana_pattern.contributed' AND table_name='aggregate_learning'
+      AND new_values::jsonb->>'schemaVersion'='1' AND new_values::jsonb->>'count'='1'
+      AND new_values::jsonb->>'policyVersion'=$2 GROUP BY new_values::jsonb->>'classKey'`, [organizationId, String(policy.version)]);
+  const sources = Number.isSafeInteger(userId) ? await client.query(`SELECT id,occurred_at FROM audit_logs
+    WHERE tenant_id=$1 AND user_id=$2 AND action='ana_correction.recorded' AND table_name='intelligence.ana_interactions'
+    ORDER BY occurred_at DESC LIMIT 20`, [organizationId, userId]) : { rows: [] };
+  return { policy, classes: LEARNING_CLASSES.map(({ key, label }) => ({ key, label,
+    count: Number(counts.rows.find(row => row.class_key === key)?.count ?? 0) })),
+  sources: sources.rows.map(row => ({ id: String(row.id), recordedAt: String(row.occurred_at) })) };
+}
+
 // k-anonymity threshold for promoting a pattern to cross-tenant memory.
 export const MIN_TENANT_COUNT = 3;
 // Minimum aggregate failures before promotion considered.
@@ -250,6 +307,49 @@ export async function recordAuditedHumanCorrection(input: RecordInteractionInput
     [input.organizationId, input.userId, result.interactionId]);
   if (source.rows.length !== 1 || typeof source.rows[0].id !== 'string') throw new Error('The correction source audit could not be verified.');
   return { ...result, sourceAuditEventId: source.rows[0].id };
+}
+
+/** Caller owns the transaction. Its organization lock serializes source/class deduplication. */
+export async function recordPatternContribution(client: InteractionExecutor, input: {
+  organizationId: number; userId: number; sourceAuditEventId: string; classKey: LearningClassKey; reasonForChange?: string;
+}) {
+  input = { ...input, sourceAuditEventId: typeof input.sourceAuditEventId === 'string' ? input.sourceAuditEventId.toLowerCase() : input.sourceAuditEventId };
+  learningClassOf(input.classKey);
+  if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(input.sourceAuditEventId) || !Number.isSafeInteger(input.organizationId) || input.organizationId < 1 ||
+      !Number.isSafeInteger(input.userId) || input.userId < 1) throw new AggregateLearningRefusedError(400);
+  const org = await client.query("SELECT settings FROM organizations WHERE id=$1 AND status='active' FOR UPDATE", [input.organizationId]);
+  if (org.rows.length !== 1) throw new AggregateLearningRefusedError();
+  const policy = learningContributionPolicyOf(org.rows[0].settings);
+  if (!policy.enabled) throw new AggregateLearningRefusedError();
+  await assertRecordedLearningConsent(client, input.organizationId, policy);
+  const { resolveSignerOrgRole } = await import('../part11/resolve-signer-role');
+  if (!await resolveSignerOrgRole(input.userId, input.organizationId, client)) throw new AggregateLearningRefusedError();
+  // Read only coarse stored bins. The source correction and its text fingerprint
+  // never enter a contribution, aggregate, QMS artifact or library receipt.
+  const source = await client.query(`SELECT i.agency,i.document_type,i.project_id FROM audit_logs a
+    JOIN intelligence.ana_interactions i ON i.id::text=a.record_id AND i.organization_id=a.tenant_id AND i.user_id=a.user_id
+    WHERE a.id=$1::uuid AND a.tenant_id=$2 AND a.action='ana_correction.recorded'
+      AND a.table_name='intelligence.ana_interactions' AND i.user_corrected=true
+      AND encode(sha256(convert_to(i.correction_text,'UTF8')),'hex')=a.new_values::jsonb->>'correctionSha256'`,
+  [input.sourceAuditEventId, input.organizationId]);
+  if (source.rows.length !== 1) throw new AggregateLearningRefusedError();
+  const row = source.rows[0];
+  if (row.project_id != null) {
+    const { admitAnaProjectScope } = await import('../ana/project-scope-admission');
+    await admitAnaProjectScope(client, { organizationId: input.organizationId, userId: input.userId, projectId: Number(row.project_id) });
+  }
+  const prior = await client.query(`SELECT id FROM audit_logs WHERE tenant_id=$1 AND action='ana_pattern.contributed'
+    AND table_name='aggregate_learning' AND record_id=$2 AND new_values::jsonb->>'classKey'=$3 LIMIT 1`,
+  [input.organizationId, input.sourceAuditEventId, input.classKey]);
+  if (prior.rows.length) return { recorded: false, classKey: input.classKey, count: 0, policyVersion: policy.version };
+  const { writeChainedAuditRow } = await import('../auditService');
+  await writeChainedAuditRow(client, { tenantId: input.organizationId, userId: input.userId,
+    action: 'ana_pattern.contributed', resourceType: 'aggregate_learning', resourceId: input.sourceAuditEventId,
+    reason: input.reasonForChange ?? 'Contributed one controlled pattern class under the current tenant policy.',
+    details: { schemaVersion: 1, classKey: input.classKey, agency: binAgencyForInteraction(String(row.agency)),
+      documentType: binDocumentType(String(row.document_type)), count: 1, policyVersion: policy.version,
+      sourceAuditEventId: input.sourceAuditEventId } });
+  return { recorded: true, classKey: input.classKey, count: 1, policyVersion: policy.version };
 }
 
 // ─── Pattern extraction (held until reviewed de-identification exists) ───────

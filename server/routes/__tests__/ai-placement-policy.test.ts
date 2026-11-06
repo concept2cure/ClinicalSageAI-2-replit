@@ -12,6 +12,23 @@ const writeOrgPlacementPolicy = vi.fn();
 const readOrgPlacementPolicy = vi.fn();
 const readDerivativeCustody = vi.fn();
 const manageDerivativeCustody = vi.fn();
+const learning = vi.hoisted(() => ({ read: vi.fn(), directory: vi.fn(), policy: vi.fn(), contribute: vi.fn(), prepare: vi.fn(), install: vi.fn() }));
+vi.mock('../../services/intelligence/ana-failure-learning', async original => ({
+  ...await original<typeof import('../../services/intelligence/ana-failure-learning')>(), readLearningContributionMetadata: (...args: unknown[]) => learning.read(...args),
+}));
+vi.mock('../../services/qms/changeControl.service', async original => ({
+  ...await original<typeof import('../../services/qms/changeControl.service')>(), listReviewedLearningLibrary: (...args: unknown[]) => learning.directory(...args),
+}));
+vi.mock('../../services/tenant/tenant-settings-writer', async original => ({
+  ...await original<typeof import('../../services/tenant/tenant-settings-writer')>(),
+  writeLearningContributionPolicy: (...args: unknown[]) => learning.policy(...args), writeLearningPatternContribution: (...args: unknown[]) => learning.contribute(...args),
+}));
+vi.mock('../../services/qms/controlled-document-service', async original => ({
+  ...await original<typeof import('../../services/qms/controlled-document-service')>(), prepareReviewedLearningCandidate: (...args: unknown[]) => learning.prepare(...args),
+}));
+vi.mock('../../services/account-skill-bundles', async original => ({
+  ...await original<typeof import('../../services/account-skill-bundles')>(), installReviewedLearningSkill: (...args: unknown[]) => learning.install(...args),
+}));
 const reauth = vi.hoisted(() => ({ ok: true, calls: [] as Array<{ userId: number; proof: unknown }> }));
 vi.mock('../c2c/actions', async importOriginal => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -66,6 +83,9 @@ const POLICY = {
 const REASON = 'EU residency required by the MSA signed 2026-09-20.';
 
 beforeEach(() => {
+  for (const mock of Object.values(learning)) mock.mockReset();
+  learning.read.mockResolvedValue({ policy: { enabled: false, version: 0 }, classes: [], sources: [] });
+  learning.directory.mockResolvedValue([]);
   writeOrgPlacementPolicy.mockReset();
   readOrgPlacementPolicy.mockReset();
   readDerivativeCustody.mockReset().mockResolvedValue({ policy: null, records: [] });
@@ -73,6 +93,43 @@ beforeEach(() => {
   reauth.ok = true;
   reauth.calls = [];
   REQUEST_CLIENT.query.mockReset().mockImplementation(async () => ({ rows: [{ role: 'admin' }] }));
+});
+
+describe('learning administration uses current actor and fresh reauthentication', () => {
+  const input = { enabled: true, expectedVersion: 0, reasonForChange: 'Administrator reviewed contribution boundaries.' };
+  it.each(['learning_policy', 'learning_contribute', 'learning_prepare', 'learning_install'])('holds %s before its writer when reauthentication fails', async action => {
+    reauth.ok = false;
+    const result = await request(appAs(ADMIN)).put('/api/ai-placement-policy').send({ action, ...input, reauth: { password: 'synthetic' } });
+    expect(result.status).toBe(401);
+    for (const mock of [learning.policy, learning.contribute, learning.prepare, learning.install]) expect(mock).not.toHaveBeenCalled();
+  });
+  it('passes only canonical tenant and actor and strips actual reauthentication from policy data', async () => {
+    learning.policy.mockResolvedValue({ enabled: true, version: 1 });
+    const result = await request(appAs(ADMIN)).put('/api/ai-placement-policy').send({ action: 'learning_policy', ...input,
+      reauth: { password: 'synthetic', totp: '123456' } });
+    expect(result.status).toBe(200);
+    expect(learning.policy).toHaveBeenCalledWith(expect.anything(), 42, 5, input);
+    expect(reauth.calls).toEqual([{ userId: 5, proof: { password: 'synthetic', totp: '123456' } }]);
+    expect(JSON.stringify(result.body)).not.toContain('synthetic');
+  });
+  it('passes the selected immutable public version through the actual install adapter', async () => {
+    const selected = { libraryVersionId: '11111111-1111-4111-8111-111111111111', expectedArtifactSha256: 'a'.repeat(64), reasonForChange: input.reasonForChange };
+    learning.install.mockResolvedValue({ id: 4 });
+    const result = await request(appAs(ADMIN)).put('/api/ai-placement-policy').send({ action: 'learning_install', ...selected, reauth: { password: 'synthetic' } });
+    expect(result.status).toBe(200);
+    expect(learning.install).toHaveBeenCalledWith(expect.anything(), 42, expect.objectContaining({ userId: 5 }), selected);
+  });
+  it('withholds raw storage errors from a learning writer', async () => {
+    learning.policy.mockRejectedValue(new Error('private-tenant-donor-canary'));
+    const result = await request(appAs(ADMIN)).put('/api/ai-placement-policy').send({ action: 'learning_policy', ...input, reauth: { password: 'synthetic' } });
+    expect(result.status).toBe(503);
+    expect(JSON.stringify(result.body)).not.toMatch(/private-tenant-donor-canary|synthetic/);
+  });
+  it('blocks a revoked administrator before reading contributions or authenticating', async () => {
+    REQUEST_CLIENT.query.mockResolvedValue({ rows: [] });
+    const result = await request(appAs(ADMIN)).put('/api/ai-placement-policy').send({ action: 'learning_policy', ...input });
+    expect(result.status).toBe(403); expect(reauth.calls).toEqual([]); expect(learning.policy).not.toHaveBeenCalled();
+  });
 });
 
 describe('PUT /api/ai-placement-policy', () => {
@@ -135,7 +192,9 @@ describe('GET /api/ai-placement-policy', () => {
     expect(res.status).toBe(200);
     expect(readOrgPlacementPolicy.mock.calls[0][0]).toBe(REQUEST_CLIENT);
     expect(readOrgPlacementPolicy.mock.calls[0][1]).toBe(42);
-    expect(res.body).toEqual({ organizationId: 42, policy: null, derivativeCustody: { policy: null, records: [] } });
+    expect(res.body).toEqual({ organizationId: 42, policy: null, derivativeCustody: { policy: null, records: [] },
+      learningContribution: { policy: { enabled: false, version: 0 }, classes: [], sources: [], library: [], canCurate: false } });
+    expect(learning.read).toHaveBeenCalledWith(REQUEST_CLIENT, 42, 5);
   });
 
   it('refuses a caller with no organization', async () => {

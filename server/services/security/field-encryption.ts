@@ -50,6 +50,9 @@ import crypto from 'crypto';
 /** Derivative custody uses a tenant-selected immutable KMS key, never v1's
  * platform key or development fallback. The envelope is bound to its use. */
 export interface TenantEnvelopeContext {
+  /** Omitted for existing derivative envelopes; purpose is authenticated. */
+  purpose?: 'run_coordination';
+  ownerUserId?: number;
   organizationId: number;
   projectId: number;
   derivativeId: string;
@@ -57,6 +60,11 @@ export interface TenantEnvelopeContext {
   policyVersion: number;
   expiresAt: string;
 }
+export interface OwnerPrivateEnvelopeContext {
+  purpose: 'owner_private_turn'; organizationId: number; ownerUserId: number; projectId: number | null;
+  runId: string; threadId: string | null; recordId: string; sourceHash: string; policyVersion: number;
+}
+export type TenantPayloadContext = TenantEnvelopeContext | OwnerPrivateEnvelopeContext;
 export interface TenantDataKeyOps {
   generate(keyArn: string, context: Record<string, string>): Promise<{ plaintext: Uint8Array; ciphertext: Uint8Array; keyId: string }>;
   decrypt(keyArn: string, ciphertext: Uint8Array, context: Record<string, string>): Promise<{ plaintext: Uint8Array; keyId: string }>;
@@ -93,27 +101,41 @@ async function tenantKms(keyArn: string): Promise<TenantDataKeyOps> {
   return tenantDataKeyOpsFromSdk(client, sdk);
 }
 
-function envelopeContext(value: TenantEnvelopeContext): Record<string, string> {
+function envelopeContext(value: TenantPayloadContext): Record<string, string> {
+  if (value.purpose === 'owner_private_turn') return ownerPrivateEnvelopeContext(value);
+  if (value.purpose !== undefined && value.purpose !== 'run_coordination') throw new Error('Invalid envelope purpose.');
+  if (value.purpose === 'run_coordination' && (!Number.isSafeInteger(value.ownerUserId) || Number(value.ownerUserId) <= 0)) throw new Error('Invalid envelope owner.');
   if (![value.organizationId, value.projectId, value.policyVersion].every(v => Number.isSafeInteger(v) && v > 0) ||
       !/^[a-f0-9-]{36}$/.test(value.derivativeId) || !/^[a-f0-9]{64}$/.test(value.sourceHash) ||
       !Number.isFinite(Date.parse(value.expiresAt))) throw new Error('Invalid derivative envelope identity.');
-  return { purpose: 'tenant-derivative-v2', organizationId: String(value.organizationId), projectId: String(value.projectId),
-    derivativeId: value.derivativeId, sourceHash: value.sourceHash, policyVersion: String(value.policyVersion), expiresAt: value.expiresAt };
+  return { purpose: value.purpose === 'run_coordination' ? 'tenant-run-coordination-v2' : 'tenant-derivative-v2', organizationId: String(value.organizationId), projectId: String(value.projectId),
+    derivativeId: value.derivativeId, sourceHash: value.sourceHash, policyVersion: String(value.policyVersion), expiresAt: value.expiresAt,
+    ...(value.purpose === 'run_coordination' ? { ownerUserId: String(value.ownerUserId) } : {}) };
+}
+function ownerPrivateEnvelopeContext(value: OwnerPrivateEnvelopeContext): Record<string, string> {
+  if (![value.organizationId, value.ownerUserId, value.policyVersion].every(v => Number.isSafeInteger(v) && v > 0) ||
+      value.projectId !== null && (!Number.isSafeInteger(value.projectId) || value.projectId <= 0) ||
+      !value.runId || value.runId.length > 200 || value.threadId !== null && (!value.threadId || value.threadId.length > 200) ||
+      !/^[a-f0-9-]{36}$/.test(value.recordId) || !/^[a-f0-9]{64}$/.test(value.sourceHash)) throw new Error('Invalid owner-private envelope identity.');
+  return { purpose: 'owner-private-turn-v2', organizationId: String(value.organizationId), ownerUserId: String(value.ownerUserId),
+    projectId: value.projectId === null ? 'none' : String(value.projectId), runId: value.runId, threadId: value.threadId ?? 'none',
+    recordId: value.recordId, sourceHash: value.sourceHash, policyVersion: String(value.policyVersion) };
 }
 
-function envelopeBytes(value: unknown, length?: number): Buffer {
-  if (typeof value !== 'string' || !value || value.length > 3_000_000) throw new Error('Invalid derivative envelope.');
+function envelopeBytes(value: unknown, length?: number, maximum = 3_000_000): Buffer {
+  if (typeof value !== 'string' || !value || value.length > maximum) throw new Error('Invalid derivative envelope.');
   const bytes = Buffer.from(value, 'base64');
   if (bytes.toString('base64') !== value || (length !== undefined && bytes.length !== length)) throw new Error('Invalid derivative envelope.');
   return bytes;
 }
 
 export async function sealTenantPayload(
-  plaintext: string, context: TenantEnvelopeContext, keyArn: string, ops?: TenantDataKeyOps,
+  plaintext: string, context: TenantPayloadContext, keyArn: string, ops?: TenantDataKeyOps,
 ): Promise<string> {
   let dataKey: Uint8Array | undefined;
   try {
-    if (!isImmutableTenantKeyArn(keyArn) || typeof plaintext !== 'string' || Buffer.byteLength(plaintext) > 1_000_000) throw new Error();
+    const maximum = context.purpose === 'owner_private_turn' ? 16_000_000 : 1_000_000;
+    if (!isImmutableTenantKeyArn(keyArn) || typeof plaintext !== 'string' || Buffer.byteLength(plaintext) > maximum) throw new Error();
     const bound = envelopeContext(context);
     const generated = await (ops ?? await tenantKms(keyArn)).generate(keyArn, bound);
     dataKey = generated.plaintext;
@@ -130,11 +152,12 @@ export async function sealTenantPayload(
 }
 
 export async function openTenantPayload(
-  envelope: string, context: TenantEnvelopeContext, keyArn: string, ops?: TenantDataKeyOps,
+  envelope: string, context: TenantPayloadContext, keyArn: string, ops?: TenantDataKeyOps,
 ): Promise<string> {
   let dataKey: Uint8Array | undefined;
   try {
-    if (!isImmutableTenantKeyArn(keyArn) || typeof envelope !== 'string' || envelope.length > 3_000_000) throw new Error();
+    const maximum = context.purpose === 'owner_private_turn' ? 24_000_000 : 3_000_000;
+    if (!isImmutableTenantKeyArn(keyArn) || typeof envelope !== 'string' || envelope.length > maximum) throw new Error();
     const value = JSON.parse(envelope);
     if (value.version !== 2 || value.keyId !== keyArn) throw new Error();
     const bound = envelopeContext(context);
@@ -144,7 +167,7 @@ export async function openTenantPayload(
     const decipher = crypto.createDecipheriv('aes-256-gcm', dataKey, envelopeBytes(value.iv, 12), { authTagLength: 16 });
     decipher.setAAD(Buffer.from(JSON.stringify(bound)));
     decipher.setAuthTag(envelopeBytes(value.tag, 16));
-    return Buffer.concat([decipher.update(envelopeBytes(value.ciphertext)), decipher.final()]).toString('utf8');
+    return Buffer.concat([decipher.update(envelopeBytes(value.ciphertext, undefined, maximum)), decipher.final()]).toString('utf8');
   } catch { throw new Error('Derivative custody could not be authenticated. No content was returned.'); }
   finally { dataKey?.fill(0); }
 }

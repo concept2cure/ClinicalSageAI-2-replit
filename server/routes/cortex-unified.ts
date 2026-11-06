@@ -25,6 +25,7 @@ import {
   getOrCreateThread,
   getThreadMessages,
   getWindowedMessages,
+  threadHasOwnerPrivateBoundary,
   ThreadAccessError,
   saveChatMessage,
   deleteConversation,
@@ -345,6 +346,18 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         });
       }
       throw e;
+    }
+
+    try {
+      if (await threadHasOwnerPrivateBoundary(threadId)) {
+        res.locals.ownerPrivateCapture = true;
+        return res.status(409).json({ code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE',
+          error: 'Continue this private conversation through AnA’s protected conversation.' });
+      }
+    } catch {
+      res.locals.ownerPrivateCapture = true;
+      return res.status(409).json({ code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE',
+        error: 'The conversation’s privacy boundary could not be verified. No model request was sent.' });
     }
 
     // Token budget: model max (128k for gpt-4o-mini) minus system prompt, new message, and response buffer
@@ -1043,12 +1056,8 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    logger.error(`[Chat] Error: ${error.message}`);
-    res.status(500).json({
-      error: 'Failed to process message',
-      code: 'CHAT_ERROR',
-      message: error.message,
-    });
+    logger.error('[Chat] Message processing failed');
+    res.status(500).json({ error: 'Failed to process message', code: 'CHAT_ERROR' });
   }
 });
 

@@ -198,3 +198,127 @@ export function captureCurrentRunSourceGate(raw: SourceRunIdentity): { tiers: re
     if (state.revision !== revision) refuseSourceRun();
   } });
 }
+
+/** Private context is expanded only at the governed model boundary. Generic
+ * turn capture sees these opaque references, never their plaintext. */
+export interface OwnerPrivateModelContextScope {
+  organizationId: number; userId: number; projectId: number | null; programId?: string | null;
+  runId: string; threadId: string | null;
+}
+declare const ownerContextBrand: unique symbol;
+export interface OwnerPrivateModelContextCapsule { readonly [ownerContextBrand]: true }
+interface OwnerPrivateContextSource {
+  scope: OwnerPrivateModelContextScope; sourceRef: string;
+  activate(): Promise<void>; expand(): Promise<string>; recheck(): Promise<void>;
+}
+export interface OwnerPrivateModelGate {
+  readonly scope: Readonly<OwnerPrivateModelContextScope>; readonly sourceRefs: readonly string[];
+  prepare(): Promise<void>; expand(): Promise<string>; recheck(): Promise<void>;
+}
+const ownerContexts = new WeakMap<OwnerPrivateModelContextCapsule, Readonly<OwnerPrivateContextSource>>();
+const privateModelRuns = new AsyncLocalStorage<readonly OwnerPrivateModelContextCapsule[]>();
+const ownerPrivateChild = Symbol('ownerPrivateChild');
+interface PrivateChildLineage { runId: string; parentRunId: string }
+const issuedPrivateChildren = new WeakSet<PrivateChildLineage>();
+export class OwnerPrivateModelContextError extends Error {
+  readonly code = 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE';
+  constructor() { super('Owner-private context, current source authority or encrypted capture could not be verified. No private model payload was released.'); this.name = 'OwnerPrivateModelContextError'; }
+}
+function privateContextRefused(): never { throw new OwnerPrivateModelContextError(); }
+function privateContextSource(capsule: OwnerPrivateModelContextCapsule): Readonly<OwnerPrivateContextSource> {
+  return ownerContexts.get(capsule) ?? privateContextRefused();
+}
+function privateScopeActor(scope: OwnerPrivateModelContextScope, raw: SourceRunIdentity = {}): PinnedSourceIdentity {
+  const actor = sourceIdentity(scope);
+  if (!actor) privateContextRefused();
+  try { checkRequestIdentity(actor, raw); } catch { privateContextRefused(); }
+  const ambient = getTenantScope();
+  if (!ambient || ambient.tenantId !== String(actor.organizationId) || ambient.accountId !== actor.userId) privateContextRefused();
+  return actor;
+}
+/** Only trusted backend source issuers supply these callbacks. Serialized
+ * tokens, request flags and copied references never acquire this authority. */
+export function issueOwnerPrivateModelContext(input: OwnerPrivateContextSource): OwnerPrivateModelContextCapsule {
+  const actor = privateScopeActor(input.scope);
+  if (!/^[a-f0-9]{64}$/.test(input.sourceRef) || !input.scope.runId || (input.scope.threadId !== null && !input.scope.threadId) ||
+      ![input.activate, input.expand, input.recheck].every(callback => typeof callback === 'function')) privateContextRefused();
+  const scope = Object.freeze({ ...input.scope, organizationId: actor.organizationId, userId: actor.userId,
+    projectId: actor.projectId, programId: actor.programId });
+  const capsule = Object.freeze({}) as OwnerPrivateModelContextCapsule;
+  ownerContexts.set(capsule, Object.freeze({ scope, sourceRef: input.sourceRef, activate: input.activate, expand: input.expand, recheck: input.recheck }));
+  return capsule;
+}
+function privateSources(capsules: readonly OwnerPrivateModelContextCapsule[]): readonly Readonly<OwnerPrivateContextSource>[] {
+  if (!Array.isArray(capsules) || capsules.length > 8) privateContextRefused();
+  const sources = capsules.map(privateContextSource), first = sources[0];
+  for (const source of sources) {
+    privateScopeActor(source.scope);
+    if (!first || source.scope.runId !== first.scope.runId || source.scope.threadId !== first.scope.threadId ||
+      source.scope.organizationId !== first.scope.organizationId || source.scope.userId !== first.scope.userId ||
+      source.scope.projectId !== first.scope.projectId || source.scope.programId !== first.scope.programId) privateContextRefused();
+  }
+  return sources;
+}
+export function runWithOwnerPrivateModelContexts<T>(capsules: readonly OwnerPrivateModelContextCapsule[], fn: () => T): T {
+  const inherited = privateModelRuns.getStore() ?? [];
+  privateSources(inherited); privateSources(capsules);
+  const keyed = new Map([...inherited, ...capsules].map(capsule => {
+    const source = privateContextSource(capsule);
+    const scope = source.scope;
+    return [JSON.stringify([scope.organizationId, scope.userId, scope.projectId, scope.programId ?? null, scope.runId, scope.threadId, source.sourceRef]), capsule] as const;
+  }));
+  const merged = [...keyed.values()];
+  const sources = privateSources(merged), first = sources[0];
+  if (!first) return privateModelRuns.run(Object.freeze(merged), fn);
+  const authority = createRunSourceAuthority(first.scope);
+  return runWithSourceAuthority(authority, () => {
+    for (const source of sources) recordCurrentRunSource({ ...source.scope, programId: source.scope.programId ?? null,
+      key: `owner_private:${source.sourceRef}`, tier: 3, recheck: source.recheck });
+    return privateModelRuns.run(Object.freeze(merged), fn);
+  });
+}
+/** Prepare before the first private user/title/message write. This performs
+ * durable capture activation and fresh admission, without expanding any text. */
+export async function prepareOwnerPrivateModelContexts(capsules: readonly OwnerPrivateModelContextCapsule[]): Promise<void> {
+  for (const source of privateSources(capsules)) {
+    await source.activate(); await source.recheck(); privateScopeActor(source.scope);
+  }
+}
+/** The actual bounded child host binds its generated child identity before
+ * gateway entry. Spreads retain this private value; JSON cannot issue it. */
+export function bindOwnerPrivateModelChildRequest<T extends { runId?: string; parentRunId?: string }>(request: T): T {
+  const capsules = privateModelRuns.getStore();
+  if (!capsules?.length) return request;
+  const first = privateSources(capsules)[0];
+  if (!first || !request.runId || request.runId === first.scope.runId || request.parentRunId !== first.scope.runId) privateContextRefused();
+  const lineage = Object.freeze({ runId: request.runId, parentRunId: request.parentRunId });
+  issuedPrivateChildren.add(lineage);
+  return { ...request, [ownerPrivateChild]: lineage };
+}
+function privateChildMatches(raw: { runId?: string; parentRunId?: string }, parentRunId: string): boolean {
+  const lineage = (raw as { [ownerPrivateChild]?: PrivateChildLineage })[ownerPrivateChild];
+  return !!lineage && issuedPrivateChildren.has(lineage) && lineage.parentRunId === parentRunId
+    && lineage.runId === raw.runId && lineage.parentRunId === raw.parentRunId;
+}
+export function captureOwnerPrivateModelGate(raw: SourceRunIdentity & { runId?: string; parentRunId?: string }): OwnerPrivateModelGate | undefined {
+  const capsules = privateModelRuns.getStore(); if (!capsules?.length) return undefined;
+  const sources = privateSources(capsules), first = sources[0];
+  if (!first) privateContextRefused();
+  privateScopeActor(first.scope, raw);
+  if (raw.runId !== first.scope.runId && !privateChildMatches(raw, first.scope.runId)) privateContextRefused();
+  const recheck = async () => {
+    for (const source of sources) { privateScopeActor(source.scope, raw); await source.recheck(); }
+    privateScopeActor(first.scope, raw);
+  };
+  return Object.freeze({ scope: first.scope, sourceRefs: Object.freeze(sources.map(source => source.sourceRef)),
+    prepare: () => prepareOwnerPrivateModelContexts(capsules), recheck, expand: async () => {
+      await recheck(); const texts: string[] = [];
+      for (const source of sources) {
+        const text = await source.expand();
+        if (typeof text !== 'string' || text.length > 32768) privateContextRefused();
+        texts.push(text);
+      }
+      const text = texts.join('\n\n'); if (text.length > 65536) privateContextRefused();
+      await recheck(); return text;
+    } });
+}

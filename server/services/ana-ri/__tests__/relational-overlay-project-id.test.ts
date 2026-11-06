@@ -1,12 +1,7 @@
 /**
- * The relational overlay never sends a non-integer project id to the database
- * (ana-14, 2026-10-08).
- *
- * The stream used to hand it Number(<program uuid>) = NaN. `project_id = NaN`
- * failed the whole read, so AnA also lost what she had learned about the
- * person (the user-level notes), on every turn in a v2 project
- * (server.log:11715). A non-integer now reads the person's notes alone, the
- * same rule reflectAfterTurn already applies on the write side.
+ * Shared prompt/record construction never receives owner-private relational
+ * prose. Invalid project ids also never reach SQL while that raw channel is
+ * held; the protected SDK capsule is the only future raw expansion point.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -31,15 +26,17 @@ beforeEach(() => {
 });
 
 describe('loadRelationalOverlay project id', () => {
-  it.each([Number.NaN, 0, -1, 1.5])('reads the person alone for project id %s, never sending it', async projectId => {
+  it.each([Number.NaN, 0, -1, 1.5])('omits private notes for project id %s, never sending it', async projectId => {
     const block = await loadRelationalOverlay({ organizationId: 7, userId: 3, projectId });
-    expect(h.query).toHaveBeenCalledTimes(1);
-    expect(h.query.mock.calls[0][1]).toEqual([7, 3, null]);
-    expect(block).toContain('Prefers tables over prose.');
+    expect(h.query).not.toHaveBeenCalled();
+    expect(block).toContain('not included in the shared context');
+    expect(block).not.toContain(USER_ROW.profile_summary);
   });
 
-  it('passes an integer project id through', async () => {
-    await loadRelationalOverlay({ organizationId: 7, userId: 3, projectId: 42 });
-    expect(h.query.mock.calls[0][1]).toEqual([7, 3, 42]);
+  it('also keeps a valid project’s raw notes out of generic capture', async () => {
+    const block = await loadRelationalOverlay({ organizationId: 7, userId: 3, projectId: 42 });
+    expect(h.query).not.toHaveBeenCalled();
+    expect(block).toContain('protected owner context');
+    expect(block).not.toContain(USER_ROW.profile_summary);
   });
 });

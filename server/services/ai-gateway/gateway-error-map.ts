@@ -21,6 +21,7 @@ import { NO_PQ_QUALIFIED_MODEL } from './model-governance';
 import { APPROVED_MODELS } from '../ai-governance/approved-models';
 
 export type GatewayErrorCode =
+  | 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE'
   | 'DERIVATIVE_USE_REFUSED'
   | 'SOURCE_CONTEXT_UNAVAILABLE'
   | 'PLACEMENT_REFUSED'
@@ -44,6 +45,7 @@ export interface ClassifiedGatewayError {
  * submissions.ts and ectd-documents.ts predate this export and agree with it.
  */
 export const GATEWAY_ERROR_HTTP_STATUS: Readonly<Record<GatewayErrorCode, number>> = {
+  OWNER_PRIVATE_CONTEXT_UNAVAILABLE: 409,
   DERIVATIVE_USE_REFUSED: 403,
   SOURCE_CONTEXT_UNAVAILABLE: 409,
   // Not an outage: the organization's own policy excludes every lane that
@@ -102,6 +104,9 @@ export function classifyGatewayError(
   }
   if (err instanceof GatewayNoProviderError) {
     return { code: 'PROVIDER_UNAVAILABLE', message: 'No AI provider is available to handle this request.' };
+  }
+  if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE') {
+    return { code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE', message: 'Private context or encrypted capture could not be verified. Check the current session and private custody configuration before retrying.' };
   }
   if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'SOURCE_CONTEXT_UNAVAILABLE') {
     return { code: 'SOURCE_CONTEXT_UNAVAILABLE', message: 'Selected project sources changed or are no longer available. Check project access and current source versions before retrying this section.' };

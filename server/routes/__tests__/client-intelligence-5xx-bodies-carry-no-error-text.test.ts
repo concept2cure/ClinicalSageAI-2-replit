@@ -122,7 +122,9 @@ describe('client-intelligence 500s carry the envelope, never the cause', () => {
     expect(res.status).toBe(500);
     expect(JSON.stringify(res.body), 'the caught error reached the response body').not.toContain('SENTINEL');
     expect(JSON.stringify(res.body)).not.toContain(SENTINEL.slice(9));
-    expect(res.body.error).toBe('INTERNAL_ERROR');
+    if (path === '/ana/user-profile') {
+      expect(res.body.error).toEqual({ code: 'PRIVATE_PROFILE_UNAVAILABLE', message: 'The private profile operation could not be confirmed.' });
+    } else expect(res.body.error).toBe('INTERNAL_ERROR');
   });
 });
 

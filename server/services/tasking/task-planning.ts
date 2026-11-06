@@ -16,6 +16,111 @@ import {
   organizationUsers,
 } from '../../../shared/schema';
 
+export interface StrictProjectTask {
+  taskId: string; status: string; estimatedHours: number | null; updatedAt: string | null;
+}
+export interface StrictProjectDependency {
+  predecessorTaskId: string; successorTaskId: string; type: string; lagHours: number | null; status: string;
+}
+export interface StrictProjectTaskGraph {
+  state: 'measured' | 'empty' | 'not_assessed';
+  tasks: StrictProjectTask[]; dependencies: StrictProjectDependency[];
+  total: number; completed: number; percentage: number | null;
+  criticalPath: string[] | null; recordedDurationHours: number | null;
+  missingDurationTaskIds: string[]; cyclicOrBlockedTaskIds: string[]; problems: string[];
+}
+
+/** A strict projection for orchestration; the older UI estimate remains a separate legacy caller. */
+export async function loadStrictProjectTaskGraph(client: RequestSqlClient, scope: { organizationId: number; projectId: number }): Promise<StrictProjectTaskGraph> {
+  if (![scope.organizationId,scope.projectId].every(id => Number.isSafeInteger(id) && id > 0)) throw new Error('An exact project task scope is required.');
+  const tasks = await client.query(`SELECT task_id,status,estimated_hours,updated_at FROM unified_tasks
+    WHERE organization_id=$1 AND project_id=$2 AND deleted_at IS NULL ORDER BY task_id LIMIT 501`, [scope.organizationId,scope.projectId]);
+  const dependencies = await client.query(`SELECT d.predecessor_task_id,d.successor_task_id,d.dependency_type,d.lag_time,d.status
+    FROM task_dependencies d JOIN unified_tasks p ON p.task_id=d.predecessor_task_id
+    JOIN unified_tasks s ON s.task_id=d.successor_task_id WHERE p.organization_id=$1 AND s.organization_id=$1
+    AND p.project_id=$2 AND s.project_id=$2 AND p.deleted_at IS NULL AND s.deleted_at IS NULL
+    AND (d.organization_id=$1 OR d.organization_id IS NULL) ORDER BY d.predecessor_task_id,d.successor_task_id,d.id LIMIT 1001`, [scope.organizationId,scope.projectId]);
+  const graph = projectTaskGraphFromRows(tasks.rows,dependencies.rows);
+  const scopeCheck = await client.query(`SELECT EXISTS(SELECT 1 FROM task_dependencies d
+    JOIN unified_tasks own ON (own.task_id=d.predecessor_task_id OR own.task_id=d.successor_task_id)
+    WHERE own.organization_id=$1 AND own.project_id=$2 AND own.deleted_at IS NULL
+    AND (d.organization_id=$1 OR d.organization_id IS NULL) AND NOT EXISTS(
+      SELECT 1 FROM unified_tasks p JOIN unified_tasks s ON s.task_id=d.successor_task_id
+      WHERE p.task_id=d.predecessor_task_id AND p.organization_id=$1 AND s.organization_id=$1
+      AND p.project_id=$2 AND s.project_id=$2 AND p.deleted_at IS NULL AND s.deleted_at IS NULL)) AS invalid`,[scope.organizationId,scope.projectId]);
+  if (scopeCheck.rows[0]?.invalid !== false) {
+    graph.state='not_assessed'; graph.criticalPath=null; graph.recordedDurationHours=null; graph.problems.push('TASK_DEPENDENCY_SCOPE_UNVERIFIED');
+  }
+  return graph;
+}
+
+export function projectTaskGraphFromRows(taskRows: Array<Record<string, unknown>>, dependencyRows: Array<Record<string, unknown>>): StrictProjectTaskGraph {
+  const tasks = taskRows.map(strictTask);
+  const dependencies = dependencyRows.map(strictDependency);
+  const ids = new Set(tasks.map(task => task.taskId));
+  const problems: string[] = [];
+  if (tasks.length > 500 || dependencies.length > 1000) problems.push('TASK_GRAPH_LIMIT');
+  if (ids.size !== tasks.length || dependencies.some(edge => !ids.has(edge.predecessorTaskId) || !ids.has(edge.successorTaskId))) problems.push('TASK_GRAPH_IDENTITY_UNVERIFIED');
+  if (tasks.some(task => !['pending','in-progress','review','completed','blocked','cancelled'].includes(task.status))) problems.push('TASK_STATUS_UNSUPPORTED');
+  const live = dependencies.filter(edge => edge.status !== 'satisfied');
+  if (live.some(edge => edge.type !== 'finish-to-start' || edge.lagHours === null || edge.status !== 'active')) problems.push('DEPENDENCY_TIMING_NOT_ASSESSED');
+  const missingDurationTaskIds = tasks.filter(task => task.estimatedHours === null).map(task => task.taskId);
+  if (missingDurationTaskIds.length) problems.push('TASK_DURATION_NOT_RECORDED');
+  const path = strictLongestPath(tasks,live);
+  if (path.unresolved.length) problems.push('DEPENDENCY_CYCLE_OR_BLOCKED');
+  const completed = tasks.filter(task => task.status === 'completed').length;
+  return { state: problems.length ? 'not_assessed' : tasks.length ? 'measured' : 'empty', tasks,dependencies,
+    total: tasks.length,completed,percentage: tasks.length ? Math.round(completed/tasks.length*100) : null,
+    criticalPath: problems.length ? null : path.path,recordedDurationHours: problems.length ? null : path.hours,
+    missingDurationTaskIds,cyclicOrBlockedTaskIds: path.unresolved,problems };
+}
+
+function strictTask(row: Record<string, unknown>): StrictProjectTask {
+  if (typeof row.task_id !== 'string' || !row.task_id) throw new Error('The task graph identity could not be read.');
+  const hours = row.estimated_hours;
+  const updated = row.updated_at == null ? null : new Date(String(row.updated_at)).toISOString();
+  return { taskId: row.task_id,status: String(row.status),estimatedHours: typeof hours === 'number' && Number.isFinite(hours) && hours >= 0 ? hours : null,updatedAt: updated };
+}
+
+function strictDependency(row: Record<string, unknown>): StrictProjectDependency {
+  if (typeof row.predecessor_task_id !== 'string' || typeof row.successor_task_id !== 'string') throw new Error('The task dependency identity could not be read.');
+  return { predecessorTaskId: row.predecessor_task_id,successorTaskId: row.successor_task_id,type: String(row.dependency_type),
+    lagHours: typeof row.lag_time === 'number' && Number.isFinite(row.lag_time) ? row.lag_time : null,status: String(row.status) };
+}
+
+function strictLongestPath(tasks: StrictProjectTask[], edges: StrictProjectDependency[]) {
+  const byId = new Map(tasks.map(task => [task.taskId,task]));
+  const incoming = new Map(tasks.map(task => [task.taskId,0]));
+  for (const edge of edges) incoming.set(edge.successorTaskId,(incoming.get(edge.successorTaskId) ?? 0)+1);
+  const queue = tasks.filter(task => incoming.get(task.taskId) === 0).map(task => task.taskId).sort();
+  const distances = new Map<string,number>(); const paths = new Map<string,string[]>();
+  const visited = new Set<string>();
+  while (queue.length) visitTaskPath(queue,edges,{byId,incoming,distances,paths,visited});
+  const ranked = [...distances].sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]));
+  const winner = ranked[0];
+  return { path: winner ? paths.get(winner[0]) ?? [] : [],hours: winner?.[1] ?? 0,
+    unresolved: tasks.filter(task => !visited.has(task.taskId)).map(task => task.taskId) };
+}
+
+function visitTaskPath(queue: string[], edges: StrictProjectDependency[], graph: {
+  byId: Map<string,StrictProjectTask>; incoming: Map<string,number>; distances: Map<string,number>;
+  paths: Map<string,string[]>; visited: Set<string>;
+}): void {
+  const id = queue.shift()!; const task = graph.byId.get(id);
+  if (!task) return;
+  graph.visited.add(id);
+  if (!graph.distances.has(id)) { graph.distances.set(id,task.estimatedHours ?? 0); graph.paths.set(id,[id]); }
+  for (const edge of edges.filter(item => item.predecessorTaskId === id)) {
+    const next = graph.byId.get(edge.successorTaskId); if (!next) continue;
+    const distance = graph.distances.get(id)! + (edge.lagHours ?? 0) + (next.estimatedHours ?? 0);
+    if (!graph.distances.has(next.taskId) || distance > graph.distances.get(next.taskId)!) {
+      graph.distances.set(next.taskId,distance); graph.paths.set(next.taskId,[...graph.paths.get(id)!,next.taskId]);
+    }
+    const remaining = (graph.incoming.get(next.taskId) ?? 0)-1; graph.incoming.set(next.taskId,remaining);
+    if (remaining === 0) { queue.push(next.taskId); queue.sort(); }
+  }
+}
+
 // Helper function to calculate critical path
 export async function calculateCriticalPath(projectId: number, organizationId: number) {
   try {

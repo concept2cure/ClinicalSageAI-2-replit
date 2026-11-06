@@ -2,7 +2,7 @@ import React, { useId, useState } from 'react';
 import { I } from './icons';
 import { useDialog } from './useDialog';
 import { useLiveData } from './dataConnect';
-import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import {
   SKILL_LIMITS,
@@ -11,6 +11,7 @@ import {
   type SkillSelectionDto,
 } from '@shared/ana/skills';
 import {
+  approvalRuleStatus, DESIGN_WITH_ANA, refusalOf,
   DISCIPLINE_OPTIONS,
   SEGMENT_OPTIONS,
   STATUS_OPTIONS,
@@ -20,6 +21,7 @@ import {
   RULE_LEVEL_LABELS,
   type OrgEditing,
 } from './surfaces/AdminSkillForms';
+export { refusalOf } from './surfaces/AdminSkillForms';
 
 /**
  * The parts of the skill studio (SkillStudio.tsx) and of a project's skill
@@ -27,14 +29,6 @@ import {
  * field, the skill's fields, and the studio's right column (try a question,
  * read the versions, ask AnA to draft).
  */
-
-/** One fixed request to AnA: nothing stored by a member is spliced into it. */
-const DESIGN_WITH_ANA =
-  'Help me design an AnA skill for this organization. Ask me what work it is for, then draft its name, one or two sentences on when to use it, trigger phrases as people type them, and its method under a "## Method" heading: numbered steps, naming the platform tool in backticks wherever a figure, verdict, date or citation is needed.';
-
-export function refusalOf(e: unknown, fallback: string): string {
-  return (e instanceof ApiRequestError ? serverMessage(e.payload) : null) ?? fallback;
-}
 
 /** The dialog both skill dialogs open in: a titled drawer with a close button and a footer. */
 export function SkillDialogShell({
@@ -445,6 +439,7 @@ function StudioHistory({ skill }: { skill: OrgSkillDto }) {
   return (
     <>
       {skill.standingRule && <StandingRuleLedger skill={skill} />}
+      {skill.libraryReceipt && <ReviewedLibraryProvenance receipt={skill.libraryReceipt} />}
       {bindings.length > 0 && (
         <section className="skill-studio-side" aria-label="Mandatory approval rules">
           <h4>Mandatory approval rules · read-only</h4>
@@ -503,11 +498,14 @@ function StudioHistory({ skill }: { skill: OrgSkillDto }) {
     </>
   );
 }
-function approvalRuleStatus(skill: OrgSkillDto): string {
-  if (skill.standingRule && skill.standingRule.state !== 'active') return 'These approval actions are retained in history. This rule no longer applies to future work.';
-  return skill.status === 'active' || skill.status === 'locked'
-    ? 'Approval is required for these actions even when this skill is not selected or is turned off for prompts in a project.'
-    : 'These saved rules apply when this skill is active, regardless of whether it is selected for a prompt.';
+
+function ReviewedLibraryProvenance({ receipt }: { receipt: NonNullable<OrgSkillDto['libraryReceipt']> }) {
+  return <section className="skill-studio-side" aria-label="Reviewed library provenance">
+    <h4>Reviewed library provenance · read-only</h4>
+    <p>Installed public guidance. Active use rechecks current approval and contribution permission.</p>
+    <dl><dt>Receipt schema</dt><dd>{receipt.schemaVersion}</dd><dt>Immutable library version</dt><dd>{receipt.libraryVersionId}</dd>
+      <dt>Artifact SHA-256</dt><dd>{receipt.artifactSha256}</dd><dt>Approval signature SHA-256</dt><dd>{receipt.signatureHash}</dd></dl>
+  </section>;
 }
 
 function StandingRuleLedger({ skill }: { skill: OrgSkillDto }) {

@@ -13,6 +13,7 @@
 import { useMemo } from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { listOf } from './qmsList';
+import { learningReviewViewOf } from './qmsApproval';
 import type {
   ChangeControl, ChangeLink, ChangeSummary, ChangeState, ChangeType,
   Classification, RiskLevel, LinkType, Relationship,
@@ -50,6 +51,7 @@ interface ServerChange {
   implementation_overdue?: boolean;
   /** CHANGE_TRANSITIONS for this row's status, sent by the register read. */
   next_states?: unknown;
+  learning_review?: unknown;
 }
 interface ServerLink {
   id: number;
@@ -84,6 +86,7 @@ function adaptChange(r: ServerChange): ChangeControl {
     riskLevel: (r.risk_level as RiskLevel | null) ?? null,
     status: r.status as ChangeState,
     reason: r.reason,
+    learningReview: learningReviewViewOf(r.learning_review),
     targetImplementationDate: r.target_implementation_date,
     createdAt: r.created_at,
     updatedAt: r.updated_at,

@@ -20,6 +20,9 @@ import type { RuleConflictDecisionPackage } from '../../shared/ana/skills.js';
 import { stableStringify } from '../../shared/canonical-json.js';
 import { appendEvent } from './account-canon.js';
 import { writeChainedAuditRow } from './auditService.js';
+import { getTenantScope } from '../db/tenantStore.js';
+import { AggregateLearningRefusedError } from './intelligence/ana-failure-learning.js';
+import { loadReviewedLearningLibraryArtifact, type ReviewedLearningLibraryReceipt } from './qms/controlled-document-service.js';
 
 function generateId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -84,6 +87,7 @@ export interface OrgSkillFields {
 
 /** An organization skill as stored, in the shape the selector and Settings read. */
 export interface OrgSkillRecord extends Omit<OrgSkillFields, 'status'> {
+  libraryReceipt?: ReviewedLearningLibraryReceipt | null;
   standingRuleRecord?: StandingRuleRecord | null;
   id: number;
   bundleId: string;
@@ -364,8 +368,10 @@ function toRecord(row: Record<string, unknown>): OrgSkillRecord {
   const mode = row.extension_mode === 'addendum' || row.extension_mode === 'replace' ? row.extension_mode : null;
   const status = String(row.status ?? 'draft');
   const standingRuleRecord = standingRuleOf(row.metadata);
+  const libraryReceipt = libraryReceiptOf(row);
   assertStoredRuleIdentity(standingRuleRecord, row);
   return {
+    ...(libraryReceipt ? { libraryReceipt } : {}),
     standingRuleRecord,
     id: Number(row.id),
     policyBindings: approvalBindingsOf(row.policy_bindings),
@@ -409,7 +415,68 @@ export async function listOrgSkills(
       ORDER BY name, id`,
     [organizationId, options.includeArchived === true, options.projectId !== undefined, options.projectId ?? null],
   );
+  await verifyReviewedLibraryRows(rows);
   return rows.map(toRecord);
+}
+
+const libraryReceiptSchema = z.object({ schemaVersion: z.literal(1), libraryVersionId: z.string().uuid(),
+  artifactSha256: z.string().regex(/^[a-f0-9]{64}$/), signatureHash: z.string().regex(/^[a-f0-9]{64}$/) }).strict();
+type ReviewedLibrary = Awaited<ReturnType<typeof loadReviewedLearningLibraryArtifact>>;
+const issuedLibraryInstalls = new WeakMap<OrgSkillFields, ReviewedLibrary>();
+function libraryReceiptOf(row: Record<string, unknown>): ReviewedLearningLibraryReceipt | null {
+  const raw = objectOf(row.metadata)?.libraryReceipt;
+  if (raw === undefined && !String(row.bundle_id).startsWith('reviewed_learning_')) return null;
+  const parsed = libraryReceiptSchema.safeParse(raw);
+  if (!parsed.success) throw new AggregateLearningRefusedError();
+  return parsed.data;
+}
+function reviewedLibraryFields(library: ReviewedLibrary): OrgSkillFields {
+  return { name: library.name, description: library.description, instructions: library.instructions,
+    disciplines: ['quality-systems'], useCases: ['review'], segments: [], therapeuticAreas: [], regions: library.regions,
+    submissionTypes: [], surfaces: [], documentTypes: library.documentTypes, triggers: [], tools: [],
+    extendsSkillKey: null, extensionMode: null, status: 'active', projectId: null, policyBindings: [], sourceAuditEventId: null };
+}
+function libraryContentOf(record: Omit<OrgSkillFields, 'status'> & { status: string }) {
+  const fields = { ...record } as Record<string, unknown>;
+  for (const key of ['status', 'expectedVersion', 'id', 'bundleId', 'version', 'updatedAt', 'libraryReceipt', 'standingRuleRecord']) delete fields[key];
+  fields.sourceAuditEventId ??= null;
+  return fields;
+}
+async function verifyReviewedLibraryRows(rows: Array<Record<string, unknown>>): Promise<void> {
+  for (const row of rows) {
+    const receipt = libraryReceiptOf(row);
+    if (!receipt || !['active', 'locked'].includes(String(row.status))) continue;
+    const library = await loadReviewedLearningLibraryArtifact(receipt.libraryVersionId);
+    const record = toRecord(row);
+    if (stableStringify(library.receipt) !== stableStringify(receipt) ||
+        stableStringify(libraryContentOf(record)) !== stableStringify(libraryContentOf(reviewedLibraryFields(library)))) {
+      throw new AggregateLearningRefusedError();
+    }
+  }
+}
+
+/** A named administrator explicitly installs one verified immutable public library version. */
+export async function installReviewedLearningSkill(pool: SkillConnectable, organizationId: number, actor: SkillActor, raw: unknown) {
+  const parsed = z.object({ libraryVersionId: z.string().uuid(), expectedArtifactSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    reasonForChange: z.string().trim().min(8).max(2000) }).strict().safeParse(raw);
+  if (!parsed.success) throw new AggregateLearningRefusedError(400);
+  const library = await loadReviewedLearningLibraryArtifact(parsed.data.libraryVersionId.toLowerCase());
+  if (library.receipt.artifactSha256 !== parsed.data.expectedArtifactSha256) throw new AggregateLearningRefusedError(409);
+  const fields = reviewedLibraryFields(library);
+  issuedLibraryInstalls.set(fields, library);
+  return createOrgSkill(pool, organizationId, fields, { actor, reason: parsed.data.reasonForChange });
+}
+async function installLibraryMetadata(client: SkillTxClient, organizationId: number, actor: SkillActor, fields: OrgSkillFields,
+  metadata: Record<string, unknown>): Promise<void> {
+  const issued = issuedLibraryInstalls.get(fields);
+  if (!issued) return;
+  await authorizeRuleHuman(client, organizationId, null, actor);
+  const current = await loadReviewedLearningLibraryArtifact(issued.receipt.libraryVersionId);
+  if (stableStringify(current) !== stableStringify(issued)) throw new AggregateLearningRefusedError(409);
+  const duplicate = await client.query(`SELECT id FROM account_skill_bundles WHERE organization_id=$1
+    AND metadata->'libraryReceipt'->>'libraryVersionId'=$2`, [organizationId, current.receipt.libraryVersionId]);
+  if (duplicate.rows.length) throw new AggregateLearningRefusedError(409);
+  metadata.libraryReceipt = current.receipt;
 }
 
 export interface AppliedStandingRule {
@@ -636,6 +703,7 @@ export async function loadMandatorySkillGates(
   client: SkillReadClient,
   organizationId: number,
   projectId: number | null,
+  ownerUserId?: number | null,
 ): Promise<{ rules: MandatorySkillGate[]; ruleHash: string }> {
   if (!Number.isSafeInteger(organizationId) || organizationId <= 0 ||
       (projectId !== null && (!Number.isSafeInteger(projectId) || projectId <= 0))) {
@@ -648,6 +716,7 @@ export async function loadMandatorySkillGates(
         AND (project_id IS NULL OR project_id = $2)
       ORDER BY bundle_id, id`, [organizationId, projectId],
   );
+  await verifyReviewedLibraryRows(rows);
   await appliedRulesFromRecords(client, organizationId, projectId, rows.map(toRecord));
   const rules: MandatorySkillGate[] = [];
   const checkedSources = new Set<string>();
@@ -671,8 +740,26 @@ export async function loadMandatorySkillGates(
   }
   const compare = (a: string, b: string): number => a < b ? -1 : a > b ? 1 : 0;
   rules.sort((a, b) => compare(a.bundleId, b.bundleId) || compare(a.toolName, b.toolName) || compare(a.description, b.description));
-  const ruleHash = createHash('sha256').update(JSON.stringify({ organizationId, projectId, rules })).digest('hex');
+  const privateRuleHash = await appendPrivateOwnerGates(client, organizationId, ownerUserId, rules);
+  const ruleHash = createHash('sha256').update(JSON.stringify({ organizationId, projectId, rules, privateRuleHash })).digest('hex');
   return { rules, ruleHash };
+}
+
+/** Private gates export opaque references, never owner-authored wording. */
+async function appendPrivateOwnerGates(client: SkillReadClient, organizationId: number, ownerUserId: number | null | undefined,
+  rules: MandatorySkillGate[]): Promise<string | null> {
+  const scope = getTenantScope();
+  const ownerId = ownerUserId ?? (scope?.tenantId === String(organizationId) ? scope.accountId : null);
+  if (ownerId == null) {
+    if (scope?.source === 'request') throw new OrgSkillRefusal(403, 'PRIVATE_OWNER_REQUIRED', 'A verified account is required before checking private approval rules.');
+    return null;
+  }
+  const { readPrivateUserRuleGates } = await import('./ana-context-router.js');
+  const privateRules = await readPrivateUserRuleGates(client, organizationId, ownerId);
+  for (const rule of privateRules.rules) rules.push({ skillId: rule.profileId, bundleId: `user_rule_${rule.ruleId}`,
+    version: rule.version, projectId: null, sourceAuditEventId: rule.sourceAuditEventId, toolName: rule.toolName,
+    description: 'Your private approval rule requires your explicit review.' });
+  return privateRules.ruleHash;
 }
 
 export interface SkillSettingRecord {
@@ -770,11 +857,13 @@ export async function createOrgSkill(
   change: SkillChange,
 ): Promise<OrgSkillRecord> {
   const { reason, actor } = change;
-  const bundleId = generateId('bundle');
+  const library = issuedLibraryInstalls.get(fields);
+  const bundleId = library ? `reviewed_learning_${organizationId}_${library.receipt.libraryVersionId}` : generateId('bundle');
   try {
     return await inTransaction(pool, async client => {
       await client.query('SELECT pg_advisory_xact_lock(3117,$1::integer)', [organizationId]);
       const rules = await ruleMetadata(client, organizationId, fields, actor);
+      await installLibraryMetadata(client, organizationId, actor, fields, rules.metadata);
       await reconcileRuleWrite(client, organizationId, { fields, rule: rules.standingRule, change });
       const { rows } = await client.query(
         `INSERT INTO account_skill_bundles
@@ -852,6 +941,9 @@ export async function createOrgSkill(
 }
 
 function assertSkillUpdateAllowed(previous: OrgSkillRecord, fields: OrgSkillFields): void {
+  if (previous.libraryReceipt) {
+    if (stableStringify(libraryContentOf(previous)) !== stableStringify(libraryContentOf(fields))) throw new AggregateLearningRefusedError(409);
+  }
   if ((previous.standingRuleRecord || fields.standingRule || fields.expectedVersion !== undefined) && fields.expectedVersion !== previous.version) {
     throw new OrgSkillRefusal(409, 'RULE_VERSION_CHANGED', 'Re-read the current rule version before changing it.');
   }
@@ -933,6 +1025,7 @@ export async function updateOrgSkill(
         ],
       );
       const next = toRecord(rows[0]);
+      await verifyReviewedLibraryRows(rows);
       await writeChainedAuditRow(client, {
         tenantId: organizationId,
         userId: actor.userId,

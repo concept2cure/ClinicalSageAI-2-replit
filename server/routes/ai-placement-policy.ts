@@ -21,6 +21,13 @@ import { clientIpOf } from '../utils/client-ip';
 import { governedActorId } from '../middleware/orgMembership';
 import { verifyReauth } from './c2c/actions';
 import { createScopedLogger } from '../utils/logger';
+import { AggregateLearningRefusedError, readLearningContributionMetadata } from '../services/intelligence/ana-failure-learning';
+import { writeLearningContributionPolicy, writeLearningPatternContribution } from '../services/tenant/tenant-settings-writer';
+import { listReviewedLearningLibrary } from '../services/qms/changeControl.service';
+import { assertCurrentLearningCurator } from '../services/qms/change-approval-signature';
+import { prepareReviewedLearningCandidate } from '../services/qms/controlled-document-service';
+import { QmsContentRefusedError } from '../services/qms/controlled-document-content';
+import { installReviewedLearningSkill } from '../services/account-skill-bundles';
 import {
   parsePlacementPolicyInput,
   readOrgPlacementPolicy,
@@ -68,15 +75,24 @@ router.get('/', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'NO_ORGANIZATION', message: 'Organization context required.' } });
   }
   try {
-    const [policy, derivativeCustody] = await Promise.all([
+    const [policy, derivativeCustody, learningContribution] = await Promise.all([
       readOrgPlacementPolicy(requestPgClient(req), orgId), readDerivativeCustody(requestPgClient(req), orgId),
+      learningAdministrationMetadata(req, orgId),
     ]);
-    return res.json({ organizationId: orgId, policy, derivativeCustody });
+    return res.json({ organizationId: orgId, policy, derivativeCustody, learningContribution });
   } catch {
     log.error('placement policy read failed');
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'The placement policy could not be read.' } });
   }
 });
+
+async function learningAdministrationMetadata(req: Request, organizationId: number) {
+  const q = requestPgClient(req), userId = governedActorId(req)!;
+  const metadata = await readLearningContributionMetadata(q, organizationId, userId);
+  let canCurate = false;
+  try { await assertCurrentLearningCurator(q, userId); canCurate = true; } catch { /* No curator controls without current standing. */ }
+  return { ...metadata, canCurate, library: await listReviewedLearningLibrary() };
+}
 
 async function manageDerivative(req: Request, res: Response, organizationId: number, userId: number) {
   try {
@@ -106,6 +122,32 @@ function derivativeReauthentication(value: unknown): Parameters<typeof verifyRea
   return { password: input.password as string | undefined, totp: (input.totp ?? input.totpCode) as string | undefined };
 }
 
+async function manageLearning(req: Request, res: Response, organizationId: number, userId: number) {
+  try {
+    const { reauth, action, ...body } = req.body;
+    if (!['learning_policy', 'learning_contribute', 'learning_prepare', 'learning_install'].includes(action)) throw new AggregateLearningRefusedError(400);
+    const proof = await verifyReauth(userId, derivativeReauthentication(reauth));
+    if (!proof.ok) return res.status(401).json({ error: { code: 'REAUTH_REQUIRED', message: 'Confirm your password and required second factor before changing learning contributions.' } });
+    const result = await performLearningAction(req, organizationId, userId, action, body);
+    return res.json({ organizationId, learningContribution: result, audited: true });
+  } catch (error) {
+    if (error instanceof AggregateLearningRefusedError) return res.status(error.status).json({ error: { code: error.code, message: error.message } });
+    if (error instanceof QmsContentRefusedError) return res.status(error.status).json({ error: { code: error.code, message: error.message } });
+    return res.status(503).json({ error: { code: 'LEARNING_CHANGE_UNCONFIRMED', message: 'The learning contribution change could not be confirmed. Re-read its current status before retrying.' } });
+  }
+}
+
+function performLearningAction(req: Request, organizationId: number, userId: number, action: string, body: unknown) {
+  const pool = requestConnectable(req);
+  if (action === 'learning_policy') return writeLearningContributionPolicy(pool, organizationId, userId, body);
+  if (action === 'learning_contribute') return writeLearningPatternContribution(pool, organizationId, userId, body);
+  if (action === 'learning_install') return installReviewedLearningSkill(pool, organizationId,
+    { userId, ipAddress: clientIpOf(req), userAgent: String(req.headers['user-agent'] ?? '') }, body);
+  return prepareReviewedLearningCandidate({ pool, tenantId: organizationId, actor: { id: String(userId), email: null },
+    audit: { pool, tenantId: organizationId, actorId: String(userId), actorEmail: 'unknown', actorRole: 'unknown',
+      ipAddress: clientIpOf(req) ?? 'unknown', userAgent: String(req.headers['user-agent'] ?? '') } }, body);
+}
+
 router.put('/', async (req: Request, res: Response) => {
   const orgId = positiveInt((req as any).user?.organizationId);
   if (orgId === null) {
@@ -118,6 +160,7 @@ router.put('/', async (req: Request, res: Response) => {
   if (typeof req.body?.action === 'string' && req.body.action.startsWith('derivative_')) {
     return manageDerivative(req, res, orgId, userId);
   }
+  if (typeof req.body?.action === 'string' && req.body.action.startsWith('learning_')) return manageLearning(req, res, orgId, userId);
   const input = parsePlacementPolicyInput(req.body);
   if (!input.ok) {
     return res.status(422).json({ error: { code: 'INVALID_POLICY', message: input.message } });

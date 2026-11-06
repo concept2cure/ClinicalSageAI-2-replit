@@ -43,6 +43,8 @@ import { buildMemoryContextForChat } from '../services/memory-context-assembler.
 import { serverError } from '../lib/api-response';
 import { ProjectAdmissionRefusal, requireProjectAdmission } from './c2c/project-access';
 import { createScopedLogger } from '../utils/logger';
+import { requestConnectable, requestDb, requestPgClient } from '../db/requestDb';
+import { z } from 'zod';
 
 const router = Router();
 const log = createScopedLogger('client-intelligence');
@@ -714,25 +716,41 @@ import {
   buildUserContext,
   upsertUserProfile,
   buildMergedContext,
+  readPrivateUserRuleLedger,
+  writePrivateUserRule,
 } from '../services/ana-context-router';
+
+const profileIdentityId = z.union([z.number(), z.string().regex(/^[1-9]\d*$/).transform(Number)]).pipe(z.number().int().positive().max(2147483647));
+function privateProfileIdentity(req: Request, res: Response): { userId: number; organizationId: number } | null {
+  const parsed = z.object({ userId: profileIdentityId, organizationId: profileIdentityId }).safeParse({ userId: req.user?.id, organizationId: req.user?.organizationId });
+  if (parsed.success) return parsed.data;
+  res.status(401).json({ success: false, error: { code: 'PRIVATE_OWNER_REQUIRED', message: 'Your verified account and organization are required.' } });
+  return null;
+}
+function privateProfileFailure(res: Response, error: unknown): Response {
+  if (error instanceof z.ZodError) return res.status(422).json({ success: false, error: { code: 'PRIVATE_RULE_INVALID', message: 'Check the private rule fields before saving.' } });
+  if (error instanceof Error && 'status' in error && typeof error.status === 'number' && [401,403,404,409,422,503].includes(error.status) &&
+    'code' in error && typeof error.code === 'string' && /^PRIVATE_[A-Z_]+$/.test(error.code)) {
+    return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
+  }
+  log.warn('Private profile operation could not be confirmed');
+  return res.status(500).json({ success: false, error: { code: 'PRIVATE_PROFILE_UNAVAILABLE', message: 'The private profile operation could not be confirmed.' } });
+}
 
 /**
  * GET /api/client-intelligence/ana/user-profile
  * Get the current user's intelligence profile (User.md layer).
  */
 router.get('/ana/user-profile', async (req: Request, res: Response) => {
+  const identity = privateProfileIdentity(req, res);
+  if (!identity) return;
   try {
-    const userId = (req as any).user?.id;
-    const organizationId = (req as any).user?.organizationId;
-    if (!userId || !organizationId) {
-      return sendError(res, 401, 'Authentication required');
-    }
-
-    const { db } = await import('../db');
+    const { userId, organizationId } = identity;
+    const privateRules = await readPrivateUserRuleLedger(requestPgClient(req), organizationId, userId);
     const { userIntelligenceProfiles } = await import('shared/schema/ana-intelligence');
     const { eq, and } = await import('drizzle-orm');
 
-    const [profile] = await db
+    const [profile] = await requestDb(req)
       .select()
       .from(userIntelligenceProfiles)
       .where(
@@ -743,9 +761,9 @@ router.get('/ana/user-profile', async (req: Request, res: Response) => {
       )
       .limit(1);
 
-    return sendSuccess(res, { profile: profile || null });
+    return sendSuccess(res, { profile: profile || null, privateRules });
   } catch (err) {
-    return serverError(res, log, 'reading the AnA user profile', err);
+    return privateProfileFailure(res, err);
   }
 });
 
@@ -754,17 +772,17 @@ router.get('/ana/user-profile', async (req: Request, res: Response) => {
  * Upsert the current user's intelligence profile.
  */
 router.post('/ana/user-profile', async (req: Request, res: Response) => {
+  const identity = privateProfileIdentity(req, res);
+  if (!identity) return;
   try {
-    const userId = (req as any).user?.id;
-    const organizationId = (req as any).user?.organizationId;
-    if (!userId || !organizationId) {
-      return sendError(res, 401, 'Authentication required');
+    const { userId, organizationId } = identity;
+    if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'action')) {
+      return res.json(await writePrivateUserRule(requestConnectable(req), organizationId, userId, req.body));
     }
-
-    await upsertUserProfile(userId, organizationId, req.body);
+    await upsertUserProfile(userId, organizationId, req.body, requestPgClient(req));
     return sendSuccess(res);
   } catch (err) {
-    return serverError(res, log, 'saving the AnA user profile', err);
+    return privateProfileFailure(res, err);
   }
 });
 

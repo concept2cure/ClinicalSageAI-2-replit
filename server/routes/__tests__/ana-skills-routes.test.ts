@@ -74,6 +74,17 @@ const MEMBER = { id: 6, organizationId: 42, role: 'member', roles: ['member'] };
 const REASON = 'Our CMC group follows its own stability SOP.';
 const LIBRARY_KEY = 'therapeutic-area';
 
+it('returns a typed hold for an unverified reviewed-library receipt without exposing stored prose', async () => {
+  const client = fakeClient(sql => sql.includes('FROM account_skill_bundles') ? [{ id: 3, bundle_id: 'reviewed_learning_42_unverified',
+    name: 'PRIVATE_UNREVIEWED_NAME_CANARY', prompt_fragments: [{ content: 'PRIVATE_UNREVIEWED_PROSE_CANARY' }],
+    status: 'active', version: 1, metadata: { libraryReceipt: { schemaVersion: 1, approved: true, donorText: 'PRIVATE_DONOR_CANARY' } } }] : []);
+  const response = await request(appAs(MEMBER, client)).get('/api/ana-skills/organization');
+  expect(response.status).toBe(403);
+  expect(response.body.error.code).toBe('AGGREGATE_LEARNING_REFUSED');
+  expect(JSON.stringify(response.body)).not.toMatch(/PRIVATE_|approved|donorText/);
+  expect(client.seen.filter(row => row.sql.includes('FROM account_skill_bundles'))).toHaveLength(1);
+});
+
 const SKILL = {
   name: 'Batch record review',
   description: 'How our QA group reviews an executed batch record before release.',
@@ -476,6 +487,7 @@ const RULE_ACCESS_DDL = `
   CREATE TABLE organizations (id integer PRIMARY KEY, status text NOT NULL DEFAULT 'active', client_type text);
   CREATE TABLE users (id integer PRIMARY KEY, name text, status text NOT NULL DEFAULT 'active');
   CREATE TABLE organization_users (organization_id integer,user_id integer,role text,PRIMARY KEY(organization_id,user_id));
+  CREATE TABLE user_intelligence_profiles (id serial PRIMARY KEY,user_id integer,organization_id integer,workflow_preferences jsonb DEFAULT '{}',UNIQUE(user_id,organization_id));
   CREATE TABLE projects (id integer PRIMARY KEY,organization_id integer,status text,owner_id integer,created_by_id integer,
     settings jsonb DEFAULT '{}',regulatory_program_id uuid,therapeutic_area text);
   CREATE TABLE project_members (project_id integer,organization_id integer,user_id integer,role text,status text);
@@ -511,6 +523,7 @@ async function seedRuleFixture() {
     return { rows: out.rows, rowCount: out.rows.length };
   };
   await rulePg.exec(`DELETE FROM mdx_notifications; DELETE FROM unified_tasks; DELETE FROM account_events; DELETE FROM account_skill_bundles; DELETE FROM audit_logs;
+    DELETE FROM user_intelligence_profiles;
     DELETE FROM intelligence.ana_interactions; DELETE FROM project_skill_settings; DELETE FROM organization_skill_settings;
     DELETE FROM project_members; DELETE FROM project_visibility_settings; DELETE FROM projects;
     DELETE FROM organization_users; DELETE FROM users; DELETE FROM organizations;
@@ -519,6 +532,7 @@ async function seedRuleFixture() {
     INSERT INTO organization_users VALUES (42,5,'admin'),(42,6,'member'),(43,7,'admin');
     INSERT INTO projects (id,organization_id,status,owner_id,created_by_id) VALUES (9,42,'active',5,5),(10,42,'active',6,6);
     INSERT INTO project_visibility_settings VALUES (9,42,'org_public'),(10,42,'org_public');
+    SELECT set_config('app.current_tenant_id','42',false),set_config('app.current_account_id','5',false);
   `);
 }
 
@@ -620,7 +634,8 @@ describe('human rule lifecycle and mandatory approval', () => {
     expect(promoted.status,JSON.stringify(promoted.body)).toBe(200);
     expect(promoted.body.skill.version).toBe(2);
     const call = { name:'lookup_fda_guidance',input:{ query:'source evidence' } };
-    const held = await validateHeldSkillApproval({ organizationId:42,userId:5,sqlClient:ruleClient },call);
+    const held = await runWithTenantScope({ tenantId:'42',accountId:5,source:'test',caller:'held-rule-owner-fixture' },
+      () => validateHeldSkillApproval({ organizationId:42,userId:5,sqlClient:ruleClient },call));
     expect(held).toMatchObject({ status:409,code:'SKILL_POLICY_CHANGED' });
     expect((await loadMandatorySkillGates(ruleClient,42,null)).rules).toHaveLength(1);
     const soft = await updateTyped(promoted.body.skill, { standingRule:{level:'soft',state:'active',conflictKey:RULE_KEY},policyBindings:[] });

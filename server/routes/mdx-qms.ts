@@ -102,6 +102,7 @@ import {
   type ChangeState,
 } from '../services/qms/changeControl.service';
 import { approveQmsChangeSigned } from '../services/qms/change-approval-signature';
+import { AggregateLearningRefusedError } from '../services/intelligence/ana-failure-learning';
 import { clientIpOf } from '../utils/client-ip';
 import { requireEditorAccess } from '../middleware/orgMembership';
 import { governedReason } from './governed-reason';
@@ -643,6 +644,14 @@ const approveBody = z.object({
   reason: z.string().trim().min(3, 'A reason for change of at least 3 characters is required').max(2000),
   effectiveDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'effectiveDate must be YYYY-MM-DD').optional(),
 });
+const changeApproveBody = approveBody.extend({ learningReview: z.object({
+  expectedArtifactSha256: z.string().regex(/^[a-f0-9]{64}$/), invariantAccepted: z.literal(true),
+}).strict().optional() });
+const learningReviewOption = (body: z.infer<typeof changeApproveBody>) => body.learningReview ? { learningReview: body.learningReview } : {};
+function learningApprovalFailure(res: Response, error: AggregateLearningRefusedError) {
+  return error.status === 503 ? res.status(503).json({ error: error.message, details: { code: error.code } })
+    : clientError(res, error.status, error.message, { code: error.code });
+}
 
 /* Retirement = the same electronic signature (P1-29 / DP-32, security review
    2026-09-24): the approve body without effectiveDate, which a retirement does
@@ -1342,7 +1351,7 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
 
-  const parsed = approveBody.safeParse(req.body ?? {});
+  const parsed = changeApproveBody.safeParse(req.body ?? {});
   if (!parsed.success) return esignatureComponentMissing(res, 'Approval', parsed.error.flatten().fieldErrors);
   const body = parsed.data;
 
@@ -1365,6 +1374,7 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
       authenticationMethod: verified.secondFactorVerified ? 'password+totp' : 'password',
       secondFactorVerified: verified.secondFactorVerified,
       ipAddress: resolveIpAddress(req),
+      ...learningReviewOption(body),
     });
     commitAttempted = true;
     await client.query('COMMIT');
@@ -1381,6 +1391,7 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
       });
     }
     await client?.query('ROLLBACK').catch(() => undefined);
+    if (err instanceof AggregateLearningRefusedError) return learningApprovalFailure(res, err);
     return signedQmsFailure(res, err, 'change-approve', 'Change');
   } finally {
     client?.release(discardReason);

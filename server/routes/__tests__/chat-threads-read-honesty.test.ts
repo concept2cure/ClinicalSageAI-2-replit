@@ -17,11 +17,15 @@ const query = vi.fn();
 vi.mock('../../db.js', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
 
 const getThreadMessages = vi.fn();
+const boundary = vi.fn();
+const privateMessages = vi.fn();
 // The store is resolved by the helper itself (resolveThreadStore, through the
 // mocked pool above); only the transcript read is replaced.
 vi.mock('../../services/chat-thread-helpers.js', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   getThreadMessages: (...a: unknown[]) => getThreadMessages(...a),
+  threadHasOwnerPrivateBoundary: (...a: unknown[]) => boundary(...a),
+  readOwnerPrivateThreadMessages: (...a: unknown[]) => privateMessages(...a),
 }));
 
 import { listThreads, listThreadMessages } from '../chat/threads';
@@ -32,6 +36,7 @@ function appWith(org: number | null) {
     if (org !== null) (req as unknown as { tenantId: unknown }).tenantId = org;
     // A signed-in caller: the lists are the caller's own (ONE_ANA_ONE_CANVAS.md, slice 3).
     (req as unknown as { user: unknown }).user = { id: 41 };
+    Object.assign(req, { dbClient: { query } });
     next();
   });
   app.get('/api/chat/threads', listThreads);
@@ -42,6 +47,8 @@ function appWith(org: number | null) {
 beforeEach(() => {
   query.mockReset();
   getThreadMessages.mockReset();
+  boundary.mockReset().mockResolvedValue(false);
+  privateMessages.mockReset();
 });
 
 describe('GET /api/chat/threads', () => {
@@ -79,6 +86,27 @@ describe('GET /api/chat/threads', () => {
 });
 
 describe('GET /api/chat/threads/:threadId/messages', () => {
+  it('reads an admitted private transcript only through the explicit current HTTP owner decoder', async () => {
+    query.mockResolvedValueOnce({ rows: [{ store: 'chat' }] });
+    boundary.mockResolvedValue(true);
+    privateMessages.mockResolvedValue([{ role: 'assistant', content: 'Synthetic decrypted owner-only message.' }]);
+    const res = await request(appWith(7)).get('/api/chat/threads/t1/messages');
+    expect(res.status).toBe(200);
+    expect(privateMessages).toHaveBeenCalledWith(expect.objectContaining({ query }), { threadId: 't1', organizationId: 7, userId: 41 });
+    expect(getThreadMessages).not.toHaveBeenCalled();
+    expect(res.body.messages[0].content).toBe('Synthetic decrypted owner-only message.');
+  });
+
+  it('never falls back to the ordinary transcript if private owner decoding fails', async () => {
+    query.mockResolvedValueOnce({ rows: [{ store: 'chat' }] });
+    boundary.mockResolvedValue(true);
+    privateMessages.mockRejectedValue(new Error('PRIVATE_DECODE_CANARY'));
+    const res = await request(appWith(7)).get('/api/chat/threads/t1/messages');
+    expect(res.status).toBe(500); expect(res.body.messages).toBeUndefined();
+    expect(getThreadMessages).not.toHaveBeenCalled();
+    expect(JSON.stringify(res.body)).not.toContain('PRIVATE_DECODE_CANARY');
+  });
+
   it('500s when the transcript read fails — an unreadable thread is not an empty one', async () => {
     /* The ownership check resolves which STORE holds the thread and reads a
        `store` column (resolveThreadStore's UNION over chat_threads/ai_threads).

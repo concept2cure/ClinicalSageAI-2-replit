@@ -203,7 +203,7 @@ export async function loadToolSkillGates(scope?: SkillGateToolScope, call?: Clas
     project = admitted;
   }
   return { organizationId: scope.organizationId, userId: scope.userId ?? null, projectId: project.projectId,
-    ...await loadMandatorySkillGates(client, scope.organizationId, project.projectId) };
+    ...await loadMandatorySkillGates(client, scope.organizationId, project.projectId, scope.userId) };
 }
 
 /** Exact held action, including tenant and project; none of these hashes confers authority on its own. */

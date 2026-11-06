@@ -4,6 +4,17 @@ import { AIGateway, GatewayAbortedError, GatewayPolicyError, resetGateway } from
 import type { GatewayRequest, GatewayResponse, ModelConfig } from '../types';
 import type { Semaphore } from '../concurrency';
 import { AnaProjectScopeError } from '../../ana/project-scope-admission';
+import { runWithTenantScope } from '../../../db/tenantStore';
+import { issueOwnerPrivateModelContext, runWithOwnerPrivateModelContexts, bindOwnerPrivateModelChildRequest } from '../model-call-scope';
+import { LEDGER_COLUMNS } from '../audit';
+import { createHash } from 'node:crypto';
+
+// The local SDK transport and credential-availability boundary are injected.
+// Real owner markers, ciphertext, source receipts and historical reads have a
+// separate canonical PGlite fixture; no qualification or live provider is claimed here.
+const privateIO=vi.hoisted(()=>({client:vi.fn(async()=>null)}));
+vi.mock('../providers/clients',async original=>({...await original<typeof import('../providers/clients')>(),
+  resolveTenantModelCredentialAvailability:async()=>({mode:'platform',providers:[]}),createTenantProviderClient:privateIO.client}));
 
 type GuardedRequest = GatewayRequest & { beforeDispatch?: () => Promise<void> };
 interface GatewayProbe {
@@ -60,6 +71,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
   vi.useRealTimers();
   resetGateway();
+  privateIO.client.mockReset().mockResolvedValue(null);
 });
 
 describe('gateway current-source dispatch checkpoint', () => {
@@ -261,5 +273,91 @@ describe('gateway repeated source checks and cancellation', () => {
     expect(dispatch.mock.calls.map(([, input]) => input.callerModule)).toEqual(['test:after-cancel']);
     expect(failures).not.toHaveBeenCalled();
     expect(fallbacks).not.toHaveBeenCalled();
+  });
+});
+
+const PRIVATE_CANARY='OWNER_PRIVATE_FINAL_SDK_CANARY_984';
+const ownerScope={organizationId:7,userId:3,projectId:42,runId:'private-parent-fixture',threadId:null};
+const asOwner=<T>(operation:()=>T)=>runWithTenantScope({tenantId:'7',accountId:3,source:'request',caller:'private-sdk-boundary-fixture'},operation);
+function privateSdkFixture(deterministicMode=false,providerAvailable=true){
+  const state={current:true,prepared:false,credentialResolved:false,events:[] as string[]};
+  const auditQuery=vi.fn(async(sql:string,_args?:unknown[]):Promise<{rows:Record<string,unknown>[]} >=>{
+    if(sql.includes('to_regclass'))return{rows:[{present:true}]};
+    if(sql.includes('has_table_privilege'))return{rows:[{role:'transport_fixture',can_insert:true}]};
+    if(sql.includes('information_schema.columns'))return{rows:LEDGER_COLUMNS.map(column_name=>({column_name}))};
+    return{rows:[]};
+  });
+  const gateway=new AIGateway({deterministicMode,auditEnabled:true,dbPool:{query:auditQuery},providers:[
+    {name:'local',enabled:providerAvailable,defaultModel:'local-default',models:[]},
+    {name:'openai',enabled:providerAvailable,apiKey:'not-used',defaultModel:'gpt-4o',models:[]}],
+    policy:{maxTokensPerRequest:128000,maxRequestsPerMinutePerOrg:10000,maxRequestsPerMinutePerUser:10000,
+      blockedPatterns:[],contentFilters:false,piiDetection:false}});
+  const sdk=vi.fn(async(_params:unknown)=>({model:'local-default',choices:[{message:{content:'A fixture reply.'},finish_reason:'stop'}],
+    usage:{prompt_tokens:1,completion_tokens:1,total_tokens:2}}));
+  Object.defineProperty(gateway,'localClient',{value:{chat:{completions:{create:sdk}}}});
+  const probe=gateway as unknown as GatewayProbe;
+  const placement=vi.spyOn(probe,'applyOrgPlacementDefaults'),dispatch=vi.spyOn(probe,'dispatchProvider');
+  const capsule=asOwner(()=>issueOwnerPrivateModelContext({scope:ownerScope,sourceRef:'a'.repeat(64),
+    activate:async()=>{state.prepared=true;state.events.push('capture');},
+    recheck:async()=>{if(!state.current)throw new Error(`Owner access revoked ${PRIVATE_CANARY}`);},
+    expand:async()=>{if(!state.prepared||!state.credentialResolved)throw new Error('Expansion preceded encrypted capture or credential resolution');
+      state.events.push('expand');return `Private instruction ${PRIVATE_CANARY}`;}}));
+  privateIO.client.mockImplementation(async()=>{state.credentialResolved=true;state.events.push('credential');return null;});
+  const within=<T>(operation:()=>T)=>asOwner(()=>runWithOwnerPrivateModelContexts([capsule],operation));
+  const input=(extra:Partial<GatewayRequest>={})=>request('test:owner-private',{...ownerScope,provider:'local',model:'local-default',...extra});
+  return {gateway,state,sdk,capsule,within,input,placement,dispatch,auditQuery,probe};
+}
+
+describe('owner-private final SDK payload boundary',()=>{
+  it('expands only after credential resolution and keeps placement, generic dispatch and audit free of raw private text',async()=>{
+    const f=privateSdkFixture(),stream=vi.fn();
+    const result=await f.within(()=>f.gateway.route(f.input({stream:true,onStream:stream,promptCache:{enabled:true,type:'ephemeral'},
+      payloadProvenance:'public',inputSensitivityTiers:[0],metadata:{raw:PRIVATE_CANARY}})));
+    expect(result).toMatchObject({provider:'local',cached:false,deterministic:false,content:'A fixture reply.'});
+    expect(f.state.events.indexOf('expand')).toBeGreaterThan(f.state.events.indexOf('credential'));
+    expect(f.sdk).toHaveBeenCalledTimes(1);expect(JSON.stringify(f.sdk.mock.calls)).toContain(PRIVATE_CANARY);
+    expect(stream).not.toHaveBeenCalled();
+    expect(f.dispatch.mock.calls[0][1]).toMatchObject({inputSensitivityTiers:[3],stream:false});
+    expect(JSON.stringify({placement:f.placement.mock.calls,dispatch:f.dispatch.mock.calls,audit:f.auditQuery.mock.calls})).not.toContain(PRIVATE_CANARY);
+    expect(f.auditQuery.mock.calls.some(([sql])=>sql.includes('INSERT INTO ai.gateway_audit_log'))).toBe(true);
+    const inserted=f.auditQuery.mock.calls.find(([sql])=>sql.includes('INSERT INTO ai.gateway_audit_log'));
+    const metadataText=inserted?.[1]?.[LEDGER_COLUMNS.indexOf('metadata')];
+    if(typeof metadataText!=='string')throw new Error('Expected actual serialized metadata INSERT payload');
+    expect(JSON.parse(metadataText)).toMatchObject({ownerPrivateContext:{preparedSdkPayload:{provider:'local',model:'local-default',
+      sha256:createHash('sha256').update(JSON.stringify(f.sdk.mock.calls[0][0])).digest('hex'),state:'prepared_not_delivery_evidence'}}});
+    expect(JSON.stringify(f.sdk.mock.calls)).not.toContain('cache_control');
+  });
+  it('refuses copied opaque capsules and a different owner before the transport is reached',async()=>{
+    const f=privateSdkFixture();
+    expect(()=>asOwner(()=>runWithOwnerPrivateModelContexts([JSON.parse(JSON.stringify(f.capsule))],()=>{}))).toThrow();
+    expect(()=>runWithTenantScope({tenantId:'7',accountId:4,source:'request',caller:'foreign-owner'},()=>runWithOwnerPrivateModelContexts([f.capsule],()=>{}))).toThrow();
+    expect(f.sdk).not.toHaveBeenCalled();
+  });
+  it('rechecks revoked owner/source after credential resolution and spends no SDK call, retry or fallback',async()=>{
+    const f=privateSdkFixture(),failures=vi.spyOn(f.probe,'recordFailure'),fallbacks=vi.spyOn(f.probe,'getFallbackModels');
+    privateIO.client.mockImplementation(async()=>{f.state.credentialResolved=true;f.state.current=false;return null;});
+    const error=await f.within(()=>f.gateway.route(f.input())).catch(reason=>reason);
+    expect(error).toBeInstanceOf(GatewayPolicyError);expect(JSON.stringify({message:error.message,cause:error.cause})).not.toContain(PRIVATE_CANARY);
+    expect(f.sdk).not.toHaveBeenCalled();expect(f.state.events).not.toContain('expand');expect(failures).not.toHaveBeenCalled();expect(fallbacks).not.toHaveBeenCalled();
+  });
+  it('keeps a forged public tier at T3 and refuses a frontier request before private expansion',async()=>{
+    const f=privateSdkFixture();
+    await expect(f.within(()=>f.gateway.route(f.input({provider:'openai',model:'gpt-4o',payloadProvenance:'public',inputSensitivityTiers:[0]})))).rejects.toThrow('DENY_INPUT_TIER');
+    expect(f.sdk).not.toHaveBeenCalled();expect(f.state.events).not.toContain('expand');
+    expect(JSON.stringify(f.auditQuery.mock.calls)).not.toContain(PRIVATE_CANARY);
+  });
+  it.each(['deterministic','unavailable'])('refuses a %s provider instead of releasing a demo or cached private answer',async mode=>{
+    const f=privateSdkFixture(mode==='deterministic',mode!=='unavailable');
+    await expect(f.within(()=>f.gateway.route(f.input()))).rejects.toMatchObject({code:'OWNER_PRIVATE_CONTEXT_UNAVAILABLE'});
+    expect(f.sdk).not.toHaveBeenCalled();expect(f.state.events).not.toContain('expand');
+  });
+  it('accepts the actual host-issued child lineage and refuses identical serialized parent-run claims',async()=>{
+    const f=privateSdkFixture();
+    const raw=f.input({runId:'actual-child-fixture',parentRunId:ownerScope.runId});
+    await expect(f.within(()=>f.gateway.route(raw))).rejects.toMatchObject({code:'OWNER_PRIVATE_CONTEXT_UNAVAILABLE'});
+    expect(f.sdk).not.toHaveBeenCalled();
+    const admitted=await f.within(()=>f.gateway.route(bindOwnerPrivateModelChildRequest(raw)));
+    expect(admitted.content).toBe('A fixture reply.');expect(f.sdk).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(f.dispatch.mock.calls)).not.toContain(PRIVATE_CANARY);
   });
 });

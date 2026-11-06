@@ -53,10 +53,16 @@
  * @module server/services/ana/turn-record
  */
 
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { sealTenantPayload, type OwnerPrivateEnvelopeContext } from '../security/field-encryption';
+import { assertRunOwnerPrivacyReceipt, ownerPrivateReceiptForHistory, readOwnerPrivateBoundary, readOwnerPrivateMarkers,
+  requireRunOwnerContext, type RunOwnerPrivacyReceipt, type RunOwnerPrivacyMetadata } from './run-control';
+import { readCoordinationKey } from './run-control';
 import { stableStringify } from '../../../shared/canonical-json.js';
 
 import { writeChainedAuditRow } from '../auditService.js';
+import { hashPayload } from '../audit/chain';
+import { verifySequencedRow } from '../audit/chain-row';
 import { qualifyServedModels, type QualifiedServedModel } from '../ai-governance/approved-models.js';
 import { servedModelsOf } from './turn-record-models.js';
 import type { TurnPlanStep } from './turn-plan.js';
@@ -79,6 +85,9 @@ import { endReasonOf, stepRecordLink, type SealedTimelineEvent, type StepRecordL
 export const TURN_RECORD_SCHEMA = 'ana-turn-record/4';
 export const TURN_RECORD_AUDIT_ACTION = 'ana.turn.recorded';
 export const TURN_RECORD_RESOURCE = 'ana_turn_record';
+export const OWNER_PRIVATE_TURN_SCHEMA = 'ana-owner-private-turn/1';
+const privateSealedRecords = new WeakMap<object, RunOwnerPrivacyReceipt>();
+const privateCaptureRequiredRecords = new WeakSet<object>();
 
 export type TurnOutcome = 'answered' | 'stopped' | 'failed';
 
@@ -86,6 +95,34 @@ export type TurnOutcome = 'answered' | 'stopped' | 'failed';
 export interface TextRef {
   sha256: string;
   chars: number;
+}
+export interface OwnerPrivateTextBox { schema: 'owner-private-text/1'; privacy: RunOwnerPrivacyMetadata; keyArn: string;
+  context: OwnerPrivateEnvelopeContext; ciphertext: string; ciphertextSha256: string; sha256: string; chars: number }
+export async function openOwnerPrivateText(q: Queryable, raw: unknown, actor: import('./turn-record-verify').OwnerPrivateReadScope): Promise<string> {
+  const reader = await import('./turn-record-verify'); return reader.openOwnerPrivateText(q, raw, actor);
+}
+/** Ciphertext is the only serializable result. No generic recorder text is created. */
+export async function sealOwnerPrivateText(q: Queryable, receipt: RunOwnerPrivacyReceipt, text: string): Promise<OwnerPrivateTextBox> {
+  const privacy = assertRunOwnerPrivacyReceipt(receipt);
+  await requireRunOwnerContext(q, { organizationId: privacy.organizationId, userId: privacy.ownerUserId });
+  const actor={organizationId:privacy.organizationId,userId:privacy.ownerUserId,runId:privacy.runId,threadId:privacy.threadId,projectId:privacy.projectId};
+  await ownerPrivateReceiptForHistory(q,actor);
+  await assertPrivateSealKey(q,privacy);
+  const markers = await readOwnerPrivateMarkers(q, privacy);
+  if (!markers.some(marker => marker.markerId === privacy.markerId && marker.markerHash === privacy.markerHash)) throw new Error('OWNER_PRIVATE_MARKER_UNAVAILABLE');
+  const context: OwnerPrivateEnvelopeContext = { purpose: 'owner_private_turn', organizationId: privacy.organizationId,
+    ownerUserId: privacy.ownerUserId, projectId: privacy.projectId, runId: privacy.runId, threadId: privacy.threadId,
+    recordId: randomUUID(), sourceHash: sha256Hex(text), policyVersion: privacy.keyVersion };
+  const ciphertext = await sealTenantPayload(text, context, privacy.keyArn);
+  await requireRunOwnerContext(q, { organizationId: privacy.organizationId, userId: privacy.ownerUserId });
+  await ownerPrivateReceiptForHistory(q,actor);
+  await assertPrivateSealKey(q,privacy);
+  return { schema: 'owner-private-text/1', privacy, context, keyArn: privacy.keyArn, ciphertext,
+    ciphertextSha256: sha256Hex(ciphertext), sha256: context.sourceHash, chars: text.length };
+}
+async function assertPrivateSealKey(q:Queryable,privacy:RunOwnerPrivacyMetadata):Promise<void>{
+  const key=await readCoordinationKey(q,privacy.organizationId);
+  if(key.keyArn!==privacy.keyArn||key.version!==privacy.keyVersion)throw new Error('OWNER_PRIVATE_CAPTURE_UNAVAILABLE');
 }
 
 export interface ModelInputBlock {
@@ -317,6 +354,16 @@ export class TurnRecorder {
   private readonly warnings: string[] = [];
   private readonly timeline: SealedTimelineEvent[] = [];
   private streamedSoFar = '';
+  private ownerPrivacy: RunOwnerPrivacyReceipt | null = null;
+  private privateCaptureRequired = false;
+
+  /** A safety requirement only: this grants neither private source access nor SDK admission. */
+  requireOwnerPrivateCapture(): void { this.privateCaptureRequired = true; }
+  markOwnerPrivate(receipt: RunOwnerPrivacyReceipt): void {
+    assertRunOwnerPrivacyReceipt(receipt, { organizationId: this.turn.organizationId, userId: this.turn.actorUserId ?? undefined,
+      runId: this.turn.runId ?? undefined, threadId: this.turn.threadId });
+    this.ownerPrivacy = receipt;
+  }
 
   /** Keep a text as a blob and return its reference. */
   ref(text: string): TextRef {
@@ -589,7 +636,10 @@ export class TurnRecorder {
       timeline: this.timeline, stoppedReason: endReasonOf(this.timeline),
     };
     const text = canonicalJson(body);
-    return { body, text, sha256: sha256Hex(text), blobs: new Map(this.blobs) };
+    const sealed = { body, text, sha256: sha256Hex(text), blobs: new Map(this.blobs) };
+    if (this.ownerPrivacy) privateSealedRecords.set(sealed, this.ownerPrivacy);
+    if (this.privateCaptureRequired) privateCaptureRequiredRecords.add(sealed);
+    return sealed;
   }
 }
 
@@ -608,6 +658,24 @@ export interface Queryable {
 interface ConnectablePool {
   connect: () => Promise<Queryable & { release: (err?: Error) => void }>;
 }
+async function capturedTurn(q: Queryable, sealed: SealedTurnRecord) {
+  const turn = sealed.body.turn;
+  let receipt = privateSealedRecords.get(sealed);
+  const boundary = await readOwnerPrivateBoundary(q, { organizationId: turn.organizationId, runId: turn.runId, threadId: turn.threadId });
+  if (!receipt && !boundary) {
+    if (privateCaptureRequiredRecords.has(sealed)) throw new Error('OWNER_PRIVATE_CAPTURE_UNAVAILABLE');
+    return { text: sealed.text, sha256: sealed.sha256, blobs: sealed.blobs, schema: sealed.body.schema, privacy: null };
+  }
+  if (!turn.runId || turn.actorUserId === null) throw new Error('OWNER_PRIVATE_CAPTURE_UNAVAILABLE');
+  receipt ??= await ownerPrivateReceiptForHistory(q, { organizationId: turn.organizationId, userId: turn.actorUserId, runId: turn.runId, threadId: turn.threadId });
+  assertRunOwnerPrivacyReceipt(receipt, { organizationId: turn.organizationId, userId: turn.actorUserId, runId: turn.runId, threadId: turn.threadId });
+  const bundle = canonicalJson({ schema: 'owner-private-bundle/1', recordText: sealed.text, recordSha256: sealed.sha256,
+    blobs: [...sealed.blobs].map(([sha256,text]) => ({ sha256, text, chars: text.length })) });
+  const box = await sealOwnerPrivateText(q, receipt, bundle), boxText = canonicalJson(box), boxSha = sha256Hex(boxText);
+  const text = canonicalJson({ schema: OWNER_PRIVATE_TURN_SCHEMA, privacy: box.privacy, originalRecordSha256: sealed.sha256,
+    bundle: { sha256: boxSha, chars: boxText.length } });
+  return { text, sha256: sha256Hex(text), blobs: new Map([[boxSha,boxText]]), schema: OWNER_PRIVATE_TURN_SCHEMA, privacy: box.privacy };
+}
 
 /**
  * Write a sealed record: its texts, the record, and the chained audit row, in
@@ -624,9 +692,12 @@ export async function writeTurnRecord(
   const { body } = sealed;
   const orgId = body.turn.organizationId;
   const client = await pool.connect();
+  let committing=false,discard=false;
+  let written:{id:string;sha256:string}|undefined;
   try {
     await client.query('BEGIN');
-    for (const [sha256, text] of sealed.blobs) {
+    const captured = await capturedTurn(client, sealed);
+    for (const [sha256, text] of captured.blobs) {
       await client.query(
         `INSERT INTO ana_record_blobs (organization_id, sha256, text, chars)
          VALUES ($1, $2, $3, $4)
@@ -651,9 +722,9 @@ export async function writeTurnRecord(
         body.turn.outcome,
         body.turn.startedAt,
         body.turn.endedAt,
-        body.schema,
-        sealed.text,
-        sealed.sha256,
+        captured.schema,
+        captured.text,
+        captured.sha256,
       ],
     );
     const id = String(inserted.rows[0].id);
@@ -666,25 +737,40 @@ export async function writeTurnRecord(
       ipAddress: audit.ipAddress,
       userAgent: audit.userAgent,
       details: {
-        recordSha256: sealed.sha256,
-        schema: body.schema,
+        recordSha256: captured.sha256,
+        schema: captured.schema,
         outcome: body.turn.outcome,
         threadId: body.turn.threadId,
         runId: body.turn.runId,
         model: body.model.model,
         startedAt: body.turn.startedAt,
         endedAt: body.turn.endedAt,
-        texts: sealed.blobs.size,
+        texts: captured.blobs.size,
+        ...(captured.privacy ? { ownerPrivateMarkerId: captured.privacy.markerId, originalRecordSha256: sealed.sha256 } : {}),
       },
     });
+    written={id,sha256:captured.sha256};committing=true;
     await client.query('COMMIT');
-    return { id, sha256: sealed.sha256 };
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    throw err;
+    if(!committing){await client.query('ROLLBACK').catch(()=>{discard=true;});throw err;}
+    discard=true;
   } finally {
-    client.release();
+    client.release(discard?new Error('Turn record transaction unconfirmed'):undefined);
   }
+  if(!written)throw new Error('TURN_RECORD_UNCONFIRMED');
+  if(discard)await reconcileTurnRecord(pool,orgId,written);
+  return written;
+}
+async function reconcileTurnRecord(pool:ConnectablePool,orgId:number,written:{id:string;sha256:string}):Promise<void>{
+  const q=await pool.connect();
+  try{
+    const record=(await q.query('SELECT record_text,record_sha256 FROM ana_turn_records WHERE organization_id=$1 AND id=$2',[orgId,written.id])).rows[0];
+    const audit=(await q.query("SELECT * FROM audit_logs WHERE tenant_id=$1 AND action='ana.turn.recorded' AND record_id=$2 ORDER BY chain_seq LIMIT 1",[orgId,written.id])).rows[0];
+    if(!record||!audit||record.record_sha256!==written.sha256||sha256Hex(record.record_text)!==written.sha256||audit.new_values?.recordSha256!==written.sha256||hashPayload(audit.new_values)!==audit.payload_hash)throw new Error('TURN_RECORD_UNCONFIRMED');
+    const verified=await verifySequencedRow(q,{action:audit.action,actor_id:audit.actor_id,target:audit.target,payload_hash:audit.payload_hash,
+      occurred_at:audit.occurred_at,tenant_id:orgId,sha256_chain:audit.sha256_chain,hmac_seal:audit.hmac_seal,chain_seq:audit.chain_seq});
+    if(verified.link!=='linked'||!['valid','no-key'].includes(verified.seal))throw new Error('TURN_RECORD_UNCONFIRMED');
+  }finally{q.release();}
 }
 
 /**

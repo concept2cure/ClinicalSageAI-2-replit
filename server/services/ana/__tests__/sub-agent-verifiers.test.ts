@@ -14,6 +14,7 @@ import { createHash } from 'node:crypto';
 import { draftSourceIdentityForText } from '../draft-source-identity';
 import type { DraftSource } from '../draft-project-sources';
 import { syntheticCurrentPolicyClient } from './support/source-read-tool-fixture';
+import { runWithTenantScope } from '../../../db/tenantStore';
 
 const dbState = vi.hoisted(() => ({ rows: [] as unknown[] }));
 
@@ -96,7 +97,8 @@ import {
 const CTX = { organizationId: 7, userId: 3, sqlClient: syntheticCurrentPolicyClient } as never;
 async function run(tool: string, input: Record<string, unknown>): Promise<string> {
   const { getToolHandler } = await import('../AnaToolExecutor');
-  return getToolHandler(tool)!(input, CTX);
+  return runWithTenantScope({ tenantId: '7', accountId: 3, source: 'test', caller: 'sub-agent-verifier-owner' },
+    () => getToolHandler(tool)!(input, CTX));
 }
 const PAD = ' The analysis followed the prespecified statistical analysis plan for the study.';
 const artifact = (id: number, content: string) => ({ id, artifactId: `a-${id}`, title: `Doc ${id}`, content, ctdSection: null, status: 'draft' });

@@ -21,7 +21,9 @@ vi.mock('../../../services/ana/project-scope-admission', () => ({
   AnaProjectScopeError: class extends Error {},
 }));
 vi.mock('../../../services/ana/source-context-admission', () => ({ assertAnaUploadAccess: async () => undefined }));
-vi.mock('../../../services/chat-thread-helpers.js', () => ({
+vi.mock('../../../services/chat-thread-helpers.js', async importOriginal => ({
+  OwnerPrivateChatError: (await importOriginal<typeof import('../../../services/chat-thread-helpers.js')>()).OwnerPrivateChatError,
+  threadHasOwnerPrivateBoundary: async () => false,
   getOrCreateThread: async () => 'thread-json', getThreadMessages: async () => [...io.history],
   saveChatMessage: io.save, ThreadAccessError: class extends Error {},
 }));
@@ -58,6 +60,8 @@ vi.mock('../../../services/ana/governed-toolset.js', () => ({ governedToolsetFor
 import { registerToolHandler } from '../../../services/ana/AnaToolExecutor';
 import { sendMessageHandler } from '../send-message';
 import { READ_ONLY_INSTRUCTION } from '../../../services/ana/read-only-turn';
+import { syntheticCurrentPolicyQuery } from '../../../services/ana/__tests__/support/source-read-tool-fixture';
+import { runWithTenantScope } from '../../../db/tenantStore';
 
 const SUMMARY = 'The project has an existing evidence record. [SRC-1]';
 const ACTION = '```ana-action\n' + JSON.stringify({ type: 'memo', confidence: 'strong', title: 'Unrequested memo', content: 'A new memo body.' }) + '\n```';
@@ -75,7 +79,10 @@ registerToolHandler('start_product_demo', async () => JSON.stringify({ status: '
 
 const app = express();
 app.use(express.json());
-app.use((req, _res, next) => { Object.assign(req, { tenantId: 7, user: { id: 3, organizationId: 7 } }); next(); });
+app.use((req, _res, next) => {
+  Object.assign(req, { tenantId: 7, user: { id: 3, organizationId: 7 } });
+  runWithTenantScope({ tenantId: '7', accountId: 3, role: 'member', source: 'request', caller: 'classic-read-only-fixture' }, next);
+});
 app.post('/api/chat/send-message', sendMessageHandler);
 const send = (message: string, extra = {}) => httpRequest(app).post('/api/chat/send-message').send({ message, thread_id: 'thread-json', ...extra });
 const modelReply = (content: string, toolUses: any[] = []) => ({ content, toolUses, provider: 'anthropic', model: 'mock-model', requestId: 'mock-request',
@@ -88,13 +95,14 @@ beforeEach(() => {
   io.history = [{ role: 'user', content: 'Draft a document and create follow-up tasks.' }, { role: 'assistant', content: 'I can draft it next.' }];
   io.responses = [];
   io.gateway.mockImplementation(async () => io.responses.shift() ?? modelReply(SUMMARY));
-  io.query.mockImplementation(async (sql: string) => {
+  io.query.mockImplementation(async (sql: string, params?: unknown[]) => {
     if (/SELECT organization_id FROM ai_threads/.test(sql)) return { rows: [{ organization_id: 7 }] };
     if (/INSERT INTO ai_retrieval_runs/.test(sql)) return { rows: [{ id: 'retrieval-json' }] };
     if (/INSERT INTO ai_retrieval_chunks/.test(sql)) return { rows: [{ id: 'chunk-json', rank: 1, atom_id: 'atom-json', score: 0.9 }] };
     if (/INSERT INTO ai_generation_runs/.test(sql)) return { rows: [{ id: 'generation-json' }] };
     if (/INSERT INTO ai_claims/.test(sql)) return { rows: [{ id: 'claim-json' }] };
-    return { rows: [], rowCount: 0 };
+    // Explicit active unit actor and empty current rule store; no database/RLS claim.
+    return syntheticCurrentPolicyQuery(sql, params);
   });
   io.search.mockResolvedValue([{ id: 'atom-json', title: 'Existing evidence', content: 'The project has an existing evidence record.', score: 0.9 }]);
   io.admit.mockResolvedValue({ projectId: 42, projectRef: '42' });

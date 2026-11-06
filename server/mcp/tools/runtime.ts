@@ -207,7 +207,7 @@ async function createMcpCallSqlClient(principal: McpPrincipal, signal: AbortSign
   if (isPlatformScopeRole(principal.role)) throw new PlatformScopeRoleRefusedError('mcp tool call');
   const { pool } = await import('../../db');
   const client = new LazyRequestDbClient(pool, checkedOut => applySessionScope(checkedOut, {
-    tenantId: String(principal.organizationId), role: principal.role, orgUuid: principal.organizationUuid,
+    tenantId: String(principal.organizationId), role: principal.role, orgUuid: principal.organizationUuid, accountId: principal.userId,
   }));
   const sqlClient: RequestSqlClient = {
     async query(text, params) {
@@ -246,6 +246,7 @@ export function registerTool(server: McpServer, spec: AnyToolSpec, config: McpCo
           tenantId: String(principal.organizationId),
           orgUuid: principal.organizationUuid,
           role: principal.role,
+          accountId: principal.userId,
           source: 'request',
           caller: `mcp:${spec.name}`,
         },
