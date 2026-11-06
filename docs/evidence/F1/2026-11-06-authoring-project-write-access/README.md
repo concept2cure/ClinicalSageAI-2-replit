@@ -60,3 +60,12 @@ Two independent read-only reviews found no material defect in the core repair, c
 ## Roadmap synchronization
 
 Fetched canonical at `c44a21268` (44 commits ahead of discovery). The newly recorded P-104 Anna runtime extends existing packages with independent read-only workers and fixture-gated acceptance; it preserves the one editor, project-first spine and all current file holds. This F1 repair changes neither the plan nor its ledger and does not mark that epic accepted. Merge and final source/check publication receipts follow below when actually completed.
+
+
+## Final integrated qualification
+
+After the canonical merge, a single fresh invocation passes **571/571 Vitest cases across 22 suites** (`integrated-regression.json`), superseding the earlier cumulative core/API/reopen overlays. All **119/119 Node cases** pass in five existing lineage/preprocessing suites (`integrated-lineage.json`). All ten gates pass again, and the current production build passes (`integrated-gates`, `integrated-build`). Every receipt reports zero named-input drift.
+
+The native-app browser re-walk passes **8/8 cases** on the merged UI, at 1440/390 (`integrated-browser.json`, `browser-scope/20261106T192506930Z-335b23/results.json`). Root inspected the real desktop and mobile fault screenshots. The existing mobile blank-state/banner issue remains with D4. The runner's first readiness URL was wrong and no cases ran; `native-browser-wrong-probe` retains that incomplete attempt. The corrected existing `/readyz` reports schema/database/storage ready and only AnA unavailable. `native-browser-runner.json` captures the corrected runner's actual exit 0, including server shutdown.
+
+`canonical-merge.json` records the 40 changed named inputs and unchanged runtime writer contracts. Two independent reviews confirm current P-104 scope and D3/D4 handoffs. Source and evidence are committed locally; accepted normal hooked push and final artifact closure are still pending.

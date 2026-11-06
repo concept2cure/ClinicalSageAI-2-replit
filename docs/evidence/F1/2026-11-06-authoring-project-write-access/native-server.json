@@ -1,6 +1,6 @@
 {
-  "startedAt": "2026-11-06T18:57:36.742013+00:00",
-  "pid": 5493,
+  "startedAt": "2026-11-06T19:24:52.433317+00:00",
+  "pid": 11889,
   "port": 5100,
   "host": "127.0.0.1",
   "runtimeRole": "app_service",
@@ -9,9 +9,6 @@
   "modelRequestsPlanned": false,
   "allowedOrigin": "http://127.0.0.1:5100",
   "entrypoint": "Existing direct server/index.ts command documented by AGENTS; schema already provisioned via existing up",
-  "status": "stopped after completed browser checks",
-  "privateLog": "/workspace/scratch/project-editor-server.log",
-  "actualBrowserResult": "browser-scope/20261106T185930490Z-5bdbe9/results.json",
-  "schemaReady": true,
-  "liveProviderConfigured": false
+  "status": "stopped after integrated browser check",
+  "privateLog": "/workspace/scratch/project-editor-server.log"
 }
