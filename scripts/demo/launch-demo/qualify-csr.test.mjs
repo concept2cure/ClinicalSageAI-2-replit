@@ -34,6 +34,8 @@ const wordXml = '<?xml version="1.0"?><w:document><w:body><w:p><w:r><w:t>' +
 
 test('approved source is unique and requires complete, exact Vault metadata', () => {
   assert.equal(qualifySource(sourceList, sourceId).sha256, sha);
+  const shortenedId = '11111111-2222-4333-888888888888';
+  assert.throws(() => qualifySource({ ...sourceList, sources: [{ ...source, documentId: shortenedId }] }, shortenedId), /existing UUID/);
   assert.throws(() => qualifySource({ ...sourceList, limitReached: true }, sourceId), /incomplete/);
   assert.throws(() => qualifySource({ ...sourceList, sources: [{ ...source, approved: false }] }, sourceId), /not approved/);
   assert.throws(() => qualifySource({ ...sourceList, sources: [source, source] }, sourceId), /expected exactly one/);
