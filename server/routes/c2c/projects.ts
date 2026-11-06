@@ -89,6 +89,7 @@ import { lockDocumentDispositionProgram } from '../../services/document-data-dis
 import { readRecordedUploadLineage } from '../../services/document-data-disposition/recorded-lineage.js';
 import { loadUploadedFile, sha256Hex, UploadedFileError, type UploadedFile } from '../../services/ana/uploaded-file-access.js';
 import { supersededSql } from '../../services/vault/vault-version-family.js';
+import { folderLabel } from '../../services/vault/vault-filing.service.js';
 import { documentAgencyFor, marketOfferGivenOutline, type FilingOffer, type MarketInput } from '../../services/regulatory/market-support.js';
 import { installProjectRouteAccess, requireProjectRouteAccess, requireProjectCreationAccess, withProjectWriteReservation, sendProjectAccessFailure } from './project-route-access';
 import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, verifiedProgramAnchors, ProgramReadAccessError } from '../../services/c2c/current-program-access';
@@ -1402,14 +1403,25 @@ router.get('/:id/evidence', async (req: Request, res: Response) => {
   try {
     if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
+    /* A data-room capture the project uses (S2) carries what it is now: its project, whether a later
+       capture replaced it, and its stored grade. Read under the organization, never another's capture. */
     const { rows } = await pool.query(
       `SELECT
          e.id, e.evidence_kind, e.evidence_ref, e.title, e.meta,
-         e.pinned_by, e.pinned_at, e.reason
+         e.pinned_by, e.pinned_at, e.reason,
+         CASE WHEN s.id IS NULL THEN NULL ELSE jsonb_build_object(
+           'sourceId', s.id, 'projectId', s.client_program_id, 'projectName', rp.name,
+           'isCurrent', s.is_current IS NOT FALSE, 'checksum', s.checksum,
+           'grade', s.grade, 'gradeScore', s.grade_score, 'gradedAt', s.graded_at,
+           'extractionStatus', s.extraction_status) END AS data_room
        FROM c2c_project_pinned_evidence e
+       LEFT JOIN cre_evidence_sources s
+         ON e.evidence_kind = 'data_room' AND e.evidence_ref ~ '^[0-9]{1,10}$'
+        AND s.id = e.evidence_ref::int AND s.organization_id = $2 AND s.deleted_at IS NULL
+       LEFT JOIN regulatory_programs rp ON rp.id = s.client_program_id
        WHERE e.project_id = $1
        ORDER BY e.pinned_at DESC`,
-      [req.params.id],
+      [req.params.id, orgId],
     );
 
     return res.json({ evidence: rows });
@@ -1428,6 +1440,35 @@ router.get('/:id/evidence', async (req: Request, res: Response) => {
 
 // ── POST /api/c2c/projects/:id/evidence ──────────────────────────────────────
 
+/**
+ * The title of a data-room capture a project may use, or null once the refusal is sent: it must be a
+ * current capture in the person's catalog for this project (S2). One answer for absent and inaccessible.
+ */
+async function dataRoomPinTitle(
+  res: Response,
+  p: { orgId: number; userId: number; programId: string; evidenceRef: string },
+): Promise<string | null> {
+  if (!/^[0-9]{1,10}$/.test(p.evidenceRef)) { send400(res, 'evidenceRef must be a data-room source id.'); return null; }
+  try {
+    const { catalogProgramIds } = await import('../../services/clinical-regulatory-evidence/data-room-search.js');
+    const allowed = await catalogProgramIds({ organizationId: p.orgId, userId: p.userId }, p.programId);
+    const found = await pool.query(
+      `SELECT title, is_current FROM cre_evidence_sources
+        WHERE id = $1 AND organization_id = $2 AND source_type = 'client_document' AND deleted_at IS NULL
+          AND client_program_id::text = ANY($3::text[])`,
+      [Number(p.evidenceRef), p.orgId, allowed],
+    );
+    const src = found.rows[0];
+    if (!src) { res.status(404).json({ error: 'SOURCE_NOT_FOUND', message: 'No captured file with this id is in your data catalog for this project.' }); return null; }
+    if (src.is_current === false) { res.status(409).json({ error: 'SOURCE_SUPERSEDED', message: 'A later capture replaced this file. Use the current one.' }); return null; }
+    return String(src.title ?? `Source ${p.evidenceRef}`);
+  } catch (err: unknown) {
+    if (err instanceof ProgramReadAccessError) sendProjectAccessFailure(res, err);
+    else serverError(res, logger, 'checking the data-room source', err, { programId: p.programId });
+    return null;
+  }
+}
+
 router.post('/:id/evidence', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   const orgId  = resolveOrgId(req);
@@ -1445,9 +1486,19 @@ router.post('/:id/evidence', async (req: Request, res: Response) => {
     return send400(res, 'evidenceKind, evidenceRef, and title are required');
   }
 
-  const VALID_KINDS = new Set(['artifact','vault_doc','rim_precedent','guidance']);
+  const VALID_KINDS = new Set(['artifact','vault_doc','rim_precedent','guidance','data_room']);
   if (!VALID_KINDS.has(evidenceKind)) {
     return send400(res, `evidenceKind must be one of: ${[...VALID_KINDS].join(', ')}`);
+  }
+
+  /* "Use in this project" (S2): a data-room capture is used only when it is a current capture
+     in the person's catalog for this project (their accessible projects of this sponsor). The
+     title is the capture's own, never the request's. One answer for absent and inaccessible. */
+  let pinTitle = title;
+  if (evidenceKind === 'data_room') {
+    const checked = await dataRoomPinTitle(res, { orgId, userId, programId: String(req.params.id), evidenceRef: String(evidenceRef) });
+    if (checked === null) return;
+    pinTitle = checked;
   }
 
   try {
@@ -1458,7 +1509,7 @@ router.post('/:id/evidence', async (req: Request, res: Response) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (project_id, evidence_kind, evidence_ref) DO NOTHING
        RETURNING *`,
-      [req.params.id, evidenceKind, evidenceRef, title, meta ?? null, userId, reason ?? null],
+      [req.params.id, evidenceKind, String(evidenceRef), pinTitle, meta ?? null, userId, reason ?? null],
       );
       if (result.rows.length) await writeProgramAudit(q, { orgId, userId, programId: String(req.params.id),
         action: 'c2c.project.evidence.pin', details: { evidenceKind, evidenceRef, reason: reason ?? null } });
@@ -1483,11 +1534,13 @@ router.delete('/:id/evidence/:evId', async (req: Request, res: Response) => {
       const result = await q.query(
       `DELETE FROM c2c_project_pinned_evidence
        WHERE id = $1 AND project_id = $2
-       RETURNING id`,
+       RETURNING id, evidence_kind, evidence_ref`,
       [req.params.evId, req.params.id],
       );
       if (result.rows.length) await writeProgramAudit(q, { orgId, userId, programId: String(req.params.id),
-        action: 'c2c.project.evidence.unpin', details: { evidenceId: String(req.params.evId) } });
+        action: 'c2c.project.evidence.unpin', details: {
+          evidenceId: String(req.params.evId), evidenceKind: result.rows[0].evidence_kind, evidenceRef: result.rows[0].evidence_ref,
+        } });
       return result;
     });
     if (del.rows.length === 0) return send404(res);
@@ -1859,7 +1912,10 @@ router.get('/:id/conversation-files', async (req: Request, res: Response) => {
 // real `total`. With none of them the answer is what it was: the newest 200,
 // superseded included. An unreadable filter is a 400, never a wider list.
 
-type ShapeableSource = EvidenceSourceRow & { snippet?: string | null; charCount?: number | null; pageCount?: number | null; studyRef?: number | null };
+type ShapeableSource = EvidenceSourceRow & {
+  snippet?: string | null; charCount?: number | null; pageCount?: number | null; studyRef?: number | null;
+  projectName?: string | null; studyName?: string | null;
+};
 type EvidenceSourceRow = import('../../services/clinical-regulatory-evidence/types.js').EvidenceSource;
 type SourceUsageSummary = { sourceId: number; sections: number; documents: number; changedSections: number };
 
@@ -1890,7 +1946,33 @@ function shapeSource(s: ShapeableSource, usage: Map<number, SourceUsageSummary>)
     charCount: s.charCount ?? null,
     pageCount: s.pageCount ?? null,
     catalog: catalogSummary(s, meta),
+    ...catalogPlacement(s, meta),
   };
+}
+
+/**
+ * Where a source sits and where it came from (S2): its project and study, the CTD section and Vault
+ * folder the classifier proposed, and its lineage (version, the capture it revises).
+ */
+function catalogPlacement(s: ShapeableSource, meta: Record<string, any>) {
+  const dossier = (meta.dossier ?? {}) as Record<string, any>;
+  return {
+    projectId: s.clientProgramId ?? null,
+    projectName: s.projectName ?? null,
+    studyName: s.studyName ?? null,
+    ctdSection: typeof dossier.ctdSection === 'string' ? dossier.ctdSection : null,
+    suggestedFolder: typeof dossier.suggestedFolder === 'string' ? dossier.suggestedFolder : null,
+    suggestedFolderLabel: dossierFolderLabel(dossier),
+    version: s.version ?? null,
+    previousVersionId: (s as { previousVersionId?: number | null }).previousVersionId ?? null,
+  };
+}
+
+/** The reader's name of the Vault folder the classifier proposed, in the view it proposed it for; null when unknown. */
+function dossierFolderLabel(dossier: Record<string, any> | undefined): string | null {
+  const folder = typeof dossier?.suggestedFolder === 'string' ? dossier.suggestedFolder : null;
+  if (!folder || typeof dossier?.view !== 'string') return null;
+  try { return folderLabel(dossier.view as never, folder) || null; } catch { return null; }
 }
 
 /**
@@ -1944,6 +2026,44 @@ function sourceFileFacts(meta: Record<string, any>, prov: Record<string, unknown
   };
 }
 
+/** A row's grade, or null when it has none or none could be computed. */
+function gradeOf(grades: Map<number, unknown> | null, id: number): unknown {
+  return grades?.get(id) ?? null;
+}
+
+/** What the answer adds for the catalog and for grades that could not be computed. */
+function catalogAnswer(catalog: boolean, grades: Map<number, unknown> | null, programIds: string[] | null | undefined, facets: unknown) {
+  return {
+    ...(grades === null ? { gradesUnavailable: true } : {}),
+    ...(catalog ? { scope: 'catalog', catalogProjects: programIds?.length ?? 0, facets } : {}),
+  };
+}
+
+/** Point a room query at the person's catalog for this project; false when it narrows to a project outside it. */
+async function scopeToCatalog(
+  query: { programIds?: string[] | null; project?: string | null },
+  identity: { organizationId: number; userId: number | undefined },
+  programId: string,
+  catalogProgramIds: (identity: { organizationId: number; userId: number | undefined }, programId: string) => Promise<string[]>,
+): Promise<boolean> {
+  query.programIds = await catalogProgramIds(identity, programId);
+  return !query.project || query.programIds.includes(query.project);
+}
+
+/** Every row's grade; a grade that cannot be computed leaves the room readable and says so, never a guessed grade. */
+async function gradeOrUnavailable(
+  gradeSources: typeof import('../../services/clinical-regulatory-evidence/data-room-grade.js').gradeSources,
+  rows: ShapeableSource[],
+  programId: string,
+) {
+  try {
+    return await gradeSources(pool, rows.map((s) => ({ ...s, organizationId: Number(s.organizationId) })));
+  } catch (err: unknown) {
+    logger.warn('data room grades unavailable', { programId, err: err instanceof Error ? err.message : String(err) });
+    return null;
+  }
+}
+
 router.get('/:id/sources', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
@@ -1954,9 +2074,10 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     const { listClientDocuments } = await import(
       '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
     );
-    const { searchDataRoom, parseDataRoomQuery, DataRoomQueryError } = await import(
+    const { searchDataRoom, parseDataRoomQuery, DataRoomQueryError, catalogProgramIds } = await import(
       '../../services/clinical-regulatory-evidence/data-room-search.js'
     );
+    const { gradeSources } = await import('../../services/clinical-regulatory-evidence/data-room-grade.js');
 
     const programId = String(req.params.id);
     let query;
@@ -1969,7 +2090,13 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     /* Superseded sources stay in the list unless current=true: the authoring
        canvas and sources rail read this route too, and each carries isCurrent,
        so a reader that counts can count once. */
-    const { total, currentTotal, sources } = await searchDataRoom(orgId, query, { userId: resolveUserId(req) ?? undefined });
+    /* scope=catalog (S2, 2026-11-06): the catalog across the person's projects of this
+       project's sponsor, from the verified accessible set; never a project the request names. */
+    const catalog = req.query.scope === 'catalog';
+    if (catalog && !(await scopeToCatalog(query, { organizationId: orgId, userId: resolveUserId(req) ?? undefined }, programId, catalogProgramIds))) {
+      return send404(res);
+    }
+    const { total, currentTotal, sources, facets } = await searchDataRoom(orgId, query, { userId: resolveUserId(req) ?? undefined });
     const truncated = (query.offset ?? 0) + sources.length < total;
     const unscoped =
       req.query.includeUnscoped === 'true'
@@ -1993,7 +2120,9 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       { userId: resolveUserId(req) ?? undefined },
     );
 
-    const shape = (s: ShapeableSource) => shapeSource(s, usage);
+    // Every row's grade: a deterministic engine over recorded facts, stored when they change (S2).
+    const grades = await gradeOrUnavailable(gradeSources, [...sources, ...unscoped], programId);
+    const shape = (s: ShapeableSource) => ({ ...shapeSource(s, usage), grade: gradeOf(grades, s.id) });
 
     return res.json({
       projectId: programId,
@@ -2004,6 +2133,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       page: { limit: query.limit, offset: query.offset },
       window: { shown: sources.length, truncated },
       usageScope: 'accessible-citations',
+      ...catalogAnswer(catalog, grades, query.programIds, facets),
     });
   } catch (err: unknown) {
     if (err instanceof ProgramReadAccessError || err instanceof SourceReadAccessError) return sendProjectAccessFailure(res, new ProgramReadAccessError(err.status, err.code, err.message), true);
