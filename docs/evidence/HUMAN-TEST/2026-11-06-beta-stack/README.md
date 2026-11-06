@@ -186,11 +186,31 @@ Gates on the changed files:
    The password may not contain the person's name, email or organisation.
 6. **Invite the testers:** sign in, then use Home → "Invite your team".
 
-## Open
+## The self-host install, the same fix (second change)
 
-- `docker-compose.yml` (the self-host install) has the same three defects.
-  `sslmode=prefer` is refused for host `db` in production, and nothing
-  provisions or embeds. It is not fixed in this change.
+`docker-compose.yml` had the same defects. Run as committed, the app
+crash-looped five times on `The server does not support SSL connections`. Its
+`sslmode=prefer` is refused for host `db` in production in any case, and
+nothing provisioned the database or embedded text.
+
+It now carries what the beta stack carries:
+- `db-tls`, TLS on `db`, and `provision`;
+- the app trusting the certificate and serving as `app_service` only;
+- `embeddings`;
+- `SETUP_TOKEN`;
+- Postgres, Redis and the app published on loopback.
+
+Its optional profiles are unchanged. Run here with the same substitutions, from
+empty volumes:
+- provisioning exits 0;
+- `/readyz` is 200 through the HTTPS front, with every dependency `ok`;
+- the CI sign-in script passes: second factor, project 201, EICAR 400, clean
+  PDF 201;
+- a second provisioning run skips install-fresh and exits 0.
+
+`.env.example`'s self-host note now says the same.
+
+## Open
 - The image build and TEI were not run here (hosts refused, above). ci.yml
   `production-image-boot` builds and boots the image, but CI on
   `concept2cure-v2` is about two days behind: runs queued on 2026-11-04 were
