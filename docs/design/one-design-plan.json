@@ -413,7 +413,9 @@
         "server/services/c2c/charter-objectives.ts",
         "server/routes/mdx-qms.ts",
         "client/src/concept2cure/quality/ChangeControl.tsx",
-        "client/src/concept2cure/quality/qmsApproval.ts"
+        "client/src/concept2cure/quality/qmsApproval.ts",
+        "client/src/concept2cure/quality/changeData.ts",
+        "client/src/concept2cure/quality/changeHooks.ts"
       ]
     },
     {
