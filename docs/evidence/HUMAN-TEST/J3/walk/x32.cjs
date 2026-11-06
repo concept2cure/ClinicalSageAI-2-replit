@@ -1,0 +1,23 @@
+const { c, openDoc } = require('./lib.cjs');
+const prog = '1078548e-39d6-4132-84d7-3cbeb64890d0';
+const T = 'NeuroPanel-Dx 510(k) Summary (J3 walk)';
+(async () => {
+  const b = await c.chromium.launch();
+  const r = await c.signIn(b, 'reviewer');
+  await r.goto(`${c.BASE}/concept2cure/review?program=${prog}`, { waitUntil: 'networkidle' }); await r.waitForTimeout(1500);
+  await r.getByText(T).first().click(); await r.waitForTimeout(1500);
+  await r.getByRole('button', { name: /Request changes/ }).first().click(); await r.waitForTimeout(2500);
+  const rd = r.getByRole('dialog').last();
+  console.log('decision preselected:', await rd.getByLabel('Decision').inputValue());
+  await rd.getByLabel(/Reason \(required\)/).fill('Please name the predicate device and its 510(k) number in section 3.');
+  await c.shot(r, 'j3-f4-request-changes-after.png');
+  await rd.getByRole('button', { name: /Record change request/ }).click(); await r.waitForTimeout(3000);
+  console.log('after', (await rd.innerText().catch(() => '')).match(/Your decision recorded[^\n]*/)?.[0]);
+  await r.keyboard.press('Escape');
+  const p = await c.signIn(b, 'author');
+  await openDoc(p, T, /Device Description/, prog);
+  await c.shot(p, 'x-57-author-after-changes.png');
+  console.log('AUTHOR', (await p.locator('body').innerText()).match(/[^\n]*(hange|returned|Review route)[^\n]*/g)?.slice(0, 12));
+  console.log(c.apiErrors);
+  await b.close();
+})();

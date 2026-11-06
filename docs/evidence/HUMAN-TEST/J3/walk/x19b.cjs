@@ -1,0 +1,22 @@
+const { c, openDoc, prog } = require('./lib.cjs');
+const who = process.argv[3] || 'reviewer';
+(async () => {
+  const b = await c.chromium.launch();
+  const p = await c.signIn(b, who);
+  await openDoc(p, "C2C-101 Investigator's Brochure (J3 walk)", /Summary/);
+  const es = p.getByRole('button', { name: /E-sign/ }).first();
+  console.log('esign title', await es.getAttribute('title'), await es.isEnabled());
+  await es.click(); await p.waitForTimeout(1500);
+  const d = p.getByRole('dialog').last();
+  await c.shot(p, `x-31-esign-${who}.png`);
+  const meaning = process.argv[4] || 'Review';
+  await d.getByRole('radio', { name: meaning }).click().catch(async () => d.getByText(meaning, { exact: true }).click());
+  await d.getByLabel(/Reason for this action/).fill(`J3 walk: ${meaning.toLowerCase()} signature on the IB`);
+  await d.getByLabel(/Password/).fill(process.env.J3_SIGNER_PASSWORD || 'pass-word');
+  await c.shot(p, `x-32-esign-${who}-filled.png`);
+  await d.getByRole('button', { name: 'Sign and commit' }).click(); await p.waitForTimeout(4000);
+  await c.shot(p, `x-33-esign-${who}-after.png`);
+  console.log('AFTER', (await p.locator('body').innerText()).match(/[^\n]*(sign|Sign|frozen|Frozen|refus|approved|Approved)[^\n]*/g)?.slice(0, 20));
+  console.log(c.apiErrors);
+  await b.close();
+})();

@@ -1,0 +1,26 @@
+const c = require('../common.cjs');
+(async () => {
+  const b = await c.chromium.launch();
+  const p = await c.signIn(b, 'author');
+  const prog = '258ad4a3-386f-4ff2-aa76-fb10228b27db';
+  await p.goto(`${c.BASE}/concept2cure/document-authoring?program=${prog}`, { waitUntil: 'networkidle' });
+  await p.getByRole('button', { name: 'More document actions' }).click();
+  await p.getByRole('menuitem', { name: /New document/ }).click();
+  const dlg = p.getByRole('dialog').last();
+  await dlg.getByLabel(/Document title/).fill("C2C-101 Investigator's Brochure (J3 walk)");
+  await dlg.getByRole('radio', { name: 'M1', exact: true }).click();
+  await p.getByText(/Loading templates/).waitFor({ state: 'detached', timeout: 60000 }).catch(()=>{});
+  const sel = p.locator('select:has(option:text("(blank document)"))');
+  await sel.selectOption({ label: "GLOBAL · Investigator's Brochure (IB)" });
+  await p.waitForTimeout(800);
+  await c.shot(p, 'x-05-new-ib-filled.png');
+  console.log((await dlg.innerText()).slice(-1200));
+  const t0 = Date.now();
+  await dlg.getByRole('button', { name: 'Create document' }).click();
+  await p.waitForTimeout(6000); await p.waitForLoadState('networkidle');
+  console.log('create ms', Date.now()-t0, p.url());
+  await c.shot(p, 'x-06-ib-created.png');
+  console.log((await c.mainText(p, 'main')).slice(0, 3500));
+  console.log(c.apiErrors);
+  await b.close();
+})();

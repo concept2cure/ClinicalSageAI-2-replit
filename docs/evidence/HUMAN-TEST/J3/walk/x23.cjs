@@ -1,0 +1,22 @@
+const { c, openDoc } = require('./lib.cjs');
+const prog = '1078548e-39d6-4132-84d7-3cbeb64890d0';
+(async () => {
+  const b = await c.chromium.launch();
+  const p = await c.signIn(b, 'author');
+  await p.goto(`${c.BASE}/concept2cure/document-authoring?program=${prog}`, { waitUntil: 'networkidle' });
+  await p.getByRole('button', { name: 'More document actions' }).click();
+  await p.getByRole('menuitem', { name: /New document/ }).click();
+  await p.getByText(/Loading templates/).waitFor({ state: 'detached', timeout: 60000 }).catch(()=>{});
+  const dlg = p.getByRole('dialog').last();
+  await dlg.getByLabel(/Document title/).fill('NeuroPanel-Dx 510(k) Summary (J3 walk)');
+  const sel = p.locator('select:has(option:text("(blank document)"))');
+  await sel.selectOption({ label: 'US · 510(k) Summary' });
+  await p.waitForTimeout(800);
+  await c.shot(p, 'x-42-510k-filled.png');
+  await dlg.getByRole('button', { name: 'Create document' }).click();
+  await p.waitForTimeout(6000); await p.waitForLoadState('networkidle');
+  await c.shot(p, 'x-43-510k-created.png');
+  console.log((await p.locator('body').innerText()).match(/Document created[^\n]*|[^\n]*refus[^\n]*|[^\n]*Couldn[^\n]*/g));
+  console.log(c.apiErrors);
+  await b.close();
+})();
