@@ -43,7 +43,7 @@ export type HarnessCheck = (typeof HARNESS_CHECKS)[number];
 export type CheckOutcome = 'pass' | 'fail' | 'see_result' | 'not_assessed' | 'error';
 
 export interface CheckReading {
-  check: HarnessCheck;
+  check: HarnessCheck | 'source_spans';
   outcome: CheckOutcome;
   /** One plain sentence, prefixed with what was checked. */
   statement: string;

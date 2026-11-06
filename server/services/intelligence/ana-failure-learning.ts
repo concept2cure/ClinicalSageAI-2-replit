@@ -1,35 +1,26 @@
 /**
- * AnA failure learning — repeated mistakes become cross-tenant memory.
+ * AnA failure learning — tenant-local interaction and correction records.
  *
- * Captures every AnA interaction outcome (accept / edit / reject / regenerate
- * / abandon) and, when failures cluster on the same fingerprint, promotes
- * them to `intelligence.failure_patterns` with a suggested correction.
- * AnA consults these patterns on every future relevant turn so the model
- * self-corrects without code changes.
+ * The former cohort aggregator copied a representative correction verbatim to
+ * shared active patterns. Whitespace normalization, hashing and a tenant count
+ * do not de-identify that text. Existing pattern records carry neither local
+ * de-identification evidence nor a named human's approval of the exact shared
+ * artifact. Under architecture spec v0.5 §§27–29, automatic extraction, shared
+ * correction reads and replay therefore remain held. No configuration or
+ * request-body threshold can substitute for that missing promotion evidence.
  *
- * Privacy controls:
- *   - Per-interaction rows are tenant-scoped and never leave the tenant.
- *   - The cross-tenant `failure_patterns` table only publishes a pattern once
- *     ≥ 3 distinct tenants have hit it (k-anonymity, same gate as the
- *     network risk priors).
- *   - The pattern_fingerprint is a deterministic SHA-256 over canonicalized
- *     dimensions; no raw text crosses tenant boundaries until the consensus
- *     correction is published.
- *
- * The fingerprint is intentionally coarse: agency + document_type +
- * intent_class + normalized prompt summary. Coarse fingerprints cluster
- * better; fine ones never promote.
- *
+ * Interaction capture and writer-scoped agency requirements remain available;
+ * client corrections never become shared advice through these entry points.
  * @module server/services/intelligence/ana-failure-learning
  */
 
 import crypto from 'crypto';
 import { pool } from '../../db/runtime.js';
-import { createScopedLogger } from '../../utils/logger.js';
 
-const log = createScopedLogger('ana-failure-learning');
+export const FAILURE_LEARNING_VERSION = '1.1.0';
 
-export const FAILURE_LEARNING_VERSION = '1.0.0';
+/** A cohort alone cannot authorize sharing client-derived language. */
+export const SHARED_LEARNING_HOLD = 'deidentification_and_human_promotion_required' as const;
 
 // k-anonymity threshold for promoting a pattern to cross-tenant memory.
 export const MIN_TENANT_COUNT = 3;
@@ -238,51 +229,7 @@ export async function recordInteraction(input: RecordInteractionInput): Promise<
   };
 }
 
-// ─── Pattern extraction (cross-tenant, with k-anonymity gate) ────────────────
-
-interface RawClusterRow {
-  pattern_fingerprint: string;
-  agency: Agency;
-  document_type: DocumentType;
-  intent_class: IntentClass;
-  failure_count: number;
-  tenant_count: number;
-  corrections: Array<{ text: string; count: number }>;
-  last_seen_at: string;
-}
-
-/**
- * Aggregate the most common correction text for a fingerprint cluster.
- *
- * We tokenize and bag-of-words match instead of exact-string matching, so
- * "Add PIP statement to §1.6" and "Add a PIP statement in 1.6" cluster
- * together. Returns the highest-frequency canonical correction and the
- * fraction of failures that matched it.
- */
-function pickConsensusCorrection(corrections: Array<{ text: string; count: number }>): {
-  text: string;
-  quorum: number;
-} | null {
-  if (corrections.length === 0) return null;
-
-  const buckets = new Map<string, { repr: string; count: number }>();
-  for (const c of corrections) {
-    const key = normalizeForFingerprint(c.text);
-    if (!key) continue;
-    const existing = buckets.get(key);
-    if (existing) existing.count += c.count;
-    else buckets.set(key, { repr: c.text, count: c.count });
-  }
-
-  let best: { repr: string; count: number } | null = null;
-  let total = 0;
-  for (const b of buckets.values()) {
-    total += b.count;
-    if (!best || b.count > best.count) best = b;
-  }
-  if (!best || total === 0) return null;
-  return { text: best.repr, quorum: best.count / total };
-}
+// ─── Pattern extraction (held until reviewed de-identification exists) ───────
 
 export interface ExtractPatternsOptions {
   readonly minTenantCount?: number;
@@ -295,128 +242,17 @@ export interface ExtractPatternsResult {
   readonly evaluated: number;
   readonly promoted: number;
   readonly suppressed: number;
+  readonly holdReason?: typeof SHARED_LEARNING_HOLD;
 }
 
-export async function extractFailurePatterns(opts: ExtractPatternsOptions = {}): Promise<ExtractPatternsResult> {
-  const minTenants = opts.minTenantCount ?? MIN_TENANT_COUNT;
-  const minFailures = opts.minFailureCount ?? MIN_FAILURE_COUNT;
-  const quorumThreshold = opts.correctionQuorum ?? CORRECTION_QUORUM_THRESHOLD;
-  const lookbackDays = opts.lookbackDays ?? 90;
-
-  // Cluster by fingerprint over the lookback window. We pre-aggregate the
-  // candidate corrections per fingerprint so we don't pull raw rows back
-  // through application memory.
-  const raw = await pool.query<RawClusterRow>(
-    `WITH failures AS (
-       SELECT pattern_fingerprint, agency, document_type, intent_class,
-              organization_id, correction_text, recorded_at
-         FROM intelligence.ana_interactions
-        WHERE outcome <> 'accepted'
-          AND recorded_at > NOW() - ($1 || ' days')::interval
-     ),
-     correction_counts AS (
-       SELECT pattern_fingerprint,
-              correction_text,
-              COUNT(*)::int AS cnt
-         FROM failures
-        WHERE correction_text IS NOT NULL AND length(correction_text) > 0
-        GROUP BY pattern_fingerprint, correction_text
-     ),
-     fingerprint_correction_json AS (
-       SELECT pattern_fingerprint,
-              jsonb_agg(jsonb_build_object('text', correction_text, 'count', cnt)
-                        ORDER BY cnt DESC) AS corrections
-         FROM correction_counts
-        GROUP BY pattern_fingerprint
-     )
-     SELECT f.pattern_fingerprint,
-            MIN(f.agency)        AS agency,
-            MIN(f.document_type) AS document_type,
-            MIN(f.intent_class)  AS intent_class,
-            COUNT(*)::int                       AS failure_count,
-            COUNT(DISTINCT f.organization_id)::int AS tenant_count,
-            COALESCE(fc.corrections, '[]'::jsonb) AS corrections,
-            MAX(f.recorded_at)::text            AS last_seen_at
-       FROM failures f
-       LEFT JOIN fingerprint_correction_json fc USING (pattern_fingerprint)
-      GROUP BY f.pattern_fingerprint, fc.corrections`,
-    [String(lookbackDays)],
-  );
-
-  let evaluated = 0;
-  let promoted = 0;
-  let suppressed = 0;
-
-  for (const row of raw.rows) {
-    evaluated += 1;
-    if (row.tenant_count < minTenants || row.failure_count < minFailures) {
-      suppressed += 1;
-      continue;
-    }
-    const consensus = pickConsensusCorrection(row.corrections ?? []);
-    if (!consensus || consensus.quorum < quorumThreshold) {
-      suppressed += 1;
-      continue;
-    }
-
-    const confidence = Math.min(
-      1,
-      0.4 * consensus.quorum
-        + 0.4 * Math.min(1, row.tenant_count / 10)
-        + 0.2 * Math.min(1, row.failure_count / 30),
-    );
-
-    await pool.query(
-      `INSERT INTO intelligence.failure_patterns (
-         pattern_fingerprint, agency, document_type, intent_class,
-         suggested_correction, correction_source,
-         failure_count, tenant_count, correction_quorum, confidence,
-         last_seen_at, extracted_at, extractor_version, status
-       ) VALUES ($1, $2, $3, $4, $5, 'aggregated_consensus',
-                 $6, $7, $8, $9, $10::timestamptz, NOW(), $11, 'active')
-       ON CONFLICT (pattern_fingerprint) DO UPDATE SET
-         suggested_correction = EXCLUDED.suggested_correction,
-         failure_count = EXCLUDED.failure_count,
-         tenant_count = EXCLUDED.tenant_count,
-         correction_quorum = EXCLUDED.correction_quorum,
-         confidence = EXCLUDED.confidence,
-         last_seen_at = EXCLUDED.last_seen_at,
-         extracted_at = NOW(),
-         extractor_version = EXCLUDED.extractor_version,
-         status = CASE WHEN intelligence.failure_patterns.status = 'curator_disabled'
-                       THEN 'curator_disabled' ELSE 'active' END`,
-      [
-        row.pattern_fingerprint,
-        row.agency,
-        row.document_type,
-        row.intent_class,
-        consensus.text,
-        row.failure_count,
-        row.tenant_count,
-        consensus.quorum,
-        confidence,
-        row.last_seen_at,
-        `failure-learning@${FAILURE_LEARNING_VERSION}`,
-      ],
-    );
-    promoted += 1;
-  }
-
-  if (promoted > 0 || evaluated > 0) {
-    log.info(`Failure patterns extracted: evaluated=${evaluated} promoted=${promoted} suppressed=${suppressed}`);
-  }
-  // Counterfactual replay — proactively warn drafts that match newly-promoted
-  // patterns. Lazy import keeps the module graph acyclic (replay imports
-  // nothing from this file).
-  if (promoted > 0) {
-    try {
-      const { replayRecentlyPromoted } = await import('./counterfactual-replay.js');
-      await replayRecentlyPromoted({ since: new Date(Date.now() - 60 * 60 * 1000) });
-    } catch (err) {
-      log.warn('Counterfactual replay failed:', err instanceof Error ? err.message : err);
-    }
-  }
-  return { evaluated, promoted, suppressed };
+/**
+ * Preserve the extraction contract without inspecting or publishing tenant text.
+ * A future QMS-backed promotion path must attest de-identification, tenant
+ * contribution permission, cohort support and a named human's exact-artifact
+ * review. None exists on failure_patterns today; do not invent one from status.
+ */
+export async function extractFailurePatterns(_opts: ExtractPatternsOptions = {}): Promise<ExtractPatternsResult> {
+  return { evaluated: 0, promoted: 0, suppressed: 0, holdReason: SHARED_LEARNING_HOLD };
 }
 
 // ─── Read path (called by AnA on every relevant turn) ────────────────────────
@@ -432,43 +268,17 @@ export interface SuggestedCorrection {
 }
 
 /**
- * Return any active corrections relevant to the current AnA turn, ranked by
- * confidence. AnA's generation path should prepend the top-K corrections to
- * its system prompt so the response self-corrects against known failures.
+ * Legacy active rows may contain a customer's original correction. Neither
+ * status='active' nor correction_source establishes reviewed de-identification.
+ * Keep them out of all generation paths until promotion evidence is available.
  */
-export async function getSuggestedCorrections(query: {
+export async function getSuggestedCorrections(_query: {
   agency: string;
   documentType: string;
   intent: string;
   limit?: number;
 }): Promise<SuggestedCorrection[]> {
-  const agency = binAgencyForInteraction(query.agency);
-  const documentType = binDocumentType(query.documentType);
-  const intent = binIntent(query.intent);
-  const limit = Math.min(50, Math.max(1, query.limit ?? 5));
-
-  const result = await pool.query(
-    `SELECT id, suggested_correction, confidence,
-            tenant_count, failure_count, correction_quorum, last_seen_at::text
-       FROM intelligence.failure_patterns
-      WHERE status = 'active'
-        AND agency = $1
-        AND document_type = $2
-        AND intent_class = $3
-      ORDER BY confidence DESC, failure_count DESC
-      LIMIT $4`,
-    [agency, documentType, intent, limit],
-  );
-
-  return result.rows.map(r => ({
-    id: r.id,
-    suggestedCorrection: r.suggested_correction,
-    confidence: parseFloat(r.confidence),
-    tenantCount: r.tenant_count,
-    failureCount: r.failure_count,
-    correctionQuorum: parseFloat(r.correction_quorum),
-    lastSeenAt: r.last_seen_at,
-  }));
+  return [];
 }
 
 // ─── Agency-requirement discovery ────────────────────────────────────────────
@@ -489,14 +299,9 @@ export interface AgencyRequirement {
 }
 
 /**
- * Surface agency-specific requirements discovered from interaction patterns:
- * validated rules (canonical, every tenant's) and, when asked, the unvalidated
- * suggestions the caller's own organization wrote.
- *
- * 2026-10-15: unvalidated rows were served to every tenant — free text any
- * member of any organization can write through promotePatternToRequirement. An
- * unvalidated row is now its writer organization's only; one with no writer
- * recorded (written before the column existed) is served to no one.
+ * Return only the writer organization's agency requirements. Curator validation
+ * confirms a requirement; it does not attest de-identification for global reuse.
+ * Ownerless legacy records have no safe tenant attribution and remain hidden.
  */
 export async function getAgencyRequirements(query: {
   organizationId: number;
@@ -516,8 +321,9 @@ export async function getAgencyRequirements(query: {
        FROM intelligence.agency_requirements
       WHERE agency = $1
         AND ($2::text IS NULL OR document_type = $2)
+        AND organization_id = $4
         AND (validation_status = 'validated'
-             OR ($3::boolean AND validation_status = 'unvalidated' AND organization_id = $4))
+             OR ($3::boolean AND validation_status = 'unvalidated'))
       ORDER BY confidence DESC, occurrence_count DESC`,
     [agency, documentType, include, query.organizationId],
   );
@@ -540,8 +346,8 @@ export async function getAgencyRequirements(query: {
 
 /**
  * Promote a failure pattern into a structured agency requirement. Called
- * either automatically (high-confidence patterns where the correction reads
- * as a declarative rule) or by curator action.
+ * by curator action or recorded as a tenant-local unvalidated proposal. Neither
+ * path authorizes cross-tenant reuse without a separate de-identification gate.
  *
  * The requirement is recorded 'validated' only when `curator` is given: a user
  * the caller has verified, from the authenticated session, holds platform
@@ -551,7 +357,7 @@ export async function getAgencyRequirements(query: {
  * rule under any name, served to every tenant.
  *
  * `organizationId` is the writer's organization, from the authenticated
- * session; an unvalidated requirement is served to that organization only.
+ * session; all requirements remain in that organization pending shared promotion.
  */
 export async function promotePatternToRequirement(params: {
   organizationId: number;

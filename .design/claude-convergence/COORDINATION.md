@@ -146,3 +146,19 @@ It cannot message, so these are here. Both were measured in the running app, not
    - check the push's own exit status; a pipe through `tail` hides a failure;
    - **after two lost ref races**, ask the coordinating session for a push window: it asks every other session to
      hold its pushes for 15 minutes and says when the window closes (the first, 22:50, landed P-89 and P-90 at 22:52).
+
+## Anna runtime epic — P-104, 2026-11-06
+
+The founder supplied Multi-Agent Architecture Spec v0.5 and explicitly assigned end-to-end implementation by
+extending existing files. The canonical scope, six-component audit, phase/package mapping, expanded spike gates
+and unresolved acceptance are in `docs/design/ONE_DESIGN_PLAN.md` §1d; P-104 is recorded in the launch decision log.
+This is an extension of the current packages, not a parallel program or a release claim.
+
+| Scope | Holder | Handoff |
+|---|---|---|
+| Plan §1d, existing plan ledger, P-104 decision, historical roadmap pointer and this coordination entry | Anna architecture lead (`Codex`, 2026-11-06), roadmap agent | Publish plan before implementation; root owns integration and records actual checks. |
+| Runtime, trust, locality and memory audit | Anna architecture lead's independent agents, read-only until exact files assigned | Preserve current file holds above. Each implementation agent gets disjoint existing files; no new files/tables/mounts/tools. |
+
+The account target changes from the historical platform/client choice to client-owned accounts for client filings.
+Historical records are retained; migration and live transport are not claimed by the plan. No child worker gains
+write/lock/sign/transmit rights. Existing approved-model/PQ, tenant and content-bound approval gates remain enforced.

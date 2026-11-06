@@ -11,7 +11,7 @@
 
 import { isTerminalGatewayError } from '../ai-gateway/gateway-outcome.js';
 import { describeToolPlan } from './agentic-loop.js';
-import type { CheckReading, HarnessCheck, VerifyVerdict } from './sub-agent-result.js';
+import type { CheckReading, VerifyVerdict } from './sub-agent-result.js';
 import type { AgentBrief } from './sub-agent-limits.js';
 
 export type AgentStatus = 'completed' | 'incomplete' | 'cancelled';
@@ -103,7 +103,7 @@ export interface ShapeInput {
   models: readonly AgentModelRecord[];
   usage: { inputTokens: number; outputTokens: number; modelCalls: number };
   reportText: string;
-  checks: { readings: CheckReading[]; verdict: VerifyVerdict; outputs: Array<{ check: HarnessCheck; output: string }> } | null;
+  checks: { readings: CheckReading[]; verdict: VerifyVerdict; outputs: Array<{ check: CheckReading['check']; output: string }> } | null;
 }
 
 /** The full result, as a JSON string. `trace` holds every step whole; the view drops it. */
@@ -132,7 +132,9 @@ export function shapeAgentResult(a: ShapeInput): string {
       ? {
           verdict: a.checks.verdict,
           checks: a.checks.readings,
-          notChecked: NOT_CHECKED,
+          notChecked: a.checks.readings.some(r => r.check === 'source_spans')
+            ? [NOT_CHECKED[0], 'Quotations outside the explicitly checked source spans; semantic support and source authenticity.']
+            : NOT_CHECKED,
           checkOutputs: a.checks.outputs.map(o => ({ check: o.check, output: cap(o.output, CHECK_OUTPUT_MAX) })),
         }
       : {}),
@@ -147,7 +149,7 @@ export function shapeAgentResult(a: ShapeInput): string {
     models: a.models,
     usage: a.usage,
     note: notes.filter(Boolean).join(' '),
-    trace: { steps: a.steps, finalText: a.reportText },
+    trace: { steps: a.steps, finalText: a.reportText, ...(a.checks ? { checkOutputs: a.checks.outputs } : {}) },
   });
 }
 
