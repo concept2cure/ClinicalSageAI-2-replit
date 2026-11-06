@@ -405,6 +405,11 @@ Selecting a primary or secondary endpoint, deciding how a concept should be meas
       'check_dossier_consistency',
       'build_abbreviation_list',
       'medical_writing_review',
+      // Where the report is written (step 12): the canvas and the editor. Pinned
+      // here because a method naming a tool the relevance cap dropped cannot be
+      // followed (turn-skills.ts toolPins).
+      'list_authoring_outline',
+      'draft_authoring_document',
     ],
     references: [
       { kind: 'ich', id: 'E3' },
@@ -428,6 +433,7 @@ Drafting, structuring or checking a clinical study report for an interventional 
 9. Causality wording attributes the judgement to its assessor: "assessed by the investigator as related", "considered by the sponsor as not related". Never state causality as fact.
 10. Subgroups: present results by age, sex and race where the SAP or E3 calls for it; for a US NDA the integrated summaries present effectiveness and safety by these subgroups (21 CFR 314.50(d)(5)).
 11. Before release: \`check_numerical_integrity\` on the draft, \`reconcile_dossier_numbers\` across protocol, SAP, CSR and Module 2, \`check_dossier_consistency\` against the project, \`build_abbreviation_list\`, and \`medical_writing_review\` (document type csr) for heading coverage. Heading coverage is not completeness.
+12. Write it where the person works on it. A report or sections drafted in the conversation are saved with \`draft_authoring_document\` as a CSR document of the open project (document type ICH_CSR, module M5, one section per E3 heading with its E3 number as the code): the person sees it as a canvas, opens it in the editor, and changes it there, where every change you propose is accepted or refused by a person. First call \`list_authoring_outline\`: when the project already has a CSR document, do not make a second; say which it is and that its sections are drafted in the editor, where "Build from the study's data" fills the results sections from the frozen study data. Saving a draft is not approving it.
 
 ## Pitfalls reviewers raise
 - Figures in the text that differ from the tables.
