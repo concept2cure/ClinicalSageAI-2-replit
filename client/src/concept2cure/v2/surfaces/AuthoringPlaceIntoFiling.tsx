@@ -242,7 +242,10 @@ function AuthoringPlaceIntoFilingForDocument({
     setPlacement(null);
     setNeedsReconciliation(false);
     resetStudyValues();
-    setSection(ownCode ?? activeSectionCode ?? '');
+    /* Never prefill a code this dialog refuses (J3, 2026-11-06): with no
+       common code, the open section's code is one of the document's own. */
+    const fallback = activeSectionCode && !ownSectionRefusal(normalizeCtdCode(activeSectionCode), sectionCodes) ? activeSectionCode : '';
+    setSection(ownCode ?? fallback);
     setOp('new');
     target.load();
   };
@@ -427,7 +430,8 @@ function AuthoringPlaceIntoFilingForDocument({
                 <div className="de-desc">
                   {sectionCodes && sectionCodes.length > 0
                     ? `Files the whole saved document (${sectionCodes.length} section${sectionCodes.length === 1 ? '' : 's'}) as one leaf` +
-                      (ownCode ? `, at the document’s own code ${ownCode}.` : '.') + ' Edit to file elsewhere.'
+                      (ownCode ? `, at the document’s own code ${ownCode}. Edit to file elsewhere.`
+                        : sectionCodes.length > 1 ? '. Enter the CTD code it is filed at, one that covers all of its sections.' : '. Edit to file elsewhere.')
                     : 'Prefilled from the open section; edit to file elsewhere.'}
                 </div>
                 <input
