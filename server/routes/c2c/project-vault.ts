@@ -67,7 +67,6 @@ import {
   resolveOrgVaultView,
   resolveVaultView,
   folderLabel,
-  cabinetFolderOf,
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { sourceReadView } from '../../../shared/data-room-processing-status.js';
@@ -900,9 +899,9 @@ function whereFiled(folderId: string): string {
  * index (the regression tests' call) it is the view's presets, as before.
  * Exported for the tree-merge regression test.
  */
-export function filingCabinet(view: VaultViewId, uploads: UploadRow[], folders?: ProgramFolderIndex): VaultFolder {
-  const index = folders ?? buildFolderIndex(view, { binder: null, reason: '' }, []);
-  const unfiled = uploads.filter(u => !index.treeFolderOf(u));
+/** Each upload by the folder the tree shows it in; those whose folder this project lacks, apart. */
+function sortUploads(index: ProgramFolderIndex, uploads: UploadRow[]) {
+  const unfiled: UploadRow[] = [];
   const byFolder = new Map<string, UploadRow[]>();
   /* Filed to a folder this project does not have. The view is resolved per read
      and not stored on the row, so a document filed under a device folder on a
@@ -912,81 +911,76 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[], folders?:
   const otherView: UploadRow[] = [];
   for (const u of uploads) {
     const folder = index.treeFolderOf(u);
-    if (!folder) continue;
-    if (!index.has(folder)) {
-      otherView.push(u);
-      continue;
-    }
-    const list = byFolder.get(folder) ?? [];
-    list.push(u);
-    byFolder.set(folder, list);
+    if (!folder) unfiled.push(u);
+    else if (!index.has(folder)) otherView.push(u);
+    else byFolder.set(folder, [...(byFolder.get(folder) ?? []), u]);
   }
-  /* The folders people made, by the folder they were made in ('' = the top). */
+  return { unfiled, byFolder, otherView };
+}
+
+/** The cabinet's folder nodes: binder headings, presets and people's folders, each holding its own leaves. */
+function cabinetNodeBuilder(view: VaultViewId, index: ProgramFolderIndex, byFolder: Map<string, UploadRow[]>) {
   const personUnder = new Map<string, PersonFolder[]>();
   for (const f of index.person) {
     const parent = f.parentId != null ? personFolderId(f.parentId) : (f.parentKey && index.has(f.parentKey) ? f.parentKey : '');
-    const list = personUnder.get(parent) ?? [];
-    list.push(f);
-    personUnder.set(parent, list);
+    personUnder.set(parent, [...(personUnder.get(parent) ?? []), f]);
   }
+  const binderUnder = new Map<string | null, BinderNode[]>();
+  for (const n of index.binder?.nodes ?? []) binderUnder.set(n.parentKey, [...(binderUnder.get(n.parentKey) ?? []), n]);
   let ordinal = 0;
+  const leaves = (id: string, own: number) => indexedLeaves(view, own, byFolder.get(id) ?? []);
   const personNodes = (parent: string, depth = 0): VaultFolder[] =>
     depth > 32 ? [] : (personUnder.get(parent) ?? []).map((f) => {
-      ordinal += 1;
+      const own = ++ordinal;
       return {
-        id: `cab-${f.folderId}`,
-        code: '',
-        label: f.name,
-        kind: 'person',
-        madeBy: f.createdBy,
-        children: [...personNodes(f.folderId, depth + 1), ...indexedLeaves(view, ordinal, byFolder.get(f.folderId) ?? [])],
+        id: `cab-${f.folderId}`, code: '', label: f.name, kind: 'person', madeBy: f.createdBy,
+        children: [...personNodes(f.folderId, depth + 1), ...leaves(f.folderId, own)],
       };
     });
-  const binderNodesUnder = new Map<string | null, BinderNode[]>();
-  for (const n of index.binder?.nodes ?? []) {
-    const list = binderNodesUnder.get(n.parentKey) ?? [];
-    list.push(n);
-    binderNodesUnder.set(n.parentKey, list);
-  }
   const binderNode = (n: BinderNode): VaultFolder => {
     const id = binderFolderId(n.key);
-    ordinal += 1;
-    const own = ordinal;
+    const own = ++ordinal;
     return {
       id: `cab-${id}`,
       code: /^M[1-5]$/.test(n.key) ? '' : n.key,
       label: n.label,
       kind: 'binder',
       ...(n.mandatory ? { required: true } : {}),
-      children: [
-        ...(binderNodesUnder.get(n.key) ?? []).map(binderNode),
-        ...personNodes(id),
-        ...indexedLeaves(view, own, byFolder.get(id) ?? []),
-      ],
+      children: [...(binderUnder.get(n.key) ?? []).map(binderNode), ...personNodes(id), ...leaves(id, own)],
     };
   };
-  const children: Array<VaultFolder | VaultDoc> = [];
-  children.push({
-    id: 'cab-unfiled',
-    code: '',
-    label: 'Unfiled · needs review',
-    kind: 'queue',
-    // Not in the index: a section here is the classifier's suggestion, not a place.
-    children: unfiled.map(u => ({ ...uploadLeaf(view, u), num: '—' })),
-  });
-  for (const n of binderNodesUnder.get(null) ?? []) children.push(binderNode(n));
-  for (const folder of index.presets) {
-    ordinal += 1;
-    const own = ordinal;
-    children.push({
-      id: `cab-${folder.id}`,
-      code: '',
-      label: folder.label,
-      kind: 'preset',
-      children: [...personNodes(folder.id), ...indexedLeaves(view, own, byFolder.get(folder.id) ?? [])],
-    });
+  const presetNode = (folder: { id: string; label: string }): VaultFolder => {
+    const own = ++ordinal;
+    return { id: `cab-${folder.id}`, code: '', label: folder.label, kind: 'preset', children: [...personNodes(folder.id), ...leaves(folder.id, own)] };
+  };
+  return { binderRoots: () => (binderUnder.get(null) ?? []).map(binderNode), presetNode, personNodes };
+}
+
+/** A leaf names its folder as the project names it: a binder heading or a person's folder has no preset label. */
+function nameLeafFolders(index: ProgramFolderIndex, nodes: Array<VaultFolder | VaultDoc>): void {
+  for (const n of nodes) {
+    if ('children' in n) nameLeafFolders(index, n.children);
+    else if (n.filing?.folderId) n.filing.folderLabel = index.label(n.filing.folderId) || n.filing.folderLabel;
   }
-  children.push(...personNodes(''));
+}
+
+export function filingCabinet(view: VaultViewId, uploads: UploadRow[], folders?: ProgramFolderIndex): VaultFolder {
+  const index = folders ?? buildFolderIndex(view, { binder: null, reason: '' }, []);
+  const { unfiled, byFolder, otherView } = sortUploads(index, uploads);
+  const build = cabinetNodeBuilder(view, index, byFolder);
+  const children: Array<VaultFolder | VaultDoc> = [
+    {
+      id: 'cab-unfiled',
+      code: '',
+      label: 'Unfiled · needs review',
+      kind: 'queue',
+      // Not in the index: a section here is the classifier's suggestion, not a place.
+      children: unfiled.map(u => ({ ...uploadLeaf(view, u), num: '—' })),
+    },
+    ...build.binderRoots(),
+    ...index.presets.map(build.presetNode),
+    ...build.personNodes(''),
+  ];
   if (otherView.length > 0) {
     children.push({
       id: 'cab-other-view',
@@ -1000,22 +994,13 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[], folders?:
       })),
     });
   }
-  /* A leaf names its folder as the project names it: a binder heading or a
-     person's folder has no preset label, and the record read the raw id. */
-  const nameFolders = (nodes: Array<VaultFolder | VaultDoc>): void => {
-    for (const n of nodes) {
-      if ('children' in n) nameFolders(n.children);
-      else if (n.filing?.folderId) n.filing.folderLabel = index.label(n.filing.folderId) || n.filing.folderLabel;
-    }
-  };
-  nameFolders(children);
+  nameLeafFolders(index, children);
+  const binder = index.binder;
   return {
     id: 'cabinet',
     code: '',
-    label: index.binder ? `Filing binder · ${index.binder.label}` : 'Source files · filing cabinet',
-    ...(index.binder
-      ? { binder: { docType: index.binder.docType, agency: index.binder.agency, version: index.binder.version, label: index.binder.label } }
-      : {}),
+    label: binder ? `Filing binder · ${binder.label}` : 'Source files · filing cabinet',
+    ...(binder ? { binder: { docType: binder.docType, agency: binder.agency, version: binder.version, label: binder.label } } : {}),
     ...(index.binderMissing ? { note: index.binderMissing } : {}),
     children,
   };
