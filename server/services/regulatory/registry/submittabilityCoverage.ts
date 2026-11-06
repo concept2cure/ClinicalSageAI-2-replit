@@ -110,8 +110,8 @@ const PORTAL_ONLY_FORMATS: ReadonlyMap<string, string> = new Map([
  *
  *  `gateway`     — a gateway pair in the submission-gateways registry carries it.
  *  `portal`      — a human web portal; no gateway will ever carry it.
- *  `unconnected` — a machine channel exists at the agency, but the platform has
- *                  no connector for it. Build-only here; the applicant transmits.
+ *  `unconnected` — the filing's channel has no platform connector. The applicant
+ *                  submits; this does not assert that a machine channel exists.
  *  `none`        — the region has no identity, so nothing names a channel.
  */
 export type SubmissionChannel =
@@ -224,6 +224,15 @@ const NOTIFIED_BODY_REASON =
 const NOTIFIED_BODY_STEP =
   'The platform prepares the content; the applicant submits it to the Notified Body through the channel that Notified Body specifies.';
 
+/** Current MHRA route (effective 28 April 2026), read with transitional guidance
+ * on 2026-11-06. This names a recipient, not an IRAS schema or an integration. */
+const UK_CTA_CHANNEL: SubmissionChannel = {
+  kind: 'unconnected',
+  channel: 'Combined IRAS review (MHRA and REC)',
+  reason: 'MHRA approval guidance effective 28 April 2026 specifies combined IRAS review by MHRA and REC as the standard route. Separate applications require advance written MHRA approval. The initial application submission date decides old/new rules; the date, product scope and document applicability remain unassessed. The platform has no IRAS connector.',
+  applicantStep: 'The platform prepares application content; the applicant completes and validates the actual forms and submits through IRAS or the exceptional route agreed with MHRA. The platform has no IRAS connector. This preparation does not establish joint approval or authorise trial start.',
+};
+
 const DEVICE_FAMILIES = new Set(['device_approval', 'device_clearance']);
 
 /** Regional gateways do not establish a channel to these device recipients.
@@ -240,6 +249,7 @@ function unmodelledDeviceRecipient(entry: RegulatoryApplicationType): string | n
 }
 
 export function submissionChannelFor(entry: RegulatoryApplicationType): SubmissionChannel {
+  if (entry.id === 'UK_CTA') return UK_CTA_CHANNEL;
   // The entry's own declared format first: a registered gateway for the region
   // is not a channel for a filing whose entry says it goes to a portal.
   const portal = PORTAL_ONLY_FORMATS.get(String(entry.submissionFormat ?? ''));

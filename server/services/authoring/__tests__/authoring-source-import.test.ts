@@ -4,6 +4,7 @@ import type { Pool } from 'pg';
 import { importSourceDocument, parseSourceImportInput, type SourceImportDeps } from '../authoring-source-import';
 import { parseProvenance } from '../authoring-from-draft';
 import type { CreateContext } from '../authoring-documents';
+import type { ProjectShareMember } from '../../project-sharing-access';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const FOREIGN = '22222222-2222-4222-8222-222222222222';
@@ -21,6 +22,7 @@ function fixture() {
   let existing: Record<string, unknown> | null = null;
   let role: string | null = 'member';
   let visibility = 'org_public';
+  let members: ProjectShareMember[] = [{ userId: Number(principal.id), role: 'edit', status: 'active' }];
   let anchors = [{ id: 42, clientWorkspaceId: null }];
   let accessUnavailable = false;
   let revokeAtSave = false;
@@ -44,7 +46,7 @@ function fixture() {
     if (/FROM projects\s+WHERE/i.test(sql)) return { rows: anchors };
     if (/FROM projects p/i.test(sql)) {
       if (accessUnavailable) throw new Error('Injected project policy read failure');
-      return { rows: [{ id: 42, owner_id: 99, created_by_id: 99, settings: {}, visibility, members: [], review_assigned: false }] };
+      return { rows: [{ id: 42, owner_id: 99, created_by_id: 99, settings: {}, visibility, members, review_assigned: false }] };
     }
     if (/AS current FROM vault.documents d/i.test(sql)) {
       expect(params).toEqual([SOURCE, PROGRAM, 1]);
@@ -61,7 +63,7 @@ function fixture() {
   const ctx: CreateContext = { pool, tenantId: 1, actor: { id: principal.id, email: principal.email },
     audit: { pool, tenantId: 1, actorId: principal.id, actorEmail: principal.email, actorRole: 'MEMBER', ipAddress: '', userAgent: '' } };
   const create = vi.fn<SourceImportDeps['create']>(async (_ctx, input, options) => {
-    if (revokeAtSave) visibility = 'private';
+    if (revokeAtSave) { visibility = 'private'; members = []; }
     await options?.verifiedImport?.reserve(pool);
     return { kind: 'created', document: { id: DOC, title: input.title }, sections: input.sections.map(section => ({ ...section })),
       provenance: { source: 'import', recordedAt: 'now', importSource: { ...options!.verifiedImport!.origin, reason, warnings: options!.verifiedImport!.warnings } }, binding: { documentId: null } };
@@ -69,7 +71,8 @@ function fixture() {
   const deps: SourceImportDeps = { readVaultBytes: vi.fn(async () => bytes), readUpload: vi.fn(async () => ({ buffer: bytes, fileName: 'source.pdf', mimeType: 'application/pdf' })),
     classify: vi.fn(() => 'pdf' as const), importDocx: vi.fn(), extractText: vi.fn(async () => ({ text: bytes.toString(), method: 'pdf-text' as const })), create };
   return { ctx, deps, record, statements, remove: () => { removed = true; }, change: () => { changedAtSave = true; },
-    setRole: (value: string | null) => { role = value; }, private: () => { visibility = 'private'; },
+    setRole: (value: string | null) => { role = value; }, private: () => { visibility = 'private'; members = []; },
+    useOnly: () => { members = [{ userId: Number(principal.id), role: 'use', status: 'active' }]; },
     unanchored: () => { anchors = []; }, ambiguous: () => { anchors = [...anchors, { id: 43, clientWorkspaceId: null }]; },
     unavailable: () => { accessUnavailable = true; }, revoke: () => { revokeAtSave = true; },
     current: (value: boolean | undefined) => { currentVersion = value; },
@@ -78,6 +81,16 @@ function fixture() {
 }
 
 describe('source → one authoring working copy', () => {
+  it('refuses use-only project membership before source metadata, bytes, conversion or creation', async () => {
+    const f = fixture(); f.useOnly();
+    expect(await importSourceDocument(f.ctx, principal, body, f.deps)).toMatchObject({ ok: false, status: 403, code: 'PROJECT_PERMISSION_DENIED' });
+    expect(f.statements.some(sql => /FROM vault.documents|FROM cre_evidence_sources/.test(sql))).toBe(false);
+    expect(f.deps.readVaultBytes).not.toHaveBeenCalled();
+    expect(f.deps.readUpload).not.toHaveBeenCalled();
+    expect(f.deps.extractText).not.toHaveBeenCalled();
+    expect(f.deps.create).not.toHaveBeenCalled();
+  });
+
   it('refuses private project access before source metadata, bytes, conversion or creation', async () => {
     const f = fixture(); f.private();
     expect(await importSourceDocument(f.ctx, principal, body, f.deps)).toMatchObject({ ok: false, status: 403, code: 'PROJECT_PERMISSION_DENIED' });

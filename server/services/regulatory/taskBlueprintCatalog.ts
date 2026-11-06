@@ -17,6 +17,7 @@ import * as usNda from './registry/blueprints/usNdaBlueprint.js';
 import * as usBla from './registry/blueprints/usBlaBlueprint.js';
 import * as euMaa from './registry/blueprints/euMaaBlueprint.js';
 import * as euCta from './registry/blueprints/euCtaBlueprint.js';
+import * as ukCta from './registry/blueprints/ukCtaBlueprint.js';
 import * as canadaNds from './registry/blueprints/canadaNdsBlueprint.js';
 import * as canadaCta from './registry/blueprints/canadaCtaBlueprint.js';
 import * as japanMaa from './registry/blueprints/japanMaaBlueprint.js';
@@ -88,6 +89,7 @@ const TASK_BLUEPRINTS: Record<string, TaskBlueprint> = {
   US_BLA: usBla.taskBlueprint,
   EU_MAA: euMaa.taskBlueprint,
   EU_CTA: euCta.taskBlueprint,
+  UK_CTA: ukCta.taskBlueprint,
   CA_NDS: canadaNds.taskBlueprint,
   CA_CTA: canadaCta.taskBlueprint,
   JP_MKT_APPROVAL: japanMaa.taskBlueprint,
