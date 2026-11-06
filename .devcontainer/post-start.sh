@@ -170,6 +170,35 @@ if [[ "$(cat "$C2C_CODESPACE_STATE/demo-seed.done" 2>/dev/null)" != "$C2C_DEMO_V
   fi
 fi
 
+# A demonstration is a conversation: the default 15-minute idle sign-out
+# would end it mid-sentence. The development organisation's idle window is set
+# to 120 minutes once, through the governed settings route an administrator
+# uses (PATCH /api/tenant-config/:id/settings, audited as
+# tenant_settings_changed). Real tenants keep their own setting.
+c2c_set_idle_window() {
+  local email="$1" minutes="$2" marker="$C2C_CODESPACE_STATE/idle-window.done"
+  grep -qx "$email=$minutes" "$marker" 2>/dev/null && return 0
+  if C2C_BASE="http://127.0.0.1:$C2C_PORT" C2C_EMAIL="$email" C2C_MINUTES="$minutes" node -e '
+    (async () => {
+      const base = process.env.C2C_BASE;
+      const l = await (await fetch(base + "/api/auth/dev-login", { method: "POST",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: process.env.C2C_EMAIL }) })).json();
+      const org = l?.user?.organizationId;
+      if (!l?.accessToken || !org) process.exit(1);
+      const r = await fetch(base + "/api/tenant-config/" + org + "/settings", { method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + l.accessToken },
+        body: JSON.stringify({ security: { sessionTimeoutMinutes: Number(process.env.C2C_MINUTES) } }) });
+      const j = await r.json().catch(() => null);
+      process.exit(r.status === 200 && j?.security?.sessionTimeoutMinutes === Number(process.env.C2C_MINUTES) ? 0 : 1);
+    })().catch(() => process.exit(1));' 2>/dev/null; then
+    echo "$email=$minutes" >>"$marker"
+    c2c_log "Idle sign-out for $email's organisation: $minutes minutes."
+  else
+    c2c_log "Could not set the idle sign-out for $email's organisation; it stays at the default (15 minutes)."
+  fi
+}
+c2c_set_idle_window "$DEMO_SEED_EMAIL" 120
+
 # The CSR study (CDISCPILOT01), prepared once: the public CDISC pilot ADaM
 # files are fetched OUTSIDE the repository (CDISC's terms forbid committing or
 # altering them), uploaded and approved in Vault by three people, and the CSR
