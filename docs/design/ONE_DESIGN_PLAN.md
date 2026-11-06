@@ -330,6 +330,14 @@ basis, controlled rule and actual model, with attributable revisions rather than
 lock, sign, transmit, approve themselves or turn an unverified proposal into a filing fact. Models remain fallible;
 source validation and independent/human approval are the control, not a promise of zero hallucinations.
 
+The existing `chat-thread-helpers.ts`, AnA history/record handlers, legacy chat handlers and
+`cortex-unified.ts` share the same permanent owner-private boundary. Generic model-context readers receive
+private placeholders; only an authenticated owner history read or a privately issued model capsule may decrypt.
+Private context activates encrypted run/thread capture before message persistence and enters model payloads only
+at the final governed boundary, with fresh owner, source, key and project admission. Unprotected external tool
+queries and governed write proposals remain held until their exact payload has an encrypted approval/egress path.
+These existing paths are included in S4; no route, table, screen or source file is added.
+
 ### Milestones in the existing roadmap — §11 build order
 
 Each row is **queued for v0.5 acceptance** until its stated fixture is run and recorded. A file's existence or an

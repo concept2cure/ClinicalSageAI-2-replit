@@ -417,7 +417,11 @@
         "client/src/concept2cure/quality/changeData.ts",
         "client/src/concept2cure/quality/changeHooks.ts",
         "server/services/ectd/assess-dispatch-readiness.ts",
-        "server/services/ectd/leaf-document-resolver.ts"
+        "server/services/ectd/leaf-document-resolver.ts",
+        "server/services/chat-thread-helpers.ts",
+        "server/routes/chat/send-message.ts",
+        "server/routes/chat/threads.ts",
+        "server/routes/cortex-unified.ts"
       ]
     },
     {
