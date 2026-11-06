@@ -351,7 +351,8 @@
         "server/services/working-memory.ts",
         "server/services/ana-session-bootstrap.ts",
         "server/services/vault/document-catalog-document.ts",
-        "server/services/vault/document-catalog-actor-reads.ts"
+        "server/services/vault/document-catalog-actor-reads.ts",
+        "db/migrations/20260520_ana_failure_learning.sql"
       ]
     },
     {
@@ -705,6 +706,54 @@
           ],
           "gate": "Provenanced eSTAR/predicate/CER factory fixtures on proven spine",
           "status": "queued"
+        }
+      ],
+      "deliverySlices": [
+        {
+          "name": "context_instruction_precedence",
+          "commit": "93b6f1a5",
+          "status": "component_verified",
+          "testsPassed": 3
+        },
+        {
+          "name": "correspondence_blocker_verdict",
+          "commit": "91dcd2ea",
+          "status": "component_verified",
+          "testsPassed": 37
+        },
+        {
+          "name": "connector_error_custody",
+          "commit": "1033d183",
+          "status": "component_verified",
+          "testsPassed": 40
+        },
+        {
+          "name": "selected_source_sensitivity_boundary",
+          "status": "component_verified",
+          "suitesPassed": 12,
+          "testsPassed": 238,
+          "scope": "selected Vault source classifications; complete classification and derivative routing pending",
+          "commit": "af8723e7"
+        },
+        {
+          "name": "shared_learning_containment",
+          "status": "component_verified_commit_pending",
+          "testsPassed": 31,
+          "scope": "unsafe sharing held; reviewed promotion not implemented"
+        },
+        {
+          "name": "agency_requirement_writer_tenant_policy",
+          "status": "component_verified_commit_pending",
+          "testsPassed": 10,
+          "scope": "existing policy amended and replayed; no new table"
+        },
+        {
+          "name": "independent_exact_quotation_check",
+          "status": "component_verified",
+          "suitesPassed": 5,
+          "testsPassed": 149,
+          "scope": "selected source spans match exactly; semantic claim support and full spike remain unassessed",
+          "commit": "c08aba5c"
         }
       ]
     }

@@ -440,6 +440,28 @@ Each session records what it delivered here, under its package, while the coordi
 facts only: commits by SHA, evidence by path, what was found, and what is next. It changes no package's scope,
 status or ownership; closing a package stays §3 step 5.
 
+#### S4 / S10 — Anna runtime v0.5, first bounded controls (2026-11-06, P-104)
+
+**What already exists.** The six-component audit and completion contracts are in §1d. These changes extend those
+same services and tests; they do not add a second runtime, tables, routes, tools or files.
+
+| Slice | Commit / existing-file evidence | Verification and limit |
+|---|---|---|
+| Roadmap integration | `7edec20d`: this plan §1d, existing ledger, P-104 and roadmap pointer | Phases 0–8 mapped; full expanded spike remains **acceptance pending**. |
+| Context precedence | `93b6f1a5`: `server/services/ana-context-router.ts` and existing test | 3 context cases pass. Project instructions outrank tenant/user context; this is not a durable RuleRecord/conflict/hard-gate runtime. |
+| Correspondence blocker verdict | `91dcd2ea`: `server/routes/orchestration.ts`, `server/services/orchestration/pre-submission-gate-verdict.ts`, existing `pre-submission-gate-honest.test.ts` / `pre-submission-gate-verdict.test.ts` | 37 tests pass: confirmed open blocking correspondence holds; pending review is conditional; failed scoped read holds. No learned subjective-fit or exact-package clean-file claim. |
+| Connector error custody | `1033d183`: `server/services/connectors/` existing registry and four providers; `connector-tenant-isolation.test.ts` | 40 tests pass, including reflected-secret canaries. Upstream response bodies and arbitrary exception messages cannot become agent-facing errors. Full credential-grant/capture/transmission acceptance is still owed. |
+| Source-aware locality boundary | Existing `server/services/ai-gateway/`, `server/services/ana/draft-project-sources.ts`, `AnaDocumentDraftingService.ts`, and Vault document-catalog readers; `af8723e7` | Agent verification: 12 suites / 238 tests pass. The root's narrower boundary set: 5 files / 123 tests pass (overlapping coverage, not additive). Private-issued selected Vault classifications enforce highest tier, T2/T3 raw frontier refusal and content-free audit, independent of PII mode. Legacy/unclassified caller coverage, ingest classification, approved derivatives/local merge and local hosting remain incomplete. |
+| Independent exact quotation check | Existing `server/services/ana/sub-agent*.ts`, `agentic-workflow-tools.ts` and the existing sub-agent, toolset, verifiers, hostable and passage-staging test suites; `c08aba5c` | 5 suites / 149 tests pass (`/workspace/scratch/runtime-tests.log`, local session output). Source-span comparison is deterministic and isolated from the drafter; missing/malformed source results fail closed. Exact matching does not establish semantic claim support or full spike verification. |
+| Shared-learning containment | Existing `server/services/intelligence/ana-failure-learning.ts`, `counterfactual-replay.ts`, existing tenant fixture tests; implementation commit pending | 31 preliminary targeted tests pass. Unsafe shared correction extraction/reads are held rather than promoting tenant text. This does not implement de-identification, contribution policy, human/QMS promotion or a RuleRecord ledger. |
+| Writer-tenant agency-requirement policy | Existing creator `db/migrations/20260520_ana_failure_learning.sql`, amended in place under RULE 1; `server/routes/__tests__/ri-agency-requirements-unvalidated-visible-only-to-writer-org.pglite.test.ts`; implementation commit pending | 10 PGlite cases pass, including direct SQL as NOSUPERUSER/NOBYPASSRLS, foreign validated-row refusal, own-row access, missing-tenant refusal, and replay twice over the prior permissive policy. The shared failure-pattern store still lacks reviewed promotion evidence; shared product reads stay held. |
+
+**Next.** Record the remaining implementation commits and consolidated
+checks, then execute the expanded fixture contract. Exact quotation checks cannot establish semantic claim support.
+No provider call, live transmission, authority-account transition, full derivative round-trip, production rollout,
+customer IQ/OQ or complete spike pass is asserted by these component checks. Phases 1–8 stay queued behind their
+stated gates.
+
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
 **Delivered**
