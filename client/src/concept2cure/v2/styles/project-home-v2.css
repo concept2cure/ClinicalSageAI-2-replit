@@ -53,6 +53,14 @@
    the page, a `--bg-050` hover, the header row in D0's table type. */
 .c2c-v2 .pj-index .ctable { background: var(--bg-000); }
 .c2c-v2 .pj-index .ct-row { font-size: var(--fs-small); line-height: 1.45; color: var(--text-200); text-align: left; }
+/* The list's cells wrap rather than spill: a lead's e-mail address ran over the target date beside it (human test J1,
+   2026-11-06). On a phone the seven columns do not fit in 390px; the table keeps its columns and scrolls sideways inside
+   its own frame, where it had squeezed the project's name to a word per line and cut the last four columns off. */
+.c2c-v2 .pj-index .ct-head > div, .c2c-v2 .pj-index .ct-row > div { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .c2c-v2 .pj-index .ctable { overflow-x: auto; }
+  .c2c-v2 .pj-index .ct-head, .c2c-v2 .pj-index .ct-row { min-width: 1060px; }
+}
 .c2c-v2 .pj-index .ct-row:hover { background: var(--bg-050); }
 .c2c-v2 .pj-index .ct-row:focus-visible { outline-offset: -2px; }
 .c2c-v2 .pj-index .ct-row .ct-strong { color: var(--text-100); }
