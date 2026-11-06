@@ -1,0 +1,19 @@
+{
+  "exitCode": 0,
+  "processExitCode": 0,
+  "sourcesUnchanged": true,
+  "args": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "server/routes/__tests__/_unified-tasks-pglite-harness.ts",
+    "server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts",
+    "server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts",
+    "server/routes/__tests__/unifiedTasks.routes.test.ts",
+    "server/routes/unifiedTasks.routes.ts",
+    "server/services/tasking/__tests__/task-project-admission.test.ts",
+    "server/services/tasking/task-project.ts",
+    "tests/db/workflow-project-admission.dbtest.ts",
+    "tests/db/workflow-project-native-fixture.ts"
+  ],
+  "elapsedSeconds": 2.1
+}
