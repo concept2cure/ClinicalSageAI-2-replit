@@ -616,11 +616,29 @@ in the running app where a screen changed. Where either was not possible, its RE
   `docs/evidence/F1/2026-11-05-data-room-region/`). So do the CTD filename detector's Module 1 documents: an EMA
   project's cover letter is proposed at 1.0 and its RMP at 1.8.2, a J-NDA's patent status at 1.4, and an FDA form
   number never another region's heading (F1, `303485d77d`; `docs/evidence/F1/2026-11-05-ctd-detector-region/`).
+- **Every other read door an audit found admitting another project's records** (2026-11-05, five slices built by agents
+  and re-tested by this session; evidence under `docs/evidence/F1/2026-11-05-*`):
+  - AnA's 26 citation routes, including run, batch-run and prune (F1, `11877757f0`; `…-ana-citations-scope/`);
+  - MDX search, project sections, the artifacts summary and MCP `c2c_list_projects` (F1, `48c819ebff`;
+    `…-listing-doors-scope/`);
+  - the governed-documents route's reads, with the project's edit right on its five writes (F1, `2d15e84d5b`;
+    `…-c2c-documents-scope/`);
+  - evidence retrieval: `searchHybrid` now requires a project scope, so Evidence ask, cortex query and deep-research
+    generate rank only the person's projects (F1, `fb1b02634c`; `…-evidence-retrieval-scope/`; real PostgreSQL 23 of
+    23);
+  - AnA's platform-command executor, `search_all_documents` and `validate_cross_references`, sharing one scope helper
+    (F1, `02ae648720`; `…-ana-command-executor-scope/`).
+  - `update_vault_document`'s stated reason is read on its own path again (F1, `3d9eae7298`); an earlier refactor
+    here had broken `governed-reason-not-invented.test.ts`, which no pre-push gate runs.
 - **Trunk red fixed:** `catalog-actor-scope-wrapper.test.ts` (7 of 11) had a stale mock (S6, `81fbd0702b`;
   `…/2026-11-05-catalog-actor-scope-mock/`).
 
 **Found**
 
+- **Retrieval no longer reaches atoms of no project.** Derived evidence learnings, chat uploads and project memory
+  were ranked organization-wide; scoping them by program is the next step. The command executor's `list_projects`,
+  `load_user_context` and `list_milestones`, the citation health route and `search_all_documents`' TMF arm are still
+  organization-wide (each slice's "Not done here").
 - **A pharma "Risk management plan" is left unfiled.** The device risk-file rule claims the name first and has no
   pharma folder; "RMP" reaches the CTD detector. An ISO 14971 plan and a Module 1 RMP share the name, so which rule
   claims it is a classifier decision, not a one-line fix.
