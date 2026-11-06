@@ -51,6 +51,29 @@ It was labelled `source: seed`, note "canvas plumbing check, no model", in the c
 
 No 4xx or 5xx responses and no page errors in either walk.
 
+## The CSR as a PDF, walked later the same day
+
+From the project's Author step, **Open** on "CDISCPILOT01 Clinical Study Report" opens it in the one editor. Download,
+then **Working copy (PDF)**, saved an 8-page A4 PDF, tagged, 99 kB, `%PDF-1.7`. The PDF holds:
+- the full ICH E3 outline, 1 to 16;
+- the title page and the study objectives from the study's data;
+- §12.3.2's narrative summary and its list of subjects;
+- the electronic-signatures statement ("Uncontrolled working copy. No electronic signature applies to this copy").
+
+Every page carries the uncontrolled-copy banner with the document id, the version and who downloaded it. The headings
+AnA would draft are empty, as they should be with no key. The PDF is not committed: it holds CDISC pilot text.
+
+One defect, fixed in `9d7624d9fd`: the title page printed "Protocol Number: CDISCPILOT01 Phase: Phase 2 Indication: …"
+as one line. The builder's template set its fields one newline apart. The editor's import and the assembled report
+both read a single newline as a soft wrap, so the fields ran together in the editor, the working copy and the
+assembly. Each field is now its own paragraph. A test in `csr-builder-no-provider.test.ts` failed on the old
+templates and passes now. A CSR already imported keeps its text; the next build carries the fix. In the Codespace the preparation stops at the
+frozen study data (`.devcontainer/post-start.sh`, `DEMO_PREPARE_UNTIL=freeze`), and the build is the founder's to start.
+So the founder's first build carries it.
+
+A walk note, not a product defect: the editor has no `?docId=` deep link. It opens the project's newest document, and
+a document is opened from the project's list. An earlier walk script assumed otherwise.
+
 ## What needs a key
 
 - AnA choosing to call the tool, and the quality of what she writes.
