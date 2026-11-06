@@ -39,3 +39,14 @@ describe('The Projects list reads at 1440 and at 390', () => {
     expect(parseInt(decl(row!.body, 'min-width')!, 10)).toBeGreaterThanOrEqual(1000);
   });
 });
+
+describe("Project home's section actions stay on a phone's screen", () => {
+  // At 390, before this, buttons on Author, Review and Submit ended at 398–456px (walk.cjs measures every step).
+  it('the head and its actions wrap at ≤640px', () => {
+    const phone = sheet('project-home-v2.css').filter((r) => r.media?.includes('max-width: 640px'));
+    expect(phone.some((r) => r.selector === '.c2c-v2 .pj .pj-sec-h' && decl(r.body, 'flex-wrap') === 'wrap')).toBe(true);
+    const acts = phone.find((r) => r.selector === '.c2c-v2 .pj .pj-sec-acts');
+    expect(acts && decl(acts.body, 'flex-wrap')).toBe('wrap');
+    expect(acts && decl(acts.body, 'max-width')).toBe('100%');
+  });
+});
