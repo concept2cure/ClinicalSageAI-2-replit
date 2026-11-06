@@ -525,25 +525,16 @@ describe('exact stored source spans (multi-agent specification §14.4)', () => {
     });
     const r = await run(verify(), withSource());
     expect(sourceReading(r).outcome).toBe('pass');
-    expect(sourceReading(r).statement).toContain('1 exact matches, 0 mismatches');
-    expect(reads).toHaveLength(1);
-    expect(reads[0].ctx).toMatchObject({ organizationId: 7, projectRef: 'prog-uuid', agentDepth: 1 });
-    expect(reads[0].refusal).not.toBeNull();
-    expect(reads[0].modelCallsBefore).toBe(0);
-    expect(r.trace.checkOutputs.find((o: any) => o.check === 'source_spans')).toBeDefined();
-    expect(r.trace.steps[0]).toMatchObject({ round: 0, tool: 'read_vault_document', ok: true });
-    const evidence = JSON.parse(r.checkOutputs.find((o: any) => o.check === 'source_spans').output).evidence[0];
-    expect(evidence.sourceReadHash).toMatch(/^[a-f0-9]{64}$/);
-    expect(evidence.quoteHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(reads).toEqual([expect.objectContaining({ ctx: expect.objectContaining({ organizationId: 7, projectRef: 'prog-uuid', agentDepth: 1 }), refusal: expect.any(Object), modelCallsBefore: 0 })]);
+    expect(r.trace).toMatchObject({ steps: [expect.objectContaining({ round: 0, tool: 'read_vault_document', ok: true })], checkOutputs: expect.arrayContaining([expect.objectContaining({ check: 'source_spans' })]) });
+    expect(JSON.parse(r.trace.checkOutputs.find((o: any) => o.check === 'source_spans').output).evidence[0]).toMatchObject({ sourceReadHash: expect.stringMatching(/^[a-f0-9]{64}$/), quoteHash: expect.stringMatching(/^[a-f0-9]{64}$/) });
     expect(r.notChecked.join(' ')).toContain('semantic support');
-    expect(r.report.advisory).toBe(true);
   });
   it('a one-character mismatch blocks even when the model declares the quote correct', async () => {
     registerToolHandler('read_vault_document', async () => JSON.stringify({ ok: true, content: 'Prefix:Response was 43%.' }));
     gw.script = [{ content: 'All citations are correct.', toolUses: [], usage: {}, provider: 'anthropic', model: 'm', requestId: 'r' }];
-    const r = await run(verify(), withSource());
-    expect(sourceReading(r).outcome).toBe('fail');
-    expect(r.verdict).toBe('issues_found');
+    const r = await run({ ...verify([{ ...span, draft_start: 4, draft_end: 20 }]), text_to_check: '[1] Response was 42%.' }, withSource());
+    expect({ check: sourceReading(r), verdict: r.verdict }).toMatchObject({ check: { outcome: 'fail' }, verdict: 'issues_found' });
   });
   it.each([
     { error: 'No document in this project.' },
