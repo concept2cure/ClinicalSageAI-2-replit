@@ -254,3 +254,19 @@ Full-history deletion review confirms `agent-swarm.ts` was deliberately retired 
 service in `287f34f65`, and the old global rule loader in `359221e5e`. Their live successors are the existing bounded
 run_agent and current Skills/runtime; none is restored. The former process-memory/global-list/body-approvedBy
 swarm cannot become the new authority. All external QA/model/KMS evidence gates remain explicit.
+
+
+### P-104 integrated continuation — 2026-11-06
+
+`a2f9264a5` commits the existing team/progress, immutable peer/run ledger, canonical project monitor, private owner
+rules/custody/final-SDK context and explicit reviewed-learning installation. `5c5b89836` commits existing owner-index,
+private telemetry and canonical signed-manifest transmission refusal repairs. `1a6682d79` merges 29 incoming canonical
+commits without a feature branch. No publication is claimed until every final merged gate passes and the remote
+ref is confirmed. Component evidence is appended to `docs/evidence/ANA-AGENTS/2026-09-27/README.md`.
+
+Root holds Git, the full compiler and final integration. Runtime is finishing durable refusals for child calls that
+were never offered (before wrapper dispatch); Spec owns ordinary AnA genesis qualification in existing authoring
+release validation, coordinating Integration's existing native joined fixture. Test inspects final-ZIP pre-wire
+approval, currently a separately identified gap from the signed manifest. Trust has a read-only seven-path proposal
+for client-confirmed repair closure and holds no task source yet. Automatic private reflection stays held pending
+its own encrypted lifetime proof. No other file holds are released or silently claimed by this continuation.
