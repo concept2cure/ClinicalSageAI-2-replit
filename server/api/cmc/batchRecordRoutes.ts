@@ -59,7 +59,7 @@ function tenantParams(orgId: number): [string, number] {
 
 // Validation schemas
 const createBatchSchema = z.object({
-  projectId: z.string().uuid().optional(),
+  projectId: z.string().guid().optional(),
   batchNumber: z.string().min(1, 'Batch number is required'),
   productName: z.string().min(1, 'Product name is required'),
   batchSize: z.string().optional(),
@@ -215,7 +215,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Invalid input data',
-        details: validationResult.error.errors,
+        details: validationResult.error.issues,
       });
     }
 
@@ -294,7 +294,7 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Invalid input data',
-        details: validationResult.error.errors,
+        details: validationResult.error.issues,
       });
     }
 
@@ -464,7 +464,7 @@ router.post('/:id/release', async (req, res) => {
     return res.status(400).json({
       success: false,
       error: 'Invalid input data',
-      details: validationResult.error.errors,
+      details: validationResult.error.issues,
     });
   }
 

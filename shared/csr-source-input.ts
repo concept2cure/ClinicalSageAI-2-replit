@@ -9,7 +9,7 @@ const count = z.number().int().min(0).max(1_000_000);
 const finite = z.number().finite();
 const maxRecords = 100_000;
 
-export const CsrSourceSelectionSchema = z.object({ documentId: z.string().uuid(), expectedSha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict();
+export const CsrSourceSelectionSchema = z.object({ documentId: z.string().guid(), expectedSha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict();
 export type CsrSourceSelection = z.infer<typeof CsrSourceSelectionSchema>;
 
 /** A ClinicalTrials.gov identifier: NCT and eight digits (NCT05330182). */
@@ -307,7 +307,7 @@ export const CsrSourceEnvelopeSchema = CsrSourceEnvelopeFieldsSchema.superRefine
 export type CsrSourceEnvelope = z.infer<typeof CsrSourceEnvelopeSchema>;
 
 export const CsrSourceReceiptSchema = z.object({
-  adapter: z.literal(CSR_SOURCE_FORMAT), documentId: z.string().uuid(), documentTitle: text, version: z.string().max(100),
+  adapter: z.literal(CSR_SOURCE_FORMAT), documentId: z.string().guid(), documentTitle: text, version: z.string().max(100),
   sha256: z.string().regex(/^[a-f0-9]{64}$/), dataCutDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), studyId: id, protocolNumber: id,
   studyInfo: CsrStudyInfoSchema, clinicalVerification: z.literal('not-established'), sourceApproval: z.enum(['canonical-lifecycle', 'not-approved']),
 }).strict();

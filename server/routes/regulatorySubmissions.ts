@@ -26,7 +26,7 @@ function validationError(res: Response, error: z.ZodError) {
     error: {
       code: 'VALIDATION_ERROR',
       message: 'Request validation failed',
-      details: error.errors.map(e => ({
+      details: error.issues.map(e => ({
         path: e.path.join('.'),
         message: e.message,
       })),

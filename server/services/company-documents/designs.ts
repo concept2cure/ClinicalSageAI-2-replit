@@ -21,7 +21,7 @@ const hashSchema = z.string().regex(/^[a-f0-9]{64}$/);
 const revisionSchema = z.number().int().nonnegative();
 const candidateSchema = profileUpdateSchema.pick({ companyName: true, address: true, contact: true,
   registrationDetails: true, letterhead: true, importedFrom: true, applyToReports: true, applyToSubmissionCorrespondence: true });
-const scopeSchema = z.object({ programId: z.string().uuid().nullable().default(null),
+const scopeSchema = z.object({ programId: z.string().guid().nullable().default(null),
   market: z.string().trim().min(1).max(50).nullable().default(null),
   language: z.string().trim().min(1).max(50).nullable().default(null),
   subsidiary: z.string().trim().min(1).max(300).nullable().default(null) }).strict();
@@ -222,7 +222,7 @@ export function companyDefaultPresentationHash(profile: CompanyDocumentProfile):
  * Scoped stationery must never be promoted to an unrestricted organization default. */
 export async function readApprovedCompanyDefaultDesign(q: RequestSqlClient, organizationId: number,
   designId: string): Promise<CompanyDefaultDesignApproval> {
-  if (!z.string().uuid().safeParse(designId).success) {
+  if (!z.string().guid().safeParse(designId).success) {
     fail('COMPANY_DEFAULT_APPROVAL_REQUIRED', 'Activate an independently reviewed, published organization-wide design before requiring default branding approval.');
   }
   const row = await readRow(q, organizationId, designId);
@@ -286,8 +286,8 @@ export async function readCompanyDesign(req: Request, id: string): Promise<Compa
 
 export async function listCompanyDesigns(req: Request, query: unknown) {
   const input = parseCompanyInput(z.object({ state: z.enum(['draft', 'reviewed', 'published']).optional(),
-    programId: z.string().uuid().optional(), limit: z.coerce.number().int().min(1).max(100).default(25),
-    before: z.string().uuid().optional(), sequenceId: z.coerce.number().int().positive().optional() }).strict(), query);
+    programId: z.string().guid().optional(), limit: z.coerce.number().int().min(1).max(100).default(25),
+    before: z.string().guid().optional(), sequenceId: z.coerce.number().int().positive().optional() }).strict(), query);
   const ctx = await context(req);
   const access = await getCurrentAccessibleProgramScope(ctx.q, { organizationId: ctx.organizationId, userId: ctx.userId });
   if (input.programId) await requireCurrentProgramAccess(ctx.q, { organizationId: ctx.organizationId, userId: ctx.userId, programId: input.programId });
@@ -318,7 +318,7 @@ function assertVariantScope(scope: CompanyDesignScope, target: CompanyVariantCon
 /** Exact selection only. The historical presentation and its reviewed scope are verified independently. */
 export async function readPublishedCompanyVariant(q: RequestSqlClient, organizationId: number, id: string,
   target: CompanyVariantContext): Promise<CompanyDocumentProfile> {
-  parseCompanyInput(z.string().uuid(), id);
+  parseCompanyInput(z.string().guid(), id);
   if (!Number.isSafeInteger(target.userId) || target.userId <= 0) fail('COMPANY_VARIANT_ACTOR_REQUIRED', 'An authenticated organization member must select company stationery.', 403);
   await readCurrentProgramActor(q, { organizationId, userId: target.userId });
   const row = await readRow(q, organizationId, id);

@@ -211,7 +211,7 @@ const createSubmissionSchema = z.object({
      here the plain z.object stripped the id the Submission Center form had made
      the user pick. Tenancy is checked by createSubmission (404 for another
      organization's project), not here. */
-  programId: z.string().uuid(),
+  programId: z.string().guid(),
   title: z.string().min(1).max(500),
   productName: z.string().max(500).optional(),
   applicationType: z.string().min(1).max(64),
@@ -236,7 +236,7 @@ const upsertLeafSchema = z.object({
   documentTable: z
     .string()
     .max(64)
-    .refine(isPlaceableDocumentTable, (v) => ({ message: unplaceableDocumentTableMessage(v) }))
+    .refine(isPlaceableDocumentTable, { error: ({ input }) => unplaceableDocumentTableMessage(input as string) })
     .optional(),
   documentId: z.coerce.number().int().positive().optional(),
   /* The uuid half of the polymorphic reference, for uuid-keyed stores
@@ -246,7 +246,7 @@ const upsertLeafSchema = z.object({
      and that a leaf carries one, not both — is enforced once, in upsertLeaf,
      against the table vocabulary; duplicating that rule here is how the two
      would drift. */
-  documentUuid: z.string().uuid().optional(),
+  documentUuid: z.string().guid().optional(),
   documentType: z.string().max(64).optional(),
   parentLeafId: z.coerce.number().int().positive().optional(),
   studyId: z.string().trim().min(1).refine((value) => {
@@ -268,7 +268,7 @@ const upsertLeafSchema = z.object({
 });
 
 const AUTHOR = 'regulatory-author';
-const readSelectionSchema = z.object({ programId: z.string().uuid().optional(),
+const readSelectionSchema = z.object({ programId: z.string().guid().optional(),
   submissionId: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().positive().safe()).optional() });
 function readSelection(req: Request) {
   const parsed = readSelectionSchema.safeParse(req.query);
@@ -1052,7 +1052,7 @@ router.post('/:id/sequences', limiter, requireRole(AUTHOR), async (req, res) => 
 // where it is anchored: by the project's lead or an organization manager, with
 // a reason, on the audit chain (anchorSubmissionToProgram). The role is the
 // membership row's, never the token's or the body's.
-const anchorProgramSchema = z.object({ programId: z.string().uuid() });
+const anchorProgramSchema = z.object({ programId: z.string().guid() });
 // The projects this submission may be anchored to: its own filing type, by the
 // rule the anchor applies (listAnchorCandidates). QA 2026-10-08 (j6): the
 // control offered every programme, a device programme for an NDA among them.
@@ -1355,8 +1355,8 @@ router.get('/:id/provenance', limiter, requireRole(AUTHOR), async (req, res) => 
    in the body is never compared; the reply says it was ignored. */
 const consistencySchema = z.object({
   dimension: z.string().min(1).max(64),
-  left: z.object({ sectionId: z.string().uuid() }),
-  right: z.array(z.object({ sectionId: z.string().uuid() })).min(1),
+  left: z.object({ sectionId: z.string().guid() }),
+  right: z.array(z.object({ sectionId: z.string().guid() })).min(1),
 });
 const suppliedTextIn = (body: unknown): boolean => {
   const b = (body ?? {}) as { left?: { text?: unknown }; right?: Array<{ text?: unknown }> };

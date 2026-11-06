@@ -232,7 +232,7 @@ const upsertPatientBody = z.object({
   programId: z.string().regex(UUID_RE),
   subjectId: z.string().min(1).max(120),
   siteId: z.string().max(120).optional().nullable(),
-  metrics: z.record(z.number()).default({}),
+  metrics: z.record(z.string(), z.number()).default({}),
 });
 
 router.post('/rbm-patient-profiles', async (req, res) => {
@@ -320,7 +320,7 @@ const ingestBody = z.object({
   dataCutoff: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
   // Either a parsed row set or the raw delimited text. Row-level validation
   // happens in the service so the rules are identical for both.
-  rows: z.array(z.record(z.unknown())).max(50_000).optional(),
+  rows: z.array(z.record(z.string(), z.unknown())).max(50_000).optional(),
   csv: z.string().max(20_000_000).optional(),
   // Deliberately re-load content already ingested under this source. Refused
   // without a reason: a reprocess replaces what an earlier run established.

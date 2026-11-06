@@ -215,7 +215,7 @@ interface StoreWrite<T> {
   status: 200 | 201;
   /** Path parameters that must be positive integers, in the order `run` takes them. */
   params: readonly string[];
-  schema: z.ZodType<T, z.ZodTypeDef, unknown>;
+  schema: z.ZodType<T, unknown>;
   failure: string;
   run: (client: TrainingSqlClient, orgId: number, actorId: number, body: T, ids: number[]) => Promise<TrainingStoreChange>;
   /** Whose training tasks the change moves, read inside the transaction; planned and written after it commits. */

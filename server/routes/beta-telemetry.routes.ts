@@ -24,7 +24,7 @@ const eventSchema = z.object({
   route: z.string().min(1),
   activeTab: z.string().min(1).nullable().optional(),
   projectId: z.union([z.string(), z.number()]).nullable().optional(),
-  detail: z.record(z.any()).optional(),
+  detail: z.record(z.string(), z.any()).optional(),
 });
 
 const issueSchema = z.object({

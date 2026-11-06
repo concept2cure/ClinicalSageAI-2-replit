@@ -495,6 +495,30 @@ describe('GET /api/audit-trail/ledger — an approval that was not the last one 
   });
 });
 
+describe('GET /api/audit-trail/ledger — Vault acts named in words (J2 human test)', () => {
+  const entryOf = (data: AuditLedgerEntry[], auditId: string) => data.find((e) => e.id === `AUD-${auditId}`);
+  it('every act the Vault writes without a description of its own is named in words', async () => {
+    const acts: Record<string, string> = {
+      'vault.document.exported': 'Exported',
+      'vault.document.extracted': 'Text extracted',
+      'vault.document.text.read': 'Text read',
+      'vault.document.filed': 'Filed',
+      'vault.document.metadata_edit': 'Details edited',
+      'vault.document.relate': 'Related document recorded',
+      'vault.document.annotate': 'Annotation added',
+      'vault.document.annotation.reply': 'Annotation replied to',
+      'vault.document.annotation.resolve': 'Annotation resolved',
+      'vault.document.annotation.retract': 'Annotation retracted',
+      'vault.document.catalog_suggest': 'Catalog description suggested',
+      'vault.document.retention_soft_delete': 'Removed under the retention process',
+    };
+    const ids: Record<string, string> = {};
+    for (const action of Object.keys(acts)) ids[action] = await write(action, 'vault_document', 'v4', {});
+    const data = await ledger();
+    for (const [action, words] of Object.entries(acts)) expect(entryOf(data, ids[action])?.event, action).toBe(words);
+  });
+});
+
 /**
  * Reporting review 2026-10-01, SECURITY-8: the ledger and a record's history
  * returned the verifier's raw break, which can name another organisation's row

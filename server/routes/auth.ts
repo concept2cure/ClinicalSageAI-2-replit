@@ -910,7 +910,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: { code: 'AUTH_001', message: 'Invalid signup data', details: parsed.error.errors },
+        error: { code: 'AUTH_001', message: 'Invalid signup data', details: parsed.error.issues },
       });
     }
 

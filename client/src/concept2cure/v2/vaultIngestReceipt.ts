@@ -2,7 +2,7 @@
 import { z } from 'zod';
 import { vaultDocumentCodeForFile } from '@shared/constants/domain/vault-document-code';
 
-const uuid = z.string().uuid().transform((value) => value.toLowerCase());
+const uuid = z.string().guid().transform((value) => value.toLowerCase());
 const nonblank = z.string().regex(/\S/);
 const changeField = z.enum([
   'document_title', 'document_type', 'classification', 'retention_policy',
