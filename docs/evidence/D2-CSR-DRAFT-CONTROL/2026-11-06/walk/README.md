@@ -1,4 +1,4 @@
-# Running-app walk of the CSR drafting lane's shipped screens, 2026-11-06: started, then stopped
+# Running-app walk of the CSR drafting lane's shipped screens, 2026-11-06
 
 RULE 4: a screen is not done until it was opened in the running app and used. This lane shipped several pieces with
 tests only:
@@ -6,8 +6,8 @@ tests only:
 - CSR drafting slices 3–4 (`0f4bc4f2c`);
 - folds F4 and F6 (`970bc3637`).
 
-This walk was to open each of them. **The account's monthly spend limit stopped the walk after its first step.** This
-README records exactly that step and nothing more.
+This walk opens each of them. The account's monthly spend limit stopped its first run after sign-in. The lead resumed
+it alone the same evening, from the same database and scripts (second part, below).
 
 ## What already exists
 
@@ -53,14 +53,66 @@ runtime role with RLS enforced, on a database the migration set built.
 too, byte-identical at 1440 px and a few bytes apart at 390 px. So the dark captures were dropped. Whether the sign-in
 page should follow the system scheme is D1's to decide. It may simply not offer dark mode.
 
-## Not walked, because the walk stopped
+## Second part (the lead, 2026-11-06, evening): the drafting panel, the folds and the chain verdict
 
-- the drafting panel: one draft, three alternatives, revise, and "Offer alternatives" on a passage. Without a model key
-  each must refuse honestly. Real drafting needs a key this environment does not have;
-- Reporting's device section, on an organization with device projects and on one with none (F4);
-- Projects' last activity, the Client Review Room on a device project's Review step, and the retired ids opened by
-  address (F6);
-- the audit-chain verdict on a screen, which must not say "verified" over nothing (P-72 slice 1b);
-- the signed-in screens at 390 px and in dark mode.
+The same database and personas were used, with upstream merged to `e5a1536fa`. The server ran as `app_service`, with
+RLS and the launch gate on and no model key (`/readyz`: `ana: down, no_provider`). Step logs:
+`walk-panel-1440.json.txt`, `walk-panel-390.json.txt` and `walk-folds.json.txt`. Scripts: `walk-scripts/`.
 
-They are the next walk, from these scripts and this database recipe.
+| Screen | What the person sees | Verdict |
+|---|---|---|
+| The editor's ✻ AnA menu (`b-1440-ana-menu.png`) | "Draft with AnA", "Draft from sources" with its one-line note, and the Review asks | Works |
+| "Draft from sources" on a device SOP section (`b-*-panel-ready.png`) | The panel opens inside the editor: tone, region, context, requirements, and "Draft section" with "Draft three alternatives" | Works, at 1440 and 390, with no horizontal overflow |
+| "Draft section" with no model key (`b-*-draft-refused.png`) | "No AI provider is configured for this deployment, so this section cannot be drafted. This is a server setting, not your connection. Nothing was changed." No draft body appears, and nothing is faked | Honest refusal |
+| "Draft three alternatives" with no model key (`b-*-alternatives-refused.png`) | The same single refusal, with no alternatives listed | Honest refusal |
+| Reporting & analytics, organization with a device project (`c-1440-reporting.png`) | The reader first chooses the project the report is for. The device section counts the one device project the reader can open, gives a 24-month submission pace (0), and says "No AnA draft is recorded against a device project you can open, so there is no rate" | F4 works |
+| Reporting, an organization with no projects (`c-1440-reporting-no-devices.png`) | "No project readiness yet", one sentence and one action | Honest empty state |
+| `/concept2cure/device-analytics` | Lands on Reporting & analytics | F4's retired id resolves |
+| Projects (`d-1440-projects.png`) | Calm cards, each with "Updated Nov 06" | F6's activity line works |
+| `/concept2cure/device-workstream` | Lands on Projects | F6's retired id resolves |
+| The device project's Review step (`d-1440-device-review-step.png`) | The Client Review Room, scoped to the project, with honest empty states for each group | F6 works |
+| Decision lineage (`e-1440-decision-lineage.png`) | "Decision lineage: not in this release". `GET /api/decision-lineage/verify-chain` answers 403 `LAUNCH_SCOPE` | The P-72 1b verdict cannot be shown on screen in this release. It is proven at the route level (`a06ae96c8`) |
+
+**Fixed here** (this lane's files, red first), then re-walked in the running app:
+
+1. **Focus after a draft request.** After "Draft section" or "Draft three alternatives" ended, keyboard focus fell to the
+   page, so a keyboard user lost their place. The control pressed now gets focus back, through the panel's existing
+   `useFocusReturn`. Re-walked: focus is on "Draft section" after the refusal, at 1440 and 390.
+2. **No internal id on screen.** The panel's title read "Draft **qms-purpose** from Data Room sources". A section is now
+   named by its outline code ("2.3", "11.4.1") when it has one, or else by its title (`sectionShownName`). Re-walked:
+   "Draft Purpose from Data Room sources".
+
+**Found, for their owners** (recorded in COORDINATION.md):
+
+1. **Drafting from sources is held on every section of the seeded biotech IND's Quality Overall Summary.** All 23
+   sections of `[Demo · Biotech]` C2C-101's 2.3 read `draftingRegionState: unavailable`
+   (`server/services/authoring/authoring-draft-region-projection.ts`, from `8013c9457`). So the panel says "The saved
+   section reference could not be verified … its parent template cannot supply a receiving agency", with both draft
+   buttons held (`b-1440-panel.png`). The device SOP reads `not-recorded` and drafts. The owner is the drafting-context
+   work.
+2. **`GET /api/authoring/sections/:id/sources` answers 503 `NATIVE_SOURCE_ACCESS_UNAVAILABLE`** ("Current Quality
+   evidence could not be verified") on that QOS section, each time the editor opens it.
+3. **At 1440, opening "Draft with AnA" with the Tasks drawer open squeezes the editor.** The conversation, the
+   document rail, the editor and the drawer share the width, and the section title and text clip. This is the D4
+   layout.
+4. **At 390, the editor's bar wraps to four rows** (Freeze, E-sign, Place into filing, Re-file saved text) and covers
+   the content beneath it, including the panel's refusal (`b-390-alternatives-refused.png`). This is D4 too: D4-3 moves
+   these actions into an inspector.
+5. **Trunk red: 8 workbench suites since `53b179b99`.** It made `useScopedDocuments` refuse a project's document list
+   unless it reads `success: true` and every row carries that project's `program_id`. The suites' fixtures answer the
+   old shape, so the tree shows "Couldn't load documents" and no section title is found: 81 tests, identical with and
+   without this lane's change. This lane fixed its own suite, `workbenchDraftPassage.test.tsx`. The other seven belong
+   to the commit's owner:
+   - `authoringUnsavedWork`;
+   - `workbenchA11ySweep`;
+   - `workbenchAssignReview`;
+   - `workbenchFileToVault`;
+   - `workbenchProjectFiles`;
+   - `workbenchDocumentAccess`;
+   - `workbenchRemedies`.
+
+## Still not walked
+
+- Real drafting, and the CSR figure gate on a live draft. Both need a model key.
+- Revise by instruction, and passage alternatives landing in the editor. Both need a draft first.
+- Dark mode on the signed-in screens.

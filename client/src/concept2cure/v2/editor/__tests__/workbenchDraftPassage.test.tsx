@@ -67,7 +67,8 @@ function serve(content: string, opts: { qualified?: boolean; echo?: boolean; ref
         ...(echo && body?.passage ? { passage: body.passage } : {}),
         metadata: { tone, model: 'qualified-test-model', provider: 'anthropic', sourcesRetrieved: 1, attributableSources: 0, retrievalStatus: 'ok' } } });
     }
-    if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
+    // The project's list read is verified (53b179b99, useScopedDocuments): confirmed, and each row this project's.
+    if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [{ ...doc, program_id: PID }] });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section, second] });
     if (method === 'GET' && url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'Recorded program', registry_id: programRegistryId });
