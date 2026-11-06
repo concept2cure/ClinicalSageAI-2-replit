@@ -95,7 +95,7 @@ export function csrEvidenceRuns(receipts: Map<string, CsrImportedSectionEvidence
   return [...runs.values()];
 }
 
-interface SectionPlan {
+export interface SectionPlan {
   code: string; content: string; text: string; receipts: CsrImportedSectionEvidence | null;
   unclaimed: string[]; results: boolean;
   /** SHA-256 of the saved content when it differs from the hash the receipts were bound to at import. */
@@ -295,8 +295,10 @@ function inManifest(p: SectionPlan): boolean {
 }
 
 /** A section without a code (added in the editor) is still read: its numbers
- * are listed and take part in the cross-section check, under its title. */
-function planSections(sections: readonly SavedCsrSection[], receipts: Map<string, CsrImportedSectionEvidence>): SectionPlan[] {
+ * are listed and take part in the cross-section check, under its title.
+ * Exported (CSR drafting slice 2, 2026-11-06) so AnA's draft route checks a
+ * candidate by this same figure step, unchanged; it is not copied there. */
+export function planSections(sections: readonly SavedCsrSection[], receipts: Map<string, CsrImportedSectionEvidence>): SectionPlan[] {
   return sections.map((s, i) => typeof s.code === 'string' && s.code.trim() ? { ...s, code: s.code }
     : { ...s, code: `(uncoded section ${i + 1}${s.title?.trim() ? `: ${s.title.trim().slice(0, 80)}` : ''})` })
     .map(s => planSection(s, receipts.get(s.code)));

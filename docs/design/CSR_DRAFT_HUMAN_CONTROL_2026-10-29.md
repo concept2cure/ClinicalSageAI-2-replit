@@ -136,6 +136,17 @@ Each slice is red first against the existing surface. It then goes green, its mu
 
 ### Slice 2. The figure gate on candidates in CSR results sections (decision 5)
 
+**Status (2026-11-06):** the server half and the accept's wording have landed. Evidence:
+`docs/evidence/D2-CSR-DRAFT-CONTROL/2026-11-06/slice-2/`.
+- Each draft, alternative, revision and passage alternative carries `csrFigures` from the saved verdict's own figure
+  step (`planSections`, exported, not copied).
+- The accept re-runs it on the text the person accepts, refusing with 422 `CSR_FIGURE_NOT_FROM_ENGINE` in §2 and §10–13.
+- A results section with no receipts says "not checked".
+- The accept's audit row names the option set (decision 3).
+
+Open: the panel's inline figure marks, the per-paragraph and per-passage hold, and the panel sending `optionSet`. Also
+open: the running-app walk, which needs a model key.
+
 - **Deliverable:**
   - For a section whose document carries CSR import receipts (`importedCsrEvidence(provenance)`), the draft response carries, for each candidate, the figures that `findUnclaimedNumbers` finds against that section's claimed cells and study-information numbers. In §2 and §10–13 they are blocking, by the same `RESULTS` rule the saved verdict uses.
   - The accept route re-runs the gate on the content actually accepted. It refuses with 422 `CSR_FIGURE_NOT_FROM_ENGINE`, naming each figure.

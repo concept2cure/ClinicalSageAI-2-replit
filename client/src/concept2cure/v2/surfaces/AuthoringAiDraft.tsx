@@ -210,6 +210,10 @@ export function describeAcceptFailure(
         'was rolled back with it. Content is not saved without provenance. The section is unchanged.',
     };
   }
+  // CSR slice 2: the server names each figure the study's engine did not produce; the draft stays to be corrected.
+  if (code === 'CSR_FIGURE_NOT_FROM_ENGINE' && message && message.trim()) {
+    return { clearDraft: false, text: message };
+  }
   if (status === 401) {
     return {
       clearDraft: false,

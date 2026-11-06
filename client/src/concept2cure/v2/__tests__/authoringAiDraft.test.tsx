@@ -206,6 +206,13 @@ describe('describeAcceptFailure', () => {
     expect(describeAcceptFailure(401, null, null).text).toMatch(/isn’t authenticated/i);
   });
 
+  it('a figure the engine did not produce is said once, as the server names it, and the draft is kept to correct (CSR slice 2)', () => {
+    const named = 'Not accepted: 17/305 in §11.4.1 is not a figure the study’s engine produced for this section. No claimed table cell of the section holds it. Correct or remove it, then accept again. Nothing was saved.';
+    const f = describeAcceptFailure(422, 'CSR_FIGURE_NOT_FROM_ENGINE', named);
+    expect(f.text).toBe(named);
+    expect(f.clearDraft).toBe(false);
+  });
+
   it('falls back to the server’s sentence, never to a bare code', () => {
     const f = describeAcceptFailure(503, null, 'Upstream unavailable');
     expect(f.text).toContain('Upstream unavailable');
