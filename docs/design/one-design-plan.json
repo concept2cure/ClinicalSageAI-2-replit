@@ -738,15 +738,17 @@
         },
         {
           "name": "shared_learning_containment",
-          "status": "component_verified_commit_pending",
+          "status": "component_verified",
           "testsPassed": 31,
-          "scope": "unsafe sharing held; reviewed promotion not implemented"
+          "scope": "unsafe sharing held; reviewed promotion not implemented",
+          "commit": "3ad2bb07"
         },
         {
           "name": "agency_requirement_writer_tenant_policy",
-          "status": "component_verified_commit_pending",
+          "status": "component_verified",
           "testsPassed": 11,
-          "scope": "writer-only agency requirements and no-policy runtime RLS quarantine of ownerless legacy failure_patterns; creator replay proved; reviewed promotion remains held"
+          "scope": "writer-only agency requirements and no-policy runtime RLS quarantine of ownerless legacy failure_patterns; creator replay proved; reviewed promotion remains held",
+          "commit": "3ad2bb07"
         },
         {
           "name": "independent_exact_quotation_check",
@@ -758,8 +760,11 @@
         },
         {
           "name": "fresh_vault_upload_sensitivity_default",
-          "status": "implementation_in_progress",
-          "scope": "default fresh unclassified uploads to CONFIDENTIAL T2; preserve existing check-in policy; acceptance pending"
+          "status": "component_verified",
+          "scope": "fresh missing classification defaults to CONFIDENTIAL T2; check-in/retry classifications preserved; existing upload UI matches; historical classes unchanged",
+          "commit": "a717cfe4",
+          "testSuitesPassed": 7,
+          "testsPassed": 182
         }
       ]
     }
