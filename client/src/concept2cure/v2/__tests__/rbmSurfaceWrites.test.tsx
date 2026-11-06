@@ -175,6 +175,28 @@ describe('RBM v2 surfaces persist their writes', () => {
     });
   });
 
+  it('seeds the KRI library through the engine when the study has none (J5-03)', async () => {
+    render(<RbmKris board={board({ kris: [] })} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Seed the standard KRI library/ }));
+    await waitFor(() => {
+      expect(writes()).toContainEqual(['POST', '/api/mdx/rbm-kris/seed', { programId: PROGRAM }]);
+    });
+  });
+
+  it('seeds the default QTLs through the engine when the study has none (J5-03)', async () => {
+    render(<RbmQtls board={board({ qtls: [] })} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Seed the default QTLs/ }));
+    await waitFor(() => {
+      expect(writes()).toContainEqual(['POST', '/api/mdx/rbm-qtls/seed', { programId: PROGRAM }]);
+    });
+  });
+
+  it('offers no library seed once the study has indicators or limits', () => {
+    render(<><RbmKris board={board()} onReload={vi.fn()} /><RbmQtls board={board()} onReload={vi.fn()} /></>);
+    expect(screen.queryByRole('button', { name: /Seed the standard KRI library/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Seed the default QTLs/ })).toBeNull();
+  });
+
   it('will not offer to raise an action when there is no plan to attach it to', async () => {
     render(<RbmPlan board={board({ plan: null, governingPlanId: null, actions: [] })} onReload={vi.fn()} />);
     const add = await screen.findByRole('button', { name: /Add action/ });

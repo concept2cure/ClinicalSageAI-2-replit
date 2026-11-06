@@ -79,7 +79,7 @@ describe('RBM project selection and read admission', () => {
   it('does not replace an unavailable explicit project with another project', async () => {
     publishShellProject({ id: C, title: 'Unavailable project' });
     render(<Rbm {...viewProps} onNav={vi.fn()} />);
-    await screen.findByText('This project is not available for risk-based monitoring');
+    await screen.findByText('Risk-based monitoring has not started for this project');
     expect(boardReads()).toHaveLength(0); expect(readShellProject()?.id).toBe(C);
     expect(screen.getByRole('button', { name: /Vault Monitoring reports/ })).toHaveProperty('disabled', true);
   });
@@ -93,6 +93,47 @@ describe('RBM project selection and read admission', () => {
     expect(screen.queryByText('No RBM data for Actual project A yet')).toBeNull();
     await act(async () => { waiting.resolve(envelope(emptyBoard(B))); });
     expect(await screen.findByText('No RBM data for Actual project B yet')).toBeTruthy();
+  });
+  it('starts monitoring for the open project with the deterministic RACT seed, then reads the roster again (J5-03)', async () => {
+    let started = false;
+    h.request.mockImplementation(async (method: string, path: string, body?: unknown) => {
+      if (method === 'GET' && path === '/api/mdx-rbm/rbm-programs') return envelope(started ? [...rows, { id: C, label: 'Actual project C', code: 'C-1', productType: 'drug' }] : rows);
+      if (method === 'GET' && path.startsWith('/api/mdx-rbm/rbm-board/')) return envelope(emptyBoard(path.split('/').at(-1)!));
+      if (method === 'POST' && path === '/api/mdx/rbm-assessments/seed') { expect(body).toEqual({ programId: C }); started = true; return envelope({ id: 9 }, 201); }
+      throw new Error(`Unexpected RBM request ${method} ${path}`);
+    });
+    publishShellProject({ id: C });
+    render(<Rbm {...viewProps} onNav={vi.fn()} />);
+    await screen.findByText('Risk-based monitoring has not started for this project');
+    expect(h.request.mock.calls.every(([method]) => method === 'GET')).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Start risk-based monitoring' }));
+    expect(await screen.findByText('No RBM data for Actual project C yet')).toBeTruthy();
+    expect(h.send).not.toHaveBeenCalled();
+  });
+  it('an empty roster with a project open offers to start it, not "select it when setting up a project" (J5-03)', async () => {
+    h.request.mockImplementation(async (method: string, path: string) => {
+      if (method === 'GET' && path === '/api/mdx-rbm/rbm-programs') return envelope([]);
+      throw new Error(`Unexpected RBM request ${method} ${path}`);
+    });
+    publishShellProject({ id: C });
+    render(<Rbm {...viewProps} onNav={vi.fn()} />);
+    expect(await screen.findByRole('button', { name: 'Start risk-based monitoring' })).toBeTruthy();
+    expect(screen.queryByText('No monitoring projects yet')).toBeNull();
+  });
+  it('a seed button on an empty board runs the engine write, not an AnA turn (J5-03)', async () => {
+    const posts: string[] = [];
+    h.request.mockImplementation(async (method: string, path: string) => {
+      if (method === 'GET' && path === '/api/mdx-rbm/rbm-programs') return envelope(rows);
+      if (method === 'GET' && path.startsWith('/api/mdx-rbm/rbm-board/')) return envelope(emptyBoard(path.split('/').at(-1)!));
+      if (method === 'POST') { posts.push(path); return envelope({ id: 1 }, 201); }
+      throw new Error(`Unexpected RBM request ${method} ${path}`);
+    });
+    publishShellProject({ id: A });
+    render(<Rbm {...viewProps} onNav={vi.fn()} />);
+    await screen.findByText('No RBM data for Actual project A yet');
+    fireEvent.click(screen.getByRole('button', { name: 'Seed risk assessment' }));
+    await waitFor(() => expect(posts).toEqual(['/api/mdx/rbm-assessments/seed']));
+    expect(h.send).not.toHaveBeenCalled();
   });
   it.each(['malformed', 'unavailable'])('reports a %s roster read as failure, with no wrong-project board', async mode => {
     h.request.mockResolvedValue(mode === 'malformed' ? envelope([{ id: 'invalid', label: 'Rejected private row' }]) : envelope(null, 503));
