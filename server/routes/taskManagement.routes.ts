@@ -47,12 +47,13 @@ import {
   calculateCriticalPath,
   getOptimalAssignee,
 } from '../services/tasking/task-planning';
-import { requestDb, type RequestDb } from '../db/requestDb';
+import { requestDb, requestPgClient, type RequestDb } from '../db/requestDb';
 import { createTaskInTx, type TaskInsertRunner } from '../services/tasking/create-task';
 import { readMyWork } from '../services/tasking/my-work';
 import { routeRemindRefusal } from '../services/review/review-route';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
-import { projectForTaskSource, PROJECT_TELLING_SOURCES } from '../services/tasking/task-project';
+import { projectForTaskSource, PROJECT_TELLING_SOURCES, requireTaskProjectId,
+  admitTaskCreationProject, TaskProjectAdmissionError } from '../services/tasking/task-project';
 import { assignTask, assignmentExpectedSchema, assignmentFailure, namedAssignmentSchema, TaskAssignmentUnknown } from '../services/tasking/task-assignment';
 
 const router = Router();
@@ -812,14 +813,29 @@ router.post('/tasks/bulk-create', requireEditorAccess, async (req: Request, res:
 
 // Create tasks from template
 type TemplateShape = { templateId: string; name: string; tasks: unknown; dependencies?: unknown };
+async function workflowCreateFailure(req: Request, res: Response, error: unknown, committing: boolean) {
+  if (committing) {
+    try { await requestPgClient(req).discard?.(new Error('Workflow COMMIT acknowledgement was not confirmed')); }
+    catch { /* The request owner may already have discarded its ended lease. */ }
+    return outcomeUnknown(res);
+  }
+  if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
+  if (error instanceof TaskProjectAdmissionError) return res.status(error.status).json({
+    success: false, code: error.code, error: error.message,
+  });
+  if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The workflow');
+  console.error('Error creating tasks from template:', error);
+  return res.status(500).json({ success: false, error: 'Failed to create tasks from template' });
+}
 router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req: Request, res: Response) => {
+  let committing = false;
   try {
     const ctx = governedWriter(req, res);
     if (!ctx) return;
     const { organizationId, actorUserId } = ctx;
     const templateId = String(req.params.templateId);
     refuseRouteColumnsInInput(req.body, 'task.create');
-    const { projectId, startDate, adjustDates } = req.body;
+    const { projectId: requestedProjectId, startDate, adjustDates } = req.body ?? {};
 
     // Get template — the org's own row wins; a built-in catalog entry serves
     // when the org has none, so "Start workflow" works with zero seeding
@@ -855,12 +871,15 @@ router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req:
     // A stored template's task definitions are org-authored data: one naming
     // a route column instantiates nothing (RR1a, M9).
     for (const taskDef of taskDefinitions) refuseRouteColumnsInInput(taskDef, 'task.create');
+    const projectId = requireTaskProjectId(requestedProjectId);
     const taskIdMapping: Record<string, string> = {};
 
     // The workflow is instantiated as ONE transaction — every task, its ledger
     // row, the dependency edges with theirs and the usage bump — so a failure
     // part-way leaves no half-built workflow and nothing without its lineage.
-    const createdTasks = await storage.db.transaction(async (tx) => {
+    const createdTasks = await requestDb(req).transaction(async (tx) => {
+      const parent = await admitTaskCreationProject(queryableFromDrizzle(tx),
+        { ...ctx, projectId, clientWorkspaceId: req.tenantContext?.clientWorkspaceId });
       // Stored templates only — built-ins have no row to bump. First, so its
       // row lock is taken before the first ledger write (the audit-chain lock
       // last, the order every task transaction takes them in).
@@ -900,7 +919,8 @@ router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req:
           .values({
             taskId,
             organizationId,
-            projectId: projectId != null ? Number(projectId) : undefined,
+            projectId: parent.projectId,
+            clientWorkspaceId: parent.clientWorkspaceId,
             title: taskDef.title,
             description: taskDef.description,
             moduleType: taskDef.moduleType || 'general',
@@ -971,15 +991,14 @@ router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req:
           }
         }
       }
+      committing = true;
       return created;
     });
+    committing = false;
 
     res.json({ success: true, data: createdTasks, count: createdTasks.length, template: template.name });
   } catch (error) {
-    if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
-    if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The workflow');
-    console.error('Error creating tasks from template:', error);
-    res.status(500).json({ success: false, error: 'Failed to create tasks from template' });
+    return workflowCreateFailure(req, res, error, committing);
   }
 });
 
