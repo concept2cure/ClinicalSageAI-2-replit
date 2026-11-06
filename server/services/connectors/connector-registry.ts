@@ -212,6 +212,9 @@ async function getAuthenticatedConnector(
 
 /**
  * Search across multiple connectors in parallel.
+ * Provider failures can echo submitted secrets. Return a fixed failure and
+ * only its numeric HTTP status; never forward arbitrary exception text into
+ * agent context, API responses or the turn's trace (§19 trust boundary).
  */
 export async function searchConnectors(
   organizationId: number,
@@ -230,7 +233,10 @@ export async function searchConnectors(
       return { connectorId, results };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      return { connectorId, results: [], error: message };
+      const match = /\bHTTP\s+([1-5]\d{2})\b|\b(?:error|failed):\s*([1-5]\d{2})\b/i.exec(message);
+      const status = match?.[1] ?? match?.[2];
+      const error = `Connector search failed${status ? ` (HTTP ${status})` : ''}. Check the connection settings and try again.`;
+      return { connectorId, results: [], error };
     }
   });
 
