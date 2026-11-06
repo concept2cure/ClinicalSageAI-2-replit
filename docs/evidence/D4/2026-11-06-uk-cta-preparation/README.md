@@ -1,0 +1,41 @@
+# Complete UK CTA preparation in the core workflow
+
+2026-11-06. Package F1; launch W3, rows D2/D4. This repairs existing UK_CTA preparation under P-73 through the shared project/document path. ONE_DESIGN_PLAN, RULES 0/3/4/5/6 govern it. The current canonical branch contains the previous IND increment, but not the unpublished UK work described in the retained session handoff; no previous UK test or gate receipt is claimed as current proof.
+
+## What already exists
+
+Read at canonical `21a21849d7cfb8a35794489a87fad2b849c7011c`, using `rg` across server routes/API/src/services, shared records, migrations and client surfaces. Full non-shallow history searched with `git log --all --diff-filter=D` for UK CTA, MHRA, IRAS, blueprint and clinical-trial-application names. Only unrelated old CMC/protocol blueprint/UI deletions were found; no recoverable UK CTA implementation.
+
+- `shared/regulatory/global-document-registry.ts` defines UK_CTA but calls it eCTD and inherits eCTD dossier metadata; UK_MA is a separate marketing identity.
+- `shared/regulatory/project-bootstrap.ts` supplies generic CTD sections and tasks for UK_CTA, rather than UK medicinal-trial preparation.
+- `server/services/regulatory/sectionBlueprintCatalog.ts` and `taskBlueprintCatalog.ts` statically select regional blueprints; UK_CTA is absent. Existing regional wrappers live in `registry/blueprints/`.
+- `server/services/regulatory/registry/submittabilityCoverage.ts` owns the delivery verdict. UK_CTA has no exact IRAS channel and can fall through to a regional gateway.
+- `server/services/global-ri/clinical-trial-application-requirements.ts` has six UK labels and returns ready on presence alone. Its existing routes and regulatory-strategy-brief consumer expose this record; they need no new API.
+- `server/services/ana/AnaDocumentDraftingService.ts` consumes the exact regional blueprint in the editor and AnA. `blueprintLines` carries limitations but omits the basis; UK has no preparation route and metadata can direct invented IRAS formatting.
+- `client/src/concept2cure/v2/editor/DocumentCanvas.tsx` and `DocumentWorkbench.tsx` already serve every type. Their layout and lifecycle are not changed by this repair.
+- `server/services/c2c/program-registry-context.ts` resolves recorded UK trials. `server/services/market-support.ts` keeps marketing-shaped legacy ind:mhra no-offer; CMC composition stays small-molecule US IND.
+- `docs/design/TRIAL_APPLICATION_DRAFTING_2026-10-30.md` records the published IND work and open cited regional slice. Therapeutic-area regional section matching, nonclinical source binding and independent qualification remain open.
+
+## Bounded repair
+
+Extract one pure shared UK preparation record inside `shared/regulatory/`, preserving six existing component codes. Both shared project bootstrap and static server catalogs consume it; any server wrapper reexports it. Baseline preparation flags preserve permitted alternatives; conditional rows remain unassessed. Numeric modules are platform groups, not a fictitious UK eCTD schema. Medicinal-product trial scope only.
+
+Correct exact UK_CTA metadata and the existing channel function to combined IRAS review with no platform connector. State standard/exception and date limits from current sources. Project scope/date, product applicability, alternatives and initial old/new-regulation assessment remain unassessed, because current inputs do not supply those facts. The existing MHRA checklist derives from the same shared record and cannot return ready from labels alone. Other markets retain behavior.
+
+The existing drafting prompt receives source URLs, basis labels and limits. Actual IRAS forms are completed and validated externally; this content outline provides no field schema or transmission. No apps/cards/screens/editors, route files, mounts, services, tables, tools, providers or production dependencies are added. No model calls are needed for software verification.
+
+## Verification
+
+Retain behavioral reds before production fixes, then affected catalog, metadata/channel/checklist, shared bootstrap and actual drafting service/editor-boundary tests. Run scoped lint, client/server build and normal gates as available. Record exact source, results and limitations. A source retrieval or prompt stand-in is not legal/scientific/model/agency qualification. No browser screen completion is claimed for this data and server-only repair.
+
+## Current status
+
+Implemented in the existing shared preparation/drafting owners: 25 preparation rows and 9 tasks, direct shared/server object identity, exact IRAS channel, and a labels-only MHRA assessment that remains unassessed. Six legacy component codes are preserved. The editor reuses its existing drafting route; no screen or layout changed.
+
+Fresh sources: five official pages (four current plus the obsolete linked MHRA page), with publisher dates, 26 verified exact quotation spans and source hashes retained in `official-source-index.json` and `official-sources.tar.gz`. The HRA obsolete link, duplicated MHRA human-experience paragraph and unread linked scenario/eligibility tables remain explicit limits. Conditional SoECAT is retained.
+
+Behavioral reds were captured before production fixes: editor/real PGlite service 2 failed and 27 passed; catalog 9 failed and 1 control passed; channel/checklist 8 failed and 25 passed. Final integration passes 350/350 across 14 suites, including actual editor and real PGlite recorded-project loading, US/EU/CA/JP compatibility, blueprint consistency, coverage/channel, CMC scope and client writing agency. The independent five-suite channel/checklist/strategy cohort passes 51/51; it overlaps the integration cohort. Gateway providers are stand-ins; there are no live model calls.
+
+Scoped ESLint on all 14 changed TypeScript files: zero errors and nine existing warnings. Production client/server builds pass (`npm run build`, Node 22.23.4). Warning-growth ratchet and repository gates are pending. No baseline or suppression was widened. A legacy numeric UK section now stays explicitly unindexed; the actual UK preparation code resolves through the shared outline. This updates the corresponding existing editor assertion rather than inventing a CTD mapping.
+
+Read-only adversarial review found no material source/guard/ownership issue. Two implementation agents owned disjoint files; the lead independently ran the combined integration, inspected final content, verified source quotations/hashes and runs the build/gates. Individual red/green/lint logs are compressed beside this file.

@@ -206,3 +206,22 @@ These changes extend the existing source selector and attribution primitive.
 Clinical guidance selection/currency is improved, but regional Module 1 source
 content, indexed disease/phase/population conditions, nonclinical source binding
 and independent scientific qualification remain open work under slices 4–7.
+
+
+## UK preparation repair (2026-11-06, F1)
+
+The previously unpublished UK continuation is recovered in the existing core workflow.
+The shared UK_CTA record now supplies 25 preparation rows and nine tasks to both
+project bootstrap and the static server catalogs. Metadata and the shared channel
+name regional combined IRAS review, with no platform connector. The existing
+MHRA checklist reads that same record and remains unassessed from labels alone.
+Drafting carries dated MHRA/HRA URLs, platform basis and unresolved conditions;
+actual forms are completed and validated in IRAS. This is preparation for medicinal
+trials, not a UK eCTD dossier, an admission expansion or a readiness qualification.
+
+The initial submission date, old/new-rule selection, product/document applicability,
+regional therapeutic-area endpoint matching, nonclinical source binding and independent
+scientific/model assessment remain open. No app, card, editor, screen, API, tool or
+store was added. Inventory and proof:
+`.design/claude-convergence/UK_CTA_PREPARATION_2026-11-06.md` and
+`docs/evidence/D4/2026-11-06-uk-cta-preparation/README.md`.

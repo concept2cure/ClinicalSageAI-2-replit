@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-06",
+  "plan": "F1",
+  "completes": "server/services/regulatory",
+  "launch": {
+    "workstream": "W3",
+    "rows": [
+      "D2",
+      "D4"
+    ]
+  },
+  "baseline": "21a21849d7cfb8a35794489a87fad2b849c7011c",
+  "sourceManifest": "source-sha256.json",
+  "sourceFiles": 14,
+  "sources": {
+    "index": "official-source-index.json",
+    "archive": "official-sources.tar.gz",
+    "officialSources": 5,
+    "quoteSpansVerified": 26,
+    "bodyArtifactHashesVerified": 15,
+    "limitations": "Current guidance plus obsolete-page caveat; linked eligibility/scenario tables not qualified."
+  },
+  "red": {
+    "editorAndRealService": {
+      "failed": 2,
+      "passed": 27
+    },
+    "blueprint": {
+      "failed": 9,
+      "passed": 1
+    },
+    "channelAndChecklist": {
+      "failed": 8,
+      "passed": 25
+    }
+  },
+  "green": {
+    "integration": {
+      "passed": 350,
+      "suites": 14
+    },
+    "blueprint": {
+      "passed": 19,
+      "suites": 2
+    },
+    "channelChecklistStrategy": {
+      "passed": 51,
+      "suites": 5
+    },
+    "note": "Cohorts overlap; do not sum."
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 9,
+    "warningGrowth": "pending normal ratchet"
+  },
+  "build": {
+    "result": "pass",
+    "command": "npm run build",
+    "runtime": "Node 22.23.4",
+    "log": "build.txt.gz"
+  },
+  "repositoryGates": "pending",
+  "publication": "pending",
+  "limits": [
+    "No IRAS form generation, technical validation, transmission or agency qualification.",
+    "Initial submission date/lifecycle/product facts remain unassessed; no automatic rule selector.",
+    "No scientific/model/independent regulatory qualification or running-app screen completion is claimed.",
+    "Regional TA clinical-array matching and nonclinical source binding remain open.",
+    "CMC remains small-molecule US IND; legacy ind:mhra remains no-offer."
+  ]
+}
