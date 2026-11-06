@@ -74,7 +74,7 @@ c2c_install_postgres() {
 c2c_start_postgres() {
   if ! pg_lsclusters -h 2>/dev/null | awk -v v="$C2C_PG_VERSION" '$1 == v && $2 == "main"' | grep -q .; then
     c2c_log "Creating PostgreSQL cluster $C2C_PG_VERSION/main."
-    c2c_sudo pg_createcluster "$C2C_PG_VERSION" main -p "$C2C_DB_PORT" -- --auth-local=peer --auth-host=scram-sha-256 >/dev/null
+    c2c_sudo pg_createcluster "$C2C_PG_VERSION" main -p "$C2C_DB_PORT" --encoding=UTF8 --locale=C -- --auth-local=peer --auth-host=scram-sha-256 >/dev/null
   fi
   if ! pg_lsclusters -h | awk -v v="$C2C_PG_VERSION" '$1 == v && $2 == "main" && $4 == "online"' | grep -q .; then
     if pg_isready -q -h 127.0.0.1 -p "$C2C_DB_PORT"; then
@@ -153,7 +153,8 @@ c2c_ensure_database() {
 SELECT format('CREATE ROLE %I LOGIN SUPERUSER', :'role')
   WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :'role') \gexec
 SELECT format('ALTER ROLE %I WITH LOGIN SUPERUSER PASSWORD %L', :'role', :'pw') \gexec
-SELECT format('CREATE DATABASE %I OWNER %I', :'db', :'role')
+SELECT format('CREATE DATABASE %I OWNER %I ENCODING %L LC_COLLATE %L LC_CTYPE %L TEMPLATE template0',
+              :'db', :'role', 'UTF8', 'C', 'C')
   WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = :'db') \gexec
 SQL
 }
