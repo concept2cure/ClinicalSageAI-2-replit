@@ -366,7 +366,8 @@ function classifyByName(input: FilingInput): NameProposal {
           ctdSection: view === 'pharma' || view === 'biotech' ? rule.ctdSection ?? null : null,
           confidence: rule.confidence ?? 'high',
           needsReview: false,
-          rationale: `Matched ${rule.label} — filed to ${folderId} for the ${view} view.`,
+          // The folder a person sees, not its id or the view (J2 human test, 2026-11-06).
+          rationale: `Matched ${rule.label} — filed to ${folderLabel(view, folderId) || folderId}.`,
           module1Role: rule.module1Role,
         };
       }

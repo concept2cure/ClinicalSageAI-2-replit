@@ -115,7 +115,8 @@ describe('readRecordAuditHistory — one document, from the one ledger', () => {
     await download(DOC_A);
     await governedWrite(OTHER_ORG, 'vault.document.download', DOC_A); // same id, other tenant
     const h1 = await readRecordAuditHistory(h.pg as never, ORG, { tableName: 'vault_document', recordId: DOC_A }, verified);
-    expect(h1.data.map((e) => e.event)).toEqual(['Vault Document Download', 'Vault Document File', 'Vault Document Ingest']);
+    // Named as acts (J2 human test, 2026-11-06), not as "Vault Document Ingest".
+    expect(h1.data.map((e) => e.event)).toEqual(['Downloaded', 'Filing recorded', 'Uploaded to the Vault']);
     expect(h1.data.every((e) => e.actor === 'Dana Reviewer')).toBe(true);
     expect(h1.data.every((e) => e.seq !== null)).toBe(true);
   });
