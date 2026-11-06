@@ -362,6 +362,7 @@
         "server/services/ai-governance/approved-models.ts",
         "server/eval/pq/**",
         "scripts/ops/verify-pq-claims.ts",
+        "scripts/ops/lib/pq-claim-verification.mjs",
         "scripts/build-server.mjs",
         "Dockerfile.optimized",
         ".dockerignore",
