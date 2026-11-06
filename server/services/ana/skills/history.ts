@@ -9,8 +9,11 @@
  */
 
 import type { SkillReadClient } from '../../account-skill-bundles.js';
+import { standingRuleOf } from '../../account-skill-bundles.js';
+import type { StandingRuleRecord } from '../../../../shared/ana/skills.js';
 
 export interface SkillHistoryEntry {
+  standingRule?: StandingRuleRecord;
   auditEventId?: string;
   occurredAt: string;
   action: string;
@@ -37,10 +40,16 @@ function objectOf(value: unknown): Record<string, unknown> | null {
   return null;
 }
 
+function historyStandingRule(next: Record<string, unknown> | null): StandingRuleRecord | null {
+  return next?.standingRuleRecord ? standingRuleOf({ standingRule: next.standingRuleRecord }) : null;
+}
+
 function entryOf(row: Record<string, unknown>): SkillHistoryEntry {
   const next = objectOf(objectOf(row.new_values)?.next);
+  const rule = historyStandingRule(next);
   const at = row.occurred_at instanceof Date ? row.occurred_at.toISOString() : String(row.occurred_at ?? '');
   return {
+    ...(rule ? { standingRule: rule } : {}),
     auditEventId: typeof row.id === 'string' ? row.id : undefined,
     occurredAt: at,
     action: String(row.action ?? ''),

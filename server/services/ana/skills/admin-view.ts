@@ -102,6 +102,7 @@ export function orgSkillDto(r: OrgSkillRecord): OrgSkillDto {
   return {
     id: r.id,
     policyBindings: r.policyBindings ?? [],
+    standingRule: r.standingRuleRecord ?? null,
     sourceAuditEventId: r.sourceAuditEventId ?? null,
     bundleId: r.bundleId,
     key: orgSkillKey(r.bundleId),

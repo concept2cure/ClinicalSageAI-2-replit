@@ -35,7 +35,7 @@ import { isBatchDraftFailure, type BatchDraftResult } from '../services/ana/batc
 import type { DocumentDraftResponse } from '../services/ana/AnaDocumentDraftingService';
 import { requestConnectable } from '../db/requestDb.js';
 import { AnaProjectScopeError } from '../services/ana/project-scope-admission';
-import { selectedDraftProject, draftProjectOptions, draftStreamFailure } from './ana-intelligence-draft-context';
+import { selectedDraftProject, selectedDraftDerivative, assertOrdinaryDraftStream, qualificationReadinessForModels, draftProjectOptions, draftStreamFailure } from './ana-intelligence-draft-context';
 import { loopToolCollector, recordLoopTurn, type LoopToolCall } from '../services/ana/turn-record-loop.js';
 import { canonicalJson, openTurnRecorder, writeTurnRecordSafely } from '../services/ana/turn-record.js';
 import { resolveOrgId, resolveUserId } from '../types/auth-request.js';
@@ -125,8 +125,9 @@ router.post('/draft', async (req: Request, res: Response) => {
     } = req.body;
 
     const projectId = selectedDraftProject(req.body);
+    const derivativeId = selectedDraftDerivative(req.body);
     // An explicit project can supply its recorded filing through the service.
-    if ((!framework && !submissionType && projectId === undefined) || !sectionType || !instructions) {
+    if (derivativeId === undefined && ((!framework && !submissionType && projectId === undefined) || !sectionType || !instructions)) {
       return res.status(400).json({
         error: 'Missing required fields: (framework, submissionType or project), sectionType, instructions',
       });
@@ -137,14 +138,15 @@ router.post('/draft', async (req: Request, res: Response) => {
     const result = await service.draftDocument({
       framework: framework ?? 'general_regulatory',
       submissionType,
-      sectionType,
-      instructions,
+      sectionType: sectionType ?? 'Approved derivative',
+      instructions: instructions ?? '',
       existingContent,
       projectContext,
       enableThinking: enableThinking ?? true,
       thinkingBudget,
       enableTools: enableTools ?? true,
       ...(qualifiedModelPin !== undefined ? { qualifiedModelPin } : {}),
+      ...(derivativeId !== undefined ? { derivativeId } : {}),
       ...identityOf(req),
       ...scope,
     });
@@ -174,6 +176,7 @@ router.post('/draft', async (req: Request, res: Response) => {
  */
 router.post('/draft/stream', async (req: Request, res: Response) => {
   try {
+    assertOrdinaryDraftStream(req.body);
     const {
       framework,
       submissionType,
@@ -559,7 +562,7 @@ router.post('/agent', async (req: Request, res: Response) => {
   // The turn is recorded whichever way it ends (services/ana/turn-record-loop.ts).
   let recordTurn: ((outcome: 'answered' | 'failed', response?: unknown, error?: unknown) => ReturnType<typeof recordLoopTurn>) | null = null;
   try {
-    const { prompt, framework, systemPrompt, maxRounds, enableThinking } = req.body;
+    const { prompt, systemPrompt, maxRounds, enableThinking } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ error: 'Missing required field: prompt' });
@@ -574,9 +577,6 @@ router.post('/agent', async (req: Request, res: Response) => {
 
     // Build system prompt
     const system = systemPrompt || 'You are a regulatory affairs expert with access to clinical trial databases, FDA guidance, and literature search tools. Use the available tools to research and provide evidence-based answers.';
-    /* Framework context is embedded directly in the system prompt below;
-       the dynamic AnaDocumentDraftingService import was unused dead code
-       and was removed. */
 
     const messages = [
       { role: 'system' as const, content: system },
@@ -713,11 +713,13 @@ router.get('/models', async (req: Request, res: Response) => {
   const gateway = getGateway();
   const available = await gateway.getModelsForOrganization(resolveOrgId(req) ?? undefined);
   const models = projectModelsForPicker(available);
+  const qualificationReadiness = await qualificationReadinessForModels(available);
   res.json({
     success: true,
     data: {
       models,
       ...projectQualifiedModelPins(available),
+      qualificationReadiness,
       effortLevels: EFFORT_LEVELS,
       defaultEffort: DEFAULT_EFFORT,
       frameworks: [

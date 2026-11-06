@@ -40,7 +40,7 @@ vi.mock('../../auditService', () => ({
   },
 }));
 
-import { CompanyDocumentsSettingRefusedError, writeTenantSettings } from '../../tenant/tenant-settings-writer';
+import { CompanyDocumentsSettingRefusedError, DerivativeCustodySettingRefusedError, generalSettingsView, writeTenantSettings } from '../../tenant/tenant-settings-writer';
 import type { SettingsWrite } from '../../tenant/tenant-settings-writer';
 
 const req = { user: { id: 3 }, ip: '192.0.2.3', headers: {}, get: () => undefined } as unknown as Request;
@@ -114,6 +114,45 @@ describe('companyDocuments is a managed organization setting', () => {
     expect(h.audit).not.toHaveBeenCalled();
   });
 
+});
+
+describe('derivative custody is isolated from general settings', () => {
+  it.each(['replace', 'clear', 'remove', 'mutate'] as const)('refuses a generic %s before any mutation or audit', async action => {
+    h.stored.derivativeCustody = { revision: 3, policy: { enabled: true }, records: [{ id: 'derivative', payloadSha256: 'a'.repeat(64) }] };
+    const before = globalThis.structuredClone(h.stored);
+    const next: SettingsWrite['next'] = current => {
+      if (action === 'mutate') {
+        (current.derivativeCustody as { revision: number }).revision = 99;
+        return current;
+      }
+      if (action === 'remove') {
+        const rest = { ...current };
+        delete rest.derivativeCustody;
+        return rest;
+      }
+      return { ...current, derivativeCustody: action === 'clear' ? null : { revision: 99, approved: true } };
+    };
+    await expect(writeTenantSettings(req, 7, change(next))).rejects.toBeInstanceOf(DerivativeCustodySettingRefusedError);
+    expect(h.log).toEqual(['BEGIN', 'LOCK update', 'ROLLBACK']);
+    expect(h.update).not.toHaveBeenCalled();
+    expect(h.audit).not.toHaveBeenCalled();
+    expect(h.stored).toEqual(before);
+  });
+
+  it('also refuses minting custody through a generic door when none exists', async () => {
+    await expect(writeTenantSettings(req, 7, change(current => ({ ...current, derivativeCustody: { approved: true } })))).rejects.toBeInstanceOf(DerivativeCustodySettingRefusedError);
+    expect(h.stored).not.toHaveProperty('derivativeCustody');
+    expect(h.update).not.toHaveBeenCalled();
+  });
+
+  it('keeps custody intact on an unrelated settings write and omits it from the general projection', async () => {
+    const custody = { revision: 3, records: [{ storageKey: 'private/custody-reference', sourceId: 'private-source' }] };
+    h.stored.derivativeCustody = custody;
+    const result = await writeTenantSettings(req, 7, change(current => ({ ...current, security: { mfaRequired: false } }), { sections: () => ['security'] }));
+    expect(result?.derivativeCustody).toEqual(custody);
+    expect(generalSettingsView(result)).toEqual({ security: { mfaRequired: false } });
+    expect(JSON.stringify(generalSettingsView(result))).not.toContain('private/');
+  });
 });
 
 describe('company profile and canonical registry audit provenance', () => {

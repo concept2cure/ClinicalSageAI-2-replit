@@ -48,9 +48,18 @@ export function namesCompanyDocuments(value: unknown): boolean {
   return Object.prototype.hasOwnProperty.call(asSettings(value), 'companyDocuments');
 }
 
-/** Generic settings reads cannot substitute for the company library's project ACL. */
+export const DERIVATIVE_CUSTODY_NOT_A_GENERAL_SETTING = 'Manage derivative custody through the governed AI placement policy controls.';
+
+export class DerivativeCustodySettingRefusedError extends Error {
+  constructor() {
+    super(DERIVATIVE_CUSTODY_NOT_A_GENERAL_SETTING);
+    this.name = 'DerivativeCustodySettingRefusedError';
+  }
+}
+
+/** Generic settings reads cannot expose project-scoped libraries or derivative custody. */
 export function generalSettingsView(value: unknown): Settings {
-  return Object.fromEntries(Object.entries(asSettings(value)).filter(([key]) => key !== 'companyDocuments'));
+  return Object.fromEntries(Object.entries(asSettings(value)).filter(([key]) => !['companyDocuments', 'derivativeCustody'].includes(key)));
 }
 
 export class CompanyDocumentsSettingRefusedError extends Error {
@@ -176,6 +185,7 @@ export async function writeTenantSettings(req: Request, tenantId: number, change
     // cannot make the before/after comparison accidentally see the same value.
     const discoveryBefore = managedSnapshot(current.onboardingDiscovery);
     const companyDocumentsBefore = managedSnapshot(current.companyDocuments);
+    const derivativeCustodyBefore = managedSnapshot(current.derivativeCustody);
     const next = await change.next(current, tenant.tier || 'standard');
     // The connector for Claude has one door (P1-47 fix round, 2026-10-01,
     // IAM-24). A write from any other door that would change it, on, off, null
@@ -190,6 +200,9 @@ export async function writeTenantSettings(req: Request, tenantId: number, change
     // an AnA tool. Keep a stored discovery intact on resets and unrelated edits.
     assertManagedValue(discoveryBefore, next.onboardingDiscovery, change.discoveryDoor, () => new DiscoverySettingRefusedError());
     assertManagedValue(companyDocumentsBefore, next.companyDocuments, change.companyDocumentsDoor, () => new CompanyDocumentsSettingRefusedError());
+    // The dedicated placement writer holds its own settings lock and audit.
+    // Generic/admin/model settings mutations never acquire its custody authority.
+    assertManagedValue(derivativeCustodyBefore, next.derivativeCustody, false, () => new DerivativeCustodySettingRefusedError());
     const [updated] = await rdb
       .update(organizations)
       .set({ settings: next })

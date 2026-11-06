@@ -15,6 +15,8 @@ import { isActiveAccountStatus } from '../account-standing';
 import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import type { TaskEventNotice } from '../tasking/task-side-effects';
 import { optionalGovernedReason, requireGovernedReason } from '../../routes/governed-reason';
+import { evaluateSavedIndependentCheck } from '../ana/saved-document-critique';
+import { readIndependentCheckContext, recordIndependentCheck, recordIndependentFindingDispositions, assertIndependentCheckRelease } from './workflow-import-governance';
 
 interface PeerReviewInput { tenantId: number; actorId: string; documentId: string }
 interface ReviewActor { id: string; email: string | null; name: string; role: string; principal: AuthoringPrincipal; writable: boolean }
@@ -158,7 +160,9 @@ async function contextFor(client: RequestSqlClient, input: PeerReviewInput, curr
     snapshot: current.snapshot, snapshotHash: current.snapshotHash, bindingBasis: AUTHORING_REVIEW_BINDING_BASIS,
     myReview: own && requestAt ? { reviewId: own.id, requestedAt: requestAt, reviewStatus: own.review_status } : null,
     canReview: reason === null, unavailableReason: reason,
-    csrScientificReviewRequired: await csrReviewRequired(client, input, current) };
+    csrScientificReviewRequired: await csrReviewRequired(client, input, current),
+    independentCheck: await readIndependentCheckContext(client, independentSubject(input, current)),
+    canRunIndependentChecks: current.actor.writable };
 }
 
 /** The server's own rule, so the screen opens the CSR step for a CSR its label
@@ -187,7 +191,8 @@ export async function readAuthoringPeerReviews(connection: RequestConnectable, i
       stats: { total: reviews.length, pending: reviews.filter(row => row.standing === 'pending').length,
         approved: count('approved'), rejected: count('rejected'), changes_requested: count('changes_requested'),
         stale: reviews.filter(row => row.standing === 'stale').length, unbound: reviews.filter(row => row.standing === 'unbound').length },
-      canApprove: reviews.length > 0 && reviews.every(row => row.standing === 'current' && row.review_status === 'approved') });
+      canApprove: reviews.length > 0 && reviews.every(row => row.standing === 'current' && row.review_status === 'approved') &&
+        (!reviewContext.independentCheck || reviewContext.independentCheck.standing === 'current' && reviewContext.independentCheck.hardBlockCount === 0) });
   }, true);
 }
 
@@ -239,6 +244,30 @@ async function scientificReviewForApproval(client: RequestSqlClient, input: Peer
   }
 }
 
+function independentSubject(input: PeerReviewInput, current: AdmittedReview) {
+  return { organizationId: input.tenantId, doc: { ...current.document, id: input.documentId },
+    sections: current.snapshot.sections, actor: { id: current.actor.id, email: current.actor.email } };
+}
+
+async function runIndependentCheck(client: RequestSqlClient, connection: RequestConnectable,
+  input: PeerReviewInput, current: AdmittedReview, audit: AuditFacts) {
+  const result = await evaluateSavedIndependentCheck(client, { organizationId: input.tenantId, userId: Number(current.actor.id),
+    projectRef: String(current.document.client_program_id ?? '') }, input.documentId);
+  return recordIndependentCheck(client, independentSubject(input, current), result, auditContext(connection, input, current.actor, audit));
+}
+
+/** Existing review action, usable without a model or an external provider. */
+export async function runAuthoringIndependentCheck(connection: RequestConnectable,
+  input: PeerReviewInput & { expectedSnapshotHash: unknown }, audit: AuditFacts) {
+  return transaction(connection, async client => {
+    const current = await admit(client, input, 'view', true);
+    if (input.expectedSnapshotHash !== current.snapshotHash) throw new AuthoringPeerReviewRefused(409, 'REVIEW_CHANGED', 'The saved document changed. Reload before running checks.');
+    const independentCheck = await runIndependentCheck(client, connection, input, current, audit);
+    unchangedAdmission(current, await admit(client, input, 'view', true));
+    return { success: true as const, independentCheck };
+  });
+}
+
 /** Authorized aggregate-table preview in the existing review workflow. */
 export async function previewAuthoringCsrReview(connection: RequestConnectable,
   input: PeerReviewInput & { runIds: unknown }) {
@@ -276,6 +305,9 @@ export async function submitAuthoringPeerReview(connection: RequestConnectable, 
   const body = { ...parsed, review_comments: stated.reason ?? undefined };
   return transaction(connection, async client => {
     const current = await assignedVerdict(client, input, body);
+    if (body.independent_findings) await recordIndependentFindingDispositions(client, independentSubject(input, current),
+      body.independent_findings, auditContext(connection, input, current.actor, deps.audit));
+    if (body.review_status === 'approved') await assertIndependentCheckRelease(client, independentSubject(input, current));
     const csrScientificEvidence = await scientificReviewForApproval(client, input, current, body);
     const result = await client.query(`UPDATE authoring_reviews SET review_status=$1, review_comments=$2,
       reviewed_at=clock_timestamp(), updated_at=clock_timestamp(), reviewer_name=$3, reviewer_email=$4,
@@ -372,6 +404,9 @@ export async function requestAuthoringPeerReviews<P, R>(connection: RequestConne
     for (const member of members) reviews.push(await openReviewRequest(client, input, member, current));
     const route = await deps.route.write(client, { actor: current.actor, prepared });
     const grants = await deps.grant(client, { actor: current.actor, scope: current.scope, reviews, reason: input.reason });
+    if (await readIndependentCheckContext(client, independentSubject(input, current))) {
+      await runIndependentCheck(client, connection, input, current, deps.audit);
+    }
     await writeAuthoringAuditTrail(auditContext(connection, input, current.actor, deps.audit), {
       docId: input.documentId, sectionId: null, operationType: 'review_requested', beforeContent: null, afterContent: null,
       changeReason: input.reason, executor: client,

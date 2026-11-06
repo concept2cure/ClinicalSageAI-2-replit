@@ -897,41 +897,12 @@ router.post('/ana/log-outcome', async (req: Request, res: Response) => {
 
 /**
  * GET /api/client-intelligence/ana/wisdom
- * Get AnA platform wisdom entries.
+ * Explicit hold: legacy global wisdom has no reviewed promotion receipt.
  */
-router.get('/ana/wisdom', async (req: Request, res: Response) => {
-  try {
-    const { db } = await import('../db');
-    const { anaPlatformWisdom } = await import('shared/schema/ana-intelligence');
-    const { eq, and, desc, sql } = await import('drizzle-orm');
-
-    const projectType = req.query.projectType as string | undefined;
-    const regulatoryBody = req.query.regulatoryBody as string | undefined;
-
-    const wisdom = await db
-      .select()
-      .from(anaPlatformWisdom)
-      .where(
-        and(
-          eq(anaPlatformWisdom.isActive, true),
-          sql`${anaPlatformWisdom.evidenceCount} >= ${anaPlatformWisdom.minEvidenceThreshold}`
-        )
-      )
-      // 2026-10-15: by confidence_score, a stamped figure now null; by evidence.
-      .orderBy(desc(anaPlatformWisdom.evidenceCount))
-      .limit(50);
-
-    // Filter by context if provided
-    const filtered = wisdom.filter(w => {
-      if (regulatoryBody && w.regulatoryBody && w.regulatoryBody !== regulatoryBody) return false;
-      if (projectType && w.projectType && w.projectType !== projectType) return false;
-      return true;
-    });
-
-    return sendSuccess(res, { wisdom: filtered });
-  } catch (err) {
-    return serverError(res, log, 'reading AnA platform wisdom', err);
-  }
+router.get('/ana/wisdom', (_req: Request, res: Response) => {
+  // Type-only coupling keeps this refusal independent of storage initialization.
+  const holdReason: typeof import('../services/intelligence/ana-failure-learning').SHARED_LEARNING_HOLD = 'deidentification_and_human_promotion_required';
+  return sendSuccess(res, { wisdom: [], holdReason });
 });
 
 /**

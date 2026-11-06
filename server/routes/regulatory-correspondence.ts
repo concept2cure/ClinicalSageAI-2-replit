@@ -26,6 +26,7 @@ import {
   ISSUE_PARSER_VERSION,
   resolveIssueParserGovernanceConfig,
   runGovernedIssueParser,
+  hasCurrentIssueSource,
 } from '../services/regulatory-correspondence/issue-parser';
 import {
   devicePathwayFor,
@@ -34,10 +35,12 @@ import {
 import {
   computeCorrespondenceIssueImpact,
   createCanonicalTasksForIssue,
+  synchronizeReviewedCorrespondenceIssueImpact,
 } from '../services/regulatory-correspondence/operating-layer';
 import { compileGovernedResponseAssembly } from '../services/regulatory-correspondence/response-package-compiler';
 import {
   issueRowsToCorrespondenceIssues,
+  issueRowToCorrespondenceIssue,
   type CorrespondenceIssueRow,
 } from '../services/regulatory-correspondence/issue-row-mapper';
 import { recordGovernedAction } from './c2c/actions';
@@ -740,6 +743,51 @@ async function reviewerMayChange(req: Request, res: Response,
   }
 }
 
+type ReviewSourceRow = CorrespondenceIssueRow & { project_id: number; submission_id: string; parsed_text: string | null };
+async function lockIssueSource(client: Pick<NonNullable<ReturnType<typeof getDbClientOrNull>>, 'query'>, issueId: string, orgId: number): Promise<ReviewSourceRow | undefined> {
+  const current = await client.query<ReviewSourceRow>(
+    `SELECT i.*, c.project_id, c.submission_id, c.parsed_text
+       FROM c2c_correspondence_issues i
+       JOIN c2c_correspondence c ON c.id = i.correspondence_id
+       JOIN c2c_submissions s ON s.id = c.submission_id
+      WHERE i.id = $1 AND c.organization_id = $2
+        AND s.organization_id = $2 AND s.project_id = c.project_id
+      FOR UPDATE OF i,c`, [issueId, orgId]);
+  return current.rows[0];
+}
+function reviewedIssueSource(issue: CorrespondenceIssue, text: string, userId: number,
+  body: { humanReviewStatus?: CorrespondenceIssue['humanReviewStatus']; sourceTextDigest?: string }) {
+  const digest = crypto.createHash('sha256').update(text).digest('hex');
+  const adopting = body.humanReviewStatus === 'confirmed' || body.humanReviewStatus === 'edited';
+  const currentSource = hasCurrentIssueSource(issue, text);
+  if ((body.sourceTextDigest !== undefined && body.sourceTextDigest !== digest)
+      || (adopting && (!currentSource || body.sourceTextDigest !== digest))) return null;
+  const status = body.humanReviewStatus ?? issue.humanReviewStatus;
+  const extraction = issue.structuredExtraction ?? {
+    regulatorAskType: 'manual_triage_required', impactedSubmissionComponent: 'unknown', sectionCandidates: [],
+    recommendedOwnerFunction: 'regulatory_affairs', recommendedResponsePackageType: 'manual_triage_response',
+    evidenceNeeds: [], confidenceTrace: [], humanReviewRequired: true,
+  };
+  const confirmed = status === 'confirmed' || status === 'edited';
+  const alreadyConfirmed = priorReviewMatchesSource(extraction, digest, status);
+  return { digest, reviewedExtraction: { ...extraction,
+    ...(extraction.feedbackCoding ? { feedbackCoding: { ...extraction.feedbackCoding,
+      humanConfirmed: currentSource && confirmed && (adopting || alreadyConfirmed) } } : {}),
+    humanReview: { reviewedBy: userId, reviewedAt: new Date().toISOString(), sourceTextDigest: digest, status },
+  } };
+}
+function priorReviewMatchesSource(extraction: NonNullable<CorrespondenceIssue['structuredExtraction']>, digest: string, status: CorrespondenceIssue['humanReviewStatus']): boolean {
+  const prior = extraction.humanReview;
+  return extraction.feedbackCoding?.humanConfirmed === true && prior?.sourceTextDigest === digest && prior.status === status
+    && Number.isSafeInteger(prior.reviewedBy) && prior.reviewedBy > 0 && Number.isFinite(Date.parse(prior.reviewedAt));
+}
+function issueReviewParams(issueId: string, orgId: number, projectId: number, body: Record<string, unknown>, extraction: object): unknown[] {
+  return [issueId, body.humanReviewStatus ?? null,
+    body.mappedCtdSections ? JSON.stringify(body.mappedCtdSections) : null,
+    body.mappedArtifactIds ? JSON.stringify(body.mappedArtifactIds) : null,
+    body.resolutionStatus ?? null, orgId, JSON.stringify(extraction), projectId];
+}
+
 router.patch('/issues/:issueId/review', async (req, res) => {
   if (!REG_CORRESPONDENCE_ENABLED) {
     return res
@@ -764,31 +812,39 @@ router.patch('/issues/:issueId/review', async (req, res) => {
   const client = await pool!.connect();
   try {
     await client.query('BEGIN');
+    const source = await lockIssueSource(client, req.params.issueId, orgId);
+    if (!source) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Issue not found' }); }
+    await requireProjectAdmission(req, String(source.project_id), true);
+    const issue = issueRowToCorrespondenceIssue(source);
+    const review = reviewedIssueSource(issue, source.parsed_text ?? '', userId, req.body);
+    if (!review) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: 'The letter version or its issue evidence could not be verified. Re-read and extract the current letter before confirming its classification.', code: 'CORRESPONDENCE_SOURCE_CHANGED' });
+    }
+    const { digest, reviewedExtraction } = review;
     const upd = await client.query(
       `UPDATE c2c_correspondence_issues AS i
          SET human_review_status = COALESCE($2, human_review_status),
              mapped_ctd_sections = COALESCE($3::jsonb, mapped_ctd_sections),
              mapped_artifact_ids = COALESCE($4::jsonb, mapped_artifact_ids),
              resolution_status = COALESCE($5, resolution_status),
+             structured_extraction = $7::jsonb,
              updated_at = NOW()
          FROM c2c_correspondence AS c
          WHERE i.id = $1
            AND c.id = i.correspondence_id
            AND c.organization_id = $6
+           AND c.project_id = $8
          RETURNING i.*`,
-      [
-        req.params.issueId,
-        req.body.humanReviewStatus || null,
-        req.body.mappedCtdSections ? JSON.stringify(req.body.mappedCtdSections) : null,
-        req.body.mappedArtifactIds ? JSON.stringify(req.body.mappedArtifactIds) : null,
-        req.body.resolutionStatus || null,
-        orgId,
-      ]
+      issueReviewParams(req.params.issueId, orgId, source.project_id, req.body, reviewedExtraction)
     );
     if (!upd.rows[0]) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Issue not found' });
     }
+
+    await synchronizeReviewedCorrespondenceIssueImpact({ orgId, projectId: source.project_id, submissionId: source.submission_id,
+      correspondenceId: issue.correspondenceId, issue: issueRowToCorrespondenceIssue(upd.rows[0] as CorrespondenceIssueRow) }, drizzle(client, { schema }));
 
     const governance = await recordGovernedAction(client, {
       orgId,
@@ -799,6 +855,10 @@ router.patch('/issues/:issueId/review', async (req, res) => {
       payload: {
         humanReviewStatus: req.body.humanReviewStatus,
         resolutionStatus: req.body.resolutionStatus,
+        sourceTextDigest: digest,
+        reviewedBy: userId,
+        reviewedAt: reviewedExtraction.humanReview.reviewedAt,
+        feedbackCoding: reviewedExtraction.feedbackCoding,
       },
       domain: 'mdx',
       surface: 'correspondence',
@@ -811,6 +871,7 @@ router.patch('/issues/:issueId/review', async (req, res) => {
     });
   } catch (err: any) {
     try { await client.query('ROLLBACK'); } catch { /* noop */ }
+    if (err instanceof ProjectAdmissionRefusal) return res.status(err.status).json({ error: err.message, code: err.code });
     console.error('[regulatory-correspondence/review]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   } finally {

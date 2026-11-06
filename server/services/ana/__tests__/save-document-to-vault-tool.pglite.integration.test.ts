@@ -110,10 +110,11 @@ describe('save_document_to_vault — the single-body form of draft_authoring_doc
     expect(await otherStores()).toEqual(storesBefore);
   });
 
-  it('refuses another organization’s project as no project — never a cross-tenant write', async () => {
+  it('refuses a foreign project at current policy admission without reading or writing foreign content', async () => {
     const before = await authoringCounts();
     const out = JSON.parse(await save(SAVE_INPUT, { ...saveCtx, projectRef: OTHER_PROGRAM }));
-    expect(out.error).toMatch(/needs an open project/);
+    expect(out).toMatchObject({ error: 'SKILL_POLICY_UNAVAILABLE', success: false });
+    expect(JSON.stringify(out)).not.toContain(SAVE_INPUT.content);
     expect(await authoringCounts()).toEqual(before);
   });
 

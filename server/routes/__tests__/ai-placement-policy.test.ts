@@ -10,10 +10,22 @@ import request from 'supertest';
 
 const writeOrgPlacementPolicy = vi.fn();
 const readOrgPlacementPolicy = vi.fn();
+const readDerivativeCustody = vi.fn();
+const manageDerivativeCustody = vi.fn();
+const reauth = vi.hoisted(() => ({ ok: true, calls: [] as Array<{ userId: number; proof: unknown }> }));
+vi.mock('../c2c/actions', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  verifyReauth: async (userId: number, proof: unknown) => {
+    reauth.calls.push({ userId, proof });
+    return { ok: reauth.ok };
+  },
+}));
 vi.mock('../../services/ai-gateway/providers/org-placement-writer', async importOriginal => ({
   ...(await importOriginal<typeof import('../../services/ai-gateway/providers/org-placement-writer')>()),
   writeOrgPlacementPolicy: (...a: unknown[]) => writeOrgPlacementPolicy(...a),
   readOrgPlacementPolicy: (...a: unknown[]) => readOrgPlacementPolicy(...a),
+  readDerivativeCustody: (...a: unknown[]) => readDerivativeCustody(...a),
+  manageDerivativeCustody: (...a: unknown[]) => manageDerivativeCustody(...a),
 }));
 vi.mock('../../db', () => ({ pool: { query: vi.fn(), connect: vi.fn() } }));
 vi.mock('../../middleware/rateLimiter', () => ({
@@ -27,7 +39,7 @@ vi.mock('../../middleware/auth', async importOriginal => ({
 import placementRouter from '../ai-placement-policy';
 
 // The request-scoped client the global auth gate attaches.
-const REQUEST_CLIENT = { query: vi.fn(async () => ({ rows: [] })) };
+const REQUEST_CLIENT = { query: vi.fn(async (): Promise<{ rows: Array<Record<string, unknown>> }> => ({ rows: [] })) };
 
 function appAs(user: Record<string, unknown> | null) {
   const app = express();
@@ -56,6 +68,11 @@ const REASON = 'EU residency required by the MSA signed 2026-09-20.';
 beforeEach(() => {
   writeOrgPlacementPolicy.mockReset();
   readOrgPlacementPolicy.mockReset();
+  readDerivativeCustody.mockReset().mockResolvedValue({ policy: null, records: [] });
+  manageDerivativeCustody.mockReset();
+  reauth.ok = true;
+  reauth.calls = [];
+  REQUEST_CLIENT.query.mockReset().mockImplementation(async () => ({ rows: [{ role: 'admin' }] }));
 });
 
 describe('PUT /api/ai-placement-policy', () => {
@@ -118,11 +135,84 @@ describe('GET /api/ai-placement-policy', () => {
     expect(res.status).toBe(200);
     expect(readOrgPlacementPolicy.mock.calls[0][0]).toBe(REQUEST_CLIENT);
     expect(readOrgPlacementPolicy.mock.calls[0][1]).toBe(42);
-    expect(res.body).toEqual({ organizationId: 42, policy: null });
+    expect(res.body).toEqual({ organizationId: 42, policy: null, derivativeCustody: { policy: null, records: [] } });
   });
 
   it('refuses a caller with no organization', async () => {
     const res = await request(appAs({ id: 5, role: 'admin', roles: ['admin'] })).get('/api/ai-placement-policy');
     expect(res.status).toBe(403);
+  });
+});
+
+describe('current derivative custody administration', () => {
+  const policyAction = { action: 'derivative_policy', policy: {
+    enabled: true, kmsKeyArn: 'arn:aws:kms:us-east-1:123456789012:key/11111111-1111-4111-8111-111111111111', maxLifetimeSeconds: 3600,
+  }, reasonForChange: 'Enable the reviewed tenant custody workflow.' };
+
+  it('reauthenticates the canonical administrator before passing only the typed action to custody', async () => {
+    const view = { policy: { ...policyAction.policy, version: 1 }, records: [] };
+    manageDerivativeCustody.mockResolvedValue(view);
+    const proof = { password: 'synthetic-current-password', totp: '123456' };
+    const res = await request(appAs(ADMIN)).put('/api/ai-placement-policy').send({ ...policyAction, reauth: proof });
+    expect(res.status).toBe(200);
+    expect(reauth.calls).toEqual([{ userId: 5, proof }]);
+    expect(manageDerivativeCustody).toHaveBeenCalledWith(expect.any(Object), 42, policyAction, expect.objectContaining({ userId: 5 }));
+    expect(JSON.stringify(manageDerivativeCustody.mock.calls)).not.toContain(proof.password);
+    expect(writeOrgPlacementPolicy).not.toHaveBeenCalled();
+    expect(res.body).toEqual({ organizationId: 42, derivativeCustody: view, audited: true });
+    expect(res.headers['cache-control']).toBe('no-store');
+  });
+
+  it('refuses rejected fresh authentication before custody or ordinary policy writes', async () => {
+    reauth.ok = false;
+    const res = await request(appAs(ADMIN)).put('/api/ai-placement-policy').send(policyAction);
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('REAUTH_REQUIRED');
+    expect(manageDerivativeCustody).not.toHaveBeenCalled();
+    expect(writeOrgPlacementPolicy).not.toHaveBeenCalled();
+  });
+
+  it('normalizes the alternate MFA field into the canonical signer reauthentication contract', async () => {
+    manageDerivativeCustody.mockResolvedValue({ policy: null, records: [] });
+    const res = await request(appAs(ADMIN)).put('/api/ai-placement-policy').send({ ...policyAction,
+      reauth: { password: 'synthetic-current-password', totpCode: '123456' } });
+    expect(res.status).toBe(200);
+    expect(reauth.calls).toEqual([{ userId: 5, proof: { password: 'synthetic-current-password', totp: '123456' } }]);
+  });
+
+  it('refuses conflicting second-factor fields before authentication or mutation', async () => {
+    const res = await request(appAs(ADMIN)).put('/api/ai-placement-policy').send({ ...policyAction,
+      reauth: { password: 'synthetic-current-password', totp: '123456', totpCode: '654321' } });
+    expect(res.status).toBe(403);
+    expect(reauth.calls).toEqual([]);
+    expect(manageDerivativeCustody).not.toHaveBeenCalled();
+  });
+
+  it.each(['read', 'write'] as const)('refuses a stale administrator before a custody %s', async operation => {
+    REQUEST_CLIENT.query.mockResolvedValue({ rows: [] });
+    const app = appAs(ADMIN);
+    const res = operation === 'read' ? await request(app).get('/api/ai-placement-policy')
+      : await request(app).put('/api/ai-placement-policy').send(policyAction);
+    expect(res.status).toBe(403);
+    expect(readDerivativeCustody).not.toHaveBeenCalled();
+    expect(manageDerivativeCustody).not.toHaveBeenCalled();
+    expect(reauth.calls).toEqual([]);
+  });
+
+  it('rejects submitted authority claims and foreign identity fields before fresh authentication', async () => {
+    const res = await request(appAs(ADMIN)).put('/api/ai-placement-policy')
+      .send({ ...policyAction, organizationId: 99, userId: 999, humanConfirmed: true });
+    expect(res.status).toBe(403);
+    expect(manageDerivativeCustody).not.toHaveBeenCalled();
+    expect(reauth.calls).toEqual([]);
+  });
+
+  it('withholds arbitrary custody/KMS error details and reauthentication material', async () => {
+    manageDerivativeCustody.mockRejectedValue(new Error('private-key-or-source-canary'));
+    const res = await request(appAs(ADMIN)).put('/api/ai-placement-policy').send({ ...policyAction,
+      reauth: { password: 'synthetic-current-password' } });
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('DERIVATIVE_CHANGE_UNCONFIRMED');
+    expect(JSON.stringify(res.body)).not.toMatch(/private-key-or-source-canary|synthetic-current-password/);
   });
 });

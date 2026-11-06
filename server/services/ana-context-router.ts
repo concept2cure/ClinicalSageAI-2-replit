@@ -23,7 +23,6 @@ import { db } from '../db';
 import {
   userIntelligenceProfiles,
   anaCapabilityRegistry,
-  anaPlatformWisdom,
   anaClientObjectives,
   anaProjectCapabilities,
 } from 'shared/schema/ana-intelligence';
@@ -200,38 +199,18 @@ export async function buildCapabilityRouterContext(
 // ─── Wisdom Router Context (~15 lines) ──────────────────────────────────────
 
 /**
- * Build a compressed wisdom block — what AnA has learned.
- * Filters platform wisdom by project context.
+ * Build the tenant's current scoped objectives. Legacy global wisdom is held
+ * before querying, independently of stored active flags or evidence counts.
  */
 export async function buildWisdomRouterContext(
   organizationId: number,
   projectId?: number,
-  regulatoryBody?: string,
-  projectType?: string
+  _regulatoryBody?: string,
+  _projectType?: string
 ): Promise<string | null> {
   try {
-    // Get relevant platform wisdom entries
-    const wisdomConditions = [
-      eq(anaPlatformWisdom.isActive, true),
-      sql`${anaPlatformWisdom.evidenceCount} >= ${anaPlatformWisdom.minEvidenceThreshold}`,
-    ];
-
-    const wisdom = await db
-      .select()
-      .from(anaPlatformWisdom)
-      .where(and(...wisdomConditions))
-      // By the evidence recorded. 2026-10-15: by confidence_score, which held a
-      // stamped 0.5 + 0.05·organizations and is now null (nothing measures it).
-      .orderBy(desc(anaPlatformWisdom.evidenceCount))
-      .limit(20);
-
-    // Filter by context
-    const relevant = wisdom.filter(w => {
-      if (regulatoryBody && w.regulatoryBody && w.regulatoryBody !== regulatoryBody) return false;
-      if (projectType && w.projectType && w.projectType !== projectType) return false;
-      return true;
-    });
-
+    // Legacy global wisdom has no exact-artifact reviewed promotion. Do not
+    // query it, even if active or supported by large recorded counts.
     // Active objectives: the organisation's own, and this project's when one is
     // open. Never another project's: until 2026-11-01 this read the top three of
     // every project in the organisation, across client workspaces, into each
@@ -253,25 +232,10 @@ export async function buildWisdomRouterContext(
       )
       .limit(3);
 
-    if (!relevant.length && !objectives.length) return null;
+    if (!objectives.length) return null;
 
     const parts: string[] = [];
     parts.push(`## AnA Wisdom — What I've Learned`);
-
-    // Risk reductions
-    const risks = relevant.filter(w => w.category === 'risk_reduction' || w.category === 'deficiency_prevention');
-    if (risks.length > 0) {
-      const topRisk = risks[0];
-      parts.push(`- **Risk Alert**: ${topRisk.patternDescription.slice(0, 120)}`);
-      parts.push(`  → ${topRisk.recommendation.slice(0, 100)}`);
-    }
-
-    // Success patterns
-    const successes = relevant.filter(w => w.category === 'success_pattern');
-    if (successes.length > 0) {
-      const topSuccess = successes[0];
-      parts.push(`- **Success Pattern**: ${topSuccess.patternDescription.slice(0, 120)}`);
-    }
 
     // Objectives
     if (objectives.length > 0) {

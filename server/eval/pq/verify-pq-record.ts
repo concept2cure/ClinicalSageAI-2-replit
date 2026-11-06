@@ -5,13 +5,26 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { PqProtocol, RegistryPqClaim, computeVerdict, servedModelMatches } from './pq-verdict.js';
 import { hasCompletedProviderFlags } from './output-integrity.js';
-import { extractionCriteriaProblems as sharedExtractionCriteriaProblems } from './pq-criteria.js';
+import { extractionCriteriaProblems as sharedExtractionCriteriaProblems, ragCriteriaProblems } from './pq-criteria.js';
 
 export interface CanonicalPqEvidence {
   protocolText: string;
   docBankText: string;
   ragGoldText: string;
   corpusManifestText: string;
+}
+
+export interface QualificationPreflight {
+  kind: 'qualification-prerequisites';
+  status: 'blocked' | 'ready_to_evaluate';
+  readyToEvaluate: boolean;
+  qualifiesModel: false;
+  blockers: Array<{ code: string; message: string; count?: number }>;
+  protocol: { id: string | null; status: string | null; approved: boolean };
+  counts: { generationTasks: number; extractionTasks: number; ragPositiveItems: number; ragNegativeControls: number;
+    ragRequiredPositiveItems: number | null; openGoldChecks: number; missingGoldEvidence: number;
+    sourceEntries: number; requiredSourceEntries: number; reviewedSources: number; publishers: number;
+    requiredPublisherTerms: number; reviewedPublisherTerms: number };
 }
 interface Rules { computeVerdict: typeof computeVerdict; servedModelMatches: typeof servedModelMatches }
 type Row = Record<string, unknown>;
@@ -52,6 +65,118 @@ export function readQualificationAsset(reference: string): string {
   const file = realpathSync(candidate);
   if (!file.startsWith(`${root}${path.sep}`)) throw new Error('Qualification evidence leaves package');
   return readFileSync(file, 'utf8');
+}
+
+function emptyQualificationPreflight(): QualificationPreflight {
+  return { kind: 'qualification-prerequisites', status: 'blocked', readyToEvaluate: false, qualifiesModel: false,
+    blockers: [], protocol: { id: null, status: null, approved: false },
+    counts: { generationTasks: 0, extractionTasks: 0, ragPositiveItems: 0, ragNegativeControls: 0,
+      ragRequiredPositiveItems: null, openGoldChecks: 0, missingGoldEvidence: 0, sourceEntries: 0, requiredSourceEntries: 0,
+      reviewedSources: 0, publishers: 0, requiredPublisherTerms: 0, reviewedPublisherTerms: 0 } };
+}
+
+function preflightTaskBank(protocol: PqProtocol, bank: Row, report: QualificationPreflight): void {
+  const tasks: Row[] = Array.isArray(bank.tasks) ? bank.tasks.filter(object) : [];
+  for (const phase of ['generation', 'extraction'] as const) {
+    const component = protocol.components[phase];
+    if (!component?.required) continue;
+    const runnable = tasks.filter(task => task.taskType === phase && nonempty(task.input));
+    report.counts[phase === 'generation' ? 'generationTasks' : 'extractionTasks'] = runnable.length;
+    const floor = component.criteria?.minTasksPerDocType;
+    const perType = new Map<string, number>();
+    for (const task of runnable) perType.set(String(task.docType), (perType.get(String(task.docType)) ?? 0) + 1);
+    if (!Number.isSafeInteger(floor) || floor < 1 || !runnable.length || [...perType.values()].some(count => count < floor)) {
+      report.blockers.push({ code: 'DOCUMENT_SAMPLE_SHORTFALL', message: `The ${phase} bank does not meet its approved per-document sample floor.` });
+    }
+    preflightTaskCriteria(phase, component.criteria, report);
+  }
+}
+
+function preflightTaskCriteria(phase: 'generation' | 'extraction', criteria: unknown, report: QualificationPreflight): void {
+  if (phase === 'extraction' && sharedExtractionCriteriaProblems(object(criteria) ? criteria : undefined).length) {
+    report.blockers.push({ code: 'EXTRACTION_CRITERIA_INVALID', message: 'Extraction acceptance criteria are incomplete or malformed.' });
+  }
+  if (phase === 'generation' && (!object(criteria) || !unit(criteria.minSectionCoverage) ||
+      typeof criteria.maxForbiddenHits !== 'number' || !Number.isSafeInteger(criteria.maxForbiddenHits) || criteria.maxForbiddenHits < 0)) {
+    report.blockers.push({ code: 'GENERATION_CRITERIA_INVALID', message: 'Generation acceptance criteria are incomplete or malformed.' });
+  }
+}
+
+function preflightSourceReview(report: QualificationPreflight): void {
+  const count = report.counts;
+  if (!count.requiredSourceEntries || count.reviewedSources < count.requiredSourceEntries) report.blockers.push({ code: 'SOURCE_REVIEW_INCOMPLETE', message: 'Required source versions, hashes or provenance remain unverified.', count: count.requiredSourceEntries - count.reviewedSources });
+  if (!count.requiredPublisherTerms || count.reviewedPublisherTerms < count.requiredPublisherTerms) report.blockers.push({ code: 'PUBLISHER_TERMS_UNVERIFIED', message: 'Reuse terms for required publishers need verification.', count: count.requiredPublisherTerms - count.reviewedPublisherTerms });
+}
+
+function preflightRequiredSources(positives: Row[], sources: Row[], report: QualificationPreflight): Row[] {
+  const keys = new Set(positives.flatMap(item => Array.isArray(item.expectedSourceKeys) ? item.expectedSourceKeys.filter(nonempty) : []));
+  const required = sources.filter(source => keys.has(`${source.document_code}@${source.version}`));
+  if (!keys.size || required.length !== keys.size || new Set(required.map(source => `${source.document_code}@${source.version}`)).size !== keys.size) {
+    report.blockers.push({ code: 'SOURCE_IDENTITY_UNRESOLVED', message: 'Gold source keys do not resolve to distinct canonical source versions.' });
+  }
+  return required;
+}
+
+function preflightPublisherCounts(required: Row[], manifest: Row) {
+  const publishers: Row = object(manifest.publishers) ? manifest.publishers : {};
+  const names = new Set(required.map(source => object(source.redistribution) ? source.redistribution.termsOf : null).filter(nonempty));
+  const reviewed = [...names].map(name => publishers[name]).filter(object)
+    .filter(publisher => publisher.termsVerified === true && nonempty(publisher.terms) && nonempty(publisher.termsUrl));
+  return { publishers: Object.keys(publishers).length, requiredPublisherTerms: names.size, reviewedPublisherTerms: reviewed.length };
+}
+
+function preflightRagBank(protocol: PqProtocol, gold: Row, manifest: Row, report: QualificationPreflight): void {
+  const component = protocol.components.rag;
+  if (!component?.required) return;
+  const items: Row[] = Array.isArray(gold.items) ? gold.items.filter(object) : [];
+  const positives = items.filter(item => !Array.isArray(item.tags) || !item.tags.includes('negative-control'));
+  const sources: Row[] = Array.isArray(manifest.entries) ? manifest.entries.filter(object) : [];
+  const requiredSources = preflightRequiredSources(positives, sources, report);
+  const required = component.criteria?.minScoredItems;
+  Object.assign(report.counts, { ragPositiveItems: positives.length, ragNegativeControls: items.length - positives.length,
+    ragRequiredPositiveItems: Number.isSafeInteger(required) ? required : null,
+    openGoldChecks: positives.filter(item => Array.isArray(item.openChecks) && item.openChecks.length).length,
+    missingGoldEvidence: positives.filter(item => !reviewedGold(item, { keysProvisional: false })).length,
+    sourceEntries: sources.length, requiredSourceEntries: requiredSources.length,
+    reviewedSources: requiredSources.filter(source => reviewedSource(source, manifest)).length,
+    ...preflightPublisherCounts(requiredSources, manifest) });
+  if (ragCriteriaProblems(component.criteria).length) report.blockers.push({ code: 'RAG_CRITERIA_INVALID', message: 'RAG acceptance criteria are incomplete or malformed.' });
+  if (!Number.isSafeInteger(required) || positives.length < required) report.blockers.push({ code: 'RAG_SAMPLE_SHORTFALL', message: 'The positive RAG bank is below its approved sample floor.', count: positives.length });
+  if (gold.keysProvisional !== false) report.blockers.push({ code: 'RAG_KEYS_PROVISIONAL', message: 'Official-source version keys still require review.' });
+  if (report.counts.openGoldChecks) report.blockers.push({ code: 'RAG_GOLD_OPEN_CHECKS', message: 'Gold answers retain unresolved official-text checks.', count: report.counts.openGoldChecks });
+  if (report.counts.missingGoldEvidence) report.blockers.push({ code: 'RAG_GOLD_EVIDENCE_MISSING', message: 'Positive gold items lack reviewed source keys, sections or quotations.', count: report.counts.missingGoldEvidence });
+  preflightSourceReview(report);
+}
+
+function preflightProtocol(protocol: PqProtocol, report: QualificationPreflight): void {
+  report.protocol = { id: nonempty(protocol.protocolId) ? protocol.protocolId : null, status: nonempty(protocol.status) ? protocol.status : null,
+    approved: protocol.status === 'approved' && nonempty(protocol.approvedBy) && validDate(protocol.approvedOn) };
+  if (!report.protocol.approved) report.blockers.push({ code: 'PROTOCOL_NOT_APPROVED', message: 'The responsible owner has not approved the canonical qualification protocol.' });
+  if (!object(protocol.components.generation) || protocol.components.generation.required !== true) report.blockers.push({ code: 'GENERATION_COMPONENT_MISSING', message: 'The canonical drafting protocol does not declare its required generation component.' });
+  for (const [name, component] of Object.entries(protocol.components)) {
+    if (!object(component) || !component.required) continue;
+    if (!component.executable || !['generation', 'extraction', 'rag'].includes(name)) report.blockers.push({ code: 'REQUIRED_COMPONENT_UNAVAILABLE', message: 'A required qualification component cannot be executed and measured.' });
+  }
+}
+
+/** Offline prerequisite diagnostics. Ready means evaluation may begin; it never establishes a model PQ PASS. */
+export function qualificationPreflight(suppliedEvidence?: CanonicalPqEvidence): QualificationPreflight {
+  const report = emptyQualificationPreflight();
+  try {
+    const evidence = suppliedEvidence ?? readCanonicalPqEvidence();
+    const protocol: unknown = JSON.parse(evidence.protocolText);
+    const bank: unknown = JSON.parse(evidence.docBankText);
+    const gold: unknown = JSON.parse(evidence.ragGoldText);
+    const manifest: unknown = JSON.parse(evidence.corpusManifestText);
+    if (![protocol, bank, gold, manifest].every(object) || !object((protocol as Row).components)) throw new Error('Invalid canonical evidence');
+    const p = protocol as unknown as PqProtocol;
+    preflightProtocol(p, report);
+    preflightTaskBank(p, bank as Row, report);
+    preflightRagBank(p, gold as Row, manifest as Row, report);
+  } catch { report.blockers.push({ code: 'CANONICAL_EVIDENCE_UNAVAILABLE', message: 'Canonical qualification inputs are unavailable or malformed.' }); }
+  report.readyToEvaluate = report.blockers.length === 0;
+  report.status = report.readyToEvaluate ? 'ready_to_evaluate' : 'blocked';
+  return report;
 }
 
 function taskAttributionValid(row: Row, entry: RegistryPqClaim, rules: Rules): boolean {

@@ -20,6 +20,8 @@
  */
 
 import type { DossierConsistencyVerdict } from '@shared/ana/dossier-consistency';
+import { compareClaims } from '../truth-engine/clinical-claims.js';
+import type { DraftSource } from './draft-project-sources.js';
 
 /**
  * The checks a verification agent runs on the text it was given, before it
@@ -43,13 +45,39 @@ export type HarnessCheck = (typeof HARNESS_CHECKS)[number];
 export type CheckOutcome = 'pass' | 'fail' | 'see_result' | 'not_assessed' | 'error';
 
 export interface CheckReading {
-  check: HarnessCheck | 'source_spans';
+  check: HarnessCheck | 'source_spans' | 'source_claims';
   outcome: CheckOutcome;
   /** One plain sentence, prefixed with what was checked. */
   statement: string;
 }
 
 export type VerifyVerdict = 'issues_found' | 'no_issues_found' | 'inconclusive' | 'nothing_checkable';
+
+export const SOURCE_CLAIM_METHOD = 'sub-agent-clinical-claims:v1';
+
+/** Existing clinical forms compare like frames only. General prose remains
+ * unverified even when every numeric component actually compared agrees. */
+export function compareStoredSourceClaims(text: string, sources: readonly DraftSource[]) {
+  const report = compareClaims([{ id: 'draft', role: 'other', text }, ...sources.map(source => ({
+    id: source.documentId, role: 'other' as const, text: source.text,
+    ...(/ocr/i.test(source.extractionMethod ?? '') ? { excluded: [{ start: 0, end: source.text.length, why: 'ocr' as const }] } : {}),
+  }))], { pairs: sources.map(s => ['draft', s.documentId] as const), withinSource: false });
+  const compared = new Set(report.comparisons.map(c => c.a.claimId));
+  const unresolved = report.notCompared.filter(n => n.a.sourceId === 'draft');
+  const complete = sources.every(s => s.completeText && !/ocr/i.test(s.extractionMethod ?? ''));
+  const unsupported = unresolved.filter(n => complete && n.reason === 'no_counterpart' && n.a.claimId && !compared.has(n.a.claimId));
+  const findings = [
+    ...report.comparisons.filter(c => c.outcome === 'conflict').map(comparison => ({ disposition: 'rejected', reason: 'NUMERIC_SOURCE_CONTRADICTION', comparison })),
+    ...unsupported.map(comparison => ({ disposition: 'rejected', reason: 'UNSUPPORTED_IN_SELECTED_SOURCES', comparison })),
+    ...unresolved.filter(n => !unsupported.includes(n)).map(comparison => ({ disposition: 'unverified', reason: comparison.reason, comparison })),
+  ];
+  const rejected = findings.filter(f => f.disposition === 'rejected').length;
+  const reading: CheckReading = { check: 'source_claims', outcome: rejected ? 'fail' : 'see_result',
+    statement: `Stored-source clinical figures: ${report.comparisons.length} framed comparisons, ${rejected} rejected finding(s), ${findings.length - rejected} unverified comparison(s). General prose and unrecognized comparative or negative claims remain unverified.` };
+  return { reading, output: { method: SOURCE_CLAIM_METHOD, qualification: 'general_prose_unverified', findings, report,
+    sources: sources.map(s => ({ documentId: s.documentId, programId: s.programId, contentHash: s.contentHash, referenceSchemaVersion: s.version,
+      extractedTextSha256: s.extractedTextSha256, spanSha256: s.spanSha256, span: s.span, completeText: s.completeText, sensitivityTier: s.sensitivityTier ?? 3 })) } };
+}
 
 function parsed(json: string): Record<string, unknown> | null {
   try {

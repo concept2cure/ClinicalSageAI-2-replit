@@ -103,6 +103,7 @@ export interface ShapeInput {
   models: readonly AgentModelRecord[];
   usage: { inputTokens: number; outputTokens: number; modelCalls: number };
   reportText: string;
+  advisoryFailure?: { code: string; message: string; started: boolean };
   checks: { readings: CheckReading[]; verdict: VerifyVerdict; outputs: Array<{ check: CheckReading['check']; output: string }> } | null;
 }
 
@@ -114,6 +115,7 @@ export function shapeAgentResult(a: ShapeInput): string {
     .map(({ s, code }) => ({ tool: s.tool, label: labelOf(s), code }));
   const notes = [statusNote(a.status, a.budget, a.heldExpired, a.reportText.trim().length > 0)];
   if (a.checks) notes.push('The verdict comes only from the checks; the agent\'s report is advisory.');
+  if (a.advisoryFailure) notes.push('The advisory model report was unavailable. The deterministic findings remain recorded; no model qualification is implied.');
   if (notExecuted.length > 0) {
     notes.push(
       `Tried ${notExecuted.length} step${notExecuted.length === 1 ? '' : 's'} it may not take: ` +
@@ -132,12 +134,15 @@ export function shapeAgentResult(a: ShapeInput): string {
       ? {
           verdict: a.checks.verdict,
           checks: a.checks.readings,
-          notChecked: a.checks.readings.some(r => r.check === 'source_spans')
+          notChecked: a.checks.readings.some(r => r.check === 'source_claims')
+            ? ['General prose, unrecognized comparative or negative claims, ambiguous frames, and scientific source authenticity remain unverified. Exact clinical comparisons cover only the named current source windows.']
+            : a.checks.readings.some(r => r.check === 'source_spans')
             ? [NOT_CHECKED[0], 'Quotations outside the explicitly checked source spans; semantic support and source authenticity.']
             : NOT_CHECKED,
           checkOutputs: a.checks.outputs.map(o => ({ check: o.check, output: cap(o.output, CHECK_OUTPUT_MAX) })),
         }
       : {}),
+    ...(a.advisoryFailure ? { advisoryUnavailable: a.advisoryFailure } : {}),
     report: {
       text: cap(a.reportText, REPORT_MAX),
       ...(a.reportText.length > REPORT_MAX ? { truncated: true } : {}),

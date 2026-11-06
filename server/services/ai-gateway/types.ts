@@ -381,6 +381,23 @@ export interface GatewayMessage {
   cacheControl?: boolean;
 }
 
+/** Server-callable derivative entry point. The approved custody record supplies
+ * every byte of model context; caller messages, tools and metadata are never used. */
+export interface DerivativeGatewayRequest {
+  organizationId: number;
+  userId: number;
+  projectId: number;
+  derivativeId: string;
+  taskType: 'document_drafting' | 'document_analysis' | 'regulatory_review';
+  provider?: ProviderName;
+  model?: string;
+  qualifiedModelPin?: QualifiedModelPin;
+  maxTokens?: number;
+  temperature?: number;
+  apiEffort?: 'low' | 'medium' | 'high' | 'max';
+  signal?: AbortSignal;
+}
+
 export interface GatewayRequest {
   /** Task categorization for routing decisions */
   taskType: TaskType;
@@ -694,6 +711,17 @@ export interface GatewayResponse {
    * payload was permitted where it went.
    */
   placementReasonCode?: string;
+
+  /** Exact local token reinjection only; this does not verify factual or semantic support. */
+  derivativeVerification?: {
+    kind: 'deterministic_token_roundtrip';
+    derivativeId: string;
+    payloadSha256: string;
+    semanticVerified: false;
+    originTier: 2;
+    effectiveTier: 1;
+    resultingContentTier: 2;
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

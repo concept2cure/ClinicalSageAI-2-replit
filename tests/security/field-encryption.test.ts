@@ -16,6 +16,8 @@ import {
   encryptField,
   decryptField,
   isEncrypted,
+  sealTenantPayload, openTenantPayload, tenantDataKeyOpsFromSdk,
+  type TenantDataKeyOps, type TenantEnvelopeContext,
 } from '../../server/services/security/field-encryption';
 
 describe('field-encryption', () => {
@@ -151,5 +153,54 @@ describe('field-encryption', () => {
       expect(read(legacyPlaintext)).toBe('C92.11');
       expect(read(migrated)).toBe('C92.11');
     });
+  });
+});
+
+
+describe('tenant derivative envelope custody', () => {
+  const arn = 'arn:aws:kms:us-east-1:123456789012:key/11111111-1111-4111-8111-111111111111';
+  const context: TenantEnvelopeContext = { organizationId: 7, projectId: 42, derivativeId: '11111111-1111-4111-8111-111111111111',
+    sourceHash: 'a'.repeat(64), policyVersion: 1, expiresAt: '2030-01-01T00:00:00.000Z' };
+  const ops: TenantDataKeyOps = {
+    generate: async key => ({ plaintext: new Uint8Array(32).fill(23), ciphertext: new Uint8Array([1, 2, 3]), keyId: key }),
+    decrypt: async (key, wrapped) => {
+      if (Buffer.from(wrapped).toString('hex') !== '010203') throw new Error('wrapped key authentication failed');
+      return { plaintext: new Uint8Array(32).fill(23), keyId: key };
+    },
+  };
+  it('encrypts real bytes and rejects every changed tenant/source/policy/expiry AAD field', async () => {
+    const secret = 'tenant-seven-molecule-canary';
+    const encrypted = await sealTenantPayload(secret, context, arn, ops);
+    expect(encrypted).not.toContain(secret);
+    expect(await openTenantPayload(encrypted, context, arn, ops)).toBe(secret);
+    for (const change of [{ organizationId: 8 }, { projectId: 43 }, { sourceHash: 'b'.repeat(64) },
+      { policyVersion: 2 }, { expiresAt: '2030-01-02T00:00:00.000Z' }, { derivativeId: '22222222-2222-4222-8222-222222222222' }]) {
+      await expect(openTenantPayload(encrypted, { ...context, ...change }, arn, ops)).rejects.toThrow(/could not be authenticated/);
+    }
+  });
+  it('fails on wrong key, key revocation, wrapped-key/ciphertext tampering and malformed lengths', async () => {
+    const encrypted = await sealTenantPayload('client secret', context, arn, ops);
+    await expect(openTenantPayload(encrypted, context, arn.replace('11111111-', '22222222-'), ops)).rejects.toThrow();
+    await expect(openTenantPayload(encrypted, context, arn, { ...ops, decrypt: async () => { throw new Error('revoked'); } })).rejects.toThrow();
+    for (const change of [{ wrappedKey: Buffer.from('forged key').toString('base64') }, { ciphertext: Buffer.from('forged').toString('base64') }, { tag: Buffer.alloc(4).toString('base64') }, { iv: 'not base64' }]) {
+      await expect(openTenantPayload(JSON.stringify({ ...JSON.parse(encrypted), ...change }), context, arn, ops)).rejects.toThrow();
+    }
+    await expect(sealTenantPayload('secret', context, arn.replace(':key/', ':alias/'), ops)).rejects.toThrow();
+    await expect(sealTenantPayload('secret', context, arn, { ...ops, generate: async () => ({ plaintext: new Uint8Array(32), ciphertext: new Uint8Array([1]), keyId: 'other' }) })).rejects.toThrow();
+  });
+  it('pins real SDK GenerateDataKey/Decrypt commands to the immutable ARN and encryption context', async () => {
+    const sdk = await import('@aws-sdk/client-kms');
+    const seen: unknown[] = [];
+    const adapter = tenantDataKeyOpsFromSdk({ send: async command => {
+      seen.push(command);
+      return command instanceof sdk.GenerateDataKeyCommand
+        ? { Plaintext: new Uint8Array(32).fill(24), CiphertextBlob: new Uint8Array([8]), KeyId: arn }
+        : { Plaintext: new Uint8Array(32).fill(24), KeyId: arn };
+    } }, sdk);
+    const encrypted = await sealTenantPayload('tenant-only', context, arn, adapter);
+    expect(await openTenantPayload(encrypted, context, arn, adapter)).toBe('tenant-only');
+    expect(seen[0]).toBeInstanceOf(sdk.GenerateDataKeyCommand);
+    expect(seen[1]).toBeInstanceOf(sdk.DecryptCommand);
+    expect((seen[0] as InstanceType<typeof sdk.GenerateDataKeyCommand>).input).toMatchObject({ KeyId: arn, KeySpec: 'AES_256', EncryptionContext: { organizationId: '7', projectId: '42' } });
   });
 });

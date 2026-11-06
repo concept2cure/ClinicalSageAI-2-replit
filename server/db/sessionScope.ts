@@ -36,6 +36,7 @@
  */
 import type { PoolClient } from 'pg';
 import { readEnforcementMode } from './rlsEnforcement';
+import { assertScopeRoleAdmissible } from './tenantStore';
 
 /** The value `app.rls_enforce` is pinned to: 'on' where this deployment enforces, else empty (as an unset startup option leaves it). */
 const enforcementValue = (): string => (readEnforcementMode() === 'on' ? 'on' : '');
@@ -56,16 +57,19 @@ export interface SessionScope {
   tenantId: string;
   role?: string | null;
   orgUuid?: string | null;
+  accountId?: number | null;
 }
 
 /** Apply a session-level scope to a checked-out connection: the tenant variables and the switch pins, one statement. */
 export async function applySessionScope(client: PoolClient, scope: SessionScope): Promise<void> {
+  assertScopeRoleAdmissible(scope, 'applySessionScope');
   await client.query(
     "SELECT set_config('app.current_tenant_id', $1, false), " +
       "set_config('app.current_user_role', $2, false), " +
       "set_config('app.current_org_id', $3, false), " +
+      "set_config('app.current_account_id', $4, false), " +
       switchPinTerms(false),
-    [scope.tenantId, scope.role ?? '', scope.orgUuid ?? ''],
+    [scope.tenantId, scope.role ?? '', scope.orgUuid ?? '', scope.accountId == null ? '' : String(scope.accountId)],
   );
 }
 
@@ -74,6 +78,7 @@ export const CLEAR_SESSION_SCOPE_SQL =
   "SELECT set_config('app.current_tenant_id', '', false), " +
   "set_config('app.current_user_role', '', false), " +
   "set_config('app.current_org_id', '', false), " +
+  "set_config('app.current_account_id', '', false), " +
   "set_config('app.bypass_rls', '', false), " +
   "set_config('app.is_admin', '', false)";
 
