@@ -54,7 +54,7 @@ describe('Vault — header document count', () => {
   it('states no count when no project is open and nothing was read', async () => {
     vaultWith(() => ok({}));
     render(<Vault {...props()} />);
-    expect(await screen.findByText('Open a project to see its vault')).toBeTruthy();
+    expect(await screen.findByText("Choose a project's Vault")).toBeTruthy();
 
     expect(headerText(), 'a document count over a vault nobody read').not.toMatch(/\d+\s+documents?/);
     expect(apiRequest.mock.calls.filter(([, url]) => String(url).startsWith('/api/c2c/project-vault'))).toEqual([]);
