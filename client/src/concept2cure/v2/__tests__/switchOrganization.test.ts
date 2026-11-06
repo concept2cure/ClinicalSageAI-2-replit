@@ -2,13 +2,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const { apiRequest, clearQueries, adoptSession, endSession } = vi.hoisted(() => ({ apiRequest: vi.fn(), clearQueries: vi.fn(), adoptSession: vi.fn(), endSession: vi.fn() }));
 vi.mock('@/lib/queryClient', async (original) => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest, queryClient: { clear: clearQueries } }));
-vi.mock('@/services/portal/authService', () => ({ authService: { adoptSession, endSession, getUser: () => sourceUser } }));
+vi.mock('@/services/portal/authService', () => ({ authService: { adoptSession, endSession, getUser: () => account.user } }));
 const sourceUser = { id: '33', organizationId: '7' };
+const account = vi.hoisted(() => ({ user: null as null | { id: string; organizationId: string } }));
 const SOURCE_TOKEN = `test.${btoa(JSON.stringify({ userId: 33, organizationId: 7 }))}.synthetic`;
 import { releaseSessionChange } from '@/lib/sessionChangeGuard';
-import { switchOrganization } from '../switchOrganization';
+import { captureOrganizationOwner, switchOrganization } from '../switchOrganization';
 const response = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body }) as Response;
 beforeEach(() => {
+  account.user = sourceUser;
   vi.clearAllMocks(); releaseSessionChange(); localStorage.clear(); sessionStorage.clear();
   sessionStorage.setItem('trialsage_access_token', SOURCE_TOKEN);
   localStorage.setItem('trialsage_refresh_token', 'previous-refresh');
@@ -42,5 +44,24 @@ describe('verified tenant-session handoff', () => {
     adoptSession.mockResolvedValue(null); const navigate = vi.fn();
     await expect(switchOrganization(9, navigate)).rejects.toThrow(/could not be verified/);
     expect(endSession).toHaveBeenCalledWith(null, true); expect(navigate).not.toHaveBeenCalled();
+  });
+});
+describe('the captured account owner (J5-02)', () => {
+  it('stays current when the session re-read hands back the same account as a new object', () => {
+    const owner = captureOrganizationOwner();
+    account.user = { id: '33', organizationId: '7' };
+    expect(owner.current()).toBe(true);
+  });
+  it('is no longer current when the account, the organisation or the bearer changes', () => {
+    const owner = captureOrganizationOwner();
+    account.user = { id: '33', organizationId: '9' };
+    expect(owner.current()).toBe(false);
+    account.user = { id: '34', organizationId: '7' };
+    expect(owner.current()).toBe(false);
+    account.user = null;
+    expect(owner.current()).toBe(false);
+    account.user = { ...sourceUser };
+    sessionStorage.setItem('trialsage_access_token', 'rotated-access');
+    expect(owner.current()).toBe(false);
   });
 });
