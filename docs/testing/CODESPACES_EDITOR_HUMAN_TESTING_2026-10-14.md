@@ -106,6 +106,9 @@ What the setup did, and where to look when something is wrong:
   `cdiscpilot01-efficacy-results.json` in that directory, the study's manifest
   says efficacy was "not supplied", and the CSR's efficacy section says so too.
   It is never invented.
+- **With `ANTHROPIC_API_KEY`** the start-up names what the key can do, using a model list that costs nothing:
+  `ANTHROPIC_API_KEY: key accepted; drafting models available: claude-opus-5-5, …`, or `BLOCKED` with the reason
+  (an invalid key, billing, or a key that can see none of the approved drafting models).
 - **Without `ANTHROPIC_API_KEY`** the app runs and `/readyz` answers 503 with
   only `ana` down (`anaState: no_provider`); the start-up box says so. AnA cannot draft. The CSR build then
   ends refused (demo replies are not saved as drafts). That is how it is designed.

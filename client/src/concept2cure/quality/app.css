@@ -77,6 +77,16 @@
 .qms-h1 { font-family: var(--font-serif); font-size: 24px; font-weight: 600; letter-spacing: -0.01em; color: var(--text-100); margin: 0 0 6px; }
 .qms-sub { font-size: 12.5px; color: var(--text-300); max-width: 760px; }
 .qms-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+/* At phone width the actions go under the title (J5-10, 2026-11-06): kept
+   beside it, they squeezed the description to one word a line at 390px and
+   pushed "New controlled document" off the screen. */
+@media (max-width: 640px) {
+  .qms-head { flex-wrap: wrap; }
+  .qms-head > div:first-child { flex: 1 1 100%; }
+  .qms-actions { flex: 1 1 100%; flex-wrap: wrap; }
+  .qms-sec-head { flex-wrap: wrap; row-gap: 4px; }
+  .qms-sec-head h2 { white-space: normal; }
+}
 .qms-btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 12px; border-radius: var(--radius-lg);

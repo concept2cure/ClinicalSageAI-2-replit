@@ -31,7 +31,7 @@ C2C_REVIEWER_EMAIL="${C2C_REVIEWER_EMAIL:-rhea.reviewer@concept2cure.pro}"
 C2C_APPROVER_EMAIL="${C2C_APPROVER_EMAIL:-ava.approver@concept2cure.pro}"
 
 c2c_log() { printf '[c2c-codespace] %s\n' "$*"; }
-c2c_sudo() { if [[ "$(id -u)" == "0" ]]; then "$@"; else sudo -n "$@"; fi; }
+c2c_sudo() { if [[ "$(id -u)" == "0" ]]; then "$@"; else sudo -n --preserve-env=DEBIAN_FRONTEND "$@"; fi; }
 c2c_as_postgres() { c2c_sudo runuser -u postgres -- "$@"; }
 
 c2c_pg_bin() { printf '/usr/lib/postgresql/%s/bin' "$C2C_PG_VERSION"; }
@@ -50,7 +50,7 @@ c2c_install_postgres() {
   local pkgs=("postgresql-$C2C_PG_VERSION" "postgresql-$C2C_PG_VERSION-pgvector" "postgresql-client-$C2C_PG_VERSION")
   export DEBIAN_FRONTEND=noninteractive
   c2c_log "Installing PostgreSQL $C2C_PG_VERSION + pgvector."
-  c2c_sudo apt-get update -qq
+  c2c_sudo apt-get update -qq || { c2c_log "BLOCKED: apt-get update failed: the distribution's package mirror is unreachable (see the lines above)."; return 1; }
   if ! apt-cache show "postgresql-$C2C_PG_VERSION-pgvector" >/dev/null 2>&1; then
     local codename
     codename="$(. /etc/os-release && echo "${VERSION_CODENAME:-}")"
@@ -59,12 +59,15 @@ c2c_install_postgres() {
     c2c_sudo apt-get install -y -qq ca-certificates curl >/dev/null
     c2c_sudo install -d /usr/share/postgresql-common/pgdg
     c2c_sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
-      https://www.postgresql.org/media/keys/ACCC4CF8.asc
+      https://www.postgresql.org/media/keys/ACCC4CF8.asc ||
+      { c2c_log "BLOCKED: could not download the PostgreSQL signing key from www.postgresql.org."; return 1; }
     echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $codename-pgdg main" |
       c2c_sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
-    c2c_sudo apt-get update -qq
+    c2c_sudo apt-get update -qq ||
+      { c2c_log "BLOCKED: apt-get update failed with the PostgreSQL repository (apt.postgresql.org)."; return 1; }
   fi
-  c2c_sudo apt-get install -y -qq "${pkgs[@]}" >/dev/null
+  c2c_sudo apt-get install -y -qq "${pkgs[@]}" >/dev/null ||
+    { c2c_log "BLOCKED: could not install ${pkgs[*]}."; return 1; }
   c2c_pgvector_present || { c2c_log "BLOCKED: pgvector is not installed for PostgreSQL $C2C_PG_VERSION."; return 1; }
 }
 

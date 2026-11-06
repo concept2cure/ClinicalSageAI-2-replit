@@ -79,6 +79,35 @@ function clip(s: string, max: number): string {
   return t.length <= max ? t : `${t.slice(0, max)}…`;
 }
 
+const SESSION_MEMORY_HEADING = '## Session memory — picking up where we left off';
+const MEMORY_CHAR_LIMIT = 4500;
+const MEMORY_OMISSION_NOTICE = '_Some session memory records were omitted to fit the prompt budget. This history is incomplete._';
+const memoryText = (value: string): string => (value ?? '').replace(/\s+/g, ' ').trim();
+
+/** Keep whole ranked records, including their labels and section headings.
+ * Reserve the omission notice before admission, so it cannot displace a
+ * qualifier after a record has been selected. File previews have their own
+ * existing limits and do not consume this memory-only budget. */
+function admitMemorySections(sections: Array<{ heading: string; records: string[] }>) {
+  const total = sections.reduce((size, section) => size + (section.records.length
+    ? section.heading.length + 1 + section.records.reduce((n, record) => n + record.length + 1, 0)
+    : 0), SESSION_MEMORY_HEADING.length);
+  const omitted = total > MEMORY_CHAR_LIMIT;
+  let used = SESSION_MEMORY_HEADING.length + (omitted ? MEMORY_OMISSION_NOTICE.length + 1 : 0);
+  const admitted = sections.map(({ heading, records }) => {
+    const lines: string[] = [];
+    for (const record of records) {
+      const cost = record.length + 1 + (lines.length ? 0 : heading.length + 1);
+      if (used + cost > MEMORY_CHAR_LIMIT) continue;
+      if (!lines.length) lines.push(heading);
+      lines.push(record);
+      used += cost;
+    }
+    return lines;
+  });
+  return { sections: admitted, omitted };
+}
+
 /** Compact per-file recall line: where a vault document is and what it is for. */
 export interface VaultFileDigest {
   fileName: string;
@@ -219,28 +248,22 @@ export function formatVaultFileLine(f: VaultFileDigest): string {
  */
 export function formatSessionBootstrap(parts: SessionBootstrapParts): string {
   const atomLimit = parts.atomLimit ?? 6;
-  const lines: string[] = [];
-
-  if (parts.workingMemorySummary && parts.workingMemorySummary.trim()) {
-    lines.push('### Where we left off');
-    lines.push(clip(parts.workingMemorySummary, 1200));
-  }
-
+  const working = memoryText(parts.workingMemorySummary ?? '');
   const project = rankBootstrapAtoms(parts.projectAtoms, atomLimit);
-  if (project.length) {
-    lines.push('### Project memory (most important)');
-    for (const a of project) {
-      lines.push(`- **${clip(a.title, 120)}**${a.category ? ` _(${a.category})_` : ''}: ${clip(a.content, 240)}`);
-    }
-  }
-
   const client = rankBootstrapAtoms(parts.clientAtoms, Math.max(2, Math.floor(atomLimit / 2)));
-  if (client.length) {
-    lines.push('### Client memory (most important)');
-    for (const a of client) {
-      lines.push(`- **${clip(a.title, 120)}**${a.category ? ` _(${a.category})_` : ''}: ${clip(a.content, 240)}`);
-    }
-  }
+  const lessons = parts.outcomeLessons.filter(l => l.lessonsLearned && l.lessonsLearned.trim()).slice(0, 5);
+  const atomLine = (a: BootstrapAtom) => `- **${memoryText(a.title)}**${a.category ? ` _(${a.category})_` : ''}: ${memoryText(a.content)}`;
+  const memory = admitMemorySections([
+    { heading: '### Where we left off', records: working ? [working] : [] },
+    { heading: '### Project memory (most important)', records: project.map(atomLine) },
+    { heading: '### Client memory (most important)', records: client.map(atomLine) },
+    { heading: '### What I learned on past work here', records: lessons.map(l => {
+      const tag = l.documentType ? `${l.capabilityKey}/${l.documentType}` : l.capabilityKey;
+      return `- (${tag}, ${l.outcome}) ${memoryText(l.lessonsLearned!)}`;
+    }) },
+  ]);
+  const lines: string[] = memory.omitted ? [MEMORY_OMISSION_NOTICE] : [];
+  lines.push(...memory.sections.slice(0, 3).flat());
 
   const vault = parts.vaultFiles;
   const files = (vault?.files ?? []).slice(0, 12);
@@ -290,15 +313,8 @@ export function formatSessionBootstrap(parts: SessionBootstrapParts): string {
     );
   }
 
-  const lessons = parts.outcomeLessons.filter(l => l.lessonsLearned && l.lessonsLearned.trim()).slice(0, 5);
-  if (lessons.length) {
-    lines.push('### What I learned on past work here');
-    for (const l of lessons) {
-      const tag = l.documentType ? `${l.capabilityKey}/${l.documentType}` : l.capabilityKey;
-      lines.push(`- (${tag}, ${l.outcome}) ${clip(l.lessonsLearned!, 220)}`);
-    }
-  }
+  lines.push(...(memory.sections[3] ?? []));
 
   if (lines.length === 0) return '';
-  return ['## Session memory — picking up where we left off', ...lines].join('\n');
+  return [SESSION_MEMORY_HEADING, ...lines].join('\n');
 }

@@ -7,7 +7,7 @@
  * summary every later turn reads and the structured fields the consolidation
  * job promotes — is what the round is about.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { checkAnswer } from '../ana/answer-grounding';
 
@@ -19,6 +19,7 @@ const state = {
   threadReads: 0,
   gatewayCalls: 0,
   inserts: [] as unknown[][],
+  embeddedSummaries: [] as string[],
 };
 
 vi.mock('../../db', () => ({
@@ -48,6 +49,14 @@ vi.mock('../chat-thread-helpers.js', () => ({
     return state.thread;
   },
 }));
+vi.mock('../enhancedEmbeddingService.js', () => ({
+  getEmbeddingService: () => ({
+    embed: async (summary: string) => {
+      state.embeddedSummaries.push(summary);
+      return { embedding: [1, 0, 0] };
+    },
+  }),
+}));
 
 const SEARCH = (content: unknown) => ({ source: 'tool:search_clinical_evidence', content: JSON.stringify(content) });
 const ANSWER = 'In NCT01234567 the objective response rate was 45% across 212 patients.';
@@ -65,6 +74,15 @@ const SUMMARY = {
   nextActions: [],
   createdArtifacts: [],
   exclusions: [],
+};
+const CONTINUITY = {
+  objective: 'Prepare the regulatory overview',
+  lockedFacts: ['The sponsor prefers a concise narrative'],
+  decisions: ['Retain the agreed outline'],
+  openQuestions: ['Which appendix should follow?'],
+  nextActions: ['Request the source tables from the study team'],
+  createdArtifacts: ['Clinical overview draft in the project'],
+  exclusions: ['Do not claim efficacy for the exploratory subgroup'],
 };
 /** Twenty messages: the refresh gate's threshold, with no earlier summary. */
 const turns = (last = ANSWER) => [
@@ -86,10 +104,71 @@ async function writeBack(extra: Record<string, unknown> = {}, messages = turns()
 
 beforeEach(() => {
   vi.resetModules();
-  Object.assign(state, { summary: SUMMARY, thread: [STORED], threadReads: 0, gatewayCalls: 0, inserts: [] });
+  vi.stubEnv('ENABLE_SEMANTIC_WORKING_MEMORY', 'false');
+  Object.assign(state, { summary: SUMMARY, thread: [STORED], threadReads: 0, gatewayCalls: 0, inserts: [], embeddedSummaries: [] });
 });
+afterEach(() => vi.unstubAllEnvs());
 
 describe('the write-back keeps only what a checked answer found', () => {
+  it.each([false, true])('preserves all seven settled fields in the recalled summary (semantic embedding: %s)', async (semantic) => {
+    vi.stubEnv('ENABLE_SEMANTIC_WORKING_MEMORY', String(semantic));
+    state.summary = CONTINUITY;
+    await writeBack();
+    const { structured, summary } = stored();
+
+    expect(structured).toMatchObject(CONTINUITY);
+    // Keep the compact established first-four-field format while carrying the
+    // actions, artifacts and exclusions that later turns also need.
+    expect(summary).toContain([
+      '**Objective**: Prepare the regulatory overview',
+      '**Key Facts**: The sponsor prefers a concise narrative',
+      '**Decisions**: Retain the agreed outline',
+      '**Open Questions**: Which appendix should follow?',
+    ].join('\n'));
+    for (const field of ['nextActions', 'createdArtifacts', 'exclusions'] as const) {
+      expect(summary).toContain(CONTINUITY[field][0]);
+    }
+    expect(state.embeddedSummaries).toEqual(semantic ? [summary] : []);
+  });
+
+  it('renders settled actions, artifacts and exclusions while keeping unsupported items withheld', async () => {
+    const unsupported = 'The ORR in NCT01234567 was 45%';
+    state.summary = {
+      ...CONTINUITY,
+      nextActions: [...CONTINUITY.nextActions, unsupported],
+      createdArtifacts: [...CONTINUITY.createdArtifacts, unsupported],
+      exclusions: [...CONTINUITY.exclusions, unsupported],
+    };
+    await writeBack();
+    const { structured, summary } = stored();
+
+    for (const field of ['nextActions', 'createdArtifacts', 'exclusions'] as const) {
+      expect(structured[field]).toEqual(CONTINUITY[field]);
+      expect(structured.withheld[field]).toEqual([unsupported]);
+      expect(summary).toContain(CONTINUITY[field][0]);
+    }
+    expect(summary).not.toContain('45%');
+    expect(structured.factCheck).toBe('answer-check/2');
+  });
+
+  it('keeps the stored thread summary empty when every proposed item is withheld', async () => {
+    const unsupported = 'The ORR in NCT01234567 was 45%';
+    state.summary = {
+      objective: unsupported,
+      lockedFacts: [unsupported],
+      decisions: [unsupported],
+      openQuestions: [unsupported],
+      nextActions: [unsupported],
+      createdArtifacts: [unsupported],
+      exclusions: [unsupported],
+    };
+    await writeBack();
+
+    expect(state.inserts).toHaveLength(1);
+    expect(state.inserts[0][3]).toBe('');
+    expect(stored().structured.withheld.objective).toBe(unsupported);
+  });
+
   it('withholds the figure the stored check did not find, in every field the reader renders', async () => {
     await writeBack();
     const { structured, summary } = stored();
