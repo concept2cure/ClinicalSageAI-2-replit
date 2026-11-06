@@ -63,6 +63,8 @@ This lane holds the unheld `server/services/clinical-regulatory-evidence/` nativ
 
 **→ D3 Project owner:** `ProjectCoreWork.tsx` omits Quality while ProjectReview already has its count/door; the door calls only `onNav('quality')`, and QP3 needs the retained open project. Please place Quality beside existing work-area links within your held layout. Native snapshots support shared selected-source builds and the typed source_ids conversation context; per-row study actions without source_ids should not promise whole-record tool reads (there is no native Vault UUID or upload to open). **→ Reporting owner:** existing `compliance.audit_assurance_pack` will consume scoped Quality facts; no additional reporting screen is requested. **→ tasking coordinator:** this lane claims only native Quality task project/source linkage in shared TaskBoard, preserving all layout and other task behavior.
 
+Verified handoff: native task → CAPA register and shared-source build → one editor pass at desktop/mobile. The current Quality tabbar overflows 847 px inside 390 px (`quality/app.css:276`, `quality/App.tsx:349`); left to Quality holder. Native snapshots feed shared project catalogue/builds and existing QA report; no held UI layout changed. Source anchors: `1e904a0550`, `b25fd60fb7`, `98661f418b`, `11e4252671`, `f92b2be3f7`, `f4c230dfac`, `bb79304fa2`. Merged 18/302 task, 8/83 source and 10/118 report tests pass; source frozen for publication, evidence `docs/evidence/DESIGN/R1/2026-11-06-quality-core-workflow/`.
+
 ## Who works where
 
 | Session | Packages | Now | Layout work |

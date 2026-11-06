@@ -26,3 +26,51 @@ The integration contract is multipurpose: native identity → project admission 
 ## Concurrent ownership
 
 Do not edit the held Quality, Project, Insights or Vault/taxonomy files. The exact QP3/project door and training project-task findings are handed to their owners in COORDINATION. This lane owns the unheld source projection/admission, task service/board integration and report computation files it names there. All changes require red-before-green tests, current access/lifecycle tests, the running app and normal branch gates before publication.
+
+## Implemented
+
+| Existing owner completed | Result | Source commits |
+|---|---|---|
+| Native Quality tasking and the existing TaskBoard | Canonical project placement repairs old tasks in place; native source doors retain the project. Training keeps assigned-reader access, periodic reminders support delegated approvers, and training reconciliation shares one document lock. Same-date numeric CAPA/action reassignment is atomic and refuses stale/inadmissible recipients. | `1e904a0550`, `f92b2be3f7` |
+| QMS controlled-document readers | Exact project/object admission precedes private bodies, including retained versions. Current working/release/retained records remain distinct; revoked/unverified releases are not called authoritative. Business JSON, CTQ/gating criteria, training records and canonical periodic-review dates are retained. | `b25fd60fb7`, type correction `11e4252671` |
+| Existing source capture, catalogue and shared editor | A project catalogue refresh reconciles admitted Quality facts into audited, hash-bound native snapshots, retaining predecessors. Scope, lifecycle and native identity are shown beside shared source facts. Native sources can be selected for every existing document build; source/actor/current-native checks run again before use. Typed project source pins also supply bounded, hash-checked native conversation context without pretending to be a file or Vault/tool receipt. | `f4c230dfac` |
+| Existing Compliance & Audit Assurance Pack | Real scoped Quality facts replace the previously uncomputed type. Saved views, history, PDF/bundles and scheduled recipients retain exact native/document permissions. Rendered UI/PDF uses readable business facts; complete native snapshots and provenance remain in the sealed machine payload. | `98661f418b`, presentation `bb79304fa2` |
+
+Latest remote integration for these checks: `b97d50039d`, merging `origin/concept2cure-v2` at `7d771e124a`. This preserves the other sessions' canonical task/project admission and authoring-access repairs. No new app, rail entry, screen, table, API mount, editor, generator, AnA tool, model or production dependency was added. The Quality renderer is an internal split within the existing renderer folder.
+
+## Verification
+
+All final merged test commands used Node 22.23.4 through `npm exec --yes --package=node@22 --package=npm@10 -- …`.
+
+| Check | Result / evidence |
+|---|---|
+| Merged tasking/QMS/board and canonical task admissions | **18 suites / 302 tests passed**, [log](validation/merged-task-regression.txt.gz) |
+| Merged native-source/private-project/content/citation boundaries | **8 suites / 83 tests passed**, [log](validation/merged-source-regression.txt.gz) |
+| Merged reporting ACL/history/scope/rendering/PDF | **10 suites / 118 tests passed**, [log](validation/merged-report-regression.txt.gz) |
+| Shared catalogue/editor/Quality handoff regression | **10 suites / 99 tests passed**, [log](validation/root-final-regression.txt.gz); overlaps the merged boundary suites, so these counts are not summed |
+| Canonical QMS lifecycle/parent callbacks | 30 tests in the collector regression; the callback type correction also passed 18 focused tests. [Collector log](validation/collector-green.txt.gz) |
+| Production client/server/verification builds after merge | Passed, [log](validation/merged-build.txt.gz) |
+| Full merged compiler | **0 errors**, baseline 0, [log](validation/merged-typecheck.txt.gz). Earlier failed/aborted attempts are not counted as passes. Normal publication gates run again on push. |
+
+Red evidence is retained separately: task placement, actor/recipient/deleted-parent rules, assignment locks, delegated periodic approvers, native source targets, report object revocation, readable PDF output and the exact UTF-16 prefix boundary. Initial new snapshot-module tests failed because the integration did not exist; that import failure is not described as a behavioral guard proof. No baseline, guard, hook or approval boundary was disabled.
+
+## Running application
+
+The application ran against local PostgreSQL as `app_service`, with **superuser=false, BYPASSRLS=false and RLS_ENFORCE=on** ([role proof](runtime/runtime-role.json)). All records are explicitly fictional. No real signing, approval, filing, external delivery or model request was made.
+
+- The existing main rail shows Quality next to RBM, CMC and Biostatistics. A nonconformance was recorded in the existing Quality UI. [Desktop](screens/quality-main-rail-desktop.png).
+- Canonical APIs created a project CAPA/task and project-owned nonconformance. The project catalogue also includes the organization nonconformance, labelled **Organization context**; project records are labelled separately. Repeated reads kept source identities unchanged when facts did not change. [Project catalogue](screens/project-quality-catalogue.png).
+- The actual task drawer opened the existing CAPA register, with the same project URL and shell context on desktop and mobile. [Receipt](runtime/task-ui-outcome.json), [desktop](screens/task-native-source-desktop.png), [mobile](screens/task-quality-capa-mobile.png). A later receipt-only rerun met ordinary session expiry; the retained screenshots and receipt distinguish the original completed pass from that aborted rerun.
+- Evidence → native source checkbox → **Build in editor** → an existing working document opened the one editor. A matching M3 preparation worksheet preview/build saved 61 template sections and its exact native source receipt; mobile reopening found the same saved source event. AnA stayed off. [Receipt](runtime/editor-ui-outcome.json), [preview](runtime/editor-preview.json), [saved references](runtime/editor-saved-source.json), [desktop](screens/shared-editor-quality-source-desktop.png), [mobile](screens/shared-editor-quality-source-mobile.png). A Quality Manual whole-document template was correctly refused for the M3 working copy before the matching template was chosen; that refusal is retained separately. This proves structure/reference assembly, not generated or scientifically qualified narrative.
+- The merged application created an actual Quality assurance report, read saved/rendered/dependency/history views, exported its PDF and opened the report at 1440 and 390 pixels. **27 live checks passed**, including retention of all three full native snapshots/provenance and readable CAPA/NC facts with no raw JSON in the primary view/PDF. [Receipt](runtime/report-ui-outcome.json), [desktop](screens/report-quality-desktop.png), [mobile facts](screens/report-quality-mobile-facts.png), [PDF](runtime/fictional-quality-report.pdf). It remains **partial**: completeness, audit-chain integrity and compliance controls are explicitly unassessed. Poppler omits a rotated watermark from text extraction; the canonical PDF parser confirms it and the explicit partial status/limits. This was a harness correction, not a product failure.
+
+## Current limits and roadmap handoffs
+
+- **QP3 / D3 remain with their existing file holders.** `quality/**` and `Project*.tsx` were not edited. The project Review door still needs the register-level project filter, and `ProjectCoreWork.tsx` still needs the Quality door beside peer areas. New controlled documents already preselect the open project. Exact findings are in `.design/claude-convergence/COORDINATION.md`.
+- The mobile Quality tab bar has existing overflow (847 px inside a 390 px page); the successful task-to-CAPA flow exposed it. Candidate owner lines are `quality/app.css:276` and `quality/App.tsx:349`. The shared editor fits 390 px; reporting uses its existing local horizontal table scroller.
+- Native record snapshots do not create original uploaded files or imply scientific verification/approval. Metadata-only legacy records have no invented authored prose. The read projection bounds are explicit (1,000 rows per family, 5,000 snapshots, 20 MiB aggregate, 2 million characters per item); exceeding them fails instead of presenting partial data as complete.
+- The editor-only per-row study button has no typed source handoff for native records and is qualified/disabled for them. **Build in editor** and the project's actual typed `source_ids` context are supported. No fake Vault UUID, upload, atom type or read receipt was introduced.
+- Free-text CAPA action owners do not establish a numeric assignee; unprovable reassignment preserves the old task. The pre-existing close-only stale lifecycle race is not claimed repaired by this integration.
+- CMC, RBM and Biostatistics retain their existing owners. This supplies the native identity → project admission → immutable capture → shared build/report pattern for their downstream completion; it does not claim unverified parity.
+
+Private browser state, credentials and app environment files are excluded from this evidence.
