@@ -18,6 +18,7 @@ import {
 import { GatewayContextWindowError } from './context-budget';
 import { isTenantPlacementRefusal } from './gateway-outcome';
 import { NO_PQ_QUALIFIED_MODEL } from './model-governance';
+import { APPROVED_MODELS } from '../ai-governance/approved-models';
 
 export type GatewayErrorCode =
   | 'SOURCE_CONTEXT_UNAVAILABLE'
@@ -212,8 +213,9 @@ function classifyPolicyRefusal(err: unknown): ClassifiedGatewayError | null {
       code: 'MODEL_NOT_QUALIFIED',
       message:
         'No model approved for regulatory drafting and review is configured on this deployment ' +
-        'for this request, so it was not sent to one that is not approved for it. Retrying will ' +
-        'not change this; an administrator needs to enable an approved model.',
+        'for this request, so it was not sent to one that is not approved for it. ' +
+        `Regulatory drafting is approved only for models served by ${HIGH_RISK_PROVIDERS}. Retrying will ` +
+        'not change this; an administrator needs to enable one of those providers.',
     };
   }
   if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'RATE_LIMIT_EXCEEDED') {
@@ -277,6 +279,19 @@ function classifyModelGovernanceRefusal(err: unknown): ClassifiedGatewayError | 
   if (code !== 'MODEL_NOT_GOVERNED') return null;
   return { code: 'MODEL_NOT_QUALIFIED', message: MODEL_NOT_GOVERNED_COPY[String(reason)] ?? MODEL_NOT_GOVERNED_COPY['no-entry'] };
 }
+
+/**
+ * Who serves the models approved for regulatory drafting, read from the registry, in words a person reads. Walked
+ * 2026-11-06 with only an OpenAI key: the conversation said "enable an approved model" without saying which, and
+ * /readyz named the providers. Now both read the same registry, so the sentence cannot drift from what is approved.
+ */
+const PROVIDER_WORDS: Readonly<Record<string, string>> = {
+  anthropic: 'Anthropic', bedrock: 'Amazon Bedrock', vertex: 'Google Vertex AI', openai: 'OpenAI', azure: 'Azure OpenAI',
+};
+const HIGH_RISK_PROVIDERS = ((): string => {
+  const names = [...new Set(APPROVED_MODELS.filter(m => m.approvedForHighRisk).map(m => PROVIDER_WORDS[m.provider] ?? m.provider))];
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}` : names[0] ?? 'no provider';
+})();
 
 const MODEL_NOT_GOVERNED_COPY: Readonly<Record<string, string>> = {
   'unknown-model': 'This request was not sent: it named a model this platform does not have.',
