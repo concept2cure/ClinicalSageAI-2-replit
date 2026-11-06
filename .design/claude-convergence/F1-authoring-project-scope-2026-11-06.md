@@ -21,7 +21,7 @@ Searches: source-name/caller/route searches and full-history deletion searches o
 
 ## Status
 
-Implementation and local checks complete; canonical synchronization and hooked publication are pending. Evidence README records actual RED/GREEN, native/browser checks and limitations. Historical Oct30 results do not qualify this source.
+Published directly to concept2cure-v2 at `c5baa0089774eb91d4bdd9fe60a6fbcf33b05bbc` with all normal hooks and full CLI tsc zero errors. Evidence README records actual RED/GREEN, native/browser checks and limitations. Historical Oct30 results do not qualify this source.
 
 
 ## Observed RED and focused GREEN
@@ -39,3 +39,7 @@ Read-only handoffs for D3's owner: `Projects.tsx` returns on a confirmed scaffol
 Core regressions qualify 360 cumulative cases through the explicit fixture/client overlays; API 207 and reopen 4 are separate. Final lineage 49/49, ten gates, lint without warning growth and production build pass. Eight native-app browser cases pass at 1440/390. AnA has no configured provider, so full readiness/CSR acceptance is not claimed. D3 and D4 handoffs, failed setup attempts and bounded proof limits are retained in the evidence README and OPEN_ITEMS. Canonical has advanced to P-104; merge and qualification remain required before publication.
 
 The merged source is now freshly qualified by 571 Vitest cases/22 suites in one invocation, 119 Node cases, ten integration gates, production build and eight native-app browser cases. Source publication remains pending; P-104 acceptance and the owner handoffs remain open.
+
+## Accepted source
+
+`c5baa0089774eb91d4bdd9fe60a6fbcf33b05bbc` is accepted on concept2cure-v2. The first transport race is retained separately; normal fetch/merge/retry succeeded. The exact frontend-only source bridge revalidates 122 client cases, build and eight browser cases while preserving unchanged server/reopen/119 Node qualification. The packet binds 3,409 named inputs to actual accepted Git blobs and records 587 distinct cumulative Vitest cases/24 suites. Our file holds are released; all D3/D4/provider/CSR limitations remain explicit. No P-104 milestone, complete filing coverage or deployment acceptance is claimed.
