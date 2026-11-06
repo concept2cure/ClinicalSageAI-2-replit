@@ -39,7 +39,7 @@ import { apiRequest, extractApiError, redactInternals, serverMessage, type ApiRe
 import { EsignModal, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import type { WorkflowImportOrigin } from '@shared/authoring/source-import';
-import { CSR_REVIEW_FIRST, CSR_REVIEW_FIRST_NOTE, useCsrSigningGate } from '../editor/reviewTaskState';
+import { barRefusalNote, useCsrSigningGate } from '../editor/reviewTaskState';
 
 export interface AuthoringFilingBarProps {
   docId: string;
@@ -497,7 +497,7 @@ function freezeTitle(frozen: boolean, refusal: string | null | undefined): strin
 function RefusalNote({ id, testId, text }: { id: string; testId: string; text: string }) {
   return (
     <span id={id} data-testid={testId} style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 240 }}>
-      {text === CSR_REVIEW_FIRST ? CSR_REVIEW_FIRST_NOTE : text}
+      {barRefusalNote(text)}
     </span>
   );
 }
