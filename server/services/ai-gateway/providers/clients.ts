@@ -51,7 +51,12 @@ function tenantProviderError(error: unknown): Error & { status?: number } {
 /** A fresh SDK object per tenant/request; no key enters GatewayRequest and no
  * client or token cache is shared between tenants. Every create rechecks the
  * captured revision and records use immediately before calling the SDK. */
-export async function createTenantProviderClient(provider: string, organizationId: number, userId?: number, purpose: 'model_inference' | 'embedding' = 'model_inference', beforeCreate?: () => void): Promise<any | null> {
+type TenantProviderAdmission = (() => void) | { beforeCreate?: () => void; recheckBeforeCreate?: () => Promise<void> };
+function tenantAdmissionCallbacks(admission?: TenantProviderAdmission) {
+  return typeof admission === 'function' ? { beforeCreate: admission, recheckBeforeCreate: undefined }
+    : { beforeCreate: admission?.beforeCreate, recheckBeforeCreate: admission?.recheckBeforeCreate };
+}
+export async function createTenantProviderClient(provider: string, organizationId: number, userId?: number, purpose: 'model_inference' | 'embedding' = 'model_inference', admission?: TenantProviderAdmission): Promise<any | null> {
   if (!['anthropic', 'openai', 'moonshot'].includes(provider)) return null;
   const availability = await resolveTenantModelCredentialAvailability(organizationId, purpose);
   if (availability.mode === 'platform') return null;
@@ -65,11 +70,13 @@ export async function createTenantProviderClient(provider: string, organizationI
       : new OpenAI({ apiKey: captured.credentials.apiKey, maxRetries: 0,
           ...(provider === 'moonshot' ? { baseURL: 'https://api.moonshot.ai/v1' } : {}) });
   } catch { throw new TenantCredentialUnavailableError(); }
+  const { beforeCreate, recheckBeforeCreate } = tenantAdmissionCallbacks(admission);
   const invoke = (create: (...args: any[]) => any) => async (...args: any[]) => {
     try { await assertCredentialUseCurrent(captured!, userId); } catch { throw new TenantCredentialUnavailableError(); }
-    // Trusted synchronous model/PQ admission, after the credential audit's
-    // asynchronous reads and immediately before the actual SDK invocation.
+    // Current derivative custody follows the asynchronous credential audit;
+    // synchronous model/PQ admission remains last, directly before the SDK.
     // Preserve its policy refusal; it is not a provider failure to sanitize.
+    if (recheckBeforeCreate) await recheckBeforeCreate();
     beforeCreate?.();
     try {
       const result = await create(...args);

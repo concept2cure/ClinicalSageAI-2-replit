@@ -45,10 +45,12 @@ vi.mock('../../../db/runtime', () => ({
 // keyed on that row existing.
 const digest = vi.hoisted(() => ({
   runProactiveDigest: vi.fn(),
+  runRuleAlignmentDigest: vi.fn(),
 }));
 vi.mock('../proactive-digest', () => ({
   PROACTIVE_DIGEST_CATEGORY: 'proactive_digest',
   runProactiveDigest: digest.runProactiveDigest,
+  runRuleAlignmentDigest: digest.runRuleAlignmentDigest,
 }));
 
 import {
@@ -85,6 +87,7 @@ beforeAll(async () => {
       severity text NOT NULL,
       title text NOT NULL,
       body text,
+      metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
       created_at timestamptz NOT NULL DEFAULT now()
     );
   `);
@@ -98,6 +101,7 @@ beforeEach(async () => {
   await pg.exec('TRUNCATE organizations, mdx_notifications RESTART IDENTITY');
   __resetDigestHeartbeatStateForTests();
   digest.runProactiveDigest.mockReset();
+  digest.runRuleAlignmentDigest.mockReset().mockResolvedValue({ notificationsCreated: 0, tasksCreated: 0 });
   digest.runProactiveDigest.mockImplementation(async (orgId: number) => {
     await insertDigestNotification(orgId, new Date('2026-08-18T09:31:00.000Z').toISOString());
     return { created: true, notificationId: 1 };
@@ -117,6 +121,18 @@ describe('the window mirrors the cron it stands in for (0 7 * * 1-5, UTC)', () =
 });
 
 describe('one digest per org per day, whoever fires it', () => {
+  it('runs alignment despite an existing regular digest and keeps alignment notices from suppressing the regular digest', async () => {
+    await pg.query(`INSERT INTO organizations (name) VALUES ('a'), ('b')`);
+    await insertDigestNotification(1,'2026-08-18T09:01:00Z');
+    await insertDigestNotification(2,'2026-08-18T09:01:00Z');
+    await pg.query(`UPDATE mdx_notifications SET metadata='{"kind":"rule_alignment"}' WHERE organization_id=2`);
+    digest.runRuleAlignmentDigest.mockResolvedValue({ notificationsCreated: 2,tasksCreated: 1 });
+    const result = await runDigestHeartbeatTick(IN_WINDOW);
+    expect(digest.runRuleAlignmentDigest.mock.calls.map(call => call[0])).toEqual([1,2]);
+    expect(digest.runProactiveDigest.mock.calls.map(call => call[0])).toEqual([2]);
+    expect(result).toMatchObject({ orgsChecked: 2,digestsCreated: 5,orgsFailed: 0 });
+  });
+
   it('runs the digest for every active org, once', async () => {
     await pg.query(`INSERT INTO organizations (name) VALUES ('a'), ('b')`);
     await pg.query(`INSERT INTO organizations (name, status) VALUES ('inactive', 'suspended')`);

@@ -41,6 +41,9 @@ import { requireAuthedOrgId } from '../utils/authedOrgId.js';
 import { authedUserId } from '../utils/authedActor.js';
 import { parseIntegerProjectId } from '../lib/project-id.js';
 import { ProjectAdmissionRefusal, requireProjectAdmission } from './c2c/project-access.js';
+import { requestConnectable } from '../db/requestDb.js';
+import { inTransaction } from '../services/account-skill-bundles.js';
+import { readCsrProjectActor } from '../services/csr/project-scope.js';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin.js';
 import {
   scoreSubmissionDraft,
@@ -56,6 +59,7 @@ import type { RiskTarget } from '../services/intelligence/risk-model.js';
 import type { CompletenessBin } from '../services/intelligence/outcome-feature-extraction.js';
 import {
   recordInteraction,
+  recordAuditedHumanCorrection,
   extractFailurePatterns,
   getSuggestedCorrections,
   getAgencyRequirements,
@@ -288,7 +292,7 @@ router.post('/interactions', asyncHandler(async (req: Request, res: Response) =>
       throw err;
     }
   }
-  const result = await recordInteraction({
+  const input = {
     organizationId: guard.orgId,
     projectId,
     userId: Number(userId),
@@ -304,7 +308,13 @@ router.post('/interactions', asyncHandler(async (req: Request, res: Response) =>
     promptSummary: typeof body.promptSummary === 'string' ? body.promptSummary : undefined,
     responseSummary: typeof body.responseSummary === 'string' ? body.responseSummary : undefined,
     correctionText: typeof body.correctionText === 'string' ? body.correctionText : undefined,
-  });
+  };
+  const result = input.correctionText?.trim()
+    ? await inTransaction(requestConnectable(req), async client => {
+      await readCsrProjectActor(client, guard.orgId, Number(userId), { forShare: true });
+      if (projectId !== undefined) await requireProjectAdmission(req, String(projectId), true, { executor: client });
+      return recordAuditedHumanCorrection(input, client);
+    }) : await recordInteraction(input);
   res.status(201).json({ success: true, data: result });
 }));
 

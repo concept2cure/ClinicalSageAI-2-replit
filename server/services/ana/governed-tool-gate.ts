@@ -232,13 +232,19 @@ export function consumeSkillGateAuthorization(context: object, expected: SkillPo
 
 /** Current held-action validation happens before any approval claim or sign-off. */
 export async function validateHeldSkillApproval(scope: SkillGateToolScope | null, call: ClassifiableToolCall, approved?: SkillPolicyApproval): Promise<
-  { gates: ToolSkillGateSnapshot | null } | { status: number; code: string; error: string }
+  { gates: ToolSkillGateSnapshot | null } | { status: number; code: string; error: string; decisionPackage?: import('../../../shared/ana/skills.js').RuleConflictDecisionPackage }
 > {
   if (!scope) return { gates: null };
   if (classifyToolCall(call).kind === 'REFUSED') return { status: 400, code: 'NOT_AN_ANA_ACTION', error: 'This is not an action AnA can take on a confirmation' };
   let gates: ToolSkillGateSnapshot | null;
   try { gates = await loadToolSkillGates(scope, call); }
-  catch { return { status: 503, code: 'SKILL_POLICY_UNAVAILABLE', error: 'Current organization and project rules could not be verified. Nothing was run.' }; }
+  catch (error) {
+    const { OrgSkillRefusal } = await import('../account-skill-bundles.js');
+    if (error instanceof OrgSkillRefusal && error.code === 'RULE_CONFLICT') {
+      return { status: 409, code: error.code, error: error.message, decisionPackage: error.decisionPackage };
+    }
+    return { status: 503, code: 'SKILL_POLICY_UNAVAILABLE', error: 'Current organization and project rules could not be verified. Nothing was run.' };
+  }
   const current = gates ? skillPolicyApprovalFor(call, gates) : null;
   if ((approved || current) && (!approved || !current || approved.actionHash !== current.actionHash || approved.rulesHash !== current.rulesHash)) {
     return { status: 409, code: 'SKILL_POLICY_CHANGED', error: 'The action or its approval rules changed. Ask AnA to propose it again.' };

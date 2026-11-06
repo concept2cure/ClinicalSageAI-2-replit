@@ -27,8 +27,13 @@ import {
   parseDraftInput,
   type CreateDocumentFromDraftInput,
   type ProvenanceInput,
+  type CreateDocumentFromDraftOptions,
 } from './authoring-from-draft';
 import type { AuthoringAuditContext } from './authoring-evidence';
+import { authorizeAuthoringProgram } from './authoring-program-access';
+import { modelCallRefusal } from '../ai-gateway/model-call-scope';
+import { createHash } from 'node:crypto';
+import type { DocumentDraftResponse } from '../ana/AnaDocumentDraftingService';
 
 const logger = createScopedLogger('draft-authoring-document-tool');
 
@@ -47,6 +52,8 @@ export interface DraftToolContext {
   threadId?: string | null;
   turnId?: string | null;
   model?: string | null;
+  /** The parent turn's server-owned cancellation signal. */
+  signal?: AbortSignal;
 }
 
 export interface DraftToolResult {
@@ -125,6 +132,12 @@ interface AnaDraftOptions {
   noProjectRefusal: string;
   /** The reason the person stated, for a tool that requires one. */
   changeReason?: string;
+  generatedDerivative?: CreateDocumentFromDraftOptions['generatedDerivative'];
+}
+
+function anaCreateOptions(opts: AnaDraftOptions): CreateDocumentFromDraftOptions | undefined {
+  if (!opts.changeReason && !opts.generatedDerivative) return undefined;
+  return { ...(opts.changeReason ? { changeReason: opts.changeReason } : {}), ...(opts.generatedDerivative ? { generatedDerivative: opts.generatedDerivative } : {}) };
 }
 
 /**
@@ -171,7 +184,7 @@ async function createAnaDraft(
     const outcome = await createDocumentFromDraft(
       { pool, tenantId: Number(ctx.organizationId), actor: { id: String(ctx.userId), email }, audit },
       parsed.value,
-      opts.changeReason ? { changeReason: opts.changeReason } : undefined,
+      anaCreateOptions(opts),
     );
     if (outcome.kind === 'refused') return { error: outcome.error };
     return {
@@ -205,9 +218,79 @@ export async function draftAuthoringDocumentTool(
   input: Record<string, unknown>,
   ctx: DraftToolContext | undefined,
 ): Promise<string> {
+  if (input.derivativeId !== undefined) return draftReviewedDerivative(pool, input, ctx);
   return JSON.stringify(await createAnaDraft(pool, input, ctx, {
     tool: 'draft_authoring_document', noProjectRefusal: DRAFT_AUTHORING_DOCUMENT_NO_PROJECT,
   }));
+}
+
+const REVIEWED_DERIVATIVE_TITLE = 'Reviewed derivative draft';
+const DERIVATIVE_MODE_KEYS = new Set(['derivativeId', 'title', 'documentType', 'module', 'qualifiedModelPin']);
+function derivativeModeInput(input: Record<string, unknown>): boolean {
+  return Object.keys(input).every(key => DERIVATIVE_MODE_KEYS.has(key)) && typeof input.derivativeId === 'string' &&
+    /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(input.derivativeId) && input.title === REVIEWED_DERIVATIVE_TITLE;
+}
+type CompleteDerivativeResponse = DocumentDraftResponse & {
+  derivativeGeneration: NonNullable<DocumentDraftResponse['derivativeGeneration']>;
+  derivativeVerification: NonNullable<DocumentDraftResponse['derivativeVerification']>;
+};
+function completeDerivativeResponse(response: DocumentDraftResponse, derivativeId: string): response is CompleteDerivativeResponse {
+  return !!response.derivativeGeneration && response.derivativeVerification?.kind === 'deterministic_token_roundtrip' &&
+    response.derivativeVerification.derivativeId === derivativeId && !response.truncated &&
+    ['stop', 'end_turn', 'stop_sequence'].includes(response.finishReason ?? '') &&
+    createHash('sha256').update(response.content, 'utf8').digest('hex') === response.derivativeGeneration.contentSha256;
+}
+function derivativeRequestSnapshot(input: Record<string, unknown>): Record<string, unknown> {
+  return { ...input, ...(input.qualifiedModelPin && typeof input.qualifiedModelPin === 'object' ? { qualifiedModelPin: { ...input.qualifiedModelPin } } : {}) };
+}
+function reviewedSaveInput(input: Record<string, unknown>) {
+  return { title: REVIEWED_DERIVATIVE_TITLE, ...(input.module !== undefined ? { module: input.module } : {}),
+    ...(input.documentType !== undefined ? { documentType: input.documentType } : {}),
+    sections: [{ code: '1', title: REVIEWED_DERIVATIVE_TITLE, content: '<p>Pending verified derivative output.</p>' }] };
+}
+/** Only the approved residual reaches the nested model; only a saved pointer
+ * returns to the planning model. The reinjected T2 body stays in the editor. */
+async function draftReviewedDerivative(pool: AuthoringPool, input: Record<string, unknown>, ctx: DraftToolContext | undefined): Promise<string> {
+  if (modelCallRefusal()) return JSON.stringify({ error: 'Reviewed derivative drafting requires the parent AnA; worker tools cannot call a model.' });
+  if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'draft_authoring_document requires tenant + user context.' });
+  if (!derivativeModeInput(input)) return JSON.stringify({ error: 'Derivative mode requires only an approved reference, the fixed title Reviewed derivative draft, and optional save metadata/model pin; sections and caller prose are refused.' });
+  const pinned = derivativeRequestSnapshot(input), actor = { ...ctx };
+  try {
+    const programId = await resolveOpenProgram(pool, actor);
+    if (!programId) return JSON.stringify({ error: DRAFT_AUTHORING_DOCUMENT_NO_PROJECT });
+    const scope = await authorizeAuthoringProgram(pool, { tenantId: Number(actor.organizationId), actor: { id: String(actor.userId) }, programId });
+    const saveInput = reviewedSaveInput(pinned);
+    const checked = parseDraftInput({ ...saveInput, programId, provenance: { source: 'ana' } });
+    if (!checked.ok) return JSON.stringify({ error: checked.error });
+    const { getAnaDraftingService } = await import('../ana/AnaDocumentDraftingService');
+    const response = await getAnaDraftingService().draftDocument({ organizationId: Number(actor.organizationId), userId: Number(actor.userId),
+      projectId: scope.projectId, contextSqlClient: pool, derivativeId: pinned.derivativeId as string,
+      framework: 'general_regulatory', sectionType: 'Approved derivative', instructions: '', signal: actor.signal,
+      ...(pinned.qualifiedModelPin !== undefined ? { qualifiedModelPin: pinned.qualifiedModelPin as import('../ai-gateway/types').QualifiedModelPin } : {}) });
+    if (!completeDerivativeResponse(response, pinned.derivativeId as string)) {
+      return JSON.stringify({ error: 'The derivative output has no complete, verified generation receipt. Nothing was saved.' });
+    }
+    const verification = response.derivativeVerification, receipt = response.derivativeGeneration;
+    const identity = { organizationId: Number(actor.organizationId), userId: Number(actor.userId), projectId: scope.projectId, derivativeId: pinned.derivativeId as string };
+    const generatedDerivative: NonNullable<AnaDraftOptions['generatedDerivative']> = {
+      receipt: { ...receipt }, derivativeId: identity.derivativeId, payloadSha256: verification.payloadSha256, rawContent: response.content,
+      reserve: async q => {
+        const { authorizeDerivativeUse } = await import('../ai-gateway/providers/org-placement-writer');
+        const current = await authorizeDerivativeUse({ query: q.query.bind(q), connect: pool.connect.bind(pool) }, identity);
+        if (current.derivativeId !== identity.derivativeId || current.payloadSha256 !== verification.payloadSha256) throw new Error('Current derivative custody changed before creation.');
+      },
+    };
+    actor.signal?.throwIfAborted();
+    const result = await createAnaDraft(pool, { ...saveInput, sections: [{ code: '1', title: REVIEWED_DERIVATIVE_TITLE, content: plainTextToHtml(response.content) }] }, actor,
+      { tool: 'draft_authoring_document', noProjectRefusal: DRAFT_AUTHORING_DOCUMENT_NO_PROJECT, generatedDerivative });
+    if ('error' in result || !('saved' in result)) return JSON.stringify(result);
+    return JSON.stringify({ status: result.status, saved: result.saved, documentStatus: result.documentStatus,
+      authoringDocId: result.authoringDocId, programId: result.programId, title: REVIEWED_DERIVATIVE_TITLE, sectionCount: result.sectionCount,
+      projectSourceReferences: [], content: '# Reviewed derivative draft\n\nSaved in the project editor. Restricted specifics remain in the document.',
+      message: 'Saved the reviewed derivative draft in the existing editor. Local token round-trip verification is recorded; independent review, approval and filing remain separate.' });
+  } catch {
+    return JSON.stringify({ error: 'Reviewed derivative drafting or current generation provenance could not be verified. No new saved document is confirmed.' });
+  }
 }
 
 /** The refusal, verbatim, when no project is open. */

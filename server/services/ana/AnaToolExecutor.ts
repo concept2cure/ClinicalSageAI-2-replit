@@ -41,6 +41,7 @@ import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
 import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
 import { getGateway } from '../ai-gateway/gateway';
 import { getTenantScope } from '../../db/tenantStore.js';
+import { looksLikeProgramUuid } from '../../lib/project-id.js';
 import { artifactDataEligibleSql, artifactOriginalFileAvailableSql } from '../document-data-disposition/eligibility.js';
 // Region + gateway taxonomy — shared with the tool schemas in
 // AnaToolDefinitions so an accepted value and an advertised one are the same
@@ -223,7 +224,7 @@ import {
   type AgenticToolEvent,
   type LoopDispatchOptions,
 } from './agentic-tool-dispatch.js';
-import { modelCallRefusal } from '../ai-gateway/model-call-scope.js';
+import { modelCallRefusal, createRunSourceAuthority, runWithSourceAuthority, recordCurrentRunSource } from '../ai-gateway/model-call-scope.js';
 import { consumeSkillGateAuthorization, loadToolSkillGates, skillPolicyApprovalFor } from './governed-tool-gate.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
 import { interviewClientType } from './intelligence-questions/client-segment.js';
@@ -16479,7 +16480,14 @@ function withScopeOrganizationUuid(ctx: ToolContext | undefined): ToolContext | 
  * abort signal, and returning the final {@link AnaGatewayResponse} the callers
  * expect.
  */
-export async function executeAgenticLoop(
+export function executeAgenticLoop(request: GatewayRequest, options?: AgenticOptions): Promise<AgenticLoopResponse> {
+  const ctx = options?.toolContext;
+  const authority = createRunSourceAuthority({ organizationId: ctx?.organizationId ?? request.organizationId,
+    userId: ctx?.userId ?? request.userId, projectId: ctx?.projectId ?? ctx?.projectRef ?? request.projectId,
+    programId: looksLikeProgramUuid(ctx?.projectRef) ? ctx?.projectRef : undefined });
+  return runWithSourceAuthority(authority, () => executeAgenticLoopWithSources(request, options));
+}
+async function executeAgenticLoopWithSources(
   request: GatewayRequest,
   options?: AgenticOptions
 ): Promise<AgenticLoopResponse> {
@@ -21209,6 +21217,29 @@ async function citableSourceIdFor(
   }
 }
 
+async function registerArtifactRoutingSource(row: Record<string, unknown>, artifactId: string, ctx: ToolContext, scope: ProjectReadScope) {
+  const { createHash } = await import('node:crypto');
+  const textHash = (value: unknown) => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value ?? '')).digest('hex');
+  const pinned = Object.freeze({ ...row }), hash = textHash(row.content);
+  const actor = Object.freeze({ organizationId: scope.organizationId, userId: scope.userId,
+    projectId: ctx.projectId, projectRef: ctx.projectRef, sqlClient: ctx.sqlClient });
+  recordCurrentRunSource({ organizationId: scope.organizationId, userId: scope.userId, projectId: Number(row.project_id),
+    origin: { projectId: ctx.projectId ?? ctx.projectRef },
+    programId: typeof row.program_id === 'string' ? row.program_id : null, key: `artifact:${artifactId}:${String(row.version)}:${hash}`, tier: 3,
+    recheck: async () => {
+      const current = await projectReadScope('read_vault_document', actor);
+      if (typeof current === 'string') throw new Error('SOURCE_ROUTING_CHANGED');
+      const { getPool } = await import('../../db.js');
+      const { rows } = await getPool().query(`SELECT a.content,a.content_hash,a.version,a.project_id,sp.regulatory_program_id AS program_id
+        FROM concept2cure_artifacts a JOIN projects sp ON sp.id=a.project_id AND sp.organization_id=a.organization_id
+        WHERE a.organization_id=$1 AND (a.id::text=$2 OR a.artifact_id=$2)
+          AND a.project_id=ANY($3::int[]) AND ${artifactDataEligibleSql('a')} LIMIT 1`, [scope.organizationId, artifactId, current.projectIds]);
+      const fresh = rows[0];
+      if (!fresh || fresh.version !== pinned.version || fresh.content_hash !== pinned.content_hash || fresh.project_id !== pinned.project_id ||
+        fresh.program_id !== pinned.program_id || textHash(fresh.content) !== hash) throw new Error('SOURCE_ROUTING_CHANGED');
+    } });
+}
+
 registerToolHandler('read_vault_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'read_vault_document requires tenant context.' });
   const artifactId = typeof input.artifact_id === 'string' ? input.artifact_id.trim() : '';
@@ -21221,7 +21252,7 @@ registerToolHandler('read_vault_document', async (input, ctx) => {
     const { rows } = await getPool().query(
       `SELECT a.id, a.artifact_id, a.title, a.type, a.category, a.ctd_section, a.status, a.version,
               a.content, a.content_hash, a.created_at, a.updated_at, a.locked_at,
-              a.project_id, COALESCE(sp.code, sp.name) AS project, sp.client_workspace_id, scw.name AS client_name,
+              a.project_id, sp.regulatory_program_id AS program_id, COALESCE(sp.code, sp.name) AS project, sp.client_workspace_id, scw.name AS client_name,
               ${artifactOriginalFileAvailableSql('a')} AS original_file_available
          FROM concept2cure_artifacts a
          JOIN projects sp ON sp.id = a.project_id AND sp.organization_id = a.organization_id
@@ -21233,6 +21264,7 @@ registerToolHandler('read_vault_document', async (input, ctx) => {
       [ctx.organizationId, artifactId, scope.projectIds],
     );
     if (!rows.length) return JSON.stringify({ error: `No currently eligible Artifacts Center document '${artifactId}' in this organization. A withdrawn or superseded representation cannot be used as new grounding. Files uploaded to the Vault are a different store with UUID ids — this does not mean a Vault file is missing.` });
+    await registerArtifactRoutingSource(rows[0], artifactId, ctx, scope);
     const [{ content, ...meta }] = await withSponsor(rows);
     const excerpt = viewExcerpt(typeof content === 'string' ? content : JSON.stringify(content ?? ''), input);
 

@@ -59,6 +59,7 @@ import { resetOrgPlacementResolver, setOrgPlacementResolver } from '../../provid
 import { resetPlacementRegistry } from '../../providers/placement';
 import { runWithTenantScope, runWithSystemTenantScope } from '../../../../db/tenantStore';
 import * as providerClients from '../../providers/clients';
+import { createRunSourceAuthority, runWithSourceAuthority, recordCurrentRunSource } from '../../model-call-scope';
 
 const PHI_TEXT = 'Patient MRN: 44819023 was admitted on 2026-03-02 for observation.';
 const PLAIN_TEXT = 'Section 3.2.P.5.1 lists the release specifications for the drug product.';
@@ -115,6 +116,35 @@ afterEach(() => {
 });
 
 describe('embedding provider selection', () => {
+  const sourceActor = { organizationId: 7, userId: 3, projectId: 42 };
+  it('bridges only private run identity and blocks raw private text before constructing a frontier embedding client', async () => {
+    const factory = vi.spyOn(providerClients, 'createTenantProviderClient');
+    await runWithSourceAuthority(createRunSourceAuthority(sourceActor), async () => {
+      recordCurrentRunSource({ ...sourceActor, key: 'actual-private-source-fixture', tier: 2, recheck: async () => {} });
+      await expect(getEmbeddingProvider().embed({ input: PLAIN_TEXT })).rejects.toThrow('DENY_INPUT_TIER');
+      await expect(getEmbeddingProvider().embed({ input: PLAIN_TEXT, organizationId: 8 })).rejects.toMatchObject({ code: 'SOURCE_RUN_AUTHORITY_UNAVAILABLE' });
+    });
+    expect(factory).not.toHaveBeenCalled(); expect(sdk.create).not.toHaveBeenCalled(); expect(sdk.construct).not.toHaveBeenCalled();
+  });
+  it('rechecks private source authority after a local credential-client await and refuses a serialized embedding authorization', async () => {
+    process.env.EMBEDDING_PROVIDER = 'local'; process.env.EMBEDDING_LOCAL_BASE_URL = 'http://127.0.0.1:11434/v1';
+    const current = { allowed: true }, checked = vi.fn(async () => { if (!current.allowed) throw new Error('source changed'); });
+    const gw = getGateway(), original = gw.recheckEmbeddingAuthorization.bind(gw);
+    const checkpoint = vi.spyOn(gw, 'recheckEmbeddingAuthorization').mockImplementation(async authorization => {
+      current.allowed = false; await original(authorization);
+    });
+    try {
+      await runWithSourceAuthority(createRunSourceAuthority(sourceActor), async () => {
+        recordCurrentRunSource({ ...sourceActor, key: 'actual-source-checkpoint-fixture', tier: 2, recheck: checked });
+        await expect(getEmbeddingProvider().embed({ input: PLAIN_TEXT })).rejects.toMatchObject({ code: 'SOURCE_CONTEXT_UNAVAILABLE' });
+        await expect(gw.authorizeEmbedding({ organizationId: 7, provider: 'local', texts: [PLAIN_TEXT] }))
+          .rejects.toMatchObject({ code: 'SOURCE_CONTEXT_UNAVAILABLE' });
+      });
+      expect(checked).toHaveBeenCalledOnce(); expect(sdk.construct).toHaveBeenCalledOnce(); expect(sdk.create).not.toHaveBeenCalled();
+      const ordinary = await gw.authorizeEmbedding({ provider: 'local', texts: [PLAIN_TEXT] });
+      await expect(original(JSON.parse(JSON.stringify(ordinary)))).rejects.toMatchObject({ code: 'SOURCE_CONTEXT_UNAVAILABLE' });
+    } finally { checkpoint.mockRestore(); }
+  });
   it('uses a fresh tenant-owned embedding grant without a global OpenAI key', async () => {
     const create = vi.fn(sdk.answer);
     const factory = vi.spyOn(providerClients, 'createTenantProviderClient').mockResolvedValue({ embeddings: { create } });

@@ -141,11 +141,16 @@ export const SAVE_DOCUMENT_TO_VAULT: AnaTool = {
 export const DRAFT_AUTHORING_DOCUMENT: AnaTool = {
   name: 'draft_authoring_document',
   description:
-    "Turn a document AnA has drafted into a REAL authoring document in the open project: the editor's own store (authoring_documents / authoring_sections), status draft, one section per { code, title, content } with the content stored as sanitized HTML, provenance recorded as drafted by AnA, a genesis revision and a Part 11 CREATE audit row per section. The person then sees it as a canvas in the conversation, can open it in the full editor, and can file it into the project vault. Use this — not save_document_to_vault, its single-body form — whenever the deliverable is a document with sections (a Module 2.5 excerpt, an IB section set, a 510(k) summary). Requires an open project; refuses otherwise. Tenant-scoped. Returns { status: 'generated', saved: true, documentStatus: 'draft', authoringDocId, programId, title, sectionCount, content }; the durable authoringDocId proves it was saved, while approval and filing remain separate.",
+    "Turn a document AnA has drafted into a REAL authoring document in the open project: the editor's own store (authoring_documents / authoring_sections), status draft, one section per { code, title, content }, with sanitized HTML, machine provenance, genesis revisions and CREATE audit. With derivativeId, use title exactly 'Reviewed derivative draft' and omit sections and all caller prose. The parent AnA drafts ONLY from the tenant's current human-attested candidate; independently checked immutable generation provenance must match before saving. Its reinjected content stays in the project editor; the tool returns a public pointer summary. Derivative drafting cannot run in worker tools. Optional module/documentType are save metadata, never model context; qualifiedModelPin is an exact governed model choice. Requires an open project. The saved authoringDocId opens the real document; independent review, approval and filing remain separate.",
   input_schema: {
     type: 'object',
     properties: {
-      title: { type: 'string', description: 'Document title.' },
+      title: { type: 'string', description: "Document title; derivative mode requires exactly 'Reviewed derivative draft'." },
+      derivativeId: { type: 'string', format: 'uuid', description: 'Use only a current human-attested derivative reference. Omit sections and all caller prose in this mode.' },
+      qualifiedModelPin: { type: 'object', description: 'Optional exact governed model/evidence pin for derivative drafting.', properties: {
+        id: { type: 'string' }, provider: { type: 'string' }, pinnedVersion: { type: 'string' }, intendedUse: { type: 'string', const: 'document_drafting' },
+        pqReference: { type: 'string' }, pqSha256: { type: 'string', pattern: '^[a-f0-9]{64}$' },
+      }, required: ['id', 'provider', 'pinnedVersion', 'intendedUse', 'pqReference', 'pqSha256'], additionalProperties: false },
       module: { type: 'string', description: "CTD module, e.g. 'M2', 'M3'. Default 'M2'." },
       documentType: { type: 'string', description: "Document type / product code, e.g. 'clinical_overview'." },
       sections: {
@@ -186,7 +191,7 @@ export const DRAFT_AUTHORING_DOCUMENT: AnaTool = {
         },
       },
     },
-    required: ['title', 'sections'],
+    required: ['title'],
   },
 };
 

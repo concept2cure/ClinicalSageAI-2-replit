@@ -14,12 +14,13 @@
  *
  *   enc:v1:<base64(iv)>:<base64(authTag)>:<base64(ciphertext)>
  *
- * ── NOT IN USE. READ BEFORE CITING THIS FILE ──────────────────────────────────
- * This module has ZERO production call sites. It is imported by exactly one
- * file — its own test. No customer field, PII, PHI or regulatory content is
- * encrypted with it today, and `PII_ENCRYPTION_KEY` is not provisioned in
- * `.env.example`, so a caller wired up right now would throw at boot in
- * production by design.
+ * ── v1 FIELD API IS UNUSED. DERIVATIVE CUSTODY IS A SEPARATE v2 API ──────────
+ * encryptField/decryptField have no production consumers. PII_ENCRYPTION_KEY
+ * is not provisioned in .env.example and is never used for derivative maps.
+ * sealTenantPayload/openTenantPayload below use per-record envelope keys,
+ * wrapped by the tenant-selected immutable KMS key, with scoped authenticated
+ * context. Their runtime consumer is the governed derivative custody service.
+ * This is not evidence of an actual tenant KMS deployment or customer BYOK.
  *
  * The note matters because the annotation below used to read as an unqualified
  * compliance claim. A HIPAA "encryption at rest" citation attached to a module
@@ -40,11 +41,113 @@
  * @compliance Implements the AES-256-GCM primitive required by HIPAA 45 CFR
  *             164.312(a)(2)(iv) and FDA 21 CFR Part 11 (data integrity via GCM
  *             authentication). NOT EVIDENCE of encryption at rest: see the note
- *             above — this module has no production call sites.
+ *             above — the v1 field helpers have no production call sites.
  * @version 1.0.0
  */
 
 import crypto from 'crypto';
+
+/** Derivative custody uses a tenant-selected immutable KMS key, never v1's
+ * platform key or development fallback. The envelope is bound to its use. */
+export interface TenantEnvelopeContext {
+  organizationId: number;
+  projectId: number;
+  derivativeId: string;
+  sourceHash: string;
+  policyVersion: number;
+  expiresAt: string;
+}
+export interface TenantDataKeyOps {
+  generate(keyArn: string, context: Record<string, string>): Promise<{ plaintext: Uint8Array; ciphertext: Uint8Array; keyId: string }>;
+  decrypt(keyArn: string, ciphertext: Uint8Array, context: Record<string, string>): Promise<{ plaintext: Uint8Array; keyId: string }>;
+}
+
+export function isImmutableTenantKeyArn(value: unknown): value is string {
+  return typeof value === 'string' && /^arn:aws(?:-us-gov|-cn)?:kms:[a-z0-9-]+:\d{12}:key\/(?:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}|mrk-[a-f0-9]{32})$/.test(value);
+}
+
+/** SDK adapter is lazy: importing this module performs no network request.
+ * KMS receives only identity metadata and a wrapped data key, never content. */
+export function tenantDataKeyOpsFromSdk(
+  client: { send(command: unknown): Promise<any> },
+  sdk: {
+    GenerateDataKeyCommand: new (input: any) => unknown;
+    DecryptCommand: new (input: any) => unknown;
+  },
+): TenantDataKeyOps {
+  return {
+    async generate(keyArn, context) {
+      const out = await client.send(new sdk.GenerateDataKeyCommand({ KeyId: keyArn, KeySpec: 'AES_256', EncryptionContext: context }));
+      return { plaintext: out?.Plaintext, ciphertext: out?.CiphertextBlob, keyId: out?.KeyId };
+    },
+    async decrypt(keyArn, ciphertext, context) {
+      const out = await client.send(new sdk.DecryptCommand({ KeyId: keyArn, CiphertextBlob: ciphertext, EncryptionContext: context }));
+      return { plaintext: out?.Plaintext, keyId: out?.KeyId };
+    },
+  };
+}
+
+async function tenantKms(keyArn: string): Promise<TenantDataKeyOps> {
+  const sdk = await import('@aws-sdk/client-kms');
+  const client = new sdk.KMSClient({ region: keyArn.split(':')[3] });
+  return tenantDataKeyOpsFromSdk(client, sdk);
+}
+
+function envelopeContext(value: TenantEnvelopeContext): Record<string, string> {
+  if (![value.organizationId, value.projectId, value.policyVersion].every(v => Number.isSafeInteger(v) && v > 0) ||
+      !/^[a-f0-9-]{36}$/.test(value.derivativeId) || !/^[a-f0-9]{64}$/.test(value.sourceHash) ||
+      !Number.isFinite(Date.parse(value.expiresAt))) throw new Error('Invalid derivative envelope identity.');
+  return { purpose: 'tenant-derivative-v2', organizationId: String(value.organizationId), projectId: String(value.projectId),
+    derivativeId: value.derivativeId, sourceHash: value.sourceHash, policyVersion: String(value.policyVersion), expiresAt: value.expiresAt };
+}
+
+function envelopeBytes(value: unknown, length?: number): Buffer {
+  if (typeof value !== 'string' || !value || value.length > 3_000_000) throw new Error('Invalid derivative envelope.');
+  const bytes = Buffer.from(value, 'base64');
+  if (bytes.toString('base64') !== value || (length !== undefined && bytes.length !== length)) throw new Error('Invalid derivative envelope.');
+  return bytes;
+}
+
+export async function sealTenantPayload(
+  plaintext: string, context: TenantEnvelopeContext, keyArn: string, ops?: TenantDataKeyOps,
+): Promise<string> {
+  let dataKey: Uint8Array | undefined;
+  try {
+    if (!isImmutableTenantKeyArn(keyArn) || typeof plaintext !== 'string' || Buffer.byteLength(plaintext) > 1_000_000) throw new Error();
+    const bound = envelopeContext(context);
+    const generated = await (ops ?? await tenantKms(keyArn)).generate(keyArn, bound);
+    dataKey = generated.plaintext;
+    if (!(dataKey instanceof Uint8Array) || dataKey.length !== 32 || generated.keyId !== keyArn ||
+        !(generated.ciphertext instanceof Uint8Array) || generated.ciphertext.length === 0) throw new Error();
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', dataKey, iv, { authTagLength: 16 });
+    cipher.setAAD(Buffer.from(JSON.stringify(bound)));
+    const ciphertext = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
+    return JSON.stringify({ version: 2, keyId: keyArn, wrappedKey: Buffer.from(generated.ciphertext).toString('base64'),
+      iv: iv.toString('base64'), tag: cipher.getAuthTag().toString('base64'), ciphertext: ciphertext.toString('base64') });
+  } catch { throw new Error('Derivative custody encryption unavailable. No plaintext was stored.'); }
+  finally { dataKey?.fill(0); }
+}
+
+export async function openTenantPayload(
+  envelope: string, context: TenantEnvelopeContext, keyArn: string, ops?: TenantDataKeyOps,
+): Promise<string> {
+  let dataKey: Uint8Array | undefined;
+  try {
+    if (!isImmutableTenantKeyArn(keyArn) || typeof envelope !== 'string' || envelope.length > 3_000_000) throw new Error();
+    const value = JSON.parse(envelope);
+    if (value.version !== 2 || value.keyId !== keyArn) throw new Error();
+    const bound = envelopeContext(context);
+    const decrypted = await (ops ?? await tenantKms(keyArn)).decrypt(keyArn, envelopeBytes(value.wrappedKey), bound);
+    dataKey = decrypted.plaintext;
+    if (!(dataKey instanceof Uint8Array) || dataKey.length !== 32 || decrypted.keyId !== keyArn) throw new Error();
+    const decipher = crypto.createDecipheriv('aes-256-gcm', dataKey, envelopeBytes(value.iv, 12), { authTagLength: 16 });
+    decipher.setAAD(Buffer.from(JSON.stringify(bound)));
+    decipher.setAuthTag(envelopeBytes(value.tag, 16));
+    return Buffer.concat([decipher.update(envelopeBytes(value.ciphertext)), decipher.final()]).toString('utf8');
+  } catch { throw new Error('Derivative custody could not be authenticated. No content was returned.'); }
+  finally { dataKey?.fill(0); }
+}
 
 // ---------------------------------------------------------------------------
 // Format constants

@@ -27,7 +27,7 @@ import { AUTHORING_REVIEW_BINDING_BASIS, authoringReviewReadSchema } from '@shar
 
 import { createJourneyDb, extractTableDdl, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import { GOVERNED_ACTION_LEDGER_PGLITE_DDL } from '../../services/ana-ri/__tests__/governed-action-ledger.fixture';
-import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, OTHER_ORG, mint, makeApp, asToken } from './_authoring-canvas-fixture';
+import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, OTHER_ORG, mint, makeApp, asToken, registerIndependentReviewHttpAcceptance } from './_authoring-canvas-fixture';
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown, notified: [] as unknown[] }));
 vi.mock('../../db', () => ({
@@ -118,6 +118,9 @@ const ask = (docId: string, people = [REVIEWER]) =>
     reason: 'Ready for medical review before the pre-IND package.',
     route: { reviewDueDate: REVIEW_DUE },
   });
+
+registerIndependentReviewHttpAcceptance({ app: () => app, connection: () => jdb.pool, create: seedDoc,
+  reviewer: req => reviewer(req), requestReview: ask });
 
 /** A structurally valid expected basis also reaches the old route, which ignores it. */
 async function expectedRead(docId: string, as = reviewer) {

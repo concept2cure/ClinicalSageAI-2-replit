@@ -270,6 +270,38 @@ export interface SkillApprovalBinding {
   description: string;
 }
 
+/** Explicit human corrections stored in the existing skill bundle metadata. */
+export type StandingRuleLevel = 'soft' | 'standing' | 'hard_gate';
+export interface StandingRuleReference { bundleId: string; version: number }
+export interface RuleConflictDecisionPackage {
+  conflictKey: string;
+  ruleRefs: Array<StandingRuleReference & { id?: number; projectId?: number | null; level?: StandingRuleLevel }>;
+  resolution: string;
+}
+export interface StandingRuleInput {
+  level: StandingRuleLevel;
+  state: 'active' | 'revoked';
+  conflictKey: string;
+  supersedes?: StandingRuleReference[];
+}
+export interface StandingRuleRecord extends Omit<StandingRuleInput, 'state' | 'supersedes'> {
+  schemaVersion: 1;
+  state: 'active' | 'revoked' | 'superseded';
+  scope: 'tenant' | 'project';
+  sourceAuditEventId: string;
+  sourceInteractionId: string;
+  supersedes: StandingRuleReference[];
+  createdAt: string;
+  revokedBy?: number;
+  revokedAt?: string;
+}
+export interface HumanCorrectionInput {
+  text: string;
+  agency: string;
+  documentType: string;
+  intent: string;
+}
+
 /** Project gates require a tool whose canonical project target is provable. */
 export const PROJECT_SKILL_APPROVAL_TOOLS = ['check_dossier_consistency'] as const;
 
@@ -280,6 +312,7 @@ export interface SkillPolicyApproval {
 }
 
 export interface OrgSkillDto extends SkillFacets {
+  standingRule?: StandingRuleRecord | null;
   policyBindings?: SkillApprovalBinding[];
   sourceAuditEventId?: string | null;
   id: number;
@@ -329,6 +362,7 @@ export interface ProjectSkillSettingDto {
 }
 
 export interface ProjectSkillsDto {
+  ruleConflicts?: RuleConflictDecisionPackage[];
   projectId: number;
   settings: ProjectSkillSettingDto[];
   /** Skills written for this project. */
@@ -339,6 +373,7 @@ export interface ProjectSkillsDto {
 }
 
 export interface SkillHistoryEntryDto {
+  standingRule?: StandingRuleRecord;
   auditEventId?: string;
   occurredAt: string;
   action: string;

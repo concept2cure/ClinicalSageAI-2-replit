@@ -14,6 +14,7 @@
  */
 
 import { getGateway } from '../ai-gateway/gateway';
+import { createHash } from 'node:crypto';
 import { isTruncated } from '../ai-gateway/finish-reason';
 import { BATCH_CONCURRENCY_MESSAGE, resolveBatchConcurrency } from './batch-draft-concurrency';
 import { classifyGatewayError, isGatewayError } from '../ai-gateway/gateway-error-map';
@@ -26,10 +27,6 @@ import type {
   AnaGatewayResponse,
   StreamCallback,
   ImageBlock,
-  ExtendedThinkingConfig,
-  AnaTool,
-  AnaToolResult,
-  TaskType,
   QualifiedModelPin,
 } from '../ai-gateway/types';
 import {
@@ -61,7 +58,7 @@ import { getLifecycleDocumentTypeForRegistry } from '../ind/ctd/index.js';
 import { IND_SAFETY_REPORT_ROUTE_LIMITS, IND_SAFETY_REPORT_TIMING } from '../ind/ctd/lifecycle-document-types.js';
 import { renderDraftProductAdvisory } from './draft-product-advisory.js';
 import { loadRecordedDraftProductContext } from './draft-product-context.js';
-import { AnaProjectScopeError } from './project-scope-admission';
+import { admitAnaProjectScope, AnaProjectScopeError } from './project-scope-admission';
 import type { RequestSqlClient } from '../../db/requestDb';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -854,6 +851,8 @@ export function resolveSystemPrompt(submissionType: string): string {
 export type RegulatoryFramework = 'fda_510k' | 'fda_pma' | 'eu_mdr' | 'ich_clinical' | 'cer_clinical_evaluation' | 'general_regulatory';
 
 export interface DocumentDraftRequest {
+  /** Approved tenant custody reference; its stored residual supplies all model context. */
+  derivativeId?: string;
   /** Exact qualified model/evidence choice for nonstreaming drafting. */
   qualifiedModelPin?: QualifiedModelPin;
   /** Backend-loaded project evidence; never copied from tool arguments. */
@@ -909,6 +908,13 @@ export interface DocumentDraftRequest {
 }
 
 export interface DocumentDraftResponse {
+  /** Identifies the actual nested generation; authoritative use must verify its immutable gateway row. */
+  derivativeGeneration?: {
+    requestId: string; provider: GatewayResponse['provider']; model: string;
+    resolvedModel?: string; contentSha256: string; derivativeId: string; payloadSha256: string;
+  };
+  /** Local token/source round-trip proof, never a claim of semantic verification. */
+  derivativeVerification?: GatewayResponse['derivativeVerification'];
   /** Generated document content */
   content: string;
   /** Extended thinking output (reasoning chain) */
@@ -1078,6 +1084,7 @@ export class AnaDocumentDraftingService {
     req = snapshotDraftRequest(req);
     const { signal } = req;
     throwIfDraftCancelled(signal);
+    if (req.derivativeId !== undefined) return this.draftApprovedDerivative(req);
     const sourceCheckpoint = await draftSourceCheckpoint(req);
     const product = await draftProductInputs(req);
     const { productRead, recordedSubmissionType, submissionType } = product;
@@ -1175,6 +1182,40 @@ export class AnaDocumentDraftingService {
       finishReason: response.finishReason,
       truncated: isTruncated(response.finishReason),
     };
+  }
+
+  /** The approved residual is the entire input; caller prose and raw project facts are excluded. */
+  private async draftApprovedDerivative(req: DocumentDraftRequest): Promise<DocumentDraftResponse> {
+    const positiveIdentity = (raw: unknown): number | null => {
+      if (typeof raw !== 'number' && !(typeof raw === 'string' && /^[1-9]\d*$/.test(raw))) return null;
+      const value = Number(raw);
+      return Number.isSafeInteger(value) && value > 0 ? value : null;
+    };
+    const organizationId = positiveIdentity(req.organizationId);
+    const userId = positiveIdentity(req.userId);
+    if (organizationId === null || userId === null || typeof req.derivativeId !== 'string' ||
+        !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(req.derivativeId) || req.onStream) {
+      throw new AnaProjectScopeError(400, 'DERIVATIVE_DRAFT_SCOPE_REQUIRED', 'Choose an approved derivative and its current project for nonstreaming drafting.');
+    }
+    const sql = req.contextSqlClient ?? (await import('../../db/runtime.js')).getPool();
+    const scope = await admitAnaProjectScope(sql, { organizationId, userId, projectRef: req.projectId });
+    if (scope.projectId === null) throw new AnaProjectScopeError(400, 'DERIVATIVE_DRAFT_SCOPE_REQUIRED', 'An approved derivative requires its current project.');
+    throwIfDraftCancelled(req.signal);
+    const response = await getGateway().routeDerivative({
+      organizationId, userId, projectId: scope.projectId, derivativeId: req.derivativeId,
+      taskType: 'document_drafting', qualifiedModelPin: req.qualifiedModelPin, maxTokens: 8192, signal: req.signal,
+    });
+    throwIfDraftCancelled(req.signal);
+    if (response.derivativeVerification?.kind !== 'deterministic_token_roundtrip' ||
+        response.derivativeVerification.derivativeId !== req.derivativeId) {
+      throw new AnaProjectScopeError(409, 'DERIVATIVE_VERIFICATION_REQUIRED', 'The derivative result did not include its local round-trip verification. No draft was released.');
+    }
+    return { content: response.content, model: response.model, usage: response.usage,
+      cacheHit: response.cacheHit, latencyMs: response.latencyMs, finishReason: response.finishReason,
+      truncated: isTruncated(response.finishReason), derivativeVerification: response.derivativeVerification,
+      derivativeGeneration: { requestId: response.requestId, provider: response.provider, model: response.model,
+        resolvedModel: response.resolvedModel, contentSha256: createHash('sha256').update(response.content).digest('hex'),
+        derivativeId: req.derivativeId, payloadSha256: response.derivativeVerification.payloadSha256 } };
   }
 
   /**

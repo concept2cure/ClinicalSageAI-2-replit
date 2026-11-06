@@ -3,12 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AIGateway, GatewayAbortedError, GatewayPolicyError, resetGateway } from '../gateway';
 import type { GatewayRequest, GatewayResponse, ModelConfig } from '../types';
 import type { Semaphore } from '../concurrency';
+import { AnaProjectScopeError } from '../../ana/project-scope-admission';
 
 type GuardedRequest = GatewayRequest & { beforeDispatch?: () => Promise<void> };
 interface GatewayProbe {
   outboundLimiter: Semaphore;
   dispatchProvider(model: ModelConfig, request: GatewayRequest, id: string, start: number): Promise<GatewayResponse>;
   recordFailure(provider: string, error: unknown): void;
+  recordTenantUsage(...args: unknown[]): void;
   getFallbackModels(...args: unknown[]): ModelConfig[];
   applyOrgPlacementDefaults(request: GatewayRequest): Promise<GatewayRequest>;
 }
@@ -117,15 +119,15 @@ describe('gateway current-source dispatch checkpoint', () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 
-  it.each(['synchronous', 'asynchronous'])('makes a %s guard refusal terminal and safe without provider-health accounting', async kind => {
+  it.each(['synchronous', 'asynchronous', 'typed source access'])('makes a %s guard refusal terminal and safe without provider-health accounting', async kind => {
     const { gateway, probe, dispatch } = liveGateway();
     const failures = vi.spyOn(probe, 'recordFailure');
     const fallbacks = vi.spyOn(probe, 'getFallbackModels');
+    const usage = vi.spyOn(probe, 'recordTenantUsage');
     const before = gateway.getProviderHealth().map(row => ({ ...row }));
     const privateMessage = 'private-source-SQL-and-access-detail';
-    const guard = kind === 'synchronous'
-      ? () => { throw new Error(privateMessage); }
-      : async () => { throw new Error(privateMessage); };
+    const cause = kind === 'typed source access' ? new AnaProjectScopeError(403, 'ANA_SOURCE_SCOPE_CHANGED', privateMessage) : new Error(privateMessage);
+    const guard = kind === 'synchronous' ? () => { throw cause; } : async () => { throw cause; };
     const error = await gateway.route(request('test:refusal', { beforeDispatch: guard })).catch(reason => reason);
     expect(error).toBeInstanceOf(GatewayPolicyError);
     expect(error).toMatchObject({ code: 'SOURCE_CONTEXT_UNAVAILABLE' });
@@ -134,6 +136,7 @@ describe('gateway current-source dispatch checkpoint', () => {
     expect(dispatch).not.toHaveBeenCalled();
     expect(failures).not.toHaveBeenCalled();
     expect(fallbacks).not.toHaveBeenCalled();
+    expect(usage).not.toHaveBeenCalled();
     expect(gateway.getProviderHealth()).toEqual(before);
   });
 
@@ -192,13 +195,16 @@ describe('gateway repeated source checks and cancellation', () => {
     const input = request('test:fallback', { provider: 'openai', beforeDispatch: guard });
     const primaryError = Object.assign(new Error('primary request shape unavailable'), { status: 400 });
     dispatch.mockImplementation(async () => { input.beforeDispatch = replacement; throw primaryError; });
-    expect(await gateway.route(input).catch(error => error)).toBeInstanceOf(GatewayPolicyError);
+    const refusal = await gateway.route(input).catch(error => error);
+    expect(refusal).toBeInstanceOf(GatewayPolicyError);
+    expect(refusal).toMatchObject({ code: 'SOURCE_CONTEXT_UNAVAILABLE' });
+    expect(refusal.message).not.toContain('revoked before fallback');
     expect(guard).toHaveBeenCalledTimes(2);
     expect(replacement).not.toHaveBeenCalled();
     expect(dispatch).toHaveBeenCalledTimes(1);
     expect(fallbacks).toHaveBeenCalledTimes(1);
     expect(failures).toHaveBeenCalledTimes(1);
-    expect(failures.mock.calls[0][1]).toBe(primaryError);
+    expect(failures.mock.calls[0][1]).toMatchObject({ status: 400, message: 'Model provider request failed (HTTP 400).' });
   });
 
   it('also rechecks before retrying a fallback provider', async () => {
@@ -211,11 +217,14 @@ describe('gateway repeated source checks and cancellation', () => {
     dispatch.mockRejectedValueOnce(primaryError).mockRejectedValue(Object.assign(new Error('fallback transient'), { status: 500 }));
     const outcome = gateway.route(request('test:fallback-retry', { provider: 'openai', beforeDispatch: guard })).catch(error => error);
     await vi.advanceTimersByTimeAsync(5_000);
-    expect(await outcome).toBeInstanceOf(GatewayPolicyError);
+    const refusal = await outcome;
+    expect(refusal).toBeInstanceOf(GatewayPolicyError);
+    expect(refusal).toMatchObject({ code: 'SOURCE_CONTEXT_UNAVAILABLE' });
+    expect(refusal.message).not.toContain('revoked during fallback backoff');
     expect(guard).toHaveBeenCalledTimes(3);
     expect(dispatch).toHaveBeenCalledTimes(2);
     expect(failures).toHaveBeenCalledTimes(1);
-    expect(failures.mock.calls[0][1]).toBe(primaryError);
+    expect(failures.mock.calls[0][1]).toMatchObject({ status: 400, message: 'Model provider request failed (HTTP 400).' });
   });
 
   it('preserves a transient retry when the source remains current', async () => {

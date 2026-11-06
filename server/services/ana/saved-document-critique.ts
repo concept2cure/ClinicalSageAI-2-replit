@@ -19,6 +19,11 @@ import { RESULT_BUDGET } from './agentic-loop';
 import { savedTemplateReview, type SavedTemplateReview } from './saved-template-review';
 import { assessSavedCsrEvidence, csrEvidenceRuns, importedCsrEvidence, type RetainedRunRead, type SavedCsrEvidenceVerdict } from './csr-saved-evidence';
 import type { RetainedCsrTables } from '../csr/cortex-authoring-context';
+import { fullVisibleAuthoringSnapshot, authoringSnapshotHash } from '../authoring/authoring-content-digests';
+import { capturedDataEligibleSql } from '../document-data-disposition/eligibility';
+import type { DerivativeSourceBinding } from '../ai-gateway/providers/org-placement-writer';
+import { parseDraftSourceReferences } from '../authoring/draft-source-references';
+import { draftSourceIdentityForText } from './draft-source-identity';
 
 export type Connection = (opts: WithTenantConnectionOptions, fn: (q: RequestSqlClient) => Promise<string>) => Promise<string>;
 /** The receipt-verified retained-table reader (csr/saved-clinical-tables readSavedClinicalTables). */
@@ -261,6 +266,7 @@ export async function readAuthorizedSavedDocument(q: RequestSqlClient,
   if (actor.rows.length !== 1 || (actor.rows[0].email !== null && typeof actor.rows[0].email !== 'string')) throw new Error('Actor unavailable');
   const authorized = await authorizeAuthoringProgram(q, { tenantId, actor: { id: String(userId), email: actor.rows[0].email }, programId, forWrite: false });
   const doc = await q.query(`SELECT d.id::text, d.title, d.module, d.product_code, d.status, d.updated_at,
+    to_jsonb(d)->'locale' AS locale, to_jsonb(d)->'version' AS version,
     to_jsonb(d)->>'template_id' AS template_id, to_jsonb(d)->'provenance' AS provenance FROM authoring_documents d
     WHERE d.id=$1 AND d.tenant_id=$2 AND d.client_program_id=$3`, [documentId, tenantId, programId]);
   if (doc.rows.length !== 1) throw new Error('Document outside project');
@@ -268,6 +274,117 @@ export async function readAuthorizedSavedDocument(q: RequestSqlClient,
   if (!(await decideAuthoringPermission({ pool: q, principal: authorized.principal, scope, action: 'view' })).allowed) throw new Error('Document access denied');
   const saved = await sections(q, documentId, tenantId, userId);
   return { project: { ...project, programId }, header: documentRecord(doc.rows[0]), saved };
+}
+
+export const INDEPENDENT_CHECKER_VERSION = 'saved-record-independent-v2';
+export interface IndependentSourcePin { sourceId: number; sourceHash: string; extractionHash: string | null }
+export type IndependentVaultSourcePin = DerivativeSourceBinding & { classification?: string };
+export interface IndependentCheckResult {
+  snapshotHash: string; sourcePins: IndependentSourcePin[];
+  vaultSourcePins?: IndependentVaultSourcePin[];
+  findings: Array<{ findingId: string; category: string; severity: 'critical' | 'high' | 'medium' | 'low'; hard: boolean; sectionId?: string | null }>;
+}
+
+/** Current canonical source admission on the caller's transaction. The public
+ * facade opens another transaction; this composition keeps signing atomic. */
+export async function verifyIndependentVaultSource(q: RequestSqlClient,
+  input: { organizationId: number; userId: number; binding: IndependentVaultSourcePin }): Promise<void> {
+  const current = await currentIndependentVaultSource(q, input);
+  if (current.classification !== (input.binding.classification ?? 'CONFIDENTIAL')) throw new Error('Source classification changed');
+}
+async function currentIndependentVaultSource(q: RequestSqlClient,
+  input: { organizationId: number; userId: number; binding: DerivativeSourceBinding }) {
+  const { binding } = input;
+  if (!binding || !UUID.test(binding.documentId) || !UUID.test(binding.programId) ||
+      !/^[a-f0-9]{64}$/.test(binding.contentHash) || !/^[a-f0-9]{64}$/.test(binding.extractedTextSha256)) throw new Error('Source binding unavailable');
+  const { admitAnaSourceReadScope, revalidateAnaSourceReadScope } = await import('./source-read-scope');
+  const { loadDocumentForAdmittedScope } = await import('../vault/document-catalog-document');
+  const scope = await admitAnaSourceReadScope(q, { organizationId: input.organizationId, userId: input.userId,
+    projectId: binding.projectId, projectRef: binding.programId });
+  await q.query('SELECT id FROM vault.documents WHERE id=$1 AND organization_id=$2 AND program_id=$3 FOR SHARE',
+    [binding.documentId, input.organizationId, binding.programId]);
+  const doc = await loadDocumentForAdmittedScope(binding.documentId, input.organizationId, { executor: q,
+    includeText: true, currentOnly: true, allowedProgramIds: scope.accessibleProgramIds, programId: binding.programId });
+  if (!doc || doc.organizationId !== input.organizationId || !['PUBLIC', 'INTERNAL', 'CONFIDENTIAL', 'CONTROLLED'].includes(String(doc.classification)) ||
+      doc.isCurrent !== true || doc.contentHash !== binding.contentHash || typeof doc.extractedText !== 'string' ||
+      digest(doc.extractedText) !== binding.extractedTextSha256) throw new Error('Source binding changed');
+  await revalidateAnaSourceReadScope(q, scope);
+  return { classification: String(doc.classification), extractedText: doc.extractedText };
+}
+
+async function savedVaultSourcePins(q: RequestSqlClient, ctx: { organizationId: number; userId: number }, documentId: string,
+  project: { projectId: number | null; programId: string }): Promise<IndependentVaultSourcePin[]> {
+  const rows = await q.query(`SELECT metadata->'provenance' AS provenance
+    FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2 AND operation_type='CREATE'
+      AND metadata->'provenance' IS NOT NULL`, [documentId, ctx.organizationId]);
+  const pins: IndependentVaultSourcePin[] = [];
+  const provenances = [...new Map(rows.rows.map(row => [stableStringify(row.provenance), row.provenance as Record<string, any>])).values()];
+  for (const provenance of provenances) {
+    if (provenance.generatedDerivative) pins.push(provenance.generatedDerivative.sourceBinding);
+    for (const ref of independentDraftReferences(provenance, project.programId)) {
+      if (project.projectId === null) throw new Error('Source project unavailable');
+      const binding = { documentId: ref.documentId, programId: project.programId, projectId: project.projectId,
+        contentHash: ref.contentHash, extractedTextSha256: ref.extractedTextSha256 };
+      const source = await currentIndependentVaultSource(q, { ...ctx, binding });
+      if (draftSourceIdentityForText(source.extractedText, ref.span).spanSha256 !== ref.spanSha256) throw new Error('Source span changed');
+      pins.push({ ...binding, classification: source.classification });
+    }
+  }
+  const unique = [...new Map(pins.map(pin => [stableStringify(pin), pin])).values()];
+  for (const binding of unique) await verifyIndependentVaultSource(q, { ...ctx, binding });
+  return unique;
+}
+function independentDraftReferences(provenance: Record<string, any>, programId: string) {
+  const groups = provenance.projectSourceReferences;
+  if (groups === undefined) return [];
+  if (!Array.isArray(groups) || groups.length > 200) throw new Error('Source inventory unavailable');
+  const refs = groups.flatMap(group => {
+    if (group?.sourceReferenceVersion !== 2 || group.qualification !== 'unassessed' || group.verification !== 'current_at_save' ||
+        !Array.isArray(group.sources) || group.sources.some((source: any) => source?.programId !== programId)) throw new Error('Exact source receipt unavailable');
+    return parseDraftSourceReferences(group.sources);
+  });
+  if (refs.length > 1000) throw new Error('Source inventory exceeds its complete-check bound');
+  return refs;
+}
+
+/** Exact current source identities, not a semantic-support assertion. Callers
+ * supply only source IDs already resolved by the authorized saved reader. */
+export async function independentSourcePins(q: RequestSqlClient, sourceIds: number[]): Promise<IndependentSourcePin[]> {
+  if (!sourceIds.length) return [];
+  if (sourceIds.length > 1000 || sourceIds.some(id => !Number.isSafeInteger(id) || id <= 0)) throw new Error('Source identity unavailable');
+  const rows = await q.query(`SELECT id,checksum,is_current,deleted_at,to_jsonb(s)->>'extracted_text' AS extracted_text
+    FROM cre_evidence_sources s WHERE id=ANY($1::int[]) AND ${capturedDataEligibleSql('s')} ORDER BY id FOR SHARE OF s`, [[...new Set(sourceIds)].sort((a, b) => a - b)]);
+  if (rows.rows.length !== new Set(sourceIds).size) throw new Error('Source identity unavailable');
+  return rows.rows.map(row => {
+    if (row.is_current !== true || row.deleted_at !== null || typeof row.checksum !== 'string' || !/^[a-f0-9]{64}$/.test(row.checksum)) throw new Error('Source identity changed');
+    return { sourceId: Number(row.id), sourceHash: row.checksum,
+      extractionHash: typeof row.extracted_text === 'string' ? digest(row.extracted_text) : null };
+  });
+}
+
+/** Trusted parent/human workflow only. The checker re-reads saved text and
+ * canonical access; input text, model verdicts and caller severity are ignored. */
+export async function evaluateSavedIndependentCheck(q: RequestSqlClient,
+  ctx: ToolContext & { organizationId: number; userId: number }, documentId: string): Promise<IndependentCheckResult> {
+  if (ctx.agentDepth) throw new Error('A child cannot record independent check authority');
+  const { project, header, saved } = await readAuthorizedSavedDocument(q, ctx, documentId);
+  const snapshot = fullVisibleAuthoringSnapshot({ doc: { ...header, id: documentId },
+    sections: saved.map(s => ({ id: s.sectionId, code: s.code ?? '', title: s.title, content: s.content })) });
+  const result = critiqueDocument(saved.map(s => ({ title: [s.code, s.title].filter(Boolean).join(' '), text: s.text })), {});
+  const raw = [...result.crossSectionFindings.map(f => ({ f, sectionId: null })),
+    ...result.sections.flatMap((s, i) => s.report.findings.map(f => ({ f, sectionId: saved[i].sectionId })))];
+  const findings: IndependentCheckResult['findings'] = raw.map(({ f, sectionId }) => ({ findingId: digest(stableStringify({ f, sectionId })), category: f.category, severity: f.severity, sectionId,
+    hard: f.category === 'grounding' && ['critical', 'high'].includes(f.severity) }));
+  for (const section of saved) {
+    const category = !section.text.trim() ? 'empty_section' : section.citationGaps.length ? 'citation_unavailable'
+      : section.pendingInsertions + section.pendingDeletions ? 'pending_changes' : null;
+    if (category) findings.push({ findingId: digest(`${category}:${section.sectionId}`), category, severity: 'high', hard: true, sectionId: section.sectionId });
+  }
+  if (findings.length > 1000) throw new Error('Complete independent finding inventory exceeds its bound');
+  const sourceIds = [...new Set(saved.flatMap(s => s.citations.map(c => Number(c.id))))];
+  return { snapshotHash: authoringSnapshotHash(snapshot), sourcePins: await independentSourcePins(q, sourceIds),
+    vaultSourcePins: await savedVaultSourcePins(q, ctx, documentId, project),
+    findings: [...new Map(findings.map(f => [f.findingId, f])).values()] };
 }
 
 /** One REPEATABLE READ snapshot on a dedicated tenant connection; rolled back on any throw. */

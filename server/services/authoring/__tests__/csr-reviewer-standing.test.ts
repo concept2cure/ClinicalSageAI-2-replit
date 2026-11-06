@@ -48,6 +48,8 @@ const release = { organizationId: ORG, doc: { id: DOC, title: 'LMN-201 Clinical 
  */
 function database(reviewer: { active: boolean }) {
   const query = vi.fn(async (sql: string) => {
+    // This fixture is a legacy human-authored CSR, with no AnA/check genesis.
+    if (/WITH trails AS/.test(sql)) return { rows: [] };
     if (/SELECT EXISTS/.test(sql) && /csrScientificEvidence/.test(sql)) return { rows: [{ required: true }] };
     const asksActive = /u\.status\s*=\s*'active'/.test(sql);
     if (/FROM authoring_reviews r/.test(sql)) return { rows: asksActive && !reviewer.active ? [] : [RECEIPT] };

@@ -11,8 +11,14 @@
 import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
+import { randomUUID } from 'node:crypto';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../db/pglite-harness';
 import { runWithTenantScope } from '../../db/tenantStore';
+import { describe, it, expect } from 'vitest';
+import { writeAuthoringAuditTrail } from '../../services/authoring/authoring-evidence';
+import { assertIndependentCheckRelease } from '../../services/authoring/workflow-import-governance';
+import { evaluateSavedIndependentCheck } from '../../services/ana/saved-document-critique';
+import * as independentReviewServices from '../../services/authoring/peer-review';
 
 export const JWT_SECRET = 'authoring-canvas-secret-0921';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -202,3 +208,225 @@ export const M25_SECTIONS = [
   { code: '2.5.2', title: 'Overview of Biopharmaceutics', content: '<p>Oral bioavailability was <strong>62%</strong> across two formulations.</p><ul><li>Fasted</li><li>Fed</li></ul>' },
   { code: '2.5.3', title: 'Overview of Clinical Pharmacology', content: '<p>Exposure increased dose-proportionally from 10 to 80 mg.</p>' },
 ];
+
+
+/** Reusable real-ledger acceptance checks, driven by each canonical Authoring
+ * fixture's own migrations and actor/HTTP setup. No provider or policy bypass. */
+export function registerIndependentFindingAcceptance(deps: {
+  connection: () => import('../../db/requestDb').RequestConnectable;
+  document: () => Promise<{ id: string; sections: string[] }>;
+  grant: (id: string) => Promise<unknown>;
+  requestReview: (id: string) => Promise<unknown>;
+  read: (id: string, actorId?: string) => Promise<Awaited<ReturnType<typeof independentReviewServices.readAuthoringPeerReviews>>>;
+  expected: (id: string) => Promise<import('../../../shared/authoring/peer-review').AuthoringReviewExpected>;
+  submit: (id: string, body: import('../../../shared/authoring/peer-review').AuthoringReviewInput) => Promise<unknown>;
+  reviewerId: string;
+}) {
+  const { document, grant, requestReview, read, expected, submit } = deps;
+  const REVIEWER = deps.reviewerId;
+  const connection: import('../../db/requestDb').RequestConnectable = {
+    query: (sql, args) => deps.connection().query(sql, args), connect: () => deps.connection().connect(),
+  };
+  const service = independentReviewServices;
+  const audit = { ipAddress: '127.0.0.1', userAgent: 'independent-check-acceptance' };
+  const rows = async (sql: string, args?: unknown[]) => (await connection.query(sql, args)).rows;
+  type SavedDocument = { id: string; sections: string[] };
+async function requireIndependent(doc: SavedDocument) {
+  await connection.query('UPDATE authoring_sections SET content=$1 WHERE doc_id=$2', ['The protocol specified the study procedures.', doc.id]);
+  await recordIndependentAnaGenesis(connection, doc.id, doc.sections[0]);
+}
+async function independentSubject(documentId: string) {
+  const current = await read(documentId);
+  const [doc] = await rows('SELECT * FROM authoring_documents WHERE id=$1', [documentId]);
+  return { organizationId: ORG, doc: { ...doc, id: documentId }, sections: current.reviewContext.snapshot.sections,
+    actor: { id: REVIEWER, email: 'reviewer@review.example' } };
+}
+async function runChecks(documentId: string, actorId = REVIEWER) {
+  const current = await read(documentId, actorId);
+  return service.runAuthoringIndependentCheck(connection, { tenantId: ORG, actorId, documentId,
+    expectedSnapshotHash: current.reviewContext.snapshotHash }, audit);
+}
+registerIndependentProofFailureCases({ connection, document, requireIndependent, requestReview, independentSubject });
+registerIndependentAuditFailureCase({ connection, document, requireIndependent, read });
+
+describe('durable deterministic checks and explicit human finding decisions', () => {
+  it('refuses an empty document without recording a favorable independent receipt', async () => {
+    const doc = await document(); await requireIndependent(doc); await grant(doc.id);
+    await connection.query('DELETE FROM authoring_sections WHERE doc_id=$1', [doc.id]);
+    await expect(runChecks(doc.id)).rejects.toThrow(/empty/);
+    expect(await rows("SELECT 1 FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='INDEPENDENT_CHECK_RECORDED'", [doc.id])).toHaveLength(0);
+    await expect(assertIndependentCheckRelease(connection, await independentSubject(doc.id))).rejects.toMatchObject({ code: 'INDEPENDENT_CHECK_REQUIRED' });
+  });
+  it('requires an independent receipt from immutable AnA genesis, while manual legacy records retain their path', async () => {
+    const manual = await document(); await requestReview(manual.id);
+    await expect(assertIndependentCheckRelease(connection, await independentSubject(manual.id))).resolves.toBeUndefined();
+    const doc = await document(); await requireIndependent(doc); await grant(doc.id);
+    expect((await read(doc.id)).reviewContext.independentCheck).toMatchObject({ standing: 'missing', receiptId: null });
+    await expect(assertIndependentCheckRelease(connection, await independentSubject(doc.id))).rejects.toMatchObject({ code: 'INDEPENDENT_CHECK_REQUIRED' });
+    await requestReview(doc.id);
+    expect((await read(doc.id)).reviewContext.independentCheck).toMatchObject({ standing: 'current', semanticVerified: false });
+    expect(await rows("SELECT 1 FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='INDEPENDENT_CHECK_RECORDED'", [doc.id])).toHaveLength(1);
+  });
+
+  it('retains a hard finding until a real rerun removes it and the assigned independent reviewer explicitly closes it', async () => {
+    const doc = await document(); await requireIndependent(doc);
+    await connection.query("UPDATE authoring_sections SET content='' WHERE id=$1", [doc.sections[0]]);
+    await requestReview(doc.id);
+    const first = (await read(doc.id)).reviewContext.independentCheck!;
+    const hard = first.findings.find(f => f.hard)!;
+    expect(first.hardBlockCount).toBeGreaterThan(0);
+    await expect(assertIndependentCheckRelease(connection, await independentSubject(doc.id))).rejects.toMatchObject({ code: 'INDEPENDENT_CHECK_REQUIRED' });
+    await expect(submit(doc.id, { review_status: 'approved', expected: await expected(doc.id), independent_findings: {
+      receiptId: first.receiptId!, snapshotHash: first.snapshotHash, dispositions: [{ findingId: hard.findingId, decision: 'resolved', reason: 'The model says that this is now supported.' }],
+    } })).rejects.toMatchObject({ code: 'INDEPENDENT_CHECK_REQUIRED' });
+    await connection.query('UPDATE authoring_sections SET content=$1 WHERE id=$2', ['The protocol specified the study procedures.', doc.sections[0]]);
+    expect((await read(doc.id)).reviewContext.independentCheck!.standing).toBe('stale');
+    const checked = (await runChecks(doc.id)).independentCheck;
+    expect(checked.hardBlockCount).toBeGreaterThan(0); // corrected content does not erase an open historical finding
+    await submit(doc.id, { review_status: 'approved', expected: await expected(doc.id), independent_findings: {
+      receiptId: checked.receiptId!, snapshotHash: checked.snapshotHash,
+      dispositions: [{ findingId: hard.findingId, decision: 'resolved', reason: 'Read the corrected accepted section and the complete current check.' }],
+    } });
+    await expect(assertIndependentCheckRelease(connection, await independentSubject(doc.id))).resolves.toBeUndefined();
+    const decisions = await rows("SELECT metadata FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='INDEPENDENT_FINDING_REVIEW'", [doc.id]);
+    expect(decisions[0].metadata.independentCheck.dispositions[0]).toMatchObject({ findingId: hard.findingId, decision: 'resolved' });
+    // A later recurrence is a new open obligation; an old resolution cannot clear it.
+    await connection.query("UPDATE authoring_sections SET content='' WHERE id=$1", [doc.sections[0]]); await runChecks(doc.id);
+    await connection.query('UPDATE authoring_sections SET content=$1 WHERE id=$2', ['The protocol specified the study procedures.', doc.sections[0]]); await runChecks(doc.id);
+    await expect(assertIndependentCheckRelease(connection, await independentSubject(doc.id))).rejects.toMatchObject({ code: 'INDEPENDENT_CHECK_REQUIRED' });
+  });
+
+  it('records human disagreement without waiving a hard deterministic blocker', async () => {
+    const doc = await document(); await requireIndependent(doc);
+    await connection.query("UPDATE authoring_sections SET content='' WHERE id=$1", [doc.sections[0]]); await requestReview(doc.id);
+    const current = (await read(doc.id)).reviewContext.independentCheck!;
+    await submit(doc.id, { review_status: 'rejected', review_comments: 'The requested evidence remains incomplete.', expected: await expected(doc.id), independent_findings: {
+      receiptId: current.receiptId!, snapshotHash: current.snapshotHash,
+      dispositions: [{ findingId: current.findings.find(f => f.hard)!.findingId, decision: 'rejected', reason: 'The reviewer disagrees with this finding but has not corrected the record.' }],
+    } });
+    await expect(assertIndependentCheckRelease(connection, await independentSubject(doc.id))).rejects.toMatchObject({ code: 'INDEPENDENT_CHECK_REQUIRED' });
+  });
+
+  it('refuses child authority and stale snapshots without writing a receipt', async () => {
+    const doc = await document(); await requireIndependent(doc); await requestReview(doc.id);
+    await expect(evaluateSavedIndependentCheck(connection, { organizationId: ORG, userId: Number(REVIEWER), projectRef: PROGRAM, agentDepth: 1 }, doc.id)).rejects.toThrow(/child/);
+    const count = (await rows("SELECT 1 FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='INDEPENDENT_CHECK_RECORDED'", [doc.id])).length;
+    await expect(service.runAuthoringIndependentCheck(connection, { tenantId: ORG, actorId: REVIEWER, documentId: doc.id,
+      expectedSnapshotHash: '0'.repeat(64) }, audit)).rejects.toMatchObject({ code: 'REVIEW_CHANGED' });
+    expect(await rows("SELECT 1 FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='INDEPENDENT_CHECK_RECORDED'", [doc.id])).toHaveLength(count);
+  });
+});
+
+}
+
+function registerIndependentProofFailureCases(fixture: {
+  connection: import('../../db/requestDb').RequestConnectable;
+  document: () => Promise<{ id: string; sections: string[] }>;
+  requireIndependent: (doc: { id: string; sections: string[] }) => Promise<void>;
+  requestReview: (id: string) => Promise<unknown>;
+  independentSubject: (id: string) => Promise<Parameters<typeof assertIndependentCheckRelease>[1]>;
+}) {
+  describe('immutable independent-check proof validation', () => {
+    it.each(['metadata', 'chain-link', 'missing-receipt'] as const)('holds release for %s damage in the retained proof', async defect => {
+      const doc = await fixture.document(); await fixture.requireIndependent(doc); await fixture.requestReview(doc.id);
+      const subject = await fixture.independentSubject(doc.id);
+      await expect(assertIndependentCheckRelease(fixture.connection, subject)).resolves.toBeUndefined();
+      // Project a damaged read of the actual persisted rows; never disable the database's immutable-ledger guards.
+      const damaged = { query: async (sql: string, args?: unknown[]) => {
+        const result = await fixture.connection.query(sql, args);
+        if (!sql.startsWith('WITH trails AS')) return result;
+        const rows = JSON.parse(JSON.stringify(result.rows)) as Array<Record<string, any>>;
+        const receipt = rows.find(row => row.operation_type === 'INDEPENDENT_CHECK_RECORDED')!;
+        if (defect === 'metadata') receipt.metadata.independentCheck.checkerVersion = 'forged-checker';
+        if (defect === 'chain-link') receipt.sha256_chain = '0'.repeat(64);
+        return { ...result, rows: defect === 'missing-receipt' ? rows.filter(row => row !== receipt) : rows };
+      } };
+      await expect(assertIndependentCheckRelease(damaged, subject)).rejects.toMatchObject({ code: 'INDEPENDENT_CHECK_REQUIRED' });
+    });
+  });
+}
+
+async function recordIndependentAnaGenesis(connection: import('../../db/requestDb').RequestConnectable, docId: string, sectionId: string) {
+  const client = await connection.connect();
+  try {
+    await client.query('BEGIN');
+    await writeAuthoringAuditTrail({ tenantId: ORG, actorId: AUTHOR.id, actorEmail: AUTHOR.email,
+      actorRole: 'member', ipAddress: '127.0.0.1', userAgent: 'independent-check-fixture', pool: connection }, {
+      docId, sectionId, operationType: 'CREATE', beforeContent: null, afterContent: null,
+      changeReason: 'Server-recorded AnA draft genesis.', executor: client,
+      metadata: { provenance: { source: 'ana' }, independentCheck: { required: true, version: 1 } },
+    });
+    await client.query('COMMIT');
+  } catch (error) { await client.query('ROLLBACK'); throw error; }
+  finally { client.release(); }
+}
+
+function registerIndependentAuditFailureCase(fixture: {
+  connection: import('../../db/requestDb').RequestConnectable;
+  document: () => Promise<{ id: string; sections: string[] }>;
+  requireIndependent: (doc: { id: string; sections: string[] }) => Promise<void>;
+  read: (id: string, actorId?: string) => Promise<Awaited<ReturnType<typeof independentReviewServices.readAuthoringPeerReviews>>>;
+}) {
+  it('rolls back the independent receipt and its initialization when the awaited chained audit fails', async () => {
+    const doc = await fixture.document(); await fixture.requireIndependent(doc);
+    const current = await fixture.read(doc.id, AUTHOR.id);
+    const failed = { ...fixture.connection, connect: async () => {
+      const client = await fixture.connection.connect();
+      return { release: () => client.release(), query: async (sql: string, args?: unknown[]) => {
+        if (/INSERT INTO audit_logs/.test(sql) && args?.includes('authoring.section.INDEPENDENT_CHECK_RECORDED')) throw new Error('fixture audit unavailable');
+        return client.query(sql, args);
+      } };
+    } };
+    await expect(independentReviewServices.runAuthoringIndependentCheck(failed, { tenantId: ORG, actorId: AUTHOR.id,
+      documentId: doc.id, expectedSnapshotHash: current.reviewContext.snapshotHash }, { ipAddress: '127.0.0.1', userAgent: 'audit-failure-fixture' })).rejects.toThrow();
+    expect((await fixture.connection.query("SELECT 1 FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type LIKE 'INDEPENDENT_CHECK_%'", [doc.id])).rows).toHaveLength(0);
+    expect((await fixture.connection.query("SELECT 1 FROM audit_logs WHERE new_values->>'docId'=$1 AND action LIKE 'authoring.section.INDEPENDENT_CHECK_%'", [doc.id])).rows).toHaveLength(0);
+  });
+}
+
+export function registerIndependentReviewHttpAcceptance(fixture: {
+  app: () => express.Express;
+  connection: () => import('../../db/requestDb').RequestConnectable;
+  create: () => Promise<string>;
+  reviewer: (req: request.Test) => request.Test;
+  requestReview: (id: string) => Promise<request.Response>;
+}) {
+  const q = (sql: string, args?: unknown[]) => fixture.connection().query(sql, args);
+  async function prepared() {
+    const id = await fixture.create(), sectionId = randomUUID();
+    await q(`INSERT INTO authoring_sections (id,doc_id,code,title,content,order_index,tenant_id)
+      VALUES($1,$2,'2.5.1','Protocol','The protocol specified the study procedures.',0,$3)`, [sectionId, id, ORG]);
+    await recordIndependentAnaGenesis(fixture.connection(), id, sectionId);
+    const requested = await fixture.requestReview(id);
+    expect(requested.status, JSON.stringify(requested.body)).toBe(200);
+    return { id, sectionId };
+  }
+  const read = (id: string) => fixture.reviewer(request(fixture.app()).get(`/api/authoring/documents/${id}/reviews`));
+  const check = (id: string, body: Record<string, unknown>) => fixture.reviewer(request(fixture.app()).post(`/api/authoring/documents/${id}/review`)).send({ action: 'run_independent_checks', ...body });
+  describe('saved independent checks through the mounted native HTTP workflow', () => {
+    it('runs the actual checker and exposes the authoritative receipt, without accepting caller findings or stale bytes', async () => {
+      const doc = await prepared(), before = await read(doc.id);
+      expect(before.body.reviewContext).toMatchObject({ canRunIndependentChecks: true, independentCheck: { standing: 'current', semanticVerified: false } });
+      await q('UPDATE authoring_sections SET content=$1 WHERE id=$2', ['The protocol specified revised study procedures.', doc.sectionId]);
+      const changed = await read(doc.id);
+      expect(changed.body.reviewContext.independentCheck.standing).toBe('stale');
+      expect((await check(doc.id, { expectedSnapshotHash: changed.body.reviewContext.snapshotHash, findings: [] })).status).toBe(400);
+      expect((await check(doc.id, { expectedSnapshotHash: before.body.reviewContext.snapshotHash })).status).toBe(409);
+      const checked = await check(doc.id, { expectedSnapshotHash: changed.body.reviewContext.snapshotHash });
+      expect(checked.status, JSON.stringify(checked.body)).toBe(200);
+      expect(checked.body.independentCheck).toMatchObject({ standing: 'current', snapshotHash: changed.body.reviewContext.snapshotHash, semanticVerified: false });
+      expect((await read(doc.id)).body.reviewContext.independentCheck.receiptId).toBe(checked.body.independentCheck.receiptId);
+      expect(checked.body.independentCheck.receiptId).not.toBe(before.body.reviewContext.independentCheck.receiptId);
+    });
+    it.each(['freeze', 'e-sign'])('holds /%s before credential verification or signature writes when the saved proof is stale', async action => {
+      const doc = await prepared();
+      await q('UPDATE authoring_sections SET content=$1 WHERE id=$2', ['The saved content changed after checking.', doc.sectionId]);
+      const response = await fixture.reviewer(request(fixture.app()).post(`/api/authoring/docs/${doc.id}/${action}`)).send({
+        password: 'deliberately-wrong', meaning: 'REVIEWER', intent: 'I reviewed the current complete document.', reason: 'Review the complete saved document before release.' });
+      expect(response.status, JSON.stringify(response.body)).toBe(409);
+      expect(response.body.code).toBe('INDEPENDENT_CHECK_REQUIRED');
+      expect((await q('SELECT 1 FROM authoring_signatures WHERE doc_id=$1', [doc.id])).rows).toHaveLength(0);
+      expect((await q('SELECT status,frozen_at FROM authoring_documents WHERE id=$1', [doc.id])).rows[0]).toMatchObject({ status: 'draft', frozen_at: null });
+    });
+  });
+}

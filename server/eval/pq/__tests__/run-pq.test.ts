@@ -11,13 +11,49 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import type * as NodeFs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { runPq, type RunPqOptions } from '../run-pq';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { runPq as runScopedPq, type RunPqOptions } from '../run-pq';
+import { getTenantScope } from '../../../db/tenantStore';
+import type { EvaluationScope } from '../../rag/qualification-corpus';
 import { buildExtractionPrompt, buildGenerationPrompt, type GoldDocTask } from '../../doc-quality/doc-quality-metrics';
 import goldBank from '../../doc-quality/gold-tasks.json';
 import protocolJson from '../pq-protocol.json';
 import { APPROVED_MODELS } from '../../../services/ai-governance/approved-models';
 import type { GatewayResponse } from '../../../services/ai-gateway/types';
+import { AIGateway } from '../../../services/ai-gateway/gateway';
+import * as providerClients from '../../../services/ai-gateway/providers/clients';
+import { setOrgPlacementResolver, resetOrgPlacementResolver } from '../../../services/ai-gateway/providers/org-placement';
+
+const admission = vi.hoisted(() => ({ organizationUuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  programId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', otherOrganizationUuid: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  otherProgramId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', resolve: vi.fn(), verify: vi.fn() }));
+const preflightFixture = vi.hoisted(() => ({ useActual: false }));
+// Network-free harness cases inject ready prerequisites so the real measured verdict remains testable.
+// This test seam changes neither the canonical protocol nor its ability to establish a PASS.
+vi.mock('../verify-pq-record', async importOriginal => {
+  const real = await importOriginal<typeof import('../verify-pq-record')>();
+  return { ...real, qualificationPreflight: () => {
+    const actual = real.qualificationPreflight();
+    return preflightFixture.useActual ? actual : { ...actual, readyToEvaluate: true, status: 'ready_to_evaluate', blockers: [] };
+  } };
+});
+vi.mock('../rag-phase', async importOriginal => ({ ...await importOriginal<typeof import('../rag-phase')>(),
+  defaultRagDependencies: async (evaluateModel: unknown) => ({ evaluateModel, resolveOrganizationId: admission.resolve,
+    verifyScope: admission.verify, readDocument: vi.fn(), retrieve: vi.fn() }) }));
+beforeEach(() => {
+  preflightFixture.useActual = false;
+  admission.resolve.mockReset().mockImplementation(async uuid => {
+    if (uuid === admission.organizationUuid) return 7;
+    if (uuid === admission.otherOrganizationUuid) return 8;
+    throw new Error('Unverified evaluation organization');
+  });
+  admission.verify.mockReset().mockImplementation(async (scope: EvaluationScope) => {
+    if ((scope.organizationId === 7 && scope.organizationUuid === admission.organizationUuid && scope.programId === admission.programId) ||
+      (scope.organizationId === 8 && scope.organizationUuid === admission.otherOrganizationUuid && scope.programId === admission.otherProgramId)) return;
+    throw new Error('Unverified organization/programme binding');
+  });
+});
+const runPq = (options: RunPqOptions) => runScopedPq({ organizationUuid: admission.organizationUuid, programId: admission.programId, ...options });
 
 /**
  * The version the model under qualification is pinned to, read from the same
@@ -127,6 +163,70 @@ const dirs: string[] = [];
 afterEach(() => {
   fsRedirect.protocolText = null;
   for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
+});
+
+describe('qualification tenant admission', () => {
+  it('reports canonical prerequisite blockers before any tenant bootstrap or provider call', async () => {
+    preflightFixture.useActual = true;
+    const s = stub(PINNED);
+    const result = await runPq({ modelId: MODEL_ID, gateway: s.gateway });
+    expect(result).toMatchObject({ verdict: 'INCOMPLETE', generation: [], extraction: [], recordPath: null,
+      preflight: { readyToEvaluate: false, qualifiesModel: false } });
+    expect(result.preflight?.blockers.map(blocker => blocker.code)).toContain('PROTOCOL_NOT_APPROVED');
+    expect(s.calls).toEqual([]);
+    expect(admission.resolve).not.toHaveBeenCalled();
+  });
+  it('refuses missing identity or an invalid live project binding before any provider call', async () => {
+    const s = stub(PINNED);
+    await expect(runScopedPq({ modelId: MODEL_ID, gateway: s.gateway })).rejects.toThrow(/organization UUID and programme/);
+    expect(admission.resolve).not.toHaveBeenCalled();
+    admission.verify.mockRejectedValueOnce(new Error('PRIVATE_DATABASE_SCOPE_ERROR'));
+    const error = await runPq({ modelId: MODEL_ID, gateway: s.gateway }).catch(e => e);
+    expect(error.message).toContain('QUALIFICATION_SCOPE_UNAVAILABLE');
+    expect(error.message).not.toContain('PRIVATE_DATABASE_SCOPE_ERROR');
+    expect(s.calls).toEqual([]);
+  });
+
+  it('uses the same verified identity in RAG and records it alongside generation and extraction', async () => {
+    const out = mkdtempSync(path.join(os.tmpdir(), 'pq-scoped-record-'));
+    dirs.push(out);
+    const result = await runPq({ modelId: MODEL_ID, gateway: stub(PINNED).gateway, judgeModelId: 'gpt-4o', record: true, outDir: out });
+    const expected = { organizationId: 7, organizationUuid: admission.organizationUuid, programId: admission.programId };
+    expect(result.rag.scope).toEqual(expected);
+    expect(result.rag.scopeVerified).toBe(true);
+    expect(JSON.parse(readFileSync(result.recordPath!, 'utf8')).evaluationScope).toEqual(expected);
+    expect(admission.resolve).toHaveBeenCalledOnce();
+  });
+
+  it('isolates two tenants through the real evaluation gateway, credential factory and placement path', async () => {
+    const calls: Array<{ credentialOrg: number; tenant: string | undefined; uuid: string | undefined }> = [];
+    const placementOrgs: number[] = [];
+    vi.spyOn(providerClients, 'resolveTenantModelCredentialAvailability').mockResolvedValue({ mode: 'customer_owned', providers: ['anthropic'] });
+    vi.spyOn(providerClients, 'createTenantProviderClient').mockImplementation(async (_provider, organizationId) => {
+      calls.push({ credentialOrg: organizationId, tenant: getTenantScope()?.tenantId, uuid: getTenantScope()?.orgUuid });
+      return { messages: { create: async (params: { model: string; messages: Array<{ content: string }> }) => ({
+        model: params.model, content: [{ type: 'text', text: coveringDraft(params.messages[0].content) }],
+        stop_reason: 'end_turn', usage: { input_tokens: 1, output_tokens: 1 },
+      }) } };
+    });
+    setOrgPlacementResolver({ resolve: async organizationId => {
+      placementOrgs.push(Number(organizationId)); return { allowedProviders: ['anthropic'] };
+    } });
+    const gateway = new AIGateway({ providers: [], auditEnabled: false, deterministicMode: false,
+      policy: { maxTokensPerRequest: 16000, maxRequestsPerMinutePerOrg: 10000, maxRequestsPerMinutePerUser: 10000,
+        blockedPatterns: [], contentFilters: false, piiDetection: false } });
+    try {
+      const results = await Promise.all([
+        runPq({ modelId: MODEL_ID, gateway }),
+        runScopedPq({ modelId: MODEL_ID, gateway, organizationUuid: admission.otherOrganizationUuid, programId: admission.otherProgramId }),
+      ]);
+      expect(results.every(result => result.generation.every(row => row.servedModelVerified) && result.extraction.every(row => row.servedModelVerified))).toBe(true);
+      expect(new Set(placementOrgs)).toEqual(new Set([7, 8]));
+      expect(calls).toHaveLength(2 * (generationTasks.length + extractionTasks.length));
+      expect(calls.every(call => call.tenant === String(call.credentialOrg) &&
+        call.uuid === (call.credentialOrg === 7 ? admission.organizationUuid : admission.otherOrganizationUuid))).toBe(true);
+    } finally { resetOrgPlacementResolver(); vi.restoreAllMocks(); }
+  });
 });
 
 describe('run-pq live path', () => {
