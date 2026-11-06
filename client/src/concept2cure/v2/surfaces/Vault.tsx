@@ -89,7 +89,8 @@ import {
   setEditorTarget,
   type EditorTargetDocType,
 } from '../editorTarget';
-import { readShellProject } from '../shellProject';
+import { readShellProject, publishShellProject } from '../shellProject';
+import { usePaletteProjects, type PaletteProject } from '../paletteProjects';
 import { useDialog } from '../useDialog';
 import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
@@ -1279,6 +1280,43 @@ function VaultSourceWorkButton({ source, onPull }: { source: VaultDoc; onPull: (
 /* Local files, private metadata and read state belong to this project and
    canonical account session. Replacement remounts the existing body; ordinary
    bearer refresh keeps the same session and preserves the person's work. */
+/**
+ * The Vault with no project open lists the projects whose Vaults the person can open (2026-11-06, by the founder:
+ * Vault "should be accessible all the time, not just from within the project, but on the left rail"). It read "Open
+ * a project to see its vault" and sent the person to Projects. The list is the one the ⌘K palette and Projects read
+ * (GET /api/c2c/projects); a row opens that project and its Vault, as the rail's Vault does inside a project.
+ */
+function ProjectVaults({ onNav }: { onNav?: (id: string) => void }) {
+  const read = usePaletteProjects(true);
+  const open = (p: PaletteProject) => {
+    publishShellProject({ id: p.id, title: p.title, ...(p.code ? { code: p.code } : {}), ...(p.ws ? { ws: p.ws } : {}), ...(p.status ? { status: p.status } : {}) });
+    onNav?.('vault');
+  };
+  if (read.state === 'reading' || read.state === 'closed') return <p role="status" className="scaf-note">Reading your projects…</p>;
+  if (read.state === 'failed') return <p role="alert" className="scaf-note">Your projects could not be read, so their Vaults are not listed. Open one from Projects.</p>;
+  if (read.projects.length === 0) {
+    return <p className="scaf-note">You have no projects yet. A Vault belongs to a project: create one with New project in Projects.</p>;
+  }
+  return (
+    <section className="pj-sec vd-org" aria-labelledby="vault-project-list-h" data-testid="vault-project-list">
+      <div className="pj-sec-h">
+        <h2 id="vault-project-list-h">Your projects' Vaults</h2>
+        <span className="sec-sub">{read.projects.length === 1 ? '1 project' : `${read.projects.length} projects`}</span>
+      </div>
+      <div className="ctable">
+        {read.projects.map((p) => (
+          <div key={p.id} className="ct-row" style={{ gridTemplateColumns: 'minmax(0,1fr) auto' }}>
+            <span className="ct-strong">{p.title}</span>
+            <button type="button" className="btn ghost small" onClick={() => open(p)} aria-label={`Open the Vault of ${p.title}`}>
+              Open its Vault
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function Vault(props: SurfaceViewProps) {
   const session = useAuthoringReadSession(authService.getUser());
   return <VaultForProject key={JSON.stringify([currentProjectId() ?? '', session.actor, session.key])} {...props} />;
@@ -3129,10 +3167,10 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         <>
           <EmptyState
             icon={I.folder}
-            title="Open a project to see its vault"
-            hint="The Vault shows the governed document tree of the project you have open: its CTD, eSTAR, IVDR or TMF spine. The governed artifacts of every project you can open are listed below."
-            action={onNav ? { label: 'Go to Projects', onAct: () => onNav('projects') } : undefined}
+            title="Choose a project's Vault"
+            hint="Each project keeps its own governed document tree: its CTD, eSTAR, IVDR or TMF spine. Open one below. The governed artifacts of every project you can open are listed after them."
           />
+          <ProjectVaults onNav={onNav} />
           {organizationView}
         </>
       ) : vaultState.loading && !vault ? (
