@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHash } from 'node:crypto';
-const h = vi.hoisted(() => ({ query: vi.fn(), admit: vi.fn(), recheck: vi.fn(), order: [] as string[] }));
+const h = vi.hoisted(() => ({ query: vi.fn(), admit: vi.fn(), recheck: vi.fn(), eligible: vi.fn(), order: [] as string[] }));
 vi.mock('../../../db', () => ({ pool: { query: h.query } }));
-vi.mock('../evidence-spine.service', () => ({ sourceIdList: (v: unknown) => Array.isArray(v) ? v.map(Number).filter(Number.isSafeInteger) : [] }));
+vi.mock('../evidence-spine.service', () => ({ getSource: h.eligible, sourceIdList: (v: unknown) => Array.isArray(v) ? v.map(Number).filter(Number.isSafeInteger) : [] }));
 vi.mock('../source-read-access', () => ({ getCurrentReadableSourceScope: h.admit, requireSourceReadScopeStillCurrent: h.recheck,
   SourceReadAccessError: class extends Error { constructor(readonly status: number, readonly code: string, message: string) { super(message); } } }));
 import { readRetainedSourceContexts } from '../retained-source-context';
@@ -12,6 +12,7 @@ let stored = text;
 const sha = (value: string) => createHash('sha256').update(value).digest('hex');
 beforeEach(() => {
   vi.resetAllMocks(); h.order = []; text = 'Quality nonconformance NC-1: disposition pending. No approval asserted.'; stored = text;
+  h.eligible.mockImplementation(async () => { h.order.push('eligible'); return { id: 9, organizationId: 7, clientProgramId: PROGRAM, sourceType: 'client_document', isCurrent: true, dataEligible: true }; });
   h.admit.mockImplementation(async () => { h.order.push('admitted'); return { scope: 'verified-accessible-sources', sourceIds: [9] }; });
   h.recheck.mockImplementation(async () => { h.order.push('rechecked'); });
   h.query.mockImplementation(async (sql: string) => {
@@ -23,7 +24,7 @@ beforeEach(() => {
 describe('existing selected-source conversation context admits native snapshots', () => {
   it('reads exact native text only after current parent admission and rechecks before supply', async () => {
     const result = await readRetainedSourceContexts(7, PROGRAM, [9], { userId: 11 });
-    expect(h.order).toEqual(['admitted', 'body', 'rechecked']);
+    expect(h.order).toEqual(['admitted', 'eligible', 'body', 'rechecked', 'eligible']);
     expect(h.admit).toHaveBeenCalledWith(expect.anything(), { organizationId: 7, userId: 11, programId: PROGRAM, sourceIds: [9] });
     expect(result).toEqual([expect.objectContaining({ sourceId: 9, text, origin: 'native_record_snapshot', sha256: sha(text), originalFileAvailable: false, truncated: false })]);
   });
@@ -48,6 +49,14 @@ describe('existing selected-source conversation context admits native snapshots'
     expect(Buffer.from(result.text, 'utf8').toString('utf8')).toBe(result.text);
     expect(result.text).toHaveLength(15999);
     expect(result.truncated).toBe(true);
+  });
+  it('refuses withdrawn native data before text and rechecks withdrawal after the read', async () => {
+    h.eligible.mockResolvedValueOnce({ id: 9, organizationId: 7, clientProgramId: PROGRAM, sourceType: 'client_document', isCurrent: true, dataEligible: false });
+    await expect(readRetainedSourceContexts(7, PROGRAM, [9], { userId: 11 })).rejects.toMatchObject({ status: 409 });
+    expect(h.order).not.toContain('body');
+    h.eligible.mockResolvedValueOnce({ id: 9, organizationId: 7, clientProgramId: PROGRAM, sourceType: 'client_document', isCurrent: true, dataEligible: true })
+      .mockResolvedValueOnce({ id: 9, organizationId: 7, clientProgramId: PROGRAM, sourceType: 'client_document', isCurrent: true, dataEligible: false });
+    await expect(readRetainedSourceContexts(7, PROGRAM, [9], { userId: 11 })).rejects.toMatchObject({ status: 409 });
   });
   it('labels bounded native excerpts truthfully', async () => {
     stored = text = 'pending nonconformance; '.repeat(1000);

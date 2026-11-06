@@ -4,7 +4,7 @@ import { pool } from '../../db.js';
 import { createHash } from 'node:crypto';
 import { capturedDataEligibleSql, capturedDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
 import { getCurrentReadableSourceScope, requireSourceReadScopeStillCurrent, SourceReadAccessError } from './source-read-access.js';
-import { sourceIdList } from './evidence-spine.service.js';
+import { getSource, sourceIdList } from './evidence-spine.service.js';
 
 export interface RetainedSourceContext {
   origin?: 'native_record_snapshot';
@@ -83,10 +83,11 @@ async function nativeSelectedContexts(organizationId: number, programId: string,
   if (!selected.length) return [];
   const scope = { organizationId, userId: actor.userId, programId, sourceIds: selected };
   const admitted = await getCurrentReadableSourceScope(pool, scope);
+  await requireNativeDataEligible(organizationId, programId, selected);
   const rows = await pool.query(`SELECT s.id,s.title,s.checksum,s.extracted_text AS content
     FROM cre_evidence_sources s WHERE s.organization_id=$1 AND s.client_program_id=$2 AND s.id=ANY($3::int[])
       AND s.source_type='client_document' AND s.provenance->>'origin'='native_record_snapshot'
-      AND s.is_current IS NOT FALSE AND s.deleted_at IS NULL AND ${capturedDataEligibleSql('s')}
+      AND s.is_current IS NOT FALSE AND s.deleted_at IS NULL
     ORDER BY s.id`, [organizationId,programId,selected]);
   if (rows.rows.length !== selected.length) throw new SourceReadAccessError(409,'NATIVE_SOURCE_CHANGED','Selected native Quality sources changed. Refresh the project catalogue.');
   let remaining = 64000;
@@ -102,6 +103,7 @@ async function nativeSelectedContexts(organizationId: number, programId: string,
       originalFileAvailable: false as const, representationId: `native:${row.id}`, origin: 'native_record_snapshot' as const }];
   });
   await requireSourceReadScopeStillCurrent(pool, scope, admitted);
+  await requireNativeDataEligible(organizationId, programId, selected);
   return context;
 }
 
@@ -112,4 +114,16 @@ function intactPrefix(content: string, maximum: number): string {
   const next = content.charCodeAt(end);
   if (last >= 0xd800 && last <= 0xdbff && next >= 0xdc00 && next <= 0xdfff) end--;
   return content.slice(0, end);
+}
+
+/** Reuse the spine's canonical disposition reader instead of copying its SQL
+ * into another text reader. Authorization has already admitted these exact IDs. */
+async function requireNativeDataEligible(organizationId: number, programId: string, ids: number[]): Promise<void> {
+  for (const id of ids) {
+    const source = await getSource(organizationId, id, pool);
+    if (!source || source.organizationId !== organizationId || source.clientProgramId?.toLowerCase() !== programId.toLowerCase()
+      || source.sourceType !== 'client_document' || !source.isCurrent || source.dataEligible !== true) {
+      throw new SourceReadAccessError(409,'NATIVE_SOURCE_CHANGED','Selected native Quality data is no longer eligible. Refresh the project catalogue.');
+    }
+  }
 }
