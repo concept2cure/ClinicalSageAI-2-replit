@@ -92,6 +92,8 @@ import { isCsrTemplateId } from '@shared/authoring/csr-scientific-review';
 import { captureAssemblySourceIntent, captureSourceDocumentStartIntent, type AssemblySourceIntent, type AssemblySourceDocumentStartIntent } from './assemblySourceIntent';
 import { assemblySelectionKey } from './assemblySourceSelection';
 import { admitWorkbenchNavigation, workbenchAlreadyThere, workbenchAssemblyIntent, workbenchNavigationRefusal, type WorkbenchLeaveTarget } from './workbenchLeaveTarget';
+import { filingTargetInventoryKey, resolveFilingSectionTarget, workingFilingBinding } from './filingSectionTarget';
+import { filingAuthorityLabel, workbenchWritingFiling } from './writingAgencyPresentation';
 import { ImportSourceNotice } from './ImportSourceNotice';
 import { CsrNarrativeReferenceView, narrativeReferenceFor } from './CsrNarrativeReferenceView';
 import { authoringCurrentReadPath, authoringReadRefused, useAuthoringReadSession } from './authoringCurrentRead';
@@ -1676,11 +1678,19 @@ export function DocumentWorkbench({
   /* The filing the open document is the editing copy of: an added market's
      Module 1 and 3.2.R when it is that market's copy (FILING_SPINE F22b),
      otherwise the project's home filing. */
-  const filing = useFilingOutline(projectIdForOutline, activeDoc?.c2c_document_id ?? null);
+  const binding = workingFilingBinding({ activeId: activeDocId, projectId: programId, listed: activeDoc,
+    header: sourceDocument, headerAnswered: Boolean(currentMetadata), headerAvailable: Boolean(metadataAvailable && !currentMetadata?.refused) });
+  const unboundDraft = Boolean(activeDocId && binding.known && binding.documentId === null);
+  // Keep the existing home-copy creation action; known-null copies borrow no requirements.
+  const filing = useFilingOutline(projectIdForOutline, binding.documentId,
+    { bindingUnavailable: Boolean(activeDocId && !binding.known), unboundDocument: unboundDraft });
   /* The outline's keys: a node the outline does not subdivide opens the
      document's sections under it (findSectionForNode; QA 2026-10-08, walk 2). */
   const outlineKeys = useMemo(() => Array.from(filing.flat, n => n.key), [filing.flat]);
-  const unboundDraft = !!activeDoc && activeDoc.module === null && !activeDoc.c2c_document_id;
+  const filingInventoryKey = useMemo(() => filingTargetInventoryKey(docs), [docs]);
+  const filingInventoryRef = useRef({ key: filingInventoryKey });
+  if (filingInventoryRef.current.key !== filingInventoryKey) filingInventoryRef.current = { key: filingInventoryKey };
+  const filingInventoryVisit = filingInventoryRef.current;
   const activeSection = sections.find(s => s.id === activeSectionId) ?? null;
   const docSealed =
     activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
@@ -2561,6 +2571,25 @@ export function DocumentWorkbench({
         if (current() && !ceremonyOpen()) { setTargetNotice(null); setSourceDocumentStart(start); }
       } });
   }, [openPulledDocument]);
+  const openNamedFilingTarget = useCallback(async (intent: { target: EditorTarget; docType: string; scope: { key: string };
+    sequence: number; current: () => boolean }) => {
+    const { target, docType, scope, sequence, current } = intent;
+    const sameInventory = () => filingInventoryRef.current === filingInventoryVisit;
+    const result = await resolveFilingSectionTarget({ projectId: programId, docType, target, docs, read: readJson,
+      current: () => current() && sameInventory() && creationScopeRef.current === scope && navigationSequence.current === sequence });
+    if (!current() || !linkedReadStillCurrent(scope, sequence)) return;
+    if (!sameInventory()) { setTargetNotice('The accessible document list or its filing bindings changed. Retry the linked filing; nothing was selected.'); return; }
+    if (result.kind === 'retired') return;
+    if (result.kind !== 'match' && result.kind !== 'document') { setTargetNotice(`Couldn’t open ${describeEditorTarget(target)} — ${result.message}`); return; }
+    const sectionId = result.kind === 'match' ? result.section.id : undefined;
+    const label = result.kind === 'match' ? `${result.section.code} · ${result.section.title} — ${editorTargetDocLabel(docType)} filing`
+      : `${editorTargetDocLabel(docType)} filing’s working copy`;
+    // Recheck the captured visit through the unsaved decision; requestLeave advances its own navigation counter.
+    const opened = requestLeaveRef.current({ kind: 'document', id: result.documentId, sectionId,
+      current: () => current() && sameInventory() && creationScopeRef.current === scope });
+    setTargetNotice(null); setTreeScrollNonce(n => n + 1);
+    fireToast(opened ? `Opened ${label}.` : `${label} will open once you decide about the unsaved work here.`);
+  }, [docs, programId, filingInventoryVisit, linkedReadStillCurrent, fireToast]);
   useEffect(() => {
     if (targetAttemptedRef.current) return;
     if (!sectionOpenTarget || docsState === 'loading' || programSwitchHeld) return;
@@ -2622,13 +2651,12 @@ export function DocumentWorkbench({
       }
       return;
     }
-    // Only the section flow consults the governed outline; its guards below
-    // need the filing settled before the one attempt is spent.
-    if (filing.loading) return;
+    // A named family resolves its own filing, independently of the default outline.
+    if (!t.docType && filing.loading) return;
     targetAttemptedRef.current = true;
     // A hand-off that named no section carried only program scope, which
     // window.C2C_PROJECT already delivered. Nothing more was claimed.
-    if (!t.sectionCode && !t.sectionLabel) return;
+    if (!t.sectionCode && !t.sectionLabel && !t.filingDocumentId) return;
     // A navigation-directive target claims no document family; the guards and
     // notices below only speak of one when the sender actually named it.
     const family = editorTargetDocLabel(t.docType);
@@ -2641,23 +2669,14 @@ export function DocumentWorkbench({
       );
       return;
     }
-    if (t.docType && filing.document && filing.document.doc_type !== t.docType) {
-      setTargetNotice(
-        `Couldn’t open ${wanted} — this project’s governed dossier is ` +
-          `${filing.document.doc_type.toUpperCase()}, not ${family}. ` +
-          'Showing the editor’s default view instead.'
-      );
-      return;
-    }
     const scope = creationScopeRef.current;
     const sequence = navigationSequence.current;
     void (async () => {
       const revision = authService.captureSessionReadGuard().sameRevision;
       const current = () => aliveRef.current && currentReadKey.current === readKey && revision() && readSession.sameRevision();
-      // The docs list is program-scoped (or the org's current filter); a
-      // program's dossier is one or a few documents, so the search is bounded
-      // defensively rather than paged.
-      for (const d of docs.slice(0, 8)) {
+      if (t.docType) { await openNamedFilingTarget({ target: t, docType: t.docType, scope, sequence, current }); return; }
+      // Legacy untyped matching retains its behavior over the complete admitted list.
+      for (const d of docs) {
         const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
           authoringCurrentReadPath(d.id, programId, true)
         );
@@ -2712,6 +2731,7 @@ export function DocumentWorkbench({
     linkedReadStillCurrent,
     pinnedDocId,
     openSourceDocumentStart,
+    openNamedFilingTarget,
   ]);
 
   /* ── Open-by-document-type hand-off (navigate_to `authoringDocType`) ──
@@ -4260,7 +4280,7 @@ export function DocumentWorkbench({
           </div>
           <div className="ed-tree-m">
             {unboundDraft ? 'Saved draft sections · unbound' : filing.document
-              ? `${filing.document.doc_type.toUpperCase()} · ${filing.document.agency.toUpperCase()} · ${
+              ? `${filing.document.doc_type.toUpperCase()} · ${filingAuthorityLabel(filing.document)} · ${
                   filing.flat.length
                 } sections`
               : docsState === 'ready'
@@ -4423,7 +4443,7 @@ export function DocumentWorkbench({
         )}
 
         {!unboundDraft && filing.document?.filing_scope === 'market' && (
-          <FilingGaps gaps={filing.gaps} agency={filing.document.agency} />
+          <FilingGaps gaps={filing.gaps} agency={filing.document.agency} docType={filing.document.doc_type} />
         )}
 
         {/* Why there is no outline, said plainly rather than as a blank pane.
@@ -5474,10 +5494,9 @@ export function DocumentWorkbench({
                     programId={programId}
                     sectionCode={activeSection.code}
                     sectionTitle={activeSection.title}
-                    recordedFiling={{ registryId: program?.id === programId ? program.registryId ?? null : null,
-                      draftingRegion: activeSection.draftingRegion, draftingRegionState: activeSection.draftingRegionState,
-                      state: !sectionsCurrent || sectionsState === 'loading' || programReadState === 'loading' ? 'loading'
-                        : sectionsState === 'error' || programReadState === 'error' ? 'error' : 'ready' }}
+                    recordedFiling={workbenchWritingFiling({ binding, filing, program, programId, programReadState,
+                      section: { draftingRegion: activeSection.draftingRegion, draftingRegionState: activeSection.draftingRegionState },
+                      sectionsCurrent, sectionsState })}
                     docSealed={docSealed}
                     editorDirty={dirty}
                     reviewSession={assembly.reviewSessions[activeSection.id]}

@@ -1,0 +1,29 @@
+{
+  "status": "frozen",
+  "red": {
+    "passed": 4,
+    "failed": 2
+  },
+  "green": {
+    "passed": 20,
+    "failed": 0,
+    "newRetryCases": 6,
+    "subjectCliCases": 5,
+    "qualifierCases": 9
+  },
+  "scopedLint": {
+    "errors": 0,
+    "newTestWarnings": 0,
+    "harnessWarnings": 18,
+    "baselineWarnings": 18,
+    "warningRulesUnchanged": true
+  },
+  "sha256": {
+    "tests/validation/lib/harness.mjs": "eb4d7563f86b0fec1a2a7569404c7f6c753c1a52982ac1077b16820e5a8ecf70",
+    "tests/validation/lib/api-client-retry.test.mjs": "15b1f7a1194c5138069f51be48f5f745132b9f82e867997756759569d9d8df66"
+  },
+  "realNetworkRequests": 0,
+  "realSleeps": 0,
+  "databaseOrProviderCalls": 0,
+  "productionChange": "Only premature FormData429 break removed; no request construction/auth/wait/maximum-retry policy changed."
+}

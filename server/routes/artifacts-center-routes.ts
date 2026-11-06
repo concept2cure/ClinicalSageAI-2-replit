@@ -112,6 +112,7 @@ const MAX_ROWS = 200;
 
 interface ArtifactCenterRow {
   id: string;
+  sourceVersion: number | null;
   name: string;
   kind: string;
   fmt: string;
@@ -255,6 +256,7 @@ export default function createArtifactsCenterRoutes(): Router {
         const g = artifactGovernance(r);
         return {
           id: r.artifact_id,
+          sourceVersion: Number.isSafeInteger(version) && version > 0 && version <= 2_147_483_647 ? version : null,
           name: r.title ?? '',
           kind: g.kind,
           fmt: g.fmt,

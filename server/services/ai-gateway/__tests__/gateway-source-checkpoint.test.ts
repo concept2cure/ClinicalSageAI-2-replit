@@ -5,6 +5,23 @@ import type { GatewayRequest, GatewayResponse, ModelConfig } from '../types';
 import type { Semaphore } from '../concurrency';
 import { AnaProjectScopeError } from '../../ana/project-scope-admission';
 
+const wire = vi.hoisted(() => ({
+  availability: vi.fn(), capture: vi.fn(), current: vi.fn(), create: vi.fn(),
+}));
+vi.mock('../../connectors/connector-registry.js', () => ({
+  resolveTenantModelCredentialAvailability: wire.availability,
+  captureCredentialForUse: wire.capture,
+  assertCredentialUseCurrent: wire.current,
+}));
+vi.mock('openai', () => ({ default: class {
+  chat = { completions: { create: (...args: unknown[]) => wire.create('openai', ...args) } };
+  embeddings = { create: (...args: unknown[]) => wire.create('embedding', ...args) };
+} }));
+vi.mock('@anthropic-ai/sdk', () => ({ default: class {
+  messages = { create: (...args: unknown[]) => wire.create('anthropic', ...args) };
+  beta = { messages: { create: (...args: unknown[]) => wire.create('anthropic', ...args) } };
+} }));
+
 type GuardedRequest = GatewayRequest & { beforeDispatch?: () => Promise<void> };
 interface GatewayProbe {
   outboundLimiter: Semaphore;
@@ -13,6 +30,7 @@ interface GatewayProbe {
   recordTenantUsage(...args: unknown[]): void;
   getFallbackModels(...args: unknown[]): ModelConfig[];
   applyOrgPlacementDefaults(request: GatewayRequest): Promise<GatewayRequest>;
+  tenantProviderClient(provider: ModelConfig['provider'], request: GatewayRequest): Promise<unknown>;
 }
 
 function deferred() {
@@ -53,6 +71,146 @@ function request(callerModule: string, extra: Partial<GuardedRequest> = {}): Gua
 beforeEach(() => {
   vi.stubEnv('NODE_ENV', 'test');
   vi.stubEnv('AI_GATEWAY_MAX_CONCURRENCY', '1');
+  wire.availability.mockReset().mockResolvedValue({ mode: 'platform', providers: [] });
+  wire.capture.mockReset().mockImplementation(async (org: number, connector: string) => ({
+    credentials: { apiKey: `SDK-STUB-${org}-${connector}` },
+  }));
+  wire.current.mockReset().mockResolvedValue(undefined);
+  wire.create.mockReset().mockImplementation(async (provider: string, params: { model: string }) => provider === 'anthropic'
+    ? { model: params.model, content: [{ type: 'text', text: 'Actual SDK boundary fixture.' }],
+      usage: { input_tokens: 1, output_tokens: 1 }, stop_reason: 'end_turn' }
+    : { model: params.model, choices: [{ message: { content: 'Actual SDK boundary fixture.' }, finish_reason: 'stop' }],
+      usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 } });
+});
+
+function heldCredentialBoundary(mode: 'tenant' | 'platform') {
+  const entered = deferred(), held = deferred();
+  let credentialCompleted = false;
+  if (mode === 'tenant') {
+    wire.availability.mockResolvedValue({ mode: 'customer_owned', providers: ['anthropic', 'openai'] });
+    wire.current.mockImplementationOnce(async () => { entered.resolve(); await held.promise; credentialCompleted = true; });
+  } else {
+    let reads = 0;
+    wire.availability.mockImplementation(async () => {
+      if (++reads === 2) { entered.resolve(); await held.promise; credentialCompleted = true; }
+      return { mode: 'platform', providers: [] };
+    });
+  }
+  return { entered, held, credentialCompleted: () => credentialCompleted };
+}
+
+describe('current sources at the actual SDK boundary after credential awaits', () => {
+  const lanes = [
+    ['anthropic', 'tenant'], ['openai', 'tenant'], ['anthropic', 'platform'], ['openai', 'platform'],
+  ] as const;
+
+  it.each(lanes)('%s / %s refuses source revocation after credential work without retry or disclosure', async (provider, mode) => {
+    const { gateway, probe, dispatch } = liveGateway();
+    dispatch.mockRestore(); // Keep the real provider executor, factory and credential-audit path.
+    const sends = vi.spyOn(probe, 'dispatchProvider');
+    const failures = vi.spyOn(probe, 'recordFailure'), fallbacks = vi.spyOn(probe, 'getFallbackModels');
+    const { entered, held } = heldCredentialBoundary(mode);
+    let current = true;
+    const guard = vi.fn(async () => { if (!current) throw new Error('PRIVATE-SOURCE-REVOCATION'); });
+    const replacement = vi.fn(async () => {});
+    const input = request('test:late-wire-source', { provider, organizationId: 7, userId: 3, beforeDispatch: guard });
+    const outcome = gateway.route(input).catch(error => error);
+    await entered.promise;
+    current = false;
+    input.beforeDispatch = replacement;
+    held.resolve();
+    const error = await outcome;
+    expect(error).toBeInstanceOf(GatewayPolicyError);
+    expect(error).toMatchObject({ code: 'SOURCE_CONTEXT_UNAVAILABLE' });
+    expect(`${String(error)}${JSON.stringify(error)}`).not.toContain('PRIVATE-SOURCE-REVOCATION');
+    // Tenant calls also recheck the issued source authority while preparing
+    // the exact SDK body, before the held credential audit begins.
+    expect(guard).toHaveBeenCalledTimes(mode === 'tenant' ? 3 : 2);
+    expect(replacement).not.toHaveBeenCalled();
+    expect(wire.create).not.toHaveBeenCalled();
+    expect(sends).toHaveBeenCalledTimes(1);
+    expect(failures).not.toHaveBeenCalled();
+    expect(fallbacks).not.toHaveBeenCalled();
+  });
+
+  it.each(lanes)('%s / %s cancels during credential work before any SDK call', async (provider, mode) => {
+    const { gateway, probe, dispatch } = liveGateway();
+    dispatch.mockRestore();
+    const failures = vi.spyOn(probe, 'recordFailure'), fallbacks = vi.spyOn(probe, 'getFallbackModels');
+    const { entered, held } = heldCredentialBoundary(mode);
+    const controller = new AbortController();
+    const outcome = gateway.route(request('test:late-wire-cancel', {
+      provider, organizationId: 7, userId: 3, signal: controller.signal, beforeDispatch: async () => {},
+    })).catch(error => error);
+    await entered.promise;
+    controller.abort(new Error('PRIVATE-CANCEL-REASON'));
+    held.resolve();
+    const error = await outcome;
+    expect(error).toBeInstanceOf(GatewayAbortedError);
+    expect(error).toMatchObject({ phase: 'pre_call' });
+    expect(wire.create).not.toHaveBeenCalled();
+    expect(failures).not.toHaveBeenCalled();
+    expect(fallbacks).not.toHaveBeenCalled();
+  });
+
+  it.each(lanes)('%s / %s keeps current-source SDK dispatch reachable', async (provider, mode) => {
+    const { gateway, dispatch } = liveGateway();
+    dispatch.mockRestore();
+    const { entered, held } = heldCredentialBoundary(mode);
+    const guard = vi.fn(async () => {});
+    const outcome = gateway.route(request('test:late-wire-current', { provider, organizationId: 7, userId: 3, beforeDispatch: guard }));
+    await entered.promise;
+    expect(wire.create).not.toHaveBeenCalled();
+    held.resolve();
+    expect((await outcome).content).toBe('Actual SDK boundary fixture.');
+    expect(guard).toHaveBeenCalledTimes(3);
+    expect(wire.create).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(lanes)('%s / %s rechecks cancellation after the final source read awaits', async (provider, mode) => {
+    const { gateway, dispatch } = liveGateway();
+    dispatch.mockRestore();
+    const { entered, held, credentialCompleted } = heldCredentialBoundary(mode);
+    const sourceEntered = deferred(), sourceHeld = deferred();
+    // Hold the source read after the credential boundary, independently of
+    // additional legitimate source checks during SDK-body preparation.
+    const guard = async () => { if (credentialCompleted()) { sourceEntered.resolve(); await sourceHeld.promise; } };
+    const controller = new AbortController();
+    const outcome = gateway.route(request('test:late-source-cancel', {
+      provider, organizationId: 7, userId: 3, signal: controller.signal, beforeDispatch: guard,
+    })).catch(error => error);
+    await entered.promise;
+    held.resolve();
+    await sourceEntered.promise;
+    expect(wire.create).not.toHaveBeenCalled();
+    controller.abort();
+    sourceHeld.resolve();
+    expect(await outcome).toMatchObject({ name: 'GatewayAbortedError', phase: 'pre_call' });
+    expect(wire.create).not.toHaveBeenCalled();
+  });
+
+});
+
+describe('platform-client continuation at the actual SDK boundary', () => {
+  it.each(['anthropic', 'openai'] as const)('%s checks cancellation in the platform-client promise continuation before SDK create', async provider => {
+    const { gateway, probe, dispatch } = liveGateway();
+    dispatch.mockRestore();
+    const controller = new AbortController();
+    const resolveClient = probe.tenantProviderClient.bind(probe);
+    vi.spyOn(probe, 'tenantProviderClient').mockImplementation(async (...args) => {
+      const client = await resolveClient(...args);
+      if (client === null) controller.abort();
+      return client;
+    });
+    const failures = vi.spyOn(probe, 'recordFailure'), fallbacks = vi.spyOn(probe, 'getFallbackModels');
+    const error = await gateway.route(request('test:platform-continuation-cancel', {
+      provider, organizationId: 7, userId: 3, signal: controller.signal, beforeDispatch: async () => {},
+    })).catch(error => error);
+    expect(error).toMatchObject({ name: 'GatewayAbortedError', phase: 'pre_call' });
+    expect(wire.create).not.toHaveBeenCalled();
+    expect(failures).not.toHaveBeenCalled();
+    expect(fallbacks).not.toHaveBeenCalled();
+  });
 });
 
 afterEach(() => {
@@ -205,6 +363,7 @@ describe('gateway repeated source checks and cancellation', () => {
     expect(fallbacks).toHaveBeenCalledTimes(1);
     expect(failures).toHaveBeenCalledTimes(1);
     expect(failures.mock.calls[0][1]).toMatchObject({ status: 400, message: 'Model provider request failed (HTTP 400).' });
+    expect(failures.mock.calls[0][1]).not.toBe(primaryError);
   });
 
   it('also rechecks before retrying a fallback provider', async () => {
@@ -225,6 +384,7 @@ describe('gateway repeated source checks and cancellation', () => {
     expect(dispatch).toHaveBeenCalledTimes(2);
     expect(failures).toHaveBeenCalledTimes(1);
     expect(failures.mock.calls[0][1]).toMatchObject({ status: 400, message: 'Model provider request failed (HTTP 400).' });
+    expect(failures.mock.calls[0][1]).not.toBe(primaryError);
   });
 
   it('preserves a transient retry when the source remains current', async () => {

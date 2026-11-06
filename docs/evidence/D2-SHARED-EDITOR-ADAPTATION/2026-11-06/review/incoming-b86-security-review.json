@@ -1,0 +1,124 @@
+{
+  "observedAt": "2026-11-06T20:14:37.066498+00:00",
+  "reviewerTask": "/root/editor_context_security_review",
+  "package": "F1",
+  "branch": "concept2cure-v2",
+  "comparisonBase": "53b9f15d8fe96767c8dbe6def2d7e8c5e03db7aa",
+  "incomingCanonical": "b86b489405a30a07d4ed1c0d46abdd4037449dcb",
+  "reviewedIntegrationMerge": "5283da69cb953d7c4c8970d80fd14f8fe81879ce",
+  "status": "passed_no_scoped_production_blocker",
+  "method": "Read-only source/diff and selected-pin comparison; only this dated evidence note was written. No test, compiler, browser or gate run by reviewer.",
+  "runtimeDeltaFileCount": 11,
+  "findings": [
+    "UK_CTA retains MHRA identity while its regional preparation record, section/task scaffolds and external IRAS route replace the previous CTD fallback. Guidance explicitly leaves date, product and document applicability unassessed; it adds no source mutation or filing/transmission authority.",
+    "The existing ANA/editor requirements dependency now consumes UK preparation data and cites blueprint basis/limitations. Saved section reference selection, actual saved-agency/manual-form holds and saved-template precedence are unchanged.",
+    "Strict current authoring target-write admission and binary/workflow/artifact source-intake owners are unchanged from the previous 637 integration checkpoint. Reading a source still does not grant working-copy creation authority.",
+    "Unified-task creation adds retained current actor and project/workspace admission with forWrite:true on the existing request transaction; task row and audit remain in that transaction. This is not an alternative authoring/source-intake path."
+  ],
+  "pinScopeFinding": {
+    "componentReceiptAtInitialComparison": "ui/browser-result/result.json",
+    "componentSelectedPins": 45,
+    "incomingChangedComponentPins": [
+      "shared/regulatory/global-document-registry.ts"
+    ],
+    "componentConclusion": "The earlier 12-case/45-pin result is historical for its recorded registry bytes. A fresh component run is needed to claim current selected-pin stability; the lead requested it. This review does not claim that run passed.",
+    "nativeReceiptAtComparison": "ui/live-result/result.json",
+    "nativeSelectedPins": 25,
+    "incomingChangedNativePins": [],
+    "currentNativePinMismatchesAtReview": [],
+    "nativeConclusion": "The fifth native walk can remain evidence for its explicit 637 checkpoint and unchanged selected owners/scenarios. The manifest is not a full transitive dependency graph and does not qualify the new UK CTA, ANA preparation, readiness or unified-task admission behavior."
+  },
+  "limits": [
+    "No new UK regulatory source verification, AI generation, external IRAS schema/connector, scientific sufficiency, deployed acceptance or controlled-release qualification was performed by this reviewer.",
+    "Selected-pin continuity does not qualify newly changed dependencies or scenarios not exercised. Existing receipts retain their original source checkpoint and counts.",
+    "The earlier e533 and 53b review receipts remain historical and unchanged."
+  ],
+  "sourceFiles": [
+    {
+      "path": "server/routes/unifiedTasks.routes.ts",
+      "sha256": "d619caa363a0fce59c001f6a5aa2a3ebfecffa497ea86b82c0bace50902eecd1",
+      "bytes": 26045
+    },
+    {
+      "path": "server/services/ana/AnaDocumentDraftingService.ts",
+      "sha256": "5c788319d0a59dddbf7f845079b1913726e4ac0675402c1a7d9fadbdc05168c2",
+      "bytes": 78319
+    },
+    {
+      "path": "server/services/global-ri/clinical-trial-application-requirements.ts",
+      "sha256": "c10d4afbe7709bf775cda355cb466577d1def79b9c3bd39f7ecf9f915f206719",
+      "bytes": 8899
+    },
+    {
+      "path": "server/services/regulatory/registry/blueprints/ukCtaBlueprint.ts",
+      "sha256": "e1df128a58e72f1db5a67fe3eade54509c74aaf19f99b542a86a38626e9ed00a",
+      "bytes": 255
+    },
+    {
+      "path": "server/services/regulatory/registry/submittabilityCoverage.ts",
+      "sha256": "4f640db4cca872ce50ec4b236ad4aca4aaef3589db4386acae0ac16e4ba4c194",
+      "bytes": 23255
+    },
+    {
+      "path": "server/services/regulatory/sectionBlueprintCatalog.ts",
+      "sha256": "785a2045d25de3e62e6100d33cf4130edc4e5f19691b3391a337690acc293ccb",
+      "bytes": 12228
+    },
+    {
+      "path": "server/services/regulatory/taskBlueprintCatalog.ts",
+      "sha256": "9f155d0e6529f97cb6cbc7f2c2b9b84ccb31d92692c06c3883d6997c7a438c4e",
+      "bytes": 6952
+    },
+    {
+      "path": "server/services/tasking/task-project.ts",
+      "sha256": "0dc2b50d3fcf9085c9511629dc36402229af98e9097feccb7fa50fd76ebd29ea",
+      "bytes": 9954
+    },
+    {
+      "path": "shared/regulatory/global-document-registry.ts",
+      "sha256": "e6f14800e0d3f8380c37f5ed6014f2bfa7cb34d118b1adea898504db3652dd08",
+      "bytes": 154849
+    },
+    {
+      "path": "shared/regulatory/project-bootstrap.ts",
+      "sha256": "e208cbc6981f9b5c824fab7350f9062daa6016fa4d61df5905564f4e80f6076d",
+      "bytes": 122645
+    },
+    {
+      "path": "shared/regulatory/uk-cta-authoring.ts",
+      "sha256": "d4164c61f97394afcb7182514bc3bacea06bff7a01e5cb24eb4d66c7d35f3d96",
+      "bytes": 21224
+    },
+    {
+      "path": "server/services/authoring/authoring-draft-template.ts",
+      "sha256": "0beb24ff53d7bcf8de01882c7012f256f543465820c92517097187b929d4e97d",
+      "bytes": 20897
+    },
+    {
+      "path": "server/services/authoring/authoring-draft-region-projection.ts",
+      "sha256": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6",
+      "bytes": 2141
+    },
+    {
+      "path": "server/services/authoring/authoring-program-access.ts",
+      "sha256": "d9542298789769b00890a169e300eae51544fb857eea97338bec18b3650e92d5",
+      "bytes": 3729
+    },
+    {
+      "path": "server/services/authoring/authoring-source-import.ts",
+      "sha256": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "bytes": 34919
+    },
+    {
+      "path": "server/services/authoring/workflow-source-import.ts",
+      "sha256": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+      "bytes": 33551
+    },
+    {
+      "path": "server/services/authoring/artifact-workflow-source.ts",
+      "sha256": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "bytes": 15210
+    }
+  ],
+  "canonicalPinManifestSha256": "caefab93f7f32415f2856350f63a9c07db13c532b22d4c65deb0dda7a81e8c96"
+}

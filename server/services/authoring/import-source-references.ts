@@ -1,6 +1,6 @@
 /** A working copy keeps its exact original dependency through later exports.
  * Keeping extracted data permits renditions; withdrawing data does not. */
-import { agencyResponseImportId, isWorkflowImportOrigin, studyDesignImportId, type AuthoringImportOrigin, type WorkflowImportOrigin } from '../../../shared/authoring/source-import';
+import { agencyResponseImportId, artifactImportId, isWorkflowImportOrigin, studyDesignImportId, type AuthoringImportOrigin, type WorkflowImportOrigin } from '../../../shared/authoring/source-import';
 import { isDeepStrictEqual } from 'node:util';
 import { authorizeAuthoringProgram } from './authoring-program-access';
 import type { AuthoringActor } from './authoring-documents';
@@ -22,11 +22,20 @@ function selectionIdentity(source: WorkflowImportOrigin['selection'] | undefined
   if (!source) return undefined;
   if (source.kind === 'agency-response') return agencyResponseImportId(source.eventId, source.questionId);
   if (source.kind === 'study-design-crf') return source.studyId;
+  if (source.kind === 'artifact') return source.artifactId;
   return source.kind === 'csr' ? source.jobId : source.documentId;
+}
+
+function artifactWorkflowIdentity(source: WorkflowImportOrigin): boolean {
+  if (source.selection?.kind !== 'artifact') return false;
+  const id = artifactImportId(source.selection.artifactId, source.selection.version);
+  return typeof source.id === 'string' && id !== null && id === source.id
+    && source.version === String(source.selection.version);
 }
 
 function workflowIdentityMatches(source: WorkflowImportOrigin): boolean {
   if (source.kind === 'agency-response') return agencyWorkflowIdentity(source);
+  if (source.kind === 'artifact') return artifactWorkflowIdentity(source);
   const ivd = source.kind === 'ivd-assessment' || source.kind === 'ivd-document';
   const study = source.kind === 'study-design-crf';
   const idValid = study ? typeof source.id === 'string' && studyDesignImportId(source.id) === source.id : ivd ? UUID.test(source.id) : /^[1-9]\d*$/.test(source.id);
@@ -103,6 +112,7 @@ export async function verifySavedWorkflowImport(doc: { provenance?: unknown; cli
     ...(origin.association.reason ? { associationReason: origin.association.reason } : {}) }, q);
   if (current.fingerprint !== origin.fingerprint) throw new Error('Imported workflow source changed or unavailable');
   if (!isDeepStrictEqual(current.origin.sectionOrigins, origin.sectionOrigins)
-    || !isDeepStrictEqual(current.origin.sourceScope, origin.sourceScope)) throw new Error('Stored workflow origin annotations do not match the verified source');
+    || !isDeepStrictEqual(current.origin.sourceScope, origin.sourceScope)
+    || !isDeepStrictEqual(current.origin.artifactSource, origin.artifactSource)) throw new Error('Stored workflow origin annotations do not match the verified source');
   return current;
 }

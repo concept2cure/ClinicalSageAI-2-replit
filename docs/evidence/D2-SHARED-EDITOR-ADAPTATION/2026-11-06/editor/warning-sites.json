@@ -1,0 +1,299 @@
+{
+  "base": "21a21849d7cfb8a35794489a87fad2b849c7011c",
+  "observedAt": "2026-11-06T18:29:49.159Z",
+  "method": "Compare warning-site multisets by exact ruleId, nodeType and source-line anchor; file-level warnings use <file>. Message metrics are retained separately, not normalized into acceptance.",
+  "rows": [
+    {
+      "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "existedAtBase": true,
+      "beforeWarnings": 12,
+      "afterWarnings": 12,
+      "errorCount": 0,
+      "beforeSites": [
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 358,
+          "anchor": "export function describeAuditMetadata(",
+          "message": "Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines",
+          "nodeType": null,
+          "line": 783,
+          "anchor": "<file>",
+          "message": "File has too many lines (5069). Maximum allowed is 500."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "nodeType": null,
+          "line": 1266,
+          "anchor": "export function DocumentWorkbench({",
+          "message": "Function 'DocumentWorkbench' has too many lines (4218). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 1266,
+          "anchor": "export function DocumentWorkbench({",
+          "message": "Function 'DocumentWorkbench' has a complexity of 478. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 2216,
+          "anchor": "recoveryOwner?: { current: () => boolean; headers: Record<string, string> }) => {",
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 2489,
+          "anchor": "useEffect(() => {",
+          "message": "Arrow function has a complexity of 32. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 3233,
+          "anchor": "const refreshAllSources = useCallback(async () => {",
+          "message": "Async arrow function has a complexity of 20. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 3298,
+          "anchor": "async (serialized: string, systemReason?: string) => {",
+          "message": "Async arrow function has a complexity of 36. Maximum allowed is 15."
+        },
+        {
+          "rule": "react-hooks/exhaustive-deps",
+          "nodeType": null,
+          "line": 3463,
+          "anchor": "[activeSection, rail, loadHistory, fireToast]",
+          "message": "React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array."
+        },
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 3830,
+          "anchor": "const saveRename = useCallback(async () => {",
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "nodeType": null,
+          "line": 6302,
+          "anchor": "comments.map(c => {",
+          "message": "Arrow function has too many lines (210). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 6302,
+          "anchor": "comments.map(c => {",
+          "message": "Arrow function has a complexity of 24. Maximum allowed is 15."
+        }
+      ],
+      "afterSites": [
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 360,
+          "anchor": "export function describeAuditMetadata(",
+          "message": "Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines",
+          "nodeType": null,
+          "line": 783,
+          "anchor": "<file>",
+          "message": "File has too many lines (5089). Maximum allowed is 500."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "nodeType": null,
+          "line": 1268,
+          "anchor": "export function DocumentWorkbench({",
+          "message": "Function 'DocumentWorkbench' has too many lines (4236). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 1268,
+          "anchor": "export function DocumentWorkbench({",
+          "message": "Function 'DocumentWorkbench' has a complexity of 472. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 2226,
+          "anchor": "recoveryOwner?: { current: () => boolean; headers: Record<string, string> }) => {",
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 2518,
+          "anchor": "useEffect(() => {",
+          "message": "Arrow function has a complexity of 31. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 3253,
+          "anchor": "const refreshAllSources = useCallback(async () => {",
+          "message": "Async arrow function has a complexity of 20. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 3318,
+          "anchor": "async (serialized: string, systemReason?: string) => {",
+          "message": "Async arrow function has a complexity of 36. Maximum allowed is 15."
+        },
+        {
+          "rule": "react-hooks/exhaustive-deps",
+          "nodeType": null,
+          "line": 3483,
+          "anchor": "[activeSection, rail, loadHistory, fireToast]",
+          "message": "React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array."
+        },
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 3850,
+          "anchor": "const saveRename = useCallback(async () => {",
+          "message": "Async arrow function has a complexity of 16. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "nodeType": null,
+          "line": 6321,
+          "anchor": "comments.map(c => {",
+          "message": "Arrow function has too many lines (210). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "nodeType": null,
+          "line": 6321,
+          "anchor": "comments.map(c => {",
+          "message": "Arrow function has a complexity of 24. Maximum allowed is 15."
+        }
+      ],
+      "newSites": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/filingSectionTarget.ts",
+      "existedAtBase": false,
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "errorCount": 0,
+      "beforeSites": [],
+      "afterSites": [],
+      "newSites": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/FilingMarkets.tsx",
+      "existedAtBase": true,
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "errorCount": 0,
+      "beforeSites": [],
+      "afterSites": [],
+      "newSites": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/writingAgencyPresentation.ts",
+      "existedAtBase": true,
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "errorCount": 0,
+      "beforeSites": [],
+      "afterSites": [],
+      "newSites": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts",
+      "existedAtBase": true,
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "errorCount": 0,
+      "beforeSites": [],
+      "afterSites": [],
+      "newSites": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/filingSectionTarget.test.tsx",
+      "existedAtBase": false,
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "errorCount": 0,
+      "beforeSites": [],
+      "afterSites": [],
+      "newSites": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchLeaveTarget.test.ts",
+      "existedAtBase": false,
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "errorCount": 0,
+      "beforeSites": [],
+      "afterSites": [],
+      "newSites": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/writingAgencyPresentation.test.ts",
+      "existedAtBase": false,
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "errorCount": 0,
+      "beforeSites": [],
+      "afterSites": [],
+      "newSites": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx",
+      "existedAtBase": true,
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "errorCount": 0,
+      "beforeSites": [],
+      "afterSites": [],
+      "newSites": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx",
+      "existedAtBase": true,
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "errorCount": 0,
+      "beforeSites": [],
+      "afterSites": [],
+      "newSites": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx",
+      "existedAtBase": true,
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "errorCount": 0,
+      "beforeSites": [],
+      "afterSites": [],
+      "newSites": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx",
+      "existedAtBase": true,
+      "beforeWarnings": 0,
+      "afterWarnings": 0,
+      "errorCount": 0,
+      "beforeSites": [],
+      "afterSites": [],
+      "newSites": []
+    }
+  ],
+  "newSiteCount": 0,
+  "errors": 0
+}

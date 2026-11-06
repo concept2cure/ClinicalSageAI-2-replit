@@ -188,6 +188,24 @@ describe('GET /api/c2c/project-vault/:id — a market document shows its own par
     readiness: 0, updated_at: null, owner_name: null, filing_scope: 'home', required_sections: null, ...over,
   });
 
+  it('carries exact filing identities and section keys when document titles and classes are identical', async () => {
+    const required_sections = [
+      { key: 'II.6', label: 'Clinical evidence', path_order: 1 },
+      { key: 'II.6.2.c', parent_key: 'II.6', label: 'Evidence appraisal', path_order: 2 },
+    ];
+    seedDocs(['filing-a', 'filing-b'].map(id => doc({ id, doc_type: 'cer', title: 'Identical report', required_sections })));
+    const res = await request(app(7)).get(`/api/c2c/project-vault/${PROJECT}`);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const filings = res.body.data.tree.filter((node: { id: string }) => node.id.startsWith('vaultdoc-'));
+    expect(filings.map((node: { filingDocumentId: string }) => node.filingDocumentId)).toEqual(['filing-a', 'filing-b']);
+    for (const filing of filings) {
+      expect(filing.children[0]).not.toHaveProperty('filingDocumentId');
+      expect(filing.children[0].children[0]).toMatchObject({ num: 'II.6.2.c', filingSectionKey: 'II.6.2.c' });
+    }
+    expect(res.body.data.tree.filter((node: { id: string }) => !node.id.startsWith('vaultdoc-'))
+      .every((node: object) => !Object.hasOwn(node, 'filingDocumentId'))).toBe(true);
+  });
+
   it('a market document holds Module 1 and 3.2.R only, never the home filing’s Module 2 (at head: 2.5 and 3.2.P too)', async () => {
     seedDocs([doc({ id: 'ema1', doc_type: 'maa', agency: 'ema', title: 'MAA (EU)', filing_scope: 'market', required_sections: MAA_PACK })]);
     const res = await request(app(7)).get(`/api/c2c/project-vault/${PROJECT}`);
@@ -214,6 +232,7 @@ describe('GET /api/c2c/project-vault/:id — a market document shows its own par
     const leaf = leavesByNum(res.body)['—'];
     expect(leaf).toBeTruthy();
     expect(leaf.pct).toBeNull();
+    expect(leaf.filingSectionKey).toBeNull();
   });
 
   it('a document with no section spec but with sections keeps its measured figure', async () => {

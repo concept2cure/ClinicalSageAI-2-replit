@@ -3,7 +3,7 @@ import { I } from '../icons';
 import { liveGetOrNull } from '../dataConnect';
 import { useDialog } from '../useDialog';
 import { getSurfaceMeta } from '../registryModel';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import {
   SURFACE_CTX, CL_MOD, CL_MOD_OPTIONS, CL_TYPE, CL_PRI, CL_PRI_LABEL, clModLabel,
   type C2CTask, type ActivityItem, type TeamMember, type ProjectEntry,
@@ -737,6 +737,15 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
      message must never be reported as sent until the server says it stored it. */
   const [sending, setSending] = useState(false);
   const [sendErr, setSendErr] = useState('');
+  // A confirmed first write survives a failed optional second write. The ref
+  // also closes the gap before React renders the disabled send control.
+  const submitted = useRef(false);
+  const [delivery, setDelivery] = useState<'unsent' | 'confirmed' | 'unknown'>('unsent');
+  const locked = sending || delivery !== 'unsent';
+  const knownRefusal = (status: number) => status >= 400 && status < 500 && status !== 408;
+  const taskFailure = (refused: boolean, detail: string) => setSendErr(refused
+    ? 'The message was sent, but the task was not created — ' + detail + '. Create it from the task board if it is still needed.'
+    : 'The message was sent, but whether the task was created is unknown. Check the task board before trying to create it again.');
 
   /* ── "Send" composed a message and threw it away ───────────────────────────
      The handler's own comment said so: "MOCK ACTION (flagged): does NOT call
@@ -755,12 +764,13 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
      GET /api/task-management/assignees (see the loader above, `team[String(r.id)]`),
      so the picked key IS `recipientUserId`. */
   const send = async () => {
-    if (!body.trim() || sending) return;
+    if (!body.trim() || sending || submitted.current) return;
     const recipientUserId = Number(to);
     if (!Number.isInteger(recipientUserId) || recipientUserId <= 0) {
       setSendErr('Pick who this goes to — a message with no recipient cannot be delivered.');
       return;
     }
+    submitted.current = true;
     setSending(true);
     setSendErr('');
     try {
@@ -774,17 +784,28 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
       if (!res.ok) {
         const b = await res.json().catch(() => null);
         setSending(false);
+        if (!knownRefusal(res.status)) {
+          setDelivery('unknown');
+          setSendErr('Whether your message was sent is unknown. Check with the recipient before sending it again.');
+          return;
+        }
+        submitted.current = false;
         setSendErr(
           'Not sent — ' + (serverMessage(b) ?? `the server refused the message (HTTP ${res.status})`) +
             '. Nothing was delivered.',
         );
         return;
       }
+      setDelivery('confirmed');
     } catch (e) {
       setSending(false);
-      setSendErr(
-        'Not sent — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was delivered.',
-      );
+      if (e instanceof ApiRequestError && knownRefusal(e.status)) {
+        submitted.current = false;
+        setSendErr('Not sent — ' + e.message + '. Nothing was delivered.');
+      } else {
+        setDelivery('unknown');
+        setSendErr('Whether your message was sent is unknown. Check with the recipient before sending it again.');
+      }
       return;
     }
 
@@ -830,11 +851,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         const serverTask = (tjson as { data?: Record<string, unknown> } | null)?.data;
         if (!tres.ok || !serverTask?.taskId) {
           setSending(false);
-          setSendErr(
-            'The message was sent, but the task was not created — ' +
-              (serverMessage(tjson) ?? `the server refused it (HTTP ${tres.status})`) +
-              '. Create it from the task board if it is still needed.',
-          );
+          taskFailure(knownRefusal(tres.status), serverMessage(tjson) ?? `the server refused it (HTTP ${tres.status})`);
           return;
         }
         // Adopt the SERVER's row, exactly as the create modal does — the id in
@@ -855,11 +872,8 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         onCreated?.();
       } catch (e) {
         setSending(false);
-        setSendErr(
-          'The message was sent, but the task was not created — ' +
-            (e instanceof Error ? e.message : String(e)) +
-            '. Create it from the task board if it is still needed.',
-        );
+        taskFailure(e instanceof ApiRequestError && (knownRefusal(e.status) || e.code === 'AUDIT_WRITE_FAILED'),
+          e instanceof Error ? e.message : String(e));
         return;
       }
     }
@@ -878,7 +892,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         <div className="cl-assignees">
           {Object.keys(C2C.team).map(k => (
             <button type="button" key={k} className={`cl-asg${to === k ? ' on' : ''}`}
-              onClick={() => setTo(k)} title={C2C.team[k].n}>
+              onClick={() => setTo(k)} title={C2C.team[k].n} disabled={locked}>
               <span className="cl-asg-av">{clAvatar(k)}</span>{C2C.team[k].n}
             </button>
           ))}
@@ -894,10 +908,10 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
       <div className="cl-field"><label htmlFor="cl-message">Message</label>
         {/* The "@name" prompt only appears once a real teammate is selected;
             with no recipient it used to read "@ -- share context...". */}
-        <textarea id="cl-message" rows={4} autoFocus value={body} onChange={e => setBody(e.target.value)}
+        <textarea id="cl-message" rows={4} autoFocus value={body} disabled={locked} onChange={e => setBody(e.target.value)}
           placeholder={(C2C.team[to] ? '@' + C2C.team[to].n + ' — ' : '') + 'share context, ask a question, or route this for action...'} />
       </div>
-      <button type="button" className={`cl-tasktoggle${makeTask ? ' on' : ''}`} onClick={() => setMakeTask(m => !m)}>
+      <button type="button" className={`cl-tasktoggle${makeTask ? ' on' : ''}`} disabled={locked} onClick={() => setMakeTask(m => !m)}>
         <span className="cl-check">{makeTask ? I.check : ''}</span>
         <span><b>Also create a task</b>{C2C.team[to] ? <> and assign it to {C2C.team[to].n}</> : <>, unassigned</>}</span>
       </button>
@@ -908,15 +922,15 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
       )}
       <div className="cl-foot">
         
-        <button className="btn ghost" onClick={onClose}>Cancel</button>
+        <button className="btn ghost" onClick={onClose}>{delivery === 'unsent' ? 'Cancel' : 'Close'}</button>
         <button
           className="btn primary"
           onClick={() => void send()}
-          disabled={!body.trim() || !to || sending}
+          disabled={!body.trim() || !to || locked}
           title={!to ? 'Pick a recipient first' : undefined}
           data-testid="collab-send"
         >
-          {I.arrowRight} {sending ? 'Sending…' : makeTask ? 'Send & assign' : 'Send'}
+          {I.arrowRight} {sending ? 'Sending…' : delivery === 'confirmed' ? 'Message sent' : delivery === 'unknown' ? 'Message status unknown' : makeTask ? 'Send & assign' : 'Send'}
         </button>
       </div>
     </div>

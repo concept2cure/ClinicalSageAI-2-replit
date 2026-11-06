@@ -170,7 +170,12 @@ export function createNativeRecordAdmission(q: RequestSqlClient, input: { organi
           if (!admitted.some(record => record.native.kind === snapshot.native.kind && record.native.id === snapshot.native.id)) await authorizeQualityEvidenceSnapshot(q, actor, snapshot.native);
         } else {
           const current = admitted.find(record => record.key === snapshot.key);
-          if (!current || nativeRecordHash(current.text) !== row.checksum || stableStringify(receipt({ ...actor, workArea: 'quality' }, current)) !== stableStringify(snapshot)) {
+          if (!current) {
+            // Absence from the actor-admitted projection cannot distinguish a
+            // missing record from a denied object. Reveal neither to a list.
+            throw new SourceReadAccessError(404, 'NATIVE_SOURCE_NOT_AVAILABLE', 'This native source is unavailable with current access.');
+          }
+          if (nativeRecordHash(current.text) !== row.checksum || stableStringify(receipt({ ...actor, workArea: 'quality' }, current)) !== stableStringify(snapshot)) {
             throw new SourceReadAccessError(409, 'NATIVE_SOURCE_CHANGED', 'The Quality record changed or is no longer available. Refresh the project catalogue before using it.');
           }
         }

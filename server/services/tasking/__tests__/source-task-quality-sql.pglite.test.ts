@@ -33,7 +33,8 @@ const ACTION = '33333333-3333-4333-8333-333333333333';
 let pg: PGlite;
 const input = (sourceEntityType: string, sourceEntityId: string): ReplaceSourceTask => ({
   organizationId: 7, actorId: 12, sourceEntityType, sourceEntityId, closeAs: 'cancelled', same: () => false,
-  next: { moduleType: 'Quality', title: 'Follow up on the native record', projectId: 999 },
+  next: { moduleType: 'Quality', title: 'Follow up on the native record', projectId: 999,
+    dueDate: new Date('2026-12-01T00:00:00Z') },
 });
 
 beforeAll(async () => {
@@ -45,8 +46,10 @@ beforeAll(async () => {
     CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer, regulatory_program_id uuid, client_workspace_id integer);
     CREATE TABLE authoring_documents (id uuid PRIMARY KEY, tenant_id integer, client_program_id uuid);
     CREATE TABLE qms_documents (id integer PRIMARY KEY, organization_id integer, authoring_document_id uuid, metadata jsonb, deleted_at timestamptz);
-    CREATE TABLE capa_records (id uuid PRIMARY KEY, program_id text NOT NULL);
-    CREATE TABLE capa_actions (id uuid PRIMARY KEY, capa_id uuid NOT NULL);
+    CREATE TABLE capa_records (id uuid PRIMARY KEY, program_id text NOT NULL,assigned_to text,created_by text,
+      target_close_date timestamptz DEFAULT '2026-12-01',state text DEFAULT 'open');
+    CREATE TABLE capa_actions (id uuid PRIMARY KEY, capa_id uuid NOT NULL,owner text,
+      due_date timestamptz DEFAULT '2026-12-01',state text DEFAULT 'planned');
   `);
   H.query = async (text, params) => {
     // The lock is a concurrency primitive; ownership and anchor SQL execute unchanged.
@@ -68,8 +71,8 @@ beforeEach(async () => {
   await pg.query(`INSERT INTO qms_documents VALUES
     (12,7,$1,$3::jsonb,NULL),(13,8,$2,'{}',NULL),(14,7,$2,'{}',NULL),(15,7,NULL,$3::jsonb,NULL),(16,7,$1,'{}',NOW())`,
   [DOC, OTHER_DOC, JSON.stringify({ programId: OTHER_PROGRAM })]);
-  await pg.query(`INSERT INTO capa_records VALUES ($1,$2),($3,$4)`, [CAPA, PROGRAM, OTHER_CAPA, OTHER_PROGRAM]);
-  await pg.query('INSERT INTO capa_actions VALUES ($1,$2)', [ACTION, CAPA]);
+  await pg.query(`INSERT INTO capa_records(id,program_id) VALUES ($1,$2),($3,$4)`, [CAPA, PROGRAM, OTHER_CAPA, OTHER_PROGRAM]);
+  await pg.query('INSERT INTO capa_actions(id,capa_id) VALUES ($1,$2)', [ACTION, CAPA]);
 });
 
 describe('the real native owner query reaches the canonical project anchor', () => {

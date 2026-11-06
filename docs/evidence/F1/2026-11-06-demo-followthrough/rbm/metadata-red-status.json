@@ -1,0 +1,8 @@
+{
+  "failed": 2,
+  "passed": 15,
+  "hashes": {
+    "client/src/concept2cure/v2/surfaces/RbmIngest.tsx": "e7194ae4cbe666cc07436e88b17139c6691b99c2065acfae7b80ca1f488a260c",
+    "client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx": "ae6dbce7d3c0f452250a877f2de3e33b4d7e2fe870eef06f19f813ac41ce6496"
+  }
+}
