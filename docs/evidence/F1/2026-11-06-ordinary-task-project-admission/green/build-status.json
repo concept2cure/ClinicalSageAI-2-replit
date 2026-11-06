@@ -1,0 +1,11 @@
+{
+  "exitCode": 0,
+  "processExitCode": 0,
+  "sourcesUnchanged": true,
+  "args": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "elapsedSeconds": 24.14
+}

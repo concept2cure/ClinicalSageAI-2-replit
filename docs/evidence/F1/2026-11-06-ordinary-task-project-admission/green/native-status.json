@@ -1,0 +1,16 @@
+{
+  "exitCode": 0,
+  "processExitCode": 0,
+  "sourcesUnchanged": true,
+  "args": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.db.config.ts",
+    "tests/db/workflow-project-admission.dbtest.ts",
+    "tests/db/task-assignment-delegation.dbtest.ts",
+    "--reporter=dot"
+  ],
+  "elapsedSeconds": 16.43
+}
