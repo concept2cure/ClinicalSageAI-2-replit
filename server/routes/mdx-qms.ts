@@ -649,7 +649,7 @@ const changeApproveBody = approveBody.extend({ learningReview: z.object({
 }).strict().optional() });
 const learningReviewOption = (body: z.infer<typeof changeApproveBody>) => body.learningReview ? { learningReview: body.learningReview } : {};
 function learningApprovalFailure(res: Response, error: AggregateLearningRefusedError) {
-  return error.status === 503 ? res.status(503).json({ error: error.message, details: { code: error.code } })
+  return error.status === 503 ? res.status(503).json({ error: 'Reviewed learning approval is unavailable. Re-read its current status before retrying.', details: { code: error.code } })
     : clientError(res, error.status, error.message, { code: error.code });
 }
 
