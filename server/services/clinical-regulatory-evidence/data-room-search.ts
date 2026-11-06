@@ -20,6 +20,8 @@ import { pool } from '../../db';
 import { capturedDataEligibleSql, capturedBinaryAvailableSql, capturedDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
 import { adaptSource, visibleOrgClause } from './evidence-spine.service.js';
 import { EXTRACTION_STATUSES, type EvidenceSource, type ExtractionStatus } from './types.js';
+import { syncQualityProjectSources } from './record-source';
+import { getCurrentReadableSourceScope, requireSourceReadScopeStillCurrent } from './source-read-access';
 import { persistedTextAvailableSql } from './data-room-processing-state.js';
 
 export interface DataRoomQuery {
@@ -127,13 +129,21 @@ function filterClauses(p: DataRoomQuery, args: unknown[]): string[] {
   return out;
 }
 
-export async function searchDataRoom(orgId: number, p: DataRoomQuery): Promise<DataRoomPage> {
+async function prepareSourceScope(orgId: number, p: DataRoomQuery, actor?: { userId: number | undefined }) {
+  if (!actor) return null;
+  if ((p.offset ?? 0) === 0) await syncQualityProjectSources({ organizationId: orgId, programId: p.programId, userId: actor.userId });
+  return getCurrentReadableSourceScope(pool, { organizationId: orgId, userId: actor.userId, programId: p.programId });
+}
+
+export async function searchDataRoom(orgId: number, p: DataRoomQuery, actor?: { userId: number | undefined }): Promise<DataRoomPage> {
+  const readable = await prepareSourceScope(orgId, p, actor);
   const c = visibleOrgClause(orgId, 1);
   const args: unknown[] = [c.param, p.programId];
   const where = [
     c.sql.replace(/organization_id/g, 's.organization_id'),
     's.deleted_at IS NULL', `s.source_type = 'client_document'`, 's.client_program_id = $2',
     ...filterClauses(p, args),
+    ...(readable ? [`s.id=ANY($${args.push(readable.sourceIds)}::int[])`] : []),
   ].join(' AND ');
   const counted = await pool.query(
     `SELECT count(*)::int AS total,
@@ -161,6 +171,7 @@ export async function searchDataRoom(orgId: number, p: DataRoomQuery): Promise<D
       LIMIT $${page.length - 1} OFFSET $${page.length}`,
     page,
   );
+  if (actor && readable) await requireSourceReadScopeStillCurrent(pool, { organizationId: orgId, userId: actor.userId, programId: p.programId }, readable);
   return {
     total: Number(counted.rows[0]?.total ?? 0),
     currentTotal: Number(counted.rows[0]?.current_total ?? 0),
