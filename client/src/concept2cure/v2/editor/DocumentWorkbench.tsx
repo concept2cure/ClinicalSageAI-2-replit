@@ -59,6 +59,7 @@ import { AuthoringCollab } from '../surfaces/AuthoringCollab';
 import { AuthoringCreateExport } from '../surfaces/AuthoringCreateExport';
 import type { AuthoringDocumentStart } from './useAuthoringCreation';
 import { NOTICE_UUID } from '@shared/types/notification-navigation';
+import { sectionNumberLabel } from '@shared/regulatory/section-code';
 import { newDocumentAction } from '../newDocumentAction';
 import { downloadBlob, safeFileName } from '../download';
 import { ProjectFilesPanel } from './ProjectFilesPanel';
@@ -4480,7 +4481,7 @@ export function DocumentWorkbench({
                           onClick={() => requestLeave({ kind: 'section', id: s.id })}
                           style={{ paddingLeft: 22 }}
                         >
-                          <span className="ed-num">{s.code}</span>
+                          <span className="ed-num">{sectionNumberLabel(s.code)}</span>
                           <span className="ed-lbl">{s.title}</span>
                           {num(s.comment_count) > 0 && (
                             <span
@@ -4958,7 +4959,7 @@ export function DocumentWorkbench({
                         aria-label={`${sec.code} ${sec.title}`}
                       >
                         <div className="ed-full-sec-h">
-                          <span className="ed-full-sec-num">{sec.code}</span>
+                          <span className="ed-full-sec-num">{sectionNumberLabel(sec.code)}</span>
                           <h2 className="ed-full-sec-t">{sec.title}</h2>
                           <button
                             className="btn ghost ed-full-edit"
@@ -5063,7 +5064,7 @@ export function DocumentWorkbench({
                     </div>
                   ) : (
                     <>
-                      <div className="ed-mast-num">{activeSection.code}</div>
+                      <div className="ed-mast-num">{sectionNumberLabel(activeSection.code)}</div>
                       <h1 className="ed-mast-t" style={{ display: 'inline' }}>
                         {activeSection.title}
                       </h1>

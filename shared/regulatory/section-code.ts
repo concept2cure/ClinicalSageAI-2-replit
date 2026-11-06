@@ -259,9 +259,17 @@ export function sectionStructureIssues(orderedCodes: readonly string[]): Section
   return { duplicateCodes: duplicateSectionCodes(codes), outOfOrder, suggestedOrder };
 }
 
-/** A section coded by its name rather than its place in the outline: title_page, references. */
-function isNamedMatterCode(code: string): boolean {
-  return /^[a-z][a-z0-9]*(?:_[a-z0-9]+)+$/.test(code) || /^[a-z]{3,}$/.test(code);
+/** The number a reader is shown for a section: its outline code, or nothing for a name code
+ *  (title_page, qms-purpose), which is a key, not a number (J3, 2026-11-06). */
+export function sectionNumberLabel(code: string | null | undefined): string {
+  const trimmed = String(code ?? '').trim();
+  return isNamedMatterCode(trimmed) ? '' : trimmed;
+}
+
+/** A section coded by its name rather than its place in the outline: title_page, references,
+ *  and a controlled SOP's qms-purpose (hyphenated; J3, 2026-11-06). */
+export function isNamedMatterCode(code: string): boolean {
+  return /^[a-z][a-z0-9]*(?:[_-][a-z0-9]+)+$/.test(code) || /^[a-z]{3,}$/.test(code);
 }
 
 /**
