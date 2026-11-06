@@ -93,7 +93,7 @@ const dtcCheckoutBodySchema = z.object({
 function respondValidationError(res: Response, error: z.ZodError) {
   return res.status(400).json({
     error: 'Validation Error',
-    details: error.errors.map(e => ({
+    details: error.issues.map(e => ({
       field: e.path.join('.'),
       message: e.message,
       code: e.code,

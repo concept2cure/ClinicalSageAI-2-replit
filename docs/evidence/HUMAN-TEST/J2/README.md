@@ -39,7 +39,7 @@ and `study-metadata.json`.
 | 10 | Search, the six filters, **Saved views** (save and apply). | Dana | pass | `18`, `19` |
 | 11 | **Required documents**: coverage against the IND rule pack, with Upload or File here for each section. | Dana | pass | `20` |
 | 12 | **Governed artifacts**: an honest empty state. | Dana | pass | `21` |
-| 13 | **Seals & fixity**: **Check stored files** re-read 11 versions and found every one matching its SHA-256. **Seal this Vault…** opens the Part 11 signature. | Dana | pass | `22`, `23` |
+| 13 | **Seals & fixity**: **Check stored files** re-read 11 versions and found every one matching its SHA-256. **Seal this Vault…** is signed by Ava (Part 11, reason and password) and records 12 documents. **Verify**, by Rhea, reads "Intact" and offers the closing archive (files, record, index, SHA256SUMS, audit trail). | Dana, Ava, Rhea | pass | `22`, `23`, `25` |
 | 14 | Admin › Settings › **Legal holds**: place a document hold with a reference and a reason. The list names the person who placed it (after D3). | JM Smith (admin) | pass | `30`, `31` |
 | 15 | The Vault shows the hold on the file. **Review file removal** is blocked: "An active legal hold requires governed review". | Dana | pass | `32`, `33` |
 | 16 | **Export Module 5 · Clinical**: the folder export is saved and its SHA-256 is checked against the server's record. | Dana | pass | `40` |
@@ -60,7 +60,7 @@ Each fix has a test that failed before the fix and passes after it.
 | D2 | A version's **History**, read by QA | The acts in words | "C2c Work Sign", "C2c Work Review Route Send", and the registration row named by the document's title (`15`) | `7aadfbeb`, re-checked in the app (`15b`): "Version review signed (e-signature)", "Version approved (e-signature)", "Sent for review", "Registered as a controlled document", "Version in review". Test: `audit-trail-ledger.routes.test.ts` |
 | D3 | Admin › Legal holds list | Who placed or lifted the hold | "Placed by user #1" | `5b0beaca`, `fe1a8bfa`: named through `public.actor_name`; the account number shows only when no name is available. Checked again in the app: "Placed by JM Smith" (`31`). Tests: `vault-legal-holds-labels.pglite.integration.test.ts`, `adminLegalHolds.test.tsx` |
 | D7 | Filing note under "Looks like" | The folder a person sees | "filed to **corresp** for the **biotech view**" (`82`) | `1808666a`: "filed to Agency correspondence". Test: `vault-filing.service.test.ts` |
-| D8 | History of an uploaded or filed file | The act in words | "Vault Document Ingest", "Vault Document File" (`82`) | `1808666a`: "Uploaded to the Vault", "Filing recorded", "Downloaded". A row's own description still comes first. Test: `vault-document-history.pglite.test.ts` |
+| D8 | History of an uploaded or filed file | The act in words | "Vault Document Ingest", "Vault Document File" (`82`) | `1808666a`, and twelve more Vault acts ("Exported", "Text extracted", annotations, edits…) in the follow-up commit; re-checked in the app (`15b`): "Uploaded to the Vault", "Filing recorded", "Downloaded". A row's own description still comes first. Test: `vault-document-history.pglite.test.ts` |
 
 ### Handed to the journey that owns the screen
 

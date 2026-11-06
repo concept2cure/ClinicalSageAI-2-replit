@@ -333,7 +333,7 @@ const transmitBody = z.object({
     format:      z.enum(BUNDLE_FORMAT_SET),
     displayName: z.string().optional(),
   }).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
   /** §11.50: the meaning the signer declares for this transmission: a release act. */
   meaning: z.enum(RELEASE_ACT_MEANINGS),

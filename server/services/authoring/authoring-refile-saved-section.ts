@@ -26,10 +26,10 @@ import type { AuthoringActor, AuthoringPool } from './authoring-documents';
 const logger = createScopedLogger('authoring-refile-saved-section');
 
 const requestSchema = z.object({
-  filingOnly: z.literal(true), expectedDocumentId: z.string().uuid(),
+  filingOnly: z.literal(true), expectedDocumentId: z.string().guid(),
   expectedFilingDocumentId: z.string().min(1).max(512).refine(value => value.trim() === value
     && [...value].every(character => character.charCodeAt(0) >= 32 && character.charCodeAt(0) !== 127)),
-  expectedProgramId: z.string().uuid(), expectedUpdatedAt: z.string().datetime({ offset: true }), changeReason: z.unknown(),
+  expectedProgramId: z.string().guid(), expectedUpdatedAt: z.string().datetime({ offset: true }), changeReason: z.unknown(),
 }).strict();
 type RefileRequest = z.infer<typeof requestSchema> & { changeReason: string };
 interface SavedSection { id: string; doc_id: string; code: string; content: string | null; title: string | null; updated_at: Date | string }

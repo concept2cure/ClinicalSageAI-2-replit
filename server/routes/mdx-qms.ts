@@ -638,7 +638,7 @@ const approveBody = z.object({
   password: z.string().min(1, 'Password re-authentication is required (21 CFR Part 11 §11.200)'),
   mfaToken: z.string().optional(),
   meaning: z.literal(QMS_DOCUMENT_APPROVAL_MEANING, {
-    errorMap: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_APPROVAL_MEANING}' (21 CFR Part 11 §11.50)` }),
+    error: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_APPROVAL_MEANING}' (21 CFR Part 11 §11.50)` }),
   }),
   reason: z.string().trim().min(3, 'A reason for change of at least 3 characters is required').max(2000),
   effectiveDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'effectiveDate must be YYYY-MM-DD').optional(),
@@ -652,7 +652,7 @@ const approveBody = z.object({
    meaning is retirement's own (P-51): 'APPROVED' is refused here. */
 const retireBody = approveBody.omit({ effectiveDate: true }).extend({
   meaning: z.literal(QMS_DOCUMENT_RETIREMENT_MEANING, {
-    errorMap: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_RETIREMENT_MEANING}' (21 CFR Part 11 §11.50)` }),
+    error: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_RETIREMENT_MEANING}' (21 CFR Part 11 §11.50)` }),
   }),
   reason: governedReason,
 });
@@ -956,8 +956,8 @@ const mrCreate = z.object({
   reviewDate:        z.string().date(),
   period:            z.string().min(1).max(40),
   attendees:         z.array(z.number().int().positive()).optional().nullable(),
-  inputs:            z.record(z.unknown()).optional().nullable(),
-  outputs:           z.record(z.unknown()).optional().nullable(),
+  inputs:            z.record(z.string(), z.unknown()).optional().nullable(),
+  outputs:           z.record(z.string(), z.unknown()).optional().nullable(),
   minutesArtifactId: z.number().int().positive().optional().nullable(),
 });
 
@@ -1118,7 +1118,7 @@ const changeCreate = z.object({
   implementationPlan:       z.string().max(8000).optional().nullable(),
   targetImplementationDate: z.string().date().optional().nullable(),
   qmsDocumentId:            z.number().int().positive().optional().nullable(),
-  metadata:                 z.record(z.unknown()).optional().nullable(),
+  metadata:                 z.record(z.string(), z.unknown()).optional().nullable(),
 });
 const changePatch = z.object({
   title:                    z.string().min(1).max(300).optional(),

@@ -155,7 +155,7 @@ const createArtifactSchema = z.object({
   content: z.string().min(1, 'Content must not be empty').max(1000000, 'Content too large'), // 1MB max, no empty
   templateId: z.string().min(1).max(200).optional(),
   ctdSection: z.string().max(50).optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
   clientTrack: z.enum(['biotech', 'device', 'diagnostics']).optional(),
   submissionProgram: z.enum(['ind', 'ectd', '510k', 'pma', 'cer', 'ivdr', 'general_ri']).optional(),
   persona: z
@@ -791,7 +791,7 @@ router.post(
       return sendSuccess(res.status(201), newArtifact, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+        return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
       }
       logConcept2cureError('create artifact', error, { projectId: req.params.projectId });
       return sendError(res, 500, 'Failed to create artifact');

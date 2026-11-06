@@ -52,7 +52,7 @@ const logger = createScopedLogger('unified-tasks');
  *  its text kept in the log). */
 function writeFailed(res: Response, error: unknown, commitInFlight: boolean, what: string, where: string) {
   if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(error.body); // RR1a: before any write
-  if (error instanceof z.ZodError) return res.status(400).json({ success: false, error: error.errors });
+  if (error instanceof z.ZodError) return res.status(400).json({ success: false, error: error.issues });
   if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, what);
   if (commitInFlight) {
     logger.error(`${where}: COMMIT lost, outcome unknown`, { err: error instanceof Error ? error.message : String(error) });

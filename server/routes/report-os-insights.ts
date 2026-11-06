@@ -182,7 +182,7 @@ const premortemRunSchema = z.object({
   projectId: z.number().int().positive().optional(),
   submissionId: z.string().optional(),
   presentSections: z.array(z.string()),
-  sectionScores: z.record(z.number()).optional(),
+  sectionScores: z.record(z.string(), z.number()).optional(),
   harmonizeIssueCount: z.number().int().nonnegative().optional(),
   openEscalations: z.number().int().nonnegative().optional(),
 });

@@ -198,7 +198,7 @@ function respondWriteError(
     return res.status(400).json({
       success: false,
       error: 'Invalid payload',
-      details: error.errors,
+      details: error.issues,
     });
   }
   /* A governed-state refusal from the register service: the write the caller
@@ -1224,7 +1224,7 @@ async function qualifyRegisterRecord(
 ): Promise<express.Response> {
   const parsed = governedSignatureSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ success: false, error: 'Invalid input data', details: parsed.error.errors });
+    return res.status(400).json({ success: false, error: 'Invalid input data', details: parsed.error.issues });
   }
   const { reason, meaning, reauth, idempotencyKey } = parsed.data;
 

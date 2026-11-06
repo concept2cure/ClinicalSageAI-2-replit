@@ -75,7 +75,7 @@ const paramsShape = {
 export const createSavedViewSchema = z.object({
   label: z.string().trim().min(1).max(120),
   visibility: z.enum(['private', 'org_public']),
-  programId: z.string().uuid().nullable(),
+  programId: z.string().guid().nullable(),
   ...paramsShape,
 }).strict();
 export const patchSavedViewSchema = z.union([

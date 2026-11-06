@@ -562,7 +562,7 @@ router.post('/', async (req, res) => {
   } catch (error) {
     log.error('Error creating user:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid user data', details: error.errors });
+      return res.status(400).json({ error: 'Invalid user data', details: error.issues });
     }
     res.status(500).json({ error: 'Failed to create user' });
   }
@@ -602,7 +602,7 @@ router.patch('/:organizationId/:userId', async (req, res) => {
       if (parsed.error.issues.every(i => i.path[0] === 'reason')) {
         return reasonRequired(res, "change a member's role");
       }
-      return res.status(400).json({ error: 'Invalid role data', details: parsed.error.errors });
+      return res.status(400).json({ error: 'Invalid role data', details: parsed.error.issues });
     }
     const { role, reason } = parsed.data;
 

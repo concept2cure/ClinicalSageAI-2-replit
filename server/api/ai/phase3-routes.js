@@ -31,7 +31,7 @@ const nerExtractSchema = z.object({
 
 const generateEmbeddingSchema = z.object({
   text: z.string().min(1).max(10000),
-  documentVersionId: z.string().uuid().optional(),
+  documentVersionId: z.string().guid().optional(),
   chunkIndex: z.number().int().min(0).optional(),
   organizationId: z.number().optional(),
 });
@@ -58,7 +58,7 @@ const globalChangeInitiateSchema = z.object({
 });
 
 const globalChangeExecuteSchema = z.object({
-  transaction_id: z.string().uuid(),
+  transaction_id: z.string().guid(),
   digital_signature: z.string().min(1),
   approval_notes: z.string().optional(),
 });
@@ -278,7 +278,7 @@ router.post('/ai/ner-extract', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Validation failed',
-        details: validationResult.error.errors,
+        details: validationResult.error.issues,
       });
     }
 
@@ -339,7 +339,7 @@ router.post('/ai/generate-embedding', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Validation failed',
-        details: validationResult.error.errors,
+        details: validationResult.error.issues,
       });
     }
 
@@ -396,7 +396,7 @@ router.post('/ai/consistency-check', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Validation failed',
-        details: validationResult.error.errors,
+        details: validationResult.error.issues,
       });
     }
 
@@ -453,7 +453,7 @@ router.post('/ai/global-change/initiate', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Validation failed',
-        details: validationResult.error.errors,
+        details: validationResult.error.issues,
       });
     }
 
@@ -537,7 +537,7 @@ router.post('/ai/global-change/execute', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Validation failed',
-        details: validationResult.error.errors,
+        details: validationResult.error.issues,
       });
     }
 

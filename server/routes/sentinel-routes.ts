@@ -136,7 +136,7 @@ router.patch('/findings/:findingId', async (req: Request, res: Response) => {
   } catch (error) {
     logger.error('Error updating finding', { err: error instanceof Error ? error.message : String(error) });
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid update data', details: error.errors });
+      return res.status(400).json({ error: 'Invalid update data', details: error.issues });
     }
     res.status(500).json({ error: 'Failed to update finding' });
   }
@@ -301,7 +301,7 @@ router.patch('/config', async (req: Request, res: Response) => {
   } catch (error) {
     logger.error('Error updating config', { err: error instanceof Error ? error.message : String(error) });
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid config data', details: error.errors });
+      return res.status(400).json({ error: 'Invalid config data', details: error.issues });
     }
     res.status(500).json({ error: 'Failed to update config' });
   }

@@ -23,7 +23,7 @@ const document = z.object({
   report, organizationId: z.number().int().positive(), period, generatedAt: text.min(1), chain,
   sections: z.array(sectionClaim.extend({
     title: text, columns: z.array(z.object({ key: text.min(1), label: text })),
-    rows: z.array(z.record(z.unknown())), notes: z.array(text).optional(),
+    rows: z.array(z.record(z.string(), z.unknown())), notes: z.array(text).optional(),
   })), notRecorded: z.array(text),
 });
 const packageShape = z.object({
@@ -101,7 +101,7 @@ export function exportSavedAuditCsv(
   }
   let json: unknown;
   try { json = JSON.parse(source.data); } catch { throw new SavedReportExportError(400, 'BAD_REPORT_SNAPSHOT', 'The saved audit export is not a JSON snapshot.'); }
-  const validated = z.array(z.record(z.unknown())).safeParse(json);
+  const validated = z.array(z.record(z.string(), z.unknown())).safeParse(json);
   if (!validated.success || validated.data.length !== source.manifest.rowCount || validated.data.some((r) =>
     !['audit_events', 'audit_logs'].includes(String(r.source)) || Number(r.organization_id) !== orgId)) {
     throw new SavedReportExportError(400, 'REPORT_SNAPSHOT_INVALID', 'The saved audit rows do not match their sealed manifest and organisation.');
