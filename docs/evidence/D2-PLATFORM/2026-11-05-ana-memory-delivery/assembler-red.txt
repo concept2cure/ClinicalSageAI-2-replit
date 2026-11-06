@@ -1,0 +1,641 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > assembles working + project memory for a project, and client memory only without one, with metadata diagnostics 4ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > applies structured forgetting to stale, unverified, low-importance memory 1ms
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > retains stale but verified memory entries and reports trimming 6ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > retains exclusions after character 400 when the complete record fits 7ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' to contain 'Use the agreed release process. Suppo…'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > keeps both complete records when their differing exclusions follow a shared long prefix 2ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' to contain 'The release decision follows the agre…'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > omits the whole qualified record when its wrapper and body exceed the global budget 2ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Approve release of the qualified pack…'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > skips an oversized working record and still admits a later smaller semantic record 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Approve the working proposal.'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete title label before admitting a record 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'source-label-overflow-'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete category label before admitting a record 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'source-label-overflow-'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete sourceDocumentName label before admitting a record 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'source-label-overflow-'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > reports only admitted records when their source-label openings collide 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Approve the second decision.'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 3500 character limit for request undefined 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Do not quote an incomplete history.'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 1000 character limit for request 100 2ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Do not quote an incomplete history.'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 12000 character limit for request 20000 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Do not quote an incomplete history.'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > retains exclusions after character 400 when the complete record fits 4ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' to contain 'Use the agreed release process. Suppo…'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > keeps both complete records when their differing exclusions follow a shared long prefix 3ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' to contain 'The release decision follows the agre…'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > omits the whole qualified record when its wrapper and body exceed the global budget 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Approve release of the qualified pack…'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > skips an oversized working record and still admits a later smaller semantic record 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Approve the working proposal.'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete title label before admitting a record 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'source-label-overflow-'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete category label before admitting a record 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'source-label-overflow-'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete sourceDocumentName label before admitting a record 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'source-label-overflow-'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > reports only admitted records when their source-label openings collide 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Approve the second decision.'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 3500 character limit for request undefined 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Do not quote an incomplete history.'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 1000 character limit for request 100 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Do not quote an incomplete history.'
+ × tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 12000 character limit for request 20000 1ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Do not quote an incomplete history.'
+(node:51) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts exact-project search before project-bound recency resolves 6ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > returns healthy layers after stalled recency reaches the existing 3s deadline 3ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts independent searches while semantic working memory is pending 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps a timeout notice even when every source is unavailable 1ms
+ × server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps the unavailability notice when the prompt budget omits a whole working record 9ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Working summary'
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > reports rejected reads as errors with a prompt notice, not empty recall 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps healthy empty recall empty, with no fabricated unavailable source 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > does not read tenant memory without an organization 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > skips only project memory when no project is selected 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > keeps recency recall but skips semantic searches without a query 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > still uses recency when semantic recall times out 2ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > does not misreport a timed-out semantic read with empty recency as empty memory 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > bounds recency fallback too when both working-memory reads stall 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > preserves a rejected semantic read as unavailable if recency returns no summary 0ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > clears successful deadline timers, preventing false timeout logs 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores a late semantic result while its recency fallback is still pending 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > excludes expired independent sources that finish during the working-memory fallback 3ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores late values and rejections after the final result is returned 1ms
+(node:59) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > normalises titles and keeps the declared order and statuses 2ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses no steps 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses an empty list 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses a step with no title 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses an unknown status 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses duplicate titles 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses more than the cap 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > clips an over-long title rather than overflowing the panel 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > the handler reports the plan as recorded, with no completion it was not given 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits for a successful update_plan call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for another tool 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a failed call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a cancelled call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a result that is not ok 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for an unparseable result 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > survives relevance trimming 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > names drafting and project search by what they act on; what they were asked is the preview 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > labels the plan step as the plan, not as a raw tool name, and counts nothing the model chose 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > counts unresolved uploads and keeps the content/name distinction 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > a failed memory read is unavailable, never "none" 0ms
+ × server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > successful retrieval with every record omitted by the budget is unavailable, never "none" 6ms
+   → expected 'none' to be 'unavailable' // Object.is equality
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > successful retrieval with no matches still reports none 1ms
+ × server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > lists the memory items the assembler rendered, and drops what the budget cut 4ms
+   → expected [ …(3) ] to deeply equal [ …(2) ]
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the declared plan is persisted with the turn > stores the last validated plan on the assistant metadata 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the declared plan is persisted with the turn > stores nothing for a turn that declared no plan 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > a handler that refuses is a step that did not happen > reads the refusal a handler returned instead of throwing 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > a handler that refuses is a step that did not happen > is null for a result that did not refuse 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 26 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > retains stale but verified memory entries and reports trimming
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…'
+
+- Expected
++ Received
+
+- AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Working Memory
++ Objective: finalize Module 3 overview
++
++ ## Client Memory (semantic matches) (cite as [Source: category — title])
++ - [client_memory | "Verified evergreen policy"] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...
++ --- END PERSISTENT MEMORY CONTEXT ---
++
+
+ ❯ tests/unit/memory-context-assembler.test.ts:225:36
+    223|     // Verification prevents forgetting; it does not make a record fit…
+    224|     // prompt. Keep the ranked candidate, omit its entire body, and sa…
+    225|     expect(result.memoryBlock).not.toContain('A'.repeat(80));
+       |                                    ^
+    226|     expect(result.read).toEqual([{ layer: 'working_memory', title: 'La…
+    227|     expectBoundedBlock(result, 1000, true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > retains exclusions after character 400 when the complete record fits
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' to contain 'Use the agreed release process. Suppo…'
+
+- Expected
++ Received
+
+- Use the agreed release process. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Exclusions: do not release the package before independent review is signed off.
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Project Memory (semantic matches) (cite as [Source: category — title])
++ - [project_memory | "Qualified release" | doc: Release decision.md] Use the agreed release process. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Suppo...
++ --- END PERSISTENT MEMORY CONTEXT ---
++
+
+ ❯ tests/unit/memory-context-assembler.test.ts:253:34
+    251|
+    252|       expect(content.indexOf('Exclusions:')).toBeGreaterThan(400);
+    253|       expect(result.memoryBlock).toContain(content);
+       |                                  ^
+    254|       expect(result.read).toEqual([{ layer, title: 'Qualified release'…
+    255|       expectBoundedBlock(result, 3500, false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > keeps both complete records when their differing exclusions follow a shared long prefix
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' to contain 'The release decision follows the agre…'
+
+- Expected
++ Received
+
+- The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. Exclusions: do not include the pediatric cohort.
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Project Memory (semantic matches) (cite as [Source: category — title])
++ - [project_memory | "Review decision" | doc: Decision A.md] The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review pr...
++ - [project_memory | "Review decision" | doc: Decision B.md] The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review pr...
++ --- END PERSISTENT MEMORY CONTEXT ---
++
+
+ ❯ tests/unit/memory-context-assembler.test.ts:270:34
+    268|
+    269|       expect(shared.length).toBeGreaterThan(400);
+    270|       expect(result.memoryBlock).toContain(first);
+       |                                  ^
+    271|       expect(result.memoryBlock).toContain(second);
+    272|       expect(result.diagnostics.droppedByDeduplication).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > omits the whole qualified record when its wrapper and body exceed the global budget
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Approve release of the qualified pack…'
+
+- Expected
++ Received
+
+- Approve release of the qualified package.
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Project Memory (semantic matches) (cite as [Source: category — title])
++ - [project_memory | "Qualified release"] Approve release of the qualified package. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recor...
++ --- END PERSISTENT MEMORY CONTEXT ---
++
+
+ ❯ tests/unit/memory-context-assembler.test.ts:292:38
+    290|       expect(content.length).toBeGreaterThan(800);
+    291|       expect(result.atoms.map(atom => atom.id)).toEqual([404]);
+    292|       expect(result.memoryBlock).not.toContain(affirmative);
+       |                                      ^
+    293|       expect(result.memoryBlock).not.toContain('Supporting detail rema…
+    294|       expect(result.read).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > skips an oversized working record and still admits a later smaller semantic record
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > skips an oversized working record and still admits a later smaller semantic record
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Approve the working proposal.'
+
+- Expected
++ Received
+
+- Approve the working proposal.
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Working Memory
++ Approve the working proposal. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. Historical detail. H...
+
+ ❯ tests/unit/memory-context-assembler.test.ts:308:38
+    306|
+    307|       expect(result.atoms.some(atom => atom.layer === 'working_memory'…
+    308|       expect(result.memoryBlock).not.toContain('Approve the working pr…
+       |                                      ^
+    309|       expect(result.memoryBlock).toContain(content);
+    310|       expect(result.read).toEqual([{ layer, title: 'Release condition'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete title label before admitting a record
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'source-label-overflow-'
+
+- Expected
++ Received
+
+- source-label-overflow-
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Project Memory (semantic matches) (cite as [Source: category — title])
++ - [project_memory | "source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-l...
+
+ ❯ tests/unit/memory-context-assembler.test.ts:326:40
+    324|
+    325|         expect(result.atoms).toHaveLength(2);
+    326|         expect(result.memoryBlock).not.toContain('source-label-overflo…
+       |                                        ^
+    327|         expect(result.memoryBlock).not.toContain(omittedContent);
+    328|         expect(result.memoryBlock).toContain('Keep the complete compac…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete category label before admitting a record
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'source-label-overflow-'
+
+- Expected
++ Received
+
+- source-label-overflow-
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Project Memory (semantic matches) (cite as [Source: category — title])
++ - [source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-sour...
+
+ ❯ tests/unit/memory-context-assembler.test.ts:326:40
+    324|
+    325|         expect(result.atoms).toHaveLength(2);
+    326|         expect(result.memoryBlock).not.toContain('source-label-overflo…
+       |                                        ^
+    327|         expect(result.memoryBlock).not.toContain(omittedContent);
+    328|         expect(result.memoryBlock).toContain('Keep the complete compac…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete sourceDocumentName label before admitting a record
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'source-label-overflow-'
+
+- Expected
++ Received
+
+- source-label-overflow-
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Project Memory (semantic matches) (cite as [Source: category — title])
++ - [project_memory | "Oversized label" | doc: source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source...
+
+ ❯ tests/unit/memory-context-assembler.test.ts:326:40
+    324|
+    325|         expect(result.atoms).toHaveLength(2);
+    326|         expect(result.memoryBlock).not.toContain('source-label-overflo…
+       |                                        ^
+    327|         expect(result.memoryBlock).not.toContain(omittedContent);
+    328|         expect(result.memoryBlock).toContain('Keep the complete compac…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > reports only admitted records when their source-label openings collide
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Approve the second decision.'
+
+- Expected
++ Received
+
+- Approve the second decision.
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Project Memory (semantic matches) (cite as [Source: category — title])
++ - [project_memory | "Shared approval record Shared approval record Shared approval record Shared approval record Shared approval record Shared approval record A" | doc: First.md] The first decision is complete.
++ - [project_memory | "Shared approval record Shared approval record Shared approval record Shared approval record Shared approval record Shared approval record B" | doc: Second.md] Approve the second decision. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditio...
++ - [project_memory | "Later compact decision"] The later decision also fits.
++ --- END PERSISTENT ...
+
+ ❯ tests/unit/memory-context-assembler.test.ts:350:38
+    348|       expect(result.memoryBlock).toContain('The first decision is comp…
+    349|       expect(result.memoryBlock).toContain('The later decision also fi…
+    350|       expect(result.memoryBlock).not.toContain('Approve the second dec…
+       |                                      ^
+    351|       expect(result.read).toEqual([
+    352|         { layer, title: firstTitle, documentName: 'First.md' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 3500 character limit for request undefined
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 1000 character limit for request 100
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 12000 character limit for request 20000
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Do not quote an incomplete history.'
+
+- Expected
++ Received
+
+- Do not quote an incomplete history.
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Project Memory (semantic matches) (cite as [Source: category — title])
++ - [project_memory | "Oversized history"] Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. D...
++ - [project_memory | "Short remembered condition"] Check the signed decision before release.
++ --- END PERSISTENT MEMORY CONTEXT ---
++
+
+ ❯ tests/unit/memory-context-assembler.test.ts:370:38
+    368|       const result = await buildMemoryContextForChat({ ...input, maxCh…
+    369|
+    370|       expect(result.memoryBlock).not.toContain('Do not quote an incomp…
+       |                                      ^
+    371|       expect(result.memoryBlock).toContain('Check the signed decision …
+    372|       expect(result.read).toEqual([{ layer, title: 'Short remembered c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > retains exclusions after character 400 when the complete record fits
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' to contain 'Use the agreed release process. Suppo…'
+
+- Expected
++ Received
+
+- Use the agreed release process. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Exclusions: do not release the package before independent review is signed off.
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Client Memory (semantic matches) (cite as [Source: category — title])
++ - [client_memory | "Qualified release" | doc: Release decision.md] Use the agreed release process. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Suppo...
++ --- END PERSISTENT MEMORY CONTEXT ---
++
+
+ ❯ tests/unit/memory-context-assembler.test.ts:253:34
+    251|
+    252|       expect(content.indexOf('Exclusions:')).toBeGreaterThan(400);
+    253|       expect(result.memoryBlock).toContain(content);
+       |                                  ^
+    254|       expect(result.read).toEqual([{ layer, title: 'Qualified release'…
+    255|       expectBoundedBlock(result, 3500, false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > keeps both complete records when their differing exclusions follow a shared long prefix
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' to contain 'The release decision follows the agre…'
+
+- Expected
++ Received
+
+- The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. Exclusions: do not include the pediatric cohort.
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Client Memory (semantic matches) (cite as [Source: category — title])
++ - [client_memory | "Review decision" | doc: Decision A.md] The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review pr...
++ - [client_memory | "Review decision" | doc: Decision B.md] The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review procedure. The release decision follows the agreed review pr...
++ --- END PERSISTENT MEMORY CONTEXT ---
++
+
+ ❯ tests/unit/memory-context-assembler.test.ts:270:34
+    268|
+    269|       expect(shared.length).toBeGreaterThan(400);
+    270|       expect(result.memoryBlock).toContain(first);
+       |                                  ^
+    271|       expect(result.memoryBlock).toContain(second);
+    272|       expect(result.diagnostics.droppedByDeduplication).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > omits the whole qualified record when its wrapper and body exceed the global budget
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Approve release of the qualified pack…'
+
+- Expected
++ Received
+
+- Approve release of the qualified package.
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Client Memory (semantic matches) (cite as [Source: category — title])
++ - [client_memory | "Qualified release"] Approve release of the qualified package. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recorded. Supporting detail remains recor...
++ --- END PERSISTENT MEMORY CONTEXT ---
++
+
+ ❯ tests/unit/memory-context-assembler.test.ts:292:38
+    290|       expect(content.length).toBeGreaterThan(800);
+    291|       expect(result.atoms.map(atom => atom.id)).toEqual([404]);
+    292|       expect(result.memoryBlock).not.toContain(affirmative);
+       |                                      ^
+    293|       expect(result.memoryBlock).not.toContain('Supporting detail rema…
+    294|       expect(result.read).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete title label before admitting a record
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'source-label-overflow-'
+
+- Expected
++ Received
+
+- source-label-overflow-
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Client Memory (semantic matches) (cite as [Source: category — title])
++ - [client_memory | "source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-lab...
+
+ ❯ tests/unit/memory-context-assembler.test.ts:326:40
+    324|
+    325|         expect(result.atoms).toHaveLength(2);
+    326|         expect(result.memoryBlock).not.toContain('source-label-overflo…
+       |                                        ^
+    327|         expect(result.memoryBlock).not.toContain(omittedContent);
+    328|         expect(result.memoryBlock).toContain('Keep the complete compac…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete category label before admitting a record
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'source-label-overflow-'
+
+- Expected
++ Received
+
+- source-label-overflow-
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Client Memory (semantic matches) (cite as [Source: category — title])
++ - [source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-sourc...
+
+ ❯ tests/unit/memory-context-assembler.test.ts:326:40
+    324|
+    325|         expect(result.atoms).toHaveLength(2);
+    326|         expect(result.memoryBlock).not.toContain('source-label-overflo…
+       |                                        ^
+    327|         expect(result.memoryBlock).not.toContain(omittedContent);
+    328|         expect(result.memoryBlock).toContain('Keep the complete compac…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete sourceDocumentName label before admitting a record
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'source-label-overflow-'
+
+- Expected
++ Received
+
+- source-label-overflow-
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Client Memory (semantic matches) (cite as [Source: category — title])
++ - [client_memory | "Oversized label" | doc: source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-label-overflow-source-l...
+
+ ❯ tests/unit/memory-context-assembler.test.ts:326:40
+    324|
+    325|         expect(result.atoms).toHaveLength(2);
+    326|         expect(result.memoryBlock).not.toContain('source-label-overflo…
+       |                                        ^
+    327|         expect(result.memoryBlock).not.toContain(omittedContent);
+    328|         expect(result.memoryBlock).toContain('Keep the complete compac…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > reports only admitted records when their source-label openings collide
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Approve the second decision.'
+
+- Expected
++ Received
+
+- Approve the second decision.
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Client Memory (semantic matches) (cite as [Source: category — title])
++ - [client_memory | "Shared approval record Shared approval record Shared approval record Shared approval record Shared approval record Shared approval record A" | doc: First.md] The first decision is complete.
++ - [client_memory | "Shared approval record Shared approval record Shared approval record Shared approval record Shared approval record Shared approval record B" | doc: Second.md] Approve the second decision. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditional detail. Conditio...
++ - [client_memory | "Later compact decision"] The later decision also fits.
++ --- END PERSISTENT MEMO...
+
+ ❯ tests/unit/memory-context-assembler.test.ts:350:38
+    348|       expect(result.memoryBlock).toContain('The first decision is comp…
+    349|       expect(result.memoryBlock).toContain('The later decision also fi…
+    350|       expect(result.memoryBlock).not.toContain('Approve the second dec…
+       |                                      ^
+    351|       expect(result.read).toEqual([
+    352|         { layer, title: firstTitle, documentName: 'First.md' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/26]⎯
+
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 3500 character limit for request undefined
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 1000 character limit for request 100
+ FAIL  tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 12000 character limit for request 20000
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Do not quote an incomplete history.'
+
+- Expected
++ Received
+
+- Do not quote an incomplete history.
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Client Memory (semantic matches) (cite as [Source: category — title])
++ - [client_memory | "Oversized history"] Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. Do not quote an incomplete history. D...
++ - [client_memory | "Short remembered condition"] Check the signed decision before release.
++ --- END PERSISTENT MEMORY CONTEXT ---
++
+
+ ❯ tests/unit/memory-context-assembler.test.ts:370:38
+    368|       const result = await buildMemoryContextForChat({ ...input, maxCh…
+    369|
+    370|       expect(result.memoryBlock).not.toContain('Do not quote an incomp…
+       |                                      ^
+    371|       expect(result.memoryBlock).toContain('Check the signed decision …
+    372|       expect(result.read).toEqual([{ layer, title: 'Short remembered c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/26]⎯
+
+ FAIL  server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps the unavailability notice when the prompt budget omits a whole working record
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'Working summary'
+
+- Expected
++ Received
+
+- Working summary
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Memory retrieval incomplete
++ Client Memory unavailable (timeout).
++ Do not infer that missing memory or prior decisions do not exist. State the retrieval limitation when relevant; ask for or verify needed context.
++
++ ## Working Memory
++ Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working summary Working ...
+
+ ❯ server/services/__tests__/memory-context-assembler-deadline.test.ts:148:36
+    146|     expect(result.memoryBlock).toContain('Client Memory unavailable (t…
+    147|     expect(result.memoryBlock).toContain('Do not infer that missing me…
+    148|     expect(result.memoryBlock).not.toContain('Working summary');
+       |                                    ^
+    149|     expect(result.memoryBlock).toMatch(/incomplete|omitt|withheld|not …
+    150|     expect(result.memoryBlock).toMatch(/budget|limit|fit|space/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/26]⎯
+
+ FAIL  server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > successful retrieval with every record omitted by the budget is unavailable, never "none"
+AssertionError: expected 'none' to be 'unavailable' // Object.is equality
+
+Expected: "unavailable"
+Received: "none"
+
+ ❯ server/services/ana/__tests__/turn-plan-and-context.test.ts:170:36
+    168|     };
+    169|
+    170|     expect(memoryStatusOf(memory)).toBe('unavailable');
+       |                                    ^
+    171|     expect(buildContextUsedEvent({ requestedUploads: 0, uploads: [], m…
+    172|       memory: [], memoryStatus: 'unavailable',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/26]⎯
+
+ FAIL  server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > lists the memory items the assembler rendered, and drops what the budget cut
+AssertionError: expected [ …(3) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+@@ -6,6 +6,10 @@
+    },
+    {
+      "layer": "project_memory",
+      "title": "Stability arm",
+    },
++   {
++     "layer": "project_memory",
++     "title": "Dissolution method",
++   },
+  ]
+
+ ❯ server/services/ana/__tests__/turn-plan-and-context.test.ts:205:25
+    203|       { layer: 'project_memory', title: 'Stability arm' },
+    204|     ];
+    205|     expect(result.read).toEqual(admitted);
+       |                         ^
+    206|     expect(result.memoryBlock).toContain('x'.repeat(390));
+    207|     expect(result.memoryBlock).not.toContain('y'.repeat(80));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/26]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  26 failed | 44 passed (70)
+   Start at  20:56:49
+   Duration  2.20s (transform 904ms, setup 93ms, import 1.47s, tests 113ms, environment 0ms)

@@ -11,7 +11,7 @@
 
 import { skill, type LibrarySkillSource } from '../types.js';
 
-const E6R3_RECORD = { kind: 'record', id: 'shared/regulatory/ich-e6r3.ts', label: 'ICH E6(R3) structure and E6(R2) crosswalk' } as const;
+const E6R3_RECORD = { kind: 'record', id: 'shared/regulatory/ich-e6r3.ts', label: 'ICH E6(R3) structure and its crosswalk from the superseded E6(R2)' } as const;
 const M11_RECORD = { kind: 'record', id: 'shared/regulatory/protocol-m11.ts', label: 'ICH M11 protocol headings (levels 1 and 2)' } as const;
 const CONSENT_RECORD = {
   kind: 'record',
@@ -405,6 +405,11 @@ Selecting a primary or secondary endpoint, deciding how a concept should be meas
       'check_dossier_consistency',
       'build_abbreviation_list',
       'medical_writing_review',
+      // Where the report is written (step 12): the canvas and the editor. Pinned
+      // here because a method naming a tool the relevance cap dropped cannot be
+      // followed (turn-skills.ts toolPins).
+      'list_authoring_outline',
+      'draft_authoring_document',
     ],
     references: [
       { kind: 'ich', id: 'E3' },
@@ -428,6 +433,7 @@ Drafting, structuring or checking a clinical study report for an interventional 
 9. Causality wording attributes the judgement to its assessor: "assessed by the investigator as related", "considered by the sponsor as not related". Never state causality as fact.
 10. Subgroups: present results by age, sex and race where the SAP or E3 calls for it; for a US NDA the integrated summaries present effectiveness and safety by these subgroups (21 CFR 314.50(d)(5)).
 11. Before release: \`check_numerical_integrity\` on the draft, \`reconcile_dossier_numbers\` across protocol, SAP, CSR and Module 2, \`check_dossier_consistency\` against the project, \`build_abbreviation_list\`, and \`medical_writing_review\` (document type csr) for heading coverage. Heading coverage is not completeness.
+12. Write it where the person works on it. A report or sections drafted in the conversation are saved with \`draft_authoring_document\` as a CSR document of the open project (document type ICH_CSR, module M5, one section per E3 heading with its E3 number as the code): the person sees it as a canvas, opens it in the editor, and changes it there, where every change you propose is accepted or refused by a person. First call \`list_authoring_outline\`: when the project already has a CSR document, do not make a second; say which it is and that its sections are drafted in the editor, where "Build from the study's data" fills the results sections from the frozen study data. Saving a draft is not approving it.
 
 ## Pitfalls reviewers raise
 - Figures in the text that differ from the tables.
@@ -513,7 +519,7 @@ Writing a first Investigator's Brochure (IB), updating one for new nonclinical, 
 ## Before answering
 - The edition, the edition superseded and the data cut-off are stated.
 - Every safety statement traces to a source document; expectedness is the sponsor's documented judgement.
-- E6(R3) is cited by its own numbering (Appendix A), never by E6(R2) section 7.
+- E6(R3) is cited by its own numbering (Appendix A), never by superseded E6(R2) section 7.
 
 ## Not AnA's to decide
 - What is expected, and the release of each edition, are the sponsor's decisions by its medically qualified reviewers; authorisation of an EU RSI change is the member states'.
@@ -592,7 +598,7 @@ Designing the consent process for a trial, drafting or revising a consent form, 
 ## Before answering
 - Each element is cited by its paragraph from the record, and the regime it comes from is named.
 - Tool findings are reported as found or not found, not as compliant or deficient.
-- E6(R3) consent content is cited as Annex 1 §2.8, never by an E6(R2) number.
+- E6(R3) consent content is cited as Annex 1 §2.8, never by a superseded E6(R2) number.
 
 ## Not AnA's to decide
 - The IRB/IEC approves the form and decides on re-consent, waivers and the readability target; the investigator obtains consent.
@@ -664,7 +670,7 @@ Questions about conducting a trial under GCP: who is responsible for what, how q
 
 ## Method
 1. Establish the role asking (sponsor, CRO, investigator site, IRB/IEC), the trial's phase and design, the regions, and what is wanted: a plan, an assessment, a deviation decision or inspection preparation.
-2. ICH E6(R3) is in force and supersedes E6(R2). Cite it by the numbering in the E6(R3) record (11 Principles; Annex 1 §1 IRB/IEC, §2 investigator, §3 sponsor, §4 data governance; Appendix C essential records), never by E6(R2) numbers. Annex 2 adds considerations for decentralised, pragmatic and real-world-data elements, and its effective dates differ by region. Check any cited guideline's currency with \`check_guidance_freshness\` rather than from memory.
+2. ICH E6(R3) is in force and supersedes E6(R2). Cite it by the numbering in the E6(R3) record (11 Principles; Annex 1 §1 IRB/IEC, §2 investigator, §3 sponsor, §4 data governance; Appendix C essential records), never by superseded E6(R2) numbers. Annex 2 adds considerations for decentralised, pragmatic and real-world-data elements, and its effective dates differ by region. Check any cited guideline's currency with \`check_guidance_freshness\` rather than from memory.
 3. Obligations by role: \`advise_gcp\` returns the principles or one domain (sponsor, investigator, IRB/IEC) with citations. Delegation of tasks to service providers leaves responsibility with the sponsor (Annex 1 §3.9 sponsor oversight, §3.6 agreements).
 4. Quality management: identify what is critical to quality and the risks to it (Annex 1 §3.10, §3.10.1), and keep controls proportionate to those risks (Principle 7). \`design_monitoring_plan\` returns a monitoring mix, key risk indicators and visit guidance from the trial's design factors; a factor left out is not scored. Monitoring is Annex 1 §3.11.4.
 5. Essential records: \`plan_essential_documents\` returns the trial master file and investigator site file plan by trial stage, with retention guidance (Appendix C; in the US, 21 CFR 312.57 and 312.62).
@@ -679,7 +685,7 @@ Questions about conducting a trial under GCP: who is responsible for what, how q
 - A monitoring plan that is not traceable to the identified risks.
 - Deviations logged but not assessed for impact, not trended, or closed without effective CAPA.
 - Oversight of service providers asserted but not documented.
-- E6(R2) section numbers cited as the guideline in force.
+- Superseded E6(R2) section numbers cited as the guideline in force.
 
 ## Before answering
 - Every E6(R3) citation names a section that exists in the record.

@@ -97,8 +97,10 @@ function sourceLine(src: RequiredSectionSource): string {
   return `Required sections are the generic ICH baseline, not this project's outline. ${src.reason ?? ''}`.trim();
 }
 
-function ModuleRow({ m }: { m: ModuleReadiness }) {
+function ModuleRow({ m, basis }: { m: ModuleReadiness; basis?: ReadinessBasis }) {
   const nothingRequired = m.completionPct == null;
+  /* Nothing of the required set counted is not "partial" (J4 human test, 2026-11-06). */
+  const chip = m.ready ? 'ready' : m.completedRequired === 0 ? (basis === 'approved' ? 'none approved' : 'none placed') : 'partial';
   return (
     <tr>
       <td style={{ fontWeight: 600 }}>{m.moduleName}</td>
@@ -115,7 +117,7 @@ function ModuleRow({ m }: { m: ModuleReadiness }) {
         )}
       </td>
       <td style={{ textAlign: 'right' }}>
-        {m.ready != null && <span className={'rd-chip tone-' + (m.ready ? 'ok' : 'warn')}>{m.ready ? 'ready' : 'partial'}</span>}
+        {m.ready != null && <span className={'rd-chip tone-' + (m.ready ? 'ok' : 'warn')}>{chip}</span>}
       </td>
     </tr>
   );
@@ -152,7 +154,7 @@ function ReadinessBody({ status, state }: { status: StatusView | null; state: 'i
         </div>
       )}
       <table className="reg-tbl"><thead><tr><th>Module</th><th>Required complete</th><th>Sections</th><th>Completion</th><th style={{ textAlign: 'right' }}>Status</th></tr></thead>
-        <tbody>{status.modules.map((m) => <ModuleRow key={m.moduleCode} m={m} />)}</tbody></table>
+        <tbody>{status.modules.map((m) => <ModuleRow key={m.moduleCode} m={m} basis={status.readinessBasis} />)}</tbody></table>
     </>
   );
 }

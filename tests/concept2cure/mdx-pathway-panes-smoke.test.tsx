@@ -490,7 +490,9 @@ describe('live dossier wiring', () => {
         ] });
       }
       if (u.includes('/api/c2c/documents')) {
-        return ok({ documents: [{ id: 'doc-1', project_id: 'proj-1', doc_type: '510k', agency: 'FDA', title: '510(k)' }] });
+        // The governed 510(k) document's class is k510 (server/services/c2c/document-class.ts); the dossier
+        // takes only the project's document of that exact class (useDossier pickDossierDocument, 62a8d5e7f6).
+        return ok({ documents: [{ id: 'doc-1', project_id: 'proj-1', doc_type: 'k510', agency: 'FDA', title: '510(k)' }] });
       }
       return Promise.resolve({ ok: false, status: 404, json: async () => ({}), text: async () => 'Not Found' } as Response);
     }) as unknown as typeof fetch;

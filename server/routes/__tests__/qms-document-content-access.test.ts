@@ -72,7 +72,8 @@ describe('QMS reads preserve canonical object access',()=>{
     expect(JSON.stringify(res.body)).not.toContain('Private procedure text');
   });
   it('keeps a genuine empty version history distinct from a denied authored history',async()=>{
-    h.query.mockImplementation(async(sql:string)=>({rows:sql.includes('SELECT id FROM qms_documents')?[registered]:[]}));
+    // The parent read, by table and predicate: it reads the whole row since 4ba9c2b045 (in-force standings).
+    h.query.mockImplementation(async(sql:string)=>({rows:/FROM qms_documents WHERE id = \$1 AND organization_id = \$2/.test(sql)?[registered]:[]}));
     const res=await request(app()).get('/api/mdx/qms/documents/4/versions');
     expect(res.status).toBe(200);expect(res.body.data).toEqual([]);expect(h.decide).not.toHaveBeenCalled();
   });

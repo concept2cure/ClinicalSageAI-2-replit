@@ -105,6 +105,18 @@ const inputVariants = {
   exit: { opacity: 0, x: -20 },
 };
 
+/**
+ * Whether a refused sign-up was the password policy's refusal: POST /api/auth/signup
+ * answers it 400 with `error.details.errors`, the policy's sentences
+ * (server/routes/auth.ts, validatePasswordPolicy). A malformed request is also
+ * 400, but its details are the schema's issues, never that list.
+ */
+export function isPasswordPolicyRefusal(status: number, payload: unknown): boolean {
+  if (status !== 400) return false;
+  const errors = (payload as { error?: { details?: { errors?: unknown } } } | null)?.error?.details?.errors;
+  return Array.isArray(errors) && errors.length > 0 && errors.every((e) => typeof e === 'string' && /^password\b/i.test(e));
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ORGANIZATION TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -384,6 +396,16 @@ export const ZenSignup: React.FC = () => {
       // fetch" / "Load failed" — it used to be rendered under the form.
       const message =
         error instanceof ApiRequestError ? error.message : t('signup.errors.signupFailed');
+      // The password is chosen on the first step; the server's policy (its own
+      // name, address and organisation checks) answers only here, on the last.
+      // Said on the last step, the person had to find the password three steps
+      // back on their own (human test J1, 2026-11-06). It is taken back to the
+      // field, with the refusal under it.
+      if (error instanceof ApiRequestError && isPasswordPolicyRefusal(error.status, error.payload)) {
+        setStep('info');
+        setErrors({ password: message });
+        return;
+      }
       setErrors(prev => ({ ...prev, general: message }));
     } finally {
       setIsLoading(false);
@@ -1038,14 +1060,16 @@ export const ZenSignup: React.FC = () => {
       <div className="space-y-2">
         <h3 className="text-base font-medium text-stone-900">{t('signup.accountCreated')}</h3>
         <p className="text-stone-600">
-          Welcome to Concept2Cure. Your workspace is ready at <strong>{formData.email}</strong>.
+          Welcome to Concept2Cure. You are signed up as <strong>{formData.email}</strong>.
         </p>
       </div>
 
+      {/* It sent a new client to "Deep Research" and "document authoring", neither of which is where Concept2Cure
+          opens: Home, with the first project to create (human test J1, 2026-11-06). */}
       <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
         <p className="text-sm text-blue-800">
-          <strong>Workspace ready.</strong> Start with Deep Research to populate it, or open
-          document authoring directly.
+          <strong>Your organisation is set up.</strong> Open Concept2Cure and create your first project: one
+          regulatory filing, from plan to submission.
         </p>
       </div>
 

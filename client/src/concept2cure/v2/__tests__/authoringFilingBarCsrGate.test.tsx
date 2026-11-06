@@ -59,8 +59,9 @@ describe('a CSR without its scientific review says so before a password is asked
     const verify = stubSignerChecks();
     answer(reviewsRead([{ review_status: 'pending', standing: 'pending' }]));
     renderBar();
-    expect(await screen.findByText(/only after its scientific review/)).toBeTruthy();
-    expect(screen.getByText(/Send it for review/)).toBeTruthy();
+    // The bar's note is one line; the control's title carries the full sentence, with the step to take.
+    expect(await screen.findByText('Needs its scientific review first')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Freeze/ }).getAttribute('title')).toMatch(/only after its scientific review.*Send it for review/);
     fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
     const dialog = await screen.findByRole('dialog');
     fireEvent.click(within(dialog).getByRole('radio', { name: /Approval/ }));
@@ -76,7 +77,7 @@ describe('a CSR without its scientific review says so before a password is asked
     stubSignerChecks();
     answer(reviewsRead([]));
     renderBar();
-    await screen.findByText(/only after its scientific review/);
+    await screen.findByText('Needs its scientific review first');
     fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
     const dialog = await screen.findByRole('dialog');
     fireEvent.click(within(dialog).getByRole('radio', { name: /Review/ }));
@@ -89,7 +90,8 @@ describe('a CSR without its scientific review says so before a password is asked
     answer(reviewsRead([{ review_status: 'approved', standing: 'stale' }]));
     renderBar();
     await waitFor(() => expect(screen.getByRole('button', { name: /Freeze/ })).toHaveProperty('disabled', true));
-    expect(screen.getByTestId('freeze-refusal').textContent).toMatch(/only after its scientific review/);
+    expect(screen.getByTestId('freeze-refusal').textContent).toBe('Needs its scientific review first');
+    expect(screen.getByRole('button', { name: /Freeze/ }).getAttribute('title')).toMatch(/only after its scientific review/);
   });
 
   it('with a current approval, or a document that is not a CSR, or a read that failed, the server decides (as before)', async () => {
@@ -99,7 +101,7 @@ describe('a CSR without its scientific review says so before a password is asked
       renderBar();
       await waitFor(() => expect(apiRequest.mock.calls.some(([, url]) => url === REVIEWS)).toBe(true));
       await act(async () => { await new Promise((r) => setTimeout(r, 20)); });
-      expect(screen.queryByText(/only after its scientific review/)).toBeNull();
+      expect(screen.queryByText(/only after its scientific review|Needs its scientific review first/)).toBeNull();
       expect(screen.getByRole('button', { name: /Freeze/ })).toHaveProperty('disabled', false);
       expect(screen.getByRole('button', { name: /E-sign/ })).toHaveProperty('disabled', false);
       cleanup();

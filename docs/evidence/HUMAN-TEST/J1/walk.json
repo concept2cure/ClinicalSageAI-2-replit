@@ -1,0 +1,135 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "startedAt": "2026-11-06T02:16:40.067Z",
+  "steps": [
+    {
+      "name": "desk biotech: signed in through the form",
+      "url": "/concept2cure"
+    },
+    {
+      "name": "desk-ind: J1-WALK-IND — Investigational New Drug Application already exists (made by an earlier run)",
+      "id": "0d4a936a-83d8-45c2-8572-5fdf3f67966a"
+    },
+    {
+      "name": "desk-biotech: Home and its composer"
+    },
+    {
+      "name": "desk-biotech: Projects grid, search, filters, list"
+    },
+    {
+      "name": "desk-ind: the six steps open; the title's x on each",
+      "xs": {
+        "Plan": 294,
+        "Evidence": 294,
+        "Author": 294,
+        "Review": 294,
+        "Submit": 294,
+        "Respond": 294
+      }
+    },
+    {
+      "name": "desk-ind: Project settings opens and closes"
+    },
+    {
+      "name": "desk device: signed in through the form"
+    },
+    {
+      "name": "desk-510k: J1-WALK-510K — CardioSense ECG patch 510(k) already exists (made by an earlier run)",
+      "id": "961a16df-a395-47d1-b5ce-c8630b1ec0e7"
+    },
+    {
+      "name": "desk-dx: J1-WALK-DX — RespiPlex respiratory panel 510(k) already exists (made by an earlier run)",
+      "id": "d6c45f39-4305-4de6-8f39-cab42a007bc6"
+    },
+    {
+      "name": "desk-device: Home and its composer"
+    },
+    {
+      "name": "desk-device: Projects grid, search, filters, list"
+    },
+    {
+      "name": "desk-510k: the six steps open; the title's x on each",
+      "xs": {
+        "Plan": 294,
+        "Evidence": 294,
+        "Author": 294,
+        "Review": 294,
+        "Submit": 294,
+        "Respond": 294
+      }
+    },
+    {
+      "name": "desk-510k: Project settings opens and closes"
+    },
+    {
+      "name": "desk-dx: the six steps open; the title's x on each",
+      "xs": {
+        "Plan": 294,
+        "Evidence": 294,
+        "Author": 294,
+        "Review": 294,
+        "Submit": 294,
+        "Respond": 294
+      }
+    },
+    {
+      "name": "desk-dx: Project settings opens and closes"
+    },
+    {
+      "name": "phone biotech: signed in through the form",
+      "url": "/concept2cure"
+    },
+    {
+      "name": "phone-biotech: Home and its composer"
+    },
+    {
+      "name": "phone-biotech: Projects grid, search, filters, list"
+    },
+    {
+      "name": "phone-ind: the six steps open; the title's x on each",
+      "xs": {
+        "Plan": 30,
+        "Evidence": 30,
+        "Author": 30,
+        "Review": 30,
+        "Submit": 30,
+        "Respond": 30
+      }
+    },
+    {
+      "name": "phone-ind: Project settings opens and closes"
+    },
+    {
+      "name": "phone device: signed in through the form"
+    },
+    {
+      "name": "phone-device: Home and its composer"
+    },
+    {
+      "name": "phone-device: Projects grid, search, filters, list"
+    },
+    {
+      "name": "phone-510k: the six steps open; the title's x on each",
+      "xs": {
+        "Plan": 30,
+        "Evidence": 30,
+        "Author": 30,
+        "Review": 30,
+        "Submit": 30,
+        "Respond": 30
+      }
+    },
+    {
+      "name": "phone-510k: Project settings opens and closes"
+    }
+  ],
+  "apiErrors": [],
+  "pageErrors": [],
+  "ids": {
+    "ind": "0d4a936a-83d8-45c2-8572-5fdf3f67966a",
+    "k": "961a16df-a395-47d1-b5ce-c8630b1ec0e7",
+    "dx": "d6c45f39-4305-4de6-8f39-cab42a007bc6"
+  },
+  "result": "pass",
+  "finishedAt": "2026-11-06T02:19:13.963Z"
+}

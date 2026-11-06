@@ -40,7 +40,8 @@ import {
   type VaultDocKind,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { detectCTDSection } from '../ctd-ingestion-service.js';
-import { soleModule1Placement } from '../../../shared/regulatory/regional-module1';
+import { soleModule1Placement, type ApplicationKind, type DocumentRole } from '../../../shared/regulatory/regional-module1';
+import { canonicalRegionOf, type CanonicalRegion } from '../../../shared/regulatory/region-identity';
 import { classifyArtifact as classifyTmfArtifact } from '../etmf/etmf-logic.js';
 import { TMF_ZONE_REFS } from '../../../shared/constants/domain/tmf-reference-model.js';
 
@@ -68,6 +69,12 @@ export interface FilingInput {
   /** The type the uploader declared (VaultIngestDocumentType), when there was one.
    *  It informs the proposal; a conflict with the name is flagged, not overridden. */
   documentType?: string | null;
+  /** The project's region, from its primary agency (resolveVaultFilingContext). Module 1 is regional:
+   *  an EU or JP project is given its own heading, another region (or null, an agency that names none)
+   *  is given none. Absent: the US heading, as before. */
+  jurisdiction?: CanonicalRegion | null;
+  /** The project's application kind (its program_type, lower case): it selects the headings that apply. */
+  applicationKind?: string | null;
 }
 
 export interface FilingClassification {
@@ -99,6 +106,9 @@ interface FilingRule {
   kind: VaultDocKind;
   folders: Partial<Record<VaultViewId, string>>;
   ctdSection?: string;
+  /** What the document is in the regional Module 1 record, so a project outside the US is given its own
+   *  region's heading. Absent on a Module 1 rule: a US document, which no other region is given a heading for. */
+  module1Role?: DocumentRole;
   confidence?: 'high' | 'medium';
 }
 
@@ -175,6 +185,7 @@ export const FILING_RULES: FilingRule[] = [
     // administrative module), device labeling has its own folder.
     folders: { device: 'udi', ivd: 'udi', pharma: 'module-1', biotech: 'module-1' },
     ctdSection: '1.14',
+    module1Role: 'product_information_draft',
   },
   {
     label: 'post-market vigilance record',
@@ -196,7 +207,7 @@ export const FILING_RULES: FilingRule[] = [
 
 // High-signal document-body phrases, consulted ONLY when filename + title match
 // nothing. Bounded scan; a body phrase alone is a medium-confidence signal.
-export const TEXT_RULES: Array<{ label: string; pattern: RegExp; kind: VaultDocKind; view: 'ctd' | 'device'; folder: string; ctdSection?: string }> = [
+export const TEXT_RULES: Array<{ label: string; pattern: RegExp; kind: VaultDocKind; view: 'ctd' | 'device'; folder: string; ctdSection?: string; module1Role?: DocumentRole }> = [
   { label: 'clinical study report body', pattern: /\bclinical study report\b/i, kind: 'csr', view: 'ctd', folder: 'module-5', ctdSection: '5.3.5' },
   /* The IB is a Module 1 document in an FDA eCTD: 1.14.4.1 Investigator's Brochure, under
      1.14.4 Investigational Drug Labeling (21 CFR 312.23(a)(5)). It used to be filed at
@@ -204,7 +215,7 @@ export const TEXT_RULES: Array<{ label: string; pattern: RegExp; kind: VaultDocK
      on this error says "an M5 assignment puts it in the wrong backbone node and the sequence does
      not validate" (shared/regulatory/global-document-registry.ts). The code comes from the record,
      not from this line. */
-  { label: "investigator's brochure body", pattern: /\binvestigator.?s brochure\b/i, kind: 'clinical', view: 'ctd', folder: 'module-1', ctdSection: soleModule1Placement('investigators_brochure', 'US', 'ind')?.code },
+  { label: "investigator's brochure body", pattern: /\binvestigator.?s brochure\b/i, kind: 'clinical', view: 'ctd', folder: 'module-1', ctdSection: soleModule1Placement('investigators_brochure', 'US', 'ind')?.code, module1Role: 'investigators_brochure' },
   { label: 'statistical analysis plan body', pattern: /\bstatistical analysis plan\b/i, kind: 'protocol', view: 'ctd', folder: 'module-5', ctdSection: '5.3.5' },
   { label: 'clinical evaluation report body', pattern: /\bclinical evaluation report\b/i, kind: 'clinical', view: 'device', folder: 'cer' },
   { label: 'instructions-for-use body', pattern: /\binstructions for use\b/i, kind: 'label', view: 'device', folder: 'udi' },
@@ -236,7 +247,7 @@ const TMF_ZONE_ID = new Map(TMF_ZONE_REFS.map(z => [z.zone, z.id]));
  * `{ folderId: null, needsReview: true, confidence: 'none' }`.
  */
 export function classifyForFiling(input: FilingInput): FilingClassification {
-  const byName = classifyByName(input);
+  const byName = inProjectRegion(classifyByName(input), input);
   const type = input.documentType ?? '';
   if (!Object.prototype.hasOwnProperty.call(DECLARED_TYPE, type)) return byName;
   return reconcileDeclaredType(byName, DECLARED_TYPE[type], type, input.view);
@@ -328,8 +339,11 @@ function reconcileDeclaredType(
   return { ...byName, evidenceKind: kind, rationale: `Uploaded as ${label}. ${byName.rationale}` };
 }
 
+/** A proposal from the name, with what the matched rule says the document is in Module 1. */
+type NameProposal = FilingClassification & { module1Role?: DocumentRole };
+
 /** The proposal from the name, title and text alone. */
-function classifyByName(input: FilingInput): FilingClassification {
+function classifyByName(input: FilingInput): NameProposal {
   const view = input.view;
   const name = (input.fileName || '').trim();
   const title = (input.title || '').trim();
@@ -352,7 +366,9 @@ function classifyByName(input: FilingInput): FilingClassification {
           ctdSection: view === 'pharma' || view === 'biotech' ? rule.ctdSection ?? null : null,
           confidence: rule.confidence ?? 'high',
           needsReview: false,
-          rationale: `Matched ${rule.label} — filed to ${folderId} for the ${view} view.`,
+          // The folder a person sees, not its id or the view (J2 human test, 2026-11-06).
+          rationale: `Matched ${rule.label} — filed to ${folderLabel(view, folderId) || folderId}.`,
+          module1Role: rule.module1Role,
         };
       }
       // The rule names what the file IS but this view has no folder for it
@@ -382,6 +398,8 @@ function classifyByName(input: FilingInput): FilingClassification {
             rationale: ctd.section
               ? `CTD pattern "${ctd.title}" → Module ${ctd.module} (${ctd.section}).`
               : `The name names Module ${ctd.module} but no section; confirm where in the module it belongs.`,
+            // Its US heading above; another region's is read for this role (inProjectRegion).
+            module1Role: ctd.role,
           };
         }
       }
@@ -428,6 +446,7 @@ function classifyByName(input: FilingInput): FilingClassification {
            asked. Medium confidence and "no review needed" cannot both be true. */
         needsReview: true,
         rationale: `Document text contains "${rule.label.replace(' body', '')}" — filename alone was not classifiable, so this placement is from the body text and is worth confirming.`,
+        module1Role: rule.module1Role,
       };
     }
   }
@@ -441,6 +460,52 @@ function classifyByName(input: FilingInput): FilingClassification {
     needsReview: true,
     rationale: 'No filing rule matched the name, title, or document text — needs a person to file it.',
   };
+}
+
+// ─── Module 1 follows the project's region ───────────────────────────────────
+
+/**
+ * Module 1 is the CTD's one regional module (ICH M4), and the rule tables above state the US heading.
+ * Labeling was proposed at 1.14 and the IB at 1.14.4.1 for every CTD project, so an EMA project's SmPC
+ * was proposed at a US heading (S6, 2026-11-05). An EU or JP project is now given its own heading from
+ * the regional Module 1 record, by what the document is; any other region, or an agency that names
+ * none, keeps Module 1 and is given no section. A caller that states no region gets the US heading.
+ * The module and Modules 2 to 5 do not change: ICH harmonises them.
+ */
+function inProjectRegion(named: NameProposal, input: FilingInput): FilingClassification {
+  const { module1Role, ...proposal } = named;
+  if (input.jurisdiction === undefined || input.jurisdiction === 'US') return proposal;
+  if (proposal.folderId !== 'module-1' || (!proposal.ctdSection && !module1Role)) return proposal;
+  const regional = regionalModule1(module1Role, input.jurisdiction, input.applicationKind ?? null);
+  // A document the US record gives no heading (an RMP) is not said to have "no section" when its region gives one.
+  const base = proposal.ctdSection ? proposal.rationale : 'The file name names a Module 1 document.';
+  const rationale = `${base} ${regional.sentence}`;
+  if (regional.code) return { ...proposal, ctdSection: regional.code, rationale };
+  return { ...proposal, ctdSection: null, confidence: 'medium', needsReview: true, rationale };
+}
+
+/** The region's heading for a document with this role, or null and why. Never a nearest match. */
+function regionalModule1(
+  role: DocumentRole | undefined,
+  jurisdiction: CanonicalRegion | null,
+  kind: string | null,
+): { code: string | null; sentence: string } {
+  const unplaced = 'so no section is proposed. A person places it.';
+  if (jurisdiction !== 'EU' && jurisdiction !== 'JP') {
+    return {
+      code: null,
+      sentence: jurisdiction
+        ? `Module 1 is regional, and the ${jurisdiction} Module 1 is not modelled here, ${unplaced}`
+        : `Module 1 is regional, and the project's agency names no region whose Module 1 is modelled here, ${unplaced}`,
+    };
+  }
+  if (!role) return { code: null, sentence: `The rule that matched gives the US Module 1 heading and no ${jurisdiction} one, ${unplaced}` };
+  const placed = soleModule1Placement(role, jurisdiction, (kind ?? undefined) as ApplicationKind | undefined);
+  if (!placed) {
+    const application = kind ? ` in this application (${kind.toUpperCase()})` : '';
+    return { code: null, sentence: `The ${jurisdiction} Module 1 holds no single heading for this document${application}, ${unplaced}` };
+  }
+  return { code: placed.code, sentence: `Module 1 follows the project's region: ${jurisdiction} ${placed.code}, ${placed.title}.` };
 }
 
 // ─── The vocabulary a filing decision is held to ──────────────────────────────
@@ -500,17 +565,40 @@ export function folderLabel(view: VaultViewId, folderId: string | null): string 
  * ingest path and the read path cannot drift.
  */
 export async function resolveVaultView(programId: string, orgId: number, executor: RequestSqlClient = pool): Promise<VaultViewId> {
+  return (await resolveVaultFilingContext(programId, orgId, executor)).view;
+}
+
+/** What a program's settings select for filing: its vault view, and the region and application of its Module 1. */
+export interface VaultFilingContext {
+  view: VaultViewId;
+  /** canonicalRegionOf(primary_agency): 'FDA' → 'US', 'HEALTH_CANADA' → 'CA'; null when it names no region. */
+  jurisdiction: CanonicalRegion | null;
+  /** program_type, lower case; null when none is recorded. */
+  applicationKind: string | null;
+}
+
+/** The view resolveVaultView gives, with the region and application read in the same query (S6, 2026-11-05). */
+export async function resolveVaultFilingContext(
+  programId: string,
+  orgId: number,
+  executor: RequestSqlClient = pool,
+): Promise<VaultFilingContext> {
   try {
     const projRes = await executor.query(
-      `SELECT product_type FROM regulatory_programs
+      `SELECT product_type, primary_agency, program_type FROM regulatory_programs
         WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
         LIMIT 1`,
       [programId, orgId],
     );
-    const productType = typeof projRes.rows[0]?.product_type === 'string' ? projRes.rows[0].product_type : null;
+    const row = projRes.rows[0];
+    const productType = typeof row?.product_type === 'string' ? row.product_type : null;
+    const region = {
+      jurisdiction: canonicalRegionOf(textColumn(row?.primary_agency)) ?? null,
+      applicationKind: textColumn(row?.program_type)?.toLowerCase() ?? null,
+    };
     const projSegs = productType ? productTypesToSegments([productType]) : [];
-    if (projSegs.length > 0) return projSegs[0];
-    return await resolveOrgVaultView(orgId, executor);
+    if (projSegs.length > 0) return { view: projSegs[0], ...region };
+    return { view: await resolveOrgVaultView(orgId, executor), ...region };
   } catch (err) {
     // A missing regulatory_programs table (fresh env) degrades to the service
     // view — the classifier still runs, it just files against TMF folders.
@@ -520,8 +608,13 @@ export async function resolveVaultView(programId: string, orgId: number, executo
     logger.warn('resolveVaultView degraded to service view', {
       err: err instanceof Error ? err.message : String(err),
     });
-    return 'service';
+    return { view: 'service', jurisdiction: null, applicationKind: null };
   }
+}
+
+/** A non-blank text column, trimmed; null otherwise. */
+function textColumn(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
 /** The org-level vault view (union of its programs' product types) — for

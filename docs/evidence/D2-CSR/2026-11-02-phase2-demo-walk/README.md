@@ -240,6 +240,13 @@ study does not have.
 
 ### Before the demo: the data and the prepared CSR
 
+*Updated 2026-11-05 to the app on trunk after F1, F5, F6, F9 and B7 (re-walked as
+`../../DEMO/2026-11-05-csr-lifecycle/README.md`, "Re-walk after the fixes"). Migrate the demo database from the
+current set first (`node scripts/db/deploy-migrate.mjs`): a database migrated before 2026-10-31 answers 500 on the
+study data. A local server's `ALLOWED_ORIGINS` must name its own URL (for example
+`ALLOWED_ORIGINS=http://127.0.0.1:5200,http://localhost:5200`), or sign-in and `demo:seed` are refused with
+`CORS_ORIGIN_BLOCKED`.*
+
 5. **Fetch the pilot files** with `scripts/cre/fetch-cdisc-pilot-adam.mjs`. Attribute CDISC; do not modify the
    files or charge for them.
 6. **Upload into the project's Vault:** ADSL, ADAE, ADLBC, ADLBH and ADVS (`.xpt`), define.xml, then the efficacy
@@ -248,22 +255,25 @@ study does not have.
 7. **Approve each of the seven files in the Vault:** the author sends it for review naming the reviewer and the
    approver, the reviewer signs the review, the approver approves. A few minutes per file.
 8. **Create the CSR document:** Author → Find or start a document in the editor → More document actions → New
-   document… → M5 → "GLOBAL · Clinical Study Report (CSR)". Two entries share that label (F1), and their order
-   depends on the project's registry. The right one shows **Build from the study's data** once created; if it does
-   not, delete it and take the other.
-9. **Freeze the study data** in that document: Clinical source → the manifest (not the efficacy file, F5) →
+   document… → M5 → "GLOBAL · Clinical Study Report (CSR)". It is listed once (F1, `23375e29e0`), and every CSR
+   document shows **Build from the study's data**.
+9. **Freeze the study data** in that document: Clinical source → the manifest (the picker lists clinical sources only, F5) →
    Preview clinical tables → Freeze as this document's study data. Take screenshots of §11.1 and §11.4 here if you
    want to show the tables; the preview is not reachable later without hiding the builds (F12).
 10. **Build CSR draft**, then wait. It drafts up to 119 headings one after another: tens of minutes.
-11. **Approve the headings** on the build board, as the reviewer or approver (not the requester). The board shows
-    no section text (F9), so read the drafts after step 12 and send back what is wrong.
-12. **Import approved sections into Authoring** (author). This creates a working copy, titled with the study's
-    title: the document that is reviewed, signed and filed (F6). The import's receipt lists each section that still
-    holds a "[…]" placeholder. Replace each one with the study's data, by hand: the scientific review refuses a
+11. **Approve the headings** on the build board, as the reviewer or approver (not the requester). Read each
+    heading's saved text first (**Read saved section text**, F9); the approval is offered only after that read, and
+    template text is not offered for review (F2).
+12. **Import approved sections into this document** (author), in the CSR's own panel. It previews what it will
+    write ("Into “…”, by ICH E3 section number. No other document is created"), asks the reason, writes the approved
+    headings into this CSR and shows its receipt in place; the editor shows the imported text (F6). There is no
+    working copy: this CSR is the document that is reviewed, signed and filed. A section someone edited since is
+    left as it is and reported. The receipt lists each section that still holds a "[…]" placeholder. Replace each one with the study's data, by hand: the scientific review refuses a
     section that still holds one, so the CSR cannot be approved until it is gone.
 13. **Build narratives** (seconds) and **Assemble CSR files**. Supply each blocking §16 appendix from the Vault
     (PDF) or declare it not applicable with a reason; 16.1.x and 16.3 come only from the sponsor.
-14. **Send the working copy for review** to the reviewer. In Submission Center, create sequence 0000 for the
+14. **Send the CSR for review** to the reviewer (More document actions → Send for review). Until a reviewer
+    approves it, Freeze and E-sign say "Needs its scientific review first" (B7). In Submission Center, create sequence 0000 for the
     project's submission.
 15. **The compile will refuse** without the agency's application number, a bound sponsor and its D-U-N-S number.
     The pilot has none; do not type one. End the demo at placement, or show the refusal.
@@ -276,11 +286,12 @@ study does not have.
 3. **The prepared CSR.** Open it and expand **Build from the study's data**. Study data shows the frozen entry.
    Show the build's section review, the narratives (95 of 95, each listing what the source does not record) and
    the CSR files with their gaps.
-4. **The working copy** (not walked here: needs a real build). Show the drafted text beside the tables.
-5. **Review**, as the reviewer: the project's **Review** tab → the working copy → **Record review decision** →
+4. **The CSR's imported sections** (needs a real build for drafted text). Show the drafted text beside the tables.
+5. **Review**, as the reviewer: the project's **Review** tab → the CSR → **Record review decision** →
    **Approve**. In the CSR scientific review, tick "Study data the imported CSR build was drafted from" (fixed
    today) → **Read the retained tables** → map each figure to its cell → attest → **Record approval**.
-6. **E-sign** as the approver (not walked here). Then **Place into filing** (5.3.5.1, Study id, STF file-tag) or
+6. **E-sign** as the approver, once the review is recorded (before that, the bar says "Needs its scientific review
+   first"; not walked here: needs a real build). Then **Place into filing** (5.3.5.1, Study id, STF file-tag) or
    **Place CSR files** from the assembly into sequence 0000.
 
 ### What not to do live

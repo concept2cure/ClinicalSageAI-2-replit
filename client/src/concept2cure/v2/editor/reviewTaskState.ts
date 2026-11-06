@@ -143,6 +143,9 @@ const CSR_GATED_MEANINGS: ReadonlySet<EsigMeaning> = new Set(['authorship', 'app
 export const CSR_REVIEW_FIRST =
   'This CSR is frozen, or signed as author or approver, only after its scientific review: a reviewer approves this ' +
   'saved version with each reported result mapped to its table cell. Send it for review, then sign once it is approved.';
+/** The same refusal, as the editor bar shows it beside the disabled control: one line. The full sentence stays the
+ * control's title and the signing dialog's refusal (the bar had wrapped it into a paragraph between Freeze and E-sign). */
+export const CSR_REVIEW_FIRST_NOTE = 'Needs its scientific review first';
 
 /** The sentence the gate will refuse with; null when it will not, or when the body is not a reading of this document's reviews. */
 export function csrReviewFirst(body: unknown, docId: string): string | null {

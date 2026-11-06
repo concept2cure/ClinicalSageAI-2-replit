@@ -71,7 +71,7 @@ import { notifyTaskEvent } from '../tasking/task-side-effects.js';
 import {
   classifyForFiling,
   filingVocabularyRefusal,
-  resolveVaultView,
+  resolveVaultFilingContext,
   isFolderInView,
   folderLabel,
 } from './vault-filing.service.js';
@@ -397,8 +397,9 @@ async function admitVaultDocument(
      not, the deterministic classifier proposes ('suggested', with confidence
      and rationale), and a file the rules cannot place stays visibly
      'unfiled'. The proposal never overwrites documentType — a filename is
-     not grounds to change a regulatory type field (see useVaultUpload). */
-  const vaultView = await resolveVaultView(args.programId, orgId);
+     not grounds to change a regulatory type field (see useVaultUpload).
+     The project's region and application select its Module 1 heading (S6). */
+  const { view: vaultView, jurisdiction, applicationKind } = await resolveVaultFilingContext(args.programId, orgId);
   let placement: {
     folderId: string | null;
     evidenceKind: string | null;
@@ -432,7 +433,7 @@ async function admitVaultDocument(
       title: args.documentTitle,
       mimeType,
       extractedText,
-      view: vaultView,
+      view: vaultView, jurisdiction, applicationKind,
       documentType: args.documentType,
     });
     placement = {

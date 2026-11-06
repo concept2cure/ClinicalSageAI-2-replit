@@ -1,0 +1,35 @@
+# US results are unchanged, byte for byte, against trunk (S6 v6, 2026-11-05)
+#
+# Method: trunk's server/services/vault/vault-filing.service.ts (git show HEAD:...) was copied to a scratch file with
+# its relative imports made absolute, and imported beside the changed service. For every view x file name x body
+# text x declared type below, the trunk output (no region) is compared, as JSON, with the changed output given
+# (a) no region, (b) jurisdiction US + application nda, (c) jurisdiction US + application ind.
+#
+# Script:
+#   import * as oldF from '/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/5604a993-5de5-57da-baa3-135913cf4da5/scratchpad/old-vault-filing.service.ts';
+#   import * as newF from '/home/user/ClinicalSageAI-2-replit/server/services/vault/vault-filing.service.ts';
+#   const names = [
+#     'FDA-Day74-filing-communication.pdf','form-fda-1571.pdf','form 356h.pdf','index.xml','CTD-house-style-template.docx',
+#     '510k-eSTAR-package-v2.zip','clinical-evaluation-report-2026.pdf','RMF-risk-management-file-v3.pdf','BX-204-IFU-EN.pdf',
+#     'MDR-vigilance-complaint-0218.pdf','SOP-document-control.docx','stability-report-24month.pdf','toxicology-study-9001.pdf',
+#     'CSR-pivotal-phase-3.pdf','protocol-amendment-3.docx','informed-consent-form-site-12.pdf','randomization-list-sealed.xlsx',
+#     'USPI-draft-labeling-v4.docx','SmPC-draft-labelling-v2.docx','package-insert-draft-ja.docx','cover letter.pdf',
+#     'patent certification.pdf','risk management plan.pdf','Module 1 administrative notes.pdf','Clinical Overview.pdf',
+#     'document-final-2.pdf','scan0001.pdf','',
+#   ];
+#   const texts = [null, "Investigator's Brochure, edition 7.", 'Clinical Study Report', 'Statistical Analysis Plan', 'Instructions for use'];
+#   const views = ['pharma','biotech','device','ivd','service'] as const;
+#   const types = [undefined, 'OTHER', 'IB', 'CSR', 'MODULE_2', 'CORRESPONDENCE'];
+#   let n = 0, diff = 0;
+#   for (const view of views) for (const fileName of names) for (const extractedText of texts) for (const documentType of types) {
+#     const before = JSON.stringify(oldF.classifyForFiling({ fileName, view, extractedText, documentType }));
+#     for (const after of [
+#       JSON.stringify(newF.classifyForFiling({ fileName, view, extractedText, documentType })),
+#       JSON.stringify(newF.classifyForFiling({ fileName, view, extractedText, documentType, jurisdiction: 'US', applicationKind: 'nda' })),
+#       JSON.stringify(newF.classifyForFiling({ fileName, view, extractedText, documentType, jurisdiction: 'US', applicationKind: 'ind' })),
+#     ]) { n++; if (after !== before) { diff++; if (diff < 5) console.log('DIFF', view, fileName, extractedText, documentType, before, after); } }
+#   }
+#   console.log(JSON.stringify({ comparisons: n, differences: diff }));
+#
+# Result:
+{"comparisons":12600,"differences":0}

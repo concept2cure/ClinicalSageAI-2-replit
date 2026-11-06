@@ -25,7 +25,7 @@
  * read; the re-reads stop once every build has ended. A failed build says why
  * it stopped (the list's `failure`, F10 of the 2026-11-02 demo walk).
  */
-import React, { useCallback, useEffect, useId, useState } from 'react';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { CsrIntoDocumentOutcome, CsrIntoDocumentReceipt } from '@shared/authoring/source-import';
 import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { apiCall, apiErrorText } from '../apiCall';
@@ -227,15 +227,15 @@ function ReceiptList({ receipt }: { receipt: CsrIntoDocumentReceipt }) {
 }
 
 /** The stated reason and the import, while the preview stands; Close once it is done. */
-function ImportControls({ open, busy, reason, setReason, ready, done, onImport, onClose }: {
+function ImportControls({ open, busy, reason, setReason, ready, done, onImport, onClose, reasonRef }: {
   open: boolean; busy: boolean; reason: string; setReason: (value: string) => void; ready: boolean; done: boolean;
-  onImport: () => void; onClose: () => void;
+  onImport: () => void; onClose: () => void; reasonRef: React.RefObject<HTMLTextAreaElement | null>;
 }) {
   const reasonId = useId();
   return <>
     {open && <div>
       <label htmlFor={reasonId}>Reason for importing ({GOVERNED_REASON_MIN}–{GOVERNED_REASON_MAX} characters, recorded with each section)</label>
-      <textarea id={reasonId} className="c2c-input" rows={2} style={{ width: '100%' }} maxLength={GOVERNED_REASON_MAX}
+      <textarea id={reasonId} ref={reasonRef} className="c2c-input" rows={2} style={{ width: '100%' }} maxLength={GOVERNED_REASON_MAX}
         value={reason} disabled={busy} onChange={e => setReason(e.target.value)} />
     </div>}
     <div style={{ display: 'flex', gap: 8 }}>
@@ -255,7 +255,14 @@ function ImportIntoDocument({ programId, documentId, jobId, sectionNumbers, onCl
   const ready = !!preview && !done && !busy && trimmed >= GOVERNED_REASON_MIN && trimmed <= GOVERNED_REASON_MAX;
   const submit = async () => { if (ready && await write(reason.trim())) onImported?.(); };
   const shown = done ?? preview;
-  return <section aria-label="Import into this document" style={{ display: 'grid', gap: 6, marginTop: 8 }}>
+  /* The panel opens below the build's section list (119 headings), so it is brought to the person: into view when
+     it opens, and the reason field focused once the preview is shown (R-1, rehearsal 2026-11-05: on stage the click
+     looked as though it did nothing). Focus moves only once per preview, never while the person is typing. */
+  const box = useRef<HTMLElement>(null);
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => { box.current?.scrollIntoView?.({ block: 'start' }); }, []);
+  useEffect(() => { if (preview) reasonRef.current?.focus(); }, [preview]);
+  return <section ref={box} aria-label="Import into this document" style={{ display: 'grid', gap: 6, marginTop: 8 }}>
     <strong>Import approved sections into this document</strong>
     {shown && <p>Into “{shown.into.title}”, by ICH E3 section number. No other document is created.</p>}
     {!shown && !error && <p role="status">Reading what the import would write…</p>}
@@ -263,7 +270,7 @@ function ImportIntoDocument({ programId, documentId, jobId, sectionNumbers, onCl
     {error && <p role="alert">{error}</p>}
     {done && <p role="status">Imported. {done.sections.filter(s => s.outcome === 'written').length} section(s) written into this document.</p>}
     <ImportControls open={!!preview && !done} busy={busy} reason={reason} setReason={setReason} ready={ready} done={!!done}
-      onImport={() => void submit()} onClose={onClose} />
+      onImport={() => void submit()} onClose={onClose} reasonRef={reasonRef} />
   </section>;
 }
 

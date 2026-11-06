@@ -4,7 +4,7 @@
 const {
   fs, path, crypto, BASE, DATA, PROJECT_TITLE, CSR_TITLE, PEOPLE, DATASETS, DEFINE, EFFICACY, MANIFEST, APPROVE, CSR_ENTRY,
   state, expect, sleep, saveState, shot, toTop, step, api, retrying, waitFor,
-  openNewDocument, csrEntries, openCsr, checkCsrCatalog, openVersions, openWorkingCopy,
+  openNewDocument, csrEntries, openCsr, checkCsrCatalog, openVersions,
 } = require('./walk-common.cjs');
 
 // ---------------------------------------------------------------- prepare: project
@@ -376,38 +376,41 @@ async function prepareHeadingReview() {
     readShot, screenshot: await shot(PEOPLE.approver.page, '13-headings-approved.png') };
 }
 
-/** The author imports the approved headings: a working copy, titled with the study's title (F6). */
+/**
+ * F6 (2026-11-05): the author imports the approved headings into the CSR document itself, by ICH E3 number.
+ * The panel previews what it will write, asks the reason, writes, and shows its receipt in place; no other
+ * document is created, and the editor shows the imported text without being reopened.
+ */
 async function importApproved(page) {
   const panel = await openCsr(page);
-  const button = panel.getByRole('button', { name: /Import approved sections into Authoring/ });
+  const button = panel.getByRole('button', { name: /Import approved sections into this document/ });
   await button.scrollIntoViewIfNeeded();
   await button.click();
-  const dlg = page.locator('[data-testid="source-import-dialog"]');
-  await dlg.waitFor();
-  await dlg.getByLabel('Reason for creating a working copy').fill('Approved CSR sections imported for medical writing and review.');
-  await dlg.getByRole('button', { name: 'Create working copy' }).click();
-  const receipt = dlg.locator('[data-testid="source-import-result"]');
-  await receipt.waitFor({ timeout: 120_000 });
-  const text = await receipt.innerText();
+  const box = panel.locator('section[aria-label="Import into this document"]');
+  await box.getByRole('list', { name: 'What the import will do' }).waitFor({ timeout: 120_000 });
+  const preview = await box.innerText();
+  await shot(page, '14-import-preview.png');
+  await box.getByLabel(/Reason for importing/).fill('Approved CSR sections imported into the CSR for medical writing and review.');
+  await box.getByRole('button', { name: 'Import into this document' }).click();
+  await box.getByText(/^Imported\. \d+ section\(s\) written into this document\./).waitFor({ timeout: 120_000 });
+  const receipt = await box.innerText();
   const shotPath = await shot(page, '14-import-receipt.png');
-  await dlg.getByRole('button', { name: /Open working copy/ }).click();
-  await page.waitForTimeout(4000);
-  // B2: the receipt's "Open working copy" looks the copy up in the editor's document list read before the import.
-  const missed = await page.getByText(/Couldn’t open the linked document/).isVisible().catch(() => false);
-  const missedShot = missed ? await shot(page, '14b-open-working-copy-from-receipt.png') : null;
-  return { receipt: text.split('\n').slice(0, 12), shotPath, openFromReceipt: missed ? 'not found in the editor’s document list (B2)' : 'opened', missedShot };
+  const written = Number((receipt.match(/Imported\. (\d+) section/) || [])[1] || 0);
+  return { preview: preview.split('\n').slice(0, 12), receipt: receipt.split('\n').slice(0, 14), written, shotPath };
 }
 
 async function prepareImport() {
   const page = PEOPLE.author.page;
-  if (state.data.workingCopyTitle) return { outcome: 'skipped', workingCopy: state.data.workingCopyTitle };
+  if (state.data.importedIntoCsr) return { outcome: 'skipped', written: state.data.importedIntoCsr };
   const approved = (await headingsOf(page)).filter((h) => h.state === 'approved');
   if (!approved.length) return { outcome: 'blocked', blockedBy: 'no approved heading to import (no model key)' };
   const r = await retrying(page, () => importApproved(page), 1);
-  state.data.workingCopyTitle = (r.receipt.find((l) => /working copy (saved|ready)/.test(l)) || '').replace(/^.*: “|”\.?$/g, '');
+  state.data.importedIntoCsr = r.written;
   saveState();
-  await retrying(page, () => openWorkingCopy(page));
-  return { ...r, workingCopy: state.data.workingCopyTitle, screenshot: await shot(page, '15-working-copy-in-editor.png') };
+  // The documents in the project: the import created none (RULE 4: one document for one CSR).
+  const docs = await api(page, 'GET', `/api/authoring/docs?programId=${state.data.programId}`);
+  const csrs = (docs.body?.documents ?? []).filter((d) => /Clinical Study Report|CSR/i.test(String(d.title ?? '')));
+  return { ...r, csrDocumentsInProject: csrs.length, screenshot: await shot(page, '15-imported-text-in-the-csr.png') };
 }
 
 async function narrativeRun(page) {
@@ -474,15 +477,16 @@ async function prepareAssembly() {
 
 // ---------------------------------------------------------------- prepare: send for review, sequence 0000, compile
 
-async function sendWorkingCopy(page) {
-  await openWorkingCopy(page);
+/** The CSR document itself goes for review (F6: the imported sections are in it). */
+async function sendCsrForReview(page) {
+  await openCsr(page);
   await page.getByRole('button', { name: 'More document actions' }).click();
   await page.getByRole('menuitem', { name: /Send for review/ }).click();
   const dlg = page.getByRole('dialog').last();
   await dlg.getByRole('checkbox', { name: PEOPLE.reviewer.name }).check();
-  await dlg.locator('#sfr-reason').fill('The imported CSR working copy, for scientific review against the study data.');
+  await dlg.locator('#sfr-reason').fill('The CSR with its imported sections, for scientific review against the study data.');
   await dlg.locator('#sfr-due').fill(new Date(Date.now() + 14 * 86_400_000).toISOString().slice(0, 10));
-  await shot(page, '18-send-working-copy-for-review.png');
+  await shot(page, '18-send-the-csr-for-review.png');
   await dlg.locator('[data-testid="sfr-submit"]').click();
   await page.locator('[data-testid="sfr-done"]').waitFor({ timeout: 60_000 });
   const receipt = await page.getByRole('dialog').last().innerText();
@@ -493,10 +497,10 @@ async function sendWorkingCopy(page) {
 
 async function prepareSendForReview() {
   const page = PEOPLE.author.page;
-  if (!state.data.workingCopyTitle) return { outcome: 'blocked', blockedBy: 'no working copy (nothing approved to import)' };
-  if (state.data.sentForReview) return { outcome: 'skipped' };
-  const r = await retrying(page, () => sendWorkingCopy(page), 1);
-  state.data.sentForReview = true;
+  if (!state.data.importedIntoCsr) return { outcome: 'blocked', blockedBy: 'nothing imported into the CSR (nothing approved to import)' };
+  if (state.data.csrSentForReview) return { outcome: 'skipped' };
+  const r = await retrying(page, () => sendCsrForReview(page), 1);
+  state.data.csrSentForReview = true;
   saveState();
   return r;
 }
@@ -545,12 +549,15 @@ async function prepare() {
   await step('Editor: New document → M5 lists the CSR once (F1)', checkCsrCatalog, { page: PEOPLE.author.page });
   await step('Editor: the CSR created from New document shows "Build from the study’s data"', prepareCsrDocument, { critical: true, page: PEOPLE.author.page });
   await step('Study data: manifest chosen, tables previewed, frozen in the document', prepareFreeze, { critical: true, page: PEOPLE.author.page });
+  // DEMO_PREPARE_UNTIL=freeze stops here: the study is ready for its CSR build, which a person starts with their own
+  // model key (the Codespace's setup, .devcontainer/post-start.sh, never spends that key by itself).
+  if (process.env.DEMO_PREPARE_UNTIL === 'freeze') return;
   await step('Build CSR draft, waited to its end', prepareBuild, { critical: true, page: PEOPLE.author.page });
   await step('Section review: the requester sends drafted headings, the approver reads and approves them', prepareHeadingReview, { page: PEOPLE.approver.page });
-  await step('Import approved sections into Authoring (a working copy)', prepareImport, { page: PEOPLE.author.page });
+  await step('Import approved sections into this CSR document (F6)', prepareImport, { page: PEOPLE.author.page });
   await step('Build narratives', prepareNarratives, { page: PEOPLE.author.page });
   await step('Assemble CSR files', prepareAssembly, { page: PEOPLE.author.page });
-  await step('Send the working copy for review (author → reviewer)', prepareSendForReview, { page: PEOPLE.author.page });
+  await step('Send the CSR for review (author → reviewer)', prepareSendForReview, { page: PEOPLE.author.page });
   await step('Submission Center: sequence 0000', prepareSequence, { page: PEOPLE.author.page });
   await step('Compile eCTD: refused, and why', prepareCompile, { page: PEOPLE.author.page });
 }

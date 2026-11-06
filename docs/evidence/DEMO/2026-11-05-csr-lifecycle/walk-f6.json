@@ -1,0 +1,194 @@
+{
+  "base": "http://127.0.0.1:5200",
+  "mode": "prepare",
+  "startedAt": "2026-11-05T13:47:14.866Z",
+  "steps": [
+    {
+      "name": "project: found or created through New project",
+      "outcome": "skipped",
+      "ms": 4296,
+      "programId": "689d47b9-1a7c-405f-a18d-11d0e829fd9a",
+      "screenshot": "screenshots/f6-00-project.png"
+    },
+    {
+      "name": "Vault: upload the study files and the manifest (POST /api/vault/ingest)",
+      "outcome": "skipped",
+      "ms": 0,
+      "uploaded": 0,
+      "files": [
+        "adsl.xpt",
+        "adae.xpt",
+        "adlbc.xpt",
+        "adlbh.xpt",
+        "advs.xpt",
+        "define.xml",
+        "cdiscpilot01-efficacy-results.json",
+        "cdiscpilot01-adam-bundle.json"
+      ]
+    },
+    {
+      "name": "Vault: send, review-sign and approve each of the seven files (three people)",
+      "outcome": "skipped",
+      "ms": 5389,
+      "done": {
+        "adsl.xpt": [],
+        "adae.xpt": [],
+        "adlbc.xpt": [],
+        "adlbh.xpt": [],
+        "advs.xpt": [],
+        "cdiscpilot01-efficacy-results.json": [],
+        "cdiscpilot01-adam-bundle.json": []
+      },
+      "screenshot": "screenshots/f6-04-vault-manifest-approved.png"
+    },
+    {
+      "name": "Editor: New document → M5 lists the CSR once (F1)",
+      "outcome": "pass",
+      "ms": 6516,
+      "csrEntries": 1,
+      "screenshot": "screenshots/f6-05-new-document-m5-csr-entry.png"
+    },
+    {
+      "name": "Editor: the CSR created from New document shows \"Build from the study’s data\"",
+      "outcome": "skipped",
+      "ms": 6037,
+      "documentId": "3ff5466e-3f3c-40e7-8824-187afd153253",
+      "buildFromStudyData": true,
+      "screenshot": "screenshots/f6-06-csr-in-the-editor.png"
+    },
+    {
+      "name": "Study data: manifest chosen, tables previewed, frozen in the document",
+      "outcome": "skipped",
+      "ms": 6531,
+      "studyDataId": "b66164b4-fc68-435d-b807-78f118d93afd",
+      "screenshot": "screenshots/f6-08-study-data-frozen.png"
+    },
+    {
+      "name": "Build CSR draft, waited to its end",
+      "outcome": "blocked",
+      "ms": 36680,
+      "blockedBy": "no model key (demo-mode replies are refused)",
+      "jobId": 2,
+      "status": "failed",
+      "progress": 26,
+      "failure": "Not complete: §4, §6, §9.2, §9.3.1, §9.3.2, §9.3.3, §9.4.1, §9.4.2, §9.4.3, §9.4.4, §9.4.5, §9.4.6 and 39 more have no saved text. The sections already saved are kept.",
+      "waitedMs": 36474,
+      "screenshot": "screenshots/f6-10-build-finished.png"
+    },
+    {
+      "name": "Section review: the requester sends drafted headings, the approver reads and approves them",
+      "outcome": "skipped",
+      "ms": 8056,
+      "headings": 119,
+      "drafted": 4,
+      "templateWithDataMissing": 16,
+      "notDrafted": 99,
+      "approved": 4,
+      "approvedNums": [
+        "1",
+        "8",
+        "12.3.2",
+        "14.3.3"
+      ],
+      "readShot": null,
+      "screenshot": "screenshots/f6-13-headings-approved.png"
+    },
+    {
+      "name": "Import approved sections into this CSR document (F6)",
+      "outcome": "skipped",
+      "ms": 0,
+      "written": 3
+    },
+    {
+      "name": "Build narratives",
+      "outcome": "skipped",
+      "ms": 7305,
+      "status": "complete",
+      "waitedMs": 6804,
+      "composed": 95,
+      "selected": 95,
+      "refused": 0,
+      "sectionsWritten": [
+        "14.3.3",
+        "12.3.2"
+      ],
+      "statusLine": "95 of 95 narratives composed from the ADaM rows; §14.3.3 and §12.3.2 written.",
+      "screenshot": "screenshots/f6-16-narratives.png"
+    },
+    {
+      "name": "Assemble CSR files",
+      "outcome": "skipped",
+      "ms": 5488,
+      "waitedMs": 5302,
+      "status": "assembled",
+      "resultStatus": "incomplete",
+      "leaves": 6,
+      "missingAppendices": [
+        "16.1.1",
+        "16.1.2",
+        "16.1.3",
+        "16.1.4",
+        "16.1.5",
+        "16.1.6",
+        "16.1.7",
+        "16.1.8",
+        "16.1.9",
+        "16.1.10",
+        "16.1.11",
+        "16.1.12",
+        "16.2.2",
+        "16.2.3",
+        "16.2.5",
+        "16.2.6",
+        "16.2.8",
+        "16.3"
+      ],
+      "placeholderSections": 16,
+      "linksChecked": 181,
+      "structureFindings": 1,
+      "bodyOutlineDepth": 3,
+      "bodyGaps": 53,
+      "verdict": [
+        "Assembled, incomplete: see the gaps below. Contents to 3 level(s), 181 link(s) checked, 1 failed.",
+        "Section 2 still holds a data placeholder (text in square brackets). Blocks placement.",
+        "Section 5.1 still holds a data placeholder (text in square brackets). Blocks placement.",
+        "Section 5.2 still holds a data placeholder (text in square brackets). Blocks placement.",
+        "Section 5.3 still holds a data placeholder (text in square brackets). Blocks placement.",
+        "Section 7 still holds a data placeholder (text in square brackets). Blocks placement.",
+        "Section 9.1 still holds a data placeholder (text in square brackets). Blocks placement.",
+        "Section 9.3 still holds a data placeholder (text in square brackets). Blocks placement."
+      ],
+      "screenshot": "screenshots/f6-17-assembly.png"
+    },
+    {
+      "name": "Send the CSR for review (author → reviewer)",
+      "outcome": "skipped",
+      "ms": 0
+    },
+    {
+      "name": "Submission Center: sequence 0000",
+      "outcome": "skipped",
+      "ms": 2354,
+      "deviceCardOnThisIndProject": false,
+      "centerShot": "screenshots/f6-20a-submission-center-device-card.png",
+      "screenshot": "screenshots/f6-20-sequence-0000.png"
+    },
+    {
+      "name": "Compile eCTD: refused, and why",
+      "outcome": "pass",
+      "ms": 2426,
+      "compileStatus": "failed",
+      "firstReasons": [
+        "The package cannot be built yet: its project records no agency application number (record the number the agency assigned on the project; the project code is not one). Record it in Submission Center, Forms and letters (1571, cover letter, LOA), under Recorded applicant identity.",
+        "The package cannot be built yet: its project has no explicitly bound sponsor record (select the recorded applicant in Module 1 forms). Record it in Submission Center, Forms and letters (1571, cover letter, LOA), under Recorded applicant identity.",
+        "The package cannot be built yet: the bound sponsor records no usable D-U-N-S number (record its nine digits in the sponsor registry). Record it in Submission Center, Forms and letters (1571, cover letter, LOA), under Recorded applicant identity.",
+        "Required section 1.1.1 is missing"
+      ],
+      "reasonCount": 78,
+      "screenshot": "screenshots/f6-21-compile-refused.png"
+    }
+  ],
+  "apiErrors": [],
+  "outcome": "passed",
+  "finishedAt": "2026-11-05T13:48:48.759Z"
+}

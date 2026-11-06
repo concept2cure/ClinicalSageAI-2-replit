@@ -39,7 +39,7 @@ import { buildContextUsedEvent, memoryStatusOf } from '../turn-context-used';
 import { ALWAYS_ON_TOOLS, selectToolsForTurn } from '../tool-selection';
 import { describeToolPlan } from '../agentic-loop';
 import { presentStep } from '../step-presentation';
-import { buildMemoryContextForChat } from '../../memory-context-assembler';
+import { buildMemoryContextForChat, type MemoryContextAssemblerResult } from '../../memory-context-assembler';
 import { buildAssistantMetadata, refusalOf } from '../tool-trace';
 
 const steps = (...s: Array<[string, string]>) => s.map(([title, status]) => ({ title, status }));
@@ -150,6 +150,36 @@ describe('context_used states only what reached the model', () => {
     expect(memoryStatusOf({ memoryBlock: '', atoms: [], diagnostics: null })).toBe('unavailable');
   });
 
+  it('successful retrieval with every record omitted by the budget is unavailable, never "none"', () => {
+    const memory: MemoryContextAssemblerResult = {
+      memoryBlock: 'Memory history is incomplete because the prompt budget omitted the matching records.',
+      atoms: [{ id: 1, layer: 'project_memory', title: 'Qualified release decision', content: 'A complete decision too long for this prompt.' }],
+      read: [],
+      diagnostics: {
+        requestedLimitPerLayer: 4,
+        appliedMaxChars: 1000,
+        minSimilarity: 0.6,
+        maxAgeDays: 180,
+        droppedByForgetting: 0,
+        droppedByDeduplication: 0,
+        trimmed: true,
+        layerOutcomes: { workingMemory: 'empty', clientMemory: 'skipped', projectMemory: 'ok' },
+      },
+    };
+
+    expect(memoryStatusOf(memory)).toBe('unavailable');
+    expect(buildContextUsedEvent({ requestedUploads: 0, uploads: [], memory })).toMatchObject({
+      memory: [], memoryStatus: 'unavailable',
+    });
+  });
+
+  it('successful retrieval with no matches still reports none', async () => {
+    const memory = await buildMemoryContextForChat({ threadId: 'thread-empty', organizationId: 9, projectId: 42, query: 'no matching memory' });
+    expect(memory.read).toEqual([]);
+    expect(memory.diagnostics.trimmed).toBe(false);
+    expect(memoryStatusOf(memory)).toBe('none');
+  });
+
   it('lists the memory items the assembler rendered, and drops what the budget cut', async () => {
     mem.project.mockResolvedValueOnce({
       entries: [
@@ -168,14 +198,21 @@ describe('context_used states only what reached the model', () => {
       query: 'estimand',
       maxChars: 1000,
     });
-    const titles = (result.read ?? []).map(r => r.title);
-    expect(titles).toContain('Estimand decision');
-    expect(result.read?.find(r => r.title === 'Estimand decision')?.documentName).toBe('Type B minutes');
-    // The block is capped at 1000 characters; the fourth item's line starts
-    // past that, so it did not reach the model and is not reported as read.
-    expect(titles).not.toContain('Late item');
+    const admitted = [
+      { layer: 'project_memory', title: 'Estimand decision', documentName: 'Type B minutes' },
+      { layer: 'project_memory', title: 'Stability arm' },
+    ];
+    expect(result.read).toEqual(admitted);
+    expect(result.memoryBlock).toContain('x'.repeat(390));
+    expect(result.memoryBlock).not.toContain('y'.repeat(80));
+    expect(result.memoryBlock).not.toContain('z'.repeat(80));
+    expect(result.memoryBlock.length).toBeLessThanOrEqual(1000);
+    expect(result.memoryBlock.trimEnd().endsWith('--- END PERSISTENT MEMORY CONTEXT ---')).toBe(true);
     expect(result.diagnostics.trimmed).toBe(true);
     expect(memoryStatusOf(result)).toBe('read');
+    expect(buildContextUsedEvent({ requestedUploads: 0, uploads: [], memory: result })).toMatchObject({
+      memory: admitted, memoryStatus: 'read',
+    });
   });
 });
 

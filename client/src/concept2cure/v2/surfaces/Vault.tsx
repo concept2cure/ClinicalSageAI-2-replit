@@ -50,9 +50,12 @@ import {
   VAULT_CLASSIFICATION_LABELS,
   VAULT_DOC_KINDS,
   VAULT_INGEST_DOCUMENT_TYPES,
+  docKindsForView,
+  isVaultViewId,
   vaultDocKindLabel,
   vaultIngestTypeLabel,
   type VaultIngestDocumentType,
+  type VaultViewId,
 } from '@shared/constants/domain/vault-taxonomy';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
@@ -749,6 +752,19 @@ const TYPE_OPTIONS: FilterOption[] = VAULT_INGEST_DOCUMENT_TYPES.map((t) => ({ v
 const FILING_OPTIONS: FilterOption[] = (['unfiled', 'suggested', 'confirmed'] as const).map((s) => ({ value: s, label: vaultStatus(s).label }));
 const CLASSIFICATION_OPTIONS: FilterOption[] = VAULT_CLASSIFICATIONS.map((c) => ({ value: c, label: VAULT_CLASSIFICATION_LABELS[c] }));
 const KIND_OPTIONS: FilterOption[] = VAULT_DOC_KINDS.map((k) => ({ value: k.value, label: k.one }));
+
+/** The views whose filings are CTD-numbered, so a document there carries a CTD section (S6 V9). */
+export const CTD_NUMBERED_VIEWS: ReadonlySet<VaultViewId> = new Set<VaultViewId>(['pharma', 'biotech']);
+
+/**
+ * The evidence kinds a project's view files (docKindsForView), with any value the filters already hold, a saved view's,
+ * so a filter that narrows the list is never out of sight (S6 V9). With no view, as across projects, every kind.
+ */
+export function kindOptionsFor(view: VaultViewId | null, held: readonly string[] = []): FilterOption[] {
+  if (!view) return KIND_OPTIONS;
+  const own = new Set(docKindsForView(view).map((k) => k.value));
+  return KIND_OPTIONS.filter((o) => own.has(o.value as never) || held.includes(o.value));
+}
 const STAGE_OPTIONS: FilterOption[] = VAULT_STAGE_CHOICES.map((c) => ({ value: c.value, label: c.label, covers: c.stages }));
 
 /** The dimensions a select shows one value of, with the words for their values. */
@@ -784,12 +800,14 @@ export function hiddenFindFilters(value: VaultFindFilters, folderLabel: (id: str
  * field is left, and only once it reads as a section code; until then the row
  * says it is not applied, rather than filtering by something else.
  */
-function VaultFindFilterRow({ value, onChange, onClear, facets, folderLabel = (id) => id }: {
+function VaultFindFilterRow({ value, onChange, onClear, facets, folderLabel = (id) => id, view = null }: {
   value: VaultFindFilters; onChange: (next: VaultFindFilters) => void; onClear: () => void;
   /** The verified read's facet counts, or null when there are none to show. */
   facets?: unknown;
   /** A cabinet folder's words, for a folder the filters hold. */
   folderLabel?: (id: string) => string;
+  /** The open project's view, which selects the vocabulary offered (S6 V9); null across projects. */
+  view?: VaultViewId | null;
 }) {
   const hidden = hiddenFindFilters(value, folderLabel);
   const counts = (key: keyof VaultFindFilters) => (facets ? facetCounts(facets, key) : null);
@@ -811,12 +829,15 @@ function VaultFindFilterRow({ value, onChange, onClear, facets, folderLabel = (i
     if ((value.ctdSection?.[0] ?? null) !== code) set('ctdSection', code ? [code] : null);
   };
   const active = Object.keys(value).length > 0;
+  const kindOptions = kindOptionsFor(view, value.evidenceKind);
+  // A filing that is not CTD-numbered is offered no CTD section, unless one is already filtered on.
+  const offersCtd = !view || CTD_NUMBERED_VIEWS.has(view) || Boolean(value.ctdSection?.length);
   return (
     <div className="vd-facets" role="group" aria-label="Filter documents">
       <FindFilterSelect label="Type" value={one('documentType')} options={TYPE_OPTIONS} counts={counts('documentType')} onChange={(v) => set('documentType', v ? [v] : null)} />
       <FindFilterSelect label="Filing" value={one('placementStatus')} options={FILING_OPTIONS} counts={counts('placementStatus')} onChange={(v) => set('placementStatus', v ? [v] : null)} />
       <FindFilterSelect label="Classification" value={one('classification')} options={CLASSIFICATION_OPTIONS} counts={counts('classification')} onChange={(v) => set('classification', v ? [v] : null)} />
-      <FindFilterSelect label="Evidence kind" value={one('evidenceKind')} options={KIND_OPTIONS} counts={counts('evidenceKind')} onChange={(v) => set('evidenceKind', v ? [v] : null)} />
+      <FindFilterSelect label="Evidence kind" value={one('evidenceKind')} options={kindOptions} counts={counts('evidenceKind')} onChange={(v) => set('evidenceKind', v ? [v] : null)} />
       <FindFilterSelect
         label="Review"
         value={stageValue}
@@ -824,18 +845,20 @@ function VaultFindFilterRow({ value, onChange, onClear, facets, folderLabel = (i
         counts={counts('lifecycleStage')}
         onChange={(v) => set('lifecycleStage', VAULT_STAGE_CHOICES.find((c) => c.value === v)?.stages ?? null)}
       />
-      <label className="vd-facet">
-        <span className="vd-facet-l">CTD section</span>
-        <input
-          className="c2c-input"
-          value={ctd}
-          placeholder="e.g. 3.2.P"
-          aria-describedby={ctdRefused ? 'vd-filter-ctd-note' : undefined}
-          onChange={(e) => setCtd(e.target.value)}
-          onBlur={commitCtd}
-          onKeyDown={(e) => { if (e.key === 'Enter') commitCtd(); }}
-        />
-      </label>
+      {offersCtd && (
+        <label className="vd-facet">
+          <span className="vd-facet-l">CTD section</span>
+          <input
+            className="c2c-input"
+            value={ctd}
+            placeholder="e.g. 3.2.P"
+            aria-describedby={ctdRefused ? 'vd-filter-ctd-note' : undefined}
+            onChange={(e) => setCtd(e.target.value)}
+            onBlur={commitCtd}
+            onKeyDown={(e) => { if (e.key === 'Enter') commitCtd(); }}
+          />
+        </label>
+      )}
       {active && (
         <button type="button" className="btn ghost small" onClick={onClear}>
           Clear filters
@@ -1275,6 +1298,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   // The placeholder shows only before there is data to show. A re-read after a change keeps the
   // body mounted, so a confirmation held in it (a save, a post, a decision) stays on screen.
   const vault = vaultState.data;
+  // The project's view, which selects the vocabulary its upload and filters offer (S6 V9).
+  const vaultView = isVaultViewId(vault?.standard) ? vault.standard : null;
   /* The payload on screen when an upload settles: the document it recorded is
      in the re-read that follows, not in this one (see `pendingTarget`). */
   const latestVault = React.useRef(vault);
@@ -2745,6 +2770,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             onClear={() => { setFindFilters({}); setFilterReset((n) => n + 1); }}
             facets={!libraryMode && verifiedSearch ? searchState.data?.facets ?? null : null}
             folderLabel={(id) => (findFolder(tree, `cab-${id}`) ?? findFolder(tree, id))?.label ?? `the folder ${id}`}
+            view={libraryMode ? null : vaultView}
           />
           {/* Where the list is: the folder, or what is narrowing it. */}
           <div className="vd-breadcrumb">
@@ -2832,7 +2858,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                     {d.earlierVersion ? ` · ${d.ver}, earlier version` : ''}
                     {reviewText(d)}
                     {d.owner && d.owner !== '—' ? ` · ${d.owner}` : ''}
-                    {` · ${d.updated}`}
+                    {/* A search hit carries no relative time (searchHitToDoc): no separator for nothing (J2, 2026-11-06). */}
+                    {d.updated ? ` · ${d.updated}` : ''}
                   </span>
                 </button>
               ))}
@@ -2905,6 +2932,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         <VaultUploadStaging
           staging={staging}
           folders={uploadFolders}
+          view={vaultView}
           uploading={uploading}
           onChange={patchStaged}
           onRemove={(key) => setStaging((st) => st && { ...st, rows: st.rows.filter((r) => r.key !== key) })}
@@ -2948,6 +2976,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       }
       busy={filing}
       defaultOpen
+      onShowOutline={() => setView('library')}
     />
   );
 

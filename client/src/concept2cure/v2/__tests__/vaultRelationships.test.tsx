@@ -71,6 +71,22 @@ describe('related documents (critique 15)', () => {
     expect(rows[1].textContent).toContain('Investigator brochure v2.0 (in BX-302). A later version of it exists; this relationship names this one');
   });
 
+  /* S6 (2026-11-05): a relationship across clients, recorded before V3 refused one, is said, not hidden. */
+  it("names a relationship to another client's project as one the Vault no longer allows", async () => {
+    onList = () => ok({ success: true, data: { relationships: [
+      rel({ other: { documentId: IB, title: 'Investigator brochure', version: '2.0', documentType: 'OTHER', programId: OTHER_PROJECT,
+        programName: 'NW-110', superseded: false, otherClient: true } }),
+      rel({ id: 'r-2', other: { documentId: IB, title: 'Study report', version: '1.0', documentType: 'OTHER', programId: OTHER_PROJECT,
+        programName: 'BX-302', superseded: false, otherClient: false } }),
+    ] } });
+    render(<Vault {...props()} />);
+    const rows = await within(await pane()).findAllByTestId('vault-relationship');
+    expect(rows[0].textContent).toContain('Investigator brochure v2.0 (in NW-110, another client’s project). It relates two clients’ records, which the Vault no longer allows; it was recorded before that rule');
+    expect(rows[1].textContent).toContain('Study report v1.0 (in BX-302)');
+    expect(rows[1].textContent).not.toContain('another client');
+    expect(within(rows[0]).getByRole('button', { name: /Remove/ })).toBeTruthy();
+  });
+
   it('a list that could not be read says so, and never reads as no related documents', async () => {
     onList = () => { throw new ApiRequestError('Internal error', 500, { success: false, error: 'RELATIONSHIPS_UNAVAILABLE' }, 'RELATIONSHIPS_UNAVAILABLE'); };
     render(<Vault {...props()} />);

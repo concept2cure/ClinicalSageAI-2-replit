@@ -21,7 +21,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { ApiRequestError } from '@/lib/queryClient';
-import { Vault } from '../surfaces/Vault';
+import { Vault, kindOptionsFor } from '../surfaces/Vault';
 import { vaultFilterParams } from '../surfaces/VaultLibraryResults';
 import { PID, ok, vaultPayload, props } from './_vault-surface-fixtures';
 
@@ -211,10 +211,46 @@ describe('facet counts in the options', () => {
   });
 });
 
+/* S6 V9 (2026-11-05): a device project's filters offer its own evidence kinds and no CTD section. A filter the person
+   already holds (a saved view's) is still shown, so a filter that narrows the list is never out of sight. */
+describe("a device project's filters offer the device's own vocabulary", () => {
+  const optionText = (row: HTMLElement, label: string) =>
+    [...(within(row).getByLabelText(label) as HTMLSelectElement).options].map((o) => o.textContent);
+  it('device: no CMC kind and no CTD section field', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return ok(vaultPayload({ standard: 'device', spine: '510(k) · 21 CFR 807' }));
+      if (url.includes('/search?')) return onSearch(url);
+      if (url.endsWith('/seals')) return ok({ success: true, data: { seals: [] } });
+      return ok({ success: true, data: {} });
+    });
+    const row = await open();
+    await waitFor(() => expect(optionText(row, 'Evidence kind')).toContain('Software artifact'));
+    expect(optionText(row, 'Evidence kind')).not.toContain('CMC document');
+    expect(within(row).queryByLabelText('CTD section')).toBeNull();
+  });
+  it('kindOptionsFor keeps a held value outside the view, and offers every kind with no view', () => {
+    expect(kindOptionsFor('device', ['cmc']).map((o) => o.value)).toContain('cmc');
+    expect(kindOptionsFor('device').map((o) => o.value)).not.toContain('cmc');
+    expect(kindOptionsFor(null).map((o) => o.value)).toEqual(expect.arrayContaining(['cmc', 'code']));
+  });
+});
+
 describe('vaultFilterParams', () => {
   it('is empty with no filter, and encodes repeated values in a stable order', () => {
     expect(vaultFilterParams({})).toBe('');
     expect(vaultFilterParams({ lifecycleStage: ['none', 'authoring'], documentType: ['CSR'], ctdSection: ['3.2.P'] }))
       .toBe('&ctdSection=3.2.P&documentType=CSR&lifecycleStage=none&lifecycleStage=authoring');
+  });
+});
+
+/* J2 human test (2026-11-06): a search hit carries no owner or relative time, and its row read
+   "Report · Approved ·" — a separator with nothing after it. */
+describe('a search hit row says only what the hit carries', () => {
+  it('ends with its review stage, not a dangling separator', async () => {
+    const row = await open();
+    choose(row, 'Type', 'Module 3 · quality');
+    const title = await screen.findByText('Batch analysis report');
+    const meta = title.closest('button')?.querySelector('.vd-row-s');
+    expect(meta?.textContent).toBe('Module 3 · quality · Approved');
   });
 });

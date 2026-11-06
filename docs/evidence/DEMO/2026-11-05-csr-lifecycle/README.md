@@ -127,6 +127,44 @@ stopped afterwards.
 In the same run, the two new headings §14.3.3 and §12.3.2 were sent by JM and approved by Ava on the board after she
 read their text. That is why the section review now reads "4 approved".
 
+## Re-walk after the fixes (2026-11-05, afternoon)
+
+The same database, after a fresh migration from the current set (`deploy-migrate`, exit 0). Server on port 5200 as
+`c2c_rt`, with `RLS_ENFORCE=on` and `NODE_ENV=development`, started at `d20e013e72`, with every fix below on trunk. The
+client was served live from the working tree, so the one-line review note (`4e423e651c`) shows in the later shots. No
+model key. The walk scripts follow F6 now (`2be9c3e469`, `ac8c9193e8`). Records: `walk-rewalk.json`, `walk-f6.json`,
+`walk-b1.json`; shots `rewalk-*`, `f6-*`, `b1-*`.
+
+| Break | Fix on trunk | Re-walked | What the app did |
+|---|---|---|---|
+| **B1** narratives and assembly fail under forced RLS | `82579d85cc` | **pass** (`b1-16-`, `b1-17-`) | `DEMO_REBUILD=1` started build 3, so both ran fresh as the runtime role, not on the owner-run results of job 2. Narratives: "95 of 95 narratives composed from the ADaM rows; §14.3.3 and §12.3.2 written." Assembly: assembled, incomplete, 6 leaves, 181 links checked, and 18 appendices named as missing (16.1.1–16.1.12, 16.2.x, 16.3). |
+| **F6** import made a second document | `49b7521569`, `2a6b4d02d2`, `667f97d103`, `c68af7c21a` | **pass** (`f6-14-import-preview`, `f6-14-import-receipt`, `f6-15-`) | The preview said "Into “CDISCPILOT01 Clinical Study Report”, by ICH E3 section number. No other document is created", with §1, §8 and §12.3.2 "Will be written" and §14.3.3 "Held by reference". The database shows §1, §8 and §12.3.2 written into document `3ff5466e…`, each with a Part 11 UPDATE row ("Imported from CSR build 2, §1, heading approved by Ava Approver at 2026-11-05T01:45:49Z", with the person's reason) and one `CSR_IMPORT` receipt. **No document was created in the project.** |
+| **B2** "Open working copy" missed the copy | gone with F6 | n/a | There is no working copy to open: the panel writes into the open document, and the editor shows the imported text (`667f97d103`). |
+| Send for review | (F6) | **pass** (`f6-18-`, `f6-19-`) | The CSR itself went to Rhea Reviewer: "Review requested. The server recorded one request on this document". |
+| **B3** compile reasons | `8cffd6c48b` | **pass** | The compile is refused, and its first three reasons are the missing application number, bound sponsor and D-U-N-S, each ending "Record it in Submission Center, Forms and letters (1571, cover letter, LOA), under Recorded applicant identity." |
+| **B4** device card on a drug IND | `0b33248bad` | **pass** (`f6-20a-`) | Submission Center for this IND shows no "Device filings · eSTAR" card. |
+| **B7** review-first refusal | `4c0c1f3765`, `4e423e651c` | **pass** (`b1-17-`) | Freeze and E-sign say "Needs its scientific review first" in the bar. The full sentence is in the control's title and in the signing dialog. |
+| F1 one CSR entry | `23375e29e0` | **pass** | M5 lists the CSR once. One run read the list before it loaded (0 entries, `f6-05-` shows "Loading templates…"). The check now waits for the list (`ac8c9193e8`), and it passes with 1. |
+
+Not re-walked here: B5 (390 px), B6, B8 and F11 have red/green tests and in-app checks in `fixes/`.
+
+**After the founder's rehearsal (session `01QoxbLd`, `docs/evidence/D2-CSR/2026-11-05-lmn201-demo-rehearsal/`),
+checked in the running app:**
+- **R-1** (`b3c176b34d`, `71095a9003`): "Import approved sections into this document" brings its box into view (top
+  at 153 px), and once the preview stands, focus is in "Reason for importing" (`r1r3-r1-import-opens-in-view.png`).
+- **R-3** (`0180e0eec2`): the preview tables are the product's data table, header cells padded 8×12 px
+  (`r1r3-r3-preview-table-spaced.png`).
+- **The narrative QC list** (95 subjects, about 9,000 px) is collapsed under "Narrative QC list · 95 subjects", as
+  beside §14.3.3 in the editor (`qc-collapsed-narratives-block-settled.png`).
+- The solid magenta block below the narratives in these screenshots is not the product. `walk-common.cjs` `shot()` masks
+  `ul[aria-label="Narrative QC"]` and the saved §12.3.2/§14.3.3 text, to keep CDISC participant detail out of committed
+  screenshots, and Playwright paints a masked region magenta. An earlier note here took it for a renderer limit; that was wrong.
+One run stopped on the Vault step (`b1-fail-3.png`): the Library tab was showing, not Uploads. It did not recur on the
+next run, and every later step read the recorded stage first.
+
+Still blocked by the missing model key: real drafting, and so a CSR whose results a reviewer can map and approve. Then
+E-sign and Freeze over that approval.
+
 ## Breaks found (each: what was done, expected, what happened, code, suggested fix)
 
 | # | Severity | What happened | Code | Suggested fix |

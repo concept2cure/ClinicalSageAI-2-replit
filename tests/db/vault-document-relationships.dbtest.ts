@@ -214,6 +214,22 @@ describe('relating documents (critique 15)', () => {
     expect(out.body.data.relationships.some((r: { other: { documentId: string } }) => r.other.documentId === ids.otherSponsor)).toBe(false);
   });
 
+  /* S6 (2026-11-05): a relationship across sponsors recorded before the refusal above is named, not hidden, so it can
+     be removed. The row is written as the owner, as the write path now refuses it. */
+  it("names a relationship to another sponsor's document recorded before that was refused", async () => {
+    const legacy = await ingest(mine, 'A document related before the sponsor rule.', { documentCode: `${CODE}-LEG`, documentTitle: 'Legacy link' });
+    await owner.query(
+      `INSERT INTO public.vault_document_relationships (organization_id, program_id, from_document_id, to_document_id, relationship_type, created_by)
+       VALUES ($1, $2, $3, $4, 'references', $5)`, [mine.orgId, mine.programId, legacy, ids.otherSponsor, userId]);
+    expect((await relate(mine, legacy, { toDocumentId: ids.elsewhere, type: 'references' })).status).toBe(201);
+    const out = await list(mine, legacy);
+    expect(out.status, JSON.stringify(out.body)).toBe(200);
+    const others = (out.body.data.relationships as Array<{ other: { documentId: string; otherClient: boolean } }>)
+      .map((r) => [r.other.documentId, r.other.otherClient]);
+    expect(others).toEqual(expect.arrayContaining([[ids.otherSponsor, true], [ids.elsewhere, false]]));
+    expect(others).toHaveLength(2);
+  });
+
   it('says when the related version has since been superseded', async () => {
     const res = await relate(mine, ids.csr, { toDocumentId: ids.sap, type: 'based_on' });
     expect(res.status, JSON.stringify(res.body)).toBe(201);

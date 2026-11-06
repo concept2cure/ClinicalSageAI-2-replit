@@ -379,3 +379,52 @@ describe('review-required conversations cannot enter active-memory recall', () =
     expect(await promotedEntries()).toHaveLength(1);
   });
 });
+
+describe('consolidation preserves conversation boundaries', () => {
+  it('persists next actions, artifact references and exclusions together without activating them', async () => {
+    const structured = {
+      objective: 'Prepare a CSR from the frozen study evidence',
+      lockedFacts: ['[KNOWN] Source version three'], decisions: ['Request independent review'],
+      openQuestions: ['Which safety table needs reconciliation?'],
+      nextActions: ['Reconcile table 14.3.1'], createdArtifacts: ['CSR draft document 91'],
+      exclusions: ['Do not include the exploratory subgroup claim', 'Defer the extension study'],
+    };
+    const id = await seedWorkingMemory({ threadId: 'all_fields', projectId: PROJECT,
+      structured: JSON.stringify(structured) });
+    const before = (await pg.query('SELECT * FROM conversation_working_memory WHERE id = $1', [id])).rows;
+    const result = await runConsolidation();
+    expect(result).toMatchObject({ memoriesConsolidated: 0, quarantined: 1, rejectedByGate: 0, errors: 0 });
+    const entries = await promotedEntries();
+    expect(entries).toHaveLength(1);
+    expect(entries[0].content).toContain('Next actions: Reconcile table 14.3.1');
+    expect(entries[0].content).toContain('Artifacts: CSR draft document 91');
+    expect(entries[0].content).toContain('Deferred/excluded: Do not include the exploratory subgroup claim; Defer the extension study');
+    expect(entries[0].status).toBe('pending_review');
+    expect(entries[0].embedding).toBe('[0.25,0.5,0.75]');
+    expect((await pg.query('SELECT * FROM conversation_working_memory WHERE id = $1', [id])).rows).toEqual(before);
+    const active = await pg.query(`SELECT id FROM project_memory_entries
+      WHERE organization_id = $1 AND project_id = $2 AND status = 'active'`, [ORG, PROJECT]);
+    expect(active.rows).toHaveLength(0);
+  });
+
+  it('keeps different exclusions as separate pending records and still refuses an exact duplicate', async () => {
+    const shared = { objective: 'Prepare the same CSR from the same frozen study evidence',
+      nextActions: ['Ask the reviewer to inspect the draft'], createdArtifacts: ['CSR draft document 91'] };
+    const first = { ...shared, exclusions: ['Defer the extension study'] };
+    const second = { ...shared, exclusions: ['Defer the pharmacokinetic appendix'] };
+    await seedWorkingMemory({ threadId: 'exclude_extension', projectId: PROJECT, structured: JSON.stringify(first) });
+    expect((await runConsolidation()).quarantined).toBe(1);
+    await seedWorkingMemory({ threadId: 'exclude_appendix', projectId: PROJECT, structured: JSON.stringify(second) });
+    expect(await runConsolidation()).toMatchObject({ quarantined: 1, rejectedByGate: 0, errors: 0 });
+    const entries = await promotedEntries();
+    expect(entries).toHaveLength(2);
+    expect(entries.every(entry => entry.status === 'pending_review')).toBe(true);
+    expect(entries.map(entry => entry.content)).toEqual(expect.arrayContaining([
+      expect.stringContaining('Deferred/excluded: Defer the extension study'),
+      expect.stringContaining('Deferred/excluded: Defer the pharmacokinetic appendix'),
+    ]));
+    await seedWorkingMemory({ threadId: 'duplicate_extension', projectId: PROJECT, structured: JSON.stringify(first) });
+    expect(await runConsolidation()).toMatchObject({ quarantined: 0, rejectedByGate: 1, errors: 0 });
+    expect(await promotedEntries()).toHaveLength(2);
+  });
+});

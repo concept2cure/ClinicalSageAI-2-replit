@@ -718,8 +718,9 @@ function placeWholeOrNothing(
  *
  * A result in `wholeOrNothing` is the exception: it is delivered whole or
  * replaced, never cut (see placeWholeOrNothing). Named passage-search bodies
- * are also kept whole or explicitly withheld, after private reads. Ordinary
- * floors and irreducible replacements mean the total is a target, not a hard
+ * are also kept whole or explicitly withheld, after private reads. Session
+ * recall is withheld if candidate budgeting would alter its complete body.
+ * Ordinary floors and irreducible replacements mean the total is a target, not a hard
  * bound for arbitrarily many calls or tiny custom totals unless strictTotal
  * is enabled. Strict mode reconciles these candidates with truthful per-call
  * replacements or refuses handoff; legacy replay keeps its historical bytes.
@@ -735,7 +736,15 @@ export function budgetToolResultsForModel(
   // Validate even empty rounds before the legacy fast path; do not change
   // historical option semantics when strict mode is omitted.
   if (options.strictTotal) assertToolResultBodyBudget([], options.totalBudget);
-  const candidates = budgetToolResultCandidates(entries, options);
+  const candidates = budgetToolResultCandidates(entries, options).map((candidate, index) => {
+    // The server-authored name selects this boundary. A memory qualification
+    // can sit in the removed middle, and JSON escaping can exceed the cap even
+    // when the complete bootstrap block fit its own memory budget.
+    const original = entries[index];
+    return original.name === 'recall_session_context' && candidate.content !== original.content
+      ? { ...candidate, content: TOOL_RESULT_WITHHELD }
+      : candidate;
+  });
   return options.strictTotal ? reconcileStrictBodyBudget(candidates, options) : candidates;
 }
 

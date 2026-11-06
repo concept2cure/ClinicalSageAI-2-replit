@@ -1183,7 +1183,12 @@ export function V2App() {
       : null;
 
   let body: React.ReactNode;
-  if (activeId === 'home') {
+  /* An address that names neither a registry surface nor a view (a typo, a
+     stale bookmark, `/concept2cure/settings`) opens Home. It used to fall to
+     KitSurfaceScaffold over a stand-in "Home" surface, so a tester saw the
+     developer install path ("Mounted routes", "Kit — design prototype")
+     under the heading Home (J5-01, 2026-11-06). */
+  if (activeId === 'home' || (!view && !surface)) {
     body = (
       <Home
         onNav={nav}

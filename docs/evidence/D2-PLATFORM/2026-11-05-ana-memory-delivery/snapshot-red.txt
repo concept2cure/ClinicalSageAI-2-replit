@@ -1,0 +1,316 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts
+{
+  "timestamp": "2026-11-06T05:03:12.691Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T05:03:12.692Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/chat/__tests__/send-message-read-only.test.ts
+{
+  "timestamp": "2026-11-06T05:03:12.692Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/chat/__tests__/send-message-read-only.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/chat/__tests__/send-message-read-only.test.ts
+{
+  "timestamp": "2026-11-06T05:03:12.971Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts
+Created cache directory: /workspace/scratch/3002d574f952/concept2cure-v2/data/cache
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > overrides drafting history, withholds pinned non-read tools and refuses unsolicited model writes before proposals
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > overrides drafting history, withholds pinned non-read tools and refuses unsolicited model writes before proposals
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > overrides drafting history, withholds pinned non-read tools and refuses unsolicited model writes before proposals
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Read only: summarize the evidence.
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Read only: summarize the evidence.
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Read only: summarize the evidence.
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Do not draft a document; summarize the evidence.
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Do not draft a document; summarize the evidence.
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Do not draft a document; summarize the evidence.
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {}
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {}
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {}
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {"mode":"submission-chat"}
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {"mode":"submission-chat"}
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {"mode":"submission-chat"}
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope 67ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > overrides drafting history, withholds pinned non-read tools and refuses unsolicited model writes before proposals 8ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Read only: summarize the evidence. 6ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Do not draft a document; summarize the evidence. 9ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {} 4ms
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'all candidates omitted'
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'all candidates omitted'
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'all candidates omitted'
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'only one semantic record admitted'
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'only one semantic record admitted'
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'only one semantic record admitted'
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'working memory and one semantic recor…'
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'working memory and one semantic recor…'
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'working memory and one semantic recor…'
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'fallback result without an admitted r…'
+[AnA] Orchestrator: intent=general, submission=none, deficiency=false
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'fallback result without an admitted r…'
+[AnA] Sending through AI Gateway (1 sources retrieved)...
+
+stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'fallback result without an admitted r…'
+[AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
+
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {"mode":"submission-chat"} 4ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history 12ms
+ × server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'all candidates omitted' 11ms
+   → expected '## CONTEXT SNAPSHOT\n- Project: NOT L…' to contain '- Memory: working=no, semantic atoms=…'
+ × server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'only one semantic record admitted' 10ms
+   → expected '## CONTEXT SNAPSHOT\n- Project: NOT L…' to contain '- Memory: working=no, semantic atoms=…'
+ × server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'working memory and one semantic recor…' 4ms
+   → expected '## CONTEXT SNAPSHOT\n- Project: NOT L…' to contain '- Memory: working=yes, semantic atoms…'
+ × server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'fallback result without an admitted r…' 4ms
+   → expected '## CONTEXT SNAPSHOT\n- Project: NOT L…' to contain '- Memory: working=no, semantic atoms=…'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'all candidates omitted'
+ FAIL  server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'fallback result without an admitted r…'
+AssertionError: expected '## CONTEXT SNAPSHOT\n- Project: NOT L…' to contain '- Memory: working=no, semantic atoms=…'
+
+- Expected
++ Received
+
+- - Memory: working=no, semantic atoms=0
+-
++ ## CONTEXT SNAPSHOT
++ - Project: NOT LOADED
++ - Active artifact: NONE
++ - Memory: working=yes, semantic atoms=2
++ - Retrieved sources: 1
++ - User role: general
++
++ Continue earlier drafting if relevant.
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Memory context incomplete
++ Some recalled memory records were omitted to fit this turn's character budget. Do not infer that omitted decisions or exclusions do not exist; ask for or verify needed context.
++
++ --- END PERSISTENT MEMORY CONTEXT ---
++
++
++ --- RETRIEVED EVIDENCE (cite as [SRC-n]) ---
++ [SRC-1] "Existing evidence"
++ The project has an existing evidence record.
++ --- END EVIDENCE ---
++
++ When your answer relies on information from the evidence above, cite it inline using [SRC-n]. If the evidence does not contain relevant information, answer from your training knowledge and state that no knowledge-base sources were found.
+
+ ❯ server/routes/chat/__tests__/send-message-read-only.test.ts:239:20
+    237|     expect(response.status).toBe(200);
+    238|     const prompt = io.gateway.mock.calls[0][0].messages[0].content;
+    239|     expect(prompt).toContain(`- Memory: ${expected}\n`);
+       |                    ^
+    240|     expect(prompt).toContain(memoryBlock);
+    241|     expect(prompt).not.toContain(omitted.content);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'only one semantic record admitted'
+AssertionError: expected '## CONTEXT SNAPSHOT\n- Project: NOT L…' to contain '- Memory: working=no, semantic atoms=…'
+
+- Expected
++ Received
+
+- - Memory: working=no, semantic atoms=1
+-
++ ## CONTEXT SNAPSHOT
++ - Project: NOT LOADED
++ - Active artifact: NONE
++ - Memory: working=yes, semantic atoms=2
++ - Retrieved sources: 1
++ - User role: general
++
++ Continue earlier drafting if relevant.
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Memory context incomplete
++ Some recalled memory records were omitted to fit this turn's character budget. Do not infer that omitted decisions or exclusions do not exist; ask for or verify needed context.
++
++ Reviewed scope: The draft is provisional until the source is checked.
++ --- END PERSISTENT MEMORY CONTEXT ---
++
++
++ --- RETRIEVED EVIDENCE (cite as [SRC-n]) ---
++ [SRC-1] "Existing evidence"
++ The project has an existing evidence record.
++ --- END EVIDENCE ---
++
++ When your answer relies on information from the evidence above, cite it inline using [SRC-n]. If the evidence does not contain relevant information, answer from your training knowledge and state that no knowledge-base sources were found.
+
+ ❯ server/routes/chat/__tests__/send-message-read-only.test.ts:239:20
+    237|     expect(response.status).toBe(200);
+    238|     const prompt = io.gateway.mock.calls[0][0].messages[0].content;
+    239|     expect(prompt).toContain(`- Memory: ${expected}\n`);
+       |                    ^
+    240|     expect(prompt).toContain(memoryBlock);
+    241|     expect(prompt).not.toContain(omitted.content);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'working memory and one semantic recor…'
+AssertionError: expected '## CONTEXT SNAPSHOT\n- Project: NOT L…' to contain '- Memory: working=yes, semantic atoms…'
+
+- Expected
++ Received
+
+- - Memory: working=yes, semantic atoms=1
++ ## CONTEXT SNAPSHOT
++ - Project: NOT LOADED
++ - Active artifact: NONE
++ - Memory: working=yes, semantic atoms=2
++ - Retrieved sources: 1
++ - User role: general
++
++ Continue earlier drafting if relevant.
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Memory context incomplete
++ Some recalled memory records were omitted to fit this turn's character budget. Do not infer that omitted decisions or exclusions do not exist; ask for or verify needed context.
+
++ Working summary: The next action is to verify the exclusion.
++ Reviewed scope: The draft is provisional until the source is checked.
++ --- END PERSISTENT MEMORY CONTEXT ---
++
++
++ --- RETRIEVED EVIDENCE (cite as [SRC-n]) ---
++ [SRC-1] "Existing evidence"
++ The project has an existing evidence record.
++ --- END EVIDENCE ---
++
++ When your answer relies on information from the evidence above, cite it inline using [SRC-n]. If the evidence does not contain relevant information, answer from your training knowledge and state that no knowledge-base sources were found.
+
+ ❯ server/routes/chat/__tests__/send-message-read-only.test.ts:239:20
+    237|     expect(response.status).toBe(200);
+    238|     const prompt = io.gateway.mock.calls[0][0].messages[0].content;
+    239|     expect(prompt).toContain(`- Memory: ${expected}\n`);
+       |                    ^
+    240|     expect(prompt).toContain(memoryBlock);
+    241|     expect(prompt).not.toContain(omitted.content);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 7 passed (11)
+   Start at  21:03:10
+   Duration  11.47s (transform 7.49s, setup 71ms, import 11.00s, tests 143ms, environment 0ms)

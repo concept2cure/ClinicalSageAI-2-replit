@@ -40,8 +40,19 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+/* One signed-in account, the same object on every render, as AuthProvider holds it; a new one only when a
+   case changes the roles or permissions. The shell reads the navigation verdicts once per account visit
+   (navEntitlements.tsx useNavigationReadOwner, 0fc881c16f): a new user object on every render was a new
+   visit on every render, and the suite read and re-rendered until the worker ran out of memory. */
+const signedIn = vi.hoisted(() => ({ roles: null as unknown, permissions: null as unknown, value: null as unknown }));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { id: 7, firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: authRoles.current, permissions: authRoles.permissions }, logout: vi.fn() }),
+  useAuth: () => {
+    if (!signedIn.value || signedIn.roles !== authRoles.current || signedIn.permissions !== authRoles.permissions) {
+      signedIn.roles = authRoles.current; signedIn.permissions = authRoles.permissions;
+      signedIn.value = { user: { id: 7, firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: authRoles.current, permissions: authRoles.permissions }, logout: () => Promise.resolve() };
+    }
+    return signedIn.value;
+  },
 }));
 vi.mock('@/contexts/TenantContext', () => ({
   useTenant: () => ({ currentOrganization: { name: 'Concept2Cure Therapeutics' } }),

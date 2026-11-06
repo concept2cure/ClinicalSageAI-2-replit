@@ -16,9 +16,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 
-const { query, insert, update, admission, programRow, projectRef, programSql } = vi.hoisted(() => ({
+const { query, insert, update, admission, programRow, projectRef, programSql, programParams } = vi.hoisted(() => ({
   query: vi.fn(), insert: vi.fn(), update: vi.fn(),
-  admission: vi.fn(), programRow: vi.fn(), projectRef: vi.fn(), programSql: [] as string[],
+  admission: vi.fn(), programRow: vi.fn(), projectRef: vi.fn(), programSql: [] as string[], programParams: [] as unknown[][],
 }));
 vi.mock('../../utils/feature-persistence.js', () => ({
   createFeatureStore: () => ({ query, insert, update, getById: vi.fn(), remove: vi.fn() }),
@@ -29,7 +29,7 @@ vi.mock('../../middleware/tenantLifecycleGuard.js', () => ({
 }));
 vi.mock('../../db/requestDb', () => ({
   requestDb: () => ({}),
-  requestPgClient: () => ({ query: async (sql: string) => { programSql.push(sql); return { rows: programRow() }; } }),
+  requestPgClient: () => ({ query: async (sql: string, params: unknown[]) => { programSql.push(sql); programParams.push(params); return { rows: programRow() }; } }),
 }));
 vi.mock('../../services/c2c/program-project-anchor.js', () => ({ strictProjectRowForRef: (...a: unknown[]) => projectRef(...a) }));
 vi.mock('../c2c/project-access', async (original) => {
@@ -54,6 +54,7 @@ let indTask: string;
 beforeEach(async () => {
   for (const f of [query, insert, update, admission, programRow, projectRef]) f.mockReset();
   programSql.length = 0;
+  programParams.length = 0;
   query.mockResolvedValue([]);
   admission.mockResolvedValue(undefined);
   projectRef.mockResolvedValue(51);
@@ -149,5 +150,138 @@ describe('PATCH /pyramids/by-project/:ref/progress/:taskId', () => {
     programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'ca_nds' }]);
     expect((await request(app()).patch(`${PATH}/progress/${indTask}`).send({ status: 'done' })).status).toBe(409);
     expect(insert).not.toHaveBeenCalled();
+  });
+});
+
+// S11 step 3 (THE_PROGRAM §3.3, §7.2): each task's due date, back-scheduled by the engine from the project's target
+// submission date. The target is the project's own recorded field, read inside the same admitted, tenant-scoped query.
+describe("GET /pyramids/by-project/:ref — the project's schedule", () => {
+  it('back-schedules every task from the recorded target date', async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind', target: '2027-06-04' }]);
+    const res = await request(app()).get(PATH);
+    expect(res.status).toBe(200);
+    const { data } = res.body;
+    expect(data.target).toBe('2027-06-04');
+    expect(data.asOf).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(data.schedule.anchorTaskId).toBe('phase8.complete');
+    expect(data.schedule.tasks['phase8.complete'].due).toBe('2027-06-04');
+    expect(Object.keys(data.schedule.tasks)).toHaveLength(data.pyramid.tasks.length);
+    // A predecessor is due before its successor starts.
+    const submit = data.pyramid.tasks.find((t: { id: string }) => t.id === 'phase8.submit');
+    for (const d of submit.deps) expect(data.schedule.tasks[d].due < data.schedule.tasks['phase8.submit'].start).toBe(true);
+  });
+
+  it('reads the target as a calendar date, in the tenant-scoped project query', async () => {
+    await request(app()).get(PATH);
+    expect(programSql.join('\n')).toMatch(/to_char\(rp\.target_submission_date, 'YYYY-MM-DD'\) AS target/);
+    expect(programSql.join('\n')).toMatch(/p\.organization_id = \$2/);
+    expect(programParams[0]).toEqual([51, 7]);
+    // The project is resolved in the session's organisation, never one the request names.
+    expect(projectRef.mock.calls[0][1]).toMatchObject({ orgId: 7, ref: PROGRAM });
+  });
+
+  it('gives no dates when no target date is recorded, rather than assuming one', async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind', target: null }]);
+    const { body } = await request(app()).get(PATH);
+    expect(body.data).toMatchObject({ target: null, schedule: null });
+  });
+
+  it('gives no schedule to a person not admitted to the project', async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind', target: '2027-06-04' }]);
+    admission.mockRejectedValue(new ProjectAdmissionRefusal(403, 'PROJECT_ACCESS_DENIED', 'You do not have access to this project.'));
+    const res = await request(app()).get(PATH);
+    expect(res.status).toBe(403);
+    expect(res.body.data).toBeUndefined();
+    expect(programSql).toHaveLength(0);
+  });
+
+  it("gives no schedule for another organisation's project: it is not found in this one", async () => {
+    projectRef.mockResolvedValue(null);
+    const res = await request(app()).get(PATH);
+    expect(res.status).toBe(404);
+    expect(programSql).toHaveLength(0);
+  });
+});
+
+// S11 (THE_PROGRAM §5, §8 items 3–4, §9 step 6): each workstream's milestone, the agency's clock after the filing, and
+// the portfolio line read for a page of Projects cards.
+describe("the plan's workstream milestones and review clock", () => {
+  it("gives each phase its completing task, the workstream's milestone", async () => {
+    const { body } = await request(app()).get(PATH);
+    for (const ph of body.data.pyramid.phases) expect(ph.gate).toBe(`${ph.id}.complete`);
+  });
+
+  it("gives an IND the 30-day review from its own pyramid, dated from the target", async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind', target: '2027-06-04' }]);
+    const { body } = await request(app()).get(PATH);
+    expect(body.data.reviewClock).toMatchObject({ authority: 'FDA', basis: '21 CFR 312.40', days: 30, ends: '2027-07-04' });
+  });
+
+  it("gives a 510(k) the published MDUFA goal and its interim milestones, from regulatory-timelines", async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: '510k', target: '2027-06-04' }]);
+    const { body } = await request(app()).get(PATH);
+    expect(body.data.type).toBe('510K');
+    expect(body.data.reviewClock).toMatchObject({ authority: 'FDA (CDRH)', days: 90, ends: '2027-09-02', label: 'MDUFA decision', clockStops: true });
+    expect(body.data.reviewClock.milestones.map((m: { day: number }) => m.day)).toEqual([15, 60]);
+  });
+
+  it('gives no clock without a target date', async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind', target: null }]);
+    expect((await request(app()).get(PATH)).body.data.reviewClock).toBeNull();
+  });
+});
+
+describe('GET /pyramids/by-project?refs= — the portfolio line', () => {
+  const OTHER = '9c9c9c9c-1111-4222-8333-444455556666';
+  const lines = (refs: string) => request(app()).get(`/api/v1/pyramids/by-project?refs=${refs}`);
+
+  it("gives each admitted project its plan in a few figures, from the engine's summary", async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind', target: '2027-06-04' }]);
+    const res = await lines(PROGRAM);
+    expect(res.status).toBe(200);
+    const line = res.body.data.lines[PROGRAM];
+    expect(line).toMatchObject({ type: 'IND', target: '2027-06-04', summary: { total: 58, done: 0 } });
+    expect(['on-track', 'at-risk']).toContain(line.summary.status);
+    expect(res.body.data.asOf).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // Read under the project's own key, in the session's organisation.
+    expect(query).toHaveBeenCalledWith(7, `project:${PROGRAM}:IND`);
+    expect(admission.mock.calls[0][2]).toBe(false);
+  });
+
+  it('admits each project on its own: a refused one says only that it is unavailable', async () => {
+    admission.mockImplementation(async (_req: unknown, projectId: string) => {
+      if (projectId === '52') throw new ProjectAdmissionRefusal(403, 'PROJECT_ACCESS_DENIED', 'You do not have access to this project.');
+    });
+    projectRef.mockImplementation(async (_db: unknown, a: { ref: string }) => (a.ref === OTHER ? 52 : 51));
+    const res = await lines(`${PROGRAM},${OTHER}`);
+    expect(res.body.data.lines[OTHER]).toEqual({ unavailable: true });
+    expect(res.body.data.lines[PROGRAM].summary).toBeTruthy();
+  });
+
+  it("says a project of another organisation is unavailable, resolved in the session's organisation only", async () => {
+    projectRef.mockResolvedValue(null);
+    const res = await lines(PROGRAM);
+    expect(res.body.data.lines[PROGRAM]).toEqual({ unavailable: true });
+    expect(projectRef.mock.calls[0][1]).toMatchObject({ orgId: 7 });
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('says a filing with no work breakdown has none, and an unscheduled project is unscheduled', async () => {
+    programRow.mockReturnValueOnce([{ program_id: PROGRAM, filing: 'ca_nds', target: null }])
+      .mockReturnValueOnce([{ program_id: OTHER, filing: 'us_ind', target: null }]);
+    const res = await lines(`${PROGRAM},${OTHER}`);
+    expect(res.body.data.lines[PROGRAM]).toEqual({ type: null, filing: 'ca_nds' });
+    expect(res.body.data.lines[OTHER].summary.status).toBe('unscheduled');
+  });
+
+  it('refuses an empty or oversized batch', async () => {
+    expect((await request(app()).get('/api/v1/pyramids/by-project')).status).toBe(400);
+    const many = Array.from({ length: 101 }, (_, i) => `ref-${i}`).join(',');
+    expect((await lines(many)).status).toBe(400);
+  });
+
+  it("is never read as a submission type ('by-project' is not a pyramid)", async () => {
+    const res = await request(app()).get('/api/v1/pyramids/by-project?refs=' + PROGRAM);
+    expect(res.body.data.lines).toBeTruthy();
   });
 });

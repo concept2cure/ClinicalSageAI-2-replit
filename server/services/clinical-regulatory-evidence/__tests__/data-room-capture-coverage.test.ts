@@ -28,6 +28,7 @@ vi.mock('../../ocr/index.js', () => ({ extractDocumentText: seam.extract }));
 vi.mock('../../ana/uploaded-file-access.js', () => ({ loadUploadedFile: seam.load }));
 vi.mock('../../vault/vault-filing.service.js', () => ({
   resolveVaultView: async () => 'test', resolveOrgVaultView: async () => 'test',
+  resolveVaultFilingContext: async () => ({ view: 'test', jurisdiction: null, applicationKind: null }),
   classifyForFiling: () => ({ evidenceKind: 'protocol', folderId: null, ctdSection: null, confidence: 0, needsReview: true, rationale: 'test seam' }),
 }));
 

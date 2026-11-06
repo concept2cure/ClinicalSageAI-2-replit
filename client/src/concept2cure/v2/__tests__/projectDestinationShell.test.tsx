@@ -214,6 +214,14 @@ describe('project destination in the real shell', () => {
     expect(observed.calls).toBe(0);
   });
 
+  it('an address that names no screen opens Home, not the developer install scaffold (J5-01)', async () => {
+    mount('/concept2cure/settings');
+    await waitFor(() => expect(document.querySelector('main')).toBeTruthy());
+    expect(screen.queryByText(/Install path/)).toBeNull();
+    expect(screen.queryByText(/Mounted routes/)).toBeNull();
+    expect(screen.queryByText(/Ports in the surface phase/)).toBeNull();
+  });
+
   it('browser Back returns to Projects rather than an alias history entry', async () => {
     publishShellProject({ id: PROGRAM });
     mount('/concept2cure/projects');

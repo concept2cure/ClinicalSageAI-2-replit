@@ -24,7 +24,11 @@ import { makePdfBuffer, sha256 } from '../../../tests/validation/lib/fixtures.mj
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(HERE, '..', '..', '..');
-export const MANIFEST_ROOT = path.join(REPO_ROOT, 'docs', 'evidence', 'DEMO');
+// DEMO_MANIFEST_ROOT keeps a run's manifests out of the repository (a Codespace's own seed,
+// .devcontainer/post-start.sh, writes them to its state directory, not over the committed evidence).
+export const MANIFEST_ROOT = process.env.DEMO_MANIFEST_ROOT
+  ? path.resolve(process.env.DEMO_MANIFEST_ROOT)
+  : path.join(REPO_ROOT, 'docs', 'evidence', 'DEMO');
 
 /** Prefix on every demo record's title. A customer never sees it unless they run the seed. */
 export const DEMO_PREFIX = { biotech: '[Demo · Biotech]', mdx: '[Demo · MDX]', lumen: '[Demo · Lumen]', faux: '[Demo · Faux]' };

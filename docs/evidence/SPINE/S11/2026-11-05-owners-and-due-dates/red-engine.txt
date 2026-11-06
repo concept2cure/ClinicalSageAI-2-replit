@@ -1,0 +1,19 @@
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > taskWorkingDays > uses the engine's typical duration, five working days a week 2ms
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > taskWorkingDays > else the estimated hours at an eight-hour day, at least one day 0ms
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > makes the task that completes the submission due on the target date 2ms
+ × tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > makes each task due the working day before the earliest start of what depends on it 8ms
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > moves a weekend target back to the Friday before it 1ms
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > lays the tasks after the submission forward from it (the PMA's post-submission readiness) 2ms
+ × tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > schedules every task of every pyramid, each due no later than what depends on it starts 2ms
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > uses the IND's typical durations 4ms
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > refuses a target that is not a calendar date 1ms
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > refuses a cycle rather than giving dates 0ms
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > refuses a work breakdown with no single task that completes it 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > makes each task due the working day before the earliest start of what depends on it
+ FAIL  tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > schedules every task of every pyramid, each due no later than what depends on it starts
+      Tests  2 failed | 9 passed (11)
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/services/regulatory/pyramidBackSchedule.test.ts > taskWorkingDays > uses the engine's typical duration, five working days a week
+TypeError: taskWorkingDays is not a function
+ FAIL  tests/services/regulatory/pyramidBackSchedule.test.ts > taskWorkingDays > else the estimated hours at an eight-hour day, at least one day

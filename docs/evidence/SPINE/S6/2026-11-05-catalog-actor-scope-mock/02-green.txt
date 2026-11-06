@@ -1,0 +1,12 @@
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > uses one stamped connection and current persisted viewer role, then re-admits before success 9ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > does not acquire a pool connection without admitted serving identity: missing_actor 3ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > does not acquire a pool connection without admitted serving identity: wrong_tenant 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > does not acquire a pool connection without admitted serving identity: no_tenant 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > inactive actor refuses before protected source callback and rolls back 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > revocation after the protected read refuses the loaded result 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > role changing between the tenant stamp and canonical admission refuses before the protected read 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > unknown pool/SQL failure returns named unavailable and never empty 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > copies actor input before any await 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > composite result cannot use a newly widened or changed role scope as its old authorization 1ms
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts > pooled interactive actor source reads > same pinned scope can finish a composite read 1ms
+      Tests  11 passed (11)
