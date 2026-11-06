@@ -82,6 +82,23 @@ Vertex AI. Retrying will not change this; an administrator needs to enable one o
 (`gateway-error-map.ts`, `gateway-error-map-no-approved-model.test.ts`;
 `06-openai-key-only-names-the-approved-providers.png`).
 
+## The conversation docked beside the CSR (R1's demo-day sweep)
+
+This is the CSR in the editor, then ✻ and "Draft with AnA": the conversation docks in a column about 400 px wide.
+Measured at 1440 px, with the column at 264 to 663 px (`07-docked-conversation-before.png`):
+- the composer's foot overflowed both edges: "AnA drives" started at 260 px and "Engine" ended at 667 px, while
+  "Between steps" was squeezed into a stack 179 px tall;
+- the "From The editor" chip sat flush against the column's edge, and it and "Back to The editor" read with a
+  capital "The";
+- the composer stayed one row (37 px) for a two-line request (59 px), cutting the second line through.
+
+After (`08-docked-conversation-after.png`):
+- the foot wraps into two centred rows, 288 to 639 px, 111 px tall (`app-v2.css`, `.ct-comp-foot`);
+- the chip row has the composer's inset and reads "From the editor" and "Back to the editor" (`authoring-v2.css`,
+  `ConversationThread.tsx` `inSentence`);
+- the composer grows with its text up to its 160 px maximum, and fits again when the column's width changes
+  (`useComposerFit`). The request now shows both lines.
+
 ## The CSR as a PDF, walked later the same day
 
 From the project's Author step, **Open** on "CDISCPILOT01 Clinical Study Report" opens it in the one editor. Download,

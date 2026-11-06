@@ -142,6 +142,31 @@ function toTurn(m: AnaChatMessage): CtTurn {
   };
 }
 
+/** A screen's name inside a sentence: "From the editor", "Back to the review board". A name that begins with "The"
+ *  read "Back to The editor" in the docked conversation (2026-11-06, R1's demo-day sweep); a proper name stays as it is. */
+export const inSentence = (label: string): string => label.replace(/^The /, 'the ');
+
+/**
+ * The composer grows with what is in it, up to its stylesheet's max-height (160 px), then scrolls, as Claude's does.
+ * It was one row whatever it held, so a request handed over from the editor showed one line and half of the next
+ * (2026-11-06, R1's demo-day sweep).
+ */
+function useComposerFit(ref: React.RefObject<HTMLTextAreaElement | null>, value: string): void {
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const fit = () => { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; };
+    fit();
+    /* Again when its width changes: docked beside the editor, the column narrows after the text arrives, and a fit
+       measured at the wider width left the second line cut. Only width refits, so setting the height cannot loop. */
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    let width = el.clientWidth;
+    const observer = new ResizeObserver(() => { if (el.clientWidth !== width) { width = el.clientWidth; fit(); } });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref, value]);
+}
+
 /**
  * A turn's next steps, or none when it failed before the model wrote an answer (a refused key, an account with no
  * credit, a timeout with nothing written). The server sends them with the turn's opening metadata, before the model
@@ -1297,6 +1322,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
   /* `/` offers the conversation's skills after the commands; choosing one picks it. */
   const skillMentions = useSkillMentionSource(shellProjectId, draft, chosenSkills, setChosenSkills);
   const mentions = useAppMentions(draft, setDraft, draftRef, skillMentions);
+  useComposerFit(draftRef, draft);
   /* An ask from inside a document canvas lands HERE — in this composer, with
      focus — so the person keeps talking to AnA about the document she is
      looking at. Not auto-sent: it is her message to send. */
@@ -2119,18 +2145,18 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
           {askOrigin && (
             <div className="ct-ask-origin" data-testid="ct-ask-origin">
               <span className="ct-ask-origin-chip">
-                From <b>{askOrigin.label}</b>
+                From <b>{inSentence(askOrigin.label)}</b>
                 <button
                   type="button"
                   className="ct-ready-doc-x"
-                  aria-label={`Do not send what ${askOrigin.label} shows with this question`}
+                  aria-label={`Do not send what ${inSentence(askOrigin.label)} shows with this question`}
                   onClick={() => { originRemovedRef.current = true; setAskOrigin(null); }}
                 >
                   {'×'}
                 </button>
               </span>
               <button type="button" className="btn ghost" onClick={() => onNav(askOrigin.surfaceId)}>
-                Back to {askOrigin.label}
+                Back to {inSentence(askOrigin.label)}
               </button>
             </div>
           )}
