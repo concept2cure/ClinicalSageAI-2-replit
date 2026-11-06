@@ -246,8 +246,26 @@ async function consolidateMemoryInner(
       }
     }
 
-    // Fall back to raw summary if structured data yielded nothing
-    const consolidatedContent = parts.length > 0 ? parts.join('\n') : memory.summary;
+    // Keep the raw-summary fallback when the six content fields are empty,
+    // including records whose only structured field is an exclusion.
+    if (parts.length === 0 && memory.summary?.trim()) parts.push(memory.summary);
+    let contentForQualitySignals = parts.join('\n');
+    if (structuredFieldsPopulated === 0 && Array.isArray(structured?.exclusions)) {
+      // A rendered thread summary can already contain these exclusions. Mask
+      // their exact text only for scoring, preserving the raw fallback itself.
+      // Longest first avoids leaving a label behind after a shorter match;
+      // whitespace prevents neighboring fragments from becoming a new label.
+      const exclusions: unknown[] = structured.exclusions;
+      for (const exclusion of exclusions
+        .filter((item): item is string => typeof item === 'string' && item.length > 0)
+        .sort((a, b) => b.length - a.length)) {
+        contentForQualitySignals = contentForQualitySignals.replaceAll(exclusion, ' ');
+      }
+    }
+    if (Array.isArray(structured?.exclusions) && structured.exclusions.length > 0) {
+      parts.push(`Deferred/excluded: ${structured.exclusions.join('; ')}`);
+    }
+    const consolidatedContent = parts.join('\n');
 
     if (!consolidatedContent || !consolidatedContent.trim()) {
       logger.warn(`Skipping memory ${memory.id} — empty content`);
@@ -270,8 +288,10 @@ async function consolidateMemoryInner(
     // scored confidence. Quality signals are what a consolidation candidate
     // honestly has: the summary was never evidence-validated (that check is
     // about world-claims in a live response), its structure is how many of the
-    // six summarizer fields are populated, and evidence labels are taken from
-    // the content itself. The resulting sub-0.7 confidence is stored as-is —
+    // six content fields are populated, and evidence labels are taken from
+    // those fields (or the raw-summary fallback). Exclusions travel with the
+    // content but add no structure credit or evidence validation. The sub-0.7
+    // confidence is stored as-is —
     // a distilled conversation does not become active merely because it has
     // no detected contradiction. The gate's review requirement is preserved.
     const existing = await client.query<{ id: number; content: string; category: string }>(
@@ -301,9 +321,9 @@ async function consolidateMemoryInner(
         evidenceValidated: false,
         structureScore: structuredFieldsPopulated,
         structureMaxScore: 6,
-        hasKnownLabels: consolidatedContent.includes('[KNOWN]'),
-        hasInferredLabels: consolidatedContent.includes('[INFERRED]'),
-        hasMissingLabels: consolidatedContent.includes('[MISSING]'),
+        hasKnownLabels: contentForQualitySignals.includes('[KNOWN]'),
+        hasInferredLabels: contentForQualitySignals.includes('[INFERRED]'),
+        hasMissingLabels: contentForQualitySignals.includes('[MISSING]'),
       },
       existingMemories: existing.rows,
       threadId: memory.thread_id,

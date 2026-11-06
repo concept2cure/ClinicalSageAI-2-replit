@@ -12,6 +12,7 @@
  * - Open Questions: unresolved items
  * - Next Actions: planned next steps
  * - Created Artifacts: documents/outputs produced
+ * - Exclusions: topics explicitly ruled out or deferred
  *
  * @module server/services/working-memory
  */
@@ -432,31 +433,7 @@ export async function searchWorkingMemorySemantic(
  * Format structured working memory into a compact text block for prompt injection.
  */
 export function formatWorkingMemoryForPrompt(memory: WorkingMemory): string {
-  const s = memory.structured;
-  const sections: string[] = [];
-
-  sections.push(`**Objective**: ${s.objective}`);
-
-  if (s.lockedFacts.length > 0) {
-    sections.push(`**Locked Facts**:\n${s.lockedFacts.map(f => `- ${f}`).join('\n')}`);
-  }
-  if (s.decisions.length > 0) {
-    sections.push(`**Decisions Made**:\n${s.decisions.map(d => `- ${d}`).join('\n')}`);
-  }
-  if (s.openQuestions.length > 0) {
-    sections.push(`**Open Questions**:\n${s.openQuestions.map(q => `- ${q}`).join('\n')}`);
-  }
-  if (s.nextActions.length > 0) {
-    sections.push(`**Next Actions**:\n${s.nextActions.map(a => `- ${a}`).join('\n')}`);
-  }
-  if (s.createdArtifacts.length > 0) {
-    sections.push(`**Created Artifacts**:\n${s.createdArtifacts.map(a => `- ${a}`).join('\n')}`);
-  }
-  if (s.exclusions.length > 0) {
-    sections.push(`**Deferred/Excluded**:\n${s.exclusions.map(e => `- ${e}`).join('\n')}`);
-  }
-
-  return sections.join('\n\n');
+  return formatWorkingMemory(memory.structured, 'prompt');
 }
 
 /**
@@ -547,16 +524,35 @@ export async function storeWorkingMemoryForThread(
   }
 }
 
-/** The summary every later turn reads: the settled fields, each only when it has something. */
-function formatWorkingMemory(structured: WorkingMemory['structured']): string {
-  return [
-    structured.objective ? `**Objective**: ${structured.objective}` : '',
-    structured.lockedFacts.length > 0 ? `**Key Facts**: ${structured.lockedFacts.join('; ')}` : '',
-    structured.decisions.length > 0 ? `**Decisions**: ${structured.decisions.join('; ')}` : '',
-    structured.openQuestions.length > 0 ? `**Open Questions**: ${structured.openQuestions.join('; ')}` : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
+/**
+ * One seven-field formatter for the public prompt and settled thread writeback.
+ * Compact summaries retain their established labels and stay empty when no
+ * settled field remains. Withheld items are never among the rendered fields.
+ */
+function formatWorkingMemory(
+  structured: WorkingMemory['structured'],
+  mode: 'compact' | 'prompt' = 'compact',
+): string {
+  const compact = mode === 'compact';
+  const sections: string[] = [];
+  if (!compact || structured.objective) sections.push(`**Objective**: ${structured.objective}`);
+
+  const lists: Array<[string, string[]]> = [
+    [compact ? 'Key Facts' : 'Locked Facts', structured.lockedFacts],
+    [compact ? 'Decisions' : 'Decisions Made', structured.decisions],
+    ['Open Questions', structured.openQuestions],
+    ['Next Actions', structured.nextActions],
+    ['Created Artifacts', structured.createdArtifacts],
+    ['Deferred/Excluded', structured.exclusions],
+  ];
+  for (const [label, items] of lists) {
+    if (items.length > 0) {
+      sections.push(compact
+        ? `**${label}**: ${items.join('; ')}`
+        : `**${label}**:\n${items.map(item => `- ${item}`).join('\n')}`);
+    }
+  }
+  return sections.join(compact ? '\n' : '\n\n');
 }
 
 /** The most recent stored answers a summary is settled against. */

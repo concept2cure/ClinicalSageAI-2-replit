@@ -242,7 +242,12 @@ function AuthoringPlaceIntoFilingForDocument({
     setPlacement(null);
     setNeedsReconciliation(false);
     resetStudyValues();
-    setSection(ownCode ?? activeSectionCode ?? '');
+    /* The open section's code is a fallback only when this dialog would accept
+       it: for a document whose sections share no code (a 510(k) Summary's
+       1 … 9) it is one of its own sections, and prefilling it showed the
+       publisher a refusal of a value they never typed (J4 human test, 2026-11-06). */
+    const fallback = activeSectionCode && !ownSectionRefusal(judgeSectionCode(activeSectionCode).canonical, sectionCodes) ? activeSectionCode : '';
+    setSection(ownCode ?? fallback);
     setOp('new');
     target.load();
   };

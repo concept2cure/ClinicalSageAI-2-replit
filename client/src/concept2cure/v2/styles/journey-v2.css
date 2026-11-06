@@ -7,6 +7,11 @@
    Namespace: pj-*  · reuses app.css tokens
    ════════════════════════════════════════════════════════════════════ */
 .c2c-v2 .pj{height:100%;overflow-y:auto;padding:26px 30px 72px;max-width:1240px;margin:0 auto;}
+/* Project home's page sits in the shell's `.page-full` flex row. As a flex item with only `margin:0 auto` it was as
+   wide as its content, so a step with narrower content (Review, Respond) shrank the column and re-centred it: the
+   title, the composer and the step tabs moved sideways under the pointer (human test J1, 2026-11-06). It claims the
+   row instead; outside a flex row these two declarations do nothing. */
+.c2c-v2 .pj{flex:1 1 auto;min-width:0;}
 /* Scoped to `.pj` rather than left bare, for cascade determinism only.
 
    Unscoped this was an exact-specificity duplicate of `.c2c-v2 .pj-title`

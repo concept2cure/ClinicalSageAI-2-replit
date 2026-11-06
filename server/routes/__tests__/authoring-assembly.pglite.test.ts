@@ -12,11 +12,12 @@ import { getIndAuthoringTemplates } from '../../services/authoring/ind-authoring
 import { builtinAuthoringTemplateId } from '../../services/authoring/builtin-authoring-templates';
 import { registerAssemblyFilingCases } from './_authoring-assembly-filing-cases';
 import { registerAssemblySectionSourceCases } from './_authoring-assembly-section-source-cases';
+import { registerAssemblyCommitCases } from './_authoring-assembly-commit-cases';
 import { readSelectedAuthoringSources } from '../../services/authoring/authoring-assembly-sources';
 import type { AssemblySourceManifest, AssemblySourceSelector } from '../../../shared/authoring/assembly-sources';
 
 const seam = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown, sql: [] as string[], fail: '', matches: 0,
-  commitFault: '' as '' | 'before' | 'after' | 'revoked', releases: [] as unknown[] }));
+  commitFault: '' as '' | 'before' | 'after' | 'revoked', releases: [] as unknown[], tenantLocal: false }));
 vi.mock('../../db', () => ({ get db() { return seam.db; }, get pool() { return seam.pool; }, getPool: () => seam.pool,
   query: (sql: string, args?: unknown[]) => (seam.pool as { query(s: string, a?: unknown[]): Promise<unknown> }).query(sql, args) }));
 let db: JourneyDb;
@@ -79,8 +80,13 @@ beforeAll(async () => {
     return query(sql, values);
   }, connect: async () => {
     checkedOut = true;
+    // tenantLocal: the enforcing pool's tenant is LOCAL to a transaction (poolInstrumentation), so forced RLS answers a statement outside one with no rows.
+    let inTransaction = false;
     return {
     query: async (sql: string, values?: unknown[]) => {
+      if (/^\s*BEGIN\b/i.test(sql)) inTransaction = true;
+      else if (seam.tenantLocal && !inTransaction) { seam.sql.push(sql); return { rows: [], rowCount: 0 }; }
+      if (/^\s*(COMMIT|ROLLBACK)\b/i.test(sql)) inTransaction = false;
       if (sql === 'COMMIT' && seam.commitFault === 'before') { seam.sql.push(sql); throw new Error('Synthetic lost COMMIT send'); }
       const result = await query(sql, values);
       if (sql === 'COMMIT' && seam.commitFault === 'after') throw new Error('Synthetic lost COMMIT response');
@@ -108,7 +114,7 @@ beforeAll(async () => {
 afterAll(async () => { await releaseCleanup; await db?.close(); });
 beforeEach(async () => {
   await releaseCleanup;
-  seam.fail = ''; seam.matches = 0; seam.commitFault = ''; seam.releases = [];
+  seam.fail = ''; seam.matches = 0; seam.commitFault = ''; seam.releases = []; seam.tenantLocal = false;
   await db.pool.query("UPDATE organization_users SET role='member' WHERE organization_id=$1 AND user_id=$2", [ORG, Number(AUTHOR.id)]);
   await db.pool.query("UPDATE users SET status='active' WHERE id=$1", [Number(AUTHOR.id)]);
   await db.pool.query("UPDATE project_visibility_settings SET visibility='org_public' WHERE project_id=42");
@@ -481,36 +487,7 @@ const assemblyCaseFixture = { query: (sql: string, args?: unknown[]) => db.pool.
 registerAssemblyFilingCases(assemblyCaseFixture);
 registerAssemblySectionSourceCases({ ...assemblyCaseFixture, templateId: TEMPLATE, vaulted, readSources });
 
-describe('uncertain assembly commit transport', () => {
-  it.each(['before', 'after'] as const)('discards the client without rollback/retry when the %s-COMMIT transport fails', async fault => {
-    const planned = await plan();
-    seam.commitFault = fault; seam.sql.length = 0;
-    const response = await commit(planned);
-    await releaseCleanup;
-    expect(response.status).toBe(503);
-    expect(response.body.success).toBe(false);
-    expect(response.body).not.toHaveProperty('data');
-    expect(seam.sql.filter(sql => sql === 'COMMIT')).toHaveLength(1);
-    expect(seam.sql).not.toContain('ROLLBACK');
-    expect(seam.releases).toEqual([expect.any(Error)]);
-    expect(await stored()).toHaveLength(fault === 'after' ? 3 : 1);
-    const checked = await plan();
-    expect(checked.rows.filter(row => row.disposition === 'append')).toHaveLength(fault === 'after' ? 0 : 2);
-  });
-
-  it('withholds private content if project access is revoked after a confirmed commit', async () => {
-    const planned = await plan();
-    seam.commitFault = 'revoked'; seam.sql.length = 0;
-    const response = await commit(planned);
-    expect(response.status).toBe(503);
-    expect(response.body.success).toBe(false);
-    expect(response.body).not.toHaveProperty('data');
-    expect(JSON.stringify(response.body)).not.toContain('Original authored text');
-    expect(await stored()).toHaveLength(3);
-    expect(seam.sql).not.toContain('ROLLBACK');
-    expect(seam.releases).toEqual([undefined]);
-  });
-});
+registerAssemblyCommitCases({ seam, plan, commit, stored, releaseCleanup: () => releaseCleanup });
 
 describe('universal template source and regional mapping', () => {
   it.each([['US_IND', 'FDA'], ['CA_CTA', 'Health Canada'], ['EU_MAA', 'EMA'], ['JP_CTN', 'PMDA']])('retains exact %s drafting region %s', async (registryId, expectedRegion) => {

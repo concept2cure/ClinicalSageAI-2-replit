@@ -1,0 +1,147 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > preserves all seven settled fields in the recalled summary (semantic embedding: false) 78ms
+   → expected '**Objective**: Prepare the regulatory…' to contain 'Request the source tables from the st…'
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > preserves all seven settled fields in the recalled summary (semantic embedding: true) 8ms
+   → expected '**Objective**: Prepare the regulatory…' to contain 'Request the source tables from the st…'
+ × server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > renders settled actions, artifacts and exclusions while keeping unsupported items withheld 7ms
+   → expected '**Objective**: Prepare the regulatory…' to contain 'Request the source tables from the st…'
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > keeps the stored thread summary empty when every proposed item is withheld 6ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > withholds the figure the stored check did not find, in every field the reader renders 6ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > reads the current answer's check, which may not be stored yet 10ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > fails closed when the thread cannot be read: only what claims nothing stands, and the row is still written 5ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > writes the row when the summarizer returns a malformed shape, never one letter per fact 4ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > below the refresh threshold, neither summarises nor reads the thread 4ms
+(node:36) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > reads older A and B independently, never the newer unattributed or foreign row 13ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > a fresh switch to B with only A and NULL summaries has no prior summary 7ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > preserves the old organization/thread caller when no project selector is supplied 7ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > rejects an invalid explicit selector without issuing an unscoped recall 6ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > retains the actual project id in a structured row read 9ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > a selected policy-column failure cannot retry the unscoped query 10ms
+ × server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > recalls all seven settled fields from a thread writeback in only its recorded project 38ms
+   → expected '**Objective**: Prepare the regulatory…' to contain 'Request the source tables from the st…'
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > binds the exact project alongside vector/thread/organization and returns its stored identity 4ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > a B writeback neither inherits A nor unattributed prior summaries and retains B on its new row 7ms
+(node:48) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/__tests__/working-memory.test.ts
+{
+  "timestamp": "2026-11-06T04:54:30.538Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T04:54:30.539Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/working-memory.test.ts
+{
+  "timestamp": "2026-11-06T04:54:30.540Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/working-memory.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/working-memory.test.ts > shouldEmbedWorkingMemory — safe-to-flip gate > embeds only when the feature is on AND the column exists 1ms
+ ✓ server/services/__tests__/working-memory.test.ts > shouldEmbedWorkingMemory — safe-to-flip gate > never embeds when the embedding column is absent — even with the flag on 0ms
+ ✓ server/services/__tests__/working-memory.test.ts > shouldEmbedWorkingMemory — safe-to-flip gate > never embeds when the feature is off 0ms
+ ✓ server/services/__tests__/working-memory.test.ts > isSemanticWorkingMemoryEnabled — flag reader > is off by default and only true for the exact string "true" 0ms
+ ✓ server/services/__tests__/working-memory.test.ts > buildWorkingMemoryPrompt > embeds the conversation and asks for the exact JSON shape 0ms
+ ✓ server/services/__tests__/working-memory.test.ts > buildWorkingMemoryPrompt > folds a previous summary in for incremental update 0ms
+ ✓ server/services/__tests__/working-memory.test.ts > formatWorkingMemoryForPrompt > always renders the objective and only the non-empty sections 1ms
+ ✓ server/services/__tests__/working-memory.test.ts > formatWorkingMemoryForPrompt > preserves the public seven-field layout without rendering withheld items 0ms
+ ✓ server/services/__tests__/working-memory.test.ts > formatWorkingMemoryForPrompt > retains the public empty-objective heading 1ms
+ ✓ server/services/__tests__/working-memory.test.ts > working-memory embeddings migration — guard > is idempotent and additive (pgvector + nullable embedding column) 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > preserves all seven settled fields in the recalled summary (semantic embedding: false)
+ FAIL  server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > preserves all seven settled fields in the recalled summary (semantic embedding: true)
+AssertionError: expected '**Objective**: Prepare the regulatory…' to contain 'Request the source tables from the st…'
+
+- Expected
++ Received
+
+- Request the source tables from the study team
++ **Objective**: Prepare the regulatory overview
++ **Key Facts**: The sponsor prefers a concise narrative
++ **Decisions**: Retain the agreed outline
++ **Open Questions**: Which appendix should follow?
+
+ ❯ server/services/__tests__/working-memory-fact-check.test.ts:129:23
+    127|     ].join('\n'));
+    128|     for (const field of ['nextActions', 'createdArtifacts', 'exclusion…
+    129|       expect(summary).toContain(CONTINUITY[field][0]);
+       |                       ^
+    130|     }
+    131|     expect(state.embeddedSummaries).toEqual(semantic ? [summary] : []);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > renders settled actions, artifacts and exclusions while keeping unsupported items withheld
+AssertionError: expected '**Objective**: Prepare the regulatory…' to contain 'Request the source tables from the st…'
+
+- Expected
++ Received
+
+- Request the source tables from the study team
++ **Objective**: Prepare the regulatory overview
++ **Key Facts**: The sponsor prefers a concise narrative
++ **Decisions**: Retain the agreed outline
++ **Open Questions**: Which appendix should follow?
+
+ ❯ server/services/__tests__/working-memory-fact-check.test.ts:148:23
+    146|       expect(structured[field]).toEqual(CONTINUITY[field]);
+    147|       expect(structured.withheld[field]).toEqual([unsupported]);
+    148|       expect(summary).toContain(CONTINUITY[field][0]);
+       |                       ^
+    149|     }
+    150|     expect(summary).not.toContain('45%');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > recalls all seven settled fields from a thread writeback in only its recorded project
+AssertionError: expected '**Objective**: Prepare the regulatory…' to contain 'Request the source tables from the st…'
+
+- Expected
++ Received
+
+- Request the source tables from the study team
++ **Objective**: Prepare the regulatory overview
++ **Key Facts**: The sponsor prefers a concise narrative
++ **Decisions**: Retain the agreed outline
++ **Open Questions**: Which appendix should follow?
+
+ ❯ server/services/__tests__/working-memory-project-recall.pglite.test.ts:98:24
+     96|     for (const value of [summary.objective, ...summary.lockedFacts, ..…
+     97|       ...summary.openQuestions, ...summary.nextActions, ...summary.cre…
+     98|       expect(recalled).toContain(value);
+       |                        ^
+     99|     }
+    100|     expect(await getLatestWorkingMemoryByThread(threadId, 7, { project…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  4 failed | 24 passed (28)
+   Start at  20:54:26
+   Duration  4.57s (transform 874ms, setup 106ms, import 1.76s, tests 2.10s, environment 0ms)

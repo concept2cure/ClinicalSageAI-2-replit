@@ -28,7 +28,11 @@ import {
   type PyPhase, type PyPyramid, type PyReviewClock, type PySchedule, type PyScheduledTask, type PyStanding, type PyTask,
 } from '../fixtures/pyramid-data';
 import { PyTaskSheet, PyWorkBreakdown, statusRefusal, workDocumentAsk } from './Pyramid';
+import { resolveFilingCatalogEntry } from '@shared/regulatory/filing-catalog';
 import { AssignAction, AssignmentLine, buildPyramidTaskBody, type PlanAssignment } from './PlanAssign';
+
+/** A recorded filing in words: the catalogue's name, or nothing when the catalogue does not know it. */
+const filingName = (filing: string | null | undefined) => (filing ? resolveFilingCatalogEntry(filing)?.displayName ?? null : null);
 
 export interface ProjectPyramidRead {
   programId: string;
@@ -211,7 +215,9 @@ export function ProjectProgramPlan({ programId, read: shared, projectId = null, 
     return (
       <p className="pj-desc pj-fact-none" data-testid="pj-program-none">
         A work breakdown is available for INDs, NDAs, BLAs, MAAs, Japanese marketing applications, 510(k)s, De Novos and PMAs.
-        This project&apos;s filing{data.filing ? ` (${data.filing})` : ''} has none yet.
+        {/* Named as the catalogue names it: "(us_510k_ivd)" read as a stored key, and beside "510(k)s" as a contradiction
+            to a device tester (human test J1, 2026-11-06). The 510(k) for IVD is its own filing in the catalogue. */}
+        This project&apos;s filing{filingName(data.filing) ? `, ${filingName(data.filing)},` : ''} has none yet.
       </p>
     );
   }

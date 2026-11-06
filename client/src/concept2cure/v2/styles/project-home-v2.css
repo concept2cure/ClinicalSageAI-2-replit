@@ -53,6 +53,14 @@
    the page, a `--bg-050` hover, the header row in D0's table type. */
 .c2c-v2 .pj-index .ctable { background: var(--bg-000); }
 .c2c-v2 .pj-index .ct-row { font-size: var(--fs-small); line-height: 1.45; color: var(--text-200); text-align: left; }
+/* The list's cells wrap rather than spill: a lead's e-mail address ran over the target date beside it (human test J1,
+   2026-11-06). On a phone the seven columns do not fit in 390px; the table keeps its columns and scrolls sideways inside
+   its own frame, where it had squeezed the project's name to a word per line and cut the last four columns off. */
+.c2c-v2 .pj-index .ct-head > div, .c2c-v2 .pj-index .ct-row > div { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .c2c-v2 .pj-index .ctable { overflow-x: auto; }
+  .c2c-v2 .pj-index .ct-head, .c2c-v2 .pj-index .ct-row { min-width: 1060px; }
+}
 .c2c-v2 .pj-index .ct-row:hover { background: var(--bg-050); }
 .c2c-v2 .pj-index .ct-row:focus-visible { outline-offset: -2px; }
 .c2c-v2 .pj-index .ct-row .ct-strong { color: var(--text-100); }
@@ -459,6 +467,13 @@
 .c2c-v2 .pj-mkt-verdict-ic{display:inline-flex;}
 .c2c-v2 .pj-mkt-verdict-ic svg{width:14px;height:14px;}
 .c2c-v2 .pj-mkt-btn{font-size:12px;padding:4px 12px;}
+/* At 390 a section's actions ran past the page's edge ("See every sequence in Submission Center" on the Submit step,
+   human test J1, 2026-11-06). On a phone the head wraps and its actions wrap under the heading. */
+@media (max-width: 640px) {
+  .c2c-v2 .pj .pj-sec-h { flex-wrap: wrap; }
+  .c2c-v2 .pj .pj-sec-acts { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; max-width: 100%; }
+  .c2c-v2 .pj .pj-sec-acts > .btn { white-space: normal; max-width: 100%; }
+}
 .c2c-v2 .pj-mkt-note{margin:4px 0 0;font-size:11.5px;line-height:1.5;color:var(--text-300);}
 .c2c-v2 .pj-mkt-blockers{margin:4px 0 2px;padding-left:18px;font-size:11.5px;line-height:1.5;color:var(--text-200);}
 .c2c-v2 .pj-mkt-acts{display:flex;justify-content:flex-end;margin-top:6px;}

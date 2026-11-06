@@ -13,7 +13,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
-import { selectToolsForTurn, ALWAYS_ON_TOOLS, SELF_DRIVE_TOOLS } from '../tool-selection';
+import { selectToolsForTurn, ALWAYS_ON_TOOLS, SELF_DRIVE_TOOLS, CANVAS_DOCUMENT_TOOLS } from '../tool-selection';
 import { withoutHiddenAppTools } from '../ana-launch-scope';
 
 function selectedNames(prompt: string): Set<string> {
@@ -118,5 +118,39 @@ describe('AnA routing — production composition (launch-scoped pool, self-drive
 
   it.each(NATURAL)('offers "$expect" for: "$prompt"', ({ prompt, expect: tool }) => {
     expect(offered(prompt).has(tool), `"${tool}" not offered — the persona requires it for this question`).toBe(true);
+  });
+});
+
+/**
+ * The founder's ask, 2026-11-06: "a conversation that produces in the canvas the
+ * documents that make up a CSR". A document AnA drafts reaches the canvas, and
+ * from it the editor, only through draft_authoring_document
+ * (document-surface-tool-defs.ts; docs/design/ANA_DOCUMENT_CANVAS.md). Recorded
+ * from the running app: "Draft the clinical study report for this study from the
+ * frozen study data, and show it to me in the canvas" was sent to the model with
+ * 50 tools and not this one; the CSR skill's own method, and generate_document's
+ * CSR refusal, name it. stream.ts renders the canvas, so it pins the tool on
+ * every turn, as it pins the self-drive tools; the CSR skill pins it too.
+ */
+describe('AnA routing — a drafted document reaches the canvas (draft_authoring_document pinned)', () => {
+  const POOL = withoutHiddenAppTools(ALL_ANA_TOOLS);
+  const offered = (prompt: string): Set<string> =>
+    new Set(
+      selectToolsForTurn(POOL, prompt, { maxTools: 50, pinned: [...SELF_DRIVE_TOOLS, ...CANVAS_DOCUMENT_TOOLS] })
+        .map((t) => t.name),
+    );
+
+  it('the tool is in the launch-scoped pool (so the cases below cannot pass vacuously)', () => {
+    expect(POOL.some((t) => t.name === 'draft_authoring_document')).toBe(true);
+    expect(CANVAS_DOCUMENT_TOOLS).toContain('draft_authoring_document');
+  });
+
+  it.each([
+    'Draft the clinical study report for this study from the frozen study data, and show it to me in the canvas.',
+    'write the CSR synopsis and the safety section',
+    'draft an investigator brochure for this product',
+    'give me a first draft of the 2.5 clinical overview',
+  ])('offers draft_authoring_document for: "%s"', (prompt) => {
+    expect(offered(prompt).has('draft_authoring_document')).toBe(true);
   });
 });

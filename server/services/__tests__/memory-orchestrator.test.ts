@@ -144,7 +144,7 @@ describe('memory-orchestrator', () => {
   });
 
   describe('dedupeAtoms', () => {
-    it('collapses same layer/title/content-prefix to the higher-scoring atom', () => {
+    it('collapses matching layer/category/title/full content to the higher-scoring atom', () => {
       const lower = atom({ id: 1, title: 'Endpoint', content: 'PFS primary', similarity: 0.6 });
       const higher = atom({ id: 2, title: 'Endpoint', content: 'PFS primary', similarity: 0.9 });
       const { deduped, dropped } = dedupeAtoms([lower, higher]);
@@ -157,6 +157,43 @@ describe('memory-orchestrator', () => {
       const c = atom({ layer: 'client_memory', title: 't', content: 'same' });
       const p = atom({ layer: 'project_memory', title: 't', content: 'same' });
       expect(dedupeAtoms([c, p]).deduped).toHaveLength(2);
+    });
+
+    it.each(['working_memory', 'client_memory', 'project_memory'] as const)(
+      'retains different conclusions after a shared long prefix in %s', layer => {
+        const prefix = 'The frozen study evidence is awaiting scientific review. '.repeat(4);
+        const first = atom({ id: 1, layer, title: 'Study conclusion', content: `${prefix}Include the subgroup claim.`, similarity: 0.9 });
+        const second = atom({ id: 2, layer, title: 'Study conclusion', content: `${prefix}Exclude the subgroup claim.`, similarity: 0.6 });
+        const result = dedupeAtoms([first, second]);
+        expect(result.dropped).toBe(0);
+        expect(result.deduped.map(entry => entry.content)).toEqual([first.content, second.content]);
+      }
+    );
+
+    it('still collapses complete duplicates with existing case and surrounding-whitespace equivalence', () => {
+      const content = 'Retain the frozen study source before drafting. '.repeat(5);
+      const lower = atom({ id: 1, title: 'Study conclusion', content, similarity: 0.6 });
+      const higher = atom({ id: 2, title: '  STUDY CONCLUSION  ', content: `\n${content.toUpperCase()}\n`, similarity: 0.9 });
+      expect(dedupeAtoms([lower, higher])).toEqual({ deduped: [higher], dropped: 1 });
+    });
+
+    it('keeps identical text assigned to different categories', () => {
+      const first = atom({ id: 1, category: 'decision', title: 'Study scope', content: 'Use the prespecified population.' });
+      const second = atom({ id: 2, category: 'open_question', title: first.title, content: first.content });
+      expect(dedupeAtoms([first, second])).toEqual({ deduped: [first, second], dropped: 0 });
+    });
+
+    it('does not confuse delimiters inside titles with content boundaries', () => {
+      const first = atom({ id: 1, title: 'Protocol:scope', content: 'continue' });
+      const second = atom({ id: 2, title: 'Protocol', content: 'scope:continue' });
+      expect(dedupeAtoms([first, second])).toEqual({ deduped: [first, second], dropped: 0 });
+    });
+
+    it('a legacy prefix-length setting cannot collapse different complete records', () => {
+      const first = atom({ id: 1, title: 'Analysis', content: 'Include population A.' });
+      const second = atom({ id: 2, title: 'Analysis', content: 'Include population B.' });
+      expect(dedupeAtoms([first, second], { ...DEFAULT_MEMORY_POLICY, dedupeContentKeyLength: 1 }))
+        .toEqual({ deduped: [first, second], dropped: 0 });
     });
   });
 
