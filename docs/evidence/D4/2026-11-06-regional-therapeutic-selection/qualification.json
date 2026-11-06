@@ -97,5 +97,44 @@
       "log": "launcher-tests.txt.gz"
     }
   },
-  "fixtureCorrection": "fixture-correction.json"
+  "fixtureCorrection": "fixture-correction.json",
+  "rbmIntegration": {
+    "remote": "e10d5e962992acc7bef3a2c7a2087fff76e31ef9",
+    "merge": "a29b4b8c945b42921afeafa7dbbf89f62266c972",
+    "review": "Independent read-only review found no UK/TA blocker; same existing org/program/subject identity, null-distinct behavior retained, incompatible indexes/duplicates refuse without deleting rows.",
+    "tests": [
+      {
+        "passed": 13,
+        "suites": 1,
+        "log": "rbm-identity-tests.txt.gz"
+      },
+      {
+        "passed": 32,
+        "suites": 2,
+        "log": "rbm-callers-tests.txt.gz"
+      }
+    ],
+    "dependencyManifest": "merged-dependency-sha256.json",
+    "ownHashesMatched": 13,
+    "build": {
+      "result": "passed",
+      "scope": "production client/server and audit/PQ verifiers",
+      "log": "rbm-merged-build.txt.gz"
+    },
+    "limits": "Incoming owner native PostgreSQL/browser evidence is separate; local replay proof is PGlite."
+  },
+  "documentationSynchronization": {
+    "remote": "9583bc094f5b11db8e97f1df78a5a9a0082d7038",
+    "scope": "documents only; source-tier propagation limits read in LAUNCHER-HANDOFF.md"
+  },
+  "failedPublicationAttempts": [
+    {
+      "source": "737d908c9384b8790df79ff976bc7d2f83184842",
+      "errors": 1,
+      "exitCode": 1,
+      "reason": "TS2322 in newly added UK saved-template fixture; invalid case removed without admission or baseline change.",
+      "log": "publication-typecheck-red.txt.gz",
+      "status": "publication-typecheck-red-status.json.gz"
+    }
+  ]
 }

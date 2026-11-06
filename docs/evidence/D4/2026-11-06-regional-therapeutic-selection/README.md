@@ -79,3 +79,21 @@ The first normal publication compiler reports one TS2322 in the added adapter te
 
 
 The corrected core run passes355/355 across five suites. Scoped fixture lint is zero errors/warnings. The13-file manifest has one explicitly recorded test-only transition; its prior snapshot is retained. The eight production files, adjacent213-case qualification and production build are unchanged. UK saved-template admission remains a recorded gap; EU/CA saved-template handoff is verified.
+
+
+## Latest canonical dependency integration
+
+After the test-only correction, fetched `e10d5e962`, including documentation
+advance `9583bc094`, and merged normally at `a29b4b8c9`. Only coordination
+conflicted. The documentation records that inline authoring/CSR still lack the
+shared service's inputSensitivityTiers propagation; that remains P-104 work in
+held files and is not qualified by this advisory-selection repair.
+
+The new RBM change amends the existing creator and model to restore the existing
+org/program/subject upsert identity. Independent read-only review found no
+regional drafting blocker. All13 replay/schema cases and32 metric/HTTP caller
+cases pass; the incoming owner's native proof is not a local rerun. The thirteen
+own source/test hashes still match; three affected dependency hashes are pinned
+separately. Current client/server build verification follows.
+
+The production client/server and audit/PQ verifier build passes after the RBM dependency merge. Final normal publication retry is pending; all source and dependency hashes are frozen.
