@@ -237,7 +237,7 @@ function auditLogEntry(row: Record<string, unknown>): AuditLedgerEntry {
       nonEmpty(row.user_email) ??
       (actorId != null && Number.isFinite(actorId) ? `user ${actorId}` : 'System'),
     actorRef: userRef(actorId),
-    event: metaString(payload, ['description', 'summary', 'title', 'message']) ?? humanizeEventType(row.action),
+    event: ACTION_EVENT[String(row.action ?? '')] ?? metaString(payload, ['description', 'summary', 'title', 'message']) ?? humanizeEventType(row.action),
     target:
       nonEmpty(row.target) ??
       `${nonEmpty(row.table_name) ?? 'system'}${nonEmpty(row.record_id) ? ` ${String(row.record_id).trim()}` : ''}`,
@@ -301,6 +301,32 @@ const SIGNED_EVENT: Record<string, string> = {
   'qms-document-retirement': 'Controlled document retired (e-signature)',
 };
 const AUTHORING_SIGNED_EVENT = 'Document e-signed';
+/** A Vault version's own lifecycle signature (lifecycle-signature.ts), named by the meaning its signer declared.
+ *  An approval that was not the last one its route required is interim and named below instead. */
+const LIFECYCLE_SIGNED_EVENT: Record<string, string> = {
+  REVIEWED: 'Version review signed (e-signature)',
+  APPROVED: 'Version approved (e-signature)',
+};
+
+/**
+ * Acts whose rows carry no description of their own, as a reader names them (J2 human test, 2026-11-06:
+ * a version's trail read "C2c Work Review Route Send", and the registration row read as the document's
+ * title). Only actions a writer mints are named; any other is shown as the chain recorded it.
+ */
+const ACTION_EVENT: Record<string, string> = {
+  'c2c.work.review-route.send': 'Sent for review',
+  'c2c.work.review-route.withdraw': 'Review withdrawn',
+  'c2c.work.review-route.return': 'Returned from review',
+  'c2c.work.review-route.reassign': 'Reviewer reassigned',
+  'c2c.work.review-route.add': 'Reviewer added',
+  'regulated_document.registered': 'Registered as a controlled document',
+  'regulated_document.created': 'Version entered review and approval',
+  'regulated_document.authoring': 'Version returned to Not sent for review',
+  'regulated_document.in_review': 'Version in review',
+  'regulated_document.approved': 'Version approved',
+  'regulated_document.superseded': 'Version superseded',
+  'regulated_document.withdrawn': 'Version withdrawn',
+};
 
 /**
  * An approval that was not the last one its route required (RR2 records,
@@ -320,7 +346,10 @@ const INTERIM_SUBJECT: Record<string, { act: string; subject: string }> = {
 function signedEvent(es: Record<string, unknown>): string | null {
   const type = String(es.signature_type);
   const interim = es.interim_approval === true ? INTERIM_SUBJECT[type] : undefined;
-  if (!interim) return SIGNED_EVENT[type] ?? null;
+  if (!interim) {
+    if (type === LIFECYCLE_SIGNATURE_TYPE) return LIFECYCLE_SIGNED_EVENT[String(es.signature_meaning ?? '').toUpperCase()] ?? null;
+    return SIGNED_EVENT[type] ?? null;
+  }
   const recorded = Number(es.approvals_recorded);
   const required = Number(es.approvals_required);
   const share = Number.isInteger(recorded) && Number.isInteger(required) && required > 0
