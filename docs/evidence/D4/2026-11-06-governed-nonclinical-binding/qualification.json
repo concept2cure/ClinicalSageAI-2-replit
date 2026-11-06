@@ -75,7 +75,21 @@
     "scope": "production client/server and audit/qualification operations verifiers"
   },
   "publication": {
-    "result": "pending"
+    "result": "accepted",
+    "source": "25f6b5cfbd6f880aae4b51ff1c3947512dc22feb",
+    "remoteVerified": "25f6b5cfbd6f880aae4b51ff1c3947512dc22feb",
+    "verifiedAt": "2026-11-06T22:32:43.382995+00:00",
+    "branch": "concept2cure-v2",
+    "method": "normal git push; all repository hooks enabled",
+    "typeScriptErrors": 0,
+    "typeScriptBaseline": 0,
+    "warningGrowth": 0,
+    "sourceManifest": "source-sha256.json",
+    "sourceHashesMatched": 6,
+    "integrationOwnerHashesMatched": 13,
+    "log": "publication-accepted.txt.gz",
+    "status": "publication-status.json",
+    "limits": "Scoped software source binding and current-run grant proof; no live model/scientific/native PostgreSQL/deployed RLS qualification, deployment or agency action."
   },
   "limits": [
     "PGlite fixtures and mocked SDK/transport are scoped software proof, not native PostgreSQL/RLS deployment qualification.",
