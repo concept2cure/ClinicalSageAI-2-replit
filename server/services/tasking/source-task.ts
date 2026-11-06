@@ -25,6 +25,8 @@ import * as schema from '../../../shared/schema';
 import unifiedTaskService, { type UnifiedTaskInput, type TaskWriteRunner } from '../unifiedTaskService';
 import { readProgramAnchorRow } from '../c2c/program-project-anchor';
 import { readCurrentProgramActor } from '../c2c/current-program-access';
+import { canAccessReportProject } from '../report-os/project-access';
+import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import { admitTaskCreationProject } from './task-project';
 import { auditTaskActionInTx } from './task-audit';
 import { authorizeQmsContentRead } from '../qms/controlled-document-content';
@@ -83,7 +85,7 @@ export interface ReconcileSourceTasksResult {
 
 type OpenSourceTask = {
   taskId: string; status: unknown; metadata: unknown; sourceEntityId: string | null;
-  projectId?: number | null; clientWorkspaceId?: number | null;
+  projectId?: number | null; clientWorkspaceId?: number | null; assigneeId?: number | null;
 };
 
 const NATIVE_PROJECT_SOURCES = new Set(['capa_record', 'capa_action', 'qms_periodic_review', 'qms_training']);
@@ -180,7 +182,7 @@ async function readOpenTasks(input: ReconcileSourceTasks, inScope: (id: string) 
   const openTasks: OpenSourceTask[] = await runner
     .select({ taskId: schema.unifiedTasks.taskId, status: schema.unifiedTasks.status, metadata: schema.unifiedTasks.metadata,
       sourceEntityId: schema.unifiedTasks.sourceEntityId, projectId: schema.unifiedTasks.projectId,
-      clientWorkspaceId: schema.unifiedTasks.clientWorkspaceId })
+      clientWorkspaceId: schema.unifiedTasks.clientWorkspaceId, assigneeId: schema.unifiedTasks.assigneeId })
     .from(schema.unifiedTasks)
     .where(and(
       eq(schema.unifiedTasks.organizationId, input.organizationId),
@@ -198,6 +200,50 @@ async function readOpenTasks(input: ReconcileSourceTasks, inScope: (id: string) 
 }
 
 interface SourceTaskTransaction { runner: TaskWriteRunner; client: RequestSqlClient }
+
+const nativeUserId = (value: unknown): number | null => {
+  const text = typeof value === 'string' || typeof value === 'number' ? String(value) : '';
+  const id = /^[1-9]\d*$/.test(text) ? Number(text) : NaN;
+  return Number.isSafeInteger(id) && id <= 2_147_483_647 ? id : null;
+};
+const dueDay = (value: unknown): string | null => {
+  const date = value instanceof Date ? value : typeof value === 'string' ? new Date(value) : null;
+  return date && Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : null;
+};
+const capaAssignee = (owner: Record<string, unknown>, record: boolean) => record
+  ? nativeUserId(owner.assigned_to) ?? nativeUserId(owner.created_by) : nativeUserId(owner.owner);
+const capaAssigneeChanged = (source: string, open: OpenSourceTask[], next?: SourceTaskNext) => !!next
+  && ['capa_record', 'capa_action'].includes(source) && open.some(task => (task.assigneeId ?? null) !== (next.assigneeId ?? null));
+
+/** A delayed producer must not restore an old owner, date or lifecycle over the current native record. */
+async function verifyCapaAssigneeChange(input: ReconcileSourceTasks, key: string, wanted: DesiredSourceTask,
+  { client: q }: SourceTaskTransaction): Promise<void> {
+  const record = input.sourceEntityType === 'capa_record';
+  const id = key.slice(record ? 'capa:'.length : 'capa-action:'.length);
+  const statement = record
+    ? `SELECT c.assigned_to,c.created_by,c.target_close_date AS due_at,c.state FROM capa_records c
+        JOIN regulatory_programs p ON p.id::text=c.program_id AND p.organization_id=$2 AND p.deleted_at IS NULL
+        WHERE c.id=$1::uuid FOR SHARE OF c,p`
+    : `SELECT a.owner,a.due_date AS due_at,a.state FROM capa_actions a JOIN capa_records c ON c.id=a.capa_id
+        JOIN regulatory_programs p ON p.id::text=c.program_id AND p.organization_id=$2 AND p.deleted_at IS NULL
+        WHERE a.id=$1::uuid FOR SHARE OF a,c,p`;
+  const { rows } = await q.query(statement, [id, input.organizationId]);
+  const owner = rows.length === 1 ? rows[0] : null;
+  const assignee = owner && capaAssignee(owner, record);
+  const ended = owner && (record ? ['closed_effective', 'closed_not_effective'] : ['done', 'cancelled']).includes(String(owner.state));
+  if (!owner || !assignee || assignee !== wanted.next.assigneeId || ended
+    || !dueDay(owner.due_at) || dueDay(owner.due_at) !== dueDay(wanted.next.dueDate)) {
+    throw new Error('The current native CAPA assignment could not be verified; the previous task was preserved');
+  }
+  // Retain the existing named-task assignment policy, not a new permission or assignment writer.
+  const actor = await readCurrentProgramActor(q, { organizationId: input.organizationId, userId: assignee, forShare: true });
+  if (!GOVERNED_WRITE_ROLES.has(actor.role)) throw new Error('The CAPA assignee is not eligible for this task');
+  const projectId = wanted.next.projectId!;
+  await q.query('SELECT user_id FROM project_members WHERE organization_id=$1 AND project_id=$2 AND user_id=$3 FOR SHARE', [input.organizationId, projectId, assignee]);
+  await q.query(`SELECT ra.artifact_id FROM concept2cure_review_assignments ra JOIN concept2cure_artifacts a ON a.id=ra.artifact_id
+    WHERE ra.organization_id=$1 AND a.organization_id=$1 AND a.project_id=$2 AND ra.reviewer_id=$3 AND ra.status='pending' FOR SHARE OF ra,a`, [input.organizationId, projectId, assignee]);
+  if (!await canAccessReportProject(input.organizationId, actor, projectId, q)) throw new Error('The CAPA assignee cannot access this project');
+}
 
 /** Correct placement without claiming the work completed or replacing its task identity. */
 async function repairTaskPlacement(input: ReconcileSourceTasks, id: string, task: OpenSourceTask, wanted: DesiredSourceTask,
@@ -232,7 +278,9 @@ async function reconcileKey(input: ReconcileSourceTasks, id: string, open: OpenS
   tx?: SourceTaskTransaction): Promise<void> {
   const { organizationId, sourceEntityType } = input;
   const wanted = input.desired.get(id);
-  if (wanted && open.length === 1 && wanted.same((open[0].metadata ?? {}) as Record<string, unknown>)) {
+  const assigneeChanged = capaAssigneeChanged(sourceEntityType, open, wanted?.next);
+  if (assigneeChanged && tx) await verifyCapaAssigneeChange(input, id, wanted!, tx);
+  if (wanted && !assigneeChanged && open.length === 1 && wanted.same((open[0].metadata ?? {}) as Record<string, unknown>)) {
     if (tx) await repairTaskPlacement(input, id, open[0], wanted, tx);
     result.kept += 1; return;
   }
