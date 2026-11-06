@@ -1038,20 +1038,38 @@
         {
           "name": "subagent_team_view_and_measured_progress",
           "package": "S4",
-          "status": "planned",
-          "scope": "Default-off toggle in existing conversation UI; worker assignment/status, measured milestone progress and qualified time estimate when available, AnA assessment and project-objective connection; hidden view does not stop execution or recording."
+          "status": "implemented_component_verified",
+          "scope": "Default-off toggle in existing conversation UI; worker assignment/status, measured milestone progress and qualified time estimate when available, AnA assessment and project-objective connection; hidden view does not stop execution or recording.",
+          "commit": "a2f9264a5",
+          "verification": {
+            "browserChecksPassed": 18,
+            "uiComponentTestsPassed": 121,
+            "boundary": "Actual durable service fixtures and authenticated HTTP; no live qualified provider execution."
+          }
         },
         {
           "name": "immutable_scoped_peer_coordination",
           "package": "S4",
-          "status": "planned",
-          "scope": "Same-project authorized peers share a scoped board and bounded messages; append-only assignment/message/proposal/decision/revision/disposition authority is durable before broadcast, idempotent and reconstructable. Lossy live mirror is only a projection; workers cannot waive verification/sign/transmit gates."
+          "status": "implemented_component_verified",
+          "scope": "Same-project authorized peers share a scoped board and bounded messages; append-only assignment/message/proposal/decision/revision/disposition authority is durable before broadcast, idempotent and reconstructable. Lossy live mirror is only a projection; workers cannot waive verification/sign/transmit gates.",
+          "commit": "a2f9264a5",
+          "verification": {
+            "runtimeTestsPassed": 20,
+            "privateNativeFixtureTestsPassed": 34,
+            "sdkBoundaryTestsPassed": 24,
+            "boundary": "Actual SQL/AES and registered workers with scripted transport, plus separate actual SDK payload seam; no live PQ claim."
+          }
         },
         {
           "name": "project_objective_monitor_and_orchestration",
           "package": "S4",
-          "status": "planned",
-          "scope": "Reconcile existing project objectives, task dependencies, evidence, authoring review and filing gates across runs for CSR/CTD/IND/registrations; distinguish task completion from verified content and filing release, surface blockers and human decisions."
+          "status": "implemented_component_verified",
+          "scope": "Reconcile existing project objectives, task dependencies, evidence, authoring review and filing gates across runs for CSR/CTD/IND/registrations; distinguish task completion from verified content and filing release, surface blockers and human decisions.",
+          "commit": "a2f9264a5",
+          "verification": {
+            "focusedTestsPassed": 158,
+            "boundary": "Canonical charter/task/dependency head binding and bounded non-authorizing filing observation; final release always checks current canonical gates."
+          }
         },
         {
           "name": "legacy_global_wisdom_quarantine",
@@ -1062,14 +1080,30 @@
         {
           "name": "private_user_rule_lifecycle",
           "package": "S4",
-          "status": "planned",
-          "scope": "Owner-protected private profile subtree, actual private correction sources and hash-only shared audit, expected-version human lifecycle, project>tenant>user precedence with hard gates at every scope; existing user-profile API and What AnA remembers drawer, including private prompt/record/peer isolation."
+          "status": "implemented_component_verified",
+          "scope": "Owner-protected private profile subtree, actual private correction sources and hash-only shared audit, expected-version human lifecycle, project>tenant>user precedence with hard gates at every scope; existing user-profile API and What AnA remembers drawer, including private prompt/record/peer isolation.",
+          "commit": "a2f9264a5",
+          "verification": {
+            "nativeOwnerProfileTestsPassed": 30,
+            "genericContextOmissionTestsPassed": 11,
+            "browserChecksPassed": 10,
+            "uiAndTelemetryTestsPassed": 45,
+            "latestKeyRotationTestsPassed": 34,
+            "boundary": "Protected turns only; current owner/source/key/capture required; automatic private reflection held; no retroactive cleanup claim for immutable pre-boundary legacy records."
+          }
         },
         {
           "name": "reviewed_aggregate_pattern_contribution",
           "package": "S4",
-          "status": "planned",
-          "scope": "Extend existing contribution setting, append-only tenant-local class/count events and QMS exact-artifact signature/version controls. Enum-only aggregate candidates require server cohort and current opt-in; no free text, source values, reversible maps or historical wisdom bypass. Existing quarantines stay closed."
+          "status": "implemented_component_verified",
+          "scope": "Extend existing contribution setting, append-only tenant-local class/count events and QMS exact-artifact signature/version controls. Enum-only aggregate candidates require server cohort and current opt-in; no free text, source values, reversible maps or historical wisdom bypass. Existing quarantines stay closed.",
+          "commit": "a2f9264a5",
+          "verification": {
+            "focusedTestsPassed": 260,
+            "nativeQmsTestsPassed": 16,
+            "postDeployRlsTestsPassed": 49,
+            "boundary": "Closed-vocabulary class/count cohorts, actual human QMS exact-artifact review, explicit tenant installation; legacy raw wisdom remains quarantined. No formal DP claim."
+          }
         }
       ],
       "hardDependencies": [

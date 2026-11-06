@@ -667,6 +667,35 @@ committed-secret gate passes. The canonical full-program compiler completes with
 baseline on the merged tree. Publication still requires all mandatory pre-push gates; the full expanded spike
 remains acceptance pending.
 
+#### P-104 team, private custody and reviewed-learning component evidence
+
+`a2f9264a5` extends the existing conversation and runtime. The team toggle is off by default; 18 actual browser
+checks and 121 UI checks cover measured progress, AnA disposition and hidden-view behavior. Registered parallel
+workers, durable coordination/refusals, cancellation, private tool holds and safe wire projections pass 20 runtime
+checks. The canonical objective/task/dependency monitor passes 158 focused checks. Its filing observation is
+explicitly non-authorizing and bracketed by current heads, rather than claimed to be an atomic release decision.
+
+Personal rules now have owner-only correction/version/conflict/revoke controls. The existing-table owner-index
+convergence and native owner CRUD/RLS suite pass 30 cases; generic private-context omission passes 11. The actual
+browser adds 10 private-rule checks. Current private UI and telemetry pass 45 cases. Whole private turn/message
+custody, owner-only history/record reads, revoked-rule history, malicious peer data and key rotation pass the latest
+34-case SQL/AES fixture. Final SDK-only private expansion, exact prepared payload hash, opaque child lineage,
+revoked authority, floor T3 and no streaming/cache/demo pass 24 gateway tests with SDK transport substituted.
+These are separate boundaries, not a claim of live model qualification or one joined full-spike pass.
+
+Reviewed shared learning passes 260 focused cases and 16 native QMS cases: audited explicit opt-in, server cohort,
+closed-vocabulary generic classes/counts, exact immutable artifact plus current human signatures, explicit tenant
+Skills installation and fresh approval checks. Post-deploy native RLS passes 49 cases and the canonical 462-file
+migration replay passes. Existing global raw wisdom stays quarantined. Automatic private reflection, historical
+pre-boundary immutable exposure remediation, final ZIP pre-wire byte approval and joined authoring qualification
+acceptance remain separately tracked; no incomplete path is described as accepted.
+
+`5c5b89836` adds private HTTP body suppression, safe existing owner-index convergence and immutable pre-wire
+`TRANSMIT_BLOCKED` evidence. Exact one-byte signed-manifest mutation and canonical transmit/QMS regressions pass
+107 cases. This approval binds the signed leaf manifest; it does not establish approval of a final ZIP bitstream.
+The new batch is committed locally and merged with canonical work; publication and final merged gates follow.
+Counts in this section overlap broader suites and must not be summed. All 16 real model PQ entries remain pending.
+
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
 **Delivered**
