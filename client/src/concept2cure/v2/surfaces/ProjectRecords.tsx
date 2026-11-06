@@ -81,7 +81,7 @@ function countLabel(section: RecordSection | undefined): string {
 /** The project's records as one card in Project knowledge, on every step (D3-2a, D3.md §4.8 item 7). Each store is
  *  a closed disclosure whose summary says its count ("Vault documents · 6") or that it is not available, so the card
  *  is a short list until a person opens a store. It moved here from the Author step's "Records in this project". */
-export function ProjectRecords({ pid }: { pid: string }) {
+export function ProjectRecords({ pid, activity }: { pid: string; activity?: React.ReactNode }) {
   const state = useLiveData<ProjectRecordsRead>(`/api/c2c/projects/${pid}/records`);
   const records = state.data?.records ?? {};
   return (
@@ -100,6 +100,14 @@ export function ProjectRecords({ pid }: { pid: string }) {
             </details>
           );
         })}
+      {/* The project's audit read, last (D3-2b): every act, its actor and its recorded reason. It was a section of
+          the Author step. It is read by the page, so a failed records read does not hide it. */}
+      {activity && (
+        <details className="pj-more" data-records-section="activity">
+          <summary>Activity</summary>
+          {activity}
+        </details>
+      )}
     </section>
   );
 }
