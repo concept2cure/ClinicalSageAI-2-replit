@@ -19,6 +19,21 @@ def receipt(name):
  return gzip.decompress(raw).decode(errors='replace')
 def accepted():
  checks=['integrated-regression','integrated-lineage','integrated-gates','integrated-build','integrated-browser']
+ freeze='integrated-inputs.json'
+ if (p/'publication-bridge.json').exists():
+  bridge=read('publication-bridge.json');freeze=bridge['finalFreeze']
+  before=read('integrated-inputs.json')['files'];after=read(freeze)['files']
+  assert set(before)<=set(after),'removed integrated input'
+  changed={name:{'before':value,'after':after[name]} for name,value in before.items() if after[name]!=value}
+  assert changed==bridge['changedIntegratedInputs'],'unreviewed source bridge'
+  added={name:value for name,value in after.items() if name not in before}
+  assert added==bridge['addedIntegratedInputs'],'unreviewed added input'
+  rerun=read(bridge['rerunFreeze'])['files']
+  assert set(rerun)==set(after),'rerun input set changed'
+  helper_changes={name:{'before':value,'after':after[name]} for name,value in rerun.items() if after[name]!=value}
+  assert helper_changes==bridge['evidenceHelperChangesAfterRerun'],'runtime source changed after rerun'
+  assert set(helper_changes)<={str((p/'finalize.py').relative_to(r))},'only this evidence verifier can change after rerun'
+  checks+=bridge['rerunChecks']
  for name in checks:receipt(name)
  output=receipt('source-push')
  assert 'errors found: 0 (tsc exit 0)' in output,'normal full CLI compiler must complete'
@@ -27,13 +42,13 @@ def accepted():
  remote=git('rev-parse','origin/concept2cure-v2').decode().strip()
  subprocess.run(['git','merge-base','--is-ancestor',head,remote],cwd=r,check=True)
  committed=tree(remote);files={}
- for name,expected in read('integrated-inputs.json')['files'].items():
+ for name,expected in read(freeze)['files'].items():
   raw=(r/name).read_bytes();assert sha(raw)==expected,name
   identity=blob(raw);assert committed.get(name)==identity,name
   files[name]={'sha256':expected,'gitBlob':identity}
- proof={'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'acceptedSourceHead':head,'observedRemoteHead':remote,'acceptedBy':'normal git push with repository hooks; source-push.json/log.gz','branch':'concept2cure-v2','scope':read('integrated-inputs.json')['scope'],'files':files}
+ proof={'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'acceptedSourceHead':head,'observedRemoteHead':remote,'acceptedBy':'normal git push with repository hooks; source-push.json/log.gz','branch':'concept2cure-v2','scope':read(freeze)['scope'],'sourceFreeze':freeze,'files':files}
  (p/'accepted-source.json').write_text(json.dumps(proof,indent=2)+'\n')
- result={'checks':checks,'vitest':'571 cases / 22 suites; one final integrated invocation','node':'See integrated-lineage TAP totals; separate from Vitest','browser':'8 cases at 1440/390; real positive and injected client-integrity faults','compiler':'Full CLI tsc exit 0, unchanged zero baseline, normal pre-push','acceptedSourceHead':head,'limitations':'OPEN_ITEMS.md; no live provider/agency/deployment, native concurrency or full CSR acceptance'}
+ result={'checks':checks,'vitest':'571 cases / 22 suites on integrated source; affected client suites rerun after the exact frontend merge if publication-bridge.json is present. Overlapping runs are not added.','node':'119 cases; unchanged server/CI inputs across frontend-only merge','browser':'8 cases at 1440/390; real positive and injected client-integrity faults','compiler':'Full CLI tsc exit 0, unchanged zero baseline, normal pre-push','acceptedSourceHead':head,'limitations':'OPEN_ITEMS.md; no live provider/agency/deployment, native concurrency or full CSR acceptance'}
  (p/'qualification.json').write_text(json.dumps(result,indent=2)+'\n')
  print(json.dumps({'acceptedSourceHead':head,'qualifiedInputs':len(files)}))
 def manifest():

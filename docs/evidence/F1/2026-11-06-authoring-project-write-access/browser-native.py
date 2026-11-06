@@ -23,8 +23,9 @@ try:
  assert body['dependencies']['database']=='ok' and body['dependencies']['schema']=='ok'
  assert body['anaState']=='no_provider' and body['failed']==['ana']
  fixture=json.loads((p/'native-fixture.json').read_text())
- env=os.environ.copy();env.update(C2C_SOURCE_FREEZE='integrated-inputs.json',BASE_URL='http://127.0.0.1:5100',SCOPE_TEST_EMAIL='scope.editor@example.test',SCOPE_TEST_PROGRAM=fixture['programId'],SCOPE_TEST_DOCUMENT=fixture['documentId'])
- result=subprocess.run(['python3',str(p/'check.py'),'integrated-browser','--','node',str(p/'browser-scope.cjs')],cwd=r,env=env)
+ env=os.environ.copy();env.setdefault('C2C_SOURCE_FREEZE','integrated-inputs.json')
+ env.update(BASE_URL='http://127.0.0.1:5100',SCOPE_TEST_EMAIL='scope.editor@example.test',SCOPE_TEST_PROGRAM=fixture['programId'],SCOPE_TEST_DOCUMENT=fixture['documentId'])
+ result=subprocess.run(['python3',str(p/'check.py'),env.get('C2C_BROWSER_LABEL','integrated-browser'),'--','node',str(p/'browser-scope.cjs')],cwd=r,env=env)
  code=result.returncode
 finally:
  os.killpg(pid,signal.SIGTERM)

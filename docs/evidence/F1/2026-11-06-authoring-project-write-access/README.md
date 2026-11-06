@@ -69,3 +69,10 @@ After the canonical merge, a single fresh invocation passes **571/571 Vitest cas
 The native-app browser re-walk passes **8/8 cases** on the merged UI, at 1440/390 (`integrated-browser.json`, `browser-scope/20261106T192506930Z-335b23/results.json`). Root inspected the real desktop and mobile fault screenshots. The existing mobile blank-state/banner issue remains with D4. The runner's first readiness URL was wrong and no cases ran; `native-browser-wrong-probe` retains that incomplete attempt. The corrected existing `/readyz` reports schema/database/storage ready and only AnA unavailable. `native-browser-runner.json` captures the corrected runner's actual exit 0, including server shutdown.
 
 `canonical-merge.json` records the 40 changed named inputs and unchanged runtime writer contracts. Two independent reviews confirm current P-104 scope and D3/D4 handoffs. Source and evidence are committed locally; accepted normal hooked push and final artifact closure are still pending.
+
+
+## First push and normal ref-race retry
+
+The first normal push completed every hook and the full CLI compiler with **0 errors, tsc exit 0, unchanged zero baseline**, but Git rejected the outdated remote ref. `source-push-ref-race-1.json/log.gz` retain that failed transport; it is not an accepted publication.
+
+Merged `965084590` normally. The exact named-input delta is three project-page files, with all authoring/server/CI and review-reopen source unchanged. `publication-bridge.json` binds their old/new hashes, the four added pins and the evidence-verifier-only change after rerun. All eight affected client suites plus the two incoming project suites pass **122/122** (`retry1-client`), replacing the original 106 client cases and adding 16 project cases. The four unchanged reopen cases and all unchanged server/119 Node cases retain their earlier qualification; overlapping passes are not added to the original 571 count. Production build and all eight native-app browser cases pass again (`retry1-build`, `retry1-browser`), with no named-input drift. The final normal push remains pending at this checkpoint.
