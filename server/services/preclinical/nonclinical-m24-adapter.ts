@@ -40,6 +40,7 @@ export function mapStudyTypeToM24(studyType: string): M24StudyType {
     case 'single_dose_tox':
     case 'repeat_dose_tox':
     case 'local_tolerance':
+    case 'immunotoxicity':
     case 'toxicology':
       return 'toxicology';
     case 'genotox':
@@ -57,13 +58,14 @@ export function mapStudyTypeToM24(studyType: string): M24StudyType {
     case 'tk':
     case 'pk':
     case 'adme':
+    case 'adme_pk':
     case 'pharmacokinetics':
       return 'pharmacokinetics';
     case 'pharmacology':
       return 'pharmacology';
     default:
-      // Unknown types are summarized under toxicology so they are not dropped.
-      return 'toxicology';
+      // Retain these in the study index without inventing a discipline.
+      return 'unclassified';
   }
 }
 
@@ -71,6 +73,8 @@ export function mapStudyTypeToM24(studyType: string): M24StudyType {
 export interface NonclinicalStudyInput {
   studyId?: string;
   studyType: string;
+  /** Original taxonomy retained when an already-adapted category is passed on. */
+  sourceStudyType?: string;
   studyTitle?: string;
   species?: string | null;
   durationWeeks?: number | null;
@@ -99,15 +103,12 @@ export interface EnrichedM24Result {
   toxProfile: ToxFindingsSummary | null;
 }
 
-const DEFAULT_SECTION: Record<M24StudyType, string> = {
-  pharmacology: '4.2.1.1',
-  safety_pharmacology: '4.2.1.3',
-  pharmacokinetics: '4.2.2',
-  toxicology: '4.2.3.2',
-  genotoxicity: '4.2.3.3',
-  carcinogenicity: '4.2.3.4',
-  reproductive_tox: '4.2.3.5',
-};
+/** Preserve a prior subtype only within its recorded broad category. A raw
+ * specific type takes precedence over conflicting round-trip metadata. */
+function originalStudyType(input: NonclinicalStudyInput, category: M24StudyType): string {
+  if (input.studyType !== category || typeof input.sourceStudyType !== 'string') return input.studyType;
+  return mapStudyTypeToM24(input.sourceStudyType) === category ? input.sourceStudyType : input.studyType;
+}
 
 /**
  * Map a single NonclinicalStudyInput (loader shape) to the NonclinicalStudy
@@ -117,7 +118,7 @@ const DEFAULT_SECTION: Record<M24StudyType, string> = {
  * input-adapter layer can call it directly without going through
  * `buildEnrichedM24`. Used by `loadNonclinicalStudiesForProject`.
  */
-export function toBuilderStudy(input: NonclinicalStudyInput, index: number): NonclinicalStudy {
+export function toBuilderStudy(input: NonclinicalStudyInput, _index: number): NonclinicalStudy {
   const studyType = mapStudyTypeToM24(input.studyType);
   const duration =
     input.duration ??
@@ -126,16 +127,17 @@ export function toBuilderStudy(input: NonclinicalStudyInput, index: number): Non
     input.glpStatus ??
     (input.glpCompliant == null ? undefined : input.glpCompliant ? 'GLP' : 'non-GLP');
   return {
-    studyId: input.studyId ?? `NC-${index + 1}`,
+    studyId: input.studyId ?? '',
     studyType,
+    sourceStudyType: originalStudyType(input, studyType),
     species: input.species ?? undefined,
     duration,
     doseLevels: input.doseLevels,
-    primaryFinding: input.primaryFinding ?? input.keyFindings ?? 'See Module 4 study report.',
+    primaryFinding: input.primaryFinding ?? input.keyFindings ?? '',
     noael: input.noael ?? undefined,
     noel: input.noel ?? undefined,
     glpStatus,
-    reportSection: input.reportSection ?? DEFAULT_SECTION[studyType],
+    reportSection: input.reportSection ?? '',
   };
 }
 

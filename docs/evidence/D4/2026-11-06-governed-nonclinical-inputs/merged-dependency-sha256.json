@@ -1,0 +1,11 @@
+{
+  "client/src/concept2cure/v2/surfaces/CsrBuildProgress.tsx": "ead551aad70795a7b4169d590c9b5681f4132ccc63dde80d74069812f6ac160b",
+  "scripts/startup.sh": "6fa61b2280e2db604cc858408b9ad9c4408e919b448b5872ef0c83fd7ae68cd0",
+  "server/routes/ana-ri/stream.ts": "f466eea842e96ae1c51385427bc6fe92d7e48edfff9589c524a5393aa6e41258",
+  "server/services/ai-gateway/gateway.ts": "4dd56cc61964678dfc70dd801bb758a80a3ce972bb74973ffc8dd50e1cc0ac97",
+  "server/services/ai-gateway/model-call-scope.ts": "273d85c87022190207a71d91b58f77f2491b19fc58183ed3f84b9b7b1c8e27a2",
+  "server/services/ai-gateway/sensitive-placement-policy.ts": "604af3d04e0b181483dff33a87274fe1d9c78b1e5b36e26006064a0a582d1279",
+  "server/services/ai-gateway/types.ts": "285ecac64f8aa284fdd94c81e664d636ab258d87a2061b620ee176f8fb554ad0",
+  "server/services/ana/AnaToolExecutor.ts": "487bc249d2db17474411e8669baee199f8004ef926282dc382f8673fad26e817",
+  "server/services/ana/governed-tool-gate.ts": "3a2a090c91cc335443a244a9cf8a3375426200f89693d57fa43ca7fa923b923f"
+}

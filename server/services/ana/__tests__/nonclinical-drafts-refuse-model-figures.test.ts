@@ -8,10 +8,9 @@
  * a target-organ adversity profile. The model is the conduit for every one of
  * those figures; it is the shape 2.5/2.7 had before 2026-10-05.
  *
- * No record links nonclinical studies to a project yet (founder decision R-1,
- * which store), so until then the drafts answer with the record's ICH M4S
- * outline for the open project and say that no studies are recorded against it,
- * and figures supplied in the call are refused and named as not used.
+ * P-55 chose the governed register. Until its protected project binding is
+ * connected, these drafts read no studies and return the record's ICH M4S
+ * outline. Figures supplied in the call are refused and named as not used.
  */
 import { describe, expect, it, vi } from 'vitest';
 
@@ -20,6 +19,15 @@ vi.mock('../../csr/project-scope.js', async (orig) => ({
   resolveCsrScope: vi.fn(async (_db: unknown, _org: number, input: { projectId?: number }) => ({ projectId: input.projectId })),
 }));
 vi.mock('../../../db.js', () => ({ db: {}, pool: { query: vi.fn() }, getPool: vi.fn() }));
+// Handler/outline unit: the older project-scope fixture is paired with a current
+// empty-rule policy snapshot. Actual mandatory policy admission is tested by
+// the governed-tool/Skills suites; no production gate is changed here.
+vi.mock('../governed-tool-gate.js', async orig => ({
+  ...await orig<typeof import('../governed-tool-gate.js')>(),
+  loadToolSkillGates: async (scope?: { organizationId?: number; userId?: number; projectId?: number }) => scope?.organizationId
+    ? { organizationId: scope.organizationId, userId: scope.userId ?? null, projectId: scope.projectId ?? null,
+      rules: [], ruleHash: 'e'.repeat(64) } : null,
+}));
 
 import { getToolHandler } from '../AnaToolExecutor.js';
 import { DRAFT_NONCLINICAL_OVERVIEW_M2_4, DRAFT_NONCLINICAL_SUMMARIES_M2_6 } from '../bla-biologics-tool-defs.js';
@@ -48,10 +56,28 @@ describe.each([
     expect(out).toMatchObject({ ok: false, status: 'needs_project', ignoredSuppliedFigures: true });
   });
 
-  it('with a project open and nothing supplied, answers with the record’s outline and says no studies are recorded', async () => {
+  it('with a project open and nothing supplied, answers with the record’s outline', async () => {
     const out = await run(tool, {});
     expect(out.nonclinical_data?.status).toBe('needs_data');
     expect(numbers(out.structure.sections)).toEqual(ctdRecordSubtree(root).map((h) => h.code));
+  });
+
+  it('names the disconnected protected source path without claiming that governed records do not exist', async () => {
+    const out = await run(tool, {});
+    const text = JSON.stringify(out);
+    expect(out.nonclinical_data?.status).toBe('needs_data');
+    expect(text).toMatch(/(?:protected|privacy|source).{0,70}(?:connect|binding)|(?:connect|binding).{0,70}(?:protected|privacy|source)/i);
+    expect(text).not.toContain('does not yet record nonclinical studies against a project');
+    expect(text).toMatch(/no (?:nonclinical )?stud(?:y|ies).{0,30}(?:read|loaded)|did not read.{0,30}stud/i);
+  });
+
+  it('contains unexpected source-context errors rather than returning driver details', async () => {
+    const { resolveCsrScope } = await import('../../csr/project-scope.js');
+    vi.mocked(resolveCsrScope).mockRejectedValueOnce(new Error('private-nonclinical-sql-canary'));
+    const out = await run(tool, {});
+    expect(out.error).toBeDefined();
+    expect(JSON.stringify(out)).not.toContain('private-nonclinical-sql-canary');
+    expect(JSON.stringify(out)).toMatch(/unavailable|could not|nothing.*composed/i);
   });
 
   // S2 review (2026-10-26): the outline's next step said "No nonclinical study is
