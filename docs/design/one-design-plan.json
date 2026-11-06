@@ -352,7 +352,8 @@
         "server/services/ana-session-bootstrap.ts",
         "server/services/vault/document-catalog-document.ts",
         "server/services/vault/document-catalog-actor-reads.ts",
-        "db/migrations/20260520_ana_failure_learning.sql"
+        "db/migrations/20260520_ana_failure_learning.sql",
+        "server/services/vault/vault-ingest.service.ts"
       ]
     },
     {
@@ -744,8 +745,8 @@
         {
           "name": "agency_requirement_writer_tenant_policy",
           "status": "component_verified_commit_pending",
-          "testsPassed": 10,
-          "scope": "existing policy amended and replayed; no new table"
+          "testsPassed": 11,
+          "scope": "writer-only agency requirements and no-policy runtime RLS quarantine of ownerless legacy failure_patterns; creator replay proved; reviewed promotion remains held"
         },
         {
           "name": "independent_exact_quotation_check",
@@ -754,6 +755,11 @@
           "testsPassed": 149,
           "scope": "selected source spans match exactly; semantic claim support and full spike remain unassessed",
           "commit": "c08aba5c"
+        },
+        {
+          "name": "fresh_vault_upload_sensitivity_default",
+          "status": "implementation_in_progress",
+          "scope": "default fresh unclassified uploads to CONFIDENTIAL T2; preserve existing check-in policy; acceptance pending"
         }
       ]
     }
