@@ -81,8 +81,9 @@ c2c_start_postgres() {
       c2c_log "BLOCKED: another PostgreSQL already listens on 127.0.0.1:$C2C_DB_PORT. Stop it, or set C2C_DB_PORT to a free port."
       return 1
     fi
-    c2c_sudo pg_ctlcluster "$C2C_PG_VERSION" main start \
-      -o "-c listen_addresses=localhost -c port=$C2C_DB_PORT"
+    c2c_sudo pg_conftool "$C2C_PG_VERSION" main set listen_addresses localhost
+    c2c_sudo pg_conftool "$C2C_PG_VERSION" main set port "$C2C_DB_PORT"
+    c2c_sudo pg_ctlcluster "$C2C_PG_VERSION" main start
   fi
   local i
   for i in $(seq 1 30); do
