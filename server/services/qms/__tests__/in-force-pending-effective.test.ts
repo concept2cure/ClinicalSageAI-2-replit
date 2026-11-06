@@ -34,4 +34,28 @@ describe('pending effective', () => {
     const current = row({ effective_date: '2026-01-01' });
     expect((await readInForceReleases({ query: async () => ({ rows: [] }) }, 9, [current])).get(5)).toEqual({ release: current, underRevision: false });
   });
+
+  it('asks native retained-parent admission before fetching any signed prose',async()=>{
+    const query=vi.fn(async(sql:string)=>{
+      if (sql.includes('controlled_document')) throw new Error('Private signed prose was fetched before admission');
+      return {rows:[{id:31,document_id:5,authoring_document_id:'private-copy'}]};
+    });
+    const admit=vi.fn(async()=>false);
+    const releases=await readInForceReleases({query},9,[row({})],{admitRelease:admit});
+    expect(releases.size).toBe(0);
+    expect(admit).toHaveBeenCalledWith(expect.objectContaining({id:5,organization_id:9,authoring_document_id:'private-copy'}));
+    expect(query).toHaveBeenCalledTimes(1);
+  });
+
+  it('fetches only an exact admitted retained-version identity',async()=>{
+    let admitted=false;
+    const query=vi.fn(async(sql:string,args?:unknown[])=>{
+      if (!sql.includes('controlled_document')) return {rows:[{id:31,document_id:5,authoring_document_id:'allowed-copy'}]};
+      expect(admitted).toBe(true);
+      expect(args).toEqual([9,[31]]);
+      return {rows:[{document_id:5,controlled_document:v1}]};
+    });
+    const releases=await readInForceReleases({query},9,[row({})],{admitRelease:async()=>{admitted=true;return true;}});
+    expect(releases.get(5)?.release.version).toBe('1.0');
+  });
 });
