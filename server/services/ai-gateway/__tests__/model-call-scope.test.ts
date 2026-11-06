@@ -17,8 +17,9 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 
 import { AIGateway, resetGateway, GatewayAbortedError, GatewayPolicyError } from '../gateway';
 import { isTerminalGatewayError } from '../gateway-outcome';
-import { modelCallRefusal, runRefusingModelCalls } from '../model-call-scope';
-import type { GatewayConfig, GatewayRequest, ModelConfig } from '../types';
+import { modelCallRefusal, runRefusingModelCalls, createRunSourceAuthority, runWithSourceAuthority, recordCurrentRunSource,
+  captureCurrentRunSourceGate, SourceRunAuthorityError, type RunSourceAuthority } from '../model-call-scope';
+import type { AuditLogEntry, GatewayConfig, GatewayRequest, ModelConfig } from '../types';
 
 const SCOPE = { runId: 'agent_00000000-0000-4000-8000-000000000001', parentRunId: 'run_p', tool: 'search_literature' };
 
@@ -62,6 +63,64 @@ afterEach(() => {
   resetGateway();
   vi.restoreAllMocks();
 });
+
+const SOURCE_ACTOR = { organizationId: 7, userId: 3, projectId: 42, programId: '10000000-0000-4000-8000-000000000001' };
+describe('private per-run source ceilings and current-source checkpoints', () => {
+  it('fills omitted SDK/audit identity only from private authority and refuses a forged actor before any SDK', async () => {
+    const { gw, placement, dispatch } = instrumented();
+    const probe = gw as unknown as { config: { auditEnabled: boolean }; auditLogger: { getRecentEntries(): AuditLogEntry[] } };
+    probe.config.auditEnabled = true;
+    await runWithSourceAuthority(createRunSourceAuthority(SOURCE_ACTOR), async () => {
+      await expect(gw.route({ taskType: 'chat', messages: [{ role: 'user', content: 'Unassessed source context' }],
+        inputSensitivityTiers: [0], payloadProvenance: 'public' })).rejects.toThrow('DENY_INPUT_TIER');
+      expect(placement.mock.calls[0][0]).toMatchObject({ organizationId: 7, userId: 3, projectId: 42, inputSensitivityTiers: [3, 0] });
+      expect(probe.auditLogger.getRecentEntries()[0]).toMatchObject({ organizationId: 7, userId: 3, projectId: 42,
+        error: 'DENY_INPUT_TIER', metadata: { inputTierPlacement: { tierMax: 3, allowed: false } } });
+      await expect(gw.route(request({ organizationId: 8, userId: 4, projectId: 43 })))
+        .rejects.toMatchObject({ code: 'SOURCE_CONTEXT_UNAVAILABLE' });
+      expect(placement).toHaveBeenCalledOnce(); expect(dispatch).not.toHaveBeenCalled();
+    });
+  });
+  it('keeps unknown history T3, preserves actual source tiers and rechecks every use without accepting serialized authority', async () => {
+    const authority = createRunSourceAuthority(SOURCE_ACTOR), verify = vi.fn(async () => {});
+    await runWithSourceAuthority(authority, async () => {
+      recordCurrentRunSource({ ...SOURCE_ACTOR, key: 'real-vault-version:sha', tier: 2, recheck: verify });
+      const gate = captureCurrentRunSourceGate({ ...SOURCE_ACTOR, inputSensitivityTiers: [0], payloadProvenance: 'public' } as SourceRunIdentityForTest)!;
+      expect(gate.tiers).toEqual([3, 2]); await gate.recheck(); await gate.recheck(); expect(verify).toHaveBeenCalledTimes(2);
+      expect(createRunSourceAuthority({ organizationId: 7, userId: 3, projectId: SOURCE_ACTOR.programId })).toBe(authority);
+      expect(() => captureCurrentRunSourceGate({ ...SOURCE_ACTOR, projectId: 43 })).toThrow(SourceRunAuthorityError);
+      expect(() => recordCurrentRunSource({ ...SOURCE_ACTOR, userId: 4, key: 'forged', tier: 0, recheck: verify })).toThrow(SourceRunAuthorityError);
+    });
+    expect(captureCurrentRunSourceGate(SOURCE_ACTOR)).toBeUndefined();
+    expect(() => runWithSourceAuthority(JSON.parse(JSON.stringify(authority)) as RunSourceAuthority, () => undefined)).toThrow(SourceRunAuthorityError);
+  });
+  it('does not let two organizations or actors share a concurrent mutable source ceiling', async () => {
+    const other = { organizationId: 8, userId: 4, projectId: 43, programId: '20000000-0000-4000-8000-000000000002' };
+    const a = createRunSourceAuthority(SOURCE_ACTOR), b = createRunSourceAuthority(other), checks: string[] = [];
+    const run = (authority: RunSourceAuthority, actor: typeof SOURCE_ACTOR, tier: 1 | 2) => runWithSourceAuthority(authority, async () => {
+      recordCurrentRunSource({ ...actor, key: `source-${actor.organizationId}`, tier, recheck: async () => { checks.push(String(actor.organizationId)); } });
+      await Promise.resolve(); const gate = captureCurrentRunSourceGate(actor)!; await gate.recheck(); return gate.tiers;
+    });
+    expect(await Promise.all([run(a, SOURCE_ACTOR, 2), run(b, other, 1)])).toEqual([[3, 2], [3, 1]]);
+    expect(checks.sort()).toEqual(['7', '8']);
+  });
+  it('holds missing identity, rejects alias disagreement and cannot lose a new source while a checkpoint awaits', async () => {
+    await runWithSourceAuthority(createRunSourceAuthority({ organizationId: 7 }), async () => {
+      await expect(captureCurrentRunSourceGate({ organizationId: 7 })!.recheck()).rejects.toThrow(SourceRunAuthorityError);
+    });
+    await runWithSourceAuthority(createRunSourceAuthority(SOURCE_ACTOR), async () => {
+      expect(() => createRunSourceAuthority({ ...SOURCE_ACTOR, programId: '30000000-0000-4000-8000-000000000003' })).toThrow(SourceRunAuthorityError);
+      let finish: () => void = () => {}, started: () => void = () => {};
+      const pending = new Promise<void>(resolve => { finish = resolve; }), entered = new Promise<void>(resolve => { started = resolve; });
+      recordCurrentRunSource({ ...SOURCE_ACTOR, key: 'first', tier: 2, recheck: async () => { started(); await pending; } });
+      const check = captureCurrentRunSourceGate(SOURCE_ACTOR)!.recheck(); await entered;
+      recordCurrentRunSource({ ...SOURCE_ACTOR, key: 'later', tier: 1, recheck: async () => {} }); finish();
+      await expect(check).rejects.toThrow(SourceRunAuthorityError);
+      expect(captureCurrentRunSourceGate(SOURCE_ACTOR)!.tiers).toEqual([3, 2, 1]);
+    });
+  });
+});
+type SourceRunIdentityForTest = Parameters<typeof captureCurrentRunSourceGate>[0];
 
 describe('the scope', () => {
   it('is empty outside, and names the run and tool inside', async () => {

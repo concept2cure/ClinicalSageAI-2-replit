@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createHash } from 'node:crypto';
 import protocolJson from '../pq-protocol.json';
 import { computeVerdict, servedModelMatches, verifyPqClaim } from '../pq-verdict.js';
-import { verifyCanonicalPqClaim, type CanonicalPqEvidence } from '../verify-pq-record.js';
+import { verifyCanonicalPqClaim, qualificationPreflight, type CanonicalPqEvidence } from '../verify-pq-record.js';
 
 const hash = (s: string) => createHash('sha256').update(s).digest('hex');
 const rules = { computeVerdict, servedModelMatches };
@@ -59,6 +59,60 @@ function fixture() {
   return { evidence, record };
 }
 const verify = ({ evidence, record }: ReturnType<typeof fixture>, claim = entry) => verifyCanonicalPqClaim(claim, () => record, rules, evidence);
+
+describe('offline qualification prerequisite diagnostics', () => {
+  it('reports the actual draft protocol and unreviewed source bank without establishing qualification', () => {
+    const result = qualificationPreflight();
+    expect(result).toMatchObject({ status: 'blocked', readyToEvaluate: false, qualifiesModel: false,
+      protocol: { status: 'draft', approved: false }, counts: { ragPositiveItems: 18, ragNegativeControls: 2,
+        ragRequiredPositiveItems: 30, reviewedSources: 0, reviewedPublisherTerms: 0 } });
+    expect(result.blockers.map(blocker => blocker.code)).toEqual(expect.arrayContaining([
+      'PROTOCOL_NOT_APPROVED', 'RAG_SAMPLE_SHORTFALL', 'RAG_KEYS_PROVISIONAL', 'RAG_GOLD_OPEN_CHECKS',
+      'RAG_GOLD_EVIDENCE_MISSING', 'SOURCE_REVIEW_INCOMPLETE', 'PUBLISHER_TERMS_UNVERIFIED',
+    ]));
+  });
+
+  it('can establish that a complete synthetic fixture is ready to evaluate, without asserting a PQ PASS', () => {
+    const result = qualificationPreflight(fixture().evidence);
+    expect(result).toMatchObject({ status: 'ready_to_evaluate', readyToEvaluate: true, qualifiesModel: false, blockers: [] });
+  });
+
+  it('does not require distractors or unused publishers to be promoted to reviewed answer sources', () => {
+    const evidence = fixture().evidence;
+    const manifest = JSON.parse(evidence.corpusManifestText);
+    manifest.entries.push({ document_code: 'OLD', version: '0', role: 'revision-distractor', verified: false });
+    manifest.publishers.unused = { termsVerified: false };
+    const result = qualificationPreflight({ ...evidence, corpusManifestText: JSON.stringify(manifest) });
+    expect(result).toMatchObject({ readyToEvaluate: true, qualifiesModel: false,
+      counts: { sourceEntries: 2, requiredSourceEntries: 1, publishers: 2, requiredPublisherTerms: 1 } });
+  });
+
+  it.each(['protocol', 'provisional', 'open-check', 'quote', 'source', 'terms', 'sample', 'generation-criteria', 'duplicate-source'])('blocks unresolved %s before execution', kind => {
+    const evidence = fixture().evidence;
+    const protocol = JSON.parse(evidence.protocolText);
+    const gold = JSON.parse(evidence.ragGoldText);
+    const manifest = JSON.parse(evidence.corpusManifestText);
+    if (kind === 'protocol') protocol.status = 'draft';
+    if (kind === 'provisional') gold.keysProvisional = true;
+    if (kind === 'open-check') gold.items[0].openChecks = ['Unresolved issuer text'];
+    if (kind === 'quote') delete gold.items[0].evidence;
+    if (kind === 'source') manifest.entries[0].versionVerified = false;
+    if (kind === 'terms') manifest.publishers.issuer.termsVerified = false;
+    if (kind === 'sample') protocol.components.rag.criteria.minScoredItems = 30;
+    if (kind === 'generation-criteria') protocol.components.generation.criteria.minSectionCoverage = 2;
+    if (kind === 'duplicate-source') manifest.entries.push({ ...manifest.entries[0] });
+    const result = qualificationPreflight({ ...evidence, protocolText: JSON.stringify(protocol), ragGoldText: JSON.stringify(gold), corpusManifestText: JSON.stringify(manifest) });
+    expect(result.readyToEvaluate).toBe(false);
+    expect(result.blockers.length).toBeGreaterThan(0);
+    expect(result.qualifiesModel).toBe(false);
+  });
+
+  it('reports malformed canonical inputs without copying their diagnostic content', () => {
+    const result = qualificationPreflight({ ...fixture().evidence, protocolText: 'PRIVATE_CANARY_BAD_INPUT' });
+    expect(result.blockers.map(blocker => blocker.code)).toContain('CANONICAL_EVIDENCE_UNAVAILABLE');
+    expect(JSON.stringify(result)).not.toContain('PRIVATE_CANARY_BAD_INPUT');
+  });
+});
 
 describe('canonical PQ claim verification', () => {
   it('rejects a header-only PASS against an unapproved canonical protocol', () => {
@@ -121,6 +175,9 @@ describe('canonical PQ claim verification', () => {
       expect(verify(f).join(' ')).toMatch(/canonical/);
     }
   });
+});
+
+describe('canonical evidence integrity and verdict recomputation', () => {
   it('rejects changed protocol/gold bytes, unapproved protocol and invalid approval dates', () => {
     for (const kind of ['protocol-hash', 'gold-hash', 'draft', 'date']) {
       const f = fixture();

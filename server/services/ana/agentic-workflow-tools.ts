@@ -143,7 +143,9 @@ export const RUN_AGENT: AnaTool = {
     'exists or supports the text. Optionally provide source_spans to compare exact quotation spans against stored ' +
     'artifacts through the available project-scoped read_vault_document tool before the agent starts. These checks ' +
     'compare only those spans, not semantic support or source authenticity. For other citations, the agent can only find and ' +
-    'quote source passages, and its report is advisory. The verdict comes only from the checks.',
+    'quote source passages, and its report is advisory. Optionally pass source_document_ids (existing Vault version UUIDs) ' +
+    'for an independent server read and deterministic clinical figure comparison. Recognized complete numeric/arm/explicit-zero frames can be contradicted or unsupported by those sources. ' +
+    'General prose, ambiguous frames and unrecognized comparisons or negations remain unverified. All child model calls treat the unassessed brief as T3/local-only. The verdict comes only from the checks.',
   input_schema: {
     type: 'object',
     properties: {
@@ -181,6 +183,9 @@ export const RUN_AGENT: AnaTool = {
           additionalProperties: false,
         },
       },
+      source_document_ids: { type: 'array', minItems: 1, maxItems: 8, uniqueItems: true,
+        items: { type: 'string', format: 'uuid' },
+        description: 'verify only: 1–8 current Vault document-version UUIDs in the open project. The server independently loads their current source text and hashes. No caller source text, success flag, classification or scientific qualification is accepted.' },
     },
     required: ['role', 'objective', 'instructions'],
   },

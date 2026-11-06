@@ -3,8 +3,8 @@
  *
  * Three-tier learning system for Concept2Cure (C2C) / AnA 1.0 RI.
  * Captures lessons at project level, promotes to client wisdom when patterns
- * repeat across 3+ projects, and anonymizes into platform-wide wisdom
- * once 10+ data points confirm a pattern.
+ * repeat across 3+ projects. Legacy global wisdom is quarantined until
+ * contribution authority and named exact-artifact QMS promotion are proven.
  *
  * All operations are non-blocking (fire-and-forget with error logging).
  *
@@ -20,14 +20,12 @@ import {
   projects,
 } from 'shared/schema';
 import {
-  anaPlatformWisdom,
   anaOutcomeLog,
   anaClientObjectives,
-  type AnaPlatformWisdomEntry,
-  type AnaClientObjective,
 } from 'shared/schema/ana-intelligence';
-import { eq, and, desc, sql, gte } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { createScopedLogger } from '../utils/logger';
+import { SHARED_LEARNING_HOLD } from './intelligence/ana-failure-learning';
 
 const logger = createScopedLogger('ana-wisdom-engine');
 
@@ -35,16 +33,6 @@ const logger = createScopedLogger('ana-wisdom-engine');
 
 const WISDOM_ENGINE_VERSION = '1.0.0';
 const MIN_PROJECTS_FOR_CLIENT_WISDOM = 3;
-const MIN_EVIDENCE_FOR_PLATFORM_WISDOM = 10;
-const REJECTION_RATE_THRESHOLD = 0.3;
-const REJECTION_SAMPLE_MIN = 20;
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Escape SQL LIKE metacharacters so they match literally. */
-function escapeLikePattern(str: string): string {
-  return str.replace(/[%_\\]/g, '\\$&');
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,6 +70,7 @@ export interface WisdomContextBlock {
   clientPattern: string | null;
   platformInsight: string | null;
   recommendedNextAction: string | null;
+  sharedLearningHold: typeof SHARED_LEARNING_HOLD;
 }
 
 export interface ObjectiveProgress {
@@ -347,108 +336,19 @@ export async function promoteToClientWisdom(organizationId: number): Promise<num
 
 // ─── 3. Promote to Platform Wisdom ───────────────────────────────────────────
 
-/**
- * Aggregates anonymized patterns across all clients into platform-level wisdom.
- * No client-identifying data crosses boundaries. Requires min 10 data points
- * before surfacing. Saves to ana_platform_wisdom table. Non-blocking.
- */
-export async function promoteToPlatformWisdom(): Promise<number> {
-  let promoted = 0;
-  try {
-    // Aggregate outcome patterns across all orgs — anonymized
-    const patterns = await db
-      .select({
-        capabilityKey: anaOutcomeLog.capabilityKey,
-        regulatoryBody: anaOutcomeLog.regulatoryBody,
-        projectType: anaOutcomeLog.projectType,
-        outcome: anaOutcomeLog.outcome,
-        count: sql<number>`count(*)::int`.as('count'),
-        // NULL when no outcome in the pattern recorded a quality score.
-        avgQuality: sql<number | string | null>`avg(${anaOutcomeLog.qualityScore})`.as('avg_quality'),
-        distinctOrgs: sql<number>`count(distinct ${anaOutcomeLog.organizationId})::int`.as('distinct_orgs'),
-      })
-      .from(anaOutcomeLog)
-      .groupBy(
-        anaOutcomeLog.capabilityKey,
-        anaOutcomeLog.regulatoryBody,
-        anaOutcomeLog.projectType,
-        anaOutcomeLog.outcome,
-      )
-      .having(sql`count(*) >= ${MIN_EVIDENCE_FOR_PLATFORM_WISDOM}`);
-
-    for (const pattern of patterns) {
-      const wisdomKey = `${pattern.capabilityKey}:${pattern.regulatoryBody ?? 'any'}:${pattern.projectType ?? 'any'}:${pattern.outcome}`;
-
-      // Check if already exists
-      const [existing] = await db
-        .select({ id: anaPlatformWisdom.id, evidenceCount: anaPlatformWisdom.evidenceCount })
-        .from(anaPlatformWisdom)
-        .where(eq(anaPlatformWisdom.wisdomKey, wisdomKey))
-        .limit(1);
-
-      const description = `${pattern.capabilityKey} ${pattern.outcome === 'success' ? 'succeeds' : pattern.outcome === 'failure' ? 'fails' : 'partially works'} for ${pattern.projectType ?? 'all project types'} targeting ${pattern.regulatoryBody ?? 'any agency'} (${pattern.count} instances across ${pattern.distinctOrgs} organizations)`;
-
-      const recommendation = pattern.outcome === 'success'
-        ? `Continue using ${pattern.capabilityKey} — high effectiveness observed for this context.`
-        : pattern.outcome === 'failure'
-          ? `Caution with ${pattern.capabilityKey} in this context — high failure rate observed. Consider alternative approaches.`
-          : `${pattern.capabilityKey} shows mixed results — review outputs carefully.`;
-
-      // 2026-10-15: an unrated success was scored as if rated 70, a partial
-      // outcome 0.5 and a failure 10/(n+10), and confidence was stamped
-      // 0.5 + 0.05·organizations on insert and refresh. Effectiveness is now the
-      // recorded mean quality of a success; anything nothing measured is null.
-      const effectivenessScore = pattern.outcome === 'success' && pattern.avgQuality != null
-        ? Math.min(1, Number(pattern.avgQuality) / 100)
-        : null;
-
-      if (existing) {
-        // Update existing
-        await db
-          .update(anaPlatformWisdom)
-          .set({
-            evidenceCount: pattern.count,
-            patternDescription: description,
-            recommendation,
-            effectivenessScore,
-            confidenceScore: null,
-            lastValidatedAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(eq(anaPlatformWisdom.id, existing.id));
-      } else {
-        // Insert new
-        await db.insert(anaPlatformWisdom).values({
-          wisdomKey,
-          category: pattern.outcome === 'failure' ? 'risk_reduction' : 'success_pattern',
-          regulatoryBody: pattern.regulatoryBody ?? null,
-          projectType: pattern.projectType ?? null,
-          patternDescription: description,
-          recommendation,
-          confidenceScore: null,
-          evidenceCount: pattern.count,
-          effectivenessScore,
-          isActive: true,
-          lastValidatedAt: new Date(),
-        });
-        promoted++;
-      }
-    }
-  } catch (err) {
-    logger.error('promoteToPlatformWisdom failed', { error: err });
-  }
-  return promoted;
+/** A cohort count cannot de-identify free-text dimensions or authorize sharing.
+ * Preserve the entry point without querying tenant outcomes or legacy wisdom. */
+export async function promoteToPlatformWisdom(): Promise<{ promoted: 0; holdReason: typeof SHARED_LEARNING_HOLD }> {
+  return { promoted: 0, holdReason: SHARED_LEARNING_HOLD };
 }
 
 // ─── 4. Risk Detection ───────────────────────────────────────────────────────
 
 /**
- * Scans project context against known risk patterns from platform wisdom.
- * Checks for matching project_type + regulatory_body patterns, missing
- * document types, known deficiency patterns, and timeline risks.
- * Returns array of risk alerts with severity and recommendation.
+ * Returns current project-local failure lessons. Unreviewed global risk and
+ * deficiency records cannot become a generation context through this helper.
  */
-export async function detectProjectRisks(projectId: number, options?: { projectOnly?: boolean }): Promise<RiskAlert[]> {
+export async function detectProjectRisks(projectId: number, _options?: { projectOnly?: boolean }): Promise<RiskAlert[]> {
   const risks: RiskAlert[] = [];
   try {
     // Get project profile for context
@@ -462,44 +362,9 @@ export async function detectProjectRisks(projectId: number, options?: { projectO
       return [];
     }
 
-    const targetBodies = (profile.targetRegulatoryBodies as string[] | null) ?? [];
-    const projectType = profile.projectType;
-
-    // 1. Check platform wisdom for risk patterns matching this project context
-    const riskWisdom = options?.projectOnly ? [] : await db
-      .select()
-      .from(anaPlatformWisdom)
-      .where(
-        and(
-          eq(anaPlatformWisdom.isActive, true),
-          eq(anaPlatformWisdom.category, 'risk_reduction'),
-          gte(anaPlatformWisdom.evidenceCount, MIN_EVIDENCE_FOR_PLATFORM_WISDOM),
-        )
-      )
-      // 2026-10-15: ranked by, and rated from, the stamped confidence. Ranked by
-      // the evidence recorded; nothing recorded rates a pattern's severity.
-      .orderBy(desc(anaPlatformWisdom.evidenceCount))
-      .limit(20);
-
-    for (const wisdom of riskWisdom) {
-      // Match by regulatory body or project type (null means applies to all)
-      const bodyMatch = !wisdom.regulatoryBody || targetBodies.includes(wisdom.regulatoryBody);
-      const typeMatch = !wisdom.projectType || wisdom.projectType === projectType;
-
-      if (bodyMatch && typeMatch) {
-        risks.push({
-          riskId: `platform-${wisdom.id}`,
-          severity: 'unrated',
-          category: wisdom.category,
-          description: wisdom.patternDescription,
-          recommendation: wisdom.recommendation,
-          wisdomSource: 'platform',
-          confidenceScore: wisdom.confidenceScore,
-        });
-      }
-    }
-
-    // 2. Check project-level failure lessons
+    // Legacy global risk/deficiency rows have no reviewed promotion receipt.
+    // They remain quarantined regardless of caller options or stored counts.
+    // Check project-level failure lessons.
     const failureLessons = await db
       .select()
       .from(projectMemoryEntries)
@@ -528,38 +393,6 @@ export async function detectProjectRisks(projectId: number, options?: { projectO
       });
     }
 
-    // 3. Check for known deficiency patterns from platform wisdom
-    const deficiencyWisdom = options?.projectOnly ? [] : await db
-      .select()
-      .from(anaPlatformWisdom)
-      .where(
-        and(
-          eq(anaPlatformWisdom.isActive, true),
-          eq(anaPlatformWisdom.category, 'deficiency_prevention'),
-          gte(anaPlatformWisdom.evidenceCount, MIN_EVIDENCE_FOR_PLATFORM_WISDOM),
-        )
-      )
-      .orderBy(desc(anaPlatformWisdom.evidenceCount))
-      .limit(10);
-
-    for (const wisdom of deficiencyWisdom) {
-      const bodyMatch = !wisdom.regulatoryBody || targetBodies.includes(wisdom.regulatoryBody);
-      const typeMatch = !wisdom.projectType || wisdom.projectType === projectType;
-
-      if (bodyMatch && typeMatch) {
-        risks.push({
-          riskId: `deficiency-${wisdom.id}`,
-          // Was 'critical' / 'high' / 'medium' / 'low' from the stamped confidence (2026-10-15).
-          severity: 'unrated',
-          category: 'deficiency_prevention',
-          description: wisdom.patternDescription,
-          recommendation: wisdom.recommendation,
-          wisdomSource: 'platform',
-          confidenceScore: wisdom.confidenceScore,
-        });
-      }
-    }
-
     // Sort by severity, then recorded confidence; an unscored risk follows the
     // scored ones of its severity rather than ranking as an invented 0.5. An
     // unrated risk follows the rated ones, in the evidence order read above.
@@ -583,14 +416,14 @@ export async function detectProjectRisks(projectId: number, options?: { projectO
 
 /**
  * Builds a compressed ~15-line wisdom context block for prompt injection.
- * Includes top risks, project lesson, client pattern, platform insight,
- * and recommended next action. Designed to be lean for token efficiency.
+ * Includes project risks/lessons and, for tenant-wide recall, client patterns.
+ * Global insight fields remain empty with an explicit shared-learning hold.
  */
 export async function buildWisdomContext(
   projectId: number,
   organizationId: number,
-  regulatoryBody?: string,
-  projectType?: string,
+  _regulatoryBody?: string,
+  _projectType?: string,
   options?: { projectOnly?: boolean },
 ): Promise<WisdomContextBlock> {
   const block: WisdomContextBlock = {
@@ -600,6 +433,7 @@ export async function buildWisdomContext(
     clientPattern: null,
     platformInsight: null,
     recommendedNextAction: null,
+    sharedLearningHold: SHARED_LEARNING_HOLD,
   };
 
   try {
@@ -661,38 +495,8 @@ export async function buildWisdomContext(
       block.clientPattern = clientPattern.content.slice(0, 300);
     }
 
-    // Top platform insight (filtered by context)
-    const platformConditions = [
-      eq(anaPlatformWisdom.isActive, true),
-      gte(anaPlatformWisdom.evidenceCount, MIN_EVIDENCE_FOR_PLATFORM_WISDOM),
-    ];
-
-    if (regulatoryBody) {
-      platformConditions.push(
-        sql`(${anaPlatformWisdom.regulatoryBody} = ${regulatoryBody} OR ${anaPlatformWisdom.regulatoryBody} IS NULL)` as ReturnType<typeof eq>
-      );
-    }
-    if (projectType) {
-      platformConditions.push(
-        sql`(${anaPlatformWisdom.projectType} = ${projectType} OR ${anaPlatformWisdom.projectType} IS NULL)` as ReturnType<typeof eq>
-      );
-    }
-
-    const [platformInsight] = await db
-      .select({
-        recommendation: anaPlatformWisdom.recommendation,
-        patternDescription: anaPlatformWisdom.patternDescription,
-      })
-      .from(anaPlatformWisdom)
-      .where(and(...platformConditions))
-      // 2026-10-15: chosen by the stamped confidence first; by the evidence recorded now.
-      .orderBy(desc(anaPlatformWisdom.evidenceCount))
-      .limit(1);
-
-    if (platformInsight) {
-      block.platformInsight = platformInsight.patternDescription.slice(0, 300);
-      block.recommendedNextAction = platformInsight.recommendation.slice(0, 200);
-    }
+    // Global insights and recommendations stay null until exact-artifact
+    // reviewed promotion exists. Project and tenant-local learning continue.
   } catch (err) {
     logger.error('buildWisdomContext failed', { error: err });
   }
@@ -703,9 +507,8 @@ export async function buildWisdomContext(
 // ─── 6. Feedback Processing ──────────────────────────────────────────────────
 
 /**
- * Updates wisdom based on user feedback on an outcome.
- * - accept: reinforces wisdom (evidence_count++, effectiveness adjusted up)
- * - reject: flags for review (if rejection rate > 30% over 20+ instances, demote)
+ * Records tenant-local feedback and edit lessons. Global reinforcement and
+ * automatic demotion are held with the legacy global store.
  * - edit: captures delta as refinement signal
  * Non-blocking.
  */
@@ -733,92 +536,12 @@ export async function processUserFeedback(
 
     if (!outcome) return;
 
-    // Find matching platform wisdom entries
-    const wisdomKeyPrefix = `${escapeLikePattern(outcome.capabilityKey)}:${escapeLikePattern(outcome.regulatoryBody ?? 'any')}:${escapeLikePattern(outcome.projectType ?? 'any')}`;
-
-    const relatedWisdom = await db
-      .select()
-      .from(anaPlatformWisdom)
-      .where(sql`${anaPlatformWisdom.wisdomKey} LIKE ${wisdomKeyPrefix + '%'}`);
-
-    for (const wisdom of relatedWisdom) {
-      if (feedback === 'accepted') {
-        // Reinforce: bump evidence count and adjust a measured effectiveness
-        // up. An unmeasured one stays null: it became 0.525 here (2026-10-15).
-        const newEffectiveness = wisdom.effectivenessScore == null
-          ? null
-          : Math.min(1, wisdom.effectivenessScore * 0.95 + 0.05);
-        await db
-          .update(anaPlatformWisdom)
-          .set({
-            evidenceCount: sql`${anaPlatformWisdom.evidenceCount} + 1`,
-            effectivenessScore: newEffectiveness,
-            lastValidatedAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(eq(anaPlatformWisdom.id, wisdom.id));
-      } else if (feedback === 'rejected') {
-        // Calculate rejection rate from outcome log
-        const [stats] = await db
-          .select({
-            total: sql<number>`count(*)::int`,
-            rejected: sql<number>`count(*) filter (where ${anaOutcomeLog.userFeedback} = 'rejected')::int`,
-          })
-          .from(anaOutcomeLog)
-          .where(
-            and(
-              eq(anaOutcomeLog.capabilityKey, outcome.capabilityKey),
-              outcome.regulatoryBody
-                ? eq(anaOutcomeLog.regulatoryBody, outcome.regulatoryBody)
-                : sql`${anaOutcomeLog.regulatoryBody} IS NULL`,
-              outcome.projectType
-                ? eq(anaOutcomeLog.projectType, outcome.projectType)
-                : sql`${anaOutcomeLog.projectType} IS NULL`,
-            )
-          );
-
-        if (stats && stats.total >= REJECTION_SAMPLE_MIN) {
-          const rejectionRate = stats.rejected / stats.total;
-          if (rejectionRate > REJECTION_RATE_THRESHOLD) {
-            // Demote wisdom
-            await db
-              .update(anaPlatformWisdom)
-              .set({
-                isActive: false,
-                rejectionRate,
-                updatedAt: new Date(),
-              })
-              .where(eq(anaPlatformWisdom.id, wisdom.id));
-          } else {
-            await db
-              .update(anaPlatformWisdom)
-              .set({
-                rejectionRate,
-                updatedAt: new Date(),
-              })
-              .where(eq(anaPlatformWisdom.id, wisdom.id));
-          }
-        }
-      } else if (feedback === 'edited' && editDelta) {
-        // Capture the edit delta as a refinement signal in project memory
-        if (!outcome.projectId) {
-          logger.warn(`Edit delta dropped for outcome ${outcomeId} — projectId is null`);
-        } else if (outcome.projectId) {
-          // Fire-and-forget lesson capture with the edit context
-          captureProjectLesson({
-            projectId: outcome.projectId,
-            organizationId: outcome.organizationId,
-            capabilityKey: outcome.capabilityKey,
-            outcome: 'partial',
-            userFeedback: 'edited',
-            editDelta,
-            regulatoryBody: outcome.regulatoryBody ?? undefined,
-            projectType: outcome.projectType ?? undefined,
-          }).catch(err => {
-            logger.error('edit delta lesson capture failed', { error: err });
-          });
-        }
-      }
+    // Feedback stays with its tenant outcome. It cannot reinforce, refresh or
+    // reactivate unreviewed global wisdom. An edit may still teach this project.
+    if (feedback === 'edited' && editDelta && outcome.projectId) {
+      await captureProjectLesson({ projectId: outcome.projectId, organizationId: outcome.organizationId,
+        capabilityKey: outcome.capabilityKey, outcome: 'partial', userFeedback: 'edited', editDelta,
+        regulatoryBody: outcome.regulatoryBody ?? undefined, projectType: outcome.projectType ?? undefined });
     }
   } catch (err) {
     logger.error('processUserFeedback failed', { error: err });

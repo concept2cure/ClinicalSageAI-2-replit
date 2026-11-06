@@ -56,13 +56,14 @@ export interface AdminSettingRow {
 export const SUMMARISE_CONFIGURATION = 'Summarize my org configuration';
 
 interface CardsProps {
+  onAsk?: (text: string) => void;
   onNav: (id: string) => void;
   /** What the Profile card lets AnA be told; null when it unmounts. */
   onProfileContext?: (context: OrganizationProfileContext | null) => void;
 }
 
 /** Every governed organisation setting, each its own card with its own read and write. */
-export function OrganizationSettingsCards({ onNav, onProfileContext }: CardsProps) {
+export function OrganizationSettingsCards({ onNav, onProfileContext, onAsk }: CardsProps) {
   return (
     <div className="txw-settings">
       <OrganizationProfileCard onContext={onProfileContext} />
@@ -71,6 +72,7 @@ export function OrganizationSettingsCards({ onNav, onProfileContext }: CardsProp
           gateway and environment (D7, founder decision 2026-10-01). */}
       <GatewayAccountsSetting />
       <ClientCredentialVaultCard />
+      <AiPlacementPolicyCard onAsk={onAsk} />
       {/* PDF/A only where this organisation's procedures require it (D7, decided 2026-10-01). */}
       <PdfARequirementSetting />
       {/* Records retention (P1-22; ADR-0014 §6): its own route and its own chained audit row. */}
@@ -91,7 +93,6 @@ interface TabProps extends CardsProps {
   /** The settings facet's read failed on the server (meta.unavailable). */
   settingsDown: boolean;
   onRetry: () => void;
-  onAsk?: (text: string) => void;
 }
 
 /** The Settings tab: the record's rows as they are, then the governed cards. */
@@ -137,7 +138,7 @@ export function AdminSettingsTab({ settings, settingsDown, onRetry, onNav, onAsk
           ))}
         </div>
       )}
-      <OrganizationSettingsCards onNav={onNav} onProfileContext={onProfileContext} />
+      <OrganizationSettingsCards onNav={onNav} onProfileContext={onProfileContext} onAsk={onAsk} />
     </section>
   );
 }
@@ -363,5 +364,161 @@ function multilineCredentialCapture(control: C2CFormFieldControl) {
       autoComplete="off" autoCapitalize="off" spellCheck={false} data-secret-entry="true" placeholder="Paste complete PEM here" />
     <span className="txw-help">{control.value ? 'Credential captured. Paste again to replace it.' : 'Paste the complete PEM. Its text is never displayed.'}</span>
     {control.value && <button type="button" className="btn ghost small" onClick={() => control.onChange('')}>Clear captured credential</button>}
+  </div>;
+}
+
+interface PlacementPolicy { residency: string | null; zeroDataRetention: boolean; allowedSubstrates: string[] | null; allowedProviders: string[] | null; publicSourceFrontier: boolean; publicSourceEgress: boolean }
+interface DerivativePolicy { enabled: boolean; kmsKeyArn: string; maxLifetimeSeconds: number; version: number }
+interface DerivativeRecord { derivativeId: string; documentId: string; projectId: number; policyVersion: number; version: number; payloadSha256: string; expiresAt: string; status: 'prepared' | 'attested' | 'revoked' }
+interface DerivativeReview { derivativeId: string; version: number; payloadSha256: string; expiresAt: string; exactPayload: string }
+interface PlacementMetadata { policy: PlacementPolicy | null; custody: { policy: DerivativePolicy | null; records: DerivativeRecord[] } }
+type PlacementAction = 'placement' | 'derivative_policy' | 'derivative_prepare' | 'derivative_review' | 'derivative_attest' | 'derivative_revoke';
+interface PlacementEdit { action: PlacementAction; record?: DerivativeRecord; review?: DerivativeReview }
+const PLACEMENT_PATH = '/api/ai-placement-policy';
+const derivativeObject = (v: unknown): Record<string, unknown> => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : {};
+const positiveInteger = (v: unknown): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v > 0;
+const DERIVATIVE_UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
+const DERIVATIVE_SHA = /^[a-f0-9]{64}$/;
+const PLACEMENT_PROVIDERS = ['anthropic', 'openai', 'moonshot', 'bedrock', 'vertex', 'azure', 'local'];
+const PLACEMENT_SUBSTRATES = ['frontier_shared', 'frontier_private', 'self_hosted'];
+const typedList = (value: unknown, allowed: string[]): value is string[] | null => value === null || (Array.isArray(value) && value.length > 0 && value.every(x => typeof x === 'string' && allowed.includes(x)));
+function placementPolicy(value: unknown): PlacementPolicy | null | undefined {
+  if (value === null) return null;
+  const p = derivativeObject(value);
+  if (!(p.residency === null || ['us', 'eu', 'apac', 'on_prem'].includes(String(p.residency))) ||
+    !['zeroDataRetention', 'publicSourceFrontier', 'publicSourceEgress'].every(k => typeof p[k] === 'boolean') ||
+    !typedList(p.allowedProviders, PLACEMENT_PROVIDERS) || !typedList(p.allowedSubstrates, PLACEMENT_SUBSTRATES)) return undefined;
+  return p as unknown as PlacementPolicy;
+}
+function derivativePolicy(value: unknown): DerivativePolicy | null | undefined {
+  if (value === null) return null;
+  const p = derivativeObject(value);
+  return typeof p.enabled === 'boolean' && typeof p.kmsKeyArn === 'string' && positiveInteger(p.version) && positiveInteger(p.maxLifetimeSeconds) && p.maxLifetimeSeconds <= 86400
+    ? { enabled: p.enabled, kmsKeyArn: p.kmsKeyArn, maxLifetimeSeconds: p.maxLifetimeSeconds, version: p.version } : undefined;
+}
+function derivativeRecord(value: unknown, organization: string): DerivativeRecord | null {
+  const r = derivativeObject(value);
+  if (String(r.organizationId) !== organization || !DERIVATIVE_UUID.test(String(r.derivativeId)) || !DERIVATIVE_UUID.test(String(r.documentId)) || !positiveInteger(r.projectId) || !positiveInteger(r.version)
+    || !positiveInteger(r.policyVersion) || !DERIVATIVE_SHA.test(String(r.payloadSha256)) || !Number.isFinite(Date.parse(String(r.expiresAt))) || !['prepared', 'attested', 'revoked'].includes(String(r.status))) return null;
+  return { derivativeId: String(r.derivativeId), documentId: String(r.documentId), projectId: r.projectId, policyVersion: r.policyVersion, version: r.version, payloadSha256: String(r.payloadSha256), expiresAt: String(r.expiresAt), status: r.status as DerivativeRecord['status'] };
+}
+function placementMetadata(value: unknown, organization: string): PlacementMetadata | null {
+  const body = derivativeObject(value), custody = derivativeObject(body.derivativeCustody);
+  const policy = placementPolicy(body.policy), candidatePolicy = derivativePolicy(custody.policy);
+  if (String(body.organizationId) !== organization || policy === undefined || candidatePolicy === undefined || !Array.isArray(custody.records)) return null;
+  const records = custody.records.map(record => derivativeRecord(record, organization));
+  return records.every((r): r is DerivativeRecord => r !== null) ? { policy, custody: { policy: candidatePolicy, records } } : null;
+}
+const choice = (key: string, label: string, value = false) => ({ key, label, type: 'select' as const, default: value ? 'yes' : 'no', options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }] });
+function placementFields(data: PlacementMetadata): C2CFormConfig['fields'] {
+  const p = data.policy;
+  return [{ key: 'residency', label: 'Data residency', type: 'select', default: p?.residency ?? '', options: ['', 'us', 'eu', 'apac', 'on_prem'] },
+    choice('zeroDataRetention', 'Require zero data retention', p?.zeroDataRetention),
+    { key: 'allowedProviders', label: 'Allowed providers (comma-separated; blank uses deployment defaults)', type: 'text', default: p?.allowedProviders?.join(', ') ?? '', desc: PLACEMENT_PROVIDERS.join(', ') },
+    { key: 'allowedSubstrates', label: 'Allowed substrates (comma-separated; blank has no added constraint)', type: 'text', default: p?.allowedSubstrates?.join(', ') ?? '', desc: PLACEMENT_SUBSTRATES.join(', ') },
+    choice('publicSourceFrontier', 'Allow public-source frontier requests', p?.publicSourceFrontier), choice('publicSourceEgress', 'Allow public-source requests', p?.publicSourceEgress ?? true)];
+}
+function derivativeFields(action: PlacementAction, data: PlacementMetadata): C2CFormConfig['fields'] {
+  if (action === 'placement') return placementFields(data);
+  if (action === 'derivative_policy') return [choice('enabled', 'Enable reviewed T2 derivatives', data.custody.policy?.enabled),
+    { key: 'kmsKeyArn', label: 'Tenant KMS key ARN (immutable key, not an alias)', type: 'text', required: true, default: data.custody.policy?.kmsKeyArn },
+    { key: 'maxLifetimeSeconds', label: 'Maximum candidate lifetime (seconds)', type: 'number', required: true, min: 1, max: 86400, default: String(data.custody.policy?.maxLifetimeSeconds ?? 3600) }];
+  if (action === 'derivative_prepare') return [
+    { key: 'projectId', label: 'Project number', type: 'number', required: true, min: 1 }, { key: 'documentId', label: 'Current Vault document ID', type: 'text', required: true },
+    { key: 'template', label: 'Minimized template', type: 'textarea', rows: 5, required: true, desc: 'Write only the context needed. Use {{0}}, {{1}}, etc., each once. Template prose remains in the outbound payload and needs manual review.' },
+    { key: 'spans', label: 'Ordered source spans (JSON)', type: 'textarea', rows: 4, required: true, placeholder: '[{"start":0,"end":12,"label":"ENTITY"}]', desc: 'UTF-16 offsets, end exclusive. Labels: ENTITY, MOLECULE, VALUE, IDENTIFIER, NAME. No source text is entered here.' },
+    { key: 'expiresInSeconds', label: 'Candidate lifetime (seconds)', type: 'number', required: true, min: 1, max: data.custody.policy?.maxLifetimeSeconds ?? 86400, default: String(Math.min(data.custody.policy?.maxLifetimeSeconds ?? 3600, 3600)) }];
+  return action === 'derivative_attest' ? [choice('reviewAcknowledged', 'Exact outbound payload reviewed')] : [];
+}
+const PLACEMENT_TITLES: Record<PlacementAction, string> = { placement: 'Change AI placement policy', derivative_policy: 'Configure derivative policy', derivative_prepare: 'Prepare derivative candidate', derivative_review: 'Read exact candidate payload', derivative_attest: 'Attest reviewed payload', derivative_revoke: 'Revoke derivative candidate' };
+function placementForm(edit: PlacementEdit, data: PlacementMetadata): C2CFormConfig {
+  return { eyebrow: 'Client administration · AI data use', title: PLACEMENT_TITLES[edit.action], submitLabel: edit.action === 'derivative_review' ? 'Read candidate for review' : PLACEMENT_TITLES[edit.action], governed: true,
+    sub: 'Structured minimization is a proposal. Review every remaining word before attesting. T3 data stays local.',
+    notice: edit.review ? `Candidate version ${edit.review.version} · SHA-256 ${edit.review.payloadSha256} · Expires ${edit.review.expiresAt}` : undefined,
+    fields: [...derivativeFields(edit.action, data), { key: 'reasonForChange', label: 'Reason (recorded; at least 8 characters)', type: 'textarea', required: true, desc: 'Do not include source values, payload text or passwords.' },
+      ...(edit.action === 'placement' ? [] : [{ key: 'password', label: 'Your password (re-authentication)', type: 'password' as const, required: true }, { key: 'totpCode', label: 'Authentication code (if enabled)', type: 'password' as const }])] };
+}
+function parsePlacementList(text: string, allowed: string[]): string[] | null {
+  const list = text.split(',').map(x => x.trim()).filter(Boolean);
+  if (list.some(x => !allowed.includes(x))) throw new Error('INVALID_INPUT');
+  return list.length ? [...new Set(list)] : null;
+}
+function derivativeSpans(value: string, template: string): unknown[] {
+  const spans: unknown = JSON.parse(value);
+  if (!Array.isArray(spans) || spans.length < 1 || spans.length > 100 || template.length > 100000) throw new Error('INVALID_INPUT');
+  let end = 0;
+  return spans.map((v, i) => { const s = derivativeObject(v);
+    if (Object.keys(s).some(k => !['start', 'end', 'label'].includes(k)) || !Number.isSafeInteger(s.start) || !Number.isSafeInteger(s.end) || Number(s.start) < end || Number(s.end) <= Number(s.start)
+      || !['ENTITY', 'MOLECULE', 'VALUE', 'IDENTIFIER', 'NAME'].includes(String(s.label)) || template.split(`{{${i}}}`).length !== 2) throw new Error('INVALID_INPUT');
+    end = Number(s.end); return { start: s.start, end: s.end, label: s.label }; });
+}
+function placementActionBody(edit: PlacementEdit, values: Record<string, string>): Record<string, unknown> {
+  const reasonForChange = values.reasonForChange.trim();
+  if (reasonForChange.length < 8) throw new Error('INVALID_INPUT');
+  if (edit.action === 'placement') return { residency: values.residency || null, zeroDataRetention: values.zeroDataRetention === 'yes', publicSourceFrontier: values.publicSourceFrontier === 'yes', publicSourceEgress: values.publicSourceEgress === 'yes',
+    allowedProviders: parsePlacementList(values.allowedProviders, PLACEMENT_PROVIDERS), allowedSubstrates: parsePlacementList(values.allowedSubstrates, PLACEMENT_SUBSTRATES), reasonForChange };
+  const body: Record<string, unknown> = { action: edit.action, reasonForChange, reauth: { password: values.password, totp: values.totpCode || undefined } };
+  if (edit.action === 'derivative_policy') return { ...body, policy: { enabled: values.enabled === 'yes', kmsKeyArn: values.kmsKeyArn, maxLifetimeSeconds: Number(values.maxLifetimeSeconds) } };
+  if (edit.action === 'derivative_prepare') return { ...body, projectId: Number(values.projectId), documentId: values.documentId.trim().toLowerCase(), template: values.template, spans: derivativeSpans(values.spans, values.template), expiresInSeconds: Number(values.expiresInSeconds) };
+  if (!edit.record) throw new Error('INVALID_INPUT');
+  if (edit.action === 'derivative_attest' && (!edit.review || values.reviewAcknowledged !== 'yes')) throw new Error('REVIEW_REQUIRED');
+  const proof = edit.review ?? edit.record;
+  return { ...body, projectId: edit.record.projectId, derivativeId: edit.record.derivativeId,
+    ...(edit.action === 'derivative_review' ? {} : { expectedVersion: proof.version, payloadSha256: proof.payloadSha256 }) };
+}
+async function candidateReview(value: unknown, record: DerivativeRecord): Promise<DerivativeReview | null> {
+  const r = derivativeObject(value);
+  if (!(r.derivativeId === record.derivativeId && r.version === record.version && r.payloadSha256 === record.payloadSha256 && r.expiresAt === record.expiresAt && typeof r.exactPayload === 'string' && r.exactPayload.length > 0 && r.exactPayload.length <= 100000) || !globalThis.crypto?.subtle) return null;
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(r.exactPayload));
+  if (Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('') !== record.payloadSha256) return null;
+  return { derivativeId: record.derivativeId, version: record.version, payloadSha256: record.payloadSha256, expiresAt: record.expiresAt, exactPayload: r.exactPayload };
+}
+const confirmedPlacementReceipt = (res: { ok: boolean }, receipt: Record<string, unknown>, organization: string) =>
+  res.ok && receipt.audited === true && String(receipt.organizationId) === organization;
+const currentAttestedDerivative = (record: DerivativeRecord, data: PlacementMetadata) => record.status === 'attested' && data.custody.policy?.enabled && record.policyVersion === data.custody.policy.version && Date.parse(record.expiresAt) > Date.now();
+export function AiPlacementPolicyCard({ onAsk }: { onAsk?: (text: string) => void } = {}) {
+  const session = useAuthoringReadSession(authService.getUser()), owner = useRef(session); owner.current = session;
+  const organization = session.actor.split(':')[0], current = () => owner.current === session && session.sameRevision();
+  const [epoch, refresh] = useState(0), [read, setRead] = useState<{ owner: typeof session; data: PlacementMetadata | null } | null>(null);
+  const [edit, setEdit] = useState<{ owner: typeof session; value: PlacementEdit } | null>(null), [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<{ owner: typeof session; text: string } | null>(null), setMessage = (text: string) => setNotice({ owner: session, text });
+  useEffect(() => { let active = true; setEdit(null); setRead(null); setBusy(false); setNotice(previous => previous?.owner === session ? previous : null);
+    void apiRequest('GET', PLACEMENT_PATH).then(async res => { const body: unknown = await res.json();
+      if (active && owner.current === session && session.sameRevision()) setRead({ owner: session, data: res.ok ? placementMetadata(body, organization) : null });
+    }).catch(() => { if (active && owner.current === session && session.sameRevision()) setRead({ owner: session, data: null }); });
+    return () => { active = false; }; }, [session, organization, epoch]);
+  const data = current() && read?.owner === session ? read.data : null, activeEdit = current() && edit?.owner === session ? edit.value : null;
+  const open = (value: PlacementEdit) => { if (current() && data && !busy) { setMessage(''); setEdit({ owner: session, value }); } };
+  const save = async (values: Record<string, string>) => {
+    if (!activeEdit || !current() || busy) return;
+    const capture = activeEdit; let body: Record<string, unknown>;
+    setEdit(null); setMessage('');
+    try { body = placementActionBody(capture, values); } catch { setMessage('Not submitted. Check the fields and explicitly confirm the exact payload when attesting.'); return; }
+    setBusy(true);
+    try { const res = await apiRequest('PUT', PLACEMENT_PATH, body), receipt = derivativeObject(await res.json().catch(() => null));
+      if (!current()) return;
+      if (!confirmedPlacementReceipt(res, receipt, organization)) throw new Error('UNCONFIRMED');
+      if (capture.action === 'derivative_review' && capture.record) {
+        const review = await candidateReview(receipt.derivativeCustody, capture.record); if (!current()) return; if (!review) throw new Error('UNCONFIRMED');
+        setEdit({ owner: session, value: { action: 'derivative_attest', record: capture.record, review } });
+      } else { setMessage('Change recorded. Reload the current policy and candidate status before further use.'); refresh(n => n + 1); }
+    } catch { if (current()) setMessage('The action could not be confirmed. Read the current record and re-authenticate before trying again.'); }
+    finally { if (current()) setBusy(false); }
+  };
+  const askForDraft = onAsk ? (record: DerivativeRecord) => {
+    if (current() && data && !busy && currentAttestedDerivative(record, data)) { setEdit(null); onAsk(`Use draft_authoring_document with derivativeId ${record.derivativeId} in project ${record.projectId} to create a reviewed derivative draft in the existing editor. Use only the approved candidate; approval and filing remain separate.`); }
+  } : undefined;
+  return <AiPlacementPolicyView data={data} activeEdit={activeEdit} busy={busy} message={current() && notice?.owner === session ? notice.text : ''} readComplete={read !== null}
+    formKey={`${session.actor}:${session.key}`} onRetry={() => refresh(n => n + 1)} onOpen={open} onCancel={() => setEdit(null)} onSave={values => { void save(values); }} onDraft={askForDraft} />;
+}
+interface PlacementViewProps { data: PlacementMetadata | null; activeEdit: PlacementEdit | null; busy: boolean; message: string; readComplete: boolean; formKey: string;
+  onDraft?: (record: DerivativeRecord) => void; onRetry: () => void; onOpen: (edit: PlacementEdit) => void; onCancel: () => void; onSave: (values: Record<string, string>) => void }
+function AiPlacementPolicyView({ data, activeEdit, busy, message, readComplete, formKey, onRetry, onOpen, onCancel, onSave, onDraft }: PlacementViewProps) {
+  return <div className="txw-set-card" data-testid="ai-placement-policy-card"><div className="txw-set-head"><div className="txw-set-head-l"><div className="txw-set-eyebrow">Client administration</div><h2 className="txw-set-title">AI data use and reviewed derivatives</h2><p className="txw-set-sub">Govern where your organisation's data may be processed. A structured template and explicit spans minimize selected T2 source values; a person reviews the exact residual before attestation. This does not automatically establish that the residual is safe. T3 remains local-only.</p></div></div>
+    <div className="txw-set-body">{message && <p role="status">{message}</p>}{!data ? <p role="status">{readComplete ? 'AI data-use settings could not be read.' : 'Reading AI data-use settings…'} <button className="btn ghost small" onClick={onRetry}>Retry</button></p> : <>
+      <p>{data.policy ? 'A placement policy is recorded.' : 'No placement policy is recorded; deployment defaults apply.'} Derivative policy: {data.custody.policy ? `${data.custody.policy.enabled ? 'Enabled' : 'Disabled'} · version ${data.custody.policy.version}` : 'Not configured'}.</p>
+      <button className="btn ghost small" disabled={busy} onClick={() => onOpen({ action: 'placement' })}>Edit AI placement policy…</button><button className="btn ghost small" disabled={busy} onClick={() => onOpen({ action: 'derivative_policy' })}>Configure derivative policy…</button><button className="btn ghost small" disabled={busy || !data.custody.policy?.enabled} onClick={() => onOpen({ action: 'derivative_prepare' })}>Prepare candidate…</button>
+      {data.custody.records.map(record => <div className="txw-row" key={record.derivativeId}><div className="txw-row-l">Project {record.projectId} · {record.status}<small>Source {record.documentId}</small><small>Candidate {record.derivativeId} · version {record.version}</small><small>SHA-256 {record.payloadSha256} · expires {record.expiresAt}</small></div><div className="txw-row-r">{onDraft && currentAttestedDerivative(record, data) && <button className="btn ghost small" disabled={busy} onClick={() => onDraft(record)}>Draft reviewed candidate…</button>}{record.status !== 'revoked' && <><button className="btn ghost small" disabled={busy} onClick={() => onOpen({ action: 'derivative_review', record })}>Review candidate…</button><button className="btn ghost small" disabled={busy} onClick={() => onOpen({ action: 'derivative_revoke', record })}>Revoke candidate…</button></>}</div></div>)}
+    </>}</div>{activeEdit && data && <C2CForm key={`${formKey}:${activeEdit.action}:${activeEdit.record?.derivativeId ?? ''}`} config={placementForm(activeEdit, data)} onCancel={onCancel} onSubmit={onSave} renderField={(field, control) => field.key === 'reviewAcknowledged' && activeEdit.review ? <><pre aria-label="Exact outbound candidate payload">{activeEdit.review.exactPayload}</pre><select id={control.id} value={control.value} onChange={e => control.onChange(e.target.value)}><option value="no">Not yet reviewed</option><option value="yes">I reviewed every remaining word</option></select></> : undefined} />}
   </div>;
 }

@@ -43,6 +43,8 @@ function app() {
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { organizationId: number; userId: number }).organizationId = 7;
     (req as unknown as { organizationId: number; userId: number }).userId = 1;
+    (req as unknown as { user: unknown }).user = { id: 1, organizationId: 7 };
+    (req as unknown as { dbClient: unknown }).dbClient = { query: vi.fn(async () => ({ rows: [] })) };
     next();
   });
   a.use('/api/claude', router);
@@ -68,6 +70,27 @@ beforeEach(() => {
 });
 
 describe('POST /api/claude/draft', () => {
+  it('forwards an approved derivative reference with canonical identity and the existing project admission context', async () => {
+    svc.draftDocument.mockRejectedValueOnce(tooLargeForEveryModel());
+    const derivativeId = '40000000-0000-4000-8000-000000000001';
+    const res = await request(app()).post('/api/claude/draft').send({ derivativeId, projectId: 42, organizationId: 99, userId: 999 });
+    expect(res.status).toBe(413);
+    expect(svc.draftDocument).toHaveBeenCalledWith(expect.objectContaining({ derivativeId, projectId: 42, organizationId: 7, userId: 1, instructions: '' }));
+  });
+
+  it.each([null, '', true, '../map'])('refuses an invalid explicit derivative reference %s instead of using ordinary drafting', async derivativeId => {
+    const res = await request(app()).post('/api/claude/draft').send({ ...draftBody, derivativeId });
+    expect(res.status).toBe(400);
+    expect(svc.draftDocument).not.toHaveBeenCalled();
+  });
+
+  it.each([{ derivativeId: '40000000-0000-4000-8000-000000000001' }, { qualifiedModelPin: { id: 'requested-qualified-model' } }])('refuses protected drafting on the streaming endpoint before SSE headers', async protectedRequest => {
+    const res = await request(app()).post('/api/claude/draft/stream').send({ ...draftBody, ...protectedRequest });
+    expect(res.status).toBe(400);
+    expect(res.headers['content-type']).toMatch(/application\/json/);
+    expect(res.body.error).toBe('NONSTREAMING_REQUIRED');
+    expect(svc.draftDocument).not.toHaveBeenCalled();
+  });
   it('forwards a qualified pin on the existing nonstreaming drafting endpoint', async () => {
     svc.draftDocument.mockRejectedValueOnce(tooLargeForEveryModel());
     const qualifiedModelPin = { id: 'controlled-model', provider: 'local', pinnedVersion: `sha256:${'a'.repeat(64)}`,

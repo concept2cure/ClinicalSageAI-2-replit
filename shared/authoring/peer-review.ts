@@ -6,6 +6,17 @@ const uuid = z.string().guid();
 const actorId = z.string().regex(/^[1-9]\d*$/);
 const timestamp = z.string().datetime({ offset: true });
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
+export const independentFindingSchema = z.object({
+  findingId: digest, category: z.string().min(1).max(80), severity: z.enum(['critical', 'high', 'medium', 'low']),
+  hard: z.boolean(), open: z.boolean(), current: z.boolean(),
+  sectionId: uuid.nullable().optional(), description: z.string().optional(),
+}).strict();
+export const independentCheckContextSchema = z.object({
+  required: z.literal(true), receiptId: uuid.nullable(), snapshotHash: digest,
+  checkerVersion: z.string(), standing: z.enum(['missing', 'current', 'stale']),
+  findings: z.array(independentFindingSchema).max(1000), hardBlockCount: z.number().int().nonnegative(),
+  semanticVerified: z.literal(false),
+}).strict();
 export const authoringReviewStatusSchema = z.enum(['pending', 'approved', 'rejected', 'changes_requested']);
 export const authoringReviewStandingSchema = z.enum(['pending', 'current', 'stale', 'unbound']);
 
@@ -35,6 +46,10 @@ export const authoringReviewInputSchema = z.object({
   expected: authoringReviewExpectedSchema,
   /** Parsed against the bounded scientific-review contract after authorization. */
   csr_evidence: z.unknown().optional(),
+  independent_findings: z.object({ receiptId: uuid, snapshotHash: digest,
+    dispositions: z.array(z.object({ findingId: digest, decision: z.enum(['resolved', 'rejected']),
+      reason: z.string().trim().min(8).max(2000) }).strict()).min(1).max(1000),
+  }).strict().optional(),
 }).strict();
 
 export const authoringReviewContextSchema = z.object({
@@ -52,6 +67,8 @@ export const authoringReviewContextSchema = z.object({
   /** The server's CSR rule for this document (requiresCsrScientificReview), so
    * the screen opens the scientific-review step for a CSR its label does not name. */
   csrScientificReviewRequired: z.boolean().optional(),
+  independentCheck: independentCheckContextSchema.optional(),
+  canRunIndependentChecks: z.boolean().optional(),
 }).superRefine((value, ctx) => {
   if (value.snapshot.id !== value.documentId || (value.canReview && (!value.myReview || value.unavailableReason !== null))) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'A decision needs this document and an authorized current review request.' });
@@ -105,6 +122,7 @@ export type AuthoringReviewExpected = z.infer<typeof authoringReviewExpectedSche
 export type AuthoringReviewContext = z.infer<typeof authoringReviewContextSchema>;
 export type AuthoringReviewInput = z.infer<typeof authoringReviewInputSchema>;
 export type AuthoringReviewRow = z.infer<typeof authoringReviewRowSchema>;
+export type IndependentCheckContext = z.infer<typeof independentCheckContextSchema>;
 
 /**
  * On a review route (RR5) a reviewer's REVIEWER signature over today's sections

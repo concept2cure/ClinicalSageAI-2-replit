@@ -113,3 +113,33 @@ describe('telemetry credential containers', () => {
     expect(out).toContain('DEPTH_LIMIT');
   });
 });
+
+
+describe('explicit derivative transforms do not certify arbitrary prose', () => {
+  it('uses only the explicit template, hides selected secrets and restores them exactly', async () => {
+    const { buildExplicitDerivative, reinjectExplicitDerivative } = await import('../../services/observability/redaction');
+    const source = 'SecretMolecule-X uses 3.14159 mg. Unselected client commentary must not travel.';
+    const transform = buildExplicitDerivative(source, 'Assess {{0}} at dose {{1}}.', [
+      { start: 0, end: 16, label: 'MOLECULE' }, { start: 22, end: 29, label: 'VALUE' },
+    ]);
+    expect(transform.payload).not.toContain('SecretMolecule-X');
+    expect(transform.payload).not.toContain('3.14159');
+    expect(transform.payload).not.toContain('Unselected');
+    expect(transform.payload).toContain('[[C2C_');
+    expect(reinjectExplicitDerivative(transform.payload, transform)).toBe('Assess SecretMolecule-X at dose 3.14159.');
+    const zero = buildExplicitDerivative('0', 'Dose {{0}}.', [{ start: 0, end: 1, label: 'VALUE' }]);
+    expect(reinjectExplicitDerivative(zero.payload, zero)).toBe('Dose 0.');
+  });
+  it('refuses literal leakage, overlapping ranges, malformed template, and missing/duplicate/unknown output tokens', async () => {
+    const { buildExplicitDerivative, reinjectExplicitDerivative } = await import('../../services/observability/redaction');
+    const spans = [{ start: 0, end: 6, label: 'ENTITY' as const }];
+    expect(() => buildExplicitDerivative('Secret', 'Secret {{0}}', spans)).toThrow();
+    expect(() => buildExplicitDerivative('Secret', '{{0}} {{0}}', spans)).toThrow();
+    expect(() => buildExplicitDerivative('Secret', '{{0}} {{2}}', spans)).toThrow();
+    expect(() => buildExplicitDerivative('Secret', '{{0}} {{1}}', [...spans, { start: 2, end: 5, label: 'VALUE' }])).toThrow();
+    const t = buildExplicitDerivative('Secret', 'Assess {{0}}.', spans);
+    for (const output of ['No tokens', `${t.payload} ${t.tokens[0].token}`, `${t.payload} [[C2C_FORGED]]`, `${t.payload} [[c2c_bad]]`, `${t.payload} [[ C2C_BAD`, t.payload.replace('C2C_', 'C2C_ALTERED_')]) {
+      expect(() => reinjectExplicitDerivative(output, t)).toThrow();
+    }
+  });
+});

@@ -77,6 +77,14 @@ export const orgSkillBody = z
       description: z.string().trim().min(8).max(600),
     }).strict()).max(12).optional(),
     sourceAuditEventId: z.string().uuid().transform(v => v.toLowerCase()).nullable().optional(),
+    standingRule: z.object({
+      level: z.enum(['soft', 'standing', 'hard_gate']), state: z.enum(['active', 'revoked']),
+      conflictKey: z.string().regex(/^[a-z][a-z0-9._-]{2,79}$/),
+      supersedes: z.array(z.object({ bundleId: z.string().regex(/^[A-Za-z0-9_-]{1,160}$/), version: z.number().int().positive() }).strict()).max(12).optional(),
+    }).strict().optional(),
+    correction: z.object({ text: z.string().trim().min(8).max(500), agency: z.string().trim().min(1).max(80),
+      documentType: z.string().trim().min(1).max(100), intent: z.string().trim().min(1).max(80) }).strict().optional(),
+    expectedVersion: z.number().int().positive().optional(),
     reason: z.unknown(),
   })
   .superRefine((v, ctx) => {
@@ -115,6 +123,9 @@ export type OrgSkillBody = z.infer<typeof orgSkillBody>;
 /** The stored fields, from a parsed body. */
 export function fieldsOf(body: OrgSkillBody): OrgSkillFields {
   return {
+    ...(body.standingRule ? { standingRule: body.standingRule } : {}),
+    ...(body.correction ? { correction: body.correction } : {}),
+    ...(body.expectedVersion !== undefined ? { expectedVersion: body.expectedVersion } : {}),
     name: body.name,
     description: body.description,
     instructions: body.instructions,
