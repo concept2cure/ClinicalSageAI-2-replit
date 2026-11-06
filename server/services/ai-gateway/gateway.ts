@@ -176,7 +176,8 @@ function ownerPrivateOf(request: GatewayRequest): OwnerPrivateModelGate | undefi
   const gate = (request as OwnerPrivateRequest)[ownerPrivateAuthority];
   return gate && issuedOwnerPrivateGates.has(gate) ? gate : undefined;
 }
-function ownerPrivateRefusal(): GatewayPolicyError & { code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE' } {
+function ownerPrivateRefusal(cause?: unknown): GatewayPolicyError & { code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE' } {
+  if (cause instanceof GatewayPolicyError || cause instanceof GatewayAbortedError) throw cause;
   return Object.assign(new GatewayPolicyError('Private context and encrypted capture could not be verified. Nothing was released.'),
     { code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE' as const });
 }
@@ -2648,10 +2649,7 @@ export class AIGateway {
       appendPrivateSdkContext(params, content, anthropic);
       privateSdkProofs.set(gate, Object.freeze({ provider: model.provider, model: model.model,
         sha256: createHash('sha256').update(JSON.stringify(params)).digest('hex'), state: 'prepared_not_delivery_evidence' }));
-    } catch (error) {
-      if (error instanceof GatewayPolicyError || error instanceof GatewayAbortedError) throw error;
-      throw ownerPrivateRefusal();
-    }
+    } catch (error) { throw ownerPrivateRefusal(error); }
   }
 
   private async dispatchProvider(

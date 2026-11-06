@@ -12,9 +12,14 @@ import { createHash } from 'node:crypto';
 // The local SDK transport and credential-availability boundary are injected.
 // Real owner markers, ciphertext, source receipts and historical reads have a
 // separate canonical PGlite fixture; no qualification or live provider is claimed here.
-const privateIO=vi.hoisted(()=>({client:vi.fn(async()=>null)}));
-vi.mock('../providers/clients',async original=>({...await original<typeof import('../providers/clients')>(),
-  resolveTenantModelCredentialAvailability:async()=>({mode:'platform',providers:[]}),createTenantProviderClient:privateIO.client}));
+const privateIO=vi.hoisted(()=>({enabled:false,client:vi.fn(async()=>null)}));
+vi.mock('../providers/clients',async original=>{
+  const actual=await original<typeof import('../providers/clients')>();
+  return {...actual,
+    resolveTenantModelCredentialAvailability:(...args:Parameters<typeof actual.resolveTenantModelCredentialAvailability>)=>privateIO.enabled
+      ?Promise.resolve({mode:'platform' as const,providers:[]}):actual.resolveTenantModelCredentialAvailability(...args),
+    createTenantProviderClient:(...args:Parameters<typeof actual.createTenantProviderClient>)=>privateIO.enabled?privateIO.client():actual.createTenantProviderClient(...args)};
+});
 
 const wire = vi.hoisted(() => ({
   availability: vi.fn(), capture: vi.fn(), current: vi.fn(), create: vi.fn(),
@@ -80,6 +85,7 @@ function request(callerModule: string, extra: Partial<GuardedRequest> = {}): Gua
 }
 
 beforeEach(() => {
+  privateIO.enabled=false;
   vi.stubEnv('NODE_ENV', 'test');
   vi.stubEnv('AI_GATEWAY_MAX_CONCURRENCY', '1');
   wire.availability.mockReset().mockResolvedValue({ mode: 'platform', providers: [] });
@@ -440,6 +446,7 @@ const PRIVATE_CANARY='OWNER_PRIVATE_FINAL_SDK_CANARY_984';
 const ownerScope={organizationId:7,userId:3,projectId:42,runId:'private-parent-fixture',threadId:null};
 const asOwner=<T>(operation:()=>T)=>runWithTenantScope({tenantId:'7',accountId:3,source:'request',caller:'private-sdk-boundary-fixture'},operation);
 function privateSdkFixture(deterministicMode=false,providerAvailable=true){
+  privateIO.enabled=true;
   const state={current:true,prepared:false,credentialResolved:false,events:[] as string[]};
   const auditQuery=vi.fn(async(sql:string,_args?:unknown[]):Promise<{rows:Record<string,unknown>[]} >=>{
     if(sql.includes('to_regclass'))return{rows:[{present:true}]};

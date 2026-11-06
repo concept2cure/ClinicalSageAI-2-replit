@@ -19,10 +19,20 @@ import { runWithTenantScope } from '../../../db/tenantStore';
 import { createRunSourceAuthority, runWithSourceAuthority, captureCurrentRunSourceGate } from '../../../services/ai-gateway/model-call-scope';
 import { openRunCoordination, readRunCoordination, coordinationSha256, type CoordinationPool, type WorkerCoordinationHandle } from '../../../services/ana/run-events';
 import { runOwnerInstance } from '../../../services/ana/run-control';
+import * as runControl from '../../../services/ana/run-control';
 import { newAgentTurnCounters } from '../../../services/ana/sub-agent-limits';
 import { TurnTimeline } from '../../../services/ana/turn-timeline-emitter';
 import type { GatewayRequest } from '../../../services/ai-gateway/types';
 import type { SubAgentHost } from '../../../services/ana/sub-agent';
+import type { NativeRecordSnapshot } from '../../../services/clinical-regulatory-evidence/record-source';
+import { GatewayPolicyError } from '../../../services/ai-gateway/gateway';
+
+const nativeQuality = vi.hoisted(() => ({ read: vi.fn() }));
+// The QMS collector is the bounded producer seam. Actor/project admission,
+// native source receipts/currentness and every coordination read use real SQL.
+vi.mock('../../../services/qms/project-evidence', async original => ({
+  ...(await original<typeof import('../../../services/qms/project-evidence')>()), readQualityProjectEvidence: nativeQuality.read,
+}));
 
 
 const harnessModule = vi.hoisted(() => () => import('./support/stream-route-harness.js'));
@@ -58,7 +68,10 @@ vi.mock('../../../services/ana-ri/chat-context-builder.js', async importOriginal
 vi.mock('../../../services/lumen-context-builder.js', async () => (await harnessModule()).mocks.lumen());
 vi.mock('../../../services/memory-context-assembler.js', async () => (await harnessModule()).mocks.memory());
 vi.mock('../../../services/ana-ri/context-enrichment.js', async () => (await harnessModule()).mocks.enrichment());
-vi.mock('../../../services/chat-thread-helpers.js', async () => (await harnessModule()).mocks.chatThreads());
+vi.mock('../../../services/chat-thread-helpers.js', async original => ({
+  ...(await harnessModule()).mocks.chatThreads(),
+  programIdForThread: (await original<typeof import('../../../services/chat-thread-helpers.js')>()).programIdForThread,
+}));
 vi.mock('../../../services/ana-session-bootstrap.js', async () => (await harnessModule()).mocks.sessionBootstrap());
 vi.mock('../../../services/kernel-adaptive-policy.js', async () => (await harnessModule()).mocks.kernelPolicy());
 vi.mock('../../../services/ana/ana-input-guard.js', async () => (await harnessModule()).mocks.inputGuard());
@@ -159,11 +172,16 @@ async function nativeCoordinationFixture(program: string) {
         type text,category text,ctd_section text,status text,version integer,content text,content_hash text,
         created_at timestamptz DEFAULT now(),updated_at timestamptz DEFAULT now(),locked_at timestamptz);
       CREATE TABLE cre_evidence_sources(id integer,organization_id integer,metadata jsonb,checksum text,
-        client_program_id uuid,provenance jsonb,source_type text,deleted_at timestamptz);
+        client_program_id uuid,provenance jsonb,source_type text,deleted_at timestamptz,
+        title text,extracted_text text,visibility_class text,created_by integer,client_workspace_id integer,is_current boolean DEFAULT true);
       CREATE TABLE document_data_dispositions(organization_id integer,program_id uuid,captured_source_id integer,
-        linked_ids jsonb,source_sha256 text,choice text);
+        linked_ids jsonb,source_sha256 text,choice text,disposition_sequence bigint,created_at timestamptz,id integer);
       CREATE TABLE file_uploads(id text,organization_id integer,checksum_sha256 text,storage_path text);
       CREATE TABLE ana_runs(id text PRIMARY KEY,organization_id integer,user_id integer,project_id text,status text,owner_instance text,thread_id text);
+      CREATE TABLE chat_threads(id text,user_id integer,organization_id integer,program_id uuid,metadata jsonb DEFAULT '{}');
+      CREATE TABLE quality_fixture_state(id integer,organization_id integer,program_id uuid,content text,visible boolean);
+      CREATE SCHEMA vault;
+      CREATE TABLE vault.documents(id uuid,organization_id integer,program_id uuid,content_hash text,deleted_at timestamptz,extracted_text text);
       INSERT INTO organizations VALUES(7,'active'); INSERT INTO users VALUES(3,'active');
       INSERT INTO organization_users VALUES(7,3,'member');
       INSERT INTO regulatory_programs VALUES('${program}',7,NULL);
@@ -313,6 +331,63 @@ async function nativeRun(cancel: boolean, {pg,pool,queryFailures}: Awaited<Retur
   } finally { io.mockRestore(); sharedQuery.mockRestore(); route.mockRestore(); }
 }
 
+const NATIVE_PROGRAM = '11111111-1111-4111-8111-111111111111';
+const NATIVE_TEXT = 'Quality nonconformance NC-900: disposition pending. No approval asserted.';
+function qualitySnapshot(text: string): NativeRecordSnapshot {
+  return { key: 'quality:qms_documents:900:working', title: 'Native Quality pending record', text, version: '1',
+    sourceScope: 'project', native: { kind: 'qms_documents', id: '900' }, lifecycle: 'draft' };
+}
+async function seedJoinedNativeSource(fixture: Awaited<ReturnType<typeof nativeCoordinationFixture>>, runId: string) {
+  const { pg } = fixture, snapshot = qualitySnapshot(NATIVE_TEXT);
+  await pg.query('INSERT INTO ana_runs VALUES($1,7,3,$2,$3,$4,$5)', [runId, NATIVE_PROGRAM, 'running', runOwnerInstance(), 'thread-1']);
+  await pg.exec('DELETE FROM quality_fixture_state; DELETE FROM cre_evidence_sources WHERE id=900; DELETE FROM chat_threads');
+  await pg.query("INSERT INTO chat_threads VALUES('thread-1',3,7,$1,'{}')", [NATIVE_PROGRAM]);
+  await pg.query('INSERT INTO quality_fixture_state VALUES(900,7,$1,$2,TRUE)', [NATIVE_PROGRAM, NATIVE_TEXT]);
+  await pg.query(`INSERT INTO cre_evidence_sources(id,organization_id,client_program_id,title,source_type,visibility_class,
+    checksum,extracted_text,created_by,metadata,provenance) VALUES(900,7,$1,$2,'client_document','tenant_private',$3,$4,3,'{}',$5)`,
+  [NATIVE_PROGRAM, snapshot.title, coordinationSha256(NATIVE_TEXT), NATIVE_TEXT, JSON.stringify({ origin: 'native_record_snapshot', recordSnapshot: {
+    version: 1, renderer: 'quality-evidence:v1', workArea: 'quality', key: snapshot.key, sourceScope: snapshot.sourceScope,
+    native: snapshot.native, lifecycle: snapshot.lifecycle } })]);
+  nativeQuality.read.mockImplementation(async (_q, actor) => {
+    expect(actor).toEqual({ organizationId: 7, userId: 3, programId: NATIVE_PROGRAM });
+    const rows = await pg.query<{ content: string }>('SELECT content FROM quality_fixture_state WHERE id=900 AND organization_id=$1 AND program_id=$2 AND visible=TRUE', [actor.organizationId, actor.programId]);
+    return rows.rows.map(row => qualitySnapshot(row.content));
+  });
+}
+async function joinedNativeStream(fixture: Awaited<ReturnType<typeof nativeCoordinationFixture>>, mode: 'team' | 'child') {
+  const runId = `joined-native-${mode}`, originalBegin = runControl.beginRun, originalRoute = h.gateway.route;
+  await seedJoinedNativeSource(fixture, runId);
+  vi.spyOn(nativeDb as unknown as { getPool(): CoordinationPool }, 'getPool').mockReturnValue(fixture.pool);
+  vi.spyOn(nativeDb.pool as unknown as Pick<CoordinationPool, 'query'>, 'query').mockImplementation(fixture.pool.query);
+  vi.spyOn(runControl, 'beginRun').mockImplementation(async (...args) => {
+    const started = await originalBegin(...args); return { ...started, runId, handle: { ...started.handle, runId } };
+  });
+  let parentCalls = 0, childCalls = 0, nativeChecks = 0, refused = false;
+  h.state.script = [[{ ...call, input: { ...call.input, instructions: NATIVE_TEXT } }], 'Recorded child proposal.', 'UNSAFE_FINAL_CANARY_900'];
+  vi.spyOn(h.gateway, 'route').mockImplementation(async (request: GatewayRequest) => {
+    if (request.callerModule === 'ana-ri-stream') {
+      expect(JSON.stringify(request.messages)).toContain('Selected native Quality record cre_source:900');
+      expect(JSON.stringify(request.messages)).toContain(NATIVE_TEXT);
+    }
+    if (request.callerModule === 'ana-sub-agent' && mode === 'child') {
+      await fixture.pg.query("UPDATE quality_fixture_state SET content='Changed native Quality facts' WHERE id=900");
+    }
+    if (request.callerModule === 'ana-ri-stream-followup' && mode === 'team') {
+      await fixture.pg.query('UPDATE ana_runs SET project_id=NULL WHERE id=$1', [runId]);
+    }
+    try {
+      const source = captureCurrentRunSourceGate(request); expect(source).toBeDefined();
+      await source?.recheck(); nativeChecks++; await request.beforeDispatch?.();
+    } catch {
+      refused = true; throw Object.assign(new GatewayPolicyError('Selected source or recorded team scope changed.'), { code: 'SOURCE_CONTEXT_UNAVAILABLE' });
+    }
+    if (request.callerModule === 'ana-sub-agent') childCalls++; else parentCalls++;
+    return originalRoute(request);
+  });
+  const events = await streamTurn(app, { message: 'Research the selected current native Quality record', project_id: NATIVE_PROGRAM, source_ids: [900] });
+  return { events, parentCalls, childCalls, nativeChecks, refused };
+}
+
 describe('registered parallel workers with actual durable coordination and source SQL', () => {
   const program = '11111111-1111-4111-8111-111111111111';
   let fixture: Awaited<ReturnType<typeof nativeCoordinationFixture>>;
@@ -380,4 +455,19 @@ describe('registered parallel workers with actual durable coordination and sourc
         expect(JSON.parse(await executor.getToolHandler('read_vault_document')!({ artifact_id: 'native-source' }, context))).toMatchObject({ ok: true });
       }));
   });
+  it('retains the actual team freshness checkpoint alongside native source currentness before the parent follow-up', async () => {
+    const result = await joinedNativeStream(fixture, 'team');
+    expect(result.parentCalls, JSON.stringify(result.events)).toBe(1); expect(result.childCalls).toBe(1);
+    expect(result.refused).toBe(true); expect(result.nativeChecks).toBeGreaterThanOrEqual(2);
+    expect(JSON.stringify(result.events)).not.toContain('UNSAFE_FINAL_CANARY_900');
+    expect(h.state.post).toBeNull();
+  }, 60000);
+  it('inherits the stream-issued native source grant into the actual child and refuses changed facts before its first SDK call', async () => {
+    const result = await joinedNativeStream(fixture, 'child');
+    expect(result.parentCalls, JSON.stringify(result.events)).toBe(1); expect(result.childCalls).toBe(0);
+    expect(result.refused).toBe(true); expect(nativeQuality.read).toHaveBeenCalled();
+    expect(JSON.stringify(result.events)).not.toContain('UNSAFE_FINAL_CANARY_900');
+    expect(h.state.post).toBeNull();
+  }, 60000);
+
 });
