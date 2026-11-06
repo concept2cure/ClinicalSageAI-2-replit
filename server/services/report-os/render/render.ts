@@ -12,6 +12,7 @@ import type { InsightAtomRef } from '../providers/types';
 import { labelCurrencyMatrixOf, renderLabelCurrencyMatrix } from './label-currency-matrix';
 import { lifecycleCalendarOf, renderLifecycleCalendar } from './lifecycle-calendar';
 import { readinessSentence } from '../../../../shared/regulatory/readiness-statement';
+import { isNativeQualityReport, qualityEvidenceSections } from './quality-evidence';
 
 /**
  * Inputs to {@link renderReport}. Mirrors the shape produced by the
@@ -340,38 +341,8 @@ function domainSection(domain: Record<string, unknown>, providers: RenderInput['
   return { id: 'register', title: 'Register', blocks };
 }
 
-/** Quality projections are factual records, with project ownership distinct from organization context. */
-function qualityEvidenceSections(value: unknown, providers: RenderInput['providers'], computedScope: string): ReportSection[] | null {
-  const evidence = asRecord(value);
-  if (!evidence) return null;
-  const rows = Array.isArray(evidence.records) ? evidence.records.map(asRecord) : null;
-  if (evidence.schemaVersion !== 1 || !rows || rows.some(row => !row || typeof row.key !== 'string' || typeof row.title !== 'string'
-    || typeof row.text !== 'string' || typeof row.lifecycle !== 'string' || (row.version !== null && typeof row.version !== 'string')
-    || !['project', 'organization'].includes(String(row.sourceScope)) || typeof asRecord(row.native)?.kind !== 'string'
-    || typeof asRecord(row.native)?.id !== 'string') || !Array.isArray(evidence.limits) || !evidence.limits.every(limit => typeof limit === 'string')) {
-    return [{ id: 'quality-evidence-unavailable', title: 'Quality evidence unavailable',
-      blocks: [{ kind: 'summary', text: 'The saved Quality evidence could not be verified. No Quality records are shown.' }] }];
-  }
-  const provenance = providers.flatMap(provider => provider.atoms ?? []);
-  const section = (scope: 'project' | 'organization', title: string, statement: string): ReportSection => {
-    const selected = rows.filter(row => row!.sourceScope === scope);
-    return { id: scope === 'project' ? 'quality-project-evidence' : 'quality-organization-context', title,
-      blocks: [{ kind: 'summary', text: statement }, selected.length ? {
-        kind: 'table', columns: ['Evidence snapshot', 'Title', 'Version', 'Lifecycle', 'Recorded facts'],
-        rows: selected.map(row => [row!.key as string, row!.title as string, row!.version as string | null, row!.lifecycle as string, row!.text as string]),
-        ...(provenance.length ? { provenance } : {}),
-      } : { kind: 'summary', text: 'No admitted records were returned for this scope. This does not establish completeness.' }] };
-  };
-  return [section('project', 'Project Quality evidence', computedScope === 'project'
-    ? 'These evidence snapshots describe this project. Working copies, releases in force and retained versions are separate snapshots.'
-    : 'These evidence snapshots describe projects the current actor can access. Working copies, releases in force and retained versions are separate snapshots.'),
-  section('organization', 'Organization Quality-system context', computedScope === 'project'
-    ? 'Organization context is not assigned to this project.' : 'These organization-owned records have no project ownership.'),
-  { id: 'quality-assessment-limits', title: 'Assessment limits', blocks: evidence.limits.map(text => ({ kind: 'summary', text })) }];
-}
-
 function renderedDomainSections(domain: Record<string, unknown>, providers: RenderInput['providers'], computedScope: string): ReportSection[] {
-  const quality = qualityEvidenceSections(domain.qualityEvidence, providers, computedScope);
+  const quality = qualityEvidenceSections(domain.qualityEvidence, computedScope);
   if (quality) return quality;
   const calendar = lifecycleCalendarOf(domain);
   if (calendar) return renderLifecycleCalendar(calendar, providers.flatMap(provider => provider.atoms ?? []), computedScope === 'organization' ? ORGANIZATION_COUNTS : null);
@@ -548,19 +519,21 @@ function computationMetadata(summary: Record<string, unknown>, scopeType: string
   const computedScope = typeof summary.computedScope === 'string' ? summary.computedScope
     : typeof summary.domainScope === 'string' ? summary.domainScope : scopeType;
   const provenance = asRecord(summary.provenance);
-  return { computedScope, ...(provenance ? { provenance } : {}) };
+  // Native receipts remain in the sealed run; normal views and PDFs show business facts.
+  const nativeQuality = isNativeQualityReport(summary);
+  return { computedScope, ...(!nativeQuality && provenance ? { provenance } : {}) };
 }
 
-function providerReadinessSection(providers: RenderInput['providers']): ReportSection {
+function providerReadinessSection(providers: RenderInput['providers'], nativeQuality = false): ReportSection {
   const providerRows: Array<Array<string | number | null>> = providers.map(p => [
-    p.provider,
+    nativeQuality ? (p.provider === 'quality_project_evidence' ? 'Quality evidence' : humanize(p.provider)) : p.provider,
     p.status,
     p.blocker ?? '—',
   ]);
   return {
     id: 'provider-readiness',
     title: 'Provider readiness',
-    blocks: [{ kind: 'table', columns: ['Provider', 'Status', 'Note'], rows: providerRows, ...(providers.some((p) => p.atoms?.length) ? { provenance: providers.flatMap((p) => p.atoms ?? []) } : {}) }],
+    blocks: [{ kind: 'table', columns: ['Provider', 'Status', 'Note'], rows: providerRows, ...(!nativeQuality && providers.some((p) => p.atoms?.length) ? { provenance: providers.flatMap((p) => p.atoms ?? []) } : {}) }],
   };
 
 }
@@ -604,7 +577,7 @@ export function renderReport(input: RenderInput): RenderedReport {
   if (market) sections.push(marketSection(module1 ?? null));
 
   // 2. Provider readiness.
-  sections.push(providerReadinessSection(input.providers));
+  sections.push(providerReadinessSection(input.providers, isNativeQualityReport(input.summary)));
 
   // 3. Blockers (only when present).
   if (input.blockers.length) {

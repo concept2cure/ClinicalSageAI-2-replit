@@ -16,6 +16,7 @@ import { computeDomainRun } from '../report-engine';
 import { gapsWereEvaluated, renderReport } from '../render/render';
 import { evaluateTruthfulness } from '../truthfulness';
 import { REPORT_TYPE_SEED } from '../taxonomy';
+import { buildRunPdf } from '../pdf/run-pdf';
 
 const TYPE = 'compliance.audit_assurance_pack';
 const LIMIT = 'Quality evidence completeness is not assessed. Audit-chain integrity and compliance controls are not assessed.';
@@ -130,5 +131,79 @@ describe('the existing assurance pack computes native Quality facts', () => {
       status: 'partial', providers: [], blockers: [LIMIT], summary: { domain: { qualityEvidence: { schemaVersion: 2, records, limits: [LIMIT] } } } });
     expect(report.sections.find(section => section.id === 'quality-evidence-unavailable')).toBeDefined();
     expect(JSON.stringify(report)).not.toContain('Project procedure');
+  });
+
+});
+
+describe('native Quality report presentation',()=>{
+  it('renders readable business facts in the view and PDF without changing the sealed input',async()=>{
+    const nativeRecords=[
+      {key:'quality:qms_nonconforming_products:41',title:'Nonconformance: NC-41',version:null,sourceScope:'project',native:{kind:'qms_nonconforming_products',id:'41'},lifecycle:'pending',
+        text:JSON.stringify({data:{record:{id:41,organization_id:7,nc_number:'NC-41',description:'Container seal integrity failed',capa_linked:false}}})},
+      {key:'quality:capa_records:72',title:'CAPA: Container closure',version:null,sourceScope:'project',native:{kind:'capa_records',id:'72'},lifecycle:'action_planned',
+        text:JSON.stringify({data:{record:{id:'72',capa_code:'CAPA-72',target_close_date:'2026-12-01',root_cause_analysis:{cause:'Incorrect torque',tests:0},source_refs:['NC-41']}}})},
+      {key:'quality:qms_management_reviews:8',title:'Management review: Q4',version:null,sourceScope:'organization',native:{kind:'qms_management_reviews',id:'8'},lifecycle:'not_recorded',
+        text:JSON.stringify({data:{record:{outputs:{actions:[{description:'Validate the torque procedure',dueDate:'2026-11-30',closed:false}]}}}})},
+      {key:'quality:qms_documents:2:working',title:'SOP-001 Seal checks — working record',version:'2.0',sourceScope:'project',native:{kind:'qms_documents',id:'2'},lifecycle:'draft',
+        text:JSON.stringify({data:{record:{doc_number:'SOP-001'},sections:[{id:'private-section-id',code:'purpose',title:'Purpose',content:'<p>Review the <strong>seals</strong>.</p>'}],contentBasis:'Working record; not a signed release.'}})},
+      {key:'quality:capa_actions:00000000-0000-4000-8000-000000000041',title:'CAPA action: 00000000-0000-4000-8000-000000000041',version:null,sourceScope:'project',
+        native:{kind:'capa_actions',id:'00000000-0000-4000-8000-000000000041'},lifecycle:'planned',text:JSON.stringify({data:{record:{n:3,description:'Repeat the torque validation'}}})},
+    ];
+    const summary={computedScope:'project',domain:{qualityEvidence:{schemaVersion:1,records:nativeRecords,limits:[LIMIT]}},
+      provenance:{queries:[{query:'readQualityProjectEvidence',rows:nativeRecords}]}};
+    const providers=[{provider:'quality_project_evidence',observedAt:'2026-11-06T00:00:00.000Z',status:'partial' as const,
+      atoms:nativeRecords.map(row=>({sourceTable:row.native.kind,recordId:row.native.id,transformation:'direct_copy' as const}))}];
+    const original=JSON.stringify(summary);
+    const originalProviders=JSON.stringify(providers);
+    const report=renderReport({reportTypeId:TYPE,reportTypeLabel:'Compliance & Audit Assurance Pack',scopeType:'project',scopeId:'11',status:'partial',providers,blockers:[LIMIT],summary});
+    const tables=report.sections.filter(section=>section.id.startsWith('quality-')).flatMap(section=>section.blocks).filter(block=>block.kind==='table');
+    const visible=tables.flatMap(table=>table.kind==='table' ? [table.columns.join(' '),...table.rows.map(row=>row.join(' '))] : []).join('\n');
+    expect(visible).toContain('Container seal integrity failed');
+    expect(visible).toContain('CAPA-72');
+    expect(visible).toContain('CAPA action 3');
+    expect(visible).toContain('2026-12-01');
+    expect(visible).toContain('Due date: 2026-11-30');
+    expect(visible).toContain('Tests: 0');
+    expect(visible).toContain('CAPA linked: No');
+    expect(visible).toContain('Review the seals.');
+    expect(visible).toContain('Not recorded');
+    expect(visible).not.toMatch(/quality:|capa_records|qms_documents|organization_id|root_cause_analysis|private-section-id|00000000-0000-4000-8000-000000000041|\{"|<strong>/);
+    expect(JSON.stringify(summary)).toBe(original);
+    expect(JSON.stringify(providers)).toBe(originalProviders);
+    expect(report.provenance).toBeUndefined();
+    expect(report.status).toBe('partial');
+    expect(JSON.stringify(report.sections)).toContain(LIMIT);
+    expect(JSON.stringify(report)).not.toMatch(/quality:|capa_records|qms_documents|quality_project_evidence/);
+
+    const at='2026-11-06T00:00:00.000Z';
+    const {bytes}=await buildRunPdf({report,typeLabel:'Quality assurance pack',seal:null,runBy:'QA reviewer',exportId:'quality-export',exportedAt:at,
+      run:{id:17,runUuid:'quality-report-run',reportTypeId:TYPE,scopeType:'project',scopeId:'11',status:'partial',confidence:0,createdAt:new Date(at)}});
+    const {PDFParse}=(await import('pdf-parse')) as unknown as {PDFParse:new(options:{data:Buffer})=>{getText():Promise<{text:string}>}};
+    const parser=new PDFParse({data:bytes});
+    const pdf=(await parser.getText()).text.replace(/\s+/g,' ');
+    expect(pdf).toContain('Container seal integrity failed');
+    expect(pdf).toContain('CAPA-72');
+    expect(pdf).toContain('Due date: 2026-11-30');
+    expect(pdf).toContain('NOT FINAL (PARTIAL)');
+    expect(pdf).not.toMatch(/quality:|capa_records|qms_documents|quality_project_evidence|readQualityProjectEvidence|"data"|"queries"/);
+  });
+
+  it('keeps record qualifications ahead of a shortened excerpt and marks additional array facts',()=>{
+    const text=JSON.stringify({data:{record:{description:'Recorded issue',source_refs:Array.from({length:9},(_,i)=>`NC-${i+1}`)},
+      approvalQualification:'Electronic-signature standing is not inferred.'}});
+    const report=renderReport({reportTypeId:TYPE,reportTypeLabel:'Quality assurance pack',scopeType:'project',scopeId:'11',status:'partial',providers:[],blockers:[LIMIT],
+      summary:{domain:{qualityEvidence:{schemaVersion:1,records:[{...records[0],text}],limits:[LIMIT]}}}});
+    const visible=JSON.stringify(report.sections);
+    expect(visible).toContain('Electronic-signature standing is not inferred.');
+    expect(visible).toContain('Additional recorded details are retained in the report data');
+  });
+
+  it('shows a readable unavailable-details note instead of falling back to malformed raw source text',()=>{
+    const text='{PRIVATE RAW SOURCE JSON';
+    const report=renderReport({reportTypeId:TYPE,reportTypeLabel:'Compliance & Audit Assurance Pack',scopeType:'project',scopeId:'11',status:'partial',providers:[],blockers:[LIMIT],
+      summary:{domain:{qualityEvidence:{schemaVersion:1,records:[{...records[0],text}],limits:[LIMIT]}}}});
+    const visible=JSON.stringify(report.sections);
+    expect(visible).not.toContain(text);
+    expect(visible).toContain('Recorded details are unavailable');
   });
 });
