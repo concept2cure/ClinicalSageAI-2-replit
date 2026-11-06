@@ -1,6 +1,7 @@
-/** Existing workflow writer, actual PostgreSQL and FORCE RLS.
+/** Existing workflow/ordinary writers, actual PostgreSQL and FORCE RLS.
  * Synthetic authenticated requests exercise real actor/project admission and
- * canonical task/audit SQL; this is not deployed-auth or full-schema proof. */
+ * canonical task/audit SQL; notifications alone are spied. This is not
+ * deployed-auth or full-schema proof. */
 import express from 'express';
 import request from 'supertest';
 import { readFile } from 'node:fs/promises';
@@ -13,6 +14,10 @@ import { databaseUrl } from '../setup.db';
 import { setupSchedulerDb, waitFor, type SchedulerDb } from './scheduler-harness';
 import { tenantIsolationPolicySql } from './harness';
 
+const effects = vi.hoisted(() => ({ notify: vi.fn() }));
+vi.mock('../../server/services/tasking/task-side-effects', async original => ({
+  ...await original<typeof import('../../server/services/tasking/task-side-effects')>(), notifyTaskEvent: effects.notify,
+}));
 vi.mock('../../server/auth', () => ({ authMiddleware: (_q: unknown, _s: unknown, next: () => void) => next() }));
 vi.mock('../../server/middleware/tenantContext', () => ({
   tenantContextMiddleware: (_q: unknown, _s: unknown, next: () => void) => next(),
@@ -24,20 +29,24 @@ vi.mock('../../server/middleware/redisRateLimiter', () => ({
 
 const TABLES = ['organization_users', 'client_workspaces', 'projects', 'project_members',
   'project_visibility_settings', 'concept2cure_artifacts', 'concept2cure_review_assignments',
-  'unified_tasks', 'task_templates', 'task_dependencies'];
+  'unified_tasks', 'task_templates', 'task_dependencies', 'canonical_documents'];
 const BASE_DDL = `
 CREATE TABLE organizations (id integer PRIMARY KEY,status text);
 CREATE TABLE users (id integer PRIMARY KEY,name text,email text,status text);
 CREATE TABLE organization_users (id serial PRIMARY KEY,organization_id integer,user_id integer,role text);
 CREATE TABLE client_workspaces (id integer PRIMARY KEY,organization_id integer);
 CREATE TABLE projects (id integer PRIMARY KEY,organization_id integer,client_workspace_id integer,
-  status text,owner_id integer,created_by_id integer,settings jsonb);
+  status text,owner_id integer,created_by_id integer,settings jsonb,regulatory_program_id uuid);
 CREATE TABLE project_members (id serial PRIMARY KEY,project_id integer,organization_id integer,
   user_id integer,role text,status text);
 CREATE TABLE project_visibility_settings (project_id integer PRIMARY KEY,organization_id integer,visibility text);
 CREATE TABLE concept2cure_artifacts (id integer,organization_id integer,project_id integer);
 CREATE TABLE concept2cure_review_assignments (artifact_id integer,reviewer_id integer,organization_id integer,status text);
+CREATE TABLE authoring_documents (id uuid PRIMARY KEY,tenant_id integer,client_program_id uuid);
+CREATE TABLE canonical_documents (canonical_id uuid PRIMARY KEY,organization_id integer,project_id uuid);
 `;
+const DOCS = ['11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', '33333333-3333-4333-8333-333333333333'];
+const PROGRAMS = ['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'];
 const TEMPLATE = 'NATIVE-PROJECT-WORKFLOW';
 const DEFINITIONS = [{ id: 'a', title: 'Review source data', moduleType: 'general', dayOffset: 0, duration: 2 },
   { id: 'b', title: 'Record the conclusion', moduleType: 'general', dayOffset: 2, duration: 1 }];
@@ -48,6 +57,7 @@ let store: typeof import('../../server/db/tenantStore');
 let router: express.Router;
 let losesCommit = false;
 let discards = 0;
+const transactionEvents: string[] = [];
 const statement = (sql: string | QueryConfig) => typeof sql === 'string' ? sql : sql.text;
 
 /** Same model-column fixture pattern as task-assignment.pglite.test.ts. */
@@ -74,6 +84,7 @@ function app(userId = 7, organizationId = 9, workspace: unknown = 71, claimedRol
         tenantContext: { organizationId, ...(workspace === undefined ? {} : { clientWorkspaceId: workspace }) },
         dbClient: { async query(sql: string | QueryConfig, params?: unknown[]) {
           const answer = await client.query(sql, params);
+          if (statement(sql).trim().toUpperCase() === 'COMMIT') transactionEvents.push('COMMIT');
           if (losesCommit && statement(sql).trim().toUpperCase() === 'COMMIT') {
             losesCommit = false; throw Object.assign(new Error('Lost actual workflow COMMIT acknowledgement'), { code: 'ECONNRESET' });
           }
@@ -88,6 +99,9 @@ function app(userId = 7, organizationId = 9, workspace: unknown = 71, claimedRol
 const create = (body: Record<string, unknown> = { projectId: 11 }, actor = 7, workspace: unknown = 71,
   template = TEMPLATE, alias = '/api/task-management') => request(app(actor, 9, workspace))
   .post(`${alias}/tasks/from-template/${encodeURIComponent(template)}`).send(body);
+const ordinary = (body: Record<string, unknown> = {}, actor = 7, workspace: unknown = 71, alias = '/api/task-management') =>
+  request(app(actor, 9, workspace)).post(`${alias}/tasks`)
+    .send({ title: 'Native ordinary project task', moduleType: 'general', assigneeId: actor, projectId: 11, ...body });
 
 async function counts() {
   const { rows } = await env.owner.query(`SELECT
@@ -103,6 +117,10 @@ async function refused(body: Record<string, unknown>, status: number, code: stri
   const before = await counts(); const answer = await create(body, actor, workspace);
   expect(answer.status, JSON.stringify(answer.body)).toBe(status);
   expect(answer.body.code).toBe(code); expect(await counts()).toEqual(before);
+}
+async function ordinaryRefused(body: Record<string, unknown>, status: number, actor = 7, workspace: unknown = 71) {
+  const before = await counts(); const answer = await ordinary(body, actor, workspace);
+  expect(answer.status, JSON.stringify(answer.body)).toBe(status); expect(await counts()).toEqual(before);
 }
 
 async function injectedFailure(table: string, predicate: string, run: () => Promise<void>) {
@@ -120,7 +138,7 @@ beforeAll(async () => {
   if (!audit || !actions) throw new Error('Canonical ledger fixture is unavailable');
   const ddl = BASE_DDL + [unifiedTasks, taskTemplates, taskDependencies].map(modeledDdl).join('\n') + audit + actions;
   env = await setupSchedulerDb(databaseUrl, 'dbwfproject', ddl, TABLES);
-  for (const [table, column] of [['audit_logs', 'tenant_id'], ['c2c_ana_actions', 'org_id']]) {
+  for (const [table, column] of [['audit_logs', 'tenant_id'], ['c2c_ana_actions', 'org_id'], ['authoring_documents', 'tenant_id']]) {
     await env.owner.query(`ALTER TABLE ${env.t(table)} ENABLE ROW LEVEL SECURITY;
       ALTER TABLE ${env.t(table)} FORCE ROW LEVEL SECURITY; ${tenantIsolationPolicySql(env.t(table), column)}`);
   }
@@ -137,7 +155,8 @@ beforeAll(async () => {
 }, 120_000);
 beforeEach(async () => {
   losesCommit = false; discards = 0;
-  await env.owner.query(`TRUNCATE ${[...TABLES, 'users', 'organizations', 'audit_logs', 'c2c_ana_actions']
+  transactionEvents.length = 0; effects.notify.mockReset().mockImplementation(() => transactionEvents.push('notification'));
+  await env.owner.query(`TRUNCATE ${[...TABLES, 'users', 'organizations', 'audit_logs', 'c2c_ana_actions', 'authoring_documents']
     .map(table => env.t(table)).join(',')} RESTART IDENTITY;
     INSERT INTO ${env.t('organizations')} VALUES (9,'active'),(10,'active');
     INSERT INTO ${env.t('users')} VALUES (7,'Project owner','owner@example.test','active'),
@@ -147,11 +166,14 @@ beforeEach(async () => {
     INSERT INTO ${env.t('organization_users')}(organization_id,user_id,role) VALUES
       (9,7,'member'),(9,8,'member'),(9,9,'member'),(9,10,'member'),(9,11,'member'),(9,12,'viewer');
     INSERT INTO ${env.t('client_workspaces')} VALUES (71,9),(72,9),(81,10);
-    INSERT INTO ${env.t('projects')} VALUES (11,9,71,'active',7,7,'{}'),
+    INSERT INTO ${env.t('projects')}(id,organization_id,client_workspace_id,status,owner_id,created_by_id,settings) VALUES (11,9,71,'active',7,7,'{}'),
       (12,9,72,'active',9,9,'{}'),(13,10,81,'active',9,9,'{}'),(14,9,NULL,'active',7,7,'{}');
     INSERT INTO ${env.t('project_visibility_settings')} VALUES (11,9,'private'),(12,9,'private'),(13,10,'private'),(14,9,'private');
     INSERT INTO ${env.t('project_members')}(project_id,organization_id,user_id,role,status) VALUES
       (11,9,8,'edit','active'),(11,9,10,'use','active'),(11,9,12,'edit','active');`);
+  await env.owner.query(`UPDATE ${env.t('projects')} SET regulatory_program_id=CASE id WHEN 11 THEN $1::uuid ELSE $2::uuid END WHERE id IN(11,12)`, PROGRAMS.slice(0, 2));
+  await env.owner.query(`INSERT INTO ${env.t('authoring_documents')} SELECT doc::uuid,9,program::uuid FROM unnest($1::text[],$2::text[]) AS source(doc,program)`, [DOCS, PROGRAMS]);
+  await env.owner.query(`INSERT INTO ${env.t('canonical_documents')} SELECT id,tenant_id,client_program_id FROM ${env.t('authoring_documents')}`);
   await env.owner.query(`INSERT INTO ${env.t('task_templates')}
     (template_id,organization_id,name,category,is_active,tasks,dependencies,usage_count)
     VALUES ($1,9,'Native project workflow','general',true,$2::json,$3::json,0)`,
@@ -179,6 +201,114 @@ describe('current workflow project admission counterexamples', () => {
     const answer = await create(); expect(answer.status, JSON.stringify(answer.body)).toBe(200);
     expect(answer.body.data).toHaveLength(2);
     for (const task of answer.body.data) expect(task).toMatchObject({ organizationId: 9, projectId: 11, clientWorkspaceId: 71, createdById: 7 });
+  });
+});
+
+describe('ordinary task project admission counterexamples', () => {
+  it('refuses an explicit private project the ordinary task creator cannot edit', async () => {
+    const before = await counts(); const answer = await ordinary({ projectId: 12 }, 7, 72);
+    expect({ status: answer.status, writes: await counts() }, JSON.stringify(answer.body))
+      .toEqual({ status: 403, writes: before });
+  });
+  it('persists the explicit project actual workspace on an ordinary task', async () => {
+    const answer = await ordinary(); expect(answer.status, JSON.stringify(answer.body)).toBe(200);
+    expect(answer.body.data).toMatchObject({ organizationId: 9, projectId: 11, clientWorkspaceId: 71, createdById: 7 });
+  });
+  it('refuses stale claimed write permission on an unfiled ordinary task', async () => {
+    const before = await counts(); const answer = await ordinary({ projectId: undefined }, 12, null);
+    expect({ status: answer.status, writes: await counts() }, JSON.stringify(answer.body))
+      .toEqual({ status: 403, writes: before });
+  });
+});
+
+describe('ordinary creation retains actual actor and project authority', () => {
+  it.each([null, 0, -1, 1.5, '11', '11x', true, [], {}, 2_147_483_648])('refuses invalid explicit project %j', async projectId => {
+    await ordinaryRefused({ projectId }, 400);
+  });
+  it.each([13, 999_999])('refuses foreign or missing ordinary parent %s', async projectId => {
+    await ordinaryRefused({ projectId }, 404);
+  });
+  it.each(['archived', 'deleted'])('refuses the actual %s ordinary parent', async status => {
+    await env.owner.query(`UPDATE ${env.t('projects')} SET status=$1 WHERE id=11`, [status]);
+    await ordinaryRefused({}, 409);
+  });
+  it('does not turn a use share into ordinary create permission', async () => { await ordinaryRefused({}, 403, 10); });
+  it('rejects the current revoked edit share', async () => {
+    await env.owner.query(`UPDATE ${env.t('project_members')} SET status='inactive' WHERE user_id=8`);
+    await ordinaryRefused({}, 403, 8);
+  });
+  it('rejects a different workspace claim on an ordinary task', async () => { await ordinaryRefused({}, 403, 7, 72); });
+  it('rejects a workspace claim on a parent with actual null workspace', async () => { await ordinaryRefused({ projectId: 14 }, 403); });
+  it.each(['membership', 'user', 'organization'])('rechecks actual %s for unfiled work', async kind => {
+    const actor = kind === 'membership' ? 8 : 7;
+    if (kind === 'membership') await env.owner.query(`DELETE FROM ${env.t('organization_users')} WHERE user_id=8`);
+    if (kind === 'user') await env.owner.query(`UPDATE ${env.t('users')} SET status='inactive' WHERE id=7`);
+    if (kind === 'organization') await env.owner.query(`UPDATE ${env.t('organizations')} SET status='inactive' WHERE id=9`);
+    await ordinaryRefused({ projectId: undefined, assigneeId: 9 }, 403, actor, null);
+  });
+});
+
+describe('ordinary source-derived project and unfiled compatibility', () => {
+  it.each(['authoring_document', 'canonical_document'])('admits and stamps the actual %s source project', async sourceEntityType => {
+    const answer = await ordinary({ projectId: undefined, sourceEntityType, sourceEntityId: DOCS[0] });
+    expect(answer.status, JSON.stringify(answer.body)).toBe(200);
+    expect(answer.body.data).toMatchObject({ projectId: 11, clientWorkspaceId: 71, sourceEntityType, sourceEntityId: DOCS[0] });
+  });
+  it.each(['authoring_document', 'canonical_document'])('refuses a private %s source project before writes', async sourceEntityType => {
+    await ordinaryRefused({ projectId: undefined, sourceEntityType, sourceEntityId: DOCS[1] }, 403, 7, 72);
+  });
+  it.each([{}, { sourceEntityType: 'unknown_kind', sourceEntityId: DOCS[0] },
+    { sourceEntityType: 'authoring_document', sourceEntityId: DOCS[2] }])('keeps valid unfiled intake %j without inventing workspace', async source => {
+    const answer = await ordinary({ projectId: undefined, ...source });
+    expect(answer.status, JSON.stringify(answer.body)).toBe(200);
+    expect(answer.body.data).toMatchObject({ projectId: null, clientWorkspaceId: null });
+  });
+  it('preserves explicit project precedence over source metadata', async () => {
+    const answer = await ordinary({ sourceEntityType: 'authoring_document', sourceEntityId: DOCS[1] });
+    expect(answer.status, JSON.stringify(answer.body)).toBe(200);
+    expect(answer.body.data).toMatchObject({ projectId: 11, clientWorkspaceId: 71, sourceEntityId: DOCS[1] });
+  });
+});
+
+describe('ordinary canonical write, RR1 and COMMIT boundary', () => {
+  it.each(['reviewRouteId', 'reviewRole', 'reviewStep', 'routeSignatureId', 'routeActId', 'routeAuthoringSignatureId'])(
+    'refuses ordinary protected input %s before writes', async column => {
+      const before = await counts(); const answer = await ordinary({ [column]: 'protected' });
+      expect(answer.status, JSON.stringify(answer.body)).toBe(400);
+      expect(answer.body.code).toBe('ROUTE_COLUMNS_NOT_ADMITTED'); expect(await counts()).toEqual(before);
+    });
+  it('rolls back the task and action when actual audit persistence fails', async () => {
+    const before = await counts(); await injectedFailure('audit_logs', 'tenant_id<>9', async () => {
+      const answer = await ordinary(); expect(answer.status, JSON.stringify(answer.body)).toBe(500);
+      expect(answer.body.error).toBe('AUDIT_WRITE_FAILED'); expect(await counts()).toEqual(before);
+    });
+  });
+  it('notifies another named assignee only after confirmed COMMIT', async () => {
+    const answer = await ordinary({ assigneeId: 9 }); expect(answer.status, JSON.stringify(answer.body)).toBe(200);
+    expect(transactionEvents).toEqual(['COMMIT', 'notification']); expect(effects.notify).toHaveBeenCalledOnce();
+    expect(effects.notify).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 9, recipientUserId: 9, taskId: answer.body.data.taskId }));
+    expect(await counts()).toEqual({ tasks: 1, edges: 0, actions: 1, audits: 1, usage: 0 });
+  });
+  it('discards an actually committed lost acknowledgement and sends no success notice', async () => {
+    losesCommit = true; const answer = await ordinary({ assigneeId: 9 });
+    expect(answer.status, JSON.stringify(answer.body)).toBe(500); expect(answer.body.error).toBe('OUTCOME_UNKNOWN');
+    expect(discards).toBe(1); expect(transactionEvents).toEqual(['COMMIT']); expect(effects.notify).not.toHaveBeenCalled();
+    expect(answer.body.message).not.toMatch(/nothing was (created|changed)/i);
+    expect(await counts()).toEqual({ tasks: 1, edges: 0, actions: 1, audits: 1, usage: 0 });
+  });
+  it.each(['/api/task-management', '/api/tasks'])('keeps ordinary metadata, provenance and atomic lineage through %s', async alias => {
+    const answer = await ordinary({ status: 'in-progress', priority: 'high', moduleData: { section: 'results' },
+      reason: 'Prepare the actual review', startDate: '2026-11-06T10:00:00.000Z' }, 7, 71, alias);
+    expect(answer.status, JSON.stringify(answer.body)).toBe(200); expect(answer.body.success).toBe(true);
+    expect(answer.body.data).toMatchObject({ projectId: 11, clientWorkspaceId: 71, createdById: 7, assigneeId: 7,
+      assigneeName: 'Project owner', assignedBy: 7, status: 'in-progress', priority: 'high', moduleData: { section: 'results' } });
+    expect(answer.body.data.assignedAt).toBeTruthy(); expect(answer.body.data.startDate).toBe('2026-11-06T10:00:00.000Z');
+    const saved = (await env.owner.query(`SELECT a.command,a.proposed_by,l.reason,l.ana_action_id,a.id,a.audit_row_id,l.id AS audit_id,
+      t.xmin::text AS task_tx,a.xmin::text AS action_tx,l.xmin::text AS audit_tx FROM ${env.t('unified_tasks')} t
+      JOIN ${env.t('c2c_ana_actions')} a ON a.target='task:'||t.task_id JOIN ${env.t('audit_logs')} l ON l.id=a.audit_row_id::text`)).rows;
+    expect(saved).toHaveLength(1); expect(saved[0]).toMatchObject({ command: 'task.create', proposed_by: 7, reason: 'Prepare the actual review' });
+    expect(saved[0].ana_action_id).toBe(saved[0].id); expect(saved[0].task_tx).toBe(saved[0].action_tx); expect(saved[0].task_tx).toBe(saved[0].audit_tx);
+    expect(await counts()).toEqual({ tasks: 1, edges: 0, actions: 1, audits: 1, usage: 0 });
   });
 });
 

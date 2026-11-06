@@ -10,7 +10,7 @@ vi.mock('../../report-os/project-access', async original => ({
   ...await original<typeof import('../../report-os/project-access')>(), canAccessReportProject: policy.edit,
 }));
 import { ProgramReadAccessError } from '../../c2c/current-program-access';
-import { admitTaskCreationProject, requireTaskProjectId } from '../task-project';
+import { admitTaskCreationActor, admitTaskCreationProject, requireTaskProjectId } from '../task-project';
 
 const actor = { userId: 7, role: 'member' };
 const input = { organizationId: 9, actorUserId: 7, projectId: 3 };
@@ -41,6 +41,7 @@ describe('current actor, actual project and workspace', () => {
     const { q, query } = fixture();
     await expect(admitTaskCreationProject(q, { ...input, clientWorkspaceId: '71' })).resolves.toEqual({ projectId: 3, clientWorkspaceId: 71 });
     expect(policy.actor).toHaveBeenCalledWith(q, { organizationId: 9, userId: 7, forShare: true });
+    expect(policy.actor).toHaveBeenCalledTimes(1);
     expect(query.mock.calls.map(([text]) => text)).toEqual([
       expect.stringMatching(/FROM projects[\s\S]*FOR SHARE/),
       expect.stringMatching(/FROM client_workspaces[\s\S]*FOR SHARE/),
@@ -88,6 +89,29 @@ describe('current actor, actual project and workspace', () => {
     const { q } = fixture(); policy.edit.mockResolvedValue(false);
     await expect(admitTaskCreationProject(q, input)).rejects.toMatchObject({ status: 403 });
     expect(policy.edit).toHaveBeenCalledWith(9, actor, 3, q, { forWrite: true });
+  });
+});
+
+describe('current actor admission for unfiled work', () => {
+  it('retains current active write membership without a project or workspace lookup', async () => {
+    const { q, query } = fixture();
+    await expect(admitTaskCreationActor(q, input)).resolves.toEqual(actor);
+    expect(policy.actor).toHaveBeenCalledWith(q, { organizationId: 9, userId: 7, forShare: true });
+    expect(query).not.toHaveBeenCalled(); expect(policy.edit).not.toHaveBeenCalled();
+  });
+  it.each(['viewer', 'guest', ''])('refuses fresh role %j without relying on a claimed write role', async role => {
+    policy.actor.mockResolvedValue({ ...actor, role }); const { q, query } = fixture();
+    await expect(admitTaskCreationActor(q, input)).rejects.toMatchObject({ status: 403, code: 'TASK_PROJECT_ACCESS_DENIED' });
+    expect(query).not.toHaveBeenCalled(); expect(policy.edit).not.toHaveBeenCalled();
+  });
+  it('maps revoked current membership to the existing sanitized denial', async () => {
+    policy.actor.mockRejectedValue(new ProgramReadAccessError(403, 'PROJECT_ACTOR_ACCESS_DENIED', 'Revoked'));
+    await expect(admitTaskCreationActor(fixture().q, input)).rejects.toMatchObject({ status: 403, code: 'TASK_PROJECT_ACCESS_DENIED' });
+  });
+  it('refuses an unavailable current actor read without exposing its database detail', async () => {
+    policy.actor.mockRejectedValue(new Error('internal connection detail'));
+    await expect(admitTaskCreationActor(fixture().q, input)).rejects.toMatchObject({ status: 503,
+      code: 'TASK_PROJECT_ACCESS_UNAVAILABLE', message: 'Current project access could not be verified. Nothing was created. Try again.' });
   });
 });
 

@@ -244,16 +244,24 @@ function pinnedAssignmentClient(role: string | null) {
   } };
 }
 
-/** The workflow's actual fixture parent belongs to actor 7; the production
+/** These concrete fixture parents belong to actor 7; the production
  * sharing policy evaluates that row, rather than being mocked as an allow. */
 function workflowProjectFixture(statement: string, params: unknown[]) {
+  const parents = [
+    { id: 3, client_workspace_id: null, status: 'active' },
+    { id: 14, client_workspace_id: 74, status: 'active' },
+    { id: 25, client_workspace_id: 75, status: 'active' },
+  ];
   if (statement.includes('SELECT id,client_workspace_id,status FROM projects')) {
-    return { rows: params[0] === 3 && params[1] === 2 ? [{ id: 3, client_workspace_id: null, status: 'active' }] : [] };
+    return { rows: params[1] === 2 ? parents.filter(parent => parent.id === params[0]) : [] };
+  }
+  if (statement.includes('FROM client_workspaces')) {
+    return { rows: params[1] === 2 && [74, 75].includes(Number(params[0])) ? [{ id: params[0] }] : [] };
   }
   if (statement.includes('FROM projects p LEFT JOIN project_visibility_settings')) {
     // The adapter binds every repeated placeholder separately; the requested
     // project is the final value in this canonical policy query.
-    return { rows: params.at(-1) === 3 ? [{ id: 3, owner_id: 7, created_by_id: 7,
+    return { rows: parents.some(parent => parent.id === params.at(-1)) ? [{ id: params.at(-1), owner_id: 7, created_by_id: 7,
       settings: {}, visibility: 'private', members: [], review_assigned: false }] : [] };
   }
   if (statement.includes('FROM project_visibility_settings') || statement.includes('FROM project_members')) return { rows: [] };
@@ -281,7 +289,7 @@ function workflowWriteFixture(statement: string, params: unknown[]) {
     insert[3].split(',').forEach((token, index) => {
       const parameter = token.trim().match(/^\$(\d+)/); if (!parameter) return;
       const value = params[Number(parameter[1]) - 1]; const name = columns[index];
-      values[name] = ['startDate', 'dueDate'].includes(name) && typeof value === 'string' ? new Date(value) : value;
+      values[name] = ['startDate', 'dueDate', 'assignedAt'].includes(name) && typeof value === 'string' ? new Date(value) : value;
     });
     h.values.push(values);
     return { rows: h.inserted as Array<Record<string, unknown>> };
