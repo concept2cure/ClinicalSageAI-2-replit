@@ -166,8 +166,19 @@ export async function commitAuthoringAssembly(ctx: CreateContext, principal: Aut
     committed = true;
     // The write may stand while current project/document access changes.
     // Re-admit before returning the held private plan or section content.
-    const fresh = await currentContext(client, ctx, principal, input.programId);
-    await target(client, fresh.context, fresh.principal, { docId, input, lock: false });
+    // The tenant scope is LOCAL to a transaction (poolInstrumentation), so
+    // after COMMIT this client carries none and forced RLS would read the
+    // project as absent: a written build answered 503 (J3, 2026-11-06). The
+    // re-admission reads run in their own transaction (not READ ONLY: the
+    // membership read takes FOR SHARE locks). It writes nothing and always
+    // ends with COMMIT, so the build above is never reported as rolled back.
+    await client.query('BEGIN');
+    try {
+      const fresh = await currentContext(client, ctx, principal, input.programId);
+      await target(client, fresh.context, fresh.principal, { docId, input, lock: false });
+    } finally {
+      await client.query('COMMIT').catch(() => { discard = new Error('Assembly re-admission could not be closed'); });
+    }
     return { ok: true, data };
   } catch (error) {
     if (commitAttempted) {
