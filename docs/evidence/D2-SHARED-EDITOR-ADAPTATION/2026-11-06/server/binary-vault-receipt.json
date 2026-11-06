@@ -1,0 +1,92 @@
+{
+  "observedAt": "2026-11-06T18:14:47.778570+00:00",
+  "baseCommit": "21a21849d7cfb8a35794489a87fad2b849c7011c",
+  "branch": "concept2cure-v2",
+  "scope": "Binary source working-copy isolation and explicit project Vault filing/source identity; Plan F1",
+  "results": {
+    "vaultDtoRed": {
+      "files": 2,
+      "passed": 17,
+      "failed": 6,
+      "cause": "Previously absent filingDocumentId, filingSectionKey and exact numeric artifact version fields"
+    },
+    "vaultDtoGreen": {
+      "files": 2,
+      "passed": 23,
+      "failed": 0
+    },
+    "binaryBeforeExplicitOption": {
+      "files": 1,
+      "passed": 21,
+      "failed": 0,
+      "note": "Current canonical resolveBinding already requires an explicitly named filing. This is baseline qualification, not a claimed pre-fix production failure."
+    },
+    "combinedGreen": {
+      "files": 5,
+      "passed": 77,
+      "failed": 0
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 6,
+      "baselineWarnings": 6,
+      "note": "Same pre-existing project-vault max-lines/function-length/complexity sites; file line count increases by 7 counted lines. No baseline or suppression change."
+    }
+  },
+  "commands": {
+    "combined": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install vitest run --config vitest.config.ts --maxWorkers=1 --fileParallelism=false server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts server/services/authoring/__tests__/authoring-source-import.test.ts server/routes/c2c/__tests__/project-vault-completion.test.ts server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts server/routes/c2c/__tests__/project-vault-branches.test.ts --reporter=verbose",
+    "lint": "npx --no-install eslint server/services/authoring/authoring-source-import.ts server/routes/c2c/project-vault.ts server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts server/routes/__tests__/_source-import-recovery-qualification.ts server/routes/c2c/__tests__/project-vault-completion.test.ts server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts",
+    "baselineLint": "git show HEAD:server/routes/c2c/project-vault.ts | npx --no-install eslint --stdin --stdin-filename server/routes/c2c/project-vault.ts"
+  },
+  "proof": [
+    "Real HTTP/JWT, native Word bytes and PGlite authoring migrations: import -> section PATCH -> reopen -> reuse; unbound filing response; both complete filing section rows unchanged; original bytes/hash unchanged; previously recorded binding preserved on reuse.",
+    "Vault response carries actual filing root ID and exact section key, including duplicate titles/classes and explicit whole-document null; artifact version is positive safe integer or null."
+  ],
+  "sourceFingerprintsAfterChecks": {
+    "server/services/authoring/authoring-source-import.ts": "cf18f49b3d08b241082dce18494aa1ad52e3c886663d29eef33be93f1de6c491",
+    "server/routes/c2c/project-vault.ts": "3e1e18d60e6be6333633506455c5bfa92f4d4e1d4499ea6fdc65c646b99cc1e5",
+    "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts": "52ad7d9fcdb8cc9458c079e05937fdfd7fe94b1be5399db1b68f4802e4e65f31",
+    "server/routes/__tests__/_source-import-recovery-qualification.ts": "4ac0baea70adffd77492f56627750d99c122eb729f3bc3e9551d42301321d0dc",
+    "server/routes/c2c/__tests__/project-vault-completion.test.ts": "608e756b81f8cae366c738ed06e2877623f21d898668ec39861c5b6797bea4a8",
+    "server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts": "3d2fce8f814051f6670131c113f01e40aba97cf1c0b8787ec78fb70757bd2f6c",
+    "server/services/authoring/__tests__/authoring-source-import.test.ts": "bdfc013f1eb365156294d24dc6b46dfbdad0b4e4b6d5284173c7b731d649c9d0",
+    "server/routes/c2c/__tests__/project-vault-branches.test.ts": "5e973a279bd652b116caf37c6854c5df27539f93b0885fcf5b78b437041a5c50"
+  },
+  "logs": {
+    "shared-editor-vault-dto-red.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-vault-dto-red.txt",
+      "rawBytes": 13371,
+      "rawSha256": "6377764c89a90865695b379a063fa8024076b81d746a8fb61b3ff79a85c0967e"
+    },
+    "shared-editor-vault-dto-green.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-vault-dto-green.txt",
+      "rawBytes": 8990,
+      "rawSha256": "da3c83c663dde8233e4d4ffa992164a1aaeacd9b9c73fc5159d444d46a4d631c"
+    },
+    "shared-editor-binary-isolation-before.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-binary-isolation-before.txt",
+      "rawBytes": 16964,
+      "rawSha256": "e82aa246ba4bc5a5d353f5274daac59b8286051f29976ca661216ce4f9702e87"
+    },
+    "shared-editor-binary-vault-green.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-binary-vault-green.txt",
+      "rawBytes": 35591,
+      "rawSha256": "0ae2fe23414e0dfcfe3d7b24e188fe3ea627232e14293c821066a0b7b98832d9"
+    },
+    "shared-editor-binary-vault-lint.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-binary-vault-lint.txt",
+      "rawBytes": 842,
+      "rawSha256": "0d39a2307cc72c46c25b5d34eaa77de90789a0e016f67f037f19e11c3d7a3a6e"
+    },
+    "shared-editor-vault-dto-lint-head.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-vault-dto-lint-head.txt",
+      "rawBytes": 842,
+      "rawSha256": "4ed2d4f6f2c9c873295169b31de39d64d0a5215c20544db93a53ba2d75b54cc2"
+    }
+  },
+  "limits": [
+    "The binary case already passes before the explicit forceUnbound option under current canonical binding policy.",
+    "Minimal governed filing fixture; no full migration-set, PostgreSQL concurrency, production RLS, live model, deployment, source signature adoption or agency acceptance qualification.",
+    "No full typecheck/build, source commit or publication performed by this scope."
+  ]
+}

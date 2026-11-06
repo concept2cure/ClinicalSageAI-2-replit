@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RequestSqlClient } from '../../../db/requestDb';
 import type { SavedTemplateReview } from '../../ana/saved-template-review';
 import type { RecordedTemplateSource } from '../../../../shared/authoring/recorded-template-source';
+import { parseRecordedTemplateSource } from '../../../../shared/authoring/recorded-template-source';
+import { builtinAuthoringTemplateId, getBuiltinAuthoringTemplate } from '../builtin-authoring-templates';
+import { builtinTemplateSource } from '../authoring-template-sections';
 
 const h = vi.hoisted(() => ({ review: vi.fn() }));
 vi.mock('../../ana/saved-template-review', () => ({ savedTemplateReview: h.review }));
@@ -32,6 +35,23 @@ const read = () => projectSectionDraftingRegions(q, scope, header, sections);
 beforeEach(() => { h.review.mockReset().mockResolvedValue(reviewed()); });
 
 describe('existing section reads project the same effective saved source as generation', () => {
+  it.each(['component:performance_evaluation_report', 'registry:EU_PER', 'registry:EU_IVDR'])('never assigns EMA to the actual notified-body source %s', async entryId => {
+    const template = await getBuiltinAuthoringTemplate(builtinAuthoringTemplateId(entryId));
+    if (!template) throw new Error('The actual MDX template must be available');
+    const selected = parseRecordedTemplateSource(builtinTemplateSource(template), template.id);
+    if (!selected) throw new Error('The actual template source must be recorded');
+    expect(selected.filingContext?.agency).toBe('Notified_Body');
+    const input = reviewed();
+    input.references = [{ sectionId: ONE, templateId: selected.id, authority: 'recorded', sourceVerification: 'full-recorded',
+      source: { ...selected }, assembly: { templateId: selected.id }, fields: {} }];
+    h.review.mockResolvedValue(input);
+    const before = JSON.stringify(input);
+    const result = await read();
+    expect(result.get(ONE)).toEqual({ draftingRegion: null, draftingRegionState: 'unavailable' });
+    expect(result.get(TWO)).toEqual({ draftingRegion: 'FDA', draftingRegionState: 'recorded' });
+    expect(JSON.stringify(input)).toBe(before);
+  });
+
   it('validates the complete admitted batch once and returns only section agency/state', async () => {
     const result = await read();
     expect(h.review).toHaveBeenCalledExactlyOnceWith(q, scope, header, sections);

@@ -30,6 +30,8 @@ export interface VaultDocFiling {
  *  read, server/services/artifact-registry-read.ts. */
 export interface VaultArtifactFacts {
   artifactId: string;
+  /** Exact numeric current version, never parsed from the display label. */
+  version?: number | null;
   kind: string;
   format: string | null;
   /** The model the writer recorded; null when none was. */
@@ -48,6 +50,8 @@ export interface VaultArtifactFacts {
 
 export interface VaultDoc {
   id: string;
+  /** Recorded filing section; null explicitly addresses the whole filing. */
+  filingSectionKey?: string | null;
   num: string;
   title: string;
   type: string;
@@ -92,6 +96,8 @@ export interface VaultDoc {
 
 export interface VaultFolder {
   id: string;
+  /** Canonical governed filing ID, distinct from this folder's presentation ID. */
+  filingDocumentId?: string;
   code: string;
   label: string;
   children: (VaultFolder | VaultDoc)[];

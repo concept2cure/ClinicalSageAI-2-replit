@@ -12,7 +12,7 @@
  *             project, model, version, the signature on the current version
  *             (four states), cited sources and human review;
  *   download  the governed DOCX (the leaf's export, recorded before delivery);
- *   editor    authoring.open-document by title;
+ *   editor    exact saved source through working-copy intake;
  *   manifest  the shared CSV builder (artifactManifest.ts), same columns;
  *   AnA       the view's state in context, and vault.focus-document, which
  *             now also takes an artifact id: the Live Drive hand-off rides it.
@@ -39,8 +39,7 @@ vi.mock('../download', async (importOriginal) => ({
 import { ApiRequestError } from '@/lib/queryClient';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { Vault } from '../surfaces/Vault';
-import { __resetSurfaceActionBus, applySurfaceAction, registerSurfaceActionHandlers, registeredSurfaceId } from '../surfaceActions';
-import { resolveSurfaceIdForTarget } from '../navParams';
+import { __resetSurfaceActionBus, applySurfaceAction, registeredSurfaceId } from '../surfaceActions';
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 import { PID, ok, props } from './_vault-surface-fixtures';
 
@@ -235,18 +234,15 @@ describe('a person acts on a row of the organization view as on the gallery', ()
     await screen.findByText(/Clinical overview was not downloaded — there is no recorded human review or signature on its current version/);
   });
 
-  it('opens a row in the editor through authoring.open-document, by title', async () => {
+  it('requires an open target project before copying a governed artifact', async () => {
     mockApi();
-    const p = props();
-    render(<Vault {...p} />);
+    const p = props(); render(<Vault {...p} />);
     const panel = await orgPanel();
     await within(panel).findByText('IND cover letter');
-    fireEvent.click(within(within(panel).getByTestId('vault-org-artifact-artifact_9')).getByRole('button', { name: /Open in editor/ }));
-    expect(p.onNav).toHaveBeenCalledWith('authoring');
-    const open = vi.fn(() => ({ ok: true as const, detail: 'Opened' }));
-    cleanup();
-    registerSurfaceActionHandlers(resolveSurfaceIdForTarget('authoring'), { 'authoring.open-document': open });
-    expect((open.mock.calls[0] as unknown[])[0]).toEqual({ title: 'IND cover letter' });
+    fireEvent.click(within(within(panel).getByTestId('vault-org-artifact-artifact_9')).getByRole('button', { name: /Work on document/ }));
+    expect(p.onNav).not.toHaveBeenCalled();
+    expect(await screen.findByText(/Open the artifact’s project/)).toBeTruthy();
+    expect(apiRequest.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(0);
   });
 
   it('asks AnA about a row by name, project and version', async () => {

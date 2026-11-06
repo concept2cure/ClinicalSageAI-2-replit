@@ -31,7 +31,9 @@ import {
   type RulePackProvenance,
 } from '@shared/rule-pack-provenance';
 
-import { useLiveData } from './dataConnect';
+import { useLiveData, type DataReadOwner } from './dataConnect';
+import { useAuthUser } from '@/services/portal/authService';
+import { useAuthoringReadSession } from './editor/authoringCurrentRead';
 import { filingSectionKey } from '@shared/regulatory/filing-section-key';
 
 /** One row of `GET /api/c2c/documents/:id/outline`. */
@@ -57,6 +59,7 @@ export interface FilingOutlineNode extends FilingOutlineRow {
 interface DocumentsResponse {
   documents: Array<{
     id: string;
+    project_id?: string;
     doc_type: string;
     agency: string;
     title: string;
@@ -69,6 +72,7 @@ interface DocumentsResponse {
 interface OutlineResponse {
   document: {
     id: string;
+    project_id?: string;
     title: string;
     doc_type: string;
     agency: string;
@@ -152,6 +156,7 @@ export function flattenOutline(nodes: readonly FilingOutlineNode[]): FilingOutli
 export type FilingOutlineReason =
   | 'no-project'
   | 'no-governed-document'
+  | 'unbound-document'
   | 'empty-outline';
 
 export interface FilingOutlineState {
@@ -189,67 +194,96 @@ export interface FilingOutlineState {
 const asFiling = (d: DocumentsResponse['documents'][number]): FilingMarket => ({
   id: d.id, title: d.title, agency: d.agency, doc_type: d.doc_type,
 });
-
-/**
- * The project's markets (F22b): `scope=market`, less any document the home
- * read already named. A read that fails is said (marketsError) and leaves the
- * home filing as it was.
- */
-function useProjectMarkets(projectId: string | null, homeIds: ReadonlySet<string>) {
+const nonblank = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+function isFiling(value: unknown, projectId: string | null, allowMissingProject = false): value is DocumentsResponse['documents'][number] {
+  if (!value || typeof value !== 'object') return false;
+  const row = value as Record<string, unknown>;
+  const matches = allowMissingProject && row.project_id === undefined ||
+    typeof row.project_id === 'string' && row.project_id.toLowerCase() === projectId?.toLowerCase();
+  return matches && [row.id, row.title, row.agency, row.doc_type].every(nonblank);
+}
+function isDocumentsResponse(value: unknown, projectId: string | null): value is DocumentsResponse {
+  const rows = value && typeof value === 'object' && 'documents' in value ? value.documents : null;
+  return Array.isArray(rows) && rows.every(row => isFiling(row, projectId));
+}
+type FilingSelection = { filing: FilingMarket | null; scope: 'home' | 'market'; loading?: boolean; error?: string };
+export interface FilingOutlineOptions { bindingUnavailable?: boolean; unboundDocument?: boolean }
+const UNVERIFIED_BINDING = 'The open document’s saved filing could not be verified. Reopen it before using filing requirements.';
+function selectFiling(homes: DocumentsResponse['documents'], markets: ReturnType<typeof useProjectMarkets>,
+  boundId: string | null, options: FilingOutlineOptions): FilingSelection {
+  const none: FilingSelection = { filing: null, scope: 'home' };
+  if (options.bindingUnavailable || options.unboundDocument && boundId !== null) return { ...none, error: UNVERIFIED_BINDING };
+  if (options.unboundDocument) return none;
+  if (boundId === null) return { ...none, filing: homes[0] ? asFiling(homes[0]) : null };
+  if (!nonblank(boundId) || boundId.trim() !== boundId) return { ...none, error: UNVERIFIED_BINDING };
+  const home = homes.filter(row => row.id === boundId);
+  if (home.length === 1) return { filing: asFiling(home[0]), scope: 'home' };
+  if (home.length > 1) return { ...none, error: UNVERIFIED_BINDING };
+  if (markets.loading) return { ...none, loading: true };
+  if (markets.error) return { ...none, error: UNVERIFIED_BINDING };
+  const market = markets.list.filter(row => row.id === boundId);
+  return market.length === 1 ? { filing: market[0], scope: 'market' } : { ...none, error: UNVERIFIED_BINDING };
+}
+function isSelectedOutline(value: unknown, selection: FilingSelection, projectId: string | null): value is OutlineResponse {
+  if (!value || typeof value !== 'object' || !selection.filing) return false;
+  const data = value as OutlineResponse;
+  const responseScope = data.document?.filing_scope;
+  if (!isFiling(data.document, projectId, true) || data.document.id !== selection.filing.id ||
+    data.document.doc_type !== selection.filing.doc_type || data.document.agency !== selection.filing.agency ||
+    responseScope !== undefined && responseScope !== selection.scope) return false;
+  return Array.isArray(data.outline) && data.outline.every(row => row && nonblank(row.key) && nonblank(row.label)) &&
+    (data.gaps === undefined || Array.isArray(data.gaps) && data.gaps.every(row => row && nonblank(row.key) && nonblank(row.label)));
+}
+function useProjectMarkets(projectId: string | null, homeIds: ReadonlySet<string>, owner: DataReadOwner) {
   const markets = useLiveData<DocumentsResponse>(
     projectId ? `/api/c2c/documents?projectId=${encodeURIComponent(projectId)}&scope=market` : null,
-    [projectId],
+    [projectId], value => isDocumentsResponse(value, projectId), owner,
   );
-  const list = React.useMemo(
-    () => (markets.data?.documents ?? []).filter((d) => !homeIds.has(d.id)).map(asFiling),
-    [markets.data, homeIds],
-  );
+  const list = React.useMemo(() => (markets.data?.documents ?? []).filter(row => !homeIds.has(row.id)).map(asFiling), [markets.data, homeIds]);
   return { list, loading: markets.loading, error: Boolean(markets.error) };
 }
-
-/**
- * `boundDocumentId` is the governed document the open authoring document is
- * the editing copy of (`authoring_documents.c2c_document_id`). When it is one
- * of the project's markets, the outline is that market's Module 1 and 3.2.R
- * (F22b); otherwise it is the home filing, as before.
- */
-export function useFilingOutline(projectId: string | null, boundDocumentId: string | null = null): FilingOutlineState {
+function useFilingReadOwner(projectId: string | null): DataReadOwner {
+  const session = useAuthoringReadSession(useAuthUser());
+  const key = JSON.stringify([projectId, session.actor, session.key]);
+  const live = React.useRef(key); live.current = key;
+  return React.useMemo(() => ({ key, current: () => live.current === key && session.sameRevision() }), [key, session]);
+}
+/** Exact saved bindings select their own home or market; failed identity never
+ * selects a different filing. A known unbound copy retains explicit project
+ * filing starts but receives no ambient requirements. */
+export function useFilingOutline(projectId: string | null, boundDocumentId: string | null = null,
+  { bindingUnavailable = false, unboundDocument = false }: FilingOutlineOptions = {}): FilingOutlineState {
+  const owner = useFilingReadOwner(projectId);
   const docs = useLiveData<DocumentsResponse>(
     projectId ? `/api/c2c/documents?projectId=${encodeURIComponent(projectId)}&scope=home` : null,
-    [projectId],
+    [projectId], value => isDocumentsResponse(value, projectId), owner,
   );
   const homeDocs = docs.data?.documents;
-  const homeIds = React.useMemo(() => new Set((homeDocs ?? []).map((d) => d.id)), [homeDocs]);
-  const markets = useProjectMarkets(projectId, homeIds);
-
-  // The project's governed document: its home filing (scope=home), the newest
-  // by `updated_at DESC`, unless the open document is a market's copy. While
-  // the markets are read for such a document, nothing is chosen, so the home
-  // outline does not flash in first.
-  const homeId = homeDocs?.[0]?.id ?? null;
-  const marketPending = Boolean(boundDocumentId) && markets.loading;
-  const shownMarket = boundDocumentId ? markets.list.find((m) => m.id === boundDocumentId) : undefined;
-  const documentId = marketPending ? null : (shownMarket?.id ?? homeId);
-
+  const homeIds = React.useMemo(() => new Set((homeDocs ?? []).map(row => row.id)), [homeDocs]);
+  const markets = useProjectMarkets(projectId, homeIds, owner);
+  const selection = React.useMemo(() => selectFiling(homeDocs ?? [], { list: markets.list, loading: markets.loading, error: markets.error },
+    boundDocumentId, { bindingUnavailable, unboundDocument }),
+    [homeDocs, markets.list, markets.loading, markets.error, boundDocumentId, bindingUnavailable, unboundDocument]);
+  const documentId = selection.filing?.id ?? null;
+  const outlineKey = JSON.stringify([owner.key, boundDocumentId, bindingUnavailable, unboundDocument, documentId]);
+  const liveOutline = React.useRef(outlineKey); liveOutline.current = outlineKey;
+  const outlineOwner = React.useMemo<DataReadOwner>(() => ({ key: outlineKey,
+    current: () => liveOutline.current === outlineKey && owner.current() }), [outlineKey, owner]);
   const outline = useLiveData<OutlineResponse>(
     documentId ? `/api/c2c/documents/${encodeURIComponent(documentId)}/outline` : null,
-    [documentId],
+    [documentId], value => isSelectedOutline(value, selection, projectId), outlineOwner,
   );
-
   return React.useMemo<FilingOutlineState>(() => {
-    const around = {
-      home: homeDocs?.[0] ? asFiling(homeDocs[0]) : null,
-      markets: markets.list,
-      marketsError: markets.error,
-    };
-    const blocked = noTreeState({
-      loading: docs.loading || outline.loading || marketPending,
-      error: docs.error ?? outline.error,
-      projectId,
-      documentId,
-    });
-    return blocked ? { ...blocked, ...around, gaps: [] } : { ...treeState(outline.data), ...around };
-  }, [projectId, documentId, homeDocs, markets.list, markets.error, marketPending, docs.loading, docs.error, outline.loading, outline.error, outline.data]);
+    const primaryHome = homeDocs?.[0] ? asFiling(homeDocs[0]) : null;
+    const around = { home: selection.filing && selection.scope === 'home' ? selection.filing
+      : selection.filing || unboundDocument ? primaryHome : null, markets: markets.list, marketsError: markets.error };
+    const blocked = noTreeState({ loading: docs.loading || outline.loading || Boolean(selection.loading),
+      error: docs.error ?? selection.error ?? outline.error, projectId, documentId });
+    if (blocked) return { ...blocked, ...around, gaps: [],
+      ...(unboundDocument && !blocked.loading && !blocked.error ? { reason: 'unbound-document' as const } : {}) };
+    return { ...treeState(outline.data, selection.scope), ...around };
+  }, [projectId, documentId, homeDocs, selection, unboundDocument, markets.list, markets.error,
+    docs.loading, docs.error, outline.loading, outline.error, outline.data]);
 }
 
 type TreePart = Pick<FilingOutlineState, 'document' | 'tree' | 'flat' | 'loading' | 'error' | 'reason'>;
@@ -264,7 +298,7 @@ function noTreeState(a: { loading: boolean; error?: string; projectId: string | 
 }
 
 /** The outline read, as a tree, with its document and (for a market) its gaps. */
-function treeState(data: OutlineResponse | null | undefined): TreePart & { gaps: FilingOutlineState['gaps'] } {
+function treeState(data: OutlineResponse | null | undefined, scope: 'home' | 'market'): TreePart & { gaps: FilingOutlineState['gaps'] } {
   const rows = data?.outline ?? [];
   const tree = buildOutlineTree(rows);
   const raw = data?.document ?? null;
@@ -275,7 +309,7 @@ function treeState(data: OutlineResponse | null | undefined): TreePart & { gaps:
     // rather than crash or — far worse — render nothing and let the outline
     // read as unqualified.
     document: raw
-      ? { ...raw, provenance: normalizeRulePackProvenance(raw.provenance), filing_scope: raw.filing_scope === 'market' ? 'market' : 'home' }
+      ? { ...raw, provenance: normalizeRulePackProvenance(raw.provenance), filing_scope: scope }
       : null,
     tree,
     flat: flattenOutline(tree),

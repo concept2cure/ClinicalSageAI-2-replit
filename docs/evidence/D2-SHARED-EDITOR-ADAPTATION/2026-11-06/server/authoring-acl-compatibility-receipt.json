@@ -1,0 +1,69 @@
+{
+  "observedAt": "2026-11-06T19:53:51.728294+00:00",
+  "sourceCommit": "637737bb13f51363e15a75d6f4a27bfcbeb8e408",
+  "sourceCommitAfterRun": "637737bb13f51363e15a75d6f4a27bfcbeb8e408",
+  "branch": "concept2cure-v2",
+  "scope": "Read-only source-import and artifact-copy compatibility with canonical authoring project write-ACL guard",
+  "validation": {
+    "suites": 3,
+    "tests": 65,
+    "passed": 65,
+    "failed": 0,
+    "exitCode": 0,
+    "durationSeconds": 54.5,
+    "fixtureEditsRequired": false
+  },
+  "command": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install vitest run --config vitest.config.ts --maxWorkers=1 --fileParallelism=false server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts server/routes/__tests__/artifact-workflow-source.test.ts server/services/authoring/__tests__/authoring-program-access.pglite.test.ts --reporter=dot",
+  "inputsBeforeRun": {
+    "observedAt": "2026-11-06T19:51:57.155763+00:00",
+    "sourceCommit": "637737bb13f51363e15a75d6f4a27bfcbeb8e408",
+    "files": {
+      "server/services/authoring/authoring-program-access.ts": "d9542298789769b00890a169e300eae51544fb857eea97338bec18b3650e92d5",
+      "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+      "server/services/c2c/current-program-access.ts": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c",
+      "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
+      "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts": "22312d759d83564a29152508a06e1fd2df8154342873d3e05a6f76001e5110b9",
+      "server/routes/__tests__/artifact-workflow-source.test.ts": "a33f9925426b68bfcffc80a0462e3f0cbae141c20f4c4e18d4cee80fecbda375",
+      "server/services/authoring/__tests__/authoring-program-access.pglite.test.ts": "84f1c27a246837aa4edb982988c7eb6394183cd929bc7331bf1c727405f05f95",
+      "server/routes/__tests__/_source-import-recovery-qualification.ts": "4ac0baea70adffd77492f56627750d99c122eb729f3bc3e9551d42301321d0dc",
+      "server/routes/__tests__/_authoring-canvas-fixture.ts": "b611eb1b4b66d4217aef4e472fc92e804bd6d7ac4f308d402e1dd8414dc226c6"
+    }
+  },
+  "sourceFingerprintsAfterRun": {
+    "server/services/authoring/authoring-program-access.ts": "d9542298789769b00890a169e300eae51544fb857eea97338bec18b3650e92d5",
+    "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+    "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+    "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+    "server/services/c2c/current-program-access.ts": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c",
+    "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
+    "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts": "22312d759d83564a29152508a06e1fd2df8154342873d3e05a6f76001e5110b9",
+    "server/routes/__tests__/artifact-workflow-source.test.ts": "a33f9925426b68bfcffc80a0462e3f0cbae141c20f4c4e18d4cee80fecbda375",
+    "server/services/authoring/__tests__/authoring-program-access.pglite.test.ts": "84f1c27a246837aa4edb982988c7eb6394183cd929bc7331bf1c727405f05f95",
+    "server/routes/__tests__/_source-import-recovery-qualification.ts": "4ac0baea70adffd77492f56627750d99c122eb729f3bc3e9551d42301321d0dc",
+    "server/routes/__tests__/_authoring-canvas-fixture.ts": "b611eb1b4b66d4217aef4e472fc92e804bd6d7ac4f308d402e1dd8414dc226c6"
+  },
+  "inputsUnchanged": true,
+  "changedPinnedPathsSincePriorF86Source": [
+    "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts",
+    "server/services/authoring/__tests__/authoring-program-access.pglite.test.ts",
+    "server/services/authoring/authoring-program-access.ts"
+  ],
+  "log": {
+    "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-authoring-acl-compatibility.txt",
+    "bytes": 18539,
+    "lines": 380,
+    "sha256": "946b9d9b4779c1494089d9f4813f18791cb77233ab332c72bfec03266998c7b6"
+  },
+  "proof": [
+    "The merged binary source fixture explicitly grants editing for positive imports and exercises use-only/revoked refusal plus edit loss during conversion. Its existing forceUnbound, save/reuse and original-file/filing isolation qualification remains passing.",
+    "The unchanged artifact fixture uses the actual project owner. Its exact-source identity, source authorization, version/hash/snapshot drift, adoption and known-machine release holds remain passing.",
+    "Actual program/anchor/sharing SQL in the new PGlite suite distinguishes project read permission from write permission."
+  ],
+  "limits": [
+    "These are the requested in-process PGlite/HTTP fixtures on the standard Vitest config; no native database suite was executed. This does not qualify production RLS, PostgreSQL concurrency, deployed authentication or agency acceptance.",
+    "No source/test edit, assertion weakening, full typecheck/build, commit or deployment in this scope. The required forceWrite guard stays intact.",
+    "Earlier receipts retain their original source snapshots and are not reinterpreted as evidence for this merged tree."
+  ]
+}

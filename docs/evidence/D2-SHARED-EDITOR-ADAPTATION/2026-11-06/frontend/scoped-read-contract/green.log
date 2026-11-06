@@ -1,0 +1,64 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault version receipts > explains separate rendition versions and explicit sequence replacement before filing 851ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault version receipts > shows the server-confirmed Vault version 1.0 and its recorded predecessor 745ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault version receipts > shows the server-confirmed Vault version 3.0 and its recorded predecessor 695ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault version receipts > shows the server legacy-family refusal without claiming a new version 414ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > calls the route with the chosen format and renders the server’s folder, hash and id 638ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > says the Authoring approval carried, naming who reviewed and approved, as the server reported it (FD5 (c)) 593ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > says the approval did not carry, with the server’s reason and what to do next 481ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > claims no approval when the server reported none 443ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > renders the server’s refusal as a refusal, with nothing claimed 424ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > a 2xx without a vault record is not a success 369ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > with no program the dialog says so and offers no submit 213ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > "Open in Vault" names the filed document for the Vault to open on, and says the next step 256ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > a Word copy is said to be unplaceable into a submission, not offered as the next step 265ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > DocumentWorkbench — File to vault > an unapproved filing is told to approve first, not to place 296ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > canvas current-access refusal preserves a sent vault outcome > keeps the existing workbench writer through a host refusal without retaining private document text 217ms
+stderr | client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > canvas current-access refusal preserves a sent vault outcome > checks the canonical session immediately before a prepared filing confirmation
+An update to FileToVaultDialog inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > canvas current-access refusal preserves a sent vault outcome > does not remount an expanded editor’s sent writer when its canvas read is refused 382ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > canvas current-access refusal preserves a sent vault outcome > checks the canonical session immediately before a prepared filing confirmation 15ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > canvas current-access refusal preserves a sent vault outcome > keeps the unsent dialog generic and blocks new confirmation after a refused current read 51ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > canvas current-access refusal preserves a sent vault outcome > keeps the pending dialog generic and blocks new confirmation after a refused current read 47ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx > keeps an uncertain filing held when the workbench closes and reopens the existing dialog 319ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > selected sources continue through the real document creation host > reaches the canonical creation drawer without any write (inline=false) 587ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > selected sources continue through the real document creation host > reaches the canonical creation drawer without any write (inline=true) 987ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > selected sources continue through the real document creation host > opens only the returned UUID with both original selectors and no automatic build (inline=false) 1201ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > selected sources continue through the real document creation host > opens only the returned UUID with both original selectors and no automatic build (inline=true) 2032ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > selected sources continue through the real document creation host > cancels the drawer without creating or binding its sources, and ordinary creation stays ordinary 1515ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts preserve the current canvas and deliberate recovery > keeps the unsaved buffer guarded after Stay, then after opening and cancelling creation 1869ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts preserve the current canvas and deliberate recovery > refuses creation after the actual selected sources change while its form is open 1429ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts preserve the current canvas and deliberate recovery > does not adopt a delayed confirmed source document after source replacement 1170ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts preserve the current canvas and deliberate recovery > does not adopt a delayed confirmed source document after project round trip 1043ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts preserve the current canvas and deliberate recovery > does not adopt a delayed confirmed source document after session replacement 1011ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts preserve the current canvas and deliberate recovery > does not adopt a delayed confirmed source document after unmount 699ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts keep explicit receipt delivery and recovery > keeps the source start valid through an actual same-session token refresh 1618ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts keep explicit receipt delivery and recovery > closes one creation drawer with Escape and leaves ordinary opening independent 523ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts keep explicit receipt delivery and recovery > retains exact selectors through explicit identified creation recovery 1985ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts keep explicit receipt delivery and recovery > keeps an absent returned record unbound instead of guessing another working document 839ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts keep explicit receipt delivery and recovery > hands the exact created record and selectors out of a filtered host after the form closes 898ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx > source starts keep explicit receipt delivery and recovery > preserves the original dirty canvas through creation and a reordered inventory until the actual leave decision 3085ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > lists the vault read model the Vault surface renders, under the program name 1758ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > searches through the vault search route and shows the total 864ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > Cite in this section inserts a citation node through the editor and records the source link 919ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > a file that is not a data-room source cannot be cited; a reference inserts as text and says it is not a citation 781ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > a failed vault read is an error with a retry, never an empty vault 437ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx > DocumentWorkbench — Project files > with no program open the rail says the document is not filed under a program 743ms
+
+ Test Files  3 passed (3)
+      Tests  43 passed (43)
+   Start at  19:56:23
+   Duration  51.12s (transform 6.29s, setup 555ms, import 9.95s, tests 35.73s, environment 3.98s)
+

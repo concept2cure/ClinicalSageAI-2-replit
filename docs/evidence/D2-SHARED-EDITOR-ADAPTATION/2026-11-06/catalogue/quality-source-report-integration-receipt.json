@@ -1,0 +1,274 @@
+{
+  "recordedAt": "2026-11-06T21:41:03.916575+00:00",
+  "package": "F1",
+  "scope": "Bounded native Quality source/report admission convergence and exact stale assembly status fixture correction",
+  "incomingRange": "8dbc9d589ff1370c97d2166646a03d68489a8311..f6127e72231bd9e9f302f596a672f58b1b40db15",
+  "initialRun": {
+    "before": {
+      "capturedAt": "2026-11-06T21:34:51.192713+00:00",
+      "head": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+      "incomingRange": "8dbc9d589ff1370c97d2166646a03d68489a8311..f6127e72231bd9e9f302f596a672f58b1b40db15",
+      "testFiles": [
+        "server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts",
+        "server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts",
+        "server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts",
+        "server/services/qms/__tests__/project-evidence.test.ts",
+        "server/services/report-os/__tests__/quality-evidence-report.test.ts",
+        "server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts",
+        "server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts",
+        "server/services/report-os/__tests__/run-history-quality-access.pglite.test.ts",
+        "server/services/report-os/__tests__/project-access-integration.test.ts",
+        "server/services/ana/__tests__/source-context-admission.pglite.test.ts",
+        "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+        "server/routes/__tests__/report-os-run-engine.test.ts",
+        "server/routes/__tests__/report-os-saved-read-access.test.ts"
+      ],
+      "sourceInputs": {
+        "server/routes/__tests__/authoring-assembly.pglite.test.ts": "aa121ab5919449e6ca2fa1e0ea99b866e48da12a982a1269553ff79c7eebf6b9",
+        "server/routes/__tests__/report-os-run-engine.test.ts": "757f4e5e69d753db4c194c4cfcf955915b0890a5bf06751e5347e7addb23f4aa",
+        "server/routes/__tests__/report-os-saved-read-access.test.ts": "f7af4c43c421d01087cefa657835a466f9cc03f73b9021898339dcbed44245ab",
+        "server/routes/ana-ri/stream.ts": "b72ffefaec969d0021c772d7de65d4e30254c6ed28b72ba64169623ef020a7a2",
+        "server/routes/report-os.ts": "37ca1fff9261bb08f33bb00b50576c569d9dcc930290f90a13eda37544daf7fe",
+        "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts": "066e80a0bed82775d5dfc88d3029d1691759f54de53f7a3cea743dd23f8e1f56",
+        "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts": "d16e3d1ca9c8d7b4b503d5133948c49a403f32283cfa6d0f79e83b8cc751d688",
+        "server/services/ai-gateway/gateway.ts": "09d187427e7dece2beec0b5a6d2e39391f94152909f291ca5c7a59a881427ff7",
+        "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts": "487fffb0df4b2444bb12acc94fa8c4e524c0da7c9c77ad8602ba775c2bc38e50",
+        "server/services/ai-gateway/providers/clients.ts": "0e3a3b26808709947a182c0fb4a96abb6fc2b02437ed54e0cf3fce4987227eb2",
+        "server/services/ana/__tests__/source-context-admission.pglite.test.ts": "d904522f43fb787b5b5ff7d467877bbc4dd87d57b20301f16cf878738a95eef2",
+        "server/services/ana/source-context-admission.ts": "9c0428730f9a57c05d6c2e2511e9fbb4b85a4893a081befebd6b09ca99e6680f",
+        "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+        "server/services/authoring/authoring-assembly-sources.ts": "a6021837adaeb5ca14d2161ab03c116b8464bb0f09a2e857293cc0a5fc772438",
+        "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+        "server/services/authoring/workflow-source-import.ts": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+        "server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts": "b832132a6a1b2e76dd87668d7861f54ef079ffa78748a470bb08fbb66f68de18",
+        "server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts": "392f47dfaa7b1a1f16479e09793f37cfa4763a008d5fb42a64250a6b90f82ae1",
+        "server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts": "00afb913b69cf9ee1b8ae5089eb2c90501b4da12980316e545c76dba53389f27",
+        "server/services/clinical-regulatory-evidence/data-room-capture-audit.ts": "79cc157c4bcf4f7fe557cb1a83be64a42db6e6aa2d86a28f859544583e3db91a",
+        "server/services/clinical-regulatory-evidence/data-room-search.ts": "1d62cc4352abf5b5fae66f03d898351771211f03a5969aced67c710dc90567be",
+        "server/services/clinical-regulatory-evidence/evidence-spine.service.ts": "12424d4ce2eb025a0fe5883d72e9f7830c3c4ba8d25e06dd99d0dc46d102409b",
+        "server/services/clinical-regulatory-evidence/record-source.ts": "a7875e6472dfbabeef6c4b038559490d9e860c05281134bb3735595ed46f54f4",
+        "server/services/clinical-regulatory-evidence/retained-source-context.ts": "fc07f5c95af9623c728ba31e9460cdcc7c6a48f66a23ac38d9b4e5b6bcfdbf4b",
+        "server/services/clinical-regulatory-evidence/source-read-access.ts": "29fd116fc5afc84f757dd4362a53d58192274e1b76313fedbcb39ef9e8dbe022",
+        "server/services/qms/__tests__/project-evidence.test.ts": "6d54c4279254ab5805c8b8179fc14dd3ea4371d01d62ba47cbb3df2fcba43789",
+        "server/services/qms/in-force-release.ts": "1c9eb8f3fb969d7b7d0f74abe8fbdc423870b3ad09e92c809425f4e0ea3a5a7f",
+        "server/services/qms/periodic-review.ts": "d3b49d65fd15098b6593c6f8182a3c1aaadf8287ae48650ca53165bcbfab648b",
+        "server/services/qms/project-evidence-queries.ts": "606b9a7a41be7aa29ed613168f76eff100cfbd12a809f7bdb5b3bda12ac80032",
+        "server/services/qms/project-evidence.ts": "65f44625fce257a3b079becb81d0c07aa82c2c584fdd5f7f1b220d314c1c5dbc",
+        "server/services/report-os/__tests__/project-access-integration.test.ts": "337d1ed2103d44209868c4d096e14056789ada1c67bbee8332ef20b14ce7fd49",
+        "server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts": "3189df625a42e002ed3a38452ecfa47b04b538b5fc6863e5ff27c6478699ce6e",
+        "server/services/report-os/__tests__/quality-evidence-report.test.ts": "90c717941bcf17c2ddf2655e63640dcc5febe88cf66f6b1f42edde08a9ed06c4",
+        "server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts": "f138e0aef62c076e7cc21215c9c6029670cde58f413c408c61ec6e2c66a22d2b",
+        "server/services/report-os/__tests__/run-history-quality-access.pglite.test.ts": "aa26d29c7903c10b92dbe7ef8fdc9c78c86a736ea6256e1747348958e6cad17a",
+        "server/services/report-os/project-access.ts": "1f65ab78bebd43e97563c42cbe16345845de58277efa79e03f2d8c2c753b5731",
+        "server/services/report-os/render/quality-evidence.ts": "c5063a6940fab90d6b1f70921a3f56dc7501a0c2691ed2c910dd4d9791e71abc",
+        "server/services/report-os/render/render.ts": "9ee889fe9bbf250598c3bf61e78f3308b41d92ab226858515ea546129ca0491d",
+        "server/services/report-os/report-engine.ts": "7d9d6f413df5189fde560b0ae73bb934da84883d372c434249fc9328f315bff6",
+        "server/services/report-os/research-compliance-report-providers.ts": "04d69650bd583c278bfa2e4ba19cdcd8c74f8667bc0d0218577eb64a7737b24c",
+        "server/services/report-os/run-history.ts": "44d338744e5fe074371fe16c1a563fe701532127f6ea26251390209b86b72e0e",
+        "server/services/report-os/scheduling/generate-deliver.ts": "6058959c853c6ff33529a7cd720bd72b8f831ed6e27ee2af0351d13a425e37ca"
+      },
+      "finalWireFiveInputsUnchanged": true
+    },
+    "after": {
+      "capturedAt": "2026-11-06T21:37:37.896825+00:00",
+      "head": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+      "sourceInputs": {
+        "server/routes/__tests__/authoring-assembly.pglite.test.ts": "aa121ab5919449e6ca2fa1e0ea99b866e48da12a982a1269553ff79c7eebf6b9",
+        "server/routes/__tests__/report-os-run-engine.test.ts": "757f4e5e69d753db4c194c4cfcf955915b0890a5bf06751e5347e7addb23f4aa",
+        "server/routes/__tests__/report-os-saved-read-access.test.ts": "f7af4c43c421d01087cefa657835a466f9cc03f73b9021898339dcbed44245ab",
+        "server/routes/ana-ri/stream.ts": "b72ffefaec969d0021c772d7de65d4e30254c6ed28b72ba64169623ef020a7a2",
+        "server/routes/report-os.ts": "37ca1fff9261bb08f33bb00b50576c569d9dcc930290f90a13eda37544daf7fe",
+        "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts": "066e80a0bed82775d5dfc88d3029d1691759f54de53f7a3cea743dd23f8e1f56",
+        "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts": "d16e3d1ca9c8d7b4b503d5133948c49a403f32283cfa6d0f79e83b8cc751d688",
+        "server/services/ai-gateway/gateway.ts": "09d187427e7dece2beec0b5a6d2e39391f94152909f291ca5c7a59a881427ff7",
+        "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts": "487fffb0df4b2444bb12acc94fa8c4e524c0da7c9c77ad8602ba775c2bc38e50",
+        "server/services/ai-gateway/providers/clients.ts": "0e3a3b26808709947a182c0fb4a96abb6fc2b02437ed54e0cf3fce4987227eb2",
+        "server/services/ana/__tests__/source-context-admission.pglite.test.ts": "d904522f43fb787b5b5ff7d467877bbc4dd87d57b20301f16cf878738a95eef2",
+        "server/services/ana/source-context-admission.ts": "9c0428730f9a57c05d6c2e2511e9fbb4b85a4893a081befebd6b09ca99e6680f",
+        "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+        "server/services/authoring/authoring-assembly-sources.ts": "a6021837adaeb5ca14d2161ab03c116b8464bb0f09a2e857293cc0a5fc772438",
+        "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+        "server/services/authoring/workflow-source-import.ts": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+        "server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts": "b832132a6a1b2e76dd87668d7861f54ef079ffa78748a470bb08fbb66f68de18",
+        "server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts": "392f47dfaa7b1a1f16479e09793f37cfa4763a008d5fb42a64250a6b90f82ae1",
+        "server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts": "00afb913b69cf9ee1b8ae5089eb2c90501b4da12980316e545c76dba53389f27",
+        "server/services/clinical-regulatory-evidence/data-room-capture-audit.ts": "79cc157c4bcf4f7fe557cb1a83be64a42db6e6aa2d86a28f859544583e3db91a",
+        "server/services/clinical-regulatory-evidence/data-room-search.ts": "1d62cc4352abf5b5fae66f03d898351771211f03a5969aced67c710dc90567be",
+        "server/services/clinical-regulatory-evidence/evidence-spine.service.ts": "12424d4ce2eb025a0fe5883d72e9f7830c3c4ba8d25e06dd99d0dc46d102409b",
+        "server/services/clinical-regulatory-evidence/record-source.ts": "a7875e6472dfbabeef6c4b038559490d9e860c05281134bb3735595ed46f54f4",
+        "server/services/clinical-regulatory-evidence/retained-source-context.ts": "fc07f5c95af9623c728ba31e9460cdcc7c6a48f66a23ac38d9b4e5b6bcfdbf4b",
+        "server/services/clinical-regulatory-evidence/source-read-access.ts": "29fd116fc5afc84f757dd4362a53d58192274e1b76313fedbcb39ef9e8dbe022",
+        "server/services/qms/__tests__/project-evidence.test.ts": "6d54c4279254ab5805c8b8179fc14dd3ea4371d01d62ba47cbb3df2fcba43789",
+        "server/services/qms/in-force-release.ts": "1c9eb8f3fb969d7b7d0f74abe8fbdc423870b3ad09e92c809425f4e0ea3a5a7f",
+        "server/services/qms/periodic-review.ts": "d3b49d65fd15098b6593c6f8182a3c1aaadf8287ae48650ca53165bcbfab648b",
+        "server/services/qms/project-evidence-queries.ts": "606b9a7a41be7aa29ed613168f76eff100cfbd12a809f7bdb5b3bda12ac80032",
+        "server/services/qms/project-evidence.ts": "65f44625fce257a3b079becb81d0c07aa82c2c584fdd5f7f1b220d314c1c5dbc",
+        "server/services/report-os/__tests__/project-access-integration.test.ts": "337d1ed2103d44209868c4d096e14056789ada1c67bbee8332ef20b14ce7fd49",
+        "server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts": "3189df625a42e002ed3a38452ecfa47b04b538b5fc6863e5ff27c6478699ce6e",
+        "server/services/report-os/__tests__/quality-evidence-report.test.ts": "90c717941bcf17c2ddf2655e63640dcc5febe88cf66f6b1f42edde08a9ed06c4",
+        "server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts": "f138e0aef62c076e7cc21215c9c6029670cde58f413c408c61ec6e2c66a22d2b",
+        "server/services/report-os/__tests__/run-history-quality-access.pglite.test.ts": "aa26d29c7903c10b92dbe7ef8fdc9c78c86a736ea6256e1747348958e6cad17a",
+        "server/services/report-os/project-access.ts": "1f65ab78bebd43e97563c42cbe16345845de58277efa79e03f2d8c2c753b5731",
+        "server/services/report-os/render/quality-evidence.ts": "c5063a6940fab90d6b1f70921a3f56dc7501a0c2691ed2c910dd4d9791e71abc",
+        "server/services/report-os/render/render.ts": "9ee889fe9bbf250598c3bf61e78f3308b41d92ab226858515ea546129ca0491d",
+        "server/services/report-os/report-engine.ts": "7d9d6f413df5189fde560b0ae73bb934da84883d372c434249fc9328f315bff6",
+        "server/services/report-os/research-compliance-report-providers.ts": "04d69650bd583c278bfa2e4ba19cdcd8c74f8667bc0d0218577eb64a7737b24c",
+        "server/services/report-os/run-history.ts": "44d338744e5fe074371fe16c1a563fe701532127f6ea26251390209b86b72e0e",
+        "server/services/report-os/scheduling/generate-deliver.ts": "6058959c853c6ff33529a7cd720bd72b8f831ed6e27ee2af0351d13a425e37ca"
+      }
+    },
+    "changedInputs": [],
+    "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --no-file-parallelism server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts server/services/qms/__tests__/project-evidence.test.ts server/services/report-os/__tests__/quality-evidence-report.test.ts server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts server/services/report-os/__tests__/run-history-quality-access.pglite.test.ts server/services/report-os/__tests__/project-access-integration.test.ts server/services/ana/__tests__/source-context-admission.pglite.test.ts server/routes/__tests__/authoring-assembly.pglite.test.ts server/routes/__tests__/report-os-run-engine.test.ts server/routes/__tests__/report-os-saved-read-access.test.ts",
+    "exitCode": 1,
+    "suitesPassed": 12,
+    "suitesFailed": 1,
+    "testsPassed": 247,
+    "testsFailed": 1,
+    "durationSeconds": 119.65,
+    "otherPassingSuiteTests": 172,
+    "otherPassingSuites": {
+      "server/routes/__tests__/report-os-run-engine.test.ts": 29,
+      "server/services/report-os/__tests__/project-access-integration.test.ts": 23,
+      "server/routes/__tests__/report-os-saved-read-access.test.ts": 25,
+      "server/services/report-os/__tests__/quality-evidence-report.test.ts": 17,
+      "server/services/qms/__tests__/project-evidence.test.ts": 13,
+      "server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts": 12,
+      "server/services/ana/__tests__/source-context-admission.pglite.test.ts": 23,
+      "server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts": 9,
+      "server/services/report-os/__tests__/run-history-quality-access.pglite.test.ts": 4,
+      "server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts": 7,
+      "server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts": 5,
+      "server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts": 5
+    },
+    "failure": "Existing authoring assembly private foreign source expected409; canonical membership denial returned403 ASSEMBLY_SOURCES_UNAVAILABLE before source body read."
+  },
+  "affectedSuiteRerun": {
+    "before": {
+      "capturedAt": "2026-11-06T21:39:05.884946+00:00",
+      "head": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+      "sourceInputs": {
+        "server/routes/__tests__/authoring-assembly.pglite.test.ts": "88d285b06cf2d5db6f8cabc7f2f50a4a5561b70b40faab377b218cf10bfe118b",
+        "server/services/authoring/authoring-assembly-sources.ts": "a6021837adaeb5ca14d2161ab03c116b8464bb0f09a2e857293cc0a5fc772438",
+        "server/services/clinical-regulatory-evidence/source-read-access.ts": "29fd116fc5afc84f757dd4362a53d58192274e1b76313fedbcb39ef9e8dbe022",
+        "server/services/clinical-regulatory-evidence/record-source.ts": "a7875e6472dfbabeef6c4b038559490d9e860c05281134bb3735595ed46f54f4",
+        "server/services/qms/project-evidence.ts": "65f44625fce257a3b079becb81d0c07aa82c2c584fdd5f7f1b220d314c1c5dbc",
+        "server/services/qms/project-evidence-queries.ts": "606b9a7a41be7aa29ed613168f76eff100cfbd12a809f7bdb5b3bda12ac80032",
+        "server/services/c2c/current-program-access.ts": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c",
+        "server/services/project-sharing-access.ts": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
+        "server/services/clinical-regulatory-evidence/evidence-spine.service.ts": "12424d4ce2eb025a0fe5883d72e9f7830c3c4ba8d25e06dd99d0dc46d102409b",
+        "server/services/report-os/project-access.ts": "1f65ab78bebd43e97563c42cbe16345845de58277efa79e03f2d8c2c753b5731"
+      }
+    },
+    "after": {
+      "capturedAt": "2026-11-06T21:41:03.916575+00:00",
+      "head": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+      "sourceInputs": {
+        "server/routes/__tests__/authoring-assembly.pglite.test.ts": "88d285b06cf2d5db6f8cabc7f2f50a4a5561b70b40faab377b218cf10bfe118b",
+        "server/services/authoring/authoring-assembly-sources.ts": "a6021837adaeb5ca14d2161ab03c116b8464bb0f09a2e857293cc0a5fc772438",
+        "server/services/clinical-regulatory-evidence/source-read-access.ts": "29fd116fc5afc84f757dd4362a53d58192274e1b76313fedbcb39ef9e8dbe022",
+        "server/services/clinical-regulatory-evidence/record-source.ts": "a7875e6472dfbabeef6c4b038559490d9e860c05281134bb3735595ed46f54f4",
+        "server/services/qms/project-evidence.ts": "65f44625fce257a3b079becb81d0c07aa82c2c584fdd5f7f1b220d314c1c5dbc",
+        "server/services/qms/project-evidence-queries.ts": "606b9a7a41be7aa29ed613168f76eff100cfbd12a809f7bdb5b3bda12ac80032",
+        "server/services/c2c/current-program-access.ts": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c",
+        "server/services/project-sharing-access.ts": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
+        "server/services/clinical-regulatory-evidence/evidence-spine.service.ts": "12424d4ce2eb025a0fe5883d72e9f7830c3c4ba8d25e06dd99d0dc46d102409b",
+        "server/services/report-os/project-access.ts": "1f65ab78bebd43e97563c42cbe16345845de58277efa79e03f2d8c2c753b5731"
+      }
+    },
+    "changedInputs": [],
+    "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --no-file-parallelism server/routes/__tests__/authoring-assembly.pglite.test.ts",
+    "exitCode": 0,
+    "suitesPassed": 1,
+    "testsPassed": 76,
+    "durationSeconds": 48.33
+  },
+  "composition": "12 passing source/QMS/report/access/history suites with172 tests from original frozen run plus affected full assembly suite rerun76tests, followed by only the two affected native-dispatch suites22tests after its separately owned repair. These are composed overlapping receipts, not a freshfull13suite green invocation.",
+  "testOnlyCorrection": {
+    "path": "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+    "oldStatus": 409,
+    "newStatus": 403,
+    "exactEnvelope": {
+      "success": false,
+      "error": "ASSEMBLY_SOURCES_UNAVAILABLE",
+      "message": "Current access to every selected project source could not be verified. No source content was supplied."
+    },
+    "preservedAssertions": [
+      "response.body.data absent",
+      "no SELECT extracted_text source body read",
+      "no canonical full getSource row read"
+    ],
+    "productionChanges": false,
+    "authorizedBy": "root after observed failure"
+  },
+  "lint": {
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 0,
+    "baselineErrors": 0,
+    "baselineWarnings": 0
+  },
+  "readOnlyFindings": [
+    "Canonical canAccessReportProject used by artifact import remains unchanged. New report options preserve its existing project policy and legacy canAccessReportScope array argument.",
+    "Native facts require current actor/project/exact QMS object, current record receipt/digest and retained-text integrity; selected contexts repeat object/source and disposition checks before supply.",
+    "Native no-original snapshots, working records, signed release observations and retained histories remain distinct. Selection/capture/reporting does not manufacture approval, assurance or model qualification.",
+    "Assembly source changes only truthful native limitations and derived manifest fingerprint; registry-artifact selectors, independent working-copy identity and source verifier remain intact.",
+    "Native selected conversation context uses existing tenant/PII model policy; it does not invent a saved Vault sensitivity tier or establish complete sensitivity-routing coverage.",
+    "Independent review identified source-currentness checks needed at both AnA stream model dispatch calls. Root assigned that existing-owner repair to risk_project_ui; after its freeze this agent reran only the two affected source-context/stream suites,22tests passed. See native-dispatch-followup-receipt.json."
+  ],
+  "logs": {
+    "shared-editor-quality-2026-11-06-red.txt": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-quality-2026-11-06-red.txt",
+      "bytes": 114713,
+      "sha256": "0e6955d2f61258f8821b19c691395775412abd9bab54e35126be35dca603b95e",
+      "orderedParts": [
+        "logs/shared-editor-quality-2026-11-06-red.txt.part01",
+        "logs/shared-editor-quality-2026-11-06-red.txt.part02"
+      ],
+      "reassemblyCommand": "cat logs/shared-editor-quality-2026-11-06-red.txt.part01 logs/shared-editor-quality-2026-11-06-red.txt.part02 > shared-editor-quality-2026-11-06-red.txt"
+    },
+    "shared-editor-quality-assembly-2026-11-06-green.txt": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-quality-assembly-2026-11-06-green.txt",
+      "bytes": 69423,
+      "sha256": "87aa8d46e09d84ae9c452ce061cc0877a29afa3e65b6bd5070c13c48cd6edd4f",
+      "orderedParts": [
+        "logs/shared-editor-quality-assembly-2026-11-06-green.txt"
+      ],
+      "reassemblyCommand": "cat logs/shared-editor-quality-assembly-2026-11-06-green.txt > shared-editor-quality-assembly-2026-11-06-green.txt"
+    },
+    "shared-editor-quality-assembly-2026-11-06-eslint-baseline.json": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-quality-assembly-2026-11-06-eslint-baseline.json",
+      "bytes": 271,
+      "sha256": "31e7559a5d3402b8049f7f53eef3651ba32d9c8e0785c4cd30c38a2eb43f7c46",
+      "orderedParts": [
+        "logs/shared-editor-quality-assembly-2026-11-06-eslint-baseline.json"
+      ],
+      "reassemblyCommand": "cat logs/shared-editor-quality-assembly-2026-11-06-eslint-baseline.json > shared-editor-quality-assembly-2026-11-06-eslint-baseline.json"
+    },
+    "shared-editor-quality-assembly-2026-11-06-eslint.json": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-quality-assembly-2026-11-06-eslint.json",
+      "bytes": 271,
+      "sha256": "31e7559a5d3402b8049f7f53eef3651ba32d9c8e0785c4cd30c38a2eb43f7c46",
+      "orderedParts": [
+        "logs/shared-editor-quality-assembly-2026-11-06-eslint.json"
+      ],
+      "reassemblyCommand": "cat logs/shared-editor-quality-assembly-2026-11-06-eslint.json > shared-editor-quality-assembly-2026-11-06-eslint.json"
+    }
+  },
+  "patch": {
+    "path": "quality-assembly-refusal-fixture.patch",
+    "bytes": 1197,
+    "sha256": "4ed49eb9ea6105b1f2d979090e541645aa2e34005b49cdd3c42c8a10c76d6e58"
+  },
+  "limits": [
+    "PGlite fixtures and mocked source/report seams; no native PostgreSQL/RLS deployment or real model/provider calls claimed.",
+    "No production source edit made by this task. One precise existing test correction was authorized after actual failure.",
+    "Root owns final compiler/build/publication and the separate selected-native dispatch follow-up."
+  ],
+  "nativeDispatchFollowup": {
+    "status": "two affected suites passed on frozen repaired inputs",
+    "receipt": "native-dispatch-followup-receipt.json",
+    "suitesPassed": 2,
+    "testsPassed": 22,
+    "overlapsInitialNativeContextCases": true
+  }
+}

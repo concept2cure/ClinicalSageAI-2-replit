@@ -1,0 +1,178 @@
+{
+  "observedAt": "2026-11-06T19:59:03.400519+00:00",
+  "incomingCanonical": "53b9f15d8fe96767c8dbe6def2d7e8c5e03db7aa",
+  "mergedCommittedBase": "637737bb13f51363e15a75d6f4a27bfcbeb8e408",
+  "mergedCommittedBaseTree": "d8c24d450b5fd0013cd63eadb618b92f5212c260",
+  "headAtFinish": "e31f5c84f16f728c740c77fb4dd8fbc57a9e1481",
+  "committedTreeAtFinish": "9a4820c4675d7bc839641f5b59c2f88aad71166c",
+  "state": "Four approved test-fixture DTO corrections only; production, assertions, casts and timeouts unchanged. All test and lint processes actually exited. Source, tests and runner remain frozen during root compiler.",
+  "fixtureChanges": {
+    "scope": "Ordinary project authoring lists now confirm success:true and every row program_id equal to the selected project. Header client_program_id remains separate and unchanged.",
+    "files": {
+      "client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx": "62c5b6f7ad768aae425d635e74320c92e08f3c67992a5d8b85d781def48d79c8",
+      "client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx": "1b37e70705b131804d201ef42991e3597804714e367e906c2bcc5e5bc474d2a4",
+      "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx": "fb24445c4f304143262453dfeeacc4341ee150132067b45e70ab0505ce0a83cf",
+      "client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx": "777796a0023e4b88071d307ae8b469f5d2d63aa317fa65ae613bbd126cce4c28"
+    }
+  },
+  "unchangedPassingTestPins": {
+    "client/src/concept2cure/v2/editor/__tests__/useScopedDocuments.test.tsx": "6884e564cc114c3e0c1d02b3beceb30ec1edc2e7c2711ef47f32d44c0355dd41",
+    "client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx": "fe1e53350f62f73840907d93f9568dd7a032512d1dd6520dbeccaf03b37cff34",
+    "client/src/concept2cure/v2/editor/__tests__/filingSectionTarget.test.tsx": "cae04fee2a7611e7001ecfa706349de9dc494d850c845e3f353804ac00ed2cea"
+  },
+  "runtimeInputPins": {
+    "client/src/concept2cure/v2/editor/useScopedDocuments.ts": "74015b1a86e423c6ffde74cad6e849aa1efe6ef5a77e417b0fa992737427af43",
+    "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx": "3706ad63db825de52f3e8effe1ae643f399bb4b7a80764b294e5297ec3d28564",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "3e7bae441a5b31728c396dfe98b455d64dca4f6488b268b42de57e06f7f7c007",
+    "client/src/concept2cure/v2/editor/filingSectionTarget.ts": "1522a4ffee3efd492883bb927f348e0fe2fac1097e7f64be7e17be2ddccbe5d8",
+    "client/src/concept2cure/v2/editor/writingAgencyPresentation.ts": "356cfe02766c57b6c280cad03111e4de33021056600c8fee85a51e08b79024fe",
+    "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts": "7d13ca6860c8b3ec0f66637612dafb2417b4f59b4dbf37227851778dbe318e17",
+    "client/src/concept2cure/v2/useFilingOutline.ts": "0e98df97ae5ca3795025a2a644482ff7c7f9102f89cbfde626686220377c9cd4"
+  },
+  "allPinnedInputsMatchCommittedHead": true,
+  "runtimeProductionChangesByThisAgent": [],
+  "testRuntime": {
+    "node": "22",
+    "nodePathPrefix": "/workspace/scratch/mdx-node-runtime/node_modules/.bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "vitestArgs": [
+      "run",
+      "--maxWorkers=1"
+    ]
+  },
+  "initialFiveSuiteRun": {
+    "exitCode": 1,
+    "passedSuites": 3,
+    "failedSuites": 2,
+    "passedTests": 74,
+    "failedTests": 11,
+    "durationSeconds": 91.17,
+    "receipt": "scoped-list-initial-red.txt.gz"
+  },
+  "correctedMainFileRerun": {
+    "exitCode": 0,
+    "suites": 2,
+    "passedTests": 22,
+    "durationSeconds": 28.38,
+    "receipt": "scoped-list-main-green.txt.gz"
+  },
+  "relatedTwoSuitePreEditRun": {
+    "exitCode": 1,
+    "failedSuites": 2,
+    "passedTests": 3,
+    "failedTests": 28,
+    "durationSeconds": 170.31,
+    "receipt": "scoped-list-related-red.txt.gz"
+  },
+  "correctedRelatedFileRerun": {
+    "exitCode": 0,
+    "suites": 2,
+    "passedTests": 31,
+    "durationSeconds": 31.31,
+    "receipt": "scoped-list-related-green.txt.gz"
+  },
+  "lint": {
+    "exitCode": 0,
+    "files": [
+      "client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx",
+      "client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx",
+      "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx",
+      "client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx"
+    ],
+    "errors": 0,
+    "warnings": 0,
+    "receipt": "scoped-list-lint.txt.gz"
+  },
+  "composedVerification": {
+    "unchangedPassingSuites": 3,
+    "unchangedPassingTests": 63,
+    "correctedFilePassingSuites": 4,
+    "correctedFilePassingTests": 53,
+    "totalSuites": 7,
+    "totalPassingTests": 116,
+    "qualification": "Three unchanged passing suites from the initial run, plus both complete corrected two-file reruns. This is not a fresh all-seven-suite rerun."
+  },
+  "failureInterpretation": "Both RED runs reproduced stale project-list response fixtures that omit the now-required confirmation envelope and/or exact row project identity. Adding only the actual canonical DTO fields restores all existing assertions. The stricter production guard was preserved.",
+  "logs": {
+    "scoped-list-initial-red.txt.gz": {
+      "uncompressedSha256": "bc3d49d13b8222c6aa62e51c5619eb0716b50252b0cbfd51ed3c5590c096b1dd",
+      "uncompressedBytes": 138851,
+      "compressedBytes": 8363,
+      "compressedSha256": "ebf96287e5792665e7285fbb2834d81e1d7c8ca15d7524987a21df5cd4b76fb7",
+      "casesByFile": {
+        "client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx": {
+          "passed": 10,
+          "failed": 3
+        },
+        "client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx": {
+          "passed": 14
+        },
+        "client/src/concept2cure/v2/editor/__tests__/filingSectionTarget.test.tsx": {
+          "passed": 33
+        },
+        "client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx": {
+          "failed": 8,
+          "passed": 1
+        },
+        "client/src/concept2cure/v2/editor/__tests__/useScopedDocuments.test.tsx": {
+          "passed": 16
+        }
+      }
+    },
+    "scoped-list-main-green.txt.gz": {
+      "uncompressedSha256": "085682747ee12ad26dcd59193488bdcd9e3fef0d129b98eae72ecbcf1074d963",
+      "uncompressedBytes": 11775,
+      "compressedBytes": 1703,
+      "compressedSha256": "a42a4ff0f600d4e28237b07d3bd0ed2c8855c533de37fb942016fc97ec26393c",
+      "casesByFile": {
+        "client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx": {
+          "passed": 9
+        },
+        "client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx": {
+          "passed": 13
+        }
+      }
+    },
+    "scoped-list-related-red.txt.gz": {
+      "uncompressedSha256": "97dd81946eadbdf7358ae2ca045ca01c8807d82dbb349dd9238edd0450f6a655",
+      "uncompressedBytes": 768463,
+      "compressedBytes": 16428,
+      "compressedSha256": "06ed97f5451ab1f1bfdca811a5bcf702677cc5f424dc35d82b1eaeb82a110da6",
+      "casesByFile": {
+        "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx": {
+          "passed": 2,
+          "failed": 22
+        },
+        "client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx": {
+          "failed": 6,
+          "passed": 1
+        }
+      }
+    },
+    "scoped-list-related-green.txt.gz": {
+      "uncompressedSha256": "4d4ae25cf908a4b946c6138988a2ec902325b544b09e7cc20767ca3e8a72567c",
+      "uncompressedBytes": 7568,
+      "compressedBytes": 1672,
+      "compressedSha256": "bf40b1b3989206f4e097ab4d585af9df05822267eb7ab62e8ee1fa75cb8d86e8",
+      "casesByFile": {
+        "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx": {
+          "passed": 24
+        },
+        "client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx": {
+          "passed": 7
+        }
+      }
+    },
+    "scoped-list-lint.txt.gz": {
+      "uncompressedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressedBytes": 0,
+      "compressedBytes": 20,
+      "compressedSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+      "casesByFile": {}
+    }
+  },
+  "limits": [
+    "No broader 119-case cohort repeat, compiler, build, browser, provider or deployment qualification by this agent.",
+    "Root separately owns final normal compiler/build/native-browser gates and publication."
+  ]
+}

@@ -14,7 +14,7 @@ import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/
 import { PREREQ, VAULT_DDL, AUTHOR, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG, JWT_SECRET, makeApp, asToken } from './_authoring-canvas-fixture';
 import type { DocumentProvenance } from '../../services/authoring/authoring-from-draft';
 import type { CreateContext } from '../../services/authoring/authoring-documents';
-import { registerSourceImportRecoveryCases, sourceFaultPool } from './_source-import-recovery-qualification';
+import { registerSourceImportPlacementCase, registerSourceImportRecoveryCases, sourceFaultPool } from './_source-import-recovery-qualification';
 
 type CountRow = { n: number };
 type ProvenanceRow = { provenance: DocumentProvenance };
@@ -506,3 +506,5 @@ describe('intake keeps the exact currently eligible Vault version', () => {
   registerSourceImportRecoveryCases({ current: () => ({ db, app, author }), versionedSource, fault: importFault });
 
 });
+
+registerSourceImportPlacementCase({ current: () => ({ db, app, author }), versionedSource });

@@ -1,0 +1,1123 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts
+{
+  "timestamp": "2026-11-06T21:35:00.952Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T21:35:00.954Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts
+{
+  "timestamp": "2026-11-06T21:35:00.955Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts
+{
+  "timestamp": "2026-11-06T21:35:01.717Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > previews an ordered mixed unfiled Data Room/Vault set without copying source prose or writing rows 1126ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > records reference intent even when every selected section is preserved, with no new text or genesis
+{
+  "timestamp": "2026-11-06T21:35:18.945Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 27c384a0-d77f-4ca3-8b44-4f401af20f47 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > records reference intent even when every selected section is preserved, with no new text or genesis 827ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event
+{
+  "timestamp": "2026-11-06T21:35:19.753Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 90cde7a7-4bb5-48ad-a692-448560569097 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event
+{
+  "timestamp": "2026-11-06T21:35:19.779Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 90cde7a7-4bb5-48ad-a692-448560569097 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event
+{
+  "timestamp": "2026-11-06T21:35:19.785Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 90cde7a7-4bb5-48ad-a692-448560569097 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event 818ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > rejects a same-length data-room extraction correction and rolls back the entire source-bound build 447ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > rejects a same-length vault extraction correction and rolls back the entire source-bound build 467ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > reuses the exact bounded preview span despite a later query and rejects a forged excerpt receipt 427ms
+ × server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > refuses another project source and never reads its body 105ms
+   → {"success":false,"error":"ASSEMBLY_SOURCES_UNAVAILABLE","message":"Current access to every selected project source could not be verified. No source content was supplied."}: expected 403 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > fails the selected set when one source becomes unreadable instead of silently dropping it 173ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > allows current verified retained Data Room text while disclosing the unavailable original
+{
+  "timestamp": "2026-11-06T21:35:21.885Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 99f8f3a3-fc9d-49b0-a9c2-eb844d152559 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > allows current verified retained Data Room text while disclosing the unavailable original
+{
+  "timestamp": "2026-11-06T21:35:21.900Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 99f8f3a3-fc9d-49b0-a9c2-eb844d152559 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > allows current verified retained Data Room text while disclosing the unavailable original
+{
+  "timestamp": "2026-11-06T21:35:21.903Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 99f8f3a3-fc9d-49b0-a9c2-eb844d152559 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > allows current verified retained Data Room text while disclosing the unavailable original 488ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a withdrawn selected Data Room record without appending anything 396ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a superseded selected Data Room record without appending anything 316ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a checksum selected Data Room record without appending anything 308ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rolls back all appended text and evidence if recording the source-reference event fails
+{
+  "timestamp": "2026-11-06T21:35:23.276Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8b9d61ed-e568-407e-9d44-503b284bb23c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rolls back all appended text and evidence if recording the source-reference event fails
+{
+  "timestamp": "2026-11-06T21:35:23.290Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8b9d61ed-e568-407e-9d44-503b284bb23c by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rolls back all appended text and evidence if recording the source-reference event fails
+CRITICAL: Failed to create audit trail: Error: Injected assembly manifest evidence failure
+    at query (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-assembly.pglite.test.ts:72:29)
+    at Object.query (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-assembly.pglite.test.ts:91:28)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:240:37)
+    at commitOnClient (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-assembly.ts:143:35)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at commitAuthoringAssembly (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-assembly.ts:163:18)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring-assembly.ts:66:13
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rolls back all appended text and evidence if recording the source-reference event fails 357ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rechecks current source-parent access after reading and withholds an asynchronously revoked source 58ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses an explicitly empty catalogue selection instead of silently building without its sources 13ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > appends all missing sections atomically while keeping every existing field and parent metadata
+{
+  "timestamp": "2026-11-06T21:35:23.591Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 436ffef4-58b4-4cd8-8ef2-33e382e42ec2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > appends all missing sections atomically while keeping every existing field and parent metadata
+{
+  "timestamp": "2026-11-06T21:35:23.611Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 436ffef4-58b4-4cd8-8ef2-33e382e42ec2 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > previews without writes and preserves normalized existing identities/content/order 68ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > appends all missing sections atomically while keeping every existing field and parent metadata 219ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > assembles one selected section and a later unchanged preserved-only plan writes nothing
+{
+  "timestamp": "2026-11-06T21:35:24.020Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 01da235f-ff48-4fac-bfda-e95ca7d5d7b2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses a repeated old fingerprint and never duplicates completed rows
+{
+  "timestamp": "2026-11-06T21:35:24.341Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc bb0d830d-a392-4f42-9332-c8a60d81f03e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses a repeated old fingerprint and never duplicates completed rows
+{
+  "timestamp": "2026-11-06T21:35:24.354Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc bb0d830d-a392-4f42-9332-c8a60d81f03e by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > assembles one selected section and a later unchanged preserved-only plan writes nothing 555ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails
+{
+  "timestamp": "2026-11-06T21:35:24.580Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c46f1e78-c3f8-4c64-8fec-61d70e7571fb by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails
+Error creating revision: Error: injected second-section revision failure
+    at query (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-assembly.pglite.test.ts:74:112)
+    at Object.query (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-assembly.pglite.test.ts:91:28)
+    at createRevision (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:403:20)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at insertSectionSeedTx (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-section-seed.ts:30:3)
+    at appendRows (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-assembly.ts:123:19)
+    at commitOnClient (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-assembly.ts:142:20)
+    at commitAuthoringAssembly (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-assembly.ts:163:18)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring-assembly.ts:66:13
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses a repeated old fingerprint and never duplicates completed rows 221ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails
+{
+  "timestamp": "2026-11-06T21:35:24.683Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c46f1e78-c3f8-4c64-8fec-61d70e7571fb by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails
+{
+  "timestamp": "2026-11-06T21:35:24.702Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c46f1e78-c3f8-4c64-8fec-61d70e7571fb by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails
+{
+  "timestamp": "2026-11-06T21:35:24.856Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 97d090e2-4c6d-4200-8796-3a75c9d72244 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails
+CRITICAL: Failed to create audit trail: Error: injected second-section audit failure
+    at query (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-assembly.pglite.test.ts:74:112)
+    at Object.query (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-assembly.pglite.test.ts:91:28)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:240:37)
+    at insertSectionSeedTx (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-section-seed.ts:32:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at appendRows (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-assembly.ts:123:19)
+    at commitOnClient (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-assembly.ts:142:20)
+    at commitAuthoringAssembly (/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-assembly.ts:163:18)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring-assembly.ts:66:13
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails 282ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails
+{
+  "timestamp": "2026-11-06T21:35:24.946Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 97d090e2-4c6d-4200-8796-3a75c9d72244 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails
+{
+  "timestamp": "2026-11-06T21:35:24.959Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 97d090e2-4c6d-4200-8796-3a75c9d72244 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails
+{
+  "timestamp": "2026-11-06T21:35:25.136Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6dd5093b-1313-4257-a363-50181e56ed99 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails 264ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails
+{
+  "timestamp": "2026-11-06T21:35:25.219Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6dd5093b-1313-4257-a363-50181e56ed99 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails
+{
+  "timestamp": "2026-11-06T21:35:25.243Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6dd5093b-1313-4257-a363-50181e56ed99 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails 286ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale text without changing any saved row 150ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale order without changing any saved row 128ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale title without changing any saved row 138ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale template without changing any saved row 124ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale guidance without changing any saved row 132ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses viewer changes after preview 90ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses disabled changes after preview 90ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses private changes after preview 87ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses grant changes after preview 97ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses frozen changes after preview 102ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses a foreign template, foreign project and a same-organization different project target 72ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses unsafe append order null without renumbering 61ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses unsafe append order 2147483647 without renumbering 64ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses normalized duplicate template codes and a missing selected code 125ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > preserves builtin empty structure and exact recorded guidance without changing the parent template identity
+{
+  "timestamp": "2026-11-06T21:35:26.902Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c9f2b5be-2dad-4ea5-8c93-02ccca76b9b7 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > preserves builtin empty structure and exact recorded guidance without changing the parent template identity 203ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > uses Canadian drafting scope and refuses a module mismatch instead of assuming FDA 125ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > keeps preparation templates in manual mode and rejects a recorded regional conflict 159ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses common sections in a bound market copy using the canonical filing rule 67ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact mdl / hc preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.546Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 75d02084-22d0-4441-87e8-5a5093dd1270 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact mdl / hc preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.554Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 75d02084-22d0-4441-87e8-5a5093dd1270 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact mdl / hc preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.561Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 75d02084-22d0-4441-87e8-5a5093dd1270 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact mdl / hc preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.568Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 75d02084-22d0-4441-87e8-5a5093dd1270 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact mdl / hc preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.578Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 75d02084-22d0-4441-87e8-5a5093dd1270 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact mdl / hc preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.585Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 75d02084-22d0-4441-87e8-5a5093dd1270 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact mdl / hc preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.592Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 75d02084-22d0-4441-87e8-5a5093dd1270 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact mdl / hc preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.600Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 75d02084-22d0-4441-87e8-5a5093dd1270 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact mdl / hc preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.606Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 75d02084-22d0-4441-87e8-5a5093dd1270 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact mdl / hc preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.611Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 75d02084-22d0-4441-87e8-5a5093dd1270 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > refuses both preview and direct commit for a Japanese template on the Canadian home filing without writes or source reads 125ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact ninsho / jp_rcb preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.780Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5169e848-6b9f-489a-b37b-3b1a5d75e656 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact ninsho / jp_rcb preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.788Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5169e848-6b9f-489a-b37b-3b1a5d75e656 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact ninsho / jp_rcb preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.793Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5169e848-6b9f-489a-b37b-3b1a5d75e656 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact ninsho / jp_rcb preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.799Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5169e848-6b9f-489a-b37b-3b1a5d75e656 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact ninsho / jp_rcb preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.804Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5169e848-6b9f-489a-b37b-3b1a5d75e656 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact ninsho / jp_rcb preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.811Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5169e848-6b9f-489a-b37b-3b1a5d75e656 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact ninsho / jp_rcb preparation outline manually
+{
+  "timestamp": "2026-11-06T21:35:27.818Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5169e848-6b9f-489a-b37b-3b1a5d75e656 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact mdl / hc preparation outline manually 220ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > builds the exact ninsho / jp_rcb preparation outline manually 207ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > says why AnA does not draft: a GLOBAL narrative names no agency; a worksheet is preparation (J3, 2026-11-06) 150ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > refuses a recorded binding in another tenant 22ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > refuses a recorded binding in another project 22ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > regional bound filing applicability before any selected source is read > refuses a stale plan when the binding class changes even though the common template remains applicable 179ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_STRATEGY with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:28.508Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 12280373-3696-470f-bf03-d3139f4f20a9 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_STRATEGY with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:28.514Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 12280373-3696-470f-bf03-d3139f4f20a9 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_STRATEGY with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:28.521Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 12280373-3696-470f-bf03-d3139f4f20a9 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_STRATEGY with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:28.527Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 12280373-3696-470f-bf03-d3139f4f20a9 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_STRATEGY with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:28.532Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 12280373-3696-470f-bf03-d3139f4f20a9 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_STRATEGY with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:28.535Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 12280373-3696-470f-bf03-d3139f4f20a9 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_STRATEGY with retained source intent and parent identity 348ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_GAP_ANALYSIS with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:28.850Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b0c1451f-562a-45c1-bf21-e1ac896536c3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_GAP_ANALYSIS with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:28.859Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b0c1451f-562a-45c1-bf21-e1ac896536c3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_GAP_ANALYSIS with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:28.864Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b0c1451f-562a-45c1-bf21-e1ac896536c3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_GAP_ANALYSIS with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:28.870Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b0c1451f-562a-45c1-bf21-e1ac896536c3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_GAP_ANALYSIS with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:28.882Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b0c1451f-562a-45c1-bf21-e1ac896536c3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_GAP_ANALYSIS with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:28.887Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc b0c1451f-562a-45c1-bf21-e1ac896536c3 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_GAP_ANALYSIS with retained source intent and parent identity 352ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_COMPETITIVE with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:29.212Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 442cc24e-ba81-44ff-bd3e-92c1261bacc0 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_COMPETITIVE with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:29.223Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 442cc24e-ba81-44ff-bd3e-92c1261bacc0 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_COMPETITIVE with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:29.228Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 442cc24e-ba81-44ff-bd3e-92c1261bacc0 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_COMPETITIVE with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:29.233Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 442cc24e-ba81-44ff-bd3e-92c1261bacc0 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_COMPETITIVE with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:29.239Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 442cc24e-ba81-44ff-bd3e-92c1261bacc0 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_COMPETITIVE with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:29.242Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 442cc24e-ba81-44ff-bd3e-92c1261bacc0 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_COMPETITIVE with retained source intent and parent identity 350ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_HA_MEETING with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:29.570Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 32b4fe00-6b73-4da7-b537-6b6ab0cc5f2d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_HA_MEETING with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:29.577Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 32b4fe00-6b73-4da7-b537-6b6ab0cc5f2d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_HA_MEETING with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:29.584Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 32b4fe00-6b73-4da7-b537-6b6ab0cc5f2d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_HA_MEETING with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:29.590Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 32b4fe00-6b73-4da7-b537-6b6ab0cc5f2d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_HA_MEETING with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:29.596Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 32b4fe00-6b73-4da7-b537-6b6ab0cc5f2d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_HA_MEETING with retained source intent and parent identity
+{
+  "timestamp": "2026-11-06T21:35:29.600Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 32b4fe00-6b73-4da7-b537-6b6ab0cc5f2d by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > assembles RI_HA_MEETING with retained source intent and parent identity 365ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > refuses an internal outline on a bound ind/fda filing before sources or writes 131ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > shared planning sources use the existing assembly without acquiring filing authority > refuses an internal outline on a bound mdl/hc filing before sources or writes 140ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact CA_MDL section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:30.076Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 392d6225-737f-4b5d-b58b-c17105314447 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact CA_MDL section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:30.082Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 392d6225-737f-4b5d-b58b-c17105314447 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact CA_MDL section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:30.089Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 392d6225-737f-4b5d-b58b-c17105314447 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact CA_MDL section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:30.096Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 392d6225-737f-4b5d-b58b-c17105314447 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact CA_MDL section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:30.102Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 392d6225-737f-4b5d-b58b-c17105314447 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact CA_MDL section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:30.108Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 392d6225-737f-4b5d-b58b-c17105314447 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact CA_MDL section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:30.124Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 392d6225-737f-4b5d-b58b-c17105314447 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact CA_MDL section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:30.130Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 392d6225-737f-4b5d-b58b-c17105314447 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact CA_MDL section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:30.139Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 392d6225-737f-4b5d-b58b-c17105314447 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact CA_MDL section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:30.147Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 392d6225-737f-4b5d-b58b-c17105314447 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact CA_MDL section source and limit after HTTP assembly into a blank no-parent document 940ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_STRATEGY section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:31.100Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1d5e1e26-cd06-4eca-aa82-69892c733705 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_STRATEGY section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:31.109Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1d5e1e26-cd06-4eca-aa82-69892c733705 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_STRATEGY section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:31.118Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1d5e1e26-cd06-4eca-aa82-69892c733705 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_STRATEGY section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:31.127Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1d5e1e26-cd06-4eca-aa82-69892c733705 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_STRATEGY section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:31.145Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1d5e1e26-cd06-4eca-aa82-69892c733705 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_STRATEGY section source and limit after HTTP assembly into a blank no-parent document 672ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_GAP_ANALYSIS section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:31.803Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f74363f3-a3a2-4b7a-99f8-e7d265074a76 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_GAP_ANALYSIS section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:31.812Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f74363f3-a3a2-4b7a-99f8-e7d265074a76 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_GAP_ANALYSIS section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:31.821Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f74363f3-a3a2-4b7a-99f8-e7d265074a76 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_GAP_ANALYSIS section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:31.829Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f74363f3-a3a2-4b7a-99f8-e7d265074a76 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_GAP_ANALYSIS section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:31.835Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f74363f3-a3a2-4b7a-99f8-e7d265074a76 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_GAP_ANALYSIS section source and limit after HTTP assembly into a blank no-parent document 715ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_COMPETITIVE section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:32.457Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ccb27e6b-cb67-4b46-8952-96030873531d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_COMPETITIVE section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:32.480Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ccb27e6b-cb67-4b46-8952-96030873531d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_COMPETITIVE section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:32.488Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ccb27e6b-cb67-4b46-8952-96030873531d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_COMPETITIVE section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:32.496Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ccb27e6b-cb67-4b46-8952-96030873531d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_COMPETITIVE section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:32.507Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ccb27e6b-cb67-4b46-8952-96030873531d by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_COMPETITIVE section source and limit after HTTP assembly into a blank no-parent document 634ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_HA_MEETING section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:33.101Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3a6e9b0d-1da4-4346-88e4-ee8d30c59012 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_HA_MEETING section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:33.108Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3a6e9b0d-1da4-4346-88e4-ee8d30c59012 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_HA_MEETING section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:33.114Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3a6e9b0d-1da4-4346-88e4-ee8d30c59012 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_HA_MEETING section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:33.123Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3a6e9b0d-1da4-4346-88e4-ee8d30c59012 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_HA_MEETING section source and limit after HTTP assembly into a blank no-parent document
+{
+  "timestamp": "2026-11-06T21:35:33.130Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3a6e9b0d-1da4-4346-88e4-ee8d30c59012 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > actual regional assembly receipts consumed by whole-document oversight > reviews every exact RI_HA_MEETING section source and limit after HTTP assembly into a blank no-parent document 659ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later data-room excerpt from canonical template title through preview, commit and replay
+{
+  "timestamp": "2026-11-06T21:35:34.106Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc c3f94d64-f825-4c84-af7b-449d81aa1272 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later data-room excerpt from canonical template title through preview, commit and replay 611ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later vault excerpt from canonical template title through preview, commit and replay
+{
+  "timestamp": "2026-11-06T21:35:34.494Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 72ece8c7-8cc5-4810-ad6a-516d3be75834 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later vault excerpt from canonical template title through preview, commit and replay 387ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later data-room excerpt from canonical template guidance through preview, commit and replay
+{
+  "timestamp": "2026-11-06T21:35:34.982Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 142322dc-0ac9-491d-a237-12b7d633d497 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later data-room excerpt from canonical template guidance through preview, commit and replay
+{
+  "timestamp": "2026-11-06T21:35:34.987Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 142322dc-0ac9-491d-a237-12b7d633d497 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later data-room excerpt from canonical template guidance through preview, commit and replay 496ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later vault excerpt from canonical template guidance through preview, commit and replay
+{
+  "timestamp": "2026-11-06T21:35:35.403Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 22cfc25a-a84e-4b13-b872-7b0f9459e4b2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later vault excerpt from canonical template guidance through preview, commit and replay
+{
+  "timestamp": "2026-11-06T21:35:35.414Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 22cfc25a-a84e-4b13-b872-7b0f9459e4b2 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > exact section source excerpts through existing assembly HTTP > pins the later vault excerpt from canonical template guidance through preview, commit and replay 424ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > whole-document and unmatched section excerpts retain opening fallback > keeps the opening for document without copying source prose 275ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > whole-document and unmatched section excerpts retain opening fallback > keeps the opening for unmatched section without copying source prose 228ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > invalid assembly structure is refused before selected source bodies are read > refuses missing section before reading source content 84ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > invalid assembly structure is refused before selected source bodies are read > refuses duplicate template codes before reading source content 76ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the before-COMMIT transport fails
+{
+  "timestamp": "2026-11-06T21:35:36.329Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc aece35a9-eb2c-4413-b4b1-853d1fbe025f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the before-COMMIT transport fails
+{
+  "timestamp": "2026-11-06T21:35:36.340Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc aece35a9-eb2c-4413-b4b1-853d1fbe025f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > invalid assembly structure is refused before selected source bodies are read > refuses ambiguous saved codes before reading source content 82ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the after-COMMIT transport fails
+{
+  "timestamp": "2026-11-06T21:35:36.578Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a14320a2-c109-46aa-9cb8-9d9a34069cd9 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the after-COMMIT transport fails
+{
+  "timestamp": "2026-11-06T21:35:36.591Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a14320a2-c109-46aa-9cb8-9d9a34069cd9 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the before-COMMIT transport fails 249ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > answers a confirmed build where the tenant scope is local to each transaction (RLS enforced)
+{
+  "timestamp": "2026-11-06T21:35:36.846Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 34bb60f2-8bc3-4e67-a8d0-c4da18cbf593 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > answers a confirmed build where the tenant scope is local to each transaction (RLS enforced)
+{
+  "timestamp": "2026-11-06T21:35:36.860Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 34bb60f2-8bc3-4e67-a8d0-c4da18cbf593 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the after-COMMIT transport fails 244ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > withholds private content if project access is revoked after a confirmed commit
+{
+  "timestamp": "2026-11-06T21:35:37.065Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 440071ea-aea4-4483-a57a-c0023c64e067 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > withholds private content if project access is revoked after a confirmed commit
+{
+  "timestamp": "2026-11-06T21:35:37.081Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 440071ea-aea4-4483-a57a-c0023c64e067 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > answers a confirmed build where the tenant scope is local to each transaction (RLS enforced) 204ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > withholds private content if project access is revoked after a confirmed commit 234ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact US_IND drafting region FDA 109ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact CA_CTA drafting region Health Canada 143ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact EU_MAA drafting region EMA 160ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact JP_CTN drafting region PMDA 269ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > commits the global reference resolver inside one transaction and copies only its empty structure
+{
+  "timestamp": "2026-11-06T21:35:38.077Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 766a9e22-a4b5-475f-88f2-999b8809edb6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > commits the global reference resolver inside one transaction and copies only its empty structure
+{
+  "timestamp": "2026-11-06T21:35:38.099Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 766a9e22-a4b5-475f-88f2-999b8809edb6 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > commits the global reference resolver inside one transaction and copies only its empty structure 355ms
+stderr | server/routes/__tests__/report-os-run-engine.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-run-engine.test.ts
+{
+  "timestamp": "2026-11-06T21:35:40.958Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-run-engine.test.ts
+{
+  "timestamp": "2026-11-06T21:35:41.048Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T21:35:41.050Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-run-engine.test.ts
+{
+  "timestamp": "2026-11-06T21:35:41.050Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > runs without a project and stores its actual organization scope 92ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > refuses an account identity other than the authenticated organization 10ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > refuses an organization segment outside the register applicability 5ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > refuses a report disabled by the registry operator 5ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified program identity 7ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified submission identity 6ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified document identity 10ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified study identity 5ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a type no engine computes > is refused 422 and nothing is computed or written 8ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses a project run before reading its evidence or writing a snapshot 13ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run rendered before metadata or output leaves 6ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run seal before metadata or output leaves 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run dependencies before metadata or output leaves 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run export.pdf before metadata or output leaves 12ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > refuses a registry choice it cannot compute and rejects invalid regional context 11ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > runs from its own provider, not the readiness orchestrator 27ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > is refused for a program whose product type it does not apply to 5ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > resolves the program through the strict anchor resolver and runs over its project 24ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > refuses a program with no project record: 409, nothing computed 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > refuses a scope id that is not the program’s project 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the run names its scope > stores the project’s name for the renderer, not only its row id 36ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > saved report detail and history > reads enriched run metadata from the authenticated tenant transaction for a deep link 6ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > saved report detail and history > returns not found when the tenant-scoped query has no record and refuses malformed IDs 6ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > saved report detail and history > passes search/sort/pagination through the tenant-scoped history reader 6ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a run computed with no blocker > renders below final until it is finalized 5ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the evidence & provenance trace > its confidence is the document's measured provenance completeness, not a count of the records present 153ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the evidence & provenance trace > a completeness that was not measured is no confidence at all, so the run stays below final 23ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > injects the actual request actor and pinned executor for a recorded lifecycle calendar 21ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > rolls back a calendar whose current creator was revoked before persistence, including an empty-source computation 25ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > keeps use-only, public and pending-review admission read-only in explicit edit mode 58ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > denies an unassigned same-organization member and viewer while allowing owner and explicit use members 15ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > retains public-project and pending-review access without admitting another organization 12ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > refuses a writing creator who has no actual access to the private project 24ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > permits scheduling by an explicit project member and delivery to an authorized viewer 18ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > honors project-membership revocation on the next delivery validation 26ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > refuses an unauthorized same-organization recipient before computing or persisting any output 12ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > requires access to every private project referenced by a program-group schedule 24ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > reporting reuses the existing project-sharing boundary > keeps genuine organization registers governed by their existing organization policy 8ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > guards saved account reports by their actual source projects and rechecks a schedule recipient after compute 27ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > rechecks actual source-project recipient access inside the persistence transaction before cursor or delivery effects 33ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > refuses malformed present source evidence null on direct account reads 0ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > refuses malformed present source evidence {"invalid":true} on direct account reads 0ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > refuses malformed present source evidence "11" on direct account reads 0ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > ordinary scheduled reports retain current authority after computation > refuses a readiness creator demoted while computing without optional source-project evidence 26ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > ordinary scheduled reports retain current authority after computation > refuses a private-project recipient revoked while computing without optional source-project evidence 44ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > ordinary scheduled reports retain current authority after computation > refuses an organization-register recipient deactivated while computing 19ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > ordinary scheduled reports retain current authority after computation > refuses malformed present source evidence null before scheduled persistence 12ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > ordinary scheduled reports retain current authority after computation > refuses malformed present source evidence {"invalid":true} before scheduled persistence 8ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > ordinary scheduled reports retain current authority after computation > refuses malformed present source evidence "11" before scheduled persistence 8ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > ordinary scheduled reports retain current authority after computation > retains an authorized non-manager program group using its actual computed project set 48ms
+ ✓ server/services/report-os/__t

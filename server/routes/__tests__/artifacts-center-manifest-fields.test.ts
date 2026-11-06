@@ -79,6 +79,7 @@ describe('GET /api/artifacts-center — the manifest fields', () => {
     expect(res.status).toBe(200);
     expect(res.body.data[0]).toMatchObject({
       id: 'artifact_9',
+      sourceVersion: 7,
       size: '2 KB',
       ctdSection: '1.2',
       status: 'final',

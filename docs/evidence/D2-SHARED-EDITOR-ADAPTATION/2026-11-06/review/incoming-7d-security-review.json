@@ -1,0 +1,197 @@
+{
+  "observedAt": "2026-11-06T20:29:53.617734+00:00",
+  "reviewerTask": "/root/editor_context_security_review",
+  "delegatedReviewerTask": "/root/editor_context_security_review/incoming_7d_models_redaction",
+  "package": "F1",
+  "branch": "concept2cure-v2",
+  "comparisonBase": "b86b489405a30a07d4ed1c0d46abdd4037449dcb",
+  "reviewedIncomingTree": "7d771e124a4dba820fbbd26d8919c7c69cd1a9d4",
+  "coordinationHeadAtReview": "b37afb77d09733ea1752e433db1b0170bd2a975c",
+  "reviewedMerge": null,
+  "status": "historical_incoming_blocker_resolved_in_later_pinned_repair",
+  "method": "Read-only exact git-tree source/diff review, delegated model/credential partition and selected browser-manifest overlap check. Incoming tree was reviewed without checking it out; only these evidence files were written.",
+  "testsRunByReviewers": false,
+  "compilerRunByReviewers": false,
+  "browserRunByReviewers": false,
+  "findings": [
+    "No direct source-intake, saved-template/agency, exact-filing, editor or Vault owner overlap was found. Protected-owner continuity is recorded below.",
+    "Transitive drafting dependencies change: ANA qualified-pin forwarding and gateway/provider credential resolution. Existing source-checkpoint errors remain terminal, but the newly awaited credential path opens the final-wire source-currentness gap recorded as the blocker below.",
+    "Mandatory skill approvals load current tenant/project rules independently of prompt selections. Exact action/rule hashes are held server-side; approval is revalidated and the handler consumes a one-use process-local authorization. The supported project rule envelope remains check_dossier_consistency.",
+    "Account canon mutation and its immutable event now share the same database transaction; no scientific or source-evidence authority is conferred by account memory.",
+    "The delegated model/credential partition found fail-closed pin substitution/streaming and current-grant/account checks. A subsequent independent cross-partition trace confirmed that these credential checks do not re-run source/project/classification admission at the final SDK boundary.",
+    "P-104 keeps full v0.5 acceptance pending, local qualified model/PQ and reversible derivative custody unresolved, and phase8 MDX factory fixtures queued. Stored credentials are not validated connections or model qualification; existing client credential cards/stores are extended."
+  ],
+  "protectedOwnersUnchanged": [
+    "server/services/authoring/authoring-draft-template.ts",
+    "server/services/authoring/authoring-draft-region-projection.ts",
+    "server/services/authoring/authoring-program-access.ts",
+    "server/services/authoring/authoring-source-import.ts",
+    "server/services/authoring/workflow-source-import.ts",
+    "server/services/authoring/artifact-workflow-source.ts",
+    "server/services/authoring/workflow-import-governance.ts",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+    "client/src/concept2cure/v2/editor/writingAgencyPresentation.ts",
+    "client/src/concept2cure/v2/editor/filingSectionTarget.ts",
+    "client/src/concept2cure/v2/editorTarget.ts",
+    "client/src/concept2cure/v2/surfaces/Vault.tsx",
+    "client/src/concept2cure/v2/useFilingOutline.ts"
+  ],
+  "selectedUiPinOverlap": {
+    "browser": {
+      "selectedPinCount": 45,
+      "incomingChangedSelectedPins": []
+    },
+    "live": {
+      "selectedPinCount": 25,
+      "incomingChangedSelectedPins": []
+    }
+  },
+  "browserEvidenceConclusion": "No selected-owner change in this incoming wave requires another repetition of the existing component/native scenarios. Preserve each receipt at its actual recorded checkpoint. Neither manifest is a full transitive dependency graph; unchanged pins do not qualify new model/PQ, account credential, mandatory skill or provider behavior. An unchanged-pin UI receipt cannot resolve the final-wire blocker; the targeted SDK-boundary regression is required.",
+  "recommendedCompatibilitySuites": [
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts",
+    "server/routes/__tests__/authoring-draft-recorded-filing.test.ts",
+    "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts",
+    "server/services/authoring/__tests__/authoring-source-import.test.ts",
+    "server/routes/__tests__/artifact-workflow-source.test.ts",
+    "server/services/authoring/__tests__/workflow-source-import.pglite.test.ts",
+    "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts",
+    "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts",
+    "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts",
+    "server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts",
+    "server/services/connectors/__tests__/connector-credentials-stored-unvalidated.pglite.test.ts",
+    "server/services/submission-gateways/__tests__/gateway-accounts.test.ts",
+    "server/__tests__/security/telemetry-redaction.test.ts"
+  ],
+  "limits": [
+    "Source review is not test, compiler, browser, live-provider, current credential, IQ/OQ/PQ, scientific or deployed qualification.",
+    "The incoming exact tree was reviewed before merge; the lead must preserve its source and run merge compatibility/full checks.",
+    "No requirement is inferred to broaden this shared editor repair into the pending P-104 runtime or MDX factory acceptance gates.",
+    "Prior e533,53b,b86 reviews remain unchanged at their own checkpoints."
+  ],
+  "sourceFiles": [
+    {
+      "path": "docs/design/ONE_DESIGN_PLAN.md",
+      "sha256": "11c5af4134e6e14c40da2fab53f8c335055f87d7157cd5acc8f18558c2533751",
+      "bytes": 105633
+    },
+    {
+      "path": "docs/design/one-design-plan.json",
+      "sha256": "1cfcb757cc1b37ea45ceb46da7ba4fdd3cefd8878197e788d6430bff70859080",
+      "bytes": 34946
+    },
+    {
+      "path": "server/services/account-canon.ts",
+      "sha256": "8bdb3f6b606b5d2197934b00521bc51db923374008af2a68e657e916e38617c1",
+      "bytes": 32254
+    },
+    {
+      "path": "server/services/account-skill-bundles.ts",
+      "sha256": "ceba6766d507cebf4242353ca70d09af94ba6c7d4509a50a888b99aa016ab940",
+      "bytes": 36194
+    },
+    {
+      "path": "server/services/ana/governed-tool-gate.ts",
+      "sha256": "f353f811896a8617fe69d285b386ae94d79b944c542a7df2c996489e3cf7163c",
+      "bytes": 13155
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "sha256": "5cd482520e46eb9b74d7d59df477e5fd708d270ff76f179d654ac2aba1f36769",
+      "bytes": 1192599
+    },
+    {
+      "path": "server/services/ana/AnaDocumentDraftingService.ts",
+      "sha256": "93f6a4a853b5a1753df8f5dd4b0f0f636e0beabc642223157dee64db27c48f7b",
+      "bytes": 78610
+    },
+    {
+      "path": "server/routes/ana-ri/utility.ts",
+      "sha256": "bcdfefdb0862f4165703377c89672d60b99c5b77e997fd8629ed11d15718babb",
+      "bytes": 37434
+    },
+    {
+      "path": "server/routes/ana-ri/stream.ts",
+      "sha256": "4b5cdbe905cba72bbf41372e3fcc75dc07888fee5d9ef877392339d6786f0150",
+      "bytes": 234224
+    },
+    {
+      "path": "server/routes/ana-ri/governed-execution-audit.ts",
+      "sha256": "a220940e12cb3af7f6a0cde924178420654e161351d29784f914657b9c3edc73",
+      "bytes": 5079
+    },
+    {
+      "path": "shared/ana/skills.ts",
+      "sha256": "a43a1305b401d55c1484056263416949177032b3afc7e6002b48d980d67970c7",
+      "bytes": 14222
+    },
+    {
+      "path": "server/services/ana/skills/org-skill-input.ts",
+      "sha256": "8a6b2cc39dd152e5797f028345ea5e2917e27bc03179fac770ece16387945ea7",
+      "bytes": 6899
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AdminSettings.tsx",
+      "sha256": "f9a19ad905ffa9faec48ef06033c54ae94a206a77f1f34ce20ab07532a49c0b9",
+      "bytes": 22137
+    },
+    {
+      "path": "server/services/ai-gateway/gateway.ts",
+      "sha256": "462513c965e2d5ffc9ac7024fd83b9f356f6bd48e1aae4ebda7861baa4442242",
+      "bytes": 237631
+    },
+    {
+      "path": "server/services/ai-gateway/model-governance.ts",
+      "sha256": "f7d5ed4903899d690ee2d487684db6b597e4bfa55f3891d85744ac012fbff99f",
+      "bytes": 13502
+    },
+    {
+      "path": "server/services/ai-gateway/providers/clients.ts",
+      "sha256": "c8eb2bd1a00a75889f9d629b58b49d258f70c9084577ed9b54a485c9d71e9bf0",
+      "bytes": 9390
+    },
+    {
+      "path": "server/services/connectors/connector-registry.ts",
+      "sha256": "e15fe91bc2fc06b122aecdd221e5416c3cbe1a483483ba3948e07cba2090b8e1",
+      "bytes": 36959
+    },
+    {
+      "path": "server/services/observability/redaction.ts",
+      "sha256": "9696e29b4fda51a10f556c222e6e5bf51b85c18ded75f9050b52308078e2345b",
+      "bytes": 3160
+    },
+    {
+      "path": "server/services/submission-gateways/index.ts",
+      "sha256": "5f1a21d59c0783e5049479fb5d33c160ccc4d27edfb7f45e4b229a324874ff44",
+      "bytes": 21948
+    },
+    {
+      "path": "server/services/submission-gateways/gateway-accounts.ts",
+      "sha256": "fd5342b79d6b639798757bd78f48eb6d71c7ecac94bb13801be588bfab8bf949",
+      "bytes": 20702
+    }
+  ],
+  "canonicalPinManifestSha256": "0354fb01545b77e51dc49da8a4fbc7ee38f8d4e2cfac9e56cb9158a438d66536",
+  "updatedAt": "2026-11-06T20:30:53.767495+00:00",
+  "blockers": [
+    {
+      "code": "FINAL_WIRE_SOURCE_CHECKPOINT_GAP",
+      "firstReportedBy": "/root/catalog_audit",
+      "independentlyConfirmedBy": "/root/editor_context_security_review",
+      "reviewedTree": "7d771e124a4dba820fbbd26d8919c7c69cd1a9d4",
+      "sourceOrder": [
+        "server/services/ai-gateway/gateway.ts:2105-2112 runs beforeDispatch before dispatchProvider.",
+        "Provider execution then awaits tenantProviderClient, e.g. gateway.ts:2574 for Anthropic.",
+        "server/services/ai-gateway/providers/clients.ts awaits availability/capture and assertCredentialUseCurrent before SDK invocation.",
+        "gateway.ts:2043-2045 supplies only synchronous assertQualifiedModel as beforeCreate; no source/project/classification checkpoint runs after those new credential awaits."
+      ],
+      "effect": "Source/project access or source classification can be revoked during the new asynchronous credential reads and source text can still reach the external SDK. Refusing the response later does not retract that outbound disclosure. The awaited platform-null mode has the same ordering concern.",
+      "requiredAction": "Preserve incoming credential/model controls and re-establish current source/project/classification admission after the newly awaited credential work at the final SDK boundary. Add a regression that revokes authority/classification during the real credential seam and asserts no SDK invocation for tenant and platform modes; the old gateway-source-checkpoint stubbed dispatch is insufficient."
+    }
+  ],
+  "resolution": {
+    "reviewedRepairCommit": "f4295889ca0297e115fcd88b334c98804c7c2fbc",
+    "followupReview": "final-sdk-boundary-security-review.json",
+    "ownerVerificationReceipt": "../catalogue/final-wire-current-source-receipt.json",
+    "originalIncomingTreePreserved": true
+  }
+}

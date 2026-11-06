@@ -1,0 +1,71 @@
+{
+  "observedAt": "2026-11-06T19:09:36.720473+00:00",
+  "sourceCommit": "d971fdda1b0305da1a34e64aa5c62ec36f1cec40",
+  "sourceCommitAfterRun": "d971fdda1b0305da1a34e64aa5c62ec36f1cec40",
+  "branch": "concept2cure-v2",
+  "scope": "Read-only bounded compatibility for incoming task-project admission and existing taskManagement route behavior",
+  "validation": {
+    "suites": 6,
+    "tests": 117,
+    "passed": 117,
+    "failed": 0,
+    "exitCode": 0,
+    "durationSeconds": 49.89,
+    "observedTestsByFile": {
+      "server/routes/__tests__/task-management-governed-writes.test.ts": 35,
+      "server/routes/__tests__/task-management-governed-writes-review.test.ts": 22,
+      "server/routes/__tests__/task-assignment.pglite.test.ts": 16,
+      "server/services/tasking/__tests__/task-project.pglite.test.ts": 8,
+      "server/services/tasking/__tests__/task-project-admission.test.ts": 32,
+      "server/routes/__tests__/task-management-source-project.test.ts": 4
+    }
+  },
+  "command": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install vitest run --config vitest.config.ts --maxWorkers=1 --fileParallelism=false server/services/tasking/__tests__/task-project-admission.test.ts server/services/tasking/__tests__/task-project.pglite.test.ts server/routes/__tests__/task-management-governed-writes.test.ts server/routes/__tests__/task-management-governed-writes-review.test.ts server/routes/__tests__/task-management-source-project.test.ts server/routes/__tests__/task-assignment.pglite.test.ts --reporter=verbose",
+  "inputsBeforeRun": {
+    "observedAt": "2026-11-06T19:08:11.727179+00:00",
+    "sourceCommit": "d971fdda1b0305da1a34e64aa5c62ec36f1cec40",
+    "files": {
+      "server/services/tasking/task-project.ts": "75aa5c80b70ad433a6327077a0e6d403e3e983d1d2994ef633f5e0528aadf8c9",
+      "server/routes/taskManagement.routes.ts": "36d2e39885c4d09bfe34bf38325062bc7c1e6a18cf235238ef5e3bd470e1cde7",
+      "server/services/tasking/__tests__/task-project-admission.test.ts": "429351e12c2ec9604da4fd5b5b2cdbb59758ecbaee0f2141c34bf0db38f36b6e",
+      "server/services/tasking/__tests__/task-project.pglite.test.ts": "d60ef803127d8bd95a0827bcb9e54dd0ff8fba067f943eeb8740437d273dd678",
+      "server/routes/__tests__/task-management-governed-writes.test.ts": "8d313ea9117053d05a7601d1ad7a97f301e80dda65ae6c9ef1a9112ea56e1e68",
+      "server/routes/__tests__/task-management-governed-writes-review.test.ts": "3a39e8d35817994fc6280f014ab4f939ac7083209e0c9014501407cddd7fcdf7",
+      "server/routes/__tests__/task-management-source-project.test.ts": "8d0f0bdb4d8f17ca60b16c2e86cf8a7319bd30bb3962572072090433c27af254",
+      "server/routes/__tests__/task-assignment.pglite.test.ts": "f0544dd2a2da2e567fde3b9751ff08e994be20c9471c1209ce0e7335a96edea1",
+      "server/routes/__tests__/_task-management-governed-harness.ts": "67fcd9138303b75263c20902f7cf0f11e71902518df191411b373b4badc0c8d7",
+      "server/services/c2c/current-program-access.ts": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c",
+      "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364"
+    }
+  },
+  "sourceFingerprintsAfterRun": {
+    "server/services/tasking/task-project.ts": "75aa5c80b70ad433a6327077a0e6d403e3e983d1d2994ef633f5e0528aadf8c9",
+    "server/routes/taskManagement.routes.ts": "36d2e39885c4d09bfe34bf38325062bc7c1e6a18cf235238ef5e3bd470e1cde7",
+    "server/services/tasking/__tests__/task-project-admission.test.ts": "429351e12c2ec9604da4fd5b5b2cdbb59758ecbaee0f2141c34bf0db38f36b6e",
+    "server/services/tasking/__tests__/task-project.pglite.test.ts": "d60ef803127d8bd95a0827bcb9e54dd0ff8fba067f943eeb8740437d273dd678",
+    "server/routes/__tests__/task-management-governed-writes.test.ts": "8d313ea9117053d05a7601d1ad7a97f301e80dda65ae6c9ef1a9112ea56e1e68",
+    "server/routes/__tests__/task-management-governed-writes-review.test.ts": "3a39e8d35817994fc6280f014ab4f939ac7083209e0c9014501407cddd7fcdf7",
+    "server/routes/__tests__/task-management-source-project.test.ts": "8d0f0bdb4d8f17ca60b16c2e86cf8a7319bd30bb3962572072090433c27af254",
+    "server/routes/__tests__/task-assignment.pglite.test.ts": "f0544dd2a2da2e567fde3b9751ff08e994be20c9471c1209ce0e7335a96edea1",
+    "server/routes/__tests__/_task-management-governed-harness.ts": "67fcd9138303b75263c20902f7cf0f11e71902518df191411b373b4badc0c8d7",
+    "server/services/c2c/current-program-access.ts": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c",
+    "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364"
+  },
+  "inputsUnchanged": true,
+  "log": {
+    "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-task-project-compatibility.txt",
+    "rawBytes": 44379,
+    "rawSha256": "cc29ca7646b0f597ac2642cde1640b7a7cd448b0dcc39e494308fc07af288974"
+  },
+  "proof": [
+    "New admission unit tests delegate current actor and shared-project edit policy on the same transaction and refuse malformed identities/workspaces, closed projects and failed policy reads.",
+    "Existing project/source resolver and review-task project handoff retain canonical project attribution.",
+    "Existing governed HTTP writes retain transaction/audit/role/refusal behavior and lost-commit reporting.",
+    "Actual HTTP/SQL PGlite assignment tests retain current actor membership, private sharing, assignee identity and scoped access behavior."
+  ],
+  "limits": [
+    "Admission unit tests mock their policy dependencies; other selected cases use the existing governed-write mocks or in-process PGlite. This does not prove native PostgreSQL RLS/concurrency or a new positive end-to-end from-template ceremony.",
+    "No default/native database connection was targeted. No production/test edits, full typecheck, build, commit or deployment.",
+    "The existing source-import/artifact35 cases were not repeated in this task; their separate receipts remain authoritative for their executions."
+  ]
+}

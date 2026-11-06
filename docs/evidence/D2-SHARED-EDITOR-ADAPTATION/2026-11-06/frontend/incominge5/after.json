@@ -1,0 +1,176 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/surfaces/authoringPeerReview.ts",
+    "bytes": 12595,
+    "sha256": "3f2728de1e23c19e88e29a111c7650df48be8c4d0b588a58bbbb1a2d9183ba87",
+    "gitBlob": "dd63c1cdfdec04947d377bca6eaaf80431f357e5"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/usePeerReviewDecision.ts",
+    "bytes": 8978,
+    "sha256": "e673b42b4f8dc2df19e8af1679ff366e2a269640ca1fd40547cc5e12a3b3c220",
+    "gitBlob": "49c62bf69dd7a222444fa4639e87b0813b762d85"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/ReviewDecisionDialog.tsx",
+    "bytes": 13179,
+    "sha256": "a882ef3002be6cba0451087e205a07a6ee7fe7737e251051ad81aaa9baf8ac8e",
+    "gitBlob": "8405862bd2d7ce7ce84c401975b4d41af59970b0"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/CsrEvidenceReview.tsx",
+    "bytes": 15657,
+    "sha256": "99985cd13e39abf7a6e2ff213c3d270a4d645635b6935e116ddf331be017cd8e",
+    "gitBlob": "ed58aaee3f007a9d09c3b2919173ae13d9c0e023"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/AdminSettings.tsx",
+    "bytes": 42602,
+    "sha256": "b8e21c02181251b2f060b4a69e79f1ea987f7c53194b01db2a167c593e5437da",
+    "gitBlob": "632e03635056459321ea7d6ae8aaedfde918e090"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/AdminSkills.tsx",
+    "bytes": 23659,
+    "sha256": "5dea902bd20260791fbdbb24a8cfbe86b5b90b3dc36c598cf8f13b0784caeb09",
+    "gitBlob": "73e0af763c6df37efa404c58aa20c59b70c94ee5"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/AdminSkillForms.ts",
+    "bytes": 15407,
+    "sha256": "36e7e9871a9f01f0d7e94779d53e044ad523bd9265f7b111469a13741fd704e0",
+    "gitBlob": "25cb6736ae74faa77574cba83ac9bae1bcff281d"
+  },
+  {
+    "path": "client/src/concept2cure/v2/SkillStudio.tsx",
+    "bytes": 17457,
+    "sha256": "4a3711e034e44d5e7901aafe2051e47e1c83e55320439c809caccbf606d20386",
+    "gitBlob": "8202a458ea6eea952d22d1fa19a09a54bf5153b6"
+  },
+  {
+    "path": "client/src/concept2cure/v2/SkillStudioParts.tsx",
+    "bytes": 18665,
+    "sha256": "6efcde5eb76f3add1bfe5b811b92bd7499a0efead8460799f74546bd7bec600f",
+    "gitBlob": "bf1e52c92256b6bad57f36d80beac136dca23bf2"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/CsrBuildProgress.tsx",
+    "bytes": 26187,
+    "sha256": "ead551aad70795a7b4169d590c9b5681f4132ccc63dde80d74069812f6ac160b",
+    "gitBlob": "428f720fa7a63d81ec63ff8c59712f8f0bce30af"
+  },
+  {
+    "path": "client/src/concept2cure/v2/C2CForm.tsx",
+    "bytes": 15009,
+    "sha256": "74f0cb40e640be496bf45074477db19b1b25cfe7c3fd2483166f2defc6b7e2e0",
+    "gitBlob": "437c090c7e40d77cc3514d7b7b108901b7505375"
+  },
+  {
+    "path": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+    "bytes": 3869,
+    "sha256": "eeb1c7f6670a9372216bbb844bc11f52632e74e127260a3e9a29d50586a657d7",
+    "gitBlob": "93ad8226bd095ee6ce82b7d6e050efedaf3ba9a5"
+  },
+  {
+    "path": "client/src/services/portal/authService.tsx",
+    "bytes": 55628,
+    "sha256": "959331a8300594b1d1d7ff74fa75518310ccfded283b3a69564b9bad3aa56b54",
+    "gitBlob": "50ef15bf0f6fd8684fb0abb8ad3978e2f85dfa70"
+  },
+  {
+    "path": "client/src/lib/queryClient.ts",
+    "bytes": 25722,
+    "sha256": "c7a3bffda9567c044c424ae0db361cac96c2389de69e2e6f80a41eac50cde612",
+    "gitBlob": "b83fcc66c03348c96aa761755f9b2c1d709c73a4"
+  },
+  {
+    "path": "client/src/concept2cure/v2/apiCall.ts",
+    "bytes": 5478,
+    "sha256": "46779c89a0e1c77d1d24edc6de8edb35de66dc9b264f59a7d7f98397e4efa1e8",
+    "gitBlob": "86c70a8fb1ae0f5f5f6cfe1d1858cd9e77623908"
+  },
+  {
+    "path": "shared/ana/skills.ts",
+    "bytes": 15422,
+    "sha256": "af782f721053ab84a0c02fa95627c2751554ce96ce798452587ffeda9d2a8b32",
+    "gitBlob": "8995047bb824260c01618b5f514ca1b915cb5327"
+  },
+  {
+    "path": "shared/authoring/peer-review.ts",
+    "bytes": 6661,
+    "sha256": "3e9ae85991b49849466277ecd4357b9e078f3dd2494a36bba2925ed36c21db1b",
+    "gitBlob": "ef83235d929a3abdb15c95b47f8e79003073ad74"
+  },
+  {
+    "path": "shared/authoring/csr-scientific-review.ts",
+    "bytes": 10693,
+    "sha256": "29f450259a1d29a370955067eb447035f6676a59e7256b42658797e71ad0a15a",
+    "gitBlob": "c4f1b2830d02c4b5a2a1120803cd499f7fd51809"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts",
+    "bytes": 12894,
+    "sha256": "f7e9d289d9603f5c776778e31ba02165c7c805c05000acdc327b6ff54d4ee1e8",
+    "gitBlob": "ffc3eaa8788e69f8921b2ce9ae93fc28ba306bb2"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx",
+    "bytes": 21083,
+    "sha256": "a5d499d166301b6d4e93d7d14d165a5265c1c2ab0f9dd3df7de4f53693045da8",
+    "gitBlob": "3ac7b6c1aaf16d5db4f23d9824ca7357e9f3aa6d"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx",
+    "bytes": 17740,
+    "sha256": "8e6df272aab5cbd7c0be4d5750eceb5cf55043391b0ddf4874bc8f820fae9eb9",
+    "gitBlob": "4396bbff5e9329bcaeda4ebe841b7578376b61d0"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx",
+    "bytes": 41861,
+    "sha256": "1f79c8eee11ba4b04012180a9a6c91181e3200c79402cbff01a808a0ad0ad2af",
+    "gitBlob": "b92f3a40726c7cc38320e1d071710ca01967b08b"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx",
+    "bytes": 20957,
+    "sha256": "21e6a8d03f5e90b36235a6312a9ec0ed38ff41ad0da440d62674d00d1a5c015d",
+    "gitBlob": "0d70042915d3693f5384a6542ae807d6fd07f5ca"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/adminSkills.test.tsx",
+    "bytes": 27684,
+    "sha256": "69457ee4159e79f9e49227f673ef41a6391185cd377e509712af724822c22b0e",
+    "gitBlob": "237b095c537dc1f9d25f83a740c7dc3da86051cb"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx",
+    "bytes": 17702,
+    "sha256": "c8c95c8748a14a73b668ccb8e552d7b0591ceb8a6552df2b7363dd1b4aa121f9",
+    "gitBlob": "abe596d5414a78df34ba96102314ecedc939907a"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx",
+    "bytes": 23902,
+    "sha256": "e1b2660aef59b24f4ea479c747ab20cdf7225defa5166e7694d5b0008dfada5f",
+    "gitBlob": "f59d1ee658772ce5487d93afccc6c7c3fce5ba78"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/peerReviewFixtures.ts",
+    "bytes": 3122,
+    "sha256": "6208ef008ee5e1326f6a003173569eebd84818fda62a4205f46ca05e19331b31",
+    "gitBlob": "595cf4c0d50ecd892667ff407859638678b0c46e"
+  },
+  {
+    "path": "tests/setup.ts",
+    "bytes": 17904,
+    "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "gitBlob": "e127691f615afa52ea3d9f2191183247a05c6584"
+  },
+  {
+    "path": "vitest.config.ts",
+    "bytes": 3983,
+    "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "gitBlob": "8935bc6c016ffc6bbfbb41cb54e2f5220f7f2215"
+  }
+]

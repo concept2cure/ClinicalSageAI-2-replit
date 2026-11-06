@@ -1,0 +1,36 @@
+clinical document starts > offers clinical working documents for US_BLA without using an unknown-type fallback 1ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > offers clinical working documents for US_505B2 without using an unknown-type fallback 0ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > offers clinical working documents for US_351K without using an unknown-type fallback 1ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > retains explicit source preparation for protocol original record sections 64ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > retains explicit source preparation for investigators_brochure original record sections 50ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > retains explicit source preparation for informed_consent original record sections 60ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > retains explicit source preparation for dsur original record sections 48ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > retains explicit source preparation for pbrer original record sections 65ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > keeps the whole US_IND filing as a mixed preparation workspace 39ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > keeps the whole US_NDA filing as a mixed preparation workspace 64ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > keeps the whole US_BLA filing as a mixed preparation workspace 47ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > keeps the whole US_351K filing as a mixed preparation workspace 73ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > keeps the whole US_505B2 filing as a mixed preparation workspace 79ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > exact US lifecycle scope and preserved device scope > refuses a US lifecycle component targeted at JP 2ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > exact US lifecycle scope and preserved device scope > refuses a US lifecycle component targeted at CA 2ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > exact US lifecycle scope and preserved device scope > retains the US scope and existing device-specific refusal 1ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > exact US lifecycle scope and preserved device scope > does not assign narrative eligibility to an unknown component identity 0ms
+ ✓ server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts > exact existing US lifecycle records reach the single editor > resolves retained source identity for pre_ind_meeting with its actual parts 103ms
+ ✓ server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts > exact existing US lifecycle records reach the single editor > resolves retained source identity for end_of_phase_2_meeting with its actual parts 77ms
+ ✓ server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts > exact existing US lifecycle records reach the single editor > resolves retained source identity for pre_nda_meeting with its actual parts 72ms
+ ✓ server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts > exact existing US lifecycle records reach the single editor > resolves retained source identity for pre_bla_meeting with its actual parts 74ms
+ ✓ server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts > exact existing US lifecycle records reach the single editor > resolves retained source identity for ind_protocol_amendment with its actual parts 62ms
+ ✓ server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts > exact existing US lifecycle records reach the single editor > resolves retained source identity for ind_information_amendment with its actual parts 57ms
+ ✓ server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts > exact existing US lifecycle records reach the single editor > resolves retained source identity for ind_cmc_amendment with its actual parts 67ms
+ ✓ server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts > exact existing US lifecycle records reach the single editor > resolves retained source identity for ind_response_to_clinical_hold with its actual parts 79ms
+ ✓ server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts > exact existing US lifecycle records reach the single editor > resolves retained source identity for cbe_30 with its actual parts 69ms
+ ✓ server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts > exact existing US lifecycle records reach the single editor > resolves retained source identity for cbe_0 with its actual parts 48ms
+ ✓ server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts > exact existing US lifecycle records reach the single editor > resolves retained source identity for iss with its actual parts 50ms
+ ✓ server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts > exact existing US lifecycle records reach the single editor > resolves retained source identity for ise with its actual parts 69ms
+ ✓ server/services/authoring/__tests__/us-biotech-lifecycle-authoring-templates.test.ts > exact existing US lifecycle records reach the single editor > keeps an EOP2 package distinct from the pre-BLA package and CBE variants apart 233ms
+
+ Test Files  7 passed (7)
+      Tests  419 passed (419)
+   Start at  18:13:18
+   Duration  17.04s (transform 3.38s, setup 318ms, import 8.30s, tests 6.34s, environment 1ms)
+
