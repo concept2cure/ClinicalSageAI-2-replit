@@ -96,8 +96,8 @@ async function mounted(overrides: Partial<DocumentWorkbenchProps> = {}) {
     onNav: vi.fn(), reloadDocs: vi.fn(async () => undefined), ...overrides };
   const view = render(<DocumentWorkbench {...props} />);
   await waitFor(() => expect(editor()?.textContent).toContain('Existing saved current work.'));
-  fireEvent.click(openEditorControl('Project files'));
-  const rail = await screen.findByRole('complementary', { name: 'Project files' });
+  fireEvent.click(openEditorControl('Vault'));
+  const rail = await screen.findByRole('complementary', { name: 'Vault' });
   fireEvent.click(await within(rail).findByRole('button', { name: /Exact retained Vault report/ }));
   return { ...view, rail, props };
 }

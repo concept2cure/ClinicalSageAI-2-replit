@@ -108,7 +108,7 @@ describe('D4-2: the editor has one bar', () => {
     fireEvent.click(more());
     const menu = within(screen.getByTestId('ed-more')).getByRole('menu');
     for (const [name, testId] of [
-      ['Sources', 'sources-rail-open'], ['Project files', 'vault-rail-open'], ['Versions', undefined],
+      ['Sources', 'sources-rail-open'], ['Vault', 'vault-rail-open'], ['Versions', undefined],
       ['Exports', 'exports-rail-open'], ['Review tasks', 'tasks-rail-open'], ['Signatures', undefined],
       ['Audit trail', undefined], ['Access', 'access-rail-open'], ['Send for review…', 'send-for-review-open'],
       ['File to vault…', 'file-to-vault-open'], ['New document…', undefined], ['New section…', undefined],
@@ -121,7 +121,7 @@ describe('D4-2: the editor has one bar', () => {
     expect(within(menu).getByRole('menuitemradio', { name: 'Document view' }).getAttribute('aria-checked')).toBe('false');
     expect(document.activeElement).toBe(within(menu).getByRole('menuitem', { name: 'Sources' }));
     fireEvent.keyDown(menu, { key: 'ArrowDown' });
-    expect(document.activeElement).toBe(within(menu).getByRole('menuitem', { name: 'Project files' }));
+    expect(document.activeElement).toBe(within(menu).getByRole('menuitem', { name: 'Vault' }));
     /* End and Home reach the last and first items, and the arrows wrap. */
     fireEvent.keyDown(menu, { key: 'End' });
     expect(document.activeElement).toBe(within(menu).getByRole('menuitem', { name: 'Download working copy (Word)' }));
