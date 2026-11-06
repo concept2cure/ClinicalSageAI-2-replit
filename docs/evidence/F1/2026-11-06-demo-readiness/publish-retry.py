@@ -5,14 +5,14 @@ from pathlib import Path
 p=Path(__file__).resolve().parent;r=p.parents[3]
 publisher=r/'docs/evidence/F1/2026-11-06-authoring-project-write-access/publish.py'
 env=os.environ.copy();env['PATH']='/workspace/scratch/editor-toolchain/node_modules/.bin:'+env['PATH']
-env['C2C_SOURCE_FREEZE']='source-fix-inputs.json'
-expected=json.loads((p/'source-fix-inputs.json').read_text())['files']
+env['C2C_SOURCE_FREEZE']='merged-demo-inputs.json'
+expected=json.loads((p/'merged-demo-inputs.json').read_text())['files']
 def command(args):return subprocess.run(args,cwd=r,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
 fd,name=tempfile.mkstemp(prefix='c2c-demo-publish-')
 try:
  with os.fdopen(fd,'w') as f:f.write('#!/bin/sh\ncase "$1" in *Username*) printf "%s\\n" x-access-token ;; *Password*) printf "%s\\n" "$GH_TOKEN" ;; *) exit 1 ;; esac\n')
  os.chmod(name,0o700);env.update(GIT_ASKPASS=name,GIT_TERMINAL_PROMPT='0')
- for attempt in range(3,8):
+ for attempt in range(4,9):
   print('normal publication attempt',attempt,flush=True)
   fetched=command(['python3',str(publisher),'fetch']);print(fetched.stdout[-600:],flush=True)
   if fetched.returncode:sys.exit(fetched.returncode)
@@ -40,7 +40,7 @@ try:
   pushed=subprocess.run(['python3',str(p/'check.py'),'source-push','--','python3',str(publisher),'push'],cwd=r,env=env)
   if pushed.returncode==0:
    head=command(['git','rev-parse','HEAD']).stdout.strip()
-   (p/'publication.json').write_text(json.dumps({'acceptedSourceHead':head,'normalAttempt':attempt,'sourceFreeze':'source-fix-inputs.json','exitCode':0},indent=2)+'\n')
+   (p/'publication.json').write_text(json.dumps({'acceptedSourceHead':head,'normalAttempt':attempt,'sourceFreeze':'merged-demo-inputs.json','exitCode':0},indent=2)+'\n')
    print('accepted canonical source',head,flush=True);sys.exit(0)
   receipt=json.loads((p/'source-push.json').read_text());old=p/receipt['rawOutput'];raw=gzip.decompress(old.read_bytes()).decode(errors='replace')
   new=p/f'source-push-ref-race-{attempt}.log.gz'

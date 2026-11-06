@@ -1,0 +1,15 @@
+{
+  "fromFreeze": "source-fix-inputs.json",
+  "toFreeze": "merged-demo-inputs.json",
+  "changedInputs": {
+    ".devcontainer/post-start.sh": {
+      "before": "9e06236dafb965d67d7b628a216d9dc1cb3f64d397c1a1a77c1a35344fc966f1",
+      "after": "baf40d3b9386f47b86ee58af7f4326e6f3821aa8b4e6d10c0cecc6387300c0e9"
+    },
+    "scripts/ops/codespaces-startup.test.mjs": {
+      "before": "4d2b07b7ace617b033a80abcd8cfb7dfea777efa0daf210d2e4d1e571ae203da",
+      "after": "b8b2718ce5ae3d98394557fda252c7debdd22c0de94fa5e1c7f503a90b866092"
+    }
+  },
+  "reason": "Preserve canonical setup-owner restart and qualifier fixes. Rerun combined launcher/Codespaces/qualifier tests; launcher package and all other old named inputs are unchanged."
+}
