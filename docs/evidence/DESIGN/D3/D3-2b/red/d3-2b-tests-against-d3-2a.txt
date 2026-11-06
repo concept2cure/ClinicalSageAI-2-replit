@@ -1,0 +1,7 @@
+D3-2b's tests run against the D3-2a source (git stash of: client/src/concept2cure/v2/styles/app-v2.css client/src/concept2cure/v2/surfaces/ProjectHome.tsx client/src/concept2cure/v2/surfaces/ProjectPlan.tsx client/src/concept2cure/v2/surfaces/ProjectRespond.tsx client/src/concept2cure/v2/surfaces/ProjectTeamResponsibilities.tsx ), tests kept:
+      Tests  4 failed | 19 passed (23)
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > one read, several readers (D3-2b) > a work read that failed is said once on the card, never as "Nothing open"
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > one read, several readers (D3-2b) > each person on the Team card says their open work; what no one on the team holds is said, and opens Plan
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > one read, several readers (D3-2b) > the Filing card says the open agency letters and the next response due, and opens Respond
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > one read, several readers (D3-2b) > the work and the inbox are each read once, however many steps show them
+ Test Files  1 failed | 1 passed (2)

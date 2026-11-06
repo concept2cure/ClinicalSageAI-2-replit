@@ -1,0 +1,36 @@
+{
+  "exitCode": 0,
+  "sourcesBefore": {
+    "server/routes/taskManagement.routes.ts": "36d2e39885c4d09bfe34bf38325062bc7c1e6a18cf235238ef5e3bd470e1cde7",
+    "server/services/tasking/task-project.ts": "75aa5c80b70ad433a6327077a0e6d403e3e983d1d2994ef633f5e0528aadf8c9",
+    "server/services/tasking/task-audit.ts": "d7189a01ddd38e8a5da4b28167d8319202dc9fffe5b5d78651dddb4fbcc58543",
+    "server/services/c2c/current-program-access.ts": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c",
+    "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
+    "server/db/requestDb.ts": "4494fa1416919919f719110540e38d3b37e67a45d3646f741b79991203b98f23",
+    "tests/db/scheduler-harness.ts": "771421cf97522c049c6dd6082332928f12fde104ee811c6c46de1280e352efa5",
+    "shared/schema.ts": "f5dcde2abbcbc409989c4d3d6690f5cb0edce1f4117dcc5ecd1f155a04db9cba",
+    "tests/db/workflow-project-admission.dbtest.ts": "350ff7162b8bd761522e39fe70ad8b6404c75189cd8223ec67fbdf6cfb12bc2c"
+  },
+  "sourcesAfter": {
+    "server/routes/taskManagement.routes.ts": "36d2e39885c4d09bfe34bf38325062bc7c1e6a18cf235238ef5e3bd470e1cde7",
+    "server/services/tasking/task-project.ts": "75aa5c80b70ad433a6327077a0e6d403e3e983d1d2994ef633f5e0528aadf8c9",
+    "server/services/tasking/task-audit.ts": "d7189a01ddd38e8a5da4b28167d8319202dc9fffe5b5d78651dddb4fbcc58543",
+    "server/services/c2c/current-program-access.ts": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c",
+    "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
+    "server/db/requestDb.ts": "4494fa1416919919f719110540e38d3b37e67a45d3646f741b79991203b98f23",
+    "tests/db/scheduler-harness.ts": "771421cf97522c049c6dd6082332928f12fde104ee811c6c46de1280e352efa5",
+    "shared/schema.ts": "f5dcde2abbcbc409989c4d3d6690f5cb0edce1f4117dcc5ecd1f155a04db9cba",
+    "tests/db/workflow-project-admission.dbtest.ts": "350ff7162b8bd761522e39fe70ad8b6404c75189cd8223ec67fbdf6cfb12bc2c"
+  },
+  "sourcesUnchanged": true,
+  "command": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.db.config.ts",
+    "tests/db/workflow-project-admission.dbtest.ts",
+    "--reporter=verbose"
+  ],
+  "elapsedSeconds": 6.61
+}

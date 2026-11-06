@@ -40,6 +40,8 @@ import { DossierReadinessCard, ModuleCompletion, dossierFacts, dossierSummaryVal
 import { editingCopyOf } from '../editor/editingCopy';
 import { sourceReadView } from '@shared/data-room-processing-status';
 import { ProjectTeamCard, ProjectTeamDrawer, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
+import type { ProjectTeamMember } from '@shared/project-team';
+import { useAgencyInbox, type CommRow } from './AgencyInbox';
 import { ProjectSide } from './ProjectSide';
 import { ProjectClientReview } from './ProjectClientReview';
 import { ProjectTeamSharing } from './ProjectTeamSharing';
@@ -841,15 +843,59 @@ const WORK_SOURCE_LABEL: Record<string, string> = {
 const WORK_STATUS_TONE: Record<string, string> = { done: 'tone-ok', blocked: 'tone-warn' };
 const WORK_SHOWN = 10;
 
-function ProjectWorkPanel({ pid, title, onNav, targetId }: { pid: string | null; title: string; onNav: (id: string) => void; targetId?: string | null }) {
+/** The project's unified work, read once by the page (D3-2b, D3.md §4.10): the task panels and the Team card's
+ *  per-person lines render this one read. `version` re-reads it (after an assignment on Plan). */
+function useProjectWork(pid: string | null, version: number) {
+  const ident = pid ? encodeURIComponent(pid) : null;
+  return useLiveData<WorkViewRow>(ident ? `/api/concept2cure/projects/${ident}/unified-work` : null, [ident, version], hasKeys<WorkViewRow>('items'));
+}
+
+/** A recorded day in words, in UTC as the record keeps it: "Nov 5, 2026". */
+const dayWords = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** The Team card's work lines (D3-2b, D3.md §4.8 item 3), from the page's one work read: each member's open items by
+ *  the owner name the work records, then what no member holds. Nothing is said while the read is not in; a failed
+ *  read says so once, never "Nothing open". */
+function teamWork(work: DataState<WorkViewRow>, team: ProjectTeamMember[] | null, openPlan: () => void) {
+  if (work.loading || !team) return { workOf: undefined, workNotes: [] };
+  if (work.error || !work.data) return { workOf: undefined, workNotes: [{ text: 'Open work could not be read.' }] };
+  const open = (work.data.items ?? []).filter(item => item.status !== 'done');
+  const today = new Date().toISOString().slice(0, 10);
+  const names = new Set(team.map(member => member.name).filter(Boolean));
+  const workOf = (member: ProjectTeamMember) => {
+    const mine = open.filter(item => member.name && item.ownerName === member.name);
+    if (!mine.length) return { text: 'Nothing open', late: false };
+    const next = mine.map(item => item.dueAt?.slice(0, 10)).filter((day): day is string => Boolean(day)).sort()[0];
+    return { text: `${mine.length} open${next ? ` · next due ${dayWords(next)}` : ''}`, late: Boolean(next && next < today) };
+  };
+  const unassigned = open.filter(item => !item.ownerName).length;
+  const elsewhere = open.filter(item => item.ownerName && !names.has(item.ownerName)).length;
+  const workNotes = [
+    unassigned ? { text: `${plural(unassigned, 'open item', 'open items')} unassigned`, onOpen: openPlan } : null,
+    elsewhere ? { text: `${plural(elsewhere, 'open item', 'open items')} assigned to someone not on this list`, onOpen: openPlan } : null,
+  ].filter((note): note is { text: string; onOpen: () => void } => Boolean(note));
+  return { workOf, workNotes };
+}
+
+/** The Filing card's agency letters (D3-2b, D3.md §4.8 item 2), from the page's one inbox read: open letters and the
+ *  next response due. A read not in, or failed, says so. */
+function lettersWords(live: { loading: boolean; error?: unknown }, comms: CommRow[]): string {
+  if (live.loading) return 'Reading…';
+  if (live.error) return 'Could not be read';
+  const open = comms.filter(c => c.closureStatus !== 'closed');
+  if (!open.length) return 'None open';
+  const due = (c: CommRow) => (c.responseClock?.state === 'dated' ? c.responseClock.dueDate : c.dueDate)?.slice(0, 10) ?? null;
+  const next = open.map(due).filter((day): day is string => Boolean(day)).sort()[0];
+  return `${open.length} open${next ? ` · next response due ${dayWords(next)}` : ''}`;
+}
+
+function ProjectWorkPanel({ pid, title, onNav, targetId, state }: {
+  pid: string | null; title: string; onNav: (id: string) => void; targetId?: string | null; state: DataState<WorkViewRow>;
+}) {
   const available = useSurfaceAvailable();
   const targetRef = useRef<HTMLDivElement>(null);
   const ident = pid ? encodeURIComponent(pid) : null;
-  const state = useLiveData<WorkViewRow>(
-    ident ? `/api/concept2cure/projects/${ident}/unified-work` : null,
-    [ident],
-    hasKeys<WorkViewRow>('items'),
-  );
   useEffect(() => {
     if (!state.loading && !state.error && targetId) {
       targetRef.current?.focus();
@@ -1713,6 +1759,11 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
   const progState = progRead.code === 'READ_CONTEXT_CHANGED' ? { ...progRead, error: undefined, loading: true } : progRead;
   const teamActorScope = `${teamActor?.organizationId ?? ''}:${teamActor?.id ?? ''}`;
   const { state: teamState, reload: reloadTeam, verifiedProjectId: sharingProjectId } = useProjectTeam(pid, teamActorScope);
+  /* The reads several parts of the page render (D3-2b, D3.md §4.10): one read each, never one per reader. */
+  const [workVersion, setWorkVersion] = React.useState(0);
+  const work = useProjectWork(pid, workVersion);
+  const [inboxToast, fireInbox] = useToast();
+  const inbox = useAgencyInbox(pid, fireInbox);
   /* The Team drawer (D3.md §4.9), opened by the Team card's "Manage"; a project switch closes it. */
   const [teamOpen, setTeamOpen] = React.useState(false);
   React.useEffect(() => { setTeamOpen(false); }, [pid]);
@@ -2066,7 +2117,8 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                 requestAnimationFrame(() => document.querySelector('.pj-lc')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' }));
               }}
               onOpenDocument={docId => openDocument({ id: docId } as BuiltDocument)}
-              tasks={<ProjectWorkPanel pid={pid} title="Tasks" onNav={onNav} />} />
+              onWorkChanged={() => setWorkVersion(value => value + 1)}
+              tasks={<ProjectWorkPanel pid={pid} title="Tasks" onNav={onNav} state={work} />} />
           )}
 
           {/* Evidence — the project's files, then its data room: every way a
@@ -2097,7 +2149,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
             <div className="pj-stagebody">
               {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
               {pid && available('quality') && <ProjectQuality key={pid} pid={pid} onNav={onNav} />}
-              <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} targetId={workTarget} />
+              <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} targetId={workTarget} state={work} />
               {/* What the client sees of this project's work (the Client Review
                   Room), for this project only: the device portfolio drew it for
                   the whole organization until it folded into Projects (D2, fold
@@ -2109,7 +2161,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
 
           {/* Respond: add the agency's letter, draft the answer from it with
               AnA, start the response sequence (F15). */}
-          {stage === 'respond' && pid && <ProjectRespond pid={pid} markets={markets} onNav={onNav} onAsk={ask} />}
+          {stage === 'respond' && pid && <ProjectRespond pid={pid} markets={markets} onNav={onNav} onAsk={ask} inbox={inbox} />}
 
           {/* Author — the project's documents, each opened by id, then module
               completion, records and activity. */}
@@ -2179,17 +2231,25 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
             {pid && !progState.error && (
               <section className="pj-card" aria-labelledby="pj-filing-h">
                 <div className="pj-card-h"><h3 id="pj-filing-h">Filing</h3></div>
-                <button type="button" className="pj-k-row" onClick={() => chooseStage('author')}>
+                {/* Each row's name says label and value apart ("Dossier readiness: 0%"); the spans alone ran together. */}
+                <button type="button" className="pj-k-row" aria-label={`${DOSSIER_READINESS_LABEL}: ${dossierSummaryValue(dossier)}`} onClick={() => chooseStage('author')}>
                   <span className="pj-k-row-l">{DOSSIER_READINESS_LABEL}</span>
                   <span className="pj-k-row-v">{dossierSummaryValue(dossier)}</span>
                   {I.right}
                 </button>
                 <ProjectStatusLine markets={markets} documentClass={documentClass} regionalApplication={regionalApplication} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }}
                   onOpenMarket={(submissionId) => openMarketOnSubmit(chooseStage, submissionId)} />
+                <button type="button" className="pj-k-row" aria-label={`Agency letters: ${lettersWords(inbox.live, inbox.comms)}`} onClick={() => chooseStage('respond')}>
+                  <span className="pj-k-row-l">Agency letters</span>
+                  <span className="pj-k-row-v">{lettersWords(inbox.live, inbox.comms)}</span>
+                  {I.right}
+                </button>
               </section>
             )}
             {/* The team, on every step (D3-3; it left Plan). "Manage" opens the Team drawer. */}
-            {pid && <ProjectTeamCard programId={pid} state={teamState} onRetry={reloadTeam} onManage={() => setTeamOpen(true)} />}
+            {pid && <ProjectTeamCard programId={pid} state={teamState} onRetry={reloadTeam} onManage={() => setTeamOpen(true)}
+              {...teamWork(work, teamState.data?.team ?? null, () => chooseStage('plan'))} />}
+            <C2CToast msg={inboxToast} />
             <ProjectHeaderDoors pid={pid} prog={prog} deviceFiling={deviceFiling} cmcComposes={cmcComposes} available={available} onNav={onNav} />
             {/* What AnA knows, the skills it follows here, and the project's records: on every step (D3-2a). */}
             <ProjectSide pid={pid} onAsk={onAsk} />

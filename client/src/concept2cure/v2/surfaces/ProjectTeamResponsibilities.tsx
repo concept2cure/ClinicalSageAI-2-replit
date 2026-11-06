@@ -91,11 +91,16 @@ function memberLine(member: ProjectTeamMember): string {
 /** The Team card in Project knowledge (D3.md §4.8 item 3), on every step: who is on the project and what each is
  *  recorded to do. "Manage" opens the Team drawer, which holds the full list, the authority note and every sharing
  *  control. It reads the same team read as the drawer, never a second one. */
-export function ProjectTeamCard({ programId, state, onRetry, onManage }: {
+export function ProjectTeamCard({ programId, state, onRetry, onManage, workOf, workNotes = [] }: {
   programId: string | null;
   state: DataState<ProjectTeamResponse>;
   onRetry?: () => void;
   onManage: () => void;
+  /** Each member's open work from the page's one work read (D3-2b): "6 open · next due Nov 5, 2026", or null
+   *  while that read is not in. `late` when the next due date has passed. */
+  workOf?: (member: ProjectTeamMember) => { text: string; late: boolean } | null;
+  /** Lines after the members: work no member holds, or that the work read failed. With `onOpen`, a line opens Plan. */
+  workNotes?: Array<{ text: string; onOpen?: () => void }>;
 }) {
   const verified = !state.loading && !state.error && !isPendingStore(state) && isProjectTeamResponse(state.data, programId);
   return (
@@ -112,13 +117,23 @@ export function ProjectTeamCard({ programId, state, onRetry, onManage }: {
                 {state.data.team.map(member => (
                   <li key={member.entry_id} className="pj-team-row">
                     <span className="pj-team-av" aria-hidden="true">{initialsOf(member.label)}</span>
-                    <span className="pj-team-who"><span className="pj-team-n">{member.label}</span><span className="pj-team-m">{memberLine(member)}</span></span>
+                    <span className="pj-team-who"><span className="pj-team-n">{member.label}</span><span className="pj-team-m">{memberLine(member)}</span>
+                      <MemberWork work={workOf?.(member) ?? null} /></span>
                   </li>
                 ))}
               </ul>
             )}
+      {verified && workNotes.map(note => note.onOpen
+        ? <button key={note.text} type="button" className="pj-k-row" onClick={note.onOpen}><span className="pj-k-row-l">{note.text}</span>{I.right}</button>
+        : <p key={note.text} className="pj-team-note" role="status">{note.text}</p>)}
     </section>
   );
+}
+
+/** A member's open work on the card; a next due date that has passed is said with the clock, in the warning tone. */
+function MemberWork({ work }: { work: { text: string; late: boolean } | null }) {
+  if (!work) return null;
+  return <span className="pj-team-m pj-team-due" data-late={work.late || undefined}>{work.late && I.clock}{work.text}</span>;
 }
 
 /** The Team drawer (D3.md §4.9): the recorded team, the sharing controls passed in by the page (they need the
