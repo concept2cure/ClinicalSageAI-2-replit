@@ -33,7 +33,7 @@ vi.mock('../../../db/requestDb', async (importOriginal) => ({
   requestPgClient: vi.fn(() => ({ query: async (sql: string, values?: unknown[]) => {
     if (!policyHarness.database) return { rows: [], rowCount: 0 };
     if (policyHarness.readFails && /FROM account_skill_bundles/.test(sql)) throw new Error('Policy store unavailable');
-    const result = await policyHarness.database.query(sql, values);
+    const result = await policyHarness.database.query<Record<string, unknown>>(sql, values);
     return { rows: result.rows, rowCount: result.affectedRows ?? result.rows.length };
   } })),
 }));
@@ -167,7 +167,7 @@ const actualCalls: Array<{ name: string; input: Record<string, unknown> }> = [];
 const gate = (toolName: string) => ({ policyType: 'requires_approval', enforcement: 'mandatory', toolName, description: 'Always ask before this action after the recorded correction.' });
 const requestClient = () => ({ query: async (sql: string, values?: unknown[]) => {
   if (policyHarness.readFails && /FROM account_skill_bundles/.test(sql)) throw new Error('Policy store unavailable');
-  const result = await pg.query(sql, values);
+  const result = await pg.query<Record<string, unknown>>(sql, values);
   return { rows: result.rows, rowCount: result.affectedRows ?? result.rows.length };
 } });
 async function addRule(tool: string, projectId: number | null = null, organizationId = 1) {

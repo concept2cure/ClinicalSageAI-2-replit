@@ -191,7 +191,7 @@ export async function loadToolSkillGates(scope?: SkillGateToolScope, call?: Clas
     import('../account-skill-bundles.js'), import('./project-scope-admission.js'),
   ]);
   const client = scope.sqlClient ?? (await import('../../db/runtime.js')).getPool();
-  let project = await admitAnaProjectScope(client, scope);
+  let project = await admitAnaProjectScope(client, { organizationId: scope.organizationId, userId: scope.userId, projectId: scope.projectId, projectRef: scope.projectRef });
   const input = asRecord(call?.input);
   // Project bindings are supported only for this proven, actually consumed target.
   // Other tools can have tenant bindings; arbitrary similarly named arguments do not define their scope.
