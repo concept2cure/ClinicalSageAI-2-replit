@@ -300,6 +300,29 @@ content-minimal notices and explicitly system-attributed review tasks. A schedul
 identity. Existing Skills administration remains the human ledger; runtime source authority extends the existing
 model-call scope and readers instead of trusting a caller's declared tier.
 
+### Project team, immutable coordination and visible oversight (P-104 continuation)
+
+The founder further directs that AnA acts as player-coach over specialized workers and the whole project's
+objectives, including CSR, CTD, IND and registration workstreams. Extend the current project objectives/task graph,
+`run_agent`, turn timeline/record and existing conversation work view. Do not create a second project manager.
+Workers need scoped peer awareness and bounded communications so they can coordinate inside their authorized
+assignment; AnA still assesses results, reconciles dependencies and escalates the required human decisions.
+
+The existing conversation gains a subtle **Show team** toggle, **off by default**. Opening it shows worker
+assignments, real status/blockers, measurable completed/total steps and AnA's actual assessment against the project
+goal. Unknown totals have no invented percentage; completion estimates require an execution basis and otherwise
+say unavailable. Hiding the panel affects presentation only. The live view, reload and another authorized device
+must agree with immutable records, including failure, interruption, rework and supersession.
+
+**What already exists.** `shared/ana/turn-timeline.ts`, `turn-timeline-emitter.ts`, `run-events.ts`, the sealed turn
+recorder and the conversation's activity/work/summary components already describe and replay AnA's work. The live
+mirror is intentionally lossy and the recorder seals at turn end, so neither alone can authorize immutable peer
+decisions before broadcast. Extend existing append-only chained audit and record blobs as the durable authority;
+keep wire/mirror/UI as projections. Every explicit operational decision must name its assignment, source/finding
+basis, controlled rule and actual model, with attributable revisions rather than overwrite. Child workers cannot
+lock, sign, transmit, approve themselves or turn an unverified proposal into a filing fact. Models remain fallible;
+source validation and independent/human approval are the control, not a promise of zero hallucinations.
+
 ### Milestones in the existing roadmap — §11 build order
 
 Each row is **queued for v0.5 acceptance** until its stated fixture is run and recorded. A file's existence or an
@@ -596,10 +619,35 @@ single-file inclusion or an existing shipped source-owned evidence path. Do not 
 
 These components extend the same §1d epic without new files, tables, routes, tools or model entries. The expanded
 spike stays **acceptance pending**;
-local qualified weights/PQ, reversible token-map custody/approved derivative policy, the seven spike checks and
-customer deployment evidence remain unresolved. Existing redaction is not a derivative round-trip. Component
+local qualified weights/PQ, the joined seven-prototype spike and customer deployment evidence remain unresolved.
+Reversible custody, explicit attestation and local reinjection are now implemented and component tested below;
+actual tenant KMS grants, deployed locality and provider/model qualification retain their own gates. Component
 suite counts overlap earlier runs and are not additive. No external provider terms or live service result is
 claimed. This lane's completed file holds are released to the lead; other sessions' holds are unaffected.
+
+#### P-104 continuation — published implementation evidence
+
+`649303b43` binds evidence review and correspondence blocker lifecycle to exact current source and human review.
+`fd0421456` repairs the database owner boundary for private profiles; 167 targeted tests and 49 native RLS tests
+pass under a non-superuser/non-bypass role. The canonical 462-file deploy set replayed twice without failures;
+restrictive owner policies survive the later generic sweeps. Private RuleRecord management is the next slice.
+
+`b8cee0745` and `e464ee0ce` join tenant-bound qualification, sourced rule lifecycle, encrypted derivative custody,
+private source authority, nested generation provenance, durable independent checks and review UI. Real browser
+checks cover the administration/rule lifecycle and independent-check dialog (22 checks), with nine native controls.
+Alignment digest/task/audit proof passes 111 cases and uses an explicit system actor; it does not close a repair.
+Ordinary sourced prose now carries exact original/extraction/classification pins through release, not only figures.
+
+`e464ee0ce` also closes a separate legacy global-wisdom path. Promotion/read/reinforcement is held before queries;
+ownerless historical rows are quarantined by FORCE RLS/no policies. All 59 focused tests pass. A full canonical
+replay preserves that quarantine; native runtime read/write denial holds even with the platform-role string and
+enforcement switch disabled. Tenant-local learning remains available. Cohort size alone authorizes no sharing.
+
+These counts overlap component runs and are not additive. Synthetic model/KMS/transport boundaries are identified
+in their fixtures; no real model PQ, customer KMS grant, provider terms approval or scientific correctness is
+asserted. The built plain-Node qualification verifier reports all 16 registry entries pending. The production
+client/server build and all eight packaging tests pass. Consolidated tests, final compiler and publication gates
+are recorded when completed; the full expanded spike remains acceptance pending.
 
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 

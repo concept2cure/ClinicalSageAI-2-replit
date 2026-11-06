@@ -893,20 +893,34 @@
         {
           "name": "qualification_tenant_binding_all_phases",
           "package": "F1",
-          "status": "implementation_in_progress",
-          "scope": "One verified tenant/programme and placement authority governs generation, extraction, IA and RAG qualification phases before any provider call."
+          "status": "implemented_component_verified",
+          "scope": "One verified tenant/programme and placement authority governs generation, extraction, IA and RAG qualification phases before any provider call.",
+          "commit": "e464ee0ce",
+          "verification": {
+            "componentTestsPassed": 107
+          }
         },
         {
           "name": "correspondence_evidence_and_reviewed_blocker_lifecycle",
           "package": "F1",
-          "status": "implementation_in_progress",
-          "scope": "Matched source spans/digest and server human review attribution; only current confirmed objective issues open publish blockers; reject/resolve cleans only associated blockers transactionally."
+          "status": "implemented_component_verified",
+          "scope": "Matched source spans/digest and server human review attribution; only current confirmed objective issues open publish blockers; reject/resolve cleans only associated blockers transactionally.",
+          "commit": "649303b43",
+          "verification": {
+            "componentSuitesPassed": 11,
+            "componentTestsPassed": 228,
+            "explicitSkippedCases": 7
+          }
         },
         {
           "name": "governed_evidence_verification_invalidation",
           "package": "F1",
-          "status": "implementation_in_progress",
-          "scope": "Strict attributable evidence review bound to exact material-content hash; material edits invalidate verification and audit atomically."
+          "status": "implemented_component_verified",
+          "scope": "Strict attributable evidence review bound to exact material-content hash; material edits invalidate verification and audit atomically.",
+          "commit": "649303b43",
+          "verification": {
+            "componentTestsPassed": 42
+          }
         },
         {
           "name": "tenant_derivative_custody_dispatch_roundtrip",
@@ -917,38 +931,97 @@
         {
           "name": "actual_correction_to_scoped_rule_lifecycle",
           "package": "S4",
-          "status": "implementation_in_progress",
-          "scope": "Actual human correction source audit and versioned tenant/project rule lifecycle, mandatory hard gates, explicit conflicts, supersession and visible human controls; no private-user rule without owner isolation."
+          "status": "implemented_component_verified",
+          "scope": "Actual human correction source audit and versioned tenant/project rule lifecycle, mandatory hard gates, explicit conflicts, supersession and visible human controls; no private-user rule without owner isolation.",
+          "commit": "b8cee0745",
+          "verification": {
+            "runtimeSuitesPassed": 8,
+            "runtimeTestsPassed": 161,
+            "uiTestsPassed": 37,
+            "nativeNextTaskPromptAssembly": "passed; no semantic model inference asserted"
+          }
         },
         {
           "name": "durable_independent_checks_before_authoring_release",
           "package": "S4",
-          "status": "implementation_in_progress",
-          "scope": "Immutable AnA genesis requires current content/source-bound deterministic checker receipt and assigned-human disposition before freeze/sign/workflow release; existing authoring ledger and review UI, no mutable provenance authority."
+          "status": "implemented_component_verified",
+          "scope": "Immutable AnA genesis requires current content/source-bound deterministic checker receipt and assigned-human disposition before freeze/sign/workflow release; existing authoring ledger and review UI, no mutable provenance authority.",
+          "commit": "e464ee0ce",
+          "verification": {
+            "canonicalAndMountedAuthoringTestsPassed": 120,
+            "sourceAndEmptyRefusalRegressionsPassed": 3,
+            "reviewUiBrowserChecksPassed": 7,
+            "checkerVersion": "saved-record-independent-v2"
+          }
         },
         {
           "name": "derivative_to_existing_editor_generation_provenance",
           "package": "S4",
-          "status": "implementation_in_progress",
-          "scope": "Existing draft_authoring_document accepts approved derivative reference only; actual nested generation ledger/hash/served identity verifies inside canonical authoring create transaction before linking draft to editor, not parent-model attribution."
+          "status": "implemented_component_verified",
+          "scope": "Existing draft_authoring_document accepts approved derivative reference only; actual nested generation ledger/hash/served identity verifies inside canonical authoring create transaction before linking draft to editor, not parent-model attribution.",
+          "commit": "e464ee0ce",
+          "verification": {
+            "reachTestsPassed": 128,
+            "sharedSaveRegressionTestsPassed": 4,
+            "boundary": "synthetic immutable transport premise in canonical-save fixture; private gateway minting tested separately"
+          }
         },
         {
           "name": "private_profile_database_owner_wall",
           "package": "F1",
-          "status": "implementation_in_progress",
-          "scope": "Repair existing private intelligence and relational profile creators with restrictive owner-and-tenant RLS and verified request account stamping/clearing; real non-bypass PostgreSQL proof before private RuleRecord writes."
+          "status": "implemented_component_verified",
+          "scope": "Repair existing private intelligence and relational profile creators with restrictive owner-and-tenant RLS and verified request account stamping/clearing; real non-bypass PostgreSQL proof before private RuleRecord writes.",
+          "commit": "fd0421456",
+          "verification": {
+            "targetedTestsPassed": 167,
+            "canonicalMigrationsPerReplay": 462,
+            "canonicalReplaysPassed": 2,
+            "nativeExistingRlsTestsPassed": 49,
+            "runtimeRole": "NOSUPERUSER NOBYPASSRLS; FORCE RLS; no private CRUD yet"
+          }
         },
         {
           "name": "source_authority_across_parent_child_and_embedding",
           "package": "S4",
-          "status": "implementation_in_progress",
-          "scope": "Private runtime source authority accumulates persisted classification across parent and child reads and rechecks exact current source after credential awaits; unknown history remains T3 and public JSON cannot lower it."
+          "status": "implemented_component_verified",
+          "scope": "Private runtime source authority accumulates persisted classification across parent and child reads and rechecks exact current source after credential awaits; unknown history remains T3 and public JSON cannot lower it.",
+          "commit": "e464ee0ce",
+          "verification": {
+            "focusedSuitesPassed": 4,
+            "focusedTestsPassed": 78,
+            "actualArtifactParentTestsPassed": 36,
+            "scope": "actual Vault/artifact readers plus selected-source checkpoints; other history conservatively unassessed T3"
+          }
         },
         {
           "name": "alignment_digest_and_attributable_system_repair_tasks",
           "package": "S4",
-          "status": "implementation_in_progress",
-          "scope": "Existing digest heartbeat and scheduler consume verified rule versions, deliver content-minimal communications and create idempotent explicitly system-attributed review tasks plus atomic chained audit; no fabricated human and no automatic repair closure."
+          "status": "implemented_component_verified",
+          "scope": "Existing digest heartbeat and scheduler consume verified rule versions, deliver content-minimal communications and create idempotent explicitly system-attributed review tasks plus atomic chained audit; no fabricated human and no automatic repair closure.",
+          "commit": "e464ee0ce",
+          "verification": {
+            "digestAndUnchangedTaskAuditSuitesPassed": 7,
+            "testsPassed": 111,
+            "boundary": "tenant/project verified rule versions only; private alignment remains separate"
+          }
+        },
+        {
+          "name": "subagent_team_view_and_measured_progress",
+          "package": "S4",
+          "status": "planned",
+          "scope": "Default-off toggle in existing conversation UI; worker assignment/status, measured milestone progress and qualified time estimate when available, AnA assessment and project-objective connection; hidden view does not stop execution or recording."
+        },
+        {
+          "name": "immutable_scoped_peer_coordination",
+          "package": "S4",
+          "status": "planned",
+          "scope": "Same-project authorized peers share a scoped board and bounded messages; append-only assignment/message/proposal/decision/revision/disposition authority is durable before broadcast, idempotent and reconstructable. Lossy live mirror is only a projection; workers cannot waive verification/sign/transmit gates."
+        },
+        {
+          "name": "project_objective_monitor_and_orchestration",
+          "package": "S4",
+          "status": "planned",
+          "scope": "Reconcile existing project objectives, task dependencies, evidence, authoring review and filing gates across runs for CSR/CTD/IND/registrations; distinguish task completion from verified content and filing release, surface blockers and human decisions."
         }
       ],
       "hardDependencies": [
@@ -959,8 +1032,8 @@
         },
         {
           "name": "approved_reversible_derivative_pipeline",
-          "status": "unresolved",
-          "evidence": "No established reversible tenant-local token-map custody or approved derivative policy; existing redaction is not the \u00a726 derivative round-trip"
+          "status": "deployment_evidence_required",
+          "evidence": "Explicit-span tenant-KMS custody, exact-payload human attestation, private derivative dispatch and deterministic reinjection implemented with synthetic boundary tests. Actual customer key grants/locality, real provider PQ and deployed acceptance remain unproven."
         },
         {
           "name": "expanded_spike",
@@ -983,6 +1056,26 @@
           "date": "2026-11-06",
           "instruction": "You have a significant amount of work to do still. Make sure all the work that you have done is pushed onto the canonical branch and then get back to the work that you need to do and finish.",
           "implementation": "Prior release verified as ancestor of canonical head; continue independent executable controls and complete real product wiring while preserving separate model/deployment qualification requirements."
+        },
+        {
+          "date": "2026-11-06",
+          "instruction": "Show sub-agent work and progress subtly in the user interface, with AnA as player-coach and central project manager.",
+          "implementation": "Extend existing project/run/task/timeline/audit and conversation controls; no new source files or parallel product surface. Source checks and human/independent gates address fallible model proposals; zero-hallucination guarantees are not asserted."
+        },
+        {
+          "date": "2026-11-06",
+          "instruction": "Sub-agents must know peer progress and communicate within the team; regulatory decisions, choices and records must be immutable.",
+          "implementation": "Extend existing project/run/task/timeline/audit and conversation controls; no new source files or parallel product surface. Source checks and human/independent gates address fallible model proposals; zero-hallucination guarantees are not asserted."
+        },
+        {
+          "date": "2026-11-06",
+          "instruction": "The team view must toggle off and on, default off, with an expected time to completion when supported.",
+          "implementation": "Extend existing project/run/task/timeline/audit and conversation controls; no new source files or parallel product surface. Source checks and human/independent gates address fallible model proposals; zero-hallucination guarantees are not asserted."
+        },
+        {
+          "date": "2026-11-06",
+          "instruction": "AnA must continuously monitor and orchestrate the whole project and its objectives across workstreams for CTD, CSR, IND and registrations.",
+          "implementation": "Extend existing project/run/task/timeline/audit and conversation controls; no new source files or parallel product surface. Source checks and human/independent gates address fallible model proposals; zero-hallucination guarantees are not asserted."
         }
       ]
     }
