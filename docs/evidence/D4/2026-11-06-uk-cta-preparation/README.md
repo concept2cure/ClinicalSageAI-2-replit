@@ -131,3 +131,25 @@ authenticated-organization binding remain intact; no UK/project/editor owner was
 touched. Billing controls, invoice/history and portal admission checks pass 75/75
 across four suites. The production client/server build passes again, and all 14
 current UK hashes still match. The normal publication retry remains pending.
+
+
+## Conversation handoff synchronization and an existing stale rail assertion
+
+The seventh run at `eda12c566` passed all normal gates, zero TypeScript errors
+and no warning growth, then lost the lock to `c44a21268`. Its conversation-handoff
+fix was reviewed and merged normally at `3bbd5dc68`. The existing project, editor,
+leave and active-stream ownership remains intact; all 14 current UK hashes match.
+Only the coordination table conflicted, resolved with both current status rows.
+
+The focused regression initially had one failure and 113 passes. The failing
+rail-target assertion was byte-for-byte the canonical test at `c44a21268`: it
+still expected Biostatistics to highlight Projects despite the founder-approved
+rail change in `5144702d2` and its dated one-product decision. Correcting that one
+expected target preserves the case and every other assertion; no production
+behavior or baseline changed. `integration-test-correction.json` records the
+canonical match, before/after SHA and authority; the failed log is retained.
+
+All 114 conversation/editor cases across 11 suites now pass, the corrected test
+has zero lint errors/warnings, and production client/server builds pass. The
+14-file manifest intentionally covers the core UK repair; this separate test-only
+correction has its own hash. The normal publication retry remains pending.

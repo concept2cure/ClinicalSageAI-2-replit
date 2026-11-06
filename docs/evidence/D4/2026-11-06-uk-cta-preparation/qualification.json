@@ -104,6 +104,13 @@
       "warningGrowth": 0,
       "log": "gates-pass-sixth-ref-race.txt.gz",
       "note": "All normal gates passed; concurrent billing update rejected the lock."
+    },
+    "seventhPass": {
+      "source": "eda12c5661ae6ae9ea8b80d9727746678e6e3a49",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-seventh-ref-race.txt.gz",
+      "note": "All normal gates passed; concurrent conversation handoff update rejected the lock."
     }
   },
   "publication": "pending normal retry after merge",
@@ -143,7 +150,7 @@
   },
   "originalSourceManifest": "source-sha256.json",
   "sourceTransition": "source-hash-transition.json",
-  "currentMergedGates": "pending normal retry after billing integration",
+  "currentMergedGates": "pending normal retry after conversation integration",
   "annaIntegration": {
     "incoming": "67348a526cc75f152df2e73e7bfbb65e815dc5fc",
     "source": "ba1d327e2c00d459e0eaa7ec037489bf805a941a",
@@ -186,5 +193,20 @@
     "build": "pass",
     "currentManifestMatches": 14,
     "review": "No UK/project/editor impact; portal role and authenticated-organization binding retained."
-  }
+  },
+  "conversationIntegration": {
+    "incoming": "c44a212688bcac9187b6c7e71cdaf390ffba6699",
+    "source": "3bbd5dc68c9f1c2cc4425875d36b61e390f89046",
+    "passed": 114,
+    "suites": 11,
+    "build": "pass",
+    "currentCoreManifestMatches": 14,
+    "review": "Existing project/editor/leave/stream ownership retained.",
+    "testCorrection": "integration-test-correction.json",
+    "testCorrectionLint": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "sourceManifestScope": "14 core UK files; one additional integration-test correction is separately hashed in integration-test-correction.json"
 }
