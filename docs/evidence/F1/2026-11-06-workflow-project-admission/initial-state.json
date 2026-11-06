@@ -1,0 +1,19 @@
+{
+  "branch": "concept2cure-v2",
+  "HEAD": "21a21849d7cfb8a35794489a87fad2b849c7011c",
+  "initialGitStatus": [],
+  "sourceSha256": {
+    "server/routes/taskManagement.routes.ts": "5571c857cccbcc5b01d4f7715f957f15678a09fe0320777f4c613e3055d9d772",
+    "server/services/tasking/task-project.ts": "8e87e89c60cf2bee1b093e720d938dad7aefca6c41dad0e725d2139240e3670c",
+    "server/services/tasking/create-task.ts": "3eb7998674894f300c47d1b52667b28c5e7fdc10867e9fefbed8025a9aedda3b",
+    "server/services/tasking/task-assignment.ts": "74f32fb09fc324429d657e09545e34993a9d2b32646816c90d9dd0fa049993bb",
+    "docs/design/ONE_DESIGN_PLAN.md": "96a92f62bdfabdd9592a174c84de82617e01192e0b1ad12df90a32f3492dbf4d",
+    "docs/design/one-design-plan.json": "375eabbe9848f99519ccf61840be9fca0f815df8b0a4d4848e25b2f8b352b7c4",
+    "AGENTS.md": "d8f04719726e6a63b2d02afbf0584d9e50d0c67f256095fd79f1ebc8f77cc3e1",
+    "CLAUDE.md": "780bc5a494d4cb1fbb5e706e0dbc52229bb9a3e32236b7ebe8c810b7f1d6a169",
+    "package.json": "d8ef47f0ce67b5d16429f06bb587be6f53d4faf40b1cc2aae5a0e9d41ed7b051",
+    "package-lock.json": "f18b36fa7f32fe2be23d51ac3f9266ddbd006756bac7c39479c9bc874f9a9542",
+    ".husky/pre-push": "be2a193164e851d77714721b3db3a99f8534aa4b800e7a96273077354f3b9b8c",
+    "scripts/ci/sql-interpolation-baseline.json": "e86b7c6e0fb85077a6f7783dcce60e9bfbe5ca540ba6ac3a5a1c6029fe4a66fd"
+  }
+}

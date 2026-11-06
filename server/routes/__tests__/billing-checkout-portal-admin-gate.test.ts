@@ -112,3 +112,30 @@ describe('what stays open', () => {
     expect(Array.isArray(res.body.tiers)).toBe(true);
   });
 });
+
+/* The portal's known states (2026-11-06, the founder's Codespace click-through): both answered 500 "Failed to create
+   portal session", shown as an error beside the page's own "Billing is not set up". */
+describe('POST /api/billing/portal — a portal that cannot open says why', () => {
+  it('an organization with no billing record yet is 409 BILLING_NOT_SET_UP, in words', async () => {
+    const { BillingPortalUnavailableError } = await import('../../services/billing');
+    h.portal.mockRejectedValueOnce(new BillingPortalUnavailableError('BILLING_NOT_SET_UP', 'Billing is not set up for this organization yet. Its billing record is created the first time a subscription is checked out.'));
+    const res = await request(app).post('/api/billing/portal').send({ returnUrl: 'https://app.test/concept2cure/licensing' });
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ code: 'BILLING_NOT_SET_UP' });
+    expect(res.body.error).toMatch(/not set up for this organization yet/);
+  });
+
+  it('a deployment with no billing provider is 503 BILLING_NOT_CONFIGURED', async () => {
+    const { BillingPortalUnavailableError } = await import('../../services/billing');
+    h.portal.mockRejectedValueOnce(new BillingPortalUnavailableError('BILLING_NOT_CONFIGURED', 'Billing is not configured on this deployment, so the billing portal cannot open.'));
+    const res = await request(app).post('/api/billing/portal').send({ returnUrl: 'https://app.test/concept2cure/licensing' });
+    expect(res.status).toBe(503);
+    expect(res.body).toMatchObject({ code: 'BILLING_NOT_CONFIGURED' });
+  });
+
+  it('anything else is still a failure, 500', async () => {
+    h.portal.mockRejectedValueOnce(new Error('stripe exploded'));
+    const res = await request(app).post('/api/billing/portal').send({ returnUrl: 'https://app.test/concept2cure/licensing' });
+    expect(res.status).toBe(500);
+  });
+});

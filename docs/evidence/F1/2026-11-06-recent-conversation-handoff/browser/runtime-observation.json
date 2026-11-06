@@ -1,0 +1,42 @@
+{
+  "observed_at": "2026-11-06T18:13:43.563473+00:00",
+  "environment": "dedicated local PostgreSQL16+pgvector; fictional author and chat histories",
+  "node": "22.23.4",
+  "runtime_role": "app_service",
+  "role_superuser": false,
+  "role_bypassrls": false,
+  "rls_enforce": "on",
+  "dependencies": {
+    "database": "ok",
+    "schema": "ok",
+    "ana": "down",
+    "storage": "ok",
+    "virusScan": "skipped",
+    "redis": "skipped",
+    "worker": "skipped"
+  },
+  "anaState": "no_provider",
+  "provider_calls": 0,
+  "browser": "Playwright Chromium151",
+  "fixtures_created_with": [
+    "scripts/db/provision.mjs",
+    "scripts/seed-admin.mjs",
+    "server/services/chat-thread-helpers.ts",
+    "POST /api/c2c/projects"
+  ],
+  "red": "actual Rail selection of B kept A mounted and left B handoff pending",
+  "green_matrix": [
+    "1440x1000 light",
+    "1440x1000 dark",
+    "390x844 light",
+    "390x844 dark"
+  ],
+  "green_checks": [
+    "Rail A to B and B to A: exact history and saved-thread URL",
+    "Palette B to A and A to B: exact history and saved-thread URL",
+    "same-thread Rail and palette keep exact textarea DOM node and unsent text",
+    "reload keeps saved B",
+    "project global, tab mirror and program URL stay on the real local IND project",
+    "zero browser page errors"
+  ]
+}

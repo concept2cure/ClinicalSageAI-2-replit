@@ -1052,6 +1052,14 @@ The founder asked this session to take over and finish the project page's work. 
   - No read is added. 36 cases were red against D3-3 and are green here; 80 of 81 project suites pass, the
     remaining failure as on trunk. Walked at 1440 and 390, light and dark.
 
+- **D3-2b, one read for several readers (work and agency inbox)**, `900e6eb44`, `docs/evidence/DESIGN/D3/D3-2b/`.
+  - The project's unified work and agency inbox are each read once by the page. They were read again on every
+    step change: per task panel, and only inside Respond.
+  - The Filing card says the open agency letters and the next response due. The Team card says each person's open
+    work and next due date, with work no one on the team holds; a failed read is said once.
+  - 4 cases were red against D3-2a and are green here; 82 of 83 project suites pass, the remaining failure as on
+    trunk. In the running app eight step changes made no read of either, counted at the network.
+
 **Not done in D3-1, for the lead**
 
 - The objective as a composer suggestion (D3.md §4.4 item 5.1). S1's objective already offers "Ask AnA to propose
@@ -1059,10 +1067,39 @@ The founder asked this session to take over and finish the project page's work. 
 
 **Next**
 
-1. D3-2b: the four reads lifted into `ProjectWorkspace` (§4.10). With them, the Filing card gains agency letters and
-   commitments, the Team card each person's due work, and Records the Activity disclosure.
+1. D3-2b's other half: the records read lifted (Records gains the Activity disclosure) and the commitments read on
+   the Filing card, keyed by the verified integer project id.
 2. D3-4: the step bodies (§4.7). This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
    Module completion without the ring.
+
+#### F1 — saved conversation handoffs (Codex continuation, 2026-11-06)
+
+**Delivered**
+
+- `931e287429`, with nullable-writer type correction `ae825ca1b7`,
+  `docs/evidence/F1/2026-11-06-recent-conversation-handoff/`.
+  D1's existing sidebar/palette could select B while A was open without loading B;
+  it dropped the saved-thread URL and parked the selection for a later visit.
+  The shell now delivers the choice through its existing conversation identity
+  and canonical URL. Selecting the current thread preserves its composer and
+  unsent text. The existing active-answer refusal is shared with shell preflight,
+  before a remount can discard a follow-up. Refused requests do not replay.
+  The type-only correction uses the existing nullable handoff contract without
+  touching D3's held global declaration; its emitted JavaScript is identical.
+- 178 focused tests and the production build pass, with no new lint errors or
+  warnings. The running app was used at 1440 and 390 px, light and dark, with
+  project context retained. Separate, explicitly synthetic SSE checks verify
+  pending-answer refusal and fresh retry; no provider/model drafting was exercised.
+- No new screen, card, editor, canvas, route, service, table, tool or dependency.
+  The changes finish `V2App.tsx`, with the existing refusal factored into
+  `routing.ts` and reused by `ConversationThread.tsx`. File holds are released.
+
+**Next**
+
+Plain generic navigation to the conversation, with no saved-thread selection,
+can still drop its saved-thread URL suffix. It is a separate D1/F1 repair;
+the saved-selection slice does not change it. Other packages retain their owners
+and holds in `COORDINATION.md`; no package is marked closed here.
 
 ## 4. How everyone works
 

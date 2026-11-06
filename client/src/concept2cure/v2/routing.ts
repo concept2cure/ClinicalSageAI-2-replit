@@ -83,3 +83,10 @@ export function locationForConversation(threadId: string | null): string {
   const base = locationForSurface(CONVERSATION_SURFACE);
   return threadId && THREAD_ID.test(threadId) ? `${base}/${encodeURIComponent(threadId)}` : base;
 }
+
+/** The conversation's existing active-answer refusal, shared with the shell's preflight. */
+export function conversationSwitchRefusal(currentId: string | null | undefined, selectedId: string, answering: boolean): string | null {
+  return answering && currentId !== selectedId
+    ? 'AnA is still answering in the current conversation, so it stays open. Open the other conversation again once she has finished.'
+    : null;
+}

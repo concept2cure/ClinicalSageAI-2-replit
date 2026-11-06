@@ -34,7 +34,6 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { I } from '../icons';
 import { stashNavParamsForTarget } from '../navParams';
 import { useChatUpload, CHAT_UPLOAD_ACCEPT, type ChatAttachment } from '../../hooks/useChatUpload';
-import { C2CToast, useToast } from '../toast';
 import { AgencyInboxList, letterSourceRef, submissionLabel, useAgencyInbox, type LogCommunicationBody, type LogResult } from './AgencyInbox';
 import type { MarketSubmission, ProgramMarkets } from './programSequence';
 
@@ -226,14 +225,15 @@ function SequenceStep({ markets, choice, onChoose, onNav }: {
   );
 }
 
-export function ProjectRespond({ pid, markets, onNav, onAsk }: {
+/** The Respond step. Its inbox is the page's one read (D3-2b, D3.md §4.10): the Filing card in Project knowledge
+ *  says the same letters' count and next due date, and the page shows the inbox's notices once. */
+export function ProjectRespond({ pid, markets, onNav, onAsk, inbox }: {
   pid: string;
   markets: ProgramMarkets;
   onNav: (id: string) => void;
   onAsk: (q: string) => void;
+  inbox: ReturnType<typeof useAgencyInbox>;
 }) {
-  const [toast, fire] = useToast();
-  const inbox = useAgencyInbox(pid, fire);
   const [choice, setChoice] = useState<MarketChoice>(null);
   return (
     <div className="pj-stagebody">
@@ -245,7 +245,6 @@ export function ProjectRespond({ pid, markets, onNav, onAsk }: {
           <SequenceStep markets={markets} choice={choice} onChoose={setChoice} onNav={onNav} />
         </ol>
       </section>
-      <C2CToast msg={toast} />
     </div>
   );
 }
