@@ -173,19 +173,19 @@ write/lock/sign/transmit rights. Existing approved-model/PQ, tenant and content-
 ### Anna runtime continuation — completed holds released, P-104, 2026-11-06
 
 This lane's completed holds below are released to the lead. Earlier sessions' file holds above are unchanged.
-Qualified-pin and credential-vault integration remain with their assigned owners/lead until final verification;
-this entry does not release those ongoing implementation files or claim the expanded spike passed.
+Qualified-pin and credential-vault source is committed and released to the lead for publication under the mandatory compiler/push gates;
+this entry does not claim the expanded spike passed.
 
 | This continuation's scope | Holder / state | Evidence and handoff |
 |---|---|---|
 | F1 atomic canon mutation/event: existing `server/services/account-canon.ts` and confidence/audit test | Released to lead | `852eb1287`, 15 component tests; mutation and event commit atomically. |
 | F1 authority freshness: existing `server/services/submission-gateways/gateway-accounts.ts`, `index.ts`, account tests | Released to lead | `026c0e96f`, 54 tests; authority rechecked after archival before wire. |
 | S4 sourced mandatory Skills policies: existing shared/store/runtime and administration/studio files | Released to lead | `4852aa78b`, 78 runtime + 10 UI tests; project envelope only `check_dossier_consistency`. |
-| Secure credential UI: existing `AdminSettings.tsx`, `GatewayAccountsSetting.tsx`, `DeepResearch.tsx` and three existing tests | Roadmap/UI agent released to lead; integration verification pending | 50 UI tests; metadata-only cards, password/paste-only capture, re-authentication, session fencing and research redirect. No implementation commit asserted yet. |
-| Plan §1d/§3a, existing ledger and this reconciliation entry | Roadmap agent released for lead staging | `Plan: PLAN` / `Founder-Decision: P-104`; final root compiler/backend evidence and remaining commit SHAs to follow. |
+| Secure credential UI, backend and qualified-pin source: existing administration, connector, SDK, gateway and PQ files | All assigned agents released to lead | `e6a7c391c`; 28 consolidated suites / 599 tests, eight packaging checks and production build pass. All agents released; lead publishes under mandatory zero-error compiler and push gates. |
+| Plan §1d/§3a, existing ledger and this reconciliation entry | Roadmap agent released for lead staging | `Plan: PLAN` / `Founder-Decision: P-104`; component source and consolidated evidence recorded, full-spike dependencies retained. |
 
-No new files/tables/tools/models are approved. Six credential cards are three LLM providers, Veeva Vault and two
+No new files/tables/tools/models are approved. Fourteen credential cards cover all nine existing authenticated connectors, three LLM providers and two
 portal login stores; PRS/FDA portal actions are explicitly not connected. Qualified model pin capability and vault
-integration have passing component/build evidence but retain **integration verification pending**. The actual
+integration have passing consolidated component/build evidence, with publication protected by the mandatory compiler/push gates. The actual
 qualification read reports 16 pending / zero passed; local model pin/PQ and reversible derivative-policy/token-map
 custody dependencies remain unresolved. Other sessions keep their own holds.

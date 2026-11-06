@@ -511,8 +511,8 @@ worker decision rights and package-byte integrity. The full TypeScript no-regres
 Additional component-suite counts above overlap this run and are not additive. Validation uses synthetic fixtures
 and mocked provider transport; no live model/gateway call or real-PostgreSQL deployment is claimed.
 
-**Next.** Record the remaining implementation commits and consolidated
-checks, then execute the expanded fixture contract. Exact quotation checks cannot establish semantic claim support.
+**Next.** Resolve the model/deployment and derivative-custody dependencies, then execute the expanded fixture
+contract. Exact quotation checks cannot establish semantic claim support.
 No provider call, live transmission, authority-account transition, full derivative round-trip, production rollout,
 customer IQ/OQ or complete spike pass is asserted by these component checks. Phases 1–8 stay queued behind their
 stated gates.
@@ -524,8 +524,8 @@ stated gates.
 | Atomic account canon | `852eb1287`; existing `server/services/account-canon.ts` and confidence/audit test, 15 passing cases | **Implemented component verified.** Fact and immutable event commit or roll back together. |
 | Authority freshness at the wire | `026c0e96f`; existing gateway accounts/dispatch services, 54 passing tests | **Implemented component verified.** Recheck authority after archive awaits; changed sender/mode/rotation/deletion refuses. Historical account ownership migration is not asserted. |
 | Sourced mandatory approval rules | `4852aa78b`; existing `policy_bindings`, Skills store/runtime and administration/studio, 78 runtime + 10 UI tests | **Implemented component verified.** Project-mandatory scope is `check_dossier_consistency`; broader tool permissions and full §23 acceptance remain gated. |
-| Qualified model pin capability | Existing controlled registry, gateway, draft endpoint/catalog, PQ verifier and build adapter; implementation not yet committed | **Integration verification pending.** Full build passes, eight packaging checks pass; plain-Node PQ claim read reports 16 pending and zero passed. Concrete/task-scoped evidence is required, and no pending entry becomes qualified by this work. Root records final compiler/tests and commit. |
-| Client administration credential vault | Existing encrypted connector store, gateway account card, Admin Settings capture and fresh tenant SDK/embedding seams; implementation not yet committed | **Integration verification pending.** Six cards: three LLM providers, Veeva Vault, plus PRS/FDA portal storage-only. Client-admin re-authentication, scope/expiry/rotation/revocation, atomic audit, metadata-only reads and tenant-specific SDK use with no platform fallback. UI capture suite: 50 tests pass; root records consolidated backend/compiler checks and commit. |
+| Qualified model pin capability | `e6a7c391c`; existing controlled registry, gateway, draft endpoint/catalog, PQ verifier and build adapter | **Implemented component verified.** Exact immutable identity and task-scoped PQ content hash are checked before dispatch and output release; substitution, unverified streaming and demo output refuse. Eight packaging checks pass; plain-Node claim read reports 16 pending and zero passed. No pending entry becomes qualified. |
+| Client administration credential vault | `e6a7c391c`; existing encrypted connector store, gateway account card, Admin Settings capture and fresh tenant SDK/embedding seams | **Implemented component verified.** Fourteen cards: all nine existing credential-required connectors, three LLM providers, and PRS/FDA portal storage-only. Client-admin re-authentication, scope/expiry/rotation/revocation, atomic audit, metadata-only reads and tenant-specific SDK use with no platform fallback. Actual database audit-trigger fixtures revoke membership during use and prove no send occurs. |
 
 The new capture surface reuses existing files/cards/dialogs. PEM capture is paste-only: exact multiline text stays
 in ephemeral form state and the password input contains a fixed mask, with clear/replace controls. LLM keys use
@@ -534,8 +534,31 @@ AnA context, browser persistence, errors or audit. Storage is not connection val
 explicitly not connected, and a stored client model key does not qualify a model. Current grants are checked for
 scope/expiry/revocation and bound to their tenant/provider immediately before deterministic SDK use.
 
-These components extend the same §1d epic without new files, tables, routes, tools or model entries. Qualified-pin
-and vault integration remain pending final root verification. The expanded spike stays **acceptance pending**;
+**Existing connector compatibility.** `5992db35e` carries all eight other authenticated connectors into the same
+administration workflow: Google Drive, Box, SharePoint, OneDrive, Medidata, FHIR, SAM.gov and Ellucian. Existing
+catalog field schemas remain the authority; Microsoft tenant IDs map explicitly to adapter headers and Google PEM
+capture preserves exact bytes. Only the five existing upload adapters receive an upload-purpose option. All 51
+connector compatibility cases and 22 administration cases pass, including capture/rotate/revoke, real adapter execution against mocked
+Google OAuth/search transport, and secret-free audit reasons for four PEM whitespace/newline representations.
+
+**Agency account reasons.** `1458f32d3` also removes new and previously held credential values from stored FDA/agency
+account change reasons and uses that same safe writer result in the chained audit. The 21 service and eight route
+tests include actual database capture/rotation/platform-revert canaries, multiline variants and safely clearing
+unreadable prior credentials. Credential bytes and the last-mile transmission authority fingerprint are preserved.
+
+**Consolidated integration checks.** After merging shared-branch work, all 28 changed existing Vitest suites pass
+with 599 tests, and all eight offline packaging checks pass. The production client/server build succeeds and its
+plain-Node qualification verifier reads the packaged assets. The plan and committed-secret gates pass; changed
+files have no ESLint errors and zero net warning growth. These counts overlap component runs above and are not
+additive. Canonical TypeScript checking reports zero errors against a zero baseline. The mandatory pre-push gate
+rechecks the published commit and refuses compiler, plan, lint or security regressions.
+
+Promotion of a future passed model must ship its exact registered, verified record as well as the four canonical
+qualification assets. The current Docker context excludes `docs/evidence`; a record registered there requires a
+single-file inclusion or an existing shipped source-owned evidence path. Do not include an entire PQ/trace tree.
+
+These components extend the same §1d epic without new files, tables, routes, tools or model entries. The expanded
+spike stays **acceptance pending**;
 local qualified weights/PQ, reversible token-map custody/approved derivative policy, the seven spike checks and
 customer deployment evidence remain unresolved. Existing redaction is not a derivative round-trip. Component
 suite counts overlap earlier runs and are not additive. No external provider terms or live service result is
