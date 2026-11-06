@@ -83,7 +83,10 @@ export function usePeerReviewDecision(scope: PeerReviewScope | null, isCurrent: 
   const runChecks = () => runChecksForSession({ scope, context, current, inFlight, blockedRef, generation, renderedGeneration,
     setContext, setFindingDrafts, setBusy, setChecking, setError, setBlocked });
   const setFindingDraft = (findingId: string, patch: Partial<IndependentFindingDrafts[string]>) => {
-    setFindingDrafts(previous => ({ ...previous, [findingId]: { decision: '', reason: '', ...previous[findingId], ...patch } }));
+    setFindingDrafts(previous => {
+      const existing: IndependentFindingDrafts[string] = previous[findingId] ?? { decision: '', reason: '' };
+      return { ...previous, [findingId]: { ...existing, ...patch } };
+    });
   };
   return {
     context, receipt, decision, reason, loading, busy, blocked, error, inFlight, current, load, record, setDecision, setReason,

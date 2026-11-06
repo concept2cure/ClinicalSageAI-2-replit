@@ -14,17 +14,20 @@ import { readFileSync } from 'node:fs';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../db/pglite-harness';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import request from 'supertest';
+import type { writeChainedAuditRow } from '../../services/auditService';
 
-const auditRows = vi.hoisted(() => [] as Array<Record<string, unknown>>);
+type RecordedAuditEntry = Parameters<typeof writeChainedAuditRow>[1];
+const auditRows = vi.hoisted(() => [] as RecordedAuditEntry[]);
 const auditFails = vi.hoisted(() => ({ value: false }));
 const live = vi.hoisted(() => ({ realAudit: false, failRuleAudit: false, loseCommit: false,
   query: null as null | ((sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount: number }>) }));
 vi.mock('../../services/auditService', async importOriginal => {
   const actual = await importOriginal<typeof import('../../services/auditService')>();
   return { ...actual,
-  writeChainedAuditRow: async (_client: unknown, entry: Record<string, unknown>) => {
+  writeChainedAuditRow: async (...args: Parameters<typeof actual.writeChainedAuditRow>) => {
+    const [,entry] = args;
     if (auditFails.value) throw new Error('audit chain refused the row');
-    if (live.realAudit) return actual.writeChainedAuditRow(_client as Parameters<typeof actual.writeChainedAuditRow>[0], entry as Parameters<typeof actual.writeChainedAuditRow>[1]);
+    if (live.realAudit) return actual.writeChainedAuditRow(...args);
     auditRows.push(entry);
   },
 }; });

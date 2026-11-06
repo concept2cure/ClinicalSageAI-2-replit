@@ -93,7 +93,7 @@ function preflightTaskBank(protocol: PqProtocol, bank: Row, report: Qualificatio
 }
 
 function preflightTaskCriteria(phase: 'generation' | 'extraction', criteria: unknown, report: QualificationPreflight): void {
-  if (phase === 'extraction' && sharedExtractionCriteriaProblems(criteria).length) {
+  if (phase === 'extraction' && sharedExtractionCriteriaProblems(object(criteria) ? criteria : undefined).length) {
     report.blockers.push({ code: 'EXTRACTION_CRITERIA_INVALID', message: 'Extraction acceptance criteria are incomplete or malformed.' });
   }
   if (phase === 'generation' && (!object(criteria) || !unit(criteria.minSectionCoverage) ||

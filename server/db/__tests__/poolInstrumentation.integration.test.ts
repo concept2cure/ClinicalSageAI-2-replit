@@ -232,8 +232,9 @@ describePrivateOwner('private profiles — native app_service owner boundary', (
     await owner.query(`GRANT USAGE ON SCHEMA public TO ${appRole}; GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ${appRole}; GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ${appRole}`);
     process.env.RLS_ENFORCE = 'on';
     const options = buildRlsStartupOptions({ NODE_ENV: 'production', RLS_ENFORCE: 'on' });
-    sessions = new Pool({ connectionString: runtimeUrl.toString(), max: 1, options });
-    runtime = new Pool({ connectionString: runtimeUrl.toString(), max: 1, options });
+    const runtimeConfig = { connectionString: runtimeUrl.toString(), max: 1, options };
+    sessions = new Pool(runtimeConfig);
+    runtime = new Pool(runtimeConfig);
     instrumentPool(runtime);
   }, 30000);
 

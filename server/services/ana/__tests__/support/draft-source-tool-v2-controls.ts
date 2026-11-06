@@ -107,15 +107,16 @@ describe('reviewed derivative mode reaches the same canonical authoring draft', 
   const derivativeInput = { derivativeId: DERIVATIVE_ID, title: 'Reviewed derivative draft', module: 'M2', documentType: 'clinical_overview' };
   it('stores actual nested receipt and escaped local body, returning only an editor pointer to the planning model', async () => {
     const { verifyIndependentVaultSource } = await import('../../saved-document-critique');
-    await verifyIndependentVaultSource(c.database().pool, { organizationId: c.organizationId, userId: c.userId, binding: c.sourceBinding });
+    await verifyIndependentVaultSource({ query: (text, params) => c.database().pglite.query<Record<string, unknown>>(text, params) },
+      { organizationId: c.organizationId, userId: c.userId, binding: c.sourceBinding });
     c.state.custodyDenied = false; c.state.custodyChecks = []; c.state.derivativeDraft.mockResolvedValue(await syntheticDerivativeOutput(c));
     const out = JSON.parse(await c.call(derivativeInput, derivativeContext(c)));
     expect(out.error, JSON.stringify(out)).toBeUndefined(); expect(out).toMatchObject({ saved: true, title: 'Reviewed derivative draft', sectionCount: 1, documentStatus: 'draft' });
     expect(JSON.stringify(out)).not.toMatch(/PRIVATE_DERIVATIVE|client-secret|3\.14159|different-parent-turn/);
-    const saved = await c.database().pool.query('SELECT provenance FROM authoring_documents WHERE id=$1', [out.authoringDocId]);
+    const saved = await c.database().pglite.query<{ provenance: unknown }>('SELECT provenance FROM authoring_documents WHERE id=$1', [out.authoringDocId]);
     expect(saved.rows[0].provenance).toMatchObject({ source: 'ana', conversationId: 'parent-conversation', model: 'claude-opus-5',
       generatedDerivative: { derivativeId: DERIVATIVE_ID, outputSha256: createHash('sha256').update(PRIVATE_DERIVATIVE_TEXT).digest('hex') } });
-    const section = await c.database().pool.query('SELECT content FROM authoring_sections WHERE doc_id=$1', [out.authoringDocId]);
+    const section = await c.database().pglite.query<{ content: string }>('SELECT content FROM authoring_sections WHERE doc_id=$1', [out.authoringDocId]);
     expect(section.rows[0].content).toBe(plainTextToHtml(PRIVATE_DERIVATIVE_TEXT));
     expect(section.rows[0].content).toContain('&lt;img');
     expect(c.state.derivativeDraft.mock.lastCall?.[0]).toMatchObject({ organizationId: c.organizationId, userId: c.userId, projectId: 42, derivativeId: DERIVATIVE_ID, instructions: '' });

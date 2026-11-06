@@ -199,7 +199,7 @@ describe('qualification tenant admission', () => {
   });
 
   it('isolates two tenants through the real evaluation gateway, credential factory and placement path', async () => {
-    const calls: Array<{ credentialOrg: number; tenant: string | undefined; uuid: string | undefined }> = [];
+    const calls: Array<{ credentialOrg: number; tenant: string | undefined; uuid: string | null | undefined }> = [];
     const placementOrgs: number[] = [];
     vi.spyOn(providerClients, 'resolveTenantModelCredentialAvailability').mockResolvedValue({ mode: 'customer_owned', providers: ['anthropic'] });
     vi.spyOn(providerClients, 'createTenantProviderClient').mockImplementation(async (_provider, organizationId) => {

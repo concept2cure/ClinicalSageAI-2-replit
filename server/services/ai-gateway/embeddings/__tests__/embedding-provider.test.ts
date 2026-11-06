@@ -116,7 +116,7 @@ afterEach(() => {
 });
 
 describe('embedding provider selection', () => {
-  const sourceActor = { organizationId: 7, userId: 3, projectId: 42 };
+  const sourceActor = { organizationId: 7, userId: 3, projectId: 42, programId: null };
   it('bridges only private run identity and blocks raw private text before constructing a frontier embedding client', async () => {
     const factory = vi.spyOn(providerClients, 'createTenantProviderClient');
     await runWithSourceAuthority(createRunSourceAuthority(sourceActor), async () => {

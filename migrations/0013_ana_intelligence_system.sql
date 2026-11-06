@@ -6,7 +6,7 @@
 --   2. ana_outcome_log — Success/failure tracking for compounding intelligence
 --   3. ana_project_capabilities — Per-project capability tracking
 --   4. user_intelligence_profiles — Per-user context (User.md / CLAUDE.local.md)
---   5. ana_platform_wisdom — Cross-client anonymized wisdom (Level 1 intelligence)
+--   5. ana_platform_wisdom — Quarantined legacy global wisdom; no runtime sharing
 --   6. ana_scoped_rules — Path-scoped rules for smart context loading
 --   7. ana_client_objectives — Company + project objectives tracking
 --
@@ -193,6 +193,14 @@ CREATE TABLE IF NOT EXISTS ana_platform_wisdom (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+-- Historical global rows may encode tenant-specific free-text dimensions.
+-- Counts and is_active never attest de-identification or named QMS approval.
+-- No runtime policies: FORCE RLS quarantines reads and writes, including when
+-- tenant enforcement is disabled or a platform role string is supplied. Only
+-- privileged maintenance retains access; no legacy row is automatically cleared.
+ALTER TABLE public.ana_platform_wisdom ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ana_platform_wisdom FORCE ROW LEVEL SECURITY;
 
 CREATE INDEX IF NOT EXISTS ana_wisdom_category_idx ON ana_platform_wisdom(category);
 CREATE INDEX IF NOT EXISTS ana_wisdom_regulatory_idx ON ana_platform_wisdom(regulatory_body);

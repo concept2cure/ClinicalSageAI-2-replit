@@ -323,9 +323,9 @@ async function runSourceClaimChecks(run: AgentRun, ctx: ToolContext, offered: Re
   try {
     const { loadDraftProjectSources, assertDraftSourceContextCurrent, draftSourceSensitivityTiers } = await import('./draft-project-sources.js');
     const context: DraftSourceContext = await runRefusingModelCalls({ runId: run.runId, parentRunId: run.host.parentRunId, tool: 'read_project_document' },
-      () => loadDraftProjectSources(run.brief.sourceDocumentIds, ctx, run.brief.textToCheck, run.signal));
+      () => loadDraftProjectSources(run.brief.sourceDocumentIds, { ...ctx, signal: run.signal }, run.brief.textToCheck));
     const result = compareStoredSourceClaims(run.brief.textToCheck!, context.sources);
-    const assertCurrent = () => assertDraftSourceContextCurrent(context, { organizationId: ctx.organizationId, userId: ctx.userId ?? undefined,
+    const assertCurrent = () => assertDraftSourceContextCurrent(context, { organizationId: ctx.organizationId ?? undefined, userId: ctx.userId ?? undefined,
       projectId: ctx.projectRef ?? ctx.projectId ?? undefined }, run.signal);
     await assertCurrent();
     return { reading: result.reading, output: { check: 'source_claims', output: JSON.stringify({ ...result.output,

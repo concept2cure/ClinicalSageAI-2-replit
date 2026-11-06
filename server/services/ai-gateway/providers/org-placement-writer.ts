@@ -346,7 +346,7 @@ export class DerivativeCustodyError extends Error {
   readonly status: 400 | 403 | 404 | 409 | 503 = 403;
   constructor() { super('Current derivative custody, source access or human attestation could not be verified. No derivative content was released.'); this.name = 'DerivativeCustodyError'; }
 }
-const derivativeDenied = (): never => { throw new DerivativeCustodyError(); };
+function derivativeDenied(): never { throw new DerivativeCustodyError(); }
 const positive = (v: unknown): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v > 0;
 const uuid = (v: unknown): v is string => typeof v === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(v);
 const sha = (v: unknown): v is string => typeof v === 'string' && /^[a-f0-9]{64}$/.test(v);

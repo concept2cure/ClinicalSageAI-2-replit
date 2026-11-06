@@ -23,6 +23,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { createHash } from 'node:crypto';
+import { createRunSourceAuthority, runWithSourceAuthority } from '../model-call-scope';
 
 const derivativeIO = vi.hoisted(() => ({ source: vi.fn(), bytes: Buffer.alloc(0) }));
 // The current actor/source facade is an observed upstream boundary here; its
@@ -97,14 +98,22 @@ describe('approved derivative dispatch and local reinjection', () => {
   it('rebuilds every context channel and restores the exact seeded bytes only after local verification', async () => {
     const malicious = { ...derivativeInput, messages: [{ role: 'system', content: SECRET }], tools: [{ name: SECRET }],
       imageContent: [{ data: SECRET }], metadata: { leak: SECRET }, payloadProvenance: 'public', inputSensitivityTiers: [0] };
-    const result = await fixture.gateway.routeDerivative(malicious, fixture.pool);
+    const authority = createRunSourceAuthority({ organizationId: 7, userId: 3, projectId: 42 });
+    const result = await runWithSourceAuthority(authority, async () => {
+      const derivative = await fixture.gateway.routeDerivative(malicious, fixture.pool);
+      await expect(fixture.gateway.route({ taskType: 'chat', organizationId: 7, userId: 3, projectId: 42,
+        inputSensitivityTiers: [1], payloadProvenance: 'public', messages: [{ role: 'user', content: derivative.content }] })).rejects.toThrow('DENY_INPUT_TIER');
+      expect(fixture.sdk).toHaveBeenCalledTimes(1);
+      return derivative;
+    });
     expect(result.content).toBe(SOURCE_TEXT);
     expect(result.derivativeVerification).toMatchObject({ kind: 'deterministic_token_roundtrip', semanticVerified: false, resultingContentTier: 2 });
     const sent = fixture.dispatch.mock.calls[0][1];
+    if (!sent || typeof sent !== 'object' || !('messages' in sent) || !Array.isArray(sent.messages)) throw new Error('SDK request was not captured');
     expect(sent.messages).toHaveLength(2);
-    expect(sent.messages[1].content).toBe(fixture.transform.payload);
+    expect(sent.messages[1]).toMatchObject({ content: fixture.transform.payload });
     expect(sent).toMatchObject({ payloadProvenance: 'tenant_derived', inputSensitivityTiers: [1] });
-    expect(sent.tools).toBeUndefined(); expect(sent.imageContent).toBeUndefined();
+    expect(sent).not.toHaveProperty('tools'); expect(sent).not.toHaveProperty('imageContent');
     const ledger = (fixture.gateway as any).auditLogger.getRecentEntries();
     expect(ledger[0]).toMatchObject({ success: true, metadata: { derivative: { originTier: 2, effectiveTier: 1 },
       inputTierPlacement: { lane: 'C_derivative' } } });

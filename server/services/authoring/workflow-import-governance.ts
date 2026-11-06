@@ -342,8 +342,10 @@ export async function assertWorkflowImportRelease(q: Queryable, input: WorkflowG
 }
 
 const CHECK_OPERATIONS = ['INDEPENDENT_CHECK_INIT', 'INDEPENDENT_CHECK_RECORDED', 'INDEPENDENT_FINDING_REVIEW'];
-const independentRefused = (): never => refusal('INDEPENDENT_CHECK_REQUIRED',
-  'Independent checks or their human finding decisions are missing, stale or unavailable. Run the saved-document checks and review the current findings before signing.');
+function independentRefused(): never {
+  return refusal('INDEPENDENT_CHECK_REQUIRED',
+    'Independent checks or their human finding decisions are missing, stale or unavailable. Run the saved-document checks and review the current findings before signing.');
+}
 interface IndependentReceipt extends IndependentCheckResult { receiptId: string; checkerVersion: string }
 
 /** Reconcile both ledger sides: changing a trail's type/metadata cannot hide
@@ -372,13 +374,21 @@ async function verifyIndependentLedgerRow(q: Queryable, row: Record<string, any>
   if (!row.trail_id || !row.audit_id || !row.chain_details) independentRefused();
   const bound = [row.chain_tenant_id === scope.organizationId, row.chain_details.docId === scope.docId,
     row.action === `authoring.section.${row.operation_type}`,
-    verifyAuthoringTrailRow({ ...row, id: row.trail_id }, row.chain_details).intact === true,
+    verifyAuthoringTrailRow(independentStoredTrail(row), row.chain_details).intact === true,
     hashPayload(row.chain_details) === row.payload_hash].every(Boolean);
   if (!bound) independentRefused();
   const integrity = await verifySequencedRow(q, { action: row.action, actor_id: row.chain_actor_id, target: row.target,
     payload_hash: row.payload_hash, occurred_at: row.occurred_at, tenant_id: scope.organizationId,
     sha256_chain: row.sha256_chain, hmac_seal: row.hmac_seal, chain_seq: row.sequence });
   if (integrity.link !== 'linked' || !['valid', 'no-key'].includes(integrity.seal)) independentRefused();
+}
+function independentStoredTrail(row: Record<string, unknown>) {
+  const text = (value: unknown): string => { if (typeof value !== 'string') return independentRefused(); return value; };
+  const nullable = (value: unknown): string | null => value === null ? null : text(value);
+  return { id: text(row.trail_id), operation_type: text(row.operation_type),
+    before_content: nullable(row.before_content), after_content: nullable(row.after_content),
+    content_hash_before: nullable(row.content_hash_before), content_hash_after: nullable(row.content_hash_after),
+    change_reason: nullable(row.change_reason), metadata: row.metadata };
 }
 
 function requiresIndependentCheck(rows: Array<Record<string, any>>): boolean {
@@ -422,7 +432,8 @@ export async function readIndependentCheckContext(q: Queryable, input: WorkflowG
   const rows = await independentLedger(q, input.doc.id, input.organizationId);
   if (!requiresIndependentCheck(rows)) return;
   const snapshotHash = authoringSnapshotHash(fullVisibleAuthoringSnapshot({ doc: input.doc, sections: input.sections }));
-  const state = independentInventory(rows, snapshotHash)!;
+  const state = independentInventory(rows, snapshotHash);
+  if (!state) return independentRefused();
   const receipt = rows.filter(row => row.operation_type === 'INDEPENDENT_CHECK_RECORDED').at(-1)?.metadata.independentCheck as IndependentReceipt;
   if (state.standing === 'current') {
     try { if (JSON.stringify(await independentSourcePins(q, receipt.sourcePins.map(pin => pin.sourceId))) !== JSON.stringify(receipt.sourcePins)) state.standing = 'stale'; }
@@ -446,7 +457,9 @@ export async function recordIndependentCheck(q: Queryable, input: WorkflowGovern
     changeReason: 'Server ran the independent deterministic saved-record checks.', metadata: { independentCheck: metadata }, executor: q });
   if (!rows.some(row => row.operation_type === 'INDEPENDENT_CHECK_INIT')) await write('INDEPENDENT_CHECK_INIT', { required: true, version: 1 });
   await write('INDEPENDENT_CHECK_RECORDED', receipt);
-  return (await readIndependentCheckContext(q, input))!;
+  const state = await readIndependentCheckContext(q, input);
+  if (!state) return independentRefused();
+  return state;
 }
 
 export async function recordIndependentFindingDispositions(q: Queryable, input: WorkflowGovernanceInput,

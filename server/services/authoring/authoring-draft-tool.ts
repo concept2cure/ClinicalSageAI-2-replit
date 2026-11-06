@@ -258,7 +258,8 @@ async function draftReviewedDerivative(pool: AuthoringPool, input: Record<string
   try {
     const programId = await resolveOpenProgram(pool, actor);
     if (!programId) return JSON.stringify({ error: DRAFT_AUTHORING_DOCUMENT_NO_PROJECT });
-    const scope = await authorizeAuthoringProgram(pool, { tenantId: Number(actor.organizationId), actor: { id: String(actor.userId) }, programId });
+    const email = await actorEmail(pool, Number(actor.userId));
+    const scope = await authorizeAuthoringProgram(pool, { tenantId: Number(actor.organizationId), actor: { id: String(actor.userId), email }, programId });
     const saveInput = reviewedSaveInput(pinned);
     const checked = parseDraftInput({ ...saveInput, programId, provenance: { source: 'ana' } });
     if (!checked.ok) return JSON.stringify({ error: checked.error });

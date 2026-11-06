@@ -305,11 +305,14 @@ async function currentIndependentVaultSource(q: RequestSqlClient,
     [binding.documentId, input.organizationId, binding.programId]);
   const doc = await loadDocumentForAdmittedScope(binding.documentId, input.organizationId, { executor: q,
     includeText: true, currentOnly: true, allowedProgramIds: scope.accessibleProgramIds, programId: binding.programId });
-  if (!doc || doc.organizationId !== input.organizationId || !['PUBLIC', 'INTERNAL', 'CONFIDENTIAL', 'CONTROLLED'].includes(String(doc.classification)) ||
+  if (!doc || doc.organizationId !== input.organizationId || !independentlyUsableCatalog(doc.catalog, binding.contentHash) || !['PUBLIC', 'INTERNAL', 'CONFIDENTIAL', 'CONTROLLED'].includes(String(doc.classification)) ||
       doc.isCurrent !== true || doc.contentHash !== binding.contentHash || typeof doc.extractedText !== 'string' ||
       digest(doc.extractedText) !== binding.extractedTextSha256) throw new Error('Source binding changed');
   await revalidateAnaSourceReadScope(q, scope);
   return { classification: String(doc.classification), extractedText: doc.extractedText };
+}
+function independentlyUsableCatalog(catalog: { version?: string; status: string; contentHash?: string } | null, contentHash: string): boolean {
+  return catalog?.version === 'current' && catalog.contentHash === contentHash && ['extracted', 'cataloged'].includes(catalog.status);
 }
 
 async function savedVaultSourcePins(q: RequestSqlClient, ctx: { organizationId: number; userId: number }, documentId: string,

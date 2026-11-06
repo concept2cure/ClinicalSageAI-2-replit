@@ -118,7 +118,7 @@ export class SourceRunAuthorityError extends Error {
   readonly code = 'SOURCE_RUN_AUTHORITY_UNAVAILABLE';
   constructor() { super('Current run identity, source version, classification or permission could not be verified. No model payload was released.'); this.name = 'SourceRunAuthorityError'; }
 }
-const refuseSourceRun = (): never => { throw new SourceRunAuthorityError(); };
+function refuseSourceRun(): never { throw new SourceRunAuthorityError(); }
 function projectIdentity(raw: SourceRunIdentity): Pick<PinnedSourceIdentity, 'projectId' | 'programId'> | null {
   const programFromProject = looksLikeProgramUuid(raw.projectId) ? String(raw.projectId).trim().toLowerCase() : null;
   const projectId = raw.projectId == null || programFromProject ? null : parseIntegerProjectId(raw.projectId);

@@ -1211,7 +1211,7 @@ export class AnaDocumentDraftingService {
       throw new AnaProjectScopeError(409, 'DERIVATIVE_VERIFICATION_REQUIRED', 'The derivative result did not include its local round-trip verification. No draft was released.');
     }
     return { content: response.content, model: response.model, usage: response.usage,
-      cacheHit: response.cacheHit, latencyMs: response.latencyMs, finishReason: response.finishReason,
+      cacheHit: response.cached, latencyMs: response.latencyMs, finishReason: response.finishReason,
       truncated: isTruncated(response.finishReason), derivativeVerification: response.derivativeVerification,
       derivativeGeneration: { requestId: response.requestId, provider: response.provider, model: response.model,
         resolvedModel: response.resolvedModel, contentSha256: createHash('sha256').update(response.content).digest('hex'),

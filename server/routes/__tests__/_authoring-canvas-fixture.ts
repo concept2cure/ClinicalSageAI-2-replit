@@ -289,7 +289,7 @@ describe('durable deterministic checks and explicit human finding decisions', ()
     } });
     await expect(assertIndependentCheckRelease(connection, await independentSubject(doc.id))).resolves.toBeUndefined();
     const decisions = await rows("SELECT metadata FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='INDEPENDENT_FINDING_REVIEW'", [doc.id]);
-    expect(decisions[0].metadata.independentCheck.dispositions[0]).toMatchObject({ findingId: hard.findingId, decision: 'resolved' });
+    expect(decisions[0]).toMatchObject({ metadata: { independentCheck: { dispositions: [{ findingId: hard.findingId, decision: 'resolved' }] } } });
     // A later recurrence is a new open obligation; an old resolution cannot clear it.
     await connection.query("UPDATE authoring_sections SET content='' WHERE id=$1", [doc.sections[0]]); await runChecks(doc.id);
     await connection.query('UPDATE authoring_sections SET content=$1 WHERE id=$2', ['The protocol specified the study procedures.', doc.sections[0]]); await runChecks(doc.id);

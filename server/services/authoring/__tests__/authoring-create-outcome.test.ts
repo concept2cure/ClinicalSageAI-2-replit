@@ -13,6 +13,7 @@ import { runAuthoringIndependentCheck } from '../peer-review';
 import { assertIndependentCheckRelease, readIndependentCheckContext } from '../workflow-import-governance';
 import { authoringSnapshotHash, fullVisibleAuthoringSnapshot } from '../authoring-content-digests';
 import { draftSourceIdentityForText } from '../../ana/draft-source-identity';
+import { authoringSavedSnapshotSchema } from '../../../../shared/authoring/peer-review';
 import type { RequestConnectable } from '../../../db/requestDb';
 import { insertDocumentTx, type AuthoringPool, type CreateContext, type DocumentRowSpec } from '../authoring-documents';
 import { AuthoringCreateOutcomeError, authoringCreationRecoveryPayload } from '../authoring-create-outcome';
@@ -109,6 +110,13 @@ async function retained(documentId: string) {
     (SELECT COUNT(*)::int FROM authoring_documents WHERE id=$1 AND tenant_id=$2) AS documents,
     (SELECT COUNT(*)::int FROM authoring_sections WHERE doc_id=$1 AND tenant_id=$2) AS sections,
     (SELECT COUNT(*)::int FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2 AND operation_type='CREATE') AS creates`, [documentId, ORG])).rows[0];
+}
+function canonicalFixtureSnapshot(document: Record<string, unknown>, sections: Array<Record<string, unknown>>) {
+  if (typeof document.id !== 'string') throw new Error('Fixture saved document has no canonical ID');
+  const framed = authoringSavedSnapshotSchema.shape.sections.parse(sections.map(section => ({
+    id: section.id, code: section.code, title: section.title ?? null, content: section.content,
+  })));
+  return fullVisibleAuthoringSnapshot({ doc: { ...document, id: document.id }, sections: framed });
 }
 function expectDiscarded() {
   expect(statements.filter(sql => sql === 'COMMIT')).toHaveLength(1);
@@ -294,7 +302,7 @@ describe('canonical derivative generation attribution', () => {
     const result = await createDocumentFromDraft(ctx(), input, { generatedDerivative: generated });
     if (result.kind !== 'created') throw new Error('Expected nested generation draft');
     const actor = { tenantId: ORG, actorId: AUTHOR.id, documentId: String(result.document.id) };
-    const snapshot = fullVisibleAuthoringSnapshot({ doc: { ...result.document, id: actor.documentId }, sections: result.sections });
+    const snapshot = canonicalFixtureSnapshot(result.document, result.sections);
     const checked = await runAuthoringIndependentCheck(pool as unknown as RequestConnectable,
       { ...actor, expectedSnapshotHash: authoringSnapshotHash(snapshot) }, { ipAddress: 'test', userAgent: 'source-binding-proof' });
     expect(checked.independentCheck.standing).toBe('current');
@@ -315,7 +323,7 @@ describe('canonical derivative generation attribution', () => {
         contentHash: sourceBinding.contentHash, span, ...draftSourceIdentityForText(source.extracted_text, span) }] }] };
     const result = await createDocumentFromDraft(ctx(), input);
     if (result.kind !== 'created') throw new Error('Expected ordinary sourced draft');
-    const documentId = String(result.document.id), snapshot = fullVisibleAuthoringSnapshot({ doc: { ...result.document, id: documentId }, sections: result.sections });
+    const documentId = String(result.document.id), snapshot = canonicalFixtureSnapshot(result.document, result.sections);
     await runAuthoringIndependentCheck(pool as unknown as RequestConnectable, { tenantId: ORG, actorId: AUTHOR.id,
       documentId, expectedSnapshotHash: authoringSnapshotHash(snapshot) }, { ipAddress: 'test', userAgent: 'ordinary-source-pin-proof' });
     const subject = { organizationId: ORG, doc: { ...result.document, id: documentId }, sections: snapshot.sections, actor: ctx().actor };

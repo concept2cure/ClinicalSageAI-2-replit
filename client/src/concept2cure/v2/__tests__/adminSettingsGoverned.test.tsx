@@ -53,7 +53,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as React from 'react';
 
 import { OrganizationSettingsCards, AdminSettingsTab, AiPlacementPolicyCard } from '../surfaces/AdminSettings';
-const handoffOwner = vi.hoisted(() => ({ value: { actor: '7:admin', key: 1, sameRevision: () => true } }));
+const handoffOwner = vi.hoisted(() => ({ value: { actor: '7:admin', key: 1, sameRevision: (): boolean => true } }));
 vi.mock('../editor/authoringCurrentRead', async importOriginal => ({ ...await importOriginal<typeof import('../editor/authoringCurrentRead')>(), useAuthoringReadSession: () => handoffOwner.value }));
 
 /** The org id in the caller's token claim — every governed URL must use it. */
