@@ -8,7 +8,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { DOSSIER_READINESS_LABEL } from '../dossierReadiness';
-import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
+import { PJ_LIFECYCLE, PJ_LIFECYCLE_DEVICE } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { captureShellProjectGuard, projectStepId, readShellProject, shellProgramId, updateShellProject, useShellProject } from '../shellProject';
 import { consumeNavParams } from '../navParams';
@@ -1808,10 +1808,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
      is read and is neither is an eCTD filing. */
   const regionalApplication = regionalDeviceApplicationClassOf(prog?.program_type);
   const deviceFiling = isDeviceOrDiagnosticProgram(prog) || clientType === 'MDX';
-  const lifecycle = deviceFiling ? PJ_LIFECYCLE.map(item => item.id === 'plan' ? { ...item, now: item.nowDevice ?? item.now } : item.id === 'author'
-    ? { ...item, blurb: 'Author filing documents from the project’s device or diagnostic evidence', now: item.nowDevice ?? item.now }
-    : item.id === 'submit' ? { ...item, blurb: 'Assemble eSTAR or the applicable technical documentation', now: item.nowDevice ?? item.now } : item)
-    .map(item => ({ ...item, starter: item.starterDevice ?? item.starter })) : PJ_LIFECYCLE;
+  const lifecycle = deviceFiling ? PJ_LIFECYCLE_DEVICE : PJ_LIFECYCLE;
   /* A filing document class (a PAS, a CSR, a meeting package) is authored
      here and never built as a sequence, so it is no eCTD filing either
      (shared/regulatory/filing-document-classes.ts; review finding, 2026-10-18). */
