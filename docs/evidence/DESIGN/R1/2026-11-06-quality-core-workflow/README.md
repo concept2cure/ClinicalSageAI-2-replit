@@ -74,3 +74,19 @@ The application ran against local PostgreSQL as `app_service`, with **superuser=
 - CMC, RBM and Biostatistics retain their existing owners. This supplies the native identity → project admission → immutable capture → shared build/report pattern for their downstream completion; it does not claim unverified parity.
 
 Private browser state, credentials and app environment files are excluded from this evidence.
+
+## Normal gate remediation and final API reproof
+
+The first normal push was refused by `ci:sql-interpolation` before publication. The source-context read had one
+additional eligibility fragment, and the collector/history assembled statements that the gate could not prove.
+The baseline and gate were **not** changed. `599fd96116` reuses the canonical source reader for disposition checks
+before and after context delivery; `2d8d19ad2e` makes the history candidate statement literal; `c5a3bb5d07` moves
+all 17 fixed-family queries to an internal literal-query map with bound scope/limits. Exact old/new predicates
+were independently compared. The [whole SQL gate passes](validation/sql-interpolation-green.txt.gz).
+
+Post-remediation regressions: collector/content/native access/report scope **6 suites / 62 tests**, history **2 / 16**,
+and native context admission/withdrawal **2 / 12** pass. Relevant production files have no lint errors or warnings.
+[Final API reproof](runtime/static-sql-api-outcome.json) passes **25 checks** on the restarted application: catalogue
+IDs and all three native record facts are unchanged; report creation/reads/history/render/PDF succeed; readable
+output and full sealed native data/provenance are retained. The earlier full compiler receipt identifies its
+pre-remediation source state; normal publication checks revalidate the final source on push.
