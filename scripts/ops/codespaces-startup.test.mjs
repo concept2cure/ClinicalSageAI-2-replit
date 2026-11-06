@@ -17,7 +17,7 @@ test('Codespaces shell hooks and startup script have valid bash syntax', () => {
 
 test('sourcing Codespaces startup retains an injected Neon DSN, not .env or localhost', () => {
   const owner = 'postgresql://fake_owner:FAKE_PASSWORD@ep-diagnostic.neon.tech/neondb?sslmode=require';
-  const runtime = 'postgresql://fake_app:DIFFERENT_FAKE_PASSWORD@ep-diagnostic-pooler.neon.tech/neondb?sslmode=require';
+  const runtime = 'postgresql://fake_app:DIFFERENT_FAKE_PASSWORD@ep-diagnostic-pooler.neon.tech/neondb?sslmode=require'; // ci-secret-scan-ignore: synthetic DSN for shell environment-retention assertions; no database connection is made.
   const env = { ...process.env, C2C_CODESPACE: '1', CODESPACES: 'true',
     DATABASE_URL: owner, APP_DATABASE_URL: runtime };
   const result = spawnSync('bash', ['-c',
