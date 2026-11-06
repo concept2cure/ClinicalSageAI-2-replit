@@ -8,12 +8,10 @@
  * draft was a figure the model supplied. This is the shape 2.5/2.7 had before
  * 2026-10-05 (module2-csr-inputs.ts).
  *
- * No record links nonclinical studies to a project yet. Which store will is a
- * founder decision (R-1: the governed `nonclinical_studies` register, or the CTD
- * program's `ctd_nonclinical_studies`). Until then this resolves the open
- * project, as the person asking, and answers that no studies are recorded
- * against it; figures supplied in the call are not used, and the answer says so.
- * Only the needs_data branch changes when a store is chosen.
+ * P-55 chose the governed nonclinical_studies register. Its project-scoped
+ * input and protected tool-result continuation are not connected here yet.
+ * Resolve the project as the actor, but read no studies or source figures.
+ * That is an unavailable binding, not evidence that a project has no studies.
  *
  * @module server/services/ana/module2-nonclinical-inputs
  */
@@ -22,6 +20,7 @@ import { nonclinicalOutline } from './ctd-component-outline.js';
 
 /** The tool-input keys that carried model-written study figures. */
 export const MODEL_SUPPLIED_NONCLINICAL_KEYS = ['studies', 'findings'] as const;
+const BINDING_LIMIT = 'Project-scoped nonclinical drafting is not yet connected to its protected source path. No nonclinical studies were read for this request.';
 
 export async function loadModule2NonclinicalInputs(
   input: Record<string, unknown>,
@@ -36,8 +35,8 @@ export async function loadModule2NonclinicalInputs(
     return {
       ...project,
       message:
-        'No project is open or named, so no project was read. This platform does not yet record nonclinical studies against a project, ' +
-        `so Module ${module} cannot be composed from records. Studies, NOAELs and findings given in the conversation are not used.`,
+        `No project is open or named, so no project was read. ${BINDING_LIMIT} ` +
+        `Module ${module} was not composed. Studies, NOAELs and findings given in the conversation are not used.`,
     };
   }
   if (!project.ok) return project;
@@ -45,9 +44,10 @@ export async function loadModule2NonclinicalInputs(
     ok: false,
     status: 'needs_data',
     projectId: project.projectId,
+    code: 'NONCLINICAL_BINDING_UNAVAILABLE',
     ignoredSuppliedFigures,
     message:
-      `This platform does not yet record nonclinical studies against a project, so Module ${module} cannot be composed from records. ` +
+      `${BINDING_LIMIT} Module ${module} was not composed from records. ` +
       'Studies, NOAELs and findings given in the conversation are not used.',
   };
 }
@@ -60,10 +60,10 @@ export async function loadModule2NonclinicalInputs(
 function nextStep(module: '2.4' | '2.6', status: RecordSourceRefusal['status']): string {
   const why =
     status === 'needs_data'
-      ? 'This platform does not yet record nonclinical studies against a project'
-      : 'No project was read for this request (nonclinical_data says why)';
+      ? BINDING_LIMIT
+      : 'No nonclinical studies were read for this request (nonclinical_data says why).';
   return (
-    `${why}, so Module ${module} is not composed and no study, dose, NOAEL or finding is stated. ` +
+    `${why} Module ${module} is not composed and no study, dose, NOAEL or finding is stated. ` +
     'Use this outline to draft each section in the governed authoring flow from the versioned study reports the author cites; state a section with no data as such rather than filling it.'
   );
 }
@@ -88,7 +88,8 @@ export async function draftNonclinicalFromRecords(input: Record<string, unknown>
       },
       next_step: nextStep(module, sourced.status),
     });
-  } catch (err) {
-    return JSON.stringify({ error: `Module ${module} drafting failed: ${err instanceof Error ? err.message : 'unknown error'}` });
+  } catch {
+    return JSON.stringify({ code: 'NONCLINICAL_DRAFT_UNAVAILABLE',
+      error: `Module ${module} source context is unavailable. Nothing was composed.` });
   }
 }

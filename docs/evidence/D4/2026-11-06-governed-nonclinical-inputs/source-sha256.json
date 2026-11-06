@@ -1,0 +1,12 @@
+{
+  "server/services/__tests__/m2-summary-builders.test.ts": "d5a7a8c67df43b036cde0a5276913836bc3f95c0b7311e0c983f020f5725aafb",
+  "server/services/__tests__/m2-summary-conclusions-from-recorded-fields.test.ts": "18b507df53ce32dd77f68ea9d9c3f4600306bc289729425e10f46a675fb69eaa",
+  "server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts": "b6e9d715229befda14c0a9998f1a6cc5453583dfa4bac387686e31de9120b89c",
+  "server/services/ana/bla-biologics-tool-defs.ts": "bd5a4e345d213fcbb5a539cbc54e1ef953677ffaacf5284827e6d0910ea833e5",
+  "server/services/ana/module2-nonclinical-inputs.ts": "5854ade72691a1a3321d2851c4f906aabee604acc6438d458536972d09b87d16",
+  "server/services/m2-summary-builders.ts": "b743faeced46f624441b29f070ae0c1231fb69eb4df411463be5f4353b0af729",
+  "server/services/preclinical/__tests__/m26-nonclinical-summaries.test.ts": "1f1c6227af1bcd865bbd0c6b522b5bd2af96b2244844ac03194451c4ccfdfd92",
+  "server/services/preclinical/__tests__/nonclinical-m24-adapter.test.ts": "ada54acd1d2ada50711b88cc0caea8b5ce399e7c8bbae51556e7f83fb89897e7",
+  "server/services/preclinical/m26-nonclinical-summaries.ts": "d6401c4866752e9affd2503ae19cb300f8008ac6b70c8ffb0fe1eedc96e2b56b",
+  "server/services/preclinical/nonclinical-m24-adapter.ts": "6c5b016ab158e554c572f7961232da2044f7c285db25a625f31acb7db1c01ddb"
+}

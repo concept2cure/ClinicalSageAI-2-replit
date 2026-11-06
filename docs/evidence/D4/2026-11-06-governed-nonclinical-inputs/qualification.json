@@ -1,0 +1,115 @@
+{
+  "date": "2026-11-06",
+  "plan": "F1",
+  "launch": "W3 D2/D4",
+  "baseline": "f6127e72231bd9e9f302f596a672f58b1b40db15",
+  "implementationCommit": "2ea66f6cf",
+  "canonicalSynchronization": {
+    "remote": "ea3b158e6",
+    "merge": "29dd53375",
+    "ownFilesUnchanged": 10,
+    "dependencyManifest": "merged-dependency-sha256.json",
+    "review": "General conservative Tier3 run authority landed; native nonclinical project/study binding remains unimplemented."
+  },
+  "sourceManifest": "source-sha256.json",
+  "sourceFiles": 10,
+  "scope": "Existing deterministic M24/M26 composers, adapter, unavailable-binding messages and existing descriptions. No study-bearing tool activation.",
+  "red": {
+    "calibrated": {
+      "failed": 41,
+      "passed": 48,
+      "suites": 4,
+      "log": "calibrated-red.txt.gz"
+    },
+    "roundtrip": {
+      "failed": 4,
+      "passed": 3,
+      "skipped": 37,
+      "log": "roundtrip-red.txt.gz"
+    },
+    "noel": {
+      "failed": 1,
+      "skipped": 36,
+      "log": "m24-noel-red.txt.gz"
+    },
+    "references": {
+      "failed": 2,
+      "skipped": 36,
+      "log": "reference-red.txt.gz"
+    },
+    "unclassifiedFinding": {
+      "failed": 1,
+      "skipped": 38,
+      "log": "unclassified-red.txt.gz"
+    },
+    "note": "Populations overlap; counts are not additive. Initial handler red included seven stale policy-fixture failures, documented separately."
+  },
+  "core": {
+    "result": "passed",
+    "tests": 110,
+    "suites": 5,
+    "log": "core-merged.txt.gz"
+  },
+  "adjacent": {
+    "result": "passed",
+    "tests": 166,
+    "suites": 13,
+    "log": "adjacent-merged.txt.gz"
+  },
+  "mergedGateway": {
+    "result": "passed",
+    "tests": 102,
+    "suites": 4,
+    "log": "gateway-merged.txt.gz"
+  },
+  "initialAdjacent": {
+    "failed": 1,
+    "passed": 165,
+    "suites": 13,
+    "log": "adjacent-initial.txt.gz",
+    "correction": "Preserved existing recorded-name assertion by restoring the expected of <name> wording."
+  },
+  "lint": {
+    "result": "passed",
+    "files": 10,
+    "errors": 0,
+    "warnings": 9,
+    "baselineProductionWarnings": 10,
+    "addedWarnings": 0,
+    "log": "lint-final.json.gz",
+    "baselineLog": "lint-before.json.gz"
+  },
+  "review": "Two material M24 preservation findings corrected and rechecked; final independent read-only review found no remaining material blocker within narrowed scope. Separate incoming P104 review found no incompatibility.",
+  "build": {
+    "result": "passed",
+    "scope": "production client/server, audit-chain verifier and qualification verifier/runtime assets",
+    "log": "build-final.txt.gz"
+  },
+  "publication": {
+    "result": "pending"
+  },
+  "limits": [
+    "Pure composition truthfulness and scoped software compatibility proof only; no scientific or regulatory adequacy conclusion.",
+    "Native nonclinical project/lifecycle/currentness binding and study-result grant issuance remain unimplemented.",
+    "Merged P104 generic run authority supplies conservative Tier3 protection; no native-study privacy qualification or live provider dispatch was performed.",
+    "PGlite, synthetic fixtures and mocked SDK boundaries are not native PostgreSQL or model qualification.",
+    "Tabulated2.6 remains a preparation worksheet; source-report availability, GLP compliance, clinical phase/duration suitability and sponsor safety judgment require review.",
+    "No app/card/editor/screen/route/service/table/model/dependency addition, deployment or agency action. NMPA and CMC scope unchanged."
+  ],
+  "finalCanonicalSynchronization": {
+    "remote": "2216b9dec",
+    "merge": "b1f7671dc",
+    "coordinationConflict": "Retained current nonclinical hold, incoming demo scope and historical regional delivery record.",
+    "sourceHashesMatched": 10,
+    "mergedDependencyHashesMatched": 9,
+    "csrTests": {
+      "passed": 11,
+      "suites": 1,
+      "log": "csr-polling.txt.gz"
+    },
+    "portTests": {
+      "passed": 5,
+      "log": "dev-port.txt.gz"
+    }
+  }
+}
