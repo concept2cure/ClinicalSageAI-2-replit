@@ -43,7 +43,9 @@ redundant handoff without remount. No second chat state or guard registry.
 - `build.log.gz`: production client/server build passes.
 - `lint-baseline.json.gz`, `lint.json.gz`: zero errors, with the same existing
   seven V2App warnings and five ConversationThread warnings; routing and the
-  new test have none.
+  new test have none. The first push caught `console.log` in the recorded seed
+  script (`push-lint-red.log.gz`); it now uses permitted `console.info` and is
+  included in the final zero-new-warning lint result. No baseline was changed.
 - Independent review: no material issue after the draft-preservation repair.
   Error feedback uses the existing alert, keyboard palette selection is
   exercised, microcopy is the existing refusal, and no layout, motion, tokens

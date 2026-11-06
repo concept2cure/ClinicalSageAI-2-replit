@@ -13,7 +13,7 @@ async function main() {
     fixtures.push({letter,id,content});
   }
   fs.writeFileSync('/workspace/scratch/c2c-handoff-runtime/threads.json',JSON.stringify(fixtures,null,2),{mode:0o600});
-  console.log('Created local saved chat histories:', fixtures.map(x=>x.content).join(', '));
+  console.info('Created local saved chat histories:', fixtures.map(x=>x.content).join(', '));
   await pool.end();
 }
 main().then(()=>process.exit(0)).catch(e=>{console.error(e.message);process.exit(1)});
