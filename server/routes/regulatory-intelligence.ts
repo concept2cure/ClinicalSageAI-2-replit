@@ -39,6 +39,8 @@ import express, { Router, type Request, type Response, type NextFunction } from 
 import { createScopedLogger } from '../utils/logger.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId.js';
 import { authedUserId } from '../utils/authedActor.js';
+import { parseIntegerProjectId } from '../lib/project-id.js';
+import { ProjectAdmissionRefusal, requireProjectAdmission } from './c2c/project-access.js';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin.js';
 import {
   scoreSubmissionDraft,
@@ -268,10 +270,28 @@ router.post('/interactions', asyncHandler(async (req: Request, res: Response) =>
       message: 'agency, documentType, and intent are required strings',
     });
   }
+  // Corrections are attributed to the verified principal, never a claimed
+  // body user. A matter-specific correction also needs current write access.
+  const userId = authedUserId(req);
+  if (!Number.isSafeInteger(userId) || Number(userId) <= 0) {
+    return res.status(401).json({ error: 'authenticated_actor_required', message: 'An authenticated user is required to record a correction.' });
+  }
+  const parsedProjectId = body.projectId == null ? null : parseIntegerProjectId(body.projectId);
+  if (body.projectId != null && parsedProjectId === null) {
+    return res.status(400).json({ error: 'invalid_request', message: 'projectId, when sent, must be a positive integer' });
+  }
+  const projectId = parsedProjectId ?? undefined;
+  if (projectId !== undefined) {
+    try { await requireProjectAdmission(req, String(projectId), true); }
+    catch (err) {
+      if (err instanceof ProjectAdmissionRefusal) return res.status(err.status).json({ error: err.code, message: err.message });
+      throw err;
+    }
+  }
   const result = await recordInteraction({
     organizationId: guard.orgId,
-    projectId: Number.isFinite(Number(body.projectId)) ? Number(body.projectId) : undefined,
-    userId: Number.isFinite(Number(body.userId)) ? Number(body.userId) : undefined,
+    projectId,
+    userId: Number(userId),
     sessionId: typeof body.sessionId === 'string' ? body.sessionId : undefined,
     artifactId: typeof body.artifactId === 'string' ? body.artifactId : undefined,
     agency: body.agency,
