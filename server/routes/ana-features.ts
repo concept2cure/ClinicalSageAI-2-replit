@@ -2338,6 +2338,203 @@ router.post(
 //
 // Run / read / list / inspect-rules surface for the citation engine.
 // All tenant-scoped via requireOrganizationContext.
+//
+// ── Which project a citation route reaches (F1, 2026-11-05) ──
+//
+// These routes read with the organization as their only filter, so a member
+// read another project's citations by id (each sentence's text and its
+// sources), its run history, its exports and its rollups: a private
+// project's, and another sponsor's. A member who could not edit a project ran
+// citations on it, and any member pruned every project's run history.
+//
+// Each route now admits, before its handler, the project it reaches: the one
+// it names, its artifact's, or its runs' artifact's. Admission is the project
+// sharing policy for the current member (readCurrentProgramActor,
+// canAccessReportProject), the policy the Vault's organization view lists by.
+//   - A project the person cannot open is answered as the route answers an id
+//     of nothing: the same status and the same words.
+//   - A run or a batch run writes the artifact's record, so it also needs the
+//     project's edit right. Pruning removes run history from every project, so
+//     it needs the organization's project management role: the policy's grant
+//     of every project's edit right.
+//   - A check that cannot run is a 503 with a code, never an answer.
+// projectAdmissionMiddleware (routes/c2c/project-access.ts) does not fit:
+// router.param binds a name for the whole router, and this router's other
+// :projectId routes (memory, readiness, therapeutic context, consistency,
+// authoring plans) are not citation routes.
+
+interface CitationAnswer { status: number; body: Record<string, unknown> }
+/** The projects a request reaches, or null when it is malformed and the handler's own 400 answers it. */
+type CitationTarget = (req: Request, organizationId: number) => Promise<number[] | null>;
+type CitationPolicy = Awaited<ReturnType<typeof loadCitationPolicy>>;
+interface CitationAdmission {
+  req: Request;
+  organizationId: number;
+  actor: { userId: number; role: string };
+  policy: CitationPolicy;
+}
+
+const CITATION_ACCESS_UNAVAILABLE: CitationAnswer = {
+  status: 503,
+  body: {
+    error: 'Current project access could not be verified. No citation was read or changed.',
+    code: 'PROJECT_ACCESS_UNAVAILABLE',
+  },
+};
+const CITATION_EDIT_REFUSED: CitationAnswer = {
+  status: 403,
+  body: {
+    error: "Your project permissions do not allow changes to this project's records. Nothing was run.",
+    code: 'PROJECT_WRITE_PERMISSION_DENIED',
+  },
+};
+const CITATION_PRUNE_REFUSED: CitationAnswer = {
+  status: 403,
+  body: {
+    error: "Pruning removes citation run history from every project in the organization, so it needs the organization's project management role. Nothing was pruned.",
+    code: 'PROJECT_WRITE_PERMISSION_DENIED',
+  },
+};
+const citationNotFound = (error: string, code: string) => (): CitationAnswer => ({ status: 404, body: { error, code } });
+const CITATION_RUN_ID_SHAPE = /^[0-9a-f-]{36}$/i; // the run routes' own check, which answers 400
+const CITATION_RUN_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function loadCitationPolicy() {
+  const [programAccess, reportAccess, sharing] = await Promise.all([
+    import('../services/c2c/current-program-access'),
+    import('../services/report-os/project-access'),
+    import('../services/project-sharing-access'),
+  ]);
+  return {
+    readCurrentProgramActor: programAccess.readCurrentProgramActor,
+    ProgramReadAccessError: programAccess.ProgramReadAccessError,
+    canAccessReportProject: reportAccess.canAccessReportProject,
+    hasOrganizationProjectManagementRole: sharing.hasOrganizationProjectManagementRole,
+  };
+}
+
+function citationAccessFailure(error: unknown, policy: CitationPolicy | null): CitationAnswer {
+  if (policy && error instanceof policy.ProgramReadAccessError) {
+    return { status: error.status, body: { error: error.message, code: error.code } };
+  }
+  logger.error('[AnA citations] project access could not be verified', {
+    error: error instanceof Error ? error.message : String(error),
+  });
+  return CITATION_ACCESS_UNAVAILABLE;
+}
+
+/** Route middleware: the current member first, then the decision; null admits. */
+function admitCitations(decide: (admission: CitationAdmission) => Promise<CitationAnswer | null>) {
+  return async (req: Request, res: Response, next: (err?: unknown) => void): Promise<void> => {
+    const claimed = (req as any).tenantContext?.organizationId || (req as any).tenantId || (req as any).organizationId;
+    if (!claimed) {
+      res.status(401).json({ error: 'Authenticated tenant required', code: 'AUTH_REQUIRED' });
+      return;
+    }
+    let policy: CitationPolicy | null = null;
+    let answer: CitationAnswer | null;
+    try {
+      policy = await loadCitationPolicy();
+      const organizationId = Number(claimed);
+      const actor = await policy.readCurrentProgramActor(getPool(), { organizationId, userId: authedUserId(req) ?? undefined });
+      answer = await decide({ req, organizationId, actor, policy });
+    } catch (error) {
+      answer = citationAccessFailure(error, policy);
+    }
+    if (answer) {
+      res.status(answer.status).json(answer.body);
+      return;
+    }
+    next();
+  };
+}
+
+/** Each project the request reaches must be one the person can open, and for a write one they can edit. */
+function admitCitationTarget(target: CitationTarget, notFound: (req: Request) => CitationAnswer, forWrite = false) {
+  return admitCitations(async ({ req, organizationId, actor, policy }) => {
+    const projectIds = await target(req, organizationId);
+    if (projectIds === null) return null;
+    if (projectIds.length === 0) return notFound(req);
+    const q = getPool();
+    for (const projectId of new Set(projectIds)) {
+      if (!(await policy.canAccessReportProject(organizationId, actor, projectId, q))) return notFound(req);
+      if (forWrite && !(await policy.canAccessReportProject(organizationId, actor, projectId, q, { forWrite: true }))) {
+        return CITATION_EDIT_REFUSED;
+      }
+    }
+    return null;
+  });
+}
+
+/** `:projectId`, parsed as the project routes parse it. */
+async function citationProjectParam(req: Request): Promise<number[] | null> {
+  const parsed = projectIdParam.safeParse(req.params.projectId);
+  if (!parsed.success) return null;
+  return parsed.data <= 2_147_483_647 ? [parsed.data] : [];
+}
+
+/** The artifact's project; artifact_id is unique, so this is the row every citation read reads. */
+async function citationArtifactProjects(organizationId: number, artifactId: string): Promise<number[] | null> {
+  if (!artifactId || artifactId.length > 128) return null;
+  const { rows } = await getPool().query(
+    `SELECT project_id
+       FROM concept2cure_artifacts
+      WHERE artifact_id = $1
+        AND organization_id = $2`,
+    [artifactId, organizationId]
+  );
+  return rows.map((row: { project_id: unknown }) => Number(row.project_id));
+}
+
+function citationArtifactParam(req: Request, organizationId: number): Promise<number[] | null> {
+  return citationArtifactProjects(organizationId, String(req.params.artifactId || ''));
+}
+
+async function citationArtifactBody(req: Request, organizationId: number): Promise<number[] | null> {
+  const parsed = runCitationsSchema.safeParse(req.body);
+  return parsed.success ? citationArtifactProjects(organizationId, parsed.data.artifactId) : null;
+}
+
+/** Each run's project as it recorded it, and its artifact's; a run missing, or without its artifact, reaches none. */
+async function citationRunProjects(organizationId: number, runIds: string[]): Promise<number[] | null> {
+  if (!runIds.every(id => CITATION_RUN_ID_SHAPE.test(id))) return null;
+  if (!runIds.every(id => CITATION_RUN_UUID.test(id))) return [];
+  const { rows } = await getPool().query(
+    `SELECT r.id::text AS run_id, r.project_id AS run_project_id, a.project_id
+       FROM ana_artifact_citation_runs r
+       JOIN concept2cure_artifacts a ON a.id = r.artifact_pk AND a.organization_id = r.organization_id
+      WHERE r.id = ANY($1::uuid[])
+        AND r.organization_id = $2`,
+    [runIds, organizationId]
+  );
+  const found = new Set(rows.map((row: { run_id: string }) => row.run_id.toLowerCase()));
+  if (!runIds.every(id => found.has(id.toLowerCase()))) return [];
+  return rows.flatMap((row: { run_project_id: unknown; project_id: unknown }) => [Number(row.run_project_id), Number(row.project_id)]);
+}
+
+const admitCitationArtifact = admitCitationTarget(citationArtifactParam, citationNotFound('Artifact not found', 'ARTIFACT_NOT_FOUND'));
+const admitCitationProject = admitCitationTarget(citationProjectParam, citationNotFound('Project not found', 'PROJECT_NOT_FOUND'));
+const admitCitationProjectEdit = admitCitationTarget(citationProjectParam, citationNotFound('Project not found', 'PROJECT_NOT_FOUND'), true);
+const admitCitationRunStart = admitCitationTarget(citationArtifactBody, req => ({
+  status: 404,
+  body: { error: `Artifact not found: ${String(req.body?.artifactId)}`, code: 'ARTIFACT_NOT_FOUND' },
+}), true);
+// The run list answers an artifact of no runs, or of nothing, with an empty history.
+const admitCitationRunList = admitCitationTarget(citationArtifactParam, req => ({
+  status: 200,
+  body: { artifactId: String(req.params.artifactId || ''), total: 0, runs: [] },
+}));
+const admitCitationRun = admitCitationTarget(
+  (req, organizationId) => citationRunProjects(organizationId, [String(req.params.runId || '')]),
+  citationNotFound('Run not found', 'CITATION_RUN_NOT_FOUND')
+);
+const admitCitationRunDiff = admitCitationTarget(
+  (req, organizationId) => citationRunProjects(organizationId, [String(req.params.runId || ''), String(req.query.against || '')]),
+  citationNotFound('One or both runs not found, or runs are for different artifacts', 'CITATION_RUN_DIFF_NOT_FOUND')
+);
+const admitCitationPrune = admitCitations(async ({ actor, policy }) =>
+  policy.hasOrganizationProjectManagementRole(actor.role) ? null : CITATION_PRUNE_REFUSED
+);
 
 const runCitationsSchema = z.object({
   artifactId: z.string().min(1, 'artifactId is required').max(128),
@@ -2357,6 +2554,7 @@ router.post(
   authenticateToken,
   requireOrganizationContext,
   runCitationsRateLimiter,
+  admitCitationRunStart,
   async (req: Request, res: Response) => {
     const parsed = runCitationsSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -2448,6 +2646,7 @@ router.get(
   '/citations/:artifactId',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationArtifact,
   async (req: Request, res: Response) => {
     const artifactId = String(req.params.artifactId || '');
     if (!artifactId || artifactId.length > 128) {
@@ -2498,6 +2697,7 @@ router.get(
   '/citations/projects/:projectId/rollup',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationProject,
   async (req: Request, res: Response) => {
     const parsed = projectIdParam.safeParse(req.params.projectId);
     if (!parsed.success) {
@@ -2534,6 +2734,7 @@ router.get(
   '/citations/projects/:projectId/stale',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationProject,
   async (req: Request, res: Response) => {
     const parsed = projectIdParam.safeParse(req.params.projectId);
     if (!parsed.success) {
@@ -2591,6 +2792,7 @@ router.post(
   authenticateToken,
   requireOrganizationContext,
   batchRunRateLimiter,
+  admitCitationProjectEdit,
   async (req: Request, res: Response) => {
     const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
     if (!projectIdParsed.success) {
@@ -2656,6 +2858,7 @@ router.get(
   '/citations/runs/:runId',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationRun,
   async (req: Request, res: Response) => {
     const runId = String(req.params.runId || '');
     if (!/^[0-9a-f-]{36}$/i.test(runId)) {
@@ -2702,6 +2905,7 @@ router.get(
   '/citations/:artifactId/runs',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationRunList,
   async (req: Request, res: Response) => {
     const artifactId = String(req.params.artifactId || '');
     if (!artifactId || artifactId.length > 128) {
@@ -3930,6 +4134,7 @@ router.post(
   authenticateToken,
   requireOrganizationContext,
   docxExportRateLimiter,
+  admitCitationArtifact,
   async (req: Request, res: Response) => {
     const artifactId = String(req.params.artifactId || '');
     if (!artifactId || artifactId.length > 128) {
@@ -4039,6 +4244,7 @@ router.get(
   '/citations/projects/:projectId/trends',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationProject,
   async (req: Request, res: Response) => {
     const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
     if (!projectIdParsed.success) {
@@ -4096,6 +4302,7 @@ router.get(
   '/citations/projects/:projectId/section-coverage',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationProject,
   async (req: Request, res: Response) => {
     const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
     if (!projectIdParsed.success) {
@@ -4144,6 +4351,7 @@ router.get(
   '/citations/projects/:projectId/graph',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationProject,
   async (req: Request, res: Response) => {
     const parsed = projectIdParam.safeParse(req.params.projectId);
     if (!parsed.success) {
@@ -4182,6 +4390,7 @@ router.get(
   '/citations/:artifactId/expectations',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationArtifact,
   async (req: Request, res: Response) => {
     const artifactId = String(req.params.artifactId || '');
     if (!artifactId || artifactId.length > 128) {
@@ -4240,6 +4449,7 @@ router.get(
   '/citations/projects/:projectId/search',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationProject,
   async (req: Request, res: Response) => {
     const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
     if (!projectIdParsed.success) {
@@ -4313,6 +4523,7 @@ router.post(
   authenticateToken,
   requireOrganizationContext,
   pruneRunsRateLimiter,
+  admitCitationPrune,
   async (req: Request, res: Response) => {
     const parsed = pruneRunsSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
@@ -4356,6 +4567,7 @@ router.get(
   '/citations/projects/:projectId/gaps-by-rule',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationProject,
   async (req: Request, res: Response) => {
     const parsed = projectIdParam.safeParse(req.params.projectId);
     if (!parsed.success) {
@@ -4394,6 +4606,7 @@ router.get(
   '/citations/projects/:projectId/export',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationProject,
   async (req: Request, res: Response) => {
     const parsed = projectIdParam.safeParse(req.params.projectId);
     if (!parsed.success) {
@@ -4450,6 +4663,7 @@ router.get(
   '/citations/:artifactId/export',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationArtifact,
   async (req: Request, res: Response) => {
     const artifactId = String(req.params.artifactId || '');
     if (!artifactId || artifactId.length > 128) {
@@ -4518,6 +4732,7 @@ router.get(
   '/citations/projects/:projectId/snapshot',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationProject,
   async (req: Request, res: Response) => {
     const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
     if (!projectIdParsed.success) {
@@ -4576,6 +4791,7 @@ router.get(
   '/citations/projects/:projectId/diff',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationProject,
   async (req: Request, res: Response) => {
     const projectIdParsed = projectIdParam.safeParse(req.params.projectId);
     if (!projectIdParsed.success) {
@@ -4634,6 +4850,7 @@ router.get(
   '/citations/runs/:runId/diff',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationRunDiff,
   async (req: Request, res: Response) => {
     const fromRunId = String(req.params.runId || '');
     const toRunId = String(req.query.against || '');
@@ -4677,6 +4894,7 @@ router.get(
   '/citations/projects/:projectId/readiness-impact',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationProject,
   async (req: Request, res: Response) => {
     const parsed = projectIdParam.safeParse(req.params.projectId);
     if (!parsed.success) {
@@ -4714,6 +4932,7 @@ router.get(
   '/citations/:artifactId/gaps',
   authenticateToken,
   requireOrganizationContext,
+  admitCitationArtifact,
   async (req: Request, res: Response) => {
     const artifactId = String(req.params.artifactId || '');
     if (!artifactId || artifactId.length > 128) {

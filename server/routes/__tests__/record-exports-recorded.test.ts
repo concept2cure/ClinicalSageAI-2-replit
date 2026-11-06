@@ -14,9 +14,10 @@
  * is the same kind of file and is held to the same rule.
  */
 import crypto from 'node:crypto';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
+import { mockPool } from '../../../tests/setup';
 
 const logAction = vi.hoisted(() => vi.fn());
 vi.mock('../../services/auditService', () => ({ default: { logAction: (...a: unknown[]) => logAction(...a) } }));
@@ -57,6 +58,25 @@ vi.mock('../../services/ana/citation-export', () => ({
 const XML = vi.hoisted(() => '<?xml version="1.0"?><lineage/>');
 vi.mock('../../services/ana/lineage-dossier.js', () => ({ buildDocumentLineageDossier: vi.fn(async () => ({ artifactId: 'art-1' })) }));
 vi.mock('../../services/ana/lineage-dossier-xml.js', () => ({ serializeDocumentLineageDossierXml: () => XML }));
+
+/* The citation downloads admit the artifact's project first (F1, 2026-11-05). This caller is a member who can open
+   project 3, the artifact's; the admission itself has its own suite, ana-citations-project-scope.pglite.test.ts. */
+vi.mock('../../services/c2c/current-program-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/c2c/current-program-access')>()),
+  readCurrentProgramActor: async () => ({ userId: 3, role: 'member' }),
+}));
+vi.mock('../../services/report-os/project-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  canAccessReportProject: async () => true,
+}));
+const originalQuery = mockPool.query;
+(mockPool as { query: unknown }).query = vi.fn(async (sql: unknown) =>
+  /SELECT project_id\s+FROM concept2cure_artifacts/.test(String(sql))
+    ? { rows: [{ project_id: 3 }], rowCount: 1 }
+    : { rows: [], rowCount: 0 });
+afterAll(() => {
+  (mockPool as { query: unknown }).query = originalQuery;
+});
 
 import { Router } from 'express';
 import { mountLineageRoutes } from '../ana-ri/lineage';
