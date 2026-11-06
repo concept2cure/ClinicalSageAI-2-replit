@@ -1,0 +1,30 @@
+{
+  "programId": "6c89e2c1-2d76-4356-80cb-001821956b5a",
+  "capaId": "2387df4a-a146-4a6c-a099-f0669fc85f12",
+  "capaCode": "CAPA-2026-0002",
+  "taskId": "9aee4c7c-5835-4f1e-b48e-42ac1a396eb8",
+  "taskStatus": "pending",
+  "role": {
+    "role": "app_service",
+    "superuser": false,
+    "bypassrls": false
+  },
+  "checks": [
+    "Runtime database role is neither superuser nor BYPASSRLS",
+    "RLS_ENFORCE is on",
+    "Canonical fictional CAPA is open",
+    "Canonical fictional CAPA has exactly one open task",
+    "stale close is refused by the existing task writer",
+    "stale close preserves task identity, status, project, assignee and due date",
+    "stale no-date cancellation is refused by the existing task writer",
+    "stale no-date cancellation preserves task identity, status, project, assignee and due date",
+    "stale different date is refused by the existing task writer",
+    "stale different date preserves task identity, status, project, assignee and due date",
+    "stale numeric owner is refused by the existing task writer",
+    "stale numeric owner preserves task identity, status, project, assignee and due date",
+    "Current canonical plan remains idempotent",
+    "No duplicate or false completion is recorded",
+    "Native lifecycle is unchanged by task-only reconciliation"
+  ],
+  "fixture": "Fictional local CAPA, stale producer inputs only; no native approval, effectiveness close, model call or filing."
+}

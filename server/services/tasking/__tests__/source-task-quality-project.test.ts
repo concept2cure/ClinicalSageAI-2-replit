@@ -34,14 +34,15 @@ const ACTION = '33333333-3333-4333-8333-333333333333';
 const input = (over: Partial<ReplaceSourceTask> = {}): ReplaceSourceTask => ({
   organizationId: 7, actorId: 12, sourceEntityType: 'capa_record', sourceEntityId: `capa:${CAPA}`,
   closeAs: 'cancelled', same: metadata => metadata.due === '2026-12-01',
-  next: { moduleType: 'Quality', title: 'Close CAPA-012', metadata: { due: '2026-12-01' }, projectId: 999 }, ...over,
+  next: { moduleType: 'Quality', title: 'Close CAPA-012', metadata: { due: '2026-12-01' }, projectId: 999,
+    dueDate: new Date('2026-12-01T00:00:00Z') }, ...over,
 });
 const existing = (projectId: number | null = null) => ({ taskId: 'existing', status: 'in_progress', metadata: { due: '2026-12-01' },
   projectId, clientWorkspaceId: projectId ? 4 : null, sourceEntityId: `capa:${CAPA}` });
 const statements = () => H.queries.map(query => query.text.trim());
 
 beforeEach(() => {
-  H.open = []; H.native = [{ program_id: PROGRAM }]; H.queries = [];
+  H.open = []; H.native = [{ program_id: PROGRAM, state: 'open', due_at: new Date('2026-12-01') }]; H.queries = [];
   H.anchor.mockReset().mockResolvedValue({ id: 41, clientWorkspaceId: 4 });
   H.admit.mockReset().mockResolvedValue({ projectId: 41, clientWorkspaceId: 4 });
   H.actor.mockReset().mockResolvedValue({ userId: 12, role: 'member' }); H.qmsRead.mockReset().mockResolvedValue(undefined);
@@ -53,7 +54,8 @@ describe('native Quality source tasks retain their canonical project', () => {
   it.each([
     ['capa_record', `capa:${CAPA}`], ['capa_action', `capa-action:${ACTION}`], ['qms_periodic_review', 'qms-document:12'],
   ])('places %s from the recorded owner, ignoring a claimed numeric project', async (sourceEntityType, sourceEntityId) => {
-    H.native = [{ program_id: PROGRAM, authoring_document_id: '44444444-4444-4444-8444-444444444444' }];
+    H.native = [{ program_id: PROGRAM, authoring_document_id: '44444444-4444-4444-8444-444444444444',
+      state: sourceEntityType === 'capa_action' ? 'planned' : 'open', due_at: new Date('2026-12-01') }];
     expect(await replaceSourceTask(input({ sourceEntityType, sourceEntityId }))).toBe('scheduled');
     expect(H.anchor).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ programId: PROGRAM, orgId: 7, requireUnique: true }));
     if (sourceEntityType === 'qms_periodic_review') expect(H.qmsRead).toHaveBeenCalledWith(expect.anything(), 7, 12, expect.objectContaining({ id: 12 }));

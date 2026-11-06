@@ -27,6 +27,8 @@ the push guidance below. The coordinating session is recorded unavailable; no
 cross-session channel is available here. No other lane is paused or claimed by
 this request. The slice continues with ordinary fetch/merge/retry and no force.
 
+Quality F1 current-record follow-up, 2026-11-06: this slice now also requests a 15-minute publication window after two ref races, both with every normal gate green and compiler 0/baseline 0 (`ea3b158e6a` → `2216b9decb` → `1947fa1666`). The coordinating session is recorded unavailable and no callable cross-session channel reaches it here. No other lane is paused by this note; this slice keeps ordinary fetch/merge/retry, without force or hook bypass. Source `4d1a06bf48`, evidence `docs/evidence/DESIGN/R1/2026-11-06-quality-current-records/`; all Quality implementation holds are released with publication.
+
 Publication request for the demo followthrough, 2026-11-06 22:01 UTC: its source push and evidence push each lost a ref race after every gate passed. A 15-minute publication window is requested under the guidance below. The coordinator remains unavailable through this session; no other lane is claimed paused. Ordinary fetch, merge and retry continue with no force or skipped hook.
 
 | Files | Held by | For |
@@ -69,6 +71,10 @@ Founder asks Quality beside RBM/CMC, connected through projects, tasks, QA/QS da
 Verified handoff: native task → CAPA register and shared-source build → one editor pass at desktop/mobile. The current Quality tabbar overflows 847 px inside 390 px (`quality/app.css:276`, `quality/App.tsx:349`); left to Quality holder. Native snapshots feed shared project catalogue/builds and existing QA report; no held UI layout changed. Source anchors: `1e904a0550`, `b25fd60fb7`, `98661f418b`, `11e4252671`, `f92b2be3f7`, `f4c230dfac`, `bb79304fa2`. Merged 18/302 task, 8/83 source and 10/118 report tests pass; source published, evidence `docs/evidence/DESIGN/R1/2026-11-06-quality-core-workflow/`.
 
 ## Who works where
+
+### Quality current-record follow-up — Codex, 2026-11-06 (F1)
+
+**Completed; this lane's implementation holds are released with this publication.** The founder asked this lane to continue. Inventory/contract: `docs/design/QUALITY_CORE_WORKFLOW_2026-11-06.md`, follow-up section; evidence `docs/evidence/DESIGN/R1/2026-11-06-quality-current-records/`. Source `4d1a06bf48`, merged with `ea3b158e6a` at `a7c0d27533`: current CAPA/action lifecycle/date/numeric-owner and close-only admission; stale-readable catalogue refusal with denied-object privacy; exact report business text; per-report native grants; final combined-report collection fence. All six existing production paths are complete and source-frozen. Merged15/188 tests, production build, real runtime task15/15 and desktop/mobile/API/PDF28/28 pass; no model calls or approval/filing. Normal publication gates remain mandatory. Earlier Quality, Project, Insights, training, Vault and taxonomy holds and their UI handoffs are unchanged. No new UI, route, subsystem or dependency.
 
 | Session | Packages | Now | Layout work |
 |---|---|---|---|
