@@ -21,7 +21,8 @@ import path from 'node:path';
 import { extractTableDdl, REPO_ROOT } from '../../../tests/golden-journeys/harness';
 
 vi.mock('../../db', async () => (await import('./_unified-tasks-pglite-harness')).dbModule());
-vi.mock('../../db/requestDb', async () => (await import('./_unified-tasks-pglite-harness')).requestDbModule());
+vi.mock('../../db/requestDb', async original => ({ ...await original<typeof import('../../db/requestDb')>(),
+  ...(await import('./_unified-tasks-pglite-harness')).requestDbModule() }));
 vi.mock('../c2c/actions', async () => (await import('./_unified-tasks-pglite-harness')).ledgerModule());
 vi.mock('../../services/tasking/task-signoff', async () =>
   (await import('./_unified-tasks-pglite-harness')).signoffModule(),

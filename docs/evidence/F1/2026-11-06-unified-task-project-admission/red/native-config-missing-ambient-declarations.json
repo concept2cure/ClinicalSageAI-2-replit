@@ -1,0 +1,13 @@
+{
+  "extends": "/workspace/Concept2cure-v2/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "incremental": true,
+    "tsBuildInfoFile": "/tmp/c2c-unified-native.tsbuildinfo"
+  },
+  "include": [
+    "/workspace/Concept2cure-v2/server/**/*.d.ts",
+    "/workspace/Concept2cure-v2/tests/db/workflow-project-admission.dbtest.ts",
+    "/workspace/Concept2cure-v2/tests/db/workflow-project-native-fixture.ts"
+  ]
+}
