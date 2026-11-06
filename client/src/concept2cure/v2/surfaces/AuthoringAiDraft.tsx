@@ -62,8 +62,8 @@ import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types'
 
 import { useAuthoringDraftReview } from '../editor/useAuthoringDraftReview';
 import { AuthoredHtml } from '../editor/AuthoredHtml';
-import { AlternativeReview, AlternativesPicker, CsrFigureNote } from '../editor/DraftAlternatives';
-import { NO_ALTERNATIVES, alternativeWording, csrFigureHold, type DraftProposalTarget } from '../editor/draftAlternatives';
+import { AlternativeReview, AlternativesPicker, CsrFigureNote, useFocusReturn } from '../editor/DraftAlternatives';
+import { NO_ALTERNATIVES, alternativeWording, csrFigureHold, sectionShownName, type DraftProposalTarget } from '../editor/draftAlternatives';
 import { PassageAlternatives } from '../editor/DraftPassage';
 import type { PassageRequest } from '../editor/draftPassage';
 import type { AcceptedAttribution, AiDraftGenerationInputs, AiDraftMetadata, AiDraftReviewSession, PendingAiDraft } from '../editor/authoringDraftTransport';
@@ -336,9 +336,12 @@ export function AuthoringAiDraft({
 
   const grounding = draft ? describeGrounding(draft) : null;
   const busy = generating || accepting || checking;
+  // A browser drops focus from a control disabled while AnA drafts; it returns there when the request ends (walk, 2026-11-06).
+  const pressed = useFocusReturn(busy);
+  const shown = sectionShownName(sectionCode, sectionTitle);
   if (passage && passageShown) {
     return <>{regionNote && !generationHold && <p role="status" data-testid="ai-draft-region-note">{regionNote}</p>}
-      <PassageAlternatives key={passage.requestId} passage={passage} docId={docId} programId={programId} sectionCode={sectionCode}
+      <PassageAlternatives key={passage.requestId} passage={passage} docId={docId} programId={programId} sectionCode={shown.name}
       region={region} docSealed={docSealed} editorDirty={editorDirty} savedUpdatedAt={savedUpdatedAt} target={proposals}
       generationHold={generationHold ?? undefined} sources={reviewSession?.sources} fireToast={fireToast} onBack={() => onPassageClose?.()} onClose={onClose} renderFacts={d => <DraftFacts draft={d} edited={false} />} /></>;
   }
@@ -357,7 +360,7 @@ export function AuthoringAiDraft({
           tabIndex={-1}
           style={{ fontSize: 13, fontWeight: 600, margin: 0 }}
         >
-          {I.sparkles} Draft {sectionCode} from Data Room sources
+          {I.sparkles} Draft {shown.name} from Data Room sources
         </h2>
         <span style={{ flex: 1 }} />
         <button className="nda-open" onClick={onClose} disabled={busy}>
@@ -401,7 +404,7 @@ export function AuthoringAiDraft({
       {generating && (
         <AnaActivity
           streaming
-          phase={phase ?? `Retrieving Data Room evidence and drafting ${sectionCode}…`}
+          phase={phase ?? `Retrieving Data Room evidence and drafting ${shown.name}…`}
           startedAt={generatingSince ?? undefined}
         />
       )}
@@ -411,7 +414,7 @@ export function AuthoringAiDraft({
           <p style={{ fontSize: 12, margin: 0, opacity: 0.85 }}>
             Retrieves evidence from this project’s Data Room and drafts{' '}
             <b>
-              {sectionCode} {sectionTitle}
+              {shown.code ? `${shown.code} ${sectionTitle}` : shown.name}
             </b>{' '}
             from it. Nothing is saved until you accept the result — and accepting records the
             verified source spans behind the text, which a normal save cannot do.
@@ -473,7 +476,7 @@ export function AuthoringAiDraft({
             <button
               className="btn primary"
               style={{ height: 30 }}
-              onClick={() => void generate()}
+              onClick={e => { pressed(e.currentTarget); void generate(); }}
               disabled={busy || docSealed || !!acceptUnknown || !!generationHold}
               data-testid="ai-draft-generate"
               title={
@@ -484,7 +487,7 @@ export function AuthoringAiDraft({
             >
               {generating ? 'Drafting…' : 'Draft section'}
             </button>{' '}
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => void generateAlternatives()}
+            <button className="btn ghost" style={{ height: 30 }} onClick={e => { pressed(e.currentTarget); void generateAlternatives(); }}
               disabled={busy || docSealed || !!acceptUnknown || !!generationHold} data-testid="ai-draft-alternatives"
               title={docSealed ? 'This document is frozen — its content cannot be edited.' : undefined}>
               Draft three alternatives
@@ -525,7 +528,7 @@ export function AuthoringAiDraft({
               the Label-in-Name failure (WCAG 2.5.3) — so the visible text
               carries the section instead. */}
           <label style={{ fontSize: 12, display: 'grid', gap: 3 }}>
-            {`Proposed content for ${sectionCode} — edit before accepting if you want to`}
+            {`Proposed content for ${shown.name} — edit before accepting if you want to`}
             <textarea
               value={body}
               onChange={e => setBody(e.target.value)}

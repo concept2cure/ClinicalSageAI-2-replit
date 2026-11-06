@@ -1,0 +1,57 @@
+const c = require('../walk/common.cjs');
+const DEVICE = 'a7904b00-75d2-4603-8197-373df73dc7c1';
+async function as(browser, email, tag, vp = c.VIEWPORTS.desktop) {
+  const { page } = await c.newPage(browser, { who: tag, viewport: vp });
+  await c.signIn(page, email);
+  return page;
+}
+(async () => {
+  const browser = await c.chromium.launch();
+  const jm = await as(browser, 'jm.smith@concept2cure.pro', 'jm');
+  await c.step('F4 Reporting: the device section, for an organization with device projects', async (s) => {
+    await jm.goto(`${c.BASE}/concept2cure/insights`, { waitUntil: 'networkidle' }); await c.sleep(2500);
+    await c.shot(jm, 'c-1440-reporting.png', { fullPage: true });
+    const dev = jm.locator('[data-testid*="device"], section:has-text("Device")').first();
+    s.notes.push('device section: ' + (await dev.innerText().catch(() => '(none found)')).slice(0, 700));
+    s.notes.push('overflowX ' + await c.overflowX(jm));
+  });
+  await c.step('F4 the retired id device-analytics, opened by address', async (s) => {
+    await jm.goto(`${c.BASE}/concept2cure/device-analytics`, { waitUntil: 'networkidle' }); await c.sleep(1500);
+    s.notes.push('landed on ' + new URL(jm.url()).pathname + ' heading: ' + (await jm.locator('h1').first().innerText().catch(() => '')));
+    await c.shot(jm, 'c-1440-device-analytics-alias.png');
+  });
+  await c.step('F6 Projects: last activity on the card and the row', async (s) => {
+    await jm.goto(`${c.BASE}/concept2cure/projects`, { waitUntil: 'networkidle' }); await c.sleep(2000);
+    await c.shot(jm, 'd-1440-projects.png');
+    const cards = await jm.locator('main').innerText();
+    s.notes.push('activity lines: ' + JSON.stringify((cards.match(/(Updated|Last activity|active)[^\n]{0,40}/gi) || []).slice(0, 6)));
+  });
+  await c.step('F6 the retired id device-workstream, opened by address', async (s) => {
+    await jm.goto(`${c.BASE}/concept2cure/device-workstream`, { waitUntil: 'networkidle' }); await c.sleep(1500);
+    s.notes.push('landed on ' + new URL(jm.url()).pathname + new URL(jm.url()).search + ' heading: ' + (await jm.locator('h1').first().innerText().catch(() => '')));
+    await c.shot(jm, 'd-1440-device-workstream-alias.png');
+  });
+  await c.step('F6 a device project: the Review step and the Client Review Room', async (s) => {
+    await jm.goto(`${c.BASE}/concept2cure/project-home?program=${DEVICE}`, { waitUntil: 'networkidle' }); await c.sleep(2000);
+    const review = jm.getByRole('tab', { name: /Review/ }).or(jm.getByRole('button', { name: /^Review$/ })).first();
+    await review.click({ timeout: 8000 }).catch(e => s.notes.push('no Review step control: ' + e.message.split('\n')[0]));
+    await c.sleep(2000);
+    await c.shot(jm, 'd-1440-device-review-step.png', { fullPage: true });
+    s.notes.push('client review: ' + (await jm.locator('[data-testid*="client-review"], section:has-text("Client Review")').first().innerText().catch(() => '(none)')).slice(0, 600));
+  });
+  await c.step('P-72 1b: the decision-lineage chain verdict', async (s) => {
+    const r = await c.api(jm, 'GET', '/api/decision-lineage/verify-chain');
+    s.notes.push(`verify-chain ${r.status} ${JSON.stringify(r.body).slice(0, 400)}`);
+    await jm.goto(`${c.BASE}/concept2cure/decision-lineage`, { waitUntil: 'networkidle' }); await c.sleep(2000);
+    await c.shot(jm, 'e-1440-decision-lineage.png');
+    s.notes.push('screen: ' + (await c.textOf(jm)).slice(0, 700));
+  });
+  const nadia = await as(browser, 'nadia.empty@harbor-lane.example', 'nadia');
+  await c.step('F4 Reporting for an organization with no device projects (honest empty)', async (s) => {
+    await nadia.goto(`${c.BASE}/concept2cure/insights`, { waitUntil: 'networkidle' }); await c.sleep(2500);
+    await c.shot(nadia, 'c-1440-reporting-no-devices.png', { fullPage: true });
+    s.notes.push('device section: ' + (await nadia.locator('[data-testid*="device"], section:has-text("Device")').first().innerText().catch(() => '(none found)')).slice(0, 500));
+  });
+  c.save('folds');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

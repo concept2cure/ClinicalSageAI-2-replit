@@ -1,0 +1,104 @@
+{
+  "base": "http://127.0.0.1:5210",
+  "startedAt": "2026-11-06T22:30:13.901Z",
+  "steps": [
+    {
+      "name": "F4 Reporting: the device section, for an organization with device projects",
+      "http": [],
+      "console": [],
+      "notes": [
+        "device section: Device projects\n\n1 device project you can open, by the status each project's record holds.\n\nActive\n1\nSubmission pace\n\n0 submitted in the 24 months to 2026-11\n\n2024-12\n0\n2025-01\n0\n2025-02\n0\n2025-03\n0\n2025-04\n0\n2025-05\n0\n2025-06\n0\n2025-07\n0\n2025-08\n0\n2025-09\n0\n2025-10\n0\n2025-11\n0\n2025-12\n0\n2026-01\n0\n2026-02\n0\n2026-03\n0\n2026-04\n0\n2026-05\n0\n2026-06\n0\n2026-07\n0\n2026-08\n0\n2026-09\n0\n2026-10\n0\n2026-11\n0\nAnA draft acceptance\n\nNo AnA draft is recorded against a device project you can open, so there is no rate.",
+        "overflowX 0"
+      ],
+      "shots": [
+        "shots/c-1440-reporting.png"
+      ],
+      "outcome": "pass",
+      "ms": 4966
+    },
+    {
+      "name": "F4 the retired id device-analytics, opened by address",
+      "http": [],
+      "console": [],
+      "notes": [
+        "landed on /concept2cure/insights heading: Reporting & analytics"
+      ],
+      "shots": [
+        "shots/c-1440-device-analytics-alias.png"
+      ],
+      "outcome": "pass",
+      "ms": 3146
+    },
+    {
+      "name": "F6 Projects: last activity on the card and the row",
+      "http": [],
+      "console": [],
+      "notes": [
+        "activity lines: [\"Updated Nov 06\",\"Updated Nov 06\",\"Updated Nov 06\",\"Updated Nov 06\",\"Updated Nov 06\",\"Updated Nov 06\"]"
+      ],
+      "shots": [
+        "shots/d-1440-projects.png"
+      ],
+      "outcome": "pass",
+      "ms": 4204
+    },
+    {
+      "name": "F6 the retired id device-workstream, opened by address",
+      "http": [],
+      "console": [],
+      "notes": [
+        "landed on /concept2cure/projects heading: Projects"
+      ],
+      "shots": [
+        "shots/d-1440-device-workstream-alias.png"
+      ],
+      "outcome": "pass",
+      "ms": 3235
+    },
+    {
+      "name": "F6 a device project: the Review step and the Client Review Room",
+      "http": [],
+      "console": [],
+      "notes": [
+        "client review: Client review\nWhat the client sees, grouped by state · Scoped to the selected project\nNeeds your action\nNo tasks needing client action yet\nNothing is waiting on the client right now.\nCheck again\nShared for review\nNo shared tasks yet\nNo tasks have been shared for client review yet.\nCheck again\nReady for authority\nNo authority-ready tasks yet\nNo tasks have been marked ready for the authority yet.\nCheck again"
+      ],
+      "shots": [
+        "shots/d-1440-device-review-step.png"
+      ],
+      "outcome": "pass",
+      "ms": 8298
+    },
+    {
+      "name": "P-72 1b: the decision-lineage chain verdict",
+      "http": [
+        "jm 403 GET /api/decision-lineage/verify-chain"
+      ],
+      "console": [
+        "jm Failed to load resource: the server responded with a status of 403 (Forbidden)"
+      ],
+      "notes": [
+        "verify-chain 403 {\"error\":{\"code\":\"LAUNCH_SCOPE\",\"message\":\"This part of the product is not in this release.\"}}",
+        "screen: NEUR\n›\nDecision lineage\n6\n✻\nDecision lineage: not in this release\nThis feature is built but is not part of the current release. It is not a subscription or permission matter — no upgrade, setting or request enables it.\nBack to Projects"
+      ],
+      "shots": [
+        "shots/e-1440-decision-lineage.png"
+      ],
+      "outcome": "pass",
+      "ms": 3776
+    },
+    {
+      "name": "F4 Reporting for an organization with no device projects (honest empty)",
+      "http": [],
+      "console": [],
+      "notes": [
+        "device section: (none found)"
+      ],
+      "shots": [
+        "shots/c-1440-reporting-no-devices.png"
+      ],
+      "outcome": "pass",
+      "ms": 34459
+    }
+  ],
+  "finishedAt": "2026-11-06T22:31:23.866Z"
+}
