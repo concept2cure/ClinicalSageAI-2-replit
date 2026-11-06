@@ -50,14 +50,23 @@ function abbreviationsOf(sections) {
   return used.length ? [p('Abbreviations', used.sort().map((k) => `${k}: ${ABBREVIATIONS[k]}`).join('\n'))] : [];
 }
 
+/** A heading the PDF's one 16-point title line holds (it is not wrapped): cut at a comma, else a space. */
+function heading(name, max = 60) {
+  if (name.length <= max) return name;
+  const comma = name.lastIndexOf(', ', max);
+  const cut = name.slice(0, comma > 20 ? comma : name.lastIndexOf(' ', max));
+  return cut.replace(/[\s:,]+(in|of|for|and|the|to|on|with)?[\s:,]*$/i, '');
+}
+
 /** The PDF of one document: its own sections between a control block and the synthetic-data statement. */
 export function vaultPdf(doc) {
   return {
-    title: T(doc.name),
+    title: heading(doc.name),
     subtitle: 'SYNTHETIC / NOT ACTUAL DATA - demonstration document',
     footer: VAULT_FOOTER,
     sections: [
       p('Document control', [
+        `Title: ${T(doc.name)}`,
         doc.subtitle,
         `Document number: ${doc.code.replace(/\.pdf$/, '')}`,
         `Version: ${doc.version}`,

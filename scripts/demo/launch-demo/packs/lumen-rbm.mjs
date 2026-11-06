@@ -10,7 +10,9 @@
  *   Start risk-based monitoring  POST /api/mdx/rbm-assessments/seed
  *   Add CtQ factor               POST /api/mdx/rbm-risk-items
  *   Approve assessment           POST /api/mdx/rbm-assessments/:id/approve   (second signer only)
- *   New KRI / New QTL            POST /api/mdx/rbm-kris, /api/mdx/rbm-qtls
+ *   Seed the standard KRI library POST /api/mdx/rbm-kris/seed, then
+ *   Configure (each KRI)         PATCH /api/mdx/rbm-kris/:id
+ *   New QTL                      POST /api/mdx/rbm-qtls
  *   Load extract…                POST /api/mdx/rbm-metric-ingest            (readings over time)
  *   Scan cohort                  POST /api/mdx/rbm-patient-profiles/score
  *   Generate from RACT           POST /api/mdx/rbm-monitoring-plans/generate (approved RACT)
@@ -26,6 +28,10 @@
  * description), so a second run creates nothing. A refusal fails the step with
  * the server's answer. Content and its provenance: lumen-rbm-content.mjs.
  *
+ * "New KRI" (POST /api/mdx/rbm-kris) is not used: on 2026-11-06 it answered
+ * 500 on every create (Postgres 42P08, "could not determine data type of
+ * parameter $11", from the `CASE WHEN $11 IS NULL` in its INSERT).
+ *
  * Not reachable from here, and not built: Site risk, Site oversight and the
  * central statistical outlier scan read the site-risk snapshot, which
  * /rbm-site-risk/recompute derives only from Site Intelligence
@@ -35,7 +41,7 @@
 import { connectSigner, must } from '../lib.mjs';
 import {
   ACTIONS, APPROVAL_REASON, ASSESSMENT_TITLE, CTQ_FACTORS, EXTRACTS, KRIS, PERIOD_DAYS_AGO,
-  PLAN, QTLS, SIGNALS, SUBJECTS,
+  PLAN, QTLS, SIGNALS, SUBJECT_EXTRACT, SUBJECTS,
 } from './lumen-rbm-content.mjs';
 
 const DAY = 86_400_000;
@@ -121,20 +127,35 @@ async function ensureAssessment({ api, run, tally, baseUrl, identity }, program,
 
 /* ───────────────────────── KRIs, QTLs and the extracts ───────────────────────── */
 
-async function ensureIndicators({ api, run, tally }, program, assessment, label) {
+async function ensureIndicators({ api, run, tally }, program, label) {
   await run.step(`RBM: ${KRIS.length} key risk indicators on ${label}`, async () => {
-    const have = new Set((await list(api, `${M}/rbm-kris?program_id=${program.id}`, 'list KRIs')).map((k) => k.name));
-    let created = 0;
-    for (const k of KRIS) {
-      if (have.has(k.name)) { tally.found('rbm-kri'); continue; }
-      must(await api('POST', `${M}/rbm-kris`, {
-        programId: program.id, assessmentId: assessment.id, name: k.name, metricDefinition: k.metric,
-        dataSource: k.source, unit: k.unit, direction: k.dir, thresholdAmber: k.amber, thresholdRed: k.red,
-      }), 201, `create KRI "${k.name}"`);
-      tally.created('rbm-kri');
-      created += 1;
+    const path = `${M}/rbm-kris?program_id=${program.id}`;
+    let rows = await list(api, path, 'list KRIs');
+    // "New KRI" (POST /rbm-kris) cannot create one (header), so the KRIs come
+    // the tab's other way: "Seed the standard KRI library", then "Configure".
+    let seeded = false;
+    if (!rows.length) {
+      must(await api('POST', `${M}/rbm-kris/seed`, { programId: program.id }), 201, 'seed the standard KRI library');
+      rows = await list(api, path, 'list the seeded KRIs');
+      tally.created('rbm-kri-library');
+      seeded = true;
     }
-    return `${created} created, ${KRIS.length - created} already there`;
+    const byName = new Map(rows.map((r) => [r.name, r]));
+    let configured = 0;
+    for (const k of KRIS) {
+      if (byName.has(k.name)) { tally.found('rbm-kri'); continue; }
+      const lib = byName.get(k.from);
+      if (!lib) throw new Error(`LMN-201 has no KRI "${k.name}" and no library indicator "${k.from}" to configure as it`);
+      must(await api('PATCH', `${M}/rbm-kris/${lib.id}`, {
+        name: k.name, metricDefinition: k.metric, dataSource: k.source, unit: k.unit,
+        direction: k.dir, thresholdAmber: k.amber, thresholdRed: k.red,
+      }), 200, `configure "${k.from}" as "${k.name}"`);
+      byName.delete(k.from);
+      byName.set(k.name, lib);
+      tally.created('rbm-kri');
+      configured += 1;
+    }
+    return `${seeded ? 'standard library seeded; ' : ''}${configured} configured, ${KRIS.length - configured} already there`;
   });
 
   await run.step(`RBM: ${QTLS.length} quality tolerance limits on ${label}`, async () => {
@@ -152,53 +173,84 @@ async function ensureIndicators({ api, run, tally }, program, assessment, label)
   });
 
   const cutoffs = PERIOD_DAYS_AGO.map((d) => dateIn(-d));
+  const ingest = async (source, ref, cutoff, csv) => {
+    const j = must(await api('POST', `${M}/rbm-metric-ingest`, { programId: program.id, source, sourceRef: ref, dataCutoff: cutoff, csv }), 201, `load ${ref}`);
+    const out = j.data ?? j;
+    if (out.status !== 'succeeded' || out.rejected > 0 || out.projection?.unmatched?.length) {
+      throw new Error(`${ref} did not land cleanly: ${JSON.stringify({ status: out.status, rejects: out.rejects?.slice(0, 3), unmatched: out.projection?.unmatched })}`);
+    }
+    return out.projection;
+  };
+  const loadedRefs = async () => new Set((await list(api, `${M}/rbm-data-runs?program_id=${program.id}`, 'read the ingestion history'))
+    .filter((r) => r.status === 'succeeded' && !r.superseded_at).map((r) => r.source_ref));
+
   await run.step(`RBM: ${EXTRACTS.length * cutoffs.length} monthly metric extracts on ${label}`, async () => {
-    const loaded = new Set((await list(api, `${M}/rbm-data-runs?program_id=${program.id}`, 'read the ingestion history'))
-      .filter((r) => r.status === 'succeeded' && !r.superseded_at).map((r) => r.source_ref));
-    let created = 0, readings = 0, qtlUpdates = 0, subjects = 0, siteRows = 0;
+    const loaded = await loadedRefs();
+    let created = 0, readings = 0, qtlUpdates = 0, siteRows = 0;
     // Oldest first, so each source's newest run is its latest cutoff.
     for (let p = 0; p < cutoffs.length; p += 1) {
       for (const x of EXTRACTS) {
         const ref = x.ref(p + 1);
         if (loaded.has(ref)) { tally.found('rbm-extract'); continue; }
-        const csv = extractCsv(x, p, cutoffs[p]);
-        const j = must(await api('POST', `${M}/rbm-metric-ingest`, { programId: program.id, source: x.source, sourceRef: ref, dataCutoff: cutoffs[p], csv }), 201, `load ${ref}`);
-        const out = j.data ?? j;
-        if (out.status !== 'succeeded' || out.rejected > 0 || out.projection?.unmatched?.length) {
-          throw new Error(`${ref} did not land cleanly: ${JSON.stringify({ status: out.status, rejects: out.rejects?.slice(0, 3), unmatched: out.projection?.unmatched })}`);
-        }
-        readings += out.projection.kriReadings; qtlUpdates += out.projection.qtlUpdates;
-        subjects += out.projection.subjectProfiles; siteRows += out.projection.siteObservations;
+        const out = await ingest(x.source, ref, cutoffs[p], extractCsv(x.source, p, cutoffs[p]));
+        readings += out.kriReadings; qtlUpdates += out.qtlUpdates; siteRows += out.siteObservations;
         tally.created('rbm-extract');
         created += 1;
       }
     }
-    return `${created} loaded (${readings} KRI readings, ${qtlUpdates} QTL values, ${subjects} subject profiles, ${siteRows} site observations), ${EXTRACTS.length * cutoffs.length - created} already loaded`;
+    return `${created} loaded (${readings} KRI readings, ${qtlUpdates} QTL values, ${siteRows} site observations), ${EXTRACTS.length * cutoffs.length - created} already loaded`;
+  });
+
+  // Subject rows land on their own: on a database whose rbm_patient_profiles
+  // lacks UNIQUE (organization_id, program_id, subject_id) the ingest's upsert
+  // is refused (42P10), and that must not cost the study its indicators.
+  let subjectsLanded = false;
+  await run.step(`RBM: subject-level extract (${SUBJECTS.length} subjects) on ${label}`, async () => {
+    const ref = SUBJECT_EXTRACT.ref;
+    if ((await loadedRefs()).has(ref)) { subjectsLanded = true; tally.found('rbm-extract'); return 'already loaded'; }
+    const csv = subjectCsv(cutoffs[cutoffs.length - 1]);
+    const res = await api('POST', `${M}/rbm-metric-ingest`, { programId: program.id, source: SUBJECT_EXTRACT.source, sourceRef: ref, dataCutoff: cutoffs[cutoffs.length - 1], csv });
+    if (res.status !== 201) {
+      run.note(`RBM: the server refused the subject-level extract (HTTP ${res.status}: ${String(res.text).slice(0, 200)}), so Patient profiles has no subjects. On 2026-11-06 the cause was rbm_patient_profiles without the UNIQUE (organization_id, program_id, subject_id) its migration declares; shared/schema.ts omits it.`);
+      return `not executed — the server refused it (HTTP ${res.status})`;
+    }
+    const out = (res.json?.data ?? res.json).projection;
+    subjectsLanded = true;
+    tally.created('rbm-extract');
+    return `loaded: ${out.subjectProfiles} subject profiles`;
   });
 
   await run.step(`RBM: patient cohort scored on ${label}`, async () => {
     const profiles = await list(api, `${M}/rbm-patient-profiles?program_id=${program.id}`, 'list patient profiles');
-    if (profiles.length && profiles.every((p) => p.scored_at)) { tally.found('rbm-cohort-score'); return `found ${profiles.length} subjects scored`; }
+    if (!profiles.length) return 'not executed — no subject profiles to score';
+    if (profiles.every((p) => p.scored_at)) { tally.found('rbm-cohort-score'); return `found ${profiles.length} subjects scored`; }
     const j = must(await api('POST', `${M}/rbm-patient-profiles/score`, { programId: program.id }), 200, 'scan the patient cohort');
     tally.created('rbm-cohort-score');
     return `scored ${j.meta?.cohortSize ?? '?'} subjects — ${j.meta?.flagged ?? 0} flagged, ${j.meta?.review ?? 0} for review`;
   });
+  return { subjectsLanded };
 }
 
-/** One extract as the Overview's "Load extract…" takes it: header row, then study, site and subject rows. */
-function extractCsv(x, p, cutoff) {
-  const lines = ['metric_key,scope_level,scope_id,value,numerator,denominator,unit,observed_at'];
-  const cell = (v) => (v == null ? '' : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
-  const row = (key, scope, id, value, unit) => lines.push([key, scope, id, value, '', '', unit, cutoff].map(cell).join(','));
-  for (const k of KRIS.filter((i) => i.extract === x.source)) {
-    row(k.name, 'study', '', k.values[p], k.unit);
-    for (const [n, vals] of Object.entries(k.bySite ?? {})) if (vals[p] != null) row(k.name, 'site', n, vals[p], k.unit);
+const CSV_HEADER = 'metric_key,scope_level,scope_id,value,numerator,denominator,unit,observed_at';
+const cell = (v) => (v == null ? '' : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
+const csvRow = (cutoff) => (key, scope, id, value, unit) => [key, scope, id, value, '', '', unit, cutoff].map(cell).join(',');
+
+/** One monthly extract as the Overview's "Load extract…" takes it: study and site rows. */
+function extractCsv(source, p, cutoff) {
+  const row = csvRow(cutoff);
+  const lines = [CSV_HEADER];
+  for (const k of KRIS.filter((i) => i.extract === source)) {
+    lines.push(row(k.name, 'study', '', k.values[p], k.unit));
+    for (const [n, vals] of Object.entries(k.bySite ?? {})) if (vals[p] != null) lines.push(row(k.name, 'site', n, vals[p], k.unit));
   }
-  for (const q of QTLS.filter((i) => i.extract === x.source)) row(q.parameter, 'study', '', q.values[p], '%');
-  if (x.subjects && p === PERIOD_DAYS_AGO.length - 1) {
-    for (const s of SUBJECTS) for (const [key, v] of Object.entries(s.metrics)) row(key, 'subject', s.id, v, '');
-  }
+  for (const q of QTLS.filter((i) => i.extract === source)) lines.push(row(q.parameter, 'study', '', q.values[p], '%'));
   return lines.join('\n') + '\n';
+}
+
+/** The subject rows: what the patient cohort scorer reads. */
+function subjectCsv(cutoff) {
+  const row = csvRow(cutoff);
+  return [CSV_HEADER, ...SUBJECTS.flatMap((s) => Object.entries(s.metrics).map(([key, v]) => row(key, 'subject', s.id, v, '')))].join('\n') + '\n';
 }
 
 /* ───────────────────────── Plan, signals and actions ───────────────────────── */
@@ -320,7 +372,7 @@ async function confirmBoard({ api, run }, program, label) {
  */
 export async function ensureLumenRbm(ctx, program, label) {
   const assessment = await ensureAssessment(ctx, program, label);
-  await ensureIndicators(ctx, program, assessment, label);
+  await ensureIndicators(ctx, program, label);
   const planId = await ensurePlan(ctx, program, assessment, label);
   const signalIds = await ensureSignals(ctx, program, planId, label);
   await ensureActions(ctx, program, planId, signalIds, label);

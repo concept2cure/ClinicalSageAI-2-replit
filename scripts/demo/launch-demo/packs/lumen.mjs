@@ -24,6 +24,7 @@ import { connectSigner, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs'
 import { asArray, makeTally } from './biotech-shared.mjs';
 import { APPROVAL_LETTER, CLIENT, INFORMATION_REQUEST, CSR_SOURCE_FILE, FOOTER, LMN201_CMC, LMN201_DESIGN, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
 import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
+import { ensureLumenQms } from './lumen-qms.mjs';
 
 const rowsOf = (j) => (Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : []);
 const inDays = (n) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
@@ -162,6 +163,8 @@ export async function seed(ctx) {
   // A letter that needs an answer: the inbox's questions and Respond (fictional, like the approval letter).
   run.record('informationRequest', await ensureAgencyLetter(c, lmn201, INFORMATION_REQUEST, 'LMN-201'));
   await ensureIbReview(c, lmn201);
+  // Quality: deviations, CAPA, suppliers, nonconformances, audits, change control, management reviews (lumen-qms.mjs).
+  await ensureLumenQms(c, { lmn201 }, 'LMN-201');
   await ensureLumenSequence(c, lmn201);
   // Last, so the reports read everything above (Run history, the report canvas).
   await ensureLumenReports(c, lmn201);
