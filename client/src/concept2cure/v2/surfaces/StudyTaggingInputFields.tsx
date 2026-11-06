@@ -5,10 +5,18 @@ import { REASON_KIT } from './filingTarget';
 
 export interface StudyTaggingValues { studyId: string; stfFileTag: string }
 
-function studyTaggingProblem(required: boolean, values: StudyTaggingValues): string | null {
+function studyTaggingProblem(required: boolean, values: StudyTaggingValues, section = ''): string | null {
   const studyId = values.studyId.trim();
   const tag = values.stfFileTag.trim();
   if (required && (!studyId || !tag)) return 'Study id and STF file-tag are required for a study file in this sequence.';
+  /* The packager refuses this tag (server/services/ectd/stf-generator.ts,
+     checkStfLeaf; ICH eCTD STF v2.6.1). Said here, before the write, with the
+     tag to use, rather than at compile (J4 human test, 2026-11-06). */
+  if (tag === 'study-report') {
+    return /^m?4(\.|$)/i.test(section.trim())
+      ? '"study-report" is not an ICH STF file-tag. A nonclinical study report is tagged "pre-clinical-study-report".'
+      : '"study-report" is not an ICH STF file-tag. A clinical study report body is tagged "study-report-body".';
+  }
   if (studyId) {
     try { stfFileName(studyId); }
     catch (error) { return error instanceof Error ? error.message : 'The study id cannot form its Study Tagging File name.'; }
@@ -30,7 +38,7 @@ export function studyTaggingPlacement(section: string, operation: string, region
   if (!show) return { show, required, valid: true, problem: null, payload: {} };
   const studyId = values.studyId.trim();
   const stfFileTag = values.stfFileTag.trim();
-  const problem = studyTaggingProblem(required, values);
+  const problem = studyTaggingProblem(required, values, section);
   const payload = !required && !studyId && !stfFileTag ? {} : { studyId: studyId || null, stfFileTag: stfFileTag || null };
   return { show, required, valid: problem === null, problem, payload };
 }

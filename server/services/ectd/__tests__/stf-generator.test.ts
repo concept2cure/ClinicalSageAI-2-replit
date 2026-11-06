@@ -266,3 +266,19 @@ describe('regional packager writes the STF under its spec name and links it to i
     }
   }, 30000);
 });
+
+/* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): a toxicology report
+   tagged "study-report" was refused with "Reassemble the CSR", which names the
+   wrong document and no place to correct it. */
+describe('"study-report" is refused with the tag to use and where to correct it', () => {
+  it('a nonclinical report: names pre-clinical-study-report and Edit study tagging, not the CSR', () => {
+    expect(() => generateStfFiles([leaf({ studyId: 'TOX-01', fileTag: 'study-report', ctdSection: '4.2.3.2' })]))
+      .toThrow(/pre-clinical-study-report[\s\S]*Edit study tagging/);
+    expect(() => generateStfFiles([leaf({ studyId: 'TOX-01', fileTag: 'study-report', ctdSection: '4.2.3.2' })]))
+      .not.toThrow(/Reassemble the CSR/);
+  });
+  it('a clinical report: names study-report-body', () => {
+    expect(() => generateStfFiles([leaf({ studyId: 'ABC-301', fileTag: 'study-report', ctdSection: '5.3.5.1' })]))
+      .toThrow(/study-report-body/);
+  });
+});

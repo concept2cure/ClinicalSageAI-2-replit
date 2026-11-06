@@ -74,8 +74,8 @@ const executeActionBodySchema = z
     targetId: z.union([z.string(), z.number(), z.null()]).optional(),
     projectId: z.coerce.number().int().positive(),
     module: z.enum(AI_ACTION_MODULE_TYPES).optional(),
-    context: z.record(z.unknown()).optional(),
-    payload: z.record(z.unknown()).optional(),
+    context: z.record(z.string(), z.unknown()).optional(),
+    payload: z.record(z.string(), z.unknown()).optional(),
     conversationId: z.union([z.number(), z.string()]).optional(),
     threadId: z.string().optional(),
     async: z.boolean().optional(),
@@ -272,7 +272,7 @@ router.post('/execute', async (req: Request, res: Response) => {
       return res.status(400).json(
         buildRouteError(
           body.actionType,
-          parsedBody.error.errors.map(e => ({
+          parsedBody.error.issues.map(e => ({
             code: 'INVALID_REQUEST',
             message: `${e.path.join('.') || 'body'}: ${e.message}`,
           })),

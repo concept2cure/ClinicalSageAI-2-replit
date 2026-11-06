@@ -1,0 +1,7 @@
+# trunk's scripts/setup-local-db.sh on a fresh cluster (C2C_PGDATA=/var/lib/postgresql/c2c-verify-red, port 5433)
+[setup-local-db] Applying the out-of-band migration set (deploy-migrate)
+[setup-local-db] ERROR: deploy-migrate failed — see /tmp/c2c-migrate.log
+[setup-local-db]   tables:      1012
+[setup-local-db]   pgvector:    installed
+  ✗ failed:  db/migrations/20260617_audit_logs_immutability.sql — permission denied to create role (Only roles with the CREATEROLE attribute may create roles.)
+❌ Deploy migration failed: migration halted at db/migrations/20260617_audit_logs_immutability.sql — permission denied to create role (Only roles with the CREATEROLE attribute may create roles.) (214/462 applied before the failure)

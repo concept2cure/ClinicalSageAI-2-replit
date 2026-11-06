@@ -19,7 +19,7 @@ import { retainCompanyPresentationRevision } from './history';
 import { readPublishedCompanyVariant } from './designs';
 
 export const correspondenceDraftSchema = z.object({ sequenceId: z.number().int().positive(),
-  variantId: z.string().uuid().optional(), title: z.string().trim().min(1).max(300), paragraphs: z.array(z.string().max(10000)).max(100).default([]), reason: governedReason }).strict();
+  variantId: z.string().guid().optional(), title: z.string().trim().min(1).max(300), paragraphs: z.array(z.string().max(10000)).max(100).default([]), reason: governedReason }).strict();
 
 function actor(req: Request) {
   const organizationId = usableOrgId(authedOrgId(req)), userId = governedActorId(req);

@@ -13,6 +13,7 @@ import request from 'supertest';
 import { SignJWT } from 'jose';
 import { expect } from 'vitest';
 import { createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
+import { grantDocumentProjectEdit } from '../../../routes/c2c/__tests__/support/document-project-access';
 
 /** Set as process.env.JWT_SECRET and JWT_SECRET_DEV by each test file before it imports a router. */
 export const FILING_JWT_SECRET = 'node-status-follows-work';
@@ -122,6 +123,9 @@ export interface FilingApp {
 /** Builds the database, hands its pool to the caller's `db` mock, and mounts both routers. */
 export async function startFilingApp(bind: (jdb: JourneyDb) => void): Promise<FilingApp> {
   const jdb = await createJourneyDb({ prereqSql: PREREQ, migrations: MIGRATIONS });
+  // The documents router admits a document only of a project its caller can open, and a write only with the
+  // project's edit right (F1, 2026-11-05): the author is given both, through the real sharing policy.
+  await grantDocumentProjectEdit(jdb.pglite, { organizationId: AUTHOR.organizationId, userId: Number(AUTHOR.id), programId: PROJECT });
   bind(jdb);
   const { default: authoringRouter } = await import('../../../routes/authoring.router');
   const { default: documentsRouter } = await import('../../../routes/c2c/documents');

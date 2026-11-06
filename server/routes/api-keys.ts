@@ -50,7 +50,7 @@ const createApiKeySchema = z.object({
     .refine(d => d.getTime() > Date.now(), 'expiresAt must be in the future')
     .optional(),
   rateLimit: z.number().int().positive().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   reason: z.string().trim().min(3).max(500).optional(),
 });
 
@@ -135,7 +135,7 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(400).json({
         error: 'Validation failed',
         availableScopes: API_KEY_SCOPES,
-        details: parsed.error.errors.map(e => ({
+        details: parsed.error.issues.map(e => ({
           field: e.path.join('.'),
           message: e.message,
           code: e.code,

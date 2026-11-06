@@ -155,7 +155,7 @@ const createArtifactSchema = z.object({
   content: z.string().min(1, 'Content must not be empty').max(1000000, 'Content too large'), // 1MB max, no empty
   templateId: z.string().min(1).max(200).optional(),
   ctdSection: z.string().max(50).optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
   clientTrack: z.enum(['biotech', 'device', 'diagnostics']).optional(),
   submissionProgram: z.enum(['ind', 'ectd', '510k', 'pma', 'cer', 'ivdr', 'general_ri']).optional(),
   persona: z
@@ -366,18 +366,27 @@ router.get(
 
 /**
  * GET /api/concept2cure/projects/all/artifacts-summary
- * Returns artifact count summary across all projects for the organization.
+ * Returns artifact count summary across the projects the caller may use.
+ *
+ * 2026-11-05 (F1, docs/evidence/F1/2026-11-05-listing-doors-scope/): it counted
+ * every artifact in the organization, a private project's included. It now
+ * counts the artifacts of the caller's accessible projects, the set the
+ * gallery above lists. A check that cannot run is an error, never a zero.
  */
 router.get('/projects/all/artifacts-summary', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
+    const actor = await requireCurrentProjectActor(req);
+    const accessible = await getAccessibleReportProjectIds(organizationId, actor, pool).catch(() => {
+      throw new ProjectAdmissionRefusal(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. No project data was supplied.');
+    });
 
-    const allArtifacts = await db
+    const allArtifacts = accessible.length === 0 ? [] : await db
       .select({
         status: concept2cureArtifacts.status,
       })
       .from(concept2cureArtifacts)
-      .where(eq(concept2cureArtifacts.organizationId, organizationId));
+      .where(and(eq(concept2cureArtifacts.organizationId, organizationId), inArray(concept2cureArtifacts.projectId, accessible)));
 
     const total = allArtifacts.length;
     const draft = allArtifacts.filter(a => a.status === 'draft').length;
@@ -388,6 +397,7 @@ router.get('/projects/all/artifacts-summary', async (req: Request, res: Response
 
     return sendSuccess(res, { total, draft, review, approved });
   } catch (error: any) {
+    if (error instanceof ProjectAdmissionRefusal) return sendError(res, error.status, error.message, undefined, error.code);
     logger.error('Failed to fetch artifacts summary', { error: error.message });
     return sendError(res, 500, 'Failed to fetch artifacts summary');
   }
@@ -791,7 +801,7 @@ router.post(
       return sendSuccess(res.status(201), newArtifact, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+        return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
       }
       logConcept2cureError('create artifact', error, { projectId: req.params.projectId });
       return sendError(res, 500, 'Failed to create artifact');

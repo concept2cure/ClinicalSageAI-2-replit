@@ -220,9 +220,16 @@ function checkStfLeaf(leaf: StfLeaf, warnings: string[]): void {
     );
   }
   if (leaf.operation !== 'delete' && leaf.fileTag === 'study-report') {
+    // Named for the leaf's module, with where a publisher corrects it (J4 human
+    // test, 2026-11-06): a toxicology report was told to "Reassemble the CSR".
+    const nonclinical = /^m?4(\.|$)/i.test(String(leaf.ctdSection ?? '').trim());
     throw new Error(
-      `${ICH_STF_SPEC_261.ref}: "study-report" is not a defined file-tag; the CSR body role is "study-report-body". ` +
-        'Reassemble the CSR or correct its study-tagging metadata before packaging.',
+      `${ICH_STF_SPEC_261.ref}: "study-report" is not a defined file-tag on "${leaf.title}" (${leaf.ctdSection}); ` +
+        (nonclinical
+          ? 'a nonclinical study report is tagged "pre-clinical-study-report". '
+          : 'the clinical study report body is tagged "study-report-body". ') +
+        'Correct it in Submission Center, Builder, Edit study tagging' +
+        (nonclinical ? '.' : ', or reassemble the CSR.'),
     );
   }
   if (!required && !STF_DOCUMENT_FILE_TAGS.tags.includes(leaf.fileTag)) {

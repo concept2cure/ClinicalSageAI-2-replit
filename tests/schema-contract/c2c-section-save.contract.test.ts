@@ -55,6 +55,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import supertest from 'supertest';
+import { grantDocumentProjectEdit } from '../../server/routes/c2c/__tests__/support/document-project-access';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const PREREQ = path.join(REPO_ROOT, 'migrations/20260527_mutation_primitives.sql');
@@ -134,6 +135,8 @@ beforeEach(async () => {
   // A document bound to a real seeded rule pack, so the composite FK resolves,
   // and to a real project — c2c_documents.project_id is NOT NULL.
   await pg.query(`INSERT INTO regulatory_programs (id) VALUES ($1)`, [PROJECT]);
+  // The route admits a document only of a project the caller can open, and a write only with its edit right (F1).
+  await grantDocumentProjectEdit(pg, { organizationId: ORG, userId: USER, programId: PROJECT });
   const pack = await pg.query<{ version: string }>(
     `SELECT version FROM c2c_rule_packs WHERE doc_type='ind' AND agency='fda' LIMIT 1`,
   );

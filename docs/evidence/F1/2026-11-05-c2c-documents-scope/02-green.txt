@@ -1,0 +1,31 @@
+02-green.txt — the new suite against the changed route.
+Command: npx vitest run --config vitest.config.ts server/routes/c2c/__tests__/documents-project-scope.pglite.test.ts
+
+✓the list holds to the projects the person can open > with no projectId, lists the open projects only: never a private project, no program, or another organization 35ms
+✓the list holds to the projects the person can open > a private project's projectId lists nothing, exactly as an unknown project does 16ms
+✓the list holds to the projects the person can open > an open project's projectId lists its documents, the filters still applied 16ms
+✓a private project's document is answered as a missing one > the document, its outline, its section and the section history: 404, the same words as a missing id 60ms
+✓a private project's document is answered as a missing one > a document with no program, and another organization's, read the same way 48ms
+✓a private project's document is answered as a missing one > the legacy section resolver names only a document the person can read 25ms
+✓a document of a project the person can open still reads > the document, its outline, its section content and history 30ms
+✓an access check that cannot run is an error with a code, never an empty result > the sharing policy cannot be read 24ms
+✓an access check that cannot run is an error with a code, never an empty result > a caller who is not a current member, or no identified caller, is refused 26ms
+✓every write needs a project the person can open, then its edit right > PATCH a section: a private project's document is answered as a missing one, and nothing changes 27ms
+✓every write needs a project the person can open, then its edit right > PATCH a section: a project the person can open but not change is refused, and nothing changes 22ms
+✓every write needs a project the person can open, then its edit right > PATCH a section: an edit check that cannot run changes nothing, and says so 13ms
+✓every write needs a project the person can open, then its edit right > link evidence: a private project's document is answered as a missing one, and nothing changes 17ms
+✓every write needs a project the person can open, then its edit right > link evidence: a project the person can open but not change is refused, and nothing changes 15ms
+✓every write needs a project the person can open, then its edit right > link evidence: an edit check that cannot run changes nothing, and says so 13ms
+✓every write needs a project the person can open, then its edit right > unlink evidence: a private project's document is answered as a missing one, and nothing changes 16ms
+✓every write needs a project the person can open, then its edit right > unlink evidence: a project the person can open but not change is refused, and nothing changes 17ms
+✓every write needs a project the person can open, then its edit right > unlink evidence: an edit check that cannot run changes nothing, and says so 14ms
+✓every write needs a project the person can open, then its edit right > lock: a private project's document is answered as a missing one, and nothing changes 16ms
+✓every write needs a project the person can open, then its edit right > lock: a project the person can open but not change is refused, and nothing changes 14ms
+✓every write needs a project the person can open, then its edit right > lock: an edit check that cannot run changes nothing, and says so 12ms
+✓every write needs a project the person can open, then its edit right > submit: a private project's document is answered as a missing one, and nothing changes 15ms
+✓every write needs a project the person can open, then its edit right > submit: a project the person can open but not change is refused, and nothing changes 14ms
+✓every write needs a project the person can open, then its edit right > submit: an edit check that cannot run changes nothing, and says so 12ms
+✓every write needs a project the person can open, then its edit right > with the edit right, each write is made and audited 82ms
+
+Test Files  1 passed (1)
+Tests  25 passed (25)

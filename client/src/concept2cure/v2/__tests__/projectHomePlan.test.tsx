@@ -432,9 +432,19 @@ describe("the Plan step's due-for-you and the content plan's join", () => {
     await openPlan();
     await waitFor(() => expect(within(entry('Target Product Profile')).getByTestId('plan-produced-by')).toBeTruthy());
     expect(within(entry('Target Product Profile')).getByTestId('plan-produced-by').textContent)
-      .toBe('Work: Define product profile · due Mar 1, 2027 · Pat Lee');
+      .toBe('Work: Define product profile · due Mar 1, 2027 · task owner: Pat Lee');
     // A document whose task is not in this project's pyramid says nothing, never a guessed task.
     expect(within(entry('Form FDA 1571')).queryByTestId('plan-produced-by')).toBeNull();
+  });
+
+  // Human test J1 (2026-11-06): beside "Assigned to …, due Nov 20", a bare "no owner" read as a contradiction. The line
+  // is the producing task's, and says whose: "task owner: none".
+  it("says a producing task without an owner is the task's, not the document's", async () => {
+    servePlan([]);
+    mount();
+    await openPlan();
+    await waitFor(() => expect(within(entry('Target Product Profile')).getByTestId('plan-produced-by')).toBeTruthy());
+    expect(within(entry('Target Product Profile')).getByTestId('plan-produced-by').textContent).toMatch(/^Work: Define product profile · .* · task owner: none$/);
   });
 
   it('reads the project pyramid once for the whole Plan step', async () => {

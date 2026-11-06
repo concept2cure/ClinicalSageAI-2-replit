@@ -65,3 +65,36 @@ describe('complete citation catalogue reads', () => {
     expect(parseProjectSourcePage(body, { programId, offset: 0, limit: 200 }).ok).toBe(false);
   });
 });
+
+/* The founder, 2026-11-05: not licensed, not relevant, missing evidence and unavailable to this user are
+   never one generic failure. The editor's citation catalogue showed the gate's raw "Module access denied"
+   with Try again for a plan without the feature. A refusal is now worded through the one read classifier
+   and says no retry can help; only a failure to answer stays retryable. */
+const refused = (status: number, code?: string) =>
+  Object.assign(new Error('Module access denied'), { name: 'ApiRequestError', status, ...(code ? { code } : {}) });
+
+describe('a refused catalogue read is said as the refusal it is', () => {
+  it.each([
+    { name: 'a plan without the feature', err: refused(403, 'MODULE_NOT_LICENSED'), words: /not enabled for your organization/ },
+    { name: 'a part not in this release', err: refused(403, 'LAUNCH_SCOPE'), words: /not in this release/ },
+    { name: 'a role that cannot read it', err: refused(403, 'FORBIDDEN'), words: /Your role cannot do this/ },
+    { name: 'a project not in this organization', err: refused(404, 'PROJECT_NOT_FOUND'), words: /not found in your organization/ },
+  ])('$name: its own words, and no retry offered', async ({ err, words }) => {
+    apiRequest.mockRejectedValue(err);
+    const { result } = renderHook(() => useProjectSourceCatalog(programId));
+    await waitFor(() => expect(result.current.state).toBe('error'));
+    expect(result.current.error).toMatch(words);
+    expect(result.current.error).not.toMatch(/Module access denied|could not be read/);
+    expect(result.current.retryable).toBe(false);
+  });
+
+  it.each([
+    { name: 'a server failure', err: refused(500) },
+    { name: 'no response at all', err: new Error('Failed to fetch') },
+  ])('$name stays a failed read that a retry can fix', async ({ err }) => {
+    apiRequest.mockRejectedValue(err);
+    const { result } = renderHook(() => useProjectSourceCatalog(programId));
+    await waitFor(() => expect(result.current.state).toBe('error'));
+    expect(result.current.retryable).toBe(true);
+  });
+});

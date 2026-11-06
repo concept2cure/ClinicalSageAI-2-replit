@@ -270,7 +270,7 @@ router.post('/projects/:projectId/tasks', async (req: Request, res: Response) =>
 
     return sendSuccess(res, task);
   } catch (error: any) {
-    if (error instanceof z.ZodError) return sendError(res, 400, 'Validation error', error.errors);
+    if (error instanceof z.ZodError) return sendError(res, 400, 'Validation error', error.issues);
     logger.error('Failed to create task', { error: error.message });
     return sendError(res, 500, 'Failed to create task');
   }

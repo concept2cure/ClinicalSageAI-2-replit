@@ -10,6 +10,20 @@
  * query is fired in parallel, tenant-scoped, capped at 25 hits each by
  * default. The fanout is defensive: a missing optional table returns []
  * rather than erroring the whole search.
+ *
+ * Project scope (F1, 2026-11-05; docs/evidence/F1/2026-11-05-listing-doors-scope/).
+ * Every type that reads a project's records read the organization's, so a
+ * member found a private project's program names, artifact titles (matched on
+ * their content too, an oracle for what the project holds), Q-Subs, labeling,
+ * risks, studies, UDI records and CDx pairings, and a colleague's AnA
+ * conversations by title. They now read the projects the sharing policy admits
+ * the person to (getAccessibleReportProjectIds) and, for a program-keyed table,
+ * the verified accessible programs (getCurrentAccessibleProgramScope), as AnA's
+ * global_search does. A record held at organization level (no program) is still
+ * found. A conversation is found only by the person who held it, as the thread
+ * list lists it (routes/chat/threads.ts). A scope check that cannot run is an
+ * error with a code, never an empty result. QMS documents, LDT inventory and
+ * the audit trail carry no project and are read as before.
  */
 
 import { Router, Request, Response } from 'express';
@@ -20,6 +34,11 @@ import {
 } from '../lib/api-response';
 import { pool } from '../db';
 import { canReadAuditTrail } from '../services/audit/audit-api-authority';
+import { governedActorId } from '../middleware/orgMembership';
+import {
+  ProgramReadAccessError, getCurrentAccessibleProgramScope, readCurrentProgramActor,
+} from '../services/c2c/current-program-access';
+import { getAccessibleReportProjectIds } from '../services/report-os/project-access';
 
 const router = Router();
 const log = createScopedLogger('mdx-search');
@@ -36,6 +55,9 @@ const SEARCH_TYPES = [
   'risk', 'study', 'udi', 'cdx', 'ldt', 'qms',
 ] as const;
 type SearchType = (typeof SEARCH_TYPES)[number];
+/** The types that read a project's records: held to the projects the person can open. */
+const PROJECT_TYPES: ReadonlySet<SearchType> = new Set<SearchType>(
+  ['program', 'artifact', 'q_sub', 'thread', 'labeling', 'risk', 'study', 'udi', 'cdx']);
 
 const searchQuery = z.object({
   q:     z.string().min(2).max(200),
@@ -66,6 +88,33 @@ async function safeQuery<T extends Record<string, unknown>>(
   }
 }
 
+/** The projects (projects.id) and programs (regulatory_programs.id) the person can open. */
+interface SearchScope { userId: number; projectIds: number[]; programIds: string[] }
+
+/** Throws when the scope cannot be read; [] is an evaluated empty scope. */
+async function readSearchScope(req: Request, orgId: number): Promise<SearchScope> {
+  const identity = { organizationId: orgId, userId: governedActorId(req) ?? undefined };
+  const actor = await readCurrentProgramActor(pool, identity);
+  const projectIds = await getAccessibleReportProjectIds(orgId, actor, pool);
+  const { programIds } = await getCurrentAccessibleProgramScope(pool, identity);
+  return { userId: actor.userId, projectIds, programIds: [...programIds] };
+}
+
+function sendScopeFailure(res: Response, err: unknown): Response {
+  if (err instanceof ProgramReadAccessError) return res.status(err.status).json({ error: err.code, message: err.message });
+  log.error('search project scope could not be read', { error: err instanceof Error ? err.message : String(err) });
+  return res.status(503).json({
+    error: 'PROJECT_ACCESS_UNAVAILABLE',
+    message: 'Current project access could not be verified. Nothing was searched.',
+  });
+}
+
+/** The scope the wanted types need, read whenever a project type runs (unused otherwise), or null once a refusal is sent. */
+async function scopeOrRefusal(req: Request, res: Response, orgId: number, wants: (t: SearchType) => boolean): Promise<SearchScope | null> {
+  if (!SEARCH_TYPES.some((t) => PROJECT_TYPES.has(t) && wants(t))) return { userId: 0, projectIds: [], programIds: [] };
+  try { return await readSearchScope(req, orgId); } catch (err) { sendScopeFailure(res, err); return null; }
+}
+
 router.get('/search', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -80,6 +129,8 @@ router.get('/search', async (req: Request, res: Response) => {
   // Audit hits only for the audit trail's readers (DP-18, second door).
   const wants = (t: SearchType) =>
     (t !== 'audit' || canReadAuditTrail(req)) && (requestedTypes.length === 0 || requestedTypes.includes(t));
+  const scope = await scopeOrRefusal(req, res, orgId, wants);
+  if (!scope) return;
 
   try {
     const fanout: Promise<SearchHit[]>[] = [];
@@ -87,10 +138,10 @@ router.get('/search', async (req: Request, res: Response) => {
     if (wants('program')) {
       fanout.push(safeQuery<{ id: string; name: string; code: string | null; status: string | null; description: string | null }>(
         `SELECT id, name, code, status, description FROM regulatory_programs
-          WHERE organization_id = $1 AND deleted_at IS NULL
+          WHERE organization_id = $1 AND deleted_at IS NULL AND id = ANY($4::uuid[])
             AND (name ILIKE $2 OR code ILIKE $2 OR description ILIKE $2)
           LIMIT $3`,
-        [orgId, ilike, limit],
+        [orgId, ilike, limit, scope.programIds],
         (r) => ({
           type: 'program', id: r.id,
           title: r.code ? `${r.code} · ${r.name}` : r.name,
@@ -104,10 +155,10 @@ router.get('/search', async (req: Request, res: Response) => {
     if (wants('artifact')) {
       fanout.push(safeQuery<{ id: number; artifact_id: string; title: string; ctd_section: string | null; status: string }>(
         `SELECT id, artifact_id, title, ctd_section, status FROM concept2cure_artifacts
-          WHERE organization_id = $1 AND status != 'archived'
+          WHERE organization_id = $1 AND project_id = ANY($4::int[]) AND status != 'archived'
             AND (title ILIKE $2 OR content ILIKE $2)
           ORDER BY updated_at DESC LIMIT $3`,
-        [orgId, ilike, limit],
+        [orgId, ilike, limit, scope.projectIds],
         (r) => ({
           type: 'artifact', id: r.id,
           title: r.title,
@@ -121,10 +172,10 @@ router.get('/search', async (req: Request, res: Response) => {
     if (wants('q_sub')) {
       fanout.push(safeQuery<{ id: string; q_number: string | null; title: string; stage: string | null }>(
         `SELECT id::text AS id, q_number, title, stage FROM q_submissions
-          WHERE program_id::uuid IN (SELECT id FROM regulatory_programs WHERE organization_id = $1)
+          WHERE program_id::uuid IN (SELECT id FROM regulatory_programs WHERE organization_id = $1 AND id = ANY($4::uuid[]))
             AND (title ILIKE $2 OR q_number ILIKE $2)
           ORDER BY created_at DESC LIMIT $3`,
-        [orgId, ilike, limit],
+        [orgId, ilike, limit, scope.programIds],
         (r) => ({
           type: 'q_sub', id: r.id,
           title: r.q_number ? `${r.q_number} · ${r.title}` : r.title,
@@ -156,9 +207,10 @@ router.get('/search', async (req: Request, res: Response) => {
     if (wants('thread')) {
       fanout.push(safeQuery<{ id: string; title: string | null; updated_at: Date }>(
         `SELECT id, title, updated_at FROM chat_threads
-          WHERE organization_id = $1 AND COALESCE(title, '') ILIKE $2
+          WHERE organization_id = $1 AND user_id = $4 AND (program_id IS NULL OR program_id = ANY($5::uuid[]))
+            AND COALESCE(title, '') ILIKE $2
           ORDER BY updated_at DESC LIMIT $3`,
-        [orgId, ilike, limit],
+        [orgId, ilike, limit, scope.userId, scope.programIds],
         (r) => ({
           type: 'thread', id: r.id,
           title: r.title ?? `Thread ${r.id}`,
@@ -172,10 +224,10 @@ router.get('/search', async (req: Request, res: Response) => {
     if (wants('labeling')) {
       fanout.push(safeQuery<{ id: number; device_name: string; doc_kind: string; language: string; status: string }>(
         `SELECT id, device_name, doc_kind, language, status FROM labeling_documents
-          WHERE organization_id = $1 AND deleted_at IS NULL
+          WHERE organization_id = $1 AND deleted_at IS NULL AND (program_id IS NULL OR program_id = ANY($4::uuid[]))
             AND (device_name ILIKE $2 OR doc_kind ILIKE $2)
           LIMIT $3`,
-        [orgId, ilike, limit],
+        [orgId, ilike, limit, scope.programIds],
         (r) => ({
           type: 'labeling', id: r.id,
           title: `${r.device_name} · ${r.doc_kind} (${r.language})`,
@@ -189,10 +241,10 @@ router.get('/search', async (req: Request, res: Response) => {
     if (wants('risk')) {
       fanout.push(safeQuery<{ id: number; ref_code: string | null; hazard: string; harm: string; status: string }>(
         `SELECT id, ref_code, hazard, harm, status FROM risk_items
-          WHERE organization_id = $1 AND deleted_at IS NULL
+          WHERE organization_id = $1 AND deleted_at IS NULL AND (program_id IS NULL OR program_id = ANY($4::uuid[]))
             AND (hazard ILIKE $2 OR harm ILIKE $2 OR COALESCE(ref_code,'') ILIKE $2)
           LIMIT $3`,
-        [orgId, ilike, limit],
+        [orgId, ilike, limit, scope.programIds],
         (r) => ({
           type: 'risk', id: r.id,
           title: r.ref_code ? `${r.ref_code} · ${r.hazard}` : r.hazard,
@@ -206,10 +258,10 @@ router.get('/search', async (req: Request, res: Response) => {
     if (wants('study')) {
       fanout.push(safeQuery<{ id: number; study_id: string; title: string; status: string }>(
         `SELECT id, study_id, title, status FROM clinical_studies
-          WHERE organization_id = $1 AND deleted_at IS NULL
+          WHERE organization_id = $1 AND deleted_at IS NULL AND (program_id IS NULL OR program_id = ANY($4::uuid[]))
             AND (title ILIKE $2 OR study_id ILIKE $2 OR COALESCE(nct_id,'') ILIKE $2)
           LIMIT $3`,
-        [orgId, ilike, limit],
+        [orgId, ilike, limit, scope.programIds],
         (r) => ({
           type: 'study', id: r.id,
           title: `${r.study_id} · ${r.title}`,
@@ -223,10 +275,10 @@ router.get('/search', async (req: Request, res: Response) => {
     if (wants('udi')) {
       fanout.push(safeQuery<{ id: number; device_name: string; udi_di: string; gudid_status: string | null }>(
         `SELECT id, device_name, udi_di, gudid_status FROM udi_records
-          WHERE organization_id = $1 AND deleted_at IS NULL
+          WHERE organization_id = $1 AND deleted_at IS NULL AND (program_id IS NULL OR program_id = ANY($4::uuid[]))
             AND (device_name ILIKE $2 OR udi_di ILIKE $2 OR COALESCE(product_code,'') ILIKE $2)
           LIMIT $3`,
-        [orgId, ilike, limit],
+        [orgId, ilike, limit, scope.programIds],
         (r) => ({
           type: 'udi', id: r.id,
           title: `${r.device_name} (${r.udi_di})`,
@@ -240,10 +292,10 @@ router.get('/search', async (req: Request, res: Response) => {
     if (wants('cdx')) {
       fanout.push(safeQuery<{ id: number; drug_name: string; biomarker: string | null; approval_status: string }>(
         `SELECT id, drug_name, biomarker, approval_status FROM cdx_pairings
-          WHERE organization_id = $1 AND deleted_at IS NULL
+          WHERE organization_id = $1 AND deleted_at IS NULL AND (device_program_id IS NULL OR device_program_id = ANY($4::uuid[]))
             AND (drug_name ILIKE $2 OR COALESCE(biomarker,'') ILIKE $2)
           LIMIT $3`,
-        [orgId, ilike, limit],
+        [orgId, ilike, limit, scope.programIds],
         (r) => ({
           type: 'cdx', id: r.id,
           title: r.biomarker ? `${r.drug_name} · ${r.biomarker}` : r.drug_name,

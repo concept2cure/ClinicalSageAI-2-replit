@@ -346,7 +346,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
     console.error('Error creating task:', error);
     res.status(400).json({
       success: false,
-      error: error instanceof z.ZodError ? error.errors : 'Failed to create task',
+      error: error instanceof z.ZodError ? error.issues : 'Failed to create task',
     });
   }
 });
@@ -635,7 +635,7 @@ router.patch('/tasks/:taskId', (req, res, next) => {
   } catch (error) {
     if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
     if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The status change');
-    if (error instanceof z.ZodError) return res.status(400).json({ success: false, error: error.errors });
+    if (error instanceof z.ZodError) return res.status(400).json({ success: false, error: error.issues });
     console.error('Error updating task:', error);
     // Lost at COMMIT: it may have landed. Nobody is notified of it, and the
     // caller is told it is unknown — never that it failed.
@@ -780,7 +780,7 @@ router.post('/tasks/bulk-create', requireEditorAccess, async (req: Request, res:
     res.json({ success: true, data: createdTasks, count: createdTasks.length });
   } catch (error) {
     if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
-    if (error instanceof z.ZodError) return res.status(400).json({ success: false, error: error.errors });
+    if (error instanceof z.ZodError) return res.status(400).json({ success: false, error: error.issues });
     const audit = error instanceof TaskAuditNotRecordedError;
     if (!audit) console.error('Error bulk creating tasks:', error);
     // Tasks commit one at a time, so a failure after the first leaves real
@@ -1179,7 +1179,7 @@ router.post('/tasks/dependencies', requireEditorAccess, async (req: Request, res
     console.error('Error creating dependency:', error);
     res.status(400).json({
       success: false,
-      error: error instanceof z.ZodError ? error.errors : 'Failed to create dependency',
+      error: error instanceof z.ZodError ? error.issues : 'Failed to create dependency',
     });
   }
 });
@@ -1331,7 +1331,7 @@ router.post('/templates', requireEditorAccess, async (req: Request, res: Respons
     console.error('Error creating template:', error);
     res.status(400).json({
       success: false,
-      error: error instanceof z.ZodError ? error.errors : 'Failed to create template',
+      error: error instanceof z.ZodError ? error.issues : 'Failed to create template',
     });
   }
 });
@@ -1368,7 +1368,7 @@ router.post('/automation', requireEditorAccess, async (req: Request, res: Respon
     console.error('Error creating automation:', error);
     res.status(400).json({
       success: false,
-      error: error instanceof z.ZodError ? error.errors : 'Failed to create automation',
+      error: error instanceof z.ZodError ? error.issues : 'Failed to create automation',
     });
   }
 });
@@ -1473,7 +1473,7 @@ router.post('/tasks/:taskId/notify', requireEditorAccess, async (req: Request, r
     res.json({ success: true, taskId, recipientUserId });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: error.errors });
+      return res.status(400).json({ success: false, error: error.issues });
     }
     console.error('Error sending notification:', error);
     res.status(500).json({
@@ -1548,7 +1548,7 @@ router.post('/messages', async (req: Request, res: Response) => {
     res.status(201).json({ success: true, data: { id } });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: error.errors });
+      return res.status(400).json({ success: false, error: error.issues });
     }
     console.error('Error sending message:', error);
     res.status(500).json({ success: false, error: 'Failed to send message' });

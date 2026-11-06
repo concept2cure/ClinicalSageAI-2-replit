@@ -19,8 +19,8 @@ type LoadComponent = (selection: CsrSourceSelection) => Promise<AdamComponent>;
 export const isAdamBundle = (raw: unknown): boolean =>
   !!raw && typeof raw === 'object' && !Array.isArray(raw) && (raw as Record<string, unknown>).format === CSR_ADAM_BUNDLE_FORMAT;
 
-const issuesOf = (issues: Array<{ path: (string | number)[]; code: string; message: string }>) =>
-  issues.slice(0, 30).map(issue => ({ path: issue.path.join('.'),
+const issuesOf = (issues: Array<{ path: PropertyKey[]; code: string; message: string }>) =>
+  issues.slice(0, 30).map(issue => ({ path: issue.path.map(String).join('.'),
     message: issue.code === 'custom' ? issue.message : 'Invalid or missing value. Check the documented field type and bounds.' }));
 
 function parseBundle(raw: unknown) {

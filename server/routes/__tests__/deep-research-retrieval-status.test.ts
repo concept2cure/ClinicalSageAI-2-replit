@@ -24,6 +24,11 @@ vi.mock('../../services/enhancedEmbeddingService', () => ({
   getEmbeddingService: () => ({ searchHybrid: (...a: unknown[]) => searchHybrid(...a) }),
 }));
 vi.mock('../../db.js', () => ({ pool: { query: vi.fn() } }));
+// The project scope has its own suite (evidence-retrieval-project-scope.pglite.test.ts).
+vi.mock('../../services/data-room-retrieval', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/data-room-retrieval')>()),
+  readDataRoomProjectScope: async () => [10, 13],
+}));
 
 import { runWithTenantScope } from '../../db/tenantStore';
 import router from '../deep-research';
@@ -87,5 +92,7 @@ describe('deep research reports its retrieval outcome', () => {
     const res = await generate();
     expect(res.body.retrievalStatus).toBe('ok');
     expect(res.body.metrics.sectionsWithSources).toBe(res.body.sections.length);
+    // Every section searched the projects the person can open, and only those.
+    expect(searchHybrid.mock.calls.every((c) => JSON.stringify(c[1].projectIds) === '[10,13]')).toBe(true);
   });
 });

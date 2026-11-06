@@ -50,3 +50,14 @@ describe("Project home's section actions stay on a phone's screen", () => {
     expect(acts && decl(acts.body, 'max-width')).toBe('100%');
   });
 });
+
+describe("New project's filing tabs reach every client type on a phone", () => {
+  // At 390 the tab row was 661px wide and clipped: "Diagnostics & IVD" and "Cross-Cutting Documents" could not be reached.
+  it('the wizard scrolls its filing tabs sideways and does not shrink them', () => {
+    const css = sheet('project-home-v2.css');
+    const row = css.find((r) => r.selector === '.c2c-v2 .npw .rpk-tabs');
+    expect(row && decl(row.body, 'overflow-x')).toBe('auto');
+    const tab = css.find((r) => r.selector === '.c2c-v2 .npw .rpk-tabs > *');
+    expect(tab && decl(tab.body, 'flex-shrink')).toBe('0');
+  });
+});

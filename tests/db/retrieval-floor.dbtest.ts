@@ -13,6 +13,11 @@
  * These cases mount the real route on a from-empty PostgreSQL, as the
  * non-superuser runtime role with RLS enforcing, inside tenant A's request
  * scope. Only the query embedding and the model call are stubbed.
+ *
+ * Since F1 (2026-11-05) a search ranks only the atoms of projects the person
+ * can open, so both atoms are artifact atoms of tenant A's fixture project,
+ * which its creator, userA, can open; the route works that scope out itself
+ * (docs/evidence/F1/2026-11-05-evidence-retrieval-scope/).
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import express, { type NextFunction, type Request, type Response } from 'express';
@@ -32,6 +37,7 @@ import {
   ORG_A,
   owner,
   userA,
+  ids,
   provisionTwoTenantFixture,
   teardownTwoTenantFixture,
 } from './two-tenant-fixture';
@@ -49,12 +55,19 @@ const QUERY_VECTOR = JSON.parse(vec(1)) as number[];
 const STRONG = `${TAG}-floor-strong`;
 const WEAK = `${TAG}-floor-weak`;
 let uuidA = '';
+let projectA = 0;
 
+/** An artifact of tenant A's fixture project, and its atom, both named `title`. */
 async function atom(title: string, cos: number) {
+  await owner.query(
+    `INSERT INTO concept2cure_artifacts (artifact_id, project_id, organization_id, type, category, title, content)
+     VALUES ($1,$2,$3,'document','clinical',$1,'fixture')`,
+    [title, projectA, ORG_A],
+  );
   await owner.query(
     `INSERT INTO lumen_data_atoms
        (organization_id, source_type, source_id, atom_type, title, content, status, embedding, created_at, updated_at)
-     VALUES ($1,'document',$2,'finding',$2,$3,'active',$4::vector, now(), now())`,
+     VALUES ($1,'artifact',$2,'finding',$2,$3,'active',$4::vector, now(), now())`,
     [ORG_A, title, `${title}: ${QUERY} was measured`, vec(cos)],
   );
 }
@@ -80,6 +93,7 @@ const titlesOf = (body: any) => JSON.stringify(body?.sources ?? []);
 beforeAll(async () => {
   await provisionTwoTenantFixture();
   uuidA = (await owner.query('SELECT uuid::text AS u FROM organizations WHERE id = $1', [ORG_A])).rows[0].u;
+  projectA = Number(ids.A.projects);
   vi.spyOn(EnhancedEmbeddingService.prototype, 'embed').mockResolvedValue({
     text: QUERY,
     embedding: QUERY_VECTOR,
@@ -114,6 +128,7 @@ afterAll(async () => {
     await owner.query('DELETE FROM ai_retrieval_runs WHERE organization_id = $1', [ORG_A]);
     await owner.query('DELETE FROM ai_threads WHERE organization_id = $1', [ORG_A]);
     await owner.query('DELETE FROM lumen_data_atoms WHERE source_id LIKE $1', [`${TAG}-floor-%`]);
+    await owner.query('DELETE FROM concept2cure_artifacts WHERE artifact_id LIKE $1', [`${TAG}-floor-%`]);
   }
   await teardownTwoTenantFixture();
 });
@@ -126,9 +141,9 @@ describe('searchHybrid applies a floor only when asked for one', () => {
     );
   it('the floor is what excludes the weak atom: without one it is returned, with one it is not', async () => {
     const svc = new EnhancedEmbeddingService(getPool() as never);
-    const unfloored = await asTenantA(() => svc.searchHybrid(QUERY, { limit: 5, organizationUuid: uuidA }));
+    const unfloored = await asTenantA(() => svc.searchHybrid(QUERY, { limit: 5, organizationUuid: uuidA, projectIds: [projectA] }));
     const floored = await asTenantA(() =>
-      svc.searchHybrid(QUERY, { limit: 5, organizationUuid: uuidA, minSemanticScore: 0.6 }),
+      svc.searchHybrid(QUERY, { limit: 5, organizationUuid: uuidA, projectIds: [projectA], minSemanticScore: 0.6 }),
     );
     expect(unfloored.map((r) => r.title)).toEqual(expect.arrayContaining([STRONG, WEAK]));
     expect(floored.map((r) => r.title)).toEqual([STRONG]);

@@ -35,6 +35,14 @@ vi.mock('../../services/ai-gateway/index.js', () => ({
   getGateway: () => ({ getEnabledProviders, route: (...a: unknown[]) => route(...a) }),
 }));
 
+/* The project scope is its own suite, on the real sharing policy
+   (evidence-retrieval-project-scope.pglite.test.ts); here it is the projects it answers. */
+const scope = vi.fn();
+vi.mock('../../services/data-room-retrieval.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/data-room-retrieval')>()),
+  readDataRoomProjectScope: (...a: unknown[]) => scope(...a),
+}));
+
 import { runWithTenantScope } from '../../db/tenantStore';
 import evidenceAskRouter from '../evidence-ask';
 
@@ -118,6 +126,8 @@ function callMatching(pattern: RegExp) {
 beforeEach(() => {
   query.mockReset();
   searchHybrid.mockReset();
+  scope.mockReset();
+  scope.mockResolvedValue([10]);
   route.mockReset();
   getEnabledProviders.mockReset();
   getEnabledProviders.mockReturnValue(['anthropic']);
@@ -156,9 +166,12 @@ describe('POST /api/evidence/ask — fail-closed JWT-derived provenance', () => 
 
     expect(res.status).toBe(200);
 
-    // Retrieval was scoped to the PRINCIPAL's org uuid, not the header.
+    // Retrieval was scoped to the PRINCIPAL's org uuid, not the header, and to
+    // the projects the PRINCIPAL can open.
     expect(searchHybrid).toHaveBeenCalledTimes(1);
     expect(searchHybrid.mock.calls[0][1].organizationUuid).toBe(TENANT_ORG_UUID);
+    expect(scope).toHaveBeenCalledWith(expect.anything(), { organizationId: TENANT_ORG_ID, userId: TENANT_USER_ID, projectId: undefined });
+    expect(searchHybrid.mock.calls[0][1].projectIds).toEqual([10]);
 
     // Retrieval provenance recorded the PRINCIPAL's org + user, never body 999.
     const rrCall = callMatching(/INSERT INTO ai_retrieval_runs/i);

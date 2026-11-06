@@ -226,7 +226,7 @@ router.get('/literature/search', authMiddleware, async (req, res) => {
  *     below persists it (SCREENING_RECORDED_SEPARATELY).
  */
 const literatureRecordSchema = z.object({
-  programId: z.string().uuid().optional(),
+  programId: z.string().guid().optional(),
   entries: z
     .array(
       z.object({
@@ -315,7 +315,7 @@ const literatureScreenSchema = z
     stage: z.enum(['title_abstract', 'full_text']),
     decision: z.enum(['included', 'excluded', 'pending']),
     exclusionReason: z.string().trim().max(4000).nullish(),
-    programId: z.string().uuid().nullish(),
+    programId: z.string().guid().nullish(),
   })
   .superRefine((value, ctx) => {
     // MEDDEV 2.7/1 Rev 4 §8 — every exclusion carries its rationale. Checked
@@ -458,7 +458,7 @@ router.post('/literature/screen', authMiddleware, async (req, res) => {
  * unavailable instead of drawing every row as unscreened.
  */
 const literatureScreeningQuerySchema = z.object({
-  programId: z.string().uuid().optional(),
+  programId: z.string().guid().optional(),
   /** Comma-separated PMIDs — typically the hits currently on screen. */
   pmids: z.string().trim().max(2000).optional(),
   limit: z.coerce.number().int().min(1).max(500).optional(),

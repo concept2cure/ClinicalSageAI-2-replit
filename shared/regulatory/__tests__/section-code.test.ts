@@ -16,6 +16,7 @@ import {
   sectionInsertSlot,
   duplicateSectionCodes,
   sectionStructureIssues,
+  sectionNumberLabel,
 } from '../section-code';
 
 const sorted = (codes: string[]) => [...codes].sort(compareSectionCode);
@@ -183,6 +184,22 @@ describe('sectionStructureIssues', () => {
     const r = sectionStructureIssues(ib);
     expect(r.outOfOrder).toBe(false);
     expect(r.suggestedOrder).toEqual(ib);
+  });
+
+  /* J3 human test, 2026-11-06: a new SOP from the Quality library (codes
+     qms-purpose … qms-approval) said its sections were "stored in an order
+     that differs from their section codes". Hyphenated name codes are named
+     matter too. */
+  it('treats hyphenated name codes (a controlled SOP) as named matter, in the order stored', () => {
+    const sop = ['qms-purpose', 'qms-scope', 'qms-responsibilities', 'qms-definitions', 'qms-procedure', 'qms-references', 'qms-attachments', 'qms-revision_history', 'qms-approval'];
+    const r = sectionStructureIssues(sop);
+    expect(r.outOfOrder).toBe(false);
+    expect(r.suggestedOrder).toEqual(sop);
+  });
+
+  it('shows a reader no number for a name code, and the outline code otherwise', () => {
+    expect(['title_page', 'qms-purpose', 'qms-revision_history', 'references'].map(sectionNumberLabel)).toEqual(['', '', '', '']);
+    expect(['1', '4.1', '2.7.3', '3.2.S.4.1', ' 6 '].map(sectionNumberLabel)).toEqual(['1', '4.1', '2.7.3', '3.2.S.4.1', '6']);
   });
 
   it('still reports numbered sections out of order among themselves, front matter kept in place', () => {

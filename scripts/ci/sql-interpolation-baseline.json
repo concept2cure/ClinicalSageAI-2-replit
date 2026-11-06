@@ -144,7 +144,7 @@
   "server/services/ectd-submission-agent.ts": 3,
   "server/services/ectd/leaf-document-resolver.ts": 1,
   "server/services/ectd/leaf-source-resolver.ts": 1,
-  "server/services/enhancedEmbeddingService.ts": 9,
+  "server/services/enhancedEmbeddingService.ts": 8,
   "server/services/external-intelligence/external-intelligence-service.ts": 2,
   "server/services/governance-boundary-service.ts": 1,
   "server/services/governance/separation-of-duties.ts": 2,

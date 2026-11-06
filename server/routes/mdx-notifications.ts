@@ -68,7 +68,7 @@ const createBody = z.object({
   resourceType:     z.string().max(60).optional().nullable(),
   resourceId:       z.string().max(200).optional().nullable(),
   actionUrl:        z.string().max(500).optional().nullable(),
-  metadata:         z.record(z.unknown()).optional(),
+  metadata:         z.record(z.string(), z.unknown()).optional(),
   expiresAt:        z.string().datetime({ offset: true }).optional().nullable(),
 });
 

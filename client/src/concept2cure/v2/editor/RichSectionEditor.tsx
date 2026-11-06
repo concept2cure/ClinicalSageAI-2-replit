@@ -1446,7 +1446,11 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const commentOnSelection = useCallback(async () => {
       if (!commentsApi || !editor) return;
       const { from, to } = editor.state.selection;
-      if (from === to) return;
+      if (from === to) {
+        /* The button did nothing at all with no selection (J3, 2026-11-06). */
+        setActionNotice('Select the passage to comment on, then press Comment.');
+        return;
+      }
       /* The anchoring save serializes the WHOLE buffer under the system reason
          below. With unsaved prose in it, two paragraphs the author never
          reasoned for would be minted as a revision "Comment anchor applied" —
@@ -2926,6 +2930,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                       asked. */}
                   <div style={{ marginTop: 12 }}>
                     <DocumentAttributionBar
+                      subject={lineage.documentTable === 'authoring_sections' ? 'section' : 'document'}
                       documentTable={lineage.documentTable}
                       documentId={lineage.documentId}
                       refreshToken={savedRevision}

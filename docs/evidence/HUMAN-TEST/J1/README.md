@@ -7,7 +7,7 @@ screenshot looked at. Each defect a tester would hit was written down, fixed in 
 red without the fix, and checked again in the app.
 
 **Result:** `walk.cjs` passes end to end, 25 steps, with **0 API responses of 4xx or 5xx and 0 page errors**
-(`walk.json`). It found 13 defects, and all 13 are fixed (below). Four more are written down for their owners.
+(`walk.json`). It found 17 defects, and all 17 are fixed (below). Four more are written down for their owners.
 
 ## What a tester can do now (verified by `walk.cjs`, screenshots in `shots/`)
 
@@ -45,7 +45,18 @@ red without the fix, and checked again in the app.
    - At 390, no control runs past the screen's edge on any step.
 8. **About card:** client, product, indication, the device facts for a device project, the **objective** with its
    version and "Ask AnA to propose it" / "Edit", and the work areas.
-9. **Project settings** opens over the page (description, priority, target date, archive) and closes.
+9. **Project settings** opens over the page (description, priority, target date, archive). A change is reviewed, saved
+   under a governed reason with "yes" typed, and the header shows it at once and after a reload ("High priority",
+   `actions/01`).
+10. **The objective's Edit** records a new version with its source and reason ("Version 2", `actions/02`).
+11. **Assign** on a document the filing needs creates a task for a person with a due date. It appears under "Due for
+    you", on the project's task board and in the person's tasks (`actions/03`).
+12. **Sign-in's other paths:** an empty form says "Enter a valid email address."; a wrong password says "Incorrect email
+    or password …" (`actions/05`); "Forgot password?" opens "Reset your password" clean (`actions/06`) and says the link
+    is on its way (`actions/07`); "Use organization SSO" asks for the organisation's identifier; Sign out, from the
+    account menu at 1440 and 390 (`actions/08`), returns to sign-in, and a protected page then asks to sign in.
+13. Home's "Record your company details" and "Invite your team" open the admin console on its settings and members
+    tabs. A Projects card opens its project.
 
 ## Defects found, and their fixes
 
@@ -67,7 +78,14 @@ Every fix is on `concept2cure-v2` with `Plan: F1` and a `Completes:` trailer. "B
 | 12 | IVD 510(k), Plan | No contradiction or key | "…available for … 510(k)s … This project's filing (us_510k_ivd) has none yet" (`before/09`) | `a3dcd54d`: "This project's filing, 510(k) for IVD, has none yet." | `projectProgramPlan.test.tsx` |
 | 13 | Project page at 390, Author / Review / Submit | Every control on screen | Section buttons ended at 398–456px, off the screen, for both personas (`before/10`) | `75dba130`: at ≤640px the head and its actions wrap | `j1PageLayout.test.ts`; walk checks every step |
 
-Defect 13 was found on the second walk, by the edge check added to it.
+| 14 | Project settings, opened | No warning about something that did not happen | "Current saved settings loaded. This read does not confirm an earlier uncertain save or audit." to a tester who had saved nothing (`before/16`) | `4d817e64`: said only on a reload after a save that could not be confirmed | `ProjectSettings.test.tsx` |
+| 15 | Plan, a document after Assign | The two lines agree | "Assigned to reg.lead…, due Nov 20, 2026" then "Work: Define product profile · due Jan 29, 2027 · no owner" (`before/15`) | see the commit list below: the line names the producing task's owner, "task owner: none" | `projectHomePlan.test.tsx` |
+| 16 | New project at 390 | Every client type's tab reachable | The filing tabs were 661px wide and clipped: "Diagnostics & IVD" and "Cross-Cutting Documents" could not be reached (`before/14`) | see the commit list below: the row scrolls in place (`actions/04`) | `j1PageLayout.test.ts` |
+
+| 17 | Sign-in, after a wrong password, "Forgot password?" | The reset form on its own | "Reset your password" opened with "Incorrect email or password …" still above the e-mail field (the screenshot was overwritten by the re-check; `actions/06` is the fixed view) | `5c6d4cde`: changing view clears the previous view's error | `signInRefusal.test.tsx` |
+
+Defect 13 was found on the second walk, by the edge check added to it; 14 to 16 on a third pass, and 17 on a fourth, through sign-in's other paths through the actions the
+walk only opened: saving settings, editing the objective, assigning, and New project at 390.
 
 Suites that also ran green: 84 editor and Evidence suites; 20 wizard and picker suites; 15 Home, wizard and sign-up
 suites; Submit and dispatch-readiness. A 99-file run of the Home, Project and project-home suites showed 4 failures in
@@ -84,8 +102,10 @@ complexity rise in `ProjectFilesPanel`, fixed in `b4251795`.
   says so in words (fix 12).
 - **→ J3 (editor):** the editor's own files rail (`ProjectFilesPanel` beside a document) still offers "IND documents"
   for a device project's document. The prop exists now (`indLibrary`); the editor would pass it the same way.
-- **→ coordinator (`app-v2.css`, held):** at 1440 the top bar's notification count ("20") sits over the bell icon.
-  Cosmetic.
+- **→ coordinator (`app-v2.css`, held):** at 1440 the top bar's notification count sat over the bell icon. Fixed by
+  the coordinator in `e25a18a6` ("The bell's count sits on the button's corner").
+- **→ coordinator (`app-v2.css`):** `.rpk-tabs` itself does not scroll; fixed for New project in
+  `project-home-v2.css` (`.npw .rpk-tabs`). Any other screen that shows the filing picker at phone width needs the same.
 - **→ coordinator:** sign-up (`ZenSignup.tsx`) is drawn in an older style: a black "C2C" mark, black buttons and a
   sans heading. Sign-in has the serif heading and terracotta button. That is a redesign, not a J1 fix.
 - **Known, not a defect:** a device project shows "No market yet" in its About card's status line. Device filings

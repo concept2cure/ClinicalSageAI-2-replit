@@ -111,7 +111,7 @@ const receiveUpload: RequestHandler = (req: Request, res: Response, next: NextFu
 };
 
 const IngestBodySchema = z.object({
-  programId: z.string().uuid('programId must be a UUID'),
+  programId: z.string().guid('programId must be a UUID'),
   // Required, except for a new version: that keeps its document's code (VR-08).
   documentCode: z.string().min(1, 'documentCode is required').optional(),
   documentTitle: z.string().min(1, 'documentTitle is required'),
@@ -130,7 +130,7 @@ const IngestBodySchema = z.object({
      of one of its versions. The server assigns the version, keeps the
      document's code and filing, and records the link; the database refuses a
      link outside the document's own program, code and organization. */
-  supersedesDocumentId: z.string().uuid('supersedesDocumentId must be a version id').optional(),
+  supersedesDocumentId: z.string().guid('supersedesDocumentId must be a version id').optional(),
 }).refine((b) => b.documentCode !== undefined || b.supersedesDocumentId !== undefined, {
   message: 'documentCode is required',
   path: ['documentCode'],

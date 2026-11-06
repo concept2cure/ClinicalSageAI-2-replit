@@ -368,6 +368,19 @@ status or ownership; closing a package stays §3 step 5.
 
   All three were used in the running app. The trend read's shape was wrong in the first test, and the running app
   caught it.
+- **Reach: the stored sizing run and its reproduction** (2026-11-06), `583b96271`,
+  `docs/evidence/DESIGN/R1/2026-11-06-sizing-run-reproduction/`.
+  - `GET /api/biostat-bridge/computation-runs/:runId/reproduce` had no caller. The design assessment now names the
+    run behind the planned N (`sizingRun`).
+  - The protocol's Statistics tab says "Stored run #1, 2026-11-06, computed 314 subjects." It offers "Check it
+    reproduces" and shows the four facts one by one.
+  - **F1, found by the reach:** with RLS enforced, the route answered 404 for the organization's own run. It
+    queried a `pool.connect()` client outside a transaction, and the scope layer sets the tenant only after
+    `BEGIN`. It reads through `pool.query` now, with a test over the real scope layer.
+  - **F1, found walking it:** the protocol workspace gave the shell's `.page-full` row two roots, so at 1440 px the
+    protocol had 325 px beside its selection bar. It has one column root now.
+  - Used in the running app, with RLS and launch scope on: before the fix, 404; after it, intact, intact,
+    reproduced, same engine version.
 - **Handed to D4** (2026-11-05). Informed consent exists twice: the `informed_consent` document type, and
   `/api/protocol-consent`, whose 7 routes have no caller. Its element checklist, completeness and signed approval
   are that document type's validation. Under Rule 4 they belong in the one editor, not a protocol panel. Whether
@@ -459,8 +472,26 @@ informed consent was.
   file the send removes by design, so it stayed red. The check now follows the recorded key. It fails on a missing
   package and passes as written. The baseline went from 12 to 11.
 
+**Delivered** (2026-11-06)
+
+- **The local database the repository provisions can run the migration set**, `70d52cc76`,
+  `docs/evidence/D1/2026-11-06-local-db-applier-rights/`.
+  - **Before.** `scripts/setup-local-db.sh` (run at every session start) gave its applier role `CREATEDB` only. On
+    a fresh cluster, `deploy-migrate` stopped at 214 of 462.
+  - **Now.** The role gets `CREATEROLE NOSUPERUSER` and owns its database, as the RDS master does. Two fresh
+    clusters: trunk's script halts at 214, the fixed one completes (1,023 tables). Every session that must open the
+    running app (RULE 4) needs this.
+- **The editor's citation catalogue says a refusal as itself**, `f0809d977`,
+  `docs/evidence/SPINE/S2/2026-11-06-citation-catalogue-refusals/`. The **Cite a source** picker showed "Module access
+  denied" with **Try again** for a plan without the feature. Through the one read classifier, a refusal is now
+  worded and not retryable, and the picker offers no retry for it. This completes the D4 hand-off of 2026-11-05.
+  All 36 suites that render the editor pass (511).
+
 **Found**
 
+- A fresh machine also needs `postgresql-16-pgvector` and `npm ci` before the session-start hook runs. That is a
+  cloud-environment setup script, not a repository change. A personal environment that does this was proposed on
+  2026-11-06. The request could not be shown in the Claude mobile app version in use, so nothing was saved.
 - `ci:canvas-path` read green all four days the walk was red. Its founder-walk link is static by design; the walk's
   result exists only in CI's Test job. That job can be red for days while every push lands.
 - `server/routes/__tests__/authoringSelectedSources.pglite.test.ts` fails 12 cases at trunk, before this change.
@@ -478,7 +509,7 @@ informed consent was.
   Recording spans, and walking the Data Room → Vault → receipt → document path, is S4's work with S2.
 - **Handed on.**
   - D3: the Evidence step's "What to do now" box is a retired pattern.
-  - D4: `editor/useProjectSourceCatalog.ts` does not classify refusals.
+  - ~~D4: `editor/useProjectSourceCatalog.ts` does not classify refusals.~~ Done here 2026-11-06 (`f0809d977`).
   - D0: a refusal is drawn in the error tone.
   - R1: the CTD onboarding routes (`/api/ctd/*`) have no caller.
 - **The local database.** Running the migration set needs pgvector created by a superuser, `CREATEROLE` on the
@@ -629,11 +660,29 @@ in the running app where a screen changed. Where either was not possible, its RE
   `docs/evidence/F1/2026-11-05-data-room-region/`). So do the CTD filename detector's Module 1 documents: an EMA
   project's cover letter is proposed at 1.0 and its RMP at 1.8.2, a J-NDA's patent status at 1.4, and an FDA form
   number never another region's heading (F1, `303485d77d`; `docs/evidence/F1/2026-11-05-ctd-detector-region/`).
+- **Every other read door an audit found admitting another project's records** (2026-11-05, five slices built by agents
+  and re-tested by this session; evidence under `docs/evidence/F1/2026-11-05-*`):
+  - AnA's 26 citation routes, including run, batch-run and prune (F1, `11877757f0`; `…-ana-citations-scope/`);
+  - MDX search, project sections, the artifacts summary and MCP `c2c_list_projects` (F1, `48c819ebff`;
+    `…-listing-doors-scope/`);
+  - the governed-documents route's reads, with the project's edit right on its five writes (F1, `2d15e84d5b`;
+    `…-c2c-documents-scope/`);
+  - evidence retrieval: `searchHybrid` now requires a project scope, so Evidence ask, cortex query and deep-research
+    generate rank only the person's projects (F1, `fb1b02634c`; `…-evidence-retrieval-scope/`; real PostgreSQL 23 of
+    23);
+  - AnA's platform-command executor, `search_all_documents` and `validate_cross_references`, sharing one scope helper
+    (F1, `02ae648720`; `…-ana-command-executor-scope/`).
+  - `update_vault_document`'s stated reason is read on its own path again (F1, `3d9eae7298`); an earlier refactor
+    here had broken `governed-reason-not-invented.test.ts`, which no pre-push gate runs.
 - **Trunk red fixed:** `catalog-actor-scope-wrapper.test.ts` (7 of 11) had a stale mock (S6, `81fbd0702b`;
   `…/2026-11-05-catalog-actor-scope-mock/`).
 
 **Found**
 
+- **Retrieval no longer reaches atoms of no project.** Derived evidence learnings, chat uploads and project memory
+  were ranked organization-wide; scoping them by program is the next step. The command executor's `list_projects`,
+  `load_user_context` and `list_milestones`, the citation health route and `search_all_documents`' TMF arm are still
+  organization-wide (each slice's "Not done here").
 - **A pharma "Risk management plan" is left unfiled.** The device risk-file rule claims the name first and has no
   pharma folder; "RMP" reaches the CTD detector. An ISO 14971 plan and a Module 1 RMP share the name, so which rule
   claims it is a classifier decision, not a one-line fix.

@@ -55,8 +55,8 @@ export const HOLD_LIST_SQL = `SELECT ${HOLD_COLUMNS.split(', ').map((column) => 
 const placeSchema = z
   .object({
     scope: z.enum(['program', 'document']),
-    programId: z.string().uuid().optional(),
-    documentId: z.string().uuid().optional(),
+    programId: z.string().guid().optional(),
+    documentId: z.string().guid().optional(),
     reference: z.string().trim().min(1).max(200),
     reason: z.string().trim().min(3).max(2000),
   })
@@ -222,7 +222,7 @@ async function placeHold(req: Request, res: Response): Promise<void> {
 async function liftHold(req: Request, res: Response): Promise<void> {
   const auth = holdAuthority(req, res);
   if (!auth) return;
-  const id = z.string().uuid().safeParse(req.params.id);
+  const id = z.string().guid().safeParse(req.params.id);
   const parsed = liftSchema.safeParse(req.body);
   if (!id.success || !parsed.success) {
     res.status(400).json({ error: 'HOLD_INVALID', message: 'A lift names the hold and gives a reason.' });

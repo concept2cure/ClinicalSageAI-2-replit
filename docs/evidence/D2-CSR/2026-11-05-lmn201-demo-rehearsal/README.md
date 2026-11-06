@@ -85,6 +85,25 @@ read-only POST, and nothing was frozen or imported.
 The CSR lane checked the same two fixes on the CDISC pilot (`../../DEMO/2026-11-05-csr-lifecycle/README.md`, "After the
 founder's rehearsal").
 
+### With production's launch-scope gate on, 2026-11-06
+
+`LAUNCH_SCOPE_ENFORCE` is on by default when `NODE_ENV=production`, and off in a local development run. Under it,
+screens outside the launch catalog say "not in this release" and their APIs answer 403. So the demo path was walked
+again, read-only, with the gate on (`LAUNCH_SCOPE_ENFORCE=on`, same database and commit). The steps were: the project
+home, the Vault source, the CSR in the editor, the study-data panel, the §11.1 and §11.4 preview and its return, the
+import box (then Cancel), the assembly gaps, and Submission Center.
+
+- No request was refused and no page said "not in this release".
+- The writes were only the tables preview and the import preview, both reads.
+
+**The project's objective.** The project home said "No objective is recorded for this project yet": the Lumen seed
+sets none. The plan's spine starts from a project with a goal, so the run-of-show now records it beforehand.
+- It was set through the project page's own form ("Set the objective"), with the gate on. The objective and the
+  success criteria are the pack's own statement of the public listing (`LMN201_DESIGN.objectives`, `endpoints` in
+  `scripts/demo/launch-demo/packs/lumen-content.mjs`), taken from ClinicalTrials.gov NCT05330182.
+- `PUT /api/charters/by-project/:id/objectives` answered 200. The page shows "Version 1", the source and "The
+  project's objective is recorded." (`09-project-objective-recorded.png`).
+
 ## For the demo (run-of-show, verified as far as above)
 
 **Before the demo**
@@ -95,17 +114,23 @@ founder's rehearsal").
    - Have three accounts with signing authority: an author, a reviewer and an approver.
 2. **Seed.** Run `npm run demo:seed -- --pack lumen --email <author> --plan enterprise`. Locally, the server needs
    `ALLOWED_ORIGINS` set to its own URL.
-3. **Run steps 1–8 above beforehand**, on one CSR document.
+3. **The project's objective.**
+   - The Lumen seed records it since `800bb0873`: the primary objective and endpoint, from NCT05330182. An objective
+     that is already recorded is left as it is. The CSR lane ran the seed against its demo server and reports it
+     "created", then "found" on a second run. This rehearsal did not re-run it.
+   - On an environment seeded before `800bb0873`, set the objective by hand with "Set the objective" on the
+     project page, using the wording in "With production's launch-scope gate on" above.
+4. **Run steps 1–8 above beforehand**, on one CSR document.
    - Build CSR draft takes tens of minutes with a key.
    - Approve the drafted headings as the reviewer or approver, not the person who requested the build.
    - Import them.
    - Replace any "[…]" placeholder in the imported text by hand.
-4. **Narratives.** The LMN-201 synthetic source has no subject-level data, so it composes none. To show narratives,
+5. **Narratives.** The LMN-201 synthetic source has no subject-level data, so it composes none. To show narratives,
    use the CDISC pilot project of the 11-02 runbook (95 of 95), or say plainly that this source carries none.
 
 **Live (about 10 minutes)**
-1. **Project.** The LMN-201 project home: one project, its steps (Plan, Evidence, Author, Review, Submit, Respond)
-   and the conversation with AnA.
+1. **Project.** The LMN-201 project home: one project with its objective, its steps (Plan, Evidence, Author, Review,
+   Submit, Respond) and the conversation with AnA.
 2. **Vault.** The synthetic source at Approved, with its review and approval signatures, bound to the file's
    SHA-256.
 3. **The CSR in the one editor.** No separate CSR app: the CSR is one document type, with "Build from the study's
