@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-05T21:48:25.410Z",
+  "generatedAt": "2026-11-06T01:58:07.198Z",
   "git": {
-    "sha": "cca6035612beaa337c80b16ab14aa39e8be73a99",
+    "sha": "b21277c07d95b9ac82d3ce4604cbd700ecfd0acb",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2463,7 +2463,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 157673
+        "bytes": 157817
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
@@ -2546,12 +2546,12 @@
         "bytes": 124254
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 122848
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+        "bytes": 122869
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "bytes": 122623
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "bytes": 122848
       },
       {
         "file": "shared/regulatory/project-bootstrap.ts",
@@ -2583,7 +2583,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 115501
+        "bytes": 115965
       },
       {
         "file": "server/routes/auth.ts",
@@ -2599,7 +2599,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "bytes": 102532
+        "bytes": 103225
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2689,7 +2689,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 3257
+        "lines": 3258
       },
       {
         "file": "server/routes/report-os.ts",
@@ -2765,7 +2765,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "lines": 2405
+        "lines": 2409
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
@@ -2841,7 +2841,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2151
+        "lines": 2156
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
@@ -2860,12 +2860,12 @@
         "lines": 2089
       },
       {
-        "file": "server/services/combination-products/combination-products-knowledge.ts",
-        "lines": 2068
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 2072
       },
       {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 2064
+        "file": "server/services/combination-products/combination-products-knowledge.ts",
+        "lines": 2068
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
@@ -2888,12 +2888,12 @@
         "lines": 2029
       },
       {
-        "file": "server/services/advanced-therapy/atmp-knowledge.ts",
-        "lines": 2002
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 2007
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 1997
+        "file": "server/services/advanced-therapy/atmp-knowledge.ts",
+        "lines": 2002
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
@@ -2976,10 +2976,6 @@
         "lines": 1814
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
-        "lines": 1804
-      },
-      {
         "file": "server/services/cmc-write-through.ts",
         "lines": 1802
       },
@@ -2990,6 +2986,10 @@
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1787
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Projects.tsx",
+        "lines": 1781
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
