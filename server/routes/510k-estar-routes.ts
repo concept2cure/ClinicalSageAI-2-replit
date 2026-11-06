@@ -999,7 +999,7 @@ const officialSchema = z.object({
   type: z.enum(ESTAR_TYPES),
   variant: z.enum(ESTAR_VARIANTS),
   /** Canonical field values to write into the official eSTAR AcroForm. */
-  data: z.record(z.unknown()).default({}),
+  data: z.record(z.string(), z.unknown()).default({}),
   flatten: z.boolean().optional(),
   /**
    * Fill from the org's governed records (estar-administrative-data): governed
@@ -1028,7 +1028,7 @@ const officialSchema = z.object({
         fileName: z.string().min(1).max(200).optional(),
         source: z.discriminatedUnion('kind', [
           z.object({ kind: z.literal('authored_section'), sectionCode: z.string().min(1) }),
-          z.object({ kind: z.literal('vault_document'), documentId: z.string().uuid() }),
+          z.object({ kind: z.literal('vault_document'), documentId: z.string().guid() }),
         ]),
       }),
     )
@@ -1407,7 +1407,7 @@ const assembleSchema = z.object({
   /** Narrow the authored-content load to one LEGACY document's sections. */
   documentId: z.coerce.number().int().positive().optional(),
   /** Read the GOVERNED device document of this regulatory program instead. */
-  programId: z.string().uuid().optional(),
+  programId: z.string().guid().optional(),
   /** Target market for the readiness overlay (optional). */
   market: z.string().min(1).optional(),
 });
@@ -1891,7 +1891,7 @@ const filingReadinessSchema = z.object({
   useProjectContent: z.boolean().optional(),
   documentId: z.coerce.number().int().positive().optional(),
   /** With useProjectContent: read the GOVERNED device document of this program. */
-  programId: z.string().uuid().optional(),
+  programId: z.string().guid().optional(),
   qSubType: z
     .enum([
       'pre_submission',
@@ -2039,7 +2039,7 @@ const createSubmissionSchema = z.object({
   catalogKey: z.string().min(1),
   variant: z.enum(['device', 'ivd']).optional(),
   title: z.string().max(500).nullish(),
-  qSubmissionId: z.string().uuid().nullish(),
+  qSubmissionId: z.string().guid().nullish(),
   notes: z.string().max(2000).nullish(),
   /** Attach the filing to a project so tracking joins the PM spine. */
   projectId: z.coerce.number().int().positive().nullish(),
@@ -2063,7 +2063,7 @@ const advanceSubmissionSchema = z
     status: z.enum(ESTAR_SUBMISSION_STATUSES),
     fdaTrackingNumber: z.string().max(64).nullish(),
     decision: z.string().max(40).nullish(),
-    filedArtifactDocumentId: z.string().uuid().optional(),
+    filedArtifactDocumentId: z.string().guid().optional(),
   })
   .and(governedSignatureSchema.partial())
   .superRefine((v, ctx) => {

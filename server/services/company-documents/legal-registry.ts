@@ -10,12 +10,12 @@ interface RegistryQuery {
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable();
 const documentSchema = z.object({
   id: z.string().min(1), title: z.string().min(1), kind: z.enum(COMPANY_LEGAL_KINDS),
-  programId: z.string().uuid(), vaultDocumentId: z.string().uuid(),
+  programId: z.string().guid(), vaultDocumentId: z.string().guid(),
   contentHash: z.string().regex(/^[a-f0-9]{64}$/i), version: z.string().min(1),
   agencies: z.array(z.string()), countries: z.array(z.string()), submissionTypes: z.array(z.string()),
   language: z.string().min(1), effectiveOn: date, expiresOn: date, active: z.boolean(),
   registeredAt: z.string().min(1), registeredBy: z.string().min(1),
-  sourceOriginal: z.object({ registryId: z.string().min(1), vaultDocumentId: z.string().uuid(), programId: z.string().uuid(),
+  sourceOriginal: z.object({ registryId: z.string().min(1), vaultDocumentId: z.string().guid(), programId: z.string().guid(),
     version: z.string().min(1), contentHash: z.string().regex(/^[a-f0-9]{64}$/i) }).strict().optional(),
   workflow: z.object({}).passthrough().optional(),
 }).passthrough();

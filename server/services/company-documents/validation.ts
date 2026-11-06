@@ -23,14 +23,14 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
 export const profileUpdateSchema = z.object({
   expectedRevision: revision, reason,
   companyName: text(300), address: text(2000), contact: text(2000), registrationDetails: text(2000),
-  letterhead: z.record(z.unknown()), importedFrom: text(500).nullable(),
+  letterhead: z.record(z.string(), z.unknown()), importedFrom: text(500).nullable(),
   applyToReports: z.boolean(), applyToSubmissionCorrespondence: z.boolean(),
   legacyDecision: z.literal('replace').optional(),
 }).strict();
 
 export const legalRegistrationSchema = z.object({
   expectedRevision: revision, reason, title: text(500).min(1), kind: z.enum(COMPANY_LEGAL_KINDS),
-  programId: z.string().uuid(), vaultDocumentId: z.string().uuid(),
+  programId: z.string().guid(), vaultDocumentId: z.string().guid(),
   agencies: scope, countries: scope, submissionTypes: scope,
   language: z.string().trim().min(1).max(50),
   effectiveOn: date, expiresOn: date,
@@ -40,7 +40,7 @@ export const legalRegistrationSchema = z.object({
 
 export const archiveSchema = z.object({ expectedRevision: revision, reason }).strict();
 
-export function parseCompanyInput<T>(schema: z.ZodType<T, z.ZodTypeDef, unknown>, value: unknown): T {
+export function parseCompanyInput<T>(schema: z.ZodType<T, unknown>, value: unknown): T {
   const result = schema.safeParse(value);
   if (!result.success) {
     throw new CompanyDocumentsError(400, 'INVALID_COMPANY_DOCUMENTS', result.error.issues.map(issue => `${issue.path.join('.') || 'request'}: ${issue.message}`).join('; '));

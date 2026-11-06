@@ -33,7 +33,7 @@ type QmsReadContext = Pick<CreateContext, 'tenantId' | 'actor'> & { pool: Reques
 
 export const controlledQmsCreateSchema = z.object({
   title: z.string().trim().min(1).max(300), docType: z.enum(['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', 'curriculum']),
-  programId: z.string().uuid(), docNumber: z.string().trim().min(1).max(60).optional(),
+  programId: z.string().guid(), docNumber: z.string().trim().min(1).max(60).optional(),
   templateKey: z.string().max(80).optional(), category: z.string().max(60).nullable().optional(),
   nextReviewDate: z.string().date().nullable().optional(), reason: z.string().trim().min(8).max(2000),
 }).strict();
@@ -123,7 +123,7 @@ export async function createControlledQmsDocument(ctx: CreateContext, raw: unkno
 
 /** Bind an existing draft without assigning invented text to a legacy signed record. */
 export async function bindControlledQmsDocument(ctx: CreateContext, id: number, raw: unknown): Promise<Record<string, any>> {
-  const body = z.object({ programId: z.string().uuid(), templateKey: z.string().optional(), reason: z.string().trim().min(8) }).safeParse(raw);
+  const body = z.object({ programId: z.string().guid(), templateKey: z.string().optional(), reason: z.string().trim().min(8) }).safeParse(raw);
   if (!body.success) throw new QmsContentRefusedError(400, 'QMS_BIND_INVALID', 'Choose an owned project and state the reason for binding this draft.');
   const current = await ctx.pool.query(`SELECT * FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [id, ctx.tenantId]);
   const row = current.rows[0];

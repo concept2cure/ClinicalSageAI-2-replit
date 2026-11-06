@@ -39,7 +39,7 @@ export const fileDraftForReview = defineTool({
     sequence_id: z.number().int().positive(),
     section_code: z.string().min(2).max(64).describe('CTD section code; decides where the document is filed in the package.'),
     title: z.string().min(1).max(300),
-    vault_document_id: z.string().uuid().optional().describe('A Vault document id from c2c_list_vault_documents.'),
+    vault_document_id: z.string().guid().optional().describe('A Vault document id from c2c_list_vault_documents.'),
     document_table: z.enum(['coauthor_documents', 'unified_documents', 'ctd_onboarding_documents', 'c2c_document_sections']).optional(),
     document_id: z.number().int().positive().optional(),
     document_type: z.string().max(60).optional().describe('Classifier hint, e.g. protocol, csr, cer'),

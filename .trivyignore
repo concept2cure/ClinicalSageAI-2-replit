@@ -58,9 +58,13 @@
 CVE-2025-71329 exp:2026-11-25
 CVE-2025-71330 exp:2026-11-25
 
-# owner: Security Engineering (dependency-risk-ledger.json row
-#   GHSA-vfj7-8cjw-p6xm; expires with the ledger, 2026-12-05; re-reviewed 2026-11-05,
-#   extension approved by the founder; the evidence is in the ledger row)
+# owner: Security Engineering (formerly dependency-risk-ledger.json row
+#   GHSA-vfj7-8cjw-p6xm; re-reviewed 2026-11-05, extension approved by the founder)
+# 2026-11-06: GitHub WITHDREW GHSA-vfj7-8cjw-p6xm on 2026-10-23 ("not a
+#   practically exploitable vulnerability"); npm audit no longer reports it, so
+#   its ledger row was removed (docs/evidence/L1/2026-11-06-dependency-advisories/).
+#   This Trivy entry is kept, unchanged in expiry, only until Trivy's database
+#   drops the withdrawn record: delete it then, or let it lapse on 2026-12-05.
 # reason: braces CVE-2026-93687 (stack-exhaustion DoS when braces expands a
 #   deeply nested PATTERN, CWE-674), vulnerable range <=3.0.3. braces 3.0.3 is
 #   the latest release, so no bump remediates it. The only production path was
@@ -74,3 +78,18 @@ CVE-2025-71330 exp:2026-11-25
 #   authority. Drop when braces ships a fix above 3.0.3; re-review if a new
 #   runtime dependency pulls micromatch or braces.
 CVE-2026-93687 exp:2026-12-05
+
+# owner: Security Engineering (dependency-risk-ledger.json row
+#   GHSA-mrhx-c7xc-m3w5; expires with the ledger, 2026-12-06; reviewed 2026-11-06)
+# reason: zod CVE-2023-54404 (array validation accumulates one issue per failing
+#   element with no cap: memory exhaustion, CWE-770), vulnerable range <4.6.6.
+#   The application copy was FIXED on 2026-11-06 (zod 3.25.76 -> 4.6.7, every
+#   server, shared and client import); `npm ls zod --omit=dev --all` lists only
+#   zod@4.6.7. The one remaining copy is zod@3.25.58 nested under
+#   @figma/code-connect, a design-time devDependency CLI that no script,
+#   workflow or Dockerfile stage runs; its latest release (2.1.0) still pins zod
+#   3.25.76, so no parent release carries the fix. Disposition UNREACHABLE per
+#   the ledger. Trivy scans package-lock.json separately from npm audit, so this
+#   is the ledger decision mirrored for Trivy, not a second authority. Drop when
+#   @figma/code-connect moves to zod >=4.6.6 or is removed.
+CVE-2023-54404 exp:2026-12-06
