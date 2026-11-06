@@ -18,7 +18,8 @@
     "officialSources": 5,
     "quoteSpansVerified": 26,
     "bodyArtifactHashesVerified": 15,
-    "limitations": "Current guidance plus obsolete-page caveat; linked eligibility/scenario tables not qualified."
+    "limitations": "Current guidance plus obsolete-page caveat; linked eligibility/scenario tables not qualified.",
+    "archivedArtifactsVerified": 22
   },
   "red": {
     "editorAndRealService": {
@@ -52,7 +53,7 @@
   "lint": {
     "errors": 0,
     "warnings": 9,
-    "warningGrowth": "pending normal ratchet"
+    "warningGrowth": 0
   },
   "build": {
     "result": "pass",
@@ -60,13 +61,30 @@
     "runtime": "Node 22.23.4",
     "log": "build.txt.gz"
   },
-  "repositoryGates": "pending",
-  "publication": "pending",
+  "repositoryGates": {
+    "result": "passed",
+    "source": "79a2f3605ef7998f69009ba7baa7dd0da8dd03a1",
+    "typeScriptErrors": 0,
+    "typeScriptBaseline": 0,
+    "warningGrowth": 0,
+    "log": "gates-pass-ref-race.txt.gz",
+    "note": "All normal gates passed; Git rejected a concurrent ref advance. Normal retry pending."
+  },
+  "publication": "pending normal retry after merge",
   "limits": [
     "No IRAS form generation, technical validation, transmission or agency qualification.",
     "Initial submission date/lifecycle/product facts remain unassessed; no automatic rule selector.",
     "No scientific/model/independent regulatory qualification or running-app screen completion is claimed.",
     "Regional TA clinical-array matching and nonclinical source binding remain open.",
     "CMC remains small-molecule US IND; legacy ind:mhra remains no-offer."
-  ]
+  ],
+  "mergedIntegration": {
+    "source": "1281bf569d1144aab964d3671717fdd8f843a9d3",
+    "incoming": "e533082d6",
+    "passed": 161,
+    "suites": 15,
+    "build": "pass",
+    "sourceHashesMatched": 14,
+    "conflict": "Only COORDINATION.md; retained UK status row and latest D3 status."
+  }
 }

@@ -36,6 +36,22 @@ Fresh sources: five official pages (four current plus the obsolete linked MHRA p
 
 Behavioral reds were captured before production fixes: editor/real PGlite service 2 failed and 27 passed; catalog 9 failed and 1 control passed; channel/checklist 8 failed and 25 passed. Final integration passes 350/350 across 14 suites, including actual editor and real PGlite recorded-project loading, US/EU/CA/JP compatibility, blueprint consistency, coverage/channel, CMC scope and client writing agency. The independent five-suite channel/checklist/strategy cohort passes 51/51; it overlaps the integration cohort. Gateway providers are stand-ins; there are no live model calls.
 
-Scoped ESLint on all 14 changed TypeScript files: zero errors and nine existing warnings. Production client/server builds pass (`npm run build`, Node 22.23.4). Warning-growth ratchet and repository gates are pending. No baseline or suppression was widened. A legacy numeric UK section now stays explicitly unindexed; the actual UK preparation code resolves through the shared outline. This updates the corresponding existing editor assertion rather than inventing a CTD mapping.
+Scoped ESLint on all 14 changed TypeScript files: zero errors and nine existing warnings. Production client/server builds pass (`npm run build`, Node 22.23.4). All normal pre-push gates passed at source `79a2f3605`: zero full-tree TypeScript errors against the unchanged zero baseline, no warning growth and all one-plan/one-product/security/contracts. Git then rejected a concurrent ref advance, retained as `gates-pass-ref-race*`. No baseline or suppression was widened. A legacy numeric UK section now stays explicitly unindexed; the actual UK preparation code resolves through the shared outline. This updates the corresponding existing editor assertion rather than inventing a CTD mapping.
 
 Read-only adversarial review found no material source/guard/ownership issue. Two implementation agents owned disjoint files; the lead independently ran the combined integration, inspected final content, verified source quotations/hashes and runs the build/gates. Individual red/green/lint logs are compressed beside this file.
+
+
+## Canonical synchronization
+
+Incoming Project knowledge changes through `e533082d6` were merged normally at
+`1281bf569`. Only the coordination table conflicted; its current D3 status and the
+UK source-frozen/released row were both retained. The incoming code changes only
+client project presentation, not UK bootstrap, drafting, filing context or server
+guards. Read-only review found no compatibility blocker. Project profile notes
+remain distinct from IND program/charter facts; no conflict reconciliation is claimed.
+
+The affected nine project suites, four adjacent project/admission suites, and the
+actual editor/real PGlite service checks pass 161/161 across 15 suites. The merged
+production client/server build passes. All 14 UK source hashes remain unchanged.
+A normal publication retry is pending; no force, hook bypass or baseline expansion
+was used. Full logs and the original successful-gates/ref-race receipt are retained.
