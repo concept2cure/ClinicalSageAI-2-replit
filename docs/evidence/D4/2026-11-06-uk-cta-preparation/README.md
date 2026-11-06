@@ -153,3 +153,18 @@ All 114 conversation/editor cases across 11 suites now pass, the corrected test
 has zero lint errors/warnings, and production client/server builds pass. The
 14-file manifest intentionally covers the core UK repair; this separate test-only
 correction has its own hash. The normal publication retry remains pending.
+
+
+The eighth run at `ad7d7d545` passed every normal gate, including zero TypeScript
+errors and no warning growth across 15 changed TypeScript files. It lost the
+lock to ordinary-task admission repair `29a1b5ddb`, merged normally at `6f7dc696b`.
+Read-only review found no UK/task-plan blocker. Explicit/source-derived project
+precedence, optional unfiled work, active write admission, actual workspace and
+confirmed-commit-only notifications stay on the existing writer/transaction.
+
+All 141 focused tasking cases across nine suites pass; the server build passes.
+`git diff ad7d7d545..HEAD -- client` is empty, so the preceding client build applies.
+The 14 current core hashes and separate corrected-test hash are unchanged. The
+incoming owner's native PostgreSQL proof is not represented as a local rerun.
+The eighth complete gate/ref-race receipt is retained; normal publication retries
+continue with no force, hook bypass or lint/TypeScript allowance growth.
