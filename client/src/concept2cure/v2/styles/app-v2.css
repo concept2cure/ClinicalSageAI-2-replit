@@ -2955,7 +2955,10 @@
 .c2c-v2 .ct-att-chip[data-status="uploading"] em{color:var(--text-500);}
 .c2c-v2 .ct-att-x{border:none;background:none;color:var(--text-400);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;}
 .c2c-v2 .ct-att-x:hover{color:var(--text-100);}
-.c2c-v2 .ct-comp-foot{max-width:768px;margin:8px auto 0;font-size:10.5px;color:var(--text-300);display:flex;align-items:center;gap:5px;justify-content:center;text-align:center;}
+/* Wraps (2026-11-06, R1's demo-day sweep): docked beside the editor the column is about 400 px, and the four
+   controls overflowed both edges, "AnA drives" under the rail and "Engine" past the column, with "Between steps"
+   squeezed into a 179 px stack. They now break into centred rows inside the column. */
+.c2c-v2 .ct-comp-foot{max-width:768px;margin:8px auto 0;font-size:10.5px;color:var(--text-300);display:flex;flex-wrap:wrap;align-items:center;gap:5px;row-gap:6px;justify-content:center;text-align:center;}
 /* A reading measure, widened in steps rather than removed: long-form
    regulatory prose is unreadable at a 1400px line, and 768px beside a 384px
    dock read as a strip with dead margin on a wide display. The composer, its
