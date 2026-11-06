@@ -77,6 +77,9 @@ export interface FormTemplate {
   name: string;
   formId?: string;
   required: boolean;
+  /** Application types that file this form (lower-case kinds, as CTDSection's
+   *  `requiredFor`). Absent = every application type. */
+  requiredFor?: string[];
   description: string;
   url?: string;
 }
@@ -91,18 +94,22 @@ export const FDA_TEMPLATE: RegionalTemplate = {
   language: 'en',
   currency: 'USD',
   forms: [
-    { name: 'FDA Form 356h', formId: '356h', required: true, description: 'Application to Market a New Drug, Biologic, or an Antibiotic Drug for Human Use' },
-    { name: 'FDA Form 1571', formId: '1571', required: true, description: 'Investigational New Drug Application (IND)' },
-    { name: 'FDA Form 3674', formId: '3674', required: true, description: 'Certification of Compliance with ClinicalTrials.gov Data Bank Requirements' },
-    { name: 'FDA Form 3397', formId: '3397', required: false, description: 'Patent Information (Orange Book)' },
+    // Scoped by application type (J4 human test, 2026-11-06): an IND's Planner
+    // listed 356h as required, and 3397 was described as patent information.
+    // Form FDA 3397 is the PDUFA user fee cover sheet (as the NDA and BLA
+    // flows and auditors in server/services/ana/intelligence-questions say).
+    { name: 'FDA Form 356h', formId: '356h', required: true, requiredFor: ['nda', 'bla', 'anda'], description: 'Application to Market a New Drug, Biologic, or an Antibiotic Drug for Human Use' },
+    { name: 'FDA Form 1571', formId: '1571', required: true, requiredFor: ['ind'], description: 'Investigational New Drug Application (IND)' },
+    { name: 'FDA Form 3674', formId: '3674', required: true, requiredFor: ['ind', 'nda', 'bla', 'anda'], description: 'Certification of Compliance with ClinicalTrials.gov Data Bank Requirements' },
+    { name: 'FDA Form 3397', formId: '3397', required: false, requiredFor: ['nda', 'bla'], description: 'Prescription Drug User Fee Cover Sheet (PDUFA)' },
   ],
   prescribingInfoTemplate: 'us-prescribing-information',
   coverLetterTemplate: 'fda-cover-letter',
   specificRequirements: [
-    '21 CFR Part 314 (NDA) or 21 CFR Part 601 (BLA)',
+    '21 CFR Part 312 (IND), 21 CFR Part 314 (NDA, ANDA) or 21 CFR Part 601 (BLA)',
     'Electronic submission via FDA ESG',
     'eCTD format required for all submissions',
-    'User fee (PDUFA) payment required',
+    'User fee (PDUFA) payment required for an NDA or BLA; an IND carries no user fee',
     'English language required',
   ],
   // FDA eCTD Module 1 headings: projected from the regional Module 1 record

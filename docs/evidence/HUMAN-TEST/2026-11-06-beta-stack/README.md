@@ -137,6 +137,20 @@ Results:
    - One console line: the CSP refused an inline style on the login page. Nothing
      visible is affected.
 
+6. **A tester invited, on the stack rebuilt from trunk `41269e082e`:**
+   - Home → "Invite your team" opens the admin console. Invite member (Reviewer)
+     → Send invite.
+   - The email "admin@beta.example.invalid invited you to Beta Sponsor on
+     Concept2Cure" arrives. Its link opens "Set a new password".
+   - The tester sets a password and signs in with the emailed code. They reach
+     Home as Tess Tester, in Beta Sponsor (`tester-signed-in-home.png`).
+7. **A first project, through the UI:** New project → Investigational New Drug
+   Application → name, product, indication, product type (required) and
+   objective → Review & create → Create project.
+   - The project page opens with its six steps, the objective (version 1) and
+     its work areas (`first-project-created.png`).
+   - No page errors and no 4xx or 5xx API responses in steps 6–7.
+
 Gates on the changed files:
 - `ci:compose-boot-contract` and its selftest pass;
 - `ci:runtime-ddl` passes;

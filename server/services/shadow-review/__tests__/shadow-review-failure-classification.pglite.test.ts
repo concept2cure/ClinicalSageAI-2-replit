@@ -167,6 +167,19 @@ describe('a refusal is not an outage, and the caller is told what it was', () =>
     expect(failedAuditRows()[0]?.details).toMatchObject({ failureCode: 'no_provider_configured', waivable: false });
   });
 
+  /* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): with no model key
+     the gateway answers with its fixed demo-mode reply (`deterministic: true`).
+     The run was recorded as invalid_ai_response, and Submission Center told the
+     publisher the model's reply was not countable — of a reply no model wrote. */
+  it('the gateway’s fixed demo-mode reply: no_provider_configured, not an invalid model reply, not waivable', async () => {
+    holder.route = () => Promise.resolve({ model: 'demo-mode', content: '## Regulatory Review (Demo Mode)\n\nNo review was performed.', deterministic: true } as never);
+    const err = await outcome(runShadowReview({ sequenceId: SEQ, organizationId: ORG, userId: USER }));
+    // The caller is told the cause, not "The AI request could not be completed."
+    expect(String(err?.message)).toMatch(/No AI provider is configured on this deployment/);
+    expect(await newestRun()).toMatchObject({ status: 'failed', failure_code: 'no_provider_configured' });
+    expect(failedAuditRows()[0]?.details).toMatchObject({ failureCode: 'no_provider_configured', waivable: false });
+  });
+
   it('a placement refusal: placement_refused, answered PLACEMENT_REFUSED rather than "provider unavailable"', async () => {
     const refusal = Object.assign(new GatewayPolicyError('The organization placement policy excludes every lane for this request.'), {
       reasonCode: 'residency', stage: 'placement',
