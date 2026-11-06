@@ -405,9 +405,9 @@ export async function listOrgSkills(
               segments, therapeutic_areas, surfaces, document_types, triggers, tool_names,
               extends_skill_key, extension_mode, project_id, status, version, updated_at, policy_bindings, metadata FROM account_skill_bundles
       WHERE organization_id = $1 AND ($2::boolean OR status <> 'archived' OR metadata->'standingRule'->>'schemaVersion'='1')
-        ${options.projectId !== undefined ? 'AND (project_id IS NULL OR project_id=$3)' : ''}
+        AND (NOT $3::boolean OR project_id IS NULL OR project_id=$4::integer)
       ORDER BY name, id`,
-    [organizationId, options.includeArchived === true, ...(options.projectId !== undefined ? [options.projectId] : [])],
+    [organizationId, options.includeArchived === true, options.projectId !== undefined, options.projectId ?? null],
   );
   return rows.map(toRecord);
 }

@@ -416,7 +416,9 @@ export function parseDerivativeAction(body: unknown): DerivativeAction {
 }
 async function loadCustody(q: Queryable, orgId: number, lock = false): Promise<{ settings: Record<string, any>; state: CustodyState }> {
   if (!positive(orgId)) derivativeDenied();
-  const { rows } = await q.query(`SELECT settings FROM organizations WHERE id=$1 AND status='active'${lock ? ' FOR UPDATE' : ''}`, [orgId]);
+  const { rows } = lock
+    ? await q.query("SELECT settings FROM organizations WHERE id=$1 AND status='active' FOR UPDATE", [orgId])
+    : await q.query("SELECT settings FROM organizations WHERE id=$1 AND status='active'", [orgId]);
   if (rows.length !== 1) derivativeDenied();
   const state = custodyOf(rows[0].settings);
   if (Object.values(state.records).some(record => record.organizationId !== orgId)) derivativeDenied();

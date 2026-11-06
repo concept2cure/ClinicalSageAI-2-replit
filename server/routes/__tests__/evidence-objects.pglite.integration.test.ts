@@ -399,6 +399,42 @@ describe('material evidence changes', () => {
     expect((await savedEvidence()).is_verified).toBe(false);
   });
 
+  it('updates every allowed column through static SQL with real JSON, UUID, date and decimal conversion', async () => {
+    expect((await decide()).status).toBe(200);
+    const title = "Study quote '; UPDATE evidence_objects SET is_verified=true; --";
+    const timestamp = '2026-11-06T12:34:56.000Z';
+    const response = await request(appWith(ORG)).patch(`/api/evidence/${EVIDENCE}`).send({
+      title, code: 'RESULT-02', description: 'Updated saved evidence', evidenceType: 'test_report',
+      evidenceCategory: 'performance', evidenceLevel: 'II', sourceType: 'external', sourceReference: 'Source 2',
+      sourceCitation: 'Citation 2', programId: PROGRAM, documentId: 45, documentVersion: '2', pageRange: '13-14',
+      excerpt: 'The result was 20.', qualityScore: 0.999, relevanceScore: 0.125,
+      validFrom: timestamp, validUntil: timestamp, publicationDate: timestamp, testDate: timestamp,
+      authors: ['Author one', "Author's two"], journal: 'Test journal', doi: '10.000/test', pmid: '12345',
+      abstract: 'Measured results', testType: 'Bench', testLab: 'Test laboratory',
+      testResults: { result: 20, nested: { status: 'measured', flags: [true, false] } },
+      tags: ['bench', 'updated'], metadata: { method: 'new analysis', trace: { source: 'stored' } }, reason: REASON,
+    });
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    const saved = await savedEvidence();
+    expect(saved).toMatchObject({ id: EVIDENCE, organization_id: ORG, program_id: PROGRAM,
+      title, code: 'RESULT-02', description: 'Updated saved evidence', evidence_type: 'test_report',
+      evidence_category: 'performance', evidence_level: 'II', source_type: 'external', source_reference: 'Source 2',
+      source_citation: 'Citation 2', document_id: 45, document_version: '2', page_range: '13-14', excerpt: 'The result was 20.',
+      authors: ['Author one', "Author's two"], journal: 'Test journal', doi: '10.000/test', pmid: '12345',
+      abstract: 'Measured results', test_type: 'Bench', test_lab: 'Test laboratory',
+      test_results: { result: 20, nested: { status: 'measured', flags: [true, false] } }, tags: ['bench', 'updated'],
+      metadata: { method: 'new analysis', trace: { source: 'stored' }, verificationInvalidation: { invalidatedBy: USER } },
+      updated_by: String(USER), is_verified: false, verified_by: null, verified_at: null, status: 'pending' });
+    expect(Number(saved.quality_score)).toBe(1);
+    expect(Number(saved.relevance_score)).toBe(0.13);
+    for (const column of ['valid_from', 'valid_until', 'publication_date', 'test_date']) {
+      expect(new Date(saved[column] as string).toISOString()).toBe(timestamp);
+    }
+    expect(response.body.meta.contentHash).toBe(await currentHash());
+    expect(H.statements.every(statement => !statement.includes(title))).toBe(true);
+    expect((await auditRows()).at(-1)?.action).toBe('evidence.verification_invalidated');
+  });
+
   it('never accepts a forged verification receipt as ordinary material metadata', async () => {
     const response = await request(appWith(ORG)).patch(`/api/evidence/${EVIDENCE}`)
       .send({ metadata: { verificationReceipt: { approved: true } }, reason: REASON });

@@ -212,7 +212,6 @@ const evidenceColumns = {
   abstract: 'abstract', testType: 'test_type', testLab: 'test_lab', testDate: 'test_date',
   testResults: 'test_results', tags: 'tags', metadata: 'metadata',
 } as const;
-const jsonFields = new Set(['authors', 'testResults', 'tags', 'metadata']);
 const dateFields = new Set(['validFrom', 'validUntil', 'publicationDate', 'testDate']);
 
 function metadataOf(value: unknown): Record<string, unknown> {
@@ -320,24 +319,53 @@ async function auditEvidence(client: RequestSqlClient, before: EvidenceRecord, u
 
 type EvidenceUpdate = z.infer<typeof updateEvidenceSchema>;
 async function updateEvidenceContent(client: RequestSqlClient, before: EvidenceRecord, updates: EvidenceUpdate, userId: number): Promise<EvidenceRecord> {
-  const sets: string[] = [];
-  const params: unknown[] = [];
+  const patch: Record<string, unknown> = {};
   for (const key of Object.keys(evidenceColumns) as Array<keyof typeof evidenceColumns>) {
     if (updates[key] === undefined || key === 'metadata') continue;
-    params.push(jsonFields.has(key) ? JSON.stringify(updates[key]) : updates[key]);
-    sets.push(`${evidenceColumns[key]}=$${params.length}${jsonFields.has(key) ? '::json' : ''}`);
+    patch[evidenceColumns[key]] = updates[key];
   }
   const metadata = metadataOf(updates.metadata ?? before.metadata);
   const previousMetadata = metadataOf(before.metadata);
   for (const reserved of REVIEW_METADATA) {
     if (Object.prototype.hasOwnProperty.call(previousMetadata, reserved)) metadata[reserved] = previousMetadata[reserved];
   }
-  params.push(JSON.stringify(metadata));
-  sets.push(`metadata=$${params.length}::json`);
-  params.push(String(userId));
-  sets.push(`updated_by=$${params.length}`, 'updated_at=NOW()');
-  params.push(before.id, before.organizationId);
-  const updated = await client.query(`UPDATE evidence_objects SET ${sets.join(', ')} WHERE id=$${params.length-1} AND organization_id=$${params.length} RETURNING *`, params);
+  patch.metadata = metadata;
+  // The row's actual column types govern JSON, UUID, timestamp and numeric
+  // conversion. Key presence preserves omitted fields without interpolating SQL.
+  const updated = await client.query(`UPDATE evidence_objects AS saved SET
+    title=CASE WHEN $1::jsonb ? 'title' THEN patch.title ELSE saved.title END,
+    code=CASE WHEN $1::jsonb ? 'code' THEN patch.code ELSE saved.code END,
+    description=CASE WHEN $1::jsonb ? 'description' THEN patch.description ELSE saved.description END,
+    evidence_type=CASE WHEN $1::jsonb ? 'evidence_type' THEN patch.evidence_type ELSE saved.evidence_type END,
+    evidence_category=CASE WHEN $1::jsonb ? 'evidence_category' THEN patch.evidence_category ELSE saved.evidence_category END,
+    evidence_level=CASE WHEN $1::jsonb ? 'evidence_level' THEN patch.evidence_level ELSE saved.evidence_level END,
+    source_type=CASE WHEN $1::jsonb ? 'source_type' THEN patch.source_type ELSE saved.source_type END,
+    source_reference=CASE WHEN $1::jsonb ? 'source_reference' THEN patch.source_reference ELSE saved.source_reference END,
+    source_citation=CASE WHEN $1::jsonb ? 'source_citation' THEN patch.source_citation ELSE saved.source_citation END,
+    program_id=CASE WHEN $1::jsonb ? 'program_id' THEN patch.program_id ELSE saved.program_id END,
+    document_id=CASE WHEN $1::jsonb ? 'document_id' THEN patch.document_id ELSE saved.document_id END,
+    document_version=CASE WHEN $1::jsonb ? 'document_version' THEN patch.document_version ELSE saved.document_version END,
+    page_range=CASE WHEN $1::jsonb ? 'page_range' THEN patch.page_range ELSE saved.page_range END,
+    excerpt=CASE WHEN $1::jsonb ? 'excerpt' THEN patch.excerpt ELSE saved.excerpt END,
+    quality_score=CASE WHEN $1::jsonb ? 'quality_score' THEN patch.quality_score ELSE saved.quality_score END,
+    relevance_score=CASE WHEN $1::jsonb ? 'relevance_score' THEN patch.relevance_score ELSE saved.relevance_score END,
+    valid_from=CASE WHEN $1::jsonb ? 'valid_from' THEN patch.valid_from ELSE saved.valid_from END,
+    valid_until=CASE WHEN $1::jsonb ? 'valid_until' THEN patch.valid_until ELSE saved.valid_until END,
+    authors=CASE WHEN $1::jsonb ? 'authors' THEN patch.authors ELSE saved.authors END,
+    publication_date=CASE WHEN $1::jsonb ? 'publication_date' THEN patch.publication_date ELSE saved.publication_date END,
+    journal=CASE WHEN $1::jsonb ? 'journal' THEN patch.journal ELSE saved.journal END,
+    doi=CASE WHEN $1::jsonb ? 'doi' THEN patch.doi ELSE saved.doi END,
+    pmid=CASE WHEN $1::jsonb ? 'pmid' THEN patch.pmid ELSE saved.pmid END,
+    abstract=CASE WHEN $1::jsonb ? 'abstract' THEN patch.abstract ELSE saved.abstract END,
+    test_type=CASE WHEN $1::jsonb ? 'test_type' THEN patch.test_type ELSE saved.test_type END,
+    test_lab=CASE WHEN $1::jsonb ? 'test_lab' THEN patch.test_lab ELSE saved.test_lab END,
+    test_date=CASE WHEN $1::jsonb ? 'test_date' THEN patch.test_date ELSE saved.test_date END,
+    test_results=CASE WHEN $1::jsonb ? 'test_results' THEN patch.test_results ELSE saved.test_results END,
+    tags=CASE WHEN $1::jsonb ? 'tags' THEN patch.tags ELSE saved.tags END,
+    metadata=patch.metadata, updated_by=$2, updated_at=NOW()
+    FROM json_populate_record(NULL::evidence_objects, $1::json) AS patch
+    WHERE saved.id=$3 AND saved.organization_id=$4 RETURNING saved.*`,
+  [JSON.stringify(patch), String(userId), before.id, before.organizationId]);
   return evidenceRow(updated.rows[0]);
 }
 
