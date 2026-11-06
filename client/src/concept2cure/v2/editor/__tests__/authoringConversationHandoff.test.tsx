@@ -92,7 +92,7 @@ describe('new editor asks use the guarded canonical conversation', () => {
 
   it('uses the same leave guard for saved source requests, excluding unsaved text after explicit leave', async () => {
     const onNav = await mount(true);
-    fireEvent.click(openEditorControl('Project files'));
+    fireEvent.click(openEditorControl('Vault'));
     fireEvent.click(screen.getByRole('button', { name: 'Ask about saved source' }));
     await screen.findByRole('alertdialog', { name: 'Unsaved changes in 3.2.P.8.1' });
     expect(handoff()).toBeUndefined();
