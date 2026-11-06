@@ -415,7 +415,9 @@
         "client/src/concept2cure/quality/ChangeControl.tsx",
         "client/src/concept2cure/quality/qmsApproval.ts",
         "client/src/concept2cure/quality/changeData.ts",
-        "client/src/concept2cure/quality/changeHooks.ts"
+        "client/src/concept2cure/quality/changeHooks.ts",
+        "server/services/ectd/assess-dispatch-readiness.ts",
+        "server/services/ectd/leaf-document-resolver.ts"
       ]
     },
     {
