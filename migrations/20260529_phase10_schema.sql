@@ -81,6 +81,12 @@ CREATE TABLE IF NOT EXISTS c2c_ana_agentic_prefs (
 
 -- ── 4. c2c_project_pinned_evidence ──────────────────────────────────────────
 --
+-- AMENDED IN PLACE 2026-11-06 (S2, the data room catalog): the kind CHECK admits
+-- 'data_room', a data-room capture a project uses ("Use in this project"). It only
+-- widens. Existing databases get the same list from
+-- migrations/20261106_data_room_grade.sql, which replaces the CHECK only when its
+-- live definition differs (RULE 1). The journal records this file as drift once.
+--
 -- Evidence cards pinned to a regulatory program (project). Displayed in the
 -- Project detail aside. Click → vault / artifact / RIM. The unique constraint
 -- ensures the same source can't be pinned twice per project.
@@ -88,7 +94,7 @@ CREATE TABLE IF NOT EXISTS c2c_ana_agentic_prefs (
 CREATE TABLE IF NOT EXISTS c2c_project_pinned_evidence (
   id            bigserial   PRIMARY KEY,
   project_id    uuid        NOT NULL,              -- regulatory_programs.id
-  evidence_kind text        NOT NULL,              -- 'artifact' | 'vault_doc' | 'rim_precedent' | 'guidance'
+  evidence_kind text        NOT NULL,              -- 'artifact' | 'vault_doc' | 'rim_precedent' | 'guidance' | 'data_room'
   evidence_ref  text        NOT NULL,              -- artifact id, vault doc id, or external reference
   title         text        NOT NULL,
   meta          text,                              -- display subtitle (e.g. "Section IV.C · RIM 0.91")
@@ -97,7 +103,7 @@ CREATE TABLE IF NOT EXISTS c2c_project_pinned_evidence (
   reason        text,
 
   CONSTRAINT c2c_pinned_ev_kind_check
-    CHECK (evidence_kind IN ('artifact','vault_doc','rim_precedent','guidance')),
+    CHECK (evidence_kind IN ('artifact','vault_doc','rim_precedent','guidance','data_room')),
   UNIQUE (project_id, evidence_kind, evidence_ref)
 );
 

@@ -1,0 +1,94 @@
+{
+  "base": "http://127.0.0.1:5001",
+  "phase": "catalog",
+  "startedAt": "2026-11-06T19:06:46.616Z",
+  "steps": [
+    {
+      "name": "1440: the catalog across projects, organized by study",
+      "text": "This project All my projects The data catalog: every captured file you can open, organized by project, study, kind, CTD section and Vault folder, each with its grade. Refresh sources Search the data room catalogue Every captured file across your 3 projects of this sponsor, each graded from what the system records about it. Organize by Newest first Project Study Kind CTD section Vault folder Any project [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) (5) [Demo · MDX] NeuroPanel-Dx 510(k) (1) Any kind Protocol (2) Agency correspondence (1) Any CTD section CTD 5.3.5 (2) Any Va"
+    },
+    {
+      "name": "1440: organized by kind",
+      "groups": [
+        "Protocol",
+        "Agency correspondence",
+        "Not described yet"
+      ]
+    },
+    {
+      "name": "1440: organized by ctd",
+      "groups": [
+        "CTD 5.3.5",
+        "Not described yet"
+      ]
+    },
+    {
+      "name": "1440: organized by folder",
+      "groups": [
+        "Module 5 · Clinical",
+        "Agency correspondence",
+        "Not described yet"
+      ]
+    },
+    {
+      "name": "1440: organized by project",
+      "groups": [
+        "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+        "[Demo · MDX] NeuroPanel-Dx 510(k)"
+      ]
+    },
+    {
+      "name": "1440: a grade's basis, criterion by criterion",
+      "basis": "Grade C (71 of 100), from recorded facts by data-room-grade v1, 11/6/2026, 7:03:46 PM. Provenance 20/20: SHA-256 recorded at capture; who captured it is recorded; arrived by chat upload. Integrity 10/20: original bytes held; not filed in Vault; fixity not checked. Currency 15/15: Current: no later capture replaced it. Processing 15/15: Read in full: its text is available. Verification 0/15: No person has confirmed what it is: not filed in Vault. Conformance (does not apply): Not a dataset: CDISC conformance does not apply."
+    },
+    {
+      "name": "1440: a dataset's grade reads the CDISC validator",
+      "basis": "Grade C (60 of 100), from recorded facts by data-room-grade v1, 11/6/2026, 7:03:46 PM. Provenance 20/20: SHA-256 recorded at capture; who captured it is recorded; arrived by chat upload. Integrity 10/20: original bytes held; not filed in Vault; fixity not checked. Currency 15/15: Current: no later capture replaced it. Processing 15/15: Structure read: 1 table profiled. Verification 0/15: No person has confirmed what it is: not filed in Vault. Conformance 0/15: 0 of 1 table pass the ADaM validator with no error (ADSL: 1 error). Structural subset, not the validator of record."
+    },
+    {
+      "name": "390: the catalog across projects, organized by study",
+      "text": "This project All my projects The data catalog: every captured file you can open, organized by project, study, kind, CTD section and Vault folder, each with its grade. Refresh sources Search the data room catalogue Every captured file across your 3 projects of this sponsor, each graded from what the system records about it. Organize by Newest first Project Study Kind CTD section Vault folder Any project [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) (5) [Demo · MDX] NeuroPanel-Dx 510(k) (1) Any kind Protocol (2) Agency correspondence (1) Any CTD section CTD 5.3.5 (2) Any Va"
+    },
+    {
+      "name": "390: organized by kind",
+      "groups": [
+        "Protocol",
+        "Agency correspondence",
+        "Not described yet"
+      ]
+    },
+    {
+      "name": "390: organized by ctd",
+      "groups": [
+        "CTD 5.3.5",
+        "Not described yet"
+      ]
+    },
+    {
+      "name": "390: organized by folder",
+      "groups": [
+        "Module 5 · Clinical",
+        "Agency correspondence",
+        "Not described yet"
+      ]
+    },
+    {
+      "name": "390: organized by project",
+      "groups": [
+        "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+        "[Demo · MDX] NeuroPanel-Dx 510(k)"
+      ]
+    },
+    {
+      "name": "390: a grade's basis, criterion by criterion",
+      "basis": "Grade C (71 of 100), from recorded facts by data-room-grade v1, 11/6/2026, 7:03:46 PM. Provenance 20/20: SHA-256 recorded at capture; who captured it is recorded; arrived by chat upload. Integrity 10/20: original bytes held; not filed in Vault; fixity not checked. Currency 15/15: Current: no later capture replaced it. Processing 15/15: Read in full: its text is available. Verification 0/15: No person has confirmed what it is: not filed in Vault. Conformance (does not apply): Not a dataset: CDISC conformance does not apply."
+    },
+    {
+      "name": "390: a dataset's grade reads the CDISC validator",
+      "basis": "Grade C (60 of 100), from recorded facts by data-room-grade v1, 11/6/2026, 7:03:46 PM. Provenance 20/20: SHA-256 recorded at capture; who captured it is recorded; arrived by chat upload. Integrity 10/20: original bytes held; not filed in Vault; fixity not checked. Currency 15/15: Current: no later capture replaced it. Processing 15/15: Structure read: 1 table profiled. Verification 0/15: No person has confirmed what it is: not filed in Vault. Conformance 0/15: 0 of 1 table pass the ADaM validator with no error (ADSL: 1 error). Structural subset, not the validator of record."
+    }
+  ],
+  "apiErrors": [],
+  "ok": true,
+  "finishedAt": "2026-11-06T19:07:09.268Z"
+}
