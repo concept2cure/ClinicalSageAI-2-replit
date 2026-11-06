@@ -139,7 +139,7 @@ export interface MemoryContextAssemblerResult {
   memoryBlock: string;
   atoms: RetrievedMemoryAtom[];
   diagnostics: MemoryAssemblyDiagnostics;
-  /** Items present in `memoryBlock` after trimming. Absent on fallback paths. */
+  /** Complete items admitted to `memoryBlock`. Absent on fallback paths. */
   read?: MemoryReadEntry[];
 }
 
@@ -349,6 +349,76 @@ function unavailableMemoryNotice(
     'Do not infer that missing memory or prior decisions do not exist. State the retrieval limitation when relevant; ask for or verify needed context.'];
 }
 
+interface RenderedMemoryRecord {
+  layer: MemoryLayer;
+  heading: string;
+  content: string;
+  entry: MemoryReadEntry;
+}
+
+function renderMemoryRecords(atoms: RetrievedMemoryAtom[], limit: number): RenderedMemoryRecord[] {
+  const records: RenderedMemoryRecord[] = [];
+  const working = atoms.find(atom => atom.layer === 'working_memory');
+  if (working) records.push({
+    layer: 'working_memory',
+    heading: '## Working Memory',
+    content: working.content,
+    entry: { layer: 'working_memory', title: working.title },
+  });
+  const layers: Array<[Extract<MemoryLayer, 'project_memory' | 'client_memory'>, string]> = [
+    ['project_memory', 'Project Memory (semantic matches)'],
+    ['client_memory', 'Client Memory (semantic matches)'],
+  ];
+  for (const [layer, heading] of layers) {
+    for (const atom of atoms.filter(candidate => candidate.layer === layer).slice(0, limit)) {
+      const documentName = atom.metadata?.source?.documentName || undefined;
+      const sourceText = documentName ? ` | doc: ${documentName}` : '';
+      // Full labels and content count toward the budget. Confidence scores are
+      // not measured probabilities and remain absent from the prompt.
+      records.push({
+        layer,
+        heading: `## ${heading} (cite as [Source: category — title])`,
+        content: `- [${atom.category || layer} | "${atom.title}"${sourceText}] ${atom.content}`,
+        entry: { layer, title: atom.title, ...(documentName ? { documentName } : {}) },
+      });
+    }
+  }
+  return records;
+}
+
+const MEMORY_BLOCK_START = '\n\n--- PERSISTENT MEMORY CONTEXT ---\n';
+const MEMORY_BLOCK_END = '\n--- END PERSISTENT MEMORY CONTEXT ---\n';
+const MEMORY_BUDGET_NOTICE = '## Memory context incomplete\n' +
+  "Some recalled memory records were omitted to fit this turn's character budget. " +
+  'Do not infer that omitted decisions or exclusions do not exist; ask for or verify needed context.';
+
+function fitMemoryRecords(records: RenderedMemoryRecord[], notices: string[], maxChars: number) {
+  const sections = [...notices];
+  const read: MemoryReadEntry[] = [];
+  let lastLayer: MemoryLayer | undefined;
+  let length = MEMORY_BLOCK_START.length + MEMORY_BLOCK_END.length + sections.join('\n\n').length;
+  let omitted = false;
+  for (const record of records) {
+    const newSection = record.layer !== lastLayer;
+    const addedLength = newSection
+      ? (sections.length ? 2 : 0) + record.heading.length + 1 + record.content.length
+      : 1 + record.content.length;
+    if (length + addedLength > maxChars) {
+      omitted = true;
+      continue;
+    }
+    if (newSection) sections.push(`${record.heading}\n${record.content}`);
+    else sections[sections.length - 1] += `\n${record.content}`;
+    length += addedLength;
+    lastLayer = record.layer;
+    read.push(record.entry);
+  }
+  const memoryBlock = sections.length
+    ? `${MEMORY_BLOCK_START}${sections.join('\n\n')}${MEMORY_BLOCK_END}`
+    : '';
+  return { memoryBlock, read, omitted };
+}
+
 export async function buildMemoryContextForChat(
   input: MemoryContextAssemblerInput
 ): Promise<MemoryContextAssemblerResult> {
@@ -380,61 +450,18 @@ export async function buildMemoryContextForChat(
     droppedByDeduplication,
   } = orchestrateAtoms(atoms, maxAgeDays, memoryPolicy);
 
-  // Put unavailability ahead of recalled content so the character budget
-  // cannot erase the distinction between unread and absent memory.
-  const sections: string[] = unavailableMemoryNotice(layerOutcomes);
-  // Each rendered item with the line that carries it, so the ones the
-  // character budget cut can be told apart from the ones the model read.
-  const rendered: Array<{ entry: MemoryReadEntry; line: string }> = [];
-
-  const wm = sorted.find(a => a.layer === 'working_memory');
-  if (wm) {
-    sections.push(`## Working Memory\n${wm.content}`);
-    rendered.push({
-      entry: { layer: 'working_memory', title: wm.title },
-      line: `## Working Memory\n${wm.content}`.slice(0, 80),
-    });
+  // Admit complete records, including their labels and the block's closing
+  // delimiter. A prefix can reverse a decision whose qualification is at its
+  // end, and it is not evidence that the whole memory was read.
+  const records = renderMemoryRecords(sorted, limit);
+  const notices = unavailableMemoryNotice(layerOutcomes);
+  let fitted = fitMemoryRecords(records, notices, maxChars);
+  if (fitted.omitted) {
+    // Reserve the complete omission notice only when needed, then reconsider
+    // all ranked candidates. An oversized record must not block smaller ones.
+    fitted = fitMemoryRecords(records, [...notices, MEMORY_BUDGET_NOTICE], maxChars);
   }
-
-  const renderSemanticLayer = (
-    layer: Extract<MemoryLayer, 'project_memory' | 'client_memory'>,
-    heading: string
-  ) => {
-    const layerAtoms = sorted.filter(a => a.layer === layer).slice(0, limit);
-    if (layerAtoms.length === 0) return;
-
-    sections.push(
-      `## ${heading} (cite as [Source: category — title])\n` +
-        layerAtoms
-          .map(a => {
-            const categoryTag = a.category || layer;
-            // 2026-10-15: this printed " | confidence: NN%" from confidence_score.
-            // No memory writer measures one (rule constants, a model's
-            // self-report, the column's 0.8 default), so it is not shown as a
-            // probability.
-            const documentName = a.metadata?.source?.documentName || undefined;
-            const sourceText = documentName ? ` | doc: ${documentName}` : '';
-            const line = `- [${categoryTag} | "${a.title}"${sourceText}] ${trimContent(
-              a.content,
-              400
-            )}`;
-            rendered.push({ entry: { layer, title: a.title, ...(documentName ? { documentName } : {}) }, line: line.slice(0, 80) });
-            return line;
-          })
-          .join('\n')
-    );
-  };
-
-  renderSemanticLayer('project_memory', 'Project Memory (semantic matches)');
-  renderSemanticLayer('client_memory', 'Client Memory (semantic matches)');
-
-  const assembled = sections.length
-    ? `\n\n--- PERSISTENT MEMORY CONTEXT ---\n${sections.join(
-        '\n\n'
-      )}\n--- END PERSISTENT MEMORY CONTEXT ---\n`
-    : '';
-
-  const memoryBlock = trimContent(assembled, maxChars);
+  const { memoryBlock, read } = fitted;
   const diagnostics: MemoryAssemblyDiagnostics = {
     requestedLimitPerLayer: limit,
     appliedMaxChars: maxChars,
@@ -442,15 +469,11 @@ export async function buildMemoryContextForChat(
     maxAgeDays,
     droppedByForgetting,
     droppedByDeduplication,
-    trimmed: memoryBlock.length < assembled.length,
+    trimmed: fitted.omitted,
     layerOutcomes,
     workingMemoryMode,
     semanticSearchMs,
   };
-
-  // An item whose opening survived the character budget was read; one the
-  // trim cut off was not, and is not reported as read.
-  const read = rendered.filter(r => memoryBlock.includes(r.line)).map(r => r.entry);
 
   return { memoryBlock, atoms: sorted, diagnostics, read };
 }

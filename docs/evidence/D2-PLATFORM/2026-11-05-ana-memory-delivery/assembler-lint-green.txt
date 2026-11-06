@@ -1,0 +1,10 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+/workspace/scratch/3002d574f952/concept2cure-v2/tests/unit/memory-context-assembler.test.ts
+  239:39  warning  Arrow function has too many lines (167). Maximum allowed is 100  max-lines-per-function
+
+✖ 1 problem (0 errors, 1 warning)

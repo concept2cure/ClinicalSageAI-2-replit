@@ -1,0 +1,397 @@
+🔒 Pre-push: Running eCTD contract enforcement gates...
+   Validating eCTD stubs bundle against schema (AJV)...
+(node:35) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ectd-validate] ✅ Loaded sub-schema: leaf_map.schema.json
+[ectd-validate] ✅ Loaded sub-schema: sequence_plan.schema.json
+[ectd-validate] ✅ Loaded sub-schema: m1_index.schema.json
+[ectd-validate] ✅ Bundle data validates against bundle schema (AJV compile + validate)
+[ectd-validate] Computed bundle hash: e4446ba912b572d27dbd382f…
+[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…
+[ectd-validate] ✅ Proof-pack layout validated
+[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1
+[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids
+
+[ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref).
+   ✅ eCTD bundle validation passed.
+   Validating risk code contracts...
+(node:61) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:74) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:74) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+OK: Generated risk code types are up to date.
+   ✅ Risk code validation passed.
+   Validating migration apply-order invariants...
+(node:87) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:100) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:migration-set-order] OK — 462 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+   Validating that guarded tables are created before they are guarded...
+(node:129) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:142) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+   ✅ Migration apply-order passed.
+   Validating the fresh-install overlay can reach what it depends on...
+(node:171) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:184) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:install-fresh-overlay-deps] 389 overlay file(s) · 694 pushed table(s) · 7 pre-overlay creator(s) · 0 finding(s).
+[ci:install-fresh-overlay-deps] ✅ every overlay dependency is reachable by the installer.
+   ✅ Fresh-install overlay dependencies reachable.
+   Checking every pushed commit is inside the one plan...
+(node:192) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:205) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ci:one-design-plan: OK — 2 commit(s) inside the plan.
+   ✅ Every pushed commit is inside the plan.
+   Validating DROPs are replay-safe...
+(node:227) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:240) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:migration-drop-safety] OK — 462 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 20 dynamic DROP(s) in 20 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+   ✅ Replay-safe DROPs passed.
+   Validating one product: no new surface or rail entry...
+(node:248) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:261) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:261) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ci:one-product: 102 surfaces, 10 rail entries, none new.
+   ✅ One product passed.
+   Validating no class vocabulary is restated...
+(node:274) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:287) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:class-vocabulary] OK — 5977 file(s) scanned, no restated class vocabulary.
+   ✅ One class vocabulary passed.
+   Validating new migrations are on a deploy path...
+(node:297) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:310) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+   ✅ Deploy-path check passed.
+   Validating queried columns are reachable...
+(node:318) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:331) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:column-reachability] OK — 3131 column add(s) on no applier, 0 queried by the server.
+   ✅ Column reachability passed.
+   Validating server code runs no DDL on the runtime connection...
+(node:339) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:352) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:runtime-ddl] 75 DDL statement(s) in 11 runtime server file(s); 13 baselined
+[ci:runtime-ddl] ✅ 2 baselined file(s) now issue LESS DDL — lower or remove their entries:
+    • server/routes/c2c/context-intelligence.ts — 1 → 0
+    • server/services/integrations/credentialVault.ts — 2 → 0
+[ci:runtime-ddl] ✅ no new runtime DDL.
+   ✅ No runtime DDL.
+   Validating jsonb operators are not applied to json columns...
+(node:360) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:373) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:json-operator-types] 960 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3573 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+   ✅ No jsonb operator on a json column.
+   Validating the migration manifest tracks db/migrations...
+(node:381) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:394) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Manifest is in sync.
+   ✅ Migration manifest in sync.
+   Validating no new unscoped Drizzle query on tenant data...
+(node:402) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:415) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:drizzle-tenant-scope] OK — 88 site(s), all baselined; 2 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 2 fix(es).
+   ✅ Drizzle tenant scope passed.
+   Validating every v2 className is defined in a stylesheet...
+(node:423) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:436) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+   ✅ v2 class names passed.
+   Validating every raw client fetch() sends the bearer token...
+(node:444) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:457) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✅ ci:unauthenticated-fetch — 73 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+   ✅ Client fetch() authentication passed.
+   Validating no new session-scoped RLS bypass...
+(node:465) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:478) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 0 baselined occurrence(s) remain in 0 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+[ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (792 migration file(s) and 4409 code file(s) read), and no script writes either (P-70).
+   ✅ No new session-scoped RLS bypass.
+   Validating no new value interpolated into SQL text...
+(node:486) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:499) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:sql-interpolation] 30 fixed canonical predicate(s) proved separately; no value allowance added:
+  server/routes/c2c/project-vault.ts:1823:21 vaultLifecycleStageSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1842:44 vaultUnfiledSql('d') <- ../../services/vault/vault-document-filter.js
+  server/routes/c2c/project-vault.ts:1843:44 vaultSuggestedSql('d') <- ../../services/vault/vault-document-filter.js
+  server/services/autoExtractionPipeline.ts:433:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/csr/source-receipt-eligibility.ts:35:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:38:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:43:49 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:69:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:69:43 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:69:76 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:127:13 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:127:46 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:136:47 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/figureGenerationService.ts:652:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/ha-interactions/commitment-fulfilment.ts:197:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/ha-interactions/commitment-fulfilment.ts:464:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/pathway-engines/estar/estar-attachment-source-access.ts:50:62 vaultBinaryAvailableSql('d') <- ../../document-data-disposition/eligibility
+  server/services/report-os/report-package-legal.ts:46:40 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility
+  server/services/vault/vault-folder-export.ts:64:15 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:107:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-seal.service.ts:110:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:111:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-seal.service.ts:268:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:203:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-version-restore.ts:64:67 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-version-restore.ts:134:15 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1056 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+   ✅ No new value interpolated into SQL text.
+   Validating ledger integrity (row ids, evidence paths)...
+   ✅ Ledger integrity passed.
+   Validating module catalog copy...
+(node:515) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:528) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:catalog-copy] OK — 104 catalog description(s) across 3 migration(s) read as product copy.
+   ✅ Catalog copy passed.
+   Checking for fixture fallback in client surfaces...
+(node:536) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:549) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+   ✅ No ungated fixture fallback.
+   Checking for mock data in production routes...
+(node:557) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:570) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+   ✅ No mock data in production routes.
+   Checking for manufactured signer identity...
+(node:578) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:591) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+   ✅ Fabricated-identity check passed.
+   Checking that every program-ownership check is the one check...
+(node:601) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:614) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[self-test] OK — 10 copies found, 6 reads passed.
+(node:622) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:635) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+   ✅ One program-ownership check.
+   Checking that project creation stays with its recorded owners...
+(node:645) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:658) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:project-creation-owners:selftest] OK { planted: 25, readsAndComments: 5, owners: 4 }
+(node:666) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:679) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:project-creation-owners] OK — one canonical program writer and three explicit, bounded PM writers (4 sites).
+   ✅ Project creation stays with its recorded owners.
+   Checking for a discarded Part 11 audit-write outcome...
+(node:688) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:701) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+check-discarded-audit-write: no new occurrences. 0 baselined across 0 file(s).
+   ✅ No discarded audit-write outcome.
+   Checking that the client address has one source...
+(node:711) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:724) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+   ✅ One source for the client address.
+   Checking the filing-exit agreement gate catches what it must...
+(node:732) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:745) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:filing-exit-agreement:selftest] ✓ a new seal with no agreement check fails, naming the file and the kind
+[ci:filing-exit-agreement:selftest] ✓ the same seal passes once it asks the question
+[ci:filing-exit-agreement:selftest] ✓ a new device package built from the filing fails
+[ci:filing-exit-agreement:selftest] ✓ a baseline entry with no written reason fails, so it cannot be a snooze
+[ci:filing-exit-agreement:selftest] ✓ a baseline allowing more than exists fails, so freed allowance cannot absorb a new door
+[ci:filing-exit-agreement:selftest] ✓ a door baselined with a real reason passes, and the count is reported
+[ci:filing-exit-agreement:selftest] ✓ the module that defines the question is not read as a door
+[ci:filing-exit-agreement:selftest] ✓ a device package through the section loaders fails, naming each kind
+[ci:filing-exit-agreement:selftest] ✓ a device package that asks governedDeviceFilingAgreement passes
+[ci:filing-exit-agreement:selftest] ✓ the device loaders' module is not read as a door
+[ci:filing-exit-agreement:selftest] ✓ an empty tree passes
+[ci:filing-exit-agreement:selftest] OK — the gate fails on every shape it exists to catch, and stays quiet on the rest.
+   ✅ The filing-exit gate fails on what it must.
+   Checking that every seal asks whether the filing holds this document's text...
+(node:841) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:854) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:filing-exit-agreement] OK — every seal and every filing-built package asks the agreement question, or is baselined with a reason. 1 baselined site(s) in 1 file(s), exactly as baselined.
+   ✅ Every seal asks the filing-agreement question.
+   Checking that every sign ledger row comes from a signature ceremony...
+(node:862) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:875) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 29 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 4 baselined re-authentication(s) sign nothing, exactly as baselined.
+   ✅ Every new sign ledger row has its ceremony.
+   Checking that every upload site is bounded, filtered and byte-checked...
+(node:887) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:900) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 20 file(s) build uploads.
+   ✅ Every upload site is guarded, or baselined with a reason.
+   Checking .trivyignore hygiene (expiry, owner, reason; no tree-wide resource ignores)...
+(node:908) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:921) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:trivyignore-hygiene] OK — 3 suppression(s) in /workspace/scratch/3002d574f952/concept2cure-v2/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+   ✅ .trivyignore entries are bounded and owned.
+   Checking no file crosses the size ceiling (the ratchet the auto-refresh was absorbing)...
+(node:929) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:942) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Repo health scan written: /tmp/repo-health-ceiling-probe.json
+- content-duplicate groups: 0 (0 files)   [gated]
+- duplicate basenames: 257   [reported, not gated]
+- files over byte threshold: 56
+- files over line threshold: 113
+
+✅ repo health strict gate passed.
+   ✅ No new oversized file.
+   Checking that no 5xx body carries the caught error's text...
+(node:953) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:966) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+   ✅ No 5xx body carries the caught error's text.
+   Checking that pushed imports resolve to tracked files...
+(node:974) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:987) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:untracked-imports] OK — every relative import in 17 file(s) resolves to a tracked file.
+   ✅ Pushed imports all resolve to tracked files.
+   Checking for ESLint errors in the pushed files...
+(node:999) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1012) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:pushed-lint-errors] OK — no ESLint errors in 17 changed file(s) against origin/concept2cure-v2.
+   ✅ No ESLint errors in the pushed files.
+   Checking that the pushed files gained no ESLint warnings...
+(node:1048) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1061) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1072) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:eslint-warning-ratchet] --since 2cec182a17105da5863bab2fdb66ba1adef317e2 (2cec182a1) -- 17 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since 2cec182a17105da5863bab2fdb66ba1adef317e2.
+   ✅ The pushed files gained no ESLint warnings.
+   Typechecking (only if this push can change a type)...
+(node:1135) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1148) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:pushed-typecheck] 16 type-relevant file(s) changed against origin/concept2cure-v2: server/routes/chat/__tests__/send-message-read-only.test.ts, server/routes/chat/send-message.ts, server/services/__tests__/ana-session-bootstrap.test.ts, server/services/__tests__/memory-context-assembler-deadline.test.ts, server/services/__tests__/working-memory-fact-check.test.ts, +11 more
+(node:1159) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:typecheck-no-regression] running full-program TypeScript API workers (500 diagnostic targets/process; baseline: 0; uncached)
+[ci:typecheck-no-regression] full-program coverage 0/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 1000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 1500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 2000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 2500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 3000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 3500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 4000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 4500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 5000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 5500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 6000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 6500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 7000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 7500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 8000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 8500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 9000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 9500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 10000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 10500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 11000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 11500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 12000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 12500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 13000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 13500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 14000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 14500/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 15000/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] full-program coverage 15379/15379; snapshot ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43
+[ci:typecheck-no-regression] all 15379 source files checked exactly once; 33 workers completed; snapshot unchanged
+[ci:typecheck-no-regression] errors found: 0 (worker aggregate exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.
+   ✅ Typecheck passed (or nothing type-relevant was pushed).
+✅ Pre-push checks complete — all gates passed.

@@ -1,0 +1,152 @@
+{
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "observed_at_utc": "2026-11-06 06:15:09 UTC",
+  "previous_remote_head": "2cec182a17105da5863bab2fdb66ba1adef317e2",
+  "published_head": "58f9558d235184f6d02a50feb3c90b882bf2d370",
+  "published_tree": "fefec1e18d9b2cb4074d2d59c1b90920a082504f",
+  "commits": [
+    {
+      "purpose": "Complete AnA memory delivery",
+      "local_candidate": "340290a483a10fa19e1e90835032cd4ff3a9c222",
+      "published_commit": "28704d1a1135195990d6c7abb49bb41bb5b196c0",
+      "tree": "22efcd6e0ad7cc932474112e9d24b019e2e52ea2"
+    },
+    {
+      "purpose": "Keep regression suites within the existing warning limits and refresh evidence",
+      "local_candidate": "85c4f258b2c8b0292b6af59f7e56b8281b1da96b",
+      "published_commit": "58f9558d235184f6d02a50feb3c90b882bf2d370",
+      "tree": "fefec1e18d9b2cb4074d2d59c1b90920a082504f"
+    }
+  ],
+  "method": "The complete unchanged pre-push hook passed on the exact local committed candidate. GitHub app publication reproduced both complete Git trees, verified commit trees, parents and messages, and updated only concept2cure-v2 with force=false and the expected previous head. Fresh branch read-back and local fetch matched. The clean local branch was aligned by a compare-and-swap ref update after full tree equality; no files were reset.",
+  "local_gate": {
+    "candidate": "85c4f258b2c8b0292b6af59f7e56b8281b1da96b",
+    "parent": "340290a483a10fa19e1e90835032cd4ff3a9c222",
+    "remote_base": "2cec182a17105da5863bab2fdb66ba1adef317e2",
+    "tree": "fefec1e18d9b2cb4074d2d59c1b90920a082504f",
+    "started_at_utc": "2026-11-06T05:24:58.681609+00:00",
+    "status": "completed",
+    "command": "TYPECHECK_FILES_PER_PROCESS=500 TYPECHECK_HEAP_MB=7168 sh .husky/pre-push origin https://github.com/concept2cure/ClinicalSageAI-2-replit.git",
+    "stdin": "refs/heads/concept2cure-v2 85c4f258b2c8b0292b6af59f7e56b8281b1da96b refs/heads/concept2cure-v2 2cec182a17105da5863bab2fdb66ba1adef317e2\n",
+    "hook_sha256": "be2a193164e851d77714721b3db3a99f8534aa4b800e7a96273077354f3b9b8c",
+    "typecheck_files_per_process": 500,
+    "typecheck_heap_mb": 7168,
+    "exit_code": 0,
+    "ended_at_utc": "2026-11-06T06:13:59.724160+00:00",
+    "log_sha256": "11878ec7f49f12f27b5f983ea658e7db333946bfed255107e3b1db8a070d1160",
+    "program_files_checked": 15379,
+    "workers_completed": 33,
+    "type_errors": 0,
+    "snapshot": "ff2df993713a9ed0b1320dc68e76db9bba5c8f3e5c680be38b379f4767d07e43",
+    "snapshot_unchanged": true,
+    "source_and_test_identities_verified": true,
+    "gate_and_baseline_unchanged": true,
+    "clean_worktree": true
+  },
+  "workflows": [
+    {
+      "id": 42173230763,
+      "name": "CodeQL",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "58f9558d235184f6d02a50feb3c90b882bf2d370",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42173230763",
+      "created_at": "2026-11-06T06:14:57Z",
+      "updated_at": "2026-11-06T06:14:57Z"
+    },
+    {
+      "id": 42173230723,
+      "name": "C2C Agent \u2014 Validate & Audit",
+      "status": "completed",
+      "conclusion": "skipped",
+      "head_sha": "58f9558d235184f6d02a50feb3c90b882bf2d370",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42173230723",
+      "created_at": "2026-11-06T06:14:57Z",
+      "updated_at": "2026-11-06T06:14:58Z"
+    },
+    {
+      "id": 42173230790,
+      "name": "CI",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "58f9558d235184f6d02a50feb3c90b882bf2d370",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42173230790",
+      "created_at": "2026-11-06T06:14:57Z",
+      "updated_at": "2026-11-06T06:14:57Z"
+    },
+    {
+      "id": 42173230725,
+      "name": "Tier 5 Browser Smoke",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "58f9558d235184f6d02a50feb3c90b882bf2d370",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42173230725",
+      "created_at": "2026-11-06T06:14:57Z",
+      "updated_at": "2026-11-06T06:14:57Z"
+    },
+    {
+      "id": 42173230837,
+      "name": "Semgrep",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "58f9558d235184f6d02a50feb3c90b882bf2d370",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42173230837",
+      "created_at": "2026-11-06T06:14:57Z",
+      "updated_at": "2026-11-06T06:14:57Z"
+    },
+    {
+      "id": 42173230773,
+      "name": "Repo Health Baseline Refresh",
+      "status": "pending",
+      "conclusion": null,
+      "head_sha": "58f9558d235184f6d02a50feb3c90b882bf2d370",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42173230773",
+      "created_at": "2026-11-06T06:14:57Z",
+      "updated_at": "2026-11-06T06:14:58Z"
+    }
+  ],
+  "qualification": "Local behavioral/build/pre-push evidence. Queued or pending hosted workflows are not successful remote qualification; no deployment or live-provider acceptance is claimed.",
+  "log_receipts": {
+    "pre-push.txt": {
+      "source_capture": "next-memory-pre-push.txt",
+      "capture_sha256": "11878ec7f49f12f27b5f983ea658e7db333946bfed255107e3b1db8a070d1160",
+      "stored_sha256": "11878ec7f49f12f27b5f983ea658e7db333946bfed255107e3b1db8a070d1160",
+      "bytes": 35301,
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "none"
+    },
+    "pre-commit-implementation.txt": {
+      "source_capture": "next-memory-pre-commit.txt",
+      "capture_sha256": "a5402bc450c1810733826c36d4437a12671d52b9159f69addfcad9d2d5daf47d",
+      "stored_sha256": "fdc666bed1433a536d82ba5e0e89e03aa708019e0184304e35b98c02f8d4a43c",
+      "bytes": 3493,
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {
+        "15": " "
+      },
+      "normalization": "documented EOF/trailing-whitespace removal only"
+    },
+    "pre-commit-tests.txt": {
+      "source_capture": "next-memory-test-cleanup-pre-commit.txt",
+      "capture_sha256": "ad3e8f82beb39e776d5fb87cf46a10705e3877d307a1bbe18164fa981b9b24e0",
+      "stored_sha256": "b6876a82f2d36e4761185e7617cf777c803a5a80ed461da15385fd30d9fdb77a",
+      "bytes": 1912,
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {
+        "5": " "
+      },
+      "normalization": "documented EOF/trailing-whitespace removal only"
+    },
+    "pre-push-lint-failure.txt": {
+      "source_capture": "next-memory-pre-push-lint-failure.txt",
+      "capture_sha256": "75e761fcfd787387a8e2e33d18c602ff222446f74988428941a7791d4b37ca76",
+      "stored_sha256": "82341909d47d98fc45f37d21e548e334d91987145570fea765ad78868aea715a",
+      "bytes": 30468,
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "documented EOF/trailing-whitespace removal only"
+    }
+  }
+}

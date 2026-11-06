@@ -1,0 +1,647 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+TAP version 13
+# (node:12) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: successful promotion retains tenant, stored content, embedding and commit-before-count
+ok 1 - successful promotion retains tenant, stored content, embedding and commit-before-count
+  ---
+  duration_ms: 3.863986
+  type: 'test'
+  ...
+# Subtest: empty scan is not a failure and opens no row scope
+ok 2 - empty scan is not a failure and opens no row scope
+  ---
+  duration_ms: 0.823335
+  type: 'test'
+  ...
+# Subtest: empty content remains a legitimate skip
+ok 3 - empty content remains a legitimate skip
+  ---
+  duration_ms: 0.524484
+  type: 'test'
+  ...
+# Subtest: missing profile remains a legitimate skip
+ok 4 - missing profile remains a legitimate skip
+  ---
+  duration_ms: 0.308476
+  type: 'test'
+  ...
+# Subtest: concurrently existing summary remains skipped, without another insert
+ok 5 - concurrently existing summary remains skipped, without another insert
+  ---
+  duration_ms: 0.452468
+  type: 'test'
+  ...
+# Subtest: gate rejection remains distinct and prevents embedding and transaction writes
+ok 6 - gate rejection remains distinct and prevents embedding and transaction writes
+  ---
+  duration_ms: 0.266854
+  type: 'test'
+  ...
+# Subtest: contradiction remains a stored quarantine rather than a successful promotion
+ok 7 - contradiction remains a stored quarantine rather than a successful promotion
+  ---
+  duration_ms: 0.490284
+  type: 'test'
+  ...
+# Subtest: noncontradiction pending-review disposition survives storage without confidence inflation
+ok 8 - noncontradiction pending-review disposition survives storage without confidence inflation
+  ---
+  duration_ms: 0.484525
+  type: 'test'
+  ...
+# Subtest: best-effort embedding failure retains durable unembedded content without provider payload logging
+ok 9 - best-effort embedding failure retains durable unembedded content without provider payload logging
+  ---
+  duration_ms: 0.860441
+  type: 'test'
+  ...
+# Subtest: comparison failure counts once as error and does not suppress the following tenant
+ok 10 - comparison failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.85337
+  type: 'test'
+  ...
+# Subtest: gate failure counts once as error and does not suppress the following tenant
+ok 11 - gate failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.509953
+  type: 'test'
+  ...
+# Subtest: begin failure counts once as error and does not suppress the following tenant
+ok 12 - begin failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.801243
+  type: 'test'
+  ...
+# Subtest: lock failure counts once as error and does not suppress the following tenant
+ok 13 - lock failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.672503
+  type: 'test'
+  ...
+# Subtest: dedupe failure counts once as error and does not suppress the following tenant
+ok 14 - dedupe failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.682428
+  type: 'test'
+  ...
+# Subtest: insert failure counts once as error and does not suppress the following tenant
+ok 15 - insert failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.275296
+  type: 'test'
+  ...
+# Subtest: commit-before failure counts once as error and does not suppress the following tenant
+ok 16 - commit-before failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.430125
+  type: 'test'
+  ...
+# Subtest: scope-open failure counts once as error and does not suppress the following tenant
+ok 17 - scope-open failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.207807
+  type: 'test'
+  ...
+# Subtest: scope-close failure counts once as error and does not suppress the following tenant
+ok 18 - scope-close failure counts once as error and does not suppress the following tenant
+  ---
+  duration_ms: 0.397447
+  type: 'test'
+  ...
+# Subtest: malformed JSON is an error, not a skip, and later work continues
+ok 19 - malformed JSON is an error, not a skip, and later work continues
+  ---
+  duration_ms: 0.632934
+  type: 'test'
+  ...
+# Subtest: invalid generation date is an error, not a skip, and later work continues
+ok 20 - invalid generation date is an error, not a skip, and later work continues
+  ---
+  duration_ms: 0.254235
+  type: 'test'
+  ...
+# Subtest: rollback failure does not erase the original failed attempt or abort later rows
+ok 21 - rollback failure does not erase the original failed attempt or abort later rows
+  ---
+  duration_ms: 0.73173
+  type: 'test'
+  ...
+# Subtest: mixed batch has separate success, quarantine, rejection, skip and failure counts
+ok 22 - mixed batch has separate success, quarantine, rejection, skip and failure counts
+  ---
+  duration_ms: 0.682928
+  type: 'test'
+  ...
+# Subtest: multiple scope failures are counted per attempted row, not one abort for the batch
+ok 23 - multiple scope failures are counted per attempted row, not one abort for the batch
+  ---
+  duration_ms: 0.391037
+  type: 'test'
+  ...
+# Subtest: scanError is one batch failure with no invented row outcomes or raw details
+ok 24 - scanError is one batch failure with no invented row outcomes or raw details
+  ---
+  duration_ms: 0.217571
+  type: 'test'
+  ...
+# Subtest: scanScopeError is one batch failure with no invented row outcomes or raw details
+ok 25 - scanScopeError is one batch failure with no invented row outcomes or raw details
+  ---
+  duration_ms: 0.295737
+  type: 'test'
+  ...
+# Subtest: a scheduled lease held elsewhere remains a no-work result
+ok 26 - a scheduled lease held elsewhere remains a no-work result
+  ---
+  duration_ms: 0.226814
+  type: 'test'
+  ...
+# Subtest: scheduled execution returns its actual partial-failure counts to the caller
+ok 27 - scheduled execution returns its actual partial-failure counts to the caller
+  ---
+  duration_ms: 0.468973
+  type: 'test'
+  ...
+# Subtest: scheduler lease error remains explicitly unavailable and omits raw exception payloads
+ok 28 - scheduler lease error remains explicitly unavailable and omits raw exception payloads
+  ---
+  duration_ms: 0.198083
+  type: 'test'
+  ...
+# Subtest: a non-Error thrown payload is counted without logging its contents
+ok 29 - a non-Error thrown payload is counted without logging its contents
+  ---
+  duration_ms: 0.370638
+  type: 'test'
+  ...
+# Subtest: failed save is retryable and does not fabricate a completed marker
+ok 30 - failed save is retryable and does not fabricate a completed marker
+  ---
+  duration_ms: 0.624712
+  type: 'test'
+  ...
+# Subtest: lost COMMIT acknowledgement is unconfirmed; retry still respects the existing duplicate guard
+ok 31 - lost COMMIT acknowledgement is unconfirmed; retry still respects the existing duplicate guard
+  ---
+  duration_ms: 0.543423
+  type: 'test'
+  ...
+# Subtest: cron initialization remains single-registration with the existing cadence
+ok 32 - cron initialization remains single-registration with the existing cadence
+  ---
+  duration_ms: 0.29786
+  type: 'test'
+  ...
+# Subtest: real gate: plain conversation remains pending without a contradiction
+ok 33 - real gate: plain conversation remains pending without a contradiction
+  ---
+  duration_ms: 1.25962
+  type: 'test'
+  ...
+# Subtest: real gate: structured conversation remains pending without a contradiction
+ok 34 - real gate: structured conversation remains pending without a contradiction
+  ---
+  duration_ms: 0.429144
+  type: 'test'
+  ...
+# Subtest: real gate: all six fields with KNOWN labels remains pending without a contradiction
+ok 35 - real gate: all six fields with KNOWN labels remains pending without a contradiction
+  ---
+  duration_ms: 0.555921
+  type: 'test'
+  ...
+# Subtest: real gate: matching negative assessments remains pending without a contradiction
+ok 36 - real gate: matching negative assessments remains pending without a contradiction
+  ---
+  duration_ms: 31.28649
+  type: 'test'
+  ...
+# Subtest: real gate: a genuine contradiction remains quarantined
+ok 37 - real gate: a genuine contradiction remains quarantined
+  ---
+  duration_ms: 0.568389
+  type: 'test'
+  ...
+# Subtest: real gate: short is rejected without embedding or storage
+ok 38 - real gate: short is rejected without embedding or storage
+  ---
+  duration_ms: 0.275166
+  type: 'test'
+  ...
+# Subtest: real gate: inferred only is rejected without embedding or storage
+ok 39 - real gate: inferred only is rejected without embedding or storage
+  ---
+  duration_ms: 0.235868
+  type: 'test'
+  ...
+# Subtest: real gate: duplicate is rejected without embedding or storage
+ok 40 - real gate: duplicate is rejected without embedding or storage
+  ---
+  duration_ms: 0.395183
+  type: 'test'
+  ...
+# Subtest: real gate: pending review is not lost during embed failure
+ok 41 - real gate: pending review is not lost during embed failure
+  ---
+  duration_ms: 0.468532
+  type: 'test'
+  ...
+# Subtest: real gate: pending review is not lost during insert failure
+ok 42 - real gate: pending review is not lost during insert failure
+  ---
+  duration_ms: 0.407562
+  type: 'test'
+  ...
+# Subtest: real gate: pending review is not lost during commit-after failure
+ok 43 - real gate: pending review is not lost during commit-after failure
+  ---
+  duration_ms: 0.367182
+  type: 'test'
+  ...
+# Subtest: real gate: scheduled mixed-tenant batch retains both scopes and pending outcomes
+ok 44 - real gate: scheduled mixed-tenant batch retains both scopes and pending outcomes
+  ---
+  duration_ms: 0.659684
+  type: 'test'
+  ...
+# Subtest: controlled verdict: accepted with human review cannot become active
+ok 45 - controlled verdict: accepted with human review cannot become active
+  ---
+  duration_ms: 0.343307
+  type: 'test'
+  ...
+# Subtest: controlled verdict: accepted with a contradiction cannot become active
+ok 46 - controlled verdict: accepted with a contradiction cannot become active
+  ---
+  duration_ms: 0.32508
+  type: 'test'
+  ...
+# Subtest: controlled verdict: pending with contradictory false flags cannot become active
+ok 47 - controlled verdict: pending with contradictory false flags cannot become active
+  ---
+  duration_ms: 0.379711
+  type: 'test'
+  ...
+# Subtest: controlled verdict: accepted without a review flag cannot become active
+ok 48 - controlled verdict: accepted without a review flag cannot become active
+  ---
+  duration_ms: 0.173646
+  type: 'test'
+  ...
+# Subtest: controlled verdict: accepted without a contradiction flag cannot become active
+ok 49 - controlled verdict: accepted without a contradiction flag cannot become active
+  ---
+  duration_ms: 0.330898
+  type: 'test'
+  ...
+# Subtest: controlled verdict: unavailable disposition unknown is a failure, not active memory
+ok 50 - controlled verdict: unavailable disposition unknown is a failure, not active memory
+  ---
+  duration_ms: 0.195589
+  type: 'test'
+  ...
+# Subtest: controlled verdict: unavailable disposition  is a failure, not active memory
+ok 51 - controlled verdict: unavailable disposition  is a failure, not active memory
+  ---
+  duration_ms: 0.139145
+  type: 'test'
+  ...
+# Subtest: controlled verdict: unavailable disposition undefined is a failure, not active memory
+ok 52 - controlled verdict: unavailable disposition undefined is a failure, not active memory
+  ---
+  duration_ms: 0.132505
+  type: 'test'
+  ...
+# Subtest: continuity: JSON object carries all seven fields through the real gate, embedding and storage
+ok 53 - continuity: JSON object carries all seven fields through the real gate, embedding and storage
+  ---
+  duration_ms: 5.172098
+  type: 'test'
+  ...
+# Subtest: continuity: serialized JSON carries all seven fields through the real gate, embedding and storage
+ok 54 - continuity: serialized JSON carries all seven fields through the real gate, embedding and storage
+  ---
+  duration_ms: 0.505287
+  type: 'test'
+  ...
+# Subtest: continuity: exclusions-only structured data preserves the raw summary fallback
+ok 55 - continuity: exclusions-only structured data preserves the raw summary fallback
+  ---
+  duration_ms: 0.520218
+  type: 'test'
+  ...
+# Subtest: continuity: a substantive exclusion is not skipped when the raw summary is empty
+ok 56 - continuity: a substantive exclusion is not skipped when the raw summary is empty
+  ---
+  duration_ms: 0.485227
+  type: 'test'
+  ...
+# Subtest: continuity: different exclusions do not become duplicate summaries at admission
+ok 57 - continuity: different exclusions do not become duplicate summaries at admission
+  ---
+  duration_ms: 0.671812
+  type: 'test'
+  ...
+# Subtest: continuity: an exact duplicate including exclusions is still rejected
+ok 58 - continuity: an exact duplicate including exclusions is still rejected
+  ---
+  duration_ms: 0.3251
+  type: 'test'
+  ...
+# Subtest: continuity: a KNOWN label inside an exclusion cannot validate an inferred-only summary
+ok 59 - continuity: a KNOWN label inside an exclusion cannot validate an inferred-only summary
+  ---
+  duration_ms: 0.28492
+  type: 'test'
+  ...
+# Subtest: continuity: a compact exclusions-only summary gives [KNOWN] no quality credit or penalty
+not ok 60 - continuity: a compact exclusions-only summary gives [KNOWN] no quality credit or penalty
+  ---
+  duration_ms: 2.513312
+  type: 'test'
+  location: '/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs:490:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+      {
+        evidenceValidated: false,
+        hasInferredLabels: false,
+    +   hasKnownLabels: true,
+    -   hasKnownLabels: false,
+        hasMissingLabels: false,
+        structureMaxScore: 6,
+        structureScore: 0
+      }
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    evidenceValidated: false
+    structureScore: 0
+    structureMaxScore: 6
+    hasKnownLabels: false
+    hasInferredLabels: false
+    hasMissingLabels: false
+  actual:
+    evidenceValidated: false
+    structureScore: 0
+    structureMaxScore: 6
+    hasKnownLabels: true
+    hasInferredLabels: false
+    hasMissingLabels: false
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs:507:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: continuity: a compact exclusions-only summary gives [INFERRED] no quality credit or penalty
+not ok 61 - continuity: a compact exclusions-only summary gives [INFERRED] no quality credit or penalty
+  ---
+  duration_ms: 2.635211
+  type: 'test'
+  location: '/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs:490:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+      {
+        evidenceValidated: false,
+    +   hasInferredLabels: true,
+    -   hasInferredLabels: false,
+        hasKnownLabels: false,
+        hasMissingLabels: false,
+        structureMaxScore: 6,
+        structureScore: 0
+      }
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    evidenceValidated: false
+    structureScore: 0
+    structureMaxScore: 6
+    hasKnownLabels: false
+    hasInferredLabels: false
+    hasMissingLabels: false
+  actual:
+    evidenceValidated: false
+    structureScore: 0
+    structureMaxScore: 6
+    hasKnownLabels: false
+    hasInferredLabels: true
+    hasMissingLabels: false
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs:507:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: continuity: a compact exclusions-only summary gives [MISSING] no quality credit or penalty
+not ok 62 - continuity: a compact exclusions-only summary gives [MISSING] no quality credit or penalty
+  ---
+  duration_ms: 1.008389
+  type: 'test'
+  location: '/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs:490:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+      {
+        evidenceValidated: false,
+        hasInferredLabels: false,
+        hasKnownLabels: false,
+    +   hasMissingLabels: true,
+    -   hasMissingLabels: false,
+        structureMaxScore: 6,
+        structureScore: 0
+      }
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    evidenceValidated: false
+    structureScore: 0
+    structureMaxScore: 6
+    hasKnownLabels: false
+    hasInferredLabels: false
+    hasMissingLabels: false
+  actual:
+    evidenceValidated: false
+    structureScore: 0
+    structureMaxScore: 6
+    hasKnownLabels: false
+    hasInferredLabels: false
+    hasMissingLabels: true
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs:507:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: continuity: a public exclusions-only summary gives [KNOWN] no quality credit or penalty
+not ok 63 - continuity: a public exclusions-only summary gives [KNOWN] no quality credit or penalty
+  ---
+  duration_ms: 1.095397
+  type: 'test'
+  location: '/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs:490:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+      {
+        evidenceValidated: false,
+        hasInferredLabels: false,
+    +   hasKnownLabels: true,
+    -   hasKnownLabels: false,
+        hasMissingLabels: false,
+        structureMaxScore: 6,
+        structureScore: 0
+      }
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    evidenceValidated: false
+    structureScore: 0
+    structureMaxScore: 6
+    hasKnownLabels: false
+    hasInferredLabels: false
+    hasMissingLabels: false
+  actual:
+    evidenceValidated: false
+    structureScore: 0
+    structureMaxScore: 6
+    hasKnownLabels: true
+    hasInferredLabels: false
+    hasMissingLabels: false
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs:507:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: continuity: fallback quality retains genuine raw facts outside the rendered exclusions
+not ok 64 - continuity: fallback quality retains genuine raw facts outside the rendered exclusions
+  ---
+  duration_ms: 1.316094
+  type: 'test'
+  location: '/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs:517:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+      {
+        evidenceValidated: false,
+    +   hasInferredLabels: true,
+    -   hasInferredLabels: false,
+        hasKnownLabels: true,
+        hasMissingLabels: false,
+        structureMaxScore: 6,
+        structureScore: 0
+      }
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    evidenceValidated: false
+    structureScore: 0
+    structureMaxScore: 6
+    hasKnownLabels: true
+    hasInferredLabels: false
+    hasMissingLabels: false
+  actual:
+    evidenceValidated: false
+    structureScore: 0
+    structureMaxScore: 6
+    hasKnownLabels: true
+    hasInferredLabels: true
+    hasMissingLabels: false
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs:525:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: continuity: overlapping exclusions cannot leave a quality label behind or mutate the source
+not ok 65 - continuity: overlapping exclusions cannot leave a quality label behind or mutate the source
+  ---
+  duration_ms: 0.667385
+  type: 'test'
+  location: '/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs:530:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    true !== false
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs:537:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: continuity: masking exclusion text cannot join fragments into quality labels
+ok 66 - continuity: masking exclusion text cannot join fragments into quality labels
+  ---
+  duration_ms: 0.238983
+  type: 'test'
+  ...
+# Subtest: continuity: a legacy null structure keeps raw fallback quality and content
+ok 67 - continuity: a legacy null structure keeps raw fallback quality and content
+  ---
+  duration_ms: 0.221627
+  type: 'test'
+  ...
+# Subtest: continuity: a legacy {} structure keeps raw fallback quality and content
+ok 68 - continuity: a legacy {} structure keeps raw fallback quality and content
+  ---
+  duration_ms: 0.352691
+  type: 'test'
+  ...
+# Subtest: continuity: absent or empty exclusions (undefined) preserve the legacy content
+ok 69 - continuity: absent or empty exclusions (undefined) preserve the legacy content
+  ---
+  duration_ms: 0.420832
+  type: 'test'
+  ...
+# Subtest: continuity: absent or empty exclusions ([]) preserve the legacy content
+ok 70 - continuity: absent or empty exclusions ([]) preserve the legacy content
+  ---
+  duration_ms: 0.167518
+  type: 'test'
+  ...
+# Subtest: continuity: absent or empty exclusions (null) preserve the legacy content
+ok 71 - continuity: absent or empty exclusions (null) preserve the legacy content
+  ---
+  duration_ms: 0.160597
+  type: 'test'
+  ...
+1..71
+# tests 71
+# suites 0
+# pass 65
+# fail 6
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 484.556489
