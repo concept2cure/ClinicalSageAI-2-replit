@@ -1,0 +1,15 @@
+{
+  "previousRun": "regression.json",
+  "affectedRun": "fixture-final.json",
+  "finalInputs": "fixture-final-inputs.json",
+  "changedInputs": [
+    "client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx",
+    "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts"
+  ],
+  "productionChangesAfterRegression": [],
+  "retainedPassingCases": 326,
+  "rerunCases": 34,
+  "qualifiedSuites": 20,
+  "qualifiedCases": 360,
+  "qualification": "Cumulative suite replacement, not one all-green final invocation; two source-import case titles honestly renamed while private use-only denial and real converter admission proof strengthened."
+}

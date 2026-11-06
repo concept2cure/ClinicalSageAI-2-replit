@@ -72,6 +72,8 @@ beforeAll(async () => {
     INSERT INTO projects (id,organization_id,name,regulatory_program_id) VALUES (43,${ORG},'second anchor','${PROGRAM_B}');
     UPDATE projects SET owner_id=7,created_by_id=7;
     INSERT INTO project_visibility_settings VALUES (42,${ORG},'org_public'),(43,${ORG},'org_public');
+    -- Positive imports need actual project editing, separately from public source reading.
+    INSERT INTO project_members VALUES (42,${ORG},${Number(AUTHOR.id)},'edit','active'),(43,${ORG},${Number(AUTHOR.id)},'edit','active');
     -- A viewer of the same organization: the editor role is read from this row, never from a token's role claim.
     INSERT INTO users (id, name, email) VALUES (18, 'Vic Viewer', 'viewer@canvas.example');
     INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, 18, 'viewer');
@@ -125,6 +127,7 @@ describe('atomic source intake through the shipped authoring router', () => {
       (SELECT count(*) FROM doc_permissions)::int AS permissions`)).rows[0];
     const before = await counts();
     await db.pool.query("UPDATE project_visibility_settings SET visibility='private' WHERE project_id=42");
+    await db.pool.query("UPDATE project_members SET status='revoked' WHERE project_id=42 AND organization_id=$1 AND user_id=$2", [ORG, Number(AUTHOR.id)]);
     try {
       const response = await author(request(app).post('/api/authoring/import/source')).send(body());
       expect(response.status, JSON.stringify(response.body)).toBe(403);
@@ -140,7 +143,10 @@ describe('atomic source intake through the shipped authoring router', () => {
         expect(missing.body.error).toBe('PROJECT_PERMISSION_DENIED');
         expect(await counts()).toEqual(before);
       } finally { await fs.rename(`${sourcePath}.held`, sourcePath); }
-    } finally { await db.pool.query("UPDATE project_visibility_settings SET visibility='org_public' WHERE project_id=42"); }
+    } finally {
+      await db.pool.query("UPDATE project_members SET role='edit',status='active' WHERE project_id=42 AND organization_id=$1 AND user_id=$2", [ORG, Number(AUTHOR.id)]);
+      await db.pool.query("UPDATE project_visibility_settings SET visibility='org_public' WHERE project_id=42");
+    }
   });
 
   it('creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit', async () => {
@@ -182,10 +188,17 @@ describe('atomic source intake through the shipped authoring router', () => {
 });
 
 describe('current source project and membership access', () => {
-  it('admits an explicitly assigned private-project member and refuses revoked access to their saved import', async () => {
+  it('requires editing for private-project imports, retaining use-only and revoked refusals without writes', async () => {
     await db.pool.query("UPDATE project_visibility_settings SET visibility='private' WHERE project_id=42");
-    await db.pool.query("INSERT INTO project_members VALUES (42,$1,$2,'use','active')", [ORG, Number(AUTHOR.id)]);
+    await db.pool.query("UPDATE project_members SET role='use' WHERE project_id=42 AND organization_id=$1 AND user_id=$2", [ORG, Number(AUTHOR.id)]);
     try {
+      const before = await importEvidenceCounts();
+      const readOnly = await author(request(app).post('/api/authoring/import/source')).send(body());
+      expect(readOnly.status, JSON.stringify(readOnly.body)).toBe(403);
+      expect(readOnly.body.error).toBe('PROJECT_PERMISSION_DENIED');
+      expect(readOnly.body.data).toBeUndefined();
+      expect(await importEvidenceCounts()).toEqual(before);
+      await db.pool.query("UPDATE project_members SET role='edit' WHERE project_id=42 AND organization_id=$1 AND user_id=$2", [ORG, Number(AUTHOR.id)]);
       const allowed = await author(request(app).post('/api/authoring/import/source')).send(body());
       expect(allowed.status, JSON.stringify(allowed.body)).toBe(200);
       expect(allowed.body.data.reused).toBe(true);
@@ -195,7 +208,7 @@ describe('current source project and membership access', () => {
       expect(denied.body.error).toBe('PROJECT_PERMISSION_DENIED');
       expect(denied.body.data).toBeUndefined();
     } finally {
-      await db.pool.query('DELETE FROM project_members WHERE project_id=42 AND user_id=$1', [Number(AUTHOR.id)]);
+      await db.pool.query("UPDATE project_members SET role='edit',status='active' WHERE project_id=42 AND organization_id=$1 AND user_id=$2", [ORG, Number(AUTHOR.id)]);
       await db.pool.query("UPDATE project_visibility_settings SET visibility='org_public' WHERE project_id=42");
     }
   });
@@ -223,7 +236,7 @@ describe('current source project and membership access', () => {
     let byteReads = 0;
     const produce = vi.fn(async () => { byteReads++; return fs.readFile(sourcePath); });
     await db.pool.query("UPDATE project_visibility_settings SET visibility='private' WHERE project_id=42");
-    await db.pool.query("INSERT INTO project_members VALUES (42,$1,$2,'use','active')", [ORG, Number(AUTHOR.id)]);
+    await db.pool.query("UPDATE project_members SET role='use' WHERE project_id=42 AND organization_id=$1 AND user_id=$2", [ORG, Number(AUTHOR.id)]);
     try {
       expect((await ownsCopy()).allowed).toBe(true);
       await expect(withSavedDraftSourceReservation(saved, db.pool, ORG, produce, actor)).resolves.toEqual(bytes);
@@ -239,7 +252,7 @@ describe('current source project and membership access', () => {
         expect(reads.mock.calls.some(([sql]) => typeof sql === 'string' && /FROM vault.documents d/.test(sql))).toBe(false);
       } finally { reads.mockRestore(); }
     } finally {
-      await db.pool.query('DELETE FROM project_members WHERE project_id=42 AND user_id=$1', [Number(AUTHOR.id)]);
+      await db.pool.query("UPDATE project_members SET role='edit',status='active' WHERE project_id=42 AND organization_id=$1 AND user_id=$2", [ORG, Number(AUTHOR.id)]);
       await db.pool.query("UPDATE project_visibility_settings SET visibility='org_public' WHERE project_id=42");
     }
   });
@@ -247,7 +260,7 @@ describe('current source project and membership access', () => {
 });
 
 describe('source transaction, integrity and format guards', () => {
-  it('rechecks a sharing revocation during conversion inside the real canonical creation transaction', async () => {
+  it('rechecks target edit revocation during conversion inside the real canonical creation transaction', async () => {
     const [{ importSourceDocument }, { createDocumentFromDraft }, { importDocx }] = await Promise.all([
       import('../../services/authoring/authoring-source-import'), import('../../services/authoring/authoring-from-draft'),
       import('../../import/docx-to-authoring'),
@@ -262,22 +275,28 @@ describe('source transaction, integrity and format guards', () => {
     const pool = db.pool as unknown as Pool;
     const ctx: CreateContext = { pool, tenantId: ORG, actor: { id: AUTHOR.id, email: AUTHOR.email },
       audit: { pool, tenantId: ORG, actorId: AUTHOR.id, actorEmail: AUTHOR.email, actorRole: 'MEMBER', ipAddress: '', userAgent: 'real-source-intake-regression' } };
+    let conversions = 0;
     try {
       const outcome = await importSourceDocument(ctx, { id: AUTHOR.id, email: AUTHOR.email, roles: ['MEMBER'] }, body(), {
         readVaultBytes: () => fs.readFile(sourcePath),
         readUpload: async () => { throw new Error('Unexpected captured upload'); },
         classify: () => 'docx',
         importDocx: async sourceBytes => {
-          await db.pool.query("UPDATE project_visibility_settings SET visibility='private' WHERE project_id=42");
+          conversions++;
+          // Public reading remains available; the actual edit grant is lost mid-conversion.
+          await db.pool.query("UPDATE project_members SET status='revoked' WHERE project_id=42 AND organization_id=$1 AND user_id=$2", [ORG, Number(AUTHOR.id)]);
           return importDocx(sourceBytes);
         },
         extractText: async () => { throw new Error('Unexpected plain-text extraction'); },
         create: createDocumentFromDraft,
       });
+      expect(conversions).toBe(1);
       expect(outcome).toMatchObject({ ok: false, status: 403, code: 'PROJECT_PERMISSION_DENIED' });
       expect(await counts()).toEqual(before);
       expect(await fs.readFile(sourcePath)).toEqual(bytes);
-    } finally { await db.pool.query("UPDATE project_visibility_settings SET visibility='org_public' WHERE project_id=42"); }
+    } finally {
+      await db.pool.query("UPDATE project_members SET role='edit',status='active' WHERE project_id=42 AND organization_id=$1 AND user_id=$2", [ORG, Number(AUTHOR.id)]);
+    }
   });
 
   it('refuses source/project mismatches and foreign tenants without creating anything', async () => {

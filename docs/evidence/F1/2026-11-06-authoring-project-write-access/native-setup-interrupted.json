@@ -1,0 +1,7 @@
+{
+  "observedAt": "2026-11-06T18:34:35.202033+00:00",
+  "status": "No completed receipt or process remained after environment resume",
+  "completedProof": false,
+  "rawOutputAvailable": false,
+  "reason": "Not established; no passing native result claimed. Dedicated DB and same generated credentials retained for existing-script retry."
+}

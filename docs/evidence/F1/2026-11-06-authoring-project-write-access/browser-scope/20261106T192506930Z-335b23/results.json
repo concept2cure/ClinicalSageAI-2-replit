@@ -1,0 +1,163 @@
+{
+  "status": "passed",
+  "startedAt": "2026-11-06T19:25:06.931Z",
+  "stage": "complete",
+  "scope": "Existing local production editor; authenticated real own-project positive, then injected HTTP-200 client-integrity faults. No model or submission actions.",
+  "cases": [
+    {
+      "width": 1440,
+      "mode": "real-positive",
+      "status": "passed",
+      "documentId": "561c87ff-5761-490a-99df-54f323398d2b",
+      "actualScopedServerResponse": true,
+      "ownRowVisible": true,
+      "screenshot": "browser-scope/20261106T192506930Z-335b23/1440-real-positive.png"
+    },
+    {
+      "width": 1440,
+      "mode": "unsuccessful",
+      "status": "passed",
+      "injectedHttp200Responses": 2,
+      "errorShown": true,
+      "documentListRows": 0,
+      "foreignTitleRendered": false,
+      "screenshot": "browser-scope/20261106T192506930Z-335b23/1440-unsuccessful.png"
+    },
+    {
+      "width": 1440,
+      "mode": "foreign",
+      "status": "passed",
+      "injectedHttp200Responses": 2,
+      "errorShown": true,
+      "documentListRows": 0,
+      "foreignTitleRendered": false,
+      "screenshot": "browser-scope/20261106T192506930Z-335b23/1440-foreign.png"
+    },
+    {
+      "width": 1440,
+      "mode": "mixed",
+      "status": "passed",
+      "injectedHttp200Responses": 2,
+      "errorShown": true,
+      "documentListRows": 0,
+      "foreignTitleRendered": false,
+      "screenshot": "browser-scope/20261106T192506930Z-335b23/1440-mixed.png"
+    },
+    {
+      "width": 390,
+      "mode": "real-positive",
+      "status": "passed",
+      "documentId": "561c87ff-5761-490a-99df-54f323398d2b",
+      "actualScopedServerResponse": true,
+      "ownRowVisible": true,
+      "screenshot": "browser-scope/20261106T192506930Z-335b23/390-real-positive.png"
+    },
+    {
+      "width": 390,
+      "mode": "unsuccessful",
+      "status": "passed",
+      "injectedHttp200Responses": 2,
+      "errorShown": true,
+      "documentListRows": 0,
+      "foreignTitleRendered": false,
+      "screenshot": "browser-scope/20261106T192506930Z-335b23/390-unsuccessful.png"
+    },
+    {
+      "width": 390,
+      "mode": "foreign",
+      "status": "passed",
+      "injectedHttp200Responses": 2,
+      "errorShown": true,
+      "documentListRows": 0,
+      "foreignTitleRendered": false,
+      "screenshot": "browser-scope/20261106T192506930Z-335b23/390-foreign.png"
+    },
+    {
+      "width": 390,
+      "mode": "mixed",
+      "status": "passed",
+      "injectedHttp200Responses": 2,
+      "errorShown": true,
+      "documentListRows": 0,
+      "foreignTitleRendered": false,
+      "screenshot": "browser-scope/20261106T192506930Z-335b23/390-mixed.png"
+    }
+  ],
+  "blockedMutations": [
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/561c87ff-5761-490a-99df-54f323398d2b/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/561c87ff-5761-490a-99df-54f323398d2b/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    }
+  ],
+  "externalRequestsBlocked": [
+    {
+      "host": "fonts.googleapis.com",
+      "method": "GET"
+    },
+    {
+      "host": "fonts.googleapis.com",
+      "method": "GET"
+    },
+    {
+      "host": "fonts.googleapis.com",
+      "method": "GET"
+    },
+    {
+      "host": "fonts.googleapis.com",
+      "method": "GET"
+    },
+    {
+      "host": "fonts.googleapis.com",
+      "method": "GET"
+    },
+    {
+      "host": "fonts.googleapis.com",
+      "method": "GET"
+    },
+    {
+      "host": "fonts.googleapis.com",
+      "method": "GET"
+    },
+    {
+      "host": "fonts.googleapis.com",
+      "method": "GET"
+    },
+    {
+      "host": "fonts.googleapis.com",
+      "method": "GET"
+    },
+    {
+      "host": "fonts.googleapis.com",
+      "method": "GET"
+    }
+  ],
+  "apiReadFailures": [],
+  "applicationMutationsForwarded": 0,
+  "authenticationException": "Only POST /api/auth/dev-login is allowed.",
+  "baseUrl": "http://127.0.0.1:5100",
+  "syntheticEmail": "scope.editor@example.test",
+  "programId": "1739faef-f7b4-4c07-934c-17e9456de00c",
+  "documentId": "561c87ff-5761-490a-99df-54f323398d2b",
+  "browserVersion": "156.0.8078.79",
+  "completedAt": "2026-11-06T19:25:40.773Z"
+}

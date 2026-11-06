@@ -1,0 +1,11 @@
+{
+  "programId": "1739faef-f7b4-4c07-934c-17e9456de00c",
+  "documentId": "561c87ff-5761-490a-99df-54f323398d2b",
+  "organizationId": 2,
+  "actorUserId": 1,
+  "clientWorkspaceId": 2,
+  "title": "Project scope working document",
+  "source": "Created through existing project intake and one Authoring API on dedicated native fixture",
+  "nativeReadyStatus": 503,
+  "liveProvider": "Not configured; no model requests made"
+}

@@ -184,8 +184,10 @@ type ResolvedItem = { kind: 'thread' | 'task'; id: string; title: string };
 function useReopenLastResolved(onNotice: FireToast, refresh: () => void, canResolve: boolean) {
   const [lastResolved, setLastResolved] = useState<ResolvedItem | null>(null);
   const reopen = async (item: ResolvedItem) => {
-    const kind = item.kind === 'thread' ? 'review-threads' : 'review-tasks';
-    const res = await apiCall('POST', `/api/concept2cure/${kind}/${encodeURIComponent(item.id)}/reopen`, {});
+    const path = item.kind === 'thread'
+      ? `/api/concept2cure/review-threads/${encodeURIComponent(item.id)}/reopen`
+      : `/api/concept2cure/review-tasks/${encodeURIComponent(item.id)}/reopen`;
+    const res = await apiCall('POST', path, {});
     if (!res.ok) { onNotice(apiErrorText(res, "Couldn't reopen it."), 'error'); return; }
     setLastResolved(null);
     refresh();
