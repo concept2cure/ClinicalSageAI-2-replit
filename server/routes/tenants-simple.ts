@@ -61,7 +61,7 @@ const createTenantSchema = z.object({
   maxUsers: z.number().int().positive().optional(),
   maxProjects: z.number().int().positive().optional(),
   maxStorage: z.number().int().positive().optional(),
-  settings: z.record(z.any()).optional(),
+  settings: z.record(z.string(), z.any()).optional(),
 });
 
 // Schema for tenant updates - same as create but all fields optional
@@ -189,7 +189,7 @@ router.post('/', requirePlatformAdmin, async (req, res) => {
   } catch (error) {
     log.error('Error creating tenant:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid tenant data', details: error.errors });
+      return res.status(400).json({ error: 'Invalid tenant data', details: error.issues });
     }
     res.status(500).json({ error: 'Failed to create tenant' });
   }
@@ -243,7 +243,7 @@ router.patch('/:id', requirePlatformAdmin, async (req, res) => {
   } catch (error) {
     log.error('Error updating tenant:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid tenant data', details: error.errors });
+      return res.status(400).json({ error: 'Invalid tenant data', details: error.issues });
     }
     // Handle duplicate slug constraint error
     if (

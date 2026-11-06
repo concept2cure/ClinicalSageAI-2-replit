@@ -21,7 +21,7 @@ const reasonSchema = z.string().trim().min(1).max(500);
 const grantSchema = z.object({
   principalId: z.string().trim().min(1).max(200),
   role: z.string().transform(normalizeAuthoringRole).refine(role => role !== null),
-  sectionId: z.string().uuid().nullable().optional(),
+  sectionId: z.string().guid().nullable().optional(),
   reason: reasonSchema,
   validUntil: z.string().datetime({ offset: true }).refine(value => Date.parse(value) > Date.now()).nullable().optional(),
 });

@@ -222,13 +222,13 @@ function requireOrchestratorWrite(req: Request, res: Response, next: () => void)
 /* No clinicalSource (RULE 4, 2026-10-31): a study's clinical source is frozen as its CSR document's study data,
    in the editor (POST /csr/study-data, services/csr/csr-study-data.ts), not chosen for a package run. Strict, so a
    caller still sending one is refused rather than given a run without it. */
-const ProgramRunSchema = z.object({ programId: z.string().uuid(), sequenceId: z.number().int().positive().optional(), enableCSRNarrative: z.boolean().optional() }).strict();
+const ProgramRunSchema = z.object({ programId: z.string().guid(), sequenceId: z.number().int().positive().optional(), enableCSRNarrative: z.boolean().optional() }).strict();
 
 /** Read retained summaries separately from the unimplemented clinical-data adapter. */
 router.get('/csr/readiness', async (req, res) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
-  const parsed = z.string().uuid().safeParse(req.query.programId);
+  const parsed = z.string().guid().safeParse(req.query.programId);
   if (!parsed.success) return res.status(400).json({ error: 'CSR_SCOPE_INVALID', message: 'A project UUID is required.' });
   const userId = orchestratorActorId(req);
   try {
@@ -243,7 +243,7 @@ router.get('/csr/readiness', async (req, res) => {
 router.get('/runs', async (req, res) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
-  const parsed = z.string().uuid().safeParse(req.query.programId);
+  const parsed = z.string().guid().safeParse(req.query.programId);
   if (!parsed.success) return res.status(400).json({ error: 'program_scope_required' });
   try {
     // Read-side program privacy follows the canonical org-scoped program policy.
@@ -335,7 +335,7 @@ router.post('/runs/for-program', requireOrchestratorWrite, async (req, res) => {
 router.post('/runs/:runId/resume', requireOrchestratorWrite, async (req, res) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
-  const runId = z.string().uuid().safeParse(req.params.runId);
+  const runId = z.string().guid().safeParse(req.params.runId);
   if (!runId.success) return res.status(400).json({ error: 'invalid_run_id' });
   try {
     const result = await continueOrchestratorRun(runId.data, organizationId, orchestratorActorId(req));
@@ -459,7 +459,7 @@ const RunCommonSchema = z.object({
 // caller's project model maps to ours unambiguously.
 const RunModeASchema = RunCommonSchema.extend({
   projectId: z.number().int().positive(),
-  cmcProjectId: z.string().uuid().optional(),
+  cmcProjectId: z.string().guid().optional(),
   ctdProgramId: z.number().int().positive().optional(),
   // Mode A explicitly rejects hand-built inputs.
   cmcSources: z.undefined().optional(),

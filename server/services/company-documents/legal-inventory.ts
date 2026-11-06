@@ -12,7 +12,7 @@ import { publicCompanyLegalDocument } from './public-document';
 export const companyLegalInventoryQuery = z.object({
   q: z.string().trim().max(200).optional(), kind: z.enum(COMPANY_LEGAL_KINDS).optional(),
   agency: z.string().trim().min(1).max(100).optional(), language: z.string().trim().min(1).max(50).optional(),
-  programId: z.string().uuid().optional(),
+  programId: z.string().guid().optional(),
   validity: z.enum(['approved', 'unapproved', 'expiring', 'future', 'expired', 'revoked', 'archived']).optional(),
   sort: z.enum(['title', 'expiry', 'recent']).default('title'),
   includeArchived: z.enum(['true', 'false']).default('false').transform(value => value === 'true'),

@@ -48,7 +48,7 @@ const validationSchema = z.object({
   validationType: z.enum(['analytical', 'clinical', 'performance']),
   analyteName: z.string().min(1),
   matrixType: z.string().optional(),
-  parameters: z.record(z.unknown()).optional(),
+  parameters: z.record(z.string(), z.unknown()).optional(),
 });
 
 const clinicalEvidenceSchema = z.object({

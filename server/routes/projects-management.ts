@@ -320,7 +320,7 @@ router.patch('/:projectId', async (req, res) => {
   } catch (error) {
     log.error('Error updating project:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid project data', details: error.errors });
+      return res.status(400).json({ error: 'Invalid project data', details: error.issues });
     }
     res.status(500).json({ error: 'Failed to update project' });
   }

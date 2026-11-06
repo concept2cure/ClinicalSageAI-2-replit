@@ -84,7 +84,7 @@ const createEvidenceSchema = z.object({
   sourceType: sourceTypeEnum,
   sourceReference: z.string().optional(),
   sourceCitation: z.string().optional(),
-  programId: z.string().uuid().optional(),
+  programId: z.string().guid().optional(),
   documentId: z.number().optional(),
   documentVersion: z.string().optional(),
   pageRange: z.string().optional(),
@@ -102,15 +102,15 @@ const createEvidenceSchema = z.object({
   testType: z.string().optional(),
   testLab: z.string().optional(),
   testDate: z.string().datetime().optional(),
-  testResults: z.record(z.unknown()).optional(),
+  testResults: z.record(z.string(), z.unknown()).optional(),
   tags: z.array(z.string()).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 const updateEvidenceSchema = createEvidenceSchema.partial();
 
 const createLinkSchema = z.object({
-  evidenceId: z.string().uuid(),
+  evidenceId: z.string().guid(),
   targetType: z.enum(['claim', 'section', 'requirement', 'standard', 'question']),
   targetId: z.string(),
   targetPath: z.string().optional(),
@@ -122,7 +122,7 @@ const createLinkSchema = z.object({
 const queryParamsSchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
-  programId: z.string().uuid().optional(),
+  programId: z.string().guid().optional(),
   evidenceType: evidenceTypeEnum.optional(),
   evidenceCategory: evidenceCategoryEnum.optional(),
   status: statusEnum.optional(),
@@ -145,7 +145,7 @@ const validateBody = (schema: z.ZodSchema) => (req: Request, res: Response, next
     if (error instanceof z.ZodError) {
       res.status(400).json({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: error.errors },
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: error.issues },
       });
       return;
     }
@@ -166,7 +166,7 @@ const validateQuery =
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid query parameters',
-            details: error.errors,
+            details: error.issues,
           },
         });
         return;

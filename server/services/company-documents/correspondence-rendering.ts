@@ -6,9 +6,9 @@ import { companyProfileHash, CompanyDocumentsError } from './profile';
 import { z } from 'zod';
 
 const record = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
-const presentationOrigin = z.object({ version: z.literal(1), organizationId: z.number().int().positive(), programId: z.string().uuid(),
+const presentationOrigin = z.object({ version: z.literal(1), organizationId: z.number().int().positive(), programId: z.string().guid(),
   companyDocumentRevision: z.number().int().nonnegative(), companyProfileHash: z.string().regex(/^[a-f0-9]{64}$/),
-  companyBrandingApplied: z.boolean(), variantId: z.string().uuid().optional(), explicitSelection: z.literal(true).optional() })
+  companyBrandingApplied: z.boolean(), variantId: z.string().guid().optional(), explicitSelection: z.literal(true).optional() })
   .refine(value => !value.explicitSelection || Boolean(value.variantId && value.companyBrandingApplied));
 
 export async function readCorrespondencePresentation(q: RequestSqlClient, organizationId: number,

@@ -34,7 +34,7 @@ router.use(authenticateToken);
  */
 function sendQcError(res: Response, error: unknown, failMessage: string): void {
   if (error instanceof z.ZodError) {
-    res.status(400).json({ error: 'Invalid data', details: error.errors });
+    res.status(400).json({ error: 'Invalid data', details: error.issues });
     return;
   }
   if (error instanceof Error && error.message.startsWith('NOT_IMPLEMENTED')) {
@@ -112,7 +112,7 @@ router.post('/specifications', async (req: Request, res: Response) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Invalid data', details: error.errors });
+      res.status(400).json({ error: 'Invalid data', details: error.issues });
     } else {
       sendQcError(res, error, 'Failed to create specification');
     }
@@ -198,7 +198,7 @@ router.post('/oos-investigations', async (req: Request, res: Response) => {
     res.status(201).json(investigation);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Invalid data', details: error.errors });
+      res.status(400).json({ error: 'Invalid data', details: error.issues });
     } else {
       sendQcError(res, error, 'Failed to create OOS investigation');
     }
@@ -310,7 +310,7 @@ router.post('/batch-releases', async (req: Request, res: Response) => {
     res.status(201).json(release);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Invalid data', details: error.errors });
+      res.status(400).json({ error: 'Invalid data', details: error.issues });
     } else {
       sendQcError(res, error, 'Failed to create batch release');
     }
@@ -435,7 +435,7 @@ router.post('/microbiological-tests', async (req: Request, res: Response) => {
     res.status(201).json(test);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Invalid data', details: error.errors });
+      res.status(400).json({ error: 'Invalid data', details: error.issues });
     } else {
       sendQcError(res, error, 'Failed to create microbiological test');
     }
@@ -545,7 +545,7 @@ router.post('/reference-standards', async (req: Request, res: Response) => {
     res.status(201).json(standard);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Invalid data', details: error.errors });
+      res.status(400).json({ error: 'Invalid data', details: error.issues });
     } else {
       sendQcError(res, error, 'Failed to create reference standard');
     }

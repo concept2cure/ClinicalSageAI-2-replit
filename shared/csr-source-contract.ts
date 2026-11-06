@@ -4,19 +4,25 @@ import { ADAM_DATASET_NAMES, CSR_ADAM_BUNDLE_FORMAT, CSR_EFFICACY_RESULTS_FORMAT
 
 /** Documentation is derived from the same Zod contract as the loader. Semantic
  * cross-record rules below still require server validation of actual source. */
-function jsonSchema(schema: z.ZodTypeAny): Record<string, unknown> {
-  if (schema instanceof z.ZodEffects) return jsonSchema(schema.innerType());
-  if (schema instanceof z.ZodOptional) return jsonSchema(schema.unwrap());
+function jsonSchema(schema: z.ZodType): Record<string, unknown> {
+  // Zod 4 attaches .refine() checks to the schema itself (no ZodEffects
+  // wrapper), so a refined object or array is walked as what it refines.
+  if (schema instanceof z.ZodOptional) return jsonSchema(schema.unwrap() as z.ZodType);
   if (schema instanceof z.ZodObject) {
-    const entries = Object.entries(schema.shape as Record<string, z.ZodTypeAny>);
+    const entries = Object.entries(schema.shape as Record<string, z.ZodType>);
     return { type: 'object', additionalProperties: false,
       properties: Object.fromEntries(entries.map(([name, field]) => [name, jsonSchema(field)])),
       required: entries.filter(([, field]) => !field.isOptional()).map(([name]) => name) };
   }
-  if (schema instanceof z.ZodArray) return { type: 'array', items: jsonSchema(schema.element),
-    ...(schema._def.minLength ? { minItems: schema._def.minLength.value } : {}),
-    ...(schema._def.maxLength ? { maxItems: schema._def.maxLength.value } : {}) };
-  if (schema instanceof z.ZodRecord) return { type: 'object', additionalProperties: jsonSchema(schema.valueSchema) };
+  if (schema instanceof z.ZodArray) {
+    const result: Record<string, unknown> = { type: 'array', items: jsonSchema(schema.element as z.ZodType) };
+    for (const check of checksOf(schema)) {
+      if (check.check === 'min_length') result.minItems = check.minimum;
+      if (check.check === 'max_length') result.maxItems = check.maximum;
+    }
+    return result;
+  }
+  if (schema instanceof z.ZodRecord) return { type: 'object', additionalProperties: jsonSchema(schema.valueType as z.ZodType) };
   if (schema instanceof z.ZodEnum) return { type: 'string', enum: schema.options };
   if (schema instanceof z.ZodLiteral) return { type: typeof schema.value, const: schema.value };
   if (schema instanceof z.ZodBoolean) return { type: 'boolean' };
@@ -25,21 +31,27 @@ function jsonSchema(schema: z.ZodTypeAny): Record<string, unknown> {
   throw new Error('Unsupported CSR source schema node');
 }
 
+/** The definitions of a schema's checks (min/max length, bounds, formats). */
+type CheckDef = { check: string; minimum?: number; maximum?: number; value?: number; inclusive?: boolean; format?: string; pattern?: RegExp };
+function checksOf(schema: z.ZodType): CheckDef[] {
+  return (schema._zod.def.checks ?? []).map(check => check._zod.def as CheckDef);
+}
+
 function numberSchema(schema: z.ZodNumber): Record<string, unknown> {
   const result: Record<string, unknown> = { type: 'number' };
-  for (const check of schema._def.checks) {
-    if (check.kind === 'int') result.type = 'integer';
-    if (check.kind === 'min') result[check.inclusive ? 'minimum' : 'exclusiveMinimum'] = check.value;
-    if (check.kind === 'max') result[check.inclusive ? 'maximum' : 'exclusiveMaximum'] = check.value;
+  for (const check of checksOf(schema)) {
+    if (check.check === 'number_format' && check.format !== 'float32' && check.format !== 'float64') result.type = 'integer';
+    if (check.check === 'greater_than') result[check.inclusive ? 'minimum' : 'exclusiveMinimum'] = check.value;
+    if (check.check === 'less_than') result[check.inclusive ? 'maximum' : 'exclusiveMaximum'] = check.value;
   }
   return result;
 }
 function stringSchema(schema: z.ZodString): Record<string, unknown> {
   const result: Record<string, unknown> = { type: 'string' };
-  for (const check of schema._def.checks) {
-    if (check.kind === 'min') result.minLength = check.value;
-    if (check.kind === 'max') result.maxLength = check.value;
-    if (check.kind === 'regex') result.pattern = check.regex.source;
+  for (const check of checksOf(schema)) {
+    if (check.check === 'min_length') result.minLength = check.minimum;
+    if (check.check === 'max_length') result.maxLength = check.maximum;
+    if (check.check === 'string_format' && check.format === 'regex' && check.pattern) result.pattern = check.pattern.source;
   }
   return result;
 }

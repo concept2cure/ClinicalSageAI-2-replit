@@ -41,7 +41,7 @@ router.post('/validate-section', authMiddleware, requireOrganizationContext, asy
       qmpId: z.number(),
       sectionCode: z.string(),
       content: z.string(),
-      metadata: z.record(z.any()).optional(),
+      metadata: z.record(z.string(), z.any()).optional(),
     });
 
     const validationResult = validationSchema.safeParse(req.body);
