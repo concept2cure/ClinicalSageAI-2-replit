@@ -177,6 +177,29 @@ export interface ReviewBoardContextSlice {
   selectedState?: string | null;
 }
 
+/** What was just resolved here, and its Reopen (R1, 2026-11-06). The inbox lists open items only, so a resolved one
+ *  leaves it with no way back; POST …/review-threads/:id/reopen and …/review-tasks/:id/reopen (server/routes/c2c/
+ *  reviews.ts) check `resolve`, which my-queue reports as canResolve, so the offer is made to those people only. */
+type ResolvedItem = { kind: 'thread' | 'task'; id: string; title: string };
+function useReopenLastResolved(onNotice: FireToast, refresh: () => void, canResolve: boolean) {
+  const [lastResolved, setLastResolved] = useState<ResolvedItem | null>(null);
+  const reopen = async (item: ResolvedItem) => {
+    const kind = item.kind === 'thread' ? 'review-threads' : 'review-tasks';
+    const res = await apiCall('POST', `/api/concept2cure/${kind}/${encodeURIComponent(item.id)}/reopen`, {});
+    if (!res.ok) { onNotice(apiErrorText(res, "Couldn't reopen it."), 'error'); return; }
+    setLastResolved(null);
+    refresh();
+    onNotice(`Reopened: ${item.title}`);
+  };
+  const reopenOffer = lastResolved && canResolve ? (
+    <p role="status" className="scaf-note" style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '6px 4px' }}>
+      <span>Resolved “{lastResolved.title}”.</span>
+      <button type="button" className="btn ghost small" onClick={() => void reopen(lastResolved)}>Reopen</button>
+    </p>
+  ) : null;
+  return { setLastResolved, reopenOffer };
+}
+
 export function ReviewThreadsPane({
   onNotice,
   board,
@@ -317,10 +340,13 @@ export function ReviewThreadsPane({
     setBusy(false);
   };
 
+  const { setLastResolved, reopenOffer } = useReopenLastResolved(onNotice, refresh, canResolve);
+
   const resolveThread = async (threadId: string) => {
     const res = await apiCall('POST', `/api/concept2cure/review-threads/${encodeURIComponent(threadId)}/resolve`, {});
     if (res.ok) {
       if (sel === threadId) setSel(null);
+      setLastResolved({ kind: 'thread', id: threadId, title: threads.find(t => t.threadId === threadId)?.title || 'Review thread' });
       refresh();
       onNotice('Thread resolved — the linked task is closed.');
     } else {
@@ -331,6 +357,7 @@ export function ReviewThreadsPane({
   const resolveTask = async (taskId: string, title: string) => {
     const res = await apiCall('POST', `/api/concept2cure/review-tasks/${encodeURIComponent(taskId)}/resolve`, {});
     if (res.ok) {
+      setLastResolved({ kind: 'task', id: taskId, title });
       refresh();
       onNotice(`Resolved: ${title}`);
     } else {
@@ -349,6 +376,7 @@ export function ReviewThreadsPane({
         )}
       </div>
 
+      {reopenOffer}
       {queue.loading ? (
         <div role="status" className="scaf-note" style={{ padding: '10px 4px' }}>Loading your review queue…</div>
       ) : queue.error ? (
