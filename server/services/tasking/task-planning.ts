@@ -7,6 +7,10 @@
  * @module server/services/tasking/task-planning
  */
 import { and, eq, or, inArray, isNull, count, sql } from 'drizzle-orm';
+import { createHash } from 'node:crypto';
+import { stableStringify } from '../../../shared/canonical-json';
+import type { ProjectTeamGoal, ProjectTeamMonitor } from '../../../shared/ana/turn-timeline';
+import type { ObjectivesRecord } from '../c2c/charter-objectives';
 import { db } from '../../db';
 import type { RequestSqlClient } from '../../db/requestDb';
 import {
@@ -29,6 +33,52 @@ export interface StrictProjectTaskGraph {
   criticalPath: string[] | null; recordedDurationHours: number | null;
   missingDurationTaskIds: string[]; cyclicOrBlockedTaskIds: string[]; problems: string[];
 }
+
+export interface ProjectObjectiveReference {
+  charterId: number; sectionKey: 'objectives'; version: number; contentHash: string;
+}
+export interface MonitorRead<T> { state: 'available' | 'unavailable'; value: T | null; digest: string }
+
+/** Pure objective/work projections and canonical heads; they do not grant readiness or mutate a project. */
+export function monitorBasis(basis: Record<string,MonitorRead<unknown>>): Record<string,{state:'available'|'unavailable';digest:string}> {
+  return Object.fromEntries(Object.entries(basis).map(([key,value]) => [key,{state:value.state,digest:value.digest}]));
+}
+export function monitorState(unavailable: boolean, basisCurrent: boolean, goal: ProjectTeamGoal|null): ProjectTeamMonitor['state'] {
+  if (unavailable) return 'unavailable';
+  return basisCurrent && goal !== null ? 'current' : 'stale';
+}
+export function monitorReference(goal: ProjectTeamGoal|null): ProjectObjectiveReference|null {
+  return goal?.source ? {charterId:goal.source.charterId,sectionKey:'objectives',version:goal.version,contentHash:goal.source.contentHash} : null;
+}
+export function monitorWork(graph: StrictProjectTaskGraph|null): ProjectTeamMonitor['work'] {
+  return {total:graph?.total ?? 0,completed:graph?.completed ?? 0,percentage:graph?.percentage ?? null};
+}
+export function monitorGateStates(source: string, documents: MonitorRead<{pending:boolean}>, filing: string): ProjectTeamMonitor['gates'] {
+  return {source:source === 'available' ? 'not_assessed' : 'unavailable',
+    document:documents.state === 'available' ? documents.value?.pending ? 'blocked' : 'not_assessed' : 'unavailable',
+    filing:filing === 'available' ? 'not_assessed' : 'unavailable'};
+}
+
+export function monitorGoal(record: ObjectivesRecord | null): ProjectTeamGoal | null {
+  const current = record?.current;
+  if (!current || !record?.charterId || !/^[a-f0-9]{64}$/.test(current.contentHash) || !current.content.objective.trim() || current.content.objective.length > 4000) return null;
+  return { alias: `g-${current.contentHash.slice(0,12)}`,label: 'Project objective',version: current.version,summary: current.content.objective.slice(0,600),
+    truncated: current.content.objective.length > 600,source: {charterId: record.charterId,sectionKey: 'objectives',version: current.version,
+      contentHash: current.contentHash,status: current.status,locked: current.locked} };
+}
+
+export function monitorBlockers(input: {programId: string|null; goal: ProjectTeamGoal|null; graph: StrictProjectTaskGraph|null;
+  source: string; documents: string; filing: string}): string[] {
+  const blockers = ['SCIENTIFIC_SOURCE_VERIFICATION_NOT_ASSESSED','DOCUMENT_RELEASE_NOT_ASSESSED','LIVE_DISPATCH_ASSESSMENT_REQUIRED'];
+  if (!input.programId) blockers.push('PROJECT_PROGRAM_UNANCHORED');
+  if (!input.goal) blockers.push('PROJECT_OBJECTIVE_REQUIRED');
+  if (!input.graph) blockers.push('PROJECT_WORK_UNAVAILABLE');
+  else blockers.push(...input.graph.problems);
+  if ([input.source,input.documents,input.filing].includes('unavailable')) blockers.push('PROJECT_GATE_SOURCE_UNAVAILABLE');
+  return [...new Set(blockers)].sort();
+}
+
+export function monitorHash(value: unknown): string { return createHash('sha256').update(stableStringify(value)).digest('hex'); }
 
 /** A strict projection for orchestration; the older UI estimate remains a separate legacy caller. */
 export async function loadStrictProjectTaskGraph(client: RequestSqlClient, scope: { organizationId: number; projectId: number }): Promise<StrictProjectTaskGraph> {

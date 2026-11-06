@@ -26,10 +26,13 @@ import { getTenantScope } from '../../../db/tenantStore';
 import { GOVERNED_WRITE_ROLES } from '../../../middleware/orgMembership';
 import { ProgramReadAccessError, readCurrentProgramActor } from '../../c2c/current-program-access';
 import { canAccessReportProject } from '../../report-os/project-access';
-import { createHash } from 'node:crypto';
 import { stableStringify } from '../../../../shared/canonical-json';
-import type { ObjectivesRecord } from '../../c2c/charter-objectives';
-import { loadStrictProjectTaskGraph, type StrictProjectTaskGraph } from '../../tasking/task-planning';
+import {
+  loadStrictProjectTaskGraph, monitorBasis, monitorState, monitorReference, monitorWork,
+  monitorGateStates, monitorGoal, monitorBlockers, monitorHash,
+  type StrictProjectTaskGraph, type ProjectObjectiveReference, type MonitorRead,
+} from '../../tasking/task-planning';
+export type { ProjectObjectiveReference } from '../../tasking/task-planning';
 import { readDossier } from '../../c2c/dossier-read';
 import type { ProjectTeamGoal, ProjectTeamMonitor } from '../../../../shared/ana/turn-timeline';
 import { createNotification } from '../../notifications/notification-service';
@@ -59,9 +62,6 @@ export interface ScheduleExecutionContext {
   executor: RequestSqlClient;
 }
 
-export interface ProjectObjectiveReference {
-  charterId: number; sectionKey: 'objectives'; version: number; contentHash: string;
-}
 export interface ProjectMonitorBinding {
   organizationId: number; projectId: number; programId: string | null;
   snapshotRevisionId: number; inputHeadHash: string; objective: ProjectObjectiveReference;
@@ -85,8 +85,6 @@ export interface ProjectGateObservation {
   consistency:'bracketed_heads_not_atomic';authorizesRelease:false;
   checks:Record<'source'|'document'|'filing',{state:ProjectTeamMonitor['gates']['source'];unresolved:number|null;codes:string[]}>;
 }
-
-interface MonitorRead<T> { state: 'available' | 'unavailable'; value: T | null; digest: string }
 
 /** Fresh, actor-admitted projection. It is never a signature, a release verdict or a clinical certification. */
 export async function readProjectObjectiveMonitor(orgId: number, projectId: number, context: ScheduleExecutionContext): Promise<ProjectObjectiveMonitor> {
@@ -203,25 +201,6 @@ async function buildProjectMonitor(sql: RequestSqlClient, organizationId: number
     humanDecisions: {state:decisions.state,pending:decisions.value?.length ?? null,runReferences:decisions.value ?? []} };
 }
 
-function monitorBasis(basis: Record<string,MonitorRead<unknown>>): ProjectObjectiveMonitor['basis'] {
-  return Object.fromEntries(Object.entries(basis).map(([key,value]) => [key,{state:value.state,digest:value.digest}]));
-}
-function monitorState(unavailable: boolean, basisCurrent: boolean, goal: ProjectTeamGoal|null): ProjectObjectiveMonitor['state'] {
-  if (unavailable) return 'unavailable';
-  return basisCurrent && goal !== null ? 'current' : 'stale';
-}
-function monitorReference(goal: ProjectTeamGoal|null): ProjectObjectiveReference|null {
-  return goal?.source ? {charterId:goal.source.charterId,sectionKey:'objectives',version:goal.version,contentHash:goal.source.contentHash} : null;
-}
-function monitorWork(graph: StrictProjectTaskGraph|null): ProjectObjectiveMonitor['work'] {
-  return {total:graph?.total ?? 0,completed:graph?.completed ?? 0,percentage:graph?.percentage ?? null};
-}
-function monitorGateStates(source: string, documents: MonitorRead<{pending:boolean}>, filing: string): ProjectTeamMonitor['gates'] {
-  return {source:source === 'available' ? 'not_assessed' : 'unavailable',
-    document:documents.state === 'available' ? documents.value?.pending ? 'blocked' : 'not_assessed' : 'unavailable',
-    filing:filing === 'available' ? 'not_assessed' : 'unavailable'};
-}
-
 type MonitorGateCheck=ProjectGateObservation['checks']['source'];
 const unassessedCheck=(code:string):MonitorGateCheck=>({state:'not_assessed',unresolved:null,codes:[code]});
 function observerIdentity(organizationId:number,userId:number|undefined):ProjectGateObservation['actor'] {
@@ -307,25 +286,6 @@ async function observeProjectFilingGate(sql:RequestSqlClient,monitor:ProjectObje
     return {state:actual.gate.cleared?'satisfied':'blocked',unresolved:actual.gate.blockers.length,
       codes:actual.gate.cleared?[]:['CANONICAL_DISPATCH_GATE_BLOCKED']};
   } catch { return {state:'unavailable',unresolved:null,codes:['CANONICAL_DISPATCH_GATE_UNAVAILABLE']}; }
-}
-
-function monitorGoal(record: ObjectivesRecord | null): ProjectTeamGoal | null {
-  const current = record?.current;
-  if (!current || !record?.charterId || !/^[a-f0-9]{64}$/.test(current.contentHash) || !current.content.objective.trim() || current.content.objective.length > 4000) return null;
-  return { alias: `g-${current.contentHash.slice(0,12)}`,label: 'Project objective',version: current.version,summary: current.content.objective.slice(0,600),
-    truncated: current.content.objective.length > 600,source: {charterId: record.charterId,sectionKey: 'objectives',version: current.version,
-      contentHash: current.contentHash,status: current.status,locked: current.locked} };
-}
-
-function monitorBlockers(input: {programId: string|null; goal: ProjectTeamGoal|null; graph: StrictProjectTaskGraph|null;
-  source: string; documents: string; filing: string}): string[] {
-  const blockers = ['SCIENTIFIC_SOURCE_VERIFICATION_NOT_ASSESSED','DOCUMENT_RELEASE_NOT_ASSESSED','LIVE_DISPATCH_ASSESSMENT_REQUIRED'];
-  if (!input.programId) blockers.push('PROJECT_PROGRAM_UNANCHORED');
-  if (!input.goal) blockers.push('PROJECT_OBJECTIVE_REQUIRED');
-  if (!input.graph) blockers.push('PROJECT_WORK_UNAVAILABLE');
-  else blockers.push(...input.graph.problems);
-  if ([input.source,input.documents,input.filing].includes('unavailable')) blockers.push('PROJECT_GATE_SOURCE_UNAVAILABLE');
-  return [...new Set(blockers)].sort();
 }
 
 async function projectSourceHeads(sql: RequestSqlClient, organizationId: number, programId: string | null) {
@@ -427,8 +387,6 @@ async function markMonitorDirtyOnExecutor(sql:ScheduleQuery,organizationId:numbe
     metadata=(COALESCE(metadata,'{}'::json)::jsonb || '{"objectiveMonitorDirty":true}'::jsonb)::json
     WHERE organization_id=$1 AND project_id=$2`,[organizationId,projectId]);
 }
-
-function monitorHash(value: unknown): string { return createHash('sha256').update(stableStringify(value)).digest('hex'); }
 
 function requireScheduleIds(orgId: number, projectId: number): void {
   if (![orgId, projectId].every(id => Number.isSafeInteger(id) && id > 0 && id <= POSTGRES_INTEGER_MAX)) {
