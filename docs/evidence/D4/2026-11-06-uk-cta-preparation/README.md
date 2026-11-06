@@ -168,3 +168,14 @@ The 14 current core hashes and separate corrected-test hash are unchanged. The
 incoming owner's native PostgreSQL proof is not represented as a local rerun.
 The eighth complete gate/ref-race receipt is retained; normal publication retries
 continue with no force, hook bypass or lint/TypeScript allowance growth.
+
+
+The ninth normal run at `117554784` passed all gates with zero TypeScript errors
+and no warning growth, then lost the ref to commitments/activity update
+`965084590`, merged normally at `6c092d752`. The commitments read uses the existing
+team-verified integer project ID; activity moves into Records preserving actor,
+reason, timestamp and independent failure states. Profile facts, editor and UK
+source owners are unchanged. All 63 affected/adjacent cases across eight suites
+pass; production client/server builds pass. The 14 current core hashes and
+separate corrected-test hash still match. The ninth gate/ref-race receipt is
+retained; normal publication retries remain pending.

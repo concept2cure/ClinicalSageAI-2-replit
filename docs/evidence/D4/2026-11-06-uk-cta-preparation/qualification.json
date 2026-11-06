@@ -119,6 +119,13 @@
       "lintedFiles": 15,
       "log": "gates-pass-eighth-ref-race.txt.gz",
       "note": "All normal gates passed; concurrent ordinary-task repair rejected the lock."
+    },
+    "ninthPass": {
+      "source": "117554784eb22964aa8e3d337f95908e6616f726",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-ninth-ref-race.txt.gz",
+      "note": "All normal gates passed; concurrent commitments/activity project UI update rejected the ref."
     }
   },
   "publication": "pending normal retry after merge",
@@ -158,7 +165,7 @@
   },
   "originalSourceManifest": "source-sha256.json",
   "sourceTransition": "source-hash-transition.json",
-  "currentMergedGates": "pending normal retry after ordinary-task integration",
+  "currentMergedGates": "pending normal retry after commitments/activity integration",
   "annaIntegration": {
     "incoming": "67348a526cc75f152df2e73e7bfbb65e815dc5fc",
     "source": "ba1d327e2c00d459e0eaa7ec037489bf805a941a",
@@ -227,5 +234,15 @@
     "currentCoreManifestMatches": 14,
     "separateTestHashMatches": true,
     "review": "Project/source precedence, fresh write scope, transactional workspace/admission and confirmed-commit notifications preserve UK task planning."
+  },
+  "knowledgeIntegration": {
+    "incoming": "965084590ccf7a569248cc1c6df0455785f7a722",
+    "source": "6c092d7529257245d1420693daa30476fb33660c",
+    "passed": 63,
+    "suites": 8,
+    "build": "pass",
+    "currentCoreManifestMatches": 14,
+    "separateTestHashMatches": true,
+    "review": "Commitments read uses verified integer project; existing activity moves into Records with independent errors. Profile facts/editor/drafting unchanged."
   }
 }
