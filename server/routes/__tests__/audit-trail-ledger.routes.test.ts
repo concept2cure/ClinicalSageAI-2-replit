@@ -493,7 +493,10 @@ describe('GET /api/audit-trail/ledger — an approval that was not the last one 
     expect(entryOf(data, fixity)?.event).toBe('Fixity check: verified');
     expect(entryOf(data, unknown)?.event).toBe('Vault Document Something New');
   });
+});
 
+describe('GET /api/audit-trail/ledger — Vault acts named in words (J2 human test)', () => {
+  const entryOf = (data: AuditLedgerEntry[], auditId: string) => data.find((e) => e.id === `AUD-${auditId}`);
   it('every act the Vault writes without a description of its own is named in words', async () => {
     const acts: Record<string, string> = {
       'vault.document.exported': 'Exported',
