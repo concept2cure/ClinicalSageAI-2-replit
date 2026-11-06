@@ -1,0 +1,15 @@
+{
+  "server/routes/__tests__/authoring-draft-recorded-filing.test.ts": "f87c4360d5e5a26d6c78108dbf5414d0c7df78f220be9ecd3f7ec129f1e3f890",
+  "server/services/ana/AnaDocumentDraftingService.ts": "f1f8b9cbad317f89b4cafc7594cabc57856af99e726e00e658e090f5c8577c98",
+  "server/services/ana/__tests__/draft-product-advisory-selection.test.ts": "e2bbaffcef0b0cdba2e63977ca3e4ceb1da374dea7ea11286600174442411abb",
+  "server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts": "a43ab9a2cb7a823233bb222fe8a58448611bf08f7db37c49bde68d06e581f4c6",
+  "server/services/ana/draft-product-advisory.ts": "075023efba6b48cbd9f4f9d38172f9513a44f5557594a950cde62be46a261fc5",
+  "server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts": "c772d11befa709518ddb57bacc9a3950a8e03b11f2b7a30099c27cb251e1315c",
+  "server/services/ana/therapeutic-area-profiles/index.ts": "52a7356bae78e91689b432741c2befa8b410d55fbe3e23ec14377409b0c8c67a",
+  "server/services/authoring/__tests__/authoring-draft-template.test.ts": "b7b63776985a910dd2343cbd1d41cacc864251532ca018df3ebf8e55e947ad6a",
+  "server/services/authoring/authoring-draft-template.ts": "a19f7299b268c6e6061a339b1cda62922b8fb0915a8dc0934b742205dda9b9ff",
+  "server/services/regulatory/registry/blueprints/canadaCtaBlueprint.ts": "aa4119d16e12c17bbf1bcd653d816113af2f9c41216aa776ccdce73a75c5b9f9",
+  "server/services/regulatory/registry/blueprints/euCtaBlueprint.ts": "1b732e9137c87a58eb3e67d44ef408259bc2bb65ea151c3e7fa7e250e516b076",
+  "shared/regulatory/document-taxonomy.ts": "4383ec406c9e448cadd76021798c067b87296b08062a5b0bf78cb832f573429b",
+  "shared/regulatory/uk-cta-authoring.ts": "bc6cc087d0219bf0c85636984116ffe9a3584287d014b2eb1d27f045ed999667"
+}

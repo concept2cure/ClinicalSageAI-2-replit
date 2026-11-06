@@ -13,3 +13,7 @@ Read-only peer audits; root runs all checks and Git. Rehearse existing npm dev w
 ## Observed repair
 
 Real npmdev passes Codespaces doctor but stops at tsxcommandnotfound because both existing dev scripts start a login shell. Root owns package.json (two launcher flags only); the bounded subprocess regression test is scripts/ci/__tests__/dev-entrypoint.test.mjs. Preserve preflight failure, actual installedtsx and Node22. Held Codespaces files remain unchanged.
+
+## Accepted completion
+
+Launcher fix accepted at `7d771e124a4dba820fbbd26d8919c7c69cd1a9d4` with all normal hooks. The canonical setup-owner restart and CSR qualifier changes were merged without overwriting them; source bridge and combined60Node tests pass. Actual npm startup and Demoaccess passed, followed by six CSRprepare steps/eleven frozen tables and three manualeditor cases including fresh-session persistence and opening AnA controls. No model generation was requested. See LAUNCHER.md and LAUNCHER-HANDOFF.md for provider/source-tier/owner limits. Our package/test holds are released.

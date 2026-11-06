@@ -371,6 +371,12 @@ function blueprintLines(entry: RegulatoryApplicationType, section: SectionBluepr
   return lines.join('\n');
 }
 
+/** Exact regional row identity also reaches the existing editor advisory path. */
+function blueprintSource(entry: RegulatoryApplicationType, section: BlueprintRow, fallback: string): string {
+  return ['UK_CTA', 'EU_CTA', 'CA_CTA', 'CA_CTA_A'].includes(entry.id)
+    ? `blueprint:regional:${entry.id}:${section.code}` : fallback;
+}
+
 type BlueprintRow = SectionBlueprint['sections'][number];
 
 /** Reuse the same component record exposed by get_document_template; a DSUR
@@ -636,7 +642,7 @@ function blueprintRequirements(
     const component = componentRequirements(entry, sectionType);
     if (component) return component;
     const section = blueprint.sections.find(matchRow);
-    return section ? { requirements: blueprintLines(entry, section), requirementsSource: 'blueprint' } : none;
+    return section ? { requirements: blueprintLines(entry, section), requirementsSource: blueprintSource(entry, section, 'blueprint') } : none;
   }
 
   // The blueprint's Module 1 rows are not a brief for a CTD entry: CTD_SECTIONS
@@ -807,7 +813,7 @@ function scopedCtdRequirements(ctx: CtdDraftContext, lead: ReturnType<typeof lea
   // replace their Module 1 with FDA guidance or their quality alternatives
   // with an unconditional marketing dossier requirement.
   const local = entry.region === 'CA' ? blueprint.sections.find(matchRow) : undefined;
-  return local ? { requirements: blueprintLines(entry, local), requirementsSource: 'blueprint:regional' } : null;
+  return local ? { requirements: blueprintLines(entry, local), requirementsSource: blueprintSource(entry, local, 'blueprint:regional') } : null;
 }
 
 /** The requirements block alone; resolveDraftingRequirements also names its source. */

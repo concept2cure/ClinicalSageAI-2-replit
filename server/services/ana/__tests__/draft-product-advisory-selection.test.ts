@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { parseDraftProductAudit, renderDraftProductAdvisory } from '../draft-product-advisory';
+import { draftProductDocumentContext, parseDraftProductAudit, renderDraftProductAdvisory,
+  type DraftProductDocumentContext } from '../draft-product-advisory';
 import type { RecordedDraftProduct } from '../draft-product-context';
+import { getProfile, listProfiles } from '../therapeutic-area-profiles';
 
 const record = (overrides: Partial<RecordedDraftProduct> = {}): RecordedDraftProduct => ({
   state: 'recorded', projectId: 11, programId: '11111111-2222-4333-8444-000000000011',
@@ -73,6 +75,121 @@ describe('canonical document kind reaches existing therapeutic selection', () =>
   it('does not infer document kind from an arbitrary protocol-like title', () => {
     const out = renderDraftProductAdvisory({ therapeuticArea: 'cardiology' }, 'A proposed protocol and scientific report', 'none');
     expect(out.prompt).not.toContain('### Endpoint Considerations');
+  });
+});
+
+const regionalClinicalRows = [
+  ['UK_CTA', 'uk_cta_protocol'], ['EU_CTA', 'PART_I.PROTOCOL'], ['EU_CTA', 'PART_I.SYNOPSIS'],
+  ['CA_CTA', '1.7.1'], ['CA_CTA', '1.4.1'], ['CA_CTA_A', '1.7.1'],
+] as const;
+const regionalProfileCases = regionalClinicalRows.flatMap(([registryId, code]) => listProfiles().map(profile =>
+  ({ registryId, code, profileId: profile.id })));
+
+describe('existing profiles reach exact regional clinical rows through shared provenance', () => {
+  it('covers the existing 25 profiles rather than a new therapeutic registry', () => {
+    expect(listProfiles()).toHaveLength(25);
+  });
+
+  it.each(regionalProfileCases)('$registryId/$code receives $profileId arrays from its resolver marker', ({ registryId, code, profileId }) => {
+    const profile = getProfile(profileId)!;
+    const out = renderDraftProductAdvisory({ therapeuticArea: profileId }, code,
+      `blueprint:regional:${registryId}:${code}`, undefined, undefined, 'ctd');
+    if (profile.endpointConsiderations.length) expect(out.prompt).toContain(profile.endpointConsiderations[0]);
+    if (profile.statisticalConsiderations.length) expect(out.prompt).toContain(profile.statisticalConsiderations[0]);
+    expect(out.prompt).toContain('clinical applicability remains undetermined');
+    expect(out.audit.therapeuticProfile).toBe(profileId);
+  });
+
+  it.each(regionalClinicalRows)('%s/%s receives the same arrays from a saved-template identity', (registryId, code) => {
+    const context: DraftProductDocumentContext = { documentKind: 'ctd', regionalSection: { registryId, code } };
+    const out = renderDraftProductAdvisory({ therapeuticArea: 'cardiology' }, code, 'none', undefined, undefined, context);
+    expect(out.prompt).toContain('### Endpoint Considerations');
+    expect(out.prompt).toContain('### Statistical Considerations');
+  });
+
+  it('uses the canonical row after an exact title resolved without pretending it is a CTD location', () => {
+    const out = renderDraftProductAdvisory({ therapeuticArea: 'cardiology', modality: 'mab' },
+      'Part I — clinical trial protocol', 'blueprint:regional:EU_CTA:PART_I.PROTOCOL');
+    expect(out.prompt).toContain('### Endpoint Considerations');
+    expect(out.prompt).not.toContain('Existing modality CMC reference set');
+  });
+
+  it('retains the existing kind while carrying supported saved-template identity', () => {
+    expect(draftProductDocumentContext('ctd', 'UK_CTA', 'uk_cta_protocol')).toEqual({
+      documentKind: 'ctd', regionalSection: { registryId: 'UK_CTA', code: 'uk_cta_protocol' },
+    });
+    expect(draftProductDocumentContext('protocol', 'CA_CTA_A', null)).toEqual({
+      documentKind: 'protocol', regionalSection: { registryId: 'CA_CTA_A', code: null },
+    });
+  });
+
+  it.each(['CN_CTA', 'AU_CTN', 'JP_CTN', 'UK_MA', undefined])('preserves the nonregional/CSR kind contract for %s', registryId => {
+    expect(draftProductDocumentContext('ctd', registryId, '1.7.1')).toBe('ctd');
+    expect(draftProductDocumentContext('csr', 'UK_CTA', 'uk_cta_protocol')).toBe('csr');
+  });
+});
+
+describe('unrelated or unresolved regional identity never grants clinical fallback', () => {
+  it.each([
+    ['UK_CTA', 'uk_cta_quality'], ['UK_CTA', 'uk_cta_nonclinical'], ['UK_CTA', 'uk_cta_application_form'],
+    ['EU_CTA', 'PART_I.IMPD_Q'], ['EU_CTA', 'PART_I.IMPD_SE'], ['EU_CTA', 'PART_II.CONSENT'],
+    ['CA_CTA', '2.3'], ['CA_CTA', '3.2'], ['CA_CTA', '1.2.1'], ['CA_CTA', '1.7.2'],
+    ['CA_CTA_A', '1.4.1'], ['CA_CTA_A', '1.2.1'],
+  ])('%s/%s suppresses even a conflicting protocol kind', (registryId, code) => {
+    const out = renderDraftProductAdvisory({ therapeuticArea: 'cardiology' }, code,
+      `blueprint:regional:${registryId}:${code}`, undefined, undefined, 'protocol');
+    expect(out.prompt).not.toContain('### Endpoint Considerations');
+    expect(out.prompt).not.toContain('### Statistical Considerations');
+  });
+
+  it.each([
+    'blueprint:regional', 'blueprint:regional:UK_CTA', 'blueprint:regional:UK_CTA:',
+    'blueprint:regional:UK_MA:uk_cta_protocol', 'blueprint:regional:UK_CTA:unknown',
+    'blueprint:regional:EU_CTA:uk_cta_protocol', 'blueprint:regional:CA_CTA:1.7.1:extra',
+    'blueprint:regional:uk_cta:uk_cta_protocol', 'blueprint:regional:UK_CTA:Protocol and synopsis',
+  ])('refuses malformed, foreign or noncanonical marker %s', source => {
+    const out = renderDraftProductAdvisory({ therapeuticArea: 'cardiology' }, 'uk_cta_protocol', source,
+      undefined, undefined, 'protocol');
+    expect(out.prompt).not.toContain('### Endpoint Considerations');
+  });
+
+  it('withholds arrays when marker and saved-template identities disagree', () => {
+    const context: DraftProductDocumentContext = { documentKind: 'ctd', regionalSection: { registryId: 'CA_CTA', code: '1.7.1' } };
+    const out = renderDraftProductAdvisory({ therapeuticArea: 'cardiology' }, 'uk_cta_protocol',
+      'blueprint:regional:UK_CTA:uk_cta_protocol', undefined, undefined, context);
+    expect(out.prompt).not.toContain('### Endpoint Considerations');
+  });
+
+  it.each([
+    { registryId: 'UK_CTA', code: null }, { registryId: 'UK_CTA', code: 'unknown' },
+    { registryId: 'CA_CTA_A', code: '1.4.1' }, { registryId: 'EU_CTA', code: 'PART_I.IMPD_Q' },
+  ])('withholds arrays for unresolved or untagged template identity %j', regionalSection => {
+    const context: DraftProductDocumentContext = { documentKind: 'protocol', regionalSection };
+    const out = renderDraftProductAdvisory({ therapeuticArea: 'cardiology' }, 'uk_cta_protocol',
+      'none', undefined, undefined, context);
+    expect(out.prompt).not.toContain('### Endpoint Considerations');
+  });
+
+  it.each([
+    ['uk_cta_protocol', 'blueprint'], ['PART_I.PROTOCOL', 'blueprint'], ['1.7.1', 'blueprint:regional'],
+    ['ctn.trial', 'blueprint'], ['2', 'blueprint'], ['Protocol and synopsis', 'none'],
+  ])('does not infer regional identity from %s and legacy source %s', (code, source) => {
+    const out = renderDraftProductAdvisory({ therapeuticArea: 'cardiology' }, code, source, undefined, undefined, 'ctd');
+    expect(out.prompt).not.toContain('### Endpoint Considerations');
+  });
+
+  it.each(['3.2.P.2', 'A proposed protocol', 'uk_cta_quality', 'uk_cta_protocol uk_cta_protocol'])('refuses a valid marker attached to unrelated section %s', section => {
+    const out = renderDraftProductAdvisory({ therapeuticArea: 'cardiology' }, section,
+      'blueprint:regional:UK_CTA:uk_cta_protocol', undefined, undefined, 'protocol');
+    expect(out.prompt).not.toContain('### Endpoint Considerations');
+  });
+
+  it('retains Canadian quality modality context without adding clinical arrays', () => {
+    const out = renderDraftProductAdvisory({ therapeuticArea: 'cardiology', modality: 'mab' }, '3.2',
+      'blueprint:regional:CA_CTA:3.2', undefined, undefined, 'ctd');
+    expect(out.prompt).toContain('Existing modality CMC reference set');
+    expect(out.prompt).not.toContain('### Endpoint Considerations');
+    expect(out.prompt).not.toContain('### Statistical Considerations');
   });
 });
 

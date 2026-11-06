@@ -4,6 +4,7 @@ import { getProfile, renderProfileForPrompt, type RenderProfileOptions, type Pro
 import { normalizeModality, MODALITIES, MODALITY_FRAME, MODALITY_LABEL, type Modality } from '../../../shared/regulatory/modality';
 import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry';
+import { getExactSectionBlueprint } from '../regulatory/sectionBlueprintCatalog';
 import type { RecordedDraftProduct } from './draft-product-context';
 
 export interface DeclaredDraftProduct {
@@ -30,18 +31,31 @@ const label = (v: unknown): string | null => typeof v === 'string' && v.trim() ?
 
 type AdvisoryArguments = [declared: DeclaredDraftProduct | undefined, sectionType: string,
   requirementsSource: string, recorded?: Readonly<RecordedDraftProduct> | null,
-  jurisdiction?: string, documentKind?: ProfileDocumentKind];
+  jurisdiction?: string, documentContext?: DraftProductDocumentContext];
+
+interface RegionalSectionIdentity { registryId: string; code: string | null }
+export type DraftProductDocumentContext = ProfileDocumentKind | {
+  documentKind: ProfileDocumentKind;
+  regionalSection: RegionalSectionIdentity;
+};
+const REGIONAL_THERAPEUTIC_IDS = new Set(['UK_CTA', 'EU_CTA', 'CA_CTA', 'CA_CTA_A']);
+
+/** Carry the already-validated saved template identity through the existing editor argument. */
+export function draftProductDocumentContext(documentKind: ProfileDocumentKind, registryId: unknown,
+  code: string | null): DraftProductDocumentContext {
+  return documentKind !== 'csr' && typeof registryId === 'string' && REGIONAL_THERAPEUTIC_IDS.has(registryId)
+    ? { documentKind, regionalSection: { registryId, code } } : documentKind;
+}
 
 export function renderDraftProductAdvisory(...args: AdvisoryArguments): { prompt: string; audit: DraftProductAudit } {
-  const [declared, sectionType, requirementsSource, recorded, jurisdiction, documentKind] = args;
+  const [declared, sectionType, requirementsSource, recorded, jurisdiction, documentContext] = args;
   const activeRecord = recorded?.state === 'recorded' ? recorded : null;
   const selected = selectProduct(declared, activeRecord);
   const audit = productAudit(selected, declared, activeRecord);
   if (!activeRecord && !FIELDS.some(field => declared?.[field] !== undefined)) {
     return { prompt: '', audit: { ...audit, productContextSource: 'unassessed' } };
   }
-  const kind = documentKind ?? knownDocumentKind(sectionType, requirementsSource);
-  const section = advisorySection(sectionType, requirementsSource, kind);
+  const { kind, section, regionalSectionRole } = advisorySelection(sectionType, requirementsSource, documentContext);
   const blocks = activeRecord ? recordedBlock(activeRecord, audit.productContextConflicts) : declaredBlock();
   const declaredLabels = declaredValues(selected);
   if (Object.keys(declaredLabels).length) {
@@ -53,7 +67,7 @@ export function renderDraftProductAdvisory(...args: AdvisoryArguments): { prompt
     blocks.push('THERAPEUTIC AREA PROFILE SOURCE: caller-declared fallback, unverified advisory.');
   }
   const options: RenderProfileOptions = { activeCtdSection: section, onlyApplicableRules: true,
-    maxBulletsPerSection: 4, jurisdiction, documentKind: kind,
+    maxBulletsPerSection: 4, jurisdiction, documentKind: kind, regionalSectionRole,
     // Record mode never re-labels a fallback label as a recorded applicability fact.
     productContext: activeRecord ? { phase: activeRecord.phase, modality: activeRecord.modality,
       population: activeRecord.population, source: 'recorded' }
@@ -156,6 +170,46 @@ function advisorySection(sectionType: string, source: string, kind: ProfileDocum
   if (kind === 'csr') return /^record:outline:csr-e3:(\d+(?:\.\d+)*):/.exec(source)?.[1]
     ?? /^(\d+(?:\.\d+)*)(?:\s|$)/.exec(sectionType.trim())?.[1] ?? null;
   return normalizeCtdCode(sectionType.trim().split(/\s+/)[0]);
+}
+
+/** Resolve section semantics separately from product facts and their presentation. */
+function advisorySelection(sectionType: string, source: string, context?: DraftProductDocumentContext) {
+  const kind = (typeof context === 'string' ? context : context?.documentKind)
+    ?? knownDocumentKind(sectionType, source);
+  const regionalSectionRole = regionalTherapeuticRole(sectionType, source, context);
+  const section = regionalSectionRole === 'protocol' || regionalSectionRole === 'protocol-synopsis'
+    ? null : advisorySection(sectionType, source, kind);
+  return { kind, section, regionalSectionRole };
+}
+
+function regionalMarkerIdentity(source: string): RegionalSectionIdentity | null {
+  const match = /^blueprint:regional:([^:]+):([^:]+)$/.exec(source);
+  return match ? { registryId: match[1], code: match[2] } : null;
+}
+
+/** False is an unresolved regional claim; undefined preserves nonregional behavior. */
+function regionalSectionIdentity(source: string, context?: DraftProductDocumentContext): RegionalSectionIdentity | false | undefined {
+  const marked = source.startsWith('blueprint:regional');
+  const marker = regionalMarkerIdentity(source);
+  const described = context !== null && typeof context === 'object';
+  const saved = described ? context.regionalSection : undefined;
+  if (!marked && !described) return undefined;
+  if ((marked && !marker) || (described && !object(saved))) return false;
+  if (marker && saved && (marker.registryId !== saved.registryId || marker.code !== saved.code)) return false;
+  return saved ?? marker ?? false;
+}
+
+/** A marker and saved-template descriptor share one current, exact catalog lookup. */
+function regionalTherapeuticRole(sectionType: string, source: string, context?: DraftProductDocumentContext): RenderProfileOptions['regionalSectionRole'] {
+  const identity = regionalSectionIdentity(source, context);
+  if (identity === undefined) return undefined;
+  if (!identity || !REGIONAL_THERAPEUTIC_IDS.has(identity.registryId) || typeof identity.code !== 'string') return 'other';
+  const row = getExactSectionBlueprint(identity.registryId)?.sections.find(section => section.code === identity.code);
+  if (!row) return 'other';
+  const target = sectionType.trim().toLowerCase();
+  const matches = row.code.trim().toLowerCase() === target || [row.title, ...(row.formerTitles ?? [])]
+    .some(value => value.trim().toLowerCase() === target || `${row.code} ${value}`.trim().toLowerCase() === target);
+  return matches ? row.therapeuticContext ?? 'other' : 'other';
 }
 
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);

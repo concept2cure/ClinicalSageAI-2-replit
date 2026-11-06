@@ -65,6 +65,32 @@ describe('existing therapeutic knowledge reaches clinical sections without enter
   });
 });
 
+describe('regional clinical roles select arrays without CTD substitution', () => {
+  it.each(['protocol', 'protocol-synopsis'] as const)('uses an explicit %s role with the actual ctd document kind', regionalSectionRole => {
+    const prompt = renderProfileForPrompt(cardiology, { ...options, activeCtdSection: null,
+      documentKind: 'ctd', regionalSectionRole });
+    expect(prompt).toContain(cardiology.endpointConsiderations[0]);
+    expect(prompt).toContain(cardiology.statisticalConsiderations[0]);
+    expect(prompt).toContain('clinical applicability remains undetermined');
+  });
+
+  it('a regional other role suppresses the generic protocol-kind fallback', () => {
+    const prompt = renderProfileForPrompt(cardiology, { ...options, activeCtdSection: null,
+      documentKind: 'protocol', regionalSectionRole: 'other' });
+    expect(prompt).not.toContain('### Endpoint Considerations');
+    expect(prompt).not.toContain('### Statistical Considerations');
+  });
+
+  it.each(['2.4', '2.6.6', '3.2.P.2', '4.2.3.2'])('preserves scientific exclusion at CTD %s despite a conflicting regional role', activeCtdSection => {
+    for (const regionalSectionRole of ['protocol', 'protocol-synopsis', 'other'] as const) {
+      const prompt = renderProfileForPrompt(cardiology, { ...options, activeCtdSection,
+        documentKind: 'protocol', regionalSectionRole });
+      expect(prompt).not.toContain('### Endpoint Considerations');
+      expect(prompt).not.toContain('### Statistical Considerations');
+    }
+  });
+});
+
 describe('reference selection and product applicability remain advisory and bounded', () => {
   it('keeps a reference cited by the selected section rule ahead of earlier general references', () => {
     const prompt = renderProfileForPrompt(scopedProfile(), { ...options, activeCtdSection: '2.5', maxBulletsPerSection: 1 });

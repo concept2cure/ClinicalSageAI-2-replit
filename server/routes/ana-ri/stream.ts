@@ -162,6 +162,7 @@ import { selectToolsForTurn, SELF_DRIVE_TOOLS, CANVAS_DOCUMENT_TOOLS } from '../
 import { recentTurnWindow, conversationWindowNotice } from '../../services/ana/history-window.js';
 import { continuationContextMessage } from '../../../shared/ana/continuation-context.js';
 import { planEventFromToolResult, type TurnPlanStep } from '../../services/ana/turn-plan.js';
+import { SourceReadAccessError } from '../../services/clinical-regulatory-evidence/source-read-access.js';
 import { buildContextUsedEvent, type ContextUpload } from '../../services/ana/turn-context-used.js';
 import {
   NO_TURN_SKILLS,
@@ -1973,15 +1974,19 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
             '../../services/clinical-regulatory-evidence/retained-source-context.js'
           );
           const retained = await readRetainedSourceContexts(
-            Number(orgId), programIdForThread(streamProjectId), req.body.source_ids,
+            Number(orgId), programIdForThread(streamProjectId), req.body.source_ids, { userId: guardUserId ?? undefined },
           );
           for (const source of retained) {
             const identity = `cre_source:${source.sourceId}`;
             messages.push({ role: 'user', content:
-              `[Selected retained source ${identity}; original SHA-256 ${source.sha256}; ` +
+              (source.origin === 'native_record_snapshot'
+                ? `[Selected native Quality record ${identity}; recorded snapshot SHA-256 ${source.sha256}; `
+                : `[Selected retained source ${identity}; original SHA-256 ${source.sha256}; `) +
               `stored representation ${source.representationId}; supplied text SHA-256 ${source.textSha256}. ` +
-              'Original file unavailable; extracted data retained. ' +
-              `${source.truncated ? 'This is a bounded excerpt, not a full-document read.' : 'Stored extracted text follows.'}]\n` +
+              (source.origin === 'native_record_snapshot'
+                ? 'Native record projection; no uploaded original or approval is implied. Its recorded scope and lifecycle govern interpretation. '
+                : 'Original file unavailable; extracted data retained. ') +
+              `${source.truncated ? 'This is a bounded excerpt, not a full-document read.' : 'Stored source text follows.'}]\n` +
               source.text,
             });
             turnContextSources.push({ source: identity, content: source.text });
@@ -2003,6 +2008,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
             if (!streamFileIds.includes(id)) streamFileIds.push(id);
           }
         } catch (srcErr: any) {
+          if (srcErr instanceof SourceReadAccessError) throw srcErr;
           console.warn('[AnA RI Stream] Source selection resolution failed:', srcErr?.message);
         }
       }

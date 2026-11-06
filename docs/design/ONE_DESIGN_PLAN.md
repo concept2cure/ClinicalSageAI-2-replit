@@ -1168,6 +1168,28 @@ can still drop its saved-thread URL suffix. It is a separate D1/F1 repair;
 the saved-selection slice does not change it. Other packages retain their owners
 and holds in `COORDINATION.md`; no package is marked closed here.
 
+#### R1 / S2 — Quality through the project evidence workflow (Codex, 2026-11-06)
+
+The existing Quality work area already sits beside RBM, CMC and Biostatistics. Its native records now feed the
+existing project source catalogue, shared document builds and Compliance & Audit Assurance Pack, with current
+project/object access, immutable snapshot lineage and truthful lifecycle/approval qualifications. The existing
+TaskBoard retains native Quality source links and canonical project placement, including training readers,
+delegated periodic approvers and same-date numeric CAPA/action reassignment.
+
+Source: `1e904a0550`, `b25fd60fb7`, `98661f418b`, `11e4252671`, `f92b2be3f7`, `f4c230dfac`, `bb79304fa2`.
+Merged with origin `7d771e124a` in `b97d50039d`. Node 22 merged checks: tasking 18 suites / 302 tests,
+source boundaries 8 / 83, reporting 10 / 118; full compiler zero and production builds pass. Actual project
+catalogue → task/Quality and catalogue → one editor flows were used on desktop/mobile; a structure-only build
+retained its native source receipt. The reporting flow passed 27 live checks, including readable PDF and complete
+sealed native data/provenance. No model generation, signing, approval, filing or external delivery is claimed.
+
+Evidence and the pre-implementation “What already exists” inventory:
+`docs/evidence/DESIGN/R1/2026-11-06-quality-core-workflow/README.md`;
+`docs/design/QUALITY_CORE_WORKFLOW_2026-11-06.md`. No app, screen, table, API mount, editor, generator, AnA tool or
+dependency was added. Quality's register project filter/QP3 and the observed mobile tab overflow remain with the
+current Quality/Project holders in `COORDINATION.md`; their held files were not edited. The same source/task/build/report
+contract is the completion pattern for the existing CMC, RBM and Biostatistics owners; parity is not claimed.
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for

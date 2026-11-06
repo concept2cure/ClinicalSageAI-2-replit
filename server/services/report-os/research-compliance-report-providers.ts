@@ -15,6 +15,90 @@ import { pool } from '../../db';
 import type { InsightAtomRef } from './providers/types';
 import { UnsupportedReportClientScope } from './client-scope';
 import type { ReportRecordContext } from './lifecycle-calendar';
+import { getCurrentAccessibleProgramScope, verifiedProgramAnchors, requireProgramScopeStillCurrent, type VerifiedProgramAnchor } from '../c2c/current-program-access';
+import type { NativeRecordSnapshot } from '../qms/project-evidence';
+
+export const QUALITY_EVIDENCE_LIMIT = 'Quality evidence completeness is not assessed. Audit-chain integrity and compliance controls are not assessed.';
+type QualityUnavailable = typeof import('../qms/project-evidence')['QualityEvidenceUnavailable'];
+
+function qualityContext(options: DomainReportOptions | undefined, Unavailable: QualityUnavailable) {
+  const context = options?.recordContext;
+  if (!context?.executor || !Number.isSafeInteger(context.userId) || !context.userId) {
+    throw new Unavailable('A current actor and database context are required for Quality evidence.');
+  }
+  return { executor: context.executor, userId: context.userId };
+}
+
+function qualityProjectScope(orgId: number, options: DomainReportOptions | undefined, Unavailable: QualityUnavailable): boolean {
+  const project = options?.scopeType === 'project';
+  if (!project && (options?.scopeType !== 'account' || options.scopeId !== String(orgId))) {
+    throw new Unavailable('Quality evidence requires one verified project or this organization.');
+  }
+  if (!project && options?.clientWorkspaceId != null) {
+    throw new UnsupportedReportClientScope('Organization Quality-system context cannot be filtered to a client workspace.');
+  }
+  return project;
+}
+
+function qualityAnchors(anchors: readonly VerifiedProgramAnchor[], options: DomainReportOptions | undefined, project: boolean, Unavailable: QualityUnavailable) {
+  if (!project) return anchors;
+  const id = typeof options?.scopeId === 'string' && /^[1-9]\d*$/.test(options.scopeId) ? Number(options.scopeId) : NaN;
+  if (!Number.isSafeInteger(id)) throw new Unavailable('The Quality report project could not be verified.');
+  const selected = anchors.filter(anchor => anchor.projectId === id);
+  if (selected.length !== 1 || (options?.clientWorkspaceId != null && selected[0].clientWorkspaceId !== options.clientWorkspaceId)) {
+    throw new Unavailable('The Quality report project and client workspace could not be verified.');
+  }
+  return selected;
+}
+
+/** Native facts retain their own scope; no Quality status is reinterpreted as an assurance verdict. */
+async function computeQualityEvidenceReport(orgId: number, options?: DomainReportOptions): Promise<DomainReportResult> {
+  const { readQualityProjectEvidence, QualityEvidenceUnavailable } = await import('../qms/project-evidence');
+  const context = qualityContext(options, QualityEvidenceUnavailable);
+  const project = qualityProjectScope(orgId, options, QualityEvidenceUnavailable);
+  const q = context.executor;
+  const identity = { organizationId: orgId, userId: context.userId };
+  const scope = await getCurrentAccessibleProgramScope(q, identity);
+  const anchors = qualityAnchors(verifiedProgramAnchors(q, identity, scope), options, project, QualityEvidenceUnavailable);
+  const records = new Map<string, NativeRecordSnapshot>();
+  const accessProjectIds: number[] = [];
+  const collect = async (programId: string | null, projectId?: number) => {
+    const rows = await readQualityProjectEvidence(q, { ...identity, programId });
+    for (const row of rows) {
+      if (row.sourceScope === 'project' && programId === null) throw new QualityEvidenceUnavailable();
+      const record: NativeRecordSnapshot = { key: row.key, title: row.title, text: row.text, version: row.version,
+        sourceScope: row.sourceScope, lifecycle: row.lifecycle, native: { kind: row.native.kind, id: row.native.id,
+          ...(row.native.authoringDocumentId ? { authoringDocumentId: row.native.authoringDocumentId } : {}) } };
+      const previous = records.get(record.key);
+      if (previous && JSON.stringify(previous) !== JSON.stringify(record)) {
+        throw new QualityEvidenceUnavailable('Quality evidence changed during collection. Refresh before generating the report.');
+      }
+      records.set(record.key, record);
+    }
+    if (projectId !== undefined && rows.some(row => row.sourceScope === 'project')) accessProjectIds.push(projectId);
+  };
+  for (const anchor of anchors) await collect(anchor.programId, anchor.projectId);
+  if (!anchors.length) await collect(null);
+  await requireProgramScopeStillCurrent(q, identity, scope);
+  const observedAt = now();
+  const rows = [...records.values()].sort((a, b) => a.key.localeCompare(b.key));
+  const computedScope = project ? 'project' : 'organization';
+  const limits = [QUALITY_EVIDENCE_LIMIT,
+    'Records state their current native lifecycle. A working copy, signed release and retained version are distinct evidence; no historical status is reconstructed.',
+    ...(scope.reconciliationRequired ? ['Some project relationships require reconciliation; this report makes no completeness claim.'] : [])];
+  return { computedScope, accessProjectIds: [...new Set(accessProjectIds)], criticalBlockers: [QUALITY_EVIDENCE_LIMIT],
+    summary: { projectEvidenceSnapshots: rows.filter(row => row.sourceScope === 'project').length,
+      organizationEvidenceSnapshots: rows.filter(row => row.sourceScope === 'organization').length,
+      qualityEvidence: { schemaVersion: 1, observedAt, records: rows, limits } },
+    provider: { provider: 'quality_project_evidence', observedAt, status: rows.length ? 'partial' : 'missing',
+      blocker: rows.length ? QUALITY_EVIDENCE_LIMIT : `No admitted Quality evidence was returned. ${QUALITY_EVIDENCE_LIMIT}`,
+      atoms: rows.map(row => ({ sourceTable: row.native.kind, recordId: row.native.id, transformation: 'direct_copy' as const })),
+      calculation: { method: 'Canonical current native Quality projection', computedScope, completeness: 'not_assessed' } },
+    provenance: { organizationId: orgId, observedAt, computedScope, queries: [{
+      query: 'readQualityProjectEvidence: canonical current actor, project and object admission',
+      parameters: [orgId, { scopeType: options?.scopeType, scopeId: options?.scopeId }], rows,
+    }] } };
+}
 
 export interface DomainReportResult {
   criticalBlockers?: string[];
@@ -79,6 +163,7 @@ async function iacucExpiry(query: typeof pool.query, orgId: number) {
  * orchestrator output is used unchanged).
  */
 export async function computeDomainReport(reportTypeId: string, orgId: number, options?: DomainReportOptions): Promise<DomainReportResult | null> {
+  if (reportTypeId === 'compliance.audit_assurance_pack') return computeQualityEvidenceReport(orgId, options);
   // These registers have no client-workspace association. A workspace claim
   // cannot be interpreted as a filter over the organisation's entire register.
   const projectId = reportTypeId === 'grants.portfolio_register' && options?.scopeType === 'project' ? Number(options.scopeId) : undefined;
