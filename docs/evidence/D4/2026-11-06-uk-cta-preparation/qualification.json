@@ -68,7 +68,15 @@
     "typeScriptBaseline": 0,
     "warningGrowth": 0,
     "log": "gates-pass-ref-race.txt.gz",
-    "note": "All normal gates passed; Git rejected a concurrent ref advance. Normal retry pending."
+    "note": "All normal gates passed; Git rejected a concurrent ref advance. Normal retry pending.",
+    "secondPass": {
+      "source": "a3c841384269046342413a32e271ee19f19c04f1",
+      "typeScriptErrors": 0,
+      "typeScriptBaseline": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-second-ref-race.txt.gz",
+      "note": "All normal gates passed again; Git rejected a coordination-doc-only ref advance."
+    }
   },
   "publication": "pending normal retry after merge",
   "limits": [
@@ -86,5 +94,14 @@
     "build": "pass",
     "sourceHashesMatched": 14,
     "conflict": "Only COORDINATION.md; retained UK status row and latest D3 status."
+  },
+  "docOnlySynchronization": {
+    "incoming": "f5891e9d9",
+    "source": "005bbee492de7226b3622b40bb8fe26607b3e191",
+    "changed": [
+      ".design/claude-convergence/COORDINATION.md"
+    ],
+    "sourceHashesMatched": 14,
+    "testsAndBuild": "Previous merged checks apply; no application source changed."
   }
 }

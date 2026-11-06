@@ -55,3 +55,12 @@ actual editor/real PGlite service checks pass 161/161 across 15 suites. The merg
 production client/server build passes. All 14 UK source hashes remain unchanged.
 A normal publication retry is pending; no force, hook bypass or baseline expansion
 was used. Full logs and the original successful-gates/ref-race receipt are retained.
+
+
+The retry at `a3c841384` again passed every normal gate, including zero full-tree
+TypeScript errors and no warning growth. Git rejected a coordination-doc-only
+advance, `f5891e9d9`; it was merged normally. No application source changed, and
+all 14 UK hashes still match. The previous merged tests/build therefore apply.
+The two full successful gate runs and ref-race statuses are retained. A 15-minute
+push window was requested under COORDINATION.md after the second ref race; the
+normal retry continues while that optional coordination request is pending.
