@@ -1124,7 +1124,12 @@
         "lintErrors": 0,
         "netLintWarningChange": -14,
         "committedSecrets": "passed",
-        "compiler": "final_merged_run_pending",
+        "compiler": {
+          "errors": 0,
+          "baseline": 0,
+          "mode": "canonical_full_program_incremental",
+          "mergedTree": "d516901b9 plus documentation-only P-104 continuation"
+        },
         "nativeExistingRlsTestsPassed": 49,
         "nativePrivateOwnerAndPoolTestsPassed": 19,
         "browserChecksPassed": 22,

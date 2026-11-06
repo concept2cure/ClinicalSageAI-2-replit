@@ -648,8 +648,9 @@ in their fixtures; no real model PQ, customer KMS grant, provider terms approval
 asserted. The built plain-Node qualification verifier reports all 16 registry entries pending. The production
 client/server build and all eight packaging tests pass. The final merged consolidation passes 1,195 tests in
 54 existing suites; changed-file lint has zero errors and 14 fewer warnings, with no baseline increase. The
-committed-secret gate passes. Final compiler and publication gates are recorded when completed; the full expanded
-spike remains acceptance pending.
+committed-secret gate passes. The canonical full-program compiler completes with zero errors against a zero
+baseline on the merged tree. Publication still requires all mandatory pre-push gates; the full expanded spike
+remains acceptance pending.
 
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
