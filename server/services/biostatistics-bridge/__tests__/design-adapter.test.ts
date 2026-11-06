@@ -18,6 +18,7 @@ import {
   clientTrackForProduct,
   computationToPlanPatch,
   phaseLabel,
+  plannedSizeOf,
   regulatoryBodyForRegions,
   statisticalReadiness,
   studyDesignToStatisticalInput,
@@ -298,5 +299,17 @@ describe('statisticalReadiness — the list-row summary', () => {
     const ni = statisticalReadiness(d);
     const margin = ni.checks.find((c) => c.key === 'margin');
     expect(margin?.ok).toBe(false); // margin set but not justified
+  });
+});
+
+describe('plannedSizeOf — one rule for the N written and the N read back', () => {
+  it('takes the attrition-adjusted total when the engine adjusted, else the total', () => {
+    expect(plannedSizeOf({ sampleSize: { perGroup: 100, total: 200, groups: 2 }, adjustedTotal: 222 })).toBe(222);
+    expect(plannedSizeOf({ sampleSize: { perGroup: 100, total: 200, groups: 2 } })).toBe(200);
+  });
+
+  it('reads nothing from a stored output that carries no size', () => {
+    expect(plannedSizeOf(null)).toBeNull();
+    expect(plannedSizeOf({ note: 'not a computation' })).toBeNull();
   });
 });

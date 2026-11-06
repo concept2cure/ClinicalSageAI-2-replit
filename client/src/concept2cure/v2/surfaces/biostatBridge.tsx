@@ -27,6 +27,7 @@ import { I } from '../icons';
 import { EmptyState, isRowsWith, useLiveRows, type ListState } from '../dataConnect';
 import { readShellProject } from '../shellProject';
 import { stashNavParamsForTarget } from '../navParams';
+import { SizingRunCheck } from './biostatSizingRun';
 /* The two governed writes and their reason forms, split out on 2026-11-02:
    this module had reached the 500-line ceiling exactly, and they were the
    block that depended on nothing else in it. */
@@ -97,7 +98,13 @@ export interface DesignAssessment extends EngineResult {
   existingDeliverables: string[];
   proposedTasks: BridgeTaskBlueprint[];
   existingTaskKeys: string[];
+  /** The stored run behind the planned N (bridge-service SizingRunRead). Absent from an older server. */
+  sizingRun?:
+    | { state: 'found'; runId: number; recordedAt: string; plannedSampleSize: number | null }
+    | { state: 'none' }
+    | { state: 'unreadable' };
 }
+
 
 export const APP_LABELS: Record<string, string> = {
   ind: 'IND', nda: 'NDA', bla: 'BLA', anda: 'ANDA', maa: 'MAA', '510k': '510(k)', de_novo: 'De Novo', pma: 'PMA', cta: 'CTA',
@@ -577,6 +584,7 @@ function BoundDesignCard({ studyId, assessment, onNav, onApplied }: {
             {failed.map((c) => <li key={c.key}>{c.label}{c.hint ? <span style={muted}> — {c.hint}</span> : null}</li>)}
           </ul>
         )}
+        <SizingRunCheck assessment={assessment} />
         {/* What the ENGINE computes for it — the same rendering the designer
             shows, so the two surfaces cannot disagree about one design. */}
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8, display: 'grid', gap: 8 }}>
