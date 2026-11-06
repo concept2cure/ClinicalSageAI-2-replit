@@ -77,3 +77,8 @@ Native nonclinical study binding remains the next completion within the same pro
 
 
 Final pre-publication synchronization: normal merge `b1f7671dc` includes canonical `2216b9dec` (CSR polling and Codespaces requested-port repair). Resolved only the coordination row conflict, retaining both current scopes and prior delivery history. All10 owned and7 prior dependency hashes remain identical; the merged dependency manifest additionally pins both incoming runtime files (9 total). Incoming CSR tests11/11 and Node port-selection cases5/5 pass, and the final combined production client/server/verifier build passes (`build-final.txt.gz`). These16 incoming cases are separate from the378 nonclinical/authority cohort. No owner browser/native claims are borrowed as local qualification.
+
+
+## Accepted canonical publication
+
+Normal hooked push accepted `f1b07add1893b5d019a95979dcade9263634e514`; independent remote verification matched it at 2026-11-06T21:57:31.210954+00:00. All mandatory repository gates passed, including the actual full-program compiler with 0 errors against baseline 0. Warning ratchet decreased by 1; no baseline changed. All 10 own source/test hashes and 9 merged runtime dependency hashes match the validated manifests. Logs and status are retained as `publication-accepted.txt.gz` and `publication-status.json`. The 378 nonclinical/authority cases, 16 separate incoming repair cases and final production build remain the software proof described above; native-study activation and scientific/regulatory qualification remain outside this completed increment. File holds are released.
