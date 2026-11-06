@@ -21530,19 +21530,21 @@ registerToolHandler('draft_authoring_document', async (input, ctx) => {
 
 /** update_vault_document's artifact, new body and stated reason, or what is missing. */
 function vaultUpdateInput(input: Record<string, unknown>, ctx: ToolContext | undefined):
-  { organizationId: number; userId: number; artifactId: string; content: string; reason: string } | string {
+  { organizationId: number; userId: number; artifactId: string; content: string } | string {
   if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'update_vault_document requires tenant + user context.' });
   const artifactId = typeof input.artifact_id === 'string' ? input.artifact_id.trim() : '';
   const content = typeof input.content === 'string' ? input.content : '';
   if (!artifactId) return JSON.stringify({ error: 'artifact_id (string) is required.' });
   if (!content) return JSON.stringify({ error: 'content (string) is required.' });
-  return { organizationId: ctx.organizationId, userId: ctx.userId, artifactId, content, reason: gatedReason(input) };
+  return { organizationId: ctx.organizationId, userId: ctx.userId, artifactId, content };
 }
 
 registerToolHandler('update_vault_document', async (input, ctx) => {
   const asked = vaultUpdateInput(input, ctx);
   if (typeof asked === 'string') return asked;
-  const { organizationId, userId, artifactId, content, reason } = asked;
+  const { organizationId, userId, artifactId, content } = asked;
+  // The stated reason, read on the write's own path (governed-reason-not-invented.test.ts binds it here).
+  const reason = gatedReason(input);
   /* A new version is written only to an artifact of a project the person can open (inside a project, its sponsor's)
      and may change (F1, 2026-11-05). It wrote any artifact of the organization. */
   const scope = await projectReadScope('update_vault_document', { ...ctx, organizationId, userId });
