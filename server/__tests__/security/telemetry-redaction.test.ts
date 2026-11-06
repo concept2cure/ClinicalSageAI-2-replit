@@ -65,6 +65,42 @@ function requestAudit() {
 }
 
 describe('credential capture request audit', () => {
+  it('honors server-private capture activated after middleware entry and preserves the owner response', () => {
+    const { middleware, entries } = requestAudit(); const canary = 'private-derived-answer-never-request-telemetry';
+    let finish = () => {};
+    const req = { path: '/api/ana-ri/stream', method: 'POST', headers: {}, body: { message: canary } };
+    const wire: unknown[][] = [];
+    const res = { statusCode: 200, locals: { ownerPrivateCapture: false }, end: (...args: unknown[]) => { wire.push(args); }, on: (_event: string, cb: () => void) => { finish = cb; } };
+    middleware({ logRequestBody: true, logResponseData: true })(req, res, () => {});
+    res.locals.ownerPrivateCapture = true;
+    const response = JSON.stringify({ content: canary }); res.end(response); finish();
+    expect(wire).toEqual([[response]]); expect(entries).toHaveLength(1);
+    expect(entries[0].bodyCapture).toBe('withheld_owner_private_context'); expect(JSON.stringify(entries)).not.toContain(canary);
+  });
+  it.each([
+    { path: '/api/client-intelligence/ana/user-profile' },
+    { path: '/api/mdx/ana/memory/profile' },
+    { path: '/ana/memory/profile', baseUrl: '/api/mdx' },
+    { path: '/ana/user-profile', baseUrl: '/api/client-intelligence' },
+    { path: '/ana/user-profile', originalUrl: '/API/client-intelligence/ana/user-profile/?view=rules' },
+    { path: '/ana/%75ser-profile', originalUrl: '/api/client-intelligence/ana/%75ser-profile' },
+  ])('withholds actual owner-private profile request and response bodies: %j', path => {
+    const { middleware, entries } = requestAudit();
+    const canary = 'owner-private-correction-and-rule-never-telemetry';
+    let finish = () => {};
+    const req = { ...path, method: 'POST', headers: {}, user: { id: 5, tenantId: 7 },
+      body: { action: 'create_rule', reason: canary, correction: { text: canary }, rule: { name: canary, instructions: canary } } };
+    const chunks: unknown[][] = [];
+    const res = { statusCode: 200, end: (...args: unknown[]) => { chunks.push(args); }, on: (_event: string, cb: () => void) => { finish = cb; } };
+    middleware({ logRequestBody: true, logResponseData: true })(req, res, () => {});
+    const body = JSON.stringify({ privateRules: { rules: [{ instructions: canary }] }, profile: { notes: canary } });
+    res.end(body, 'utf8'); finish();
+    expect(chunks).toEqual([[body, 'utf8']]);
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({ action: 'API_REQUEST', userId: 5, statusCode: 200, bodyCapture: 'withheld_owner_private_profile' });
+    expect(entries[0]).not.toHaveProperty('requestBody'); expect(entries[0]).not.toHaveProperty('responseData');
+    expect(JSON.stringify(entries)).not.toContain(canary);
+  });
   it('redacts vault capture, reauthentication and PEM containers in actual request/response logging', () => {
     const { middleware, entries } = requestAudit();
     const canary = 'client-vault-canary-never-a-live-credential';

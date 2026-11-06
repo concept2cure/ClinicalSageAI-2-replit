@@ -138,6 +138,26 @@ CREATE TABLE IF NOT EXISTS user_intelligence_profiles (
 
 CREATE INDEX IF NOT EXISTS user_intel_profiles_org_idx ON user_intelligence_profiles(organization_id);
 
+-- CREATE TABLE does not reconcile a pre-existing substrate's missing unique
+-- identity. Both the ordinary profile upsert and private rule row lock require
+-- exactly one row per owner/organization. Preserve all data; duplicates require
+-- explicit reconciliation rather than selecting or deleting an arbitrary row.
+DO $private_identity$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_index i
+    WHERE i.indrelid='public.user_intelligence_profiles'::regclass
+      AND i.indisunique AND i.indisvalid AND i.indnkeyatts=2
+      AND i.indpred IS NULL AND i.indexprs IS NULL
+      AND ((pg_get_indexdef(i.indexrelid,1,true)='user_id' AND pg_get_indexdef(i.indexrelid,2,true)='organization_id')
+        OR (pg_get_indexdef(i.indexrelid,1,true)='organization_id' AND pg_get_indexdef(i.indexrelid,2,true)='user_id'))
+  ) THEN
+    CREATE UNIQUE INDEX user_intel_profiles_user_org_idx
+      ON public.user_intelligence_profiles(user_id,organization_id);
+  END IF;
+END
+$private_identity$;
+
 -- Private per-account context: tenant membership and platform role never admit
 -- another owner's profile. Restrictive policy ANDs with every permissive policy,
 -- including later generic tenant policies. The canonical deploy replays this

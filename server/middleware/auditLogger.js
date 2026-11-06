@@ -84,6 +84,18 @@ function pathMatches(path, entry) {
   return path.startsWith(entry + '/');
 }
 
+/** Owner-private profile bodies are not request telemetry, even when body
+ * capture is enabled. Match both global and router-mounted request shapes. */
+function ownerPrivateProfile(req) {
+  return [req.originalUrl, `${req.baseUrl || ''}${req.path || ''}`, req.path].some(value => {
+    if (typeof value !== 'string') return false;
+    try {
+      const path = decodeURIComponent(value.split(/[?#]/, 1)[0]).replace(/\/+$/, '').toLowerCase();
+      return ['/api/client-intelligence/ana/user-profile', '/api/mdx/ana/memory/profile'].includes(path);
+    } catch { return false; }
+  });
+}
+
 /**
  * Creates middleware for automatic API request logging
  *
@@ -107,6 +119,8 @@ function createAuditLogger(options = {}) {
     }
 
     const startTime = Date.now();
+    const privateProfile = ownerPrivateProfile(req);
+    const ownerPrivateCapture = () => privateProfile || res.locals?.ownerPrivateCapture === true;
     let capturedChunk;
 
     // Wrap res.end so we observe the response without altering its
@@ -117,7 +131,7 @@ function createAuditLogger(options = {}) {
     // forwarded `(chunk, encoding)` and dropped the callback overload.
     const originalEnd = res.end.bind(res);
     res.end = function (...args) {
-      capturedChunk = args[0];
+      capturedChunk = ownerPrivateCapture() ? undefined : args[0];
       return originalEnd(...args);
     };
 
@@ -139,11 +153,12 @@ function createAuditLogger(options = {}) {
         timestamp: new Date().toISOString(),
       };
 
-      if (logRequestBody && req.body && typeof req.body === 'object') {
+      if (ownerPrivateCapture()) logEntry.bodyCapture = privateProfile ? 'withheld_owner_private_profile' : 'withheld_owner_private_context';
+      if (!ownerPrivateCapture() && logRequestBody && req.body && typeof req.body === 'object') {
         logEntry.requestBody = scrubSensitive(req.body);
       }
 
-      if (logResponseData && capturedChunk) {
+      if (!ownerPrivateCapture() && logResponseData && capturedChunk) {
         try {
           const text =
             typeof capturedChunk === 'string'
