@@ -26,6 +26,7 @@ import { clientIpOf } from '../utils/client-ip';
 import { createScopedLogger } from '../utils/logger';
 import { writeChainedAuditRow } from '../services/auditService';
 import { verifyReauth } from './c2c/actions';
+import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
 import { getGatewayUnguarded, gatewayTransportReadiness } from '../services/submission-gateways';
 import {
   GatewayAccountInputError,
@@ -50,8 +51,20 @@ router.get('/', async (req: Request, res: Response) => {
   if (orgId === null) {
     return res.status(403).json({ error: { code: 'NO_ORGANIZATION', message: 'Organization context required.' } });
   }
+  const userId = positiveInt((req as any).user?.id);
+  if (userId === null) {
+    return res.status(401).json({ error: { code: 'NO_USER', message: 'A signed-in user is required.' } });
+  }
   try {
-    const accounts = await listGatewayAccounts(requestPgClient(req), orgId, (spec, environment) =>
+    const client = requestPgClient(req);
+    // Display authority is current persisted membership, never the token's
+    // role or an organization named in the request. PUT owns the actual act.
+    const role = await resolveSignerOrgRole(userId, orgId, client);
+    if (!role) {
+      return res.status(403).json({ error: { code: 'MEMBERSHIP_REQUIRED', message: 'Current organization membership is required.' } });
+    }
+    const canManage = role === 'admin' || role === 'owner';
+    const accounts = await listGatewayAccounts(client, orgId, (spec, environment) =>
       getGatewayUnguarded(spec.region, spec.gateway).isConfigured(orgId, environment),
     );
     const accountsWithReadiness = await Promise.all(accounts.map(async (account) => ({
@@ -59,7 +72,7 @@ router.get('/', async (req: Request, res: Response) => {
       credentialsConfigured: account.status === 'ready',
       transportReadiness: await gatewayTransportReadiness(account.region, account.gateway, account.environment),
     })));
-    return res.json({ organizationId: orgId, accounts: accountsWithReadiness });
+    return res.json({ organizationId: orgId, accounts: accountsWithReadiness, canManage });
   } catch (err) {
     log.error('gateway accounts read failed', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'The gateway accounts could not be read.' } });
