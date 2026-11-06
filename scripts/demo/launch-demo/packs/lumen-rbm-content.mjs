@@ -58,21 +58,30 @@ export const CTQ_FACTORS = [
 /** Six monthly extracts; the last is two days old so the board reads it as current. */
 export const PERIOD_DAYS_AGO = [152, 122, 91, 61, 30, 2];
 
+/**
+ * Indicators, each configured from one indicator of the standard library the
+ * KRIs tab seeds (`from`, the product's own library name: rbm-engine
+ * DEFAULT_KRIS). The KRIs tab's "New KRI" cannot create one (see lumen-rbm.mjs).
+ */
 export const KRIS = [
-  { name: T('AE reporting lag'), metric: `Median days from adverse-event onset to EDC entry. ${SYN}`, source: 'edc', unit: 'days', dir: 'higher_worse', amber: 5, red: 10, extract: 'edc',
+  { from: 'SAE reporting timeliness', name: T('AE reporting lag'), metric: `Median days from adverse-event onset to EDC entry. ${SYN}`, source: 'edc', unit: 'days', dir: 'higher_worse', amber: 5, red: 10, extract: 'edc',
     values: [2.6, 2.9, 3.4, 4.8, 6.2, 7.4],
     bySite: { 101: [2, 3, 2, 3, 2, 3], 102: [3, 2, 3, 3, 3, 2], 103: [3, 3, 4, 3, 4, 4], 104: [3, 4, 6, 11, 17, 21], 105: [2, 2, 3, 2, 3, 3], 106: [3, 4, 3, 4, 4, 5], 107: [null, null, null, null, 2, 3], 108: [null, null, null, null, null, 2] } },
-  { name: T('Open query aging'), metric: `Median age of open data queries. ${SYN}`, source: 'edc', unit: 'days', dir: 'higher_worse', amber: 14, red: 28, extract: 'edc',
+  { from: 'Open query aging', name: T('Open query aging'), metric: `Median age of open data queries. ${SYN}`, source: 'edc', unit: 'days', dir: 'higher_worse', amber: 14, red: 28, extract: 'edc',
     values: [9, 11, 13, 17, 22, 31],
     bySite: { 101: [8, 9, 10, 11, 12, 12], 102: [7, 8, 8, 9, 9, 10], 103: [10, 11, 12, 12, 13, 14], 104: [10, 14, 22, 34, 47, 58], 105: [9, 9, 10, 10, 11, 11], 106: [11, 12, 12, 13, 15, 16], 107: [null, null, null, null, 4, 6], 108: [null, null, null, null, null, 3] } },
-  { name: T('Important protocol deviation rate'), metric: `Important protocol deviations per randomized subject. ${SYN}`, source: 'edc', unit: 'per subject', dir: 'higher_worse', amber: 0.3, red: 0.5, extract: 'edc',
+  { from: 'Important protocol deviation rate', name: T('Important protocol deviation rate'), metric: `Important protocol deviations per randomized subject. ${SYN}`, source: 'edc', unit: 'per subject', dir: 'higher_worse', amber: 0.3, red: 0.5, extract: 'edc',
     values: [0.06, 0.09, 0.12, 0.16, 0.21, 0.24] },
-  { name: T('Missed visit rate'), metric: `Scheduled visits missed or out of window, as a share of visits due. ${SYN}`, source: 'edc', unit: '%', dir: 'higher_worse', amber: 5, red: 10, extract: 'edc',
+  { from: 'Dropout rate', name: T('Missed visit rate'), metric: `Scheduled visits missed or out of window, as a share of visits due. ${SYN}`, source: 'edc', unit: '%', dir: 'higher_worse', amber: 5, red: 10, extract: 'edc',
     values: [1.8, 2.2, 2.9, 3.8, 5.4, 6.1] },
-  { name: T('eDiary compliance'), metric: `Diary days completed, as a share of days expected. ${SYN}`, source: 'edc', unit: '%', dir: 'lower_worse', amber: 90, red: 80, extract: 'edc',
+  { from: 'CRF entry lag', name: T('CRF entry lag'), metric: `Median days from visit to EDC entry. ${SYN}`, source: 'edc', unit: 'days', dir: 'higher_worse', amber: 7, red: 14, extract: 'edc',
+    values: [3.1, 3.4, 3.9, 4.6, 5.8, 6.4] },
+  { from: 'Query rate', name: T('eDiary compliance'), metric: `Diary days completed, as a share of days expected. ${SYN}`, source: 'edc', unit: '%', dir: 'lower_worse', amber: 90, red: 80, extract: 'edc',
     values: [97, 96, 96, 95, 93, 92] },
-  { name: T('Screen-failure rate'), metric: `Screen failures, as a share of subjects screened. ${SYN}`, source: 'ctms', unit: '%', dir: 'higher_worse', amber: 35, red: 50, extract: 'ctms',
+  { from: 'Screen failure rate', name: T('Screen-failure rate'), metric: `Screen failures, as a share of subjects screened. ${SYN}`, source: 'ctms', unit: '%', dir: 'higher_worse', amber: 35, red: 50, extract: 'ctms',
     values: [44, 41, 38, 36, 34, 33] },
+  { from: 'Enrollment vs target', name: T('Randomization vs plan'), metric: `Subjects randomized as a share of the enrollment plan to date (375 planned). ${SYN}`, source: 'ctms', unit: 'ratio', dir: 'lower_worse', amber: 0.8, red: 0.6, extract: 'ctms',
+    values: [0.95, 0.97, 0.96, 0.94, 0.93, 0.92] },
 ];
 
 /** Values are percentages. The secondary limit is the early warning. */
@@ -100,9 +109,12 @@ export const SUBJECTS = [
 
 /** The extracts, by source and period: what the Overview's "Load extract…" takes. */
 export const EXTRACTS = [
-  { source: 'edc', ref: (p) => `${T(`LMN-201 RePreve EDC monthly extract M${p} — SYNTHETIC`)}.csv`, subjects: true },
-  { source: 'ctms', ref: (p) => `${T(`LMN-201 RePreve CTMS monthly extract M${p} — SYNTHETIC`)}.csv`, subjects: false },
+  { source: 'edc', ref: (p) => `${T(`LMN-201 RePreve EDC monthly extract M${p} — SYNTHETIC`)}.csv` },
+  { source: 'ctms', ref: (p) => `${T(`LMN-201 RePreve CTMS monthly extract M${p} — SYNTHETIC`)}.csv` },
 ];
+
+/** The subject-level rows, loaded on their own as of the latest cutoff. */
+export const SUBJECT_EXTRACT = { source: 'edc', ref: `${T('LMN-201 RePreve EDC subject-level extract M6 — SYNTHETIC')}.csv` };
 
 export const PLAN = { title: T('LMN-201 RePreve — risk-based monitoring plan'), strategy: 'hybrid' };
 
