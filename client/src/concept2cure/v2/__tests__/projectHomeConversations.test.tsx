@@ -11,7 +11,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
@@ -93,12 +93,16 @@ describe('ProjectHome — conversations', () => {
     expect(screen.queryByText(/You have no conversations on this project yet/)).toBeNull();
   });
 
-  it('the composer comes first in the main column; the readiness ring sits in the aside', async () => {
+  /* D3-2a (2026-11-06): the readiness figure is the Filing card's first row in Project knowledge, on every step; its
+     detail (and, until D3-4, its ring) is on Author beside the modules it measures. */
+  it('the composer comes first in the main column; the readiness figure is on the Filing card in the aside', async () => {
     route('ok');
     const { container } = render(<ProjectHome {...props()} />);
+    const filing = await screen.findByRole('region', { name: 'Filing' });
+    expect(filing.closest('.pj-side'), 'the Filing card is in Project knowledge').toBeTruthy();
+    expect(within(filing).getByRole('button', { name: /Dossier readiness/ })).toBeTruthy();
     await waitFor(() => expect(container.querySelector('.pj-map-ring')).toBeTruthy());
-    expect(container.querySelector('.pj-side .pj-map-ring'), 'ring in the aside').toBeTruthy();
-    expect(container.querySelector('.pj-main .pj-map-ring'), 'ring not in the main column').toBeNull();
+    expect(container.querySelector('.pj-side .pj-map-ring'), 'no ring in the aside').toBeNull();
     // Claude's project page (founder, 2026-11-01; RULE 4): the conversation first, then the steps.
     const convo = container.querySelector('.pj-convo')!;
     expect(convo.closest('.pj-main'), 'composer in the main column').toBeTruthy();

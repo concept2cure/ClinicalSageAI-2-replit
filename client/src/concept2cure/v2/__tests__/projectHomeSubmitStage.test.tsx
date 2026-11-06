@@ -237,7 +237,8 @@ describe('Project home — the Submit stage lists the project’s submissions', 
     await openSubmit();
     expect(await screen.findByText("Couldn't load this project's markets")).toBeTruthy();
     expect(screen.queryByText('No market for this project yet')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    /* The step's own retry: since D3-2a the knowledge cards beside every step can show their own failed reads. */
+    fireEvent.click(within(document.querySelector('.pj-main') as HTMLElement).getByRole('button', { name: 'Try again' }));
     expect(await screen.findByTestId('pj-submission')).toBeTruthy();
   });
 
