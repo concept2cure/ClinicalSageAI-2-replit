@@ -1,0 +1,65 @@
+{
+  "observedAt": "2026-11-06T18:58:22.271705+00:00",
+  "sourceCommit": "74f6e51d627e15c223a0ecbe90c6d21e0b6f3742",
+  "branch": "concept2cure-v2",
+  "scope": "Test-only declared HTTP helper input type correction following root full-compiler TS2345 at artifact-workflow-source.test.ts:97",
+  "change": "post helper input: unknown -> Record<string, unknown>; every caller supplies an object, including malformed nested selector cases. No any, casts, suppression or assertion changes.",
+  "onlyDeclaredInputTypeChanged": true,
+  "validation": {
+    "suites": 1,
+    "tests": 35,
+    "passed": 35,
+    "failed": 0,
+    "testExitCode": 0,
+    "durationSeconds": 44.2,
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "lintExitCode": 0,
+    "diffCheck": "passed"
+  },
+  "commands": {
+    "sql": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install vitest run --config vitest.config.ts --maxWorkers=1 --fileParallelism=false server/routes/__tests__/artifact-workflow-source.test.ts --reporter=verbose",
+    "lint": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install eslint server/routes/__tests__/artifact-workflow-source.test.ts --max-warnings=0"
+  },
+  "sourceInputsBeforeRun": {
+    "observedAt": "2026-11-06T18:57:12.854425+00:00",
+    "baseCommit": "74f6e51d627e15c223a0ecbe90c6d21e0b6f3742",
+    "files": {
+      "shared/authoring/source-import.ts": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+      "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "server/services/authoring/workflow-source-import.ts": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+      "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+      "server/services/authoring/workflow-import-governance.ts": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+      "server/routes/__tests__/artifact-workflow-source.test.ts": "a33f9925426b68bfcffc80a0462e3f0cbae141c20f4c4e18d4cee80fecbda375"
+    },
+    "onlyDeclaredInputTypeChanged": true
+  },
+  "sourceFingerprintsAfterRun": {
+    "shared/authoring/source-import.ts": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+    "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+    "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+    "server/services/authoring/workflow-source-import.ts": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+    "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+    "server/services/authoring/workflow-import-governance.ts": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+    "server/routes/__tests__/artifact-workflow-source.test.ts": "a33f9925426b68bfcffc80a0462e3f0cbae141c20f4c4e18d4cee80fecbda375"
+  },
+  "inputsUnchanged": true,
+  "logs": {
+    "shared-editor-artifact-typecorrection-green.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-artifact-typecorrection-green.txt",
+      "bytes": 13223,
+      "sha256": "73efc851100f4c4d3d8e1bcc387ae5f776f3b0ba9c81c4410c4190f968bc7885"
+    },
+    "shared-editor-artifact-typecorrection-lint.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-artifact-typecorrection-lint.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "limits": [
+    "Root owns the full compiler/typecheck; this scope did not rerun it.",
+    "The SQL fixture remains a bounded PGlite qualification, not deployment, production RLS or native PostgreSQL concurrency proof.",
+    "No production edit, source commit, push or publication performed."
+  ]
+}

@@ -1,0 +1,367 @@
+{
+  "canonicalBase": "7d771e124a4dba820fbbd26d8919c7c69cd1a9d4",
+  "sourceCheckpoint": "f4295889ca0297e115fcd88b334c98804c7c2fbc",
+  "checkpointKind": "local checked commit; publication is proved by exact Git tree",
+  "inputs": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx",
+      "sha256": "e03d7b1c518d3fc2f386739f0c6591d7686208c8447cdb5f5e1c89ffcd60b279",
+      "gitBlob": "7c8f533180a654ca8332a8ab8b4854bfaed7c5f0",
+      "bytes": 12789
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx",
+      "sha256": "1b37e70705b131804d201ef42991e3597804714e367e906c2bcc5e5bc474d2a4",
+      "gitBlob": "7b526dbf8dfde85f4d871d2fd5c5315039f96786",
+      "bytes": 21932
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/editorTarget.test.ts",
+      "sha256": "b824416bbccb3eca987c61a35129bf35f771b94e9230dbef276e625bf247b230",
+      "gitBlob": "9d4e1666fbdf704e685cda3e04f642f223b5771e",
+      "bytes": 9920
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx",
+      "sha256": "ea90de2592087b1c1502e3e4cf4f936906ffa2b992758a03e82b584e3efb5bdc",
+      "gitBlob": "847f7f324e88516b8650196e49078c79d69a6c4d",
+      "bytes": 13770
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx",
+      "sha256": "777796a0023e4b88071d307ae8b469f5d2d63aa317fa65ae613bbd126cce4c28",
+      "gitBlob": "44aa425f81c19f7f9a595bf7916c148e22cbacc3",
+      "bytes": 10751
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx",
+      "sha256": "82c43f432506b599a8d5ccd9201d8597e32affa8d684dd4a6b1b5b5b17157654",
+      "gitBlob": "890497e4748b847f890e67700f3ab7695f60165d",
+      "bytes": 21431
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx",
+      "sha256": "8994a7e94e96619d1723e12ffbd05907013368d3dc38e33bc6654220c322a7ad",
+      "gitBlob": "f4769e5ca44b1c940650aafdc09c0b69bd7910d9",
+      "bytes": 22006
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx",
+      "sha256": "8983444c836095cdb8896297d6219830bb6bfb7da0340a6e939981e8adc82251",
+      "gitBlob": "f426aeb12873601586d8e6613181d6bb0968ba5a",
+      "bytes": 25087
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+      "sha256": "a5b39a9d66be6127f0b41731ec1506d74240cf0868543492213b5d9f7c5cc41d",
+      "gitBlob": "25d4c4eb3951a745b471d685c4dc0a199556d142",
+      "bytes": 21120
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx",
+      "sha256": "196a5d19838aed576780ce98dcc620be5409eae9f4b78ccd2154cb31b510ef25",
+      "gitBlob": "e6d90123d929312b4538738fe7256dbb3a3233dd",
+      "bytes": 10544
+    },
+    {
+      "path": "client/src/concept2cure/v2/authoringHandoff.ts",
+      "sha256": "66accd6a93a661a928dc844457b07cd454b5d3283f4cfd16a23646eade21eeec",
+      "gitBlob": "95f253d3b8fedc3ccfbf842da98737d6e1925824",
+      "bytes": 36948
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "sha256": "3e7bae441a5b31728c396dfe98b455d64dca4f6488b268b42de57e06f7f7c007",
+      "gitBlob": "157a989f72565daef59e077d928b7038355b4b19",
+      "bytes": 347313
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/FilingMarkets.tsx",
+      "sha256": "2d4f0828bca74fec16cc7dc276a58a5e0a0f1bc1a6d96261a826afb5ac132634",
+      "gitBlob": "a27515baad925e824e79858475941bce5fd544f9",
+      "bytes": 9296
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SourceImportDialog.tsx",
+      "sha256": "eaaa4754499bea5971fb18d6f970d24d3fb91aaa000d7da9303024c8a4362b27",
+      "gitBlob": "de9eb8271fcdcac0dad279472be7ff693294c9db",
+      "bytes": 13290
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx",
+      "sha256": "62c5b6f7ad768aae425d635e74320c92e08f3c67992a5d8b85d781def48d79c8",
+      "gitBlob": "b14d0246a8256a6e8454fce948ffb3a84ddea5eb",
+      "bytes": 12976
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/filingSectionTarget.test.tsx",
+      "sha256": "cae04fee2a7611e7001ecfa706349de9dc494d850c845e3f353804ac00ed2cea",
+      "gitBlob": "0c4e209e9fbae5b9cd2ed232f20263a15811cae3",
+      "bytes": 16393
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx",
+      "sha256": "fb24445c4f304143262453dfeeacc4341ee150132067b45e70ab0505ce0a83cf",
+      "gitBlob": "f094cbe7ab71e31428a4fdb379356d86ef76053c",
+      "bytes": 26824
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchLeaveTarget.test.ts",
+      "sha256": "57fe014355348fc870e561cdc6e259da5f64768e65a96cd3b1ea313dd4419368",
+      "gitBlob": "052eb898bc86f118bd6d758d1a8983d2ad9586f9",
+      "bytes": 1616
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/writingAgencyPresentation.test.ts",
+      "sha256": "c0c9c9e5997fd555bfcc6e3d0815585aa555d9b092bb6b1973ef0b6223dae384",
+      "gitBlob": "77d89c831d17b196e0cc7f7b264e90cf03148f6b",
+      "bytes": 2642
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/filingSectionTarget.ts",
+      "sha256": "1522a4ffee3efd492883bb927f348e0fe2fac1097e7f64be7e17be2ddccbe5d8",
+      "gitBlob": "0d93ad4994537d3d61b57b935602681c8324895d",
+      "bytes": 10334
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts",
+      "sha256": "7d13ca6860c8b3ec0f66637612dafb2417b4f59b4dbf37227851778dbe318e17",
+      "gitBlob": "ad21184a4f571c9da62827d2cc6541ad11f98b19",
+      "bytes": 2968
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/writingAgencyPresentation.ts",
+      "sha256": "356cfe02766c57b6c280cad03111e4de33021056600c8fee85a51e08b79024fe",
+      "gitBlob": "2287aa3de46733ee04a00359dc491852a9a1c5ff",
+      "bytes": 9062
+    },
+    {
+      "path": "client/src/concept2cure/v2/editorTarget.ts",
+      "sha256": "4bfe12459e379483c7e6656903fc04788c47bb172c6e5cc688b8f4b6db1862cd",
+      "gitBlob": "18df1d35a853b2e859886ccdbdd904add82e4537",
+      "bytes": 22691
+    },
+    {
+      "path": "client/src/concept2cure/v2/fixtures/vault-data.ts",
+      "sha256": "22444aa930f258faf2dd0c3cc1ddd6fb6700b29acdef14c2dde431b1a931c165",
+      "gitBlob": "ec0461dd84dd061c47baf393933ccba832debb51",
+      "bytes": 8357
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+      "sha256": "9d043639fde9edae20c006660d0f08372f6b7f80bcbda618cfc5eb4a3b89d2ad",
+      "gitBlob": "de6ca229e9cf440d05005103b003420b85f6ba38",
+      "bytes": 160060
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/VaultOrganizationArtifacts.tsx",
+      "sha256": "a937c317721e136e8821daf992d3a2a713a7c4b0dfc4dae8688d0f2b0413ce0f",
+      "gitBlob": "9a46779a7b544fd05b4e9e29778533d84c34df00",
+      "bytes": 16980
+    },
+    {
+      "path": "client/src/concept2cure/v2/useFilingOutline.ts",
+      "sha256": "0e98df97ae5ca3795025a2a644482ff7c7f9102f89cbfde626686220377c9cd4",
+      "gitBlob": "79ccb852e7f4927706aefccf46951ca6803f3694",
+      "bytes": 18816
+    },
+    {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/ui/browser-artifact-check.mjs",
+      "sha256": "c4d687f022899278fcf891d479ed7722a1b33a9ab4f3333b95394df4b0462fd3",
+      "gitBlob": "892be1d41b36ca69341dd6a45b0092c03f8f4d6f",
+      "bytes": 4646
+    },
+    {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/ui/browser-artifact-fixtures.mjs",
+      "sha256": "ddce206070c0b221a51665926376f64564ef6ccf5ac98e8e837ec8c39d138bd9",
+      "gitBlob": "c91db062094e3faf985e490a592cf28c43fdb2e7",
+      "bytes": 6320
+    },
+    {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/ui/browser-check.mjs",
+      "sha256": "6e2eea44bb298c06966d97258cf1b3ef30f15587012a1cbfc6c159a34e929886",
+      "gitBlob": "60626b1445f35177036ca46c7e6834367eb65e5b",
+      "bytes": 10402
+    },
+    {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/ui/browser-fixtures.mjs",
+      "sha256": "5c74b2720ba3fcd2bbd2b763660bbcee5f027dfe82a570ff7a91dbaf8ffe82bc",
+      "gitBlob": "ba4c428e23e919cc7b27b50481fc46d68b0af515",
+      "bytes": 10069
+    },
+    {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/ui/browser-index.html",
+      "sha256": "d13ca2e584676eba847c5d9e581df1559f2eb810ff63b1f38b807cff28a7dede",
+      "gitBlob": "dcda82f5b97fa713ba4e6c35827b519684f21efa",
+      "bytes": 300
+    },
+    {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/ui/browser-probe.tsx",
+      "sha256": "6cd3cbb87b3887a10b102516da39a3869546ffb05d6ba0e86fe909018b63bb20",
+      "gitBlob": "445304f1f54ed30c02552d4a3d2929c18a7c539f",
+      "bytes": 5151
+    },
+    {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/ui/browser-server.mjs",
+      "sha256": "aa818f71888330c342be6cfd6cb6d798524746bf9f71b56ac6f1340ca4793eaa",
+      "gitBlob": "0d5ea9978f62757293b4d0a65e31bf6a94f44d80",
+      "bytes": 817
+    },
+    {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/ui/evidence-json.mjs",
+      "sha256": "4572e63b4bf49587a16357b5389ef17a255407142c5f9a25c1115614b52af2bc",
+      "gitBlob": "849f7b24af156b91bf08bbb2164c47b0f85672f2",
+      "bytes": 720
+    },
+    {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/ui/live-app-check.mjs",
+      "sha256": "09d5f17516f4b8a900af5a97cd809a74c210e877d973adb6a8c2150ed717eb66",
+      "gitBlob": "a3758cf333f2391e48dedf238a58d2f095c4cdcf",
+      "bytes": 11883
+    },
+    {
+      "path": "scripts/ci/lib/approved-sql-predicates.mjs",
+      "sha256": "c6688b005480c879f2725fcbc6ea45128dc667019f60559ac41c36f1ef2989ff",
+      "gitBlob": "66e1affdcb00fc47f0012fda0fd92cc8f51afc54",
+      "bytes": 9227
+    },
+    {
+      "path": "server/routes/__tests__/_source-import-recovery-qualification.ts",
+      "sha256": "4ac0baea70adffd77492f56627750d99c122eb729f3bc3e9551d42301321d0dc",
+      "gitBlob": "b83c362a0678a60bef989a40c84fec022ce51ac2",
+      "bytes": 9214
+    },
+    {
+      "path": "server/routes/__tests__/artifact-workflow-source.test.ts",
+      "sha256": "a33f9925426b68bfcffc80a0462e3f0cbae141c20f4c4e18d4cee80fecbda375",
+      "gitBlob": "668f7a41e51828c7e37d0c7556bf2390f53381d1",
+      "bytes": 26486
+    },
+    {
+      "path": "server/routes/__tests__/artifacts-center-manifest-fields.test.ts",
+      "sha256": "2714e39e8865b0df8b4c5992e0988d9a684391b95863315027a2f25981690706",
+      "gitBlob": "04aeba04098647cd32bf45b320fa79a7a3d89af3",
+      "bytes": 3861
+    },
+    {
+      "path": "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts",
+      "sha256": "22312d759d83564a29152508a06e1fd2df8154342873d3e05a6f76001e5110b9",
+      "gitBlob": "59cfb254b9c18199aeb1531cb19aec6c61a3a708",
+      "bytes": 36698
+    },
+    {
+      "path": "server/routes/artifacts-center-routes.ts",
+      "sha256": "fb401a68211827f58e0181858b831c29620949d9d4e1fd4a79533e77cd0b053b",
+      "gitBlob": "7a3fdd4208cfe613150af5fc6049270a81d81df0",
+      "bytes": 23990
+    },
+    {
+      "path": "server/routes/c2c/__tests__/project-vault-completion.test.ts",
+      "sha256": "608e756b81f8cae366c738ed06e2877623f21d898668ec39861c5b6797bea4a8",
+      "gitBlob": "c5469f78d599808fe0b02fb7f209b82b75afd095",
+      "bytes": 11904
+    },
+    {
+      "path": "server/routes/c2c/__tests__/project-vault-governed-artifacts.test.ts",
+      "sha256": "3d2fce8f814051f6670131c113f01e40aba97cf1c0b8787ec78fb70757bd2f6c",
+      "gitBlob": "a556611b59340db080a4f8fdfdd9a2938d44de7e",
+      "bytes": 16467
+    },
+    {
+      "path": "server/routes/c2c/project-vault.ts",
+      "sha256": "3e1e18d60e6be6333633506455c5bfa92f4d4e1d4499ea6fdc65c646b99cc1e5",
+      "gitBlob": "90f3d0b902008f315c81f85df0cfe9cde8a3b534",
+      "bytes": 161318
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts",
+      "sha256": "066e80a0bed82775d5dfc88d3029d1691759f54de53f7a3cea743dd23f8e1f56",
+      "gitBlob": "f01efd97125a1a450d3761e2f2c273239c602b49",
+      "bytes": 27146
+    },
+    {
+      "path": "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts",
+      "sha256": "d16e3d1ca9c8d7b4b503d5133948c49a403f32283cfa6d0f79e83b8cc751d688",
+      "gitBlob": "c04ee0ead1646ec09b36064f47d20d68d1875dfe",
+      "bytes": 21388
+    },
+    {
+      "path": "server/services/ai-gateway/gateway.ts",
+      "sha256": "09d187427e7dece2beec0b5a6d2e39391f94152909f291ca5c7a59a881427ff7",
+      "gitBlob": "1ed271a2de6771accef4d9d887f937c74093c5e9",
+      "bytes": 239345
+    },
+    {
+      "path": "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts",
+      "sha256": "487fffb0df4b2444bb12acc94fa8c4e524c0da7c9c77ad8602ba775c2bc38e50",
+      "gitBlob": "675fff70cc75bbf2eaf1b0129a4c61ad3239b091",
+      "bytes": 17330
+    },
+    {
+      "path": "server/services/ai-gateway/providers/clients.ts",
+      "sha256": "0e3a3b26808709947a182c0fb4a96abb6fc2b02437ed54e0cf3fce4987227eb2",
+      "gitBlob": "0aa80807265c99da4394c554eb73b8e956e444f9",
+      "bytes": 9895
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-draft-region-projection.test.ts",
+      "sha256": "a18213f0acd3130513b71b6595f7ba98ebb64aa303d4b39688922a72bfc17249",
+      "gitBlob": "e6220da457c4b207333c1b48edeba734719d421e",
+      "bytes": 6433
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-draft-template.test.ts",
+      "sha256": "85dccfdb175f5ccad2d6ca196481a6c3d4c58b59970184e7ca760857e54b4a1f",
+      "gitBlob": "3fbce86dfb22df22927ce694ad9d566121eec9e2",
+      "bytes": 23511
+    },
+    {
+      "path": "server/services/authoring/artifact-workflow-source.ts",
+      "sha256": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "gitBlob": "604032730af9b8e45d5778cd024ef1b705275810",
+      "bytes": 15210
+    },
+    {
+      "path": "server/services/authoring/authoring-draft-region-projection.ts",
+      "sha256": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6",
+      "gitBlob": "85dc5cf9b0d0af7899a81e4d8af50bfca8e31440",
+      "bytes": 2141
+    },
+    {
+      "path": "server/services/authoring/authoring-draft-template.ts",
+      "sha256": "0beb24ff53d7bcf8de01882c7012f256f543465820c92517097187b929d4e97d",
+      "gitBlob": "9ee76008c6c2c8ca67f80ff23d9ca34cccf919ba",
+      "bytes": 20897
+    },
+    {
+      "path": "server/services/authoring/authoring-source-import.ts",
+      "sha256": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "gitBlob": "243281b253e2dc164d3be2edc435d2ac3e7f60b5",
+      "bytes": 34919
+    },
+    {
+      "path": "server/services/authoring/import-source-references.ts",
+      "sha256": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+      "gitBlob": "4e4b63bf13a621f225f7ae6a37c2f018d498362f",
+      "bytes": 7846
+    },
+    {
+      "path": "server/services/authoring/workflow-import-governance.ts",
+      "sha256": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+      "gitBlob": "68e54a3d7126118135e72ffc2bbfa2486de2ad54",
+      "bytes": 23025
+    },
+    {
+      "path": "server/services/authoring/workflow-source-import.ts",
+      "sha256": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+      "gitBlob": "8323754eecdf060377a3172233774d8355fc6bfb",
+      "bytes": 33551
+    },
+    {
+      "path": "shared/authoring/source-import.ts",
+      "sha256": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+      "gitBlob": "04c7a4f70e46222fde18f157f1b97119ff62436b",
+      "bytes": 7198
+    }
+  ]
+}

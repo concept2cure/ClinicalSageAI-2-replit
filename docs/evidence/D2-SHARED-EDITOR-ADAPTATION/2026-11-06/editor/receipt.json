@@ -1,0 +1,80 @@
+{
+  "observedAt": "2026-11-06T18:30:23.793975+00:00",
+  "base": "21a21849d7cfb8a35794489a87fad2b849c7011c",
+  "state": "Owned sources/tests frozen; no commit or full compiler by implementation agent.",
+  "sourcePins": {
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "271983097b158abe3d106763118ea84b78077aa3154d6a787560cd4a60f8373b",
+    "client/src/concept2cure/v2/editor/filingSectionTarget.ts": "1522a4ffee3efd492883bb927f348e0fe2fac1097e7f64be7e17be2ddccbe5d8",
+    "client/src/concept2cure/v2/editor/FilingMarkets.tsx": "2d4f0828bca74fec16cc7dc276a58a5e0a0f1bc1a6d96261a826afb5ac132634",
+    "client/src/concept2cure/v2/editor/writingAgencyPresentation.ts": "356cfe02766c57b6c280cad03111e4de33021056600c8fee85a51e08b79024fe",
+    "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts": "7d13ca6860c8b3ec0f66637612dafb2417b4f59b4dbf37227851778dbe318e17"
+  },
+  "testedPins": {
+    "client/src/concept2cure/v2/editor/__tests__/filingSectionTarget.test.tsx": "cae04fee2a7611e7001ecfa706349de9dc494d850c845e3f353804ac00ed2cea",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchLeaveTarget.test.ts": "57fe014355348fc870e561cdc6e259da5f64768e65a96cd3b1ea313dd4419368",
+    "client/src/concept2cure/v2/editor/__tests__/writingAgencyPresentation.test.ts": "056c85a9906ac0f450c8e6172fe1c42f29568fb814a26b53f0d7392858ca8069",
+    "client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx": "e03d7b1c518d3fc2f386739f0c6591d7686208c8447cdb5f5e1c89ffcd60b279",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx": "0afb9eb4aa92309829db03ca409f09862642e592027216cb82ee0bf547a41773",
+    "client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx": "acd27e7327780db558afbea2219853e7379d07cb6807ee430b7f17c5a965743e",
+    "client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx": "185a73f8f7ad8c89174f4deeec945d08a0500c3017defc5667ade00b3fa1a087",
+    "client/src/concept2cure/v2/__tests__/authoringLinkedTargetWriteGuard.test.tsx": "5e48a9d94e15f207e9958c512bf0d9caa6e864a79fddcf172ef2332514c3af66"
+  },
+  "red": {
+    "receipt": "red.txt.gz",
+    "suites": 2,
+    "failed": 16,
+    "passed": 3,
+    "skipped": 9,
+    "meaning": "Fresh actual Workbench mixed-family/tenth-row/known-null/pinned-header context and writing-agency regressions against current owners."
+  },
+  "green": {
+    "receipt": "green.txt.gz",
+    "suites": 8,
+    "passed": 119,
+    "durationSeconds": 47.06,
+    "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run client/src/concept2cure/v2/editor/__tests__/filingSectionTarget.test.tsx client/src/concept2cure/v2/editor/__tests__/workbenchLeaveTarget.test.ts client/src/concept2cure/v2/editor/__tests__/writingAgencyPresentation.test.ts client/src/concept2cure/v2/__tests__/authoringWritingAgency.test.tsx client/src/concept2cure/v2/editor/__tests__/workbenchDraftPassage.test.tsx client/src/concept2cure/v2/__tests__/filingOutlinePerMarket.test.tsx client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx client/src/concept2cure/v2/__tests__/authoringLinkedTargetWriteGuard.test.tsx --maxWorkers=1",
+    "completeExitObserved": true
+  },
+  "lint": {
+    "receipt": "eslint.txt.gz",
+    "errors": 0,
+    "warnings": 12,
+    "warningSites": "warning-sites.json",
+    "note": "All twelve pre-existing warnings are in DocumentWorkbench; other owned files have zero. Per-site comparison is filed separately.",
+    "newWarningSiteCount": 0
+  },
+  "fixtureCorrections": [
+    "First post-change attempt: pinned-header outline assertion expected exactly two apiRequest arguments. The native live read supplies extra options/AbortSignal; the assertion now matches method/path without rejecting those arguments. This was a test assertion mistake, not a product defect.",
+    "First post-change attempt: numeric ambiguity requested exact code 1 alongside 01, so the exact-code match correctly won. The ambiguity test now requests 1.0 against 1 and 01, proving numeric aliases only after no exact match. This was a test expectation mistake, not a product defect."
+  ],
+  "currentBehavior": [
+    "Exact admitted header identity/project/binding outranks stale or filtered-away list rows; known-null and unknown/refused metadata are distinct.",
+    "Named family and exact governed ID use current project filings, every admitted working row, fresh headers and exact doc-owned sections; global exact-code/numeric/title priority proves a unique best match.",
+    "Whole-filing intent opens only one uniquely bound admitted copy; missing/refused/ambiguous contexts are explicit.",
+    "Actor/project/read owner, tokenized inventory visits and final held-navigation predicate prevent stale lookup or dirty-decision completion, including inventory A to B to A.",
+    "Canonical home-copy creation remains available for a known-null M5 copy while unboundDocument suppresses ambient requirements. Its POST preserves exact project/filing ID and module:null.",
+    "Current Workbench passage emission uses exact current bound writing agency; unknown/refused scope holds generation even with a retained saved projection. Known-unbound/legacy fallback reads actual project agency, never EU region.",
+    "CER/MDR/IVDR legacy EMA keys use canonical EU / Notified Body display in subtitle, choices, gaps and result messages. False recorded EMA projection holds new generation while arrived review remains available. Medicinal EMA remains.",
+    "Existing exact authoring docId, within/module and CSR review/source paths remain unchanged."
+  ],
+  "logs": {
+    "red.txt.gz": {
+      "originalBytes": 113185,
+      "sha256": "3773ab30c47576dd027b9fd88184ee466ce31b8ebccbd1bbb67d07816e64b747"
+    },
+    "green.txt.gz": {
+      "originalBytes": 46369,
+      "sha256": "017a3983f064e36019ec0b7a3ae20c3b8278e481d46eef507def7f3e2c4b70a4"
+    },
+    "eslint.txt.gz": {
+      "originalBytes": 2130,
+      "sha256": "42e0e45c7ff8e34d316394e4639a3d22f203d73aadf39c43165e4747e576f9c7"
+    }
+  },
+  "limits": [
+    "Read tests use real shipped Workbench/TipTap with synthetic HTTP; they do not establish authenticated/deployed client acceptance.",
+    "No native PostgreSQL concurrency, production RLS, conversion-provider or scientific/regulatory qualification is claimed by this client repair.",
+    "This bounded repair does not close project/downstream roadmap packages D3/D4/S11/S12 or establish complete MDX scientific automation.",
+    "Root owns final compiler/build/browser gates and publication. Catalog/Vault/backend owners retain their separate source and verification receipts."
+  ]
+}

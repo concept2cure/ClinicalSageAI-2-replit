@@ -1,4 +1,4 @@
-import { agencyResponseImportId, isWorkflowSourceKind, studyDesignImportId } from '../../../shared/authoring/source-import';
+import { agencyResponseImportId, artifactImportId, isWorkflowSourceKind, studyDesignImportId } from '../../../shared/authoring/source-import';
 /**
  * Pull an exact source into the existing authoring store. Source identities,
  * bytes and provenance come from the server; no pasted source receipt is
@@ -291,7 +291,7 @@ async function existingWorkingCopy(work: { ctx: CreateContext; origin: Authoring
 async function saveWorkingCopy(work: ImportWork): Promise<SourceImportOutcome> {
   const { ctx, input, origin, converted, deps } = work;
   try {
-    const outcome = await deps.create(ctx, importedDraft(input, origin, converted), { verifiedImport: { origin, warnings: converted.warnings,
+    const outcome = await deps.create(ctx, importedDraft(input, origin, converted), { verifiedImport: { origin, warnings: converted.warnings, forceUnbound: true,
       reason: input.reason, reserve: q => reserve(q, work) } });
     if (outcome.kind === 'refused') return refused(outcome.status, outcome.code ?? 'SOURCE_IMPORT_REFUSED', outcome.error);
     if (typeof outcome.document.id !== 'string' || typeof outcome.document.title !== 'string') throw new Error('Saved working copy lacks document identity');
@@ -327,6 +327,9 @@ function csrWorkflowSelector(selected: Record<string, unknown>): WorkflowImportS
 }
 
 function workflowSelector(selected: Record<string, unknown>): WorkflowImportSource {
+  if (selected.kind === 'artifact' && artifactImportId(selected.artifactId, selected.version)) {
+    return { kind: 'artifact', artifactId: String(selected.artifactId), version: Number(selected.version) };
+  }
   if (selected.kind === 'agency-response' && agencyResponseImportId(selected.eventId, selected.questionId)) {
     return { kind: 'agency-response', eventId: String(selected.eventId), questionId: Number(selected.questionId) };
   }

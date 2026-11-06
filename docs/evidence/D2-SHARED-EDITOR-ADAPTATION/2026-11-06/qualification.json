@@ -1,0 +1,199 @@
+{
+  "package": "F1",
+  "launchRow": "D2",
+  "branch": "concept2cure-v2",
+  "sourceCheckpoint": "f4295889ca0297e115fcd88b334c98804c7c2fbc",
+  "canonicalBase": "7d771e124a4dba820fbbd26d8919c7c69cd1a9d4",
+  "nodeMajor": 22,
+  "build": {
+    "exitCode": 0,
+    "changedRuntimePinsStable": 85
+  },
+  "prePush": {
+    "exitCode": 0,
+    "typecheckErrors": 0,
+    "baselineRelaxed": false
+  },
+  "committedSecrets": {
+    "exitCode": 0,
+    "credentialMaterialFound": false
+  },
+  "sourceFreeze": {
+    "path": "checks/source-freeze-proof.json",
+    "inputCount": 11327,
+    "sha256": "7532906188d786a258c29bc0fafd6bb0e36953bfed277e8899cb612ae2c11bd8",
+    "capturePhase": "After the frozen source commit, during the normal full pre-push run; not a pre-hook snapshot."
+  },
+  "targetChannel": {
+    "testsPassed": 39,
+    "initialFailed": 15
+  },
+  "incomingProjectCompatibility": {
+    "suitesPassed": 9,
+    "testsPassed": 102
+  },
+  "componentBrowser": {
+    "checksPassed": 12,
+    "selectedPinsStable": 45,
+    "checkedCheckpoint": "5283da69cb953d7c4c8970d80fd14f8fe81879ce",
+    "api": "explicit synthetic fixture; four simulated intake POSTs"
+  },
+  "nativeBrowser": {
+    "journeysPassed": 2,
+    "filings": [
+      "510k",
+      "ind"
+    ],
+    "checkedCheckpoint": "637737bb13f51363e15a75d6f4a27bfcbeb8e408",
+    "api": "real local application, no interception",
+    "sectionPatches": 2,
+    "selectedPinsStable": 25,
+    "qualificationSavesAcrossCompletedRuns": 10,
+    "completedNativeRuns": 5,
+    "scope": "Retained native core save/reopen proof with unchanged selected owners; excludes incoming UK CTA, ANA preparation and unified-task behavior."
+  },
+  "latestIncomingCompatibility": {
+    "ordinaryTask": {
+      "suitesPassed": 6,
+      "testsPassed": 116,
+      "receipt": "server/ordinary-task-compatibility-receipt.json"
+    },
+    "editor": {
+      "unchangedPassingSuites": 5,
+      "unchangedPassingTests": 54,
+      "affectedFileRerunTestsPassed": 14,
+      "composedPassingTests": 68,
+      "freshAllSixSuiteGreenRun": false,
+      "receipt": "editor/latest-six-compatibility-receipt.json"
+    },
+    "authoringAcl": {
+      "suitesPassed": 3,
+      "testsPassed": 65,
+      "receipt": "server/authoring-acl-compatibility-receipt.json"
+    },
+    "confirmedProjectLists": {
+      "unchangedPassingSuites": 3,
+      "unchangedPassingTests": 63,
+      "correctedFilePassingSuites": 4,
+      "correctedFilePassingTests": 53,
+      "composedPassingTests": 116,
+      "freshAllSevenSuiteGreenRun": false,
+      "receipt": "editor/scoped-list-compatibility-receipt.json"
+    },
+    "vaultConfirmedProjectLists": {
+      "suitesPassed": 3,
+      "testsPassed": 43,
+      "receipt": "frontend/scoped-read-contract/receipt.json"
+    },
+    "lineageHardening": {
+      "mutationTestsPassed": 49,
+      "guardedPaths": 22,
+      "launchBoundaryTestsPassed": 207,
+      "receipt": "catalogue/lineage-hardening-receipt.json"
+    },
+    "unifiedTask": {
+      "suitesPassed": 5,
+      "testsPassed": 164,
+      "receipt": "server/unified-task-compatibility-receipt.json"
+    },
+    "ukCta": {
+      "suitesPassed": 8,
+      "testsPassed": 152,
+      "receipt": "catalogue/uk-cta-integration-receipt.json"
+    },
+    "projectRail": {
+      "suitesPassed": 1,
+      "testsPassed": 16,
+      "receipt": "editor/final-rail-compatibility-receipt.json"
+    },
+    "adminCredentialUi": {
+      "suitesPassed": 3,
+      "testsPassed": 44,
+      "receipt": "frontend/incoming7d-admin/receipt.json"
+    },
+    "gatewayAccounts": {
+      "unchangedPassingSuites": 5,
+      "unchangedPassingTests": 67,
+      "isolatedConnectorRetryPassingTests": 38,
+      "composedPassingTests": 105,
+      "freshAllSixSuiteGreenRun": false,
+      "receipt": "server/gateway-account-compatibility-receipt.json"
+    },
+    "startupAndQualifiers": {
+      "nodeTestsPassed": 27,
+      "receipt": "checks/launcher-compatibility.json"
+    },
+    "finalSdkBoundary": {
+      "suitesPassed": 9,
+      "testsPassed": 250,
+      "sourceRaceRed": {
+        "failed": 12,
+        "passed": 16
+      },
+      "continuationRed": {
+        "failed": 3,
+        "passed": 81
+      },
+      "receipt": "catalogue/final-wire-current-source-receipt.json"
+    }
+  },
+  "cohortCounting": "Owner cohorts overlap and are not summed.",
+  "ownerReceipts": [
+    "editor/receipt.json",
+    "frontend/receipt.json",
+    "catalogue/receipt.json",
+    "server/binary-vault-receipt.json",
+    "server/artifact-source-receipt.json",
+    "review/security-review.json",
+    "ui/README.md",
+    "editor/latest-six-compatibility-receipt.json",
+    "server/ordinary-task-compatibility-receipt.json",
+    "server/authoring-acl-compatibility-receipt.json",
+    "editor/scoped-list-compatibility-receipt.json",
+    "frontend/scoped-read-contract/receipt.json",
+    "catalogue/lineage-hardening-receipt.json",
+    "review/incoming-53b-security-review.json",
+    "server/unified-task-compatibility-receipt.json",
+    "catalogue/uk-cta-integration-receipt.json",
+    "editor/final-rail-compatibility-receipt.json",
+    "review/incoming-b86-security-review.json",
+    "frontend/incoming7d-admin/receipt.json",
+    "server/gateway-account-compatibility-receipt.json",
+    "catalogue/final-wire-current-source-receipt.json",
+    "review/incoming-7d-security-review.json",
+    "review/final-sdk-boundary-security-review.json"
+  ],
+  "nativeRuntime": {
+    "database": "fresh local PostgreSQL 15",
+    "role": "app_service",
+    "rls": "on",
+    "launchScope": "on",
+    "developmentLogin": true,
+    "databaseSchemaStorageReady": true,
+    "overallReadyHttpStatus": 503,
+    "notReadyReason": "No AI provider; no AI request was made."
+  },
+  "setupCorrections": [
+    "Node 24 install rejected by engine requirement; dependencies installed under Node 22.",
+    "First local psql wrapper lacked repository SQL mount; fresh mounted provisioning exited 0.",
+    "Undersized local JWT secret refused; runtime-only secrets replaced with random 32-byte values.",
+    "Browser origin at port 5100 refused; exact local ALLOWED_ORIGINS configured without bypass.",
+    "Fixture review GET, previewOnly omission, token readback helper and lint setup corrected before acceptance.",
+    "Seven test-fixture type errors corrected without production changes or baseline relaxation.",
+    "Merged conversation fixture corrected to the canonical unbound header/list and no ambient outline contract.",
+    "Six older project-list test fixtures corrected to include actual success and row project identity fields after incoming read hardening; all assertions and production guards retained.",
+    "Two legacy provider-error identity assertions aligned with incoming exact HTTP400 sanitization while retaining safe status/message and non-identity checks.",
+    "Isolated connector suite passed unchanged after its initial setup hook timed out; no timeout, production or assertion change."
+  ],
+  "notQualified": [
+    "deployment",
+    "every client/document combination",
+    "full scientific MDX automation",
+    "native concurrent editing",
+    "IAM/MFA",
+    "AI generation",
+    "controlled release",
+    "agency transmission",
+    "full roadmap convergence or closing S11/S12"
+  ]
+}

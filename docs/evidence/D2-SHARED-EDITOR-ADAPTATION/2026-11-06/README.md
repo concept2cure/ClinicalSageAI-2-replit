@@ -1,0 +1,192 @@
+# Shared project editor and Vault continuity
+
+Package F1, launch row D2. Starting point:
+`21a21849d7cfb8a35794489a87fad2b849c7011c`, `concept2cure-v2`.
+Contract: `docs/design/SHARED_EDITOR_PROJECT_ADAPTATION_2026-11-06.md`.
+
+## What already exists
+
+The shared canvas/editor, project document start, filing outline, editor target,
+Vault tree, source-import dialog, intake/adoption and file-to-Vault already own
+this workflow. The design inventory records their paths, behavior and bounded
+gaps. Complete these owners without another app, screen, editor or data store.
+
+## Completed behavior
+
+- Project definition remains the start. Existing functionality is reached inside
+  that journey through the same canvas and editor; no app, per-type screen, API
+  mount, service identity or store was added.
+- Requirements follow the exact saved home or market filing. Unknown bindings,
+  refused reads and unbound working documents remain distinct. Unbound documents
+  retain the existing explicit home-filing editing-copy start.
+- Filing navigation searches every admitted working copy with fresh headers and
+  global code-first matching. Ambiguity, session changes and stale inventory do
+  not open an unrelated document, including after an unsaved-edit decision.
+- Vault carries recorded filing/section identities and artifact versions into the
+  existing editor/source intake. Newly created imports are unbound; reused copies
+  retain their saved bindings. Editing does not overwrite the captured original.
+- Artifact copies disclose retained-version versus current-head-snapshot basis,
+  hashes, provenance and limitations. Original approval/signature is not inherited;
+  source revalidation, human adoption and machine qualification holds remain.
+- Receiving-agency defaults use actual saved agency metadata. EU geography and
+  legacy device rule keys do not become EMA authority. CER/MDR/IVDR legacy keys
+  display the canonical EU / Notified Body label; manual editing remains available.
+
+## Fresh verification
+
+These cohorts overlap; their counts are not additive. All are fresh Nov 6 runs.
+
+| Boundary | Result | Receipt |
+| --- | --- | --- |
+| Target channel, exact filing intent and legacy compatibility | 39 tests | `checks/target-green.txt.gz` |
+| Shared editor, current context, held navigation, CSR compatibility and market starts | 8 suites / 119 tests | `editor/receipt.json` |
+| Vault source intake, save/filing continuity and newer session/read behavior | 12 suites / 313 tests | `frontend/receipt.json` |
+| Exact outline, home/market/unbound context and omitted market scope | 3 suites / 52 tests | `catalogue/receipt.json` |
+| Recorded agency and current template compatibility | 7 suites / 419 tests | `catalogue/receipt.json` |
+| Binary isolation and Vault identity projection | 5 suites / 77 tests | `server/binary-vault-receipt.json` |
+| Artifact preview/create/reuse/drift, persisted source verification and release holds | 35 actual SQL tests | `server/artifact-source-receipt.json` |
+| Related source/governance regression | 4 suites / 91 tests | `catalogue/receipt.json` |
+| Incoming project-layout compatibility at `e533082d63` | 9 suites / 102 tests | `checks/incoming-project-compatibility.txt.gz` |
+| Merged Vault compatibility at `67348a526c` | 7 suites / 96 tests | `frontend/incoming673/receipt.json` |
+| Merged backend sensitivity/source/connector compatibility | 6 suites / 168 tests | `catalogue/incoming-backend-receipt.json` |
+| Merged editor compatibility, composed result | 6 unchanged suites / 112 tests plus corrected conversation suite / 9 tests | `editor/incoming-merge-receipt.json` |
+| Latest project-team/Respond compatibility | 3 suites / 33 tests | `editor/d3-compatibility-receipt.json` |
+| Latest task/project admission compatibility | 6 suites / 117 tests | `server/task-project-compatibility-receipt.json` |
+| Final ordinary-task/project admission compatibility at `965084590c` | 6 suites / 116 tests | `server/ordinary-task-compatibility-receipt.json` |
+| Final shell/conversation compatibility, composed result | 5 unchanged suites / 54 tests plus affected-file rerun / 14 tests | `editor/latest-six-compatibility-receipt.json` |
+| Incoming authoring write-access and source-copy compatibility at `53b9f15d8f` | 3 suites / 65 tests | `server/authoring-acl-compatibility-receipt.json` |
+| Incoming lineage hardening and existing route attribution | 49 mutation tests; 22 guarded paths; 207 launch-boundary tests | `catalogue/lineage-hardening-receipt.json` |
+| Confirmed project reads, editor and filing continuity; composed result | 3 unchanged suites / 63 tests plus 4 corrected-file suites / 53 tests | `editor/scoped-list-compatibility-receipt.json` |
+| Confirmed project reads through existing Vault and source-start owners | 3 suites / 43 tests | `frontend/scoped-read-contract/receipt.json` |
+| Incoming unified-task/project admission and source intake at `b86b489405` | 5 suites / 164 tests | `server/unified-task-compatibility-receipt.json` |
+| Incoming UK CTA and recorded-agency integration at `b86b489405` | 8 suites / 152 tests | `catalogue/uk-cta-integration-receipt.json` |
+| Existing project rail and command palette | 1 suite / 16 tests | `editor/final-rail-compatibility-receipt.json` |
+| Incoming credential administration UI at `7d771e124a` | 3 suites / 44 tests | `frontend/incoming7d-admin/receipt.json` |
+| Incoming gateway/account compatibility; composed result | 5 unchanged suites / 67 tests plus connector-only retry / 38 tests | `server/gateway-account-compatibility-receipt.json` |
+| Existing startup and CSR/AnA qualifier compatibility | 27 Node tests | `checks/launcher-compatibility.json` |
+| Final SDK source, cancellation and qualified-pin boundary | 9 suites / 250 tests; genuine source and continuation REDs retained | `catalogue/final-wire-current-source-receipt.json` |
+| Running actual components with explicitly synthetic HTTP | 12 checks / 45 stable pins | `ui/browser-result/result.json` |
+| Running local application and native PostgreSQL, no API interception | Both 510(k) and IND journeys passed | `ui/live-result/result.json` |
+| Independent scope and source-governance review at `e533082d63` | No scoped blocker at that checkpoint; 22 historical runtime pins | `review/security-review.json` |
+| Incoming project read/write guard integration review at `53b9f15d8f` | No scoped production blocker; 9 selected source pins; read-only review | `review/incoming-53b-security-review.json` |
+| Incoming UK CTA/task integration review at `b86b489405` | No scoped blocker; 17 review pins; component refresh and native scope explicitly distinguished | `review/incoming-b86-security-review.json` |
+| Incoming credential-wave review and final repair closure | Initial blocker retained; later independent review closes both SDK timing gaps at `f4295889ca` | `review/final-sdk-boundary-security-review.json` |
+
+The native browser walk opened each exact filing section from Vault, edited it
+with a reason, saved through the real route, checked saved content/hash and audit
+reason, reloaded, and reopened from Vault. Exactly two seeded section PATCHes were
+made in the final qualified run (ten across five completed local qualification
+runs). This is separate from the component fixture's four simulated intake POSTs.
+Existing file-to-Vault/release behavior is covered by the linked tests, not claimed
+as native controlled-release or agency-submission acceptance.
+
+The production build completed successfully on Node 22 with all selected runtime
+input hashes unchanged. Their count is in `qualification.json`. Final repository
+gate/typecheck output is recorded in the
+root qualification receipt: every pre-push gate passed, including zero type
+errors against the unchanged zero baseline. Lint has no new warning sites; existing
+warnings and non-blocking companion-filename scan notices remain disclosed.
+
+## Provenance and limits
+
+The earlier environment was replaced before its local increment was published.
+Its lost counts/checkpoints do not qualify this tree. Repairs were reconstructed
+against current canonical owners; newer CSR, Vault and project-page changes were
+preserved. Canonical advancement `21a21849d7` → `e533082d63` was a fast-forward,
+with its project compatibility run recorded above.
+
+The subsequent `67348a526c` advance was merged with no conflicts, preserving its
+Vault project chooser, inspector names, upload privacy and P-104 runtime changes.
+Affected compatibility cohorts, a rebuilt application and refreshed native and
+component browser runs qualify the combined inputs. Earlier owner receipts retain
+their exact checked hashes; they are not silently relabeled as later runs.
+The independent security receipt likewise retains its `e533082d63` scope;
+subsequent Workbench/Vault changes are covered by the incoming compatibility
+receipts and refreshed browser qualification, not by relabeling that review.
+
+The later `57b13c599d` advance was also merged intact. Its project-team/inbox reads
+and task/project admission are covered by the two latest compatibility receipts.
+The build and 45/23-pin browser receipts were refreshed after that merge.
+The final `965084590c` advance, including `29a1b5ddb1`, was merged intact,
+preserving saved-conversation routing, licensing and ordinary-task admission.
+The final build and native walk were repeated on the combined tree. All 45
+component-fixture inputs remained unchanged and were rechecked against it.
+The task cohort passed all 116 tests. One shell case initially failed to find its
+button within the existing wait, then passed unchanged alone and in its full
+14-test file. The composed 68-test result retains the initial failure and is not
+represented as a fresh all-six-suite green run; its cause remains unproven.
+
+The `53b9f15d8f` advance was then merged intact, preserving project write
+authorization, confirmed project-list reads, strengthened lineage checks and
+existing stored-run route attribution. Its source-copy/access cohort passed
+65 tests without fixture changes. Incoming guard review found no scoped
+production blocker. The native proof adds the two newly exercised guard owners
+to its 25 pins; unchanged component pins alone are not treated as exercising them.
+Six older editor/Vault fixtures omitted the now-required confirmed result or row
+project identity. Only their DTO fields were corrected, preserving every
+assertion and production guard. The four corrected editor suites passed 53 tests;
+with three unchanged passing suites this composes 116 cases, not a fresh
+seven-suite rerun. The separate three-suite Vault/source-start run passed all
+43 tests. Original failures and exact fixture diffs remain in their receipts.
+
+The `b86b489405` advance was also merged intact: UK CTA preparation remains
+medicinal, cited and scoped to its actual IRAS channel; it does not grant source
+or write authority. Its eight integration suites passed 152 tests. Unified-task
+admission/source intake passed 164 tests, and the unchanged rail/palette suite
+passed 16. These required no source or fixture changes. The changed shared
+registry is one of the 45 component pins, so the component qualification is
+refreshed for this merge. The native receipt retains its `637737bb13` checkpoint
+and 25 unchanged selected owners; it does not qualify new UK CTA, AnA preparation,
+unified-task behavior or all transitive registry changes.
+
+The `7d771e124a` advance was preserved as well, including sourced Skills policy,
+credential custody/redaction, immutable model/PQ checks, account-canon transactions
+and startup/build repairs. Its changes intersect none of the 45 component or
+25 native selected pins. Their original checkpoints remain explicit; these
+receipts do not qualify the new credential/model/AnA paths. Administration passed
+44 tests, and startup/qualifier compatibility passed 27. Gateway/account coverage
+composes five passing suites/67 cases with an unchanged connector-only retry/38
+cases after an initial setup timeout; it is not a fresh six-suite green run.
+
+Review of that advance found a source-authorization gap across new credential
+awaits. Actual SDK stubs reproduced 12 failures with 16 cases already passing.
+A separate platform continuation reproduced three cancellation/PQ failures with
+81 passing cases. The bounded repair keeps the captured source hook private,
+revalidates it after credential waits, and checks cancellation/qualified evidence
+synchronously at all five actual SDK call sites. Source refusals remain safe and
+terminal, without retries or provider-health failures. Final nine-suite execution
+passed all 250 tests; lint retained its existing 26 warnings with no growth.
+Only two existing production owners and three existing tests changed. Two older
+provider-error identity assertions now require the incoming exact sanitized
+HTTP-400 status/message and reject raw identity; source-refusal assertions remain.
+The incoming blocked review is preserved, with a separate final closure receipt.
+
+The final source inventory is captured after the frozen source commit during
+early pre-push gates, then compared after the full check. Its digest scope and
+timing are explicit in `checks/source-freeze-proof.json`; it replaces no gate.
+Raw tool-output logs are preserved verbatim, including terminal whitespace;
+format checks apply to code and authored documents, not rewritten log captures.
+
+Genuine REDs and corrected test-fixture assumptions are distinguished in the
+owner receipts. In particular, current canonical binary creation already left an
+unnamed filing unbound; the explicit forceUnbound option reinforces that contract,
+and the pre-option SQL qualification was already green. The final omitted-market-
+scope defect was reproduced before deriving scope from the verified selection.
+
+The first full compiler pass found seven type errors in two test fixtures: a null
+optional error and an unknown HTTP-send input. Only fixture types changed; the
+writing tests and all 35 artifact SQL tests passed again. The merged conversation
+test also assumed an ambient filing-outline read for an explicitly unbound copy;
+its canonical DTOs and that obsolete read expectation were corrected, preserving
+all conversation identity and absence-of-filing assertions. Raw failures and
+bounded reruns are retained; the typecheck baseline stays zero.
+
+The native application ran as app_service with RLS and launch scope enabled, on a
+fresh locally provisioned PostgreSQL database and synthetic projects. Its explicit
+development login does not qualify IAM/MFA. Database/schema/storage readiness was
+green; overall readiness remained 503 because no AI provider was configured. No
+AI request, gateway transmission or external message was used for this proof.
+
+Full roadmap convergence (including S11/S12), every client/type combination,
+scientific MDX automation, native concurrent editing, controlled release, live
+filing and deployed acceptance remain outside this bounded repair's claims.

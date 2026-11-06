@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > retains newest-home default only when no active document binding was supplied 75ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > selects exact bound 'cer' among mixed home filings 56ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > selects exact bound 'ivdr' among mixed home filings 56ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > selects exact bound 'ind' among mixed home filings 58ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > uses exact market requirements and retains home context 59ms
+ × client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > retains verified market identity and gaps when an older outline omits filing_scope 69ms
+   → expected 'home' to be 'market' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > refuses missing or malformed binding "missing" 55ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > refuses missing or malformed binding "" 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > refuses missing or malformed binding " " 56ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > refuses missing or malformed binding " filing-cer " 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > withholds requirements for an unavailable active binding 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > keeps the explicit home-copy creation door for a known unbound document without reading default requirements 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > refuses duplicate bound identity 53ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > retains exact bound home when the optional market read fails 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > does not replace a refused market with home requirements 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > requires exact project echo on home list 55ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > requires exact project echo on market list 55ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects wrong-project successful home response 55ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects wrong-project successful market response 53ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects wrong-project successful outline response 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects incorrect outline identity 56ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects incorrect outline shape 57ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects incorrect outline scope 53ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects incorrect outline agency 53ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > source identity and failed reads > rejects incorrect outline type 54ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > retirement of previous project and actor reads > withholds old filing immediately and ignores its delayed response 112ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > retirement of previous project and actor reads > retires same-project state after actor change and ignores old response 161ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > retirement of previous project and actor reads > retires same-project state after session change and ignores old response 159ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > retirement of previous project and actor reads > withholds prior project context while next project is unresolved 59ms
+ ✓ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > retirement of previous project and actor reads > keeps returned state identity across unchanged host rerenders 55ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx > exact home and market requirements > retains verified market identity and gaps when an older outline omits filing_scope
+AssertionError: expected 'home' to be 'market' // Object.is equality
+
+Expected: "market"
+Received: "home"
+
+ ❯ client/src/concept2cure/v2/__tests__/filingOutlineHomeScope.test.tsx:65:51
+     63|     const { result } = renderHook(() => useFilingOutline(PROJECT, MARK…
+     64|     await waitFor(() => expect(result.current.document?.id).toBe(MARKE…
+     65|     expect(result.current.document?.filing_scope).toBe('market');
+       |                                                   ^
+     66|     expect(result.current.gaps).toEqual([{ key: '3.2.R', label: 'Regio…
+     67|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 29 passed (30)
+   Start at  18:32:42
+   Duration  3.84s (transform 463ms, setup 232ms, import 581ms, tests 1.96s, environment 776ms)
+

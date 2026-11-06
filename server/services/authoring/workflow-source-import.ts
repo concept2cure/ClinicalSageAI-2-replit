@@ -6,7 +6,7 @@ const sourceLogger = createScopedLogger('workflow-source-import');
 import { stableStringify } from '../../../shared/canonical-json';
 import { nctNumberOf } from '../../../shared/csr-source-input';
 import type { WorkflowImportSource, WorkflowImportOrigin, WorkflowImportAssociation, WorkflowSectionOrigin } from '../../../shared/authoring/source-import';
-import { agencyResponseImportId, studyDesignImportId } from '../../../shared/authoring/source-import';
+import { agencyResponseImportId, artifactImportId, studyDesignImportId } from '../../../shared/authoring/source-import';
 import type { Queryable } from './authoring-evidence';
 import { requireCsrJobAccess, readCsrProjectActor, CsrScopeError } from '../csr/project-scope';
 import { canAccessReportProject } from '../report-os/project-access';
@@ -58,8 +58,17 @@ function validateAgencySource(source: Extract<WorkflowImportSource, { kind: 'age
   if (!agencyResponseImportId(source.eventId, source.questionId)) fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact saved agency question.');
 }
 
-function validateInput(input: WorkflowMaterializationInput): void {
+function validateArtifactSource(source: Extract<WorkflowImportSource, { kind: 'artifact' }>): void {
+  if (!artifactImportId(source.artifactId, source.version)) fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact saved artifact and current version.');
+}
+
+function validateScope(input: WorkflowMaterializationInput): void {
   if (!positive(input.organizationId) || !positive(input.userId) || !positive(input.target.projectId) || !UUID.test(input.target.programId)) fail(400, 'WORKFLOW_SCOPE_INVALID', 'A verified organization actor and target project are required.');
+}
+
+function validateInput(input: WorkflowMaterializationInput): void {
+  validateScope(input);
+  if (input.source.kind === 'artifact') return validateArtifactSource(input.source);
   if (input.source.kind === 'agency-response') {
     return validateAgencySource(input.source);
   }
@@ -340,6 +349,10 @@ function finish(input: WorkflowMaterializationInput & { source: Extract<Workflow
 export async function materializeWorkflowSource(input: WorkflowMaterializationInput, q: Queryable): Promise<MaterializedWorkflowSource> {
   validateInput(input);
   try {
+    if (input.source.kind === 'artifact') {
+      const { materializeArtifactSource } = await import('./artifact-workflow-source');
+      return await materializeArtifactSource({ ...input, source: input.source }, q);
+    }
     if (input.source.kind === 'agency-response') {
       const { materializeAgencyResponseSource } = await import('./agency-response-source');
       return await materializeAgencyResponseSource({ ...input, source: input.source }, q);

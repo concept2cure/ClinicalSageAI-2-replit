@@ -51,7 +51,8 @@ function tenantProviderError(error: unknown): Error & { status?: number } {
 /** A fresh SDK object per tenant/request; no key enters GatewayRequest and no
  * client or token cache is shared between tenants. Every create rechecks the
  * captured revision and records use immediately before calling the SDK. */
-export async function createTenantProviderClient(provider: string, organizationId: number, userId?: number, purpose: 'model_inference' | 'embedding' = 'model_inference', beforeCreate?: () => void): Promise<any | null> {
+type ProviderCreateChecks = (() => void) | { sourceCheck?: () => Promise<void>; beforeCreate: () => void };
+export async function createTenantProviderClient(provider: string, organizationId: number, userId?: number, purpose: 'model_inference' | 'embedding' = 'model_inference', checks?: ProviderCreateChecks): Promise<any | null> {
   if (!['anthropic', 'openai', 'moonshot'].includes(provider)) return null;
   const availability = await resolveTenantModelCredentialAvailability(organizationId, purpose);
   if (availability.mode === 'platform') return null;
@@ -67,9 +68,14 @@ export async function createTenantProviderClient(provider: string, organizationI
   } catch { throw new TenantCredentialUnavailableError(); }
   const invoke = (create: (...args: any[]) => any) => async (...args: any[]) => {
     try { await assertCredentialUseCurrent(captured!, userId); } catch { throw new TenantCredentialUnavailableError(); }
+    // Credential capture/audit can wait after the gateway's capacity check.
+    // Recheck the privately captured source authority before releasing text.
+    // Its terminal refusal must bypass both credential and provider sanitizers.
+    if (typeof checks === 'object') await checks.sourceCheck?.();
     // Trusted synchronous model/PQ admission, after the credential audit's
-    // asynchronous reads and immediately before the actual SDK invocation.
+    // and source checkpoint's reads, immediately before actual SDK invocation.
     // Preserve its policy refusal; it is not a provider failure to sanitize.
+    const beforeCreate = typeof checks === 'function' ? checks : checks?.beforeCreate;
     beforeCreate?.();
     try {
       const result = await create(...args);

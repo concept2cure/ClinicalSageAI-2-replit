@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "package": "F1",
+  "launchRow": "D2",
+  "kind": "incoming673 frontend compatibility",
+  "incomingCommit": "67348a526cc75f152df2e73e7bfbb65e815dc5fc",
+  "previousSourceCommit": "93e92859f4dbbc3d339f7f52687f557833883611",
+  "sourceCommit": "74f6e51d627e15c223a0ecbe90c6d21e0b6f3742",
+  "sourceTree": "0e85bda622593e73bd7a618cba5f9c88b7f91bac",
+  "headAtPackaging": "74f6e51d627e15c223a0ecbe90c6d21e0b6f3742",
+  "packagedAtUtc": "2026-11-06T18:58:53.974983+00:00",
+  "workdir": "/workspace/ClinicalSageAI-2-replit",
+  "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --fileParallelism=false client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx client/src/concept2cure/v2/__tests__/vaultStagingSessionOwnership.test.tsx client/src/concept2cure/v2/__tests__/vaultProjectSwitch.test.tsx client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx",
+  "exitCode": 0,
+  "suitesPassed": 7,
+  "testsPassed": 96,
+  "log": {
+    "path": "tests.log",
+    "sha256": "740ca073e5fb18b6776b51f1ba7d7f39e18a4877b818282ec19c8d86e462f44c",
+    "bytes": 22153,
+    "originalSha256": "740ca073e5fb18b6776b51f1ba7d7f39e18a4877b818282ec19c8d86e462f44c",
+    "originalBytes": 22153,
+    "originalLines": 141,
+    "gzipMtime": null
+  },
+  "selectedInputs": 23,
+  "before": {
+    "path": "before.json",
+    "sha256": "7668dab6640f59201aa885c537bc63899387233dd057390eaaf7b407ad9e763c"
+  },
+  "after": {
+    "path": "after.json",
+    "sha256": "7668dab6640f59201aa885c537bc63899387233dd057390eaaf7b407ad9e763c"
+  },
+  "changedDuringRun": [],
+  "changedSincePreviousFrontendQualification": [
+    "client/src/concept2cure/v2/surfaces/Vault.tsx"
+  ],
+  "scope": "Existing frontend suites for exact filing/source handoff, organization artifacts, current session, project switching, global chooser and confidential upload staging.",
+  "limits": "Selected pins do not enumerate every transitive import. Synthetic component/transport tests do not establish backend durability, deployed acceptance or full MDX scientific automation. Workbench integration and backend classification are qualified separately. This rerun overlaps earlier frontend evidence; do not add counts as unique coverage.",
+  "mutations": "Evidence files only. No production/test edits, Git mutation, lint or compiler run in this task."
+}

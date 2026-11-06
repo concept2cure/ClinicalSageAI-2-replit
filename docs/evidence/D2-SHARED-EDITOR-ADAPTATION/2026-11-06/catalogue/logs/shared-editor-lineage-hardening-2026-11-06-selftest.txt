@@ -1,0 +1,304 @@
+TAP version 13
+# Subtest: the gate ran against the fixture tree, not the repository
+ok 1 - the gate ran against the fixture tree, not the repository
+  ---
+  duration_ms: 1567.694217
+  type: 'test'
+  ...
+# Subtest: a content write after a string holding /* is discovered
+ok 2 - a content write after a string holding /* is discovered
+  ---
+  duration_ms: 0.476526
+  type: 'test'
+  ...
+# Subtest: a content write after an https:// string on the same line is discovered
+ok 3 - a content write after an https:// string on the same line is discovered
+  ---
+  duration_ms: 0.265026
+  type: 'test'
+  ...
+# Subtest: a content write only inside real comments is not a writer
+ok 4 - a content write only inside real comments is not a writer
+  ---
+  duration_ms: 0.293295
+  type: 'test'
+  ...
+# Subtest: a content write named only in a trailing line comment is not a writer
+ok 5 - a content write named only in a trailing line comment is not a writer
+  ---
+  duration_ms: 0.266437
+  type: 'test'
+  ...
+# Subtest: review-predicate does not mistake a predicate or quoted/comment text for an assignment
+ok 6 - review-predicate does not mistake a predicate or quoted/comment text for an assignment
+  ---
+  duration_ms: 0.604819
+  type: 'test'
+  ...
+# Subtest: return-predicate does not mistake a predicate or quoted/comment text for an assignment
+ok 7 - return-predicate does not mistake a predicate or quoted/comment text for an assignment
+  ---
+  duration_ms: 0.244034
+  type: 'test'
+  ...
+# Subtest: quoted-content does not mistake a predicate or quoted/comment text for an assignment
+ok 8 - quoted-content does not mistake a predicate or quoted/comment text for an assignment
+  ---
+  duration_ms: 0.127471
+  type: 'test'
+  ...
+# Subtest: sql-comment does not mistake a predicate or quoted/comment text for an assignment
+ok 9 - sql-comment does not mistake a predicate or quoted/comment text for an assignment
+  ---
+  duration_ms: 0.638162
+  type: 'test'
+  ...
+# Subtest: content-after-keywords still discovers the actual prose assignment
+ok 10 - content-after-keywords still discovers the actual prose assignment
+  ---
+  duration_ms: 0.79454
+  type: 'test'
+  ...
+# Subtest: content-after-dollar-text still discovers the actual prose assignment
+ok 11 - content-after-dollar-text still discovers the actual prose assignment
+  ---
+  duration_ms: 0.303251
+  type: 'test'
+  ...
+# Subtest: content-after-sql-comment still discovers the actual prose assignment
+ok 12 - content-after-sql-comment still discovers the actual prose assignment
+  ---
+  duration_ms: 0.143547
+  type: 'test'
+  ...
+# Subtest: quoted-column still discovers the actual prose assignment
+ok 13 - quoted-column still discovers the actual prose assignment
+  ---
+  duration_ms: 0.350121
+  type: 'test'
+  ...
+# Subtest: the actual CSR review updates review metadata, with content used only as its concurrency predicate
+ok 14 - the actual CSR review updates review metadata, with content used only as its concurrency predicate
+  ---
+  duration_ms: 1852.978556
+  type: 'test'
+  ...
+# Subtest: the actual CSR import keeps the canonical lineage helper on its SERIALIZABLE callback transaction
+ok 15 - the actual CSR import keeps the canonical lineage helper on its SERIALIZABLE callback transaction
+  ---
+  duration_ms: 2720.953164
+  type: 'test'
+  ...
+# Subtest: CSR import refuses missing lineage
+ok 16 - CSR import refuses missing lineage
+  ---
+  duration_ms: 1837.89682
+  type: 'test'
+  ...
+# Subtest: CSR import refuses lineage on the pool
+ok 17 - CSR import refuses lineage on the pool
+  ---
+  duration_ms: 1953.600412
+  type: 'test'
+  ...
+# Subtest: CSR import refuses content on the pool
+ok 18 - CSR import refuses content on the pool
+  ---
+  duration_ms: 1533.541711
+  type: 'test'
+  ...
+# Subtest: CSR import refuses shadowed q
+ok 19 - CSR import refuses shadowed q
+  ---
+  duration_ms: 1039.207899
+  type: 'test'
+  ...
+# Subtest: CSR import refuses reassigned q
+ok 20 - CSR import refuses reassigned q
+  ---
+  duration_ms: 1216.211856
+  type: 'test'
+  ...
+# Subtest: CSR import refuses unawaited lineage
+ok 21 - CSR import refuses unawaited lineage
+  ---
+  duration_ms: 992.101593
+  type: 'test'
+  ...
+# Subtest: CSR import refuses unawaited section write
+ok 22 - CSR import refuses unawaited section write
+  ---
+  duration_ms: 1200.315729
+  type: 'test'
+  ...
+# Subtest: CSR import refuses unawaited transaction work
+ok 23 - CSR import refuses unawaited transaction work
+  ---
+  duration_ms: 1072.306283
+  type: 'test'
+  ...
+# Subtest: CSR import refuses wrong callback client
+ok 24 - CSR import refuses wrong callback client
+  ---
+  duration_ms: 883.135058
+  type: 'test'
+  ...
+# Subtest: CSR import refuses early commit
+ok 25 - CSR import refuses early commit
+  ---
+  duration_ms: 1860.905809
+  type: 'test'
+  ...
+# Subtest: CSR import refuses missing rollback
+ok 26 - CSR import refuses missing rollback
+  ---
+  duration_ms: 1307.442292
+  type: 'test'
+  ...
+# Subtest: CSR import refuses weakened write isolation
+ok 27 - CSR import refuses weakened write isolation
+  ---
+  duration_ms: 619.582495
+  type: 'test'
+  ...
+# Subtest: CSR import refuses changed BEGIN map
+ok 28 - CSR import refuses changed BEGIN map
+  ---
+  duration_ms: 673.347823
+  type: 'test'
+  ...
+# Subtest: CSR import refuses mutated BEGIN map
+ok 29 - CSR import refuses mutated BEGIN map
+  ---
+  duration_ms: 855.709909
+  type: 'test'
+  ...
+# Subtest: CSR import refuses additional prose writer
+ok 30 - CSR import refuses additional prose writer
+  ---
+  duration_ms: 799.512305
+  type: 'test'
+  ...
+# Subtest: CSR import still refuses a hollowed shared lineage helper
+ok 31 - CSR import still refuses a hollowed shared lineage helper
+  ---
+  duration_ms: 799.928651
+  type: 'test'
+  ...
+# Subtest: the reviewed charter objective is its sourced structured project-intent record
+ok 32 - the reviewed charter objective is its sourced structured project-intent record
+  ---
+  duration_ms: 1269.653885
+  type: 'test'
+  ...
+# Subtest: charter metadata registration refuses changed serialization
+ok 33 - charter metadata registration refuses changed serialization
+  ---
+  duration_ms: 829.343141
+  type: 'test'
+  ...
+# Subtest: charter metadata registration refuses missing same-transaction audit
+ok 34 - charter metadata registration refuses missing same-transaction audit
+  ---
+  duration_ms: 791.193952
+  type: 'test'
+  ...
+# Subtest: charter metadata registration refuses missing actor attribution
+ok 35 - charter metadata registration refuses missing actor attribution
+  ---
+  duration_ms: 756.104071
+  type: 'test'
+  ...
+# Subtest: charter metadata registration refuses missing version chain
+ok 36 - charter metadata registration refuses missing version chain
+  ---
+  duration_ms: 764.185052
+  type: 'test'
+  ...
+# Subtest: charter metadata registration refuses additional prose writer
+ok 37 - charter metadata registration refuses additional prose writer
+  ---
+  duration_ms: 823.713169
+  type: 'test'
+  ...
+# Subtest: CSR import additionally refuses an unreachable gate
+ok 38 - CSR import additionally refuses an unreachable gate
+  ---
+  duration_ms: 1046.981131
+  type: 'test'
+  ...
+# Subtest: CSR import additionally refuses a rebound transaction wrapper
+ok 39 - CSR import additionally refuses a rebound transaction wrapper
+  ---
+  duration_ms: 1243.546419
+  type: 'test'
+  ...
+# Subtest: CSR import additionally refuses changed content after UPDATE
+ok 40 - CSR import additionally refuses changed content after UPDATE
+  ---
+  duration_ms: 2559.857897
+  type: 'test'
+  ...
+# Subtest: CSR import additionally refuses changed section id after UPDATE
+ok 41 - CSR import additionally refuses changed section id after UPDATE
+  ---
+  duration_ms: 1318.96121
+  type: 'test'
+  ...
+# Subtest: CSR import additionally refuses a foreign lineage tenant
+ok 42 - CSR import additionally refuses a foreign lineage tenant
+  ---
+  duration_ms: 2477.267788
+  type: 'test'
+  ...
+# Subtest: CSR import additionally refuses a foreign lineage actor
+ok 43 - CSR import additionally refuses a foreign lineage actor
+  ---
+  duration_ms: 28182.537736
+  type: 'test'
+  ...
+# Subtest: CSR import additionally refuses a foreign UPDATE tenant
+ok 44 - CSR import additionally refuses a foreign UPDATE tenant
+  ---
+  duration_ms: 5295.675298
+  type: 'test'
+  ...
+# Subtest: CSR import additionally refuses a foreign UPDATE document
+ok 45 - CSR import additionally refuses a foreign UPDATE document
+  ---
+  duration_ms: 2273.504839
+  type: 'test'
+  ...
+# Subtest: CSR import additionally refuses a changed context between UPDATE and lineage
+ok 46 - CSR import additionally refuses a changed context between UPDATE and lineage
+  ---
+  duration_ms: 1799.285444
+  type: 'test'
+  ...
+# Subtest: CSR import refuses an overriding target object shape
+ok 47 - CSR import refuses an overriding target object shape
+  ---
+  duration_ms: 1531.536766
+  type: 'test'
+  ...
+# Subtest: CSR import refuses an overriding filing client object shape
+ok 48 - CSR import refuses an overriding filing client object shape
+  ---
+  duration_ms: 3534.255051
+  type: 'test'
+  ...
+# Subtest: CSR import refuses an overriding audit executor object shape
+ok 49 - CSR import refuses an overriding audit executor object shape
+  ---
+  duration_ms: 2366.194768
+  type: 'test'
+  ...
+1..49
+# tests 49
+# suites 0
+# pass 49
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 85059.188454

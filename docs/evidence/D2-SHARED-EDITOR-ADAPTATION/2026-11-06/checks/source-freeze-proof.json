@@ -1,0 +1,37 @@
+{
+  "checkedHead": "f4295889ca0297e115fcd88b334c98804c7c2fbc",
+  "verifiedHead": "f4295889ca0297e115fcd88b334c98804c7c2fbc",
+  "capturePhase": "After the frozen source commit, during the normal full pre-push run; not a pre-hook snapshot.",
+  "inputCount": 11327,
+  "beforeSha256": "7532906188d786a258c29bc0fafd6bb0e36953bfed277e8899cb612ae2c11bd8",
+  "afterSha256": "7532906188d786a258c29bc0fafd6bb0e36953bfed277e8899cb612ae2c11bd8",
+  "sourceBytesUnchanged": true,
+  "algorithm": "SHA256 of sorted UTF8 path + NUL + lowercase file SHA256 + NUL",
+  "sourceSuffixes": [
+    ".cjs",
+    ".css",
+    ".cts",
+    ".html",
+    ".js",
+    ".jsx",
+    ".mjs",
+    ".mts",
+    ".py",
+    ".scss",
+    ".sh",
+    ".sql",
+    ".ts",
+    ".tsx",
+    ".yaml",
+    ".yml"
+  ],
+  "rootJsonInputs": [
+    ".typecheck-baseline.json",
+    "package-lock.json",
+    "package.json"
+  ],
+  "additionalInputs": "tsconfig*.json everywhere; JSON under client/server/shared/scripts",
+  "sourceScope": "client/server/shared/scripts/.devcontainer; root code; selected component/native browser inputs",
+  "inventory": "git ls-files --cached --others --exclude-standard; existing files only",
+  "limits": "This proves input equality around the normal full check; it does not replace any gate."
+}

@@ -7,7 +7,7 @@ import { assertEditorDraftNotTruncated } from './authoring-draft-termination';
 import { renderPassageBlock } from './authoring-draft-passage';
 import { savedTemplateReview, type SavedTemplateReview } from '../ana/saved-template-review';
 import { e3ReferenceDraftingMode } from '../ind/ctd/csr-e3-guidance';
-import { writingAgencyOf } from '../../../shared/authoring/writing-regions';
+import { WRITING_AGENCIES, writingAgencyOf, type WritingAgency } from '../../../shared/authoring/writing-regions';
 import { isCsrTemplateId } from '../../../shared/authoring/csr-scientific-review';
 
 export const MAX_DRAFT_TEMPLATE_REFERENCE_BYTES = 16 * 1024;
@@ -35,23 +35,47 @@ function effectiveReference(review: SavedTemplateReview, sectionId: string) {
   return { references, selected, source, templateId: selected?.templateId ?? review.template.id };
 }
 
-function recordedWritingRegion(source: Record<string, unknown> | null): string | null {
+function recordedFilingContext(source: Record<string, unknown> | null): { region: unknown; agency: unknown } | null {
   const filing = source?.filingContext;
-  if (!filing || typeof filing !== 'object' || Array.isArray(filing)) return null;
-  const region = (filing as Record<string, unknown>).region;
-  return writingAgencyOf(region);
+  if (!filing || typeof filing !== 'object' || Array.isArray(filing) || !('region' in filing)) return null;
+  return { region: filing.region, agency: 'agency' in filing ? filing.agency : undefined };
+}
+
+/** A saved receiving agency is not a geographic writing preference. In
+ * particular, an EU Notified Body must never become EMA through its region. */
+export function recordedTemplateWritingAgency(source: Record<string, unknown> | null): WritingAgency | null {
+  const filing = recordedFilingContext(source);
+  if (!filing || filing.region === 'GLOBAL' || typeof filing.agency !== 'string') return null;
+  const key = (value: string) => value.trim().replace(/[\s_-]+/g, '').toLowerCase();
+  const recorded = key(filing.agency);
+  return WRITING_AGENCIES.find(agency => key(agency) === recorded) ?? null;
+}
+
+function unsupportedRecordedAgency(source: Record<string, unknown> | null): boolean {
+  const filing = recordedFilingContext(source);
+  return filing !== null && filing.region !== 'GLOBAL' && recordedTemplateWritingAgency(source) === null;
+}
+
+function receivingJurisdiction(source: Record<string, unknown> | null, recordedRegion: string | null, verified: boolean): string {
+  if (recordedRegion) return 'recorded template scope; confirm current applicability';
+  if (verified && unsupportedRecordedAgency(source)) return 'recorded receiving agency is unsupported by automated drafting; retain its saved jurisdiction and use manual editing';
+  return 'unconfirmed; GLOBAL or absent scope is not a receiving jurisdiction';
 }
 
 function sourceRequiresManual(source: Record<string, unknown> | null): boolean {
   return source?.aiDraftable === false || source?.kind === 'preparation' || source?.authoringMode === 'manual';
 }
 
-function admitDraftReference(source: Record<string, unknown> | null, requestedRegion: unknown, sectionManual: boolean) {
+function admitDraftReference(source: Record<string, unknown> | null, requestedRegion: unknown, sectionManual: boolean, verified: boolean) {
   if (sectionManual || sourceRequiresManual(source)) {
     throw new DraftTemplateReferenceError(409, 'TEMPLATE_NOT_DRAFTABLE',
       'The recorded template requires manual preparation. Use the original form, dataset or signed record and the manual editor; nothing was drafted.');
   }
-  const recordedRegion = recordedWritingRegion(source);
+  if (verified && unsupportedRecordedAgency(source)) {
+    throw new DraftTemplateReferenceError(409, 'TEMPLATE_AGENCY_UNSUPPORTED',
+      'The saved template’s receiving agency is not supported by automated drafting. Retain its recorded jurisdiction and use the manual editor; nothing was drafted.');
+  }
+  const recordedRegion = recordedTemplateWritingAgency(source);
   const requested = requestedRegion === undefined ? null : writingAgencyOf(requestedRegion);
   if ((requestedRegion !== undefined && !requested) || (!recordedRegion && !requested)) {
     throw new DraftTemplateReferenceError(409, 'DRAFT_REGION_REQUIRED',
@@ -69,13 +93,14 @@ export function savedSectionTemplateReference(review: SavedTemplateReview, scope
   const { references, selected, source, templateId } = effectiveReference(review, scope.sectionId);
   const sectionManual = references.some(reference => reference.fields.drafting_mode === 'manual' ||
     (reference.authority === 'recorded' && e3ReferenceDraftingMode(reference.fields.source_reference) === 'manual'));
-  const recordedRegion = recordedWritingRegion(source);
+  const recordedRegion = recordedTemplateWritingAgency(source);
+  const sourceVerification = review.source && !selected?.assembly ? 'full-recorded' : selected?.sourceVerification ?? 'not-recorded';
   const reference = {
     kind: 'saved-section-template-reference', sectionId: scope.sectionId, sectionCode: scope.code, templateId,
     ...(!selected?.assembly ? { parentTemplateId: review.template.id } : {}),
-    sourceVerification: review.source && !selected?.assembly ? 'full-recorded' : selected?.sourceVerification ?? 'not-recorded',
+    sourceVerification,
     templateSource: source,
-    receivingJurisdiction: recordedRegion ? 'recorded template scope; confirm current applicability' : 'unconfirmed; GLOBAL or absent scope is not a receiving jurisdiction',
+    receivingJurisdiction: receivingJurisdiction(source, recordedRegion, sourceVerification === 'full-recorded'),
     references: references.map(reference => ({ sectionId: reference.sectionId, templateId: reference.templateId,
       authority: reference.authority, sourceVerification: reference.sourceVerification,
       ...(reference.state ? { state: reference.state } : {}), fields: reference.fields,
@@ -99,7 +124,7 @@ export function renderSavedSectionTemplateReference(reference: Record<string, un
 
 function renderDraftReference(review: SavedTemplateReview, scope: DraftTemplateScope, requestedRegion: unknown) {
   const { source, sectionManual, reference } = savedSectionTemplateReference(review, scope);
-  const { region, recordedRegion } = admitDraftReference(source, requestedRegion, sectionManual);
+  const { region, recordedRegion } = admitDraftReference(source, requestedRegion, sectionManual, reference.sourceVerification === 'full-recorded');
   const filing = source?.filingContext as Record<string, unknown> | undefined;
   // A CSR whatever template it was made from: the recorded filing, or one of the built-in CSR templates (the same
   // rule the editor's study-data build and the scientific review use). The component CSR New document offers records
