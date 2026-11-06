@@ -374,7 +374,19 @@
         "server/services/security/field-encryption.ts",
         "server/services/observability/redaction.ts",
         "server/services/tenant/tenant-settings-writer.ts",
-        "server/routes/ai-placement-policy.ts"
+        "server/routes/ai-placement-policy.ts",
+        "server/eval/localai/**",
+        "server/routes/authoring.router.ts",
+        "server/services/authoring/peer-review.ts",
+        "server/services/authoring/workflow-import-governance.ts",
+        "server/services/authoring/authoring-from-draft.ts",
+        "server/services/authoring/authoring-draft-tool.ts",
+        "shared/authoring/peer-review.ts",
+        "client/src/concept2cure/v2/surfaces/ReviewDecisionDialog.tsx",
+        "client/src/concept2cure/v2/surfaces/usePeerReviewDecision.ts",
+        "client/src/concept2cure/v2/surfaces/authoringPeerReview.ts",
+        "server/routes/regulatory-intelligence.ts",
+        "server/services/intelligence/ana-failure-learning.ts"
       ]
     },
     {
@@ -896,6 +908,24 @@
           "package": "S4",
           "status": "implementation_in_progress",
           "scope": "Extend existing crypto/storage/settings/policy/gateway/drafting/Admin files: explicit-span minimal derivative, tenant KMS AES-GCM custody, reauthenticated exact-payload attestation, current policy/source/actor admission, nonstream derivative-only dispatch and deterministic local token reinjection verification. Raw T3 remains local; no fabricated model PQ or custody deployment evidence."
+        },
+        {
+          "name": "actual_correction_to_scoped_rule_lifecycle",
+          "package": "S4",
+          "status": "implementation_in_progress",
+          "scope": "Actual human correction source audit and versioned tenant/project rule lifecycle, mandatory hard gates, explicit conflicts, supersession and visible human controls; no private-user rule without owner isolation."
+        },
+        {
+          "name": "durable_independent_checks_before_authoring_release",
+          "package": "S4",
+          "status": "implementation_in_progress",
+          "scope": "Immutable AnA genesis requires current content/source-bound deterministic checker receipt and assigned-human disposition before freeze/sign/workflow release; existing authoring ledger and review UI, no mutable provenance authority."
+        },
+        {
+          "name": "derivative_to_existing_editor_generation_provenance",
+          "package": "S4",
+          "status": "implementation_in_progress",
+          "scope": "Existing draft_authoring_document accepts approved derivative reference only; actual nested generation ledger/hash/served identity verifies inside canonical authoring create transaction before linking draft to editor, not parent-model attribution."
         }
       ],
       "hardDependencies": [
