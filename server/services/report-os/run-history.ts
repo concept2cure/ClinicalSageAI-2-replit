@@ -85,8 +85,17 @@ const runColumns = `r.id AS "id", r.run_uuid AS "runUuid", r.organization_id AS 
 async function admittedQualityRunIds(organizationId: number, filters: ReportRunHistoryFilters, executor: RequestSqlClient): Promise<number[]> {
   if (!filters.actor) return [];
   const qualityContext = createReportQualityAccessContext(executor, { organizationId, userId: filters.actor.userId });
-  const { rows } = await executor.query(`SELECT ${runColumns} FROM report_runs r
-    WHERE r.organization_id = $1 AND ${qualityCandidate} ORDER BY r.id FOR SHARE`, [organizationId]);
+  const { rows } = await executor.query(`SELECT r.id AS "id", r.run_uuid AS "runUuid", r.organization_id AS "organizationId",
+      r.client_workspace_id AS "clientWorkspaceId", r.scope_type AS "scopeType",
+      r.scope_id AS "scopeId", r.report_type_id AS "reportTypeId", r.status AS "status",
+      r.requested_by AS "requestedBy", r.dependency_summary AS "dependencySummary",
+      r.blockers AS "blockers", r.confidence AS "confidence", r.freshness AS "freshness",
+      r.error AS "error", r.started_at AS "startedAt", r.completed_at AS "completedAt",
+      r.created_at AS "createdAt", r.updated_at AS "updatedAt"
+    FROM report_runs r WHERE r.organization_id = $1
+      AND (r.report_type_id = 'compliance.audit_assurance_pack'
+        OR COALESCE((r.dependency_summary::jsonb #> '{summary,domain}') ? 'qualityEvidence', false))
+    ORDER BY r.id FOR SHARE`, [organizationId]);
   const ids: number[] = [];
   for (const row of rows) {
     const run = row as unknown as typeof reportRuns.$inferSelect;
