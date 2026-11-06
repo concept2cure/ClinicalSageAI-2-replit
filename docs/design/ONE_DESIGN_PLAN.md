@@ -238,6 +238,32 @@ round-trip. Existing redaction does not supply that derivative contract. These l
 **acceptance pending**; no model is enabled, provider terms verified or external retention/residency assurance made
 by this update. Record actual evidence before changing those statuses.
 
+### Continuing founder direction — concrete model pins and credential custody
+
+The founder further directed on 2026-11-06: **“We need the ability to have pinned to qualified models, not
+placeholders.”** Extend the controlled registry and existing qualification verifier with an exact provider/model
+snapshot or local weights digest, intended use, executed PQ record reference and content hash. A strict pin never
+silently changes model or falls back to an unqualified one. Missing, altered, wrong-scope or incomplete evidence
+refuses execution. A source-code change or customer key is not a qualification pass; existing pending entries stay
+pending. The existing nonstream drafting endpoint and model catalog expose this capability; unsupported streaming
+must refuse before releasing any text. Runtime packaging includes only verified registry-referenced records and
+canonical qualification assets, never an entire evidence directory or customer trace collection.
+
+The founder also requested a **secure vault-type card in Client Administration** for client-owned third-party
+accounts (Veeva Vault, ClinicalTrials.gov and FDA) and client-owned Claude/OpenAI/Kimi keys. Extend the existing
+connector-credential store and agency-account card rather than duplicate them. Capture is write-only to the UI:
+current tenant administration authority, fresh authentication, stated reason, encrypted credentials, scoped
+versioned grants, expiry, rotation/revocation and an atomic audit are required. Saved secrets never return in API
+metadata, AnA context, browser persistence, audit or errors. Revocation preserves a tombstone so a client-owned
+credential cannot silently fall back to a platform key. Model SDKs and embeddings use fresh request-scoped tenant
+credentials and retain all placement, model/PQ and approval gates. Provider availability cannot depend solely on a
+platform environment key. Registry/portal accounts without a verified adapter are identified as storage-only,
+never “connected” or transmission-ready. FDA ESG certificates remain in the existing authority-account card.
+
+These instructions continue P-104 within the existing files. No new source file, screen, mount, table, dependency,
+provider/model entry or fabricated qualification is approved. The ledger lists the exact additional existing
+implementation and build paths. Full v0.5 acceptance remains pending until its fixture gates pass.
+
 ### Milestones in the existing roadmap — §11 build order
 
 Each row is **queued for v0.5 acceptance** until its stated fixture is run and recorded. A file's existence or an

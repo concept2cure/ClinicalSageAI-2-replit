@@ -358,7 +358,18 @@
         "server/services/account-skill-bundles.ts",
         "client/src/concept2cure/v2/surfaces/AdminSkillForms.ts",
         "client/src/concept2cure/v2/SkillStudioParts.tsx",
-        "client/src/concept2cure/v2/SkillStudio.tsx"
+        "client/src/concept2cure/v2/SkillStudio.tsx",
+        "server/services/ai-governance/approved-models.ts",
+        "server/eval/pq/**",
+        "scripts/ops/verify-pq-claims.ts",
+        "scripts/build-server.mjs",
+        "Dockerfile.optimized",
+        ".dockerignore",
+        "server/routes/deep-research.ts",
+        "server/routes/knowledge-base.ts",
+        "client/src/concept2cure/v2/surfaces/AdminSettings.tsx",
+        "client/src/concept2cure/v2/surfaces/GatewayAccountsSetting.tsx",
+        "client/src/concept2cure/v2/surfaces/DeepResearch.tsx"
       ]
     },
     {
@@ -788,6 +799,18 @@
           "package": "S4",
           "status": "implementation_in_progress",
           "scope": "extend existing skill-store policy_bindings and current administration/studio surfaces with sourced mandatory rules; runtime acceptance not yet demonstrated"
+        },
+        {
+          "name": "qualified_model_pin_capability",
+          "package": "S4",
+          "status": "implementation_in_progress",
+          "scope": "Exact controlled registry/provider/version and task-scoped PQ reference/hash; no placeholder, silent fallback or unverified streaming."
+        },
+        {
+          "name": "client_administration_credential_vault",
+          "package": "S4",
+          "status": "implementation_in_progress",
+          "scope": "Metadata-only client administration cards; encrypted grant envelope, tenant/provider binding, re-authenticated atomic audit, rotate/revoke/expiry, no platform fallback for revoked keys, BYOK SDK/embedding isolation."
         }
       ],
       "hardDependencies": [
@@ -805,6 +828,18 @@
           "name": "expanded_spike",
           "status": "acceptance_pending",
           "evidence": "No full §14.4 + §§19/23/26 fixture pass; component tests do not enable downstream phases"
+        }
+      ],
+      "userDirections": [
+        {
+          "date": "2026-11-06",
+          "instruction": "We need the ability to have pinned to qualified models, not placeholders.",
+          "implementation": "Strict concrete provider/model pin and actual task-scoped PQ evidence verification; no fabricated qualification."
+        },
+        {
+          "date": "2026-11-06",
+          "instruction": "Client Administration secure vault cards for external account credentials and client-owned Claude, OpenAI and Kimi API keys.",
+          "implementation": "Extend existing encrypted connector and gateway account stores; admin reauthentication, scoped grants, expiry/rotation/revocation, write-only capture and tenant-specific deterministic SDK use."
         }
       ]
     }
