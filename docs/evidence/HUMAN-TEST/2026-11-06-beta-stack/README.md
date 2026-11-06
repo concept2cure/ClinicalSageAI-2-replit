@@ -137,6 +137,20 @@ Results:
    - One console line: the CSP refused an inline style on the login page. Nothing
      visible is affected.
 
+6. **A tester invited, on the stack rebuilt from trunk `41269e082e`:**
+   - Home → "Invite your team" opens the admin console. Invite member (Reviewer)
+     → Send invite.
+   - The email "admin@beta.example.invalid invited you to Beta Sponsor on
+     Concept2Cure" arrives. Its link opens "Set a new password".
+   - The tester sets a password and signs in with the emailed code. They reach
+     Home as Tess Tester, in Beta Sponsor (`tester-signed-in-home.png`).
+7. **A first project, through the UI:** New project → Investigational New Drug
+   Application → name, product, indication, product type (required) and
+   objective → Review & create → Create project.
+   - The project page opens with its six steps, the objective (version 1) and
+     its work areas (`first-project-created.png`).
+   - No page errors and no 4xx or 5xx API responses in steps 6–7.
+
 Gates on the changed files:
 - `ci:compose-boot-contract` and its selftest pass;
 - `ci:runtime-ddl` passes;
@@ -172,11 +186,31 @@ Gates on the changed files:
    The password may not contain the person's name, email or organisation.
 6. **Invite the testers:** sign in, then use Home → "Invite your team".
 
-## Open
+## The self-host install, the same fix (second change)
 
-- `docker-compose.yml` (the self-host install) has the same three defects.
-  `sslmode=prefer` is refused for host `db` in production, and nothing
-  provisions or embeds. It is not fixed in this change.
+`docker-compose.yml` had the same defects. Run as committed, the app
+crash-looped five times on `The server does not support SSL connections`. Its
+`sslmode=prefer` is refused for host `db` in production in any case, and
+nothing provisioned the database or embedded text.
+
+It now carries what the beta stack carries:
+- `db-tls`, TLS on `db`, and `provision`;
+- the app trusting the certificate and serving as `app_service` only;
+- `embeddings`;
+- `SETUP_TOKEN`;
+- Postgres, Redis and the app published on loopback.
+
+Its optional profiles are unchanged. Run here with the same substitutions, from
+empty volumes:
+- provisioning exits 0;
+- `/readyz` is 200 through the HTTPS front, with every dependency `ok`;
+- the CI sign-in script passes: second factor, project 201, EICAR 400, clean
+  PDF 201;
+- a second provisioning run skips install-fresh and exits 0.
+
+`.env.example`'s self-host note now says the same.
+
+## Open
 - The image build and TEI were not run here (hosts refused, above). ci.yml
   `production-image-boot` builds and boots the image, but CI on
   `concept2cure-v2` is about two days behind: runs queued on 2026-11-04 were

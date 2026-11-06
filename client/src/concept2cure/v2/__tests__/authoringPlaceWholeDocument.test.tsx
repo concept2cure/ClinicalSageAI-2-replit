@@ -123,6 +123,19 @@ describe('a whole document is filed at its own code, and a repeat placement says
     expect(apiRequest.mock.calls.filter(c => c[0] !== 'GET')).toHaveLength(0);
   });
 
+  /* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): the MDX 510(k)
+     Summary's sections are numbered 1 … 9 (21 CFR 807.92(a)(1) …), so they
+     share no code and the dialog fell back to the open section's "1" — then
+     refused its own prefill in red before the publisher had typed anything. */
+  it('does not prefill a section code it would itself refuse when the sections share no code', async () => {
+    mockApi();
+    renderSeam({ sectionCodes: ['1', '2', '3'], activeSectionCode: '1' });
+    await openAndTarget();
+    expect((screen.getByLabelText(/Section code/) as HTMLInputElement).value).toBe('');
+    expect(document.body.textContent).not.toMatch(/one section of this document/);
+    expect((screen.getByRole('button', { name: /Place leaf/ }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it('a one-section document is filed at that section’s code', async () => {
     mockApi();
     renderSeam({ sectionCodes: ['3.2.S.4.1'], activeSectionCode: '3.2.S.4.1' });

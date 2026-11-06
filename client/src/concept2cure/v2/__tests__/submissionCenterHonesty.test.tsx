@@ -86,7 +86,8 @@ const FDA_PROFILE = {
     { number: '1.9', title: 'Optional annex', required: false, description: 'Not required' },
   ],
   forms: [
-    { name: 'Form 356h', formId: 'FDA-356h', required: true, description: 'Application to market' },
+    { name: 'Form 356h', formId: 'FDA-356h', required: true, requiredFor: ['nda', 'bla', 'anda'], description: 'Application to market' },
+    { name: 'Form 1571', formId: 'FDA-1571', required: true, requiredFor: ['ind'], description: 'IND application' },
   ],
   specificRequirements: ['Submit via ESG with a WebTrader or AS2 account.'],
   validationRules: [
@@ -340,5 +341,16 @@ describe('SubmissionCenter — the Planner over a region profile', () => {
     expect(body()).not.toMatch(/General investigational plan/);
     // Nor is a non-required section presented as required.
     expect(body()).not.toMatch(/Optional annex/);
+  });
+
+  /* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): an IND's Planner
+     listed "356h · FDA Form 356h (required)", the marketing-application form.
+     Forms are scoped by `requiredFor` exactly as Module 1 headings are. */
+  it('lists only the agency forms THIS application type files', async () => {
+    serve({ submissions: () => rows([SUBMISSION]) });
+    await openPlanner();
+    expect(await screen.findByText(/Required Module 1 for/i)).toBeTruthy();
+    expect(body()).toMatch(/FDA-356h/);
+    expect(body()).not.toMatch(/FDA-1571/);
   });
 });
