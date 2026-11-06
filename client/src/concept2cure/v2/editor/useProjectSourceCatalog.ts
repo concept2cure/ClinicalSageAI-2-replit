@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
-import { useDataReadVisit, type DataReadOwner, type DataReadVisit } from '../dataConnect';
+import { readRefusalWords, useDataReadVisit, type DataReadOwner, type DataReadVisit } from '../dataConnect';
 import { isProgramId } from './draftToDocument';
 import { parseProjectSourcePage, projectSourceCatalogUrl, type ProjectSourceRecord } from './projectSourceCatalog';
 import { errorCodeOf } from '@/lib/apiErrorCode';
-import { describeReadFailure, readFailureFor } from '../../mdx/hooks/useFetchJson';
 
 export type SourceReadState = 'idle' | 'loading' | 'ready' | 'error';
 /** `retryable` is false for a refusal (not licensed, not in this release, a role, not found, an expired
@@ -20,14 +19,12 @@ const UNREAD = 'The project source catalogue could not be read.';
 /* Why the catalogue was not read, said as what happened (2026-11-06). The founder, 2026-11-05: not
    licensed, not relevant, missing evidence and unavailable to this user are never one generic failure.
    A refused read showed the gate's raw "Module access denied" with Try again. A refusal is worded by the
-   one read classifier, as the Data Room panel and the Vault are, and is not retryable; only a failure to
-   answer keeps the server's words (or the generic ones) and the retry. */
+   shared rule (readRefusalWords, dataConnect.tsx) and is not retryable; only a failure to answer keeps the
+   server's words (or the generic ones) and the retry. */
 function readFailure(status: number | undefined, code: string | undefined, fallback: string) {
-  if (status === 401) return { ok: false as const, message: 'Your session has expired. Sign in again to read this project’s sources.', retryable: false };
-  const kind = readFailureFor(status, code);
-  if (kind === 'failed') return { ok: false as const, message: fallback, retryable: true };
-  const words = describeReadFailure(kind, 'the project source catalogue');
-  return { ok: false as const, message: words.message, retryable: words.retryable };
+  const refusal = readRefusalWords({ status, code }, 'the project source catalogue');
+  return refusal ? { ok: false as const, message: refusal.message, retryable: refusal.retryable }
+    : { ok: false as const, message: fallback, retryable: true };
 }
 
 async function readPage(programId: string, offset: number, current: () => boolean) {
