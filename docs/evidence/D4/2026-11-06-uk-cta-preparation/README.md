@@ -64,3 +64,14 @@ all 14 UK hashes still match. The previous merged tests/build therefore apply.
 The two full successful gate runs and ref-race statuses are retained. A 15-minute
 push window was requested under COORDINATION.md after the second ref race; the
 normal retry continues while that optional coordination request is pending.
+
+
+A third normal run, `53842d227`, passed every gate with zero TypeScript errors
+and no warning growth, then lost a Vault/navigation ref race. Incoming
+`adb1c00cb` was merged normally at `8b851f5cf`. It preserves the same editor Vault
+panel/actions, renaming its labels, and reuses existing scoped project discovery.
+The Biostatistics rail door carries the dated founder decision required by the
+one-product gate. No UK drafting/source/guard owner changed; all 14 hashes match.
+The nine changed suites plus shared navigation, navigation reachability and Vault
+project-switch checks pass 132/132 across 12 suites. Production client/server
+builds pass again. The normal retry continues; no gate bypass or force is used.

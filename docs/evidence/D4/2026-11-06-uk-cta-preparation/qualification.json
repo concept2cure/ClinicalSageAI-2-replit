@@ -76,6 +76,13 @@
       "warningGrowth": 0,
       "log": "gates-pass-second-ref-race.txt.gz",
       "note": "All normal gates passed again; Git rejected a coordination-doc-only ref advance."
+    },
+    "thirdPass": {
+      "source": "53842d227388f7815eedf519233e972ea89689ba",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-third-ref-race.txt.gz",
+      "note": "All normal gates passed; concurrent Vault/navigation advance rejected the ref."
     }
   },
   "publication": "pending normal retry after merge",
@@ -103,5 +110,14 @@
     ],
     "sourceHashesMatched": 14,
     "testsAndBuild": "Previous merged checks apply; no application source changed."
+  },
+  "vaultIntegration": {
+    "incoming": "adb1c00cba37ae6c128b4d05b350d237ab5d80fb",
+    "source": "8b851f5cf89009bbb88f43e030b1e5f0df88cbd9",
+    "passed": 132,
+    "suites": 12,
+    "build": "pass",
+    "sourceHashesMatched": 14,
+    "review": "No UK/source/guard/one-editor blocker. Biostatistics rail decision is explicitly recorded in the incoming one-product baseline."
   }
 }
