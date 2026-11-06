@@ -1,0 +1,25 @@
+{
+  "status": "passed",
+  "startedAt": "2026-11-06T20:31:14.387Z",
+  "programId": "ff0a5984-4100-460a-8b80-97de5a8efb10",
+  "documentId": "03fff5f2-0e49-4a35-8766-eb1a7645217a",
+  "cases": [
+    {
+      "name": "Human section edit saves with deliberate change reason",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Saved text reopens from the server in a fresh browser context",
+      "status": "passed",
+      "noteSha256": "58078b709ef9afe143287ccc2b2107560a1df70f1f3a1ade67023f9ed439246e"
+    },
+    {
+      "name": "Existing AnA drafting controls open inside the same section editor",
+      "status": "passed",
+      "generationRequested": false
+    }
+  ],
+  "blockedModelOrAgencyRequests": [],
+  "finishedAt": "2026-11-06T20:31:37.946Z"
+}

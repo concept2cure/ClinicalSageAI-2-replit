@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "node",
+    "--require",
+    "/workspace/ClinicalSageAI/docs/evidence/F1/2026-11-06-demo-readiness/browser-runtime.cjs",
+    "docs/evidence/DEMO/2026-11-05-csr-lifecycle/walk.cjs",
+    "http://127.0.0.1:5100",
+    "/workspace/scratch/demo-cdisc-pilot",
+    "prepare"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 186.548,
+  "rawOutput": "csr-csr-prepare.log.gz",
+  "rawGzipSha256": "1f0e72b71e770b9ea2bcb9b76ce4c0a847c76a8260ce10f2c979e3eafff671e7"
+}
