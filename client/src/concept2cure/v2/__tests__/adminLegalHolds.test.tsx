@@ -113,6 +113,24 @@ describe('Settings legal-hold read states', () => {
   });
 });
 
+/* J2 human test (2026-11-06): the list said "Placed by user #1" — an account number, where an inspector
+   needs the person who placed the hold and who lifted it. */
+describe('who placed and lifted a hold', () => {
+  it('names the person the server names, and the account number only when it names no one', async () => {
+    list.body = { holds: [
+      hold({ placedByName: 'JM Smith', liftedByName: 'Ava Approver', active: false, liftedAt: '2026-10-14T10:00:00Z', liftedBy: 9, liftReason: 'Inspection closed' }),
+      hold({ id: '55555555-5555-4555-8555-555555555555', placedByName: null }),
+    ] };
+    const view = renderCard();
+    fireEvent.change(await view.findByLabelText('Show holds'), { target: { value: 'all' } });
+    const named = await view.findByTestId(`legal-hold-${HOLD}`);
+    expect(named.textContent).toContain('Placed by JM Smith on');
+    expect(named.textContent).toContain('Lifted by Ava Approver on');
+    expect(named.textContent).not.toContain('user #');
+    expect((await view.findByTestId('legal-hold-55555555-5555-4555-8555-555555555555')).textContent).toContain('Placed by user #7 on');
+  });
+});
+
 describe('placing a legal hold', () => {
   it('uses a named tenant project and the server’s accepted record; no caller-supplied tenant id', async () => {
     const { view, dialog } = await openForm();
