@@ -41,10 +41,10 @@ import { resetOrgPlacementResolver, setOrgPlacementResolver } from '../providers
 
 const PII_TEXT = 'Patient email is patient@example.com';
 
-function buildGateway() {
+function buildGateway(piiDetection = true, auditEnabled = false) {
   return new AIGateway({
     deterministicMode: false,
-    auditEnabled: false,
+    auditEnabled,
     providers: [
       { name: 'openai', enabled: true, apiKey: 'not-used', defaultModel: 'gpt-4o', models: [] },
     ],
@@ -54,7 +54,7 @@ function buildGateway() {
       maxRequestsPerMinutePerUser: 30,
       blockedPatterns: [],
       contentFilters: true,
-      piiDetection: true,
+      piiDetection,
     },
   });
 }
@@ -85,6 +85,55 @@ describe('last-mile sensitive-dispatch gate', () => {
     logSpies.warn.mockClear();
     logSpies.error.mockClear();
     logSpies.debug.mockClear();
+  });
+
+  it.each(['public', 'tenant_derived', 'tenant_governed'] as const)(
+    'blocks Tier 3 even with PII screening off and provenance %s, and audits no content', async payloadProvenance => {
+      process.env.NODE_ENV = 'development';
+      process.env.AI_PII_ENFORCEMENT = 'off';
+      const gateway = buildGateway(false, true);
+      const dispatch = vi.spyOn(gateway as any, 'dispatchProvider');
+      await expect(gateway.route({ taskType: 'chat', organizationId: 7, payloadProvenance,
+        inputSensitivityTiers: [0, 3, 1], messages: [{ role: 'user', content: 'CANARY_CMC_SECRET_829' }] }))
+        .rejects.toMatchObject({ name: GatewayPolicyError.name, message: expect.stringContaining('DENY_INPUT_TIER') });
+      expect(dispatch).not.toHaveBeenCalled();
+      const entries = (gateway as any).auditLogger.getRecentEntries();
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toMatchObject({ error: 'DENY_INPUT_TIER',
+        metadata: { inputTierPlacement: { tierMax: 3, allowed: false, provider: 'openai' } } });
+      expect(JSON.stringify(entries)).not.toContain('CANARY_CMC_SECRET_829');
+    },
+  );
+
+  it('retains the tier decision in the served ledger without changing legacy unclassified calls', async () => {
+    process.env.NODE_ENV = 'development';
+    const gateway = buildGateway(false, true);
+    const dispatch = vi.spyOn(gateway as any, 'dispatchProvider').mockResolvedValue(FAKE_RESPONSE);
+    await gateway.route({ taskType: 'chat', inputSensitivityTiers: [0, 1], messages: [{ role: 'user', content: 'Public workflow' }] });
+    expect((gateway as any).auditLogger.getRecentEntries()[0]).toMatchObject({ success: true,
+      metadata: { inputTierPlacement: { tierMax: 1, allowed: true, lane: 'B_frontier' } } });
+    await gateway.route({ taskType: 'chat', messages: [{ role: 'user', content: 'Legacy workflow' }] });
+    expect(dispatch).toHaveBeenCalledTimes(2);
+  });
+
+  it('pins classifications before asynchronous tenant policy resolution', async () => {
+    process.env.NODE_ENV = 'development';
+    const tiers: Array<0 | 3> = [3];
+    setOrgPlacementResolver({ resolve: async () => { tiers[0] = 0; return null; } });
+    const gateway = buildGateway(false);
+    const dispatch = vi.spyOn(gateway as any, 'dispatchProvider');
+    await expect(gateway.route({ taskType: 'chat', organizationId: 7, inputSensitivityTiers: tiers,
+      messages: [{ role: 'user', content: 'Restricted manufacturing procedure' }] }))
+      .rejects.toThrow('DENY_INPUT_TIER');
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('applies the same tier wall before embedding dispatch', async () => {
+    process.env.NODE_ENV = 'development';
+    const gateway = buildGateway(false);
+    await expect(gateway.authorizeEmbedding({ organizationId: 7, provider: 'openai',
+      texts: ['Restricted manufacturing procedure'], inputSensitivityTiers: [3] }))
+      .rejects.toThrow('DENY_INPUT_TIER');
   });
 
   it('malformed placement approvals under enforcement is a terminal policy error, not a retried outage', async () => {

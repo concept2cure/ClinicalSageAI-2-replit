@@ -84,12 +84,26 @@ export function childToolsFrom(governed: readonly AnyAnaTool[]): AnaTool[] {
 
 export type SubAgentRole = 'research' | 'verify';
 
+/** Exact quotation checks, bounded before any source is read. Character offsets are UTF-16. */
+export interface AgentSourceSpan {
+  artifact_id: string;
+  source_start: number;
+  source_end: number;
+  draft_start: number;
+  draft_end: number;
+}
+
+export const MAX_AGENT_SOURCE_SPANS = 8;
+export const MAX_AGENT_SOURCE_CHARS = 30_000;
+export const MAX_AGENT_QUOTE_CHARS = 2_000;
+
 export interface AgentBrief {
   role: SubAgentRole;
   objective: string;
   instructions: string;
   /** verify only: the exact text the checks run on. */
   textToCheck?: string;
+  sourceSpans?: AgentSourceSpan[];
 }
 
 /** A refusal the runner returns instead of starting an agent. House shape. */
@@ -99,6 +113,32 @@ export interface AgentRefusal {
 }
 
 const refusal = (error: string, message: string): AgentRefusal => ({ error, message });
+
+/** Validate references as data; neither an input quote nor a success flag can supply evidence. */
+function parseSourceSpans(value: unknown, draft: string): AgentSourceSpan[] | AgentRefusal {
+  const invalid = (message: string) => refusal('INVALID_AGENT_BRIEF', `${message} No agent was started.`);
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || !value.length || value.length > MAX_AGENT_SOURCE_SPANS) {
+    return invalid(`source_spans must contain 1–${MAX_AGENT_SOURCE_SPANS} references.`);
+  }
+  const sourceSpans: AgentSourceSpan[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return invalid('Each source span must be an object.');
+    const span = item as Record<string, unknown>;
+    const artifact = typeof span.artifact_id === 'string' ? span.artifact_id.trim() : '';
+    const offsets = [span.source_start, span.source_end, span.draft_start, span.draft_end];
+    if (!artifact || artifact.length > 200 || !offsets.every(n => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0)) {
+      return invalid('Source spans need an artifact_id and non-negative integer offsets.');
+    }
+    const [sourceStart, sourceEnd, draftStart, draftEnd] = offsets as number[];
+    const valid = [sourceEnd > sourceStart, sourceEnd <= MAX_AGENT_SOURCE_CHARS, draftEnd > draftStart,
+      draftEnd <= draft.length, sourceEnd - sourceStart === draftEnd - draftStart,
+      sourceEnd - sourceStart <= MAX_AGENT_QUOTE_CHARS, Boolean(draft.slice(draftStart, draftEnd).trim())].every(Boolean);
+    if (!valid) return invalid('Source and draft spans must have the same non-zero length, fit their bounds, and contain text.');
+    sourceSpans.push({ artifact_id: artifact, source_start: sourceStart, source_end: sourceEnd, draft_start: draftStart, draft_end: draftEnd });
+  }
+  return sourceSpans;
+}
 
 /** The brief, validated: over-long input is refused, never truncated. */
 export function parseAgentBrief(input: Record<string, unknown>): AgentBrief | AgentRefusal {
@@ -121,7 +161,9 @@ export function parseAgentBrief(input: Record<string, unknown>): AgentBrief | Ag
   if (raw.length > AGENT_TEXT_TO_CHECK_MAX) {
     return invalid(`text_to_check is over ${AGENT_TEXT_TO_CHECK_MAX} characters.`);
   }
-  return { role, objective, instructions, textToCheck: raw };
+  const sourceSpans = parseSourceSpans(input.source_spans, raw);
+  if ('error' in sourceSpans) return sourceSpans;
+  return { role, objective, instructions, textToCheck: raw, ...(sourceSpans.length ? { sourceSpans } : {}) };
 }
 
 /** One parent turn's agent counts. The stream holds one per turn. */

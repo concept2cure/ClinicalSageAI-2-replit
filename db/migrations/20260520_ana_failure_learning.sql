@@ -2,7 +2,7 @@
 -- eCTD REGULATORY AUDIT CONTEXT
 -- Purpose: AnA failure learning — the per-turn interaction log, the cross-tenant
 --          failure patterns, and the agency requirements promoted from them.
--- Integrity Risk Addressed: tenant isolation of unvalidated agency requirements.
+-- Integrity Risk Addressed: tenant isolation of all client-derived agency requirements.
 --
 -- AMENDED 2026-10-15 (in place, per CLAUDE.md RULE 1):
 --   intelligence.agency_requirements gains organization_id BIGINT, the
@@ -29,6 +29,16 @@
 --   callers or policies. Instrumented runtime queries apply verified request
 --   tenant scope. Policy creation is guarded for every-deploy replay; no rows,
 --   owners or validation states are changed by this amendment.
+-- AMENDED 2026-11-06 (in place, spec v0.5 §§17/27, P-104):
+--   Curator validation does not establish reviewed de-identification. Require
+--   the writer organization for BOTH validated and unvalidated requirements;
+--   ownerless legacy rows remain invisible. ALTER the existing SELECT policy
+--   on every replay so deployed databases lose the former global-read branch.
+--   INSERT policy and row ownership are preserved; no data is rewritten.
+--   failure_patterns has no tenant owner or reviewed de-identification evidence.
+--   ENABLE/FORCE RLS with no policies quarantines that legacy content from all
+--   non-bypass runtime roles; only existing superuser/BYPASSRLS maintenance
+--   authority remains. No runtime grant, inferred owner or activation is added.
 -- =============================================================================
 -- AnA Failure Learning — extension of the Regulatory Intelligence layer
 --
@@ -43,12 +53,13 @@
 -- The learning happens in three tables:
 --
 --   intelligence.ana_interactions   — per-turn log (tenant-scoped)
---   intelligence.failure_patterns   — DP-anonymized cross-tenant clusters
+--   intelligence.failure_patterns   — quarantined legacy correction clusters
 --   intelligence.agency_requirements — discovered per-agency rules
 --
--- The pattern table is the moat. A single tenant's corrections stay private;
--- when N≥3 tenants surface the same corrected pattern, we promote it to a
--- cross-platform rule AnA consults on every future relevant turn.
+-- Historical shape: the old aggregator copied a representative tenant
+-- correction into failure_patterns after a cohort threshold. That was neither
+-- differential privacy nor de-identification. Legacy rows are retained for
+-- controlled remediation; active status alone never authorizes global reuse.
 -- =============================================================================
 
 BEGIN;
@@ -57,13 +68,12 @@ CREATE SCHEMA IF NOT EXISTS intelligence;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- AnA interactions — append-only log of every conversation turn whose outcome
--- the system recorded. Tenant-scoped; the only field that ever crosses tenant
--- boundaries is the `pattern_fingerprint`, which is a hashed projection that
--- can be safely aggregated.
---
--- `prompt_summary` / `response_summary` are deliberately sanitized
--- (no PII, no proprietary content) — the user-correction text is stored as
--- `correction_text` and is also sanitized at write time.
+-- the system recorded, attributed to its organization. Prompt/response
+-- summaries and correction_text are normalized/truncated, NOT de-identified;
+-- they may still contain private or proprietary content. Hashing prompt tokens
+-- likewise does not establish safe sharing. Shared extraction is held at the
+-- service boundary pending reviewed local de-identification and contribution
+-- authority. This amendment does not change tenant-local interaction capture.
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS intelligence.ana_interactions (
     id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -84,7 +94,7 @@ CREATE TABLE IF NOT EXISTS intelligence.ana_interactions (
     ana_confidence       DOUBLE PRECISION,                    -- 0..1 if AnA reported one
     user_corrected       BOOLEAN NOT NULL DEFAULT FALSE,      -- did the user provide an explicit correction?
 
-    -- Content (sanitized at the service layer — never raw prompt/response).
+    -- Client content (whitespace-normalized/truncated, not de-identified).
     prompt_summary       TEXT,                                -- short summary, ≤500 chars
     response_summary     TEXT,                                -- short summary, ≤500 chars
     correction_text      TEXT,                                -- the user's correction, sanitized
@@ -105,15 +115,10 @@ CREATE INDEX IF NOT EXISTS idx_ai_agency_doctype  ON intelligence.ana_interactio
 CREATE INDEX IF NOT EXISTS idx_ai_recorded_at     ON intelligence.ana_interactions(recorded_at DESC);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Failure patterns — clustered failures promoted to cross-tenant memory.
--- A pattern is promoted from raw interactions when:
---   1. ≥ 3 distinct tenants have hit the same pattern_fingerprint
---   2. Aggregate failure count ≥ 5
---   3. A clear majority correction exists (k-best correction's frequency
---      passes a quorum threshold at extraction time)
---
--- Each row carries the suggested correction the aggregator believes best
--- resolves the failure, plus metadata for ranking and decay.
+-- Failure patterns — retained legacy schema, runtime access quarantined.
+-- Historical automatic cohort/consensus promotion did not remove identities,
+-- values or strategy from suggested_correction. There is no recorded owner or
+-- de-identification/human-promotion artifact, so no tenant may read these rows.
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS intelligence.failure_patterns (
     id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -122,7 +127,7 @@ CREATE TABLE IF NOT EXISTS intelligence.failure_patterns (
     document_type            TEXT NOT NULL,
     intent_class             TEXT NOT NULL,
 
-    -- Best-known correction across tenants.
+    -- Legacy correction text; may contain client content. Not shared advice.
     suggested_correction     TEXT NOT NULL,
     correction_source        TEXT NOT NULL DEFAULT 'aggregated_consensus', -- 'aggregated_consensus' | 'curator_override' | 'agency_doc_match'
 
@@ -138,6 +143,13 @@ CREATE TABLE IF NOT EXISTS intelligence.failure_patterns (
     status                   TEXT NOT NULL DEFAULT 'active'   -- 'active' | 'superseded' | 'curator_disabled'
 );
 
+-- No policies intentionally: deny all non-bypass runtime access, including to
+-- the owner under FORCE RLS. Existing privileged maintenance can retain and
+-- remediate records. Do not create a permissive policy without reviewed
+-- de-identification, contribution authority and named exact-artifact approval.
+ALTER TABLE intelligence.failure_patterns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE intelligence.failure_patterns FORCE ROW LEVEL SECURITY;
+
 CREATE INDEX IF NOT EXISTS idx_fp_lookup ON intelligence.failure_patterns(agency, document_type, intent_class) WHERE status = 'active';
 CREATE INDEX IF NOT EXISTS idx_fp_status ON intelligence.failure_patterns(status);
 CREATE INDEX IF NOT EXISTS idx_fp_extracted ON intelligence.failure_patterns(extracted_at DESC);
@@ -149,8 +161,8 @@ CREATE INDEX IF NOT EXISTS idx_fp_extracted ON intelligence.failure_patterns(ext
 -- in §1.6"), whereas a pattern is the conversational fix.
 --
 -- Validation lifecycle: 'unvalidated' → 'validated' (curator) | 'rejected'.
--- Unvalidated rows are surfaced to AnA at lower confidence; validated rows
--- enter the canonical rule set.
+-- Both validated and unvalidated client-derived requirements remain inside
+-- their writer organization; validation is not permission for global reuse.
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS intelligence.agency_requirements (
     id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -187,11 +199,8 @@ BEGIN
   ) THEN
     CREATE POLICY tenant_isolation_policy ON intelligence.agency_requirements
       FOR SELECT USING (
-        validation_status = 'validated'
-        OR (
-          validation_status = 'unvalidated'
-          AND organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::BIGINT
-        )
+        organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::BIGINT
+        AND validation_status IN ('unvalidated', 'validated')
       );
   END IF;
   IF NOT EXISTS (
@@ -206,6 +215,14 @@ BEGIN
   END IF;
 END
 $$;
+
+-- Existing deployments already have the policy: CREATE IF MISSING alone would
+-- leave its former validated-global branch in force indefinitely.
+ALTER POLICY tenant_isolation_policy ON intelligence.agency_requirements
+  USING (
+    organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::BIGINT
+    AND validation_status IN ('unvalidated', 'validated')
+  );
 
 CREATE INDEX IF NOT EXISTS idx_ar_lookup     ON intelligence.agency_requirements(agency, document_type);
 CREATE INDEX IF NOT EXISTS idx_ar_validation ON intelligence.agency_requirements(validation_status);
