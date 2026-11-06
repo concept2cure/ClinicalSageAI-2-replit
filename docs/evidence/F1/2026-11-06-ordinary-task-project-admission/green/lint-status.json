@@ -1,0 +1,16 @@
+{
+  "exitCode": 0,
+  "processExitCode": 0,
+  "sourcesUnchanged": true,
+  "args": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "server/routes/__tests__/_task-management-governed-harness.ts",
+    "server/routes/__tests__/task-management-source-project.test.ts",
+    "server/routes/taskManagement.routes.ts",
+    "server/services/tasking/__tests__/task-project-admission.test.ts",
+    "server/services/tasking/task-project.ts",
+    "tests/db/workflow-project-admission.dbtest.ts"
+  ],
+  "elapsedSeconds": 1.82
+}

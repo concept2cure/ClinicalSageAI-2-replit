@@ -89,6 +89,23 @@ async function retainTaskWorkspace(q: RequestSqlClient, organizationId: number, 
   if (owned.rows.length !== 1 || owned.rows[0].id !== workspaceId) throw projectDenied();
 }
 
+/** Unfiled work still requires current active write membership, retained on the
+ * writer's own transaction just like the actor of project-bound work. */
+export async function admitTaskCreationActor(q: RequestSqlClient, input: {
+  organizationId: number; actorUserId: number;
+}) {
+  try {
+    const actor = await readCurrentProgramActor(q, { organizationId: input.organizationId,
+      userId: input.actorUserId, forShare: true });
+    if (!GOVERNED_WRITE_ROLES.has(actor.role)) throw projectDenied();
+    return actor;
+  } catch (error) {
+    if (error instanceof TaskProjectAdmissionError) throw error;
+    if (error instanceof ProgramReadAccessError && error.status === 403) throw projectDenied();
+    throw projectUnavailable();
+  }
+}
+
 /** Extend the existing task/project boundary on the writer's own transaction.
  * Locks retain the current actor, parent, visibility and edit membership through
  * the task/edge/audit commit; a read/review share never becomes write authority. */
@@ -97,9 +114,7 @@ export async function admitTaskCreationProject(q: RequestSqlClient, input: {
 }): Promise<{ projectId: number; clientWorkspaceId: number | null }> {
   const projectId = requireTaskProjectId(input.projectId);
   try {
-    const actor = await readCurrentProgramActor(q, { organizationId: input.organizationId,
-      userId: input.actorUserId, forShare: true });
-    if (!GOVERNED_WRITE_ROLES.has(actor.role)) throw projectDenied();
+    const actor = await admitTaskCreationActor(q, input);
     const { rows } = await q.query(`SELECT id,client_workspace_id,status FROM projects
       WHERE id=$1 AND organization_id=$2 FOR SHARE`, [projectId, input.organizationId]);
     if (!rows.length) throw new TaskProjectAdmissionError(404, 'TASK_PROJECT_NOT_FOUND',
