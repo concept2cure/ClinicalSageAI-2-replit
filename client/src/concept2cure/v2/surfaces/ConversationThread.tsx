@@ -138,8 +138,18 @@ function toTurn(m: AnaChatMessage): CtTurn {
        canvas beneath the turn is rendered from THIS, not from the draft's
        inline content (docs/design/ANA_DOCUMENT_CANVAS.md). */
     authoringDoc: authoringDoc ?? undefined,
-    suggestedActions: nonEmpty(m.suggestedActions),
+    suggestedActions: suggestionsFor(m),
   };
+}
+
+/**
+ * A turn's next steps, or none when it failed before the model wrote an answer (a refused key, an account with no
+ * credit, a timeout with nothing written). The server sends them with the turn's opening metadata, before the model
+ * replies, so a refused turn drew "Rewrite Section", "Create Risk Memo" and the rest under the refusal: each would
+ * meet the same refusal, and the row read as if the turn had worked (2026-11-06). An answered turn keeps them.
+ */
+export function suggestionsFor(m: AnaChatMessage): string[] | undefined {
+  return m.interrupted && !m.interruptedWithPartialResponse ? undefined : nonEmpty(m.suggestedActions);
 }
 
 /**
