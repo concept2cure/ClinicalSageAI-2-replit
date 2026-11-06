@@ -114,14 +114,12 @@ sets none. The plan's spine starts from a project with a goal, so the run-of-sho
    - Have three accounts with signing authority: an author, a reviewer and an approver.
 2. **Seed.** Run `npm run demo:seed -- --pack lumen --email <author> --plan enterprise`. Locally, the server needs
    `ALLOWED_ORIGINS` set to its own URL.
-3. **Record the project's objective.** On the LMN-201 project page, use "Set the objective":
-   - Objective: "To evaluate whether LMN-201 with standard-of-care antibiotics improves sustained clinical cure
-     compared with placebo."
-   - Success criteria: sustained clinical cure at week 12.
-   - Taken from: A trial registry entry, NCT05330182.
-   - Reason: one sentence.
-
-   The project then opens on its goal.
+3. **The project's objective.**
+   - The Lumen seed records it since `800bb0873`: the primary objective and endpoint, from NCT05330182. An objective
+     that is already recorded is left as it is. The CSR lane ran the seed against its demo server and reports it
+     "created", then "found" on a second run. This rehearsal did not re-run it.
+   - On an environment seeded before `800bb0873`, set the objective by hand with "Set the objective" on the
+     project page, using the wording in "With production's launch-scope gate on" above.
 4. **Run steps 1–8 above beforehand**, on one CSR document.
    - Build CSR draft takes tens of minutes with a key.
    - Approve the drafted headings as the reviewer or approver, not the person who requested the build.
