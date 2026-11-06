@@ -225,6 +225,130 @@ describe('an organization’s own skills', () => {
     expect((auditRows[0].details as Record<string, unknown>).previous).toBeNull();
   });
 
+});
+
+describe('sourced organization rules', () => {
+  it('records an existing tenant correction source with the human skill change on one transaction', async () => {
+    const sourceAuditEventId = '741e0191-6844-4f0c-a6f1-948914ba474a';
+    const client = fakeClient(sql => {
+      if (sql.includes('FROM audit_logs')) return [{ id: sourceAuditEventId, table_name: 'organization_skill_settings', action: 'ana_skill.library_disabled', record_id: 'labeling', user_id: 5 }];
+      if (sql.includes('INSERT INTO account_skill_bundles')) return [{ ...STORED_ROW, metadata: { standingRule: { sourceAuditEventId } } }];
+      return [];
+    });
+    const res = await request(appAs(ADMIN, client)).post('/api/ana-skills/organization')
+      .send({ ...SKILL, sourceAuditEventId: sourceAuditEventId.toUpperCase(), reason: REASON, createdById: 999, organizationId: 999 });
+    expect(res.status).toBe(201);
+    expect(res.body.skill.sourceAuditEventId).toBe(sourceAuditEventId);
+    const source = client.seen.find(q => q.sql.includes('FROM audit_logs'))!;
+    expect(source.params).toEqual([sourceAuditEventId, 42]);
+    const insert = writes(client).find(q => q.sql.includes('INSERT INTO account_skill_bundles'))!;
+    expect(JSON.parse(insert.params[22] as string)).toEqual({ standingRule: { sourceAuditEventId } });
+    expect(auditRows[0]).toMatchObject({ userId: 5, tenantId: 42 });
+    expect(client.seen[0].sql).toBe('BEGIN');
+    expect(client.seen.at(-1)?.sql).toBe('COMMIT');
+  });
+
+  it('persists a typed sourced approval binding and records the actual human actor', async () => {
+    const sourceAuditEventId = '741e0191-6844-4f0c-a6f1-948914ba474a';
+    const binding = { policyType: 'requires_approval', enforcement: 'mandatory', toolName: 'lookup_fda_guidance', description: 'Ask the regulatory lead before external guidance lookup.' };
+    const row = { ...STORED_ROW, policy_bindings: [binding], metadata: { standingRule: { sourceAuditEventId } } };
+    const client = fakeClient(sql => {
+      if (sql.includes('FROM audit_logs')) return [{ id: sourceAuditEventId, table_name: 'organization_skill_settings', action: 'ana_skill.library_disabled', record_id: 'labeling', user_id: 5 }];
+      if (sql.includes('INSERT INTO account_skill_bundles')) return [row];
+      return [];
+    });
+    const res = await request(appAs(ADMIN, client)).post('/api/ana-skills/organization').send({ ...SKILL, reason: REASON,
+      sourceAuditEventId, policyBindings: [binding], approvedBy: 'model does not choose actor', userId: 999,
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.skill.policyBindings).toEqual([binding]);
+    const insert = writes(client).find(q => q.sql.includes('INSERT INTO account_skill_bundles'))!;
+    expect(JSON.parse(insert.params[21] as string)).toEqual([binding]);
+    expect(insert.params[19]).toBe(5);
+    expect(auditRows[0]).toMatchObject({ userId: 5, action: 'ana_skill.created' });
+    expect((auditRows[0].details as any).next.policyBindings).toEqual([binding]);
+  });
+
+  it('rolls a sourced rule back when its chained audit cannot be recorded', async () => {
+    const sourceAuditEventId = '741e0191-6844-4f0c-a6f1-948914ba474a';
+    const client = fakeClient(sql => {
+      if (sql.includes('FROM audit_logs')) return [{ id: sourceAuditEventId, table_name: 'organization_skill_settings', action: 'ana_skill.library_disabled', record_id: 'labeling', user_id: 5 }];
+      if (sql.includes('INSERT INTO account_skill_bundles')) return [{ ...STORED_ROW, metadata: { standingRule: { sourceAuditEventId } } }];
+      return [];
+    });
+    auditFails.value = true;
+    const res = await request(appAs(ADMIN, client)).post('/api/ana-skills/organization').send({ ...SKILL, reason: REASON, sourceAuditEventId });
+    expect(res.status).toBe(500);
+    expect(client.seen.at(-1)?.sql).toBe('ROLLBACK');
+    expect(client.seen.some(q => q.sql === 'COMMIT')).toBe(false);
+    expect(client.seen.some(q => q.sql.includes('INSERT INTO account_events'))).toBe(false);
+  });
+
+  it('refuses an unknown or foreign correction source without changing the skill', async () => {
+    const client = fakeClient();
+    const res = await request(appAs(ADMIN, client)).post('/api/ana-skills/organization')
+      .send({ ...SKILL, sourceAuditEventId: '741e0191-6844-4f0c-a6f1-948914ba474a', reason: REASON });
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe('RULE_SOURCE_NOT_FOUND');
+    expect(writes(client)).toEqual([]);
+    expect(auditRows).toEqual([]);
+    expect(client.seen.at(-1)?.sql).toBe('ROLLBACK');
+  });
+
+});
+
+describe('standing rule input authority', () => {
+  it.each(['optional', 'recommended'])('refuses %s enforcement and model-provided approval claims', async enforcement => {
+    const client = fakeClient();
+    const res = await request(appAs(ADMIN, client)).post('/api/ana-skills/organization').send({ ...SKILL, reason: REASON,
+      policyBindings: [{ policyType: 'requires_approval', enforcement, toolName: 'lookup_fda_guidance', description: 'Never query external guidance without approval.', approvedBy: 'model' }],
+    });
+    expect(res.status).toBe(422);
+    expect(writes(client)).toEqual([]);
+  });
+
+  it.each(['execute_platform_command', 'run_agent', 'made_up_tool'])('refuses unsupported approval binding %s without creating a promise it cannot enforce', async toolName => {
+    const client = fakeClient();
+    const res = await request(appAs(ADMIN, client)).post('/api/ana-skills/organization').send({ ...SKILL, reason: REASON,
+      sourceAuditEventId: '741e0191-6844-4f0c-a6f1-948914ba474a',
+      policyBindings: [{ policyType: 'requires_approval', enforcement: 'mandatory', toolName, description: 'Never run this action without approval.' }],
+    });
+    expect(res.status).toBe(422);
+    expect(writes(client)).toEqual([]);
+  });
+
+  it('does not turn a private project correction into an organization-wide source', async () => {
+    const sourceAuditEventId = '741e0191-6844-4f0c-a6f1-948914ba474a';
+    const client = fakeClient(sql => sql.includes('FROM audit_logs') ? [{ id: sourceAuditEventId,
+      table_name: 'project_skill_settings', action: 'ana_skill.project_turned_off', record_id: '19:labeling',
+      user_id: 6, new_values: { projectId: 19 } }] : []);
+    const res = await request(appAs(ADMIN, client)).post('/api/ana-skills/organization').send({ ...SKILL, sourceAuditEventId, reason: REASON });
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe('RULE_SOURCE_SCOPE_MISMATCH');
+    expect(writes(client)).toEqual([]);
+    expect(auditRows).toEqual([]);
+  });
+
+});
+
+describe('changing sourced organization skills', () => {
+  it('preserves a recorded correction source during an ordinary edit that omits provenance', async () => {
+    const sourceAuditEventId = '741e0191-6844-4f0c-a6f1-948914ba474a';
+    const row = { ...STORED_ROW, metadata: { unrelated: 'keep', standingRule: { sourceAuditEventId } } };
+    const client = fakeClient(sql => {
+      if (sql.includes('FOR UPDATE')) return [row];
+      if (sql.includes('FROM audit_logs')) return [{ id: sourceAuditEventId, table_name: 'organization_skill_settings', action: 'ana_skill.library_disabled', record_id: 'labeling', user_id: 5 }];
+      if (sql.includes('UPDATE account_skill_bundles')) return [{ ...row, version: 2 }];
+      return [];
+    });
+    const res = await request(appAs(ADMIN, client)).put('/api/ana-skills/organization/77').send({ ...SKILL, reason: REASON });
+    expect(res.status).toBe(200);
+    const update = writes(client).find(q => q.sql.includes('UPDATE account_skill_bundles'))!;
+    expect(JSON.parse(update.params[20] as string)).toEqual(row.metadata);
+    expect(res.body.skill.sourceAuditEventId).toBe(sourceAuditEventId);
+    expect((auditRows[0].details as any).next.sourceAuditEventId).toBe(sourceAuditEventId);
+  });
+
   it('refuses to change a locked skill and writes nothing', async () => {
     const client = fakeClient(sql => (sql.includes('FOR UPDATE') ? [{ ...STORED_ROW, status: 'locked' }] : []));
     const res = await request(appAs(ADMIN, client)).put('/api/ana-skills/organization/77').send({ ...SKILL, reason: REASON });

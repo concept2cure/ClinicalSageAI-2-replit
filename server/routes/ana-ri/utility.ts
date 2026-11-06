@@ -28,7 +28,7 @@ import {
 } from '../../services/ana-ri/part11-governance.js';
 import { isProposeOnlyCommand } from '../../services/ana-ri/command-rbac.js';
 import { TOOL_REGISTER, toolAuthorizationOf } from '../../services/ana/tool-authorization.js';
-import { registeredToolTier } from '../../services/ana/governed-tool-gate.js';
+import { authorizeSkillGateContext, registeredToolTier, skillPolicyApprovalFor, validateHeldSkillApproval, type ToolSkillGateSnapshot } from '../../services/ana/governed-tool-gate.js';
 import { personsReasonFor } from './persons-reason.js';
 import { verifyGovernedESignature } from './governed-esignature.js';
 import {
@@ -175,10 +175,12 @@ function heldToolDecision(
   command: string,
   params: Record<string, unknown>,
   held: Awaited<ReturnType<typeof readPendingApproval>> | null,
+  mandatory = false,
 ): 'command' | 'tool' | 'not-confirmable' {
   const isTool = held ? Boolean(held.toolContext) : !isProposeOnlyCommand(command) && command in TOOL_REGISTER;
   if (!isTool) return 'command';
-  return !held || toolAuthorizationOf(command, params).class === 'confirm' ? 'tool' : 'not-confirmable';
+  const auth = toolAuthorizationOf(command, params);
+  return !held || auth.class === 'confirm' || (mandatory && (auth.class === 'read' || auth.class === 'self')) ? 'tool' : 'not-confirmable';
 }
 
 /**
@@ -196,6 +198,7 @@ async function runConfirmedTool(
   params: Record<string, unknown>,
   held: NonNullable<Awaited<ReturnType<typeof readPendingApproval>>>,
   principal: { organizationId: number; userId: number; sqlClient: RequestSqlClient },
+  gates: ToolSkillGateSnapshot | null,
 ): Promise<unknown> {
   const { organizationId, userId, sqlClient } = principal;
   const { getToolHandler } = await import('../../services/ana/AnaToolExecutor.js');
@@ -203,11 +206,14 @@ async function runConfirmedTool(
   if (!handler) throw new Error(`${name} is not an available tool`);
   // The context the turn held it with, and the person's yes: the same
   // conversation, turn and model the dispatch would have named (PF-10 S5).
-  const out = await handler(params, {
+  const context = {
     ...confirmedToolContext(held.toolContext, organizationId, userId),
     sqlClient,
     humanConfirmed: true,
-  });
+  };
+  const approval = gates ? skillPolicyApprovalFor({ name, input: params }, gates) : null;
+  if (approval) authorizeSkillGateContext(context, approval);
+  const out = await handler(params, context);
   try {
     return JSON.parse(out);
   } catch {
@@ -564,9 +570,11 @@ export function mountUtilityRoutes(router: Router): void {
     // through chat. The tier decides what the person supplies: 'confirm' an
     // explicit yes, 'reason' a reason for change, 'esignature' the reason and
     // re-authentication.
-    const toolDecision = heldToolDecision(command, params, pendingForRun);
-    const toolRefusal = refuseUnrunnableTool(res, toolDecision, pendingForRun);
-    if (toolRefusal) return toolRefusal;
+    const policyCheck = await validateHeldSkillApproval(pendingForRun?.toolContext ? { ...confirmedToolContext(pendingForRun.toolContext, numericOrgId, userId), sqlClient: requestPgClient(req) } : null, { name: command, input: params }, pendingForRun?.skillPolicyApproval);
+    if ('error' in policyCheck) return sendError(res, policyCheck.status, policyCheck.error, null, policyCheck.code);
+    const currentGates = policyCheck.gates;
+    const toolDecision = heldToolDecision(command, params, pendingForRun, Boolean(pendingForRun?.skillPolicyApproval));
+    if (refuseUnrunnableTool(res, toolDecision, pendingForRun)) return;
     const isTool = toolDecision !== 'command';
     if (!command || !(isProposeOnlyCommand(command) || isTool)) {
       return sendError(res, 400, 'A governed command name is required', null, 'NOT_A_GOVERNED_COMMAND');
@@ -599,7 +607,6 @@ export function mountUtilityRoutes(router: Router): void {
     const esign = eSignRequired ? await verifyGovernedESignature(userId, numericOrgId, body, isTool ? null : requiredSignatureMeaning(command, params)) : undefined;
     if (esign && !esign.ok) return sendError(res, esign.status, esign.error, esign.details, esign.code);
     const signatureMeaning = esign?.meaning;
-    const secondFactorVerified = esign?.secondFactorVerified ?? false;
 
     // §11.10(e): record the sign-off to the audit trail before executing.
     // No governed mutation without a durable audit record.
@@ -614,8 +621,8 @@ export function mountUtilityRoutes(router: Router): void {
     //
     // logAction returns AuditWriteResult, so the refusal can be real: read
     // `persisted` and abort on it.
-    const trace = governedActionTrace(runId, toolUseId, pendingForRun, params);
     const personsReason = isTool && tier === 'reason' ? personsReasonFor(command, params, reasonForChange) : null;
+    const trace = governedActionTrace(runId, toolUseId, pendingForRun, personsReason?.params ?? params, currentGates);
     // DT3 review (finding 4.3): the held run may have ended while the person
     // signed — an administrator's stop, the session's end, the 40-minute cap,
     // a shutdown. Claimed atomically on a run still waiting, before anything
@@ -632,7 +639,7 @@ export function mountUtilityRoutes(router: Router): void {
       userAgent: req.headers['user-agent'] as string | undefined,
       // With the declared §11.50 meaning on the e-signature tier; absent otherwise,
       // and the trace of what was authorised (governedActionTrace).
-      details: { command, tier, reasonForChange, eSignRequired, secondFactorVerified, ...(signatureMeaning && { signatureMeaning }), ...personsReason?.audit, ...trace },
+      details: { command, tier, reasonForChange, eSignRequired, secondFactorVerified: esign?.secondFactorVerified ?? false, ...(signatureMeaning && { signatureMeaning }), ...personsReason?.audit, ...trace },
     });
     if (!signoffAudit.persisted) {
       log.error('Governed action aborted: sign-off audit row was not persisted', {
@@ -694,7 +701,7 @@ export function mountUtilityRoutes(router: Router): void {
     };
     const executedRow = { organizationId: numericOrgId, userId, command, trace, startedAt: Date.now() };
     try {
-      const [ran] = isTool ? [await runConfirmedTool(command, personsReason?.params ?? params, pendingForRun!, { organizationId: numericOrgId, userId, sqlClient: requestPgClient(req) })] : await executeCommands([{ command, params } as any], ctx);
+      const [ran] = isTool ? [await runConfirmedTool(command, personsReason?.params ?? params, pendingForRun!, { organizationId: numericOrgId, userId, sqlClient: requestPgClient(req) }, currentGates)] : await executeCommands([{ command, params } as any], ctx);
       const result = withAuditTrail(ran, await recordGovernedExecution(executedRow, { result: ran }));
       // The execution stays HERE, in the one place that stamps humanConfirmed.
       // The waiting turn is handed the RESULT, not the right to run the command

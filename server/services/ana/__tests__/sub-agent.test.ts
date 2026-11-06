@@ -9,6 +9,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { syntheticCurrentPolicyClient as SQL_CLIENT } from './support/source-read-tool-fixture.js';
 
 vi.hoisted(() => {
   process.env.NODE_ENV = process.env.NODE_ENV || 'test';
@@ -67,8 +68,10 @@ function host(over: Partial<SubAgentHost> = {}): SubAgentHost & { frames: AgentE
     ...over,
   } as SubAgentHost & { frames: AgentEventFrame[] };
 }
-const SQL_CLIENT = { query: vi.fn() };
-const CTX = { organizationId: 7, userId: 3, sqlClient: SQL_CLIENT, projectId: null, projectRef: 'prog-uuid', humanConfirmed: true } as any;
+// A current open project with no mandatory rules is the premise of these
+// child-loop tests. The wrapper still reads admission and policy through this
+// client; undefined query results are a policy-store outage, not an empty set.
+const CTX = { organizationId: 7, userId: 3, sqlClient: SQL_CLIENT, projectId: null, projectRef: '10000000-0000-4000-8000-000000000001', humanConfirmed: true } as any;
 const RESEARCH = { role: 'research', objective: 'Find the pivotal trial', instructions: 'Search PubMed for the pivotal trial of drug X.' };
 const inTenant = <T>(fn: () => Promise<T>, tenantId = '7') =>
   runWithTenantScope({ tenantId, source: 'test', caller: 'sub-agent-test' } as any, fn);
@@ -156,7 +159,7 @@ describe('the child is governed', () => {
     expect(ctx.agentDepth).toBe(1);
     expect(ctx.modelCalls).toBe('refuse');
     expect(ctx.organizationId).toBe(7);
-    expect(ctx.projectRef).toBe('prog-uuid');
+    expect(ctx.projectRef).toBe(CTX.projectRef);
     expect(ctx.sqlClient).toBe(SQL_CLIENT);
     expect(ctx.signal).toBeInstanceOf(AbortSignal);
     expect(seen[0].refusal).not.toBeNull();
@@ -525,7 +528,7 @@ describe('exact stored source spans (multi-agent specification §14.4)', () => {
     });
     const r = await run(verify(), withSource());
     expect(sourceReading(r).outcome).toBe('pass');
-    expect(reads).toEqual([expect.objectContaining({ ctx: expect.objectContaining({ organizationId: 7, projectRef: 'prog-uuid', agentDepth: 1 }), refusal: expect.any(Object), modelCallsBefore: 0 })]);
+    expect(reads).toEqual([expect.objectContaining({ ctx: expect.objectContaining({ organizationId: 7, projectRef: CTX.projectRef, agentDepth: 1 }), refusal: expect.any(Object), modelCallsBefore: 0 })]);
     expect(r.trace).toMatchObject({ steps: [expect.objectContaining({ round: 0, tool: 'read_vault_document', ok: true })], checkOutputs: expect.arrayContaining([expect.objectContaining({ check: 'source_spans' })]) });
     expect(JSON.parse(r.trace.checkOutputs.find((o: any) => o.check === 'source_spans').output).evidence[0]).toMatchObject({ sourceReadHash: expect.stringMatching(/^[a-f0-9]{64}$/), quoteHash: expect.stringMatching(/^[a-f0-9]{64}$/) });
     expect(r.notChecked.join(' ')).toContain('semantic support');

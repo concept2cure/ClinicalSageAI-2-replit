@@ -36,6 +36,8 @@ vi.mock('../../../db/requestDb', async importOriginal => ({
   ...(await importOriginal<Record<string, unknown>>()),
   requestPgClient: vi.fn(() => ({ query: vi.fn() })),
 }));
+// This suite tests the existing tiers; mandatory policy boundaries run with the real loader in the tenant-pinned suite.
+vi.mock('../../../services/ana/governed-tool-gate.js', async importOriginal => ({ ...(await importOriginal<Record<string, unknown>>()), validateHeldSkillApproval: async () => ({ gates: null }) }));
 vi.mock('../../../services/ana/run-control.js', async importOriginal => ({
   ...(await importOriginal<Record<string, unknown>>()),
   // The held approval is claimed before the sign-off and the execution (DT3

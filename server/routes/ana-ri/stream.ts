@@ -251,7 +251,7 @@ import {
 } from '../../services/ana/run-status.js';
 import { createRunHold, type RunHold } from '../../services/ana/run-hold.js';
 import { TurnPolicy } from '../../services/ana/turn-run-policy.js';
-import { classifyToolCall } from '../../services/ana/governed-tool-gate.js';
+import { classifyToolCall, loadToolSkillGates } from '../../services/ana/governed-tool-gate.js';
 import { heldToolContext, turnToolContext } from '../../services/ana/turn-tool-context.js';
 import { approvalRequiredEnvelope } from '../../services/ana-ri/part11-governance.js';
 import {
@@ -2725,7 +2725,18 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
               out.set(toolUse.id, { ok: false, why: readOnlyRefusal.message, result: readOnlyRefusal, heldBack: true, readOnly: true });
               continue;
             }
-            const verdict = classifyToolCall(toolUse);
+            let verdict = classifyToolCall(toolUse);
+            if (verdict.kind !== 'REFUSED' && verdict.kind !== 'UNDECIDABLE') {
+              try {
+                const gates = await loadToolSkillGates({ organizationId: orgId, userId: guardUserId, sqlClient: requestPgClient(req),
+                  ...turnToolContext(streamProjectId, { threadId, turnId: runId, servingModel: lastServedModel }) }, toolUse);
+                verdict = classifyToolCall(toolUse, gates);
+              } catch {
+                out.set(toolUse.id, { ok: false, why: 'current skill rules unavailable', heldBack: true,
+                  result: { error: 'SKILL_POLICY_UNAVAILABLE', tool: toolUse.name, message: 'Current organization and project rules could not be verified. Nothing was run.' } });
+                continue;
+              }
+            }
             if (verdict.kind === 'UNGOVERNED') continue;
 
             if (verdict.kind === 'REFUSED') {
@@ -2823,6 +2834,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
             command: verdict.command,
             params: verdict.params,
             tier: verdict.tier,
+            ...(verdict.skillPolicyApproval ? { skillPolicyApproval: verdict.skillPolicyApproval } : {}),
             ...checked,
             requestedAt: new Date().toISOString(),
             rationale: typeof (verdict.params as any)?.reason === 'string'

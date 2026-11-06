@@ -6,6 +6,7 @@ import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import {
   SKILL_LIMITS,
+  type OrgSkillDto,
   type SkillHistoryEntryDto,
   type SkillSelectionDto,
 } from '@shared/ana/skills';
@@ -211,7 +212,7 @@ export function StudioAside({
   return (
     <div className="skill-studio-pane">
       <StudioTry target={target} values={values} />
-      {target.skill && <StudioHistory skillId={target.skill.id} />}
+      {target.skill && <StudioHistory skill={target.skill} />}
       {onAsk && (
         <div className="skill-studio-side">
           <h4>Design it with AnA</h4>
@@ -458,45 +459,74 @@ function StudioTry({ target, values }: { target: OrgEditing; values: Record<stri
   );
 }
 
-/** The skill's versions, from its audit rows. */
-function StudioHistory({ skillId }: { skillId: number }) {
+/** Saved approval rules and their source share the skill's existing audit history. */
+function StudioHistory({ skill }: { skill: OrgSkillDto }) {
   const history = useLiveData<{ history: SkillHistoryEntryDto[] }>(
-    `/api/ana-skills/organization/${skillId}/history`,
-    [skillId]
+    `/api/ana-skills/organization/${skill.id}/history`,
+    [skill.id]
   );
   const rows = history.data?.history ?? [];
+  const bindings = skill.policyBindings ?? [];
+  const active = skill.status === 'active' || skill.status === 'locked';
+  const source = rows.find(h => h.auditEventId === skill.sourceAuditEventId);
   return (
-    <div className="skill-studio-side">
-      <h4>Versions</h4>
-      {history.loading ? (
-        <span role="status" className="skill-studio-verdict">
-          Loading the versions…
-        </span>
-      ) : history.error ? (
-        <span role="alert" className="de-err">
-          Couldn&apos;t load the versions. This is not a skill without history.
-        </span>
-      ) : rows.length === 0 ? (
-        <span className="skill-studio-verdict">
-          No change to this skill is on the audit trail yet.
-        </span>
-      ) : (
-        <ol className="skill-studio-hist">
-          {rows.map((h, i) => (
-            <li key={`${h.occurredAt}-${i}`}>
-              <span>
-                {h.version !== null ? `Version ${h.version}` : 'Change'} ·{' '}
-                {h.action === 'ana_skill.created' ? 'created' : 'changed'}
-                {h.status ? ` · ${h.status}` : ''}
-              </span>
-              <span className="skill-studio-hist-m">
-                {new Date(h.occurredAt).toLocaleString()} · {h.actorName ?? 'a member'}
-                {h.reason ? ` — ${h.reason}` : ''}
-              </span>
-            </li>
-          ))}
-        </ol>
+    <>
+      {bindings.length > 0 && (
+        <section className="skill-studio-side" aria-label="Mandatory approval rules">
+          <h4>Mandatory approval rules · read-only</h4>
+          <span className="skill-studio-verdict">
+            {active
+              ? 'Approval is required for these actions even when this skill is not selected or is turned off for prompts in a project.'
+              : 'These saved rules apply when this skill is active, regardless of whether it is selected for a prompt.'}
+          </span>
+          <ul className="skill-studio-hist">
+            {bindings.map(binding => (
+              <li key={binding.toolName}>
+                <span>{binding.description}</span>
+                <span className="skill-studio-hist-m">Requires approval · {binding.toolName.replace(/_/g, ' ')}</span>
+              </li>
+            ))}
+          </ul>
+          {source?.auditEventId ? (
+            <a className="skill-studio-verdict" href={`#skill-${skill.id}-audit-${source.auditEventId}`}>Source audit record</a>
+          ) : (
+            <span className="skill-studio-hist-m">Source audit record: {skill.sourceAuditEventId ?? 'not attached'}</span>
+          )}
+        </section>
       )}
-    </div>
+      <div className="skill-studio-side">
+        <h4>Versions</h4>
+        {history.loading ? (
+          <span role="status" className="skill-studio-verdict">
+            Loading the versions…
+          </span>
+        ) : history.error ? (
+          <span role="alert" className="de-err">
+            Couldn&apos;t load the versions. This is not a skill without history.
+          </span>
+        ) : rows.length === 0 ? (
+          <span className="skill-studio-verdict">
+            No change to this skill is on the audit trail yet.
+          </span>
+        ) : (
+          <ol className="skill-studio-hist">
+            {rows.map((h, i) => (
+              <li key={h.auditEventId ?? `${h.occurredAt}-${i}`}
+                id={h.auditEventId ? `skill-${skill.id}-audit-${h.auditEventId}` : undefined}>
+                <span>
+                  {h.version !== null ? `Version ${h.version}` : 'Change'} ·{' '}
+                  {h.action === 'ana_skill.created' ? 'created' : 'changed'}
+                  {h.status ? ` · ${h.status}` : ''}
+                </span>
+                <span className="skill-studio-hist-m">
+                  {new Date(h.occurredAt).toLocaleString()} · {h.actorName ?? 'a member'}
+                  {h.reason ? ` — ${h.reason}` : ''}
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </>
   );
 }

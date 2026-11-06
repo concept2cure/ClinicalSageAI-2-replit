@@ -7,6 +7,7 @@ import { recordAuditRow, type AuditRowOutcome } from '../../services/audit/audit
 import { canonicalJson, sha256Hex } from '../../services/ana/turn-record.js';
 import type { readPendingApproval } from '../../services/ana/run-control.js';
 import type { AnswerCheck } from '../../services/ana/answer-grounding.js';
+import { skillPolicyApprovalFor, type ToolSkillGateSnapshot } from '../../services/ana/governed-tool-gate.js';
 
 /** Texts of each list the row keeps, at most, and the length of each. */
 const MAX_ROW_TEXTS = 20;
@@ -35,6 +36,13 @@ function proposalCheckOf(check: AnswerCheck) {
   };
 }
 
+/** Keep the proposed and actually authorized action distinct when a person edits the reason. */
+function executedSkillTrace(gates: ToolSkillGateSnapshot | null | undefined, pending: Awaited<ReturnType<typeof readPendingApproval>>, params: Record<string, unknown>) {
+  if (!gates || !pending?.toolContext) return {};
+  const proof = skillPolicyApprovalFor({ name: pending.command, input: params }, gates);
+  return proof ? { executedSkillPolicyApproval: proof, policyProjectId: gates.projectId } : {};
+}
+
 /**
  * What a governed action's audit rows name beside the command (D5/D6): the run
  * and the tool call it answered, the model call that proposed it (the held
@@ -49,6 +57,7 @@ export function governedActionTrace(
   toolUseId: string,
   pending: Awaited<ReturnType<typeof readPendingApproval>> | null,
   params: Record<string, unknown>,
+  gates?: ToolSkillGateSnapshot | null,
 ) {
   const proposer = pending?.proposedBy ?? null;
   return {
@@ -57,6 +66,8 @@ export function governedActionTrace(
     gatewayRequestId: proposer?.requestId ?? null,
     servingModel: proposer ? { provider: proposer.provider, model: proposer.model } : null,
     paramsSha256: sha256Hex(canonicalJson(params ?? {})),
+    ...(pending?.skillPolicyApproval && { skillPolicyApproval: { ...pending.skillPolicyApproval } }),
+    ...executedSkillTrace(gates, pending, params),
     ...(pending?.check && { proposalCheck: proposalCheckOf(pending.check) }),
   };
 }
