@@ -524,6 +524,17 @@ describe('AuthoringFilingBar — the server’s refusal, before the dialog', () 
     expect(offeredIn(await screen.findByRole('dialog'))).toEqual(['Authorship', 'Review', 'Approval']);
   });
 
+  /* J3 human test, 2026-11-06: a controlled SOP opened in the editor showed the
+     server's two-sentence QMS refusal wrapped into four lines between Freeze and
+     E-sign. The bar says it in one line; the sentence stays the title. */
+  it('a controlled QMS document: one short line in the bar, the whole sentence on the controls', () => {
+    const QMS = 'This controlled QMS document is reviewed, approved and retired in the Quality register. Its signed lifecycle cannot be changed through the Authoring signing controls.';
+    renderWith({ freezeRefusal: QMS, esignRefusal: QMS });
+    expect(screen.getByTestId('freeze-refusal').textContent).toBe('Reviewed and signed in Quality');
+    expect(screen.queryByTestId('esign-refusal')).toBeNull();
+    expect(screen.getByRole('button', { name: /E-sign/ }).getAttribute('title')).toBe(QMS);
+  });
+
   it('leaves both enabled when the permission is unknown', () => {
     renderWith({ freezeRefusal: null, esignRefusal: null });
     expect((screen.getByRole('button', { name: /Freeze/ }) as HTMLButtonElement).disabled).toBe(false);

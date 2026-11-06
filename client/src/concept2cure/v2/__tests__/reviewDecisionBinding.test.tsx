@@ -66,6 +66,24 @@ describe('saved-content-bound human review', () => {
   });
 });
 
+/* J3 human test, 2026-11-06: the board's "Request changes..." opened the dialog at
+   "Not stated — choose", the same as "Record review decision". */
+describe('the board opens the decision the reviewer pressed', () => {
+  it('"Request changes..." opens with Request changes chosen and asks for the reason', async () => {
+    render(<Review surface={getSurface('review')!} segment="biopharma" onAsk={vi.fn()} onNav={vi.fn()} />);
+    fireEvent.click(await screen.findByRole('button', { name: /Request changes/ }));
+    await waitFor(() => expect((screen.getByLabelText('Decision') as HTMLSelectElement).value).toBe('changes_requested'));
+    expect(screen.getByLabelText('Reason (required)')).toBeTruthy();
+    expect(writes()).toHaveLength(0);
+  });
+
+  it('"Record review decision" still opens with nothing chosen', async () => {
+    await open();
+    await waitFor(() => expect(screen.getByRole('button', { name: /Record decision/ })).toBeTruthy());
+    expect((screen.getByLabelText('Decision') as HTMLSelectElement).value).toBe('');
+  });
+});
+
 function dialog(props: Partial<React.ComponentProps<typeof ReviewDecisionDialog>> = {}) {
   return <ReviewDecisionDialog documentId={PEER_DOC} onClose={vi.fn()} onRecorded={vi.fn()} {...props} />;
 }

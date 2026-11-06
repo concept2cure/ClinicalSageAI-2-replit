@@ -147,6 +147,14 @@ export const CSR_REVIEW_FIRST =
  * control's title and the signing dialog's refusal (the bar had wrapped it into a paragraph between Freeze and E-sign). */
 export const CSR_REVIEW_FIRST_NOTE = 'Needs its scientific review first';
 
+/* A controlled QMS document is signed in the Quality register (server/services/qms/controlled-document-content.ts,
+   QMS_SIGN_IN_QUALITY). The bar had wrapped that two-sentence refusal into four lines (J3, 2026-11-06). */
+const QMS_SIGN_IN_QUALITY = /^This controlled QMS document is reviewed, approved and retired in the Quality register\./;
+/** A refusal as the editor bar shows it: one line for the long ones it knows; the full sentence stays the title. */
+export function barRefusalNote(text: string): string {
+  return text === CSR_REVIEW_FIRST ? CSR_REVIEW_FIRST_NOTE : QMS_SIGN_IN_QUALITY.test(text) ? 'Reviewed and signed in Quality' : text;
+}
+
 /** The sentence the gate will refuse with; null when it will not, or when the body is not a reading of this document's reviews. */
 export function csrReviewFirst(body: unknown, docId: string): string | null {
   const read = body as { success?: unknown; reviews?: unknown; reviewContext?: { csrScientificReviewRequired?: unknown } } | null;

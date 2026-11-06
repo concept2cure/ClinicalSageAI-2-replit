@@ -108,6 +108,17 @@ function registerBoundCases(fixture: AssemblyFixture): void {
       expect(await stored()).toHaveLength(planned.rows.length + 1);
     });
 
+    it('says why AnA does not draft: a GLOBAL narrative names no agency; a worksheet is preparation (J3, 2026-11-06)', async () => {
+      await query('UPDATE authoring_documents SET module=NULL WHERE id=$1', [documentId()]);
+      const ib = await plan({ templateId: builtinAuthoringTemplateId('registry:ICH_IB') });
+      const ibReasons = ib.rows.map(row => row.aiDraftableReason).join(' | ');
+      expect(ibReasons).toContain('names no receiving agency');
+      expect(ibReasons).not.toContain('preparation template');
+      await bind('mdl', 'hc');
+      const worksheet = await plan({ templateId: builtinAuthoringTemplateId('registry:CA_MDL') });
+      expect(worksheet.rows.every(row => /preparation template/.test(row.aiDraftableReason))).toBe(true);
+    });
+
     it.each([['tenant', 2, PROGRAM], ['project', ORG, PROGRAM_B]] as const)('refuses a recorded binding in another %s', async (_scope, org, program) => {
       await bind('mdl', 'hc', org, program);
       const before = await stored(); const evidence = await evidenceCounts();

@@ -1,0 +1,20 @@
+const { c, prog } = require('./lib.cjs');
+(async () => {
+  const b = await c.chromium.launch();
+  const p = await c.signIn(b, 'reviewer');
+  await p.goto(`${c.BASE}/concept2cure/review?program=${prog}`, { waitUntil: 'networkidle' });
+  await p.waitForTimeout(1500);
+  await p.getByRole('button', { name: 'Record review decision' }).click(); await p.waitForTimeout(1500);
+  const d = p.getByRole('dialog').last();
+  await c.shot(p, 'x-28-decision-dialog.png');
+  await d.getByText('Approve', { exact: true }).first().click().catch(async () => { const sel = d.locator('select'); console.info('select?', await sel.count()); await sel.first().selectOption({ label: 'Approve' }); });
+  await d.getByLabel(/Note for the thread/).fill('Summary reads correctly for a draft IB.').catch(()=>{});
+  await p.waitForTimeout(500);
+  await c.shot(p, 'x-29-decision-approve.png');
+  console.info('extra', (await d.innerText()).split('Decision')[1]?.slice(0, 1500));
+  await d.getByRole('button', { name: 'Record approval' }).click(); await p.waitForTimeout(3000);
+  await c.shot(p, 'x-30-decision-recorded.png');
+  console.info('after', (await c.mainText(p)).slice(0, 1800));
+  console.info(c.apiErrors);
+  await b.close();
+})();
