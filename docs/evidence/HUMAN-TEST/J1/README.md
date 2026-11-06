@@ -7,7 +7,7 @@ screenshot looked at. Each defect a tester would hit was written down, fixed in 
 red without the fix, and checked again in the app.
 
 **Result:** `walk.cjs` passes end to end, 25 steps, with **0 API responses of 4xx or 5xx and 0 page errors**
-(`walk.json`). It found 16 defects, and all 16 are fixed (below). Four more are written down for their owners.
+(`walk.json`). It found 17 defects, and all 17 are fixed (below). Four more are written down for their owners.
 
 ## What a tester can do now (verified by `walk.cjs`, screenshots in `shots/`)
 
@@ -51,7 +51,11 @@ red without the fix, and checked again in the app.
 10. **The objective's Edit** records a new version with its source and reason ("Version 2", `actions/02`).
 11. **Assign** on a document the filing needs creates a task for a person with a due date. It appears under "Due for
     you", on the project's task board and in the person's tasks (`actions/03`).
-12. Home's "Record your company details" and "Invite your team" open the admin console on its settings and members
+12. **Sign-in's other paths:** an empty form says "Enter a valid email address."; a wrong password says "Incorrect email
+    or password …" (`actions/05`); "Forgot password?" opens "Reset your password" clean (`actions/06`) and says the link
+    is on its way (`actions/07`); "Use organization SSO" asks for the organisation's identifier; Sign out, from the
+    account menu at 1440 and 390 (`actions/08`), returns to sign-in, and a protected page then asks to sign in.
+13. Home's "Record your company details" and "Invite your team" open the admin console on its settings and members
     tabs. A Projects card opens its project.
 
 ## Defects found, and their fixes
@@ -78,7 +82,9 @@ Every fix is on `concept2cure-v2` with `Plan: F1` and a `Completes:` trailer. "B
 | 15 | Plan, a document after Assign | The two lines agree | "Assigned to reg.lead…, due Nov 20, 2026" then "Work: Define product profile · due Jan 29, 2027 · no owner" (`before/15`) | see the commit list below: the line names the producing task's owner, "task owner: none" | `projectHomePlan.test.tsx` |
 | 16 | New project at 390 | Every client type's tab reachable | The filing tabs were 661px wide and clipped: "Diagnostics & IVD" and "Cross-Cutting Documents" could not be reached (`before/14`) | see the commit list below: the row scrolls in place (`actions/04`) | `j1PageLayout.test.ts` |
 
-Defect 13 was found on the second walk, by the edge check added to it; 14 to 16 on a third pass through the actions the
+| 17 | Sign-in, after a wrong password, "Forgot password?" | The reset form on its own | "Reset your password" opened with "Incorrect email or password …" still above the e-mail field (the screenshot was overwritten by the re-check; `actions/06` is the fixed view) | `5c6d4cde`: changing view clears the previous view's error | `signInRefusal.test.tsx` |
+
+Defect 13 was found on the second walk, by the edge check added to it; 14 to 16 on a third pass, and 17 on a fourth, through sign-in's other paths through the actions the
 walk only opened: saving settings, editing the objective, assigning, and New project at 390.
 
 Suites that also ran green: 84 editor and Evidence suites; 20 wizard and picker suites; 15 Home, wizard and sign-up

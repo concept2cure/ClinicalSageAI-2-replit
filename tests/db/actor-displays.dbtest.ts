@@ -131,10 +131,11 @@ async function seedRecordsAcrossSurfaces() {
             (gen_random_uuid(), $1, $2, 'system', 'by a non-numeric author', now())`,
     [revisedSection, ORG_A, String(leaver)]
   );
+  // Of the reader's own program: /api/c2c/documents reads a document only of a project the reader can open (F1).
   await owner.query(
-    `INSERT INTO c2c_documents (id, org_id, doc_type, agency, rule_pack_version, title)
-     VALUES ($1, $2, 'ind', 'fda', 'ich-m4-v2.0', 'Dossier')`,
-    [dossierDoc, ORG_A]
+    `INSERT INTO c2c_documents (id, org_id, project_id, doc_type, agency, rule_pack_version, title)
+     VALUES ($1, $2, $3::uuid, 'ind', 'fda', 'ich-m4-v2.0', 'Dossier')`,
+    [dossierDoc, ORG_A, program]
   );
   const ds = await owner.query(
     `INSERT INTO c2c_document_sections (document_id, section_key, label, path_order)

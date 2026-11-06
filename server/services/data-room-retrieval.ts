@@ -18,6 +18,8 @@
 import type pg from 'pg';
 import { currentTenantOrgUuid } from '../db/currentTenant';
 import { getEmbeddingService } from './enhancedEmbeddingService';
+import { ProgramReadAccessError, readCurrentProgramActor, type ProgramAccessExecutor } from './c2c/current-program-access';
+import { canAccessReportProject, getAccessibleReportProjectIds } from './report-os/project-access';
 
 export type RetrievalStatus = 'ok' | 'empty' | 'failed';
 
@@ -47,13 +49,47 @@ export const RETRIEVAL_STATUS_MESSAGE: Record<RetrievalStatus, string> = {
 };
 
 /**
- * Search the current session's Data Room. Never throws: a missing tenant key,
- * an embedding outage or a query error is `failed`, with its cause for the log.
+ * The projects a Data Room search may rank for this person (F1, 2026-11-05):
+ * the one they name, if they can open it, or else every project they can open.
+ * The policy is the project sharing policy (services/report-os/project-access.ts).
+ *
+ * Throws ProgramReadAccessError: 404 PROJECT_NOT_FOUND for a named project they
+ * cannot open, the same answer as a project that does not exist; 403 with no
+ * current member; 503 PROJECT_ACCESS_UNAVAILABLE when the check could not run.
+ * [] is an evaluated answer (they can open no project), never a failure.
+ */
+export async function readDataRoomProjectScope(
+  q: ProgramAccessExecutor,
+  input: { organizationId: number | null; userId: number | null; projectId?: number },
+): Promise<number[]> {
+  const { organizationId, userId, projectId } = input;
+  if (!organizationId || !userId) {
+    throw new ProgramReadAccessError(403, 'PROJECT_ACTOR_REQUIRED', 'A current organization actor is required.');
+  }
+  let admitted: number[];
+  try {
+    const actor = await readCurrentProgramActor(q, { organizationId, userId });
+    if (projectId === undefined) return await getAccessibleReportProjectIds(organizationId, actor, q);
+    admitted = (await canAccessReportProject(organizationId, actor, projectId, q)) ? [projectId] : [];
+  } catch (error) {
+    if (error instanceof ProgramReadAccessError) throw error;
+    throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE',
+      'Current project access could not be verified. Nothing was searched.');
+  }
+  if (admitted.length === 0) throw new ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+  return admitted;
+}
+
+/**
+ * Search the current session's Data Room, within `projectIds` (the person's,
+ * from readDataRoomProjectScope). Never throws: a missing tenant key, a missing
+ * scope, an embedding outage or a query error is `failed`, with its cause for
+ * the log. An empty scope finds nothing, so it is `empty`.
  */
 export async function retrieveDataRoomEvidence(
   pool: pg.Pool,
   query: string,
-  options: { limit: number; minSemanticScore: number; projectId?: string },
+  options: { limit: number; minSemanticScore: number; projectIds: readonly number[] },
 ): Promise<DataRoomRetrieval> {
   try {
     const organizationUuid = await currentTenantOrgUuid(pool);

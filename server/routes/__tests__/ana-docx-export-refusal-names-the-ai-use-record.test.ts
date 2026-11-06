@@ -23,6 +23,17 @@ vi.mock('../../middleware/auth', () => ({ authenticateToken: pass }));
 vi.mock('../../middleware/tenantContext', () => ({ requireOrganizationContext: pass, requireTenantContext: pass }));
 vi.mock('../../middleware/rateLimiter', () => ({ createRateLimiter: () => pass }));
 
+/* The export admits the artifact's project first (F1, 2026-11-05). This caller is a member who can open project 3,
+   the artifact's; the admission itself has its own suite, ana-citations-project-scope.pglite.test.ts. */
+vi.mock('../../services/c2c/current-program-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/c2c/current-program-access')>()),
+  readCurrentProgramActor: async () => ({ userId: 3, role: 'member' }),
+}));
+vi.mock('../../services/report-os/project-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  canAccessReportProject: async () => true,
+}));
+
 import anaFeaturesRouter from '../ana-features';
 
 const artifactRow = {
@@ -37,6 +48,7 @@ const artifactRow = {
   if (/FROM ana_submission_chat_proposals/i.test(text)) {
     return Promise.reject(Object.assign(new Error('permission denied for table ana_submission_chat_proposals'), { code: '42501' }));
   }
+  if (/SELECT project_id\s+FROM concept2cure_artifacts/i.test(text)) return Promise.resolve({ rows: [{ project_id: 3 }], rowCount: 1 });
   if (/SELECT content\s+FROM concept2cure_artifacts/i.test(text)) return Promise.resolve({ rows: [{ content: 'body' }], rowCount: 1 });
   if (/FROM concept2cure_artifacts a/i.test(text)) return Promise.resolve({ rows: [artifactRow], rowCount: 1 });
   return Promise.resolve({ rows: [], rowCount: 0 });

@@ -109,7 +109,8 @@ async function newProject(page, tag, { tab, filing, name, code, indication, obje
 async function projectPage(page, tag, id, { objective, device }) {
   await page.goto(`${BASE}/concept2cure/project-home?program=${id}`, { waitUntil: 'networkidle' });
   const about = await page.locator('main').innerText();
-  expect(about.includes(objective), "the About card states the project's objective");
+  // The opening words: the objective can have later versions (the README's "actions" pass records a version 2).
+  expect(about.includes(objective.replace(/\.$/, '').slice(0, 40)), "the About card states the project's objective");
   const xs = {};
   for (const s of ['Plan', 'Evidence', 'Author', 'Review', 'Submit', 'Respond']) {
     await page.getByRole('navigation', { name: 'Project lifecycle' }).getByRole('button', { name: new RegExp(`^${s}`) }).click();

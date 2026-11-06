@@ -21,6 +21,12 @@
  * Proof on PostgreSQL built by install-fresh + deploy-migrate, as the
  * non-superuser runtime role with RLS enforcing (two-tenant-fixture.ts).
  * Embeddings are fixed vectors: the model is not what is under test.
+ *
+ * Since F1 (2026-11-05) a search names the projects it may rank (projectIds),
+ * and ranks only those projects' artifact atoms. So every atom here is an
+ * artifact atom of a project: tenant A's project under test, a second project
+ * of tenant A that scores higher, and tenant B's project
+ * (docs/evidence/F1/2026-11-05-evidence-retrieval-scope/).
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { getPool } from '../../server/db/runtime';
@@ -33,6 +39,8 @@ import {
   FIXTURE_ORGS,
   owner,
   ids,
+  userA,
+  workspaceA,
   provisionTwoTenantFixture,
   teardownTwoTenantFixture,
 } from './two-tenant-fixture';
@@ -50,7 +58,20 @@ const QUERY_VECTOR = JSON.parse(vec(1)) as number[];
 
 let orgUuidA: string;
 let projectA: number;
+/** Tenant A's second project, made here: its atoms score higher than project A's. */
+let projectA2: number;
+let projectB: number;
 const projectAtomSources: string[] = [];
+
+/** An artifact of `projectId`, and its atom. */
+async function artifactAtom(org: number, projectId: number, artifactId: string, cos: number, label: string) {
+  await owner.query(
+    `INSERT INTO concept2cure_artifacts (artifact_id, project_id, organization_id, type, category, title, content)
+     VALUES ($1,$2,$3,'document','clinical',$4,'fixture')`,
+    [artifactId, projectId, org, `${TAG} artifact ${label}`],
+  );
+  await atom(org, 'artifact', artifactId, cos, label);
+}
 
 async function atom(org: number, sourceType: string, sourceId: string, cos: number, label: string) {
   await owner.query(
@@ -80,23 +101,24 @@ beforeAll(async () => {
   await provisionTwoTenantFixture();
   orgUuidA = (await owner.query('SELECT uuid::text AS u FROM organizations WHERE id = $1', [ORG_A])).rows[0].u;
   projectA = Number(ids.A.projects);
+  projectB = Number(ids.B.projects);
+  projectA2 = Number((await owner.query(
+    `INSERT INTO projects (organization_id,client_workspace_id,name,type,description,created_by_id)
+     VALUES ($1,$2,$3,'regulatory','fixture-body-A2',$4) RETURNING id`,
+    [ORG_A, workspaceA, `${TAG}-project-A2`, userA],
+  )).rows[0].id);
 
   // Tenant A, the project under test: three artifacts whose atoms score LOWER
   // on the vector than everything else below.
   for (let k = 0; k < 3; k++) {
     const artifactId = `${TAG}-art-A${k}`;
-    await owner.query(
-      `INSERT INTO concept2cure_artifacts (artifact_id, project_id, organization_id, type, category, title, content)
-       VALUES ($1,$2,$3,'document','clinical',$4,'fixture')`,
-      [artifactId, projectA, ORG_A, `${TAG} artifact A${k}`],
-    );
     projectAtomSources.push(artifactId);
-    await atom(ORG_A, 'artifact', artifactId, 0.6, `project-A atom ${k}`);
+    await artifactAtom(ORG_A, projectA, artifactId, 0.6, `project-A atom ${k}`);
   }
-  // Tenant A outside the project, and tenant B: twelve each, scoring higher.
+  // Tenant A's second project, and tenant B's project: twelve each, scoring higher.
   for (let k = 0; k < 12; k++) {
-    await atom(ORG_A, 'document', `${TAG}-doc-A${k}`, 1, `tenant-A atom ${k}`);
-    await atom(ORG_B, 'document', `${TAG}-doc-B${k}`, 1, `tenant-B atom ${k}`);
+    await artifactAtom(ORG_A, projectA2, `${TAG}-art-A2-${k}`, 1, `project-A2 atom ${k}`);
+    await artifactAtom(ORG_B, projectB, `${TAG}-art-B${k}`, 1, `tenant-B atom ${k}`);
   }
 }, 120_000);
 
@@ -122,13 +144,17 @@ describe("searchHybrid serves a tenant's own evidence, as asked", () => {
     // With tenant A's key: a search with none is refused since the D3 change
     // (atom-search-tenant-key.dbtest.ts), where this call once ran unfiltered and
     // only RLS kept it to tenant A.
-    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, { limit: 3, organizationUuid: orgUuidA }));
+    const rows = await asTenantA(() =>
+      service(getPool()).searchHybrid(QUERY, { limit: 3, organizationUuid: orgUuidA, projectIds: [projectA, projectA2] }),
+    );
     expect(rows.length).toBe(3);
     for (const r of rows) expect(r.title).not.toMatch(/tenant-B/);
   });
 
   it('weights semantic and keyword scores as the caller asked', async () => {
-    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, { limit: 5, organizationUuid: orgUuidA }));
+    const rows = await asTenantA(() =>
+      service(getPool()).searchHybrid(QUERY, { limit: 5, organizationUuid: orgUuidA, projectIds: [projectA, projectA2] }),
+    );
     expect(rows.length).toBe(5);
     for (const r of rows) {
       expect(r.score).toBeCloseTo(0.7 * r.semanticScore + 0.3 * r.keywordScore, 6);
@@ -136,14 +162,27 @@ describe("searchHybrid serves a tenant's own evidence, as asked", () => {
   });
 
   it("returns a project's own atoms even when other projects' atoms score higher", async () => {
-    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, { limit: 3, organizationUuid: orgUuidA, projectId: String(projectA) }));
+    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, { limit: 3, organizationUuid: orgUuidA, projectIds: [projectA] }));
     expect(rows.map((r) => r.sourceId).sort()).toEqual([...projectAtomSources].sort());
+  });
+
+  it('never returns an atom of a project of the same tenant that the scope does not name', async () => {
+    // Room for every candidate: project A2's twelve better-scoring atoms are the
+    // same tenant's, readable under its RLS policy, and still not returned.
+    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, { limit: 10, organizationUuid: orgUuidA, projectIds: [projectA] }));
+    expect(rows.map((r) => r.sourceId).sort()).toEqual([...projectAtomSources].sort());
+    for (const r of rows) expect(r.title).not.toMatch(/project-A2/);
+    const unscoped = await asTenantA(() => service(getPool()).searchHybrid(QUERY, { limit: 10, organizationUuid: orgUuidA, projectIds: [projectA, projectA2] }));
+    expect(unscoped.some((r) => /project-A2/.test(r.title)), 'positive control: A2 is searchable when named').toBe(true);
   });
 
   it('never returns another tenant’s atom, even on a connection RLS does not filter', async () => {
     // The owner pool bypasses RLS: only the query's own org filter stands
-    // between tenant A's search and tenant B's twelve better-scoring atoms.
-    const rows = await service(owner as never).searchHybrid(QUERY, { limit: 10, organizationUuid: orgUuidA });
+    // between tenant A's search and tenant B's twelve better-scoring atoms, even
+    // with tenant B's project named in the scope.
+    const rows = await service(owner as never).searchHybrid(QUERY, {
+      limit: 10, organizationUuid: orgUuidA, projectIds: [projectA, projectA2, projectB],
+    });
     expect(rows.length).toBeGreaterThan(0);
     for (const r of rows) expect(r.title).not.toMatch(/tenant-B/);
   });

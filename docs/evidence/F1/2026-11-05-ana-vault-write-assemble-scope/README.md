@@ -70,3 +70,12 @@ Two test fixtures changed:
 ## Not done here
 
 - **Not run on a PostgreSQL server or in a live AnA conversation.** The suites run on PGlite.
+
+## Follow-up: the stated reason is read on the write's own path (2026-11-06)
+
+`governed-reason-not-invented.test.ts` checks statically that every reason carried to a write is bound to
+`gatedReason(input)` on that write's path. The refactor above moved that call into `vaultUpdateInput`, so the check read
+`update_vault_document`'s reason as unbound and failed: "update_vault_document AnaToolExecutor.ts:21544: reason is not
+bound on this path". It is now read in the handler again, and the helper returns no reason. The suite passes, 75 of 75;
+no behaviour changed. Found by the lead session while reviewing the next slice; the pre-push gates do not run that
+suite.
