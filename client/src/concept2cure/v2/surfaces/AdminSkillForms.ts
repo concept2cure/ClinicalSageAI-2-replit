@@ -9,9 +9,13 @@ import {
   SKILL_SEGMENT_LABELS,
   SKILL_USE_CASES,
   SKILL_USE_CASE_LABELS,
+  SKILL_LIMITS,
   type LibrarySkillDetailDto,
   type LibrarySkillSummaryDto,
   type OrgSkillDto,
+  type StandingRuleReference,
+  type StandingRuleLevel,
+  type RuleConflictDecisionPackage,
 } from '@shared/ana/skills';
 
 /**
@@ -144,7 +148,17 @@ function defaultsOfBase(base: LibrarySkillDetailDto | null, mode: OrgEditing['mo
 export function studioDefaults(target: OrgEditing): Record<string, string> {
   const mode = target.skill?.extensionMode ?? target.mode;
   const d = target.skill ? defaultsOfSkill(target.skill) : defaultsOfBase(target.base, mode);
-  return { ...d, mode: mode ?? 'addendum' };
+  return { ...d, mode: mode ?? 'addendum', ...standingRuleDefaults(target) };
+}
+function standingRuleDefaults(target: OrgEditing): Record<string, string> {
+  const rule = target.skill?.standingRule;
+  const project = target.projectId ?? target.skill?.projectId;
+  return { ruleLevel: rule?.level ?? 'none', ruleState: rule?.state ?? 'active',
+    ruleScope: project ? 'project' : 'tenant', ruleProject: String(project ?? ''),
+    conflictKey: rule?.conflictKey ?? '', ruleSource: 'capture', sourceAuditEventId: '',
+    correctionText: '', correctionAgency: '', correctionDocumentType: '', correctionIntent: '',
+    supersedes: rule?.supersedes.map(ref => `${ref.bundleId}@${ref.version}`).join('\n') ?? '',
+    approvalDescription: 'Require human approval before checking dossier consistency.' };
 }
 
 /** Whether the skill builds on a library skill (adds to it or replaces it). */
@@ -162,8 +176,8 @@ export function studioTitle(target: OrgEditing): string {
 
 /**
  * The body /api/ana-skills/organization reads, from the form's values.
- * Omit policyBindings and sourceAuditEventId: the studio does not author
- * approval rules, and an ordinary method edit must preserve them on the server.
+ * Ordinary method edits preserve stored approval rules and source attribution.
+ * An explicit sourced rule change carries its lifecycle and expected version.
  */
 export function orgSkillBody(target: OrgEditing, v: Record<string, string>, reason: string | null) {
   const extendsSkillKey = target.base?.key ?? target.skill?.extendsSkillKey ?? null;
@@ -181,5 +195,101 @@ export function orgSkillBody(target: OrgEditing, v: Record<string, string>, reas
     extensionMode: extendsSkillKey ? (v.mode === 'replace' ? 'replace' : 'addendum') : null,
     status: v.status || 'draft',
     reason,
+    ...(reason === null ? {} : standingRuleBody(target, v)),
   };
+}
+
+/** Scope is carried by the existing endpoint, never by a claimed body field. */
+export function studioProject(target: OrgEditing, values: Record<string, string>): string | number | null {
+  if (target.skill) return target.skill.projectId;
+  if (target.projectId) return target.projectId;
+  return values.ruleLevel !== 'none' && values.ruleScope === 'project' ? values.ruleProject.trim() : null;
+}
+export function supersededRuleRefs(value: string): StandingRuleReference[] | null {
+  const refs: StandingRuleReference[] = [];
+  for (const line of lines(value)) {
+    const match = /^([A-Za-z0-9_-]{1,160})@([1-9]\d*)$/.exec(line);
+    if (!match || !Number.isSafeInteger(Number(match[2]))) return null;
+    refs.push({ bundleId: match[1], version: Number(match[2]) });
+  }
+  return refs.length <= 20 ? refs : null;
+}
+function standingRuleBody(target: OrgEditing, values: Record<string, string>) {
+  const prior = target.skill?.standingRule;
+  if (!prior && (!values.ruleLevel || values.ruleLevel === 'none')) return {};
+  const level = values.ruleLevel as StandingRuleLevel;
+  const state = values.ruleState === 'revoked' ? 'revoked' as const : 'active' as const;
+  const retained = target.skill?.policyBindings ?? [];
+  const policyBindings = level === 'hard_gate' ? retained.length ? retained : [{ policyType: 'requires_approval' as const,
+    enforcement: 'mandatory' as const, toolName: 'check_dossier_consistency', description: values.approvalDescription.trim() }] : [];
+  const supersedes = prior ? prior.supersedes.map(ref => ({ ...ref })) : supersededRuleRefs(values.supersedes) ?? [];
+  return { standingRule: { level, state, conflictKey: values.conflictKey.trim(), supersedes },
+    policyBindings, status: state === 'revoked' ? 'archived' : 'active',
+    ...(target.skill ? { expectedVersion: target.skill.version } : {}),
+    ...(!prior ? correctionSourceBody(values) : {}),
+  };
+}
+function correctionSourceBody(values: Record<string, string>) {
+  return values.ruleSource === 'audit' ? { sourceAuditEventId: values.sourceAuditEventId.trim() }
+    : { correction: { text: values.correctionText.trim(), agency: values.correctionAgency.trim(),
+      documentType: values.correctionDocumentType.trim(), intent: values.correctionIntent.trim() } };
+}
+
+/** Refuse a silent change in authority before sending the exact versioned action. */
+export function standingRuleRefusal(target: OrgEditing, values: Record<string, string>): string | null {
+  const prior = target.skill?.standingRule;
+  const stored = storedRuleRefusal(target, values);
+  if (stored) return stored;
+  if (!prior && (!values.ruleLevel || values.ruleLevel === 'none')) return null;
+  return reusableMethodRefusal(values) ?? ruleDefinitionRefusal(target, values) ?? (prior ? null : correctionSourceRefusal(values));
+}
+function reusableMethodRefusal(values: Record<string, string>): string | null {
+  if (!values.name.trim() || values.name.trim().length > SKILL_LIMITS.nameMax) return `Give the rule a name of 1–${SKILL_LIMITS.nameMax} characters.`;
+  if (values.description.trim().length < SKILL_LIMITS.descriptionMin || values.description.length > SKILL_LIMITS.descriptionMax) return `State when to use it in ${SKILL_LIMITS.descriptionMin}–${SKILL_LIMITS.descriptionMax} characters.`;
+  return values.instructions.trim().length < SKILL_LIMITS.instructionsMin || values.instructions.length > SKILL_LIMITS.instructionsMax
+    ? `Write the reusable Method in ${SKILL_LIMITS.instructionsMin}–${SKILL_LIMITS.instructionsMax} characters. The correction source is stored separately.` : null;
+}
+function storedRuleRefusal(target: OrgEditing, values: Record<string, string>): string | null {
+  const prior = target.skill?.standingRule;
+  if (prior && prior.state !== 'active') return 'This rule is revoked or superseded. Create a new sourced rule to replace it.';
+  if (prior?.level === 'hard_gate' && values.ruleLevel !== 'hard_gate') return 'A mandatory approval rule cannot be lowered. Revoke it explicitly with a reason.';
+  if (!prior && target.skill?.policyBindings?.length && !['none', 'hard_gate'].includes(values.ruleLevel)) return 'Existing mandatory approval actions must be retained.';
+  if (prior && values.ruleLevel === 'none') return 'Use explicit revocation to stop a saved rule.';
+  return null;
+}
+function ruleDefinitionRefusal(target: OrgEditing, values: Record<string, string>): string | null {
+  if (!/^[a-z][a-z0-9._-]{2,79}$/.test(values.conflictKey)) return 'Use a rule topic of 3–80 lowercase letters, numbers, dots, hyphens or underscores.';
+  if (supersededRuleRefs(values.supersedes) === null) return 'List each replaced rule as its bundle identifier followed by @ and its exact version.';
+  const project = studioProject(target, values);
+  if (values.ruleScope === 'project' && !project) return 'Choose the project this rule applies to.';
+  if (values.ruleLevel === 'hard_gate' && !(target.skill?.policyBindings?.length) && values.approvalDescription.trim().length < 8) return 'Describe the mandatory approval step.';
+  return null;
+}
+export const RULE_LEVEL_LABELS = { soft: 'Soft preference', standing: 'Standing instruction', hard_gate: 'Mandatory approval' };
+const object = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
+function conflictReference(raw: unknown): StandingRuleReference | null {
+  if (!object(raw) || typeof raw.bundleId !== 'string' || !/^[A-Za-z0-9_-]{1,160}$/.test(raw.bundleId)
+      || typeof raw.version !== 'number' || !Number.isSafeInteger(raw.version) || raw.version <= 0) return null;
+  return { bundleId: raw.bundleId, version: raw.version };
+}
+export function ruleConflictDecision(payload: unknown): RuleConflictDecisionPackage | null {
+  if (!object(payload) || !object(payload.error) || payload.error.code !== 'RULE_CONFLICT') return null;
+  const decision = payload.error.decisionPackage;
+  if (!object(decision) || typeof decision.conflictKey !== 'string' || !/^[a-z][a-z0-9._-]{2,79}$/.test(decision.conflictKey)
+      || !Array.isArray(decision.ruleRefs) || !decision.ruleRefs.length || decision.ruleRefs.length > 20) return null;
+  const ruleRefs: StandingRuleReference[] = [];
+  for (const raw of decision.ruleRefs) {
+    const reference = conflictReference(raw);
+    if (!reference) return null;
+    ruleRefs.push(reference);
+  }
+  return { conflictKey: decision.conflictKey, ruleRefs, resolution: 'Explicitly supersede or revoke the conflicting rule.' };
+}
+function correctionSourceRefusal(values: Record<string, string>): string | null {
+  if (values.ruleState === 'revoked') return 'Save a sourced rule before revoking it.';
+  if (values.ruleSource === 'audit') return /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(values.sourceAuditEventId)
+    ? null : 'Enter the identifier of a recorded correction audit event.';
+  if (!values.correctionText.trim() || values.correctionText.trim().length > 500) return 'State the correction in 1–500 characters.';
+  return values.correctionAgency.trim() && values.correctionDocumentType.trim() && values.correctionIntent.trim()
+    ? null : 'State the correction’s agency, document type and intended future behavior.';
 }

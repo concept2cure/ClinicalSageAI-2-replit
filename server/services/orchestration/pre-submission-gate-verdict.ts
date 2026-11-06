@@ -5,6 +5,9 @@
  * readiness + CMC + CRL/RTF + ICH checks.
  */
 
+import { isCurrentConfirmedFeedbackIssue, isCurrentConfirmedObjectiveBlocker } from '../regulatory-correspondence/issue-parser';
+import { issueRowToCorrespondenceIssue, type CorrespondenceIssueRow } from '../regulatory-correspondence/issue-row-mapper';
+
 export type GateVerdict = 'ready' | 'conditional' | 'hold';
 
 /** Server-read correspondence evidence, never a caller's claim that review passed. */
@@ -17,11 +20,13 @@ export interface CorrespondenceBlockerReview {
   subjectiveFit: 'not_assessed';
 }
 
-export interface CorrespondenceBlockerRow {
+export interface CorrespondenceBlockerRow extends Partial<CorrespondenceIssueRow> {
   id: string;
   blocker: boolean;
   human_review_status: string;
   resolution_status: string;
+  parsed_text?: string | null;
+  direction?: string | null;
 }
 
 /**
@@ -36,8 +41,17 @@ export function reviewCorrespondenceBlockers(rows: readonly CorrespondenceBlocke
   for (const row of rows) {
     if (!row.blocker || row.human_review_status === 'rejected'
       || row.resolution_status === 'resolved' || row.resolution_status === 'waived') continue;
-    if (row.human_review_status === 'confirmed' || row.human_review_status === 'edited') {
+    if (row.direction !== undefined && row.direction !== 'inbound') continue;
+    const issue = issueRowToCorrespondenceIssue(row as CorrespondenceIssueRow);
+    const sourceText = row.parsed_text ?? '';
+    const direction = row.direction ?? null;
+    if (isCurrentConfirmedObjectiveBlocker(issue, sourceText, direction)) {
       blockingIssueIds.push(row.id);
+    } else if (issue.structuredExtraction?.feedbackCoding?.register === 'subjective'
+        && isCurrentConfirmedFeedbackIssue(issue, sourceText, direction)) {
+      // An adopted presentation inference is not an objective requirement;
+      // subjective-fit remains unassessed without a connected pattern corpus.
+      continue;
     } else {
       pendingIssueIds.push(row.id);
     }
@@ -63,7 +77,7 @@ export async function readCorrespondenceBlockerReview(
     const pool = getPool();
     if (!pool) throw new Error('Correspondence store unavailable');
     const result = await pool.query<CorrespondenceBlockerRow>(
-      `SELECT i.id, i.blocker, i.human_review_status, i.resolution_status
+      `SELECT i.*, c.parsed_text, c.direction
          FROM c2c_correspondence_issues i
          JOIN c2c_correspondence c ON c.id = i.correspondence_id
          JOIN c2c_submissions s ON s.id = c.submission_id

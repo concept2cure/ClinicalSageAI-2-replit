@@ -271,6 +271,29 @@ describe('customer-owned SDK failures and embedding authority', () => {
     expect(`${error.stack}${JSON.stringify(error)}`).not.toContain('CANARY');
   });
 
+  it('rechecks asynchronous derivative custody after credential use and before synchronous PQ admission', async () => {
+    const order: string[] = [];
+    factory.current.mockImplementation(async () => { await Promise.resolve(); order.push('credential'); });
+    const freshCustody = vi.fn(async () => { await Promise.resolve(); order.push('custody'); });
+    const qualified = vi.fn(() => { order.push('pq'); });
+    factory.sdkCreate.mockImplementation(async () => { order.push('sdk'); return {}; });
+    const client = await createTenantProviderClient('openai', 7, 3, 'model_inference', { beforeCreate: qualified, recheckBeforeCreate: freshCustody });
+    await client.chat.completions.create({ model: 'fixture' });
+    expect(order).toEqual(['credential', 'custody', 'pq', 'sdk']);
+    expect(freshCustody).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves a custody refusal after credential use and never reaches PQ or the SDK', async () => {
+    const refusal = Object.assign(new Error('The derivative authority was revoked.'), { name: 'GatewayPolicyError' });
+    const qualified = vi.fn();
+    const freshCustody = vi.fn(async () => { throw refusal; });
+    const client = await createTenantProviderClient('anthropic', 7, 3, 'model_inference', { beforeCreate: qualified, recheckBeforeCreate: freshCustody });
+    await expect(client.messages.create({ model: 'fixture' })).rejects.toBe(refusal);
+    expect(factory.current).toHaveBeenCalledTimes(1);
+    expect(qualified).not.toHaveBeenCalled();
+    expect(factory.sdkCreate).not.toHaveBeenCalled();
+  });
+
   it('sanitizes async iterator failures and retains AbortError identity for cancellation', async () => {
     const client = await createTenantProviderClient('anthropic', 7, 3);
     const controller = new AbortController();

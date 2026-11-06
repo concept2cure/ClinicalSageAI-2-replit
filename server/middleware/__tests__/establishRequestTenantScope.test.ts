@@ -85,6 +85,38 @@ describe('establishRequestTenantScope', () => {
     expect(req.dbClient).toBeUndefined();
   });
 
+  it.each([7, '7'])('binds only the admitted req.user.id subject (%s)', (id) => {
+    const req = makeReq({ user: { id, userId: 99, organizationId: '42', role: 'member' }, userId: 98,
+      headers: { 'x-user-id': '97', 'x-account-id': '96' }, body: { accountId: 95 }, tenantContext: { userId: 94 } });
+    const res = makeRes();
+    establishRequestTenantScope(req, res as any, () => expect(getTenantScope()?.accountId).toBe(7));
+    expect(req.tenantContext.userId).toBe(id);
+    res.finish();
+  });
+
+  it.each([undefined, null, '', '7tail', '007', '0', -1, 1.5, 2147483648, 'identity-uuid'])('leaves private ownership unknown for an invalid/missing subject (%s)', (id) => {
+    const req = makeReq({ user: { id, userId: 99, organizationId: '42', role: 'member' }, userId: 98,
+      headers: { 'x-account-id': '97' }, body: { accountId: 96 }, tenantContext: { userId: 95 } });
+    const res = makeRes();
+    establishRequestTenantScope(req, res as any, () => {
+      expect(getTenantScope()?.tenantId).toBe('42');
+      expect(getTenantScope()?.accountId).toBeNull();
+    });
+    res.finish();
+  });
+
+  it('replaces a pre-auth account with the final verified subject after membership', () => {
+    const req = makeReq({ user: { id: 7, organizationId: '42', role: 'member' } });
+    const res = makeRes();
+    runWithTenantScope({ tenantId: '0', accountId: 99, source: 'request' }, () => {
+      establishRequestTenantScope(req, res as any, () => {
+        expect(getTenantScope()).toMatchObject({ tenantId: '42', accountId: 7 });
+      });
+      expect(getTenantScope()?.accountId).toBe(99);
+    });
+    res.finish();
+  });
+
   it('is idempotent when req.dbClient is already set', () => {
     const sentinel = { query: vi.fn() };
     const req = makeReq({ dbClient: sentinel });
@@ -95,6 +127,20 @@ describe('establishRequestTenantScope', () => {
 
     expect(called).toBe(true);
     expect(req.dbClient).toBe(sentinel); // untouched
+  });
+
+  it('refuses repeated admission under another account instead of keeping its private data scope', () => {
+    const req = makeReq({ user: { id: 8, organizationId: '42', role: 'member' } });
+    const res = Object.assign(makeRes(), { status: vi.fn(), json: vi.fn() });
+    res.status.mockReturnValue(res);
+    const next = vi.fn();
+    runWithTenantScope({ tenantId: '42', accountId: 7, source: 'request' }, () => {
+      establishRequestTenantScope(req, res as any, next);
+    });
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({ error: expect.objectContaining({ code: 'ACCOUNT_SCOPE_MISMATCH' }) });
+    expect(req.dbClient).toBeUndefined();
   });
 
   it('does NOT fabricate a scope for a tenant-less identity', () => {

@@ -21,6 +21,7 @@ import { NO_PQ_QUALIFIED_MODEL } from './model-governance';
 import { APPROVED_MODELS } from '../ai-governance/approved-models';
 
 export type GatewayErrorCode =
+  | 'DERIVATIVE_USE_REFUSED'
   | 'SOURCE_CONTEXT_UNAVAILABLE'
   | 'PLACEMENT_REFUSED'
   | 'MODEL_NOT_QUALIFIED'
@@ -43,6 +44,7 @@ export interface ClassifiedGatewayError {
  * submissions.ts and ectd-documents.ts predate this export and agree with it.
  */
 export const GATEWAY_ERROR_HTTP_STATUS: Readonly<Record<GatewayErrorCode, number>> = {
+  DERIVATIVE_USE_REFUSED: 403,
   SOURCE_CONTEXT_UNAVAILABLE: 409,
   // Not an outage: the organization's own policy excludes every lane that
   // could serve the request, and retrying cannot change that.
@@ -103,6 +105,9 @@ export function classifyGatewayError(
   }
   if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'SOURCE_CONTEXT_UNAVAILABLE') {
     return { code: 'SOURCE_CONTEXT_UNAVAILABLE', message: 'Selected project sources changed or are no longer available. Check project access and current source versions before retrying this section.' };
+  }
+  if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'DERIVATIVE_USE_REFUSED') {
+    return { code: 'DERIVATIVE_USE_REFUSED', message: 'The approved derivative, its source access or its local verification is no longer valid. Review current custody and approval before drafting again.' };
   }
   const refusal = classifyPolicyRefusal(err);
   if (refusal) return refusal;

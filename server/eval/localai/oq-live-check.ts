@@ -39,6 +39,10 @@ import {
   isPlacementCompliant,
 } from '../../services/ai-gateway/providers/placement';
 import type { ProviderName } from '../../services/ai-gateway/types';
+import { APPROVED_MODELS, governingEntry, type ApprovedModel } from '../../services/ai-governance/approved-models';
+import { CLOUD_MODELS } from '../../services/ai-gateway/providers/cloud-models';
+import { hasConcreteQualifiedPin } from '../../services/ai-gateway/model-governance';
+import type { ModelConfig } from '../../services/ai-gateway/types';
 
 /** The frontier substrates that must be excluded from on-prem residency. */
 const FRONTIER_PROVIDERS: ProviderName[] = [
@@ -158,25 +162,87 @@ export interface ProbeResult {
   ok: boolean;
   models?: string[];
   error?: string;
+  readiness?: LocalQualificationReadiness;
+}
+
+interface LocalReadinessInputs {
+  env?: NodeJS.ProcessEnv;
+  registry?: readonly ModelConfig[];
+  entries?: readonly ApprovedModel[];
+  reportedModels?: readonly string[];
+}
+
+export interface LocalQualificationReadiness {
+  kind: 'local-qualification-readiness';
+  status: 'blocked';
+  readyToEvaluate: false;
+  qualifiesModel: false;
+  endpointConfigured: boolean;
+  routingEnabled: boolean;
+  expectedModel: { id: string | null; version: string | null; immutablePin: boolean };
+  runtimeIdentity: { status: 'not_probed' | 'matched' | 'mismatched'; reportedModelCount: number; matchedModel: string | null };
+  weightsVerification: 'not_independently_verified';
+  blockers: Array<{ code: string; message: string }>;
+}
+
+function localConfiguration(inputs: LocalReadinessInputs) {
+  const env = inputs.env ?? process.env;
+  const row = (inputs.registry ?? CLOUD_MODELS).find(model => model.provider === 'local');
+  const entry = row ? governingEntry(row, inputs.entries ?? APPROVED_MODELS) : undefined;
+  const endpointConfigured = Boolean(env.LOCAL_AI_BASE_URL || env.LITELLM_BASE_URL);
+  const routingEnabled = endpointConfigured && env.AI_LOCAL_ENABLED === 'true' && Boolean(row?.enabled);
+  const immutablePin = Boolean(entry && hasConcreteQualifiedPin(entry));
+  return { row, entry, endpointConfigured, routingEnabled, immutablePin };
+}
+
+function localRuntimeIdentity(configuration: ReturnType<typeof localConfiguration>, reported?: readonly string[]): LocalQualificationReadiness['runtimeIdentity'] {
+  const matched = configuration.immutablePin && reported?.includes(configuration.entry!.pinnedVersion) === true;
+  return { status: reported === undefined ? 'not_probed' : matched ? 'matched' : 'mismatched',
+    reportedModelCount: reported?.length ?? 0, matchedModel: matched ? configuration.entry!.pinnedVersion : null };
+}
+
+function localReadinessBlockers(configuration: ReturnType<typeof localConfiguration>, identity: LocalQualificationReadiness['runtimeIdentity']) {
+  const { endpointConfigured, routingEnabled, entry, immutablePin } = configuration;
+  const blockers: LocalQualificationReadiness['blockers'] = [];
+  if (!endpointConfigured) blockers.push({ code: 'LOCAL_ENDPOINT_UNCONFIGURED', message: 'A self-hosted generation endpoint has not been configured.' });
+  if (!routingEnabled) blockers.push({ code: 'LOCAL_ROUTING_DISABLED', message: 'The local generation lane is not enabled.' });
+  if (!entry) blockers.push({ code: 'LOCAL_REGISTRY_DRIFT', message: 'The configured local row does not match its controlled registry entry.' });
+  if (!immutablePin) blockers.push({ code: 'LOCAL_PIN_NOT_CONCRETE', message: 'The controlled local entry does not pin immutable weights by SHA-256.' });
+  if (identity.status === 'mismatched') blockers.push({ code: 'LOCAL_IDENTITY_NOT_REPORTED', message: 'Discovery did not report the exact configured immutable model identity.' });
+  blockers.push({ code: 'LOCAL_WEIGHTS_NOT_INDEPENDENTLY_VERIFIED', message: 'Runtime inventory cannot independently verify loaded weights, the runtime image or deployment configuration.' });
+  return blockers;
+}
+
+/** A runtime model name is a declaration, not a measurement of loaded weights or deployment configuration. */
+export function localQualificationReadiness(inputs: LocalReadinessInputs = {}): LocalQualificationReadiness {
+  const configuration = localConfiguration(inputs);
+  const runtimeIdentity = localRuntimeIdentity(configuration, inputs.reportedModels);
+  const { endpointConfigured, routingEnabled, row, entry, immutablePin } = configuration;
+  return { kind: 'local-qualification-readiness', status: 'blocked', readyToEvaluate: false, qualifiesModel: false,
+    endpointConfigured, routingEnabled, expectedModel: { id: row?.id ?? null, version: entry?.pinnedVersion ?? null, immutablePin },
+    runtimeIdentity, weightsVerification: 'not_independently_verified', blockers: localReadinessBlockers(configuration, runtimeIdentity) };
 }
 
 /**
- * Probe the configured local endpoint via the gateway's createLocalClient()
- * (never a direct client — that would bypass the audited seam). Lists models;
- * a reachable OpenAI-compatible server answers. Returns a result object rather
- * than throwing so the runner can format it.
+ * Inspect runtime-declared identity through the existing client factory.
+ * Reachability and matching inventory cannot independently attest loaded
+ * weights or deployment configuration, so neither establishes readiness.
  */
-export async function probeLocalEndpoint(): Promise<ProbeResult> {
+export async function probeLocalEndpoint(inputs: LocalReadinessInputs = {}): Promise<ProbeResult> {
+  const before = localQualificationReadiness(inputs);
+  if (!before.routingEnabled || !before.expectedModel.immutablePin) return { ok: false, readiness: before, error: 'LOCAL_QUALIFICATION_PREREQUISITES_BLOCKED' };
   const client = createLocalClient();
   if (!client) {
-    return { ok: false, error: 'no local client — LOCAL_AI_BASE_URL/LITELLM_BASE_URL unset' };
+    return { ok: false, readiness: before, error: 'LOCAL_CLIENT_UNAVAILABLE' };
   }
   try {
     const list: any = await client.models.list();
-    const models: string[] = (list?.data || []).map((m: any) => m.id).filter(Boolean);
-    return { ok: true, models };
-  } catch (e: any) {
-    return { ok: false, error: e?.message || String(e) };
+    const models: string[] = Array.isArray(list?.data) ? list.data.map((model: { id?: unknown }) => model.id).filter((id: unknown): id is string => typeof id === 'string' && Boolean(id.trim())) : [];
+    const readiness = localQualificationReadiness({ ...inputs, reportedModels: models });
+    return { ok: false, readiness, models: readiness.runtimeIdentity.matchedModel ? [readiness.runtimeIdentity.matchedModel] : [],
+      error: readiness.runtimeIdentity.status === 'matched' ? 'LOCAL_DEPLOYMENT_EVIDENCE_REQUIRED' : 'LOCAL_IDENTITY_NOT_REPORTED' };
+  } catch {
+    return { ok: false, readiness: before, error: 'LOCAL_DISCOVERY_FAILED' };
   }
 }
 
@@ -207,14 +273,15 @@ async function main(): Promise<void> {
     return;
   }
 
-  console.log('\n[OQ] Local endpoint configured — probing via the gateway local client...');
+  console.log('\n[OQ] Local endpoint configured — checking controlled identity and discovery prerequisites...');
   const probe = await probeLocalEndpoint();
+  if (probe.readiness) console.log(JSON.stringify(probe.readiness));
   if (!probe.ok) {
-    console.error(`[OQ] FAIL: local endpoint did not respond — ${probe.error}`);
+    console.error(`[OQ] BLOCKED: local qualification readiness is not established — ${probe.error}`);
     process.exitCode = 1;
     return;
   }
-  console.log(`[OQ] PASS: local endpoint reachable. Served models: ${(probe.models || []).join(', ') || '(none reported)'}`);
+  console.log('[OQ] Exact runtime identity was reported; independent deployment evidence and model qualification remain separate requirements.');
 }
 /* eslint-enable no-console */
 

@@ -45,6 +45,7 @@ import { getTenantScope } from '../../db/tenantStore.js';
 import { runRefusingModelCalls } from '../ai-gateway/model-call-scope.js';
 import type { AnyAnaTool, GatewayRequest } from '../ai-gateway/types.js';
 import type { AgenticToolEvent } from './agentic-tool-dispatch.js';
+import type { DraftSourceContext } from './draft-project-sources.js';
 import { notifyObserver } from './agentic-tool-dispatch.js';
 import type { LoopStopDirective, ToolResultEntry } from './agentic-loop.js';
 import type { ToolContext } from './AnaToolExecutor.js';
@@ -53,6 +54,8 @@ import { refusalOf } from './tool-trace.js';
 import {
   HARNESS_CHECKS,
   aggregateVerdict,
+  compareStoredSourceClaims,
+  SOURCE_CLAIM_METHOD,
   dossierCheckSkipped,
   readDossierCheck,
   readGroundingCheck,
@@ -151,7 +154,8 @@ function startRefusal(
   }
   const brief = parseAgentBrief(input);
   if ('error' in brief) return brief;
-  if (brief.role === 'verify' && !host.governedTools.some(t => (HARNESS_CHECKS as readonly string[]).includes(t.name))) {
+  if (brief.role === 'verify' && !host.governedTools.some(t => (HARNESS_CHECKS as readonly string[]).includes(t.name) ||
+    (brief.sourceDocumentIds?.length && t.name === 'read_project_document'))) {
     return {
       error: 'NO_DETERMINISTIC_CHECKER',
       message: 'None of the checks a verify agent runs is available in this conversation. No agent was started.',
@@ -163,15 +167,10 @@ function startRefusal(
 /** The child's ToolContext, field by field: nothing of the parent's is spread in (D11). */
 function childContext(ctx: ToolContext, signal: AbortSignal): ToolContext {
   return {
-    organizationId: ctx.organizationId,
-    organizationUuid: ctx.organizationUuid ?? null,
-    userId: ctx.userId ?? null,
-    sqlClient: ctx.sqlClient,
-    projectId: ctx.projectId ?? null,
-    projectRef: ctx.projectRef ?? null,
-    agentDepth: 1,
-    modelCalls: 'refuse',
-    signal,
+    organizationId: ctx.organizationId, organizationUuid: ctx.organizationUuid ?? null,
+    userId: ctx.userId ?? null, sqlClient: ctx.sqlClient,
+    projectId: ctx.projectId ?? null, projectRef: ctx.projectRef ?? null,
+    agentDepth: 1, modelCalls: 'refuse', signal,
   };
 }
 
@@ -307,6 +306,49 @@ async function runSourceSpanChecks(
   return { reading, output: { check: 'source_spans' as const, output: JSON.stringify({ evidence }) } };
 }
 
+interface SourceClaimCheck {
+  reading: CheckReading;
+  output: { check: 'source_claims'; output: string };
+  tiers: readonly (0 | 1 | 2 | 3)[];
+  assertCurrent(): Promise<void>;
+}
+/** No supplied source prose or classification reaches this issuer. The existing
+ * Vault loader binds current actor/project, exact version UUID and extraction. */
+async function runSourceClaimChecks(run: AgentRun, ctx: ToolContext, offered: ReadonlySet<string>): Promise<SourceClaimCheck> {
+  const unavailable: SourceClaimCheck = { reading: { check: 'source_claims', outcome: 'error',
+    statement: 'Stored-source clinical figures: current project source access could not be established. Claims remain unverified.' },
+  output: { check: 'source_claims', output: JSON.stringify({ method: SOURCE_CLAIM_METHOD, qualification: 'unverified', reason: 'SOURCE_UNAVAILABLE' }) },
+  tiers: [3], assertCurrent: async () => {} };
+  if (!offered.has('read_project_document')) return unavailable;
+  try {
+    const { loadDraftProjectSources, assertDraftSourceContextCurrent, draftSourceSensitivityTiers } = await import('./draft-project-sources.js');
+    const context: DraftSourceContext = await runRefusingModelCalls({ runId: run.runId, parentRunId: run.host.parentRunId, tool: 'read_project_document' },
+      () => loadDraftProjectSources(run.brief.sourceDocumentIds, { ...ctx, signal: run.signal }, run.brief.textToCheck));
+    const result = compareStoredSourceClaims(run.brief.textToCheck!, context.sources);
+    const assertCurrent = () => assertDraftSourceContextCurrent(context, { organizationId: ctx.organizationId ?? undefined, userId: ctx.userId ?? undefined,
+      projectId: ctx.projectRef ?? ctx.projectId ?? undefined }, run.signal);
+    await assertCurrent();
+    return { reading: result.reading, output: { check: 'source_claims', output: JSON.stringify({ ...result.output,
+      draftSha256: createHash('sha256').update(run.brief.textToCheck!).digest('hex'), organizationId: ctx.organizationId,
+      userId: ctx.userId, projectId: ctx.projectId ?? null, projectRef: ctx.projectRef ?? null, sourceCurrentAtCheck: true }) },
+    tiers: draftSourceSensitivityTiers(context) ?? [3], assertCurrent };
+  } catch (error) {
+    if (run.signal.aborted) throw error;
+    return unavailable;
+  }
+}
+
+async function recheckSourceClaims(source: SourceClaimCheck | null, signal: AbortSignal): Promise<void> {
+  if (!source) return;
+  try { await source.assertCurrent(); }
+  catch (error) {
+    if (signal.aborted) throw error;
+    source.reading.outcome = 'error';
+    source.reading.statement = 'Stored-source clinical figures: source authority changed before release. The recorded comparisons are historical; current support is unverified.';
+    source.output.output = JSON.stringify({ ...JSON.parse(source.output.output), sourceCurrentAtRelease: false, qualification: 'unverified' });
+  }
+}
+
 /** The child's standing instructions. */
 export const SUB_AGENT_MODE =
   'You are a sub-agent working for AnA on one bounded task. Nobody is watching you and nobody will answer a ' +
@@ -363,14 +405,10 @@ async function modelRecorder(): Promise<(response: { provider?: string | null; m
 
 /** One agent's state while it runs. */
 interface AgentRun {
-  runId: string;
-  brief: AgentBrief;
-  host: SubAgentHost;
-  ctx: ToolContext;
+  runId: string; brief: AgentBrief; host: SubAgentHost; ctx: ToolContext;
   timer: ReturnType<typeof createActiveTimer>;
   signal: AbortSignal;
-  steps: AgentStep[];
-  models: AgentModelRecord[];
+  steps: AgentStep[]; models: AgentModelRecord[];
   usage: { inputTokens: number; outputTokens: number; modelCalls: number };
   budget: AgentBudget | null;
   /** What the run hold last answered when it was not 'running': the person's own outcome. */
@@ -383,14 +421,10 @@ function beginAgentRun(brief: AgentBrief, host: SubAgentHost, ctx: ToolContext):
   const runId = `agent_${randomUUID()}`;
   const timer = createActiveTimer(() => host.heldMs(), CHILD_ACTIVE_MS);
   const run: AgentRun = {
-    runId,
-    brief,
-    host,
-    ctx,
+    runId, brief, host, ctx,
     timer,
     signal: AbortSignal.any([timer.signal, host.expiredSignal, ...(ctx.signal ? [ctx.signal] : [])]),
-    steps: [],
-    models: [],
+    steps: [], models: [],
     usage: { inputTokens: 0, outputTokens: 0, modelCalls: 0 },
     budget: null,
     heldOutcome: null,
@@ -456,7 +490,7 @@ function recordStagedResults(steps: AgentStep[], entries: readonly Readonly<Tool
 }
 
 /** Run the child loop. The caller turns its outcome into the result. */
-async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: CheckReading[]) {
+async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: CheckReading[], source: SourceClaimCheck | null) {
   const { host: h, runId } = run;
   const tools = childToolsFrom(h.governedTools);
   const pin = await childPin();
@@ -472,6 +506,10 @@ async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: Chec
     runId,
     parentRunId: h.parentRunId,
     callerModule: 'ana-sub-agent',
+    // The self-contained brief has no independently issued classification.
+    // Loaded sources can raise its floor; neither fields nor model prose lower it.
+    inputSensitivityTiers: Object.freeze([3, ...(source?.tiers ?? [])]),
+    ...(source ? { beforeDispatch: source.assertCurrent } : {}),
   };
   const { executeAgenticLoop } = await import('./AnaToolExecutor.js');
   const { runWithRunScope } = await import('../ai-gateway/run-scope.js');
@@ -511,20 +549,33 @@ async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: Chec
   }));
 }
 
-/** Wait out a pause, run the checks (verify), run the child loop, and shape what it did. */
-async function driveAgent(run: AgentRun): Promise<string> {
-  // A run that will not resume starts nothing.
-  if (!(await holdFor(run))) return stoppedResult(run);
-  const childCtx = childContext(run.ctx, run.signal);
+async function prepareAgentChecks(run: AgentRun, childCtx: ToolContext) {
   const offered = new Set(run.host.governedTools.map(t => t.name));
   const checks =
     run.brief.textToCheck !== undefined
       ? await runHarnessChecks(run.brief.textToCheck, childCtx, offered, { runId: run.runId, parentRunId: run.host.parentRunId }, { sourceSpans: run.brief.sourceSpans, steps: run.steps })
       : null;
+  const source = run.brief.sourceDocumentIds ? await runSourceClaimChecks(run, childCtx, offered) : null;
+  if (source && checks) { checks.readings.push(source.reading); checks.outputs.push(source.output); }
+  return { checks, source };
+}
+async function runAdvisory(run: AgentRun, childCtx: ToolContext, prepared: Awaited<ReturnType<typeof prepareAgentChecks>>) {
+  try { return { response: await runChildLoop(run, childCtx, prepared.checks?.readings ?? [], prepared.source), advisoryFailure: undefined }; }
+  catch (error) {
+    if (run.signal.aborted || !prepared.checks) throw error;
+    return { response: null, advisoryFailure: classifyAgentFailure(error, run.usage.modelCalls) };
+  }
+}
+/** Wait out a pause, run independent checks, then retain them if advice cannot run. */
+async function driveAgent(run: AgentRun): Promise<string> {
+  if (!(await holdFor(run))) return stoppedResult(run);
+  const childCtx = childContext(run.ctx, run.signal);
+  const prepared = await prepareAgentChecks(run, childCtx), { checks, source } = prepared;
+  const { response, advisoryFailure } = await runAdvisory(run, childCtx, prepared);
+  await recheckSourceClaims(source, run.signal);
   const verdict = checks ? aggregateVerdict(checks.readings) : null;
-  const response = await runChildLoop(run, childCtx, checks?.readings ?? []);
 
-  const reason = response.loop.stoppedReason;
+  const reason = response?.loop.stoppedReason ?? 'advisory_unavailable';
   let status: AgentStatus = reason === 'no_more_tools' ? 'completed' : 'incomplete';
   let heldExpired = false;
   if (reason === 'cancelled') {
@@ -538,16 +589,9 @@ async function driveAgent(run: AgentRun): Promise<string> {
   run.finished = { phase: 'finished', runId: run.runId, status, ...(verdict ? { verdict } : {}) };
   const { runId, brief, steps, models, usage, budget } = run;
   return shapeAgentResult({
-    runId,
-    brief,
-    status,
-    stoppedReason: reason,
-    budget,
-    heldExpired,
-    steps,
-    models,
-    usage,
-    reportText: response.content ?? '',
+    runId, brief, status, stoppedReason: reason, budget, heldExpired, steps, models, usage,
+    reportText: response?.content ?? '',
+    advisoryFailure,
     checks: checks && verdict ? { readings: checks.readings, verdict, outputs: checks.outputs } : null,
   });
 }

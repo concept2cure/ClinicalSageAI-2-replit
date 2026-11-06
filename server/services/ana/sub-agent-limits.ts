@@ -104,6 +104,8 @@ export interface AgentBrief {
   /** verify only: the exact text the checks run on. */
   textToCheck?: string;
   sourceSpans?: AgentSourceSpan[];
+  /** Existing Vault version UUIDs, independently loaded by the server. */
+  sourceDocumentIds?: string[];
 }
 
 /** A refusal the runner returns instead of starting an agent. House shape. */
@@ -154,16 +156,32 @@ export function parseAgentBrief(input: Record<string, unknown>): AgentBrief | Ag
   if (instructions.length > AGENT_INSTRUCTIONS_MAX) {
     return invalid(`instructions are over ${AGENT_INSTRUCTIONS_MAX} characters.`);
   }
-  if (role === 'research') return { role, objective, instructions };
+  if (role === 'research') return Object.hasOwn(input, 'source_document_ids')
+    ? invalid('source_document_ids is available only to a verify agent.') : { role, objective, instructions };
   // Checked as given: trimmed only to decide it is empty.
   const raw = typeof input.text_to_check === 'string' ? input.text_to_check : '';
   if (!raw.trim()) return invalid('a verify agent needs the exact text to check in text_to_check.');
   if (raw.length > AGENT_TEXT_TO_CHECK_MAX) {
     return invalid(`text_to_check is over ${AGENT_TEXT_TO_CHECK_MAX} characters.`);
   }
-  const sourceSpans = parseSourceSpans(input.source_spans, raw);
+  const sources = verificationSources(input, raw);
+  return 'error' in sources ? sources : { role, objective, instructions, textToCheck: raw, ...sources };
+}
+
+function verificationSources(input: Record<string, unknown>, text: string): Pick<AgentBrief, 'sourceSpans' | 'sourceDocumentIds'> | AgentRefusal {
+  const sourceSpans = parseSourceSpans(input.source_spans, text), ids = parseSourceDocumentIds(input.source_document_ids);
   if ('error' in sourceSpans) return sourceSpans;
-  return { role, objective, instructions, textToCheck: raw, ...(sourceSpans.length ? { sourceSpans } : {}) };
+  if ('error' in ids) return ids;
+  return { ...(sourceSpans.length ? { sourceSpans } : {}), ...(ids.length ? { sourceDocumentIds: ids } : {}) };
+}
+
+function parseSourceDocumentIds(value: unknown): string[] | AgentRefusal {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || !value.length || value.length > 8 || value.some(id => typeof id !== 'string' ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))) {
+    return refusal('INVALID_AGENT_BRIEF', 'source_document_ids must contain 1–8 Vault version UUIDs. No agent was started.');
+  }
+  return [...new Set((value as string[]).map(id => id.toLowerCase()))];
 }
 
 /** One parent turn's agent counts. The stream holds one per turn. */

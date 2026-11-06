@@ -183,7 +183,11 @@ export interface RecordInteractionResult {
   readonly isFailure: boolean;
 }
 
-export async function recordInteraction(input: RecordInteractionInput): Promise<RecordInteractionResult> {
+export interface InteractionExecutor {
+  query(sql: string, params?: unknown[]): Promise<{ rows: Record<string, unknown>[] }>;
+}
+
+export async function recordInteraction(input: RecordInteractionInput, executor: InteractionExecutor = pool): Promise<RecordInteractionResult> {
   const agency = binAgencyForInteraction(input.agency);
   const documentType = binDocumentType(input.documentType);
   const intent = binIntent(input.intent);
@@ -193,7 +197,7 @@ export async function recordInteraction(input: RecordInteractionInput): Promise<
   const fingerprint = buildFingerprint({ agency, documentType, intentClass: intent, promptSummary });
   const failure = isFailure(input.outcome);
 
-  const result = await pool.query<{ id: string }>(
+  const result = await executor.query(
     `INSERT INTO intelligence.ana_interactions (
        organization_id, project_id, user_id, session_id, artifact_id,
        agency, document_type, submission_type, intent_class,
@@ -223,10 +227,29 @@ export async function recordInteraction(input: RecordInteractionInput): Promise<
   );
 
   return {
-    interactionId: result.rows[0].id,
+    interactionId: String(result.rows[0].id),
     fingerprint,
     isFailure: failure,
   };
+}
+
+/** Caller owns the transaction and current human/project authorization. No shared promotion. */
+export async function recordAuditedHumanCorrection(input: RecordInteractionInput, client: InteractionExecutor): Promise<RecordInteractionResult & { sourceAuditEventId: string }> {
+  if (!Number.isSafeInteger(input.userId) || Number(input.userId) <= 0 || !sanitizeSummary(input.correctionText)) {
+    throw new Error('An attributed human correction is required.');
+  }
+  const result = await recordInteraction({ ...input, userCorrected: true }, client);
+  const { writeChainedAuditRow } = await import('../auditService.js');
+  await writeChainedAuditRow(client, { tenantId: input.organizationId, userId: input.userId,
+    action: 'ana_correction.recorded', resourceType: 'intelligence.ana_interactions', resourceId: result.interactionId,
+    details: { organizationId: input.organizationId, projectId: input.projectId ?? null,
+      actorUserId: input.userId, interactionId: result.interactionId,
+      correctionSha256: crypto.createHash('sha256').update(sanitizeSummary(input.correctionText)!).digest('hex') } });
+  const source = await client.query(`SELECT id FROM audit_logs WHERE tenant_id=$1 AND user_id=$2
+    AND table_name='intelligence.ana_interactions' AND record_id=$3 AND action='ana_correction.recorded'`,
+    [input.organizationId, input.userId, result.interactionId]);
+  if (source.rows.length !== 1 || typeof source.rows[0].id !== 'string') throw new Error('The correction source audit could not be verified.');
+  return { ...result, sourceAuditEventId: source.rows[0].id };
 }
 
 // ─── Pattern extraction (held until reviewed de-identification exists) ───────

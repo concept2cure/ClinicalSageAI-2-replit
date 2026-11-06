@@ -158,8 +158,8 @@ function inferCaller(): string {
 // structurally impossible, even if a query throws.
 
 // One round-trip that sets all four vars LOCAL to the current transaction.
-// app.current_account_id is the account a pre-auth scope is bound to
-// (tenantStore.bindPreAuthAccount); empty otherwise. Written on every scoped
+// app.current_account_id is the verified subject or explicit trusted job owner;
+// empty when no owner is established. Written on every scoped
 // statement, so a connection never carries one request's account into another.
 // The isolation switches are pinned LOCAL in the same statement (sessionScope.ts):
 // a switch left on a pooled connection by any path does not reach this

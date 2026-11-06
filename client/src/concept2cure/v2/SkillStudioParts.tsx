@@ -17,6 +17,7 @@ import {
   TA_OPTIONS,
   USE_CASE_OPTIONS,
   orgSkillBody,
+  RULE_LEVEL_LABELS,
   type OrgEditing,
 } from './surfaces/AdminSkillForms';
 
@@ -94,16 +95,8 @@ export function SkillDialogShell({
   );
 }
 
-export function Field({
-  id,
-  label,
-  desc,
-  children,
-}: {
-  id: string;
-  label: string;
-  desc?: string;
-  children: React.ReactNode;
+export function Field({ id, label, desc, children }: {
+  id: string; label: string; desc?: string; children: React.ReactNode;
 }) {
   return (
     <div className="de-field">
@@ -116,21 +109,14 @@ export function Field({
   );
 }
 
-export function Select({
-  id,
-  value,
-  options,
-  onChange,
-}: {
-  id: string;
-  value: string;
-  options: { value: string; label: string }[];
-  onChange: (v: string) => void;
+export function Select({ id, value, options, onChange, disabled }: {
+  id: string; value: string; options: { value: string; label: string; disabled?: boolean }[];
+  onChange: (v: string) => void; disabled?: boolean;
 }) {
   return (
-    <select id={id} className="c2c-input" value={value} onChange={e => onChange(e.target.value)}>
+    <select id={id} className="c2c-input" value={value} disabled={disabled} onChange={e => onChange(e.target.value)}>
       {options.map(o => (
-        <option key={o.value} value={o.value}>
+        <option key={o.value} value={o.value} disabled={o.disabled}>
           {o.label}
         </option>
       ))}
@@ -139,14 +125,8 @@ export function Select({
 }
 
 /** The governed reason every skill change carries. */
-export function ReasonField({
-  id,
-  value,
-  onChange,
-}: {
-  id: string;
-  value: string;
-  onChange: (v: string) => void;
+export function ReasonField({ id, value, onChange }: {
+  id: string; value: string; onChange: (v: string) => void;
 }) {
   return (
     <div className="de-field">
@@ -175,6 +155,7 @@ function TextField({
   value,
   onChange,
   wide,
+  readOnly,
 }: {
   id: string;
   label: string;
@@ -183,6 +164,7 @@ function TextField({
   value: string;
   onChange: (v: string) => void;
   wide?: boolean;
+  readOnly?: boolean;
 }) {
   return (
     <Field id={id} label={label} desc={desc}>
@@ -191,6 +173,7 @@ function TextField({
         className={wide ? 'c2c-input skill-studio-method' : 'c2c-input'}
         rows={rows}
         value={value}
+        readOnly={readOnly}
         onChange={e => onChange(e.target.value)}
       />
     </Field>
@@ -211,7 +194,7 @@ export function StudioAside({
 }) {
   return (
     <div className="skill-studio-pane">
-      <StudioTry target={target} values={values} />
+      {(!target.skill?.standingRule || target.skill.standingRule.state === 'active') && <StudioTry target={target} values={values} />}
       {target.skill && <StudioHistory skill={target.skill} />}
       {onAsk && (
         <div className="skill-studio-side">
@@ -241,55 +224,37 @@ function StudioFacets({
   uid,
   values,
   set,
+  readOnly,
+  hideStatus,
 }: {
   uid: string;
   values: Record<string, string>;
   set: (key: string) => (value: string) => void;
+  readOnly?: boolean;
+  hideStatus?: boolean;
 }) {
+  const facets = [
+    { key: 'discipline', suffix: 'disc', label: 'Discipline', options: DISCIPLINE_OPTIONS },
+    { key: 'useCase', suffix: 'use', label: 'Kind of work', options: USE_CASE_OPTIONS },
+    { key: 'segment', suffix: 'seg', label: 'Client segment', options: SEGMENT_OPTIONS },
+    { key: 'therapeuticArea', suffix: 'ta', label: 'Therapeutic area', options: TA_OPTIONS },
+  ];
   return (
     <>
       <div className="skill-studio-row">
-        <Field id={`${uid}-disc`} label="Discipline">
-          <Select
-            id={`${uid}-disc`}
-            value={values.discipline}
-            options={DISCIPLINE_OPTIONS}
-            onChange={set('discipline')}
-          />
-        </Field>
-        <Field id={`${uid}-use`} label="Kind of work">
-          <Select
-            id={`${uid}-use`}
-            value={values.useCase}
-            options={USE_CASE_OPTIONS}
-            onChange={set('useCase')}
-          />
-        </Field>
-        <Field id={`${uid}-seg`} label="Client segment">
-          <Select
-            id={`${uid}-seg`}
-            value={values.segment}
-            options={SEGMENT_OPTIONS}
-            onChange={set('segment')}
-          />
-        </Field>
-        <Field id={`${uid}-ta`} label="Therapeutic area">
-          <Select
-            id={`${uid}-ta`}
-            value={values.therapeuticArea}
-            options={TA_OPTIONS}
-            onChange={set('therapeuticArea')}
-          />
-        </Field>
+        {facets.map(facet => <Field key={facet.key} id={`${uid}-${facet.suffix}`} label={facet.label}>
+          <Select id={`${uid}-${facet.suffix}`} value={values[facet.key]} options={facet.options} onChange={set(facet.key)} disabled={readOnly} />
+        </Field>)}
       </div>
-      <Field id={`${uid}-status`} label="Status" desc="A draft is never loaded; try it here first.">
+      {!hideStatus && <Field id={`${uid}-status`} label="Status" desc="A draft is never loaded; try it here first.">
         <Select
           id={`${uid}-status`}
           value={values.status}
           options={STATUS_OPTIONS}
           onChange={set('status')}
+          disabled={readOnly}
         />
-      </Field>
+      </Field>}
     </>
   );
 }
@@ -306,12 +271,16 @@ export function StudioFields({
   set,
   extending,
   projectOnly,
+  readOnly,
+  hideStatus,
 }: {
   uid: string;
   values: Record<string, string>;
   set: (key: string) => (value: string) => void;
   extending: boolean;
   projectOnly: boolean;
+  readOnly?: boolean;
+  hideStatus?: boolean;
 }) {
   return (
     <div className="skill-studio-pane">
@@ -320,6 +289,7 @@ export function StudioFields({
           id={`${uid}-name`}
           className="c2c-input"
           value={values.name}
+          readOnly={readOnly}
           maxLength={SKILL_LIMITS.nameMax}
           onChange={e => set('name')(e.target.value)}
         />
@@ -331,6 +301,7 @@ export function StudioFields({
         rows={2}
         value={values.description}
         onChange={set('description')}
+        readOnly={readOnly}
       />
       {extending && (
         <Field id={`${uid}-mode`} label="What it does to the library skill">
@@ -340,6 +311,7 @@ export function StudioFields({
             value={values.mode}
             onChange={set('mode')}
             options={projectOnly ? MODE_OPTIONS.slice(0, 1) : MODE_OPTIONS}
+            disabled={readOnly}
           />
         </Field>
       )}
@@ -350,6 +322,7 @@ export function StudioFields({
         rows={12}
         value={values.instructions}
         onChange={set('instructions')}
+        readOnly={readOnly}
         wide
       />
       <TextField
@@ -363,8 +336,9 @@ export function StudioFields({
         rows={4}
         value={values.triggers}
         onChange={set('triggers')}
+        readOnly={readOnly}
       />
-      <StudioFacets uid={uid} values={values} set={set} />
+      <StudioFacets uid={uid} values={values} set={set} readOnly={readOnly} hideStatus={hideStatus} />
     </div>
   );
 }
@@ -467,17 +441,15 @@ function StudioHistory({ skill }: { skill: OrgSkillDto }) {
   );
   const rows = history.data?.history ?? [];
   const bindings = skill.policyBindings ?? [];
-  const active = skill.status === 'active' || skill.status === 'locked';
   const source = rows.find(h => h.auditEventId === skill.sourceAuditEventId);
   return (
     <>
+      {skill.standingRule && <StandingRuleLedger skill={skill} />}
       {bindings.length > 0 && (
         <section className="skill-studio-side" aria-label="Mandatory approval rules">
           <h4>Mandatory approval rules · read-only</h4>
           <span className="skill-studio-verdict">
-            {active
-              ? 'Approval is required for these actions even when this skill is not selected or is turned off for prompts in a project.'
-              : 'These saved rules apply when this skill is active, regardless of whether it is selected for a prompt.'}
+            {approvalRuleStatus(skill)}
           </span>
           <ul className="skill-studio-hist">
             {bindings.map(binding => (
@@ -517,6 +489,7 @@ function StudioHistory({ skill }: { skill: OrgSkillDto }) {
                   {h.version !== null ? `Version ${h.version}` : 'Change'} ·{' '}
                   {h.action === 'ana_skill.created' ? 'created' : 'changed'}
                   {h.status ? ` · ${h.status}` : ''}
+                  {h.standingRule && ` · ${RULE_LEVEL_LABELS[h.standingRule.level]} · ${h.standingRule.state}`}
                 </span>
                 <span className="skill-studio-hist-m">
                   {new Date(h.occurredAt).toLocaleString()} · {h.actorName ?? 'a member'}
@@ -529,4 +502,32 @@ function StudioHistory({ skill }: { skill: OrgSkillDto }) {
       </div>
     </>
   );
+}
+function approvalRuleStatus(skill: OrgSkillDto): string {
+  if (skill.standingRule && skill.standingRule.state !== 'active') return 'These approval actions are retained in history. This rule no longer applies to future work.';
+  return skill.status === 'active' || skill.status === 'locked'
+    ? 'Approval is required for these actions even when this skill is not selected or is turned off for prompts in a project.'
+    : 'These saved rules apply when this skill is active, regardless of whether it is selected for a prompt.';
+}
+
+function StandingRuleLedger({ skill }: { skill: OrgSkillDto }) {
+  const rule = skill.standingRule!;
+  const date = Number.isFinite(Date.parse(rule.createdAt)) ? new Date(rule.createdAt).toLocaleString() : 'Not recorded';
+  return <section className="skill-studio-side" aria-label="Standing rule ledger">
+    <h4>{RULE_LEVEL_LABELS[rule.level]} · {rule.state}</h4>
+    <dl className="skill-studio-hist">
+      <dt>Scope</dt><dd>{rule.scope === 'project' ? `Project ${skill.projectId}` : 'This organization'}</dd>
+      <dt>Version</dt><dd>{skill.version}</dd>
+      <dt>Rule topic</dt><dd>{rule.conflictKey}</dd>
+      <dt>Recorded</dt><dd>{date}</dd>
+      <dt>Source audit event</dt><dd>{rule.sourceAuditEventId}</dd>
+      <dt>Source interaction</dt><dd>{rule.sourceInteractionId}</dd>
+      {rule.supersedes.length > 0 && <><dt>Replaces</dt><dd>{rule.supersedes.map(ref => `${ref.bundleId} · version ${ref.version}`).join('; ')}</dd></>}
+      {rule.revokedAt && <><dt>Revoked</dt><dd>{new Date(rule.revokedAt).toLocaleString()}</dd></>}
+    </dl>
+    <p className="skill-studio-verdict">{rule.state !== 'active' ? 'This rule no longer applies to future work.' : rule.level === 'hard_gate'
+      ? 'Mandatory approval is checked before the action runs. Turning a skill off for prompts does not remove this rule.'
+      : 'The reusable method is available to future work in this scope. Its correction source is retained separately.'}</p>
+    {rule.state !== 'active' && <p className="skill-studio-verdict">This record is read-only. A replacement needs a new sourced rule.</p>}
+  </section>;
 }

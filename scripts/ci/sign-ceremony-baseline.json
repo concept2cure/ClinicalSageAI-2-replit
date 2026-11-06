@@ -93,6 +93,10 @@
   "authority": {
     "$note": "Per-file COUNT of signer re-verifications (verifyReauth / reverifySigner) whose handler does not ask the signing-authority policy (checkSigningAuthority — since P-27, 2026-10-08, nothing else counts). Written 2026-10-08 after the QA j6 sweep (docs/evidence/QA-2026-10-08/submission-center-3/). Shrink only. Every entry is a re-authentication that signs nothing, or a helper whose callers ask authority first; the reason says which.",
     "files": {
+      "server/routes/ai-placement-policy.ts": {
+        "count": 1,
+        "reason": "P-104 derivative custody administration: manageDerivative re-authenticates the current tenant admin/owner before policy, candidate review, exact-residual attestation or revocation. These are data-use/custody controls, not approval or signature of regulated document content. The dedicated writer rechecks current tenant authority and commits managed state with its chained custody audit; it writes no sign ledger act or electronic_signatures row and grants no signing authority. Route and actual custody tests cover stale roles, MFA, policy/source binding, audit rollback and write-only secret custody."
+      },
       "server/routes/authoring.router.ts": {
         "count": 1,
         "reason": "reverifyAuthoringSigner is a helper. Each of its three callers (POST /docs/:docId/freeze, /docs/:docId/e-sign, /docs/:docId/sign) calls checkSigningAuthority before it; the gate cannot see across the function boundary."

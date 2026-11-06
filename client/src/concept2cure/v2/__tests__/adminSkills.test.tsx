@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async importOriginal => ({ ...(await importOriginal<typeof import('@/lib/queryClient')>()), apiRequest }));
@@ -14,6 +14,8 @@ vi.mock('@/lib/queryClient', async importOriginal => ({ ...(await importOriginal
 import { ApiRequestError } from '@/lib/queryClient';
 import type { OrgSkillDto } from '@shared/ana/skills';
 import { AdminSkills } from '../surfaces/AdminSkills';
+import { SkillStudio } from '../SkillStudio';
+import { authService, type AuthUser } from '@/services/portal/authService';
 
 const STABILITY = {
   key: 'cmc.stability',
@@ -117,9 +119,19 @@ function routes(overrides: Record<string, () => unknown> = {}) {
 beforeEach(() => {
   apiRequest.mockReset();
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('the Skills tab', () => {
+  it('keeps saved skills inside their section so the flex layout cannot clip the ledger row', async () => {
+    routes({ 'GET /api/ana-skills/organization': () => ok({ skills: [SOURCED_SKILL] }) });
+    render(<AdminSkills />);
+    const row = await screen.findByRole('button', { name: /Our stability review/ });
+    const section = screen.getByRole('heading', { name: 'Your skills' }).closest('section');
+    expect(section?.contains(row)).toBe(true);
+    fireEvent.click(row);
+    await screen.findByRole('dialog', { name: /Change "Our stability review"/ });
+  });
+
   it('says a failed library read failed, and never shows it as an empty library', async () => {
     routes({ 'GET /api/ana-skills/library': () => { throw new ApiRequestError('boom', 500, {}); } });
     render(<AdminSkills />);
@@ -165,6 +177,156 @@ describe('the Skills tab', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Test' }));
     await screen.findByText(/Because asked about "shelf life"/);
     expect(apiRequest).toHaveBeenCalledWith('POST', '/api/ana-skills/test', { message: 'How do we justify our shelf life?', submissionType: null });
+  });
+});
+
+const PRIVATE_CORRECTION = 'PRIVATE-CORRECTION-CANARY: use the approved project evidence before interpreting this study.';
+const RULE_SKILL: OrgSkillDto = { ...SOURCED_SKILL, name: 'Sourced dossier rule', version: 3, policyBindings: [],
+  standingRule: { schemaVersion: 1, level: 'standing', state: 'active', scope: 'tenant', conflictKey: 'dossier-consistency',
+    sourceAuditEventId: SOURCE_AUDIT_ID, sourceInteractionId: 'correction-42', supersedes: [], createdAt: '2026-11-06T10:00:00Z' } };
+function studio(skill: OrgSkillDto | null = null, onSaved = vi.fn(), onAsk?: (message: string) => void) {
+  routes({ 'GET /api/ana-skills/organization/42/history': () => ok({ history: [SOURCE_HISTORY] }) });
+  const props = { target: { kind: 'org' as const, skill, base: null, mode: null }, onClose: vi.fn(), onSaved, onAsk };
+  return { ...render(<SkillStudio {...props} />), props, onSaved };
+}
+function change(label: string | RegExp, value: string) { fireEvent.change(screen.getByLabelText(label), { target: { value } }); }
+function completeRule(level = 'standing') {
+  change('Name', 'Sourced dossier rule'); change('When to use it', 'Reviewing the current evidence before a dossier consistency check.');
+  change('Method', '## Method\nRead the current project evidence before reviewing a dossier or making a consistency claim.');
+  change('Rule level', level); change('Rule topic', 'dossier-consistency'); change('Correction to remember', PRIVATE_CORRECTION);
+  change('Agency or context', 'FDA'); change('Document type', 'Dossier'); change('Intended future behavior', 'Use current project evidence before review.');
+  change(/Reason for change/, 'Record the review team correction for future work.');
+}
+const saveStudio = () => fireEvent.click(screen.getByTestId('skill-studio-save'));
+
+describe('sourced corrections and the visible rule ledger', () => {
+  it('captures one atomic correction and rule, then shows its source, date, state and version', async () => {
+    let saved = false;
+    const created = { ...RULE_SKILL, version: 1 };
+    routes({ 'GET /api/ana-skills/organization': () => ok({ skills: saved ? [created] : [] }),
+      'GET /api/ana-skills/organization/42/history': () => ok({ history: [SOURCE_HISTORY] }),
+      'POST /api/ana-skills/organization': () => { saved = true; return ok({ skill: created, audited: true }); } });
+    render(<AdminSkills />); fireEvent.click(await screen.findByRole('button', { name: /New skill/ })); completeRule(); saveStudio();
+    fireEvent.click(await screen.findByRole('button', { name: /Sourced dossier rule/ }));
+    const ledger = await screen.findByRole('region', { name: 'Standing rule ledger' });
+    expect(ledger.textContent).toContain('Standing instruction · active'); expect(ledger.textContent).toContain('Version1');
+    expect(ledger.textContent).toContain(SOURCE_AUDIT_ID); expect(ledger.textContent).toContain('correction-42');
+    expect(ledger.textContent).toContain('2026'); expect(ledger.textContent).not.toContain(PRIVATE_CORRECTION);
+    const body = apiRequest.mock.calls.find(([method, path]) => method === 'POST' && path === '/api/ana-skills/organization')![2];
+    expect(body).toMatchObject({ standingRule: { level: 'standing', state: 'active', conflictKey: 'dossier-consistency' },
+      correction: { text: PRIVATE_CORRECTION, agency: 'FDA', documentType: 'Dossier' }, status: 'active' });
+    expect(body).not.toHaveProperty('scope'); expect(body).not.toHaveProperty('userId');
+  });
+  it('routes an explicit project rule through the existing project endpoint', async () => {
+    const view = studio(); completeRule(); change('Rule scope', 'project'); change('Project reference', '7');
+    apiRequest.mockImplementation(async (method, path) => method === 'POST' && path === '/api/ana-skills/projects/7/skills'
+      ? ok({ skill: { ...RULE_SKILL, projectId: 7, version: 1, standingRule: { ...RULE_SKILL.standingRule!, scope: 'project' } }, audited: true }) : ok({ history: [] }));
+    saveStudio(); await waitFor(() => expect(view.onSaved).toHaveBeenCalled());
+    expect(apiRequest).toHaveBeenCalledWith('POST', '/api/ana-skills/projects/7/skills', expect.objectContaining({ standingRule: { level: 'standing', state: 'active', conflictKey: 'dossier-consistency', supersedes: [] } }));
+    expect(screen.queryByRole('option', { name: /private|personal user/i })).toBeNull();
+  });
+  it('promotes with the expected version and explicit mandatory approval binding', async () => {
+    const view = studio(RULE_SKILL); change('Rule level', 'hard_gate'); change(/Reason for change/, 'Require an approval before dossier consistency checks.');
+    apiRequest.mockResolvedValue(ok({ skill: { ...RULE_SKILL, version: 4, standingRule: { ...RULE_SKILL.standingRule!, level: 'hard_gate' } }, audited: true }));
+    saveStudio(); await waitFor(() => expect(view.onSaved).toHaveBeenCalledWith('Sourced dossier rule saved, version 4.'));
+    const body = apiRequest.mock.calls.find(([method]) => method === 'PUT')![2];
+    expect(body).toMatchObject({ expectedVersion: 3, standingRule: { level: 'hard_gate', state: 'active' },
+      policyBindings: [{ policyType: 'requires_approval', enforcement: 'mandatory', toolName: 'check_dossier_consistency' }] });
+    expect(body).not.toHaveProperty('correction'); expect(body).not.toHaveProperty('sourceAuditEventId');
+  });
+  it('revokes explicitly without lowering the mandatory level or dropping its binding', async () => {
+    const binding = { policyType: 'requires_approval' as const, enforcement: 'mandatory' as const, toolName: 'check_dossier_consistency', description: 'Ask before dossier consistency checks.' };
+    const supersedes = [{ bundleId: 'previous-rule', version: 2 }];
+    const hard: OrgSkillDto = { ...RULE_SKILL, policyBindings: [binding], standingRule: { ...RULE_SKILL.standingRule!, level: 'hard_gate', supersedes } };
+    studio(hard); expect((screen.getByRole('option', { name: 'Soft preference' }) as HTMLOptionElement).disabled).toBe(true);
+    expect(screen.queryByLabelText('Status')).toBeNull();
+    expect((screen.getByLabelText('Replace exact rule versions') as HTMLTextAreaElement).value).toBe('previous-rule@2');
+    expect((screen.getByLabelText('Replace exact rule versions') as HTMLTextAreaElement).readOnly).toBe(true);
+    change('Replace exact rule versions', '');
+    change('Rule state', 'revoked'); change(/Reason for change/, 'Retire this approval rule after team review.');
+    apiRequest.mockResolvedValue(ok({ skill: { ...hard, version: 4, status: 'archived', standingRule: { ...hard.standingRule!, state: 'revoked' } }, audited: true }));
+    saveStudio(); await waitFor(() => expect(apiRequest.mock.calls.some(([method]) => method === 'PUT')).toBe(true));
+    const body = apiRequest.mock.calls.find(([method]) => method === 'PUT')![2];
+    expect(body).toMatchObject({ expectedVersion: 3, status: 'archived',
+      standingRule: { level: 'hard_gate', state: 'revoked', supersedes }, policyBindings: [binding] });
+    expect(body).not.toHaveProperty('correction');
+    expect(body).not.toHaveProperty('sourceAuditEventId');
+  });
+  it('keeps terminal rule records read-only', async () => {
+    studio({ ...RULE_SKILL, status: 'archived', standingRule: { ...RULE_SKILL.standingRule!, state: 'revoked', revokedAt: '2026-11-06T12:00:00Z', revokedBy: 11 } });
+    await screen.findByRole('region', { name: 'Standing rule ledger' });
+    expect((screen.getByTestId('skill-studio-save') as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByLabelText('Method') as HTMLTextAreaElement).readOnly).toBe(true);
+    expect(screen.getByText('This rule no longer applies to future work.')).toBeTruthy(); saveStudio();
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PUT')).toBe(false);
+  });
+});
+
+describe('explicit rule conflict decisions and correction privacy', () => {
+  it('keeps a structured conflict visible and replaces only versions the person explicitly selects', async () => {
+    const view = studio(); completeRule(); let attempts = 0;
+    apiRequest.mockImplementation(async () => {
+      if (++attempts === 1) throw new ApiRequestError('private provider text', 409, { error: { code: 'RULE_CONFLICT', message: PRIVATE_CORRECTION,
+        decisionPackage: { conflictKey: 'dossier-consistency', ruleRefs: [{ bundleId: 'older-rule', version: 2 }], resolution: PRIVATE_CORRECTION } } });
+      return ok({ skill: { ...RULE_SKILL, version: 1 }, audited: true });
+    });
+    saveStudio(); const decision = await screen.findByRole('region', { name: 'Rule conflict decision' });
+    expect(decision.textContent).toContain('older-rule · version 2'); expect(decision.textContent).not.toContain(PRIVATE_CORRECTION);
+    expect(attempts).toBe(1); expect((screen.getByLabelText('Method') as HTMLTextAreaElement).value).toContain('current project evidence');
+    fireEvent.click(within(decision).getByRole('button', { name: 'Use these exact versions for replacement' }));
+    expect(attempts).toBe(1); saveStudio(); await waitFor(() => expect(view.onSaved).toHaveBeenCalled());
+    expect(apiRequest.mock.calls.filter(([method]) => method === 'POST')[1][2].standingRule.supersedes).toEqual([{ bundleId: 'older-rule', version: 2 }]);
+  });
+  it('keeps correction source text out of prompt tests and design-with-AnA messages', async () => {
+    const ask = vi.fn(); studio(null, vi.fn(), ask); completeRule();
+    apiRequest.mockResolvedValue(ok({ selection: { selected: [], passedOver: [], considered: 1 }, draftKey: 'draft' }));
+    change(/Type a question/, 'Check the dossier method.'); fireEvent.click(screen.getByRole('button', { name: 'Try it' }));
+    await screen.findByText('This skill would not load for that question. Add a trigger phrase that appears in it, or pick the skill in the conversation.');
+    const tried = apiRequest.mock.calls.find(([, path]) => path === '/api/ana-skills/test')![2];
+    expect(JSON.stringify(tried)).not.toContain(PRIVATE_CORRECTION); expect(tried.draft).not.toHaveProperty('correction');
+    expect(tried.draft).not.toHaveProperty('standingRule'); expect(tried.draft).not.toHaveProperty('policyBindings');
+    fireEvent.click(screen.getByRole('button', { name: 'Ask AnA to draft a skill' }));
+    expect(ask).toHaveBeenCalled(); expect(ask.mock.calls[0][0]).not.toContain(PRIVATE_CORRECTION);
+  });
+  it('adds a typed rule to an existing method with its exact version and a recorded correction source', async () => {
+    const ordinary = { ...RULE_SKILL, standingRule: null, sourceAuditEventId: null };
+    const view = studio(ordinary); completeRule(); change('Correction source', 'audit'); change('Correction audit event', SOURCE_AUDIT_ID);
+    apiRequest.mockResolvedValue(ok({ skill: { ...RULE_SKILL, version: 4 }, audited: true })); saveStudio();
+    await waitFor(() => expect(view.onSaved).toHaveBeenCalled());
+    const body = apiRequest.mock.calls.find(([method]) => method === 'PUT')![2];
+    expect(body).toMatchObject({ expectedVersion: 3, sourceAuditEventId: SOURCE_AUDIT_ID });
+    expect(body).not.toHaveProperty('correction');
+  });
+  it('keeps stale-version and malformed conflict failures contained without retrying or overwriting', async () => {
+    studio(RULE_SKILL); change(/Reason for change/, 'Clarify the saved review method.');
+    apiRequest.mockRejectedValue(new ApiRequestError(PRIVATE_CORRECTION, 409, { error: { code: 'RULE_CONFLICT', message: PRIVATE_CORRECTION,
+      decisionPackage: { conflictKey: 'dossier-consistency', ruleRefs: [{ bundleId: '<private-source>', version: -1 }] } } }));
+    saveStudio(); await screen.findByText('The rule version or authority changed. Reopen the current ledger before making an explicit change.');
+    expect(screen.queryByRole('region', { name: 'Rule conflict decision' })).toBeNull();
+    expect(screen.getByRole('alert').textContent).not.toContain(PRIVATE_CORRECTION);
+    expect(apiRequest.mock.calls.filter(([method]) => method === 'PUT')).toHaveLength(1);
+    expect(apiRequest.mock.calls.find(([method]) => method === 'PUT')![2].expectedVersion).toBe(3);
+  });
+  it('suppresses late saves and clears source fields after a session change', async () => {
+    let revision = 1;
+    let actor = { id: '11', organizationId: '2' } as AuthUser;
+    vi.spyOn(authService, 'getUser').mockImplementation(() => actor);
+    vi.spyOn(authService, 'captureSessionReadGuard').mockImplementation(() => { const captured = revision;
+      return { sameRevision: () => captured === revision, current: () => captured === revision, credentialsCurrent: () => captured === revision }; });
+    const view = studio(); completeRule(); let settle!: (value: unknown) => void;
+    apiRequest.mockImplementation(() => new Promise(resolve => { settle = resolve; })); saveStudio();
+    actor = { id: '11', organizationId: '3' } as AuthUser; revision++;
+    view.rerender(<SkillStudio {...view.props} />); await screen.findByText('Session changed');
+    expect(screen.queryByLabelText('Correction to remember')).toBeNull();
+    await act(async () => settle(ok({ skill: { ...RULE_SKILL, version: 1 }, audited: true })));
+    expect(view.onSaved).not.toHaveBeenCalled();
+  });
+  it('retires a draft when the selected skill version changes instead of overwriting newer work', async () => {
+    const view = studio(RULE_SKILL); change('Method', '## Method\nThis unsaved method must not overwrite a newer saved rule version.');
+    change(/Reason for change/, 'Clarify the existing current review method.');
+    view.rerender(<SkillStudio {...view.props} target={{ ...view.props.target, skill: { ...RULE_SKILL, version: 4 } }} />);
+    await screen.findByText('Skill changed'); expect(screen.queryByLabelText('Method')).toBeNull();
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PUT')).toBe(false);
   });
 });
 

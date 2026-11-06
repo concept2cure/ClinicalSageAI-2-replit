@@ -63,6 +63,7 @@ import { getTenantScope, runWithSystemTenantScope } from '../../../db/tenantStor
 import { createScopedLogger } from '../../../utils/logger.js';
 import { listCorpora, SELF_HOSTED_EMBEDDING_MODEL } from '../../embedding-corpus-policy.js';
 import { createTenantProviderClient } from '../providers/clients.js';
+import { captureCurrentRunSourceGate, SourceRunAuthorityError } from '../model-call-scope.js';
 
 const log = createScopedLogger('embedding-provider');
 
@@ -80,6 +81,20 @@ export interface EmbeddingRequest {
    * approvals). When absent, the running request's tenant scope supplies it.
    */
   organizationId?: string | number;
+  /** A private run bridge may inherit these from its server-issued actor scope. */
+  userId?: string | number;
+  projectId?: string | number;
+}
+
+/** Inherit identity only through the current opaque server authority. Any
+ * supplied organization/actor/project must already match it. */
+function embeddingRunIdentity(req: EmbeddingRequest): Pick<EmbeddingRequest, 'organizationId' | 'userId' | 'projectId'> {
+  const identity = { organizationId: req.organizationId ?? scopedOrganizationId(), userId: req.userId, projectId: req.projectId };
+  const gate = captureCurrentRunSourceGate(identity);
+  if (!gate) return identity;
+  if (!gate.identity) throw new SourceRunAuthorityError();
+  const actor = gate.identity;
+  return { organizationId: actor.organizationId, userId: actor.userId, projectId: actor.projectId ?? actor.programId ?? req.projectId };
 }
 
 export interface EmbeddingProviderResult {
@@ -230,10 +245,10 @@ class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
     // rather than at module top: it is a heavy module and this seam is loaded
     // by the corpus runtime early in boot. A refusal throws GatewayPolicyError.
     const texts = Array.isArray(req.input) ? req.input : [req.input];
-    const { getGateway, safeProviderFailure } = await import('../gateway.js');
+    const { getGateway, safeProviderFailure, GatewayPolicyError } = await import('../gateway.js');
     const gateway = getGateway();
     const authorization = await gateway.authorizeEmbedding({
-      organizationId: req.organizationId ?? scopedOrganizationId(),
+      ...embeddingRunIdentity(req),
       provider: this.kind,
       texts,
     });
@@ -253,8 +268,14 @@ class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
     // a served row, or a failure row before the error goes back to the caller.
     let res: any;
     try {
-      res = await (await this.getRequestClient(req)).embeddings.create(params);
+      const client = await this.getRequestClient({ ...req, organizationId: authorization.request.organizationId });
+      await gateway.recheckEmbeddingAuthorization(authorization);
+      res = await client.embeddings.create(params);
     } catch (error: any) {
+      if (error instanceof GatewayPolicyError) {
+        await gateway.recordEmbeddingCall(authorization, { provider: this.kind, model, error: error.message });
+        throw error;
+      }
       const safe = safeProviderFailure(error);
       await gateway.recordEmbeddingCall(authorization, { provider: this.kind, model, error: safe.message });
       throw safe;

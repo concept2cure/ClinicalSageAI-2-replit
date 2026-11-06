@@ -19,7 +19,9 @@ import request from 'supertest';
 const SENTINEL = 'SENTINEL relation "client_memory_entries" does not exist at 10.0.0.5:5432';
 
 const H = vi.hoisted(() => ({
+  dbQueries: 0,
   fail: () => {
+    H.dbQueries += 1;
     throw new Error('SENTINEL relation "client_memory_entries" does not exist at 10.0.0.5:5432');
   },
   reject: async () => {
@@ -101,7 +103,6 @@ const ROUTES: Array<[string, string, Record<string, unknown>?]> = [
   ['get', '/ana/merged-context'],
   ['get', '/ana/capabilities'],
   ['post', '/ana/log-outcome', { capabilityKey: 'k', outcome: 'success' }],
-  ['get', '/ana/wisdom'],
   ['get', '/ana/objectives'],
   ['post', '/ana/objectives', { objective: 'File the IND', category: 'regulatory' }],
   ['get', '/ana/templates/company-types'],
@@ -110,7 +111,7 @@ const ROUTES: Array<[string, string, Record<string, unknown>?]> = [
   ['get', '/ana/templates/project/ind'],
 ];
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => { vi.clearAllMocks(); H.dbQueries = 0; });
 
 describe('client-intelligence 500s carry the envelope, never the cause', () => {
   it.each(ROUTES)('%s %s', async (method, path, body) => {
@@ -122,5 +123,16 @@ describe('client-intelligence 500s carry the envelope, never the cause', () => {
     expect(JSON.stringify(res.body), 'the caught error reached the response body').not.toContain('SENTINEL');
     expect(JSON.stringify(res.body)).not.toContain(SENTINEL.slice(9));
     expect(res.body.error).toBe('INTERNAL_ERROR');
+  });
+});
+
+
+describe('unreviewed platform wisdom route', () => {
+  it('returns an explicit content-free hold before touching the unavailable database', async () => {
+    const res = await request(app()).get(`${BASE}/ana/wisdom?projectType=PRIVATE_QUERY_CANARY`);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ success: true, wisdom: [], holdReason: 'deidentification_and_human_promotion_required' });
+    expect(H.dbQueries).toBe(0);
+    expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL|PRIVATE_QUERY_CANARY|10\.0\.0\.5/);
   });
 });

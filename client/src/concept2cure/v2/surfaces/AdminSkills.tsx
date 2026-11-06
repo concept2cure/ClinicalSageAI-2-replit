@@ -450,30 +450,30 @@ function OrgSkills({ epoch, reload, onEdit }: { epoch: number; reload: () => voi
           <span className="section-sub">Written by this organization's administrators</span>
           <button className="btn small primary adm-key-create" onClick={() => onEdit({ kind: 'org', skill: null, base: null, mode: null })}>{I.plus} New skill</button>
         </div>
+        {orgSkills.loading ? (
+          <div role="status" className="adm-empty">Loading your skills…</div>
+        ) : orgSkills.error ? (
+          <div className="adm-facet-error">
+            <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load your skills" hint="The read failed. This is not an organization without skills." retry={reload} />
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="adm-empty">This organization has no skills of its own yet. Add to a library skill, replace one, or write a new one.</div>
+        ) : (
+          <div className="ctable" aria-label="Your skills">
+            {rows.map((s) => (
+              <button key={s.id} className="ctable-row adm-skill-row" onClick={() => onEdit({ kind: 'org', skill: s, base: null, mode: s.extensionMode })}>
+                <span className="adm-skill-name">
+                  <span className="ctable-strong">{s.name}</span>
+                  <span className="mono tiny adm-muted">{s.extendsSkillKey ? `${s.extensionMode === 'replace' ? 'replaces' : 'adds to'} ${s.extendsSkillKey}` : 'stands alone'}</span>
+                </span>
+                <span className="adm-sub">version {s.version}</span>
+                <span><span className={`status-pill ${orgStatusPill(s.status)}`}>{s.status}</span></span>
+                <span className="adm-sub">{s.triggers.length} trigger(s)</span>
+              </button>
+            ))}
+          </div>
+        )}
       </section>
-      {orgSkills.loading ? (
-        <div role="status" className="adm-empty">Loading your skills…</div>
-      ) : orgSkills.error ? (
-        <div className="adm-facet-error">
-          <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load your skills" hint="The read failed. This is not an organization without skills." retry={reload} />
-        </div>
-      ) : rows.length === 0 ? (
-        <div className="adm-empty">This organization has no skills of its own yet. Add to a library skill, replace one, or write a new one.</div>
-      ) : (
-        <div className="ctable" aria-label="Your skills">
-          {rows.map((s) => (
-            <button key={s.id} className="ctable-row adm-skill-row" onClick={() => onEdit({ kind: 'org', skill: s, base: null, mode: s.extensionMode })}>
-              <span className="adm-skill-name">
-                <span className="ctable-strong">{s.name}</span>
-                <span className="mono tiny adm-muted">{s.extendsSkillKey ? `${s.extensionMode === 'replace' ? 'replaces' : 'adds to'} ${s.extendsSkillKey}` : 'stands alone'}</span>
-              </span>
-              <span className="adm-sub">version {s.version}</span>
-              <span><span className={`status-pill ${orgStatusPill(s.status)}`}>{s.status}</span></span>
-              <span className="adm-sub">{s.triggers.length} trigger(s)</span>
-            </button>
-          ))}
-        </div>
-      )}
     </>
   );
 }

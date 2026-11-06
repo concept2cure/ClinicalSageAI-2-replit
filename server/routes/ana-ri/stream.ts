@@ -128,6 +128,7 @@ import {
   type ToolTraceEntry,
 } from '../../services/ana/tool-trace.js';
 import { runWithRunScope } from '../../services/ai-gateway/run-scope.js';
+import { createRunSourceAuthority, runWithSourceAuthority } from '../../services/ai-gateway/model-call-scope.js';
 import {
   newGenerationCapture,
   runCapturingGenerations,
@@ -1000,6 +1001,8 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
         throw error;
       }
       const streamProjectId = admittedProject.programId ?? admittedProject.projectId ?? undefined;
+      const sourceAuthority = createRunSourceAuthority({ organizationId: guardOrgId, userId: guardUserId,
+        projectId: admittedProject.projectId, programId: admittedProject.programId });
 
       const gw = ensureGateway();
       const deterministicMode = gw?.isDeterministic?.() || false;
@@ -2549,7 +2552,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       );
       if (readOnly) messages.push({ role: 'system', content: READ_ONLY_INSTRUCTION });
       turnRecorder?.setModelInput(messages);
-      const gwResponse = await gw.route({
+      const gwResponse = await runWithSourceAuthority(sourceAuthority, () => gw.route({
         taskType: routingPlan.taskType,
         // Binds the turn to its tenant, so the org's placement policy (vendor and
         // substrate allow-lists, residency, zero retention) governs which AI
@@ -2619,7 +2622,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
           );
         },
         callerModule: 'ana-ri-stream',
-      });
+      }));
       /* Which model produced the tool calls about to run. The governed-write
          gate (registerToolHandler, server/services/ana/governed-write-tools.ts)
          refuses to store model-authored text in a governed record unless this
@@ -3133,7 +3136,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
                   // are listed under this run on the ledger (D6); and inside a
                   // capture, so what a model writes for it is known.
                   const toolWork = runCapturingGenerations(generated, () =>
-                    runWithRunScope({ runId }, () =>
+                    runWithSourceAuthority(sourceAuthority, () => runWithRunScope({ runId }, () =>
                       handler(toolUse.input, {
                         readOnly,
                         sqlClient: requestPgClient(req),
@@ -3153,7 +3156,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
                         // Only a run_agent call, and only on a hosting turn.
                         ...hostForTool(toolUse.name, toolUse.id),
                       }),
-                    ),
+                    )),
                   );
                   const cancellationWait = abortRace(runSignal);
                   try {
@@ -3755,7 +3758,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
           // What this round sends, kept for its record (MC-RL-8).
           const roundThinking = followUpThinking();
           if (runSignal?.aborted) return { text: '', toolCalls: [] };
-          const roundResponse = await gw.route({
+          const roundResponse = await runWithSourceAuthority(sourceAuthority, () => gw.route({
             taskType: routingPlan.taskType,
             // Every agentic round is bound to the same tenant as the first.
             organizationId: orgId ?? undefined,
@@ -3824,7 +3827,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
               res.write(`data: ${JSON.stringify({ type: 'text', content: shown })}\n\n`);
             },
             callerModule: 'ana-ri-stream-followup',
-          });
+          }));
           if (!roundText && roundResponse.content) {
             roundText = roundResponse.content;
             const appended = (fullContent ? '\n\n' : '') + roundText;
