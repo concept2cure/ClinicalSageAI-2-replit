@@ -4746,7 +4746,7 @@ export function DocumentWorkbench({
                     <div role="group" aria-label="Panels" className="dlm-group">
                       {/* The section's citation count, as the old toggle said it ("Sources 3"). */}
                       <MenuItem label={`Sources${citations > 0 ? ` ${citations}` : ''}`} onChoose={fromMore('sources')} testId="sources-rail-open" />
-                      <MenuItem label="Project files" onChoose={fromMore('vault')} testId="vault-rail-open" />
+                      <MenuItem label="Vault" onChoose={fromMore('vault')} testId="vault-rail-open" />
                       <MenuItem label="Versions" onChoose={fromMore('history')} />
                       <MenuItem label="Exports" onChoose={fromMore('exports')} testId="exports-rail-open" />
                       <MenuItem label="Review tasks" onChoose={fromMore('tasks')} testId="tasks-rail-open" />
@@ -6152,7 +6152,7 @@ export function DocumentWorkbench({
           source into the open section through the editor's own citation
           command, or insert a plain reference to a file that is not a source. */}
       {rail === 'vault' && (
-        <aside className="ed-comments" aria-label="Project files">
+        <aside className="ed-comments" aria-label="Vault">
           <ProjectFilesPanel
             programId={programId}
             readOwner={projectSourceOwner}

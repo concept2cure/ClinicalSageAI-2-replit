@@ -267,8 +267,10 @@ function useVaultFileActions(opts: {
 function ProjectFilesHeader({ programName, onClose }: { programName: string | null; onClose: () => void }) {
   return (
     <div className="ed-comments-h ed-comments-h-row">
-      <span>Project files{programName ? ` · ${programName}` : ''}</span>
-      <button type="button" className="ed-comments-close" aria-label="Close project files" title="Close project files" onClick={onClose}>{I.close}</button>
+      {/* "Vault", the name the rail and the founder use (2026-11-06): it read "Project files", and the Vault in the editor
+          could not be found by its name. */}
+      <span>Vault{programName ? ` · ${programName}` : ''}</span>
+      <button type="button" className="ed-comments-close" aria-label="Close the Vault" title="Close the Vault" onClick={onClose}>{I.close}</button>
     </div>
   );
 }

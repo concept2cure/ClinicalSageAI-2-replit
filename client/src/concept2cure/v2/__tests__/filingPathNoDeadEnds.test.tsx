@@ -15,7 +15,7 @@
  *      pinned with the verdict a release without it returns.
  *   2. Vault, with a project open: "Inspection readiness" opened `etmf`, also
  *      locked.
- *   3. Vault, with no project open: "Open a project to see its vault" and
+ *   3. Vault, with no project open: each project's Vault is listed (2026-11-06; it read "Open a project to see its vault") and
  *      nothing to click.
  *   4. Submission Center, Builder: with no Co-Author documents it said to
  *      "author one in the eCTD Co-Author first", a surface that is locked and
@@ -167,13 +167,18 @@ describe('No dead ends on the filing path (F16)', () => {
     expect(screen.queryByText(/Inspection readiness/)).toBeNull();
   });
 
-  it('Vault, with no project open: one button opens Projects', async () => {
+  it('Vault, with no project open: lists each project\'s Vault, and a row opens that project and its Vault', async () => {
+    /* The founder, 2026-11-06: Vault "should be accessible all the time, not just from within the project, but on
+       the left rail". It read "Open a project to see its vault" and sent the person to Projects. */
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string) =>
+      method === 'GET' && url === '/api/c2c/projects?limit=200' ? ok([{ id: PID, title: 'BX-204', code: 'BX-204' }]) : base(method, url));
     const onNav = vi.fn();
     render(<Vault surface={{ id: 'vault', label: 'Vault' } as never} onAsk={vi.fn()} onNav={onNav} segment="biotech" />);
-    expect(await screen.findByText('Open a project to see its vault')).toBeTruthy();
-    // "Go to", not "Open": beside the header's "Open project" it read as a second door to the same place.
-    fireEvent.click(screen.getByRole('button', { name: /Go to Projects/ }));
-    expect(onNav).toHaveBeenCalledWith('projects');
+    expect(await screen.findByText("Choose a project's Vault")).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: 'Open the Vault of BX-204' }));
+    expect(onNav).toHaveBeenCalledWith('vault');
+    expect((window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT?.id).toBe(PID);
     /* Design review 2026-10-08 (open item 10): with no project open, the
        header's "Open project" led to Project home's "No project selected". */
     expect(screen.queryByRole('button', { name: /^.?Open project$/ })).toBeNull();

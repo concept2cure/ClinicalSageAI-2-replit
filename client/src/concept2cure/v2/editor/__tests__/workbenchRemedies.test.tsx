@@ -182,7 +182,7 @@ describe('AnA remedies reach the existing editor', () => {
     await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('18 months'));
     const editor = (document.querySelector('.tiptap') as unknown as { editor: Editor }).editor;
     act(() => { editor.commands.insertContent('Unsaved note. '); });
-    fireEvent.click(openEditorControl('Project files'));
+    fireEvent.click(openEditorControl('Vault'));
     fireEvent.click(screen.getByRole('button', { name: 'Open pulled working copy' }));
     await screen.findByRole('alertdialog', { name: 'Unsaved changes in 3.2.P.8.1' });
     expect(onNav).not.toHaveBeenCalled();
