@@ -170,3 +170,8 @@ crash.log
 
 # Claude Code per-machine permission overrides — never committed
 .claude/settings.local.json
+
+# The Codespace CSR study preparation (.devcontainer/post-start.sh, DEMO_TAG=codespace) writes its log and
+# screenshots beside the walk; they are local to each Codespace, never evidence.
+docs/evidence/DEMO/2026-11-05-csr-lifecycle/walk-codespace.json
+docs/evidence/DEMO/2026-11-05-csr-lifecycle/screenshots/codespace-*

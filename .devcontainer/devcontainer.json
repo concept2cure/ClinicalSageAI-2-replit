@@ -2,6 +2,8 @@
   "name": "C2C Regulatory Development Environment",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
 
+  "hostRequirements": { "cpus": 4, "memory": "16gb", "storage": "32gb" },
+
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/git:1": {},
@@ -54,16 +56,16 @@
       }
     },
     "codespaces": {
-      "openFiles": ["README.md"]
+      "openFiles": ["docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md"]
     }
   },
 
-  "forwardPorts": [3000, 5000, 5173, 8000, 5432],
+  "forwardPorts": [5000],
 
   "portsAttributes": {
     "5000": {
-      "label": "C2C Express Server",
-      "onAutoForward": "notify"
+      "label": "Concept2Cure",
+      "onAutoForward": "openBrowser"
     },
     "8000": {
       "label": "C2C FastAPI Server",
@@ -72,10 +74,6 @@
     "3000": {
       "label": "C2C Frontend",
       "onAutoForward": "notify"
-    },
-    "5432": {
-      "label": "Neon DB (Local Proxy)",
-      "onAutoForward": "silent"
     }
   },
 
