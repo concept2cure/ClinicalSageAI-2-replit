@@ -1,0 +1,62 @@
+01-red.txt — the new suite against the UNCHANGED route (server/routes/c2c/documents.ts at HEAD 28f6a3c897).
+Method: the changed route was copied aside, HEAD's put back with git show HEAD:server/routes/c2c/documents.ts,
+the suite run, then the changed route copied back and checked with cmp (identical).
+Command: npx vitest run --config vitest.config.ts server/routes/c2c/__tests__/documents-project-scope.pglite.test.ts
+Result: 23 of 25 fail. The 2 that pass are the two that must hold either way: an open project's documents list
+under its projectId, and an open project's document reads. The last case ('with the edit right ...') fails on HEAD
+for a knock-on reason: the earlier cases' unscoped writes had already submitted doc_edit.
+
+×the list holds to the projects the person can open > with no projectId, lists the open projects only: never a private project, no program, or another organization 60ms
+×the list holds to the projects the person can open > a private project's projectId lists nothing, exactly as an unknown project does 14ms
+✓the list holds to the projects the person can open > an open project's projectId lists its documents, the filters still applied 9ms
+×a private project's document is answered as a missing one > the document, its outline, its section and the section history: 404, the same words as a missing id 8ms
+×a private project's document is answered as a missing one > a document with no program, and another organization's, read the same way 11ms
+×a private project's document is answered as a missing one > the legacy section resolver names only a document the person can read 8ms
+✓a document of a project the person can open still reads > the document, its outline, its section content and history 31ms
+×an access check that cannot run is an error with a code, never an empty result > the sharing policy cannot be read 4ms
+×an access check that cannot run is an error with a code, never an empty result > a caller who is not a current member, or no identified caller, is refused 4ms
+×every write needs a project the person can open, then its edit right > PATCH a section: a private project's document is answered as a missing one, and nothing changes 35ms
+×every write needs a project the person can open, then its edit right > PATCH a section: a project the person can open but not change is refused, and nothing changes 17ms
+×every write needs a project the person can open, then its edit right > PATCH a section: an edit check that cannot run changes nothing, and says so 18ms
+×every write needs a project the person can open, then its edit right > link evidence: a private project's document is answered as a missing one, and nothing changes 18ms
+×every write needs a project the person can open, then its edit right > link evidence: a project the person can open but not change is refused, and nothing changes 18ms
+×every write needs a project the person can open, then its edit right > link evidence: an edit check that cannot run changes nothing, and says so 10ms
+×every write needs a project the person can open, then its edit right > unlink evidence: a private project's document is answered as a missing one, and nothing changes 45ms
+×every write needs a project the person can open, then its edit right > unlink evidence: a project the person can open but not change is refused, and nothing changes 18ms
+×every write needs a project the person can open, then its edit right > unlink evidence: an edit check that cannot run changes nothing, and says so 21ms
+×every write needs a project the person can open, then its edit right > lock: a private project's document is answered as a missing one, and nothing changes 41ms
+×every write needs a project the person can open, then its edit right > lock: a project the person can open but not change is refused, and nothing changes 10ms
+×every write needs a project the person can open, then its edit right > lock: an edit check that cannot run changes nothing, and says so 10ms
+×every write needs a project the person can open, then its edit right > submit: a private project's document is answered as a missing one, and nothing changes 30ms
+×every write needs a project the person can open, then its edit right > submit: a project the person can open but not change is refused, and nothing changes 16ms
+×every write needs a project the person can open, then its edit right > submit: an edit check that cannot run changes nothing, and says so 14ms
+×every write needs a project the person can open, then its edit right > with the edit right, each write is made and audited 11ms
+
+Failure reasons, in order:
+AssertionError: expected [ 'doc_edit', 'doc_fda510k_5', …(4) ] to deeply equal [ 'doc_edit', 'doc_fda510k_6', …(1) ]
+AssertionError: expected { documents: [ { …(14) }, { …(14) } ] } to deeply equal { documents: [] }
+AssertionError: /api/c2c/documents/doc_priv: expected 200 to be 404 // Object.is equality
+AssertionError: /api/c2c/documents/doc_noprog: expected 200 to be 404 // Object.is equality
+AssertionError: expected 200 to be 404 // Object.is equality
+AssertionError: /api/c2c/documents: expected 200 to be 503 // Object.is equality
+AssertionError: /api/c2c/documents: expected 200 to be 403 // Object.is equality
+AssertionError: {"id":3,"document_id":"doc_priv","section_key":"2.5","parent_key":null,"label":"Clinical overview","path_order":10,"mandatory":false,"status":"review","owner_id":null,"content":{"text":"Text of doc_priv"},"draft_source":null,"drafted_at":null,"
+AssertionError: {"id":1,"document_id":"doc_open","section_key":"2.5","parent_key":null,"label":"Clinical overview","path_order":10,"mandatory":false,"status":"review","owner_id":null,"content":{"text":"Text of doc_open"},"draft_source":null,"drafted_at":null,"
+AssertionError: {"id":2,"document_id":"doc_edit","section_key":"2.5","parent_key":null,"label":"Clinical overview","path_order":10,"mandatory":false,"status":"review","owner_id":null,"content":{"text":"Text of doc_edit"},"draft_source":null,"drafted_at":null,"
+AssertionError: {"id":6,"section_id":3,"evidence_kind":"artifact","evidence_ref":"ev-new","paragraph_id":null,"confidence":null,"linked_by":7,"linked_at":"2026-11-05T15:59:47.179Z"}: expected 201 to be 404 // Object.is equality
+AssertionError: {"id":7,"section_id":1,"evidence_kind":"artifact","evidence_ref":"ev-new","paragraph_id":null,"confidence":null,"linked_by":7,"linked_at":"2026-11-05T15:59:47.198Z"}: expected 201 to be 403 // Object.is equality
+AssertionError: {"id":8,"section_id":2,"evidence_kind":"artifact","evidence_ref":"ev-new","paragraph_id":null,"confidence":null,"linked_by":7,"linked_at":"2026-11-05T15:59:47.211Z"}: expected 201 to be 503 // Object.is equality
+AssertionError: {}: expected 204 to be 404 // Object.is equality
+AssertionError: {}: expected 204 to be 403 // Object.is equality
+AssertionError: {}: expected 204 to be 503 // Object.is equality
+AssertionError: {"actionId":"act_1","status":"locked"}: expected 200 to be 404 // Object.is equality
+AssertionError: {"actionId":"act_1","status":"locked"}: expected 200 to be 403 // Object.is equality
+AssertionError: {"actionId":"act_1","status":"locked"}: expected 200 to be 503 // Object.is equality
+AssertionError: {"actionId":"act_1","status":"submitted","filing":{"external":{"channel":"ESG","reference":"R-1","filedAt":"2026-11-01T00:00:00.000Z"}}}: expected 200 to be 404 // Object.is equality
+AssertionError: {"actionId":"act_1","status":"submitted","filing":{"external":{"channel":"ESG","reference":"R-1","filedAt":"2026-11-01T00:00:00.000Z"}}}: expected 200 to be 403 // Object.is equality
+AssertionError: {"actionId":"act_1","status":"submitted","filing":{"external":{"channel":"ESG","reference":"R-1","filedAt":"2026-11-01T00:00:00.000Z"}}}: expected 200 to be 503 // Object.is equality
+AssertionError: PATCH a section: {"code":"DOCUMENT_SUBMITTED","error":"DOCUMENT_SUBMITTED","message":"This filing has been submitted, so its sections are not changed in place. Nothing was changed."}: expected 409 to be less than 300
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 23 ⎯⎯⎯⎯⎯⎯⎯
+Test Files  1 failed (1)
+Tests  23 failed | 2 passed (25)

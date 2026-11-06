@@ -26,11 +26,22 @@
  * and its /accept), which parks the retrieved sources server-side and records
  * verified source + author spans in the same transaction as the content.
  *
+ * Project access (F1, 2026-11-05): every read is held to the projects the
+ * person can open, and every write needs the project's edit right as well.
+ * See "Project access" below.
+ *
  * @module server/routes/c2c/documents
  */
 
 import { Router, type Request, type Response } from 'express';
+import type { PoolClient } from 'pg';
 import { pool } from '../../db.js';
+import {
+  ProgramReadAccessError,
+  getCurrentAccessibleProgramScope,
+  requireCurrentProgramAccess,
+} from '../../services/c2c/current-program-access.js';
+import { canAccessReportProject } from '../../services/report-os/project-access.js';
 import { writeMutation, recordGovernedAction, verifyReauth, separationOfDutiesRefusal } from './actions.js';
 import { assertSignerIsNotAuthor } from '../../services/governance/separation-of-duties.js';
 import { readDocumentOutline } from '../../services/c2c/document-outline.js';
@@ -115,6 +126,71 @@ function send404(res: Response) {
   return res.status(404).json({ error: 'NOT_FOUND' });
 }
 
+// ── Project access (F1, 2026-11-05) ───────────────────────────────────────────
+//
+// c2c_documents.project_id is a regulatory program, and this router read and
+// wrote by organization alone: any member listed a private project's governed
+// documents and read their sections. Every read now binds the programs of the
+// projects the person can open (the project sharing policy, through
+// getCurrentAccessibleProgramScope), as AnA's list_governed_documents and
+// read_governed_document do. A document of any other program, or of none, reads
+// as no row and is answered exactly as a missing one is. A write needs the
+// project's edit right as well (requireDocumentEditRight). A check that cannot
+// run is an error with its code, never an empty result.
+
+/** The program uuids of the projects the person can open now. Throws ProgramReadAccessError. */
+async function readablePrograms(req: Request, organizationId: number): Promise<string[]> {
+  const userId = resolveUserId(req) ?? undefined;
+  return [...(await getCurrentAccessibleProgramScope(pool, { organizationId, userId })).programIds];
+}
+
+interface ReadableDocument { id: string; project_id: string; status: string }
+
+/** The document, if it is the organization's and of a program the person can open; otherwise null. */
+async function readableDocument(req: Request, orgId: number, id: string): Promise<ReadableDocument | null> {
+  const programs = await readablePrograms(req, orgId);
+  const { rows } = await pool.query(
+    `SELECT id, project_id, status FROM c2c_documents
+      WHERE id = $1 AND org_id = $2 AND project_id = ANY($3::uuid[])
+      LIMIT 1`,
+    [id, orgId, programs],
+  );
+  return (rows[0] as ReadableDocument | undefined) ?? null;
+}
+
+/**
+ * Throws unless the person may change this program's documents now: the program
+ * admitted (requireCurrentProgramAccess) and the project's edit right
+ * (canAccessReportProject, forWrite). Read on the write's own transaction, with
+ * the project and its sharing held until commit, as routes/mdx-risk-access.ts
+ * reads it.
+ */
+async function requireDocumentEditRight(client: PoolClient, organizationId: number, userId: number, programId: string): Promise<void> {
+  let editable: boolean;
+  try {
+    const access = await requireCurrentProgramAccess(client, { organizationId, userId, programId, forShare: true });
+    await client.query('SELECT id FROM projects WHERE id = $1 AND organization_id = $2 FOR SHARE', [access.projectId, organizationId]);
+    await client.query('SELECT project_id FROM project_visibility_settings WHERE project_id = $1 AND organization_id = $2 FOR SHARE',
+      [access.projectId, organizationId]);
+    editable = await canAccessReportProject(organizationId, access.actor, access.projectId, client, { forWrite: true });
+  } catch (error) {
+    if (error instanceof ProgramReadAccessError) throw error;
+    throw new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project edit access could not be verified. Nothing was changed.');
+  }
+  if (!editable) {
+    throw new ProgramReadAccessError(403, 'PROJECT_WRITE_ACCESS_DENIED', 'Your current project permissions do not permit this change. Nothing was changed.');
+  }
+}
+
+/** A refusal, or a check that could not run, is answered with its code; anything else is the route's 500. */
+function sendFailure(res: Response, label: string, err: unknown) {
+  if (err instanceof ProgramReadAccessError) {
+    return res.status(err.status).json({ code: err.code, error: err.code, message: err.message });
+  }
+  console.error('[c2c/documents]', label, err);
+  return res.status(500).json({ error: 'INTERNAL_ERROR' });
+}
+
 // ── GET /api/c2c/documents ────────────────────────────────────────────────────
 
 router.get('/', async (req: Request, res: Response) => {
@@ -130,13 +206,13 @@ router.get('/', async (req: Request, res: Response) => {
   }
 
   try {
-    const conditions: string[] = ['d.org_id = $1'];
-    const params: unknown[] = [orgId];
+    // Only the programs the person can open (F1). A projectId outside them, or
+    // naming no program, lists nothing, as an unknown project always has.
+    const readable = await readablePrograms(req, orgId);
+    const programs = projectId ? readable.filter((p) => p === String(projectId).toLowerCase()) : readable;
+    const conditions: string[] = ['d.org_id = $1', 'd.project_id = ANY($2::uuid[])'];
+    const params: unknown[] = [orgId, programs];
 
-    if (projectId) {
-      params.push(projectId);
-      conditions.push(`d.project_id = $${params.length}`);
-    }
     if (docType) {
       params.push(docType);
       conditions.push(`d.doc_type = $${params.length}`);
@@ -163,8 +239,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     return res.json({ documents: rows });
   } catch (err: unknown) {
-    console.error('[c2c/documents] GET /', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return sendFailure(res, 'GET /', err);
   }
 });
 
@@ -184,17 +259,23 @@ router.get('/by-legacy/cerv2-section/:id', async (req: Request, res: Response) =
   if (!Number.isFinite(legacyId)) return send400(res, 'INVALID_ID');
 
   try {
+    // The answer names a document, so only one the person can read (F1): a
+    // document of a program outside their projects, or of none, is answered as
+    // a missing one.
+    const programs = await readablePrograms(req, orgId);
     // Join through the chain: cerv2_510k_sections → fda_510k_documents → fda_510k_projects
     // c2c_documents.id = 'doc_fda510k_' + fda_510k_projects.id
     const { rows } = await pool.query(`
       SELECT
         'doc_fda510k_' || fd.project_id::text AS document_id,
-        s.section_key
+        s.section_key,
+        COALESCE(d.project_id = ANY($3::uuid[]), false) AS readable
       FROM cerv2_510k_sections s
       JOIN fda_510k_documents fd ON fd.id = s.document_id
+      LEFT JOIN c2c_documents d ON d.id = 'doc_fda510k_' || fd.project_id::text AND d.org_id = s.organization_id
       WHERE s.id = $1 AND s.document_id IS NOT NULL AND s.organization_id = $2
       LIMIT 1
-    `, [legacyId, orgId]);
+    `, [legacyId, orgId, programs]);
 
     if (rows.length === 0) {
       // Section not linked to a project: fall back to org-level lookup
@@ -202,19 +283,19 @@ router.get('/by-legacy/cerv2-section/:id', async (req: Request, res: Response) =
         SELECT d.id AS document_id, s.section_key
         FROM cerv2_510k_sections s
         JOIN c2c_documents d ON d.doc_type = 'k510' AND d.org_id = s.organization_id
-        WHERE s.id = $1 AND s.organization_id = $2
+        WHERE s.id = $1 AND s.organization_id = $2 AND d.project_id = ANY($3::uuid[])
         ORDER BY d.created_at ASC
         LIMIT 1
-      `, [legacyId, orgId]);
+      `, [legacyId, orgId, programs]);
 
       if (fallback.length === 0) return send404(res);
       return res.json(fallback[0]);
     }
 
-    return res.json(rows[0]);
+    const { readable, ...mapping } = rows[0] as { readable: boolean; document_id: string; section_key: string };
+    return readable ? res.json(mapping) : send404(res);
   } catch (err: unknown) {
-    console.error('[c2c/documents] GET /by-legacy/cerv2-section', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return sendFailure(res, 'GET /by-legacy/cerv2-section', err);
   }
 });
 
@@ -266,16 +347,15 @@ router.get('/:id', async (req: Request, res: Response) => {
               d.owner_id, d.artifact_id, d.locked_at, d.submitted_at,
               d.created_at, d.updated_at
        FROM c2c_documents d
-       WHERE d.id = $1 AND d.org_id = $2
+       WHERE d.id = $1 AND d.org_id = $2 AND d.project_id = ANY($3::uuid[])
        LIMIT 1`,
-      [req.params.id, orgId],
+      [req.params.id, orgId, await readablePrograms(req, orgId)],
     );
 
     if (rows.length === 0) return send404(res);
     return res.json(rows[0]);
   } catch (err: unknown) {
-    console.error('[c2c/documents] GET /:id', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return sendFailure(res, 'GET /:id', err);
   }
 });
 
@@ -291,12 +371,12 @@ router.get('/:id/outline', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
+    if (!(await readableDocument(req, orgId, String(req.params.id)))) return send404(res);
     const outline = await readDocumentOutline(pool, orgId, String(req.params.id));
     if (!outline) return send404(res);
     return res.json(outline);
   } catch (err: unknown) {
-    console.error('[c2c/documents] GET /:id/outline', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return sendFailure(res, 'GET /:id/outline', err);
   }
 });
 
@@ -309,12 +389,8 @@ router.get('/:id/sections/:key', async (req: Request, res: Response) => {
   const { id, key } = req.params;
 
   try {
-    // Verify doc org membership first.
-    const docCheck = await pool.query(
-      `SELECT 1 FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
-      [id, orgId],
-    );
-    if (docCheck.rows.length === 0) return send404(res);
+    // The document first: the organization's, of a program the person can open.
+    if (!(await readableDocument(req, orgId, String(id)))) return send404(res);
 
     const { rows } = await pool.query(
       `SELECT id, document_id, section_key, parent_key, label,
@@ -329,8 +405,7 @@ router.get('/:id/sections/:key', async (req: Request, res: Response) => {
     if (rows.length === 0) return send404(res);
     return res.json(rows[0]);
   } catch (err: unknown) {
-    console.error('[c2c/documents] GET /:id/sections/:key', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return sendFailure(res, 'GET /:id/sections/:key', err);
   }
 });
 
@@ -347,11 +422,7 @@ router.get('/:id/sections/:key/versions', async (req: Request, res: Response) =>
   if (!orgId) return send403(res);
   const { id, key } = req.params;
   try {
-    const docCheck = await pool.query(
-      `SELECT 1 FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
-      [id, orgId],
-    );
-    if (docCheck.rows.length === 0) return send404(res);
+    if (!(await readableDocument(req, orgId, String(id)))) return send404(res);
     const { rows } = await pool.query(
       `SELECT v.id, v.version, v.author_id, v.author_kind, v.reason, v.occurred_at,
               COALESCE(u.name, u.email) AS author_name
@@ -379,8 +450,7 @@ router.get('/:id/sections/:key/versions', async (req: Request, res: Response) =>
       })),
     });
   } catch (err: unknown) {
-    console.error('[c2c/documents] GET /:id/sections/:key/versions', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return sendFailure(res, 'GET /:id/sections/:key/versions', err);
   }
 });
 
@@ -462,16 +532,14 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
   }
 
   try {
-    // Verify doc org membership.
-    const docCheck = await pool.query(
-      `SELECT 1 FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
-      [id, orgId],
-    );
-    if (docCheck.rows.length === 0) return send404(res);
+    // The organization's document, of a program the person can open (F1).
+    const doc = await readableDocument(req, orgId, String(id));
+    if (!doc) return send404(res);
 
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      await requireDocumentEditRight(client, orgId, userId, doc.project_id);
 
       // A locked or submitted document is immutable: its sections must not be
       // edited in place. Amendments go through a new version/submission, not a
@@ -598,8 +666,7 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
       client.release();
     }
   } catch (err: unknown) {
-    console.error('[c2c/documents] PATCH /:id/sections/:key', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return sendFailure(res, 'PATCH /:id/sections/:key', err);
   }
 });
 
@@ -629,18 +696,18 @@ router.post('/:id/sections/:key/evidence', async (req: Request, res: Response) =
   }
 
   try {
-    // Verify doc + get section id.
+    // Verify doc + get section id: a document of a program the person can open (F1).
     const secRes = await pool.query(
-      `SELECT ds.id AS section_id
+      `SELECT ds.id AS section_id, d.project_id
        FROM c2c_document_sections ds
        JOIN c2c_documents d ON d.id = ds.document_id
-       WHERE ds.document_id = $1 AND ds.section_key = $2 AND d.org_id = $3
+       WHERE ds.document_id = $1 AND ds.section_key = $2 AND d.org_id = $3 AND d.project_id = ANY($4::uuid[])
        LIMIT 1`,
-      [id, key, orgId],
+      [id, key, orgId, await readablePrograms(req, orgId)],
     );
 
     if (secRes.rows.length === 0) return send404(res);
-    const sectionId = (secRes.rows[0] as any).section_id as number;
+    const { section_id: sectionId, project_id: programId } = secRes.rows[0] as { section_id: number; project_id: string };
 
     // 21 CFR Part 11 §11.10(e): create the evidence link and its audit in one
     // transaction, so they commit or roll back together. Previously the insert
@@ -649,6 +716,7 @@ router.post('/:id/sections/:key/evidence', async (req: Request, res: Response) =
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      await requireDocumentEditRight(client, orgId, userId, programId);
       const { rows } = await client.query(
         `INSERT INTO c2c_document_section_evidence
            (section_id, evidence_kind, evidence_ref, paragraph_id, confidence, linked_by)
@@ -675,8 +743,7 @@ router.post('/:id/sections/:key/evidence', async (req: Request, res: Response) =
       client.release();
     }
   } catch (err: unknown) {
-    console.error('[c2c/documents] POST /:id/sections/:key/evidence', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return sendFailure(res, 'POST /:id/sections/:key/evidence', err);
   }
 });
 
@@ -690,18 +757,20 @@ router.delete('/:id/sections/:key/evidence/:evId', async (req: Request, res: Res
   const { id, key, evId } = req.params;
 
   try {
-    // Verify org membership and ownership.
+    // Verify org membership and ownership: a document of a program the person can open (F1).
     const check = await pool.query(
-      `SELECT ev.id
+      `SELECT ev.id, d.project_id
        FROM c2c_document_section_evidence ev
        JOIN c2c_document_sections ds ON ds.id = ev.section_id
        JOIN c2c_documents d ON d.id = ds.document_id
        WHERE ev.id = $1 AND ds.document_id = $2 AND ds.section_key = $3 AND d.org_id = $4
+         AND d.project_id = ANY($5::uuid[])
        LIMIT 1`,
-      [evId, id, key, orgId],
+      [evId, id, key, orgId, await readablePrograms(req, orgId)],
     );
 
     if (check.rows.length === 0) return send404(res);
+    const programId = (check.rows[0] as { project_id: string }).project_id;
 
     // 21 CFR Part 11 §11.10(e): audit the unlink and perform the DELETE in ONE
     // transaction, so they are atomic — a failure of either rolls back both. The
@@ -710,6 +779,7 @@ router.delete('/:id/sections/:key/evidence/:evId', async (req: Request, res: Res
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      await requireDocumentEditRight(client, orgId, userId, programId);
       await writeMutation(
         'resolve',
         { target: `section:${id}:${key}`, reason: 'evidence unlinked', payload: { evidenceId: evId } },
@@ -729,8 +799,7 @@ router.delete('/:id/sections/:key/evidence/:evId', async (req: Request, res: Res
       client.release();
     }
   } catch (err: unknown) {
-    console.error('[c2c/documents] DELETE /:id/sections/:key/evidence/:evId', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return sendFailure(res, 'DELETE /:id/sections/:key/evidence/:evId', err);
   }
 });
 
@@ -760,12 +829,10 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
   }
 
   try {
-    const docCheck = await pool.query(
-      `SELECT id, status FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (docCheck.rows.length === 0) return send404(res);
-    if ((docCheck.rows[0] as any).status === 'locked') {
+    // The organization's document, of a program the person can open (F1).
+    const doc = await readableDocument(req, orgId, String(req.params.id));
+    if (!doc) return send404(res);
+    if (doc.status === 'locked') {
       return res.status(409).json({ error: 'ALREADY_LOCKED' });
     }
     await assertSignerIsNotAuthor(`document:${req.params.id}`, orgId, userId, { command: 'lock' });
@@ -775,6 +842,7 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      await requireDocumentEditRight(client, orgId, userId, doc.project_id);
       const result = await writeMutation(
         'lock',
         { target: `document:${req.params.id}`, reason: reason.trim(), reauth } as any,
@@ -800,8 +868,7 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
   } catch (err: unknown) {
     const sod = separationOfDutiesRefusal(err, 'c2c/documents/lock');
     if (sod) return res.status(sod.status).json(sod.body);
-    console.error('[c2c/documents] POST /:id/lock', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return sendFailure(res, 'POST /:id/lock', err);
   }
 });
 
@@ -886,13 +953,11 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
   }
 
   try {
-    const docCheck = await pool.query(
-      `SELECT id, status FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (docCheck.rows.length === 0) return send404(res);
+    // The organization's document, of a program the person can open (F1).
+    const doc = await readableDocument(req, orgId, String(req.params.id));
+    if (!doc) return send404(res);
 
-    const docStatus = (docCheck.rows[0] as any).status;
+    const docStatus = doc.status;
     if (docStatus === 'submitted') {
       return res.status(409).json({ error: 'ALREADY_SUBMITTED' });
     }
@@ -938,6 +1003,7 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      await requireDocumentEditRight(client, orgId, userId, doc.project_id);
       const result = await writeMutation(
         'transition',
         { target: `document:${req.params.id}`, reason: reason.trim(), payload: { filing } },
@@ -962,8 +1028,7 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
       client.release();
     }
   } catch (err: unknown) {
-    console.error('[c2c/documents] POST /:id/submit', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return sendFailure(res, 'POST /:id/submit', err);
   }
 });
 
