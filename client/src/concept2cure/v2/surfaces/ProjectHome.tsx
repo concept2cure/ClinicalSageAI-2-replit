@@ -12,7 +12,6 @@ import { PJ_LIFECYCLE, PJ_LIFECYCLE_DEVICE } from '../fixtures/project-home-data
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { captureShellProjectGuard, projectStepId, readShellProject, shellProgramId, updateShellProject, useShellProject } from '../shellProject';
 import { consumeNavParams } from '../navParams';
-import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
 import { DocumentDisposition } from './DocumentDisposition';
 import { useProjectThreads, useWorkingThreads } from './projectThreads';
@@ -37,7 +36,7 @@ import { FileDropZone } from '../FileDropZone';
 import { ProjectRespond } from './ProjectRespond';
 import { ProjectObjective } from './ProjectObjective';
 import { ProjectMarkets, ProjectStatusLine, regionalPreparationReason } from './ProjectMarkets';
-import { ModuleCompletion, dossierFacts, dossierSummaryValue, useProjectDossier, type DossierState, type RowCopy } from './ProjectDossier';
+import { DossierReadinessCard, ModuleCompletion, dossierFacts, dossierSummaryValue, useProjectDossier, type DossierState, type RowCopy } from './ProjectDossier';
 import { editingCopyOf } from '../editor/editingCopy';
 import { sourceReadView } from '@shared/data-room-processing-status';
 import { ProjectTeamCard, ProjectTeamDrawer, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
@@ -1524,17 +1523,13 @@ function AuthorWorkspace({
     <>
         <ProjectDocuments pid={pid} read={docs} onRetry={onRetryDocs} onOpen={onOpenDoc} onNav={onNav} available={available} cmcComposes={cmcComposes} />
 
-        {/* Module completion, from the same dossier read as the card (F23). */}
-        <ModuleCompletion read={dossier} copyFor={copyFor} onOpen={onOpenDoc} onAsk={onAsk} />
+        {/* The dossier's readiness detail, beside the modules it measures (D3-2a: it left the side column, whose Filing
+            card now carries the figure on every step). */}
+        <DossierReadinessCard read={dossier} copyFor={copyFor} onOpen={onOpenDoc} />
 
-        {/* Records in this project — REAL: GET /:id/records, every store read
-            by its project key (PF-17). A store it cannot read says so. */}
-        {pid && (
-          <section className="pj-sec" aria-label="Records in this project">
-            <div className="pj-sec-h"><h2>Records in this project</h2></div>
-            <ProjectRecords pid={pid} />
-          </section>
-        )}
+        {/* Module completion, from the same dossier read as the card (F23). The project's records are the Records
+            card in Project knowledge, on every step (D3-2a). */}
+        <ModuleCompletion read={dossier} copyFor={copyFor} onOpen={onOpenDoc} onAsk={onAsk} />
 
         {/* The project's audit read. Its team and tasks are on Plan (CLIENT_JOURNEY pass 3). */}
         <section className="pj-sec">
@@ -1584,13 +1579,13 @@ function ProjectReportsDoor({ onNav }: { onNav: (id: string) => void }) {
   const available = useSurfaceAvailable();
   const programId = shellProgramId(useShellProject());
   if (!programId || !available('insights')) return null;
+  /* The Work areas card's last row (D3-2a, D3.md §4.8 item 4): "Reports", with the full sentence as its name. */
   return (
-    <div className="pj-about-row">
-      {/* The name is a sentence, so it wraps at phone width rather than overflow. */}
-      <button type="button" className="pj-about-link" onClick={() => onNav('insights')}>
-        {REPORTS_DOOR} {I.right}
-      </button>
-    </div>
+    <button type="button" className="pj-work-area" aria-label={REPORTS_DOOR} title={REPORTS_DOOR} onClick={() => onNav('insights')}>
+      <span className="pj-work-area-ic" aria-hidden="true">{I.barChart}</span>
+      <span className="pj-work-area-l">Reports</span>
+      {I.right}
+    </button>
   );
 }
 
@@ -1639,14 +1634,13 @@ function ProjectHeaderDoors({ pid, prog, deviceFiling, cmcComposes, available, o
   available: (id: string) => boolean; onNav: (id: string) => void;
 }) {
   const read = pid && prog?.id === pid ? prog : null;
+  /* The Reports row is passed only when it will show, so a card with nothing to open is not drawn. */
+  const reports = Boolean(shellProgramId(useShellProject())) && available('insights');
   return (
-    <>
-      {read && (
-        <ProjectCoreWork programId={pid} available={available} onNav={onNav}
-          track={{ deviceFiling, riskBasedMonitoring: read.riskBasedMonitoring === true, cmcComposes }} />
-      )}
-      <ProjectReportsDoor onNav={onNav} />
-    </>
+    <ProjectCoreWork programId={pid} available={available} onNav={onNav}
+      track={read ? { deviceFiling, riskBasedMonitoring: read.riskBasedMonitoring === true, cmcComposes } : null}>
+      {reports && <ProjectReportsDoor onNav={onNav} />}
+    </ProjectCoreWork>
   );
 }
 
@@ -2143,10 +2137,10 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                 filing stands, and its conversations, beside the work. */}
             <section className="pj-about" aria-label="About this project">
               {/* "Edit" opens Project settings on the description (D3.md §4.8 item 1), for a person who may change it. */}
-              {prog && pid && prog.id === pid && prog.canChange !== false && (
-                <div className="pj-card-h"><h3>About</h3>
-                  <button type="button" className="pj-card-h-go" aria-haspopup="dialog" aria-label="Edit project details" onClick={() => openSettings('description')}>Edit</button></div>
-              )}
+              <div className="pj-card-h"><h3>About</h3>
+                {prog && pid && prog.id === pid && prog.canChange !== false && (
+                  <button type="button" className="pj-card-h-go" aria-haspopup="dialog" aria-label="Edit project details" onClick={() => openSettings('description')}>Edit</button>
+                )}</div>
               {prog && (
                 <section className="pj-facts" aria-label="Project identity">
                   <dl className="pj-fact"><dt>Client</dt><dd>{clientName ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
@@ -2179,15 +2173,26 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                   )}
                 </section>
               )}
-              <ProjectHeaderDoors pid={pid} prog={prog} deviceFiling={deviceFiling} cmcComposes={cmcComposes} available={available} onNav={onNav} />
-              {pid && !progState.error && (
+            </section>
+            {/* Filing (D3-2a, D3.md §4.8 item 2): where the filing stands, on every step. The dossier's figure opens
+                Author, where its detail is; each market's line opens Submit at its verdict. */}
+            {pid && !progState.error && (
+              <section className="pj-card" aria-labelledby="pj-filing-h">
+                <div className="pj-card-h"><h3 id="pj-filing-h">Filing</h3></div>
+                <button type="button" className="pj-k-row" onClick={() => chooseStage('author')}>
+                  <span className="pj-k-row-l">{DOSSIER_READINESS_LABEL}</span>
+                  <span className="pj-k-row-v">{dossierSummaryValue(dossier)}</span>
+                  {I.right}
+                </button>
                 <ProjectStatusLine markets={markets} documentClass={documentClass} regionalApplication={regionalApplication} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }}
                   onOpenMarket={(submissionId) => openMarketOnSubmit(chooseStage, submissionId)} />
-              )}
-            </section>
+              </section>
+            )}
             {/* The team, on every step (D3-3; it left Plan). "Manage" opens the Team drawer. */}
             {pid && <ProjectTeamCard programId={pid} state={teamState} onRetry={reloadTeam} onManage={() => setTeamOpen(true)} />}
-            {stage === 'author' && <ProjectSide pid={pid} dossier={dossier} copyFor={filingCopyIn(docsRead)} onOpenDoc={openDocument} onAsk={onAsk} />}
+            <ProjectHeaderDoors pid={pid} prog={prog} deviceFiling={deviceFiling} cmcComposes={cmcComposes} available={available} onNav={onNav} />
+            {/* What AnA knows, the skills it follows here, and the project's records: on every step (D3-2a). */}
+            <ProjectSide pid={pid} onAsk={onAsk} />
           </aside>
           {teamOpen && pid && (
             <ProjectTeamDrawer programId={pid} state={teamState} onRetry={reloadTeam} onClose={() => setTeamOpen(false)}

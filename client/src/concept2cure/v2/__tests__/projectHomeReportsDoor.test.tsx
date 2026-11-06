@@ -102,8 +102,10 @@ describe("Project home: a door to this project's reports", () => {
     const onNav = renderProject();
     await headerReady();
     const door = await screen.findByRole('button', { name: DOOR });
-    // Claude's project page (2026-11-01): it sits with what the project is, beside the work.
-    expect(door.closest('[aria-label="About this project"]'), 'the door is with the project\u2019s facts').not.toBeNull();
+    // Claude's project page (2026-11-01): it sits in Project knowledge, beside the work: since D3-2a, the Work areas
+    // card's last row, named "Reports" with the full sentence as its accessible name.
+    expect(door.closest('[aria-label="This project\u2019s work areas"]'), 'the door is a Work areas row').not.toBeNull();
+    expect(door.textContent).toContain('Reports');
     fireEvent.click(door);
     expect(onNav).toHaveBeenCalledWith('insights');
     // The shell's one program channel still names this project for the next surface.

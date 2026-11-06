@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { ProjectRecordedContextData, ProjectRecordedProfile } from '@shared/project-recorded-context';
 const request = vi.hoisted(() => vi.fn());
 const tenant = vi.hoisted(() => ({ currentOrganization: { id: 7 }, currentClientWorkspace: { id: '21', organizationId: '7' } as { id: string; organizationId: string } | null }));
@@ -35,7 +35,7 @@ function deferred() {
   let resolve!: (value: Response) => void;
   return { promise: new Promise<Response>(done => { resolve = done; }), resolve: (value: Response) => resolve(value) };
 }
-const side = (pid: string | null = PID) => <ProjectSide pid={pid} dossier={{ state: { loading: true, data: null }, retry: () => {} } as never} copyFor={() => ({ kind: 'none' })} onOpenDoc={() => {}} />;
+const side = (pid: string | null = PID) => <ProjectSide pid={pid} />;
 beforeEach(() => {
   login(); tenant.currentOrganization = { id: 7 }; tenant.currentClientWorkspace = { id: '21', organizationId: '7' };
   window.C2C_PROJECT = { id: PID, title: 'Current project' }; request.mockReset(); serve(answer());
@@ -47,7 +47,11 @@ describe('recorded profile in the existing project side cards', () => {
     render(side());
     expect(await screen.findByText('Recorded strategy from the client profile')).toBeTruthy();
     expect(screen.getByText('Preserve the recorded nomenclature')).toBeTruthy();
-    expect(screen.getByText(/Saved intelligence-profile instructions/)).toBeTruthy();
+    /* D3-2a: one card, "What AnA knows", whose first line says what AnA reads; Memory and Instructions are its two
+       disclosures. The two sentences about separate sources are gone (D3.md §4.8 item 5). */
+    expect(screen.getByRole('heading', { name: 'What AnA knows' })).toBeTruthy();
+    expect(screen.getByText('AnA reads these in every conversation in this project.')).toBeTruthy();
+    expect(screen.queryByText(/Saved intelligence-profile instructions/)).toBeNull();
     expect(reads()).toHaveLength(1);
     expect(request).toHaveBeenCalledWith('GET', path, undefined, expect.objectContaining({ Authorization: `Bearer ${jwt()}`, 'x-organization-id': '7', 'x-client-id': '21' }));
     expect(screen.queryByText('Not read on this page yet')).toBeNull();
@@ -59,8 +63,20 @@ describe('recorded profile in the existing project side cards', () => {
     expect(screen.getByText('Recorded source: Source document')).toBeTruthy();
     expect(screen.getByText('Confidence not recorded.')).toBeTruthy();
     expect(screen.getByText(/not verified evidence or a readiness verdict/)).toBeTruthy();
-    expect(screen.getByText(/Authored project instructions and the skills AnA follows are separate sources/)).toBeTruthy();
+    expect(screen.queryByText(/Authored project instructions and the skills AnA follows are separate sources/)).toBeNull();
     expect(request.mock.calls.every(([method]) => method === 'GET')).toBe(true);
+  });
+
+  /* D3-2a: Memory and Instructions are the card's two closed disclosures, each summary saying what it holds. */
+  it('shows Memory and Instructions as closed disclosures of one card', async () => {
+    render(side());
+    const card = (await screen.findByRole('heading', { name: 'What AnA knows' })).closest('section') as HTMLElement;
+    await within(card).findByText('Recorded strategy from the client profile');
+    const summaries = Array.from(card.querySelectorAll('details > summary')).map((el) => el.textContent ?? '');
+    expect(summaries).toHaveLength(2);
+    expect(summaries[0]).toMatch(/^Memory/);
+    expect(summaries[1]).toMatch(/^Instructions/);
+    expect(card.querySelectorAll('details[open]')).toHaveLength(0);
   });
 
   it('distinguishes a verified absent profile from a profile with no recorded fields', async () => {
@@ -92,7 +108,7 @@ describe('recorded profile in the existing project side cards', () => {
   it('states loading without an absence claim and permits an unselected workspace to bind the actual saved parent', async () => {
     tenant.currentClientWorkspace = null;
     const pending = deferred(); serve(pending.promise); render(side());
-    expect(screen.getAllByText('Reading saved project profile…')).toHaveLength(2);
+    expect(screen.getAllByText('Reading saved project profile…')).toHaveLength(1);
     expect(screen.queryByText('No saved intelligence profile for this project.')).toBeNull();
     await waitFor(() => expect(reads()).toHaveLength(1));
     expect(reads()[0][3]).not.toHaveProperty('x-client-id');
@@ -113,7 +129,8 @@ describe('recorded profile in the existing project side cards', () => {
   ])('withholds a successful but %s answer as unavailable', async (_label, body) => {
     serve(ok(body)); render(side());
     await screen.findByRole('button', { name: 'Retry recorded project context' });
-    expect(screen.getAllByRole('alert').filter(element => element.textContent?.includes('Recorded project context could not be read'))).toHaveLength(2);
+    /* One card since D3-2a, so one alert (it was one per card, Memory and Instructions). */
+    expect(screen.getAllByRole('alert').filter(element => element.textContent?.includes('Recorded project context could not be read'))).toHaveLength(1);
     expect(screen.queryByText('Recorded strategy from the client profile')).toBeNull();
     expect(screen.queryByText('No saved intelligence profile for this project.')).toBeNull();
   });
@@ -130,7 +147,7 @@ describe('recorded profile in the existing project side cards', () => {
 
   it('makes no profile request for a foreign current tenant selection', () => {
     tenant.currentOrganization = { id: 8 }; render(side());
-    expect(screen.getAllByText(/Recorded project context was withdrawn/)).toHaveLength(2);
+    expect(screen.getAllByText(/Recorded project context was withdrawn/)).toHaveLength(1);
     expect(reads()).toHaveLength(0);
   });
 });
@@ -174,7 +191,7 @@ describe('recorded profile response ownership', () => {
     const retry = await screen.findByRole('button', { name: 'Retry recorded project context' });
     setAuthToken(jwt(99)); fireEvent.click(retry);
     expect(reads()).toHaveLength(1);
-    expect(screen.getAllByText(/Recorded project context was withdrawn/)).toHaveLength(2);
+    expect(screen.getAllByText(/Recorded project context was withdrawn/)).toHaveLength(1);
   });
 
   it('preserves a pending profile read through canonical same-account bearer refresh', async () => {

@@ -1,0 +1,155 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "0e8acdb9-40ba-41ed-bb5d-d0b3cf836a54",
+  "startedAt": "2026-11-06T18:10:03.592Z",
+  "steps": [
+    {
+      "name": "the same Project knowledge on every step, in order",
+      "steps": [
+        {
+          "step": "Plan",
+          "cards": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records"
+          ]
+        },
+        {
+          "step": "Evidence",
+          "cards": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records"
+          ]
+        },
+        {
+          "step": "Author",
+          "cards": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records"
+          ]
+        },
+        {
+          "step": "Review",
+          "cards": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records"
+          ]
+        },
+        {
+          "step": "Submit",
+          "cards": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records"
+          ]
+        },
+        {
+          "step": "Respond",
+          "cards": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "the Filing card's readiness figure opens Author",
+      "row": "Dossier readiness0%",
+      "opened": "Author",
+      "readinessDetailInMain": true
+    },
+    {
+      "name": "a Records store opens",
+      "summaries": [
+        "Submissions · 1",
+        "Data Room sources · 1",
+        "Authoring documents · 0",
+        "Vault documents · 0",
+        "Study designs · 0",
+        "Filing documents · 1"
+      ],
+      "opened": 1
+    },
+    {
+      "name": "the column, 1440 light",
+      "cards": [
+        "About",
+        "Filing",
+        "Team",
+        "Work areas",
+        "What AnA knows",
+        "Skills",
+        "Records"
+      ],
+      "width": 320,
+      "shots": [
+        "screenshots/1440-light-knowledge-top.png",
+        "screenshots/1440-light-knowledge-lower.png"
+      ]
+    },
+    {
+      "name": "the column, 1440 dark",
+      "cards": [
+        "About",
+        "Filing",
+        "Team",
+        "Work areas",
+        "What AnA knows",
+        "Skills",
+        "Records"
+      ],
+      "width": 320,
+      "shots": [
+        "screenshots/1440-dark-knowledge-top.png",
+        "screenshots/1440-dark-knowledge-lower.png"
+      ]
+    },
+    {
+      "name": "the column, 390 light",
+      "cards": [
+        "About",
+        "Filing",
+        "Team",
+        "Work areas",
+        "What AnA knows",
+        "Skills",
+        "Records"
+      ],
+      "width": 330,
+      "shots": [
+        "screenshots/390-light-knowledge-top.png",
+        "screenshots/390-light-knowledge-lower.png"
+      ]
+    }
+  ],
+  "result": "pass",
+  "finishedAt": "2026-11-06T18:10:23.481Z"
+}
