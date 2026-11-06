@@ -1,0 +1,23 @@
+{
+  "acceptedSourceCommit": "ffedcf728c2a211bd35ff32430a2ad91103f6ddc",
+  "canonicalRef": "refs/heads/concept2cure-v2",
+  "verifiedRemoteAt": "2026-11-06T22:08:18.134759+00:00",
+  "remoteHead": "ffedcf728c2a211bd35ff32430a2ad91103f6ddc",
+  "fullCliTypecheckErrors": 0,
+  "normalPrePushGates": "all passed",
+  "uiTests": 92,
+  "scriptTests": 20,
+  "noWarningGrowth": true,
+  "qualifiedSourceHashesMatch": {
+    "client/src/concept2cure/v2/surfaces/RbmIngest.tsx": true,
+    "client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx": true,
+    "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx": true,
+    "client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx": true,
+    "scripts/demo/launch-demo/packs/lumen-rbm.mjs": true,
+    "scripts/demo/launch-demo/lumen-rbm-completion.test.mjs": true,
+    "tests/validation/lib/harness.mjs": true,
+    "tests/validation/lib/api-client-retry.test.mjs": true
+  },
+  "integration": "All incoming changes preserved by normal canonical integration. Three ref races were retried; no force push or gate/baseline change. The final source is accepted remotely.",
+  "runtimeLimit": "Local native-file UI proof is recorded by snapshot; no paid provider generation or current user Codespace qualification is claimed."
+}

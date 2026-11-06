@@ -56,3 +56,11 @@ final source/cutoff edit controls also clear stale duplicate authorization,
 qualified by two genuine RED cases and the 92-case GREEN run. The earlier
 browser receipt remains bound to its recorded component hash; it predates
 only those two metadata handlers. Normal push hooks provide final type proof.
+
+## Accepted canonical source
+
+Source accepted at `ffedcf728c2a211bd35ff32430a2ad91103f6ddc` on `concept2cure-v2`. All eight
+qualified source/test hashes still match. The final full CLI typecheck reports
+zero errors; all normal pre-push gates pass with no warning growth. Three
+transport races were integrated and retried. The accepted push log and remote
+verification receipt are retained here; no baseline, gate or force push was used.

@@ -36,5 +36,11 @@
   "typecheckFirstAttempt": {
     "errors": 5,
     "cause": "Unsupported exact option in five new Testing Library role queries; corrected without baseline changes. Final typecheck remains with ordinary push hooks."
+  },
+  "finalPublication": {
+    "acceptedSourceCommit": "ffedcf728c2a211bd35ff32430a2ad91103f6ddc",
+    "fullCliTypecheckErrors": 0,
+    "normalPrePushGates": "all passed",
+    "sourceHashesMatch": true
   }
 }
