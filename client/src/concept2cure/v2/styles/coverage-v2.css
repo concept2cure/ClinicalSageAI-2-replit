@@ -1158,7 +1158,7 @@
 .c2c-v2 .indl-place{ font-size:10px; font-weight:600; color:var(--text-300); background:var(--bg-300); padding:2px 6px; border-radius:5px; }
 .c2c-v2 .indl-ref{ font-size:10px; color:var(--text-400); padding:2px 0; }
 .c2c-v2 .indl-dcard-desc{ font-size:11px; color:var(--text-400); line-height:1.5; margin-bottom:10px; }
-.c2c-v2 .indl-dcard-acts{ display:flex; align-items:center; gap:8px; }
+.c2c-v2 .indl-dcard-acts{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .c2c-v2 .indl-route{ font-size:10px; color:var(--text-500); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .c2c-v2 .indl-deliv-foot{ font-size:10.5px; color:var(--text-400); line-height:1.5; margin-top:12px; padding-top:10px; border-top:1px solid var(--border); }
 @media (max-width:1080px){ .c2c-v2 .indl-grid{ grid-template-columns:1fr; } .c2c-v2 .indl-aside{ position:static; } }
