@@ -42,3 +42,8 @@ Exact protocol/synopsis roles clear the CTD section rather than inventing a CTD 
 ## What already exists — saved UK region boundary found by the compiler
 
 The first normal publication compiler reports one TS2322 in the added adapter test. `shared/authoring/recorded-template-source.ts` has an established US/EU/CA/JP/GLOBAL region contract and runtime parser; `builtin-authoring-templates.ts` uses the same admitted region list. The new UK saved-template fixture bypassed that actual boundary via the mocked validated-result seam. Remove that invalid fixture rather than widen template admission or pretend GLOBAL is UK. UK remains covered by exact project-filing and direct advisory identity tests; saved regional template handoff is verified for currently admitted EU/CA identities only. Five positive saved-template cases remain, preserving their assertions. Original failed compiler/log is retained, the zero baseline is unchanged, and this limitation supersedes earlier unqualified six-template statements.
+
+
+## Published — 2026-11-06
+
+Normal hooked source push accepted `d75e63b617700584971794b874ff5ae6f1990ba3`; remote equality and all 13 source/test plus three merged-dependency hashes verified. Full-tree compiler zero and no warning growth. Evidence/handoff in `docs/evidence/D4/2026-11-06-regional-therapeutic-selection/`. No file remains held. Current core355, adjacent213; UK saved-template admission and broader scientific/source-privacy work remain open.

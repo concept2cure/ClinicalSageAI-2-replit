@@ -4,7 +4,9 @@
 
 ## Current status
 
-Corrected core checks pass355/355. The first normal push refused one invalid new UK saved-template fixture at the compiler; its failed log and explicit correction are retained. The zero baseline and production code are unchanged. Normal retry is pending after documentation-only synchronization.
+**Published.** Normal push accepted `d75e63b617700584971794b874ff5ae6f1990ba3` on `concept2cure-v2`; independent remote equality, all 13 source/test hashes and all three merged dependency hashes were verified. Every hook passed: zero full-tree TypeScript errors against the unchanged zero baseline and no warning growth. Full receipt/output: `publication-receipt.json`, `publication-accepted*`.
+
+Current proof covers six clinical identities through nested/project-filing drafting and five admitted EU/CA saved-template cases. UK saved-template admission remains open. Corrected core: 355/355; adjacent: 213/213. Historical pending and 356-case statements below are superseded by this receipt and the retained fixture correction.
 
 ## What already exists
 
