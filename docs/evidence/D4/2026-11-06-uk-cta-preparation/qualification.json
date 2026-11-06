@@ -126,6 +126,13 @@
       "warningGrowth": 0,
       "log": "gates-pass-ninth-ref-race.txt.gz",
       "note": "All normal gates passed; concurrent commitments/activity project UI update rejected the ref."
+    },
+    "tenthPass": {
+      "source": "605ce3b8a225e7115a0fb39fa22c812519441c60",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-tenth-ref-race.txt.gz",
+      "note": "Every normal gate passed; concurrent authoring project-authority/editor-list and gate-completion publication rejected the ref."
     }
   },
   "publication": "pending normal retry after merge",
@@ -165,7 +172,7 @@
   },
   "originalSourceManifest": "source-sha256.json",
   "sourceTransition": "source-hash-transition.json",
-  "currentMergedGates": "pending normal retry after commitments/activity integration",
+  "currentMergedGates": "pending normal retry after shared-editor project-authority integration",
   "annaIntegration": {
     "incoming": "67348a526cc75f152df2e73e7bfbb65e815dc5fc",
     "source": "ba1d327e2c00d459e0eaa7ec037489bf805a941a",
@@ -223,7 +230,7 @@
       "warnings": 0
     }
   },
-  "sourceManifestScope": "14 core UK files; one additional integration-test correction is separately hashed in integration-test-correction.json",
+  "sourceManifestScope": "14 core UK repair files in current manifest; Biostatistics rail pin and source-import explicit edit-grant fixture have separate correction hashes.",
   "ordinaryTaskIntegration": {
     "incoming": "29a1b5ddb11941df199de9a0c155333d50ab99b1",
     "source": "6f7dc696b5e3728dcc99f1eedeb97a1e631b842c",
@@ -244,5 +251,34 @@
     "currentCoreManifestMatches": 14,
     "separateTestHashMatches": true,
     "review": "Commitments read uses verified integer project; existing activity moves into Records with independent errors. Profile facts/editor/drafting unchanged."
+  },
+  "authoringProjectIntegration": {
+    "remote": "c5baa0089774eb91d4bdd9fe60a6fbcf33b05bbc",
+    "merge": "1162f4a1c",
+    "closingDocsRemote": "53b9f15d8fe96767c8dbe6def2d7e8c5e03db7aa",
+    "closingDocsMerge": "cae0363a1",
+    "reviews": "Two independent read-only reviews found no UK/shared-editor compatibility blocker. Existing project write intent and scoped list integrity strengthened; no new app/editor/surface.",
+    "coreTests": {
+      "passed": 130,
+      "suites": 8,
+      "log": "editor-authority-tests.txt.gz"
+    },
+    "callerTests": {
+      "passed": 354,
+      "suites": 6,
+      "log": "editor-callers-green.txt.gz"
+    },
+    "testOnlyCorrection": "source-intake-fixture-correction.json",
+    "limits": "Counts overlap earlier cohorts. Incoming native PostgreSQL/browser evidence is retained with its owner and is not a local rerun.",
+    "lineageTests": {
+      "passed": 87,
+      "suites": 2,
+      "log": "editor-lineage-tests.txt.gz"
+    },
+    "build": {
+      "result": "passed",
+      "log": "editor-authority-build.txt.gz"
+    },
+    "fixtureReview": "Independent read-only review reconstructed the exact canonical before-hash by reversing only the explicit grant/new denial case. All preexisting assertions retained; after-hash and 27-case/lint receipts verified."
   }
 }

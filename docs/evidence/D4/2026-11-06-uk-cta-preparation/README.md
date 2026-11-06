@@ -179,3 +179,36 @@ source owners are unchanged. All 63 affected/adjacent cases across eight suites
 pass; production client/server builds pass. The 14 current core hashes and
 separate corrected-test hash still match. The ninth gate/ref-race receipt is
 retained; normal publication retries remain pending.
+
+
+## What already exists — merged source-intake fixture
+
+Before any further test edit or worker prompt, the broader caller run at merge `1162f4a1c` found 10 failures/339 passes in five suites. All ten failures are in existing `server/services/authoring/__tests__/authoring-source-import.test.ts`: its query fixture returns an org-public, non-owned project with an empty members array, so the new canonical write-intent forwarding correctly refuses before the source assertions. `server/services/report-os/project-access.ts` already delegates edit decisions to `canEditProject`; the corrected SQL/PGlite fixture in the incoming owner provides real edit membership. Reuse that policy shape in this existing unit fixture, retain the private/revocation checks by retiring its edit grant, and add an explicit use-only refusal. No production policy or assertion is relaxed. Existing source-import tests preserve hash/currentness/transaction checks. Source/caller searches and full deletion history were inspected: history has three existing source-intake commits, no deleted replacement. This completes the existing F1 test owner and does not create another capability.
+
+
+## Shared editor project-authority synchronization
+
+The tenth normal run at `605ce3b8a` passed every gate with zero TypeScript errors
+and no warning growth, then lost the ref to `c5baa0089`. The incoming existing
+project-write/list-integrity repair was reviewed independently and merged at
+`1162f4a1c`; its closing evidence at `53b9f15d8` was merged at `cae0363a1`. Only
+coordination conflicted, retaining canonical status plus the released UK row.
+UK core files remain unchanged. Explicit read calls remain separate; writes
+now carry their existing edit intent into canonical project policy, and scoped
+editor lists require confirmed success with the actual project identity.
+
+The older unit source-import fixture needed an honest edit grant. Its original
+10 failures/339 passing caller cases are retained. The narrow test-only fix
+preserves every prior assertion and adds a use-only refusal before source access;
+independent review reproduced the exact prior file hash by reversing only those
+fixture changes and the new case. Focused checks pass 27/27 with zero lint errors
+or warnings. Its before/after fingerprint is separate from the core manifest in
+`source-intake-fixture-correction.json`.
+
+All 130 core editor/authorization checks across eight suites and 354 caller,
+recovery and narrow launch checks across six suites pass. Both changed lineage
+Node suites pass 87/87; production client/server builds pass. Counts overlap
+previous cohorts and are not added to them. The incoming owner's native database
+and browser evidence remains separate and was not rerun here. The 14 core hashes
+and both separately documented test-correction hashes match. Normal publication
+remains pending at this checkpoint; all hooks remain enabled.

@@ -27,3 +27,8 @@ The existing drafting prompt receives source URLs, basis labels and limits. Actu
 ## Verification
 
 Retain behavioral reds before production fixes, then affected catalog, metadata/channel/checklist, shared bootstrap and actual drafting service/editor-boundary tests. Run scoped lint, client/server build and normal gates as available. Record exact source, results and limitations. A source retrieval or prompt stand-in is not legal/scientific/model/agency qualification. No browser screen completion is claimed for this data and server-only repair.
+
+
+## What already exists — merged source-intake fixture
+
+Before any further test edit or worker prompt, the broader caller run at merge `1162f4a1c` found 10 failures/339 passes in five suites. All ten failures are in existing `server/services/authoring/__tests__/authoring-source-import.test.ts`: its query fixture returns an org-public, non-owned project with an empty members array, so the new canonical write-intent forwarding correctly refuses before the source assertions. `server/services/report-os/project-access.ts` already delegates edit decisions to `canEditProject`; the corrected SQL/PGlite fixture in the incoming owner provides real edit membership. Reuse that policy shape in this existing unit fixture, retain the private/revocation checks by retiring its edit grant, and add an explicit use-only refusal. No production policy or assertion is relaxed. Existing source-import tests preserve hash/currentness/transaction checks. Source/caller searches and full deletion history were inspected: history has three existing source-intake commits, no deleted replacement. This completes the existing F1 test owner and does not create another capability.
