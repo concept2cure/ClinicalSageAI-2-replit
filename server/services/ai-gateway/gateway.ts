@@ -65,6 +65,9 @@ import {
   createVertexClient,
   createAzureClient,
   createLocalClient,
+  createTenantProviderClient,
+  resolveTenantModelCredentialAvailability,
+  TenantCredentialUnavailableError,
 } from './providers/clients';
 import {
   resolvePlacement,
@@ -117,6 +120,10 @@ import {
   type PqRefusalReason,
   type SelectionGovernance,
   type WithheldRow,
+  qualifiedPinRefusal,
+  readQualifiedPinEvidence,
+  type QualifiedPinEvidenceReader,
+  type QualifiedPinRefusal,
 } from './model-governance.js';
 // In-flight concurrency limiter — bounds simultaneous outbound provider calls.
 import { Semaphore, resolveMaxConcurrency } from './concurrency.js';
@@ -1281,6 +1288,23 @@ function providerErrorText(error: unknown): string {
   return parts.filter((p): p is string => typeof p === 'string').join(' ');
 }
 
+/** Provider bodies may echo credentials or input. Keep only fixed failure categories and numeric HTTP status. */
+export function safeProviderFailure(error: unknown): Error & { status?: number } {
+  if (error instanceof GatewayPolicyError || error instanceof GatewayAbortedError || error instanceof GatewayModelDeclinedError ||
+      error instanceof GatewayStreamStalledError || error instanceof TenantCredentialUnavailableError) return error;
+  const rawStatus = Number((error as { status?: unknown; statusCode?: unknown } | null)?.status ??
+    (error as { statusCode?: unknown } | null)?.statusCode);
+  const status = Number.isInteger(rawStatus) && rawStatus >= 100 && rawStatus <= 599 ? rawStatus : undefined;
+  const category = providerFailureCategory(providerErrorText(error), status);
+  return Object.assign(new Error(`Model provider ${category}${status ? ` (HTTP ${status})` : ''}.`), status ? { status } : {});
+}
+function providerFailureCategory(text: string, status?: number): string {
+  return /credit balance|insufficient_quota|exceeded your current quota/i.test(text) ? 'insufficient_quota'
+    : /not_found_error|model_not_found|does not exist or you do not have access/i.test(text) ? 'model_not_found'
+      : /authentication_error|invalid.{0,12}api.key|incorrect api key|api key does not have permission/i.test(text) || status === 401 ? 'authentication_error'
+        : /timed out|timeout/i.test(text) ? 'request timed out' : 'request failed';
+}
+
 /**
  * True when a failure says the request was wrong rather than the provider — a
  * request-shape status whose text does not say the account cannot be served.
@@ -1302,6 +1326,13 @@ export class AIGateway {
    * variable or request field reaches it.
    */
   private readonly approvedModels: readonly ApprovedModel[] = APPROVED_MODELS;
+  /** Test-only replacement seam; no request/configuration can supply qualification evidence. */
+  private readonly qualifiedPinEvidenceReader: QualifiedPinEvidenceReader = readQualifiedPinEvidence;
+  /** Tenant availability belongs to one captured request, never to the global registry or SDK cache. */
+  private readonly requestModels = new WeakMap<GatewayRequest, ModelConfig[]>();
+  private readonly customerOwnedModelSets = new WeakSet<ModelConfig[]>();
+  private readonly customerCredentialRows = new Set(DEFAULT_MODELS.filter(row => row.enabled).map(row => row.id));
+  private readonly explicitlyDisabledProviders = new Set<ProviderName>();
   private providerHealth: Map<ProviderName, ProviderHealth>;
   private auditLogger: GatewayAuditLogger;
   private policyEngine: GatewayPolicyEngine;
@@ -1321,6 +1352,7 @@ export class AIGateway {
   private roundRobinIndex = 0;
 
   constructor(config?: Partial<GatewayConfig>) {
+    for (const provider of config?.providers ?? []) if (!provider.enabled) this.explicitlyDisabledProviders.add(provider.name);
     this.config = withoutExcludedProviders(this.buildConfig(config));
     this.models = this.buildModelRegistry();
     this.providerHealth = new Map();
@@ -1390,6 +1422,9 @@ export class AIGateway {
    * This is the ONLY method external code should call.
    */
   async route(request: GatewayRequest): Promise<GatewayResponse> {
+    if (request.qualifiedModelPin !== undefined) {
+      request = { ...request, qualifiedModelPin: Object.freeze({ ...request.qualifiedModelPin }) };
+    }
     if (request.inputSensitivityTiers !== undefined) {
       request = { ...request, inputSensitivityTiers: Object.freeze(
         Array.isArray(request.inputSensitivityTiers) ? [...request.inputSensitivityTiers] : [],
@@ -1495,7 +1530,13 @@ export class AIGateway {
     // 2026-09-28 (track GW review [2]/[11]) AI_GATEWAY_DETERMINISTIC=true
     // returned DETERMINISTIC_RESPONSES.document_drafting here in production.
     // Outside production it is unchanged.
+    await this.prepareTenantModels(request, { strategy, requestId, startTime });
     if (this.config.deterministicMode) {
+      if (request.qualifiedModelPin !== undefined) {
+        const error = new QualifiedModelPinError('deterministic');
+        await this.auditSelectionRefusal(error, request, { strategy, requestId, startTime });
+        throw error;
+      }
       if (isProductionEnv()) await this.selectOrRefuse(request, { strategy, requestId, startTime });
       return this.notedDeterministicResponse(request, requestId, startTime);
     }
@@ -1562,6 +1603,7 @@ export class AIGateway {
         const response = await this.retryWithBackoff(
           () => this.executeProvider(selectedModel, request, requestId, startTime, beforeDispatch), primaryRetries, 1000, overloadPolicy
         );
+        await this.assertQualifiedResponse(request, response, strategy, triedModels, contentPolicy);
         this.recordSuccess(selectedModel.provider, response.latencyMs);
         this.recordTenantUsage(request, response, true);
         await this.logAudit(request, response, strategy, true, undefined, triedModels, contentPolicy);
@@ -1572,18 +1614,23 @@ export class AIGateway {
       } catch (error: any) {
         // Policy denials are terminal. Never retry or cross-provider fallback:
         // doing so would turn a placement refusal into a routing hint.
-        if (error instanceof GatewayPolicyError) throw error;
+        if (error instanceof GatewayPolicyError) {
+          if ((error instanceof QualifiedModelPinError && error.reason !== 'served-mismatch') || error instanceof TenantModelCredentialError) {
+            await this.auditSelectionRefusal(error, request, { strategy, requestId, startTime });
+          }
+          throw error;
+        }
         // A cancel is terminal for the same shape of reason, and the stakes
         // are higher: falling back would re-run the entire request the user
         // just stopped on every remaining rung, and recordFailure would mark a
         // provider that did nothing wrong as unhealthy for everyone else.
         if (error instanceof GatewayAbortedError) throw error;
-        lastError = error;
+        lastError = safeProviderFailure(error);
         triedModels.push(selectedModel.id);
         await this.endOnTerminalDecline(error, selectedModel, { request, requestId, startTime, strategy, triedModels, contentPolicy });
         this.noteRungFailure(selectedModel, error, declines);
         log.warn(
-          `[AI Gateway] ${selectedModel.provider}/${selectedModel.model} failed: ${error.message}`
+          `[AI Gateway] ${selectedModel.provider}/${selectedModel.model} failed: ${lastError.message}`
         );
       }
     }
@@ -1607,14 +1654,19 @@ export class AIGateway {
         noteGeneration(response);
         return response;
       } catch (error: any) {
-        if (error instanceof GatewayPolicyError) throw error;
+        if (error instanceof GatewayPolicyError) {
+          if (error instanceof TenantModelCredentialError) {
+            await this.auditSelectionRefusal(error, request, { strategy, requestId, startTime });
+          }
+          throw error;
+        }
         if (error instanceof GatewayAbortedError) throw error;
-        lastError = error;
+        lastError = safeProviderFailure(error);
         triedModels.push(fallback.id);
         await this.endOnTerminalDecline(error, fallback, { request, requestId, startTime, strategy, triedModels, contentPolicy });
         this.noteRungFailure(fallback, error, declines);
         log.warn(
-          `[AI Gateway] Fallback ${fallback.provider}/${fallback.model} failed: ${error.message}`
+          `[AI Gateway] Fallback ${fallback.provider}/${fallback.model} failed: ${lastError.message}`
         );
       }
     }
@@ -1844,7 +1896,8 @@ export class AIGateway {
     modelId: string,
     request: Omit<GatewayRequest, 'provider' | 'model' | 'strategy'>,
   ): Promise<GatewayResponse> {
-    const model = this.models.find(m => m.id === modelId);
+    const models = await this.getModelsForOrganization(auditOrganizationId(request));
+    const model = models.find(m => m.id === modelId);
     if (!model) {
       throw new GatewayNoProviderError(`PQ: "${modelId}" is not a model the gateway knows.`);
     }
@@ -1946,6 +1999,53 @@ export class AIGateway {
     return this.models;
   }
 
+  /** Current tenant-owned cards can enable the existing rows without global provider keys. */
+  async getModelsForOrganization(organizationId?: string | number): Promise<ModelConfig[]> {
+    if (!isOrganizationId(organizationId)) return this.models;
+    let availability: Awaited<ReturnType<typeof resolveTenantModelCredentialAvailability>>;
+    try { availability = await resolveTenantModelCredentialAvailability(Number(organizationId)); }
+    catch { throw new TenantModelCredentialError(); }
+    if (availability.mode === 'platform') return this.models;
+    const models = this.models.map(row => ['anthropic', 'openai', 'moonshot'].includes(row.provider)
+      ? { ...row, enabled: availability.providers.includes(row.provider as 'anthropic' | 'openai' | 'moonshot') &&
+          this.customerCredentialRows.has(row.id) && !this.explicitlyDisabledProviders.has(row.provider) &&
+          !isProviderExcludedInEnvironment(row.provider) } : row);
+    this.customerOwnedModelSets.add(models);
+    return models;
+  }
+
+  private async prepareTenantModels(request: GatewayRequest, context: RefusalContext): Promise<void> {
+    try {
+      const models = await this.getModelsForOrganization(auditOrganizationId(request));
+      if (this.customerOwnedModelSets.has(models)) {
+        const explicitProvider = request.qualifiedModelPin?.provider ?? request.provider;
+        const named = models.filter(row => (!explicitProvider || row.provider === explicitProvider) &&
+          (!request.model || row.id === request.model || row.model === request.model));
+        if (!models.some(row => row.enabled && row.capabilities.includes(request.taskType)) ||
+            ((explicitProvider || request.model) && named.some(row => ['anthropic', 'openai', 'moonshot'].includes(row.provider)) &&
+              !named.some(row => row.enabled))) throw new TenantModelCredentialError();
+      }
+      this.requestModels.set(request, models);
+    }
+    catch (error) {
+      await this.auditSelectionRefusal(error, request, context);
+      throw error;
+    }
+  }
+
+  private modelsForRequest(request: GatewayRequest): ModelConfig[] { return this.requestModels.get(request) ?? this.models; }
+
+  private async tenantProviderClient(provider: ProviderName, request: GatewayRequest): Promise<any | null> {
+    const organizationId = auditOrganizationId(request);
+    if (!isOrganizationId(organizationId)) return null;
+    if (request.userId !== undefined && !isOrganizationId(request.userId)) throw new TenantModelCredentialError();
+    try {
+      return await createTenantProviderClient(provider, Number(organizationId),
+        isOrganizationId(request.userId) ? Number(request.userId) : undefined, 'model_inference',
+        () => this.assertQualifiedModel(request));
+    } catch { throw new TenantModelCredentialError(); }
+  }
+
   /**
    * Check if gateway is in deterministic mode.
    */
@@ -1972,6 +2072,7 @@ export class AIGateway {
     startTime: number,
     beforeDispatch?: GatewayRequest['beforeDispatch'],
   ): Promise<GatewayResponse> {
+    this.assertQualifiedModel(request, modelConfig);
     assertContentBlocksCarried(modelConfig, request);
     await this.assertTenantPlacement(modelConfig, request, requestId, startTime);
     // Anthropic-hosted tools run only where this lane and this tenant permit
@@ -2010,6 +2111,7 @@ export class AIGateway {
         }
         // Cancellation can land while the source checkpoint is awaiting its reads.
         request.signal?.throwIfAborted();
+        this.assertQualifiedModel(request, modelConfig);
         dispatchStarted = true;
         return this.dispatchProvider(modelConfig, governed.request, requestId, startTime);
       }, request.signal)
@@ -2035,7 +2137,8 @@ export class AIGateway {
         if (request.signal?.aborted && !(error instanceof GatewayAbortedError)) {
           throw new GatewayAbortedError(dispatchStarted ? 'in_flight' : 'pre_call');
         }
-        throw error;
+        if (error instanceof TenantCredentialUnavailableError) throw new TenantModelCredentialError();
+        throw safeProviderFailure(error);
       });
     return {
       ...response,
@@ -2285,7 +2388,7 @@ export class AIGateway {
     startTime: number
   ): Promise<AnaGatewayResponse> {
     // Resolve the OpenAI-compatible client for this provider (openai / azure / local).
-    const client = this.openaiFamilyClient(modelConfig.provider);
+    const client = await this.tenantProviderClient(modelConfig.provider, request) ?? this.openaiFamilyClient(modelConfig.provider);
     if (!client) {
       throw new Error(
         `${modelConfig.provider} client not initialized (missing credentials/endpoint for ${modelConfig.provider})`
@@ -2464,16 +2567,13 @@ export class AIGateway {
     startTime: number
   ): Promise<AnaGatewayResponse> {
     // Resolve the Anthropic-family client (first-party / Bedrock / Vertex).
-    const client = this.anthropicFamilyClient(modelConfig.provider);
-    if (!client) {
-      throw new Error(
-        `${modelConfig.provider} client not initialized (missing credentials for ${modelConfig.provider})`
-      );
-    }
-
     // If streaming requested, delegate to streaming method
     if (request.stream && request.onStream) {
       return this.executeAnthropicStream(modelConfig, request, requestId, startTime);
+    }
+    const client = await this.tenantProviderClient(modelConfig.provider, request) ?? this.anthropicFamilyClient(modelConfig.provider);
+    if (!client) {
+      throw new Error(`${modelConfig.provider} client not initialized (missing credentials for ${modelConfig.provider})`);
     }
 
     // Convert messages — Anthropic needs system separate. Position matters:
@@ -2708,7 +2808,7 @@ export class AIGateway {
     requestId: string,
     startTime: number
   ): Promise<AnaGatewayResponse> {
-    const client = this.anthropicFamilyClient(modelConfig.provider);
+    const client = await this.tenantProviderClient(modelConfig.provider, request) ?? this.anthropicFamilyClient(modelConfig.provider);
     if (!client) {
       throw new Error(
         `${modelConfig.provider} client not initialized (missing credentials for ${modelConfig.provider})`
@@ -2951,7 +3051,7 @@ export class AIGateway {
         }
       }
     } catch (streamErr: any) {
-      log.error('[AI Gateway] Stream interrupted:', streamErr?.message);
+      log.error('[AI Gateway] Stream interrupted:', safeProviderFailure(streamErr).message);
       // Return whatever content was accumulated so far (partial response)
       if (!content) throw streamErr; // Re-throw if nothing was captured
     } finally {
@@ -3031,7 +3131,8 @@ export class AIGateway {
     requestId: string,
     startTime: number
   ): Promise<AnaGatewayResponse> {
-    if (!this.moonshotClient) {
+    const client = await this.tenantProviderClient(modelConfig.provider, request) ?? this.moonshotClient;
+    if (!client) {
       throw new Error('Moonshot client not initialized (missing KIMI_API_KEY or MOONSHOT_API_KEY)');
     }
 
@@ -3039,7 +3140,7 @@ export class AIGateway {
     // surfaces both tokens and reasoning incrementally, at Anthropic parity.
     if (request.stream && request.onStream) {
       return this.executeOpenAICompatibleStream(
-        this.moonshotClient,
+        client,
         modelConfig,
         request,
         requestId,
@@ -3067,7 +3168,7 @@ export class AIGateway {
     applyOpenAIToolParams(params, request, modelConfig);
 
     const completion = await Promise.race([
-      this.moonshotClient.chat.completions.create(params, request.signal ? { signal: request.signal } : undefined),
+      client.chat.completions.create(params, request.signal ? { signal: request.signal } : undefined),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Moonshot API call timed out after 120s')), 120_000)
       ),
@@ -3251,7 +3352,7 @@ export class AIGateway {
         }
       }
     } catch (streamErr: any) {
-      log.error(`[AI Gateway] ${provider} stream interrupted:`, streamErr?.message);
+      log.error(`[AI Gateway] ${provider} stream interrupted:`, safeProviderFailure(streamErr).message);
       if (!content) throw streamErr; // nothing captured — surface the failure
     } finally {
       stall.stop();
@@ -3323,13 +3424,23 @@ export class AIGateway {
 
   private selectModel(request: GatewayRequest, strategy: RoutingStrategy): ModelConfig | null {
     const gov = this.governance();
+    if (request.qualifiedModelPin !== undefined) {
+      this.assertQualifiedModel(request);
+      const pin = request.qualifiedModelPin;
+      const selected = this.modelsForRequest(request).find(row => row.id === pin.id && row.provider === pin.provider && row.model === pin.pinnedVersion);
+      if (!selected || !selected.enabled || !selected.capabilities.includes(request.taskType) ||
+          !this.meetsPlacementRequirements(selected.provider, request) || !this.approvedForTask(selected, request, gov)) {
+        throw new QualifiedModelPinError('unavailable');
+      }
+      return selected;
+    }
     // Explicit provider/model override
     if (request.provider || request.model) {
       const explicit = this.selectExplicit(request, gov);
       if (explicit) return explicit;
     }
 
-    const eligible = this.models.filter(
+    const eligible = this.modelsForRequest(request).filter(
       m =>
         m.enabled &&
         m.capabilities.includes(request.taskType) &&
@@ -3342,7 +3453,7 @@ export class AIGateway {
       // Relax health check (but never relax placement or governance:
       // residency, ZDR, the approved entry and high-risk approval are hard
       // compliance constraints, not preferences).
-      const relaxed = this.models.filter(
+      const relaxed = this.modelsForRequest(request).filter(
         m =>
           m.enabled &&
           m.capabilities.includes(request.taskType) &&
@@ -3366,10 +3477,10 @@ export class AIGateway {
    * selection: the caller asked for one model and silently got another.
    */
   private selectExplicit(request: GatewayRequest, gov: SelectionGovernance): ModelConfig | null {
-    if (!namesRegistryRow(this.models, request)) {
+    if (!namesRegistryRow(this.modelsForRequest(request), request)) {
       throw new ModelNotGovernedError('unknown-model', [], explicitName(request));
     }
-    const matches = this.models.filter(
+    const matches = this.modelsForRequest(request).filter(
       m =>
         m.enabled &&
         (!request.provider || m.provider === request.provider) &&
@@ -3390,7 +3501,7 @@ export class AIGateway {
 
   /** Enabled rows that can do this task, placement aside. */
   private capableRows(request: GatewayRequest): ModelConfig[] {
-    return this.models.filter(m => m.enabled && m.capabilities.includes(request.taskType));
+    return this.modelsForRequest(request).filter(m => m.enabled && m.capabilities.includes(request.taskType));
   }
 
   /**
@@ -3484,8 +3595,9 @@ export class AIGateway {
     triedModels: string[],
     primaryProvider: ProviderName,
   ): ModelConfig[] {
+    if (request.qualifiedModelPin !== undefined) return [];
     const gov = this.governance();
-    const eligible = this.models.filter(
+    const eligible = this.modelsForRequest(request).filter(
       m =>
         m.enabled &&
         m.capabilities.includes(request.taskType) &&
@@ -3533,6 +3645,28 @@ export class AIGateway {
   /** The governance selection runs under: this environment, and the approved-models list. */
   private governance(): SelectionGovernance {
     return selectionGovernance(this.approvedModels);
+  }
+
+  private assertQualifiedModel(request: GatewayRequest, model?: ModelConfig): void {
+    if (request.qualifiedModelPin === undefined) return;
+    if (request.stream || request.onStream) throw new QualifiedModelPinError('streaming');
+    const refusal = qualifiedPinRefusal(request, this.approvedModels, this.qualifiedPinEvidenceReader);
+    if (refusal) throw new QualifiedModelPinError(refusal);
+    const pin = request.qualifiedModelPin;
+    if (model && (model.id !== pin.id || model.provider !== pin.provider || model.model !== pin.pinnedVersion)) {
+      throw new QualifiedModelPinError('registry-mismatch');
+    }
+  }
+
+  /** No content or tool result escapes before the provider's actual serving identity is verified. */
+  private async assertQualifiedResponse(request: GatewayRequest, response: GatewayResponse, strategy: RoutingStrategy,
+    triedModels: string[], contentPolicy?: { action: ContentPolicyAction; findings: PolicyFinding[] }): Promise<void> {
+    if (request.qualifiedModelPin === undefined) return;
+    const pin = request.qualifiedModelPin;
+    if (response.provider === pin.provider && response.resolvedModel === pin.pinnedVersion &&
+        response.cached === false && response.deterministic === false) return;
+    await this.logAudit(request, response, strategy, false, 'QUALIFIED_MODEL_PIN_REFUSED:served-mismatch', triedModels, contentPolicy);
+    throw new QualifiedModelPinError('served-mismatch');
   }
 
   /**
@@ -3746,6 +3880,7 @@ export class AIGateway {
         ...request,
         metadata: {
           ...(request.metadata ?? {}),
+          ...(request.qualifiedModelPin ? { qualifiedModelPin: request.qualifiedModelPin } : {}),
           // Only what has no typed column: the reason code, resolution, binding
           // and provenance are columns (ledgerProvenance), written once.
           tenantPlacement: {
@@ -4088,6 +4223,7 @@ export class AIGateway {
         metadata: {
           ...(request.metadata ?? {}),
           ...(contentPolicy ? { contentPolicy } : {}),
+          ...(request.qualifiedModelPin ? { qualifiedModelPin: request.qualifiedModelPin } : {}),
           // Audit-only: the classifier's regulatory signal gates nothing yet.
           ...(request.regulatoryContentDetected !== undefined
             ? { regulatoryContentDetected: request.regulatoryContentDetected }
@@ -4109,6 +4245,16 @@ export class AIGateway {
    * refusal and is left to the caller.
    */
   private async auditSelectionRefusal(error: unknown, request: GatewayRequest, ctx: RefusalContext): Promise<void> {
+    if (error instanceof TenantModelCredentialError) {
+      await this.logRefusalRow(request, ctx, error.code, { credentialAuthority: { reason: 'unavailable', accountOwner: 'client' } });
+      return;
+    }
+    if (error instanceof QualifiedModelPinError) {
+      await this.logRefusalRow(request, ctx, error.code, {
+        qualifiedModelPin: request.qualifiedModelPin ?? null, modelGovernance: { code: error.code, reason: error.reason },
+      });
+      return;
+    }
     if (
       error instanceof ModelNotApprovedError ||
       error instanceof ModelNotGovernedError ||
@@ -4566,6 +4712,21 @@ export class ModelNotQualifiedError extends GatewayPolicyError {
     super(NO_PQ_QUALIFIED_MODEL);
     this.withheldModelIds = withheld.map(w => w.id);
   }
+}
+
+/** Optional strict pins are terminal and can never fall through to a different model. */
+export class QualifiedModelPinError extends GatewayPolicyError {
+  readonly code = 'QUALIFIED_MODEL_PIN_REFUSED' as const;
+  constructor(readonly reason: QualifiedPinRefusal) {
+    super(reason === 'served-mismatch'
+      ? 'The provider did not confirm the exact qualified model version. Its output was withheld.'
+      : 'The exact qualified model pin cannot serve this request. Check its immutable version, intended use and qualification evidence.');
+  }
+}
+
+export class TenantModelCredentialError extends GatewayPolicyError {
+  readonly code = 'TENANT_CREDENTIAL_UNAVAILABLE' as const;
+  constructor() { super('The organization’s own model credential grant is unavailable or no longer authorizes this request. Nothing was sent.'); }
 }
 
 /**
@@ -5146,7 +5307,7 @@ function isNeverRetried(err: unknown): boolean {
 /** Build the decline for a refusal stop, deciding whether another model may run it. */
 function declineFor(model: string, stopDetails: unknown, textAlreadyStreamed: boolean): GatewayModelDeclinedError {
   const raw = (stopDetails as { category?: unknown } | null | undefined)?.category;
-  const category = typeof raw === 'string' && raw ? raw : null;
+  const category = typeof raw === 'string' && ['cyber', 'bio', 'reasoning_extraction'].includes(raw) ? raw : null;
   return new GatewayModelDeclinedError(
     model,
     category,

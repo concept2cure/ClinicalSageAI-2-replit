@@ -262,7 +262,26 @@ export interface LibrarySkillDetailDto extends LibrarySkillSummaryDto {
   disabledReason: string | null;
 }
 
+/** Human-authored runtime restrictions carried by an existing skill bundle. */
+export interface SkillApprovalBinding {
+  policyType: 'requires_approval';
+  enforcement: 'mandatory';
+  toolName: string;
+  description: string;
+}
+
+/** Project gates require a tool whose canonical project target is provable. */
+export const PROJECT_SKILL_APPROVAL_TOOLS = ['check_dossier_consistency'] as const;
+
+/** Server-held authorization for one exact action under current rule versions. */
+export interface SkillPolicyApproval {
+  actionHash: string;
+  rulesHash: string;
+}
+
 export interface OrgSkillDto extends SkillFacets {
+  policyBindings?: SkillApprovalBinding[];
+  sourceAuditEventId?: string | null;
   id: number;
   bundleId: string;
   key: string;
@@ -320,6 +339,7 @@ export interface ProjectSkillsDto {
 }
 
 export interface SkillHistoryEntryDto {
+  auditEventId?: string;
   occurredAt: string;
   action: string;
   actorName: string | null;

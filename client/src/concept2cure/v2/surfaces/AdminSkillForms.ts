@@ -160,7 +160,11 @@ export function studioTitle(target: OrgEditing): string {
   return mode === 'replace' ? `Replace "${target.base.name}"` : `Add to "${target.base.name}"`;
 }
 
-/** The body /api/ana-skills/organization reads, from the form's values. */
+/**
+ * The body /api/ana-skills/organization reads, from the form's values.
+ * Omit policyBindings and sourceAuditEventId: the studio does not author
+ * approval rules, and an ordinary method edit must preserve them on the server.
+ */
 export function orgSkillBody(target: OrgEditing, v: Record<string, string>, reason: string | null) {
   const extendsSkillKey = target.base?.key ?? target.skill?.extendsSkillKey ?? null;
   return {

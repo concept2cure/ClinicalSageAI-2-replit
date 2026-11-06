@@ -36,7 +36,7 @@ import { resolvePdfARequirement } from '../ectd/pdfa-requirement';
 import { buildLeafManifest, type SequenceLeafManifestEntry } from '../ectd/sequence-manifest';
 import { assertBundleLeafSecurity } from './bundle-leaf-security';
 import { pool } from '../../db';
-import { clientAccountRefusal, resolveGatewayAccount, specFor, type ResolvedGatewayAccount } from './gateway-accounts';
+import { clientAccountRefusal, resolveGatewayAccount, resolveGatewayAccountForUse, specFor, type ResolvedGatewayAccount } from './gateway-accounts';
 import { ADAPTER_UNSOURCED } from './transport-refusals';
 import { archiveSentPackage, type SentPackageRecord } from './sent-package-archive';
 
@@ -326,6 +326,13 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
         // package refused above is not stored, and a copy that cannot be kept
         // refuses the send (sent-package-archive.ts, 2026-10-29 W5/D7).
         sentPackage = await archiveSentPackage(req, impl.region, impl.gateway);
+        // Archival can await remote storage. A client may revoke or rotate the
+        // account during that wait, so the earlier resolved credentials alone
+        // no longer authorize this attempt. Recheck without changing identity
+        // or falling back to a platform account, immediately before transport.
+        account = await resolveGatewayAccountForUse(pool, account, {
+          organizationId: req.organizationId, region: impl.region, gateway: impl.gateway, environment: req.environment,
+        });
       } catch (err) {
         throw markRefusedBeforeWire(err);
       }

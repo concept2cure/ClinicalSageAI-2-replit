@@ -30,6 +30,7 @@ import type {
   AnaTool,
   AnaToolResult,
   TaskType,
+  QualifiedModelPin,
 } from '../ai-gateway/types';
 import {
   DOCUMENT_DRAFTING_TOOLS,
@@ -54,6 +55,8 @@ import { lifecycleOutlineParts, lifecycleRecordOutlineFor, type LifecycleOutline
 import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance.js';
 import { renderOutlineBrief } from '../ind/ctd/section-brief.js';
 import { ICH_M11_PROTOCOL_LIMITATIONS } from '../../../shared/regulatory/protocol-m11.js';
+import { basisLabel } from '../../../shared/regulatory/regulatory-basis.js';
+import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage.js';
 import { getLifecycleDocumentTypeForRegistry } from '../ind/ctd/index.js';
 import { IND_SAFETY_REPORT_ROUTE_LIMITS, IND_SAFETY_REPORT_TIMING } from '../ind/ctd/lifecycle-document-types.js';
 import { renderDraftProductAdvisory } from './draft-product-advisory.js';
@@ -174,6 +177,13 @@ const SUBMISSION_TYPE_TO_FRAMEWORK: Record<string, string> = {
 };
 
 function preparationRoute(entry: RegulatoryApplicationType | null) {
+  if (entry?.id === 'UK_CTA') {
+    const route = submissionChannelFor(entry);
+    return {
+      channel: route.kind === 'unconnected' ? route.channel : 'UK CTA delivery route unassessed',
+      scope: `${route.kind === 'unconnected' ? route.applicantStep : 'Confirm the applicable delivery route.'} Content preparation only; no IRAS field schema is supplied. Complete and validate actual forms in IRAS.`,
+    };
+  }
   if (!entry || (entry.segment !== 'pharma_biotech' && !isDeviceDocumentScope({ entry })) || !['US', 'EU', 'CA', 'JP'].includes(entry.region)) return null;
   return buildDocumentPreparation({ registryId: entry.id }).regionalRoute;
 }
@@ -347,14 +357,20 @@ function recordRequirements(
 }
 
 function blueprintLines(entry: RegulatoryApplicationType, section: SectionBlueprint['sections'][number]): string {
+  const context = getSectionBlueprintContext(entry.id);
   const lines = [
     `SECTION REQUIREMENTS (from the ${entry.displayName} authoring blueprint):`,
     `- Section: ${section.code} — ${section.title}`,
     `- Content type: ${section.contentType}`,
     `- ${section.required ? 'Expected in the selected platform scaffold; confirm agency and client applicability' : 'Conditional or optional scaffold branch; applicability is unresolved, not waived'}`,
   ];
+  if (context.basis) {
+    lines.push(`- Authoring basis: ${basisLabel(context.basis)}`);
+    if (context.basis.url) lines.push(`- Basis source: ${context.basis.url}`);
+    if (context.basis.checked) lines.push(`- Basis source checked: ${context.basis.checked}`);
+  }
   if (section.guidance) lines.push(`- Recorded authoring guidance: ${section.guidance}`);
-  lines.push(...getSectionBlueprintContext(entry.id).limitations.map(s => `- Scope limitation: ${s}`));
+  lines.push(...context.limitations.map(s => `- Scope limitation: ${s}`));
   return lines.join('\n');
 }
 
@@ -838,6 +854,8 @@ export function resolveSystemPrompt(submissionType: string): string {
 export type RegulatoryFramework = 'fda_510k' | 'fda_pma' | 'eu_mdr' | 'ich_clinical' | 'cer_clinical_evaluation' | 'general_regulatory';
 
 export interface DocumentDraftRequest {
+  /** Exact qualified model/evidence choice for nonstreaming drafting. */
+  qualifiedModelPin?: QualifiedModelPin;
   /** Backend-loaded project evidence; never copied from tool arguments. */
   sourceContext?: import('./draft-project-sources.js').DraftSourceContext;
   /** Regulatory framework context */
@@ -961,6 +979,7 @@ export interface BatchDocumentRequest {
  * The selected-source object itself must retain its private issuer identity. */
 function snapshotDraftRequest(request: DocumentDraftRequest): DocumentDraftRequest {
   const pinned = { ...request };
+  if (pinned.qualifiedModelPin !== undefined) pinned.qualifiedModelPin = Object.freeze({ ...pinned.qualifiedModelPin });
   const signal = trustedSignal(pinned.signal);
   if (signal) pinned.signal = signal;
   else delete pinned.signal;
@@ -1082,8 +1101,8 @@ export class AnaDocumentDraftingService {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      provider: 'anthropic',
-      model: 'claude-opus-4', // Use Opus for document drafting (registry alias, not a wire version)
+      ...(req.qualifiedModelPin !== undefined ? { qualifiedModelPin: req.qualifiedModelPin }
+        : { provider: 'anthropic' as const, model: 'claude-opus-4' }),
       maxTokens: 8192,
       // Enable prompt caching for regulatory system prompts
       promptCache: { enabled: true, type: 'ephemeral' },

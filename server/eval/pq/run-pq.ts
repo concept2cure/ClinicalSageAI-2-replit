@@ -389,6 +389,7 @@ export async function runPq(opts: RunPqOptions): Promise<RunPqResult> {
   if (opts.record) {
     const rec: PqRecord = {
       kind: 'pq-record',
+      intendedUses: ['document_drafting'],
       protocolId: protocol.protocolId,
       protocolVersion: protocol.version,
       protocolStatus: protocol.status,

@@ -2013,6 +2013,8 @@ export async function endHeldRun(pool: RunControlQuery, runId: string): Promise<
  * wrong module (`ci:duplicate-exported-types`).
  */
 export interface PendingToolApproval {
+  /** Trusted server policy/action hashes captured when the run was held. */
+  skillPolicyApproval?: import('../../../shared/ana/skills.js').SkillPolicyApproval;
   /** The tool call this is for. Binds the decision to one proposal. */
   toolUseId: string;
   command: string;

@@ -220,3 +220,22 @@ describe('service dispatch and post-provider boundaries re-read actual records',
     expect(h.provider).toHaveBeenCalledTimes(1);
   });
 });
+
+
+describe('recorded UK CTA uses shared drafting with explicit IRAS boundaries', () => {
+  it('prepares content for external combined review without inventing IRAS form formatting', async () => {
+    await pg.exec(`UPDATE regulatory_programs SET primary_agency='MHRA' WHERE id='${PROGRAM}'`);
+    await service.draftDocument(request({ sectionType: 'uk_cta_protocol' }));
+    const system = String(captured().messages[0].content);
+    expect(captured().metadata).toMatchObject({ submissionType: 'UK_CTA', recordedSubmissionType: 'UK_CTA' });
+    expect(system).toContain('Combined IRAS review (MHRA and REC)');
+    expect(system).toMatch(/no IRAS field schema/i);
+    expect(system).toMatch(/complete.{0,30}validat.{0,30}IRAS/i);
+    expect(system).not.toContain('Use IRAS formatting requirements');
+    expect(prompt()).toMatch(/platform convention.*not a regulatory requirement/i);
+    expect(prompt()).toContain('2026-11-06');
+    expect(prompt()).toContain('https://www.gov.uk/guidance/clinical-trials-for-medicines-notifiable-trials');
+    expect(prompt()).toContain('https://www.gov.uk/guidance/clinical-trials-for-medicines-clinical-trials-regulations-transitional-arrangements');
+    expect(prompt()).toContain('hra.nhs.uk/');
+  });
+});

@@ -224,6 +224,7 @@ import {
   type LoopDispatchOptions,
 } from './agentic-tool-dispatch.js';
 import { modelCallRefusal } from '../ai-gateway/model-call-scope.js';
+import { consumeSkillGateAuthorization, loadToolSkillGates, skillPolicyApprovalFor } from './governed-tool-gate.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
 import { interviewClientType } from './intelligence-questions/client-segment.js';
 import { HIDDEN_APP_TOOLS, anaCapabilityInLaunchScope } from './ana-launch-scope';
@@ -584,13 +585,28 @@ async function writeRoleRefusal(
   return refusal ? { code: 'WRITE_ROLE_REQUIRED', result: refusal } : null;
 }
 
+async function mandatorySkillRefusal(name: string, input: Record<string, unknown>, ctx?: ToolContext) {
+  try {
+    const gates = await loadToolSkillGates(ctx, { name, input });
+    const expected = gates ? skillPolicyApprovalFor({ name, input }, gates) : null;
+    const authorized = ctx ? consumeSkillGateAuthorization(ctx, expected) : null;
+    if (!expected && authorized !== false) return null;
+    if ((ctx?.agentDepth ?? 0) >= 1) return { code: 'SUB_AGENT_READ_ONLY', result: JSON.stringify({ success: false, error: 'SUB_AGENT_READ_ONLY', tool: name, message: 'This read requires a person’s approval; a sub-agent cannot request it. Nothing was run.' }) };
+    if (authorized === true) return null;
+    return { code: 'SKILL_POLICY_APPROVAL_REQUIRED', result: JSON.stringify({ success: false, error: 'SKILL_POLICY_APPROVAL_REQUIRED', tool: name, message: 'An active organization or project rule requires approval of this exact action. Nothing was run.' }) };
+  } catch {
+    return { code: 'SKILL_POLICY_UNAVAILABLE', result: JSON.stringify({ success: false, error: 'SKILL_POLICY_UNAVAILABLE', tool: name, message: 'Current organization and project rules could not be verified. Nothing was run.' }) };
+  }
+}
+
 async function handlerAdmissionRefusal(name: string, input: Record<string, any>, ctx?: ToolContext) {
   return preHandlerRefusal(name, input, ctx) ??
     (await writeRoleRefusal(name, input, ctx)) ??
     (await rbmToolAdmissionRefusal(name, input, ctx)) ??
     // A program or record the model names must be the caller's (tool-record-scope.ts).
     (await foreignProgramRefusal(input, ctx?.organizationId)) ??
-    (await foreignRecordRefusal(name, input, ctx?.organizationId));
+    (await foreignRecordRefusal(name, input, ctx?.organizationId)) ??
+    (await mandatorySkillRefusal(name, input, ctx));
 }
 
 export function registerToolHandler(name: string, handler: ToolHandler): void {

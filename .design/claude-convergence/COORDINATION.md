@@ -30,6 +30,7 @@ this request. The slice continues with ordinary fetch/merge/retry and no force.
 | Files | Held by | For |
 |---|---|---|
 | `package.json` (`dev` and `dev:local` shell flags only), `scripts/ci/__tests__/dev-entrypoint.test.mjs` | Codex demo-readiness, 2026-11-06 | F1/W1 D2: actual npmdev fails after Codespaces preflight with tsxcommandnotfound; preserve npm tool PATH with the existing preflight and runtime. No dependency, UI, model or held Codespaces edit. |
+| (none held) | Codex continuation, 2026-11-06 | F1, W3 D2/D4 delivered: cited shared UK_CTA outline (25 rows/nine tasks), IRAS preparation routing and labels-only unassessed readiness in the existing project/editor owners. Normal source publication accepted `15bf1226e`; compiler zero, no warning growth; affected tests/builds pass. Evidence `docs/evidence/D4/2026-11-06-uk-cta-preparation/`. Regional/TA/scientific qualification remains open; no app, screen, editor, route or tool added. |
 | D3's files: `surfaces/Project*.tsx`, `surfaces/project*.ts`, `surfaces/MarketBlockers.tsx`, `fixtures/project-home-data.*`, `styles/project-home-v2.css`, `styles/project-settings.css` (and the `.pj` block of `app-v2.css`, a turn at a time) | Project page (`01QoxbLcnW…`), from 2026-11-06, taking over D3 at the founder's request | D3 (`.design/claude-convergence/D3.md`). Landed: D3-1, the frame (`a9819177d`, `docs/evidence/DESIGN/D3/D3-1/`); D3-3, the Team card on every step and its drawer, and settings opened on a field (`6cd6d7c92`, `docs/evidence/DESIGN/D3/D3-3/`). Next: D3-2 (the rest of Project knowledge, lifted reads), D3-4 (step bodies). **→ S9, S10, S11 owners:** your behaviour on the project page lands on this layout; send the file and the line, and this session places it. |
 | (none held) | Codex continuation of study/protocol shell safeguards, 2026-11-06 | F1 delivered: recent conversation selection reaches the existing loader; an active-answer refusal precedes remount/URL change and preserves unsent follow-up; same-thread selection keeps its mounted composer and address. 178 tests, production build and running-app desktop/mobile light/dark checks pass. Evidence `docs/evidence/F1/2026-11-06-recent-conversation-handoff/`. Released: `V2App.tsx`, `routing.ts`, `surfaces/ConversationThread.tsx`. No layout, new capability or other package's held file. |
 | D3's files: `surfaces/Project*.tsx`, `surfaces/project*.ts`, `surfaces/MarketBlockers.tsx`, `fixtures/project-home-data.*`, `styles/project-home-v2.css`, `styles/project-settings.css` (and the `.pj` block of `app-v2.css`, a turn at a time) | Project page (`01QoxbLcnW…`), from 2026-11-06, taking over D3 at the founder's request | D3 (`.design/claude-convergence/D3.md`). Landed: D3-1, the frame (`a9819177d`, `docs/evidence/DESIGN/D3/D3-1/`); D3-3, the Team card on every step and its drawer, and settings opened on a field (`6cd6d7c92`, `docs/evidence/DESIGN/D3/D3-3/`); D3-2a, Project knowledge the same on every step (`8225e3075`, `docs/evidence/DESIGN/D3/D3-2a/`); D3-2b, the work, agency inbox and commitments read once, with Activity in Records (`900e6eb44`, `e84c4f1ef`, `docs/evidence/DESIGN/D3/D3-2b/`). Next: D3-4 (step bodies). **→ Vault parity:** `projectCreationDoors.contract` (Vault.tsx's Projects index door) and `projectDestination` fail on trunk after `adb1c00cba` / `5144702d21`. **→ S9, S10, S11 owners:** your behaviour on the project page lands on this layout; send the file and the line, and this session places it. |
@@ -171,6 +172,26 @@ This is an extension of the current packages, not a parallel program or a releas
 The account target changes from the historical platform/client choice to client-owned accounts for client filings.
 Historical records are retained; migration and live transport are not claimed by the plan. No child worker gains
 write/lock/sign/transmit rights. Existing approved-model/PQ, tenant and content-bound approval gates remain enforced.
+
+### Anna runtime continuation — completed holds released, P-104, 2026-11-06
+
+This lane's completed holds below are released to the lead. Earlier sessions' file holds above are unchanged.
+Qualified-pin and credential-vault source is committed and released to the lead for publication under the mandatory compiler/push gates;
+this entry does not claim the expanded spike passed.
+
+| This continuation's scope | Holder / state | Evidence and handoff |
+|---|---|---|
+| F1 atomic canon mutation/event: existing `server/services/account-canon.ts` and confidence/audit test | Released to lead | `852eb1287`, 15 component tests; mutation and event commit atomically. |
+| F1 authority freshness: existing `server/services/submission-gateways/gateway-accounts.ts`, `index.ts`, account tests | Released to lead | `026c0e96f`, 54 tests; authority rechecked after archival before wire. |
+| S4 sourced mandatory Skills policies: existing shared/store/runtime and administration/studio files | Released to lead | `4852aa78b`, 78 runtime + 10 UI tests; project envelope only `check_dossier_consistency`. |
+| Secure credential UI, backend and qualified-pin source: existing administration, connector, SDK, gateway and PQ files | All assigned agents released to lead | `e6a7c391c`; 28 consolidated suites / 599 tests, eight packaging checks and production build pass. All agents released; lead publishes under mandatory zero-error compiler and push gates. |
+| Plan §1d/§3a, existing ledger and this reconciliation entry | Roadmap agent released for lead staging | `Plan: PLAN` / `Founder-Decision: P-104`; component source and consolidated evidence recorded, full-spike dependencies retained. |
+
+No new files/tables/tools/models are approved. Fourteen credential cards cover all nine existing authenticated connectors, three LLM providers and two
+portal login stores; PRS/FDA portal actions are explicitly not connected. Qualified model pin capability and vault
+integration have passing consolidated component/build evidence, with publication protected by the mandatory compiler/push gates. The actual
+qualification read reports 16 pending / zero passed; local model pin/PQ and reversible derivative-policy/token-map
+custody dependencies remain unresolved. Other sessions keep their own holds.
 
 ## Project/editor F1 delivery — 2026-11-06
 

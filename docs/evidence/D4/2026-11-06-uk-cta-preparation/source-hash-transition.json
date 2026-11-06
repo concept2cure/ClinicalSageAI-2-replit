@@ -1,0 +1,13 @@
+{
+  "originalManifest": "source-sha256.json",
+  "currentManifest": "source-sha256.anna-merged.json",
+  "incoming": "67348a526cc75f152df2e73e7bfbb65e815dc5fc",
+  "changed": {
+    "server/services/ana/AnaDocumentDraftingService.ts": {
+      "before": "0b8972473d7ec3cc2df379616e5e96ed2b63fd50ac0d6a5c398ca81362629306",
+      "after": "5c788319d0a59dddbf7f845079b1913726e4ac0675402c1a7d9fadbdc05168c2"
+    }
+  },
+  "reason": "Reviewed four-line incoming server-issued source-sensitivity carry in draftSourceCheckpoint/GatewayRequest; UK prompt/basis changes preserved.",
+  "unchangedOriginalFiles": 13
+}

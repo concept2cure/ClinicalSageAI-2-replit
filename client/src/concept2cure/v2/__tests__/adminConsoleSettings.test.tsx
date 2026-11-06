@@ -20,15 +20,20 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+const credentialOwner = vi.hoisted(() => ({ value: { actor: '7:admin', key: 1, sameRevision: () => true } }));
+vi.mock('../editor/authoringCurrentRead', async importOriginal => ({
+  ...(await importOriginal<typeof import('../editor/authoringCurrentRead')>()), useAuthoringReadSession: () => credentialOwner.value,
+}));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
 
 import { AdminAccess } from '../surfaces/AdminAccess';
+import { ClientCredentialVaultCard } from '../surfaces/AdminSettings';
 import { useActiveSurfaceContext } from '../surfaceContext';
 
 const TOKEN_ORG = 7;
@@ -275,4 +280,217 @@ describe('AnA summarises the configuration from admin-console’s context', () =
     fireEvent.click(await screen.findByRole('button', { name: /Ask AnA to summarise/ }));
     expect(p.onAsk).toHaveBeenCalledWith('Summarize my org configuration');
   });
+});
+
+
+const credentialMetadata = (organizationId = 7, canManage = true, held = false) => ({ organizationId, canManage, credentialCards: [{
+  id: 'llm_openai', name: 'OpenAI', kind: 'llm', purpose: 'Model requests under your client account',
+  status: held ? 'stored_unvalidated' : 'missing', fields: [{ name: 'apiKey', label: 'Provider API key', secret: true, required: true }],
+  scopes: ['model_inference', 'embedding'], grantedScopes: held ? ['model_inference'] : [], expiresAt: null,
+  lastChangedAt: null, secretFieldsHeld: held ? ['apiKey'] : [], canManage,
+}] });
+
+describe('client administration credential vault', () => {
+  let held: boolean;
+  beforeEach(() => {
+    credentialOwner.value = { actor: '7:admin', key: 1, sameRevision: () => true };
+    held = false;
+    apiRequest.mockImplementation(async (method: string, path: string, body: any) => {
+      sent.push({ method, url: path, body });
+      return json(method === 'GET' ? credentialMetadata(7, true, held) : { success: true, organizationId: 7 });
+    });
+  });
+  const enter = async () => {
+    fireEvent.click(await screen.findByRole('button', { name: 'Store credential…' }));
+    const input = screen.getByLabelText(/Provider API key/) as HTMLInputElement;
+    expect(input.type).toBe('password'); expect(input.value).toBe('');
+    fireEvent.change(input, { target: { value: 'CREDENTIAL_UI_CANARY' } });
+    fireEvent.change(screen.getByLabelText(/Reason for/), { target: { value: 'Client administrator capture' } });
+    fireEvent.change(screen.getByLabelText(/Your password/), { target: { value: 'REAUTH_UI_CANARY' } });
+  };
+  it('captures a key through the governed route, clears entry and never displays saved or reflected values', async () => {
+    apiRequest.mockImplementation(async (method: string, path: string, body: any) => {
+      sent.push({ method, url: path, body });
+      if (method === 'POST') { held = true; return json({ success: true, organizationId: 7, secret: 'CREDENTIAL_UI_CANARY', message: 'REAUTH_UI_CANARY' }); }
+      return json({ ...credentialMetadata(7, true, held), secret: 'SAVED_VALUE_UI_CANARY' });
+    });
+    render(<ClientCredentialVaultCard />); await enter();
+    expect(document.body.textContent).not.toContain('CREDENTIAL_UI_CANARY');
+    fireEvent.click(screen.getByRole('button', { name: 'Store credential' }));
+    await screen.findByText('Stored · not validated');
+    const post = sent.find(x => x.method === 'POST');
+    expect(post).toMatchObject({ url: '/api/deep-research/connectors', body: { connectorId: 'llm_openai', action: 'capture', credentials: { apiKey: 'CREDENTIAL_UI_CANARY' }, scopes: ['model_inference'], reauth: { password: 'REAUTH_UI_CANARY' } } });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/CREDENTIAL_UI_CANARY|REAUTH_UI_CANARY|SAVED_VALUE_UI_CANARY/);
+    expect(JSON.stringify(localStorage)).not.toMatch(/CREDENTIAL_UI_CANARY|REAUTH_UI_CANARY/);
+    fireEvent.click(screen.getByRole('button', { name: 'Replace credential…' }));
+    expect((screen.getByLabelText(/Provider API key/) as HTMLInputElement).value).toBe('');
+  });
+  it('closes on failed submit and uses a fixed refusal without server response text', async () => {
+    apiRequest.mockImplementation(async (method: string) => method === 'GET' ? json(credentialMetadata()) : json({ error: { message: 'CREDENTIAL_UI_CANARY' } }, 401));
+    render(<ClientCredentialVaultCard />); await enter();
+    fireEvent.click(screen.getByRole('button', { name: 'Store credential' }));
+    await screen.findByText(/identity could not be confirmed/);
+    expect(screen.queryByRole('dialog')).toBeNull(); expect(document.body.textContent).not.toContain('CREDENTIAL_UI_CANARY');
+  });
+  it('revokes without sending any credential material', async () => {
+    held = true; render(<ClientCredentialVaultCard />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Revoke…' }));
+    expect(screen.queryByLabelText(/Provider API key/)).toBeNull();
+    fireEvent.change(screen.getByLabelText(/Reason for/), { target: { value: 'Client revoked the provider grant' } });
+    fireEvent.change(screen.getByLabelText(/Your password/), { target: { value: 'fixture password' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Revoke credential' }));
+    await waitFor(() => expect(sent.some(x => x.method === 'POST')).toBe(true));
+    const post = sent.find(x => x.method === 'POST'); expect(post?.body.action).toBe('revoke'); expect(post?.body.credentials).toBeUndefined();
+  });
+  it('takes capability from the backend and shows a failed read without fabricating status', async () => {
+    apiRequest.mockResolvedValue(json(credentialMetadata(7, false))); const view = render(<ClientCredentialVaultCard />);
+    await screen.findByText(/Only your organisation/); expect(screen.queryByRole('button', { name: 'Store credential…' })).toBeNull();
+    view.unmount(); apiRequest.mockRejectedValue(new Error('CREDENTIAL_UI_CANARY'));
+    render(<ClientCredentialVaultCard />); await screen.findByText(/could not be read/);
+    expect(document.body.textContent).not.toContain('CREDENTIAL_UI_CANARY'); expect(screen.queryByText('Not stored')).toBeNull();
+  });
+  it('drops a secret drawer and late old-tenant metadata on an organisation switch', async () => {
+    const view = render(<ClientCredentialVaultCard />); await enter();
+    credentialOwner.value = { actor: '8:other', key: 2, sameRevision: () => true };
+    view.rerender(<ClientCredentialVaultCard />);
+    expect(screen.queryByRole('dialog')).toBeNull(); expect(document.body.textContent).not.toContain('CREDENTIAL_UI_CANARY');
+    await screen.findByText(/could not be read/); // the old org response cannot populate the new visit
+    expect(screen.queryByText('OpenAI')).toBeNull(); expect(sent.some(x => x.method === 'POST')).toBe(false);
+  });
+  it('cancels without retaining a key on reopen', async () => {
+    render(<ClientCredentialVaultCard />); await enter(); fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Store credential…' }));
+    expect((screen.getByLabelText(/Provider API key/) as HTMLInputElement).value).toBe('');
+  });
+});
+
+
+it('keeps portal credentials explicitly storage-only', async () => {
+  credentialOwner.value = { actor: '7:admin', key: 1, sameRevision: () => true };
+  const response = credentialMetadata(7, true, true);
+  Object.assign(response.credentialCards[0], { id: 'clinical_trials_prs', name: 'ClinicalTrials.gov PRS',
+    purpose: 'Store your own PRS login. Portal actions are not connected.', status: 'stored_not_connected',
+    scopes: ['account_reference'], grantedScopes: ['account_reference'] });
+  apiRequest.mockResolvedValue(json(response));
+  render(<ClientCredentialVaultCard />);
+  await screen.findByText('Stored · portal actions not connected');
+  expect(screen.getByText(/Keep account reference only/)).toBeTruthy();
+  expect(screen.queryByText('Connected')).toBeNull();
+});
+
+it('cannot apply an old tenant write receipt after the organisation changes', async () => {
+  credentialOwner.value = { actor: '7:admin', key: 1, sameRevision: () => true };
+  let finish: (response: Response) => void = () => undefined;
+  const pending = new Promise<Response>(resolve => { finish = resolve; });
+  apiRequest.mockImplementation(async (method: string, _path: string, body: unknown) => {
+    if (method === 'POST') { sent.push({ method, url: '/api/deep-research/connectors', body }); return pending; }
+    const org = Number(credentialOwner.value.actor.split(':')[0]);
+    const metadata = credentialMetadata(org); metadata.credentialCards[0].name = `Tenant ${org} provider`;
+    return json(metadata);
+  });
+  const view = render(<ClientCredentialVaultCard />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Store credential…' }));
+  fireEvent.change(screen.getByLabelText(/Provider API key/), { target: { value: 'LATE_WRITE_UI_CANARY' } });
+  fireEvent.change(screen.getByLabelText(/Reason for/), { target: { value: 'Initial tenant provider rotation' } });
+  fireEvent.change(screen.getByLabelText(/Your password/), { target: { value: 'fixture password' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Store credential' }));
+  await waitFor(() => expect(sent.some(x => x.method === 'POST')).toBe(true));
+  credentialOwner.value = { actor: '8:other', key: 2, sameRevision: () => true };
+  view.rerender(<ClientCredentialVaultCard />); await screen.findByText('Tenant 8 provider');
+  await act(async () => { finish(json({ success: true, organizationId: 7, secret: 'LATE_WRITE_UI_CANARY' })); });
+  expect(screen.queryByText(/Credential change recorded/)).toBeNull();
+  expect(screen.getByText('Tenant 8 provider')).toBeTruthy();
+  expect(document.body.textContent).not.toContain('LATE_WRITE_UI_CANARY');
+});
+
+
+it('does not call an unconfirmed write response a recorded credential change', async () => {
+  credentialOwner.value = { actor: '7:admin', key: 1, sameRevision: () => true };
+  apiRequest.mockImplementation(async (method: string) => json(method === 'GET' ? credentialMetadata() : { success: true, organizationId: 99 }));
+  render(<ClientCredentialVaultCard />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Store credential…' }));
+  fireEvent.change(screen.getByLabelText(/Provider API key/), { target: { value: 'UNCONFIRMED_UI_CANARY' } });
+  fireEvent.change(screen.getByLabelText(/Reason for/), { target: { value: 'Confirm matching tenant receipt' } });
+  fireEvent.change(screen.getByLabelText(/Your password/), { target: { value: 'fixture password' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Store credential' }));
+  await screen.findByText(/could not be confirmed/);
+  expect(screen.queryByText(/Credential change recorded/)).toBeNull();
+  expect(screen.queryByRole('dialog')).toBeNull();
+});
+
+
+// Independent client/API contract fixture: inventories every previously authenticated adapter.
+const inventoryCredentialCards = () => {
+  const field = (name: string, secret = false, required = true, multiline?: boolean) => ({ name, label: name, secret, required, ...(multiline === undefined ? {} : { multiline }) });
+  const repositories = ['connector_search', 'connector_fetch', 'connector_upload'];
+  const read = ['connector_search', 'connector_fetch'];
+  const spec = (id: string, fields: ReturnType<typeof field>[], scopes = read, kind = 'connector') => ({
+    id, name: id, kind, purpose: `Client-owned ${id} credential`, status: 'missing', fields, scopes,
+    grantedScopes: [], expiresAt: null, lastChangedAt: null, secretFieldsHeld: [], canManage: true,
+  });
+  return { organizationId: 7, canManage: true, credentialCards: [
+    spec('veeva_vault', [field('baseUrl'), field('username', false, false), field('password', true, false), field('apiKey', true, false)], repositories),
+    spec('llm_anthropic', [field('apiKey', true)], ['model_inference'], 'llm'),
+    spec('llm_openai', [field('apiKey', true)], ['model_inference', 'embedding'], 'llm'),
+    spec('llm_moonshot', [field('apiKey', true)], ['model_inference'], 'llm'),
+    spec('clinical_trials_prs', [field('username'), field('password', true)], ['account_reference']),
+    spec('fda_portal', [field('username'), field('password', true)], ['account_reference']),
+    spec('google_drive', [field('clientId'), field('clientSecret', true, true, true), field('username', false, false)], repositories),
+    spec('box', [field('clientId'), field('clientSecret', true), field('baseUrl')], repositories),
+    spec('onedrive', [field('clientId'), field('clientSecret', true), field('tenantId'), field('username', false, false)], repositories),
+    spec('sharepoint', [field('clientId'), field('clientSecret', true), field('tenantId')], repositories),
+    spec('medidata_rave', [field('baseUrl'), field('username'), field('password', true)]),
+    spec('fhir-r4', [field('baseUrl'), field('apiKey', true, false), field('clientId', false, false), field('clientSecret', true, false)]),
+    spec('sam_exclusions', [field('apiKey', true)]),
+    spec('ellucian_banner', [field('baseUrl'), field('apiKey', true)]),
+  ] };
+};
+
+it('accepts the complete 14-card metadata contract and keeps all eight existing adapter management forms reachable', async () => {
+  credentialOwner.value = { actor: '7:admin', key: 1, sameRevision: () => true };
+  const response = inventoryCredentialCards();
+  apiRequest.mockResolvedValue(json({ ...response, credentials: { apiKey: 'METADATA_CAPTURE_UI_CANARY' } }));
+  render(<ClientCredentialVaultCard />);
+  await screen.findByTestId('credential-card-google_drive');
+  expect(screen.getAllByTestId(/^credential-card-/)).toHaveLength(14);
+  const legacy = ['google_drive', 'box', 'onedrive', 'sharepoint', 'medidata_rave', 'fhir-r4', 'sam_exclusions', 'ellucian_banner'];
+  for (const id of legacy) {
+    fireEvent.click(within(screen.getByTestId(`credential-card-${id}`)).getByRole('button', { name: 'Store credential…' }));
+    const card = response.credentialCards.find(item => item.id === id)!;
+    for (const f of card.fields) {
+      const input = within(screen.getByRole('dialog')).getByLabelText(new RegExp(`^${f.label}`)) as HTMLInputElement;
+      expect(input.value).toBe('');
+      if (f.secret) expect(input.type).toBe('password');
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  }
+  expect(document.body.textContent).not.toContain('METADATA_CAPTURE_UI_CANARY');
+});
+
+it('captures the Google private key without a raw DOM value and sends exact PEM newlines', async () => {
+  credentialOwner.value = { actor: '7:admin', key: 1, sameRevision: () => true };
+  apiRequest.mockImplementation(async (method: string, url: string, body: any) => {
+    sent.push({ method, url, body });
+    return json(method === 'GET' ? inventoryCredentialCards() : { success: true, organizationId: 7 });
+  });
+  render(<ClientCredentialVaultCard />);
+  fireEvent.click(within(await screen.findByTestId('credential-card-google_drive')).getByRole('button', { name: 'Store credential…' }));
+  const input = screen.getByLabelText(/^clientSecret/) as HTMLInputElement;
+  expect(input.type).toBe('password'); expect(input.readOnly).toBe(true);
+  const pem = '-----BEGIN PRIVATE KEY-----\nGOOGLE_MULTILINE_UI_CANARY\n-----END PRIVATE KEY-----\n';
+  fireEvent.paste(input, { clipboardData: { getData: () => pem } });
+  expect(input.value).toBe('********'); expect(document.body.innerHTML).not.toContain('GOOGLE_MULTILINE_UI_CANARY');
+  fireEvent.click(screen.getByRole('button', { name: 'Clear captured credential' }));
+  expect(input.value).toBe('');
+  fireEvent.paste(input, { clipboardData: { getData: () => pem } });
+  fireEvent.change(screen.getByLabelText(/^clientId/), { target: { value: 'service-account@example.invalid' } });
+  fireEvent.change(screen.getByLabelText(/Reason for/), { target: { value: 'Capture client-owned Drive credentials' } });
+  fireEvent.change(screen.getByLabelText(/Your password/), { target: { value: 'fixture password' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Store credential' }));
+  await waitFor(() => expect(sent.some(item => item.method === 'POST')).toBe(true));
+  const post = sent.find(item => item.method === 'POST');
+  expect(post?.body).toMatchObject({ connectorId: 'google_drive', credentials: { clientId: 'service-account@example.invalid', clientSecret: pem }, scopes: ['connector_search'] });
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(document.body.innerHTML).not.toContain('GOOGLE_MULTILINE_UI_CANARY');
 });

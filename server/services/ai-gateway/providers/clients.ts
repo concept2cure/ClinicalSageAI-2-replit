@@ -22,8 +22,72 @@
 
 import { createRequire } from 'node:module';
 import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { createScopedLogger } from '../../../utils/logger.js';
 import { bedrockClientRegion, vertexClientRegion } from './placement';
+import { assertCredentialUseCurrent, captureCredentialForUse,
+  resolveTenantModelCredentialAvailability as readTenantModelCredentials,
+  type TenantModelProvider } from '../../connectors/connector-registry.js';
+
+export class TenantCredentialUnavailableError extends Error {
+  readonly code = 'TENANT_CREDENTIAL_UNAVAILABLE';
+  constructor() { super('The organization’s own model credential grant is unavailable or no longer authorizes this request. Nothing was sent.'); this.name = 'TenantCredentialUnavailableError'; }
+}
+export async function resolveTenantModelCredentialAvailability(organizationId: number, purpose: 'model_inference' | 'embedding' = 'model_inference') {
+  try { return await readTenantModelCredentials(organizationId, undefined, purpose); } catch { throw new TenantCredentialUnavailableError(); }
+}
+
+/** Keep arbitrary provider error text, causes, headers and response bodies out
+ * of logs and model context. Numeric status retains the gateway's retry rules. */
+function tenantProviderError(error: unknown): Error & { status?: number } {
+  const status = (error as { status?: unknown } | null)?.status;
+  const safeStatus = typeof status === 'number' && Number.isInteger(status) && status >= 100 && status <= 599 ? status : undefined;
+  const clean: Error & { status?: number } = new Error(`The customer-owned model request failed${safeStatus ? ` (HTTP ${safeStatus})` : ''}.`);
+  if (safeStatus) clean.status = safeStatus;
+  if ((error as { name?: unknown } | null)?.name === 'AbortError') clean.name = 'AbortError';
+  return clean;
+}
+
+/** A fresh SDK object per tenant/request; no key enters GatewayRequest and no
+ * client or token cache is shared between tenants. Every create rechecks the
+ * captured revision and records use immediately before calling the SDK. */
+export async function createTenantProviderClient(provider: string, organizationId: number, userId?: number, purpose: 'model_inference' | 'embedding' = 'model_inference', beforeCreate?: () => void): Promise<any | null> {
+  if (!['anthropic', 'openai', 'moonshot'].includes(provider)) return null;
+  const availability = await resolveTenantModelCredentialAvailability(organizationId, purpose);
+  if (availability.mode === 'platform') return null;
+  if (!availability.providers.includes(provider as TenantModelProvider)) throw new TenantCredentialUnavailableError();
+  let captured: Awaited<ReturnType<typeof captureCredentialForUse>>;
+  try { captured = await captureCredentialForUse(organizationId, `llm_${provider}`, purpose); } catch { throw new TenantCredentialUnavailableError(); }
+  if (!captured || typeof captured.credentials.apiKey !== 'string' || !captured.credentials.apiKey) throw new TenantCredentialUnavailableError();
+  let sdk: any;
+  try {
+    sdk = provider === 'anthropic' ? new Anthropic({ apiKey: captured.credentials.apiKey, maxRetries: 0 })
+      : new OpenAI({ apiKey: captured.credentials.apiKey, maxRetries: 0,
+          ...(provider === 'moonshot' ? { baseURL: 'https://api.moonshot.ai/v1' } : {}) });
+  } catch { throw new TenantCredentialUnavailableError(); }
+  const invoke = (create: (...args: any[]) => any) => async (...args: any[]) => {
+    try { await assertCredentialUseCurrent(captured!, userId); } catch { throw new TenantCredentialUnavailableError(); }
+    // Trusted synchronous model/PQ admission, after the credential audit's
+    // asynchronous reads and immediately before the actual SDK invocation.
+    // Preserve its policy refusal; it is not a provider failure to sanitize.
+    beforeCreate?.();
+    try {
+      const result = await create(...args);
+      if (result && typeof result[Symbol.asyncIterator] === 'function') {
+        return { controller: result.controller,
+          async *[Symbol.asyncIterator]() {
+            try { for await (const event of result) yield event; } catch (error) { throw tenantProviderError(error); }
+          } };
+      }
+      return result;
+    } catch (error) { throw tenantProviderError(error); }
+  };
+  return provider === 'anthropic'
+    ? { messages: { create: invoke((...args) => sdk.messages.create(...args)) },
+        beta: { messages: { create: invoke((...args) => sdk.beta.messages.create(...args)) } } }
+    : { chat: { completions: { create: invoke((...args) => sdk.chat.completions.create(...args)) } },
+        ...(provider === 'openai' ? { embeddings: { create: invoke((...args) => sdk.embeddings.create(...args)) } } : {}) };
+}
 
 const log = createScopedLogger('ai-gateway:providers');
 const requireOptional = createRequire(import.meta.url);

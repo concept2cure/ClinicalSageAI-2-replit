@@ -68,6 +68,13 @@ beforeEach(() => {
 });
 
 describe('POST /api/claude/draft', () => {
+  it('forwards a qualified pin on the existing nonstreaming drafting endpoint', async () => {
+    svc.draftDocument.mockRejectedValueOnce(tooLargeForEveryModel());
+    const qualifiedModelPin = { id: 'controlled-model', provider: 'local', pinnedVersion: `sha256:${'a'.repeat(64)}`,
+      intendedUse: 'document_drafting', pqReference: 'docs/evidence/PQ/review.json', pqSha256: 'b'.repeat(64) };
+    await request(app()).post('/api/claude/draft').send({ ...draftBody, qualifiedModelPin });
+    expect(svc.draftDocument).toHaveBeenCalledWith(expect.objectContaining({ qualifiedModelPin }));
+  });
   it('answers a context-window refusal with 413 TOKEN_LIMIT_EXCEEDED and the actionable sentence', async () => {
     svc.draftDocument.mockRejectedValueOnce(tooLargeForEveryModel());
     const res = await request(app()).post('/api/claude/draft').send(draftBody);

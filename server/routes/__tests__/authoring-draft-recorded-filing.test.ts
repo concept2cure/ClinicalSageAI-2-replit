@@ -115,12 +115,15 @@ describe('the editor drafts against the application the project records', () => 
     expect(res.body.draft.metadata.requirementsSource).not.toBe('none');
   });
 
-  it('a UK CTA section asked for as FDA content says the application on record differs, and that its Module 1 has no entry', async () => {
+  it('leaves a legacy CTD number unindexed for UK CTA and states the requested writing-region mismatch', async () => {
     filing = { program_type: 'cta', primary_agency: 'MHRA', metadata: null };
-    await draft('FDA');
+    const res = await draft('FDA');
+    expect(res.status).toBe(200);
     expect(prompt()).toContain('Clinical Trial Authorisation (UK)');
     expect(prompt()).toMatch(/requested writing region FDA differs from the application on record \(MHRA\)/);
-    expect(prompt()).toContain('no UK (MHRA) Module 1 entry for 1.2.1');
+    expect(prompt()).toContain('none are recorded for this section in this application');
+    expect(prompt()).toContain('Do not supply them from memory');
+    expect(res.body.draft.metadata.requirementsSource).toBe('none');
   });
 
   it('a project whose application cannot be resolved is told so, and no jurisdiction is assumed', async () => {
@@ -190,5 +193,23 @@ describe('the editor uses current recorded product context', () => {
     const res = await draft();
     expect(res.status).toBe(409);
     expect(h.park).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('the one editor receives the cited UK preparation outline', () => {
+  it('uses UK protocol preparation and scope from the recorded filing, without a new editor path', async () => {
+    filing = { program_type: 'cta', primary_agency: 'MHRA', metadata: null };
+    code = 'uk_cta_protocol';
+    const res = await draft('MHRA');
+    expect(res.status).toBe(200);
+    expect(res.body.draft.metadata).toMatchObject({ submissionType: 'UK_CTA', requirementsSource: 'blueprint' });
+    expect(prompt()).toMatch(/platform convention.*not a regulatory requirement/i);
+    expect(prompt()).toContain('2026-11-06');
+    expect(prompt()).toContain('IRAS');
+    expect(prompt()).toContain('https://www.gov.uk/guidance/clinical-trials-for-medicines-apply-for-approval-in-the-uk');
+    expect(prompt()).toMatch(/initial.{0,30}submission date/i);
+    expect(prompt()).toMatch(/not.{0,20}eCTD|not an eCTD/i);
+    expect(prompt()).not.toContain('no UK (MHRA) Module 1 entry');
   });
 });
