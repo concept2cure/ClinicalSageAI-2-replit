@@ -22,6 +22,7 @@ import { db } from '../../db';
 import { withTenantConnection } from '../../db/withTenantConnection';
 import type { RequestSqlClient } from '../../db/requestDb';
 import * as schema from '../../../shared/schema';
+import { ACTION_TRANSITIONS, CAPA_TRANSITIONS } from '../../../shared/constants/capa-lifecycle';
 import unifiedTaskService, { type UnifiedTaskInput, type TaskWriteRunner } from '../unifiedTaskService';
 import { readProgramAnchorRow } from '../c2c/program-project-anchor';
 import { readCurrentProgramActor } from '../c2c/current-program-access';
@@ -90,6 +91,53 @@ type OpenSourceTask = {
 
 const NATIVE_PROJECT_SOURCES = new Set(['capa_record', 'capa_action', 'qms_periodic_review', 'qms_training']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isCapaSource = (source: string) => ['capa_record', 'capa_action'].includes(source);
+const dueDay = (value: unknown): string | null => {
+  const date = value instanceof Date ? value : typeof value === 'string' ? new Date(value) : null;
+  return date && Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : null;
+};
+
+async function readCapaTaskRecord(q: RequestSqlClient, input: ReconcileSourceTasks, key: string) {
+  const record = input.sourceEntityType === 'capa_record';
+  const prefix = record ? 'capa:' : 'capa-action:';
+  const id = key.startsWith(prefix) ? key.slice(prefix.length) : '';
+  if (!UUID.test(id)) throw new Error('Invalid CAPA task source');
+  const statement = record
+    ? `SELECT c.program_id,c.assigned_to,c.created_by,c.target_close_date AS due_at,c.state FROM capa_records c
+        JOIN regulatory_programs p ON p.id::text=c.program_id AND p.organization_id=$2 AND p.deleted_at IS NULL
+        WHERE c.id=$1::uuid FOR SHARE OF c,p`
+    : `SELECT c.program_id,a.owner,a.due_date AS due_at,a.state FROM capa_actions a JOIN capa_records c ON c.id=a.capa_id
+        JOIN regulatory_programs p ON p.id::text=c.program_id AND p.organization_id=$2 AND p.deleted_at IS NULL
+        WHERE a.id=$1::uuid FOR SHARE OF a,c,p`;
+  const { rows } = await q.query(statement, [id, input.organizationId]);
+  if (rows.length !== 1) throw new Error('The native Quality task owner could not be verified');
+  return rows[0];
+}
+
+/** Null means the current native record still owes a dated task. */
+function currentCapaClosure(source: string, row: Record<string, unknown>): 'completed' | 'cancelled' | null {
+  const record = source === 'capa_record';
+  const states = record ? CAPA_TRANSITIONS : ACTION_TRANSITIONS;
+  if (typeof row.state !== 'string' || !Object.prototype.hasOwnProperty.call(states, row.state)
+    || row.due_at !== null && !dueDay(row.due_at)) throw new Error('The current native CAPA lifecycle could not be verified');
+  const completed = record ? ['closed_effective', 'closed_not_effective'].includes(row.state) : row.state === 'done';
+  if (completed) return 'completed';
+  return row.state === 'cancelled' || row.due_at === null ? 'cancelled' : null;
+}
+
+function verifyCurrentCapaPlan(input: ReconcileSourceTasks, key: string, row: Record<string, unknown>) {
+  const closure = currentCapaClosure(input.sourceEntityType, row);
+  const wanted = input.desired.get(key);
+  const assignee = capaAssignee(row, input.sourceEntityType === 'capa_record');
+  if (wanted && assignee !== null && wanted.next.assigneeId !== assignee) {
+    throw new Error('The task plan no longer matches the current native CAPA assignee; the previous task was preserved');
+  }
+  const closeAs = input.closeAs(key);
+  const valid = wanted
+    ? closure === null && dueDay(row.due_at) === dueDay(wanted.next.dueDate) && closeAs === 'cancelled'
+    : closure !== null && closure === closeAs;
+  if (!valid) throw new Error('The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved');
+}
 
 async function controlledDocumentTaskProgram(q: RequestSqlClient, organizationId: number, id: string, actorId: number) {
   const { rows } = await q.query(`SELECT authoring_document_id::text AS authoring_document_id FROM qms_documents
@@ -116,18 +164,9 @@ async function nativeTaskPlacement(q: RequestSqlClient, input: ReconcileSourceTa
     programId = await controlledDocumentTaskProgram(q, input.organizationId, match[1], input.actorId);
     if (programId === null) return null;
   } else {
-    const prefix = input.sourceEntityType === 'capa_record' ? 'capa:' : 'capa-action:';
-    const id = key.startsWith(prefix) ? key.slice(prefix.length) : '';
-    if (!UUID.test(id)) throw new Error('Invalid CAPA task source');
-    const statement = input.sourceEntityType === 'capa_record'
-      ? `SELECT c.program_id FROM capa_records c JOIN regulatory_programs p ON p.id::text=c.program_id
-          AND p.organization_id=$2 AND p.deleted_at IS NULL WHERE c.id=$1::uuid FOR SHARE OF c,p`
-      : `SELECT c.program_id FROM capa_actions a JOIN capa_records c ON c.id=a.capa_id
-          JOIN regulatory_programs p ON p.id::text=c.program_id AND p.organization_id=$2 AND p.deleted_at IS NULL
-          WHERE a.id=$1::uuid FOR SHARE OF a,c,p`;
-    const { rows } = await q.query(statement, [id, input.organizationId]);
-    if (rows.length !== 1) throw new Error('The native Quality task owner could not be verified');
-    programId = rows[0].program_id;
+    const row = await readCapaTaskRecord(q, input, key);
+    verifyCurrentCapaPlan(input, key, row);
+    programId = row.program_id;
   }
   if (typeof programId !== 'string' || !UUID.test(programId)) throw new Error('The native Quality task project could not be verified');
   const anchor = await readProgramAnchorRow(q, { programId, orgId: input.organizationId,
@@ -206,33 +245,18 @@ const nativeUserId = (value: unknown): number | null => {
   const id = /^[1-9]\d*$/.test(text) ? Number(text) : NaN;
   return Number.isSafeInteger(id) && id <= 2_147_483_647 ? id : null;
 };
-const dueDay = (value: unknown): string | null => {
-  const date = value instanceof Date ? value : typeof value === 'string' ? new Date(value) : null;
-  return date && Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : null;
-};
 const capaAssignee = (owner: Record<string, unknown>, record: boolean) => record
   ? nativeUserId(owner.assigned_to) ?? nativeUserId(owner.created_by) : nativeUserId(owner.owner);
 const capaAssigneeChanged = (source: string, open: OpenSourceTask[], next?: SourceTaskNext) => !!next
-  && ['capa_record', 'capa_action'].includes(source) && open.some(task => (task.assigneeId ?? null) !== (next.assigneeId ?? null));
+  && isCapaSource(source) && open.some(task => (task.assigneeId ?? null) !== (next.assigneeId ?? null));
 
-/** A delayed producer must not restore an old owner, date or lifecycle over the current native record. */
+/** A delayed producer must not restore an old owner over the current native record. */
 async function verifyCapaAssigneeChange(input: ReconcileSourceTasks, key: string, wanted: DesiredSourceTask,
   { client: q }: SourceTaskTransaction): Promise<void> {
   const record = input.sourceEntityType === 'capa_record';
-  const id = key.slice(record ? 'capa:'.length : 'capa-action:'.length);
-  const statement = record
-    ? `SELECT c.assigned_to,c.created_by,c.target_close_date AS due_at,c.state FROM capa_records c
-        JOIN regulatory_programs p ON p.id::text=c.program_id AND p.organization_id=$2 AND p.deleted_at IS NULL
-        WHERE c.id=$1::uuid FOR SHARE OF c,p`
-    : `SELECT a.owner,a.due_date AS due_at,a.state FROM capa_actions a JOIN capa_records c ON c.id=a.capa_id
-        JOIN regulatory_programs p ON p.id::text=c.program_id AND p.organization_id=$2 AND p.deleted_at IS NULL
-        WHERE a.id=$1::uuid FOR SHARE OF a,c,p`;
-  const { rows } = await q.query(statement, [id, input.organizationId]);
-  const owner = rows.length === 1 ? rows[0] : null;
-  const assignee = owner && capaAssignee(owner, record);
-  const ended = owner && (record ? ['closed_effective', 'closed_not_effective'] : ['done', 'cancelled']).includes(String(owner.state));
-  if (!owner || !assignee || assignee !== wanted.next.assigneeId || ended
-    || !dueDay(owner.due_at) || dueDay(owner.due_at) !== dueDay(wanted.next.dueDate)) {
+  const owner = await readCapaTaskRecord(q, input, key);
+  const assignee = capaAssignee(owner, record);
+  if (!assignee || assignee !== wanted.next.assigneeId) {
     throw new Error('The current native CAPA assignment could not be verified; the previous task was preserved');
   }
   // Retain the existing named-task assignment policy, not a new permission or assignment writer.
@@ -331,6 +355,12 @@ function sourceTaskLockKey(input: ReconcileSourceTasks): string {
   return `qms_training:qms-document:${match[1]}`;
 }
 
+function qualityTaskKeys(input: ReconcileSourceTasks, open: Map<string, OpenSourceTask[]>, desired: Map<string, DesiredSourceTask>) {
+  const keys = new Set([...open.keys(), ...desired.keys()]);
+  if (isCapaSource(input.sourceEntityType) && 'exact' in input.match) keys.add(input.match.exact);
+  return keys;
+}
+
 /** The governed act has committed; native task placement owns a fresh scoped transaction. */
 async function reconcileQualityTasks(input: ReconcileSourceTasks): Promise<ReconcileSourceTasksResult> {
   return withTenantConnection({ tenantId: input.organizationId, source: 'job', caller: 'quality-source-task' }, async q => {
@@ -352,7 +382,8 @@ async function reconcileQualityTasks(input: ReconcileSourceTasks): Promise<Recon
       const runner = drizzle(q, { schema });
       const result: ReconcileSourceTasksResult = { kept: 0, closed: 0, written: [], failed: false };
       const byKey = await readOpenTasks(scoped, inScope, runner);
-      for (const id of new Set([...byKey.keys(), ...[...desired.keys()].filter(inScope)])) {
+      for (const id of qualityTaskKeys(input, byKey, desired)) {
+        if (isCapaSource(input.sourceEntityType) && !desired.has(id)) await nativeTaskPlacement(q, scoped, id);
         await reconcileKey(scoped, id, byKey.get(id) ?? [], result, { runner, client: q });
       }
       await q.query('COMMIT');

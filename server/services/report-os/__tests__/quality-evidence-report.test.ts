@@ -36,6 +36,45 @@ beforeEach(() => {
   h.collect.mockImplementation(async (_q, input) => input.programId === A ? records : [records[1]]);
 });
 
+describe('native Quality report text fidelity',()=>{
+  it.each(['view','PDF'])('preserves clinical limits, literal prose and unresolved semantic marks in the %s',async(target)=>{
+    const plain='pH < 6 and temperature > 30 C; impurity <LOQ; temperature <critical> threshold; literal &amp;lt; and &lt; stay unchanged.';
+    const html='<p>Bioburden 10<sup>6</sup> CFU/mL; pH &lt; 6 and temperature &gt; 30 C; encoded &amp;lt;.</p><p>Proposed dose <del data-author-name="QA reviewer">20 mg</del><ins>40 mg</ins>.</p>';
+    const projected='Bioburden 10^6 CFU/mL; pH < 6 and temperature > 30 C; encoded &lt;. Proposed dose [-20 mg-][+40 mg+].';
+    const inline='10<sup>6</sup> CFU; limit &lt;5; literal &amp;lt;. <ins>value &lt; 5</ins>';
+    const projectedInline='10^6 CFU; limit <5; literal &lt;. [+value < 5+]';
+    const qualification='Working record; pending changes are not approved.';
+    const nativeRecords=[
+      {...records[0],key:'quality:qms_nonconforming_products:41',title:'Nonconformance: NC-41',native:{kind:'qms_nonconforming_products',id:'41'},
+        text:JSON.stringify({data:{record:{nc_number:'NC-41',description:plain}}})},
+      {...records[0],title:'SOP-001 Working procedure',text:JSON.stringify({data:{record:{doc_number:'SOP-001'},
+        contentBasis:qualification,sections:[{title:'Acceptance criteria',content:html},{title:'Inline criteria',content:inline}]}})},
+    ];
+    const summary={computedScope:'project',domain:{qualityEvidence:{schemaVersion:1,records:nativeRecords,limits:[LIMIT]}}};
+    const original=JSON.stringify(summary);
+    const report=renderReport({reportTypeId:TYPE,reportTypeLabel:'Quality assurance pack',scopeType:'project',scopeId:'11',status:'partial',providers:[],blockers:[LIMIT],summary});
+    const visible=report.sections.flatMap(section=>section.blocks).filter(block=>block.kind==='table')
+      .flatMap(block=>block.kind==='table' ? block.rows.map(row=>row.join(' ')) : []).join('\n');
+    let output=visible;
+    if (target==='PDF') {
+      const at='2026-11-06T00:00:00.000Z';
+      const {bytes}=await buildRunPdf({report,typeLabel:'Quality assurance pack',seal:null,runBy:'QA reviewer',exportId:'quality-fidelity',exportedAt:at,
+        run:{id:19,runUuid:'quality-fidelity-run',reportTypeId:TYPE,scopeType:'project',scopeId:'11',status:'partial',confidence:0,createdAt:new Date(at)}});
+      const {PDFParse}=(await import('pdf-parse')) as unknown as {PDFParse:new(options:{data:Buffer})=>{getText():Promise<{text:string}>}};
+      output=(await new PDFParse({data:bytes}).getText()).text.replace(/\s+/g,' ');
+      expect(output).toContain('NOT FINAL (PARTIAL)');
+      expect(output).toContain(LIMIT);
+    }
+    expect(output).toContain(plain);
+    expect(output).toContain(projected);
+    expect(output).toContain(projectedInline);
+    expect(output).toContain(qualification);
+    expect(JSON.stringify(summary)).toBe(original);
+    expect(report.status).toBe('partial');
+    expect(JSON.stringify(report.sections)).toContain(LIMIT);
+  });
+});
+
 describe('the existing assurance pack computes native Quality facts', () => {
   it('routes the existing type only to supported Quality scopes', () => {
     expect(reportAvailability(TYPE, 'project', ['project'])).toMatchObject({ engine: 'domain', runnable: true, computedScope: 'project' });
@@ -52,7 +91,8 @@ describe('the existing assurance pack computes native Quality facts', () => {
     const report = await computeDomainReport(TYPE, 7, { scopeType: 'project', scopeId: '11', clientWorkspaceId: 71, recordContext });
     expect(h.scope).toHaveBeenCalledWith(q, { organizationId: 7, userId: 5 });
     expect(h.anchors).toHaveBeenCalledWith(q, { organizationId: 7, userId: 5 }, scope);
-    expect(h.collect).toHaveBeenCalledExactlyOnceWith(q, { organizationId: 7, userId: 5, programId: A });
+    expect(h.collect).toHaveBeenCalledTimes(2);
+    expect(h.collect).toHaveBeenCalledWith(q, { organizationId: 7, userId: 5, programId: A });
     expect(h.current).toHaveBeenCalledWith(q, { organizationId: 7, userId: 5 }, scope);
     expect(report).toMatchObject({ computedScope: 'project', accessProjectIds: [11], criticalBlockers: [LIMIT],
       summary: { projectEvidenceSnapshots: 1, organizationEvidenceSnapshots: 1, qualityEvidence: { records, limits: expect.arrayContaining([LIMIT]) } },
@@ -63,7 +103,7 @@ describe('the existing assurance pack computes native Quality facts', () => {
 
   it('deduplicates organization context and retains only projects contributing evidence in an organization run', async () => {
     const report = await computeDomainReport(TYPE, 7, { scopeType: 'account', scopeId: '7', recordContext });
-    expect(h.collect.mock.calls.map(([, input]) => input.programId)).toEqual([A, B]);
+    expect(h.collect.mock.calls.map(([, input]) => input.programId)).toEqual([A, B, A, B]);
     expect(report).toMatchObject({ computedScope: 'organization', accessProjectIds: [11],
       summary: { projectEvidenceSnapshots: 1, organizationEvidenceSnapshots: 1, qualityEvidence: { records } } });
     expect(JSON.stringify(report)).not.toContain(B);
@@ -72,7 +112,8 @@ describe('the existing assurance pack computes native Quality facts', () => {
   it('reads explicit organization context when there are no accessible projects, without inventing an empty completeness result', async () => {
     h.scope.mockResolvedValue({ ...scope, programIds: [] }); h.anchors.mockReturnValue([]);
     const report = await computeDomainReport(TYPE, 7, { scopeType: 'account', scopeId: '7', recordContext });
-    expect(h.collect).toHaveBeenCalledExactlyOnceWith(q, { organizationId: 7, userId: 5, programId: null });
+    expect(h.collect).toHaveBeenCalledTimes(2);
+    expect(h.collect).toHaveBeenCalledWith(q, { organizationId: 7, userId: 5, programId: null });
     expect(report).toMatchObject({ accessProjectIds: [], summary: { projectEvidenceSnapshots: 0, organizationEvidenceSnapshots: 1 }, provider: { status: 'partial' } });
     h.collect.mockResolvedValue([]);
     const empty = await computeDomainRun(TYPE, 7, 'account', '7', { recordContext });

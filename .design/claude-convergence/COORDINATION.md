@@ -66,6 +66,10 @@ Verified handoff: native task → CAPA register and shared-source build → one 
 
 ## Who works where
 
+### Quality current-record follow-up — Codex, 2026-11-06 (F1)
+
+The founder asked this lane to continue. Pre-implementation inventory and bounded contract: `docs/design/QUALITY_CORE_WORKFLOW_2026-11-06.md`, follow-up section; evidence `docs/evidence/DESIGN/R1/2026-11-06-quality-current-records/`. Holds only `server/services/tasking/source-task.ts` and its CAPA lifecycle tests for current-record admission before reconciliation; `server/services/clinical-regulatory-evidence/source-read-access.ts`, native admission in `record-source.ts` only if required, and focused source tests for stale-readable versus inaccessible catalogue admission; `server/services/report-os/render/quality-evidence.ts` and its renderer/PDF tests for faithful existing business text projection; `server/services/report-os/project-access.ts` and saved-report access tests for per-report native-grant freshness; `server/services/report-os/research-compliance-report-providers.ts` and provider tests for final combined-collection freshness. Existing Quality, Project, Insights, training, Vault and taxonomy holds are unchanged. No new UI, route, subsystem or dependency.
+
 | Session | Packages | Now | Layout work |
 |---|---|---|---|
 | UI and workflow redesign (`01JbQU…`) | D0, then the D1–D7 build order | D0-5, D4-1, D2-1, L1, L8, the editor's masked suites | L1–L4, L7, L8, L10 |

@@ -60,7 +60,7 @@ afterAll(async () => { await pg?.close(); });
 describe('Quality report source isolation with the actual sharing policy', () => {
   it('reads only admitted project records and explicit organization context, never private/foreign/deleted/ambiguous parents', async () => {
     const result = await computeDomainReport(TYPE, 7, { scopeType: 'account', scopeId: '7', recordContext: context() });
-    expect(h.collect.mock.calls.map(([, input]) => input.programId)).toEqual([A]);
+    expect(h.collect.mock.calls.map(([, input]) => input.programId)).toEqual([A, A]);
     expect(result).toMatchObject({ computedScope: 'organization', accessProjectIds: [11], provider: { status: 'partial' },
       summary: { projectEvidenceSnapshots: 1, organizationEvidenceSnapshots: 1 } });
     expect(JSON.stringify(result)).toContain('Admitted project A audit');
@@ -75,7 +75,8 @@ describe('Quality report source isolation with the actual sharing policy', () =>
 
   it('admits the other private project only for its owner', async () => {
     const result = await computeDomainReport(TYPE, 7, { scopeType: 'project', scopeId: '12', clientWorkspaceId: 72, recordContext: context(6) });
-    expect(h.collect).toHaveBeenCalledExactlyOnceWith(q, { organizationId: 7, userId: 6, programId: B });
+    expect(h.collect).toHaveBeenCalledTimes(2);
+    expect(h.collect).toHaveBeenCalledWith(q, { organizationId: 7, userId: 6, programId: B });
     expect(result?.accessProjectIds).toEqual([12]);
   });
 

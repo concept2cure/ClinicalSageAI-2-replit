@@ -1,0 +1,21 @@
+{
+  "baselineCommit": "f6127e72231bd9e9f302f596a672f58b1b40db15",
+  "sourceFrozen": true,
+  "files": {
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": "46ca133dd0332d0f13d467839a546f6c3115c8c3120c05e6a5a7ace7a5920b2a",
+    "server/services/clinical-regulatory-evidence/record-source.ts": "0b00d5991962f08654dbfb10af7e46e08536f8b97a121adff26d372ce50e63a5",
+    "server/services/clinical-regulatory-evidence/source-read-access.ts": "b66457fe8ffd19f5b6bc157cd8cc32f6f330a340ff621d4da94999c9d3869585",
+    "server/services/report-os/__tests__/quality-evidence-report-freshness.test.ts": "8a4250c38bfd353a3f5a7b621860a3ba0b35df916387b17b8568ab35527371fa",
+    "server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts": "d5fca2e07bf98e7221c911ca2f75c590a94c3fb906c6510360d35a3189261a23",
+    "server/services/report-os/__tests__/quality-evidence-report.test.ts": "c9d6bea12cccc53a0640159aab56a280cae71781d075316d5ecbd7cb8a25919a",
+    "server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts": "8767c8f7c6248180129fc90f9c5c3180afb8a9030ea552ec795321ed0eeebcf3",
+    "server/services/report-os/__tests__/run-history-native-refresh.pglite.test.ts": "fdbe63714d01c348e9c301ebc5add6ad6e14242965e6cabd547d9e60414ceaf7",
+    "server/services/report-os/project-access.ts": "14fda044477c19e4903efd888bdd175a1e2ba2207d6633d15c58a2c65d2eafcf",
+    "server/services/report-os/render/quality-evidence.ts": "48064fb34e5e34f5c3984841d33fb9c1d078b2f5f2b2f62e24573b1db6fa6807",
+    "server/services/report-os/research-compliance-report-providers.ts": "bd30947b5569db20bcedd031c261a48ebf377ccc48c3a9d30001b26cde9fb067",
+    "server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts": "5db9ec7fb9ac48b887d10c063fa54565401834472a33dd3fcf7df37337108268",
+    "server/services/tasking/__tests__/source-task-quality-project.test.ts": "b816cc4bd187a360e8a22093dabeaa964a1f382977fcf9911be4c2186fc524a6",
+    "server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts": "41cab57be6e85c962b0e8ec1b620e898532d2786a9bc1292af751675ab796068",
+    "server/services/tasking/source-task.ts": "cb89b42ce1c13a3a9cb44d58d6c2bd34a51f833a3a0085e3b41c08e1a016680d"
+  }
+}
