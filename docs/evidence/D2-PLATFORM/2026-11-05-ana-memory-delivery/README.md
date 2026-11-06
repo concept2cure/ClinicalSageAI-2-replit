@@ -60,6 +60,14 @@ The final combined runs on the completed implementation passed **128 Node cases 
 
 Independent read-only review found no blocker in the four memory formatting/context-used changes or in the explicit-recall handoff boundary. Caller inspection verified that automatic first-turn blocks are concatenated whole through JSON/stream chat and gateway message transformation; model context-window admission refuses an oversized request rather than cutting those messages. Both explicit-tool hosts retain their existing receipt guard/settlement and final total-body assertion after the new recall guard.
 
+### Test-size gate correction
+
+The first full pre-push attempt on local candidate `340290a483a10fa19e1e90835032cd4ff3a9c222` stopped at the pushed-files warning ratchet, before typechecking. The added assembler and bootstrap case groups exceeded the function-size limit, and the expanded consolidation suite exceeded the file-size limit: net three new warnings, zero lint errors. `pre-push-lint-failure.txt` preserves this failed attempt; it is not counted as a complete gate or typecheck pass.
+
+The three existing test files were refactored without changing production code or warning policy. Bootstrap cases are split into coherent groups; assembler cases register through three focused helpers; consolidation shares compilation, continuity and rejection assertions. All original cases and meaningful assertions remain, and several continuity checks now apply consistently to more cases. Targeted lint returned to the previous warning counts: zero for bootstrap, one existing outer-group warning for the assembler and one existing harness warning for consolidation. The consolidation file has 499 counted lines. No lint suppression, baseline, gate or configuration was changed.
+
+The final combined tests were rerun after this cleanup and again passed 128 Node cases plus 323 Vitest cases. All seven production files remain byte-identical to the successful build. `execution.json` carries the refreshed final test identities, the failed-gate record and the test-refactor receipts. The complete hook will be rerun on the final committed candidate before publication.
+
 The captured logs are preserved except for documented whitespace normalization needed by `git diff --check`. Extra blank lines at EOF are removed; the failed consolidation TAP's diagnostic diff lines also have trailing whitespace removed. `execution.json` records original/stored SHA-256 hashes and the exact whitespace changes, so the original captures can be reconstructed. No test result, diagnostic text, baseline, gate or compiler configuration is changed.
 
 ## Reproduction

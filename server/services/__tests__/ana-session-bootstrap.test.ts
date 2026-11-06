@@ -133,12 +133,12 @@ describe('formatSessionBootstrap', () => {
 
 });
 
-describe('formatSessionBootstrap — complete memory within the prompt budget', () => {
-  const empty = { projectAtoms: [], clientAtoms: [], outcomeLessons: [] };
-  const heading = '## Session memory — picking up where we left off';
-  const workingHeading = '### Where we left off';
-  const omission = /memory.*omitted.*budget.*history is incomplete/i;
+const empty = { projectAtoms: [], clientAtoms: [], outcomeLessons: [] };
+const heading = '## Session memory — picking up where we left off';
+const workingHeading = '### Where we left off';
+const omission = /memory.*omitted.*budget.*history is incomplete/i;
 
+describe('formatSessionBootstrap — complete-record admission', () => {
   it('keeps trailing qualifications in working, project, client and lesson records when they fit together', () => {
     const working = `${'The retained results need independent review. '.repeat(29)}Do not describe the study as successful.`;
     const title = `${'Review of study results '.repeat(6)}— still provisional`;
@@ -208,7 +208,9 @@ describe('formatSessionBootstrap — complete memory within the prompt budget', 
     expect(out).toMatch(omission);
     expect(out.length).toBeLessThanOrEqual(4500);
   });
+});
 
+describe('formatSessionBootstrap — budget boundaries and output compatibility', () => {
   it('admits a complete summary exactly at the rendered budget without an omission notice', () => {
     const summary = 'S'.repeat(4500 - heading.length - workingHeading.length - 2);
     const out = formatSessionBootstrap({ ...empty, workingMemorySummary: summary });

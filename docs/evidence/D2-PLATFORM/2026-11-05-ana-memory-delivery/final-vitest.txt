@@ -9,13 +9,13 @@
 (Use `node --trace-warnings ...` to show where the warning was created)
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts
 {
-  "timestamp": "2026-11-06T05:07:36.240Z",
+  "timestamp": "2026-11-06T05:18:37.681Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-11-06T05:07:36.241Z",
+  "timestamp": "2026-11-06T05:18:37.683Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -25,7 +25,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts
 {
-  "timestamp": "2026-11-06T05:07:36.241Z",
+  "timestamp": "2026-11-06T05:18:37.683Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -33,7 +33,7 @@ stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id
 {
-  "timestamp": "2026-11-06T05:07:38.016Z",
+  "timestamp": "2026-11-06T05:18:39.456Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -41,7 +41,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id
 {
-  "timestamp": "2026-11-06T05:07:38.021Z",
+  "timestamp": "2026-11-06T05:18:39.460Z",
   "level": "info",
   "message": "[memory-consolidation] Found 1 stale memories to consolidate",
   "context": {}
@@ -49,7 +49,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id
 {
-  "timestamp": "2026-11-06T05:07:38.024Z",
+  "timestamp": "2026-11-06T05:18:39.462Z",
   "level": "warn",
   "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.40 between thresholds — needs human verification",
   "context": {}
@@ -57,7 +57,7 @@ stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id
 {
-  "timestamp": "2026-11-06T05:07:38.028Z",
+  "timestamp": "2026-11-06T05:18:39.465Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.40)",
   "context": {}
@@ -65,15 +65,15 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id
 {
-  "timestamp": "2026-11-06T05:07:38.029Z",
+  "timestamp": "2026-11-06T05:18:39.465Z",
   "level": "info",
-  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (13ms)",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (9ms)",
   "context": {}
 }
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression
 {
-  "timestamp": "2026-11-06T05:07:38.042Z",
+  "timestamp": "2026-11-06T05:18:39.474Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -81,7 +81,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression
 {
-  "timestamp": "2026-11-06T05:07:38.044Z",
+  "timestamp": "2026-11-06T05:18:39.475Z",
   "level": "info",
   "message": "[memory-consolidation] Found 1 stale memories to consolidate",
   "context": {}
@@ -89,7 +89,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression
 {
-  "timestamp": "2026-11-06T05:07:38.045Z",
+  "timestamp": "2026-11-06T05:18:39.476Z",
   "level": "warn",
   "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.40 between thresholds — needs human verification",
   "context": {}
@@ -97,7 +97,7 @@ stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression
 {
-  "timestamp": "2026-11-06T05:07:38.047Z",
+  "timestamp": "2026-11-06T05:18:39.478Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.40)",
   "context": {}
@@ -105,15 +105,15 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression
 {
-  "timestamp": "2026-11-06T05:07:38.048Z",
+  "timestamp": "2026-11-06T05:18:39.478Z",
   "level": "info",
-  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (6ms)",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (4ms)",
   "context": {}
 }
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > never guesses: a thread row with NO project attribution stays unpromoted
 {
-  "timestamp": "2026-11-06T05:07:38.054Z",
+  "timestamp": "2026-11-06T05:18:39.484Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -121,13 +121,13 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > never guesses: a thread row with NO project attribution stays unpromoted
 {
-  "timestamp": "2026-11-06T05:07:38.056Z",
+  "timestamp": "2026-11-06T05:18:39.486Z",
   "level": "info",
   "message": "[memory-consolidation] Found 0 stale memories to consolidate",
   "context": {}
 }
 {
-  "timestamp": "2026-11-06T05:07:38.056Z",
+  "timestamp": "2026-11-06T05:18:39.486Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidation complete: 0/0 consolidated, 0 quarantined, 0 rejected by gate, 0 skipped, 0 errors (2ms)",
   "context": {}
@@ -135,7 +135,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > skips (does not invent) a promotion when the project has no intelligence profile
 {
-  "timestamp": "2026-11-06T05:07:38.065Z",
+  "timestamp": "2026-11-06T05:18:39.492Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -143,7 +143,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > skips (does not invent) a promotion when the project has no intelligence profile
 {
-  "timestamp": "2026-11-06T05:07:38.067Z",
+  "timestamp": "2026-11-06T05:18:39.494Z",
   "level": "warn",
   "message": "[memory-consolidation] Skipping memory 1 — no project intelligence profile for project 12",
   "context": {}
@@ -151,7 +151,7 @@ stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > skips (does not invent) a promotion when the project has no intelligence profile
 {
-  "timestamp": "2026-11-06T05:07:38.067Z",
+  "timestamp": "2026-11-06T05:18:39.494Z",
   "level": "info",
   "message": "[memory-consolidation] Found 1 stale memories to consolidate",
   "context": {}
@@ -159,7 +159,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > skips (does not invent) a promotion when the project has no intelligence profile
 {
-  "timestamp": "2026-11-06T05:07:38.067Z",
+  "timestamp": "2026-11-06T05:18:39.494Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 0 quarantined, 0 rejected by gate, 1 skipped, 0 errors (2ms)",
   "context": {}
@@ -167,7 +167,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > does not use reserved ReportOS state as a duplicate-memory comparison
 {
-  "timestamp": "2026-11-06T05:07:38.076Z",
+  "timestamp": "2026-11-06T05:18:39.502Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -175,7 +175,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > does not use reserved ReportOS state as a duplicate-memory comparison
 {
-  "timestamp": "2026-11-06T05:07:38.077Z",
+  "timestamp": "2026-11-06T05:18:39.503Z",
   "level": "info",
   "message": "[memory-consolidation] Found 1 stale memories to consolidate",
   "context": {}
@@ -183,7 +183,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > does not use reserved ReportOS state as a duplicate-memory comparison
 {
-  "timestamp": "2026-11-06T05:07:38.078Z",
+  "timestamp": "2026-11-06T05:18:39.504Z",
   "level": "warn",
   "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.40 between thresholds — needs human verification",
   "context": {}
@@ -191,7 +191,7 @@ stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > does not use reserved ReportOS state as a duplicate-memory comparison
 {
-  "timestamp": "2026-11-06T05:07:38.079Z",
+  "timestamp": "2026-11-06T05:18:39.506Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.40)",
   "context": {}
@@ -199,15 +199,15 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > does not use reserved ReportOS state as a duplicate-memory comparison
 {
-  "timestamp": "2026-11-06T05:07:38.079Z",
+  "timestamp": "2026-11-06T05:18:39.506Z",
   "level": "info",
-  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (3ms)",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (4ms)",
   "context": {}
 }
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > retains an embedding without activating an unreviewed conversation summary
 {
-  "timestamp": "2026-11-06T05:07:38.087Z",
+  "timestamp": "2026-11-06T05:18:39.513Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -215,7 +215,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > retains an embedding without activating an unreviewed conversation summary
 {
-  "timestamp": "2026-11-06T05:07:38.088Z",
+  "timestamp": "2026-11-06T05:18:39.515Z",
   "level": "info",
   "message": "[memory-consolidation] Found 1 stale memories to consolidate",
   "context": {}
@@ -223,7 +223,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > retains an embedding without activating an unreviewed conversation summary
 {
-  "timestamp": "2026-11-06T05:07:38.089Z",
+  "timestamp": "2026-11-06T05:18:39.515Z",
   "level": "warn",
   "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.40 between thresholds — needs human verification",
   "context": {}
@@ -231,7 +231,7 @@ stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > retains an embedding without activating an unreviewed conversation summary
 {
-  "timestamp": "2026-11-06T05:07:38.092Z",
+  "timestamp": "2026-11-06T05:18:39.518Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.40)",
   "context": {}
@@ -239,15 +239,15 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > retains an embedding without activating an unreviewed conversation summary
 {
-  "timestamp": "2026-11-06T05:07:38.092Z",
+  "timestamp": "2026-11-06T05:18:39.519Z",
   "level": "info",
-  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (5ms)",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (6ms)",
   "context": {}
 }
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > REJECTS a duplicate of what the project already remembers
 {
-  "timestamp": "2026-11-06T05:07:38.100Z",
+  "timestamp": "2026-11-06T05:18:39.525Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -255,7 +255,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > REJECTS a duplicate of what the project already remembers
 {
-  "timestamp": "2026-11-06T05:07:38.101Z",
+  "timestamp": "2026-11-06T05:18:39.527Z",
   "level": "info",
   "message": "[memory-consolidation] Found 1 stale memories to consolidate",
   "context": {}
@@ -263,7 +263,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > REJECTS a duplicate of what the project already remembers
 {
-  "timestamp": "2026-11-06T05:07:38.102Z",
+  "timestamp": "2026-11-06T05:18:39.528Z",
   "level": "info",
   "message": "[memory-consolidation] Memory 1 rejected by acceptance gate: Duplicate of existing memory #1",
   "context": {}
@@ -271,21 +271,15 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > REJECTS a duplicate of what the project already remembers
 {
-  "timestamp": "2026-11-06T05:07:38.102Z",
+  "timestamp": "2026-11-06T05:18:39.528Z",
   "level": "info",
-  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 0 quarantined, 1 rejected by gate, 0 skipped, 0 errors (2ms)",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 0 quarantined, 1 rejected by gate, 0 skipped, 0 errors (3ms)",
   "context": {}
 }
 
- ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id 31ms
- ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression 15ms
- ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > never guesses: a thread row with NO project attribution stays unpromoted 8ms
- ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > skips (does not invent) a promotion when the project has no intelligence profile 11ms
- ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > does not use reserved ReportOS state as a duplicate-memory comparison 12ms
- ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > retains an embedding without activating an unreviewed conversation summary 12ms
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it
 {
-  "timestamp": "2026-11-06T05:07:38.111Z",
+  "timestamp": "2026-11-06T05:18:39.536Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -293,7 +287,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it
 {
-  "timestamp": "2026-11-06T05:07:38.113Z",
+  "timestamp": "2026-11-06T05:18:39.537Z",
   "level": "info",
   "message": "[memory-consolidation] Found 1 stale memories to consolidate",
   "context": {}
@@ -301,7 +295,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it
 {
-  "timestamp": "2026-11-06T05:07:38.145Z",
+  "timestamp": "2026-11-06T05:18:39.566Z",
   "level": "warn",
   "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Contradicts existing memories: New memory says \"is insufficient\" but existing memory #1 says \"is sufficient\"",
   "context": {}
@@ -309,7 +303,7 @@ stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it
 {
-  "timestamp": "2026-11-06T05:07:38.148Z",
+  "timestamp": "2026-11-06T05:18:39.568Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.38)",
   "context": {}
@@ -317,15 +311,22 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it
 {
-  "timestamp": "2026-11-06T05:07:38.148Z",
+  "timestamp": "2026-11-06T05:18:39.568Z",
   "level": "info",
-  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (37ms)",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (32ms)",
   "context": {}
 }
 
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > promotes a THREAD-KEYED row (conversation_id NULL) via its own project_id 23ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > still promotes a CONVERSATION-KEYED row (the legacy shape) — no regression 11ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > never guesses: a thread row with NO project attribution stays unpromoted 8ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > the live AnA chat path can finally reach durable memory > skips (does not invent) a promotion when the project has no intelligence profile 8ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > does not use reserved ReportOS state as a duplicate-memory comparison 12ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > retains an embedding without activating an unreviewed conversation summary 12ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > REJECTS a duplicate of what the project already remembers 11ms
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
 {
-  "timestamp": "2026-11-06T05:07:38.156Z",
+  "timestamp": "2026-11-06T05:18:39.575Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -333,7 +334,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
 {
-  "timestamp": "2026-11-06T05:07:38.157Z",
+  "timestamp": "2026-11-06T05:18:39.576Z",
   "level": "info",
   "message": "[memory-consolidation] Found 1 stale memories to consolidate",
   "context": {}
@@ -341,7 +342,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
 {
-  "timestamp": "2026-11-06T05:07:38.158Z",
+  "timestamp": "2026-11-06T05:18:39.577Z",
   "level": "warn",
   "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.40 between thresholds — needs human verification",
   "context": {}
@@ -349,7 +350,7 @@ stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
 {
-  "timestamp": "2026-11-06T05:07:38.160Z",
+  "timestamp": "2026-11-06T05:18:39.579Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.40)",
   "context": {}
@@ -357,7 +358,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
 {
-  "timestamp": "2026-11-06T05:07:38.160Z",
+  "timestamp": "2026-11-06T05:18:39.579Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (4ms)",
   "context": {}
@@ -365,7 +366,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
 {
-  "timestamp": "2026-11-06T05:07:38.160Z",
+  "timestamp": "2026-11-06T05:18:39.579Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -373,13 +374,13 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id)
 {
-  "timestamp": "2026-11-06T05:07:38.161Z",
+  "timestamp": "2026-11-06T05:18:39.580Z",
   "level": "info",
   "message": "[memory-consolidation] Found 0 stale memories to consolidate",
   "context": {}
 }
 {
-  "timestamp": "2026-11-06T05:07:38.161Z",
+  "timestamp": "2026-11-06T05:18:39.580Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidation complete: 0/0 consolidated, 0 quarantined, 0 rejected by gate, 0 skipped, 0 errors (1ms)",
   "context": {}
@@ -387,7 +388,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row
 {
-  "timestamp": "2026-11-06T05:07:38.167Z",
+  "timestamp": "2026-11-06T05:18:39.588Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -395,7 +396,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row
 {
-  "timestamp": "2026-11-06T05:07:38.169Z",
+  "timestamp": "2026-11-06T05:18:39.589Z",
   "level": "info",
   "message": "[memory-consolidation] Found 1 stale memories to consolidate",
   "context": {}
@@ -403,7 +404,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row
 {
-  "timestamp": "2026-11-06T05:07:38.170Z",
+  "timestamp": "2026-11-06T05:18:39.590Z",
   "level": "warn",
   "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.35 between thresholds — needs human verification",
   "context": {}
@@ -411,7 +412,7 @@ stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row
 {
-  "timestamp": "2026-11-06T05:07:38.171Z",
+  "timestamp": "2026-11-06T05:18:39.592Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.35)",
   "context": {}
@@ -419,7 +420,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row
 {
-  "timestamp": "2026-11-06T05:07:38.172Z",
+  "timestamp": "2026-11-06T05:18:39.593Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (5ms)",
   "context": {}
@@ -427,7 +428,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row
 {
-  "timestamp": "2026-11-06T05:07:38.174Z",
+  "timestamp": "2026-11-06T05:18:39.595Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -435,13 +436,13 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row
 {
-  "timestamp": "2026-11-06T05:07:38.175Z",
+  "timestamp": "2026-11-06T05:18:39.596Z",
   "level": "info",
   "message": "[memory-consolidation] Found 0 stale memories to consolidate",
   "context": {}
 }
 {
-  "timestamp": "2026-11-06T05:07:38.175Z",
+  "timestamp": "2026-11-06T05:18:39.596Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidation complete: 0/0 consolidated, 0 quarantined, 0 rejected by gate, 0 skipped, 0 errors (1ms)",
   "context": {}
@@ -449,7 +450,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row
 {
-  "timestamp": "2026-11-06T05:07:38.181Z",
+  "timestamp": "2026-11-06T05:18:39.603Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -457,7 +458,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row
 {
-  "timestamp": "2026-11-06T05:07:38.184Z",
+  "timestamp": "2026-11-06T05:18:39.604Z",
   "level": "info",
   "message": "[memory-consolidation] Found 1 stale memories to consolidate",
   "context": {}
@@ -465,7 +466,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row
 {
-  "timestamp": "2026-11-06T05:07:38.184Z",
+  "timestamp": "2026-11-06T05:18:39.605Z",
   "level": "warn",
   "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.55 between thresholds — needs human verification",
   "context": {}
@@ -473,7 +474,7 @@ stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row
 {
-  "timestamp": "2026-11-06T05:07:38.187Z",
+  "timestamp": "2026-11-06T05:18:39.608Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.55)",
   "context": {}
@@ -481,15 +482,15 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row
 {
-  "timestamp": "2026-11-06T05:07:38.187Z",
+  "timestamp": "2026-11-06T05:18:39.608Z",
   "level": "info",
-  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (6ms)",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (5ms)",
   "context": {}
 }
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row
 {
-  "timestamp": "2026-11-06T05:07:38.189Z",
+  "timestamp": "2026-11-06T05:18:39.609Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -497,13 +498,13 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row
 {
-  "timestamp": "2026-11-06T05:07:38.190Z",
+  "timestamp": "2026-11-06T05:18:39.610Z",
   "level": "info",
   "message": "[memory-consolidation] Found 0 stale memories to consolidate",
   "context": {}
 }
 {
-  "timestamp": "2026-11-06T05:07:38.190Z",
+  "timestamp": "2026-11-06T05:18:39.610Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidation complete: 0/0 consolidated, 0 quarantined, 0 rejected by gate, 0 skipped, 0 errors (1ms)",
   "context": {}
@@ -511,7 +512,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > persists next actions, artifact references and exclusions together without activating them
 {
-  "timestamp": "2026-11-06T05:07:38.199Z",
+  "timestamp": "2026-11-06T05:18:39.618Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -519,7 +520,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > persists next actions, artifact references and exclusions together without activating them
 {
-  "timestamp": "2026-11-06T05:07:38.200Z",
+  "timestamp": "2026-11-06T05:18:39.619Z",
   "level": "info",
   "message": "[memory-consolidation] Found 1 stale memories to consolidate",
   "context": {}
@@ -527,7 +528,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > persists next actions, artifact references and exclusions together without activating them
 {
-  "timestamp": "2026-11-06T05:07:38.201Z",
+  "timestamp": "2026-11-06T05:18:39.620Z",
   "level": "warn",
   "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.55 between thresholds — needs human verification",
   "context": {}
@@ -535,7 +536,7 @@ stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > persists next actions, artifact references and exclusions together without activating them
 {
-  "timestamp": "2026-11-06T05:07:38.204Z",
+  "timestamp": "2026-11-06T05:18:39.621Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.55)",
   "context": {}
@@ -543,20 +544,15 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > persists next actions, artifact references and exclusions together without activating them
 {
-  "timestamp": "2026-11-06T05:07:38.204Z",
+  "timestamp": "2026-11-06T05:18:39.622Z",
   "level": "info",
-  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (5ms)",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (4ms)",
   "context": {}
 }
 
- ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > REJECTS a duplicate of what the project already remembers 11ms
- ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it 45ms
- ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id) 13ms
- ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row 14ms
- ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row 15ms
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
 {
-  "timestamp": "2026-11-06T05:07:38.212Z",
+  "timestamp": "2026-11-06T05:18:39.629Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -564,7 +560,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
 {
-  "timestamp": "2026-11-06T05:07:38.214Z",
+  "timestamp": "2026-11-06T05:18:39.630Z",
   "level": "info",
   "message": "[memory-consolidation] Found 1 stale memories to consolidate",
   "context": {}
@@ -572,7 +568,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
 {
-  "timestamp": "2026-11-06T05:07:38.214Z",
+  "timestamp": "2026-11-06T05:18:39.631Z",
   "level": "warn",
   "message": "[memory-consolidation] Memory 1 quarantined (pending_review): Confidence 0.40 between thresholds — needs human verification",
   "context": {}
@@ -580,7 +576,7 @@ stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
 {
-  "timestamp": "2026-11-06T05:07:38.216Z",
+  "timestamp": "2026-11-06T05:18:39.633Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidated memory 1 into project 11 (status pending_review, confidence 0.40)",
   "context": {}
@@ -588,7 +584,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
 {
-  "timestamp": "2026-11-06T05:07:38.216Z",
+  "timestamp": "2026-11-06T05:18:39.633Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (4ms)",
   "context": {}
@@ -596,7 +592,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
 {
-  "timestamp": "2026-11-06T05:07:38.217Z",
+  "timestamp": "2026-11-06T05:18:39.633Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -604,7 +600,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
 {
-  "timestamp": "2026-11-06T05:07:38.218Z",
+  "timestamp": "2026-11-06T05:18:39.634Z",
   "level": "info",
   "message": "[memory-consolidation] Found 1 stale memories to consolidate",
   "context": {}
@@ -612,7 +608,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
 {
-  "timestamp": "2026-11-06T05:07:38.219Z",
+  "timestamp": "2026-11-06T05:18:39.635Z",
   "level": "warn",
   "message": "[memory-consolidation] Memory 2 quarantined (pending_review): Confidence 0.40 between thresholds — needs human verification",
   "context": {}
@@ -620,7 +616,7 @@ stderr | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
 {
-  "timestamp": "2026-11-06T05:07:38.220Z",
+  "timestamp": "2026-11-06T05:18:39.637Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidated memory 2 into project 11 (status pending_review, confidence 0.40)",
   "context": {}
@@ -628,7 +624,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
 {
-  "timestamp": "2026-11-06T05:07:38.221Z",
+  "timestamp": "2026-11-06T05:18:39.637Z",
   "level": "info",
   "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 1 quarantined, 0 rejected by gate, 0 skipped, 0 errors (4ms)",
   "context": {}
@@ -636,7 +632,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
 {
-  "timestamp": "2026-11-06T05:07:38.222Z",
+  "timestamp": "2026-11-06T05:18:39.639Z",
   "level": "info",
   "message": "[memory-consolidation] Starting nightly memory consolidation cycle",
   "context": {}
@@ -644,7 +640,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
 {
-  "timestamp": "2026-11-06T05:07:38.223Z",
+  "timestamp": "2026-11-06T05:18:39.640Z",
   "level": "info",
   "message": "[memory-consolidation] Found 1 stale memories to consolidate",
   "context": {}
@@ -652,7 +648,7 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
 {
-  "timestamp": "2026-11-06T05:07:38.224Z",
+  "timestamp": "2026-11-06T05:18:39.641Z",
   "level": "info",
   "message": "[memory-consolidation] Memory 3 rejected by acceptance gate: Duplicate of existing memory #1",
   "context": {}
@@ -660,36 +656,40 @@ stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.
 
 stdout | server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate
 {
-  "timestamp": "2026-11-06T05:07:38.225Z",
+  "timestamp": "2026-11-06T05:18:39.641Z",
   "level": "info",
-  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 0 quarantined, 1 rejected by gate, 0 skipped, 0 errors (3ms)",
+  "message": "[memory-consolidation] Consolidation complete: 0/1 consolidated, 0 quarantined, 1 rejected by gate, 0 skipped, 0 errors (2ms)",
   "context": {}
 }
 
- ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > persists next actions, artifact references and exclusions together without activating them 15ms
- ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate 19ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > QUARANTINES a contradiction as pending_review, invisible to recall until a human clears it 39ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > promotion is embedded and gated, not "write everything" > a second nightly run does not double-promote (title-encoded cwm id) 11ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores raw summary pending without inventing verification or changing the source row 16ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > review-required conversations cannot enter active-memory recall > stores fully structured KNOWN-labeled summary pending without inventing verification or changing the source row 15ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > persists next actions, artifact references and exclusions together without activating them 11ms
+ ✓ server/services/__tests__/memory-consolidation.pglite.integration.test.ts > consolidation preserves conversation boundaries > keeps different exclusions as separate pending records and still refuses an exact duplicate 18ms
 (node:42) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
  ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > reads older A and B independently, never the newer unattributed or foreign row 12ms
- ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > a fresh switch to B with only A and NULL summaries has no prior summary 6ms
- ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > preserves the old organization/thread caller when no project selector is supplied 4ms
- ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > rejects an invalid explicit selector without issuing an unscoped recall 4ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > a fresh switch to B with only A and NULL summaries has no prior summary 5ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > preserves the old organization/thread caller when no project selector is supplied 5ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > rejects an invalid explicit selector without issuing an unscoped recall 6ms
  ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > retains the actual project id in a structured row read 8ms
- ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > a selected policy-column failure cannot retry the unscoped query 7ms
- ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > recalls all seven settled fields from a thread writeback in only its recorded project 31ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > a selected policy-column failure cannot retry the unscoped query 9ms
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > recalls all seven settled fields from a thread writeback in only its recorded project 33ms
  ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > binds the exact project alongside vector/thread/organization and returns its stored identity 4ms
  ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > a B writeback neither inherits A nor unattributed prior summaries and retains B on its new row 7ms
 (node:54) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
 stdout | server/routes/chat/__tests__/send-message-read-only.test.ts
 {
-  "timestamp": "2026-11-06T05:07:41.852Z",
+  "timestamp": "2026-11-06T05:18:43.303Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-11-06T05:07:41.853Z",
+  "timestamp": "2026-11-06T05:18:43.304Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -699,7 +699,7 @@ stdout | server/routes/chat/__tests__/send-message-read-only.test.ts
 
 stderr | server/routes/chat/__tests__/send-message-read-only.test.ts
 {
-  "timestamp": "2026-11-06T05:07:41.853Z",
+  "timestamp": "2026-11-06T05:18:43.304Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -710,7 +710,7 @@ stderr | server/routes/chat/__tests__/send-message-read-only.test.ts
 
 stderr | server/routes/chat/__tests__/send-message-read-only.test.ts
 {
-  "timestamp": "2026-11-06T05:07:42.091Z",
+  "timestamp": "2026-11-06T05:18:43.554Z",
   "level": "error",
   "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
   "context": {}
@@ -752,6 +752,9 @@ stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat
 stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Read only: summarize the evidence.
 [AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
 
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope 77ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > overrides drafting history, withholds pinned non-read tools and refuses unsolicited model writes before proposals 14ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Read only: summarize the evidence. 7ms
 stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Do not draft a document; summarize the evidence.
 [AnA] Orchestrator: intent=general, submission=none, deficiency=false
 
@@ -779,12 +782,6 @@ stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat
 stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {"mode":"submission-chat"}
 [AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
 
- ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope 68ms
- ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > overrides drafting history, withholds pinned non-read tools and refuses unsolicited model writes before proposals 10ms
- ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Read only: summarize the evidence. 6ms
- ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Do not draft a document; summarize the evidence. 6ms
- ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {} 5ms
- ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {"mode":"submission-chat"} 3ms
 stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history
 [AnA] Orchestrator: intent=general, submission=none, deficiency=false
 
@@ -842,33 +839,61 @@ stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat
 stdout | server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'fallback result without an admitted r…'
 [AnA] AI Gateway response via anthropic/mock-model (1ms, req=mock-request)
 
- ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history 13ms
- ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'all candidates omitted' 12ms
- ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'only one semantic record admitted' 4ms
- ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'working memory and one semantic recor…' 4ms
- ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'fallback result without an admitted r…' 3ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Do not draft a document; summarize the evidence. 21ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {} 5ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {"mode":"submission-chat"} 4ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history 16ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'all candidates omitted' 5ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'only one semantic record admitted' 6ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'working memory and one semantic recor…' 9ms
+ ✓ server/routes/chat/__tests__/send-message-read-only.test.ts > JSON chat admitted memory snapshot > reports what reached the prompt when 'fallback result without an admitted r…' 6ms
 (node:63) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > preserves all seven settled fields in the recalled summary (semantic embedding: false) 22ms
- ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > preserves all seven settled fields in the recalled summary (semantic embedding: true) 6ms
- ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > renders settled actions, artifacts and exclusions while keeping unsupported items withheld 8ms
- ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > keeps the stored thread summary empty when every proposed item is withheld 7ms
- ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > withholds the figure the stored check did not find, in every field the reader renders 7ms
- ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > reads the current answer's check, which may not be stored yet 5ms
- ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > fails closed when the thread cannot be read: only what claims nothing stands, and the row is still written 5ms
- ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > writes the row when the summarizer returns a malformed shape, never one letter per fact 6ms
- ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > below the refresh threshold, neither summarises nor reads the thread 3ms
+ ✓ server/services/__tests__/working-memory-project-attribution.test.ts > storeWorkingMemoryForThread — project attribution > records project_id on the row when the column exists 120ms
+ ✓ server/services/__tests__/working-memory-project-attribution.test.ts > storeWorkingMemoryForThread — project attribution > degrades to the pre-migration INSERT — with one warning — when the column is missing 5ms
+ ✓ server/services/__tests__/working-memory-project-attribution.test.ts > storeWorkingMemoryForThread — project attribution > never records a non-positive or non-finite project id 5ms
 (node:71) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > preserves all seven settled fields in the recalled summary (semantic embedding: false) 19ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > preserves all seven settled fields in the recalled summary (semantic embedding: true) 7ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > renders settled actions, artifacts and exclusions while keeping unsupported items withheld 7ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > keeps the stored thread summary empty when every proposed item is withheld 10ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > withholds the figure the stored check did not find, in every field the reader renders 7ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > reads the current answer's check, which may not be stored yet 7ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > fails closed when the thread cannot be read: only what claims nothing stands, and the row is still written 8ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > writes the row when the summarizer returns a malformed shape, never one letter per fact 3ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > below the refresh threshold, neither summarises nor reads the thread 4ms
+(node:79) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts exact-project search before project-bound recency resolves 9ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > returns healthy layers after stalled recency reaches the existing 3s deadline 4ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts independent searches while semantic working memory is pending 2ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps a timeout notice even when every source is unavailable 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps the unavailability notice when the prompt budget omits a whole working record 2ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > reports rejected reads as errors with a prompt notice, not empty recall 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps healthy empty recall empty, with no fabricated unavailable source 5ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > does not read tenant memory without an organization 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > skips only project memory when no project is selected 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > keeps recency recall but skips semantic searches without a query 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > still uses recency when semantic recall times out 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > does not misreport a timed-out semantic read with empty recency as empty memory 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > bounds recency fallback too when both working-memory reads stall 5ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > preserves a rejected semantic read as unavailable if recency returns no summary 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > clears successful deadline timers, preventing false timeout logs 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores a late semantic result while its recency fallback is still pending 2ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > excludes expired independent sources that finish during the working-memory fallback 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores late values and rejections after the final result is returned 1ms
+(node:87) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
 stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
 {
-  "timestamp": "2026-11-06T05:07:52.173Z",
+  "timestamp": "2026-11-06T05:18:55.635Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-11-06T05:07:52.176Z",
+  "timestamp": "2026-11-06T05:18:55.637Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -878,7 +903,7 @@ stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
 
 stderr | server/services/ana/__tests__/strict-round-body-budget.test.ts
 {
-  "timestamp": "2026-11-06T05:07:52.176Z",
+  "timestamp": "2026-11-06T05:18:55.637Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -887,13 +912,13 @@ stderr | server/services/ana/__tests__/strict-round-body-budget.test.ts
 stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
 [database] Database connection successful
 
- ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > CONTROL: omitted and false keep exact historical floor and marker bytes above 24000 3ms
- ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > bounds actual ordinary floor output, retains every correlation and withholds a reverse suffix only 4ms
- ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > keeps a valid under-budget round byte-identical including whole protected JSON 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > CONTROL: omitted and false keep exact historical floor and marker bytes above 24000 6ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > bounds actual ordinary floor output, retains every correlation and withholds a reverse suffix only 9ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > keeps a valid under-budget round byte-identical including whole protected JSON 0ms
  ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > uses a fixed ordinary envelope without copying source-controlled outcome or metadata 1ms
  ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > strict raw round-body bound with legacy byte controls > measures real legacy marker bytes under custom per-result ceiling and ordinary floor 0ms
  ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > keeps short ordinary siblings, then withholds the last passage before any private read 1ms
- ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > withholds private reads in reverse call order using the exact trusted offset 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > withholds private reads in reverse call order using the exact trusted offset 0ms
  ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > gives private-map membership precedence over a passage server name in the strict pass 0ms
  ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > does not enlarge an eligible short passage when ordinary floor output must be reduced 1ms
  ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > observable class priority, exact protected bytes and no enlargement > preserves exact existing replacement JSON for over-ceiling passages and private reads 1ms
@@ -901,109 +926,23 @@ stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
  ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=1 instead of dropping, slicing or enlarging a private outcome 0ms
  ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=2 instead of dropping, slicing or enlarging a private outcome 0ms
  ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses total=50 instead of dropping, slicing or enlarging a private outcome 0ms
- ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses an excessive call count when even unchanged short bodies exceed the default target 13ms
- ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > does not replace shorter ordinary or protected bodies with longer envelopes to claim success 0ms
- ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total NaN even before an empty-round fast path 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > refuses an excessive call count when even unchanged short bodies exceed the default target 20ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > does not replace shorter ordinary or protected bodies with longer envelopes to claim success 1ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total NaN even before an empty-round fast path 3ms
  ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total Infinity even before an empty-round fast path 0ms
  ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total -Infinity even before an empty-round fast path 0ms
  ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > rejects invalid strict total -1 even before an empty-round fast path 0ms
- ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > admits exactly empty bodies at zero while preserving each empty call correlation 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > deterministic refusal when truthful per-call bodies cannot fit > admits exactly empty bodies at zero while preserving each empty call correlation 1ms
  ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > accepts exact UTF-16 length and refuses one less without mutating bodies 0ms
- ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > refuses the actual enlarged post-guard array, without a second allocation 0ms
+ ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > refuses the actual enlarged post-guard array, without a second allocation 1ms
  ✓ server/services/ana/__tests__/strict-round-body-budget.test.ts > optional final non-mutating assertion export (absent on frozen baseline) > applies invalid-total and zero rules consistently to empty final arrays 1ms
-(node:79) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
-(Use `node --trace-warnings ...` to show where the warning was created)
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > assembles working + project memory for a project, and client memory only without one, with metadata diagnostics 5ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > applies structured forgetting to stale, unverified, low-importance memory 1ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > retains stale but verified memory entries and reports trimming 1ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > retains exclusions after character 400 when the complete record fits 1ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > keeps both complete records when their differing exclusions follow a shared long prefix 1ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > omits the whole qualified record when its wrapper and body exceed the global budget 1ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > admits a complete record at exactly 1000 rendered characters and omits it at 1001 1ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > skips an oversized working record and still admits a later smaller semantic record 1ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete title label before admitting a record 1ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete category label before admitting a record 1ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete sourceDocumentName label before admitting a record 1ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > reports only admitted records when their source-label openings collide 1ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 3500 character limit for request undefined 1ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 1000 character limit for request 100 0ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 12000 character limit for request 20000 2ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > retains exclusions after character 400 when the complete record fits 0ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > keeps both complete records when their differing exclusions follow a shared long prefix 0ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > omits the whole qualified record when its wrapper and body exceed the global budget 0ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > admits a complete record at exactly 1000 rendered characters and omits it at 1001 1ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > skips an oversized working record and still admits a later smaller semantic record 0ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete title label before admitting a record 0ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete category label before admitting a record 0ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete sourceDocumentName label before admitting a record 0ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > reports only admitted records when their source-label openings collide 0ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 3500 character limit for request undefined 0ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 1000 character limit for request 100 0ms
- ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 12000 character limit for request 20000 0ms
-(node:87) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
-(Use `node --trace-warnings ...` to show where the warning was created)
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts exact-project search before project-bound recency resolves 8ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > returns healthy layers after stalled recency reaches the existing 3s deadline 2ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts independent searches while semantic working memory is pending 2ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps a timeout notice even when every source is unavailable 1ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps the unavailability notice when the prompt budget omits a whole working record 2ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > reports rejected reads as errors with a prompt notice, not empty recall 1ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps healthy empty recall empty, with no fabricated unavailable source 1ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > does not read tenant memory without an organization 1ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > skips only project memory when no project is selected 1ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > keeps recency recall but skips semantic searches without a query 1ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > still uses recency when semantic recall times out 1ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > does not misreport a timed-out semantic read with empty recency as empty memory 1ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > bounds recency fallback too when both working-memory reads stall 3ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > preserves a rejected semantic read as unavailable if recency returns no summary 1ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > clears successful deadline timers, preventing false timeout logs 1ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores a late semantic result while its recency fallback is still pending 1ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > excludes expired independent sources that finish during the working-memory fallback 3ms
- ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores late values and rejections after the final result is returned 1ms
 (node:95) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves suggested provenance and discloses unrecorded scientific context 2ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves confirmed provenance and discloses unrecorded scientific context 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves corrected provenance and discloses unrecorded scientific context 1ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > rewards importance, verification, and confidence 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > defaults unknown importance to a middle weight 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > orders by score then recency and respects the limit 1ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > breaks ties by createdAt recency 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > fires only at session start with an org 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire mid-conversation 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire without an org 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > respects the disable flag 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > renders all sections when present 1ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > returns empty string when there is nothing to recall 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > omits lessons with no lessonsLearned text 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete memory within the prompt budget > keeps trailing qualifications in working, project, client and lesson records when they fit together 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete memory within the prompt budget > omits an oversized working summary and still considers later memory 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete memory within the prompt budget > skips an oversized project record without losing a later complete record 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete memory within the prompt budget > skips an oversized client record without losing a later complete record 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete memory within the prompt budget > skips an oversized lesson record without losing a later complete record 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete memory within the prompt budget > budgets full titles, categories and lesson labels as part of each record 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete memory within the prompt budget > admits a complete summary exactly at the rendered budget without an omission notice 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete memory within the prompt budget > reserves room for the omission notice before admitting complete records 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete memory within the prompt budget > reports an incomplete history when all candidates are omitted, without empty section headings 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete memory within the prompt budget > preserves ordinary short output, section order, ranking and count limits 1ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete memory within the prompt budget > leaves Vault and chat preview text and access notices outside the memory budget 1ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls project files with their filed location and what each is for 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls files the client sent in past conversations, with the id that reopens them 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > says honestly when a file has not been studied or failed extraction 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > says how many files it is NOT showing, and forbids answering from the sample 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > counts what needs attention across the whole scope, not across the sample 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > claims completeness only when the listing really is complete 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > says when more chat uploads were attached than it is showing 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > does not invent a "there is more" claim when there is not 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > discloses an unmeasured actor scope total for a bounded chat page 0ms
- ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > retains a measured scope total when an exhausted actor page supplies it 0ms
-(node:103) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
-(Use `node --trace-warnings ...` to show where the warning was created)
- ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument 8ms
- ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice 2ms
- ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled catalog feature lookup without reading gated records 1ms
- ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > distinguishes a failed source from an empty source and consumes late rejections 1ms
- ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > keeps disabled recall and disabled catalog gates intact 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument 9ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice 3ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled catalog feature lookup without reading gated records 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > distinguishes a failed source from an empty source and consumes late rejections 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > keeps disabled recall and disabled catalog gates intact 2ms
  ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > withholds both catalogue arms when access changes after their prose and counts were read 1ms
  ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > bounds a stalled final access read within the original turn budget and discards catalogue results 1ms
  ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > does not start any prose loader for an inactive or unavailable current actor 1ms
@@ -1016,17 +955,46 @@ stdout | server/services/ana/__tests__/strict-round-body-budget.test.ts
  ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > selected-project bootstrap boundary > a fresh project conversation recalls exact project facts without querying client operational atoms 1ms
  ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > selected-project bootstrap boundary > an organization conversation retains its existing client recall 1ms
  ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > unresolved selected project recall > does not fall back to working,client or organization outcome memory when an explicit project has no integer anchor 1ms
+(node:103) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > assembles working + project memory for a project, and client memory only without one, with metadata diagnostics 5ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > applies structured forgetting to stale, unverified, low-importance memory 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > retains stale but verified memory entries and reports trimming 3ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > retains exclusions after character 400 when the complete record fits 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > keeps both complete records when their differing exclusions follow a shared long prefix 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > omits the whole qualified record when its wrapper and body exceed the global budget 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > admits a complete record at exactly 1000 rendered characters and omits it at 1001 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > skips an oversized working record and still admits a later smaller semantic record 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete title label before admitting a record 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete category label before admitting a record 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete sourceDocumentName label before admitting a record 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > reports only admitted records when their source-label openings collide 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 3500 character limit for request undefined 3ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 1000 character limit for request 100 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 12000 character limit for request 20000 6ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > retains exclusions after character 400 when the complete record fits 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > keeps both complete records when their differing exclusions follow a shared long prefix 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > omits the whole qualified record when its wrapper and body exceed the global budget 3ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > admits a complete record at exactly 1000 rendered characters and omits it at 1001 3ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > skips an oversized working record and still admits a later smaller semantic record 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete title label before admitting a record 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete category label before admitting a record 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete sourceDocumentName label before admitting a record 2ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > reports only admitted records when their source-label openings collide 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 3500 character limit for request undefined 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 1000 character limit for request 100 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 12000 character limit for request 20000 0ms
 (node:111) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
 stdout | server/services/ana/__tests__/agentic-loop-rounds.test.ts
 {
-  "timestamp": "2026-11-06T05:07:54.346Z",
+  "timestamp": "2026-11-06T05:18:57.949Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-11-06T05:07:54.347Z",
+  "timestamp": "2026-11-06T05:18:57.950Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -1036,7 +1004,7 @@ stdout | server/services/ana/__tests__/agentic-loop-rounds.test.ts
 
 stderr | server/services/ana/__tests__/agentic-loop-rounds.test.ts
 {
-  "timestamp": "2026-11-06T05:07:54.347Z",
+  "timestamp": "2026-11-06T05:18:57.950Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -1046,42 +1014,112 @@ stdout | server/services/ana/__tests__/agentic-loop-rounds.test.ts
 [database] Database connection successful
 
  ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > scales the round ceiling by effort 1ms
- ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > lifts the old flat cap of 5 for the default (balanced) turn 1ms
- ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > falls back to the balanced ceiling for unknown/absent effort 0ms
- ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > never returns fewer rounds than needed to chain a real investigation 0ms
- ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveRoundExtension > scales the progress-earned allowance by effort 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > lifts the old flat cap of 5 for the default (balanced) turn 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > falls back to the balanced ceiling for unknown/absent effort 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > never returns fewer rounds than needed to chain a real investigation 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveRoundExtension > scales the progress-earned allowance by effort 0ms
  ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveRoundExtension > falls back to the balanced allowance for unknown/absent effort 0ms
  ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > extends past maxRounds while every round tries novel work 1ms
  ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > does NOT extend when the model is repeating itself 0ms
- ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > default behavior is unchanged when progressExtension is not set 0ms
- ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > thrash still cuts the loop even with extension headroom 1ms
- ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > passes small rounds through byte-identical (classic per-result caps) 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > default behavior is unchanged when progressExtension is not set 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > thrash still cuts the loop even with extension headroom 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > passes small rounds through byte-identical (classic per-result caps) 0ms
  ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > squeezes an oversized round into the total budget 1ms
  ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > never squeezes a result below the floor 1ms
- ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > handles an empty round 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > handles an empty round 0ms
  ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > keeps short whole recall JSON byte-identical with strictTotal=false 0ms
  ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > keeps short whole recall JSON byte-identical with strictTotal=true 0ms
- ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > withholds a complete memory expanded past the cap by JSON escaping with strictTotal=false 3ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > withholds a complete memory expanded past the cap by JSON escaping with strictTotal=false 2ms
  ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > withholds a complete memory expanded past the cap by JSON escaping with strictTotal=true 1ms
- ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > withholds a sub-8k recall squeezed by round sharing with strictTotal=false 2ms
- ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > withholds a sub-8k recall squeezed by round sharing with strictTotal=true 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > withholds a sub-8k recall squeezed by round sharing with strictTotal=false 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > withholds a sub-8k recall squeezed by round sharing with strictTotal=true 0ms
  ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > admits exactly 8000 serialized characters and withholds the complete 8001-character body 1ms
  ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > does not protect an ordinary result whose payload claims the recall tool name 0ms
  ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > session memory remains whole at tool-result handoff > keeps the strict total, call identity, order and immutable input in a crowded mixed round 2ms
  ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > returns empty when nothing failed 0ms
- ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > names the failures and coaches adaptation, not retry 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > names the failures and coaches adaptation, not retry 1ms
  ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > truncates a pathological error message 0ms
 (node:119) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > normalises titles and keeps the declared order and statuses 2ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses no steps 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses an empty list 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses a step with no title 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses an unknown status 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses duplicate titles 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses more than the cap 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > clips an over-long title rather than overflowing the panel 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > the handler reports the plan as recorded, with no completion it was not given 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits for a successful update_plan call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for another tool 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a failed call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a cancelled call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a result that is not ok 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for an unparseable result 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > survives relevance trimming 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > names drafting and project search by what they act on; what they were asked is the preview 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > labels the plan step as the plan, not as a raw tool name, and counts nothing the model chose 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > counts unresolved uploads and keeps the content/name distinction 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > a failed memory read is unavailable, never "none" 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > successful retrieval with every record omitted by the budget is unavailable, never "none" 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > successful retrieval with no matches still reports none 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > lists the memory items the assembler rendered, and drops what the budget cut 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the declared plan is persisted with the turn > stores the last validated plan on the assistant metadata 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the declared plan is persisted with the turn > stores nothing for a turn that declared no plan 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > a handler that refuses is a step that did not happen > reads the refusal a handler returned instead of throwing 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > a handler that refuses is a step that did not happen > is null for a result that did not refuse 0ms
+(node:127) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the stored check, as the server reads it > is this engine's check, from the stored metadata 2ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the stored check, as the server reads it > is nothing when it is another engine's, malformed or absent 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds the figure the check did not find, wherever the summarizer put it 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > keeps what the check found, and words that claim nothing 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds a stated verdict 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds what is not a sentence 0ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > never recombines two answers' findings into a claim neither made 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > a value one answer found never vouches for the same value another answer could not find 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > credits a figure's own number, never another number written beside it 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > a check that does not describe its text vouches for nothing 2ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds a value only the person stated (the person's, not a finding) 2ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the summary, settled field by field > keeps every field the reader renders only as far as it was found, and records what it withheld 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the summary, settled field by field > with no checked answer to stand on, keeps only what claims nothing 0ms
+(node:135) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > a write that fails is skipped, not thrown, and the others are still written
+{
+  "timestamp": "2026-11-06T05:19:00.339Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "30000000-0000-4000-8000-000000000005",
+    "error": "database unavailable"
+  }
+}
+
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > writes a receipt only for a result sent to the model byte for byte as the read returned it 2ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > a write that fails is skipped, not thrown, and the others are still written 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > with nothing deferred, writes nothing and touches no database 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > without any, a squeezed round is exactly what it was 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > reads are placed first and whole; the cuttable results share what is left, never below the floor 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > a read larger than the per-result cap is replaced, never cut 0ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > the replacement says where to read again from, in the shape the design names 0ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > coverageAfter > is the recorded spans plus this window 1ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > coverageAfter > with nothing recorded, is this window alone 0ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > fitReadWindow > keeps a window that fits, and shrinks one that does not to the largest that does 0ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > outside a settling host it records nothing, counts nothing, and says so 2ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > inside one it defers the receipt for exactly the window it serves, with the result it serves 2ms
+ ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > a comprehension record too large to leave room for text gives way, and says so 1ms
+(node:143) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
 stdout | server/services/ana/__tests__/passage-round-budget.test.ts
 {
-  "timestamp": "2026-11-06T05:07:55.188Z",
+  "timestamp": "2026-11-06T05:19:01.167Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-11-06T05:07:55.189Z",
+  "timestamp": "2026-11-06T05:19:01.168Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -1091,7 +1129,7 @@ stdout | server/services/ana/__tests__/passage-round-budget.test.ts
 
 stderr | server/services/ana/__tests__/passage-round-budget.test.ts
 {
-  "timestamp": "2026-11-06T05:07:55.190Z",
+  "timestamp": "2026-11-06T05:19:01.169Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -1101,9 +1139,9 @@ stdout | server/services/ana/__tests__/passage-round-budget.test.ts
 [database] Database connection successful
 
  ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > admits the first three 7500-character bodies and withholds the fourth intact 4ms
- ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > reserves every later replacement instead of filling the target with four of five 6000-character bodies 2ms
- ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > withholds a 8001-character over-per-result body even in an otherwise small round 1ms
- ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > withholds a 12000-character over-per-result body even in an otherwise small round 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > reserves every later replacement instead of filling the target with four of five 6000-character bodies 1ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > withholds a 8001-character over-per-result body even in an otherwise small round 0ms
+ ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > withholds a 12000-character over-per-result body even in an otherwise small round 0ms
  ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > uses one fixed withholding body irrespective of payload fields or search outcome 1ms
  ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > does not make an over-custom-ceiling body eligible again after other bodies are withheld 0ms
  ✓ server/services/ana/__tests__/passage-round-budget.test.ts > whole passage bodies through crowded canonical rounds > keeps an eligible body shorter than its replacement even with negative available room 0ms
@@ -1124,36 +1162,49 @@ stdout | server/services/ana/__tests__/passage-round-budget.test.ts
  ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > requires the exact server tool name, not "SEARCH_DOCUMENT_PASSAGES" 0ms
  ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > requires the exact server tool name, not " search_document_passages" 0ms
  ✓ server/services/ana/__tests__/passage-round-budget.test.ts > legacy ordinary budgeting and classification controls > keeps the existing empty-round result 0ms
-(node:127) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(node:151) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > normalises titles and keeps the declared order and statuses 3ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses no steps 1ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses an empty list 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses a step with no title 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses an unknown status 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses duplicate titles 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses more than the cap 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > clips an over-long title rather than overflowing the panel 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > the handler reports the plan as recorded, with no completion it was not given 1ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits for a successful update_plan call 1ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for another tool 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a failed call 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a cancelled call 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a result that is not ok 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for an unparseable result 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > survives relevance trimming 2ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > names drafting and project search by what they act on; what they were asked is the preview 1ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > labels the plan step as the plan, not as a raw tool name, and counts nothing the model chose 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > counts unresolved uploads and keeps the content/name distinction 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > a failed memory read is unavailable, never "none" 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > successful retrieval with every record omitted by the budget is unavailable, never "none" 1ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > successful retrieval with no matches still reports none 2ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > lists the memory items the assembler rendered, and drops what the budget cut 1ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the declared plan is persisted with the turn > stores the last validated plan on the assistant metadata 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the declared plan is persisted with the turn > stores nothing for a turn that declared no plan 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > a handler that refuses is a step that did not happen > reads the refusal a handler returned instead of throwing 0ms
- ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > a handler that refuses is a step that did not happen > is null for a result that did not refuse 0ms
-(node:135) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves suggested provenance and discloses unrecorded scientific context 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves confirmed provenance and discloses unrecorded scientific context 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves corrected provenance and discloses unrecorded scientific context 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > rewards importance, verification, and confidence 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > defaults unknown importance to a middle weight 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > orders by score then recency and respects the limit 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > breaks ties by createdAt recency 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > fires only at session start with an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire mid-conversation 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire without an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > respects the disable flag 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > renders all sections when present 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > returns empty string when there is nothing to recall 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > omits lessons with no lessonsLearned text 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete-record admission > keeps trailing qualifications in working, project, client and lesson records when they fit together 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete-record admission > omits an oversized working summary and still considers later memory 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete-record admission > skips an oversized project record without losing a later complete record 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete-record admission > skips an oversized client record without losing a later complete record 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete-record admission > skips an oversized lesson record without losing a later complete record 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete-record admission > budgets full titles, categories and lesson labels as part of each record 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — budget boundaries and output compatibility > admits a complete summary exactly at the rendered budget without an omission notice 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — budget boundaries and output compatibility > reserves room for the omission notice before admitting complete records 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — budget boundaries and output compatibility > reports an incomplete history when all candidates are omitted, without empty section headings 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — budget boundaries and output compatibility > preserves ordinary short output, section order, ranking and count limits 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — budget boundaries and output compatibility > leaves Vault and chat preview text and access notices outside the memory budget 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls project files with their filed location and what each is for 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls files the client sent in past conversations, with the id that reopens them 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > says honestly when a file has not been studied or failed extraction 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > says how many files it is NOT showing, and forbids answering from the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > counts what needs attention across the whole scope, not across the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > claims completeness only when the listing really is complete 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > says when more chat uploads were attached than it is showing 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > does not invent a "there is more" claim when there is not 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > discloses an unmeasured actor scope total for a bounded chat page 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > retains a measured scope total when an exhausted actor page supplies it 0ms
+(node:159) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > does not query organization operational atoms while retaining exact project recall 5ms
+ ✓ server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > keeps the same project selector on semantic working memory and recency fallback 1ms
+ ✓ server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > retains organization recall when the caller names no project 1ms
+(node:167) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
  ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > scoreAtom (behaviour-preserving with the previous inlined atomSortScore) > pins working memory above any semantic atom 2ms
  ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > scoreAtom (behaviour-preserving with the previous inlined atomSortScore) > combines similarity, confidence, and verified boost with the original weights 0ms
@@ -1163,7 +1214,7 @@ stdout | server/services/ana/__tests__/passage-round-budget.test.ts
  ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > per-layer ranking weights (unified formula) > lets a custom policy unpin working memory so it ranks by similarity 0ms
  ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > always keeps working memory 0ms
  ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > keeps recent semantic atoms and drops stale ones 0ms
- ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > retains stale atoms when verified or high-importance 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > retains stale atoms when verified or high-importance 1ms
  ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > keeps atoms with no/invalid createdAt (cannot prove staleness) 0ms
  ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > collapses matching layer/category/title/full content to the higher-scoring atom 1ms
  ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > keeps atoms that differ by layer 0ms
@@ -1179,66 +1230,25 @@ stdout | server/services/ana/__tests__/passage-round-budget.test.ts
  ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > SEMANTIC_WORKING_MEMORY_POLICY > ranks working memory by similarity instead of a flat pin 0ms
  ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > SEMANTIC_WORKING_MEMORY_POLICY > keeps a small structural edge: ties favour working memory 0ms
  ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > exposes the reviewed default constants that preserve prior behaviour 0ms
-(node:143) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
-(Use `node --trace-warnings ...` to show where the warning was created)
-stderr | server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > a write that fails is skipped, not thrown, and the others are still written
-{
-  "timestamp": "2026-11-06T05:07:57.237Z",
-  "level": "warn",
-  "message": "[read-receipts] read receipt not written",
-  "context": {
-    "documentId": "30000000-0000-4000-8000-000000000005",
-    "error": "database unavailable"
-  }
-}
-
- ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > writes a receipt only for a result sent to the model byte for byte as the read returned it 3ms
- ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > a write that fails is skipped, not thrown, and the others are still written 2ms
- ✓ server/services/ana/__tests__/read-receipts.test.ts > settleReadReceipts > with nothing deferred, writes nothing and touches no database 1ms
- ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > without any, a squeezed round is exactly what it was 1ms
- ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > reads are placed first and whole; the cuttable results share what is left, never below the floor 1ms
- ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > a read larger than the per-result cap is replaced, never cut 0ms
- ✓ server/services/ana/__tests__/read-receipts.test.ts > budgetToolResultsForModel with whole-or-nothing reads > the replacement says where to read again from, in the shape the design names 0ms
- ✓ server/services/ana/__tests__/read-receipts.test.ts > coverageAfter > is the recorded spans plus this window 0ms
- ✓ server/services/ana/__tests__/read-receipts.test.ts > coverageAfter > with nothing recorded, is this window alone 0ms
- ✓ server/services/ana/__tests__/read-receipts.test.ts > fitReadWindow > keeps a window that fits, and shrinks one that does not to the largest that does 1ms
- ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > outside a settling host it records nothing, counts nothing, and says so 3ms
- ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > inside one it defers the receipt for exactly the window it serves, with the result it serves 2ms
- ✓ server/services/ana/__tests__/read-receipts.test.ts > read_project_document > a comprehension record too large to leave room for text gives way, and says so 1ms
-(node:151) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
-(Use `node --trace-warnings ...` to show where the warning was created)
- ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the stored check, as the server reads it > is this engine's check, from the stored metadata 3ms
- ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the stored check, as the server reads it > is nothing when it is another engine's, malformed or absent 1ms
- ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds the figure the check did not find, wherever the summarizer put it 1ms
- ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > keeps what the check found, and words that claim nothing 1ms
- ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds a stated verdict 1ms
- ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds what is not a sentence 0ms
- ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > never recombines two answers' findings into a claim neither made 1ms
- ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > a value one answer found never vouches for the same value another answer could not find 1ms
- ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > credits a figure's own number, never another number written beside it 1ms
- ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > a check that does not describe its text vouches for nothing 2ms
- ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds a value only the person stated (the person's, not a finding) 1ms
- ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the summary, settled field by field > keeps every field the reader renders only as far as it was found, and records what it withheld 1ms
- ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the summary, settled field by field > with no checked answer to stand on, keeps only what claims nothing 0ms
-(node:159) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(node:175) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
  ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'semantic' when the flag is on and similarity recall serves the summary 4ms
  ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'recency_fallback' when the flag is ON but semantic clears nothing — the state a pilot must see 1ms
  ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'recency' when the flag is off and the default path answers 1ms
- ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'none' when nothing is recalled at all 0ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'none' when nothing is recalled at all 1ms
  ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the mode reaches Prometheus > recordAnaTurn counts modes and the rendered family carries them 1ms
- ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the mode reaches Prometheus > the stream route hands the mode from diagnostics to recordAnaTurn (source contract) 1ms
-(node:167) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the mode reaches Prometheus > the stream route hands the mode from diagnostics to recordAnaTurn (source contract) 2ms
+(node:183) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
 stdout | server/services/__tests__/working-memory.test.ts
 {
-  "timestamp": "2026-11-06T05:07:58.608Z",
+  "timestamp": "2026-11-06T05:19:02.714Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-11-06T05:07:58.610Z",
+  "timestamp": "2026-11-06T05:19:02.715Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -1248,7 +1258,7 @@ stdout | server/services/__tests__/working-memory.test.ts
 
 stderr | server/services/__tests__/working-memory.test.ts
 {
-  "timestamp": "2026-11-06T05:07:58.610Z",
+  "timestamp": "2026-11-06T05:19:02.715Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -1257,7 +1267,7 @@ stderr | server/services/__tests__/working-memory.test.ts
 stdout | server/services/__tests__/working-memory.test.ts
 [database] Database connection successful
 
- ✓ server/services/__tests__/working-memory.test.ts > shouldEmbedWorkingMemory — safe-to-flip gate > embeds only when the feature is on AND the column exists 2ms
+ ✓ server/services/__tests__/working-memory.test.ts > shouldEmbedWorkingMemory — safe-to-flip gate > embeds only when the feature is on AND the column exists 1ms
  ✓ server/services/__tests__/working-memory.test.ts > shouldEmbedWorkingMemory — safe-to-flip gate > never embeds when the embedding column is absent — even with the flag on 0ms
  ✓ server/services/__tests__/working-memory.test.ts > shouldEmbedWorkingMemory — safe-to-flip gate > never embeds when the feature is off 0ms
  ✓ server/services/__tests__/working-memory.test.ts > isSemanticWorkingMemoryEnabled — flag reader > is off by default and only true for the exact string "true" 0ms
@@ -1265,19 +1275,19 @@ stdout | server/services/__tests__/working-memory.test.ts
  ✓ server/services/__tests__/working-memory.test.ts > buildWorkingMemoryPrompt > folds a previous summary in for incremental update 0ms
  ✓ server/services/__tests__/working-memory.test.ts > formatWorkingMemoryForPrompt > always renders the objective and only the non-empty sections 1ms
  ✓ server/services/__tests__/working-memory.test.ts > formatWorkingMemoryForPrompt > preserves the public seven-field layout without rendering withheld items 0ms
- ✓ server/services/__tests__/working-memory.test.ts > formatWorkingMemoryForPrompt > retains the public empty-objective heading 1ms
+ ✓ server/services/__tests__/working-memory.test.ts > formatWorkingMemoryForPrompt > retains the public empty-objective heading 0ms
  ✓ server/services/__tests__/working-memory.test.ts > working-memory embeddings migration — guard > is idempotent and additive (pgvector + nullable embedding column) 0ms
-(node:175) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(node:191) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
 stdout | server/services/ana/__tests__/passage-round-read-priority.test.ts
 {
-  "timestamp": "2026-11-06T05:07:59.548Z",
+  "timestamp": "2026-11-06T05:19:03.667Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-11-06T05:07:59.549Z",
+  "timestamp": "2026-11-06T05:19:03.670Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -1287,7 +1297,7 @@ stdout | server/services/ana/__tests__/passage-round-read-priority.test.ts
 
 stderr | server/services/ana/__tests__/passage-round-read-priority.test.ts
 {
-  "timestamp": "2026-11-06T05:07:59.550Z",
+  "timestamp": "2026-11-06T05:19:03.670Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -1298,31 +1308,21 @@ stdout | server/services/ana/__tests__/passage-round-read-priority.test.ts
 
  ✓ server/services/ana/__tests__/passage-round-read-priority.test.ts > review regression: passage replacement cannot change private-read admission > preserves the sixth read as not delivered when a new replacement makes a previously crowded round fit 3ms
  ✓ server/services/ana/__tests__/passage-round-read-priority.test.ts > review regression: passage replacement cannot change private-read admission > preserves an admitted read when an irreducible passage replacement makes a previously fitting round crowded 1ms
-(node:183) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
-(Use `node --trace-warnings ...` to show where the warning was created)
- ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > does not score a missing confidence as a confidence of zero 1ms
- ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > ranks an unscored atom on the same scale as a scored one 0ms
- ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > puts a more relevant unscored atom above a less relevant one carrying a stamped 0.8 1ms
- ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > orders unscored atoms by similarity, then verification 0ms
- ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > says how many ranked atoms carry no recorded confidence 0ms
- ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > counts working memory as unscored only where its layer weighs confidence 0ms
- ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > control: a recorded confidence still counts with its weight 0ms
-(node:191) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
-(Use `node --trace-warnings ...` to show where the warning was created)
- ✓ server/services/__tests__/working-memory-project-attribution.test.ts > storeWorkingMemoryForThread — project attribution > records project_id on the row when the column exists 68ms
- ✓ server/services/__tests__/working-memory-project-attribution.test.ts > storeWorkingMemoryForThread — project attribution > degrades to the pre-migration INSERT — with one warning — when the column is missing 5ms
- ✓ server/services/__tests__/working-memory-project-attribution.test.ts > storeWorkingMemoryForThread — project attribution > never records a non-positive or non-finite project id 4ms
 (node:199) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ server/services/__tests__/memory-context-assembler-presents-no-confidence-percent.test.ts > memory block > cites a project atom without a confidence percentage, and leaves the organization layer out 3ms
- ✓ server/services/__tests__/memory-context-assembler-presents-no-confidence-percent.test.ts > memory block > cites an organization atom without a confidence percentage when no project is open 1ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > does not score a missing confidence as a confidence of zero 2ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > ranks an unscored atom on the same scale as a scored one 1ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > puts a more relevant unscored atom above a less relevant one carrying a stamped 0.8 1ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > orders unscored atoms by similarity, then verification 1ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > says how many ranked atoms carry no recorded confidence 0ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > counts working memory as unscored only where its layer weighs confidence 1ms
+ ✓ server/services/__tests__/memory-orchestrator-ranks-unscored-atoms-on-their-other-signals.test.ts > memory ranking without a recorded confidence > control: a recorded confidence still counts with its weight 0ms
 (node:207) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > does not query organization operational atoms while retaining exact project recall 7ms
- ✓ server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > keeps the same project selector on semantic working memory and recency fallback 1ms
- ✓ server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > retains organization recall when the caller names no project 1ms
+ ✓ server/services/__tests__/memory-context-assembler-presents-no-confidence-percent.test.ts > memory block > cites a project atom without a confidence percentage, and leaves the organization layer out 4ms
+ ✓ server/services/__tests__/memory-context-assembler-presents-no-confidence-percent.test.ts > memory block > cites an organization atom without a confidence percentage when no project is open 1ms
 
  Test Files  22 passed (22)
       Tests  323 passed (323)
-   Start at  21:07:34
-   Duration  25.63s (transform 8.50s, setup 325ms, import 17.87s, tests 4.33s, environment 2ms)
+   Start at  21:18:36
+   Duration  28.17s (transform 9.63s, setup 375ms, import 19.76s, tests 4.41s, environment 2ms)

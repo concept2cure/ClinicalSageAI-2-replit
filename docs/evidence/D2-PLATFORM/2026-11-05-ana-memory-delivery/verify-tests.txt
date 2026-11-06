@@ -1,8 +1,3 @@
 (node:8) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
-Warning: modified files without companion tests (non-blocking):
- - server/routes/chat/send-message.ts
- - server/services/ana-session-bootstrap-format.ts
- - server/services/ana/turn-context-used.ts
- - server/services/memory-consolidation-job.ts
-Companion-file scan complete. This scan does not execute or qualify tests.
+No source files requiring test verification.

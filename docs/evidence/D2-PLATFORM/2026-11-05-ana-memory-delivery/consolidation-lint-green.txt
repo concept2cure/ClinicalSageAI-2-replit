@@ -1,0 +1,7 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs
+  50:1  warning  Function 'harness' has too many lines (103). Maximum allowed is 100  max-lines-per-function
+
+✖ 1 problem (0 errors, 1 warning)

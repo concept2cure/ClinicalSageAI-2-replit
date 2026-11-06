@@ -2,7 +2,7 @@
   "repository": "concept2cure/ClinicalSageAI-2-replit",
   "branch": "concept2cure-v2",
   "baseline": "2cec182a17105da5863bab2fdb66ba1adef317e2",
-  "local_verification_as_of_utc": "2026-11-06T05:08:42Z",
+  "local_verification_as_of_utc": "2026-11-06T05:23:22Z",
   "runtime": {
     "node": "22.23.4",
     "typescript": "5.6.3",
@@ -18,8 +18,8 @@
       "git_blob": "59e54c3ce854eb298e8c3273e4efdb2870b6792f"
     },
     "server/services/__tests__/ana-session-bootstrap.test.ts": {
-      "sha256": "164685ba8c338d75985c690c7566d0e0e42c5f8f9d706c1204ffb819ebc4ded2",
-      "git_blob": "458e351be05456c433c16048bb0cfda3c686e356"
+      "sha256": "38ce5ff7371a2a3fc458f4c006f38c13a75f483e47ed78a3c32cc644e9567cac",
+      "git_blob": "8c6b9fbc31b1e9fd2fcd10937b8a89f5013b058a"
     },
     "server/services/__tests__/memory-context-assembler-deadline.test.ts": {
       "sha256": "dd5db503289a5695b4aa5d709b440243c1b0dde2fdba4eff4d0f799c64a53958",
@@ -70,12 +70,12 @@
       "git_blob": "5db1d1ca100beb724cc3b59fb38c401946e97d59"
     },
     "tests/services/ana/memory-consolidation-outcomes.test.cjs": {
-      "sha256": "235ff6cb91751a9bd7e1eb02752ef91c2572279cc8135bde24d3f6d0bad4fb65",
-      "git_blob": "9ddd78308bbb62c07fe029180ee146277fa0f0e0"
+      "sha256": "b57f9a7e5ec4fa4f7e0b8f70155cffee67dff65a2a18bd010189d62265d3c000",
+      "git_blob": "71d5eaf32bf47598165e542e408c9b99408cbe88"
     },
     "tests/unit/memory-context-assembler.test.ts": {
-      "sha256": "f38c0cc8c6c7ac055d40cab9f143e3a9284a0872d892b8a9d01e0ed21fa2b65b",
-      "git_blob": "3a2733a9b9c7ee892b05d383adf997e7c0a65e03"
+      "sha256": "12cce106b36add89d99d5c345deff26abbd8ef0bf7e78d08120ba440b6f2ab24",
+      "git_blob": "496cb302428df5347a9fb4501eb899af5cabb27f"
     }
   },
   "red_green": {
@@ -145,7 +145,7 @@
       "server/services/ana/__tests__/read-receipts.test.ts"
     ]
   },
-  "pre_push": "not yet run on the committed candidate; publication receipt will record the exact result",
+  "pre_push": "initial candidate failed the test-size warning ratchet; the complete hook on the final candidate remains pending",
   "logs": {
     "working-red.txt": {
       "source_capture": "next-memory-working-red.txt",
@@ -279,8 +279,8 @@
     },
     "final-behavioral.tap": {
       "source_capture": "next-memory-final-behavioral.tap",
-      "capture_sha256": "9092574397625e2bbd05362603557c146ff7508b19260272366ec0b5489fb63b",
-      "stored_sha256": "9092574397625e2bbd05362603557c146ff7508b19260272366ec0b5489fb63b",
+      "capture_sha256": "a588ff05cce84e685a3ab4295b7ed5cb6e9cf11b303f480fad0f7c35492c4c9f",
+      "stored_sha256": "a588ff05cce84e685a3ab4295b7ed5cb6e9cf11b303f480fad0f7c35492c4c9f",
       "bytes": 27626,
       "normalization": "none",
       "removed_eof_newlines": 0,
@@ -288,9 +288,9 @@
     },
     "final-vitest.txt": {
       "source_capture": "next-memory-final-vitest.txt",
-      "capture_sha256": "a046363af2ecdf1e9e2fb2d5ad7e35023923c02b9f628813e015f88cc325745a",
-      "stored_sha256": "995c178aa3092a0e601899aecc2753f6262e3a70e17da6ffdf8ab2576728e3ed",
-      "bytes": 116034,
+      "capture_sha256": "d7cba50726f405b59b32d6d4cf379c98f556e9d8eb5c204c6ba6c90a7f802701",
+      "stored_sha256": "8401668922bc998a721b7a0e30af8ce97295d0b150804d3816a8ffaf90bf6e91",
+      "bytes": 115954,
       "normalization": "documented EOF/trailing-whitespace removal only",
       "removed_eof_newlines": 1,
       "trailing_whitespace_removed_by_line": {}
@@ -306,12 +306,75 @@
     },
     "verify-tests.txt": {
       "source_capture": "next-memory-verify-tests.txt",
-      "capture_sha256": "4b9c8753da5542ac29d07e19290bd6c377671c726c71c056069a512b0783a2a4",
-      "stored_sha256": "4b9c8753da5542ac29d07e19290bd6c377671c726c71c056069a512b0783a2a4",
-      "bytes": 493,
+      "capture_sha256": "a5cfd46942ea2809100354e712669d505eaba64c460188d6b19d94106da56b3d",
+      "stored_sha256": "a5cfd46942ea2809100354e712669d505eaba64c460188d6b19d94106da56b3d",
+      "bytes": 219,
       "normalization": "none",
       "removed_eof_newlines": 0,
       "trailing_whitespace_removed_by_line": {}
+    },
+    "bootstrap-regroup-green.txt": {
+      "source_capture": "next-memory-bootstrap-regroup-green.txt",
+      "capture_sha256": "808c55b45590edbd15873cb679c64d2b12a582d0259c7cb26bca35dc1cfb387d",
+      "stored_sha256": "f9cc88d4dfd5872f7e4ae48aca2174bc2b87e1b55899b54d615fd33d51065938",
+      "bytes": 6958,
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "documented EOF/trailing-whitespace removal only"
+    },
+    "bootstrap-lint-green.txt": {
+      "source_capture": "next-memory-bootstrap-lint-green.txt",
+      "capture_sha256": "5b409d9e78f06352b89a0378e6ac4e7e81254e847af559174018746f8dfad2d9",
+      "stored_sha256": "5b409d9e78f06352b89a0378e6ac4e7e81254e847af559174018746f8dfad2d9",
+      "bytes": 456,
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "none"
+    },
+    "assembler-regroup-green.txt": {
+      "source_capture": "next-memory-assembler-regroup-green.txt",
+      "capture_sha256": "2d41743961fd8d68cb79bba4867e7029d33f28c5ae1d95206d7fdef75ed70287",
+      "stored_sha256": "ceee13d61b0000a247f7e63458e73f3e2888a7f00a1feb6d25b5afa7f8eb0ffb",
+      "bytes": 6662,
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "documented EOF/trailing-whitespace removal only"
+    },
+    "assembler-lint-green.txt": {
+      "source_capture": "next-memory-assembler-lint-green.txt",
+      "capture_sha256": "48c3d00ce62bdc87eb2bd6a84a116043cfe969e90778e034a6b03f5100d12179",
+      "stored_sha256": "69434d68a926da4d2b4991d3e5f2988663dda8a12e83648135538728ccbc01b7",
+      "bytes": 685,
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "documented EOF/trailing-whitespace removal only"
+    },
+    "consolidation-refactor-green.tap": {
+      "source_capture": "next-memory-consolidation-refactor-green.tap",
+      "capture_sha256": "c9b8cb8534fb2e1c1b4968c6c5c533e01ef39770030d88962dd89e18860666d1",
+      "stored_sha256": "c9b8cb8534fb2e1c1b4968c6c5c533e01ef39770030d88962dd89e18860666d1",
+      "bytes": 16297,
+      "removed_eof_newlines": 0,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "none"
+    },
+    "consolidation-lint-green.txt": {
+      "source_capture": "next-memory-consolidation-lint-green.txt",
+      "capture_sha256": "76bb02c1c1fe2d7d09bc4ee961aaed5bec38c3c6e4ebccaef189a562cd80dc25",
+      "stored_sha256": "4cd3ef5788260fd3d82cb84b9dffed48ba5958613f0b5c83057125ea9bc06d1e",
+      "bytes": 427,
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "documented EOF/trailing-whitespace removal only"
+    },
+    "pre-push-lint-failure.txt": {
+      "source_capture": "next-memory-pre-push-lint-failure.txt",
+      "capture_sha256": "75e761fcfd787387a8e2e33d18c602ff222446f74988428941a7791d4b37ca76",
+      "stored_sha256": "82341909d47d98fc45f37d21e548e334d91987145570fea765ad78868aea715a",
+      "bytes": 30468,
+      "removed_eof_newlines": 1,
+      "trailing_whitespace_removed_by_line": {},
+      "normalization": "documented EOF/trailing-whitespace removal only"
     }
   },
   "commands": {
@@ -320,5 +383,38 @@
     "build": "npm run build",
     "companion_scan": "bash scripts/ai/verify-tests.sh",
     "runtime_path_prefix": "/workspace/scratch/873134e51e15/node22-runtime/node_modules/node/bin"
+  },
+  "pre_push_attempts": [
+    {
+      "candidate": "340290a483a10fa19e1e90835032cd4ff3a9c222",
+      "parent": "2cec182a17105da5863bab2fdb66ba1adef317e2",
+      "tree": "22efcd6e0ad7cc932474112e9d24b019e2e52ea2",
+      "started_at_utc": "2026-11-06T05:12:49.125369+00:00",
+      "status": "completed",
+      "command": "TYPECHECK_FILES_PER_PROCESS=500 TYPECHECK_HEAP_MB=7168 sh .husky/pre-push origin https://github.com/concept2cure/ClinicalSageAI-2-replit.git",
+      "stdin": "refs/heads/concept2cure-v2 340290a483a10fa19e1e90835032cd4ff3a9c222 refs/heads/concept2cure-v2 2cec182a17105da5863bab2fdb66ba1adef317e2\n",
+      "hook_sha256": "be2a193164e851d77714721b3db3a99f8534aa4b800e7a96273077354f3b9b8c",
+      "typecheck_files_per_process": 500,
+      "typecheck_heap_mb": 7168,
+      "exit_code": 1,
+      "ended_at_utc": "2026-11-06T05:13:39.805932+00:00",
+      "log_sha256": "75e761fcfd787387a8e2e33d18c602ff222446f74988428941a7791d4b37ca76",
+      "failure": "three new test-size lint warnings; no typecheck executed",
+      "stored_log": "pre-push-lint-failure.txt"
+    }
+  ],
+  "test_size_refactor": {
+    "cases_removed": 0,
+    "consolidation_names_and_order_preserved": 71,
+    "counted_consolidation_lines": 499,
+    "lint_counts": {
+      "bootstrap": 0,
+      "assembler": 1,
+      "consolidation": 1
+    },
+    "production_changed": false,
+    "baseline_changed": false,
+    "configuration_changed": false,
+    "seven_production_files_identical_to_successful_build": true
   }
 }
