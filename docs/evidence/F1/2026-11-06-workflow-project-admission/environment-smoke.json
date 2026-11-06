@@ -1,0 +1,15 @@
+{
+  "exitCode": 0,
+  "command": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/tasking/__tests__/workflow-templates.test.ts",
+    "server/services/tasking/__tests__/task-audit-transaction.test.ts",
+    "--reporter=verbose"
+  ],
+  "elapsedSeconds": 1.16,
+  "node": "v22.23.4",
+  "repositoryHead": "21a21849d7cfb8a35794489a87fad2b849c7011c",
+  "dependencyManifestsUnchanged": true
+}
