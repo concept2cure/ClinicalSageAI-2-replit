@@ -27,7 +27,8 @@
     "P-100",
     "P-101",
     "P-102",
-    "P-103"
+    "P-103",
+    "P-104"
   ],
   "alwaysAllowed": [
     "**/__tests__/**",
@@ -323,7 +324,7 @@
     },
     {
       "id": "S4",
-      "title": "Spine 4: AnA the writer and the project's memory: narrates with citations, takes direction, asks the right questions, pushes back, remembers the project and the person (P-79, P-81)",
+      "title": "Spine 4: AnA the writer and the project's memory: narrates with citations, takes direction, asks the right questions, pushes back, remembers the project and the person (P-79, P-81); Anna runtime epic: controlled skills, independent read-only workers, scoped rules and decision gates (P-104)",
       "status": "open",
       "dependsOn": [],
       "paths": [
@@ -344,7 +345,13 @@
         "server/services/ana-context-router.ts",
         "server/services/lumen-context-builder.ts",
         "server/services/ana-wisdom-engine.ts",
-        "server/services/ana-capability-registry.ts"
+        "server/services/ana-capability-registry.ts",
+        "server/services/ai-gateway/**",
+        "server/services/connectors/**",
+        "server/services/working-memory.ts",
+        "server/services/ana-session-bootstrap.ts",
+        "server/services/vault/document-catalog-document.ts",
+        "server/services/vault/document-catalog-actor-reads.ts"
       ]
     },
     {
@@ -486,7 +493,9 @@
         "server/services/agency-responses/**",
         "shared/agency/**",
         "client/src/concept2cure/v2/surfaces/AgencyResponses*.tsx",
-        "client/src/concept2cure/v2/surfaces/LetterQuestion*.tsx"
+        "client/src/concept2cure/v2/surfaces/LetterQuestion*.tsx",
+        "server/routes/orchestration.ts",
+        "server/services/orchestration/pre-submission-gate-verdict.ts"
       ]
     },
     {
@@ -593,5 +602,111 @@
       "scope": "replaces the project_memory_entries bundle:<uuid> path, deleted in the same change (C3-BUNDLE-REGISTER.md)"
     }
   ],
-  "completesRequired": true
+  "completesRequired": true,
+  "architectureEpics": [
+    {
+      "id": "anna-runtime",
+      "decision": "P-104",
+      "title": "Extend the existing Anna runtime — Multi-Agent Architecture Spec v0.5",
+      "source": "MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf §§1–32",
+      "planSection": "docs/design/ONE_DESIGN_PLAN.md §1d",
+      "status": "acceptance_pending",
+      "newFilesApproved": false,
+      "accountTarget": "client_owned_only_for_client_filings; retain historical sender identity; no migration claimed",
+      "milestones": [
+        {
+          "phase": 0,
+          "packages": [
+            "S4",
+            "S9",
+            "S11",
+            "S5",
+            "S6"
+          ],
+          "gate": "Expanded §14.4 spike: independent verification, custody, exact-byte approval, tenant isolation, correction/hard gate, tier routing, derivative round-trip",
+          "status": "acceptance_pending"
+        },
+        {
+          "phase": 1,
+          "packages": [
+            "S2",
+            "S4",
+            "S6"
+          ],
+          "gate": "Provenance end-to-end; seeded bad citation rejected",
+          "status": "queued"
+        },
+        {
+          "phase": 2,
+          "packages": [
+            "D4",
+            "S4",
+            "S6"
+          ],
+          "gate": "CSR cannot lock with unverified claims or blockers",
+          "status": "queued"
+        },
+        {
+          "phase": 3,
+          "packages": [
+            "S3",
+            "S4"
+          ],
+          "gate": "Exact fixture TLF; independent QC catches seeded cell change",
+          "status": "queued"
+        },
+        {
+          "phase": 4,
+          "packages": [
+            "S7",
+            "S12"
+          ],
+          "gate": "Exact CMC batch/stability tables; OOS flagged",
+          "status": "queued"
+        },
+        {
+          "phase": 5,
+          "packages": [
+            "S8",
+            "S3",
+            "S9"
+          ],
+          "gate": "QNS workflow; seeded site thresholds; reproducible reports",
+          "status": "queued"
+        },
+        {
+          "phase": 6,
+          "packages": [
+            "S6",
+            "S4",
+            "S9"
+          ],
+          "gate": "Effective templates/training; inspection export; scoped learning and cohort/promotion controls",
+          "status": "queued"
+        },
+        {
+          "phase": 7,
+          "packages": [
+            "S5",
+            "S10",
+            "S9"
+          ],
+          "gate": "Validated package/client grant/hash approval; ACK watch; sourced correspondence; clean-file readiness",
+          "status": "queued"
+        },
+        {
+          "phase": 8,
+          "packages": [
+            "D4",
+            "S2",
+            "S4",
+            "S5",
+            "S10"
+          ],
+          "gate": "Provenanced eSTAR/predicate/CER factory fixtures on proven spine",
+          "status": "queued"
+        }
+      ]
+    }
+  ]
 }
