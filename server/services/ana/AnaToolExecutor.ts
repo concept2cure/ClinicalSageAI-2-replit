@@ -5754,7 +5754,7 @@ registerToolHandler('load_nonclinical_program', async (input: Record<string, unk
       presentStudies: loaded.presentStudies,
       speciesNoaels: loaded.speciesNoaels,
       instruction:
-        'These rows are model-extracted observations, not an approved basis for program readiness or a starting dose. Do not relay them as a program determination; any worksheet comparison is labelled as stated inputs, not records the calculator read. Do not pass these studies to draft_nonclinical_overview_m2_4 or draft_nonclinical_summaries_m2_6: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. If rowCount is 0, tell the user no nonclinical studies are ingested for this program.',
+        'These rows are model-extracted observations, not an approved basis for program readiness or a starting dose. Do not relay them as a program determination; any worksheet comparison is labelled as stated inputs, not records the calculator read. Do not pass these studies to draft_nonclinical_overview_m2_4 or draft_nonclinical_summaries_m2_6: they accept no study figures and resolve their own protected governed project records, or return an explicit source refusal/outline. If rowCount is 0, tell the user no nonclinical studies are ingested for this program.',
     });
   } catch (err: any) {
     // 2026-10-22: a program outside the organization read as a failed load.

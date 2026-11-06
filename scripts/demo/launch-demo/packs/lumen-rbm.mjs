@@ -201,19 +201,15 @@ async function ensureIndicators({ api, run, tally }, program, label) {
     return `${created} loaded (${readings} KRI readings, ${qtlUpdates} QTL values, ${siteRows} site observations), ${EXTRACTS.length * cutoffs.length - created} already loaded`;
   });
 
-  // Subject rows land on their own: on a database whose rbm_patient_profiles
-  // lacks UNIQUE (organization_id, program_id, subject_id) the ingest's upsert
-  // is refused (42P10), and that must not cost the study its indicators.
+  // Subject rows land separately so a refused load cannot undo the indicators.
+  // Required intake still fails the pack, leaving startup free to retry it.
   let subjectsLanded = false;
   await run.step(`RBM: subject-level extract (${SUBJECTS.length} subjects) on ${label}`, async () => {
     const ref = SUBJECT_EXTRACT.ref;
     if ((await loadedRefs()).has(ref)) { subjectsLanded = true; tally.found('rbm-extract'); return 'already loaded'; }
     const csv = subjectCsv(cutoffs[cutoffs.length - 1]);
     const res = await api('POST', `${M}/rbm-metric-ingest`, { programId: program.id, source: SUBJECT_EXTRACT.source, sourceRef: ref, dataCutoff: cutoffs[cutoffs.length - 1], csv });
-    if (res.status !== 201) {
-      run.note(`RBM: the server refused the subject-level extract (HTTP ${res.status}: ${String(res.text).slice(0, 200)}), so Patient profiles has no subjects. On 2026-11-06 the cause was rbm_patient_profiles without the UNIQUE (organization_id, program_id, subject_id) its migration declares; shared/schema.ts omits it.`);
-      return `not executed — the server refused it (HTTP ${res.status})`;
-    }
+    must(res, 201, `load ${ref}`);
     const out = (res.json?.data ?? res.json).projection;
     subjectsLanded = true;
     tally.created('rbm-extract');

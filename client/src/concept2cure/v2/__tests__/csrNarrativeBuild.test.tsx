@@ -10,7 +10,7 @@
  */
 import React from 'react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 const { apiRequest } = vi.hoisted(() => ({ apiRequest: vi.fn() }));
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest }));
 import { CsrNarrativeBuild, type CsrBoardHeading, type CsrNarrativeQcRow, type CsrNarrativeRun } from '../surfaces/CsrBuildProgress';
@@ -29,11 +29,18 @@ const rows: CsrNarrativeQcRow[] = [
     qc: { armName: 'LMN-201', categories: ['discontinuation'], events: [], missingFields: [], prose: null,
       refusal: { reason: 'ADSL records discontinuation for an adverse event, but no ADAE event records the study treatment as withdrawn (AEACN).' } } },
 ];
-afterEach(() => { cleanup(); apiRequest.mockReset(); });
+afterEach(() => { cleanup(); vi.useRealTimers(); apiRequest.mockReset(); });
 
 const at = '2026-10-30T09:00:00.000Z';
 const runOf = (over: Partial<CsrNarrativeRun>): CsrNarrativeRun =>
   ({ id: 3, status: 'queued', subjectsDone: 0, subjectsTotal: null, stalled: false, updatedAt: at, result: null, error: null, ...over });
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; });
+  return { promise, resolve, reject };
+}
 
 /** The server: POST queues; each status read returns the next state in `states` (the last one repeats). */
 function serve(states: Array<CsrNarrativeRun | null>, qcAfter: CsrNarrativeQcRow[] = []) {
@@ -85,6 +92,140 @@ it('refreshes the QC list and the board when the build finished before the first
   expect(disclosure.open).toBe(false);
   expect(within(disclosure).getByText('Narrative QC list · 2 subjects')).toBeTruthy();
   expect(changed).toHaveBeenCalled();
+});
+
+it('keeps the newer completion and QC when an older running poll finishes later, without restarting polling', async () => {
+  vi.useFakeTimers();
+  const older = deferred<ReturnType<typeof ok>>();
+  const newer = deferred<ReturnType<typeof ok>>();
+  const running = runOf({ status: 'running', subjectsDone: 1, subjectsTotal: 2 });
+  const complete = runOf({ status: 'complete', subjectsDone: 2, subjectsTotal: 2,
+    result: { status: 'complete', selected: 2, composed: 2, refused: 0, sections: { written: ['14.3.3', '12.3.2'], kept: [] } } });
+  let statusReads = 0;
+  let qcReads = 0;
+  apiRequest.mockImplementation(async (_method: string, path: string) => {
+    if (path.endsWith('/narratives/status')) {
+      statusReads += 1;
+      if (statusReads === 2) return older.promise;
+      if (statusReads === 3) return newer.promise;
+      return ok({ run: statusReads === 1 ? running : complete });
+    }
+    if (path.endsWith('/narratives')) return ok({ subjects: ++qcReads === 1 ? [] : rows });
+    return ok({});
+  });
+  const changed = vi.fn();
+  await act(async () => { render(<CsrNarrativeBuild jobId={41} headings={headings} onChanged={changed} pollMs={10} />); });
+  expect(screen.getByText('Composing narratives: 1 of 2 subjects.')).toBeTruthy();
+  await act(async () => { vi.advanceTimersByTime(20); });
+  expect(statusReads).toBe(3);
+
+  await act(async () => { newer.resolve(ok({ run: complete })); });
+  expect(screen.getByText(/2 of 2 narratives composed from the ADaM rows/)).toBeTruthy();
+  expect(within(screen.getByLabelText('Narrative QC')).getByText('Septic shock')).toBeTruthy();
+  expect(changed).toHaveBeenCalledTimes(1);
+  const settledQcReads = qcReads;
+
+  await act(async () => { older.resolve(ok({ run: running })); });
+  expect(screen.getByText(/2 of 2 narratives composed from the ADaM rows/)).toBeTruthy();
+  expect(screen.queryByLabelText('Narrative progress')).toBeNull();
+  expect((screen.getByRole('button', { name: /Build narratives/ }) as HTMLButtonElement).disabled).toBe(false);
+  expect(within(screen.getByLabelText('Narrative QC')).getByText('Septic shock')).toBeTruthy();
+  await act(async () => { vi.advanceTimersByTime(30); });
+  expect(statusReads).toBe(3);
+  expect(qcReads).toBe(settledQcReads);
+  expect(changed).toHaveBeenCalledTimes(1);
+});
+
+it('applies arriving progress while a newer poll is outstanding, then keeps completion over older replies', async () => {
+  vi.useFakeTimers();
+  const oldest = deferred<ReturnType<typeof ok>>();
+  const progress = deferred<ReturnType<typeof ok>>();
+  const completion = deferred<ReturnType<typeof ok>>();
+  const running = runOf({ status: 'running', subjectsDone: 0, subjectsTotal: 2 });
+  const complete = runOf({ status: 'complete', subjectsDone: 2, subjectsTotal: 2,
+    result: { status: 'complete', selected: 2, composed: 2, refused: 0, sections: { written: ['14.3.3', '12.3.2'], kept: [] } } });
+  let statusReads = 0;
+  let qcReads = 0;
+  apiRequest.mockImplementation(async (_method: string, path: string) => {
+    if (path.endsWith('/narratives/status')) {
+      statusReads += 1;
+      if (statusReads === 2) return oldest.promise;
+      if (statusReads === 3) return progress.promise;
+      if (statusReads === 4) return completion.promise;
+      return ok({ run: statusReads === 1 ? running : complete });
+    }
+    if (path.endsWith('/narratives')) return ok({ subjects: ++qcReads === 1 ? [] : rows });
+    return ok({});
+  });
+  const changed = vi.fn();
+  await act(async () => { render(<CsrNarrativeBuild jobId={41} headings={headings} onChanged={changed} pollMs={10} />); });
+  expect(screen.getByText('Composing narratives: 0 of 2 subjects.')).toBeTruthy();
+  await act(async () => { vi.advanceTimersByTime(30); });
+  expect(statusReads).toBe(4);
+
+  // Network latency can exceed the polling interval; a pending later read must not starve arrived progress.
+  await act(async () => { progress.resolve(ok({ run: runOf({ status: 'running', subjectsDone: 1, subjectsTotal: 2 }) })); });
+  expect(screen.getByText('Composing narratives: 1 of 2 subjects.')).toBeTruthy();
+  expect(screen.getByLabelText('Narrative progress').getAttribute('value')).toBe('1');
+  expect(changed).not.toHaveBeenCalled();
+
+  await act(async () => { completion.resolve(ok({ run: complete })); });
+  expect(screen.getByText(/2 of 2 narratives composed from the ADaM rows/)).toBeTruthy();
+  expect(within(screen.getByLabelText('Narrative QC')).getByText('Septic shock')).toBeTruthy();
+  await act(async () => { oldest.resolve(ok({ run: running })); });
+  expect(screen.getByText(/2 of 2 narratives composed from the ADaM rows/)).toBeTruthy();
+  expect(screen.queryByLabelText('Narrative progress')).toBeNull();
+  await act(async () => { vi.advanceTimersByTime(30); });
+  expect(statusReads).toBe(4);
+  expect(changed).toHaveBeenCalledTimes(1);
+});
+
+it('keeps the latest status-read error when an older successful poll finishes later', async () => {
+  vi.useFakeTimers();
+  const older = deferred<ReturnType<typeof ok>>();
+  const newer = deferred<ReturnType<typeof ok>>();
+  const running = runOf({ status: 'running', subjectsDone: 1, subjectsTotal: 2 });
+  let statusReads = 0;
+  apiRequest.mockImplementation(async (_method: string, path: string) => {
+    if (path.endsWith('/narratives/status')) {
+      statusReads += 1;
+      if (statusReads === 2) return older.promise;
+      if (statusReads === 3) return newer.promise;
+      return ok({ run: running });
+    }
+    return ok({ subjects: [] });
+  });
+  const changed = vi.fn();
+  await act(async () => { render(<CsrNarrativeBuild jobId={41} headings={[]} onChanged={changed} pollMs={10} />); });
+  await act(async () => { vi.advanceTimersByTime(20); });
+  expect(statusReads).toBe(3);
+  await act(async () => { newer.reject(refusal(503, { error: 'The newest narrative status could not be read.' })); });
+  expect(screen.getByRole('alert').textContent).toBe('The newest narrative status could not be read.');
+
+  await act(async () => { older.resolve(ok({ run: running })); });
+  expect(screen.getByRole('alert').textContent).toBe('The newest narrative status could not be read.');
+  expect(changed).not.toHaveBeenCalled();
+});
+
+it('retires an outstanding status read when the mounted control changes jobs', async () => {
+  const older = deferred<ReturnType<typeof ok>>();
+  const complete = runOf({ id: 4, status: 'complete', subjectsDone: 2, subjectsTotal: 2,
+    result: { status: 'complete', selected: 2, composed: 2, refused: 0, sections: { written: ['14.3.3', '12.3.2'], kept: [] } } });
+  apiRequest.mockImplementation(async (_method: string, path: string) => {
+    if (path === '/api/csr/jobs/41/narratives/status') return older.promise;
+    if (path === '/api/csr/jobs/42/narratives/status') return ok({ run: complete });
+    return ok({ subjects: [] });
+  });
+  const changed = vi.fn();
+  const view = render(<CsrNarrativeBuild jobId={41} headings={[]} onChanged={changed} />);
+  view.rerender(<CsrNarrativeBuild jobId={42} headings={[]} onChanged={changed} />);
+  await screen.findByText(/2 of 2 narratives composed from the ADaM rows/);
+
+  await act(async () => { older.resolve(ok({ run: runOf({ status: 'running', subjectsDone: 1, subjectsTotal: 2 }) })); });
+  expect(screen.getByText(/2 of 2 narratives composed from the ADaM rows/)).toBeTruthy();
+  expect(screen.queryByLabelText('Narrative progress')).toBeNull();
+  expect((screen.getByRole('button', { name: /Build narratives/ }) as HTMLButtonElement).disabled).toBe(false);
+  expect(changed).not.toHaveBeenCalled();
 });
 
 it('shows a failed build by its recorded refusal, naming the rows', async () => {

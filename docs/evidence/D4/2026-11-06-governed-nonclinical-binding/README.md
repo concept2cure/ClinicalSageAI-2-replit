@@ -1,0 +1,72 @@
+# Complete governed project-study input for existing Module2 tools
+
+2026-11-06. Baseline `e5a1536fa0f94a609f93a9871bd579446854330c`; Plan F1, W3 D2/D4. Canonical branch only: `concept2cure-v2`. Continues P-55 R-1 and the accepted deterministic composition repair. No app/card/editor/screen/route/service/table/model/dependency addition.
+
+## What already exists
+
+Before this design and worker prompts, `rg` searched nonclinical/toxicology/Module2/source-binding names across existing routes, services, shared schema, migrations, tools and tests. Full-history `git log --all --diff-filter=D` covered `*nonclinical*`, `*record-source*`, `*program-project-anchor*`, `*model-call-scope*`: historical dead-code/seed cleanups, no alternative governed project reader found. The clone is non-shallow. Canonical synchronization brings only completed demo documentation/coordination after the last accepted source.
+
+- `ana/module2-nonclinical-inputs.ts` already owns both draft tools and their refusal/requirements-outline result; no governed studies are read. `ana/AnaToolExecutor.ts` registers both tools and already forwards the request SQL client and actor/project context. Keep that owner/registration.
+- `ana/record-source-project.ts` is the single actor/open-project resolver used by nonclinical and clinical Module2 tools. It uses actual `csr/project-scope.ts` and project-sharing policy, including current organization/user membership. It currently uses the global Drizzle handle rather than an optional caller-bound SQL client. Extend the existing context/resolver connection seam, preserving legacy CSR callers.
+- `nonclinical/nonclinical-service.ts`, `shared/schema/nonclinical.ts` and replayed nonclinical migrations own audited `nonclinical_studies`. Its current list-for-summary is organization-wide and reads all statuses; do not use it as a project input or change its other consumers. Native fields include study number/type, species, GLP declaration, NOAEL, duration/finding, CTD locator, submission link, status/deletion and update timestamp; they do not prove report availability or scientific qualification.
+- `submissions.program_id` is the canonical same-organization regulatory-program link; `projects.regulatory_program_id` plus `c2c/program-project-anchor.ts::readProgramAnchorRow(requireUnique:true)` is the unique project anchor. Never guess from names, legacy CTD extraction rows or an org-wide study list. Anchor reads support a raw caller client and refuse ambiguous anchors.
+- `csr/project-scope.ts::resolveCsrScope`, `readCsrProjectActor` and `report-os/project-access.ts` enforce current actor/project access. `db/requestDb.ts::RequestSqlClient`, existing Drizzle wrapper pattern and `drizzle-queryable.ts` provide the same-connection contract. Reuse those checks for initial read and currentness recheck.
+- `ai-gateway/model-call-scope.ts` already supplies private per-run authority, default Tier3 for unknown/unassessed input, backend-only `recordCurrentRunSource` and captured before-SDK rechecks. Ordinary loop and SSE carry that authority. Actual Vault/document readers demonstrate version/content/permission rechecks; no model-returned token, tier or source metadata is authority.
+- `preclinical/nonclinical-m24-adapter.ts`, `m26-nonclinical-summaries.ts` and `m2-summary-builders.ts` are the accepted deterministic composers. They preserve recorded taxonomy/NOEL distinctions/missing fields and worksheet/report/scientific limits. Reuse them unchanged unless a demonstrated consumer defect requires correction. Do not derive a target-organ adversity finding from unstructured study prose.
+- P-55 and the original decisions table explicitly choose this register, admit `in_reporting` for an IND, exclude planned/cancelled, and identify2.6 tables as preparation worksheets. Finalized records are eligible; in-life is not completed/reporting evidence. Other submission types use finalized records, without extending the IND exception.
+- Existing `module2-csr-inputs.pglite.test.ts`, `nonclinical-drafts-refuse-model-figures.test.ts`, governed-tool policy suites, PGlite registry/view tests, `model-call-scope`/source-checkpoint suites and Vault executor-follow-up fixture are existing proof seams. Extend tests alongside existing owners, no second product flow.
+
+## Completion contract under review
+
+Extend `module2-nonclinical-inputs.ts` to read only the admitted project's same-org non-deleted submissions/studies through its canonical program anchor. Require actor identity and a caller-bound SQL client for the native-study read; preserve open-project precedence, UUID and integer identities, access denials and refusal of model-supplied study/findings. Resolve scope using that same client. Read finalized rows and IND in-reporting rows only; never planned, cancelled, in-life, deleted, unlinked, foreign submission/tenant or sibling-project rows. An unanchored/ambiguous/unavailable source is not an empty eligible set.
+
+Use existing deterministic M24/M26 composers with only persisted fields. Preserve raw study number/type/NOAEL/duration/finding/GLP declaration/recorded locator; no drug identity, report availability, pathology classification or dose may be invented or supplied by the model. Project-derived identity is used only when a canonical field is present; otherwise preserve the existing missing-name gap. Return draft/worksheet outputs with explicit recorded basis and source identifiers/lifecycle pins, never filing/safety/GLP/program-adequacy approval. Empty eligible reads retain the canonical outline and a truthful needs-data explanation; unavailable reads retain safe unavailable messages, never empty-success.
+
+Before any study-bearing tool result leaves the owner, register one backend-only Tier3 source-set grant on the current private run authority. Without that authority, no record payload is emitted. Pin actor/project/program plus a digest of the exact eligible ordered source set, including lifecycle/link/update/content fields. The existing gateway callback must re-evaluate current actor/project/unique anchor/submission link and entire eligible set before any SDK dispatch, retry or fallback; modified content, permission/membership removal, relink/deletion/status changes or added eligible rows refuse. No gateway/authority/admission widening is needed.
+
+Behavioral reds precede production changes. Root owns implementation, shared resolver, descriptions, evidence, Git and serialized gates. Focused tests and independent source-access/privacy review may be delegated after this inventory is published. No held authoring/CSR route or UI is edited. All accepted work goes directly to canonical with normal hooks.
+
+
+## What already exists — extracted-loader instruction
+
+Read-only review found `AnaToolExecutor.ts` also returns a live `load_nonclinical_program` instruction that says both Module2 tools always return an outline. Correct that single existing string alongside the four descriptions: extracted rows remain inadmissible, and the governed tools resolve their own protected project records. No registration or execution/dispatch behaviour changes in that file.
+
+
+## Reviewed authority and scientific boundaries
+
+Independent read-only review confirms the existing authority is usable without gateway changes. Grant registration must return true, its key includes the immutable digest, and recheck captures copied identity scalars plus the exact snapshot hash. Numeric-project paths also require the canonical unique inverse anchor. The IND reporting exception is evaluated for each study's own submission. Product/project names are not drug-substance names, so this binding leaves that existing input gap. Currentness applies to the current protected run only; later retained history remains conservative Tier3 and must reread/rebind before a new currentness claim. The result must state that limit.
+
+
+## What already exists — immediate tool-result publication
+
+Review of the existing SSE owner (`routes/ana-ri/stream.ts`, tool_result recording/emission) found that the tool payload is recorded/shown before its next gateway SDK check. The native owner must therefore invoke the same actor/anchor/whole-snapshot callback once before returning any recorded/empty-set outcome, as well as register it for later gateway checks. Add query-wrapper race reds that mutate permission/content/eligible-set after the initial SELECT before fixing this boundary. No stream/gateway code changes are needed.
+
+
+## Implemented and initial validation
+
+The existing Module2 owner now reads the selected project's same-org governed studies via submission/program/unique anchor. P-55 lifecycle rules apply per study's submission. Native reads require the request connection and private Tier3 authority; shared clinical callers preserve their existing connection behavior. Missing executor, missing/ambiguous anchor, source errors and lack of authority do not become empty eligible results. A true empty read retains the canonical outline and a source-set grant. Recorded fields feed the existing deterministic composers, without product-name substitution or model figures.
+
+One immutable digest-bearing grant rechecks actual permissions, unique anchor, parents and the entire ordered eligible set before tool publication and every protected SDK dispatch/retry/fallback. Currentness is limited to that run. Returned identifiers/hash are evidence context, not authority accepted from a model.
+
+Observed reds before fixes: initial selected database8 failed/1 passed/39 skipped; instruction5 failed/16 passed; pre-return races3 failed/48 skipped. Counts overlap and are not additive. Initial core5 failed/70 passed exposed native missing-executor global fallback and four old outline expectations. Fixed the real fallback before any global read, and updated the old handler fixture to explicitly provide a request client while withholding authority; it now asserts unavailable/code/no summary instead of falsely calling the store empty. Existing scope/model-refusal/outline/error assertions remain. Real policy admission is separately exercised; this handler unit still uses the documented empty-rule policy snapshot.
+
+Final core78/78 in3 suites and adjacent260/260 in17 suites pass. Scoped lint across6 source/test files:0 errors and95 pre-existing warnings, unchanged from the four-production-file baseline (94 are already in the executor). Source-specific lint complexity growth was refactored away without baseline or suppression changes. The6-file source manifest pins this implementation and tests. Gateway/build/full compiler/canonical publication remain pending. Independent read-only review found and rechecked the missing-client and pre-return race defects, then approved the agreed scope.
+
+
+## Source freeze and canonical synchronization
+
+All440 cases in24 distinct source/core/adjacent/gateway suites pass. Canonical7e042881d was merged normally as6be80f509; incoming collaboration/RBM context behavior was reviewed,68 client cases and11 Node checks pass. A final explicit issuer actor guard preserves the required private-grant identity; core78, zero-new-warning lint and production build were rerun afterward. The6-file source manifest now pins that final source. No dependency, warning/typecheck baseline or gate changed. Further incoming Quality changes are reviewed before final integration/publication; no owner browser/native/model qualification is borrowed as local evidence.
+
+
+## Final merged checks before publication
+
+Canonical05aafea82 is merged normally asb9a612362. Review confirms shared `canAccessReportProject` and CSR admission are unchanged; Quality receipt caches/currentness are strengthened. The7-suite shared-compatibility run passes122 cases (78 overlap the earlier core;44 are additional Quality cases). The final new real-request-shape case proves a named project works under private conversation authority with no open project and that subsequent permission removal still refuses. Final core is79/79, alongside260 adjacent and102 gateway cases; these24 source suites total441 distinct cases, or485 including the44 Quality compatibility cases. Incoming68 client/11 Node cases are separately recorded. No counts are added twice.
+
+Final production client/server and audit/qualification verifier build passes on the Quality-merged source. The last edit afterward adds only the named-project test; all four production hashes remain identical. Final6-file lint:0 errors/95 existing warnings, no growth or baseline change. Source/test and13 integration-owner hashes are pinned. Full-program TypeScript and normal canonical publication remain pending until their actual receipts are captured. Native study/report scientific correctness, live model qualification, deployed RLS and later-turn currentness are not inferred from these software checks.
+
+
+## Accepted canonical publication
+
+Normal hooked push accepted `25f6b5cfbd6f880aae4b51ff1c3947512dc22feb`; independent remote verification matched at 2026-11-06T22:32:43.382995+00:00. All mandatory repository gates passed, including the actual full-program compiler with 0 errors against baseline 0 and warning growth 0. All 6 owned source/test hashes and 13 integration-owner hashes match the validated manifests. The accepted logs/status are retained in `publication-accepted.txt.gz` and `publication-status.json`. File holds are released.
+
+This completes the existing Module2 governed project-input binding within the agreed current-run boundary. The final source core is 79 cases; adjacent 260 and gateway 102 make 441 source cases in 24 distinct suites. The additional 44 Quality shared-compatibility cases make 485, without counting the overlapping 78 core cases twice. Incoming 68 client/11 Node cases remain separate. Final merged production/verifier build and zero-new-warning lint pass. No source classification is inferred from prose, GLP declaration or serving model; private source authority remains conservative Tier3. Records and category coverage do not establish scientific safety, phase suitability, verified report availability or filing approval. Later turns must reread/rebind before claiming currentness. No new product surface or separate editor was introduced.

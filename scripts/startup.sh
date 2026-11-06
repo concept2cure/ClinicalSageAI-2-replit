@@ -203,6 +203,10 @@ select_app_port() {
     local attempt=0
 
     while is_port_in_use "$candidate_port"; do
+        if is_codespace; then
+            log_error "Codespaces app port ${desired_port} is already in use. Stop the process using that port, then start the app again."
+            return 1
+        fi
         if [[ $attempt -eq 0 ]]; then
             log_warn "Port ${desired_port} is already in use. Searching for next available port..."
         fi

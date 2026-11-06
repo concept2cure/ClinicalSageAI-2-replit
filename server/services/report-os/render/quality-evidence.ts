@@ -1,6 +1,9 @@
 /** Client presentation of already-admitted native Quality snapshots.
  * The sealed run retains complete receipts; this projection shows recorded business facts. */
 import type { ReportSection } from './types';
+import { looksLikeHtml } from '../../../../shared/authoring/plain-text-html';
+import { inlineMarksToText } from '../../../export/inline-marks-to-text';
+import { blocksToPlainText, sectionContentToBlocks } from '../../../export/authoring-section-content';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -28,8 +31,9 @@ function qualityBusinessField(key:string):boolean {
   return QUALITY_BUSINESS_IDS.has(normalized) || (!QUALITY_INTERNAL.has(normalized) && !/(?:^|_)(?:ids?|digest|hash|uuid|sha256|checksum)$/.test(normalized));
 }
 function qualityPlain(text:string):string {
-  return text.replace(/<[^>]*>/g,' ').replace(/&nbsp;|&#160;/gi,' ').replace(/&amp;/gi,'&')
-    .replace(/&lt;/gi,'<').replace(/&gt;/gi,'>').replace(/&quot;/gi,'"').replace(/&#39;/gi,"'")
+  // Keep the original HTML decision when semantic marks were its only tags.
+  const content=looksLikeHtml(text) ? `<div>${inlineMarksToText(text)}</div>` : text;
+  return blocksToPlainText(sectionContentToBlocks(content))
     .replace(/\s+/g,' ').replace(/\s+([.,;:!?])/g,'$1').trim();
 }
 function qualityScalar(value:unknown):string|null {
