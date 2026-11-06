@@ -830,13 +830,16 @@ The founder asked this session to take over and finish the project page's work. 
 
 **Delivered**
 
-- `931e287429`, `docs/evidence/F1/2026-11-06-recent-conversation-handoff/`.
+- `931e287429`, with nullable-writer type correction `ae825ca1b7`,
+  `docs/evidence/F1/2026-11-06-recent-conversation-handoff/`.
   D1's existing sidebar/palette could select B while A was open without loading B;
   it dropped the saved-thread URL and parked the selection for a later visit.
   The shell now delivers the choice through its existing conversation identity
   and canonical URL. Selecting the current thread preserves its composer and
   unsent text. The existing active-answer refusal is shared with shell preflight,
   before a remount can discard a follow-up. Refused requests do not replay.
+  The type-only correction uses the existing nullable handoff contract without
+  touching D3's held global declaration; its emitted JavaScript is identical.
 - 178 focused tests and the production build pass, with no new lint errors or
   warnings. The running app was used at 1440 and 390 px, light and dark, with
   project context retained. Separate, explicitly synthetic SSE checks verify
