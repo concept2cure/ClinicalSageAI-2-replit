@@ -354,3 +354,20 @@ describe('SubmissionCenter — the Planner over a region profile', () => {
     expect(body()).not.toMatch(/FDA-1571/);
   });
 });
+
+/* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): at 390 px a sequence
+   row ("0000 · Original sequence · FDA (US) · Assembling · Validated · Draft") is
+   one no-wrap flex line, so its label column was squeezed to one character per line. */
+describe('SubmissionCenter — a sequence row wraps at a phone’s width', () => {
+  it('the row wraps and its label keeps a readable minimum width', async () => {
+    const css = (await import('node:fs')).readFileSync('client/src/concept2cure/v2/styles/submission-v2.css', 'utf8');
+    expect(css).toMatch(/\.sc-subrow\s*\{[^}]*flex-wrap:\s*wrap/);
+    expect(css).toMatch(/\.sc-subrow\s+\.sp-row-b\s*\{[^}]*min-width:\s*\d+px/);
+  });
+  it('a table wider than its card scrolls inside the card, not the whole page', async () => {
+    const css = (await import('node:fs')).readFileSync('client/src/concept2cure/v2/styles/submission-v2.css', 'utf8');
+    expect(css).toMatch(/\.sc-page\s+\.pj-card-b-flush\s*\{[^}]*overflow-x:\s*auto/);
+    // The submission picker sized itself to its longest title (599 px at 390).
+    expect(css).toMatch(/\.sc-subpick\s*\{[^}]*max-width:\s*100%/);
+  });
+});
