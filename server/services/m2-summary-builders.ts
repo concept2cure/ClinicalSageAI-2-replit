@@ -114,7 +114,9 @@ export interface M24BuildContext {
 
 export interface NonclinicalStudy {
   studyId: string;
-  studyType: 'pharmacology' | 'pharmacokinetics' | 'toxicology' | 'safety_pharmacology' | 'reproductive_tox' | 'genotoxicity' | 'carcinogenicity';
+  studyType: 'pharmacology' | 'pharmacokinetics' | 'toxicology' | 'safety_pharmacology' | 'reproductive_tox' | 'genotoxicity' | 'carcinogenicity' | 'unclassified';
+  /** Original input taxonomy, retained separately from the broad composition category. */
+  sourceStudyType?: string;
   species?: string;
   duration?: string;
   doseLevels?: string[];
@@ -123,6 +125,23 @@ export interface NonclinicalStudy {
   noel?: string;
   glpStatus?: 'GLP' | 'non-GLP';
   reportSection: string;
+}
+
+/** A broad toxicology category, title, dose or location cannot establish repeat-dose scope. */
+export function isRepeatDoseNonclinicalStudy(study: Pick<NonclinicalStudy, 'studyType' | 'sourceStudyType'>): boolean {
+  return study.studyType === 'toxicology' && study.sourceStudyType?.trim().toLowerCase() === 'repeat_dose_tox';
+}
+
+/** Missing input fields, not a regulatory necessity or compliance determination. */
+export function nonclinicalStudyRecordGaps(study: NonclinicalStudy): string[] {
+  const id = study.studyId?.trim() || '[study identifier not recorded]';
+  const fields = { species: study.species, duration: study.duration, 'GLP status': study.glpStatus,
+    finding: study.primaryFinding, 'report section/placement': study.reportSection };
+  const gaps = Object.entries(fields).filter(([, value]) => !value?.trim()).map(([field]) => `${id}: ${field} not recorded`);
+  if (!study.studyId?.trim()) gaps.push('study identifier not recorded');
+  if (study.studyType === 'toxicology' && !study.noael?.trim() && !study.noel?.trim()) gaps.push(`${id}: NOAEL/NOEL not recorded; applicability unassessed`);
+  if (study.studyType === 'unclassified') gaps.push(`${id}: unclassified source study type ${study.sourceStudyType || '(not recorded)'}`);
+  return gaps;
 }
 
 export interface M25BuildContext {
@@ -298,7 +317,7 @@ export function buildM23QualityOverallSummary(ctx: M23BuildContext): M2Summary {
 // ── 2.4 Nonclinical Overview ────────────────────────────────────────────────
 
 /**
- * Build M2.4 Nonclinical Overview from Module 4 study reports.
+ * Build M2.4 Nonclinical Overview from supplied study fields.
  * Per ICH M4S, this is an integrated assessment across pharmacology, PK, and tox.
  */
 export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
@@ -310,6 +329,7 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
     safetyPharm: studies.filter(s => s.studyType === 'safety_pharmacology'),
     pk: studies.filter(s => s.studyType === 'pharmacokinetics'),
     tox: studies.filter(s => s.studyType === 'toxicology'),
+    repeatDose: studies.filter(isRepeatDoseNonclinicalStudy),
     repro: studies.filter(s => s.studyType === 'reproductive_tox'),
     geno: studies.filter(s => s.studyType === 'genotoxicity'),
     carcino: studies.filter(s => s.studyType === 'carcinogenicity'),
@@ -318,7 +338,7 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
   // The categories this overview checks; completeness is taken over this list.
   const checked: Array<[string, NonclinicalStudy[]]> = [
     ['primary pharmacology studies', byType.pharmacology], ['safety pharmacology (ICH S7A)', byType.safetyPharm],
-    ['pharmacokinetic / ADME studies', byType.pk], ['repeat-dose toxicology', byType.tox],
+    ['pharmacokinetic / ADME studies', byType.pk], ['repeat-dose toxicology', byType.repeatDose],
     ['genotoxicity battery (ICH S2(R1))', byType.geno],
   ];
   const categoryGaps = checked.filter(([, found]) => found.length === 0).map(([label]) => label);
@@ -328,12 +348,14 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
   // found. That is the sponsor's toxicology judgment; it is an open item.
   const gaps = categoryGaps.length > 0 ? [...categoryGaps] : ['nonclinical safety conclusion (sponsor toxicology judgment; not drawn automatically)'];
   if (ds === DRUG_SUBSTANCE_NAME_NOT_RECORDED) gaps.push(DRUG_SUBSTANCE_NAME_GAP);
+  gaps.push(...studies.flatMap(nonclinicalStudyRecordGaps));
 
   const narrative = [
     `MODULE 2.4 — NONCLINICAL OVERVIEW`,
     ``,
     `INTRODUCTION`,
-    `This Nonclinical Overview integrates the pharmacology, pharmacokinetic, and toxicology data for ${ds}${ctx.indication ? ` developed for ${ctx.indication}` : ''}. ${studies.length} nonclinical study/ies are summarized; full reports are provided in Module 4.`,
+    `This Nonclinical Overview integrates the supplied pharmacology, pharmacokinetic, and toxicology entries for ${ds}${ctx.indication ? ` developed for ${ctx.indication}` : ''}. ${studies.length} nonclinical study/ies are summarized. Verify source reports and proposed Module 4 locations; this composer has not read or verified those reports.`,
+    'Coverage is the presence of explicitly identified input categories only, not scientific readiness. GLP entries are supplied flags/status, not verified compliance.',
     ``,
     heading('2.4.1'),
     // 2026-10-15: this used to open "The nonclinical program was designed in
@@ -358,8 +380,8 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
     ``,
     heading('2.4.4'),
     byType.tox.length > 0
-      ? `Repeat-dose toxicology: ${byType.tox.length} study/ies in ${[...new Set(byType.tox.map(s => s.species).filter(Boolean))].join(', ') || '[species not specified]'}. NOAEL range: ${nooalSummary(byType.tox)}.`
-      : `[Repeat-dose toxicology missing — required per ICH M3(R2)]`,
+      ? `Toxicology entries: ${byType.tox.length} study/ies in ${[...new Set(byType.tox.map(s => s.species).filter(Boolean))].join(', ') || '[species not recorded]'}. Supplied NOAEL values: ${nooalSummary(byType.tox)}. Only ${byType.repeatDose.length} explicitly identified repeat-dose study/ies count toward the repeat-dose coverage check.`
+      : '[No toxicology entries supplied — assess applicability for the actual product and phase]',
     byType.repro.length > 0
       ? `Reproductive toxicology per ICH S5(R3): ${byType.repro.length} study/ies.`
       : ``,
@@ -389,28 +411,31 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
   if (studies.length > 0) {
     tables.push({
       title: 'Nonclinical Study Index',
-      headers: ['Study ID', 'Type', 'Species', 'GLP', 'NOAEL', 'Module 4 Section'],
+      headers: ['Study ID', 'Type', 'Species', 'GLP', 'NOAEL', 'NOEL', 'Key Finding', 'Proposed Module 4 Section'],
       rows: studies.map(s => [
         s.studyId,
-        s.studyType.replace('_', ' '),
+        s.sourceStudyType || s.studyType.replace('_', ' '),
         s.species || '—',
         s.glpStatus || '—',
-        s.noael || s.noel || '—',
-        s.reportSection,
+        s.noael || '—',
+        s.noel || '—',
+        s.primaryFinding || '[finding not recorded]',
+        s.reportSection || '— (not recorded)',
       ]),
     });
   }
   if (byType.tox.length > 0) {
     tables.push({
-      title: 'Repeat-Dose Toxicology Summary',
-      headers: ['Study', 'Species', 'Duration', 'Dose Levels', 'NOAEL', 'Key Finding'],
+      title: 'Toxicology Study Summary',
+      headers: ['Study', 'Species', 'Duration', 'Dose Levels', 'NOAEL', 'NOEL', 'Key Finding'],
       rows: byType.tox.map(s => [
         s.studyId,
         s.species || '—',
         s.duration || '—',
         (s.doseLevels || []).join(', ') || '—',
         s.noael || '—',
-        s.primaryFinding,
+        s.noel || '—',
+        s.primaryFinding || '[finding not recorded]',
       ]),
     });
   }
@@ -422,7 +447,7 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
     title: 'Nonclinical Overview',
     narrative,
     tables,
-    inputSectionKeys: studies.map(s => s.reportSection),
+    inputSectionKeys: studies.map(s => s.reportSection).filter(section => section.trim().length > 0),
     completeness,
     gaps,
     generatedAt: new Date().toISOString(),

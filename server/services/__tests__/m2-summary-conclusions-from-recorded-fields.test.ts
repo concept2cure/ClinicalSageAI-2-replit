@@ -65,6 +65,8 @@ const study = (studyType: NonclinicalStudy['studyType'], studyId: string, primar
   studyType,
   primaryFinding,
   reportSection: '4.2.1.1',
+  species: 'Recorded species', duration: 'Recorded duration', glpStatus: 'non-GLP',
+  ...(studyType === 'toxicology' ? { noael: 'Not established' } : {}),
 });
 
 describe('2.4 draws no ICH M3(R2) or safety conclusion the records do not hold', () => {
@@ -80,7 +82,7 @@ describe('2.4 draws no ICH M3(R2) or safety conclusion the records do not hold',
       study('pharmacology', 'PH-1', 'Target engagement in vitro'),
       study('safety_pharmacology', 'SP-1', 'hERG IC50 3 µM'),
       study('pharmacokinetics', 'PK-1', 'Oral bioavailability 20%'),
-      study('toxicology', 'TX-1', 'Mortality at all dose levels; NOAEL not established'),
+      { ...study('toxicology', 'TX-1', 'Mortality at all dose levels; NOAEL not established'), sourceStudyType: 'repeat_dose_tox' },
       study('genotoxicity', 'GT-1', 'Ames positive'),
     ];
     const r = buildM24NonclinicalOverview({ nonclinicalStudies: all, drugSubstanceName: 'BX-115' });
