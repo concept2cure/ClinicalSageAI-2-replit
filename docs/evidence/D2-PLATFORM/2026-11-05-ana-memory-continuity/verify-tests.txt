@@ -1,0 +1,5 @@
+(node:8) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Warning: modified files without companion tests (non-blocking):
+ - server/services/memory-consolidation-job.ts
+Companion-file scan complete. This scan does not execute or qualify tests.

@@ -10,6 +10,7 @@ import {
   resolveRoundExtension,
   runAgenticToolLoop,
   budgetToolResultsForModel,
+  capToolResultForModel,
   buildAdaptationNote,
   type ModelTurn,
   type ToolCall,
@@ -157,6 +158,103 @@ describe('budgetToolResultsForModel', () => {
 
   it('handles an empty round', () => {
     expect(budgetToolResultsForModel([])).toEqual([]);
+  });
+});
+
+describe('session memory remains whole at tool-result handoff', () => {
+  const recallName = 'recall_session_context';
+  const exclusion = 'Exclusions: do not release before the independent review is signed off.';
+  const body = (context: string) => JSON.stringify({ ok: true, hasContext: true, context });
+  const result = (id: string, content: string, name = recallName): ToolResultEntry => ({ tool_use_id: id, name, content });
+  const sizedBody = (size: number) => body('R'.repeat(size - body('').length));
+  const total = (entries: ToolResultEntry[]) => entries.reduce((sum, entry) => sum + entry.content.length, 0);
+
+  function expectWithheld(content: string) {
+    expect(() => JSON.parse(content)).not.toThrow();
+    const withheld = JSON.parse(content) as Record<string, unknown>;
+    expect(Object.keys(withheld).sort()).toEqual(['code', 'delivered', 'message']);
+    expect(withheld).toMatchObject({ delivered: false, code: 'TOOL_RESULT_WITHHELD' });
+    expect(withheld.message).toMatch(/withheld/i);
+    expect(withheld.message).toMatch(/do not infer.*success.*failure.*absence/i);
+    expect(content).not.toContain('truncated to fit the model context');
+    expect(content).not.toContain(exclusion);
+  }
+
+  it.each([false, true])('keeps short whole recall JSON byte-identical with strictTotal=%s', strictTotal => {
+    const content = body(`Reviewed "protocol" at C:\\study. ${exclusion}`);
+    const original = [result('small', content)];
+    expect(budgetToolResultsForModel(original, { strictTotal })).toEqual(original);
+  });
+
+  it.each([false, true])('withholds a complete memory expanded past the cap by JSON escaping with strictTotal=%s', strictTotal => {
+    const context = '\\'.repeat(2900) + exclusion + '\\'.repeat(4387 - 2900 - exclusion.length);
+    const content = body(context);
+    expect(context.length).toBe(4387);
+    expect(content.length).toBeGreaterThan(8000);
+    // The unchanged ordinary cap demonstrates why a memory body cannot use it:
+    // escaping moves the exclusion into the removed middle and breaks JSON.
+    const partial = capToolResultForModel(content);
+    expect(partial).not.toContain(exclusion);
+    expect(() => JSON.parse(partial)).toThrow();
+
+    const [out] = budgetToolResultsForModel([result('escaped', content)], { strictTotal });
+    expectWithheld(out.content);
+    expect(out.tool_use_id).toBe('escaped');
+    expect(out.name).toBe(recallName);
+  });
+
+  it.each([false, true])('withholds a sub-8k recall squeezed by round sharing with strictTotal=%s', strictTotal => {
+    const context = 'R'.repeat(4500) + exclusion + 'R'.repeat(7500 - body('').length - 4500 - exclusion.length);
+    const content = body(context);
+    expect(content.length).toBe(7500);
+    const original = [result('recall', content), ...Array.from({ length: 3 }, (_, i) =>
+      result(`ordinary-${i}`, 'O'.repeat(7500), 'ordinary'))];
+    const ordinaryControl = original.map(entry => ({ ...entry, name: 'ordinary' }));
+    const control = budgetToolResultsForModel(ordinaryControl, { strictTotal });
+    expect(control[0].content).not.toContain(exclusion);
+
+    const out = budgetToolResultsForModel(original, { strictTotal });
+    expectWithheld(out[0].content);
+    expect(out.slice(1)).toEqual(control.slice(1));
+    expect(total(out)).toBeLessThanOrEqual(24000);
+  });
+
+  it('admits exactly 8000 serialized characters and withholds the complete 8001-character body', () => {
+    const exact = result('exact', sizedBody(8000));
+    expect(exact.content.length).toBe(8000);
+    expect(budgetToolResultsForModel([exact], { strictTotal: true })).toEqual([exact]);
+
+    const over = result('over', sizedBody(8001));
+    expect(over.content.length).toBe(8001);
+    expectWithheld(budgetToolResultsForModel([over], { strictTotal: true })[0].content);
+  });
+
+  it('does not protect an ordinary result whose payload claims the recall tool name', () => {
+    const content = JSON.stringify({ name: recallName, tool: recallName, context: 'O'.repeat(9000) });
+    const original = result('ordinary', content, 'search_literature');
+    const [out] = budgetToolResultsForModel([original]);
+    expect(out.content).toBe(capToolResultForModel(content));
+    expect(out.content).toContain('truncated to fit the model context');
+    expect(out.name).toBe('search_literature');
+  });
+
+  it('keeps the strict total, call identity, order and immutable input in a crowded mixed round', () => {
+    const original = Array.from({ length: 20 }, (_, i) => i === 3
+      ? result('recall', sizedBody(7500))
+      : result(`ordinary-${i}`, 'O'.repeat(9000), `ordinary-${i}`));
+    original.forEach(Object.freeze);
+    Object.freeze(original);
+    const snapshot = JSON.stringify(original);
+    // Even after replacing the recall, ordinary floors still require the
+    // existing strict reconciliation rather than a new allocation policy.
+    expect(total(budgetToolResultsForModel(original))).toBeGreaterThan(24000);
+
+    const out = budgetToolResultsForModel(original, { strictTotal: true });
+    expect(total(out)).toBeLessThanOrEqual(24000);
+    expect(out.map(entry => [entry.tool_use_id, entry.name])).toEqual(original.map(entry => [entry.tool_use_id, entry.name]));
+    expectWithheld(out[3].content);
+    expect(out[out.length - 1].content).toBe(out[3].content);
+    expect(JSON.stringify(original)).toBe(snapshot);
   });
 });
 

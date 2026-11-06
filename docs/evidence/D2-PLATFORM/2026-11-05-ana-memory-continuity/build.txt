@@ -1,0 +1,244 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 build
+> vite build && node scripts/build-server.mjs
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+vite v6.4.4 building for production...
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+transforming...
+✓ 4720 modules transformed.
+rendering chunks...
+../dist/public/assets/concept2cure-icon-C0D51nvS.svg              2.43 kB
+../dist/public/index.html                                        10.91 kB
+../dist/public/assets/RedlineText-DBgVI_xu.css                    0.43 kB
+../dist/public/assets/MasterLicensing-t1Wqsdw2.css                0.95 kB
+../dist/public/assets/ProjectHome-pBWOqyJk.css                    1.06 kB
+../dist/public/assets/VaultLibraryResults-Cnlcxs1z.css            1.13 kB
+../dist/public/assets/Onboarding-1aQVXd4a.css                     1.27 kB
+../dist/public/assets/licensing-history-3IhUqBxm.css              1.35 kB
+../dist/public/assets/AdminSurfaces-BQK2NazF.css                  1.76 kB
+../dist/public/assets/DispatchReadiness-CreNFVQe.css              1.91 kB
+../dist/public/assets/Review-CuVw54Cq.css                         2.15 kB
+../dist/public/assets/SubmissionCenter-B6eS-65B.css               2.44 kB
+../dist/public/assets/GovernedConfirmDialog-BAvPP0yZ.css          3.28 kB
+../dist/public/assets/ana-skills-DnuLV-6C.css                     3.74 kB
+../dist/public/assets/OnboardingIngest-Ddud8PyC.css               4.55 kB
+../dist/public/assets/ProtocolDev-Dz7ZRQGk.css                    5.53 kB
+../dist/public/assets/EsignModal-B2vOkq0q.css                     6.54 kB
+../dist/public/assets/company-documents-DTS3j-5q.css              8.89 kB
+../dist/public/assets/Intelligence-dbIuEgU3.css                   9.10 kB
+../dist/public/assets/RichSectionEditor-CxRdFO8C.css             11.02 kB
+../dist/public/assets/ClientPortal-CfoyHw2v.css                  11.50 kB
+../dist/public/assets/ZenRouter-BbLT-fZv.css                     11.71 kB
+../dist/public/assets/commcenter-v2-C0Zk7Eb_.css                 14.73 kB
+../dist/public/assets/AdminAccess-oLvTAr9n.css                   15.92 kB
+../dist/public/assets/Insights-CNXBqjk1.css                      17.36 kB
+../dist/public/assets/EctdCoauthor-Bcw0dLf2.css                  18.26 kB
+../dist/public/assets/translation-v2-C6Hduq_f.css                20.30 kB
+../dist/public/assets/Pyramid-wGv7e7sB.css                       20.84 kB
+../dist/public/assets/QualityModule-DTYwJUfL.css                 22.72 kB
+../dist/public/assets/project-home-v2-7hy43PkT.css               31.83 kB
+../dist/public/assets/Rbm-5nTtm3sn.css                           34.84 kB
+../dist/public/assets/MdxSurfaceHost-cPc8RILs.css                48.01 kB
+../dist/public/assets/PdevRoute-BvTaZFQ6.css                     48.34 kB
+../dist/public/assets/workDock-Dq695-ka.css                      69.59 kB
+../dist/public/assets/app-veRQYfzy.css                          126.89 kB
+../dist/public/assets/index-quJZsk3J.css                        144.28 kB
+../dist/public/assets/V2App-DlL2--nf.css                        695.50 kB
+../dist/public/assets/governed-reason-YLyJLrcY.js                 0.04 kB
+../dist/public/assets/mutationOutcome-BfZPOob0.js                 0.13 kB
+../dist/public/assets/commcenter-v2-kfARv-Vz.js                   0.27 kB
+../dist/public/assets/figure-refs-pNIp18xu.js                     0.30 kB
+../dist/public/assets/signatureMeaning-Csc2ihpw.js                0.30 kB
+../dist/public/assets/member-labels-URd6ElIf.js                   0.34 kB
+../dist/public/assets/signature-method-BXfQKbLH.js                0.35 kB
+../dist/public/assets/section-code-DoFkxHN0.js                    0.39 kB
+../dist/public/assets/assessmentState-B5PAvwaR.js                 0.41 kB
+../dist/public/assets/utc-day-OS1SLZd0.js                         0.48 kB
+../dist/public/assets/projectSources-p3W-PXi7.js                  0.53 kB
+../dist/public/assets/gatewayLabels-OjMa3Krc.js                   0.58 kB
+../dist/public/assets/canonical-document-DA2K9lD9.js              0.70 kB
+../dist/public/assets/download-B-Hg7wn6.js                        0.92 kB
+../dist/public/assets/clinical-regulatory-evidence-CY4PuH_p.js    0.95 kB
+../dist/public/assets/projectWords-CTvkV5Gr.js                    1.06 kB
+../dist/public/assets/agency-interaction-CoCtA8Wo.js              1.06 kB
+../dist/public/assets/engineeringPanelTarget-D7YJDsht.js          1.06 kB
+../dist/public/assets/GovernedTimestamp-CFXP5sAt.js               1.07 kB
+../dist/public/assets/task-filing-home-BTw-PGDc.js                1.13 kB
+../dist/public/assets/AuthoringHandoffNotice-VilHCp0S.js          1.37 kB
+../dist/public/assets/submission-Bsvd4hAs.js                      1.39 kB
+../dist/public/assets/authoringCurrentRead-Vla4wMyF.js            1.47 kB
+../dist/public/assets/engineResultHtml-C8RSkQi7.js                1.48 kB
+../dist/public/assets/AnaMarkdown-B8iOdchi.js                     1.51 kB
+../dist/public/assets/AuthoredHtml-aJjd7tds.js                    1.51 kB
+../dist/public/assets/ana-skills-CHGTPmW8.js                      1.51 kB
+../dist/public/assets/AssessmentWorkbenchKit-CYCKBBU7.js          1.52 kB
+../dist/public/assets/AnaOutputs-S6cDwFdc.js                      1.59 kB
+../dist/public/assets/projectThreads-BKIFJzPW.js                  1.64 kB
+../dist/public/assets/csr-scientific-review-DlbFvhMT.js           1.78 kB
+../dist/public/assets/useScopedDocuments-DrWeAj8q.js              1.85 kB
+../dist/public/assets/MarketSupportLine-rVpGxU-5.js               1.92 kB
+../dist/public/assets/AnswerLead-95Xi2JRD.js                      1.94 kB
+../dist/public/assets/TaskSignOffDialog-tl2Pw1zI.js               1.99 kB
+../dist/public/assets/projectScopedRead-RuGtWxyP.js               2.16 kB
+../dist/public/assets/programSequence-BWF-rwYl.js                 2.44 kB
+../dist/public/assets/documentRecordRead-CMVSEadi.js              2.71 kB
+../dist/public/assets/imageNode-Bp8tJTVF.js                       2.94 kB
+../dist/public/assets/HaqManager-xOVo56Nc.js                      3.01 kB
+../dist/public/assets/SignedContentState-CSZWaOQt.js              3.45 kB
+../dist/public/assets/DocumentAuthoring-BmFJOlB-.js               3.61 kB
+../dist/public/assets/AnswerCheckRows-De5Roxel.js                 3.72 kB
+../dist/public/assets/app-registry-CQ_2yOGV.js                    3.74 kB
+../dist/public/assets/ClientReviewRoom-4NJUs1tQ.js                3.84 kB
+../dist/public/assets/reviewTaskState-Bi4Hjgy3.js                 3.88 kB
+../dist/public/assets/roundTrip-DsnAP1qJ.js                       3.92 kB
+../dist/public/assets/RedlineText-BGbiiN1x.js                     3.98 kB
+../dist/public/assets/GovernedConfirmDialog-CpCE5mZZ.js           4.02 kB
+../dist/public/assets/submission-type-bridge-k8SHGAzq.js          4.16 kB
+../dist/public/assets/licensing-D4F7nBsS.js                       4.17 kB
+../dist/public/assets/ExportReviewConfirmation-DAgIAq9y.js        4.35 kB
+../dist/public/assets/SmpcLabeling-etURIPGR.js                    4.74 kB
+../dist/public/assets/vault-taxonomy-Cj3OIRiZ.js                  4.91 kB
+../dist/public/assets/Training-DuZt6t6i.js                        5.12 kB
+../dist/public/assets/RegChange-C6CIxUs-.js                       5.56 kB
+../dist/public/assets/CommitmentRow-DI9z_dFu.js                   5.58 kB
+../dist/public/assets/filing-document-classes-D0k9Li0j.js         5.81 kB
+../dist/public/assets/Coverage-C7A4RO_F.js                        5.98 kB
+../dist/public/assets/ClientPortal-jCi2bk1r.js                    6.01 kB
+../dist/public/assets/InvestigatorBrochure-CQggtPgX.js            6.03 kB
+../dist/public/assets/MaaCockpit-B4qxQgJc.js                      6.06 kB
+../dist/public/assets/Evidence-DjaJDSJ4.js                        6.16 kB
+../dist/public/assets/app-Cp-pIAVG.js                             7.00 kB
+../dist/public/assets/DownloadMenu-D7H8KbO7.js                    7.51 kB
+../dist/public/assets/ReportGovernance-DaT0F_33.js                7.57 kB
+../dist/public/assets/ResearchAdmin-dRInWeLt.js                   7.85 kB
+../dist/public/assets/CanvasDocumentList-Dz0j0mvs.js              7.87 kB
+../dist/public/assets/ChangeAssessment-BOPg7u_i.js                7.96 kB
+../dist/public/assets/MarketAccess-B_mjRKtM.js                    8.34 kB
+../dist/public/assets/AccessRequests-CV3yC9ES.js                  9.86 kB
+../dist/public/assets/company-documents-Bv4GbCGJ.js               9.98 kB
+../dist/public/assets/useVaultUpload-C2-FaM6N.js                  9.99 kB
+../dist/public/assets/DocJourney-NqgxP_LL.js                     10.01 kB
+../dist/public/assets/VaultLibraryResults-C_y5g0mJ.js            10.27 kB
+../dist/public/assets/UsageBilling-DXcPEQdL.js                   10.55 kB
+../dist/public/assets/PagedCompanyLegalPicker-CAfucNjo.js        11.32 kB
+../dist/public/assets/OnboardingIngest-8jAX9ORJ.js               11.61 kB
+../dist/public/assets/VaultSourceBuildAction-DsTwIVh_.js         11.71 kB
+../dist/public/assets/SourceTracer-DK5gVIgj.js                   11.88 kB
+../dist/public/assets/filingTarget-JEufrPwH.js                   12.57 kB
+../dist/public/assets/EsignModal-BMpWpIP3.js                     12.58 kB
+../dist/public/assets/onboarding-discovery-BZ-YjWyY.js           13.16 kB
+../dist/public/assets/FileDropZone-0n-7ewMk.js                   13.35 kB
+../dist/public/assets/FilingStrategy-XqAY0CCd.js                 13.36 kB
+../dist/public/assets/CroPortfolio-jacQIxUf.js                   13.51 kB
+../dist/public/assets/SourceImportDialog-B7s884jW.js             14.07 kB
+../dist/public/assets/QmpWorkspace-DaOma7Er.js                   14.10 kB
+../dist/public/assets/SubmissionTwin-VsfTO1ok.js                 14.11 kB
+../dist/public/assets/PvCockpit-jJ9gyrOm.js                      14.26 kB
+../dist/public/assets/ShadowReview-qxpiCh8W.js                   14.27 kB
+../dist/public/assets/Registrations-HouR06zi.js                  14.45 kB
+../dist/public/assets/Intelligence-CK_ZlAF5.js                   14.62 kB
+../dist/public/assets/RouteOrderFields-B4irtMsG.js               15.57 kB
+../dist/public/assets/CrlLibrary-C7eHINZZ.js                     15.60 kB
+../dist/public/assets/OnboardingInvitations-C-AiZqra.js          16.42 kB
+../dist/public/assets/IdentityConsole-DryBetTg.js                16.64 kB
+../dist/public/assets/Nonclinical-BTtuN9b_.js                    16.75 kB
+../dist/public/assets/cmcAgencyQuestions-CL0AJF9Y.js             16.77 kB
+../dist/public/assets/BatchDraft-1TD0Ktzg.js                     17.14 kB
+../dist/public/assets/DecisionLineage-CbgtbGZG.js                17.52 kB
+../dist/public/assets/VaultReviewRoute-nA5ZJQL9.js               17.81 kB
+../dist/public/assets/SkillStudio-DW8KuP9n.js                    18.12 kB
+../dist/public/assets/DeepResearch-BHKk3i4q.js                   18.14 kB
+../dist/public/assets/ClinicalOps-C4Xx1NtZ.js                    18.52 kB
+../dist/public/assets/LicensingSurface-BUYnWAVP.js               18.57 kB
+../dist/public/assets/HumanFactors-oVIU2fVw.js                   19.08 kB
+../dist/public/assets/LabelingPi-7LJz7NjJ.js                     19.18 kB
+../dist/public/assets/AssignReviewDialog-CJBpVeBM.js             19.54 kB
+../dist/public/assets/SafetyNarrative-qJFnkHEk.js                19.56 kB
+../dist/public/assets/AuthoringEngine-Dw1sC8lZ.js                19.65 kB
+../dist/public/assets/BiopharmaProject-BBuGolmf.js               20.08 kB
+../dist/public/assets/GatewayTransmittals-Byy0oLkj.js            20.60 kB
+../dist/public/assets/BiopharmaJourney-D-xREYvr.js               20.62 kB
+../dist/public/assets/product-types-CxOxW3zR.js                  20.79 kB
+../dist/public/assets/useFilingOutline-Brzp1a_l.js               21.04 kB
+../dist/public/assets/TemplateLibrary-CtE0vSPF.js                22.17 kB
+../dist/public/assets/Labeling-KXwFxj-u.js                       23.27 kB
+../dist/public/assets/workDock-XT6geGpX.js                       23.42 kB
+../dist/public/assets/AnaCommand-DXDkDKHo.js                     23.58 kB
+../dist/public/assets/Etmf-9NqLvoyT.js                           24.20 kB
+../dist/public/assets/EctdCoauthor-DROtTDpA.js                   24.24 kB
+../dist/public/assets/AnaActivity-o_r3zUmh.js                    24.55 kB
+../dist/public/assets/ReportEngine-94iMACMi.js                   25.44 kB
+../dist/public/assets/PrecedentEngine-DIpJqHv7.js                25.62 kB
+../dist/public/assets/biostatBridge-CKNEwcdf.js                  26.87 kB
+../dist/public/assets/AuthoringRecoveryNotice-D4clbztP.js        27.17 kB
+../dist/public/assets/Inconsistency-C4T4B4Kp.js                  27.36 kB
+../dist/public/assets/Biostatistics-PaljEr6y.js                  28.05 kB
+../dist/public/assets/Orchestration-Dl9icBS2.js                  29.12 kB
+../dist/public/assets/MissionControl-Bb0ORPr8.js                 29.23 kB
+../dist/public/assets/Pyramid-CZk56YeK.js                        30.34 kB
+../dist/public/assets/CsrAssemblyControl-B1SHXX6o.js             31.85 kB
+../dist/public/assets/NdaCockpit-E6ZItY-E.js                     33.65 kB
+../dist/public/assets/vendor-tanstack-BsQb-AXS.js                35.79 kB
+../dist/public/assets/PyramidProject-BGrN5m9z.js                 36.13 kB
+../dist/public/assets/editingCopy-Bjkv7ldE.js                    37.36 kB
+../dist/public/assets/BiopharmaSpecialty-C80N0m3D.js             38.26 kB
+../dist/public/assets/CommunicationCenter-Wse7RIM6.js            40.17 kB
+../dist/public/assets/ProjectBiotechPlan-BSxCnUKN.js             41.58 kB
+../dist/public/assets/Onboarding-CcFz1MOW.js                     43.53 kB
+../dist/public/assets/AgencyInbox-Cs8zB5jW.js                    45.45 kB
+../dist/public/assets/AdminSurfaces-8pP2q5lD.js                  47.10 kB
+../dist/public/assets/vendor-icons-BKjVqgj6.js                   52.23 kB
+../dist/public/assets/vendor-validation-BQopC1Ny.js              53.05 kB
+../dist/public/assets/ComplianceReports-Cu9sGkvI.js              54.66 kB
+../dist/public/assets/Review-CoXAw5KJ.js                         59.71 kB
+../dist/public/assets/MasterLicensing-hpRdc9Tr.js                60.12 kB
+../dist/public/assets/Projects-DEk48H7E.js                       63.55 kB
+../dist/public/assets/PdevRoute-BHAB3J_z.js                      68.95 kB
+../dist/public/assets/renderSafeMarkdown-BHZnHNoG.js             71.51 kB
+../dist/public/assets/TaskBoard-BescscOL.js                      73.76 kB
+../dist/public/assets/DispatchReadiness-DCcMsAYe.js              74.07 kB
+../dist/public/assets/ZenRouter-DP-JGwe_.js                      75.33 kB
+../dist/public/assets/IndLifecycle-CGVDlaj9.js                   79.75 kB
+../dist/public/assets/BiostatWorkbench-BiZTcoIg.js               81.51 kB
+../dist/public/assets/SubmissionCenter-DPeBHfVu.js               81.77 kB
+../dist/public/assets/ConversationThread-xsfZkKMw.js             82.42 kB
+../dist/public/assets/EctdCompile-C_5iLwh4.js                    82.73 kB
+../dist/public/assets/Rbm-CJuakllk.js                            86.09 kB
+../dist/public/assets/CompanyDocumentSettings-BSCkmgh_.js        95.28 kB
+../dist/public/assets/AdminAccess-B0ZmxZs5.js                    95.45 kB
+../dist/public/assets/jszip.min-Cu7QYpMI.js                      97.54 kB
+../dist/public/assets/RichSectionEditor-CyuLpipg.js             106.71 kB
+../dist/public/assets/vendor-ui-C-bQWGEw.js                     108.10 kB
+../dist/public/assets/vendor-motion-4muLWrAZ.js                 114.22 kB
+../dist/public/assets/vendor-realtime-zr-5Zozk.js               114.58 kB
+../dist/public/assets/SubmissionSeqWorkspaces-BNz3zhNW.js       117.72 kB
+../dist/public/assets/Insights-B46sdJqx.js                      118.03 kB
+../dist/public/assets/global-document-registry-Cg8f0Ylw.js      123.34 kB
+../dist/public/assets/ProjectHome-BEId1Nm9.js                   133.70 kB
+../dist/public/assets/index-CuVgSh9s.js                         175.10 kB
+../dist/public/assets/QualityModule-BwgBqcZ_.js                 191.69 kB
+../dist/public/assets/ProtocolDev-2fzUPrjM.js                   191.78 kB
+../dist/public/assets/vendor-react-B_PvgaeU.js                  194.42 kB
+../dist/public/assets/CmcModule-B_lWiE5W.js                     250.56 kB
+../dist/public/assets/Vault-BfRcEHjb.js                         261.31 kB
+../dist/public/assets/DocumentWorkbench-BWNx6RFa.js             355.47 kB
+../dist/public/assets/MdxSurfaceHost-BkM_oAvV.js                385.35 kB
+../dist/public/assets/vendor-tiptap-C5bM0tpz.js                 468.12 kB
+../dist/public/assets/V2App-D0ThFWdG.js                         515.85 kB
+../dist/public/assets/vendor-sentry-CZg4eASW.js                 567.53 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 24.30s
+(node:55) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✅ Server build complete → dist/index.js
+✅ Audit-chain verifier build complete → dist/ops/verify-audit-chain.mjs
