@@ -1,0 +1,15 @@
+{
+  "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx": "238e1176fae7ba50e97b6d0f39350878f161d1190a6453ff937cdc90a47e11a8",
+  "client/src/concept2cure/v2/surfaces/RbmIngest.tsx": "3ccab8c550c122b7c0754dd2c6f47f5c09c048515238ab5d01c28d05a3ee9026",
+  "scripts/demo/launch-demo/packs/lumen-rbm.mjs": "1fafcd678e2b383bd41b3d2ac85d32c6872397ab21bebd4181db1d7443f5b5e3",
+  "server/db/drizzle-queryable.ts": "0e2ac9713c4326739921c88beb832737e2350e210a0c92e926789acbeda13399",
+  "server/db/requestDb.ts": "4494fa1416919919f719110540e38d3b37e67a45d3646f741b79991203b98f23",
+  "server/routes/ana-ri/stream.ts": "f466eea842e96ae1c51385427bc6fe92d7e48edfff9589c524a5393aa6e41258",
+  "server/services/ai-gateway/gateway.ts": "4dd56cc61964678dfc70dd801bb758a80a3ce972bb74973ffc8dd50e1cc0ac97",
+  "server/services/ai-gateway/model-call-scope.ts": "273d85c87022190207a71d91b58f77f2491b19fc58183ed3f84b9b7b1c8e27a2",
+  "server/services/c2c/program-project-anchor.ts": "feee4a39a6147b595e058682b4ac97f1cba23b10cfe5ffda6012b76e3d1585f3",
+  "server/services/csr/project-scope.ts": "6f70d1b969ea1abc92809f22ac9e8061506366ce250e583f325e969520b74108",
+  "server/services/project-sharing-access.ts": "f39a527db22a214c681cb6685af41f4793fd6e2973517f65b854cb87d5cf9815",
+  "server/services/report-os/project-access.ts": "1f65ab78bebd43e97563c42cbe16345845de58277efa79e03f2d8c2c753b5731",
+  "tests/validation/lib/harness.mjs": "eb4d7563f86b0fec1a2a7569404c7f6c753c1a52982ac1077b16820e5a8ecf70"
+}

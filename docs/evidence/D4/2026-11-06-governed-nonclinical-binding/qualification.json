@@ -1,0 +1,99 @@
+{
+  "date": "2026-11-06",
+  "plan": "F1",
+  "launch": "W3 D2/D4",
+  "baseline": "e5a1536fa0f94a609f93a9871bd579446854330c",
+  "implementationCommit": "67e472079",
+  "sourceManifest": "source-sha256.json",
+  "sourceFiles": 6,
+  "scope": "Complete P-55 governed project inputs in existing Module2 tools with request-bound actor/project access, unique canonical anchors, lifecycle eligibility, deterministic composition and private Tier3 source-set rechecks.",
+  "red": {
+    "databaseSelected": {
+      "failed": 8,
+      "passed": 1,
+      "skipped": 39,
+      "log": "database-red.txt.gz"
+    },
+    "instructions": {
+      "failed": 5,
+      "passed": 16,
+      "log": "instruction-red.txt.gz"
+    },
+    "preReturnRaces": {
+      "failed": 3,
+      "skipped": 48,
+      "log": "return-race-red.txt.gz"
+    },
+    "note": "Overlapping populations, not additive. Before target fixes; full core initial failures retained separately."
+  },
+  "initialCore": {
+    "failed": 5,
+    "passed": 70,
+    "log": "core-initial.txt.gz",
+    "correction": "Fixed missing request-client global fallback; existing handler unit now has explicit client/no authority and asserts unavailable rather than empty data."
+  },
+  "core": {
+    "result": "passed",
+    "suites": 3,
+    "tests": 78,
+    "log": "core-final.txt.gz"
+  },
+  "adjacent": {
+    "result": "passed",
+    "suites": 17,
+    "tests": 260,
+    "log": "adjacent.txt.gz"
+  },
+  "gateway": {
+    "result": "passed",
+    "suites": 4,
+    "tests": 102,
+    "log": "gateway.txt.gz"
+  },
+  "lint": {
+    "result": "passed",
+    "files": 6,
+    "errors": 0,
+    "warnings": 95,
+    "baselineProductionWarnings": 95,
+    "addedWarnings": 0,
+    "log": "lint-final.json.gz",
+    "baselineLog": "lint-before.json.gz",
+    "initialLog": "lint-initial.json.gz"
+  },
+  "review": "Independent review corrected then rechecked missing-client fallback, pre-return publication race, immutable digest authority, own-submission IND exception, product/substance distinction and current-run-only scope. Final narrowed diff approved.",
+  "canonicalSynchronization": {
+    "remote": "7e042881d",
+    "merge": "6be80f509",
+    "ownSourceHashesUnchanged": 6,
+    "integrationDependencyManifest": "integration-dependency-sha256.json",
+    "review": "Incoming collaboration/RBM/demo retry fixes do not change source/project/context/gateway/composer behavior."
+  },
+  "build": {
+    "result": "passed",
+    "log": "build.txt.gz",
+    "scope": "production client/server and audit/qualification operations verifiers"
+  },
+  "publication": {
+    "result": "pending"
+  },
+  "limits": [
+    "PGlite fixtures and mocked SDK/transport are scoped software proof, not native PostgreSQL/RLS deployment qualification.",
+    "No live model/provider call, model PQ, scientific safety assessment, report availability verification, agency action or deployment.",
+    "Source-set authority/currentness applies to the current run; later retained history remains Tier3 and requires a fresh read/rebinding before currentness claims.",
+    "Module2.6 tabulation remains a preparation worksheet; recorded lifecycle/GLP values and category presence are not clinical-phase suitability, GLP compliance or safety/filing approval.",
+    "No app/card/editor/screen/route/service/table/model/dependency addition; actual owned changes are four existing production files and two tests. CMC and regional regulatory-content scope remain unchanged."
+  ],
+  "incomingClient": {
+    "result": "passed",
+    "tests": 68,
+    "suites": 4,
+    "log": "incoming-client.txt.gz"
+  },
+  "incomingNode": {
+    "result": "passed",
+    "tests": 11,
+    "log": "incoming-node.txt.gz"
+  },
+  "finalIssuerGuard": "Explicit missing-actor refusal at the private grant issuer narrows its required actor type; core/lint/build rerun after this final source edit."
+}

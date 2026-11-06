@@ -72,6 +72,7 @@ async function readSnapshot(client: RequestSqlClient, project: AdmittedProject):
  * Capture scalars/hash only; callers cannot mutate a later SDK recheck. */
 async function registerSnapshot(client: RequestSqlClient, project: AdmittedProject, snapshot: Snapshot, module: '2.4' | '2.6'): Promise<void> {
   const organizationId = project.organizationId, userId = project.actorUserId, projectId = project.projectId;
+  if (!userId) throw new NonclinicalSourceUnavailable();
   const programId = snapshot.programId, hash = snapshot.hash;
   const pinned = Object.freeze({ organizationId, userId, projectId, projectRef: programId, sqlClient: client });
   const recheck = async () => {
