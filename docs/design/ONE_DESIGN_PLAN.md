@@ -338,6 +338,34 @@ at the final governed boundary, with fresh owner, source, key and project admiss
 queries and governed write proposals remain held until their exact payload has an encrypted approval/egress path.
 These existing paths are included in S4; no route, table, screen or source file is added.
 
+The next bounded extensions finish the remaining reachable controls in these same packages:
+
+- **S5 exact final-package approval:** the existing governed precheck prepares and retains immutable ZIP bytes;
+  the current signature ceremony resolves the preparation receipt and binds its actual byte hash, destination,
+  application, source heads and current actor. Transmission reuses those bytes, rechecks current authority and
+  integrity after awaits, and consumes one claimed attempt. The current dry-run assembly retains its contract.
+- **S4 private proposals:** the existing pending approval, conversation signoff and authoring transaction store the
+  entire proposal/check/rationale encrypted, provide a fresh-owner exact preview, and require explicit exact-content
+  sharing. A successful actual gateway output/tool-argument receipt with current drafting qualification authorizes
+  machine genesis. Consent, fixed document ID, required ownership and execution receipt commit together; uncertain
+  commits reconcile that exact identity before release or retry. Read-only intent, cancellation, current source/key,
+  hard gates and independent review remain enforced.
+- **S9 client-confirmed repair:** the current task ledger, both task APIs, board, source/task writers and reminder
+  sweep preserve an immutable opening marker and transition chain. A real current affected client confirms an exact
+  proposal bound to current QMS/CAPA, signed fix version and verified tenant/project rule evidence. Generic closure,
+  mirror writes, stale metadata replacement and generic reopen cannot bypass this history. Existing Part 11 signoff
+  remains a separate requirement where the task requires it.
+- **S10 feedback source continuity:** existing agency question proposals carry source/checksum/extracted-text and
+  exact-span proof into the current Record action. The same governed transaction admits the current linked source
+  and actor before storing a source-backed question. Manual edits remain explicitly manual. Reuse the current
+  retained-source guard for every retained source kind and all descendant model calls. Human clock confirmation,
+  reviewed objective/subjective coding, denominator-aware metrics and exact-package clean-file review follow in
+  the existing correspondence/submission paths, with insufficient history stated explicitly.
+
+These scope extensions add no source file, screen, mount, table, tool or dependency. Their implementation stays
+pending until its own tests and real browser checks pass; the reviewed-learning and privacy components above do
+not imply that these later gates have already passed.
+
 ### Milestones in the existing roadmap — §11 build order
 
 Each row is **queued for v0.5 acceptance** until its stated fixture is run and recorded. A file's existence or an

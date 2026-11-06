@@ -421,7 +421,9 @@
         "server/services/chat-thread-helpers.ts",
         "server/routes/chat/send-message.ts",
         "server/routes/chat/threads.ts",
-        "server/routes/cortex-unified.ts"
+        "server/routes/cortex-unified.ts",
+        "server/services/authoring/authoring-documents.ts",
+        "server/services/authoring/authoring-create-outcome.ts"
       ]
     },
     {
@@ -447,7 +449,10 @@
         "migrations/**",
         "db/migrations/**",
         "scripts/db/migration-set.mjs",
-        "shared/schema/**"
+        "shared/schema/**",
+        "server/services/submission-service/submission-service.ts",
+        "server/services/part11/signature-persistence.ts",
+        "server/routes/c2c/actions.ts"
       ]
     },
     {
@@ -536,7 +541,13 @@
         "migrations/**",
         "db/migrations/**",
         "scripts/db/migration-set.mjs",
-        "shared/schema/**"
+        "shared/schema/**",
+        "server/routes/taskManagement.routes.ts",
+        "server/routes/unifiedTasks.routes.ts",
+        "server/routes/taskBoard.routes.ts",
+        "server/services/unifiedTaskService.ts",
+        "server/services/ana-ri/command-executor.ts",
+        "server/jobs/taskDueSweep.ts"
       ]
     },
     {
@@ -565,7 +576,8 @@
         "client/src/concept2cure/v2/surfaces/AgencyResponses*.tsx",
         "client/src/concept2cure/v2/surfaces/LetterQuestion*.tsx",
         "server/routes/orchestration.ts",
-        "server/services/orchestration/pre-submission-gate-verdict.ts"
+        "server/services/orchestration/pre-submission-gate-verdict.ts",
+        "server/services/clinical-regulatory-evidence/retained-source-context.ts"
       ]
     },
     {
