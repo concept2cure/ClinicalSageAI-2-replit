@@ -12,7 +12,7 @@
  * Authoring through the canonical intake (SourceImportDialog). SYNTHETIC.
  */
 import React from 'react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, onTestFinished, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 const { apiRequest } = vi.hoisted(() => ({ apiRequest: vi.fn() }));
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest }));
@@ -214,9 +214,17 @@ it('imports exactly the approved sections into this document, with this document
   fireEvent.change(await screen.findByLabelText(/Study data/), { target: { value: RUN } });
   const region = await screen.findByLabelText('CSR builds from this study data');
   expect(within(region).queryByRole('button', { name: /Import approved sections into Authoring/ })).toBeNull();
+  const scrolled = vi.fn();
+  const scrollIntoView = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = scrolled;
+  onTestFinished(() => { Element.prototype.scrollIntoView = scrollIntoView; });
   fireEvent.click(await within(region).findByRole('button', { name: /Import approved sections into this document/ }));
   const panel = await within(region).findByLabelText('Import into this document');
   expect(await within(panel).findByText(/§11\.4\.1 Analysis of efficacy · Will be written/)).toBeTruthy();
+  // R-1 (rehearsal 2026-11-05): the panel opens below the section list, so it is brought into view, and the reason
+  // field takes focus once the preview is shown; on stage the click had looked as though it did nothing.
+  expect(scrolled.mock.contexts).toContain(panel);
+  expect(document.activeElement).toBe(within(panel).getByLabelText(/Reason for importing/));
   expect(within(panel).getByText(/§12\.2 Adverse events · Edited here since; not replaced · still holds a data placeholder/)).toBeTruthy();
   const source = { kind: 'csr', jobId: 41, sectionNumbers: ['11.4.1', '12.2'], approvedOnly: true };
   expect(imports()[0][2]).toEqual({ programId: PROGRAM, source, targetDocumentId: CSR_DOC, previewOnly: true });

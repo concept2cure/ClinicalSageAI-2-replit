@@ -1,0 +1,21 @@
+C2C Codespace post-start. Branch: concept2cure-v2
+No database or AI secret is printed.
+[c2c-codespace] Provisioning the database (npm run db:provision; first run takes several minutes).
+[c2c-codespace] Database provisioned and verified as the app_service role.
+[c2c-codespace] The app is already running on port 5000.
+[c2c-codespace] The app is serving. /readyz: serving; not ready: ana (AnA: no_provider)
+[c2c-codespace] No ANTHROPIC_API_KEY secret: AnA cannot draft regulatory documents (OPENAI_API_KEY alone answers chat only).
+[c2c-codespace] Add it as a Codespaces secret for this repository, then rebuild or restart the Codespace.
+
+============================================================================
+ Concept2Cure is running: https://proof-codespace-5000.app.github.dev
+ Sign in: press "Demo access" on the sign-in page (signs in as ana.author@concept2cure.pro).
+ Password sign-in for the three demo people: see /root/.concept2cure-codespace/app.env
+   (DEMO_SIGNER_PASSWORD). App log: /tmp/concept2cure-app.log
+ Restart the app: pkill -f 'tsx --inspect=0 server/index.ts'; bash .devcontainer/post-start.sh
+============================================================================
+
+real	0m3.962s
+user	0m1.152s
+sys	0m0.315s
+exit=0

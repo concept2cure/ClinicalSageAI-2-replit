@@ -217,12 +217,13 @@ describe('(1) a comment and its record, written through POST /sections/:id/comme
     made.quoted = commentId;
 
     // The comment row, as written.
-    const stored = await jdb.pglite.query<{ body: string; anchor: unknown; created_by: string; doc_id: string }>(
-      'SELECT body, anchor, created_by, doc_id FROM authoring_comments WHERE id = $1',
+    const stored = await jdb.pglite.query<{ body: string; anchor: unknown; created_by: string; doc_id: string; user_name: string }>(
+      'SELECT body, anchor, created_by, doc_id, user_name FROM authoring_comments WHERE id = $1',
       [commentId],
     );
     expect(stored.rows).toHaveLength(1);
-    expect(stored.rows[0]).toMatchObject({ body, anchor, created_by: AUTHOR.id, doc_id: DOC_A });
+    // The rail shows user_name: the person's name, not their email (J3 human test, 2026-11-06).
+    expect(stored.rows[0]).toMatchObject({ body, anchor, created_by: AUTHOR.id, doc_id: DOC_A, user_name: AUTHOR.name });
 
     // The trail row: the words as after_content, the passage and its hashes.
     const trail = await trailFor(commentId);

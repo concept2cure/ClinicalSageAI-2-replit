@@ -1538,8 +1538,12 @@ export function ShadowReviewWorkspace({
     } else {
       setNotice({
         tone: 'err',
-        text: `The shadow review did not complete — ${r.error ?? 'the request failed'}. No findings were recorded.`,
+        text: `The shadow review did not complete — ${(r.error ?? 'the request failed').replace(/\.+$/, '')}. No findings were recorded.`,
       });
+      /* The server records a failed run, with its reason, before it answers the
+         error: read the list again so the run and that reason are shown (J4
+         human test, 2026-11-06). */
+      setBump((b) => b + 1);
     }
   };
 

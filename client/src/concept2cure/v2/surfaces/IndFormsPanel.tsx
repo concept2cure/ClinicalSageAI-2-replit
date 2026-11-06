@@ -504,6 +504,8 @@ function IndFormsPanelForScope({ note, projectIdent, isScopeCurrent }: { note: F
         </section>
       )}
 
+      {/* Scrolls at a phone's width rather than being clipped by its card (J4 human test, 2026-11-06). */}
+      <div style={{ overflowX: 'auto' }}>
       <table className="reg-tbl"><thead><tr><th>Form</th><th>Field check</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
         <tbody>{forms.map((f) => {
           const chk = checks[f];
@@ -564,7 +566,7 @@ function IndFormsPanelForScope({ note, projectIdent, isScopeCurrent }: { note: F
                   </div>
                 )}
               </td>
-              <td style={{ textAlign: 'right', whiteSpace: 'nowrap', verticalAlign: 'top' }}>
+              <td style={{ textAlign: 'right', verticalAlign: 'top', minWidth: 220 }}>
                 <button className="nda-open" onClick={() => check(f)} disabled={busy != null}>{I.checkCircle} {busy === 'check-' + f ? 'Building…' : 'Build & check'}</button>
                 <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => download(f)} disabled={busy != null}>{I.download} {busy === 'pdf-' + f ? 'Rendering…' : 'PDF'}</button>
                 <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => save(f)} disabled={busy != null} title="Persist as a governed artifact in the project dossier">{I.database} {busy === 'save-' + f ? 'Saving…' : 'Save to dossier'}</button>
@@ -600,6 +602,7 @@ function IndFormsPanelForScope({ note, projectIdent, isScopeCurrent }: { note: F
             </tr>
           );
         })}</tbody></table>
+      </div>
     </div>
   );
 }

@@ -593,7 +593,7 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
   } catch (error: any) {
     if (error instanceof ProjectAdmissionRefusal) return sendError(res, error.status, error.message, undefined, error.code);
     if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
     }
     logger.error('AI edit failed', { error: error.message });
     return sendError(res, 500, 'AI editing failed');
@@ -1273,7 +1273,7 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
   } catch (error: any) {
     if (error instanceof ProjectAdmissionRefusal) return sendError(res, error.status, error.message, undefined, error.code);
     if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
     }
     logger.error('Template generation failed', { error: error.message });
     return sendError(res, 500, 'Template generation failed');

@@ -32,7 +32,7 @@ const router = express.Router();
 
 // Validation schemas
 const createSpecSchema = z.object({
-  projectId: z.string().uuid().optional(),
+  projectId: z.string().guid().optional(),
   materialType: z.string().min(1, 'Material type is required'),
   materialName: z.string().min(1, 'Material name is required'),
   testParameters: z.any().optional(),
@@ -49,7 +49,7 @@ const createSpecSchema = z.object({
    */
   approvalStatus: z
     .enum(['draft', 'review'], {
-      errorMap: () => ({
+      error: () => ({
         message: 'A specification is created as draft or review. Approval is an electronic signature: POST /api/cmc/specifications/:id/approve.',
       }),
     })
@@ -201,7 +201,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Invalid input data',
-        details: validationResult.error.errors,
+        details: validationResult.error.issues,
       });
     }
 
@@ -298,7 +298,7 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Invalid input data',
-        details: validationResult.error.errors,
+        details: validationResult.error.issues,
       });
     }
 
@@ -445,7 +445,7 @@ router.post('/:id/approve', async (req, res) => {
     return res.status(400).json({
       success: false,
       error: 'Invalid input data',
-      details: validationResult.error.errors,
+      details: validationResult.error.issues,
     });
   }
   const { reason, meaning, reauth, idempotencyKey } = validationResult.data;

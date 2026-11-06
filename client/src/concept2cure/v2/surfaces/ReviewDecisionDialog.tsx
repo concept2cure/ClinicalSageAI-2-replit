@@ -17,6 +17,8 @@ export interface ReviewDecisionDialogProps {
   programId?: string | null;
   onClose: () => void;
   onRecorded: (receipt: AuthoringReviewRow) => void;
+  /** The decision the dialog opens at: "changes_requested" from the board's "Request changes...". */
+  initialDecision?: PeerVerdict;
 }
 
 export function ReviewDecisionDialog(props: ReviewDecisionDialogProps) {
@@ -32,7 +34,7 @@ export function ReviewDecisionDialog(props: ReviewDecisionDialogProps) {
 function DecisionSession(props: ReviewDecisionDialogProps & {
   scope: ReturnType<typeof peerReviewScope>; isCurrent: () => boolean;
 }) {
-  const state = usePeerReviewDecision(props.scope, props.isCurrent, props.onRecorded);
+  const state = usePeerReviewDecision(props.scope, props.isCurrent, props.onRecorded, props.initialDecision ?? '');
   const close = () => { if (!state.inFlight.current && state.current()) props.onClose(); };
   const dialogRef = useDialog(close);
   React.useEffect(registerCeremonyOpen, []);

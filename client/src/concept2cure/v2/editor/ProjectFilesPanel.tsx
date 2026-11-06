@@ -87,6 +87,9 @@ export interface ProjectFilesPanelProps {
   onNav?: (id: string) => void;
   /** Uses the host's existing conversation for IND preparation and source study. */
   onAsk?: (text: string) => void;
+  /** Whether the IND document library is a lane. False for a device or diagnostic project, which files no IND: its
+   *  Evidence step offered "IND documents" beside a 510(k) (human test J1, 2026-11-06). Defaults to shown. */
+  indLibrary?: boolean;
 }
 
 const NO_SOURCES: ProjectSource[] = [];
@@ -455,6 +458,20 @@ function PdfViewerPane(props: {
   );
 }
 
+type SourceLane = 'vault' | 'data-room' | 'ind';
+
+/** The panel's document sources. The IND library is offered unless the host says the project files no IND. */
+function SourceLanes({ lane, indLibrary = true, onLane }: { lane: SourceLane; indLibrary?: boolean; onLane: (next: SourceLane) => void }) {
+  const lanes: Array<[SourceLane, string]> = [['vault', 'Vault'], ['data-room', 'Data room'], ...(indLibrary ? [['ind', 'IND documents'] as [SourceLane, string]] : [])];
+  return (
+    <div className="cdl-scope" role="group" aria-label="Document sources">
+      {lanes.map(([id, label]) => (
+        <button key={id} type="button" className="cdl-scope-btn" aria-pressed={lane === id} onClick={() => onLane(id)}>{label}</button>
+      ))}
+    </div>
+  );
+}
+
 /** Reset only the files rail on a scope switch; the editor keeps its leave guard. */
 export function ProjectFilesPanel(props: ProjectFilesPanelProps) {
   const owned = useDataReadVisit(props.programId, props.readOwner);
@@ -467,7 +484,7 @@ export function ProjectFilesPanel(props: ProjectFilesPanelProps) {
 
 function ProjectFilesForProgram({
   programId, programName, sectionOpen = false, sectionCode = null, projectSources = NO_SOURCES,
-  onCite, onInsertReference, onOpenDocument, onAsk, onClose, fireToast, onNav, readOwner, ownerCurrent,
+  onCite, onInsertReference, onOpenDocument, onAsk, onClose, fireToast, onNav, readOwner, ownerCurrent, indLibrary,
 }: ProjectFilesPanelProps & { ownerCurrent: () => boolean }) {
   // Retained actions keep their original visit rather than adopting a later guard.
   const capturedCurrent = useRef(ownerCurrent).current;
@@ -481,7 +498,7 @@ function ProjectFilesForProgram({
   const { viewer, showPdf, closeViewer } = useVaultPdfViewer<VaultDoc>();
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [lane, setLane] = useState<'vault' | 'data-room' | 'ind'>('vault');
+  const [lane, setLane] = useState<SourceLane>('vault');
   const [pullDoc, setPullDoc] = useState<VaultDoc | null>(null);
 
   const sourceFor = useCallback((doc: VaultDoc) => matchingProjectSource(doc, projectSources), [projectSources]);
@@ -527,11 +544,7 @@ function ProjectFilesForProgram({
     <>
       {header}
       <div className="pf-search">
-      <div className="cdl-scope" role="group" aria-label="Document sources">
-        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'vault'} onClick={() => { if (current()) setLane(previous => current() ? 'vault' : previous); }}>Vault</button>
-        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'data-room'} onClick={() => { if (current()) setLane(previous => current() ? 'data-room' : previous); }}>Data room</button>
-        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'ind'} onClick={() => { if (current()) setLane(previous => current() ? 'ind' : previous); }}>IND documents</button>
-      </div>
+      <SourceLanes lane={lane} indLibrary={indLibrary} onLane={next => { if (current()) setLane(previous => current() ? next : previous); }} />
       </div>
       {lane === 'data-room' && <DataRoomSourcesPanel key={programId} programId={programId} readOwner={libraryOwner} onOpenDocument={openDocument} onAsk={ask} onNav={navigate} />}
       {lane === 'ind' && <IndDocumentLibrary key={programId} programId={programId} onAsk={ask} onOpenDocument={openDocument}

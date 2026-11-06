@@ -147,6 +147,18 @@ model key. The walk scripts follow F6 now (`2be9c3e469`, `ac8c9193e8`). Records:
 | F1 one CSR entry | `23375e29e0` | **pass** | M5 lists the CSR once. One run read the list before it loaded (0 entries, `f6-05-` shows "Loading templates…"). The check now waits for the list (`ac8c9193e8`), and it passes with 1. |
 
 Not re-walked here: B5 (390 px), B6, B8 and F11 have red/green tests and in-app checks in `fixes/`.
+
+**After the founder's rehearsal (session `01QoxbLd`, `docs/evidence/D2-CSR/2026-11-05-lmn201-demo-rehearsal/`),
+checked in the running app:**
+- **R-1** (`b3c176b34d`, `71095a9003`): "Import approved sections into this document" brings its box into view (top
+  at 153 px), and once the preview stands, focus is in "Reason for importing" (`r1r3-r1-import-opens-in-view.png`).
+- **R-3** (`0180e0eec2`): the preview tables are the product's data table, header cells padded 8×12 px
+  (`r1r3-r3-preview-table-spaced.png`).
+- **The narrative QC list** (95 subjects, about 9,000 px) is collapsed under "Narrative QC list · 95 subjects", as
+  beside §14.3.3 in the editor (`qc-collapsed-narratives-block-settled.png`).
+- The solid magenta block below the narratives in these screenshots is not the product. `walk-common.cjs` `shot()` masks
+  `ul[aria-label="Narrative QC"]` and the saved §12.3.2/§14.3.3 text, to keep CDISC participant detail out of committed
+  screenshots, and Playwright paints a masked region magenta. An earlier note here took it for a renderer limit; that was wrong.
 One run stopped on the Vault step (`b1-fail-3.png`): the Library tab was showing, not Uploads. It did not recur on the
 next run, and every later step read the recorded stage first.
 

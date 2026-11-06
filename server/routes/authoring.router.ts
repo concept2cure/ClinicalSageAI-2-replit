@@ -2493,7 +2493,10 @@ router.post('/sections/:sectionId/comment', async (req: Request, res: Response) 
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
     const userEmail = req.user?.email ?? null;
-    const userName = userEmail || createdBy;
+    // The comment rail shows user_name: the person's name from their user
+    // record, as a signature prints it; the email only when none is recorded
+    // (the rail read "jm.smith@…" for JM Smith; J3 human test, 2026-11-06).
+    const userName = (userEmail && await resolveSignerName(userEmail)) || userEmail || createdBy;
 
     if (!body) {
       return res.status(400).json({

@@ -157,6 +157,8 @@ interface RegionProfileForm {
   name: string;
   formId?: string;
   required: boolean;
+  /** Application types that file this form. Absent = all of them. */
+  requiredFor?: string[];
   description: string;
   url?: string;
 }
@@ -205,6 +207,14 @@ function requiredModule1For(
   };
   walk(sections ?? []);
   return out;
+}
+
+/** The agency forms THIS application type files, by the same `requiredFor`
+ *  contract as requiredModule1For: an IND does not file Form 356h (J4 human
+ *  test, 2026-11-06). Unknown type: every form is kept. */
+function formsFor(forms: RegionProfileForm[] | undefined, applicationType: string | null | undefined): RegionProfileForm[] {
+  const app = applicationType ? String(applicationType).toLowerCase() : null;
+  return (forms ?? []).filter((f) => !f.requiredFor || !app || f.requiredFor.includes(app));
 }
 
 // (SUB_STATUS_TONE / SUB_STATUS_LABEL — the submission status chip — live in
@@ -1214,7 +1224,7 @@ export function SubmissionCenter({
                     profile.data.module1Sections,
                     sub?.applicationType,
                   ).map((s) => ({ number: s.number, title: s.title })),
-                  requiredForms: (profile.data.forms ?? [])
+                  requiredForms: formsFor(profile.data.forms, sub?.applicationType)
                     .filter((f) => f.required)
                     .map((f) => ({ formId: f.formId ?? null, name: f.name })),
                   specificRequirements: profile.data.specificRequirements ?? [],
@@ -1625,11 +1635,11 @@ export function SubmissionCenter({
                   })()}
 
                   {/* Agency forms. */}
-                  {profile.data.forms?.length > 0 && (
+                  {formsFor(profile.data.forms, sub.applicationType).length > 0 && (
                     <div className="sc-mt">
                       <div className="tl-spec-k sc-mb">Agency forms</div>
                       <div className="sc-chiprow">
-                        {profile.data.forms.map((f) => (
+                        {formsFor(profile.data.forms, sub.applicationType).map((f) => (
                           <span
                             key={f.formId ?? f.name}
                             className={`rd-chip tone-${f.required ? 'warn' : 'idle'}`}

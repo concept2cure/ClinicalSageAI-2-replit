@@ -57,6 +57,13 @@ beforeEach(() => {
 afterEach(() => { cleanup(); authService.endSession(null); clearShellProject(); request.mockReset(); vi.unstubAllGlobals(); });
 
 describe('Project settings reads and bounded fields', () => {
+  // Human test J1 (2026-11-06): opening the settings said "This read does not confirm an earlier uncertain save or
+  // audit" to a tester who had saved nothing. That sentence belongs only after a save that could not be confirmed.
+  it('opens on the saved settings without a note about an uncertain save', async () => {
+    mount();
+    await open();
+    expect(screen.queryByText(/Current saved settings loaded|uncertain save/)).toBeNull();
+  });
   it('reads lazily, renders actual fields, prevents a no-op and records only the reasoned difference', async () => {
     const { onSaved } = mount();
     expect(request).not.toHaveBeenCalled();

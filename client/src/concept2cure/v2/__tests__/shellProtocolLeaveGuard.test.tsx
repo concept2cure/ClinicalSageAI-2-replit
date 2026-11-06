@@ -9,9 +9,17 @@ import { installDriveBrowserMocks } from './liveDriveShell.fixtures';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest }));
+/* One signed-in account, the same object on every render, as AuthProvider holds it. The shell reads the
+   navigation verdicts once per account visit (navEntitlements.tsx useNavigationReadOwner, 0fc881c16f): a new
+   user object on every render was a new visit on every render, and the suite read and re-rendered until the
+   test worker ran out of memory. */
+const signedIn = vi.hoisted(() => ({
+  user: { id: '7', organizationId: '7', firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: ['admin'], permissions: ['governed:write', 'billing:admin'] },
+  logout: () => Promise.resolve(),
+}));
 vi.mock('@/services/portal/authService', async original => ({
   ...await original<typeof import('@/services/portal/authService')>(),
-  useAuth: () => ({ user: { id: '7', organizationId: '7', firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: ['admin'], permissions: ['governed:write', 'billing:admin'] }, logout: vi.fn() }),
+  useAuth: () => signedIn,
 }));
 vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: { id: '7', name: 'Sponsor' }, organizationId: 7, tenant: null }) }));
 vi.mock('../surfaceActions', async original => {

@@ -1377,11 +1377,11 @@ const gapAnalysisRequestSchema = z.object({
     .transform(val => val.toUpperCase().replace('-', ''))
     .refine(
       val => Object.keys(ectdRequirements).includes(val),
-      val => ({
-        message: `Unsupported submission type: ${val}. Supported types: ${Object.keys(
+      {
+        error: ({ input: val }) => `Unsupported submission type: ${String(val)}. Supported types: ${Object.keys(
           ectdRequirements
         ).join(', ')}`,
-      })
+      }
     ),
   uploadedDocuments: z.array(z.string()).default([]),
   projectId: z.string().optional(),
@@ -1403,8 +1403,8 @@ router.post(
       if (!parsed.success) {
         return res.status(400).json({
           success: false,
-          error: parsed.error.errors[0]?.message || 'Invalid request data',
-          details: parsed.error.errors,
+          error: parsed.error.issues[0]?.message || 'Invalid request data',
+          details: parsed.error.issues,
         });
       }
 
@@ -1550,7 +1550,7 @@ router.post(
         return res.status(400).json({
           success: false,
           error: 'Invalid request data',
-          details: error.errors,
+          details: error.issues,
         });
       }
       return serverError(res, logger, 'saving gap analysis', error);
@@ -2098,7 +2098,7 @@ const applyRewriteSchema = z.object({
     .min(8, 'proposedContent is too short')
     .max(200_000, 'proposedContent exceeds the size limit')
     .optional(),
-  proposalId: z.string().uuid().optional(),
+  proposalId: z.string().guid().optional(),
   reasonForChange: z
     .string()
     .min(8, 'reasonForChange must explain WHY the rewrite is being applied')
@@ -2146,7 +2146,7 @@ const previewRewriteSchema = z
       .min(8, 'proposedContent is too short')
       .max(200_000, 'proposedContent exceeds the size limit')
       .optional(),
-    proposalId: z.string().uuid().optional(),
+    proposalId: z.string().guid().optional(),
   })
   .refine(d => !!d.proposedContent || !!d.proposalId, {
     message: 'proposedContent or proposalId is required',
@@ -3536,7 +3536,7 @@ const guidanceUpsertSchema = z.object({
   authority: guidanceAuthorityEnum,
   newVersion: z.string().min(1).max(64),
   sourceUrl: z.string().url().max(500).nullable().optional(),
-  metadata: z.record(z.unknown()).nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
   /** When set, also run the scan scoped to this org. */
   scanOrganizationId: z.number().int().positive().optional(),
 });
@@ -3863,7 +3863,7 @@ router.get(
 );
 
 const bulkAlertActionSchema = z.object({
-  alertIds: z.array(z.string().uuid()).min(1).max(500),
+  alertIds: z.array(z.string().guid()).min(1).max(500),
 });
 
 router.post(
@@ -3965,7 +3965,7 @@ const webhookIngestSchema = z.object({
         authority: guidanceAuthorityEnum,
         newVersion: z.string().min(1).max(64),
         sourceUrl: z.string().url().max(500).nullable().optional(),
-        metadata: z.record(z.unknown()).nullable().optional(),
+        metadata: z.record(z.string(), z.unknown()).nullable().optional(),
       })
     )
     .min(1)
@@ -5458,7 +5458,7 @@ router.get(
 
 const authoringPlanIdParam = z
   .string()
-  .uuid({ message: 'planId must be a UUID' });
+  .guid({ message: 'planId must be a UUID' });
 
 router.get(
   '/authoring-plan/:planId',

@@ -469,8 +469,53 @@ describe('GET /api/audit-trail/ledger — an approval that was not the last one 
     const data = await ledger();
     expect(entryOf(data, typed)?.event).toBe('Version approval signed, 1 of 3 required; the version is not yet approved (e-signature)');
     expect(entryOf(data, stored)?.event).toBe('Version approval signed, 1 of 2 required; the version is not yet approved (e-signature)');
-    // A review signature is not an approval: the audit row's own name stays.
-    expect(entryOf(data, review)?.event).toBe('C2c Work Sign');
+    // A review signature is not an approval: it is named as the review it records.
+    expect(entryOf(data, review)?.event).toBe('Version review signed (e-signature)');
+  });
+
+  /* J2 human test (2026-11-06): a Vault version's history read "C2c Work Sign" and "C2c Work Review Route
+     Send" — the raw action codes — and named the registration row by the document's title, as if the title
+     were the act. A QA approver reading the trail could not tell what happened. */
+  it('a Vault version: the final approval, the route sent and the lifecycle moves are named as acts, not codes', async () => {
+    const approved = await write('c2c.work.sign', 'canonical_document', 'c3', {});
+    await signature('regulated-document-lifecycle', 'APPROVED', { auditId: approved }, '2026-10-29 10:00:00');
+    const sent = await write('c2c.work.review-route.send', 'canonical_document', 'c3', {});
+    const registered = await write('regulated_document.registered', 'canonical_document', 'c3', { title: 'Data Management Plan' });
+    const inReview = await write('regulated_document.in_review', 'canonical_document', 'c3', { from: 'authoring', to: 'in_review' });
+    const fixity = await write('vault.document.fixity', 'vault_document', 'v3', { description: 'Fixity check: verified' });
+    const unknown = await write('vault.document.something_new', 'vault_document', 'v3', {});
+    const data = await ledger();
+    expect(entryOf(data, approved)?.event).toBe('Version approved (e-signature)');
+    expect(entryOf(data, sent)?.event).toBe('Sent for review');
+    expect(entryOf(data, registered)?.event).toBe('Registered as a controlled document');
+    expect(entryOf(data, inReview)?.event).toBe('Version in review');
+    // A row that describes itself keeps its own words; an act with no name is shown as the chain recorded it.
+    expect(entryOf(data, fixity)?.event).toBe('Fixity check: verified');
+    expect(entryOf(data, unknown)?.event).toBe('Vault Document Something New');
+  });
+});
+
+describe('GET /api/audit-trail/ledger — Vault acts named in words (J2 human test)', () => {
+  const entryOf = (data: AuditLedgerEntry[], auditId: string) => data.find((e) => e.id === `AUD-${auditId}`);
+  it('every act the Vault writes without a description of its own is named in words', async () => {
+    const acts: Record<string, string> = {
+      'vault.document.exported': 'Exported',
+      'vault.document.extracted': 'Text extracted',
+      'vault.document.text.read': 'Text read',
+      'vault.document.filed': 'Filed',
+      'vault.document.metadata_edit': 'Details edited',
+      'vault.document.relate': 'Related document recorded',
+      'vault.document.annotate': 'Annotation added',
+      'vault.document.annotation.reply': 'Annotation replied to',
+      'vault.document.annotation.resolve': 'Annotation resolved',
+      'vault.document.annotation.retract': 'Annotation retracted',
+      'vault.document.catalog_suggest': 'Catalog description suggested',
+      'vault.document.retention_soft_delete': 'Removed under the retention process',
+    };
+    const ids: Record<string, string> = {};
+    for (const action of Object.keys(acts)) ids[action] = await write(action, 'vault_document', 'v4', {});
+    const data = await ledger();
+    for (const [action, words] of Object.entries(acts)) expect(entryOf(data, ids[action])?.event, action).toBe(words);
   });
 });
 

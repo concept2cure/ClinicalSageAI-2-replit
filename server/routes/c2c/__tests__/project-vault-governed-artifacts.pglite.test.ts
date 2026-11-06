@@ -54,7 +54,11 @@ beforeAll(async () => {
       readiness integer, updated_at timestamptz, owner_id integer, project_id text, org_id integer
     );
     CREATE TABLE c2c_rule_packs (doc_type text, agency text, version text, required_sections jsonb);
-    CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL, code text, name text, regulatory_program_id uuid);
+    -- client_workspace_id and client_workspaces: the governed-artifact read keeps the organisation's
+    -- artifacts inside the open project's sponsor (artifact-registry-read.ts narrowToSponsorOf,
+    -- 1e83af2c96). No project here records a sponsor.
+    CREATE TABLE client_workspaces (id integer PRIMARY KEY, organization_id integer NOT NULL, name text NOT NULL);
+    CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL, code text, name text, regulatory_program_id uuid, client_workspace_id integer);
     INSERT INTO projects VALUES
       (11, 7, 'BX-204', 'BX-204', '${P1}'),
       (12, 7, 'BX-999', 'BX-999', '${P2}'),

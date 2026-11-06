@@ -38,10 +38,16 @@ const HOLD_COLUMNS =
 export const HOLD_LIST_SQL = `SELECT ${HOLD_COLUMNS.split(', ').map((column) => `h.${column}`).join(', ')},
     CASE WHEN h.scope = 'program' THEN p.name
          ELSE COALESCE(NULLIF(d.document_title, ''), NULLIF(d.file_name, '')) END AS target_label,
-    p.name AS target_project_label
+    p.name AS target_project_label,
+    COALESCE(pb.name, pb.email) AS placed_by_name,
+    COALESCE(lb.name, lb.email) AS lifted_by_name
   FROM vault.legal_holds h
   LEFT JOIN vault.documents d ON d.id = h.document_id AND d.organization_id = h.organization_id
   LEFT JOIN regulatory_programs p ON p.id = COALESCE(h.program_id, d.program_id) AND p.organization_id = h.organization_id
+  -- Who placed and lifted it, by name (J2 human test, 2026-11-06: the list said "user #1"); actor_name names only
+  -- a member of the session's organisation under enforcement.
+  LEFT JOIN LATERAL public.actor_name(h.placed_by) pb ON TRUE
+  LEFT JOIN LATERAL public.actor_name(h.lifted_by) lb ON TRUE
   WHERE h.organization_id = $1
   ORDER BY (h.lifted_at IS NULL) DESC, h.placed_at DESC
   LIMIT 500`;
@@ -49,8 +55,8 @@ export const HOLD_LIST_SQL = `SELECT ${HOLD_COLUMNS.split(', ').map((column) => 
 const placeSchema = z
   .object({
     scope: z.enum(['program', 'document']),
-    programId: z.string().uuid().optional(),
-    documentId: z.string().uuid().optional(),
+    programId: z.string().guid().optional(),
+    documentId: z.string().guid().optional(),
     reference: z.string().trim().min(1).max(200),
     reason: z.string().trim().min(3).max(2000),
   })
@@ -76,6 +82,8 @@ interface HoldRow {
   lift_reason: string | null;
   target_label?: string | null;
   target_project_label?: string | null;
+  placed_by_name?: string | null;
+  lifted_by_name?: string | null;
 }
 
 function presentHold(row: HoldRow) {
@@ -87,9 +95,11 @@ function presentHold(row: HoldRow) {
     programId: row.program_id,
     documentId: row.document_id,
     placedBy: row.placed_by,
+    placedByName: row.placed_by_name ?? null,
     placedAt: row.placed_at,
     liftedAt: row.lifted_at,
     liftedBy: row.lifted_by,
+    liftedByName: row.lifted_by_name ?? null,
     liftReason: row.lift_reason,
     active: row.lifted_at === null,
     targetLabel: row.target_label ?? null,
@@ -212,7 +222,7 @@ async function placeHold(req: Request, res: Response): Promise<void> {
 async function liftHold(req: Request, res: Response): Promise<void> {
   const auth = holdAuthority(req, res);
   if (!auth) return;
-  const id = z.string().uuid().safeParse(req.params.id);
+  const id = z.string().guid().safeParse(req.params.id);
   const parsed = liftSchema.safeParse(req.body);
   if (!id.success || !parsed.success) {
     res.status(400).json({ error: 'HOLD_INVALID', message: 'A lift names the hold and gives a reason.' });

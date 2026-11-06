@@ -75,6 +75,37 @@ describe('exact stored project recall before ordering and limiting', () => {
 });
 
 describe('project binding at semantic and writeback seams', () => {
+  it('recalls all seven settled fields from a thread writeback in only its recorded project', async () => {
+    const summary = {
+      objective: 'Prepare the regulatory overview',
+      lockedFacts: ['The sponsor prefers a concise narrative'],
+      decisions: ['Retain the agreed outline'],
+      openQuestions: ['Which appendix should follow?'],
+      nextActions: ['Request the source tables from the study team'],
+      createdArtifacts: ['Clinical overview draft in the project'],
+      exclusions: ['Do not claim efficacy for the exploratory subgroup'],
+    };
+    h.gateway.mockResolvedValueOnce({ content: JSON.stringify(summary) });
+    const threadId = 'seven-field-continuity';
+    await summarizeAndStoreWorkingMemoryForThread({
+      threadId, organizationId: 7, projectId: 42,
+      messages: Array.from({ length: 20 }, () => ({ role: 'user', content: 'Continue the currently selected project.' })),
+    });
+
+    const recalled = await getLatestWorkingMemoryByThread(threadId, 7, { projectId: 42 });
+    for (const value of [summary.objective, ...summary.lockedFacts, ...summary.decisions,
+      ...summary.openQuestions, ...summary.nextActions, ...summary.createdArtifacts, ...summary.exclusions]) {
+      expect(recalled).toContain(value);
+    }
+    expect(await getLatestWorkingMemoryByThread(threadId, 7, { projectId: 41 })).toBeNull();
+    expect(await getLatestWorkingMemoryByThread(threadId, 8, { projectId: 42 })).toBeNull();
+    const stored = await h.pg!.query<{ structured_data: unknown }>(
+      'SELECT structured_data FROM conversation_working_memory WHERE thread_id = $1 AND organization_id = $2 AND project_id = $3',
+      [threadId, 7, 42],
+    );
+    expect(stored.rows[0].structured_data).toMatchObject(summary);
+  });
+
   it('binds the exact project alongside vector/thread/organization and returns its stored identity', async () => {
     vi.stubEnv('ENABLE_SEMANTIC_WORKING_MEMORY', 'true');
     h.vectorRows = [{ id:2,summary:'PROJECT_B_FACT',project_id:42,similarity:0.9,generated_at:'2026-10-02' }];

@@ -1013,7 +1013,9 @@
 .c2c-v2 .tt-trigger{position:relative;}
 /* The count in ink, not orange; red only when something is overdue (TaskTray.tsx sets
    data-overdue and says "n overdue" in the button's name). D1.md §D1.B step 7. */
-.c2c-v2 .tt-badge{position:absolute;top:1px;right:1px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--text-100);color:var(--bg-000);font-size:var(--fs-caption,12px);font-weight:600;line-height:18px;text-align:center;}
+/* On the button's corner, not its glyph: at top/right 1px a two-digit count covered the
+   bell at 1440 (J1 human test, 2026-11-06). The count reads "99+" at most (TaskTray.tsx). */
+.c2c-v2 .tt-badge{position:absolute;top:-5px;right:-7px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--text-100);color:var(--bg-000);font-size:var(--fs-caption,12px);font-weight:600;line-height:16px;text-align:center;pointer-events:none;}
 .c2c-v2 .tt-trigger[data-overdue] .tt-badge{background:var(--error);color:var(--on-error,#fff);}
 /* The scrim's chrome is the drawer backdrop's (journey-v2.css .de-bd, D0 §4.2.14); it keeps its
    own layer, under the panel (91). The class is doubled because that rule loads later at the same
@@ -1196,6 +1198,11 @@
 /* Keep the existing task header and recovery messages readable on a phone. */
 @media (max-width:760px){
   .c2c-v2 .tb .ph{flex-direction:column;align-items:stretch;gap:12px;}
+  /* Stacked, the shared `> :first-child{flex:1 1 420px}` became a 420px height:
+     a ~250px gap above the actions at 390 (J5-09 / J2 D9, 2026-11-06). */
+  .c2c-v2 .tb .ph > :first-child{flex:0 0 auto;}
+  .c2c-v2 .tb-filters{min-width:0;max-width:100%;}
+  .c2c-v2 .tb-filters .tb-sel{max-width:100%;min-width:0;text-overflow:ellipsis;}
   .c2c-v2 .tb .c2c-error-state{display:grid;grid-template-columns:15px minmax(0,1fr);}
   .c2c-v2 .tb .c2c-error-actions{grid-column:2;}
 }

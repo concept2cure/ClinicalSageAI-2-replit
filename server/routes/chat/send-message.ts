@@ -706,8 +706,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       const snapshotArtifactTitle = clientCtx.artifactTitle;
       const snapshotSection = clientCtx.sectionCode;
       const snapshotUserRole = clientCtx.userRole || 'general';
-      const workingMemoryPresent = atoms.some(a => a.layer === 'working_memory');
-      const semanticMemoryCount = atoms.filter(a => a.layer !== 'working_memory').length;
+      const admittedMemory = memoryResult.read ?? [];
+      const workingMemoryPresent = admittedMemory.some(a => a.layer === 'working_memory');
+      const semanticMemoryCount = admittedMemory.filter(a => a.layer !== 'working_memory').length;
       const contextSnapshot =
         '## CONTEXT SNAPSHOT\n' +
         `- Project: ${

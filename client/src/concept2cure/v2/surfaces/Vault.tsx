@@ -2858,7 +2858,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                     {d.earlierVersion ? ` · ${d.ver}, earlier version` : ''}
                     {reviewText(d)}
                     {d.owner && d.owner !== '—' ? ` · ${d.owner}` : ''}
-                    {` · ${d.updated}`}
+                    {/* A search hit carries no relative time (searchHitToDoc): no separator for nothing (J2, 2026-11-06). */}
+                    {d.updated ? ` · ${d.updated}` : ''}
                   </span>
                 </button>
               ))}

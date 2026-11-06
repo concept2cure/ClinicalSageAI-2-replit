@@ -74,9 +74,16 @@
  *      connection — /readyz would report schema: down
  *
  * ── Re-runs ──────────────────────────────────────────────────────────────────
- * Safe over a COMPLETE database (every step is idempotent). Over a partial one
- * it is not a repair — see install-fresh's header — and the preflight says so
- * when it sees that shape.
+ * Safe over a COMPLETE database: install-fresh is skipped there, and the run is
+ * deploy-migrate (idempotent; it re-runs every file of the C2C set and refreshes
+ * the runtime role's grants) and the readiness contract — what every later
+ * deploy runs (deploy-aws.yml). Until 2026-11-06 a re-run ran install-fresh
+ * again, whose drizzle-kit push over a complete database waited on a prompt
+ * until it was killed after five minutes (exit 6), so a Compose stack that
+ * provisions on every `up` (docker-compose.beta.yml) could never come up a
+ * second time (docs/evidence/HUMAN-TEST/2026-11-06-beta-stack/). Over a partial
+ * database it is not a repair — see install-fresh's header — and the preflight
+ * says so when it sees that shape; install-fresh still runs there.
  */
 
 import { spawnSync } from 'node:child_process';
@@ -364,15 +371,21 @@ async function preflight(client, { appRoleWanted, runtimeRole }) {
   const n = publicTables.rows[0].n;
   if (n === 0) {
     log('  ✓ database is empty (0 public tables) — fresh provisioning');
-  } else if (present.length === BASE_SCHEMA_SENTINELS.length) {
-    log(`  • database already provisioned (${n} public tables) — every step below is idempotent; re-running`);
-  } else {
-    warn(
-      `  ⚠ database is PARTIALLY provisioned (${n} public tables; base sentinels present: ` +
-        `${present.join(', ') || 'none'}). install-fresh cannot repair a partial step 2 — if this run ` +
-        'does not converge, drop the database and provision into an empty one.',
-    );
+    return 'empty';
   }
+  if (present.length === BASE_SCHEMA_SENTINELS.length) {
+    log(
+      `  • database already provisioned (${n} public tables) — install-fresh is skipped; ` +
+        'deploy-migrate and the readiness contract run, as every later deploy does',
+    );
+    return 'complete';
+  }
+  warn(
+    `  ⚠ database is PARTIALLY provisioned (${n} public tables; base sentinels present: ` +
+      `${present.join(', ') || 'none'}). install-fresh cannot repair a partial step 2 — if this run ` +
+      'does not converge, drop the database and provision into an empty one.',
+  );
+  return 'partial';
 }
 
 /** Run one of the installers as the OWNER, with the URL precedence pinned. */
@@ -450,19 +463,23 @@ async function main() {
   const owner = await connect(ownerUrl).catch((err) =>
     fail(EXIT_CONFIG, [`✗ cannot connect as the owner: ${err.message}`]),
   );
+  let shape;
   try {
-    await preflight(owner, { appRoleWanted, runtimeRole });
+    shape = await preflight(owner, { appRoleWanted, runtimeRole });
   } finally {
     await owner.end().catch(() => {});
   }
 
-  const install = runAsOwner(
-    '2/4 install-fresh — base schema, RLS, authoring subsystem, governed content',
-    path.join(__dirname, 'install-fresh.mjs'),
-    ownerUrl,
-    process.env,
-    runtimeRole,
-  );
+  const install =
+    shape === 'complete'
+      ? (log('\n▶ 2/4 install-fresh — skipped: the base schema is already installed (see "Re-runs")'), { ok: true })
+      : runAsOwner(
+          '2/4 install-fresh — base schema, RLS, authoring subsystem, governed content',
+          path.join(__dirname, 'install-fresh.mjs'),
+          ownerUrl,
+          process.env,
+          runtimeRole,
+        );
   if (!install.ok) {
     fail(EXIT_INSTALL_FAILED, [
       `✗ install-fresh did not complete (${install.detail}). Its log above names the`,

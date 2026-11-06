@@ -26,7 +26,7 @@ export class SubmissionReadError extends Error {
 }
 export interface SubmissionReadActor { organizationId: number; userId: number }
 export interface SubmissionReadSelection { expectedProgramId?: string; expectedSubmissionId?: number }
-const identitySchema = z.object({ submissionId: z.number().int().positive(), programId: z.string().uuid().nullable(),
+const identitySchema = z.object({ submissionId: z.number().int().positive(), programId: z.string().guid().nullable(),
   applicationType: z.string(), primaryRegion: z.string(), sequenceId: z.number().int().positive().optional(), sequenceRegion: z.string().optional() });
 type ParentIdentity = z.infer<typeof identitySchema>;
 export interface AdmittedSubmissionSequence {
@@ -83,7 +83,7 @@ async function admitParent(q: RequestSqlClient, actor: SubmissionReadActor, iden
 async function requireRecordedProjectAnchor(q: RequestSqlClient, binding: Binding): Promise<void> {
   if (binding.projectId === undefined) return;
   const current = await requireCurrentProgramAccess(q, {
-    ...binding.actor, programId: z.string().uuid().parse(binding.identity.programId),
+    ...binding.actor, programId: z.string().guid().parse(binding.identity.programId),
   });
   if (current.projectId !== binding.projectId) throw new Error('Retained project anchor changed');
 }
@@ -140,7 +140,7 @@ export async function readSubmissionSequenceForRequest(q: RequestSqlClient, acto
     await readCurrentProgramActor(q, actor);
     const identity = await parentIdentity(q, actor, { sequenceId });
     const scope = await admitParent(q, actor, identity, selection);
-    const access = await requireCurrentProgramAccess(q, { ...actor, programId: z.string().uuid().parse(identity.programId) });
+    const access = await requireCurrentProgramAccess(q, { ...actor, programId: z.string().guid().parse(identity.programId) });
     const admitted = Object.freeze({ ...actor, submissionId: identity.submissionId, sequenceId, programId: access.programId, projectId: access.projectId,
       applicationType: identity.applicationType, sequenceRegion: z.string().parse(identity.sequenceRegion) });
     sequenceBindings.set(admitted, { q, actor, identity, scope, projectId: access.projectId }); return admitted;

@@ -106,5 +106,11 @@ export function classifyShadowReviewFailure(err: unknown): ClassifiedShadowRevie
     return { failureCode, errorCode: 'INVALID_AI_RESPONSE', message: own || 'Shadow review returned invalid JSON.' };
   }
   const gateway = classifyGatewayError(err);
+  if (failureCode === 'no_provider_configured') {
+    // Say the cause: the gateway's generic "could not be completed" read as a
+    // transient fault to a publisher on a deployment with no model key (J4 human
+    // test, 2026-11-06). Authored here, never a provider string.
+    return { failureCode, errorCode: gateway.code, message: 'No AI provider is configured on this deployment, so no review was performed.' };
+  }
   return { failureCode, errorCode: gateway.code, message: gateway.message };
 }

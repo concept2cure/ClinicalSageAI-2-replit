@@ -168,7 +168,9 @@ describe('retained scope and evaluation remain current through completion', () =
       }
     };
     const res=await request(app).get(`/api/submissions/sequences/12/pathway-manifest?programId=${PUBLIC}&submissionId=2`);
-    expect(changed).toBe(true);expect(res.status).toBe(503);expect(res.body.error.code).toBe('SUBMISSION_ACCESS_CHANGED');
+    // The final parent check's scope recheck compares the verified anchors since a40f48f860, so the
+    // moved anchor is refused there as the project-access change it is.
+    expect(changed).toBe(true);expect(res.status).toBe(503);expect(res.body.error.code).toBe('PROJECT_ACCESS_CHANGED');
     expect(res.body.scope).toBeUndefined();expect(res.body.entries).toBeUndefined();
     expect((await harness.pglite.query('SELECT id FROM projects WHERE regulatory_program_id=$1',[PUBLIC])).rows).toEqual([{id:73}]);
   });

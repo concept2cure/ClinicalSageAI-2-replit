@@ -124,7 +124,7 @@ router.post('/assist', async (req, res) => {
       logAIRequest('/assist', false, 'Validation error', validationResult.error);
       return res.status(400).json({ 
         error: 'Invalid request data',
-        details: validationResult.error.errors,
+        details: validationResult.error.issues,
         fallback: true 
       });
     }
@@ -293,7 +293,7 @@ router.post('/verify', async (req, res) => {
       logAIRequest('/verify', false, 'Validation error', validationResult.error);
       return res.status(400).json({ 
         error: 'Invalid request data',
-        details: validationResult.error.errors 
+        details: validationResult.error.issues 
       });
     }
     

@@ -1,0 +1,44 @@
+ ✓ projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > opens study and protocol design from the project's work-area doors, beside the steps, in one click 386ms
+ ✓ projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a new project opens on it, phases in order, with the target date 116ms
+ ✓ projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a started deliverable opens this project’s working copy; the rest start from their template 120ms
+ ✓ projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a failed catalogue read is a failure with a retry, never an empty plan 52ms
+ ✓ projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > writes one task to the task store, scoped and linked, and reads the assignment back 203ms
+ ✓ projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > is not offered to a viewer, whose task writes the server refuses 76ms
+ ✓ projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > is not offered while the project’s id is unverified, so no task is written unscoped 68ms
+ ✓ projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > an unreadable assignment list is said, and Assign still works 73ms
+ ✓ projectHomePlan.test.tsx > a phase opens the feature that composes it, on this project > a small-molecule US IND: Module 3 in CMC, Module 1 in the IND forms, QA on Submit 102ms
+ ✓ projectHomePlan.test.tsx > a phase opens the feature that composes it, on this project > a biologic IND is not sent to CMC, which composes small-molecule Module 3 only 75ms
+ ✓ projectHomePlan.test.tsx > other filings > a device project’s Plan is its workstreams, each assignable 284ms
+ ✓ projectHomePlan.test.tsx > other filings > an NDA is told the list is not available here and where its documents are, with no invented list 145ms
+ ✓ projectHomePlan.test.tsx > the assignment model > keys tasks by this project’s deliverable; the newest wins; another project’s and cancelled tasks are ignored 1ms
+ ✓ projectHomePlan.test.tsx > the assignment model > never Number()s the program UUID: the project id is the verified numeric one 1ms
+ ✓ projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > while the project record is read, Plan says so, and never that the filing has no list 112ms
+ ✓ projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > does not offer project initiation for a returned record belonging to another project 99ms
+ ✓ projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a filing with no list is not told to "see every document" by the step band 57ms
+ ✓ projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > the target date is the recorded day, never shifted by the viewer’s zone 75ms
+ ✓ projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a working copy titled as its template counts as started 70ms
+ ✓ projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > an unconfirmed Assign reads the lists again, so they say what is there 166ms
+ ✓ projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a deliverable someone already has offers "Assign another person", and a finished task is the task’s, not the deliverable’s 73ms
+ × projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > opens with what is due for the signed-in person, from the plan's tasks, by date 5080ms
+ × projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > says nothing is assigned rather than leaving the section out 5070ms
+ ✓ projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > shows no due-for-you list without a signed-in person 52ms
+ × projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > names, beside each IND document, the work-breakdown task that produces it, its due date and owner 5061ms
+ ✓ projectHomePlan.test.tsx > the Plan step's due-for-you and the content plan's join > reads the project pyramid once for the whole Plan step 86ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > reads the project's own pyramid and states its progress from the project's statuses 215ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > records a task's status on the project's route 37ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > reverts a refused status and says it was not saved 48ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > says a filing has no work breakdown, and invents none 7ms
+ ✓ projectProgramPlan.test.tsx > the project's program plan > says the plan could not be read when the read fails 5ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > says the schedule is built back from the target date, when the work starts, what is behind, and who owns what 29ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > puts each task's owner and due date on its row, with a word when it is behind 25ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > makes an owner's task through the existing Assign, under the pyramid task's own origin, due on the schedule's date 154ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > shows the owner's task and says when the schedule has moved since it was assigned 81ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > gives no due dates when no target date is recorded, and says where to set one 21ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > reads the schedule again when the project's target date changes 33ms
+ ✓ projectProgramPlan.test.tsx > the program plan's owners and due dates > keeps a deliverable's tasks and a work-breakdown task's apart 1ms
+ × projectProgramPlan.test.tsx > the content plan join and due-for-you, as functions > reads a catalogue document's producing task from its id, and only from the catalogue's two shapes 5ms
+ × projectProgramPlan.test.tsx > the content plan join and due-for-you, as functions > lists only the person's open tasks of this project's plan, by due date, none last 1ms
+ × projectProgramPlan.test.tsx > the content plan join and due-for-you, as functions > says a past-due task in words, and an unread list as unread 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  6 failed | 35 passed (41)

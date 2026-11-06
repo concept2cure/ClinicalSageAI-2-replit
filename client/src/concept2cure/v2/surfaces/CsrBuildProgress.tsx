@@ -369,7 +369,9 @@ export function CsrNarrativeBuild({ jobId, headings, onChanged, pollMs = 2000 }:
     {message && <p role={message.alert ? 'alert' : 'status'}>{message.text}</p>}
     {rows === null ? null : rows.length === 0
       ? <p>No narratives have been composed for this build.</p>
-      : <NarrativeQcList rows={rows} />}
+      /* Collapsed, as beside §14.3.3 in the editor (CsrNarrativeReferenceView): 95 subjects made the panel about
+         9,000 px tall, burying the assembly below it (found re-walking the demo, 2026-11-05). */
+      : <details><summary>Narrative QC list · {rows.length} {rows.length === 1 ? 'subject' : 'subjects'}</summary><NarrativeQcList rows={rows} /></details>}
   </section>;
 }
 

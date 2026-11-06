@@ -33,7 +33,12 @@ vi.mock('../../services/tasking/task-planning', async () =>
 const REQUEST_DB = vi.hoisted(() => ({ marker: 'the request-scoped RLS client' }));
 vi.mock('../../db/requestDb', () => ({ requestDb: () => REQUEST_DB }));
 const projectForTaskSource = vi.hoisted(() => vi.fn(async (..._a: unknown[]): Promise<number | null> => 25));
-vi.mock('../../services/tasking/task-project', () => ({ projectForTaskSource, AUTHORING_DOCUMENT_SOURCE: 'authoring_document' }));
+// The real module's source list (PROJECT_TELLING_SOURCES, which the route reads since
+// ee4e7d3c7f), with only the lookup stood in.
+vi.mock('../../services/tasking/task-project', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../services/tasking/task-project')>()),
+  projectForTaskSource,
+}));
 
 import taskManagementRoutes from '../taskManagement.routes';
 import { h, appFactory, BASE, wrote, resetHarness } from './_task-management-governed-harness';

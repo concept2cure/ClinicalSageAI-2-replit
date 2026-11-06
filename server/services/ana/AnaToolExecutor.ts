@@ -21473,7 +21473,7 @@ registerToolHandler('draft_authoring_document', async (input, ctx) => {
   return draftAuthoringDocumentTool(getPool(), input, ctx);
 });
 
-/** update_vault_document's artifact, new body and stated reason, or what is missing. */
+/** update_vault_document's artifact and new body, or what is missing. The stated reason is read in the handler. */
 function vaultUpdateInput(input: Record<string, unknown>, ctx: ToolContext | undefined):
   { organizationId: number; userId: number; artifactId: string; content: string } | string {
   if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'update_vault_document requires tenant + user context.' });
@@ -21488,7 +21488,10 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
   const asked = vaultUpdateInput(input, ctx);
   if (typeof asked === 'string') return asked;
   const { organizationId, userId, artifactId, content } = asked;
-  // The stated reason, read on the write's own path (governed-reason-not-invented.test.ts binds it here).
+  /* Bound here, from the gate, where governed-reason-not-invented.test.ts can see it:
+     read inside vaultUpdateInput (F1, 2026-11-05) it was the person's reason all the same,
+     but no reader of this handler could tell, and that guard went red. Same order as
+     before: the artifact and body are checked first. */
   const reason = gatedReason(input);
   /* A new version is written only to an artifact of a project the person can open (inside a project, its sponsor's)
      and may change (F1, 2026-11-05). It wrote any artifact of the organization. */

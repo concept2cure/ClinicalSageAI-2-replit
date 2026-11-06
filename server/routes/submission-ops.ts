@@ -172,9 +172,9 @@ function getUserId(req: Request): number {
 // ============================================================
 
 const createPackageSchema = z.object({
-  projectId: z.number({ required_error: 'projectId is required' }),
-  packageFamily: z.string({ required_error: 'packageFamily is required' }).min(1, 'packageFamily must not be empty'),
-  title: z.string({ required_error: 'title is required' }).min(1, 'title must not be empty'),
+  projectId: z.number({ error: (issue) => (issue.input === undefined ? 'projectId is required' : undefined) }),
+  packageFamily: z.string({ error: (issue) => (issue.input === undefined ? 'packageFamily is required' : undefined) }).min(1, 'packageFamily must not be empty'),
+  title: z.string({ error: (issue) => (issue.input === undefined ? 'title is required' : undefined) }).min(1, 'title must not be empty'),
   description: z.string().optional(),
   targetDate: z.string().optional(),
   sections: z.array(z.object({
@@ -184,8 +184,8 @@ const createPackageSchema = z.object({
 });
 
 const createArtifactSectionMapSchema = z.object({
-  artifactId: z.number({ required_error: 'artifactId is required' }),
-  sectionDbId: z.number({ required_error: 'sectionDbId is required' }),
+  artifactId: z.number({ error: (issue) => (issue.input === undefined ? 'artifactId is required' : undefined) }),
+  sectionDbId: z.number({ error: (issue) => (issue.input === undefined ? 'sectionDbId is required' : undefined) }),
   // Mapping a document into a package section changes what would be filed
   // with an agency: a governed change, recorded with the operator's reason.
   reason: z.string().min(8, 'reason must be at least 8 characters'),
@@ -197,7 +197,7 @@ const createArtifactSectionMapSchema = z.object({
 });
 
 const createMilestoneSchema = z.object({
-  title: z.string({ required_error: 'title is required' }).min(1, 'title must not be empty'),
+  title: z.string({ error: (issue) => (issue.input === undefined ? 'title is required' : undefined) }).min(1, 'title must not be empty'),
   description: z.string().optional(),
   targetDate: z.string().optional(),
   sectionIds: z.array(z.number()).optional(),

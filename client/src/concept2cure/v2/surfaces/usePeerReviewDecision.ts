@@ -4,10 +4,12 @@ import type { AuthoringReviewContext, AuthoringReviewRow } from '@shared/authori
 import { labelledCsr, type ScientificReviewSubmission } from '@shared/authoring/csr-scientific-review';
 import { PeerReviewError, readPeerReview, recordPeerReview, type PeerReviewScope, type PeerVerdict } from './authoringPeerReview';
 
-export function usePeerReviewDecision(scope: PeerReviewScope | null, isCurrent: () => boolean, onRecorded: (receipt: AuthoringReviewRow) => void) {
+/** `initialDecision`: the verdict the reviewer pressed to open this (the board's "Request changes..."); a load starts there. */
+export function usePeerReviewDecision(scope: PeerReviewScope | null, isCurrent: () => boolean, onRecorded: (receipt: AuthoringReviewRow) => void,
+  initialDecision: PeerVerdict | '' = '') {
   const [context, setContext] = React.useState<AuthoringReviewContext | null>(null);
   const [receipt, setReceipt] = React.useState<AuthoringReviewRow | null>(null);
-  const [decision, setDecision] = React.useState<PeerVerdict | ''>('');
+  const [decision, setDecision] = React.useState<PeerVerdict | ''>(initialDecision);
   const [reason, setReason] = React.useState('');
   const [loading, setLoading] = React.useState(true);
   const [busy, setBusy] = React.useState(false);
@@ -27,7 +29,7 @@ export function usePeerReviewDecision(scope: PeerReviewScope | null, isCurrent: 
     const request = ++generation.current;
     const owns = () => current() && generation.current === request;
     blockedRef.current = true;
-    setContext(null); setReceipt(null); setDecision(''); setReason(''); setError(''); setLoading(true); setBlocked(true);
+    setContext(null); setReceipt(null); setDecision(initialDecision); setReason(''); setError(''); setLoading(true); setBlocked(true);
     try {
       if (!scope) throw new PeerReviewError('Your signed-in identity could not be verified. Sign in again before reviewing.');
       const result = await readPeerReview(scope);

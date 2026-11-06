@@ -104,8 +104,8 @@ const RUN_DATA_HASH = 'a review names the report run it read (its data hash, 64 
 const scope = z
   .object({
     description: text(2000),
-    reportExportId: z.string({ required_error: RUN_EXPORT_ID }).trim().min(1, RUN_EXPORT_ID).max(200),
-    reportDataHash: z.string({ required_error: RUN_DATA_HASH }).regex(/^[0-9a-f]{64}$/, RUN_DATA_HASH),
+    reportExportId: z.string({ error: (issue) => (issue.input === undefined ? RUN_EXPORT_ID : undefined) }).trim().min(1, RUN_EXPORT_ID).max(200),
+    reportDataHash: z.string({ error: (issue) => (issue.input === undefined ? RUN_DATA_HASH : undefined) }).regex(/^[0-9a-f]{64}$/, RUN_DATA_HASH),
   })
   .strict();
 

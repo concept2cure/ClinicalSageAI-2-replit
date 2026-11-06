@@ -9,8 +9,8 @@ import { CompanyDocumentsError } from './validation';
 
 interface CopyIdentity { organizationId: number; vaultDocumentId: string; contentHash: string }
 interface ResolvedSource { ref: CompanyLegalOriginalSource; records: CompanyLegalDocument[] }
-const sourceSchema = z.object({ registryId: z.string().min(1).max(200), vaultDocumentId: z.string().uuid(), contentHash: z.string().regex(/^[a-f0-9]{64}$/i),
-  programId: z.string().uuid().nullable(), version: z.string().min(1).max(100).nullable(), copiedHash: z.string().regex(/^[a-f0-9]{64}$/i) }).strict();
+const sourceSchema = z.object({ registryId: z.string().min(1).max(200), vaultDocumentId: z.string().guid(), contentHash: z.string().regex(/^[a-f0-9]{64}$/i),
+  programId: z.string().guid().nullable(), version: z.string().min(1).max(100).nullable(), copiedHash: z.string().regex(/^[a-f0-9]{64}$/i) }).strict();
 const UNKNOWN = 'The immutable source of this copied company legal document could not be verified. Review its original before filing.';
 const WITHDRAWN = 'A source original for this company legal copy was revoked or has an invalid signature finding. Review a new original before filing.';
 function unverified(): never { throw new CompanyDocumentsError(409, 'COMPANY_LEGAL_COPY_SOURCE_UNVERIFIED', UNKNOWN); }

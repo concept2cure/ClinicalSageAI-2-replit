@@ -177,7 +177,7 @@ router.post('/artifacts/export-docx', exportActorAdmission(true), async (req: Re
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
     }
     logger.error('Failed to export DOCX', { error: error.message });
     return sendError(res, 500, 'Failed to export DOCX');
@@ -474,7 +474,7 @@ router.post('/artifacts/export-pptx', exportActorAdmission(true), async (req: Re
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
     }
     logger.error('Failed to export PPTX', { error: error.message });
     return sendError(res, 500, 'Failed to export PPTX');

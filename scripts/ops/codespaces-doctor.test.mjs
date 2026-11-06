@@ -288,3 +288,48 @@ test('running app with simulated AnA is not accepted as real model readiness', a
   assert.equal(app.status, 'blocked');
   assert.match(app.explanation, /NOT qualified/);
 });
+
+test('Anthropic probe names which approved drafting versions the key can see, across pages', async () => {
+  const pages = {
+    'https://api.anthropic.com/v1/models?limit=100':
+      { data: [{ id: 'claude-haiku-4-5' }, { id: 'claude-opus-4-8' }], has_more: true, last_id: 'claude-opus-4-8' },
+    'https://api.anthropic.com/v1/models?limit=100&after_id=claude-opus-4-8':
+      { data: [{ id: 'claude-opus-5-5' }], has_more: false, last_id: 'claude-opus-5-5' },
+  };
+  const fetcher = async (url) => {
+    assert.ok(url in pages, 'unexpected URL ' + url);
+    return { ok: true, status: 200, json: async () => pages[url] };
+  };
+  const seen = await checkAnthropic({ env: { ANTHROPIC_API_KEY: 'test-only-key' }, fetcher,
+    expectedModels: ['claude-opus-5-5', 'claude-opus-5', 'claude-opus-4-8'] });
+  assert.equal(seen.status, 'passed');
+  assert.equal(seen.modelsVisible, 3);
+  assert.deepEqual(seen.draftingModelsVisible, ['claude-opus-5-5', 'claude-opus-4-8']);
+  assert.deepEqual(seen.draftingModelsMissing, ['claude-opus-5']);
+  assert.doesNotMatch(JSON.stringify(seen), /test-only-key/);
+});
+
+test('A working key that sees no approved drafting version is blocked, not passed', async () => {
+  const fetcher = async () => ({ ok: true, status: 200,
+    json: async () => ({ data: [{ id: 'claude-haiku-4-5' }], has_more: false }) });
+  const seen = await checkAnthropic({ env: { ANTHROPIC_API_KEY: 'test-only-key' }, fetcher,
+    expectedModels: ['claude-opus-5-5'] });
+  assert.equal(seen.status, 'blocked');
+  assert.equal(seen.code, 'ANTHROPIC_DRAFTING_MODELS_NOT_VISIBLE');
+  assert.equal(seen.authenticationVerified, true);
+  // Without an expected list the same key still passes authentication, as before.
+  const plain = await checkAnthropic({ env: { ANTHROPIC_API_KEY: 'test-only-key' }, fetcher });
+  assert.equal(plain.status, 'passed');
+});
+
+test('--expect-anthropic-models reaches the Anthropic probe from the command line', async () => {
+  const fetcher = async () => ({ ok: true, status: 200,
+    json: async () => ({ data: [{ id: 'claude-opus-5-5' }], has_more: false }) });
+  const report = await runCodespacesDoctor({
+    env: { ...env, ANTHROPIC_API_KEY: 'test-only-key' }, fetcher,
+    args: ['--probe-anthropic', '--expect-anthropic-models=claude-opus-5-5,claude-opus-5'],
+    connectDb: async () => ({ ok: true, role: 'app_service', failures: [] }),
+  });
+  assert.deepEqual(report.anthropic.draftingModelsVisible, ['claude-opus-5-5']);
+  assert.deepEqual(report.anthropic.draftingModelsMissing, ['claude-opus-5']);
+});

@@ -1947,3 +1947,58 @@ work achievements."**
   still needs its own founder decision.
 - **Owner.** Each session, for its own package.
 
+### P-101 — The statistical analysis plan is written in the one editor; the second SAP system converges into it
+
+The founder, 2026-11-05, answering "the SAP is a document type in the one editor, and a separate SAP system also exists
+on the server (biostatPlatform.ts …) with no screen. Which is the SAP?": **"Converge into editor."** The question was
+raised by R1 (`docs/evidence/DESIGN/R1/2026-11-05-handoffs-and-decisions/README.md`, Decision A).
+
+- **What is decided.** The SAP is written in the one editor, as every document type is (Rule 4), as
+  `statistical_analysis_plan`. The useful engines of `server/routes/biostatPlatform.ts`'s statistics thread are
+  reached as that document's functions in the editor:
+  - analysis specifications;
+  - TLF shells;
+  - the CSR-section generator.
+
+  Its own SAP store (section edit, comments and their resolution, amendments, lock, versions) is retired. It is
+  migrated and deleted in the same change that reaches its replacement (working agreement: zero duplication; name
+  the replacement by path).
+- **What is not decided.** The order of the work, and whether any statistics-thread engine is itself retired. That
+  is for the owner after a "what already exists" review.
+- **Owner.** The one editor's holder (D4), with S3 for the engines' behaviour. It waits for the CSR demo, as D4-3
+  does.
+
+### P-102 — Informed consent is one record: the 21 CFR 50.25 checklist becomes the document type's checks in the one editor
+
+The founder, 2026-11-05, answering "should the /api/protocol-consent checklist and approval become the consent
+document's checks inside the one editor, as one record?": **"Yes, one record."** The question was raised by R1
+(`docs/evidence/DESIGN/R1/2026-11-05-handoffs-and-decisions/README.md`, Decision B).
+
+- **What is decided.** The `informed_consent` document type carries the 21 CFR 50.25 required-element checklist and
+  its completeness as the editor's checks for that type. Its approval runs through the editor's one signing. The
+  structured record behind `/api/protocol-consent` converges into that one record, not beside it. The protocol
+  workspace's Consent tab stays read-only until then.
+- **Owner.** The one editor's holder (D4), after the CSR demo. It was handed to them on 2026-11-05
+  (`COORDINATION.md`).
+
+### P-103 — The submission-ops package path is retired; the sequence is the one filing path
+
+The founder, 2026-11-05, answering "retire the six /api/submission-ops/packages/* routes? They are a second filing
+store that the sequence replaced on 17 Oct (FILING_SPINE F12)": **"Retire them."** The question was raised by R1
+(`docs/evidence/DESIGN/R1/2026-11-05-handoffs-and-decisions/README.md`, Decision C).
+
+- **What is decided.** The routes are unmounted, or excluded from the launch scope (`LAUNCH_EXCLUDED_API`, with the
+  F12 reason):
+  - `GET/POST …/packages/:id/milestones`;
+  - `POST …/packages/:id/preflight`;
+  - `POST …/packages/:id/publish`;
+  - `GET …/packages/:id/readiness-history`;
+  - `PUT …/packages/:id/regulatory-identifiers`.
+
+  The replacement is the sequence: Submission Center → sequence → Validation, Dispatch, sign, transmit
+  (`SubmissionSeqWorkspaces.tsx`; `POST /api/submissions/sequences/:id/transmit`). No package can be locked for
+  export outside it.
+- **What is not decided.** Whether other `/api/submission-ops/*` routes that a screen still calls are kept. Each is
+  judged on its own.
+- **Owner.** RIM, which holds S5.
+

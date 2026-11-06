@@ -55,7 +55,7 @@ router.post('/embeddings/component', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Validation failed',
-        details: validation.error.errors
+        details: validation.error.issues
       });
     }
 
@@ -89,7 +89,7 @@ router.post('/embeddings/document', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Validation failed',
-        details: validation.error.errors
+        details: validation.error.issues
       });
     }
 
@@ -123,7 +123,7 @@ router.post('/search', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Validation failed',
-        details: validation.error.errors
+        details: validation.error.issues
       });
     }
 

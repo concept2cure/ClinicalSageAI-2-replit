@@ -242,3 +242,15 @@ describe('vaultFilterParams', () => {
       .toBe('&ctdSection=3.2.P&documentType=CSR&lifecycleStage=none&lifecycleStage=authoring');
   });
 });
+
+/* J2 human test (2026-11-06): a search hit carries no owner or relative time, and its row read
+   "Report · Approved ·" — a separator with nothing after it. */
+describe('a search hit row says only what the hit carries', () => {
+  it('ends with its review stage, not a dangling separator', async () => {
+    const row = await open();
+    choose(row, 'Type', 'Module 3 · quality');
+    const title = await screen.findByText('Batch analysis report');
+    const meta = title.closest('button')?.querySelector('.vd-row-s');
+    expect(meta?.textContent).toBe('Module 3 · quality · Approved');
+  });
+});

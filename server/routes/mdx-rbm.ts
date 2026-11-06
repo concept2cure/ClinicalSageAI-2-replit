@@ -825,7 +825,7 @@ const createSignalBody = z.object({
   severity: z.enum(SEVERITY).optional(),
   title: z.string().min(1).max(400),
   detail: z.string().max(4000).optional().nullable(),
-  statistic: z.record(z.unknown()).optional().nullable(),
+  statistic: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
 router.post('/rbm-signals', async (req, res) => {

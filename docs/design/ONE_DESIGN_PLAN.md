@@ -368,10 +368,36 @@ status or ownership; closing a package stays §3 step 5.
 
   All three were used in the running app. The trend read's shape was wrong in the first test, and the running app
   caught it.
+- **Reach: the stored sizing run and its reproduction** (2026-11-06), `583b96271`,
+  `docs/evidence/DESIGN/R1/2026-11-06-sizing-run-reproduction/`.
+  - `GET /api/biostat-bridge/computation-runs/:runId/reproduce` had no caller. The design assessment now names the
+    run behind the planned N (`sizingRun`).
+  - The protocol's Statistics tab says "Stored run #1, 2026-11-06, computed 314 subjects." It offers "Check it
+    reproduces" and shows the four facts one by one.
+  - **F1, found by the reach:** with RLS enforced, the route answered 404 for the organization's own run. It
+    queried a `pool.connect()` client outside a transaction, and the scope layer sets the tenant only after
+    `BEGIN`. It reads through `pool.query` now, with a test over the real scope layer.
+  - **F1, found walking it:** the protocol workspace gave the shell's `.page-full` row two roots, so at 1440 px the
+    protocol had 325 px beside its selection bar. It has one column root now.
+  - Used in the running app, with RLS and launch scope on: before the fix, 404; after it, intact, intact,
+    reproduced, same engine version.
 - **Handed to D4** (2026-11-05). Informed consent exists twice: the `informed_consent` document type, and
   `/api/protocol-consent`, whose 7 routes have no caller. Its element checklist, completeness and signed approval
   are that document type's validation. Under Rule 4 they belong in the one editor, not a protocol panel. Whether
   the two records converge is the D4 owner's or the founder's decision.
+
+**L1 (row D2): the founder's CSR demo** (2026-11-05 and 11-06)
+
+- **Rehearsal**, `4c38889a4`, `docs/evidence/D2-CSR/2026-11-05-lmn201-demo-rehearsal/`.
+  - The CSR path walked in the running app as author, reviewer and approver, on the Lumen LMN-201 demonstration pack.
+  - It ran from the Vault source's signed approval to assembly's gap list.
+  - Found R-1 to R-4 and handed them to the CSR lane (`011Dpx…`).
+- **R-1 and R-3 closed** (2026-11-06), `78ce793a7`. The lane fixed them (`b3c176b34d`, `0180e0eec2`). The re-walk on
+  trunk confirmed both and wrote nothing.
+  - The run-of-show lost its two workarounds.
+  - It gained a verified way to show §11.1 and §11.4 live without freezing.
+- **Blocked**: drafting, the scientific review of drafted text, e-sign and placement. They need a model key, which
+  this environment does not have.
 
 **Finding shared with the design lead**
 
@@ -446,8 +472,26 @@ informed consent was.
   file the send removes by design, so it stayed red. The check now follows the recorded key. It fails on a missing
   package and passes as written. The baseline went from 12 to 11.
 
+**Delivered** (2026-11-06)
+
+- **The local database the repository provisions can run the migration set**, `70d52cc76`,
+  `docs/evidence/D1/2026-11-06-local-db-applier-rights/`.
+  - **Before.** `scripts/setup-local-db.sh` (run at every session start) gave its applier role `CREATEDB` only. On
+    a fresh cluster, `deploy-migrate` stopped at 214 of 462.
+  - **Now.** The role gets `CREATEROLE NOSUPERUSER` and owns its database, as the RDS master does. Two fresh
+    clusters: trunk's script halts at 214, the fixed one completes (1,023 tables). Every session that must open the
+    running app (RULE 4) needs this.
+- **The editor's citation catalogue says a refusal as itself**, `f0809d977`,
+  `docs/evidence/SPINE/S2/2026-11-06-citation-catalogue-refusals/`. The **Cite a source** picker showed "Module access
+  denied" with **Try again** for a plan without the feature. Through the one read classifier, a refusal is now
+  worded and not retryable, and the picker offers no retry for it. This completes the D4 hand-off of 2026-11-05.
+  All 36 suites that render the editor pass (511).
+
 **Found**
 
+- A fresh machine also needs `postgresql-16-pgvector` and `npm ci` before the session-start hook runs. That is a
+  cloud-environment setup script, not a repository change. A personal environment that does this was proposed on
+  2026-11-06. The request could not be shown in the Claude mobile app version in use, so nothing was saved.
 - `ci:canvas-path` read green all four days the walk was red. Its founder-walk link is static by design; the walk's
   result exists only in CI's Test job. That job can be red for days while every push lands.
 - `server/routes/__tests__/authoringSelectedSources.pglite.test.ts` fails 12 cases at trunk, before this change.
@@ -465,7 +509,7 @@ informed consent was.
   Recording spans, and walking the Data Room → Vault → receipt → document path, is S4's work with S2.
 - **Handed on.**
   - D3: the Evidence step's "What to do now" box is a retired pattern.
-  - D4: `editor/useProjectSourceCatalog.ts` does not classify refusals.
+  - ~~D4: `editor/useProjectSourceCatalog.ts` does not classify refusals.~~ Done here 2026-11-06 (`f0809d977`).
   - D0: a refusal is drawn in the error tone.
   - R1: the CTD onboarding routes (`/api/ctd/*`) have no caller.
 - **The local database.** Running the migration set needs pgvector created by a superuser, `CREATEROLE` on the

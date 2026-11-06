@@ -45,7 +45,7 @@ const prepareSchema = z.object({
   applicantName: z.string().optional(),
   drugName: z.string().optional(),
   indication: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 const addDocumentSchema = z.object({
@@ -63,7 +63,7 @@ const addDocumentSchema = z.object({
   pageCount: z.number().optional(),
   wordCount: z.number().optional(),
   language: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 const amendSchema = z.object({
@@ -72,7 +72,7 @@ const amendSchema = z.object({
   applicantName: z.string().optional(),
   drugName: z.string().optional(),
   indication: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ─── Routes ──────────────────────────────────────────────────────────────────

@@ -47,7 +47,7 @@ const figureRequestSchema = z.object({
     'pk_concentration','stability_trend','comparison_table','decision_tree','custom']),
   title: z.string().min(1).max(500), description: z.string().max(10000).default(''),
   targetSection: z.string().max(100).optional(), sourceDataRefs: z.array(z.string().regex(/^[1-9]\d*$/)).max(100).optional(),
-  rawData: z.array(z.record(z.unknown())).max(10000).optional(),
+  rawData: z.array(z.record(z.string(), z.unknown())).max(10000).optional(),
   preferences: z.object({ style:z.enum(['clinical','regulatory','presentation']).optional(),
     colorScheme:z.enum(['default','grayscale','high-contrast']).optional(), format:z.enum(['mermaid','chartjs','svg']).optional() }).optional(),
 });

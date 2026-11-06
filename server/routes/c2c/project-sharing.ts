@@ -59,7 +59,7 @@ function manager(ctx: SharingContext): boolean {
 type ActorContext = SharingContext;
 
 async function context(req: Request, q: RequestSqlClient, write = false): Promise<ActorContext> {
-  const programId = z.string().uuid().optional().parse(req.query.programId)?.toLowerCase();
+  const programId = z.string().guid().optional().parse(req.query.programId)?.toLowerCase();
   const project = await requireProjectAdmission(req, req.params.id, write, { executor: q, programId, forShare: write });
   const snapshot = await sharingSnapshot(q, project, write);
   return { project, snapshot, programId, organizationId: getOrganizationId(req), actorUserId: getUserId(req), role: String(req.userRole) };
@@ -183,7 +183,7 @@ export async function changeProjectSharing(req: Request, command: SharingCommand
 }
 
 function failure(res: Response, error: unknown) {
-  if (error instanceof z.ZodError) return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+  if (error instanceof z.ZodError) return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
   if (error instanceof ProjectAdmissionRefusal) return sendError(res, error.status, error.message, undefined, error.code);
   return sendError(res, 503, 'Project sharing could not be verified. Read the current state before trying again.', undefined, 'PROJECT_SHARING_UNAVAILABLE');
 }

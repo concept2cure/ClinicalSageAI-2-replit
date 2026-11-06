@@ -192,6 +192,9 @@ export const Concept2CureLogin: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
+  /* A view's own error, never the last one's: "Incorrect email or password" followed the person from a failed sign-in
+     onto "Reset your password" (human test J1, 2026-11-06). Changing view clears it. */
+  const showView = (next: View) => { setError(null); setView(next); };
   const [ssoReturnTo, setSsoReturnTo] = useState<string | null>(null);
   // Why the last session ended on its own account (inactivity, lifetime), read
   // once from where the auth service left it (P1-1).
@@ -568,7 +571,7 @@ export const Concept2CureLogin: React.FC = () => {
                 <button
                   type="button"
                   className={styles.ghost}
-                  onClick={() => setView('forgot-password')}
+                  onClick={() => showView('forgot-password')}
                 >
                   {t('action.forgotPassword')}
                 </button>
@@ -653,7 +656,7 @@ export const Concept2CureLogin: React.FC = () => {
                   type="button"
                   className={styles.ghost}
                   onClick={() => {
-                    setView('sign-in');
+                    showView('sign-in');
                     setPassword('');
                     setMfaCode('');
                     setSsoReturnTo(null);
@@ -721,7 +724,7 @@ export const Concept2CureLogin: React.FC = () => {
                 {t('action.sendResetLink')}
               </button>
 
-              <button type="button" className={styles.secondary} onClick={() => setView('sign-in')}>
+              <button type="button" className={styles.secondary} onClick={() => showView('sign-in')}>
                 {t('action.backToSignIn')}
               </button>
             </div>
@@ -741,7 +744,7 @@ export const Concept2CureLogin: React.FC = () => {
                   components={{ strong: <strong /> }}
                 />
               </p>
-              <button type="button" className={styles.secondary} onClick={() => setView('sign-in')}>
+              <button type="button" className={styles.secondary} onClick={() => showView('sign-in')}>
                 {t('action.returnToSignIn')}
               </button>
             </div>

@@ -1,0 +1,27 @@
+ ✓ citationRegistration.test.tsx > citation registration precedes the in-text marker > inserts no marker when the authoritative source registration is refused 458ms
+ ✓ citationRegistration.test.tsx > citation registration precedes the in-text marker > holds insertion until confirmation and keeps the exact selected position 197ms
+ ✓ citationRegistration.test.tsx > citation registration precedes the in-text marker > does not insert when the picker was cancelled during registration 162ms
+ ✓ citationRegistration.test.tsx > citation registration precedes the in-text marker > does not insert into content that changed while registration was pending 144ms
+ ✓ citationRegistration.test.tsx > citation registration precedes the in-text marker > applies the same confirmation gate to insertion through the mounted editor handle
+ ✓ citationRegistration.test.tsx > citation registration precedes the in-text marker > refuses a changed selection even when the document text did not change 123ms
+ ✓ citationRegistration.test.tsx > citation registration precedes the in-text marker > refuses an old section confirmation after the host scope changes 122ms
+ ✓ citationRegistration.test.tsx > citation choices and incomplete resolution > offers only eligible insertion choices while keeping historical names available for exis
+ ✓ citationRegistration.test.tsx > citation choices and incomplete resolution > does not print a plausible number while the source catalogue is incomplete 50ms
+ ✓ citationRegistration.test.tsx > a refused citation catalogue offers no retry (2026-11-06) > shows a refusal in its words and no Try again 102ms
+ ✓ citationRegistration.test.tsx > a refused citation catalogue offers no retry (2026-11-06) > keeps Try again for a failed read 92ms
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > holds numbering metadata until every page has been confirmed 77ms
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses overlapping or changed page contents 56ms
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses overlapping or changed page contents 55ms
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > retries the full read after a later-page failure without retaining incomplete authority 108ms
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses a nonprogressing empty page instead of looping or claiming completion 1ms
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"textAvail
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"processin
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"processin
+ ✓ projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a plan without the feature': its own words, and no retry offered 58ms
+ ✓ projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a part not in this release': its own words, and no retry offered 54ms
+ ✓ projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a role that cannot read it': its own words, and no retry offered 55ms
+ ✓ projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a project not in this organization': its own words, and no retry offered 55m
+ ✓ projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a server failure' stays a failed read that a retry can fix 55ms
+ ✓ projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'no response at all' stays a failed read that a retry can fix 53ms
+      Tests  25 passed (25)
+Every suite that renders DocumentWorkbench (36 files): 511 passed, 0 failed.

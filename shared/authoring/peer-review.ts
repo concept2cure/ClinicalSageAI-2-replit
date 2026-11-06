@@ -2,7 +2,7 @@
 import { z } from 'zod';
 
 export const AUTHORING_REVIEW_BINDING_BASIS = 'authoring-full-visible-v1' as const;
-const uuid = z.string().uuid();
+const uuid = z.string().guid();
 const actorId = z.string().regex(/^[1-9]\d*$/);
 const timestamp = z.string().datetime({ offset: true });
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
