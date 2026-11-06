@@ -9,6 +9,7 @@ import { registerSurfaceLeaveGuard, surfaceLeaveRefusal } from '../navParams';
 import type { ListState } from '../dataConnect';
 import { I } from '../icons';
 import { setEditorTarget } from '../editorTarget';
+import { openNotificationRecord } from '../notificationNavigation';
 import { useDialog } from '../useDialog';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, EmptyState, ErrorState } from '../dataConnect';
 import { taskAnalyticsScope } from './taskBoardAnalyticsScope';
@@ -110,6 +111,9 @@ interface TaskItem {
   source: string;
   /** Exact UUID of an authoring document linked by the task's persisted source. */
   sourceDocumentId?: string;
+  /** A review-route member's task: where the route is acted on (taskBoard.routes.ts
+   *  reviewRoute). The board does not move such a task; the route completes it. */
+  reviewRoute?: { kind: 'vault'; documentId: string; programId: string | null } | { kind: 'quality'; qmsDocumentId: string } | { kind: 'unresolved' };
   /** Humanised label for display only — never parsed for overdue state. */
   due: string;
   /**
@@ -605,6 +609,8 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
   // allow navigation. Keep the verified project+document target for that next
   // render, not a free-floating docId that opens against the previous project.
   const pendingEditorNav = useRef<{ docId: string; programId: string; programTitle: string } | null>(null);
+  /** A review-route task's record, opened once its drawer has closed (the leave guard refuses while it is open). */
+  const pendingRouteNav = useRef<Parameters<typeof openNotificationRecord>[0] | null>(null);
   const selectedTask = useRef(sel);
   selectedTask.current = sel;
   const mounted = useRef(true);
@@ -666,6 +672,15 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
   const leaveGuard = useRef<() => string | null>(() => null);
   leaveGuard.current = () => boardBusyGuard()?.reason ?? (sel ? 'A task detail is open — close it first.' : null);
   useEffect(() => registerSurfaceLeaveGuard(() => leaveGuard.current()), []);
+  useEffect(() => {
+    const target = pendingRouteNav.current;
+    if (!target || sel !== null) return;
+    pendingRouteNav.current = null;
+    if (!currentTaskActor(taskActorScope(user), isCurrent)) return;
+    try { openNotificationRecord(target, onNav); } catch (e) {
+      setActionErr(e instanceof Error ? e.message : 'The document could not be opened.');
+    }
+  }, [sel, user, isCurrent, onNav]);
   useEffect(() => {
     const pending = pendingEditorNav.current;
     if (!pending || sel !== null) return;
@@ -1333,7 +1348,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
                         <span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
                         {!t.readOnly && <span className="tb-av" title={nameOf(t.assignee)}>{tbAvatar(nameOf(t.assignee))}</span>}
                       </div>
-                      {canWrite && !t.readOnly && (
+                      {canWrite && !t.readOnly && !t.reviewRoute && (
                         <div className="tb-move" onClick={e => e.stopPropagation()}>
                           <button disabled={t.status === 'pending'} onClick={() => move(t, -1)} title="Move back" aria-label="Move back">{I.left}</button>
                           <button disabled={t.status === 'completed'} onClick={() => move(t, 1)} title="Advance" aria-label="Advance">{I.chevRight}</button>
@@ -1573,6 +1588,16 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
             pendingEditorNav.current = { docId: documentId, programId, programTitle: project[0].name };
             setSel(null);
           }}
+          onOpenRoute={(task) => {
+            const route = task.reviewRoute;
+            if (!route || route.kind === 'unresolved' || !currentTaskActor(taskActorScope(user), isCurrent)) return 'The document could not be opened. Reopen the task.';
+            if (route.kind === 'vault' && !route.programId) return 'This version is in no project. Open it from the Vault.';
+            pendingRouteNav.current = route.kind === 'vault'
+              ? { surface: 'vault', label: 'Open the version in the Vault', params: { documentId: route.documentId }, programId: route.programId }
+              : { surface: 'quality', label: 'Open the controlled document', params: { qmsDocumentId: route.qmsDocumentId }, programId: null };
+            setSel(null);
+            return null;
+          }}
           onAsk={onAsk}
           onMove={move}
           nameOf={nameOf}
@@ -1611,6 +1636,8 @@ interface TaskDetailProps {
   projLabel: (id: string) => string;
   onClose: () => void;
   onOpenDocument?: (documentId: string) => void;
+  /** Opens where a review-route task is acted on; returns a refusal to show, or null. */
+  onOpenRoute?: (t: TaskItem) => string | null;
   onAsk: (text: string) => void;
   onMove: (t: TaskItem, dir: number) => void;
   onAssign: (meta: TaskAssignmentMeta, headers: () => Record<string, string> | null) => Promise<AutomaticAssignmentAnswer>;
@@ -1682,7 +1709,27 @@ function OtherStoreTaskDetail({ t, projName, onClose, onOpenHome, opening, error
   );
 }
 
-function TaskDetail({ t, byId, projLabel, onClose, onOpenDocument, onAsk, onMove, onAssign, nameOf, onArchived, canWrite, pendingNotification,
+/** A review-route task's place (J5 human test, J2's D4, 2026-11-06): the board
+ *  cannot move it (the server answers 409), so the drawer opens where it is signed. */
+function RouteTaskSection({ t, onOpenRoute }: { t: TaskItem; onOpenRoute?: (t: TaskItem) => string | null }) {
+  const [err, setErr] = useState('');
+  const route = t.reviewRoute;
+  if (!route) return null;
+  const label = route.kind === 'vault' ? 'Open the version in the Vault' : route.kind === 'quality' ? 'Open the controlled document' : null;
+  return (
+    <div className="tb-detail-sec">
+      <div className="tb-detail-note">
+        This task is a step on a review route. It is reviewed and signed on the document, and the route completes it; it is not moved on the board.
+      </div>
+      {label && onOpenRoute
+        ? <button type="button" className="btn primary" onClick={() => setErr(onOpenRoute(t) ?? '')}>{I.fileText} {label}</button>
+        : <div role="status" className="tb-detail-note">The document this route is on could not be read. Open it from the Vault or Quality.</div>}
+      {err && <div role="alert" className="tb-detail-note">{err}</div>}
+    </div>
+  );
+}
+
+function TaskDetail({ t, byId, projLabel, onClose, onOpenDocument, onOpenRoute, onAsk, onMove, onAssign, nameOf, onArchived, canWrite, pendingNotification,
   actorScope, isCurrent, onAssignmentSaved }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const owner = nameOf(t.assignee) || 'Unassigned';
@@ -1785,6 +1832,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onOpenDocument, onAsk, onMove
             </button>
           </div>
         )}
+        <RouteTaskSection t={t} onOpenRoute={onOpenRoute} />
         {canWrite && <TaskAssignmentControls key={t.taskId} taskId={t.taskId} status={t.status}
           projectId={/^[1-9]\d*$/.test(t.project) ? Number(t.project) : null} actorScope={actorScope} isCurrent={isCurrent}
           disabled={confirmArchive || archiving} onAutomatic={onAssign} onSaved={onAssignmentSaved} onBlockedChange={setAssignmentBlocked} />}
@@ -1901,7 +1949,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onOpenDocument, onAsk, onMove
               screens' scroll container, journey-v2.css) gave this spacer a
               height and padding and pushed Advance onto its own row. */}
           <span className="tb-grow" />
-          {canWrite && (
+          {canWrite && !t.reviewRoute && (
             <>
               <button className="btn ghost" disabled={assignmentBlocked || t.status === 'pending'} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
               <button className="btn primary" disabled={assignmentBlocked || t.status === 'completed'} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>
