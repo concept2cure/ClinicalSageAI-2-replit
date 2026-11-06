@@ -17,7 +17,7 @@
  * @module concept2cure/v2/surfaces/RbmIngest
  */
 import { ErrorState } from '../dataConnect';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
 import { useDialog } from '../useDialog';
 import { useRbmMutation, rbmWrite } from './rbmWrites';
@@ -119,19 +119,61 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
   const [csv, setCsv] = useState('');
   const [fileName, setFileName] = useState<string | null>(null);
   const [result, setResult] = useState<IngestResult | null>(null);
+  const currentRead = useRef<FileReader | null>(null);
+  const fileChoice = useRef<HTMLInputElement>(null);
+  const writing = useRef(false);
+  const needsReload = useRef(false);
+  const [reading, setReading] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
   // A refusal because this exact extract is already loaded. Held apart from
   // mut.error so the reprocess path is offered in place, with the operator's
   // file and cutoff still in the form, instead of reading as a dead end.
   const [duplicate, setDuplicate] = useState<string | null>(null);
   const [reprocessReason, setReprocessReason] = useState('');
-  const mut = useRbmMutation(onReload);
+  // A board refresh unmounts this modal. Let the operator read the saved
+  // outcome or duplicate warning, then refresh when the modal is dismissed.
+  const mut = useRbmMutation();
+  const closeDialog = () => {
+    if (writing.current) return;
+    const refresh = needsReload.current;
+    needsReload.current = false;
+    onClose();
+    if (refresh) onReload?.();
+  };
 
+  const cancelRead = useCallback(() => {
+    const reader = currentRead.current;
+    currentRead.current = null;
+    if (reader?.readyState === FileReader.LOADING) reader.abort();
+  }, []);
+  useEffect(() => cancelRead, [cancelRead]);
+
+  const clearOutcome = () => {
+    setResult(null); setDuplicate(null); setReprocessReason('');
+    setFileError(null); mut.clearError();
+  };
+  const clearFileChoice = () => {
+    setFileName(null);
+    if (fileChoice.current) fileChoice.current.value = '';
+  };
   const readFile = (file: File | undefined) => {
     if (!file) return;
+    cancelRead(); clearOutcome(); setCsv(''); setReading(true);
     setFileName(file.name);
     const reader = new FileReader();
-    reader.onload = () => setCsv(String(reader.result ?? ''));
-    reader.readAsText(file);
+    currentRead.current = reader;
+    reader.onload = () => {
+      if (currentRead.current !== reader) return;
+      currentRead.current = null; setReading(false);
+      setCsv(String(reader.result ?? ''));
+    };
+    const failed = () => {
+      if (currentRead.current !== reader) return;
+      currentRead.current = null; setReading(false); clearFileChoice();
+      setFileError('The selected file could not be read. Choose it again or paste its rows.');
+    };
+    reader.onerror = failed; reader.onabort = failed;
+    try { reader.readAsText(file); } catch { failed(); }
   };
 
   /**
@@ -139,7 +181,10 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
    * accepting the duplicate warning — a retry must never silently become a
    * second load, because a second load appends KRI readings.
    */
-  const submit = (reprocess = false) => mut.run(async () => {
+  const submit = (reprocess = false) => {
+    if (currentRead.current || writing.current || !csv.trim()) return;
+    writing.current = true; setResult(null);
+    return mut.run(async () => {
     try {
       const data = await rbmWrite<IngestResult>('POST', '/rbm-metric-ingest', {
         programId,
@@ -149,6 +194,7 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
         csv,
         ...(reprocess ? { reprocess: true, reprocessReason: reprocessReason.trim() } : {}),
       });
+      needsReload.current = true;
       setDuplicate(null);
       setResult(data);
     } catch (err) {
@@ -160,11 +206,12 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
       }
       throw err;
     }
-  });
+    }).finally(() => { writing.current = false; });
+  };
 
   /* Declared the role but had no Escape and never moved focus into the panel
      or back to the opener; the semantics also sat on the scrim, not the panel. */
-  const dialogRef = useDialog(onClose);
+  const dialogRef = useDialog(closeDialog);
 
   return (
     <div className="rbm-modal-scrim">
@@ -184,13 +231,13 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
         </div>
 
         <label className="rbm-field"><span>Source feed</span>
-          <select value={source} disabled={mut.busy} onChange={e => setSource(e.target.value)}>
+          <select value={source} disabled={mut.busy} onChange={e => { clearOutcome(); setSource(e.target.value); }}>
             {SOURCES.map(s => <option key={s} value={s}>{SOURCE_LABEL[s]}</option>)}
           </select>
         </label>
 
         <label className="rbm-field"><span>Data cutoff</span>
-          <input type="date" value={cutoff} disabled={mut.busy} onChange={e => setCutoff(e.target.value)} />
+          <input type="date" value={cutoff} disabled={mut.busy} onChange={e => { clearOutcome(); setCutoff(e.target.value); }} />
           <em className="rbm-field-hint">
             The date the extract represents, not today. Freshness is measured from this — an
             export pulled weeks ago does not become current by being loaded now.
@@ -198,7 +245,7 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
         </label>
 
         <label className="rbm-field"><span>Extract file</span>
-          <input type="file" accept=".csv,.tsv,.txt,text/csv" disabled={mut.busy}
+          <input ref={fileChoice} type="file" accept=".csv,.tsv,.txt,text/csv" disabled={mut.busy}
             onChange={e => readFile(e.target.files?.[0])} />
           <em className="rbm-field-hint">
             Header row required. Columns: <span className="mono">{TEMPLATE}</span>. Only
@@ -207,10 +254,15 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
           </em>
         </label>
 
+        {reading && <div role="status">Reading the selected file…</div>}
+        {fileError && <ErrorState variant="inline" title="Extract file could not be read" message={fileError} />}
         <label className="rbm-field"><span>…or paste the rows</span>
           <textarea rows={5} value={csv} disabled={mut.busy}
             placeholder={`${TEMPLATE}\nQuery rate,study,,12.5,,,%,2026-07-20`}
-            onChange={e => { setCsv(e.target.value); setFileName(null); }} />
+            onChange={e => {
+              cancelRead(); clearOutcome(); setReading(false);
+              setCsv(e.target.value); clearFileChoice();
+            }} />
         </label>
 
         {mut.error && (
@@ -235,7 +287,7 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
                 this reason recorded against its replacement.
               </em>
             </label>
-            <button className="rbm-btn" disabled={mut.busy || reprocessReason.trim().length < 3}
+            <button className="rbm-btn" disabled={mut.busy || reading || reprocessReason.trim().length < 3}
               onClick={() => submit(true)}>
               {mut.busy ? 'Reprocessing…' : 'Reprocess and replace that run'}
             </button>
@@ -249,8 +301,8 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
           evidence of control without it.
         </div>
         <div className="rbm-modal-acts">
-          <button className="rbm-btn" onClick={onClose} disabled={mut.busy}>{result ? 'Close' : 'Cancel'}</button>
-          <button className="rbm-btn pri" disabled={mut.busy || !csv.trim()} onClick={() => { setDuplicate(null); submit(); }}>
+          <button className="rbm-btn" onClick={closeDialog} disabled={mut.busy}>{result ? 'Close' : 'Cancel'}</button>
+          <button className="rbm-btn pri" disabled={mut.busy || reading || !csv.trim()} onClick={() => { setDuplicate(null); submit(); }}>
             {mut.busy ? 'Loading…' : result ? 'Load again' : 'Load extract'}
           </button>
         </div>

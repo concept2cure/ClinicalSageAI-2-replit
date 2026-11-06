@@ -1,0 +1,33 @@
+{
+  "status": "frozen",
+  "inventoryCommit": "f6127e72231bd9e9f302f596a672f58b1b40db15",
+  "red": {
+    "passed": 2,
+    "failed": 3,
+    "cases": "HTTP403,429,500 wrongly returned successful CLI/manifest before repair"
+  },
+  "green": {
+    "passed": 14,
+    "failed": 0,
+    "newCliCases": 5,
+    "existingQualifierCases": 9,
+    "durationMs": 361.29278
+  },
+  "lint": {
+    "errors": 0,
+    "newTestWarnings": 0,
+    "packWarningsInUnchangedFunctions": 3
+  },
+  "sha256": {
+    "scripts/demo/launch-demo/packs/lumen-rbm.mjs": "1fafcd678e2b383bd41b3d2ac85d32c6872397ab21bebd4181db1d7443f5b5e3",
+    "scripts/demo/launch-demo/lumen-rbm-completion.test.mjs": "b31cd112c2d97a580631145ec656125f8dac24de8ea4485c2dc9b3b2adad436d",
+    "scripts/demo/launch-demo/seed.mjs": "2e5f36a0919830e31cdd0d21401d823e74d3b1b96a08f716c049999b341689c0",
+    "scripts/demo/launch-demo/lib.mjs": "595e9065f4e2b66e8298b5cd40be0cc04017a1c4b8f319a72c8328be8ed26c34"
+  },
+  "limits": [
+    "All HTTP is synthetic; no live database/login/provider/browser evidence claimed.",
+    "Held .devcontainer files and marker logic are untouched.",
+    "No Git mutations, full typecheck, build or gates run by this worker.",
+    "Source hash list covers the real CLI, pack, runner and focused fixture; not all transitive imports."
+  ]
+}

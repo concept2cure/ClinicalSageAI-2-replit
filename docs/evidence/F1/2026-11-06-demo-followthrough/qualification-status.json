@@ -1,0 +1,40 @@
+{
+  "base": "f6127e72231bd9e9f302f596a672f58b1b40db15",
+  "client": {
+    "passed": 92,
+    "failed": 0,
+    "files": 7,
+    "durationSeconds": 12.82
+  },
+  "script": {
+    "passed": 20,
+    "failed": 0
+  },
+  "nativeBrowser": {
+    "passed": true,
+    "writesIntercepted": 2,
+    "serverMutation": false,
+    "pageErrors": 0,
+    "scope": "Recorded component snapshot predates only the final source/cutoff clearOutcome handlers; two separate RED/GREEN cases qualify those edits."
+  },
+  "rbmLint": {
+    "errors": 0,
+    "newTestWarnings": 0,
+    "componentWarnings": 2,
+    "baselineWarnings": 2
+  },
+  "sha256": {
+    "client/src/concept2cure/v2/surfaces/RbmIngest.tsx": "3ccab8c550c122b7c0754dd2c6f47f5c09c048515238ab5d01c28d05a3ee9026",
+    "client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx": "ae6dbce7d3c0f452250a877f2de3e33b4d7e2fe870eef06f19f813ac41ce6496",
+    "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx": "238e1176fae7ba50e97b6d0f39350878f161d1190a6453ff937cdc90a47e11a8",
+    "client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx": "efe5037749e9c3e32a19f39a101c6a3ce85edc6cb6756a21cd505bec4bbc43d0",
+    "scripts/demo/launch-demo/packs/lumen-rbm.mjs": "1fafcd678e2b383bd41b3d2ac85d32c6872397ab21bebd4181db1d7443f5b5e3",
+    "scripts/demo/launch-demo/lumen-rbm-completion.test.mjs": "b31cd112c2d97a580631145ec656125f8dac24de8ea4485c2dc9b3b2adad436d",
+    "tests/validation/lib/harness.mjs": "eb4d7563f86b0fec1a2a7569404c7f6c753c1a52982ac1077b16820e5a8ecf70",
+    "tests/validation/lib/api-client-retry.test.mjs": "15b1f7a1194c5138069f51be48f5f745132b9f82e867997756759569d9d8df66"
+  },
+  "typecheckFirstAttempt": {
+    "errors": 5,
+    "cause": "Unsupported exact option in five new Testing Library role queries; corrected without baseline changes. Final typecheck remains with ordinary push hooks."
+  }
+}
