@@ -52,6 +52,7 @@ import { filingLifecycleReferenceFor } from '@shared/regulatory/filing-lifecycle
 import { ProjectSettings } from './ProjectSettings';
 import { ProjectCoreWork } from './ProjectCoreWork';
 import { actionWords, enumWords } from './projectWords';
+import { WS_LABEL } from './ProjectPortfolioFilters';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
@@ -1599,7 +1600,7 @@ function ProjectTags({ tags: t }: { tags: {
 } }) {
   return (
     <div className="pj-tags">
-      {t.clientType && <span className="rd-chip tone-ai">{t.clientType}</span>}
+      {t.clientType && <span className="rd-chip tone-ai">{WS_LABEL[t.clientType] ?? t.clientType}</span>}
       {t.submissionType && <span className="rd-chip tone-idle">{t.submissionType}</span>}
       {t.regionLabel && <span className="rd-chip tone-idle">{t.regionLabel}</span>}
       {t.indication && <span className="rd-chip tone-idle">{t.indication}</span>}
