@@ -70,7 +70,7 @@ import { useAuthoringRefileSavedText } from './AuthoringRefileSavedText';
 import { refileControlRefusal, refileSavedSource } from './authoringRefileSavedTextState';
 import { hasUnsavedSessionWork } from '@/lib/sessionChangeGuard';
 import { SendForReviewDialog } from './SendForReviewDialog';
-import { useProgramRead, programHeadline, programName } from './programSummary';
+import { useProgramRead, programHeadline, programName, offersIndLibrary } from './programSummary';
 import { askAnaToDraftPrompt, openConversationWithPrompt, originWithSavedVersion, prefillConversation, type AskOrigin, type SavedSectionVersion } from './askAnaToDraft';
 import { describeClaimsCheck, describeFigureCheck, describeProvenance } from './provenance';
 import { DraftFigureLine } from './DraftFigureLine';
@@ -6156,6 +6156,7 @@ export function DocumentWorkbench({
             programId={programId}
             readOwner={projectSourceOwner}
             programName={programName(program)}
+            indLibrary={offersIndLibrary(program)}
             sectionOpen={activeSection != null && !contentReadOnly}
             sectionCode={activeSection?.code ?? null}
             projectSources={projectSources.filter(sourceCitationEligible)}
