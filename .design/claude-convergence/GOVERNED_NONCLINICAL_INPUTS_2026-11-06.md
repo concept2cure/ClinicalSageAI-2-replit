@@ -65,3 +65,6 @@ The existing M24 all-study index lacks a finding column. Once unknown study type
 ## Implemented and checked
 
 Existing M24/M26/adapters now preserve source taxonomy (including consistent round trips), unclassified findings, distinct NOAEL/NOEL and missing inputs. Blank locations do not become source-reference keys. Category coverage remains separate from source/report/scientific verification and sponsor judgment. The protected-binding outline and generic source failure are truthful; no native study read is activated. After normal canonical merge, all378 cases in22 existing suites pass; changed-file lint has0 errors/9 warnings (one fewer), and production client/server/operations-verifier build passes. Full canonical hooks/publication remain pending and are recorded in the evidence README/qualification receipt after execution.
+
+
+Canonical accepted `f1b07add1893b5d019a95979dcade9263634e514` with all normal hooks, full compiler 0/baseline 0, warning delta -1, independent remote equality and manifest verification. Evidence/limits: `docs/evidence/D4/2026-11-06-governed-nonclinical-inputs/qualification.json`. Native nonclinical project/lifecycle/currentness binding remains next; generic P-104 Tier 3 authority is inherited. This completion introduces no app, editor, route, table, model or dependency.

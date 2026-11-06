@@ -86,7 +86,21 @@
     "log": "build-final.txt.gz"
   },
   "publication": {
-    "result": "pending"
+    "result": "accepted",
+    "source": "f1b07add1893b5d019a95979dcade9263634e514",
+    "remoteVerified": "f1b07add1893b5d019a95979dcade9263634e514",
+    "verifiedAt": "2026-11-06T21:57:31.210954+00:00",
+    "branch": "concept2cure-v2",
+    "method": "normal git push; all repository hooks enabled",
+    "typeScriptErrors": 0,
+    "typeScriptBaseline": 0,
+    "warningGrowth": -1,
+    "sourceManifest": "source-sha256.json",
+    "sourceHashesMatched": 10,
+    "mergedDependencyHashesMatched": 9,
+    "log": "publication-accepted.txt.gz",
+    "status": "publication-status.json",
+    "limits": "Software composition/compatibility only; no native nonclinical study binding, live model/scientific/native PostgreSQL qualification, deployment or agency action."
   },
   "limits": [
     "Pure composition truthfulness and scoped software compatibility proof only; no scientific or regulatory adequacy conclusion.",
