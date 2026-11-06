@@ -58,14 +58,8 @@ import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { setEditorTarget } from '../editorTarget';
 import { AuthoredHtml } from './AuthoredHtml';
 import {
-  DocumentWorkbench,
-  escapeBelongsToInner,
-  readDocumentAccess,
-  actRefusal,
-  UNKNOWN_DOCUMENT_ACCESS,
-  type AuthDoc,
-  type DocumentAccess,
-  type EditorBridge,
+  DocumentWorkbench, escapeBelongsToInner, readDocumentAccess, actRefusal, UNKNOWN_DOCUMENT_ACCESS,
+  type AuthDoc, type DocumentAccess, type EditorBridge,
 } from './DocumentWorkbench';
 import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
 import { FileToVaultDialog } from './FileToVaultDialog';
