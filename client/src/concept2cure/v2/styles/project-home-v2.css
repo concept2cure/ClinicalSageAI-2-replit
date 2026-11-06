@@ -501,10 +501,21 @@
 .c2c-v2 .pj-status-item[data-tone=blocked]{color:var(--error);}
 .c2c-v2 .pj-status-item[data-tone=warn]{color:var(--warning);}
 /* The project's work areas, in the About card beside every step (ProjectCoreWork). */
-.c2c-v2 .pj-work-areas{display:flex;flex-direction:column;align-items:flex-start;gap:6px;}
-.c2c-v2 .pj-work-areas-k{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);}
-.c2c-v2 .pj-work-area{background:none;border:0;padding:0;cursor:pointer;}
-.c2c-v2 .pj-work-area:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:4px;}
+/* Since D3-2a (2026-11-06) a card of rows: icon, label, chevron; the Reports row is its last (D3.md §4.8 item 4).
+   The Filing card's rows (.pj-k-row) are the same shape: a label, its value, a chevron. */
+.c2c-v2 .pj-work-areas{gap:2px;}
+.c2c-v2 :is(.pj-work-area, .pj-k-row){display:flex;align-items:center;gap:10px;min-height:32px;padding:4px 6px;margin:0 -6px;width:calc(100% + 12px);background:none;border:0;border-radius:var(--radius-md);font-size:13px;color:var(--text-200);text-align:left;cursor:pointer;}
+.c2c-v2 :is(.pj-work-area, .pj-k-row):hover{background:var(--bg-100);color:var(--text-100);}
+.c2c-v2 :is(.pj-work-area, .pj-k-row):focus-visible{outline:2px solid var(--accent-200);outline-offset:0;}
+.c2c-v2 :is(.pj-work-area, .pj-k-row) > svg{flex:0 0 14px;width:14px;height:14px;color:var(--text-300);}
+.c2c-v2 .pj-work-area-ic{display:inline-flex;color:var(--text-300);}
+.c2c-v2 .pj-work-area-ic svg{width:16px;height:16px;}
+.c2c-v2 :is(.pj-work-area-l, .pj-k-row-l){flex:1;min-width:0;overflow-wrap:anywhere;}
+.c2c-v2 .pj-k-row-v{font-weight:500;color:var(--text-100);white-space:nowrap;}
+/* What AnA knows (D3-2a, D3.md §4.8 item 5): saved text keeps its line breaks and never overflows the card. */
+.c2c-v2 .pj-knows{overflow-wrap:anywhere;}
+.c2c-v2 .pj-knows-t{white-space:pre-wrap;overflow-wrap:anywhere;}
+.c2c-v2 .pj-knows h4{margin:10px 0 2px;font-size:13px;font-weight:600;color:var(--text-100);}
 /* A market's verdict, as the button that opens it on Submit. */
 .c2c-v2 .pj-status-open{background:none;border:1px solid transparent;border-radius:var(--radius-md);padding:2px 6px;margin:-2px -6px;font:inherit;cursor:pointer;text-align:left;}
 .c2c-v2 .pj-status-open:hover{border-color:var(--border);background:var(--bg-100);}
@@ -560,7 +571,5 @@
 /* What the project is and where its filing stands, beside the work, as Claude
    keeps a project's knowledge (founder, 2026-11-01; RULE 4). */
 .c2c-v2 .pj-about{display:flex;flex-direction:column;gap:12px;padding:14px 16px;border:1px solid var(--border);border-radius:12px;background:var(--bg-000);}
-.c2c-v2 .pj-about-row{display:flex;flex-wrap:wrap;gap:var(--space-2);}
-.c2c-v2 .pj-about-link{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--accent-200);text-align:left;white-space:normal;}
-.c2c-v2 .pj-about-link:hover{text-decoration:underline;}
-.c2c-v2 .pj-about-link svg{width:12px;height:12px;}
+/* The About card's doors (.pj-about-row, .pj-about-link: orange links) left with D3-2a; the work areas and
+   Reports are the Work areas card's rows. */
