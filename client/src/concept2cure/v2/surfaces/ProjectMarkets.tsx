@@ -328,10 +328,12 @@ const FORBIDDEN_WORDS = 'Your role does not include reading submissions, so this
 /** The project's markets as a list, with its loading, refused, failed and
  *  empty states. The Submit tab and Submission Readiness (F18) both draw it,
  *  each with MarketGateDetail under every row (F10). */
-export function MarketsBody({ markets, onOpen, center, startHint, detail, number }: {
+export function MarketsBody({ markets, onOpen, center, startHint, empty, detail, number }: {
   markets: ProgramMarkets; onOpen: ((m: ProgramMarket) => void) | null; center: boolean;
   /** Said after "No market for this project yet": how one is started from here. */
   startHint?: string;
+  /** The empty state's own words, where "no market" is not true of the project (a device filing). */
+  empty?: { title: string; hint: string };
   detail?: (m: ProgramMarket) => React.ReactNode;
   /** Each market's own application number (P-44); drawn by the project's Submit tab. */
   number?: (m: ProgramMarket) => React.ReactNode;
@@ -353,8 +355,8 @@ export function MarketsBody({ markets, onOpen, center, startHint, detail, number
   if (markets.markets.length === 0) {
     const start = startHint ?? (center ? ' Add a market to start one.' : '');
     return (
-      <EmptyState icon={I.rocket} title="No market for this project yet"
-        hint={`A market is one submission: an application to one agency.${start}${others ? ` ${others}` : ''}`} />
+      <EmptyState icon={I.rocket} title={empty?.title ?? 'No market for this project yet'}
+        hint={`${empty?.hint ?? `A market is one submission: an application to one agency.${start}`}${others ? ` ${others}` : ''}`} />
     );
   }
   return (
@@ -516,13 +518,22 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
       </div>
       {deviceFiling && <p className="pj-mkt-note">Device and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.</p>}
       <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null}
-        startHint={deviceFiling ? ' Existing submissions appear here when recorded to this project.' : undefined}
+        /* A 510(k) to FDA is this project's filing, so "No market for this project yet" told a device tester it had
+           none (human test J1, 2026-11-06). Its documents are assembled with the action above; what is missing is a
+           submission record, which only the Submission Center records. */
+        empty={deviceFiling ? DEVICE_NO_SUBMISSION : undefined}
         detail={(m) => <MarketBlockers m={m} onNav={onNav} center={center} />}
         number={(m) => <MarketApplicationNumber submissionId={m.submission.id} canChange={canChange}
           onChanged={() => markets.retryMarket(m.submission.id)} />} />
     </section>
   );
 }
+
+/** A device or diagnostic project's empty Submit list, in words true of it. */
+export const DEVICE_NO_SUBMISSION = {
+  title: 'No submission recorded to this project yet',
+  hint: 'This filing is assembled from its approved documents with the action above, not as an eCTD sequence. A submission recorded to this project in the Submission Center is listed here.',
+};
 
 /** The board read the Review tab makes, as the header line counts it. */
 export interface ReviewCountRead {
