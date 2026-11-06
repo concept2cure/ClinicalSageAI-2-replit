@@ -13,12 +13,13 @@ const H = vi.hoisted(() => ({
   refresh: vi.fn(),
   reads: {} as Record<string, { data: unknown; loading: boolean; error: string | null }>,
   program: null as string | null,
+  programName: null as string | null,
 }));
 
 vi.mock('../../mdx/hooks/useFetchJson', () => ({
   useFetchJson: (url: string) => ({ ...(H.reads[url] ?? { data: null, loading: true, error: null }), refresh: H.refresh }),
 }));
-vi.mock('../../v2/shellProject', () => ({ shellProgramId: () => H.program }));
+vi.mock('../../v2/shellProject', () => ({ shellProgramId: () => H.program, shellProgramName: () => H.programName }));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'Q. Approver' }) }));
 /* The signing dialog hands over what a signer typed (ChangeControlApproval.test.tsx). */
 vi.mock('../../_shared/components/EsignModal', () => ({
@@ -51,7 +52,7 @@ const CAPA = {
   targetCloseDate: '2026-11-30T00:00:00Z', problemStatement: null, closedAt: null,
 };
 
-afterEach(() => { cleanup(); H.apiRequest.mockReset(); H.reads = {}; H.program = null; });
+afterEach(() => { cleanup(); H.apiRequest.mockReset(); H.reads = {}; H.program = null; H.programName = null; });
 
 describe('Quality records', () => {
   it('lists nonconformances and dispositions one only through a signature, its reason the rationale', async () => {
@@ -231,6 +232,9 @@ describe('Quality records', () => {
     expect(screen.getByText('No CAPAs recorded yet.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Raise CAPA/ }));
     const d = screen.getByRole('dialog');
+    // J5-04: said before the form is filled, not only after it is submitted.
+    expect(within(d).getByText(/No project is open/)).toBeTruthy();
+    expect(within(d).queryByText(/Raised in the project you have open/)).toBeNull();
     fireEvent.change(within(d).getByLabelText(/^Title/), { target: { value: 'Supplier CoA gaps' } });
     fireEvent.click(within(d).getByRole('radio', { name: 'Corrective' }));
     fireEvent.change(within(d).getByLabelText(/Raised from/), { target: { value: 'supplier' } });
@@ -241,6 +245,7 @@ describe('Quality records', () => {
 
   it('raises a CAPA from a nonconformance, in the open project, with the record as its source', async () => {
     H.program = '40000000-0000-4000-8000-000000000001';
+    H.programName = 'C2C-101';
     H.reads['/api/mdx/qms/nonconforming'] = { data: { data: [NC] }, loading: false, error: null };
     H.apiRequest.mockResolvedValue({ status: 201, json: async () => ({ ...CAPA, capaCode: 'CAPA-008', meta: {} }) });
     render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
@@ -248,6 +253,7 @@ describe('Quality records', () => {
     fireEvent.click(screen.getByRole('button', { name: /Raise CAPA/ }));
     const d = screen.getByRole('dialog');
     expect((within(d).getByLabelText(/^Title/) as HTMLInputElement).value).toBe('NC-2026-004: Assay out of specification at release');
+    expect(within(d).getByText(/Raised in C2C-101, the project you have open/)).toBeTruthy();
     fireEvent.click(within(d).getByRole('radio', { name: 'Corrective' }));
     fireEvent.click(within(d).getByRole('button', { name: 'Raise CAPA' }));
     await waitFor(() => expect(H.apiRequest).toHaveBeenCalledTimes(1));
