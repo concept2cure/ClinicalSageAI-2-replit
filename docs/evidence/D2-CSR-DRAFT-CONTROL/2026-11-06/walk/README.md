@@ -98,18 +98,19 @@ RLS and the launch gate on and no model key (`/readyz`: `ana: down, no_provider`
 4. **At 390, the editor's bar wraps to four rows** (Freeze, E-sign, Place into filing, Re-file saved text) and covers
    the content beneath it, including the panel's refusal (`b-390-alternatives-refused.png`). This is D4 too: D4-3 moves
    these actions into an inspector.
-5. **Trunk red: 8 workbench suites since `53b179b99`.** It made `useScopedDocuments` refuse a project's document list
-   unless it reads `success: true` and every row carries that project's `program_id`. The suites' fixtures answer the
-   old shape, so the tree shows "Couldn't load documents" and no section title is found: 81 tests, identical with and
-   without this lane's change. This lane fixed its own suite, `workbenchDraftPassage.test.tsx`. The other seven belong
-   to the commit's owner:
+5. **Trunk red: workbench suites since `53b179b99`.** It made `useScopedDocuments` refuse a project's document list
+   unless it reads `success: true` and every row carries that project's `program_id`. The suites' fixtures answered the
+   old shape, so the tree showed "Couldn't load documents" and no section title was found: 8 suites and 81 tests,
+   identical with and without this lane's change. This lane fixed its own `workbenchDraftPassage`, and upstream
+   `3d9879dfc` fixed the same suite, `workbenchFileToVault` and `workbenchProjectFiles`. Five remain red at the merge
+   `6459c8b48`, 46 tests:
    - `authoringUnsavedWork`;
    - `workbenchA11ySweep`;
    - `workbenchAssignReview`;
-   - `workbenchFileToVault`;
-   - `workbenchProjectFiles`;
    - `workbenchDocumentAccess`;
    - `workbenchRemedies`.
+
+   They belong to the commit's owner.
 
 ## Still not walked
 
