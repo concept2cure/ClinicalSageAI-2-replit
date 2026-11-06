@@ -174,7 +174,9 @@ export function ProducedBy({ deliverableId, read, owners }: {
   const owner = owners?.get(task.id);
   return (
     <span className="pj-plan-producedby" data-testid="plan-produced-by">
-      Work: {task.name}{slot ? ` · due ${dayWords(slot.due)}` : ''} · {owner ? owner.assigneeName ?? 'owner not returned' : 'no owner'}
+      {/* "task owner": beside "Assigned to Dana, due Nov 20" (the document's own assignment), a bare "no owner" read as a
+          contradiction (human test J1, 2026-11-06). This line is the producing task's, and says so. */}
+      Work: {task.name}{slot ? ` · due ${dayWords(slot.due)}` : ''} · task owner: {owner ? owner.assigneeName ?? 'not returned' : 'none'}
     </span>
   );
 }
