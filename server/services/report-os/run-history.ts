@@ -5,6 +5,7 @@
 import { getPool } from '../../db/runtime';
 import type { RequestSqlClient } from '../../db/requestDb';
 import type { reportRuns } from '../../../shared/schema/report-os';
+import { canAccessReportScope, createReportQualityAccessContext, type ReportProjectActor } from './project-access';
 
 export type ReportRunHistorySort =
   | 'createdAt'
@@ -28,6 +29,8 @@ export interface ReportRunHistoryFilters {
   offset?: number;
   /** Server-resolved sharing-policy result, never accepted from req.query. */
   accessibleProjectIds?: readonly number[];
+  /** Internal current actor for native Quality receipt admission; never a query parameter. */
+  actor?: ReportProjectActor;
   /** Canonical organization project administrators may inspect unbound legacy program output. */
   allowUnboundProgramReports?: boolean;
 }
@@ -66,6 +69,35 @@ const computedScope = `COALESCE(
   NULLIF(r.dependency_summary::jsonb #>> '{summary,domainScope}', ''),
   r.scope_type
 )`;
+
+const qualityCandidate = `(r.report_type_id = 'compliance.audit_assurance_pack'
+  OR COALESCE((r.dependency_summary::jsonb #> '{summary,domain}') ? 'qualityEvidence', false))`;
+const runColumns = `r.id AS "id", r.run_uuid AS "runUuid", r.organization_id AS "organizationId",
+  r.client_workspace_id AS "clientWorkspaceId", r.scope_type AS "scopeType",
+  r.scope_id AS "scopeId", r.report_type_id AS "reportTypeId", r.status AS "status",
+  r.requested_by AS "requestedBy", r.dependency_summary AS "dependencySummary",
+  r.blockers AS "blockers", r.confidence AS "confidence", r.freshness AS "freshness",
+  r.error AS "error", r.started_at AS "startedAt", r.completed_at AS "completedAt",
+  r.created_at AS "createdAt", r.updated_at AS "updatedAt"`;
+
+/** Admit complete native reports before any search, count or page can reveal them.
+ * The caller's transaction retains candidate rows while their receipts are checked. */
+async function admittedQualityRunIds(organizationId: number, filters: ReportRunHistoryFilters, executor: RequestSqlClient): Promise<number[]> {
+  if (!filters.actor) return [];
+  const qualityContext = createReportQualityAccessContext(executor, { organizationId, userId: filters.actor.userId });
+  const { rows } = await executor.query(`SELECT ${runColumns} FROM report_runs r
+    WHERE r.organization_id = $1 AND ${qualityCandidate} ORDER BY r.id FOR SHARE`, [organizationId]);
+  const ids: number[] = [];
+  for (const row of rows) {
+    const run = row as unknown as typeof reportRuns.$inferSelect;
+    if (!Number.isSafeInteger(run.id) || run.id < 1 || run.organizationId !== organizationId) {
+      throw new Error('The native Quality report identity could not be verified.');
+    }
+    if (await canAccessReportScope(organizationId, filters.actor, run, executor,
+      { accessibleIds: filters.accessibleProjectIds, qualityContext })) ids.push(run.id);
+  }
+  return ids;
+}
 
 function historyPagination(organizationId: number, filters: ReportRunHistoryFilters) {
   if (!Number.isSafeInteger(organizationId) || organizationId < 1) {
@@ -112,12 +144,17 @@ export async function listReportRunHistory(
 ): Promise<ReportRunHistory> {
   const { limit, offset } = historyPagination(organizationId, filters);
   const { column, direction, ordering } = historyOrdering(filters);
+  if (filters.accessibleProjectIds !== undefined && !filters.accessibleProjectIds.every(id => Number.isSafeInteger(id) && id > 0)) {
+    throw new Error('Invalid accessible project IDs.');
+  }
+  const executor = client ?? getPool();
+  const qualityIds = await admittedQualityRunIds(organizationId, filters, executor);
 
   const params: unknown[] = [organizationId];
   const conditions = ['r.organization_id = $1'];
   const bind = (value: unknown) => { params.push(value); return `$${params.length}`; };
+  conditions.push(`(NOT ${qualityCandidate} OR r.id = ANY(${bind(qualityIds)}::int[]))`);
   if (filters.accessibleProjectIds !== undefined) {
-    if (!filters.accessibleProjectIds.every(id => Number.isSafeInteger(id) && id > 0)) throw new Error('Invalid accessible project IDs.');
     const permitted = bind(filters.accessibleProjectIds);
     const allowLegacy = bind(filters.allowUnboundProgramReports === true);
     // Source projects constrain every saved scope, including an account report
@@ -173,13 +210,7 @@ export async function listReportRunHistory(
   const statement = `
     WITH matching_runs AS (
       SELECT
-        r.id AS "id", r.run_uuid AS "runUuid", r.organization_id AS "organizationId",
-        r.client_workspace_id AS "clientWorkspaceId", r.scope_type AS "scopeType",
-        r.scope_id AS "scopeId", r.report_type_id AS "reportTypeId", r.status AS "status",
-        r.requested_by AS "requestedBy", r.dependency_summary AS "dependencySummary",
-        r.blockers AS "blockers", r.confidence AS "confidence", r.freshness AS "freshness",
-        r.error AS "error", r.started_at AS "startedAt", r.completed_at AS "completedAt",
-        r.created_at AS "createdAt", r.updated_at AS "updatedAt",
+        ${runColumns},
         ${reportTypeLabel} AS "reportTypeLabel", ${regionCode} AS "regionCode",
         ${registryId} AS "registryId", ${agency} AS "agency",
         ${scopeLabel} AS "scopeLabel", ${computedScope} AS "computedScope"
@@ -197,7 +228,7 @@ export async function listReportRunHistory(
     ORDER BY page."${column}" ${direction} NULLS LAST, page."id" ${direction}
   `;
 
-  const { rows } = await (client ?? getPool()).query(statement, params);
+  const { rows } = await executor.query(statement, params);
   const total = Number(rows[0]?.__total ?? 0);
   const data = rows.filter(row => row.id != null).map(({ __total: _total, ...row }) => row as ReportRunHistoryRow);
   return { data, meta: { limit, offset, total, hasMore: offset + data.length < total } };

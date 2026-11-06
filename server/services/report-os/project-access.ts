@@ -62,6 +62,9 @@ export async function canAccessReportProject(organizationId: number, actor: Repo
 
 export interface ReportAccessScope {
   scopeType: string; scopeId: string; organizationId?: number;
+  reportTypeId?: string;
+  /** A bundle item is a pointer, never its own authority for saved source receipts. */
+  runId?: number; runUuid?: string | null;
   /** Saved output is bound to the source projects actually computed then. */
   recorded?: boolean; dependencySummary?: unknown; accessProjectIds?: readonly number[];
 }
@@ -91,7 +94,53 @@ async function canAccessProgramScope(organizationId: number, actor: ReportProjec
 
 /** The saved scope's parent projects, including archived records retained for
  * audit. Scope existence and project permission are different checks. */
-export async function canAccessReportScope(organizationId: number, actor: ReportProjectActor, scope: ReportAccessScope, client: RequestSqlClient = getPool(), accessibleIds?: readonly number[]): Promise<boolean> {
+export interface ReportAccessOptions { accessibleIds?: readonly number[]; qualityContext?: ReportQualityAccessContext }
+function reportAccessOptions(value: readonly number[] | ReportAccessOptions | undefined): ReportAccessOptions {
+  return Array.isArray(value) ? { accessibleIds: value } : (value as ReportAccessOptions | undefined) ?? {};
+}
+
+export async function canAccessReportScope(organizationId: number, actor: ReportProjectActor, scope: ReportAccessScope, client: RequestSqlClient = getPool(), access?: readonly number[] | ReportAccessOptions): Promise<boolean> {
+  const { accessibleIds, qualityContext } = reportAccessOptions(access);
+  if (scope.organizationId !== undefined && scope.organizationId !== organizationId) return false;
+  const retained = await retainedReportScope(organizationId, scope, client);
+  if (!retained || !await canAccessSavedProjectScope(organizationId, actor, retained, client, accessibleIds)) return false;
+  const withReceipts = scope.runId === undefined ? retained : await retainedQualityReceipts(scope.runId, organizationId, retained, client);
+  return withReceipts !== null && canAccessQualityEvidence(organizationId, actor, withReceipts, client, qualityContext);
+}
+
+/** A stripped bundle manifest cannot replace the canonical run's source manifest. */
+async function retainedReportScope(organizationId: number, scope: ReportAccessScope, client: RequestSqlClient): Promise<ReportAccessScope | null> {
+  if (scope.runId === undefined) return scope;
+  if (!Number.isSafeInteger(scope.runId) || scope.runId <= 0) return null;
+  const { rows } = await client.query(`SELECT id,run_uuid AS "runUuid",organization_id AS "organizationId",
+    scope_type AS "scopeType",scope_id AS "scopeId",report_type_id AS "reportTypeId",
+    CASE WHEN COALESCE(dependency_summary::jsonb #> '{summary}', '{}'::jsonb) ? 'accessProjectIds'
+      THEN jsonb_build_object('summary', jsonb_build_object('accessProjectIds', dependency_summary::jsonb #> '{summary,accessProjectIds}'))
+      ELSE '{}'::jsonb END AS "dependencySummary"
+    FROM report_runs WHERE id=$1 AND organization_id=$2`, [scope.runId, organizationId]);
+  const row = rows[0];
+  if (rows.length !== 1 || row.organizationId !== organizationId || row.scopeType !== scope.scopeType || row.scopeId !== scope.scopeId) return null;
+  if (scope.runUuid !== undefined && scope.runUuid !== row.runUuid) return null;
+  if (scope.reportTypeId !== undefined && scope.reportTypeId !== row.reportTypeId) return null;
+  if (typeof row.reportTypeId !== 'string' || (typeof row.runUuid !== 'string' && row.runUuid !== null)) return null;
+  return { organizationId, scopeType: scope.scopeType, scopeId: scope.scopeId, reportTypeId: row.reportTypeId,
+    runUuid: row.runUuid, dependencySummary: row.dependencySummary, recorded: true };
+}
+
+/** Project admission precedes receipt reads; unrelated retained report bodies are never loaded here. */
+async function retainedQualityReceipts(runId: number, organizationId: number, scope: ReportAccessScope, client: RequestSqlClient): Promise<ReportAccessScope | null> {
+  const { rows } = await client.query(`SELECT dependency_summary::jsonb #> '{summary,domain,qualityEvidence}' AS evidence,
+      COALESCE((dependency_summary::jsonb #> '{summary,domain}') ? 'qualityEvidence', false) AS present
+    FROM report_runs WHERE id=$1 AND organization_id=$2 AND scope_type=$3 AND scope_id=$4
+      AND report_type_id=$5 AND run_uuid IS NOT DISTINCT FROM $6::uuid`,
+  [runId, organizationId, scope.scopeType, scope.scopeId, scope.reportTypeId, scope.runUuid]);
+  if (rows.length !== 1) return null;
+  if (rows[0].present !== true) return scope;
+  const dependencies = recordObject(scope.dependencySummary), summary = recordObject(dependencies?.summary);
+  return { ...scope, dependencySummary: { summary: { ...summary, domain: { qualityEvidence: rows[0].evidence } } } };
+}
+
+async function canAccessSavedProjectScope(organizationId: number, actor: ReportProjectActor, scope: ReportAccessScope, client: RequestSqlClient, accessibleIds?: readonly number[]): Promise<boolean> {
   if (scope.organizationId !== undefined && scope.organizationId !== organizationId) return false;
   const sourceIds = recordedReportProjectIds(scope);
   if (recordedProjectEvidence(scope).present && sourceIds === null) return false;
@@ -99,6 +148,138 @@ export async function canAccessReportScope(organizationId: number, actor: Report
   const allowed = new Set(accessibleIds ?? await getAccessibleReportProjectIds(organizationId, actor, client));
   if (sourceIds && !sourceIds.every(id => allowed.has(id))) return false;
   return canAccessAdmittedReportScope(organizationId, actor, scope, allowed, client);
+}
+
+const recordObject = (value: unknown): Record<string, unknown> | null =>
+  value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+const PROGRAM_ID = /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i;
+type QualityReceipt = { sourceScope: 'project' | 'organization'; programId: string | null; native: { kind: string; id: string; authoringDocumentId?: string } };
+
+/** Internal per-read batching. Serialized fields cannot manufacture its executor/actor provenance. */
+export interface ReportQualityAccessContext { readonly kind: 'report-quality-access' }
+interface QualityAccessState {
+  client: RequestSqlClient; organizationId: number; userId: number; role?: string;
+  current: Map<string | null, Promise<Set<string>>>; checked: Map<string, Promise<boolean>>;
+}
+const qualityAccessContexts = new WeakMap<ReportQualityAccessContext, QualityAccessState>();
+export function createReportQualityAccessContext(client: RequestSqlClient, identity: { organizationId: number; userId: number }): ReportQualityAccessContext {
+  const context = Object.freeze({ kind: 'report-quality-access' as const });
+  qualityAccessContexts.set(context, { client, ...identity, current: new Map(), checked: new Map() });
+  return context;
+}
+
+function qualityAccessState(context: ReportQualityAccessContext | undefined, client: RequestSqlClient, identity: { organizationId: number; userId: number }): QualityAccessState {
+  const state = qualityAccessContexts.get(context ?? createReportQualityAccessContext(client, identity));
+  if (!state || state.client !== client || state.organizationId !== identity.organizationId || state.userId !== identity.userId) {
+    throw new Error('A current executor-bound report source context is required.');
+  }
+  return state;
+}
+
+/** null is a non-Quality report; false is a missing or malformed Quality manifest. */
+function qualityRecords(scope: ReportAccessScope): unknown[] | null | false {
+  const summary = recordObject(recordObject(scope.dependencySummary)?.summary);
+  const domain = recordObject(summary?.domain);
+  if (!domain || !Object.prototype.hasOwnProperty.call(domain, 'qualityEvidence')) {
+    return scope.reportTypeId === 'compliance.audit_assurance_pack' ? false : null;
+  }
+  const manifest = recordObject(domain.qualityEvidence);
+  return manifest?.schemaVersion === 1 && Array.isArray(manifest.records) && manifest.records.length <= 5000 ? manifest.records : false;
+}
+
+function nativeIdentity(value: unknown): QualityReceipt['native'] | null {
+  const native = recordObject(value);
+  if (!native || typeof native.kind !== 'string' || !/^[a-z][a-z0-9_]*$/.test(native.kind)
+    || typeof native.id !== 'string' || !/^[A-Za-z0-9-]{1,128}$/.test(native.id)) return null;
+  if (native.authoringDocumentId !== undefined && (typeof native.authoringDocumentId !== 'string' || !PROGRAM_ID.test(native.authoringDocumentId))) return null;
+  return { kind: native.kind, id: native.id, ...(typeof native.authoringDocumentId === 'string' ? { authoringDocumentId: native.authoringDocumentId } : {}) };
+}
+
+function qualitySnapshotText(snapshot: Record<string, unknown>, native: QualityReceipt['native']): Record<string, unknown> | null {
+  if (typeof snapshot.text !== 'string' || snapshot.text.length > 2_000_000) return null;
+  let text: Record<string, unknown> | null;
+  try { text = recordObject(JSON.parse(snapshot.text)); } catch { return null; }
+  if (!text || text.evidenceKind !== 'qms' || text.sourceScope !== snapshot.sourceScope
+    || JSON.stringify(nativeIdentity(text.native)) !== JSON.stringify(native)) return null;
+  return text;
+}
+
+function qualityReceipt(value: unknown): QualityReceipt | null {
+  const snapshot = recordObject(value), native = nativeIdentity(snapshot?.native);
+  if (!snapshot || !native) return null;
+  const text = qualitySnapshotText(snapshot, native);
+  if (!text) return null;
+  if (snapshot.sourceScope === 'organization') return text.programId === undefined ? { sourceScope: 'organization', programId: null, native } : null;
+  return snapshot.sourceScope === 'project' && typeof text.programId === 'string' && PROGRAM_ID.test(text.programId)
+    ? { sourceScope: 'project', programId: text.programId.toLowerCase(), native } : null;
+}
+
+type QualityModule = typeof import('../qms/project-evidence');
+function nativeBinding(native: QualityReceipt['native'], sourceScope: 'project' | 'organization'): string {
+  return JSON.stringify({ sourceScope, native });
+}
+
+/** A native register is collected once per program/actor in this read. Retained authored copies keep exact-object admission. */
+async function authorizeQualityReceipt(client: RequestSqlClient, identity: { organizationId: number; userId: number }, receipt: QualityReceipt,
+  current: Map<string | null, Promise<Set<string>>>, quality: QualityModule): Promise<boolean> {
+  if (['qms_documents', 'qms_document_versions'].includes(receipt.native.kind)) {
+    try { await quality.authorizeQualityEvidenceSnapshot(client, { ...identity, programId: receipt.programId }, receipt.native); return true; }
+    catch (error) { if (error instanceof quality.QualityEvidenceNotReadable) return false; throw error; }
+  }
+  let admitted = current.get(receipt.programId);
+  if (!admitted) {
+    admitted = quality.readQualityProjectEvidence(client, { ...identity, programId: receipt.programId })
+      .then(rows => new Set(rows.map(row => nativeBinding(row.native, row.sourceScope))));
+    current.set(receipt.programId, admitted);
+  }
+  return (await admitted).has(nativeBinding(receipt.native, receipt.sourceScope));
+}
+
+/** Organization ownership is separate from the project workspace admitting that context. */
+async function checkedQualityReceipt(receipt: QualityReceipt, programs: readonly (string | null)[], state: QualityAccessState, quality: QualityModule, authoredChecks: Map<string, Promise<boolean>>): Promise<boolean> {
+  // Object grants can change while a multi-report history/export read continues.
+  // Deduplicate retained parents within this report, never across saved reports.
+  const checked = ['qms_documents', 'qms_document_versions'].includes(receipt.native.kind) ? authoredChecks : state.checked;
+  for (const programId of programs) {
+    const contextualReceipt = { ...receipt, programId };
+    const key = JSON.stringify(contextualReceipt);
+    let admitted = checked.get(key);
+    if (!admitted) {
+      admitted = authorizeQualityReceipt(state.client, { organizationId: state.organizationId, userId: state.userId }, contextualReceipt, state.current, quality);
+      checked.set(key, admitted);
+    }
+    if (await admitted) return true;
+  }
+  return false;
+}
+
+/** Historical facts remain historical; each exact retained parent must still be readable now. */
+async function canAccessQualityEvidence(organizationId: number, actor: ReportProjectActor, scope: ReportAccessScope, client: RequestSqlClient, qualityContext?: ReportQualityAccessContext): Promise<boolean> {
+  const records = qualityRecords(scope);
+  if (records === null) return true;
+  if (records === false) return false;
+  if (!['project', 'account'].includes(scope.scopeType)) return false;
+  const { getCurrentAccessibleProgramScope, verifiedProgramAnchors, requireProgramScopeStillCurrent, ProgramReadAccessError } = await import('../c2c/current-program-access');
+  const quality = await import('../qms/project-evidence');
+  const identity = { organizationId, userId: actor.userId };
+  const current = await getCurrentAccessibleProgramScope(client, identity);
+  const state = qualityAccessState(qualityContext, client, identity);
+  if (state.role !== undefined && state.role !== current.actor.role) {
+    throw new ProgramReadAccessError(503, 'REPORT_SOURCE_ACCESS_CHANGED', 'Current source access changed during this read. Nothing was supplied.');
+  }
+  state.role = current.actor.role;
+  const anchors = verifiedProgramAnchors(client, identity, current);
+  const permitted = new Set(anchors.filter(anchor => scope.scopeType === 'account' || String(anchor.projectId) === scope.scopeId).map(anchor => anchor.programId));
+  const organizationContexts = scope.scopeType === 'account' ? [null, ...permitted] : [...permitted];
+  const authoredChecks = new Map<string, Promise<boolean>>();
+  for (const value of records) {
+    const receipt = qualityReceipt(value);
+    if (!receipt || (receipt.programId !== null && !permitted.has(receipt.programId))) return false;
+    const programs = receipt.sourceScope === 'organization' ? organizationContexts : [receipt.programId];
+    if (!await checkedQualityReceipt(receipt, programs, state, quality, authoredChecks)) return false;
+  }
+  await requireProgramScopeStillCurrent(client, identity, current);
+  return true;
 }
 
 /** Scope-specific parents are checked only after saved source admission. The
