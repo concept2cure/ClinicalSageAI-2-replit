@@ -107,6 +107,51 @@ describe('formatWorkingMemoryForPrompt', () => {
     expect(out).not.toContain('**Created Artifacts**');
     expect(out).not.toContain('**Deferred/Excluded**');
   });
+
+  it('preserves the public seven-field layout without rendering withheld items', () => {
+    const out = formatWorkingMemoryForPrompt({
+      ...base,
+      structured: {
+        objective: 'Prepare the regulatory overview',
+        lockedFacts: ['The sponsor prefers a concise narrative'],
+        decisions: ['Retain the agreed outline'],
+        openQuestions: ['Which appendix should follow?'],
+        nextActions: ['Request the source tables'],
+        createdArtifacts: ['Clinical overview draft'],
+        exclusions: ['Do not claim efficacy for the exploratory subgroup'],
+        withheld: {
+          objective: 'WITHHELD objective',
+          lockedFacts: ['WITHHELD fact'],
+          decisions: ['WITHHELD decision'],
+          openQuestions: ['WITHHELD question'],
+          nextActions: ['WITHHELD action'],
+          createdArtifacts: ['WITHHELD artifact'],
+          exclusions: ['WITHHELD exclusion'],
+        },
+      },
+    });
+
+    expect(out).toBe([
+      '**Objective**: Prepare the regulatory overview',
+      '**Locked Facts**:\n- The sponsor prefers a concise narrative',
+      '**Decisions Made**:\n- Retain the agreed outline',
+      '**Open Questions**:\n- Which appendix should follow?',
+      '**Next Actions**:\n- Request the source tables',
+      '**Created Artifacts**:\n- Clinical overview draft',
+      '**Deferred/Excluded**:\n- Do not claim efficacy for the exploratory subgroup',
+    ].join('\n\n'));
+    expect(out).not.toContain('WITHHELD');
+  });
+
+  it('retains the public empty-objective heading', () => {
+    expect(formatWorkingMemoryForPrompt({
+      ...base,
+      structured: {
+        objective: '', lockedFacts: [], decisions: [], openQuestions: [],
+        nextActions: [], createdArtifacts: [], exclusions: [],
+      },
+    })).toBe('**Objective**: ');
+  });
 });
 
 describe('working-memory embeddings migration — guard', () => {

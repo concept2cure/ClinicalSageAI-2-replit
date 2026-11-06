@@ -2918,3 +2918,101 @@ jobs:
     uses: ./.github/workflows/release-evidence.yml
     with:
       evidence-artifact: release-evidence-input-${{ github.sha }}
+
+  # The Codespace, built and started as GitHub builds it: the devcontainer image,
+  # .devcontainer/post-create.sh, then .devcontainer/post-start.sh, run inside it.
+  # A Codespace that "can't get it to work" was the defect (2026-11-06): the
+  # scripts are proven here with the image's own apt sources and the PostgreSQL
+  # project's repository, which the development sandbox cannot reach. Nightly,
+  # and on a push that changes what the Codespace runs; other pushes skip it.
+  # No model key: AnA is expected to be the one dependency /readyz reports down.
+  codespace:
+    name: Codespace (devcontainer image, post-create + post-start)
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Does this push change what the Codespace runs?
+        id: scope
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "${{ github.event_name }}" != "push" ] || [ -z "$BEFORE" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -qE '^(\.devcontainer/|scripts/ops/codespaces-|scripts/db/|scripts/startup\.sh|scripts/seed-admin\.mjs|scripts/demo/launch-demo/|docs/evidence/DEMO/2026-11-05-csr-lifecycle/)'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "No Codespace file changed in this push; the nightly run covers it."
+          fi
+
+      - name: Start the devcontainer image
+        if: steps.scope.outputs.run == 'true'
+        run: |
+          image=$(node -e "console.log(require('./.devcontainer/devcontainer.json').image)")
+          docker run -d --name codespace --network host \
+            -v "$PWD:/workspaces/repo" -w /workspaces/repo \
+            -e HOME=/root -e C2C_ENVIRONMENT=development -e C2C_CODESPACE=1 -e RLS_ENFORCE=on \
+            -e C2C_AGENT_MODE=active -e CODESPACES=true -e CODESPACE_NAME=ci-codespace \
+            -e GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN=app.github.dev \
+            "$image" sleep infinity
+          docker exec codespace git config --global --add safe.directory /workspaces/repo
+
+      - name: post-create (npm ci, PostgreSQL 16 + pgvector, provisioning, accounts)
+        if: steps.scope.outputs.run == 'true'
+        run: docker exec codespace bash .devcontainer/post-create.sh
+
+      - name: post-start (database, migrations, app, demo seed, CSR study)
+        if: steps.scope.outputs.run == 'true'
+        run: |
+          docker exec codespace bash .devcontainer/post-start.sh | tee /tmp/post-start.txt
+          grep -q 'The app is serving' /tmp/post-start.txt
+          grep -q 'Demo projects seeded' /tmp/post-start.txt
+          grep -q 'CSR study ready' /tmp/post-start.txt
+
+      - name: The app as a browser reaches it through the Codespaces forward
+        if: steps.scope.outputs.run == 'true'
+        run: |
+          host=ci-codespace-5000.app.github.dev
+          curl -s http://127.0.0.1:5000/readyz | node -e '
+            let s = ""; process.stdin.on("data", d => s += d).on("end", () => {
+              const r = JSON.parse(s); console.log(JSON.stringify(r.dependencies));
+              const bad = ["database", "schema", "storage"].filter(k => r.dependencies?.[k] !== "ok");
+              if (bad.length) { console.error("not ok: " + bad.join(", ")); process.exit(1); }
+            });'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H "Host: $host" http://127.0.0.1:5000/concept2cure/login)" = 200
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+            -H "Host: $host" -H "Origin: https://$host" http://127.0.0.1:5000/api/auth/dev-login \
+            -d '{"email":"ana.author@concept2cure.pro"}')
+          test "$code" = 200 || { echo "dev-login from the forwarded origin answered $code"; exit 1; }
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+            -H "Host: $host" -H "Origin: https://evil.example" http://127.0.0.1:5000/api/auth/dev-login \
+            -d '{"email":"ana.author@concept2cure.pro"}')
+          test "$code" = 403 || { echo "dev-login from a foreign origin answered $code, expected 403"; exit 1; }
+
+      - name: The app never holds the owner credential
+        if: steps.scope.outputs.run == 'true'
+        run: |
+          docker exec codespace bash -c '
+            for p in $(pgrep -f "server/index.ts"); do
+              tr "\0" "\n" < /proc/$p/environ | grep -E "^(DATABASE_OWNER_URL|APP_SERVICE_DB_PASSWORD|C2C_OWNER_PASSWORD)=" && exit 1
+              tr "\0" "\n" < /proc/$p/environ | grep -E "^DATABASE_URL=." && exit 1
+            done
+            runuser -u postgres -- psql -At -d concept2cure -c \
+              "select usename from pg_stat_activity where datname = '\''concept2cure'\'' and backend_type = '\''client backend'\'' and usename <> '\''postgres'\''" |
+              sort -u | tee /dev/stderr | grep -qvx app_service && exit 1
+            exit 0'
+
+      - name: A second start applies migrations and keeps the app
+        if: steps.scope.outputs.run == 'true'
+        run: docker exec codespace bash .devcontainer/post-start.sh | grep -E 'Database provisioned|already running'
+
+      - name: Logs
+        if: always() && steps.scope.outputs.run == 'true'
+        run: |
+          docker exec codespace bash -c 'tail -n 80 /tmp/concept2cure-app.log; for f in provision demo-seed csr-study; do echo "== $f"; tail -n 40 ~/.concept2cure-codespace/$f.log 2>/dev/null; done' |
+            sed -E 's/:[0-9a-f]{24,}@/:***@/g'

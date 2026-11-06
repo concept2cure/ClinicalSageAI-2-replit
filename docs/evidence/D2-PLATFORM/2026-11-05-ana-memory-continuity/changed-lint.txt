@@ -1,0 +1,15 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+/workspace/scratch/3002d574f952/concept2cure-v2/server/services/__tests__/memory-orchestrator.test.ts
+  27:36  warning  Arrow function has too many lines (214). Maximum allowed is 100  max-lines-per-function
+
+/workspace/scratch/3002d574f952/concept2cure-v2/server/services/memory-consolidation-job.ts
+  207:1  warning  Async function 'consolidateMemoryInner' has too many lines (143). Maximum allowed is 100  max-lines-per-function
+  207:1  warning  Async function 'consolidateMemoryInner' has a complexity of 34. Maximum allowed is 15     complexity
+
+/workspace/scratch/3002d574f952/concept2cure-v2/tests/services/ana/memory-consolidation-outcomes.test.cjs
+  53:1  warning  Function 'harness' has too many lines (103). Maximum allowed is 100  max-lines-per-function
+
+✖ 4 problems (0 errors, 4 warnings)
+

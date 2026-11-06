@@ -1,0 +1,356 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+TAP version 13
+# (node:12) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: dedupe preserves different decisions after character 200
+ok 1 - dedupe preserves different decisions after character 200
+  ---
+  duration_ms: 30.819585
+  type: 'test'
+  ...
+# Subtest: dedupe preserves different numeric results after character 200
+ok 2 - dedupe preserves different numeric results after character 200
+  ---
+  duration_ms: 0.258662
+  type: 'test'
+  ...
+# Subtest: dedupe preserves different sources after character 200
+ok 3 - dedupe preserves different sources after character 200
+  ---
+  duration_ms: 0.178563
+  type: 'test'
+  ...
+# Subtest: dedupe preserves different final character at the 5000-character limit
+ok 4 - dedupe preserves different final character at the 5000-character limit
+  ---
+  duration_ms: 0.331299
+  type: 'test'
+  ...
+# Subtest: dedupe preserves a known djb2 hash collision
+ok 5 - dedupe preserves a known djb2 hash collision
+  ---
+  duration_ms: 0.311159
+  type: 'test'
+  ...
+# Subtest: dedupe preserves different Unicode text after character 200
+ok 6 - dedupe preserves different Unicode text after character 200
+  ---
+  duration_ms: 15.001244
+  type: 'test'
+  ...
+# Subtest: an opposite conclusion after a shared opening reaches human review, not duplicate rejection
+ok 7 - an opposite conclusion after a shared opening reaches human review, not duplicate rejection
+  ---
+  duration_ms: 0.858047
+  type: 'test'
+  ...
+# Subtest: an exact long duplicate is still rejected
+ok 8 - an exact long duplicate is still rejected
+  ---
+  duration_ms: 0.168579
+  type: 'test'
+  ...
+# Subtest: existing case-and-whitespace normalization still identifies duplicates
+ok 9 - existing case-and-whitespace normalization still identifies duplicates
+  ---
+  duration_ms: 0.373792
+  type: 'test'
+  ...
+# Subtest: equal content in different categories is not a duplicate
+ok 10 - equal content in different categories is not a duplicate
+  ---
+  duration_ms: 0.483724
+  type: 'test'
+  ...
+# Subtest: category/content field boundaries do not collide
+ok 11 - category/content field boundaries do not collide
+  ---
+  duration_ms: 0.173136
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag is sufficient / is insufficient in both directions
+ok 12 - opposite phrases still flag is sufficient / is insufficient in both directions
+  ---
+  duration_ms: 0.261817
+  type: 'test'
+  ...
+# Subtest: two matching is insufficient assessments do not contradict each other
+ok 13 - two matching is insufficient assessments do not contradict each other
+  ---
+  duration_ms: 0.131153
+  type: 'test'
+  ...
+# Subtest: two matching is sufficient assessments do not contradict each other
+ok 14 - two matching is sufficient assessments do not contradict each other
+  ---
+  duration_ms: 0.107499
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag is adequate / is inadequate in both directions
+ok 15 - opposite phrases still flag is adequate / is inadequate in both directions
+  ---
+  duration_ms: 0.125795
+  type: 'test'
+  ...
+# Subtest: two matching is inadequate assessments do not contradict each other
+ok 16 - two matching is inadequate assessments do not contradict each other
+  ---
+  duration_ms: 0.078175
+  type: 'test'
+  ...
+# Subtest: two matching is adequate assessments do not contradict each other
+ok 17 - two matching is adequate assessments do not contradict each other
+  ---
+  duration_ms: 0.072357
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag meets requirements / does not meet requirements in both directions
+ok 18 - opposite phrases still flag meets requirements / does not meet requirements in both directions
+  ---
+  duration_ms: 0.19582
+  type: 'test'
+  ...
+# Subtest: two matching does not meet requirements assessments do not contradict each other
+ok 19 - two matching does not meet requirements assessments do not contradict each other
+  ---
+  duration_ms: 0.098916
+  type: 'test'
+  ...
+# Subtest: two matching meets requirements assessments do not contradict each other
+ok 20 - two matching meets requirements assessments do not contradict each other
+  ---
+  duration_ms: 0.086969
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag no risk / significant risk in both directions
+ok 21 - opposite phrases still flag no risk / significant risk in both directions
+  ---
+  duration_ms: 0.159856
+  type: 'test'
+  ...
+# Subtest: two matching significant risk assessments do not contradict each other
+ok 22 - two matching significant risk assessments do not contradict each other
+  ---
+  duration_ms: 0.082542
+  type: 'test'
+  ...
+# Subtest: two matching no risk assessments do not contradict each other
+ok 23 - two matching no risk assessments do not contradict each other
+  ---
+  duration_ms: 0.072397
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag compliant / non-compliant in both directions
+ok 24 - opposite phrases still flag compliant / non-compliant in both directions
+  ---
+  duration_ms: 0.130663
+  type: 'test'
+  ...
+# Subtest: two matching non-compliant assessments do not contradict each other
+ok 25 - two matching non-compliant assessments do not contradict each other
+  ---
+  duration_ms: 0.075772
+  type: 'test'
+  ...
+# Subtest: two matching compliant assessments do not contradict each other
+ok 26 - two matching compliant assessments do not contradict each other
+  ---
+  duration_ms: 0.071906
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag complete / incomplete in both directions
+ok 27 - opposite phrases still flag complete / incomplete in both directions
+  ---
+  duration_ms: 0.166596
+  type: 'test'
+  ...
+# Subtest: two matching incomplete assessments do not contradict each other
+ok 28 - two matching incomplete assessments do not contradict each other
+  ---
+  duration_ms: 0.124564
+  type: 'test'
+  ...
+# Subtest: two matching complete assessments do not contradict each other
+ok 29 - two matching complete assessments do not contradict each other
+  ---
+  duration_ms: 0.079467
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag no gaps / data gaps in both directions
+ok 30 - opposite phrases still flag no gaps / data gaps in both directions
+  ---
+  duration_ms: 0.11511
+  type: 'test'
+  ...
+# Subtest: two matching data gaps assessments do not contradict each other
+ok 31 - two matching data gaps assessments do not contradict each other
+  ---
+  duration_ms: 0.072427
+  type: 'test'
+  ...
+# Subtest: two matching no gaps assessments do not contradict each other
+ok 32 - two matching no gaps assessments do not contradict each other
+  ---
+  duration_ms: 0.070875
+  type: 'test'
+  ...
+# Subtest: opposite phrases still flag approved / rejected in both directions
+ok 33 - opposite phrases still flag approved / rejected in both directions
+  ---
+  duration_ms: 0.108811
+  type: 'test'
+  ...
+# Subtest: two matching rejected assessments do not contradict each other
+ok 34 - two matching rejected assessments do not contradict each other
+  ---
+  duration_ms: 0.07413
+  type: 'test'
+  ...
+# Subtest: two matching approved assessments do not contradict each other
+ok 35 - two matching approved assessments do not contradict each other
+  ---
+  duration_ms: 0.070134
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: unapproved
+ok 36 - a word fragment is not the phrase: unapproved
+  ---
+  duration_ms: 0.150402
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: unrejected
+ok 37 - a word fragment is not the phrase: unrejected
+  ---
+  duration_ms: 0.079287
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: completeness
+ok 38 - a word fragment is not the phrase: completeness
+  ---
+  duration_ms: 0.069653
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: non-compliantness
+ok 39 - a word fragment is not the phrase: non-compliantness
+  ---
+  duration_ms: 0.071185
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: no risks
+ok 40 - a word fragment is not the phrase: no risks
+  ---
+  duration_ms: 0.08129
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: incomplete_record
+ok 41 - a word fragment is not the phrase: incomplete_record
+  ---
+  duration_ms: 1.519655
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: αapproved
+ok 42 - a word fragment is not the phrase: αapproved
+  ---
+  duration_ms: 0.143812
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: approvedβ
+ok 43 - a word fragment is not the phrase: approvedβ
+  ---
+  duration_ms: 0.091636
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: approved2
+ok 44 - a word fragment is not the phrase: approved2
+  ---
+  duration_ms: 0.127928
+  type: 'test'
+  ...
+# Subtest: a word fragment is not the phrase: approved́ness
+ok 45 - a word fragment is not the phrase: approved́ness
+  ---
+  duration_ms: 0.147197
+  type: 'test'
+  ...
+# Subtest: whitespace and case do not hide a configured multi-word conflict
+ok 46 - whitespace and case do not hide a configured multi-word conflict
+  ---
+  duration_ms: 0.133377
+  type: 'test'
+  ...
+# Subtest: punctuation boundaries retain the configured phrases
+ok 47 - punctuation boundaries retain the configured phrases
+  ---
+  duration_ms: 0.102642
+  type: 'test'
+  ...
+# Subtest: masking a negative phrase does not erase a separate positive assertion
+ok 48 - masking a negative phrase does not erase a separate positive assertion
+  ---
+  duration_ms: 0.152204
+  type: 'test'
+  ...
+# Subtest: a conflict notice states the opposing assertion even when existing text contains both
+ok 49 - a conflict notice states the opposing assertion even when existing text contains both
+  ---
+  duration_ms: 0.12157
+  type: 'test'
+  ...
+# Subtest: multiple conflicts in one entry do not duplicate its identifier
+ok 50 - multiple conflicts in one entry do not duplicate its identifier
+  ---
+  duration_ms: 0.110994
+  type: 'test'
+  ...
+# Subtest: different conflicting entries retain their separate identifiers
+ok 51 - different conflicting entries retain their separate identifiers
+  ---
+  duration_ms: 0.143472
+  type: 'test'
+  ...
+# Subtest: the full acceptance path does not quarantine two non-compliant assessments
+ok 52 - the full acceptance path does not quarantine two non-compliant assessments
+  ---
+  duration_ms: 0.140808
+  type: 'test'
+  ...
+# Subtest: low-quality content is not auto-accepted merely because a false conflict was removed
+ok 53 - low-quality content is not auto-accepted merely because a false conflict was removed
+  ---
+  duration_ms: 0.20335
+  type: 'test'
+  ...
+# Subtest: sub-floor confidence is still rejected
+ok 54 - sub-floor confidence is still rejected
+  ---
+  duration_ms: 0.096633
+  type: 'test'
+  ...
+# Subtest: length rejection boundaries are unchanged
+ok 55 - length rejection boundaries are unchanged
+  ---
+  duration_ms: 0.194898
+  type: 'test'
+  ...
+# Subtest: content, provenance and thread attribution survive unchanged
+ok 56 - content, provenance and thread attribution survive unchanged
+  ---
+  duration_ms: 0.106196
+  type: 'test'
+  ...
+# Subtest: no comparison records means no inferred contradiction
+ok 57 - no comparison records means no inferred contradiction
+  ---
+  duration_ms: 0.076893
+  type: 'test'
+  ...
+1..57
+# tests 57
+# suites 0
+# pass 57
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 503.765166

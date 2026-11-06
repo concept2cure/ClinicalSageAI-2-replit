@@ -1,0 +1,44 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > assembles working + project memory for a project, and client memory only without one, with metadata diagnostics 5ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > applies structured forgetting to stale, unverified, low-importance memory 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > retains stale but verified memory entries and reports trimming 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > retains exclusions after character 400 when the complete record fits 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > keeps both complete records when their differing exclusions follow a shared long prefix 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > omits the whole qualified record when its wrapper and body exceed the global budget 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > admits a complete record at exactly 1000 rendered characters and omits it at 1001 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > skips an oversized working record and still admits a later smaller semantic record 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete title label before admitting a record 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete category label before admitting a record 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > accounts for the complete sourceDocumentName label before admitting a record 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > reports only admitted records when their source-label openings collide 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 3500 character limit for request undefined 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 1000 character limit for request 100 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'project' memory reaches the model only as complete records > preserves the existing 12000 character limit for request 20000 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > retains exclusions after character 400 when the complete record fits 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > keeps both complete records when their differing exclusions follow a shared long prefix 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > omits the whole qualified record when its wrapper and body exceed the global budget 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > admits a complete record at exactly 1000 rendered characters and omits it at 1001 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > skips an oversized working record and still admits a later smaller semantic record 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete title label before admitting a record 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete category label before admitting a record 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > accounts for the complete sourceDocumentName label before admitting a record 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > reports only admitted records when their source-label openings collide 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 3500 character limit for request undefined 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 1000 character limit for request 100 0ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > 'client' memory reaches the model only as complete records > preserves the existing 12000 character limit for request 20000 1ms
+
+ Test Files  1 passed (1)
+      Tests  27 passed (27)
+   Start at  21:01:49
+   Duration  449ms (transform 119ms, setup 72ms, import 77ms, tests 27ms, environment 0ms)

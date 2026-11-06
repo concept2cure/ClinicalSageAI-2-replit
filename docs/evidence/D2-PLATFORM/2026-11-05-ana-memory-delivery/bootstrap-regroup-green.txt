@@ -1,0 +1,49 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves suggested provenance and discloses unrecorded scientific context 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves confirmed provenance and discloses unrecorded scientific context 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves corrected provenance and discloses unrecorded scientific context 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > rewards importance, verification, and confidence 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > defaults unknown importance to a middle weight 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > orders by score then recency and respects the limit 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > breaks ties by createdAt recency 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > fires only at session start with an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire mid-conversation 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire without an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > respects the disable flag 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > renders all sections when present 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > returns empty string when there is nothing to recall 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > omits lessons with no lessonsLearned text 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete-record admission > keeps trailing qualifications in working, project, client and lesson records when they fit together 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete-record admission > omits an oversized working summary and still considers later memory 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete-record admission > skips an oversized project record without losing a later complete record 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete-record admission > skips an oversized client record without losing a later complete record 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete-record admission > skips an oversized lesson record without losing a later complete record 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — complete-record admission > budgets full titles, categories and lesson labels as part of each record 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — budget boundaries and output compatibility > admits a complete summary exactly at the rendered budget without an omission notice 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — budget boundaries and output compatibility > reserves room for the omission notice before admitting complete records 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — budget boundaries and output compatibility > reports an incomplete history when all candidates are omitted, without empty section headings 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — budget boundaries and output compatibility > preserves ordinary short output, section order, ranking and count limits 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — budget boundaries and output compatibility > leaves Vault and chat preview text and access notices outside the memory budget 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls project files with their filed location and what each is for 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls files the client sent in past conversations, with the id that reopens them 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > says honestly when a file has not been studied or failed extraction 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > says how many files it is NOT showing, and forbids answering from the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > counts what needs attention across the whole scope, not across the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > claims completeness only when the listing really is complete 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > says when more chat uploads were attached than it is showing 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > does not invent a "there is more" claim when there is not 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > discloses an unmeasured actor scope total for a bounded chat page 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > retains a measured scope total when an exhausted actor page supplies it 0ms
+
+ Test Files  1 passed (1)
+      Tests  35 passed (35)
+   Start at  21:16:07
+   Duration  423ms (transform 98ms, setup 61ms, import 59ms, tests 13ms, environment 0ms)

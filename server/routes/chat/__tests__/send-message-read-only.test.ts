@@ -211,3 +211,39 @@ describe('JSON chat current-turn read-only enforcement', () => {
     expect(io.memoryWrite).toHaveBeenCalledOnce();
   });
 });
+
+describe('JSON chat admitted memory snapshot', () => {
+  const omissionNotice = '## Memory context incomplete\n' +
+    "Some recalled memory records were omitted to fit this turn's character budget. " +
+    'Do not infer that omitted decisions or exclusions do not exist; ask for or verify needed context.';
+  const working = { id: 1, layer: 'working_memory', title: 'Working summary', content: 'The next action is to verify the exclusion.' };
+  const admitted = { id: 2, layer: 'project_memory', title: 'Reviewed scope', content: 'The draft is provisional until the source is checked.' };
+  const omitted = { id: 3, layer: 'project_memory', title: 'Oversized candidate', content: 'This record was not admitted to the prompt.' };
+
+  it.each([
+    { label: 'all candidates omitted', read: [], records: '', expected: 'working=no, semantic atoms=0' },
+    { label: 'only one semantic record admitted', read: [{ layer: admitted.layer, title: admitted.title }],
+      records: `${admitted.title}: ${admitted.content}\n`, expected: 'working=no, semantic atoms=1' },
+    { label: 'working memory and one semantic record admitted',
+      read: [{ layer: working.layer, title: working.title }, { layer: admitted.layer, title: admitted.title }],
+      records: `${working.title}: ${working.content}\n${admitted.title}: ${admitted.content}\n`, expected: 'working=yes, semantic atoms=1' },
+    { label: 'fallback result without an admitted read list', read: undefined, records: '', expected: 'working=no, semantic atoms=0' },
+  ])('reports what reached the prompt when $label', async ({ read, records, expected }) => {
+    const memoryBlock = `\n\n--- PERSISTENT MEMORY CONTEXT ---\n${omissionNotice}\n\n${records}--- END PERSISTENT MEMORY CONTEXT ---\n`;
+    io.memoryRead.mockResolvedValue({ memoryBlock, atoms: [working, admitted, omitted], read, diagnostics: { trimmed: true } });
+
+    const response = await send('Read-only: summarize the recalled project context.');
+
+    expect(response.status).toBe(200);
+    const prompt = io.gateway.mock.calls[0][0].messages[0].content;
+    expect(prompt).toContain(`- Memory: ${expected}\n`);
+    expect(prompt).toContain(memoryBlock);
+    expect(prompt).not.toContain(omitted.content);
+    if (!read?.some(entry => entry.layer === working.layer)) expect(prompt).not.toContain(working.content);
+    // Candidate counts remain diagnostic; only the model-facing snapshot
+    // describes the records actually admitted to its prompt.
+    expect(response.body.retrievalMeta).toMatchObject({
+      memoryAtomCount: 3, memoryBlockChars: memoryBlock.length, memoryDiagnostics: { trimmed: true },
+    });
+  });
+});
