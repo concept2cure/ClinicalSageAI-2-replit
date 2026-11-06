@@ -48,6 +48,12 @@ The local application uses `app_service` with **superuser=false, BYPASSRLS=false
 
 Screenshots wait for finite drawer animations to finish; the first capture's transient fade was a harness timing issue. The final receipt verifies opaque resting drawer backgrounds and opacity 1. Private authentication state and application environment files are excluded.
 
+## Merged-source validation
+
+Merged `origin/concept2cure-v2` at `ea3b158e6a` into `a7c0d27533`, preserving its tenant/account isolation and P-104 work. No Quality source conflict occurred; all 15 owned source/test hashes remain unchanged. Independent review found no break between explicit account scope and the tenant-level Quality readers/task writer.
+
+On the merged source, the same **15 suites / 188 tests** pass ([log](validation/merged-integrated-regression.txt.gz)); the [production build](validation/merged-production-build.txt.gz) passes; actual app-service task checks remain **15 / 15** ([receipt](runtime/merged-task-outcome.json)); and restarted application/API/desktop/mobile/PDF checks remain **28 / 28** ([receipt](runtime/merged-after-outcome.json)). All five native snapshots exactly match the pre-merge run ([equality receipt](runtime/merged-native-facts.json), [saved data](runtime/merged-saved.json)). No model request, approval, filing or external delivery was performed.
+
 ## Boundaries and existing handoffs
 
 - The combined-collection check detects observed drift; it is not a database-wide atomic snapshot or a completeness/assurance claim.
