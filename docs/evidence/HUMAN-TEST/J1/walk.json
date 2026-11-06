@@ -1,6 +1,6 @@
 {
   "base": "http://127.0.0.1:5100",
-  "startedAt": "2026-11-06T02:16:40.067Z",
+  "startedAt": "2026-11-06T09:33:52.374Z",
   "steps": [
     {
       "name": "desk biotech: signed in through the form",
@@ -131,5 +131,5 @@
     "dx": "d6c45f39-4305-4de6-8f39-cab42a007bc6"
   },
   "result": "pass",
-  "finishedAt": "2026-11-06T02:19:13.963Z"
+  "finishedAt": "2026-11-06T09:36:20.594Z"
 }

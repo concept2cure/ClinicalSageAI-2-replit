@@ -21,7 +21,10 @@ import { readOnlyToolRefusal } from './read-only-turn.js';
 
 import { toBiostatsInput as mapToBiostatsInput } from '../ana-biostats/request-input.js';
 import type { RequestSqlClient } from '../../db/requestDb.js';
-import { admitAnaProjectScope, AnaProjectScopeError } from './project-scope-admission';
+import {
+  admitAnaProjectScope, AnaProjectScopeError, programReadScope, projectReadScope, projectScopeRefusal,
+  type ProjectReadScope,
+} from './project-scope-admission';
 import { ProgramReadAccessError } from '../c2c/current-program-access';
 import type { PoolClient } from 'pg';
 import { SchedulePreservationConflict } from '../projects/schedule-of-events/preservation';
@@ -4779,18 +4782,22 @@ registerToolHandler('validate_cross_references', async (input, ctx) => {
       error: 'section_references is required: list the references to check, e.g. ["Section 3.2.P.5.1"].',
     });
   }
+  // A document of a program outside the projects the person can open, inside an open project its sponsor's, reads as
+  // no row: answered as a missing id (F1-C, 2026-11-05). It read any document of the organization by id.
+  const scope = await programReadScope('validate_cross_references', ctx);
+  if (typeof scope === 'string') return scope;
   try {
     const { getPool } = await import('../../db.js');
     const { checkCrossReference } = await import('./cross-reference-check.js');
     const doc = await getPool().query(
       `SELECT id, project_id, title FROM c2c_documents
-        WHERE org_id = $1 AND id = $2 LIMIT 1`,
-      [ctx.organizationId, documentId],
+        WHERE org_id = $1 AND id = $2 AND project_id = ANY($3::uuid[]) LIMIT 1`,
+      [ctx.organizationId, documentId, scope.programIds],
     );
     if (!doc.rows.length) return JSON.stringify({ error: `No document '${documentId}' in this organization.` });
-    /* This document's outline always, even when it belongs to no project
-       (project_id is nullable for legacy rows); the project's other
-       documents unless archived. */
+    /* This document's outline always; the project's other documents unless
+       archived. A legacy row with no project (project_id is nullable) is in
+       no project the person can open, so it read as missing above. */
     const outlines = await getPool().query(
       `SELECT s.document_id, d.title, s.section_key, s.status
          FROM c2c_document_sections s
@@ -5764,6 +5771,8 @@ registerToolHandler('execute_platform_command', async (input: Record<string, unk
       userId: Number(userId),
       organizationId: Number(organizationId),
       activeProjectId: ctx?.projectId != null ? Number(ctx.projectId) : undefined,
+      // The open project as sent (a program uuid under the v2 shell, where projectId is null): its sponsor narrows reads.
+      activeProjectRef: ctx?.projectRef ?? undefined,
       // The model call that proposed this command, for its audit row.
       servingModel: ctx?.servingModel ?? null,
     };
@@ -21049,72 +21058,8 @@ function artifactModelAvailability(row: Record<string, unknown>) {
   };
 }
 
-/**
- * The projects AnA's governed-artifact and governed-document reads may read for this person (F1, 2026-11-05).
- *
- * list_vault_documents, read_vault_document, get_document_versions, compare_vault_versions, list_governed_documents,
- * read_governed_document and global_search read with the organization as their only filter. So a member read a
- * private project's governed artifacts, and inside one sponsor's project a CRO's other sponsors' too. A CRO works
- * across authorized sponsor projects "without mixing sponsor data or permissions" (the founder, 2026-11-05).
- *
- * They now read the projects the sharing policy admits the person to (getAccessibleReportProjectIds, the policy the
- * Vault's organization view lists by, routes/artifacts-center-routes.ts). With a project open (ctx.projectId, or
- * ctx.projectRef, a program uuid under the v2 shell), that project is admitted first (admitAnaProjectScope) and the
- * projects are narrowed to its sponsor's (narrowToSponsorOf, the Vault's own narrowing). An id outside them reads as
- * no row, so it is answered as a missing id is. A check that cannot run is an error, never an empty scope.
- */
-interface ProjectReadScope { organizationId: number; userId: number; projectIds: number[] }
-/** Governed documents are keyed by program: the verified anchors (verifiedProgramAnchors) of the scope's projects. */
-interface ProgramReadScope extends ProjectReadScope { programIds: string[]; anchorProjectIds: number[] }
-
-function projectScopeRefusal(error: unknown): string {
-  if (error instanceof ProgramReadAccessError || error instanceof AnaProjectScopeError) {
-    return JSON.stringify({ error: error.message, code: error.code });
-  }
-  return JSON.stringify({
-    error: 'Current project access could not be verified. No project data was supplied.',
-    code: 'PROJECT_ACCESS_UNAVAILABLE',
-  });
-}
-
-async function projectReadScope(name: string, ctx: ToolContext): Promise<ProjectReadScope | string> {
-  const organizationId = Number(ctx.organizationId);
-  const userId = Number(ctx.userId);
-  if (!Number.isSafeInteger(userId) || userId <= 0) {
-    return JSON.stringify({ error: `${name} reads only the projects you can open, and no identified member is known. Nothing was read.`, code: 'PROJECT_ACTOR_REQUIRED' });
-  }
-  try {
-    const { getPool } = await import('../../db.js');
-    const { readCurrentProgramActor } = await import('../c2c/current-program-access.js');
-    const { getAccessibleReportProjectIds } = await import('../report-os/project-access.js');
-    const { narrowToSponsorOf } = await import('../artifact-registry-read.js');
-    const q = getPool();
-    const actor = await readCurrentProgramActor(q, { organizationId, userId });
-    const accessible = await getAccessibleReportProjectIds(organizationId, actor, q);
-    const open = await admitAnaProjectScope(q, { organizationId, userId, projectId: ctx.projectId, projectRef: ctx.projectRef });
-    if (open.projectId === null) return { organizationId, userId, projectIds: accessible };
-    return { organizationId, userId, projectIds: (await narrowToSponsorOf(organizationId, accessible, open.projectId)).projectIds };
-  } catch (error) {
-    return projectScopeRefusal(error);
-  }
-}
-
-async function programReadScope(name: string, ctx: ToolContext): Promise<ProgramReadScope | string> {
-  const scope = await projectReadScope(name, ctx);
-  if (typeof scope === 'string') return scope;
-  try {
-    const { getPool } = await import('../../db.js');
-    const { getCurrentAccessibleProgramScope, verifiedProgramAnchors } = await import('../c2c/current-program-access.js');
-    const q = getPool();
-    const identity = { organizationId: scope.organizationId, userId: scope.userId };
-    const allowed = new Set(scope.projectIds);
-    const anchors = verifiedProgramAnchors(q, identity, await getCurrentAccessibleProgramScope(q, identity))
-      .filter((anchor) => allowed.has(anchor.projectId));
-    return { ...scope, programIds: anchors.map((a) => a.programId), anchorProjectIds: anchors.map((a) => a.projectId) };
-  } catch (error) {
-    return projectScopeRefusal(error);
-  }
-}
+/* The projects AnA's governed-artifact and governed-document reads may read for this person (F1, 2026-11-05):
+   projectReadScope and programReadScope, in project-scope-admission.ts, shared with AnA's platform commands. */
 
 /**
  * Null when the person may change this project's records now; otherwise the refusal (F1, 2026-11-05). The edit right
@@ -21763,6 +21708,10 @@ registerToolHandler('search_all_documents', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'search_all_documents requires tenant context.' });
   const q = typeof input.query === 'string' ? input.query.trim() : '';
   if (!q) return JSON.stringify({ error: 'query (string) is required.' });
+  // The vault and governed stores of the projects the person can open, inside an open project its sponsor's (F1-C,
+  // 2026-11-05): it searched the organization's, a private project's titles included, as global_search did.
+  const scope = await programReadScope('search_all_documents', ctx);
+  if (typeof scope === 'string') return scope;
   try {
     const { getPool } = await import('../../db.js');
     const ilike = `%${q.replace(/[%_]/g, (m) => `\\${m}`)}%`;
@@ -21773,13 +21722,13 @@ registerToolHandler('search_all_documents', async (input, ctx) => {
         `SELECT a.id, a.artifact_id, a.title, a.status, a.ctd_section, a.updated_at,
                 ${artifactOriginalFileAvailableSql('a')} AS original_file_available
            FROM concept2cure_artifacts a
-          WHERE a.organization_id = $1 AND a.status != 'archived' AND a.title ILIKE $2
+          WHERE a.organization_id = $1 AND a.project_id = ANY($4::int[]) AND a.status != 'archived' AND a.title ILIKE $2
             AND ${artifactDataEligibleSql('a')}
-          ORDER BY a.updated_at DESC LIMIT $3`, [ctx.organizationId, ilike, limit]),
+          ORDER BY a.updated_at DESC LIMIT $3`, [ctx.organizationId, ilike, limit, scope.projectIds]),
       getPool().query(
         `SELECT id, doc_type, agency, title, status, readiness FROM c2c_documents
-          WHERE org_id = $1 AND title ILIKE $2
-          ORDER BY updated_at DESC LIMIT $3`, [ctx.organizationId, ilike, limit]),
+          WHERE org_id = $1 AND project_id = ANY($4::uuid[]) AND title ILIKE $2
+          ORDER BY updated_at DESC LIMIT $3`, [ctx.organizationId, ilike, limit, scope.programIds]),
       getPool().query(
         `SELECT id, tmf_file_id, zone, artifact_name, status FROM tmf_artifacts
           WHERE organization_id = $1 AND deleted_at IS NULL AND artifact_name ILIKE $2

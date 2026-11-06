@@ -24,15 +24,36 @@ import { getUsageSummary } from '../services/usage-metering.js';
 import { ai } from '../lib/unified-ai-client.js';
 import { serverError } from '../lib/api-response';
 import {
+  readDataRoomProjectScope,
   retrieveDataRoomEvidence,
   RETRIEVAL_STATUS_MESSAGE,
   type RetrievalStatus,
 } from '../services/data-room-retrieval';
+import { ProgramReadAccessError, type ProgramAccessExecutor } from '../services/c2c/current-program-access';
+import { resolveOrgId } from '../types/auth-request';
+import { authedUserId } from '../utils/authedActor';
 import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('deep-research');
 
 const router = Router();
+
+/**
+ * The projects a generated document may draw Data Room evidence from: every
+ * project the person can open (F1, 2026-11-05). It searched every atom in the
+ * organization. Null, with the refusal sent, when the check refuses or cannot
+ * run: that is an error, never a document "grounded" in nothing.
+ */
+async function documentEvidenceProjects(req: Request, res: Response, pool: ProgramAccessExecutor): Promise<number[] | null> {
+  try {
+    return await readDataRoomProjectScope(pool, { organizationId: resolveOrgId(req), userId: authedUserId(req) });
+  } catch (error) {
+    const failure = error instanceof ProgramReadAccessError ? error
+      : new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. Nothing was generated.');
+    res.status(failure.status).json({ error: failure.message, code: failure.code });
+    return null;
+  }
+}
 
 // All routes require authentication
 router.use(authenticateToken);
@@ -376,6 +397,8 @@ router.post('/document/generate', requireTier('standard'), async (req: Request, 
     // for every remaining section and was only logged, so an outage read as
     // "no sources" (services/data-room-retrieval.ts says why that matters).
     const { pool } = await import('../db.js');
+    const projectIds = await documentEvidenceProjects(req, res, pool);
+    if (!projectIds) return;
     const dataRoomEvidence = new Map<string, string>();
     const retrievalBySection = new Map<string, RetrievalStatus>();
     for (const tmpl of templates) {
@@ -383,6 +406,7 @@ router.post('/document/generate', requireTier('standard'), async (req: Request, 
       const retrieval = await retrieveDataRoomEvidence(pool, searchQuery, {
         limit: 3,
         minSemanticScore: 0.65,
+        projectIds,
       });
       retrievalBySection.set(tmpl.number, retrieval.status);
       if (retrieval.cause) {

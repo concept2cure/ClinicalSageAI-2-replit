@@ -1,0 +1,644 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/listing-doors-project-scope.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/listing-doors-project-scope.pglite.test.ts
+{
+  "timestamp": "2026-11-06T02:17:03.710Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/listing-doors-project-scope.pglite.test.ts
+{
+  "timestamp": "2026-11-06T02:17:12.057Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T02:17:12.059Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/listing-doors-project-scope.pglite.test.ts
+{
+  "timestamp": "2026-11-06T02:17:12.059Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > lists the artifacts of the projects the member can open, of every sponsor, never a private project’s 92ms
+   → expected [ 'Contoso memo', …(2) ] to deeply equal [ 'Contoso memo', 'Northwind memo' ]
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > a content-only match does not disclose what a private project holds 20ms
+   → expected [ 'Contoso memo', …(2) ] to deeply equal [ 'Contoso memo', 'Northwind memo' ]
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > lists the programs the member can open, never the private program 12ms
+   → expected [ …(2) ] to deeply equal [ 'NW-1 · Northwind oncology IND' ]
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > a program-keyed record of a private project is not found; an organization-level one still is 9ms
+   → expected [ 'R-OPEN · Hemolysis open', …(2) ] to deeply equal [ 'R-OPEN · Hemolysis open', …(1) ]
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > finds only the person’s own conversations, in projects they can open 7ms
+   → expected [ 'Dosing question colleague', …(2) ] to deeply equal [ 'Dosing question mine' ]
+ ✓ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > the private project’s owner finds its program and artifact (the control) 6ms
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > a scope check that cannot run is an error with a code, and nothing is searched 9ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > a caller with no identified member is refused with a code, not answered empty 5ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET  answers a private project exactly as a project that does not exist 88ms
+   → {"sections":[{"id":2,"organization_id":1,"project_id":12,"section_code":"m2.5","module":"M2","title":"Private clinical overview","status":"drafting","assigned_to":null,"reviewer_id":null,"deadline":null,"estimated_hours":null,"actual_hours":null,"priority":null,"metadata":{},"notes":null,"started_at":null,"completed_at":null,"locked_at":null,"locked_by":null,"updated_at":"2026-11-06T02:17:25.064Z","assigned_to_name":null,"reviewer_name":null,"open_comments":1,"artifact_count":1}],"total":1,"projectId":12}: expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET /summary answers a private project exactly as a project that does not exist 26ms
+   → {"projectId":12,"progress":0,"overall":{"total":1,"completed":0,"active":1,"assigned":0,"overdue":0,"requiredTotal":0,"requiredCompleted":0,"estimatedHours":0,"actualHours":0},"modules":[{"module":"M2","total":1,"completed":0,"inProgress":1,"notStarted":0,"overdue":0,"nextDeadline":null,"estimatedHours":0,"actualHours":0,"progress":0}],"teamWorkload":[]}: expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET /dependencies answers a private project exactly as a project that does not exist 28ms
+   → {"dependencies":[]}: expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET /milestones answers a private project exactly as a project that does not exist 18ms
+   → {"milestones":[{"id":1,"organization_id":1,"project_id":12,"name":"Private milestone","description":null,"target_date":"2026-12-06T02:17:25.064Z","linked_sections":null,"created_by":9,"completed_at":null,"updated_at":"2026-11-06T02:17:25.064Z","created_by_name":"P. Owner","status_label":"on_track"}]}: expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET /timeline answers a private project exactly as a project that does not exist 16ms
+   → {"projectId":12,"events":[{"date":"2026-12-06T02:17:25.064Z","type":"milestone","title":"Private milestone","status":"on_track","metadata":{"milestoneId":1,"linkedSections":null,"completedAt":null}}],"totalSectionDeadlines":0,"totalMilestones":1}: expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET /m2.5 answers a private project exactly as a project that does not exist 21ms
+   → {"section":{"id":2,"organization_id":1,"project_id":12,"section_code":"m2.5","module":"M2","title":"Private clinical overview","status":"drafting","assigned_to":null,"reviewer_id":null,"deadline":null,"estimated_hours":null,"actual_hours":null,"priority":null,"metadata":{},"notes":null,"started_at":null,"completed_at":null,"locked_at":null,"locked_by":null,"updated_at":"2026-11-06T02:17:25.064Z","assigned_to_name":null,"reviewer_name":null},"artifacts":[{"artifact_id":"a-priv","title":"Private memo","status":"review","version":1,"updated_at":"2026-11-06T02:17:25.064Z"}],"dependencies":[],"blockedBy":[]}: expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET /m2.5/comments answers a private project exactly as a project that does not exist 17ms
+   → {"comments":[{"id":1,"organization_id":1,"project_id":12,"section_code":"m2.5","author_id":9,"content":"private comment","parent_id":null,"resolved":false,"created_at":"2026-11-06T02:17:25.064Z","author_name":"P. Owner"}]}: expected 200 to be 404 // Object.is equality
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET /m2.5/history answers a private project exactly as a project that does not exist 32ms
+   → {"history":[]}: expected 200 to be 404 // Object.is equality
+ ✓ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > lists an open project’s sections with their artifact count 28ms
+ ✓ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > the private project’s owner reads its sections, artifacts and comments (the control) 18ms
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > a write naming a private project is refused as not found, and writes nothing 28ms
+   → expected { status: 200, body: { …(2) } } to deeply equal { status: 404, body: { …(2) } }
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > a private project’s milestone is answered as a missing one, and is neither changed nor deleted 10ms
+   → expected { status: 200, body: { …(2) } } to deeply equal { status: 404, …(1) }
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > a check that cannot run is an error with a code, never a list 6ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/concept2cure/projects/all/artifacts-summary > counts the artifacts of the projects the member can open, of every sponsor, never a private project’s 10ms
+   → expected { total: 3, draft: 1, review: 1, …(1) } to deeply equal { Object (total, draft, ...) }
+ ✓ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/concept2cure/projects/all/artifacts-summary > the private project’s owner counts its artifact too (the control) 4ms
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/concept2cure/projects/all/artifacts-summary > a check that cannot run is an error with a code, never a zero 6ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > MCP c2c_list_projects > lists the programs the member can open, of every sponsor, never the private one or another organization’s 177ms
+   → expected [ 'CT-1', 'NW-1', 'NW-PRIV' ] to deeply equal [ 'CT-1', 'NW-1' ]
+ ✓ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > MCP c2c_list_projects > the private project’s owner lists it too (the control) 8ms
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > MCP c2c_list_projects > a scope that cannot be read is a refusal with a code, never a list 4ms
+   → expected 'ok' to be 'refused' // Object.is equality
+ × server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > MCP c2c_list_projects > without the call’s own connection, nothing is listed 9ms
+   → expected { kind: 'ok', …(2) } to match object { kind: 'refused', …(1) }
+(4 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 23 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > lists the artifacts of the projects the member can open, of every sponsor, never a private project’s
+AssertionError: expected [ 'Contoso memo', …(2) ] to deeply equal [ 'Contoso memo', 'Northwind memo' ]
+
+- Expected
++ Received
+
+  [
+    "Contoso memo",
+    "Northwind memo",
++   "Private memo",
+  ]
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:184:39
+    182|     const res = await search(MEMBER, 'memo', 'artifact');
+    183|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    184|     expect(ids(res.body, 'artifact')).toEqual(['Contoso memo', 'Northw…
+       |                                       ^
+    185|     expect(JSON.stringify(res.body)).not.toMatch(/Private memo|Their m…
+    186|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > a content-only match does not disclose what a private project holds
+AssertionError: expected [ 'Contoso memo', …(2) ] to deeply equal [ 'Contoso memo', 'Northwind memo' ]
+
+- Expected
++ Received
+
+  [
+    "Contoso memo",
+    "Northwind memo",
++   "Private memo",
+  ]
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:191:39
+    189|     const res = await search(MEMBER, 'zebra', 'artifact');
+    190|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    191|     expect(ids(res.body, 'artifact')).toEqual(['Contoso memo', 'Northw…
+       |                                       ^
+    192|   });
+    193|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > lists the programs the member can open, never the private program
+AssertionError: expected [ …(2) ] to deeply equal [ 'NW-1 · Northwind oncology IND' ]
+
+- Expected
++ Received
+
+  [
+    "NW-1 · Northwind oncology IND",
++   "NW-PRIV · Northwind private program",
+  ]
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:197:38
+    195|     const res = await search(MEMBER, 'Northwind', 'program');
+    196|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    197|     expect(ids(res.body, 'program')).toEqual(['NW-1 · Northwind oncolo…
+       |                                      ^
+    198|   });
+    199|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > a program-keyed record of a private project is not found; an organization-level one still is
+AssertionError: expected [ 'R-OPEN · Hemolysis open', …(2) ] to deeply equal [ 'R-OPEN · Hemolysis open', …(1) ]
+
+- Expected
++ Received
+
+  [
+    "R-OPEN · Hemolysis open",
+    "R-ORG · Hemolysis organization",
++   "R-PRIV · Hemolysis private",
+  ]
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:203:35
+    201|     const res = await search(MEMBER, 'Hemolysis', 'risk');
+    202|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    203|     expect(ids(res.body, 'risk')).toEqual(['R-OPEN · Hemolysis open', …
+       |                                   ^
+    204|   });
+    205|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > finds only the person’s own conversations, in projects they can open
+AssertionError: expected [ 'Dosing question colleague', …(2) ] to deeply equal [ 'Dosing question mine' ]
+
+- Expected
++ Received
+
+  [
++   "Dosing question colleague",
++   "Dosing question in a project I left",
+    "Dosing question mine",
+  ]
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:209:37
+    207|     const res = await search(MEMBER, 'Dosing', 'thread');
+    208|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    209|     expect(ids(res.body, 'thread')).toEqual(['Dosing question mine']);
+       |                                     ^
+    210|   });
+    211|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > a scope check that cannot run is an error with a code, and nothing is searched
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:222:24
+    220|     h.failWhen = POLICY_READ;
+    221|     const res = await search(MEMBER, 'memo', 'artifact,program');
+    222|     expect(res.status).toBe(503);
+       |                        ^
+    223|     expect(res.body.error).toBe('PROJECT_ACCESS_UNAVAILABLE');
+    224|     expect(h.statements.some((s) => /FROM concept2cure_artifacts\s+WHE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/mdx/search > a caller with no identified member is refused with a code, not answered empty
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:229:24
+    227|   it('a caller with no identified member is refused with a code, not a…
+    228|     const res = await search(undefined, 'memo', 'artifact');
+    229|     expect(res.status).toBe(403);
+       |                        ^
+    230|     expect(res.body.error).toBe('PROJECT_ACTOR_ACCESS_DENIED');
+    231|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET  answers a private project exactly as a project that does not exist
+AssertionError: {"sections":[{"id":2,"organization_id":1,"project_id":12,"section_code":"m2.5","module":"M2","title":"Private clinical overview","status":"drafting","assigned_to":null,"reviewer_id":null,"deadline":null,"estimated_hours":null,"actual_hours":null,"priority":null,"metadata":{},"notes":null,"started_at":null,"completed_at":null,"locked_at":null,"locked_by":null,"updated_at":"2026-11-06T02:17:25.064Z","assigned_to_name":null,"reviewer_name":null,"open_comments":1,"artifact_count":1}],"total":1,"projectId":12}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:244:56
+    242|     const hidden = await get(MEMBER, path, PRIVATE);
+    243|     const missing = await get(MEMBER, path, MISSING);
+    244|     expect(hidden.status, JSON.stringify(hidden.body)).toBe(404);
+       |                                                        ^
+    245|     expect(hidden.body).toEqual({ error: 'Project not found', code: 'P…
+    246|     expect({ status: missing.status, body: missing.body }).toEqual({ s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET /summary answers a private project exactly as a project that does not exist
+AssertionError: {"projectId":12,"progress":0,"overall":{"total":1,"completed":0,"active":1,"assigned":0,"overdue":0,"requiredTotal":0,"requiredCompleted":0,"estimatedHours":0,"actualHours":0},"modules":[{"module":"M2","total":1,"completed":0,"inProgress":1,"notStarted":0,"overdue":0,"nextDeadline":null,"estimatedHours":0,"actualHours":0,"progress":0}],"teamWorkload":[]}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:244:56
+    242|     const hidden = await get(MEMBER, path, PRIVATE);
+    243|     const missing = await get(MEMBER, path, MISSING);
+    244|     expect(hidden.status, JSON.stringify(hidden.body)).toBe(404);
+       |                                                        ^
+    245|     expect(hidden.body).toEqual({ error: 'Project not found', code: 'P…
+    246|     expect({ status: missing.status, body: missing.body }).toEqual({ s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET /dependencies answers a private project exactly as a project that does not exist
+AssertionError: {"dependencies":[]}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:244:56
+    242|     const hidden = await get(MEMBER, path, PRIVATE);
+    243|     const missing = await get(MEMBER, path, MISSING);
+    244|     expect(hidden.status, JSON.stringify(hidden.body)).toBe(404);
+       |                                                        ^
+    245|     expect(hidden.body).toEqual({ error: 'Project not found', code: 'P…
+    246|     expect({ status: missing.status, body: missing.body }).toEqual({ s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET /milestones answers a private project exactly as a project that does not exist
+AssertionError: {"milestones":[{"id":1,"organization_id":1,"project_id":12,"name":"Private milestone","description":null,"target_date":"2026-12-06T02:17:25.064Z","linked_sections":null,"created_by":9,"completed_at":null,"updated_at":"2026-11-06T02:17:25.064Z","created_by_name":"P. Owner","status_label":"on_track"}]}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:244:56
+    242|     const hidden = await get(MEMBER, path, PRIVATE);
+    243|     const missing = await get(MEMBER, path, MISSING);
+    244|     expect(hidden.status, JSON.stringify(hidden.body)).toBe(404);
+       |                                                        ^
+    245|     expect(hidden.body).toEqual({ error: 'Project not found', code: 'P…
+    246|     expect({ status: missing.status, body: missing.body }).toEqual({ s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET /timeline answers a private project exactly as a project that does not exist
+AssertionError: {"projectId":12,"events":[{"date":"2026-12-06T02:17:25.064Z","type":"milestone","title":"Private milestone","status":"on_track","metadata":{"milestoneId":1,"linkedSections":null,"completedAt":null}}],"totalSectionDeadlines":0,"totalMilestones":1}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:244:56
+    242|     const hidden = await get(MEMBER, path, PRIVATE);
+    243|     const missing = await get(MEMBER, path, MISSING);
+    244|     expect(hidden.status, JSON.stringify(hidden.body)).toBe(404);
+       |                                                        ^
+    245|     expect(hidden.body).toEqual({ error: 'Project not found', code: 'P…
+    246|     expect({ status: missing.status, body: missing.body }).toEqual({ s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET /m2.5 answers a private project exactly as a project that does not exist
+AssertionError: {"section":{"id":2,"organization_id":1,"project_id":12,"section_code":"m2.5","module":"M2","title":"Private clinical overview","status":"drafting","assigned_to":null,"reviewer_id":null,"deadline":null,"estimated_hours":null,"actual_hours":null,"priority":null,"metadata":{},"notes":null,"started_at":null,"completed_at":null,"locked_at":null,"locked_by":null,"updated_at":"2026-11-06T02:17:25.064Z","assigned_to_name":null,"reviewer_name":null},"artifacts":[{"artifact_id":"a-priv","title":"Private memo","status":"review","version":1,"updated_at":"2026-11-06T02:17:25.064Z"}],"dependencies":[],"blockedBy":[]}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:244:56
+    242|     const hidden = await get(MEMBER, path, PRIVATE);
+    243|     const missing = await get(MEMBER, path, MISSING);
+    244|     expect(hidden.status, JSON.stringify(hidden.body)).toBe(404);
+       |                                                        ^
+    245|     expect(hidden.body).toEqual({ error: 'Project not found', code: 'P…
+    246|     expect({ status: missing.status, body: missing.body }).toEqual({ s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET /m2.5/comments answers a private project exactly as a project that does not exist
+AssertionError: {"comments":[{"id":1,"organization_id":1,"project_id":12,"section_code":"m2.5","author_id":9,"content":"private comment","parent_id":null,"resolved":false,"created_at":"2026-11-06T02:17:25.064Z","author_name":"P. Owner"}]}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:244:56
+    242|     const hidden = await get(MEMBER, path, PRIVATE);
+    243|     const missing = await get(MEMBER, path, MISSING);
+    244|     expect(hidden.status, JSON.stringify(hidden.body)).toBe(404);
+       |                                                        ^
+    245|     expect(hidden.body).toEqual({ error: 'Project not found', code: 'P…
+    246|     expect({ status: missing.status, body: missing.body }).toEqual({ s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > GET /m2.5/history answers a private project exactly as a project that does not exist
+AssertionError: {"history":[]}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:244:56
+    242|     const hidden = await get(MEMBER, path, PRIVATE);
+    243|     const missing = await get(MEMBER, path, MISSING);
+    244|     expect(hidden.status, JSON.stringify(hidden.body)).toBe(404);
+       |                                                        ^
+    245|     expect(hidden.body).toEqual({ error: 'Project not found', code: 'P…
+    246|     expect({ status: missing.status, body: missing.body }).toEqual({ s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > a write naming a private project is refused as not found, and writes nothing
+AssertionError: expected { status: 200, body: { …(2) } } to deeply equal { status: 404, body: { …(2) } }
+
+- Expected
++ Received
+
+  {
+    "body": {
+-     "code": "PROJECT_NOT_FOUND",
+-     "error": "Project not found",
++     "comment": {
++       "author_id": 7,
++       "content": "a member who cannot open it",
++       "created_at": "2026-11-06T02:17:25.623Z",
++       "id": 2,
++       "organization_id": 1,
++       "parent_id": null,
++       "project_id": 12,
++       "resolved": false,
++       "section_code": "m2.5",
+      },
+-   "status": 404,
++     "success": true,
++   },
++   "status": 200,
+  }
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:269:60
+    267|     const comment = await request(app(MEMBER)).post('/api/project-sect…
+    268|       .send({ project_id: PRIVATE, content: 'a member who cannot open …
+    269|     expect({ status: comment.status, body: comment.body }).toEqual({ s…
+       |                                                            ^
+    270|     const status = await request(app(MEMBER)).patch('/api/project-sect…
+    271|       .send({ project_id: PRIVATE, new_status: 'internal_review' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > a private project’s milestone is answered as a missing one, and is neither changed nor deleted
+AssertionError: expected { status: 200, body: { …(2) } } to deeply equal { status: 404, …(1) }
+
+- Expected
++ Received
+
+  {
+    "body": {
+-     "error": "Milestone not found",
++     "milestone": {
++       "completed_at": null,
++       "created_by": 9,
++       "description": null,
++       "id": 1,
++       "linked_sections": null,
++       "name": "renamed",
++       "organization_id": 1,
++       "project_id": 12,
++       "target_date": "2026-12-06T02:17:25.064Z",
++       "updated_at": "2026-11-06T02:17:25.631Z",
+      },
+-   "status": 404,
++     "success": true,
++   },
++   "status": 200,
+  }
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:284:58
+    282|     const hidden = await request(app(MEMBER)).patch(`/api/project-sect…
+    283|     const missing = await request(app(MEMBER)).patch(`/api/project-sec…
+    284|     expect({ status: hidden.status, body: hidden.body }).toEqual({ sta…
+       |                                                          ^
+    285|     expect({ status: missing.status, body: missing.body }).toEqual({ s…
+    286|     const deleted = await request(app(MEMBER)).delete(`/api/project-se…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > /api/project-sections > a check that cannot run is an error with a code, never a list
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:295:24
+    293|     h.failWhen = POLICY_READ;
+    294|     const res = await get(MEMBER, '', OPEN);
+    295|     expect(res.status).toBe(503);
+       |                        ^
+    296|     expect(res.body.code).toBe('PROJECT_ACCESS_UNAVAILABLE');
+    297|     expect(h.statements.some((s) => /FROM project_sections ps/.test(s)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/concept2cure/projects/all/artifacts-summary > counts the artifacts of the projects the member can open, of every sponsor, never a private project’s
+AssertionError: expected { total: 3, draft: 1, review: 1, …(1) } to deeply equal { Object (total, draft, ...) }
+
+- Expected
++ Received
+
+  {
+    "approved": 1,
+    "draft": 1,
+-   "review": 0,
+-   "total": 2,
++   "review": 1,
++   "total": 3,
+  }
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:309:27
+    307|     const res = await summary(MEMBER);
+    308|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    309|     expect(res.body.data).toEqual({ total: 2, draft: 1, review: 0, app…
+       |                           ^
+    310|   });
+    311|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > GET /api/concept2cure/projects/all/artifacts-summary > a check that cannot run is an error with a code, never a zero
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:321:24
+    319|     h.failWhen = POLICY_READ;
+    320|     const res = await summary(MEMBER);
+    321|     expect(res.status).toBe(503);
+       |                        ^
+    322|     expect(JSON.stringify(res.body)).toContain('PROJECT_ACCESS_UNAVAIL…
+    323|     expect(res.body.data).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > MCP c2c_list_projects > lists the programs the member can open, of every sponsor, never the private one or another organization’s
+AssertionError: expected [ 'CT-1', 'NW-1', 'NW-PRIV' ] to deeply equal [ 'CT-1', 'NW-1' ]
+
+- Expected
++ Received
+
+  [
+    "CT-1",
+    "NW-1",
++   "NW-PRIV",
+  ]
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:347:28
+    345|     const outcome = await run(MEMBER);
+    346|     expect(outcome.kind, JSON.stringify(outcome)).toBe('ok');
+    347|     expect(codes(outcome)).toEqual(['CT-1', 'NW-1']);
+       |                            ^
+    348|     expect(outcome.kind === 'ok' && outcome.data.total).toBe(2);
+    349|     expect(JSON.stringify(outcome)).not.toMatch(/NW-PRIV|THEIRS/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > MCP c2c_list_projects > a scope that cannot be read is a refusal with a code, never a list
+AssertionError: expected 'ok' to be 'refused' // Object.is equality
+
+Expected: "refused"
+Received: "ok"
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:359:26
+    357|     h.failWhen = POLICY_READ;
+    358|     const outcome = await run(MEMBER);
+    359|     expect(outcome.kind).toBe('refused');
+       |                          ^
+    360|     expect(outcome.data).toMatchObject({ code: 'PROJECT_ACCESS_UNAVAIL…
+    361|     expect(outcome.data?.projects).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/23]⎯
+
+ FAIL  server/routes/__tests__/listing-doors-project-scope.pglite.test.ts > MCP c2c_list_projects > without the call’s own connection, nothing is listed
+AssertionError: expected { kind: 'ok', …(2) } to match object { kind: 'refused', …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "data": {
+-     "code": "REQUEST_DB_CONTEXT_REQUIRED",
++     "organizationId": 1,
++     "projects": [
++       {
++         "code": "CT-1",
++         "id": "33333333-3333-4333-8333-333333333333",
++         "leadUserName": null,
++         "name": "Contoso device study",
++         "phase": "planning",
++         "primaryAgency": "FDA",
++         "productName": "CT-Device",
++         "productType": "device",
++         "programType": "510K",
++         "status": "active",
++         "targetSubmissionDate": null,
++         "updatedAt": "2026-11-06T02:17:25.064Z",
++       },
++       {
++         "code": "NW-1",
++         "id": "11111111-1111-4111-8111-111111111111",
++         "leadUserName": null,
++         "name": "Northwind oncology IND",
++         "phase": "planning",
++         "primaryAgency": "FDA",
++         "productName": "NW-101",
++         "productType": "drug",
++         "programType": "IND",
++         "status": "active",
++         "targetSubmissionDate": null,
++         "updatedAt": "2026-11-06T02:17:25.064Z",
+        },
+-   "kind": "refused",
++       {
++         "code": "NW-PRIV",
++         "id": "44444444-4444-4444-8444-444444444444",
++         "leadUserName": null,
++         "name": "Northwind private program",
++         "phase": "planning",
++         "primaryAgency": "FDA",
++         "productName": "NW-SECRET",
++         "productType": "drug",
++         "programType": "IND",
++         "status": "active",
++         "targetSubmissionDate": null,
++         "updatedAt": "2026-11-06T02:17:25.064Z",
++       },
++     ],
++     "total": 3,
++   },
++   "kind": "ok",
+  }
+
+ ❯ server/routes/__tests__/listing-doors-project-scope.pglite.test.ts:366:21
+    364|   it('without the call’s own connection, nothing is listed', async () …
+    365|     const outcome = await run(MEMBER, null);
+    366|     expect(outcome).toMatchObject({ kind: 'refused', data: { code: 'RE…
+       |                     ^
+    367|   });
+    368| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/23]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  23 failed | 5 passed (28)
+   Start at  02:16:50
+   Duration  35.54s (transform 13.57s, setup 165ms, import 21.70s, tests 7.01s, environment 0ms)
+

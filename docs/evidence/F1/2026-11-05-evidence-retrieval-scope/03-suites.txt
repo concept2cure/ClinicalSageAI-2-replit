@@ -1,0 +1,46 @@
+# Existing suites covering the changed files, plus the new suite, on the changed source.
+# Before the change (HEAD 28f6a3c897, same 27 existing files): Test Files 27 passed (27), Tests 177 passed (177).
+# Command: npx vitest run <the files below>
+
+server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts
+server/routes/__tests__/evidence-ask.test.ts
+server/routes/__tests__/cortexQueryRoutes-error-containment.test.ts
+server/routes/__tests__/cortex-unified-tenant-context.test.ts
+server/routes/__tests__/deep-research-retrieval-status.test.ts
+server/routes/__tests__/deep-research-job-scope.test.ts
+server/routes/__tests__/deep-research-job-read-failure-is-500-not-404.test.ts
+server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts
+server/routes/c2c/__tests__/ai-editing-readiness-is-not-completeness.test.ts
+server/routes/c2c/__tests__/ai-editing-retrieval-status.test.ts
+server/routes/c2c/__tests__/c2c-router.parity.test.ts
+server/routes/chat/__tests__/send-message-context-window.test.ts
+server/routes/chat/__tests__/send-message-model-calls.test.ts
+server/routes/chat/__tests__/send-message-private-project.test.ts
+server/routes/chat/__tests__/send-message-read-only.test.ts
+server/routes/chat/__tests__/send-message-result-budget.test.ts
+server/routes/chat/__tests__/send-message-saved-section-context.pglite.test.ts
+server/services/__tests__/enhancedEmbeddingService.audit-row-stored-with-embedding.pglite.test.ts
+server/services/__tests__/enhancedEmbeddingService.policy-refusal.test.ts
+server/services/__tests__/enhancedEmbeddingService.reports-no-unmeasured-stats.test.ts
+server/services/__tests__/enhancedEmbeddingService.source-identity.test.ts
+server/services/__tests__/embedding-corpus-policy.test.ts
+server/services/__tests__/rag-cache-tenant-key.test.ts
+server/__tests__/security/tenant-isolation-org-uuid.contract.test.ts
+tests/routes/concept2cure.test.ts
+tests/routes/chat-governed-upload.test.ts
+tests/routes/chat-upload-wiring.test.ts
+tests/audit-medium-fabrication-attribution.test.ts
+
+ Test Files  28 passed (28)
+      Tests  195 passed (195)
+
+# Gates
+# node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD -> exit 0:
+[ci:eslint-warning-ratchet] --since HEAD (11877757f) -- 33 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.
+# ESLint warnings per changed file, before -> after (npx eslint <file> --format json):
+#   ai-editing.ts 24 -> 24; send-message.ts 18 -> 18; cortexQueryRoutes.ts 2 -> 2; deep-research.ts 4 -> 4;
+#   evidence-ask.ts 2 -> 2; data-room-retrieval.ts 0 -> 0; enhancedEmbeddingService.ts 0 -> 0; the five test files 0.
+# npm run -s ci:sql-interpolation -> exit 1, one problem, a shrink in this change's file:
+  • server/services/enhancedEmbeddingService.ts: now 8 (baseline 9) — good news; lower the baseline to lock it in
+#   The baseline (scripts/ci/sql-interpolation-baseline.json) was not edited, per this lane's rules.

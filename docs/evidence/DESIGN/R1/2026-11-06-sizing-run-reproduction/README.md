@@ -89,9 +89,10 @@ No other request failed and the page raised no error.
     another purpose are not named.
 - `server/services/biostatistics-bridge/__tests__/reproduce-under-tenant-scope.test.ts`: the scope fix.
 
-## Found and not fixed here
+## Found here, fixed by the design lane
 
-At 390 px the protocol's cover head is cramped. The title wraps in a narrow column beside "Ask AnA" and "Export",
-and "Clinical protocol" overlaps "v0.1 · updated" (`03-protocol-workspace-390.png`). Its rules are in the shared
-`misc-surfaces-v2.css` and `research-v2.css`, not the protocol's own sheet. It is left for the design lane's phone
-pass.
+At 390 px the protocol's cover head was cramped: the title wrapped in a narrow column beside "Ask AnA" and "Export",
+and "Clinical protocol" overlapped "v0.1 · updated" (`03-protocol-workspace-390.png`). The rules are in the shared
+`research-v2.css`, so it went to the design lane (`011Dpx…`). Their fix is `839efe9471`
+(`docs/evidence/DESIGN/2026-11-06-protocol-head-390/`). `.pd-head-r` did not shrink, so the left column measured 0 px
+and "Open saved draft in editor" sat off screen at x 598. The head now wraps.
