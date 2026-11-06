@@ -87,6 +87,9 @@ export interface ProjectFilesPanelProps {
   onNav?: (id: string) => void;
   /** Uses the host's existing conversation for IND preparation and source study. */
   onAsk?: (text: string) => void;
+  /** Whether the IND document library is a lane. False for a device or diagnostic project, which files no IND: its
+   *  Evidence step offered "IND documents" beside a 510(k) (human test J1, 2026-11-06). Defaults to shown. */
+  indLibrary?: boolean;
 }
 
 const NO_SOURCES: ProjectSource[] = [];
@@ -467,7 +470,7 @@ export function ProjectFilesPanel(props: ProjectFilesPanelProps) {
 
 function ProjectFilesForProgram({
   programId, programName, sectionOpen = false, sectionCode = null, projectSources = NO_SOURCES,
-  onCite, onInsertReference, onOpenDocument, onAsk, onClose, fireToast, onNav, readOwner, ownerCurrent,
+  onCite, onInsertReference, onOpenDocument, onAsk, onClose, fireToast, onNav, readOwner, ownerCurrent, indLibrary = true,
 }: ProjectFilesPanelProps & { ownerCurrent: () => boolean }) {
   // Retained actions keep their original visit rather than adopting a later guard.
   const capturedCurrent = useRef(ownerCurrent).current;
@@ -530,11 +533,11 @@ function ProjectFilesForProgram({
       <div className="cdl-scope" role="group" aria-label="Document sources">
         <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'vault'} onClick={() => { if (current()) setLane(previous => current() ? 'vault' : previous); }}>Vault</button>
         <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'data-room'} onClick={() => { if (current()) setLane(previous => current() ? 'data-room' : previous); }}>Data room</button>
-        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'ind'} onClick={() => { if (current()) setLane(previous => current() ? 'ind' : previous); }}>IND documents</button>
+        {indLibrary && <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'ind'} onClick={() => { if (current()) setLane(previous => current() ? 'ind' : previous); }}>IND documents</button>}
       </div>
       </div>
       {lane === 'data-room' && <DataRoomSourcesPanel key={programId} programId={programId} readOwner={libraryOwner} onOpenDocument={openDocument} onAsk={ask} onNav={navigate} />}
-      {lane === 'ind' && <IndDocumentLibrary key={programId} programId={programId} onAsk={ask} onOpenDocument={openDocument}
+      {lane === 'ind' && indLibrary && <IndDocumentLibrary key={programId} programId={programId} onAsk={ask} onOpenDocument={openDocument}
         onFindSources={text => { if (current()) { setQuery(previous => current() ? text : previous); setLane(previous => current() ? 'vault' : previous); } }} />}
       {lane === 'vault' && <>
       <div className="pf-search">
