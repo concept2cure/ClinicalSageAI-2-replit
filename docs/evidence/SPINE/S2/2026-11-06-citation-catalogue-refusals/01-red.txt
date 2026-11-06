@@ -1,0 +1,16 @@
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > holds numbering metadata until every page has been confirmed 72ms
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses overlapping or changed page contents 56ms
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses overlapping or changed page contents 55ms
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > retries the full read after a later-page failure without retaining incomplete authority 108ms
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses a nonprogressing empty page instead of looping or claiming completion 0ms
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"textAvail
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"processin
+ ✓ projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"processin
+ × projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a plan without the feature': its own words, and no retry offered 60ms
+ × projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a part not in this release': its own words, and no retry offered 55ms
+ × projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a role that cannot read it': its own words, and no retry offered 55ms
+ × projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a project not in this organization': its own words, and no retry offered 55ms
+ × projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a server failure' stays a failed read that a retry can fix 56ms
+ × projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'no response at all' stays a failed read that a retry can fix 55ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 8 passed (14)
