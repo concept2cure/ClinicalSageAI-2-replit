@@ -71,6 +71,19 @@ describe('eCTD module readiness says what it counted', () => {
     expect(card().textContent).toContain('1 of 2 required sections placed in sequence 0000');
   });
 
+  /* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): an empty
+     sequence 0000 read "0% · Partial" on every module, as if work were part done. */
+  it('a module with nothing of its required set placed reads "none placed", not "partial"', async () => {
+    serveStatus({
+      ...STATUS, readinessBasis: 'placed', totalRequired: 9, totalCompleted: 0,
+      sequence: { sequenceNumber: '0000', region: 'fda', leafCount: 0 },
+      modules: [{ moduleCode: 'm1', moduleName: 'Module 1 — Administrative', totalSections: 0, requiredSections: 9, completedRequired: 0, completionPct: 0, ready: false }],
+    });
+    render(<EctdCompile {...props()} />);
+    const row = (await screen.findByText('Module 1 — Administrative')).closest('tr')!;
+    expect(row.querySelector('.rd-chip')?.textContent).toBe('none placed');
+  });
+
   it('a market with no required set says why, with no figure', async () => {
     const note = 'Sequence 0000 is for the ZZ market, which has no required-section set for a NDA here, so placement is not measured.';
     serveStatus({ ...STATUS, overallReadiness: null, readinessBasis: 'unavailable', readinessNote: note, modules: [], totalRequired: 0, totalCompleted: 0 });
