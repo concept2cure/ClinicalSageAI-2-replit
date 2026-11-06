@@ -320,6 +320,8 @@ export function DeviceFilingsCard({ res, filings, assembly, pathway, onOpenFilin
               ? "Start tracking an eSTAR filing (510(k), De Novo, PMA, Q-Sub…) from the 510(k) surface's filing panel — its status and review clock appear here."
               /* The surface it names is not in this release (F16: no dead ends). */
               : `Device filings are tracked from ${pathway.label}, which is not part of this release.`}
+            /* The panel it names, as a door (J4 human test, 2026-11-06); only where it opens. */
+            action={pathway.available ? { label: 'Open the 510(k) filing panel', onAct: onOpenPathway } : undefined}
           />
         ) : (
           <table className="ub-inv">
