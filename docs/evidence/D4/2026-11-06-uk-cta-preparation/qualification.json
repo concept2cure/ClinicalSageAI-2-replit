@@ -10,7 +10,7 @@
     ]
   },
   "baseline": "21a21849d7cfb8a35794489a87fad2b849c7011c",
-  "sourceManifest": "source-sha256.json",
+  "sourceManifest": "source-sha256.anna-merged.json",
   "sourceFiles": 14,
   "sources": {
     "index": "official-source-index.json",
@@ -83,6 +83,13 @@
       "warningGrowth": 0,
       "log": "gates-pass-third-ref-race.txt.gz",
       "note": "All normal gates passed; concurrent Vault/navigation advance rejected the ref."
+    },
+    "fourthPass": {
+      "source": "0f2180f00a88c7472266295c988a47b3300d8ee6",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-fourth-ref-race.txt.gz",
+      "note": "All normal gates passed; the remote ref changed before lock to incoming Anna runtime P104."
     }
   },
   "publication": "pending normal retry after merge",
@@ -119,5 +126,31 @@
     "build": "pass",
     "sourceHashesMatched": 14,
     "review": "No UK/source/guard/one-editor blocker. Biostatistics rail decision is explicitly recorded in the incoming one-product baseline."
+  },
+  "originalSourceManifest": "source-sha256.json",
+  "sourceTransition": "source-hash-transition.json",
+  "currentMergedGates": "pending normal retry",
+  "annaIntegration": {
+    "incoming": "67348a526cc75f152df2e73e7bfbb65e815dc5fc",
+    "source": "ba1d327e2c00d459e0eaa7ec037489bf805a941a",
+    "passed": 705,
+    "suites": 30,
+    "uploadHook": {
+      "passed": 14,
+      "suites": 1
+    },
+    "ops": {
+      "passed": 31
+    },
+    "build": "pass",
+    "originalHashesUnchanged": 13,
+    "reviewedChangedFile": "server/services/ana/AnaDocumentDraftingService.ts",
+    "reviewedChange": "Four-line server-issued source-sensitivity carry; UK prompt/basis/currentness checks preserved.",
+    "currentManifestMatches": 14,
+    "limits": [
+      "No native PostgreSQL or live provider/gateway deployment qualification.",
+      "Selected Vault sensitivity checks and exact quoted spans do not prove semantic claim support or the full P104 spike.",
+      "Correspondence blocker checks do not establish exact-package clean-file readiness."
+    ]
   }
 }

@@ -36,7 +36,7 @@ Fresh sources: five official pages (four current plus the obsolete linked MHRA p
 
 Behavioral reds were captured before production fixes: editor/real PGlite service 2 failed and 27 passed; catalog 9 failed and 1 control passed; channel/checklist 8 failed and 25 passed. Final integration passes 350/350 across 14 suites, including actual editor and real PGlite recorded-project loading, US/EU/CA/JP compatibility, blueprint consistency, coverage/channel, CMC scope and client writing agency. The independent five-suite channel/checklist/strategy cohort passes 51/51; it overlaps the integration cohort. Gateway providers are stand-ins; there are no live model calls.
 
-Scoped ESLint on all 14 changed TypeScript files: zero errors and nine existing warnings. Production client/server builds pass (`npm run build`, Node 22.23.4). All normal pre-push gates passed at source `79a2f3605`: zero full-tree TypeScript errors against the unchanged zero baseline, no warning growth and all one-plan/one-product/security/contracts. Git then rejected a concurrent ref advance, retained as `gates-pass-ref-race*`. No baseline or suppression was widened. A legacy numeric UK section now stays explicitly unindexed; the actual UK preparation code resolves through the shared outline. This updates the corresponding existing editor assertion rather than inventing a CTD mapping.
+Scoped ESLint on all 14 changed TypeScript files: zero errors and nine existing warnings. Production client/server builds pass (`npm run build`, Node 22.23.4). All normal pre-push gates passed at source `79a2f3605`: zero full-tree TypeScript errors against the unchanged zero baseline, no warning growth and all one-plan/one-product/security/contracts. Git then rejected a concurrent ref advance, retained as `gates-pass-ref-race*`. No lint/TypeScript baseline or suppression was widened by this repair. A legacy numeric UK section now stays explicitly unindexed; the actual UK preparation code resolves through the shared outline. This updates the corresponding existing editor assertion rather than inventing a CTD mapping.
 
 Read-only adversarial review found no material source/guard/ownership issue. Two implementation agents owned disjoint files; the lead independently ran the combined integration, inspected final content, verified source quotations/hashes and runs the build/gates. Individual red/green/lint logs are compressed beside this file.
 
@@ -75,3 +75,30 @@ one-product gate. No UK drafting/source/guard owner changed; all 14 hashes match
 The nine changed suites plus shared navigation, navigation reachability and Vault
 project-switch checks pass 132/132 across 12 suites. Production client/server
 builds pass again. The normal retry continues; no gate bypass or force is used.
+
+
+## Anna runtime integration (P-104)
+
+A fourth normal run at `0f2180f00` passed every gate with zero TypeScript errors
+and no warning growth, then lost the ref lock to `67348a526`. That incoming epic
+and its recorded founder decision were read and merged normally at `ba1d327e2`.
+F1 remains open; this UK work does not claim the new epic's acceptance gates.
+
+The drafting-service overlap is exactly four incoming lines carrying privately
+issued source-sensitivity tiers through the existing checkpoint into the gateway.
+The UK preparation route, basis and source/product currentness checks are intact.
+Two read-only reviewers found no material compatibility blocker across the source,
+privacy, worker, connector, tenant/migration, upload and correspondence controls.
+The original `source-sha256.json` is preserved. Thirteen of its files still match;
+the reviewed shared-service change is recorded in `source-hash-transition.json`.
+The current 14-file manifest is `source-sha256.anna-merged.json`.
+
+The combined core UK/regional/editor and affected runtime cohort passes 705/705
+across 30 suites. The existing upload hook passes 14/14 and Codespace synthetic
+credential/startup checks pass 31/31; these are distinct bounded checks, not full
+runtime or scientific qualification. Production client/server builds pass again.
+Providers use stand-ins, native PostgreSQL was not available, and the real PGlite
+creator/RLS/replay proof remains distinct from a deployed PostgreSQL qualification.
+Selected-source sensitivity, exact quotation checks and correspondence blockers
+also do not establish semantic claim support, the complete P-104 spike, or an
+exact-package clean-file verdict. The current normal publication retry is pending.
