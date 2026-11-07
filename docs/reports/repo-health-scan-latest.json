@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-06T22:41:31.044Z",
+  "generatedAt": "2026-11-07T10:28:54.335Z",
   "git": {
-    "sha": "7a23ed73ca342c1dad1e44ab7cc841e3e40e2b2f",
+    "sha": "5ef1b892f3b4cae82667989af7b45d57f4c6b74f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -311,6 +311,18 @@
         ]
       },
       {
+        "basename": "browser-probe",
+        "count": 6,
+        "paths": [
+          "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/ui/browser-probe.tsx",
+          "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-23/ui/browser-probe.tsx",
+          "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-probe.tsx",
+          "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/ui/browser-probe.tsx",
+          "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-probe.tsx",
+          "docs/evidence/W5/2026-10-23-market-identity-resolution/ui/browser-probe.tsx"
+        ]
+      },
+      {
         "basename": "shell",
         "count": 6,
         "paths": [
@@ -332,17 +344,6 @@
           "docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/probe/vitest.probe.config.ts",
           "docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/round-2/probe/vitest.probe.config.ts",
           "docs/evidence/F1/2026-11-01-rbm-handlers/method/vitest.probe.config.ts"
-        ]
-      },
-      {
-        "basename": "browser-probe",
-        "count": 5,
-        "paths": [
-          "docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/ui/browser-probe.tsx",
-          "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-23/ui/browser-probe.tsx",
-          "docs/evidence/D2-MDX-PROJECT-WORKFLOW/2026-10-30/ui/browser-probe.tsx",
-          "docs/evidence/D2-WORKFLOW-NAVIGATION/2026-10-23/ui/browser-probe.tsx",
-          "docs/evidence/W5/2026-10-23-market-identity-resolution/ui/browser-probe.tsx"
         ]
       },
       {
@@ -2387,7 +2388,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1195387
+        "bytes": 1200671
       },
       {
         "file": "shared/schema.ts",
@@ -2407,23 +2408,23 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 344937
+        "bytes": 352178
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 252515
+        "bytes": 261053
+      },
+      {
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 246988
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
         "bytes": 238741
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 235267
-      },
-      {
         "file": "server/services/submission-service/submission-service.ts",
-        "bytes": 211090
+        "bytes": 214786
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2451,7 +2452,7 @@
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 160807
+        "bytes": 161318
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2459,7 +2460,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 159954
+        "bytes": 160060
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2538,16 +2539,16 @@
         "bytes": 126270
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "bytes": 125826
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "bytes": 125379
       },
       {
         "file": "server/src/routes/stability.router.ts",
         "bytes": 125356
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 124964
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
@@ -2613,7 +2614,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22510
+        "lines": 22575
       },
       {
         "file": "shared/schema.ts",
@@ -2625,7 +2626,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6677
+        "lines": 6774
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2641,11 +2642,11 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 5588
+        "lines": 5721
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 4521
+        "lines": 4671
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2657,7 +2658,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "lines": 4160
+        "lines": 4212
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2684,12 +2685,12 @@
         "lines": 3324
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 3299
-      },
-      {
         "file": "server/services/module3Composer.ts",
         "lines": 3283
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 3282
       },
       {
         "file": "server/routes/report-os.ts",
@@ -2701,7 +2702,7 @@
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "lines": 3181
+        "lines": 3191
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2760,12 +2761,12 @@
         "lines": 2477
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
-        "lines": 2435
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 2441
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "lines": 2431
+        "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+        "lines": 2435
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
@@ -2816,11 +2817,11 @@
         "lines": 2234
       },
       {
-        "file": "server/services/ana/run-control.ts",
-        "lines": 2224
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 2223
       },
       {
-        "file": "server/routes/c2c/projects.ts",
+        "file": "server/services/ana/run-control.ts",
         "lines": 2223
       },
       {
@@ -3075,7 +3076,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 179,
+      "duplicateGroups": 180,
       "largeByBytes": 0,
       "largeByLines": 5
     },
