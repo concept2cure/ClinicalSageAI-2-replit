@@ -23,7 +23,6 @@
  * @module server/services/account-standing
  */
 
-import type { SessionEndDetail } from '@shared/ana/stop-lines';
 import { runAsAccount } from '../db/tenantStore';
 import { sessionStartSecondsOf } from './session-inactivity';
 import type { RequestSqlClient } from '../db/requestDb';
@@ -194,65 +193,14 @@ export async function untilStampHasBegun(stamp: Date): Promise<void> {
   if (wait > 0) await new Promise<void>((resolve) => setTimeout(resolve, Math.min(wait, 1000)));
 }
 
-/**
- * End every session the account holds: stamp `users.sessions_ended_at` with
- * the first whole second after `at` (endingStampOf), never moving it backwards
- * (a write that did would revive a session an earlier one ended). Every
- * authenticator then refuses, at its next request, each session that began
- * before the stamp, access and refresh token alike (sessionEndedByStanding).
- * `at` is the server's clock, the clock that stamps a session's start (`sst`).
- * In the caller's database scope; throws when the write fails, and returns
- * whether the account was there to stamp. A caller answering a person waits
- * for the stamp first (untilStampHasBegun).
+/*
+ * endEverySessionOf (sign out everywhere) and stopPersonsRuns live in
+ * ana/run-control.ts, beside the stopRunsFor they call (2026-11-08). Here they
+ * made every reader of this module reach AnA's run machinery, and through it a
+ * model call, at file level: part11's signer re-verification reads
+ * isAccountActive, so the engine tools behind it failed ci:step-presentation.
+ * Ending every session still stops the person's runs in that one function.
  */
-export async function endEverySessionOf(
-  userId: number,
-  at: Date = new Date(),
-  cause: SessionEndDetail = { cause: 'sign_out_everywhere', byUserId: userId },
-): Promise<boolean> {
-  const { pool } = await import('../db.js');
-  // tenant-isolation-safe: the account's own row, by the id its live session established.
-  const result = await pool.query(
-    `UPDATE users
-        SET sessions_ended_at = GREATEST(COALESCE(sessions_ended_at, '-infinity'::timestamptz), $2::timestamptz)
-      WHERE id = $1`,
-    [userId, endingStampOf(at.getTime()).toISOString()],
-  );
-  const stamped = (result.rowCount ?? 0) === 1;
-  // Every session ended, so every AnA turn those sessions started stops too,
-  // on every device (AnA detach §2.9, session_ended). Never throws.
-  if (stamped) await stopPersonsRuns(userId, cause);
-  return stamped;
-}
-
-/**
- * Stop a person's live AnA runs, because the session that started them ended
- * (AnA detach §2.9): sign-out everywhere, a password change or reset, a
- * deprovisioning, a member's removal (with `organizationId`, that
- * organisation's only) or one session's sign-out (with `sessionId`, that
- * session's only — a sign-out on the desktop does not stop the phone's turn).
- * `detail` says what ended it and who, for the run row, the record and the
- * audit row (run-control.ts stopRunsFor). Lazy, so the standing module does
- * not load run control until it needs it; never throws — the run's
- * round-boundary re-check is the backstop. Returns the runs it stopped.
- */
-export async function stopPersonsRuns(
-  userId: number,
-  detail: SessionEndDetail,
-  scope: { organizationId?: number; sessionId?: string } = {},
-): Promise<string[]> {
-  try {
-    const [{ stopRunsFor }, { pool }] = await Promise.all([import('./ana/run-control.js'), import('../db.js')]);
-    return await stopRunsFor(
-      pool,
-      { userId, organizationId: scope.organizationId ?? null, sessionId: scope.sessionId ?? null },
-      detail,
-    );
-  } catch {
-    /* stopRunsFor logs its own failure; a module that cannot load leaves the round check */
-    return [];
-  }
-}
 
 /**
  * The same reading, for a check that runs before a tenant is known: sign-in and

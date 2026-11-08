@@ -31,7 +31,7 @@ import { ipInAnyCidr } from '../utils/cidr';
 import { shouldProcessTenantInBackground } from '../services/tenant/tenant-lifecycle.js';
 import { clientIpOf } from '../utils/client-ip';
 import { invalidateOrgMembershipCache } from '../middleware/orgMembership';
-import { stopPersonsRuns } from '../services/account-standing';
+import { stopPersonsRuns } from '../services/ana/run-control';
 import type { SessionEndDetail } from '@shared/ana/stop-lines';
 import {
   changeMemberRole,

@@ -98,6 +98,7 @@ import type { AnswerCheck } from './answer-grounding';
 import { RunStopped } from './run-stopped.js';
 import { sessionEndDetailOf, type SessionEndDetail } from '@shared/ana/stop-lines';
 import { sessionIdOfToken } from '../session-inactivity.js';
+import { endingStampOf } from '../account-standing.js';
 import {
   expireOrphanedRunEvents,
   openRunEventsMirror,
@@ -1381,6 +1382,66 @@ export async function stopRunsFor(pool: Pool, scope: RunStopScope, detail: Sessi
     return ids;
   } catch (err: any) {
     log.error(`[ana-run-control] stopping runs (${reason}, ${detail.cause}) failed: ${err?.message}`);
+    return [];
+  }
+}
+
+/**
+ * End every session the account holds: stamp `users.sessions_ended_at` with
+ * the first whole second after `at` (endingStampOf), never moving it backwards
+ * (a write that did would revive a session an earlier one ended). Every
+ * authenticator then refuses, at its next request, each session that began
+ * before the stamp, access and refresh token alike (sessionEndedByStanding).
+ * `at` is the server's clock, the clock that stamps a session's start (`sst`).
+ * In the caller's database scope; throws when the write fails, and returns
+ * whether the account was there to stamp. A caller answering a person waits
+ * for the stamp first (untilStampHasBegun).
+ */
+export async function endEverySessionOf(
+  userId: number,
+  at: Date = new Date(),
+  cause: SessionEndDetail = { cause: 'sign_out_everywhere', byUserId: userId },
+): Promise<boolean> {
+  const { pool } = await import('../../db.js');
+  // tenant-isolation-safe: the account's own row, by the id its live session established.
+  const result = await pool.query(
+    `UPDATE users
+        SET sessions_ended_at = GREATEST(COALESCE(sessions_ended_at, '-infinity'::timestamptz), $2::timestamptz)
+      WHERE id = $1`,
+    [userId, endingStampOf(at.getTime()).toISOString()],
+  );
+  const stamped = (result.rowCount ?? 0) === 1;
+  // Every session ended, so every AnA turn those sessions started stops too,
+  // on every device (AnA detach §2.9, session_ended). Never throws.
+  if (stamped) await stopPersonsRuns(userId, cause);
+  return stamped;
+}
+
+/**
+ * Stop a person's live AnA runs, because the session that started them ended
+ * (AnA detach §2.9): sign-out everywhere, a password change or reset, a
+ * deprovisioning, a member's removal (with `organizationId`, that
+ * organisation's only) or one session's sign-out (with `sessionId`, that
+ * session's only — a sign-out on the desktop does not stop the phone's turn).
+ * `detail` says what ended it and who, for the run row, the record and the
+ * audit row (stopRunsFor). Never throws — the run's round-boundary re-check
+ * is the backstop. Returns the runs it stopped. Moved here from
+ * account-standing.ts on 2026-11-08 (see the note there).
+ */
+export async function stopPersonsRuns(
+  userId: number,
+  detail: SessionEndDetail,
+  scope: { organizationId?: number; sessionId?: string } = {},
+): Promise<string[]> {
+  try {
+    const { pool } = await import('../../db.js');
+    return await stopRunsFor(
+      pool,
+      { userId, organizationId: scope.organizationId ?? null, sessionId: scope.sessionId ?? null },
+      detail,
+    );
+  } catch {
+    /* stopRunsFor logs its own failure; a database that cannot load leaves the round check */
     return [];
   }
 }
