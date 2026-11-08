@@ -20,6 +20,9 @@
  * catalog write through.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+// Not a standing-rule suite: its stub sqlClient has no rule store (see _standing-rule-fixture.ts).
+vi.mock('../governed-tool-gate.js', async orig =>
+  (await import('./_standing-rule-fixture')).withNoStandingRules(await orig()));
 import type { ToolContext } from '../AnaToolExecutor.js';
 
 vi.hoisted(() => {

@@ -7,6 +7,9 @@
  * qualify live gateway admission, provider dispatch or durable database writes.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+// Not a standing-rule suite: its stub sqlClient has no rule store (see _standing-rule-fixture.ts).
+vi.mock('../governed-tool-gate.js', async orig =>
+  (await import('./_standing-rule-fixture')).withNoStandingRules(await orig()));
 import type { AgenticOptions, ToolContext } from '../AnaToolExecutor.js';
 import type { ToolResultEntry } from '../agentic-loop.js';
 import type { GatewayRequest } from '../../ai-gateway/types.js';

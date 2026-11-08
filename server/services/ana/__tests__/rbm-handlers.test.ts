@@ -99,13 +99,9 @@ vi.mock('../../part11/editor-role', async original => ({ ...(await original<Reco
 vi.mock('../../entitlements/enforcement-mode', () => ({ currentEnforcementMode: async () => ({ mode: 'off' }) }));
 // The registry's mandatory-skill check (governed-tool-gate.ts, P-104) reads the
 // organisation's rules from the database; these cases are about RBM, so the
-// organisation has none, as in nonclinical-drafts-refuse-model-figures.test.ts.
-vi.mock('../governed-tool-gate.js', async orig => ({
-  ...await orig<typeof import('../governed-tool-gate.js')>(),
-  loadToolSkillGates: async (scope?: { organizationId?: number; userId?: number; projectId?: number }) => scope?.organizationId
-    ? { organizationId: scope.organizationId, userId: scope.userId ?? null, projectId: scope.projectId ?? null,
-      rules: [], ruleHash: 'e'.repeat(64) } : null,
-}));
+// organisation has none (_standing-rule-fixture.ts).
+vi.mock('../governed-tool-gate.js', async orig =>
+  (await import('./_standing-rule-fixture')).withNoStandingRules(await orig()));
 vi.mock('../../c2c/governed-program-write', () => ({
   // Recorded into the SQL log so a test can see where the write recheck ran.
   requireGovernedProgramWriteTx: (...args: unknown[]) => { h.calls.push({ sql: '-- write recheck', params: [] }); return h.write(...args); },

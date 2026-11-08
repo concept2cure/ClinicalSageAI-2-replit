@@ -219,7 +219,7 @@ describe('assemble_briefing_book tool', () => {
      to build nothing without the sponsor's own meeting type and questions. */
   it('refuses to build a book without the meeting type and the sponsor\'s questions', async () => {
     const handler = getToolHandler('assemble_briefing_book')!;
-    const out = JSON.parse(await handler({ run_premortem: false }, { organizationId: 'org_1' } as any));
+    const out = JSON.parse(await handler({ run_premortem: false }, { organizationId: 1 } as any));
     expect(out.error).toMatch(/meeting type and the sponsor's own questions/);
     expect(out.missing).toEqual(['meeting_type', 'key_questions']);
     expect(out.content).toBeUndefined();
@@ -230,7 +230,7 @@ describe('assemble_briefing_book tool', () => {
     const out = JSON.parse(
       await handler(
         { run_premortem: false, meeting_type: 'eop2', key_questions: QS, product_name: 'Real Product' },
-        { organizationId: 'org_1' } as any,
+        { organizationId: 1 } as any,
       ),
     );
     expect(out.error).toBeUndefined();
