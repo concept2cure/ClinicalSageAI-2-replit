@@ -1441,6 +1441,62 @@ COORDINATION.md, row "Codespace setup".
 4. **No real model output has been seen in a Codespace.** No session had a key. The founder's first run, with both
    keys, is the qualification.
 
+#### D7-D — Reporting & analytics on the work-area pattern, with its F1 repairs (session `session_011HLkYCajohxJ4HxpcfSiU6`, lane L11)
+
+**What already exists.** The surfaces are `client/src/concept2cure/v2/surfaces/Insights.tsx` (`insights`),
+`InsightsCatalogPanel.tsx`, `insightsLibraryShared.tsx` and `ComplianceReports.tsx` (`compliance-reports`), with
+`styles/insights-v2.css`. The digest renderer is `server/services/report-os/render/render.ts`. Nothing new was added:
+no screen, route, service, table or component file.
+
+- **D7-D steps 1–9, as `.design/claude-convergence/D7.md` §D.4 lists them** (2026-11-02):
+  - `f58089a336`: steps 1–2, one column and the page header;
+  - `209a8964bf`: steps 3 and 5, the find row on `.c2c-input` (a plain search field, not the composer's look, P-91)
+    and a quiet result;
+  - `fc9dbb57a7` and `81faf1bda2`: steps 6–7, Preview plan as a `.seg` in the Catalog, and `.tabs`;
+  - `002ab41e13`: steps 4 and 8, starters, the HS-1008-1 facts as the sub's second sentence, packs as `.pj-card`s,
+    and the not-computed list as a disclosure;
+  - `44f574f70e`: step 9, Audit & compliance reports' back link.
+
+  Dated notes in D7.md §D.4 record each place where the build differs from the spec: steps 3, 4, 6 and 10.
+- **Running-app evidence** (`e124af0812`, `a9dbe72512`): `docs/evidence/DESIGN/D7/2026-11-02-reporting/`. It is a
+  git-archive copy of `9bd593c346` on its own port, captured at 1440 and 390, light and dark: 16 captures with
+  probes. §D.6 holds:
+  - one column;
+  - the find field after the header;
+  - one orange fill;
+  - no page overflow and no script errors;
+  - the readiness sentence never says "ready" with a gap open.
+- **What the running app found, fixed:**
+  - `9bd593c346`: an unnamed back link, Find dropping under the field at 390, 19 orange Run buttons in the
+    Catalog, and a basis tag widening Audit & compliance reports by 4px at 390;
+  - `7ce21a6c8f`: Export PDF was a second primary;
+  - `854bceccd5` (F1): packs are offered by the project's filing type, so an IND is no longer offered the BLA pack,
+    and the page says why;
+  - `4f9966c841` (F1): the digest printed a raw `not_ready` and made its own wording. It now speaks through
+    `shared/regulatory/readiness-statement` and shows a "Critical gaps" tile.
+- **ProjectBack convergence** (2026-11-08):
+  - `23238cd9ad` (D0): `ProjectBack` takes the `name` its screen read, rebuilding the coordinator's unpushed
+    `c4fcb90a7`. `dataConnect.tsx` is the coordinator's hold ("change only through D0"), so the change is D0's,
+    as that session designed and approved it, and the release is noted in COORDINATION.md;
+  - `eac4aaff16`: ReportingHead now uses it, with insightsOpenProgram red before and green after.
+
+  This closes Reporting's half of D0-7.
+- **Other repairs:**
+  - `ef94805978` (F1): finalize's signing-authority test;
+  - `66819a2460` (F1): the lineage-trace test's stale argument list;
+  - `66ce445d7b`: D6 evidence corrected, five loose queries and not a regression;
+  - `f49c747814`: P-91 recorded.
+- **Found, and handed on:**
+  - The device readiness scorecard (`server/services/market-specs/device-readiness-scorecard.ts:58`) uses the same
+    five words with no critical-gap rule, and AnA receives its level raw (`AnaToolExecutor.ts:10594`). Routed to
+    the MDX journey session (`01P6GW…`).
+  - CMC's `CmStarters` puts `aria-label` on a role-less `div`.
+- **Next:**
+  - C-3, the report-pack register tables (P-91, `Plan: L1`). They need `scripts/db/migration-set.mjs` and the RULE 1
+    replay and drop-safety work, shown red first. It is not started, because the coordinator's file hold can't be
+    asked for while it is unavailable.
+  - Re-walk Reporting in the running app at the current head. The ProjectBack switch has jsdom evidence only.
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for

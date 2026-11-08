@@ -19,6 +19,13 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 | `styles/app-v2.css` | **one holder at a time**. Now: the coordinating session, for D0's fixes and the shared `ProjectBack`. Ask for a turn, keep the change a small CSS-only commit, and say when you release it. 2026-11-06: the project page session (`01QoxbLcnW…`) took a turn for the project page block only (`.pj` rules, D3-1, `a9819177d`); released with that commit, and asks again for each D3 step | BUILD_ORDER §2.1 | each step's commit |
 | `client/src/concept2cure/v2/AnswerLead.tsx`, `icons.tsx`, `C2CForm.tsx`, `dataConnect.tsx` | the coordinating session | D0 (use them; change them only through D0) | D0 closes |
 
+Note on `dataConnect.tsx`, 2026-11-08, from the reporting session (`session_011HLkYC…`, L11). `ProjectBack` takes the
+`name` its screen read (`23238cd9ad`, `Plan: D0`). This is the change the coordinating session designed and approved on
+2026-11-02 as `c4fcb90a7`, which never reached origin. It was made under D0 because that session is unavailable
+(P-100). It is one commit and nothing else in the file changed. The hold is unchanged and the file is not held by
+this session.
+
+
 ### Holds on other files (one session per file, plan §4.6)
 
 Publication note from the Codex F1 continuation, 2026-11-06: after two ref-race
