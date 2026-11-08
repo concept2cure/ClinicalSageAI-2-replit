@@ -55,7 +55,6 @@
   .rd-input{ font:inherit; font-size:12px; padding:6px 9px; border:1px solid var(--border-control); border-radius:var(--radius-md); background:var(--bg-000); color:var(--text-100); }
   .rd-input::placeholder{ color:var(--text-500); }
   .rd-input:focus{ outline:none; border-color:var(--accent-200); box-shadow:0 0 0 3px var(--accent-000); }
-  .rd-chip.tone-flight{ background:#eef2fb; color:#3a5bbf; }
 
   /* buttons */
   .pdev-btn{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:var(--radius-lg); border:1px solid var(--border-strong); background:var(--bg-000); color:var(--text-100); cursor:pointer; transition:background var(--dur); }
@@ -804,11 +803,14 @@
 .c2c-v2 .cro-pipe{display:flex;align-items:center;gap:6px;overflow-x:auto;}
 .c2c-v2 .cro-pipe-cell{flex:1 0 96px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-050);text-align:center;}
 .c2c-v2 .cro-pipe-n{font-size:18px;font-weight:600;line-height:1;color:var(--text-100);font-variant-numeric:tabular-nums;}
-.c2c-v2 .cro-pipe-n.tone-ok{color:var(--success);}
-.c2c-v2 .cro-pipe-n.tone-warn{color:var(--warning);}
+/* The fills on ok, warn, idle and ai (CRO_LIFECYCLE's tones) came from the bare `.c2c-v2 .tone-*`
+   rules in app-v2.css (deleted in D0 review fix 1); the same values, named here. */
+.c2c-v2 .cro-pipe-n.tone-ok{color:var(--success);background:var(--success-muted);}
+.c2c-v2 .cro-pipe-n.tone-warn{color:var(--warning);background:var(--warning-muted);}
 .c2c-v2 .cro-pipe-n.tone-err{color:var(--error);}
 .c2c-v2 .cro-pipe-n.tone-acc{color:var(--accent-100);}
-.c2c-v2 .cro-pipe-n.tone-idle{color:var(--text-300);}
+.c2c-v2 .cro-pipe-n.tone-idle{color:var(--text-300);background:var(--idle-muted);}
+.c2c-v2 .cro-pipe-n.tone-ai{background:var(--ai-muted);}
 .c2c-v2 .cro-pipe-l{font-size:11px;color:var(--text-300);line-height:1.25;}
 .c2c-v2 .cro-pipe-arr{flex-shrink:0;display:inline-flex;color:var(--text-400);}
 .c2c-v2 .cro-pipe-arr svg{width:14px;height:14px;}

@@ -83,6 +83,9 @@ const RETIRED: Retired[] = [
   cls('pj-eyebrow', 1),
   cls('reg-cta', 13),
   cls('landing-newproj', 1),
+  /* D0 review fix 5 (§4.7's `.sp-primary`): the canonical primary's alias. Measured 2026-11-02 at
+     b391bfad2, 50 uses in 24 files (docs/evidence/DESIGN/D0/D0-11-primitives/). D6-2 and D6-3 convert. */
+  cls('sp-primary', 50),
   { name: 'btn sm', baseline: 14, kind: 'btn-sm', css: /\.btn\.sm(?![\w-])|\.sm\.btn(?![\w-])/ },
   cls('reg-card', 15),
   cls('reg-tabs', 11),

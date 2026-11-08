@@ -23,18 +23,9 @@
 .adm-access .page-header { padding: 28px 32px 20px; border-bottom: 1px solid var(--border); }
 .adm-access .page-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
-/* Buttons (scoped — do not touch ui-v2's global .btn) */
-.adm-access .btn {
-  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
-  padding: 8px 14px; border-radius: var(--radius-sm, 8px);
-  border: 1px solid var(--border); background: var(--bg-000); color: var(--text-100);
-  font-size: 13px; font-weight: 500; font-family: inherit;
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-}
+/* Buttons: the canonical .btn, .ghost and .primary (app-v2.css, D0 block). Admin's own four rules
+   tied it and won on load order (D0 review fix 10); only its small size is its own (D0.md §4.2.4). */
 .adm-access .btn.small { padding: 6px 11px; font-size: 12px; }
-.adm-access .btn:hover { border-color: var(--border-strong); }
-.adm-access .btn.primary { background: var(--accent-strong); border-color: transparent; color: var(--accent-on-strong); }
-.adm-access .btn.ghost { background: transparent; }
 
 /* Metrics */
 .adm-access .metrics-row { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); padding: 20px 32px 4px; }
@@ -82,10 +73,8 @@
 .adm-access .adm-facet-error { margin: 0 32px 20px; }
 .adm-access .adm-tabs + .adm-facet-error { margin-top: 24px; }
 
-/* Segmented control */
-.adm-access .seg { display: inline-flex; gap: 2px; padding: 2px; background: var(--bg-050); border-radius: var(--radius-sm, 8px); }
-.adm-access .seg-btn { border: none; background: transparent; cursor: pointer; padding: 4px 10px; border-radius: var(--radius-md); font-size: 12px; color: var(--text-400); font-family: inherit; }
-.adm-access .seg-btn[data-on] { background: var(--bg-000); color: var(--text-100); box-shadow: 0 1px 2px color-mix(in oklab, var(--black, #000) 6%, transparent); }
+/* Segmented control: the canonical .seg track, and its item with admin's .seg-btn aliased onto it
+   (app-v2.css, D0 block; review fix 10). The section header places it (`.section-head .seg`). */
 
 /* Compact table */
 .adm-access .ctable { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-000); overflow: hidden; margin: 0 32px 20px; }

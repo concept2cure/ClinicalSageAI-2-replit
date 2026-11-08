@@ -1,0 +1,351 @@
+A client/src/concept2cure/components/ana/AnswerCheckRows.tsx:78	[ana-grounding-ic is-]	 (reads a tone name)	{`ana-grounding-ic is-${tone}`}
+A client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx:483	[eng-blocker-dot]	 tone-${…}	{`eng-blocker-dot tone-${b.severity}`}
+A client/src/concept2cure/mdx/surfaces/PmaSurface.tsx:247	[readiness-fill]	 (reads a tone name)	{`readiness-fill ${d.bar.tone || ''}`}
+A client/src/concept2cure/mdx/surfaces/PmaSurface.tsx:252	[health-meta]	 (reads a tone name)	{`health-meta ${d.tone || ''}`}
+A client/src/concept2cure/mdx/surfaces/PostmarketSurface.tsx:354	[eng-blocker-dot]	 tone-${…} (reads a tone name)	{`eng-blocker-dot tone-${tone}`}
+A client/src/concept2cure/mdx/surfaces/PostmarketSurface.tsx:409	[eng-blocker-dot critical err warn]	 tone-${…}	{`eng-blocker-dot tone-${ s.severity === 'critical' ? 'err' : 'warn' }`}
+A client/src/concept2cure/mdx/surfaces/UdiSurface.tsx:292	[eng-blocker-dot]	 tone-${…}	{`eng-blocker-dot tone-${b.severity}`}
+A client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx:241	[audit-chip]	 tone-${…} (reads a tone name)	{`audit-chip tone-${meta.tone}`}
+A client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx:281	[audit-chip]	 tone-${…} (reads a tone name)	{`audit-chip tone-${meta.tone}`}
+A client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx:963	[audit-chip]	 tone-${…} (reads a tone name)	{`audit-chip tone-${meta.tone}`}
+A client/src/concept2cure/pdev/surfaces/ActivityDetail.tsx:206	[pdev-state-pill state-]	 (reads a tone name)	{`pdev-state-pill state-${tone}`}
+A client/src/concept2cure/pdev/surfaces/ActivityDetail.tsx:245	[pdev-state-pill state-]	 (reads a tone name)	{`pdev-state-pill state-${tone}`}
+A client/src/concept2cure/pdev/surfaces/Assembly.tsx:149	[pdev-sev-dot]	tone-warn	"pdev-sev-dot tone-warn"
+A client/src/concept2cure/pdev/surfaces/Contradictions.tsx:141	[pdev-sev-dot]	 tone-${…}	{`pdev-sev-dot tone-${c.severity}`}
+A client/src/concept2cure/pdev/surfaces/Contradictions.tsx:168	[pdev-sev-dot]	 tone-${…}	{`pdev-sev-dot tone-${selected.severity}`}
+A client/src/concept2cure/pdev/surfaces/Workstream.tsx:293	[pdev-state-pill state-]	 (reads a tone name)	{`pdev-state-pill state-${statePillTone(state)}`}
+A client/src/concept2cure/pdev/surfaces/Workstream.tsx:304	[pdev-due mono]	 (reads a tone name)	{`pdev-due mono ${due.tone}`}
+A client/src/concept2cure/pdev/surfaces/Workstream.tsx:339	[pdev-state-pill state-]	 (reads a tone name)	{`pdev-state-pill state-${statePillTone(state)}`}
+A client/src/concept2cure/pdev/surfaces/Workstream.tsx:344	[mono]	 (reads a tone name)	{`mono ${due.tone}`}
+A client/src/concept2cure/v2/AnswerLead.tsx:84	[al-lead al-]	 (reads a tone name)	{`al-lead al-${tone}`}
+A client/src/concept2cure/v2/OpenWork.tsx:104	[tt-dot tt-dot-]	 (reads a tone name)	{quiet ? 'tt-dot' : `tt-dot tt-dot-${tone}`}
+A client/src/concept2cure/v2/SignedContentState.tsx:151	[rd-chip]	 tone-${…} (reads a tone name)	{`rd-chip tone-${TONE[f.state]}`}
+A client/src/concept2cure/v2/TaskTray.tsx:294	[tt-dot tt-dot-]	 (reads a tone name)	{tone ? `tt-dot tt-dot-${tone}` : 'tt-dot'}
+A client/src/concept2cure/v2/editor/DocumentWorkbench.tsx:4325	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/editor/DocumentWorkbench.tsx:4425	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/editor/DocumentWorkbench.tsx:6089	[ok sp-tone-ok warn sp-tone-warn]	 (reads a tone name)	{ st.tone === 'ok' ? 'sp-tone-ok' : st.tone === 'warn' ? 'sp-tone-warn' : undefined }
+A client/src/concept2cure/v2/editor/DocumentWorkbench.tsx:6225	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/editor/DocumentWorkbench.tsx:6324	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx:287	[rd-chip]	 tone-${…} (reads a tone name)	{`rd-chip tone-${st.tone}`}
+A client/src/concept2cure/v2/editor/ReviewTasksPanel.tsx:446	[rd-chip]	 tone-${…} (reads a tone name)	{`rd-chip tone-${st.tone}`}
+A client/src/concept2cure/v2/surfaces/AgencyInbox.tsx:375	[cc-comm-dot idle]	 tone-${…} (reads a tone name)	{'cc-comm-dot tone-' + (CC_TONE[c.urgency] || 'idle')}
+A client/src/concept2cure/v2/surfaces/AgencyInbox.tsx:382	[rd-chip]	tone-err	"rd-chip tone-err"
+A client/src/concept2cure/v2/surfaces/AgencyInbox.tsx:387	[rd-chip idle]	 tone-${…}	{'rd-chip tone-' + (CC_CLOSURE[c.closureStatus] || 'idle')}
+A client/src/concept2cure/v2/surfaces/AgencyResponses.tsx:243	[rd-chip critical err major warn idle]	 tone-${…}	{'rd-chip tone-' + (q.severity === 'critical' ? 'err' : q.severity === 'major' ? 'warn' : 'idle')}
+A client/src/concept2cure/v2/surfaces/AgencyResponses.tsx:246	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + STATE_TONE[q.state]}
+A client/src/concept2cure/v2/surfaces/AnaCommand.tsx:325	[ac-gate-cv]	 (reads a tone name)	{'ac-gate-cv ' + gateTone(risk.overallRisk)}
+A client/src/concept2cure/v2/surfaces/AnaCommand.tsx:608	[rd-chip idle]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + (RISK_TONE[p.riskLevel] || 'idle')}
+A client/src/concept2cure/v2/surfaces/AnaCommand.tsx:857	[ac-gate-cv]	 (reads a tone name)	{'ac-gate-cv ' + gateTone(gate.ich?.overallStatus)}
+A client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx:248	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/AuthoringPlaceIntoFiling.tsx:450	[err de-err de-desc]	 (reads a tone name)	{sectionNote.tone === 'err' ? 'de-err' : 'de-desc'}
+A client/src/concept2cure/v2/surfaces/AuthoringPlaceIntoFiling.tsx:499	[err de-err de-gov]	 (reads a tone name)	{verdict.tone === 'err' ? 'de-err' : 'de-gov'}
+A client/src/concept2cure/v2/surfaces/AuthoringPlaceIntoFiling.tsx:501	[ok de-gov-t]	 (reads a tone name)	{verdict.tone === 'ok' ? 'de-gov-t' : undefined}
+A client/src/concept2cure/v2/surfaces/BiopharmaProject.tsx:171	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + SEVERITY_TONE[f.severity]}
+A client/src/concept2cure/v2/surfaces/BiopharmaProject.tsx:175	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + VERIFICATION_TONE[f.verification]}
+A client/src/concept2cure/v2/surfaces/BiopharmaProject.tsx:186	[rd-chip inferred crl-inferred]	tone-idle	{'rd-chip tone-idle' + (m.status === 'inferred' ? ' crl-inferred' : '')}
+A client/src/concept2cure/v2/surfaces/BiopharmaProject.tsx:534	[rd-chip]	 tone-${…} (reads a tone name)	{`rd-chip tone-${STATUS_TONE[s.status]}`}
+A client/src/concept2cure/v2/surfaces/BiopharmaProject.tsx:554	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/BiopharmaSpecialty.tsx:135	[rd-chip idle]	 tone-${…}	{'rd-chip tone-' + (map[status] || 'idle')}
+A client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:545	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + ratingTone(asmtRes.judgment.overallVerdict)}
+A client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:546	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + ratingTone(asmtRes.judgment.overallRisk)}
+A client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:547	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + ratingTone(asmtRes.judgment.actionRecommendation)}
+A client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:557	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + ratingTone(d.verdict)}
+A client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx:587	[rd-chip high warn idle]	 tone-${…}	{'rd-chip tone-' + (a.sensitivity === 'high' ? 'warn' : 'idle')}
+A client/src/concept2cure/v2/surfaces/Biostatistics.tsx:1038	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + verdictTone(ready.judgment.overallVerdict)}
+A client/src/concept2cure/v2/surfaces/Biostatistics.tsx:1214	[rd-chip approved ok warn]	 tone-${…}	{'rd-chip tone-' + (p.status === 'approved' ? 'ok' : 'warn')}
+A client/src/concept2cure/v2/surfaces/ChangeAssessment.tsx:101	[chg-out]	 (reads a tone name)	{`chg-out ${out.tone}`}
+A client/src/concept2cure/v2/surfaces/ClientPortal.tsx:176	[rd-chip]	tone-ai	"rd-chip tone-ai"
+A client/src/concept2cure/v2/surfaces/ClientPortal.tsx:183	[rd-chip ai]	 tone-${…}	{`rd-chip tone-${CP_T[p.status] || 'ai'}`}
+A client/src/concept2cure/v2/surfaces/ClientPortal.tsx:214	[rd-chip ai]	 tone-${…}	{`rd-chip tone-${CP_T[d.status] || 'ai'}`}
+A client/src/concept2cure/v2/surfaces/ClinicalOps.tsx:227	[rd-chip idle]	 tone-${…}	{'rd-chip tone-' + (map[status] || 'idle')}
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:1101	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + stTone(s.st)}
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:1105	[rd-chip]	tone-err	"rd-chip tone-err"
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:1164	[rd-chip]	tone-dim	"rd-chip tone-dim"
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:1166	[rd-chip]	tone-err	"rd-chip tone-err"
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:1168	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:1170	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:1406	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + stTone(r.st)}
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:1687	[rd-chip ok err]	 tone-${…}	{'rd-chip tone-' + (test.poolable ? 'ok' : 'err')}
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:2086	[rd-chip]	 tone-${…}	{'rd-chip tone-' + stabStatusTone(r.status)}
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:2110	[rd-chip ok err]	 tone-${…}	{'rd-chip tone-' + (x.withinSpecification ? 'ok' : 'err')}
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:2180	[rd-chip err ok]	 tone-${…}	{'rd-chip tone-' + (bad ? 'err' : 'ok')}
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:2294	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:2295	[rd-chip]	tone-err	"rd-chip tone-err"
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:2301	[warn sp-tone-warn cm-meta]	 (reads a tone name)	{claim.tone === 'warn' ? 'sp-tone-warn' : 'cm-meta'}
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:2390	[rd-chip pooled ok warn]	 tone-${…}	{'rd-chip tone-' + (a.decision === 'pooled' ? 'ok' : 'warn')}
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:2587	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:2587	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:2588	[rd-chip released ok rejected err warn]	 tone-${…}	{'rd-chip tone-' + (r.st === 'released' ? 'ok' : r.st === 'rejected' ? 'err' : 'warn')}
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:2763	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + capabilityTone(o)}
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:3096	[rd-chip approved ok refreshed warn dim]	 tone-${…}	{'rd-chip tone-' + (e.eventType === 'approved' ? 'ok' : e.eventType === 'refreshed' ? 'warn' : 'dim')}
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:3134	[rd-chip critical err warn]	 tone-${…}	{'rd-chip tone-' + (String(c.severity).toLowerCase() === 'critical' ? 'err' : 'warn')}
+A client/src/concept2cure/v2/surfaces/CmcModule.tsx:3137	[rd-chip resolved ok warn]	 tone-${…}	{'rd-chip tone-' + (c.status === 'resolved' ? 'ok' : 'warn')}
+A client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:495	[rd-chip ok warn]	 tone-${…}	{'rd-chip tone-' + (readiness.data.exportReady ? 'ok' : 'warn')}
+A client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:596	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + severityTone(c.severity)}
+A client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:675	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + meta.tone}
+A client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx:813	[rd-chip approved ok refreshed warn dim]	 tone-${…}	{'rd-chip tone-' + (e.eventType === 'approved' ? 'ok' : e.eventType === 'refreshed' ? 'warn' : 'dim')}
+A client/src/concept2cure/v2/surfaces/CmcQuality.tsx:363	[rd-chip ok warn]	 tone-${…}	{'rd-chip tone-' + (c.methodLinked ? 'ok' : 'warn')}
+A client/src/concept2cure/v2/surfaces/CmcQuality.tsx:426	[rd-chip dim]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + (OVERALL_LABEL[ich.overallStatus]?.tone ?? 'dim')}
+A client/src/concept2cure/v2/surfaces/CmcQuality.tsx:454	[rd-chip dim]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + (FINDING_TONE[f.status] ?? 'dim')}
+A client/src/concept2cure/v2/surfaces/CmcSectionEvidence.tsx:166	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + chip.tone}
+A client/src/concept2cure/v2/surfaces/CmcSectionEvidence.tsx:269	[error de-err cm-meta]	 (reads a tone name)	{message.tone === 'error' ? 'de-err' : 'cm-meta'}
+A client/src/concept2cure/v2/surfaces/CommitmentRow.tsx:261	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + commitmentTone(status)}
+A client/src/concept2cure/v2/surfaces/CommunicationCenter.tsx:746	[rd-chip closed ok held minutes_received ai idle]	 tone-${…}	{ 'rd-chip tone-' + (m.status === 'closed' ? 'ok' : m.status === 'held' || m.status === 'minutes_received' ? 'ai' : 'idle') }
+A client/src/concept2cure/v2/surfaces/CompanySubmissionDocuments.tsx:144	[company-notice err company-error]	 (reads a tone name)	{`company-notice${note.tone === 'err' ? ' company-error' : ''}`}
+A client/src/concept2cure/v2/surfaces/ConversationFilesAdopt.tsx:134	[error sp-tone-warn sp-tone-ok]	 (reads a tone name)	{note.tone === 'error' ? 'sp-tone-warn' : 'sp-tone-ok'}
+A client/src/concept2cure/v2/surfaces/Coverage.tsx:177	[rd-chip]	 tone-${…} (reads a tone name)	{`rd-chip tone-${rd.tone}`}
+A client/src/concept2cure/v2/surfaces/CrlLibrary.tsx:125	[rd-chip explicit crl-inferred]	tone-idle	{'rd-chip ' + (m.status === 'explicit' ? 'tone-idle' : 'tone-idle crl-inferred')}
+A client/src/concept2cure/v2/surfaces/CrlLibrary.tsx:161	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + SEVERITY_TONE[f.severity]}
+A client/src/concept2cure/v2/surfaces/CrlLibrary.tsx:165	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + VERIFICATION_TONE[f.verification]}
+A client/src/concept2cure/v2/surfaces/CrlLibrary.tsx:174	[rd-chip]	tone-err	"rd-chip tone-err"
+A client/src/concept2cure/v2/surfaces/CroPortfolio.tsx:375	[cro-pipe-n]	 tone-${…} (reads a tone name)	{`cro-pipe-n tone-${p.tone}`}
+A client/src/concept2cure/v2/surfaces/CroPortfolio.tsx:407	[rd-chip]	 tone-${…} (reads a tone name)	{`rd-chip tone-${t.tone}`}
+A client/src/concept2cure/v2/surfaces/CroPortfolio.tsx:423	[cro-sow idle]	 tone-${…} (reads a tone name)	{`cro-sow tone-${SOW_TONE[s.sow] || 'idle'}`}
+A client/src/concept2cure/v2/surfaces/CroPortfolio.tsx:442	[rd-chip]	 tone-${…} (reads a tone name)	{`rd-chip tone-${companyTypeOf(sel.type).tone}`}
+A client/src/concept2cure/v2/surfaces/CroPortfolio.tsx:472	[cro-sow-banner idle]	 tone-${…} (reads a tone name)	{`cro-sow-banner tone-${SOW_TONE[sel.sow] || 'idle'}`}
+A client/src/concept2cure/v2/surfaces/CroPortfolio.tsx:525	[rd-chip Complete ok Startup idle ai]	 tone-${…}	{`rd-chip tone-${ st.status === 'Complete' ? 'ok' : st.status === 'Startup' ? 'idle' : 'ai' }`}
+A client/src/concept2cure/v2/surfaces/CroPortfolio.tsx:597	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/CroPortfolio.tsx:601	[cro-lc-dot]	 tone-${…} (reads a tone name)	{`cro-lc-dot tone-${lc.tone}`}
+A client/src/concept2cure/v2/surfaces/CsrAssemblyControl.tsx:179	[rd-chip warn idle]	 tone-${…}	{`rd-chip tone-${m.blocking ? 'warn' : 'idle'}`}
+A client/src/concept2cure/v2/surfaces/CsrBuildProgress.tsx:145	[rd-chip]	 tone-${…} (reads a tone name)	{`rd-chip tone-${STATE_TONE[heading.state]}`}
+A client/src/concept2cure/v2/surfaces/CsrBuildProgress.tsx:296	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/CsrBuildProgress.tsx:297	[rd-chip composed ok warn]	 tone-${…}	{`rd-chip tone-${row.status === 'composed' ? 'ok' : 'warn'}`}
+A client/src/concept2cure/v2/surfaces/DecisionLineage.tsx:384	[dl-lead]	 tone-${…} (reads a tone name)	{'dl-lead tone-' + lead.tone}
+A client/src/concept2cure/v2/surfaces/DecisionLineage.tsx:427	[dl-node]	 tone-${…} (reads a tone name)	{'dl-node tone-' + cfg.tone}
+A client/src/concept2cure/v2/surfaces/DecisionLineage.tsx:429	[dl-node-ic]	 tone-${…} (reads a tone name)	{'dl-node-ic tone-' + cfg.tone}
+A client/src/concept2cure/v2/surfaces/DecisionLineage.tsx:435	[dl-node-type]	 tone-${…} (reads a tone name)	{'dl-node-type tone-' + cfg.tone}
+A client/src/concept2cure/v2/surfaces/DeepResearch.tsx:737	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/DeepResearch.tsx:738	[rd-chip]	tone-err	"rd-chip tone-err"
+A client/src/concept2cure/v2/surfaces/DeepResearch.tsx:893	[rd-chip ok idle]	 tone-${…}	{'rd-chip tone-' + (c.configured ? 'ok' : 'idle')}
+A client/src/concept2cure/v2/surfaces/DeepResearch.tsx:905	[rd-chip idle]	 tone-${…} (reads a tone name)	{ 'rd-chip tone-' + (TIER_TONE[c.tier as ConnectorTier] || 'idle') }
+A client/src/concept2cure/v2/surfaces/DesignControlsTrace.tsx:425	[dc-cell]	 tone-${…} (reads a tone name)	{'dc-cell tone-' + tone}
+A client/src/concept2cure/v2/surfaces/DesignControlsTrace.tsx:514	[dc-cell]	tone-err	"dc-cell tone-err"
+A client/src/concept2cure/v2/surfaces/DesignControlsTrace.tsx:539	[dc-820-dot]	tone-idle	"dc-820-dot tone-idle"
+A client/src/concept2cure/v2/surfaces/DesignControlsTrace.tsx:547	[dc-820-dot present ok err]	 tone-${…}	{'dc-820-dot tone-' + (e.state === 'present' ? 'ok' : 'err')}
+A client/src/concept2cure/v2/surfaces/DeviceFilings.tsx:189	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/DeviceFilings.tsx:193	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx:148	[dr2-find idle]	 tone-${…} (reads a tone name)	{'dr2-find tone-' + (SEV_TONE[f.severity] || 'idle')}
+A client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx:149	[dr2-find-sev idle]	 tone-${…} (reads a tone name)	{'dr2-find-sev tone-' + (SEV_TONE[f.severity] || 'idle')}
+A client/src/concept2cure/v2/surfaces/EctdCompile.tsx:434	[rd-chip]	tone-dim	"rd-chip tone-dim"
+A client/src/concept2cure/v2/surfaces/EctdCompile.tsx:658	[rd-chip completed ok failed err dim]	 tone-${…}	{'rd-chip tone-' + (h.status === 'completed' ? 'ok' : h.status === 'failed' ? 'err' : 'dim')}
+A client/src/concept2cure/v2/surfaces/EctdCompile.tsx:1496	[rd-chip completed ok err]	 tone-${…}	{'rd-chip tone-' + (compileResult.status === 'completed' ? 'ok' : 'err')}
+A client/src/concept2cure/v2/surfaces/EctdCompile.tsx:1573	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + sevTone(f.severity)}
+A client/src/concept2cure/v2/surfaces/EctdCompile.tsx:1693	[rd-chip]	 tone-${…} (reads a tone name)	{`rd-chip tone-${orchStepTone(s.status)}`}
+A client/src/concept2cure/v2/surfaces/EctdCompile.tsx:1821	[rd-chip complete ok failed err dim]	 tone-${…}	{`rd-chip tone-${e.status === 'complete' ? 'ok' : e.status === 'failed' ? 'err' : 'dim'}`}
+A client/src/concept2cure/v2/surfaces/EctdCompileReference.tsx:372	[rd-chip mono]	tone-idle	"rd-chip tone-idle mono"
+A client/src/concept2cure/v2/surfaces/EctdModuleReadiness.tsx:89	[rd-chip ok warn]	 tone-${…}	{'rd-chip tone-' + (complete ? 'ok' : 'warn')}
+A client/src/concept2cure/v2/surfaces/EctdModuleReadiness.tsx:118	[rd-chip ok warn]	 tone-${…}	{'rd-chip tone-' + (m.ready ? 'ok' : 'warn')}
+A client/src/concept2cure/v2/surfaces/FilingStrategy.tsx:164	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + severityTone(r[c])}
+A client/src/concept2cure/v2/surfaces/FilingStrategy.tsx:477	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx:584	[rd-chip]	 tone-${…}	{'rd-chip tone-' + statusTone(t.status)}
+A client/src/concept2cure/v2/surfaces/GlobalRiBrowser.tsx:322	[rd-chip ok warn]	 tone-${…}	{`rd-chip tone-${c.deterministic ? 'ok' : 'warn'}`}
+A client/src/concept2cure/v2/surfaces/HumanFactors.tsx:606	[hf-gate err ok idle]	 tone-${…}	{'hf-gate tone-' + (gateBlocked ? 'err' : gateClear ? 'ok' : 'idle')}
+A client/src/concept2cure/v2/surfaces/HumanFactors.tsx:631	[hf-sev critical err serious warn idle]	 tone-${…}	{'hf-sev tone-' + (s.potentialHarmSeverity === 'critical' ? 'err' : s.potentialHarmSeverity === 'serious' ? 'warn' : 'idle')}
+A client/src/concept2cure/v2/surfaces/HumanFactors.tsx:632	[hf-mit ok err idle]	 tone-${…}	{'hf-mit tone-' + (s.mitigated ? 'ok' : isCrit ? 'err' : 'idle')}
+A client/src/concept2cure/v2/surfaces/HumanFactors.tsx:651	[hf-el-dot ok idle]	 tone-${…}	{'hf-el-dot tone-' + (present[k] ? 'ok' : 'idle')}
+A client/src/concept2cure/v2/surfaces/IdentityConsole.tsx:383	[rd-chip ok dim]	 tone-${…}	{'rd-chip tone-' + (t.enabled ? 'ok' : 'dim')}
+A client/src/concept2cure/v2/surfaces/IdentityConsole.tsx:408	[rd-chip ok dim]	 tone-${…}	{'rd-chip tone-' + (r.enabled ? 'ok' : 'dim')}
+A client/src/concept2cure/v2/surfaces/Inconsistency.tsx:872	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/Inconsistency.tsx:922	[gi-auth]	 tone-${…} (reads a tone name)	{'gi-auth tone-' + auth.tone}
+A client/src/concept2cure/v2/surfaces/Inconsistency.tsx:989	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx:542	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx:543	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx:556	[rd-chip]	 (reads a tone name)	{`rd-chip ${verdict.tone}`}
+A client/src/concept2cure/v2/surfaces/IndLifecycle.tsx:1417	[rd-chip good warn]	 tone-${…}	{ 'rd-chip tone-' + (f.done ? 'good' : 'warn') }
+A client/src/concept2cure/v2/surfaces/IndLifecycle.tsx:1526	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + cst.tone}
+A client/src/concept2cure/v2/surfaces/Insights.tsx:1063	[ro-status st-]	 (reads a tone name)	{'ro-status st-' + stTone}
+A client/src/concept2cure/v2/surfaces/InvestigatorBrochure.tsx:215	[rd-chip]	 tone-${…} (reads a tone name)	{`rd-chip tone-${STATUS_TONE[s.status]}`}
+A client/src/concept2cure/v2/surfaces/IvdReadinessBoard.tsx:245	[ivd-fam]	 tone-${…} (reads a tone name)	{'ivd-fam tone-' + familyTone(f.pct)}
+A client/src/concept2cure/v2/surfaces/IvdReadinessBoard.tsx:262	[ivd-dot]	 tone-${…}	{'ivd-dot tone-' + t}
+A client/src/concept2cure/v2/surfaces/IvdReadinessBoard.tsx:266	[ivd-item-st]	 tone-${…}	{'ivd-item-st tone-' + t}
+A client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx:138	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/LabelingSignatures.tsx:140	[rd-chip idle]	 tone-${…} (reads a tone name)	{`rd-chip tone-${T_TONE[t.status] || 'idle'}`}
+A client/src/concept2cure/v2/surfaces/LicensingInvoices.tsx:242	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + tone}
+A client/src/concept2cure/v2/surfaces/MaaCockpit.tsx:154	[rd-chip ok idle]	 tone-${…}	{'rd-chip tone-' + (m.key === market ? 'ok' : 'idle')}
+A client/src/concept2cure/v2/surfaces/MaaCockpit.tsx:190	[rd-chip ok err]	 tone-${…}	{'rd-chip tone-' + (has ? 'ok' : 'err')}
+A client/src/concept2cure/v2/surfaces/MissionControl.tsx:687	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + severityTone(b.severity)}
+A client/src/concept2cure/v2/surfaces/MissionControl.tsx:701	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + severityTone(a.priority)}
+A client/src/concept2cure/v2/surfaces/MissionControl.tsx:737	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + severityTone(String(r.severity ?? ''))}
+A client/src/concept2cure/v2/surfaces/Nonclinical.tsx:239	[rd-chip idle]	 tone-${…}	{'rd-chip tone-' + (map[status] || 'idle')}
+A client/src/concept2cure/v2/surfaces/Nonclinical.tsx:550	[rd-chip adverse warn pending idle ok]	 tone-${…}	{'rd-chip tone-' + (c === 'adverse' ? 'warn' : c === 'pending' ? 'idle' : 'ok')}
+A client/src/concept2cure/v2/surfaces/Nonclinical.tsx:729	[rd-chip high err medium warn ok]	 tone-${…}	{'rd-chip tone-' + (sum.send.risk === 'high' ? 'err' : sum.send.risk === 'medium' ? 'warn' : 'ok')}
+A client/src/concept2cure/v2/surfaces/Onboarding.tsx:1116	[rd-chip ai idle]	 tone-${…}	{ 'rd-chip tone-' + (cur ? 'ai' : 'idle') }
+A client/src/concept2cure/v2/surfaces/Orchestration.tsx:932	[orch-find-dot idle]	 (reads a tone name)	{'orch-find-dot ' + (SEV_TONE[f.sev] || 'idle')}
+A client/src/concept2cure/v2/surfaces/Orchestration.tsx:938	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/Orchestration.tsx:939	[rd-chip fail warn]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + (f.status === 'fail' ? ORCH_TONE.failed : f.status === 'warn' ? ORCH_TONE.paused : ORCH_TONE.completed)}
+A client/src/concept2cure/v2/surfaces/Orchestration.tsx:1059	[rd-chip idle]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + (ORCH_TONE[x.status] || 'idle')}
+A client/src/concept2cure/v2/surfaces/Orchestration.tsx:1170	[rd-chip]	tone-ai	"rd-chip tone-ai"
+A client/src/concept2cure/v2/surfaces/Orchestration.tsx:1320	[rd-chip ok err]	 tone-${…}	{'rd-chip tone-' + (r.isReady ? 'ok' : 'err')}
+A client/src/concept2cure/v2/surfaces/Orchestration.tsx:1321	[rd-chip]	tone-err	"rd-chip tone-err"
+A client/src/concept2cure/v2/surfaces/PrecedentEngine.tsx:596	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/PrecedentEngine.tsx:951	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/PrecedentEngine.tsx:1042	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/PrecedentEngine.tsx:1044	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/PrecedentEngine.tsx:1066	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + severityTone(f.severity)}
+A client/src/concept2cure/v2/surfaces/ProjectHome.tsx:668	[ok sp-tone-ok warn sp-tone-warn]	 (reads a tone name)	{use.tone === 'ok' ? 'sp-tone-ok' : use.tone === 'warn' ? 'sp-tone-warn' : undefined}
+A client/src/concept2cure/v2/surfaces/ProjectHome.tsx:677	[ok sp-tone-ok warn sp-tone-warn]	 (reads a tone name)	{rs.tone === 'ok' ? 'sp-tone-ok' : rs.tone === 'warn' ? 'sp-tone-warn' : undefined}
+A client/src/concept2cure/v2/surfaces/ProjectHome.tsx:901	[rd-chip]	tone-idle (reads a tone name)	{`rd-chip ${WORK_STATUS_TONE[w.status] ?? 'tone-idle'}`}
+A client/src/concept2cure/v2/surfaces/ProjectHome.tsx:1603	[rd-chip]	tone-ai	"rd-chip tone-ai"
+A client/src/concept2cure/v2/surfaces/ProjectHome.tsx:1604	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/ProjectHome.tsx:1605	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/ProjectHome.tsx:1606	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/ProjectHome.tsx:1607	[rd-chip]	tone-idle (reads a tone name)	{`rd-chip ${PROGRAM_STATUS_TONE[t.status] ?? 'tone-idle'}`}
+A client/src/concept2cure/v2/surfaces/ProjectHome.tsx:1608	[rd-chip]	tone-idle (reads a tone name)	{`rd-chip ${PRIORITY_TONE[t.priority] ?? 'tone-idle'}`}
+A client/src/concept2cure/v2/surfaces/ProjectHome.tsx:1609	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/ProjectRecords.tsx:103	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/ProjectTeamResponsibilities.tsx:45	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/PvCockpit.tsx:239	[rd-chip err ok]	 tone-${…}	{'rd-chip tone-' + (scrRes.signalDetected ? 'err' : 'ok')}
+A client/src/concept2cure/v2/surfaces/PvCockpit.tsx:307	[rd-chip warn ok]	 tone-${…}	{'rd-chip tone-' + (dlRes.expeditedReport ? 'warn' : 'ok')}
+A client/src/concept2cure/v2/surfaces/PvCockpit.tsx:332	[rd-chip compliant ok err]	 tone-${…}	{'rd-chip tone-' + (r.complianceStatus === 'compliant' ? 'ok' : 'err')}
+A client/src/concept2cure/v2/surfaces/QmpWorkspace.tsx:363	[rd-chip]	 tone-${…}	{'rd-chip tone-' + statusTone(p.status)}
+A client/src/concept2cure/v2/surfaces/QmpWorkspace.tsx:384	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/QmpWorkspace.tsx:385	[rd-chip ok warn]	 tone-${…}	{'rd-chip tone-' + (Math.round(dash.overallCompleteness) >= 80 ? 'ok' : 'warn')}
+A client/src/concept2cure/v2/surfaces/QmpWorkspace.tsx:400	[rd-chip]	tone-err	"rd-chip tone-err"
+A client/src/concept2cure/v2/surfaces/QmpWorkspace.tsx:401	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/QmpWorkspace.tsx:402	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/ReportGovernance.tsx:181	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + sealTone(seal)}
+A client/src/concept2cure/v2/surfaces/ResearchAdmin.tsx:186	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/RetentionPeriodCard.tsx:66	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/Review.tsx:115	[rd-chip]	 tone-${…} (reads a tone name)	{`rd-chip tone-${tone}`}
+A client/src/concept2cure/v2/surfaces/Review.tsx:721	[rv-wf-tag approved ok current warn rejected err idle]	 tone-${…}	{'rv-wf-tag tone-' + (s.status === 'approved' ? 'ok' : s.status === 'current' ? 'warn' : s.status === 'rejected' ? 'err' : 'idle')}
+A client/src/concept2cure/v2/surfaces/Review.tsx:824	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/Review.tsx:828	[rd-chip approved ok rejected err warn]	 tone-${…}	{`rd-chip tone-${current ? item.myReviewStatus === 'approved' ? 'ok' : item.myReviewStatus === 'rejected' ? 'err' : 'warn' : 'warn'}`}
+A client/src/concept2cure/v2/surfaces/Review.tsx:848	[rv-wf-tag]	 tone-${…} (reads a tone name)	{`rv-wf-tag tone-${tone}`}
+A client/src/concept2cure/v2/surfaces/ReviewThreads.tsx:369	[rd-chip high err medium warn idle]	 tone-${…}	{`rd-chip tone-${t.priority === 'high' ? 'err' : t.priority === 'medium' ? 'warn' : 'idle'}`}
+A client/src/concept2cure/v2/surfaces/ReviewThreads.tsx:426	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/ReviewVaultQueue.tsx:103	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/RiskRegister.tsx:927	[riskmx-cell]	 tone-${…}	{`riskmx-cell tone-${zone(si, pi)}`}
+A client/src/concept2cure/v2/surfaces/RiskRegister.tsx:967	[rd-chip]	 tone-${…} (reads a tone name)	{`rd-chip tone-${sevTone}`}
+A client/src/concept2cure/v2/surfaces/RiskRegister.tsx:970	[rd-chip Acceptable ok warn]	 tone-${…}	{`rd-chip tone-${row.res === 'Acceptable' ? 'ok' : 'warn'}`}
+A client/src/concept2cure/v2/surfaces/RiskRegister.tsx:988	[rd-chip idle]	 tone-${…} (reads a tone name)	{`rd-chip tone-${ctrlTone[c.status] || 'idle'}`}
+A client/src/concept2cure/v2/surfaces/RiskRegister.tsx:1004	[rd-chip idle]	 tone-${…} (reads a tone name)	{`rd-chip tone-${stTone[row.status] || 'idle'}`}
+A client/src/concept2cure/v2/surfaces/SequenceAssembleTestPackage.tsx:94	[sc-verdict]	tone-warn	{clear ? 'sc-verdict' : 'sc-verdict tone-warn'}
+A client/src/concept2cure/v2/surfaces/SequenceAssembleTestPackage.tsx:117	[sc-verdict sc-mt]	tone-err	"sc-verdict tone-err sc-mt"
+A client/src/concept2cure/v2/surfaces/SequenceAssembleTestPackage.tsx:155	[sc-verdict]	tone-err	"sc-verdict tone-err"
+A client/src/concept2cure/v2/surfaces/SequenceAssembleTestPackage.tsx:161	[sc-verdict]	tone-warn	"sc-verdict tone-warn"
+A client/src/concept2cure/v2/surfaces/ShadowFindingDisposition.tsx:266	[sc-verdict sc-mb]	tone-warn	"sc-verdict tone-warn sc-mb"
+A client/src/concept2cure/v2/surfaces/ShadowReview.tsx:285	[sr-lead]	 tone-${…} (reads a tone name)	{'sr-lead tone-' + lead.tone}
+A client/src/concept2cure/v2/surfaces/ShadowReview.tsx:356	[sr-finding]	 tone-${…} (reads a tone name)	{'sr-finding tone-' + sev.tone}
+A client/src/concept2cure/v2/surfaces/ShadowReview.tsx:358	[sr-sev]	 tone-${…} (reads a tone name)	{'sr-sev tone-' + sev.tone}
+A client/src/concept2cure/v2/surfaces/ShadowReviewWaiver.tsx:176	[sc-verdict]	tone-warn	"sc-verdict tone-warn"
+A client/src/concept2cure/v2/surfaces/ShadowReviewWaiver.tsx:183	[sc-verdict]	tone-warn	"sc-verdict tone-warn"
+A client/src/concept2cure/v2/surfaces/SmpcLabeling.tsx:197	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + STATUS_TONE[s.status]}
+A client/src/concept2cure/v2/surfaces/SourceTracer.tsx:302	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + stTone(s.status)}
+A client/src/concept2cure/v2/surfaces/SourceTracer.tsx:329	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + lab.tone}
+A client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx:1466	[rd-chip idle]	 tone-${…} (reads a tone name)	{`rd-chip tone-${SUB_STATUS_TONE[s.status] ?? 'idle'}`}
+A client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx:1588	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx:1606	[rd-chip warn idle]	 tone-${…}	{`rd-chip tone-${f.required ? 'warn' : 'idle'}`}
+A client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx:1642	[rd-chip error err warning warn idle]	 tone-${…}	{`rd-chip tone-${r.severity === 'error' ? 'err' : r.severity === 'warning' ? 'warn' : 'idle'}`}
+A client/src/concept2cure/v2/surfaces/SubmissionConsistency.tsx:66	[rd-chip err ok]	 tone-${…}	{'rd-chip tone-' + (conflict ? 'err' : 'ok')}
+A client/src/concept2cure/v2/surfaces/SubmissionModule2Qc.tsx:93	[rd-chip error err warn]	 tone-${…}	{'rd-chip tone-' + (f.severity === 'error' ? 'err' : 'warn')}
+A client/src/concept2cure/v2/surfaces/SubmissionProgramAnchor.tsx:74	[sc-verdict]	tone-err	"sc-verdict tone-err"
+A client/src/concept2cure/v2/surfaces/SubmissionProgramAnchor.tsx:249	[sc-verdict sc-mt]	tone-err	"sc-verdict tone-err sc-mt"
+A client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx:110	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx:111	[rd-chip mismatch warn idle]	 tone-${…}	{`rd-chip tone-${source.evidence.pin === 'mismatch' ? 'warn' : 'idle'}`}
+A client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx:112	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx:137	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx:137	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx:137	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx:137	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx:138	[sc-verdict]	tone-warn	"sc-verdict tone-warn"
+A client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx:141	[sc-verdict]	tone-warn	"sc-verdict tone-warn"
+A client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx:142	[sc-verdict]	tone-warn	"sc-verdict tone-warn"
+A client/src/concept2cure/v2/surfaces/SubmissionRequiredDeliverables.tsx:153	[sc-verdict]	tone-warn	"sc-verdict tone-warn"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:114	[sc-verdict]	 tone-${…} (reads a tone name)	{`sc-verdict tone-${notice.tone}`}
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:122	[rd-chip]	 tone-${…}	{`rd-chip tone-${m.t}`}
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:251	[sc-verdict]	tone-err	"sc-verdict tone-err"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:574	[rd-chip]	 (reads a tone name)	{`rd-chip ${verdict.tone}`}
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:774	[sc-verdict]	tone-err	"sc-verdict tone-err"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:1208	[sc-verdict sc-mb]	tone-warn	"sc-verdict tone-warn sc-mb"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:1374	[sc-verdict sc-mt]	tone-err	"sc-verdict tone-err sc-mt"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:1665	[sc-verdict]	tone-err	"sc-verdict tone-err"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:1677	[sc-verdict]	tone-err	"sc-verdict tone-err"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:1816	[sc-verdict]	tone-ok	"sc-verdict tone-ok"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:1817	[sc-verdict]	tone-err	"sc-verdict tone-err"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:1892	[sc-verdict]	tone-err	"sc-verdict tone-err"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:1912	[rd-chip]	 tone-${…}	{`rd-chip tone-${transmittalStatusTone(t.status)}`}
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:1971	[sc-verdict sc-mt]	tone-err	"sc-verdict tone-err sc-mt"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:2003	[sc-verdict sc-mt]	tone-warn	"sc-verdict tone-warn sc-mt"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:2193	[sc-verdict]	tone-warn	"sc-verdict tone-warn"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:2200	[sc-verdict]	tone-warn	"sc-verdict tone-warn"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:2213	[sc-verdict]	tone-warn	"sc-verdict tone-warn"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:2220	[sc-verdict]	tone-warn	"sc-verdict tone-warn"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:2342	[sc-verdict sc-mt]	tone-err	"sc-verdict tone-err sc-mt"
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:2355	[sc-verdict]	tone-ok,tone-warn (reads a tone name)	{`sc-verdict ${qc.data.clearedToDispatch && a?.gate.cleared ? 'tone-ok' : 'tone-warn'}`}
+A client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:2388	[rd-chip ok warn]	 tone-${…}	{`rd-chip tone-${c.pass ? 'ok' : 'warn'}`}
+A client/src/concept2cure/v2/surfaces/SubmissionTwin.tsx:275	[rd-chip]	tone-err	"rd-chip tone-err"
+A client/src/concept2cure/v2/surfaces/SubmissionTwin.tsx:282	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/SubmissionTwin.tsx:314	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + sevTone(c.severity)}
+A client/src/concept2cure/v2/surfaces/SubmissionTwin.tsx:328	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + sevTone(d.severity)}
+A client/src/concept2cure/v2/surfaces/SubmissionTwin.tsx:345	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + sevTone(im.impactSeverity)}
+A client/src/concept2cure/v2/surfaces/Surfaces.tsx:427	[rd-chip idle]	 tone-${…} (reads a tone name)	{`rd-chip tone-${r?.tone ?? 'idle'}`}
+A client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx:618	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx:618	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx:655	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/TemplateLibrary.tsx:655	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/Training.tsx:118	[rd-chip]	 tone-${…} (reads a tone name)	{`rd-chip tone-${p.tone}`}
+A client/src/concept2cure/v2/surfaces/Training.tsx:175	[rd-chip earned ok in-progress warn idle]	 tone-${…}	{`rd-chip tone-${c.status === 'earned' ? 'ok' : c.status === 'in-progress' ? 'warn' : 'idle'}`}
+A client/src/concept2cure/v2/surfaces/Vault.tsx:589	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + (ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).tone}
+A client/src/concept2cure/v2/surfaces/Vault.tsx:691	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + status(doc.status).tone}
+A client/src/concept2cure/v2/surfaces/Vault.tsx:2224	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + st(sel.status).tone}
+A client/src/concept2cure/v2/surfaces/Vault.tsx:2227	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + stageTone(sel.lifecycleStage)}
+A client/src/concept2cure/v2/surfaces/Vault.tsx:2806	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + st(d.status).tone}
+A client/src/concept2cure/v2/surfaces/VaultAnnotations.tsx:323	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/VaultAnnotations.tsx:323	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/VaultCatalogRecord.tsx:400	[error vd-dr-err vd-d-idx]	 (reads a tone name)	{cat.note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'}
+A client/src/concept2cure/v2/surfaces/VaultEditDetails.tsx:189	[error vd-dr-err vd-d-idx]	 (reads a tone name)	{ed.note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'}
+A client/src/concept2cure/v2/surfaces/VaultVersionRestore.tsx:74	[error vd-dr-err vd-d-idx]	 (reads a tone name)	{note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'}
+A client/src/concept2cure/v2/surfaces/VaultVersionViewer.tsx:86	[error vd-dr-err vd-d-idx]	 (reads a tone name)	{note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'}
+A client/src/concept2cure/v2/surfaces/VaultVersions.tsx:563	[error vd-dr-err vd-d-idx]	 (reads a tone name)	{exportNote.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'}
+A client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx:648	[rd-chip rd-chip-sentence idle ai ok]	 tone-${…}	{`rd-chip rd-chip-sentence tone-${a.lock ? 'idle' : a.on ? 'ai' : 'ok'}`}
+A client/src/concept2cure/v2/surfaces/adaptiveMonitoring.tsx:411	[error pde-refusal scaf-note]	 (reads a tone name)	{a.notice.tone === 'error' ? 'pde-refusal' : 'scaf-note'}
+A client/src/concept2cure/v2/surfaces/biostatBridge.tsx:243	[rd-chip]	 tone-${…}	{'rd-chip tone-' + readinessTone(d.readiness.percent)}
+A client/src/concept2cure/v2/surfaces/biostatBridge.tsx:411	[rd-chip]	 tone-${…}	{'rd-chip tone-' + readinessTone(a.readiness.percent)}
+A client/src/concept2cure/v2/surfaces/biostatBridge.tsx:569	[rd-chip]	 tone-${…}	{'rd-chip tone-' + readinessTone(readiness.percent)}
+A client/src/concept2cure/v2/surfaces/biostatBridge.tsx:628	[error pde-refusal scaf-note]	 (reads a tone name)	{notice.tone === 'error' ? 'pde-refusal' : 'scaf-note'}
+A client/src/concept2cure/v2/surfaces/biostatEngineResult.tsx:306	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + verdictTone(a.judgment.overallVerdict)}
+A client/src/concept2cure/v2/surfaces/biostatEngineResult.tsx:333	[rd-chip]	tone-err	"rd-chip tone-err"
+A client/src/concept2cure/v2/surfaces/biostatEngineResult.tsx:334	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/biostatEngineResult.tsx:335	[rd-chip]	tone-idle	"rd-chip tone-idle"
+A client/src/concept2cure/v2/surfaces/biostatEngineResult.tsx:364	[rd-chip high warn idle]	 tone-${…}	{'rd-chip tone-' + (x.sensitivity === 'high' ? 'warn' : 'idle')}
+A client/src/concept2cure/v2/surfaces/biostatEngineResult.tsx:392	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + verdictTone(d.verdict)}
+A client/src/concept2cure/v2/surfaces/biostatEngineResult.tsx:462	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + riskTone(review.overallRisk)}
+A client/src/concept2cure/v2/surfaces/biostatEngineResult.tsx:476	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + riskTone(r.risk)}
+A client/src/concept2cure/v2/surfaces/biostatGovernedWrites.tsx:135	[rd-chip critical err high warn idle]	 tone-${…}	{'rd-chip tone-' + (t.priority === 'critical' ? 'err' : t.priority === 'high' ? 'warn' : 'idle')}
+A client/src/concept2cure/v2/surfaces/cmcAgencyQuestions.tsx:381	[rd-chip]	tone-err	"rd-chip tone-err"
+A client/src/concept2cure/v2/surfaces/cmcAgencyQuestions.tsx:387	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + RESPONSE_STATE_TONE[q.state]}
+A client/src/concept2cure/v2/surfaces/cmcAgencyQuestions.tsx:413	[rd-chip]	tone-err	"rd-chip tone-err"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:165	[rd-chip]	 tone-${…}	{'rd-chip tone-' + cmcStatusTone(value)}
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:178	[rd-chip]	 tone-${…} (reads a tone name)	{'rd-chip tone-' + tone}
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:768	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:768	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1273	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1378	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1379	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1476	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1529	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1599	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1610	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1614	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1626	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1630	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1630	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1664	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1716	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1763	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1766	[rd-chip]	tone-ok,tone-warn	{r.tseCertificate ? 'rd-chip tone-ok' : 'rd-chip tone-warn'}
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1775	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1836	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1843	[rd-chip]	tone-ok,tone-warn	{r.novelExcipientJustification ? 'rd-chip tone-ok' : 'rd-chip tone-warn'}
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1922	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1931	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:1932	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:2031	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:2037	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:2040	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:2041	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:2055	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:2169	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:2173	[rd-chip]	tone-warn	"rd-chip tone-warn"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:2176	[rd-chip]	tone-ok	"rd-chip tone-ok"
+A client/src/concept2cure/v2/surfaces/cmcRegisters.tsx:2176	[rd-chip]	tone-warn	"rd-chip tone-warn"
