@@ -189,8 +189,8 @@ This is an extension of the current packages, not a parallel program or a releas
 **Owner from 2026-11-08 (P-105).** The founder gave the whole epic to one session: *"you own all of the attached
 alone."* That session is `session_01KZK3jgtmQBgNepqLjXjS3k` (Claude Code). It replaces the Anna architecture lead
 below, and no other session takes an epic slice. Holds that sessions have registered on this page for their own
-packages still stand. An epic slice asks here before it touches a file someone else holds. Spec v0.4 is mapped in
-plan §1d as v0.5's base.
+packages still stand. An epic slice asks here before it touches a file someone else holds. The specification is v0.5,
+`docs/design/MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf`. v0.4 is superseded.
 
 | Scope | Holder | Handoff |
 |---|---|---|

@@ -160,7 +160,8 @@ program. Their deliverables are mapped to the downstream documents they feed (P-
 
 ## 1d. Anna runtime — extend the existing product (founder decisions P-104, 2026-11-06, and P-105, 2026-11-08)
 
-The founder supplied **Multi-Agent Architecture Spec v0.5, 2026-11-06**, §§1–32, and directed:
+The founder supplied **Multi-Agent Architecture Spec v0.5, 2026-11-06**, §§1–32
+(`docs/design/MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf`, in the repository from 2026-11-08), and directed:
 
 > "Study the attached document, align to the current roadmap, and add the attached plan to the current roadmap,
 > and you own this end to end. This is your assignment to build all of this in a very sophisticated way, not by
@@ -174,17 +175,22 @@ file, service, tool, screen, route, mount, table, dependency or model is approve
 cannot be met by extending the existing objects, record that precise dependency in this epic before implementing
 it. No work silently weakens isolation, signatures, launch scope, model qualification or a fail-closed gate.
 
-**Spec v0.4 and one owner (P-105, 2026-11-08).** The founder then supplied **v0.4, 2026-11-05**, §§1–15, the version
-that came before v0.5. The direction: *"add the attached plan to the main new roadmap and you own all of the
-attached alone."*
+**The current specification and one owner (P-105, 2026-11-08).**
 
-- **Owner.** The epic has one owner: the Claude Code session `session_01KZK3jgtmQBgNepqLjXjS3k`. It replaces the
-  2026-11-06 Anna architecture lead, and no other session takes an epic slice. Other packages' holders keep their
-  file holds for their own work (§4.6). An epic slice asks for a held file in `COORDINATION.md`.
-- **How v0.4 maps.** v0.4 is this epic's base, not a second backlog. Where it differs from v0.5, v0.5 and P-104
-  govern.
+- **The specification.** On 2026-11-08 the founder first supplied v0.4 (2026-11-05, §§1–15), then corrected it:
+  *"there's a newer version … v0.5, from November 6 … supersedes v0.4 … this is the current plan."* The source of
+  record is now in the repository: `docs/design/MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf` (52 pages,
+  sha256 `4564aff5d1da81520ed187abf5d5f20be11f74c7d407244bba33d685229b36c4`). Its change note says §§1–15 are
+  unchanged from v0.4. v0.4 is superseded and is not a second backlog.
+- **The owner.** The founder: *"you own all of the attached alone."*
+  - The epic has one owner: the Claude Code session `session_01KZK3jgtmQBgNepqLjXjS3k`.
+  - It replaces the 2026-11-06 Anna architecture lead, and no other session takes an epic slice.
+  - Other packages' holders keep their file holds for their own work (§4.6). An epic slice asks for a held file in
+    `COORDINATION.md`.
+- **Coverage.** The table below maps every section of v0.5 onto this epic. The owner read the whole PDF to build it,
+  §§16–32 included.
 
-| v0.4 section | Where it lives in this epic |
+| v0.5 section | Where it lives in this epic |
 |---|---|
 | §1 principles (provenance, deterministic/LLM split, drafter ≠ checker, stateless workers, escalation) | RULE 2; the audit below; "Where the code corrects the spec": the workers stay read-only, not writable sandboxes |
 | §§2–3 data model, worker contracts, roster, orchestrator loop | Mapped onto the existing tenant keys, artifact versions, lineage and task records, and onto `sub-agent*.ts` and `agentic-workflow-tools.ts`; no duplicate Project/Atom/Task store |
@@ -201,6 +207,23 @@ attached alone."*
 | §14.3 audit, §14.4 spike | The audit below, and check 1 of the expanded spike |
 | §14.5 risks and open questions | Isolation is spike check 4, and the fixture gates are the evaluation harness. **Still open for the founder:** whether Anna is customer-facing first or internal-only; the model cost and latency budget per document type; and whether Anna's internal dispositions need the user-facing approvals' IQ/OQ package, to be scoped with the first design partner |
 | §15 plan-only hand-off | Superseded by P-104's build instruction |
+| §16 the AnA pattern: vault cards, scoped connectors, approval cards, discretion, decision rights and audit | "Trust (§§16–19)" below |
+| §17 custody with the client: tenant isolation, client-owned authority accounts, credential delegation, exact-content approval, client-visible audit, roles and offboarding, one vault for many authorities | "Account decision reconciled" below; phase 6 (support access, offboarding export) and phase 7 (authority onboarding, exact-byte approval). §17's verify-before-external-use notes on ESG, eSTAR and CDER Direct stand: no authority is enabled by a label |
+| §18 why it wins | Rationale, nothing to build |
+| §19 trust build implications | Spike checks 2 (custody canary), 3 (one-byte approval invalidation) and 4 (tenant-scoped audit) |
+| §20 how AnA learns: typed memory, correction → rule, L1/L2/L3 escalation, alignment synthesis, trust repair | "Continuous evolution (§§20–23)" below |
+| §21 rules at user, tenant and project scope: RuleRecord, precedence, the visible ledger, the digest, isolation, repair as Deviation/CAPA | "Continuous evolution" below; phase 6 |
+| §22 why it wins | Rationale, nothing to build |
+| §23 evolution build implications | Spike check 5; the conflict resolver, digest, correspondence-derived project rules and ledger edit/revoke follow in phase 6 |
+| §24 data locality: tiers T0–T3, lanes A/B/C, the tenant policy ceiling, evaluation-gated routing | "Locality (§§24–26)" below |
+| §25 why it wins | Rationale, nothing to build |
+| §26 locality build implications | Spike checks 6 (tier tagging and routing) and 7 (derivative round-trip) |
+| §27 three kinds of learning: client content never crosses, de-identified patterns cross through a cohort gate, craft compounds globally; the promotion pipeline and its invariant | "Learning boundaries (§§27–29)" below |
+| §28 why it wins | Rationale, nothing to build |
+| §29 learning build implications | Phase 6, after the spike's walls |
+| §30 agency feedback: the corpus, objective vs subjective coding, the clean-file review, the three-scope loop, source discipline | "Agency feedback (§§30–32)" below; phase 7 |
+| §31 why it wins | Rationale, nothing to build |
+| §32 feedback build implications | Phase 7: human-confirmed coding, the clean-file review as a ready-state gate ("insufficient pattern history" when sparse), deficiency and RTF/RTA metrics |
 
 **Account decision reconciled.** `server/services/submission-gateways/gateway-accounts.ts` implements the founder's
 2026-10-01 choice of platform or client accounts, with no row defaulting to platform. The supplied §17.2 now directs
@@ -1521,6 +1544,62 @@ COORDINATION.md, row "Codespace setup".
 
   The reader holds no file now.
 - **Not examined:** duplicate names in a zip directory (`safeZip.ts`, "Not done here").
+
+#### F1 / S10 / S5 — RIM: what the agency holds is what was sent, and the queued filing work (session `session_011e42DEAR2U6W51Mjvgfgbt`, 2026-11-01 to 2026-11-08)
+
+**Delivered**
+
+- **What the agency holds is what was sent** (F1 slice 1, rows D7 and D2). `090f62af1`, with `72f2a942d`. It was pushed
+  as `33aa3f08a..72f2a942d` with every pre-push gate passing.
+  - The transmit guard (`server/services/submission-gateways/index.ts`) stamps the dispatch binding and the leaf
+    manifest of the package it sends, server-side and before the wire, on the transmittal row it already writes.
+  - The fold (`server/services/ectd/prior-sequence-loader.ts`) reads each filed sequence from the one transmittal its
+    attempt binds.
+  - A caller can no longer put a forged binding or manifest on a row.
+  - Older sends read from their compiles, labelled as such. A sent sequence with neither record is refused, by name, on
+    the filing path.
+  - No migration and no new file. Evidence: `docs/evidence/D7-ECTD-FILED-STATE-VIEW/2026-11-01-filed-is-what-was-sent/`.
+- **A stale Submission Center test** (F1). `28b287602`: it now pins the market-support read's method and path. It had
+  been stale since `c3794c8fe`. Evidence: `docs/evidence/D7-SUBMISSION-CENTER-NEW-FROM-PROJECT-TEST/2026-11-02/`.
+- **S10, the blind second reading** of the letter splitter's 177 questions in 49 letters.
+  - The package is `a0b2b6701` (`docs/evidence/S10/2026-11-02-blind-reading-package/`).
+  - The coordinating session's reading is `3bc851c5b` (`docs/evidence/S10/2026-11-02-blind-reading/`).
+- **Founder decision P-106 recorded:** the ten uncalled IND lifecycle routes are retired.
+- **The designs for the work queued below** are filed in `docs/evidence/RIM/2026-11-08-designs/`. Each was critiqued
+  and revised, with the founder's and the coordinator's answers appended.
+
+**Found**
+
+- **No git hooks in this session's container (2026-10-18 to 2026-11-02).** `core.hooksPath` was empty, so pushes from
+  it skipped `.husky/pre-push`. Hooks were installed on 2026-11-02. The seven ungated commits, `0308ee257` to
+  `408b0b481`, were checked by the coordinating session: nothing broken.
+- **A compile of a sequence already sent silently lifts slice 1's refusal.** `server/routes/ectd-compile.ts` has no
+  check that the sequence was sent. The P-99 design's first commit closes it.
+- **The corrected R1 inventory's two "probable" callers of the IND diff and manifest PDF routes are false matches.**
+  `IndLifecycle.tsx` posts only letter and report PDFs. The record is
+  `docs/evidence/RIM/2026-11-08-designs/p87-p106-ind-routes-caller-check.txt`.
+- **The splitter.** An oracle run of trunk's G3 over 1,261 inputs found 3,288 violations of its verbatim contract. The
+  blind reading found four classes for S10 to fix red first.
+
+**In progress**
+
+- **F1 slice 2: a send to the agency's test environment is not a filing.** The server part is built and green, with
+  five mutations, in the working tree. The client words, the review and the independent verification remain. The holds
+  are as `COORDINATION.md` records them.
+
+**Next, in order** (the coordinating session's order of 2026-11-02, with P-103 and P-106 added)
+
+1. Slice 2.
+2. The filing-types session's 3b slice 3 (b), then (c) under P-97.
+3. Repairs A to C.
+4. P-87 with P-106 (R1).
+5. P-93, P-94, P-86, P-92 with P-99, and P-96.
+6. P-103, the submission-ops package routes.
+7. S10.
+8. S9 with P-88.
+9. P-104's client-owned authority accounts for S5.
+
+Several decided designs still have open questions with the founder and the coordinator; each design lists them.
 
 ## 4. How everyone works
 
