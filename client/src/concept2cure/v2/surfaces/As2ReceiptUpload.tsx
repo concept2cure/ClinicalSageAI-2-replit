@@ -1,12 +1,26 @@
 import React, { useState } from 'react';
 import { apiUpload, serverMessage } from '@/lib/queryClient';
+import { environmentWords, TEST_SEND_NOT_A_FILING } from './SubmissionSeqWorkspaces';
 
 const MAX_RECEIPT_BYTES = 8 * 1024 * 1024;
-type RecordedReceipt = { verified: true; recorded: true; status: 'received' | 'rejected'; sequenceResolution?: 'resolved' | 'already-resolved' | 'unreconciled' };
+/** `environment`: the original send's, as the server recorded it (absent from an older server). */
+type RecordedReceipt = { verified: true; recorded: true; status: 'received' | 'rejected'; sequenceResolution?: 'resolved' | 'already-resolved' | 'unreconciled'; environment?: 'staging' | 'production' };
 
 function isRecordedReceipt(value: unknown): value is RecordedReceipt {
   const result = value as Partial<RecordedReceipt> | null | undefined;
   return result?.verified === true && result?.recorded === true && (result.status === 'received' || result.status === 'rejected');
+}
+
+/**
+ * A receipt for a send to the agency's test environment, in words. It files
+ * nothing, whatever it says: the server settles no sequence on it, so whether it
+ * reconciled one is not this receipt's question (F1, row D7, 2026-11-01).
+ */
+function testReceiptOutcome(result: RecordedReceipt): { ok: boolean; text: string } {
+  const from = environmentWords(result.environment);
+  return result.status === 'rejected'
+    ? { ok: false, text: `Signed agency MDN verified and recorded. It came from ${from}, which rejected this test send. ${TEST_SEND_NOT_A_FILING}, so this receipt does not file or reject a sequence. Review the agency receipt before sending again.` }
+    : { ok: true, text: `Signed agency MDN verified and recorded. It came from ${from}. ${TEST_SEND_NOT_A_FILING}, so this receipt files no sequence; the sequence can still be filed with the agency.` };
 }
 
 /** Record an agency's signed MDN, without choosing its disposition or ACK stage. */
@@ -36,7 +50,8 @@ export function As2ReceiptUpload({ transmittalId, onRecorded }: { transmittalId:
         setOutcome({ ok: false, text: 'The verification result was not returned. Refresh the transmittal status before retrying.' });
         return;
       }
-      setOutcome(result.status === 'rejected'
+      if (result.environment === 'staging') setOutcome(testReceiptOutcome(result));
+      else setOutcome(result.status === 'rejected'
         ? { ok: false, text: 'Signed agency MDN verified and recorded: FDA transport rejected the submission. Review the agency receipt before correcting it.' + (result.sequenceResolution === 'unreconciled' ? ' This receipt did not reconcile a sequence attempt; review the original transmission record.' : '') }
         : result.sequenceResolution === 'unreconciled'
           ? { ok: false, text: 'Signed agency MDN verified and recorded. This receipt did not reconcile a sequence attempt; review the original transmission record. FDA center acceptance is a separate acknowledgement.' }

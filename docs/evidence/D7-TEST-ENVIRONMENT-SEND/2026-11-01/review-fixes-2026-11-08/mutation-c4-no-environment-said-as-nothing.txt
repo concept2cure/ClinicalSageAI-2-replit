@@ -1,0 +1,7 @@
+MUTATION c4-no-environment-said-as-nothing in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx: replaced [                  : ' (environment not recorded)'}] with [                  : ''}]
+ × client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a transmittal with no recorded environment says so 292ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a transmittal with no recorded environment says so
+AssertionError: expected 'Transmissions and acknowledgementsFil…' to contain '(environment not recorded)'
+      Tests  1 failed | 7 skipped (8)
+restored sha256 fb924f7eb766cd678674155711505fcc8334a3e0ad8cc46dd069996b4d197a02 (expected fb924f7eb766cd678674155711505fcc8334a3e0ad8cc46dd069996b4d197a02)

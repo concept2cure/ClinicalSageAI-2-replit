@@ -1,0 +1,7 @@
+MUTATION c1-production-failure-says-nothing-was-sent in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-08T21:58:21.807796Z): replaced [so nothing was filed.` : '';] with [so nothing was filed.` : ' Nothing was sent.';]
+ × client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a send to the agency's test environment is not a filing (F1, row D7): the signing dialog and the answer > a production send whose request failed shows the server's words and never says nothing was sent 522ms
+      Tests  1 failed | 28 skipped (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a send to the agency's test environment is not a filing (F1, row D7): the signing dialog and the answer > a production send whose request failed shows the server's words and never says nothing was sent
+AssertionError: expected 'FDA ESG AS2 returned HTTP 502 after t…' not to contain 'Nothing was sent'
+restored sha256 346ec3ba86a4b0879aca2791798260b2452ff704f96ac78050d6046f5b5f67c7 (expected 346ec3ba86a4b0879aca2791798260b2452ff704f96ac78050d6046f5b5f67c7)

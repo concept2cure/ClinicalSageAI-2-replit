@@ -775,6 +775,30 @@ acceptance remain separately tracked; no incomplete path is described as accepte
 The new batch is committed locally and merged with canonical work; publication and final merged gates follow.
 Counts in this section overlap broader suites and must not be summed. All 16 real model PQ entries remain pending.
 
+#### S4 / F1 — Anna runtime: the epic's own red on trunk (2026-11-08, P-105 owner `session_01KZK3jgtmQBgNepqLjXjS3k`)
+
+Evidence: `docs/evidence/SPINE/S4/2026-11-08-anna-trunk-red/README.md`.
+
+- **Found.** Since `4852aa78`/`a2f9264a`, every AnA tool reads standing rules and fails closed. Old fixtures cannot
+  answer that read, so 144 of the 366 suites reaching AnA's tools refused before their subject ran. A local probe
+  recorded the swallowed errors: 906 non-member, 273 owner-scope and 241 project-not-found.
+- **Delivered.** All commits are on `concept2cure-v2`.
+  - `e739190890`: the stub pool gets the real gate's empty-rule snapshot, and there is one shared declaration for
+    hand-built stubs.
+  - `fd52dceb45`: every loop round dispatches with its tenant (`ci:ai-tenant-binding` green).
+  - `02d0bad57a`: one declaration, not four copies.
+  - `c55704def0`: production serves the credential vault, the placement setting and the private-rule ledger
+    (`ci:launch-scope-api` green).
+  - `df385e5984`: a project AnA cannot use is refused as that, and eight real-database suites meet the independent
+    check.
+- **Result.** Of the 144 gate-refused suites, 127 pass on the merged tree. No suite moved from passing to failing, and
+  the gate's own suites pass unchanged.
+- **Next.**
+  - `ci:step-presentation`: two import cuts, with no RULE 2 defect behind them.
+  - About 40 AnA suites red for other causes, being diagnosed in three disjoint file sets: the stream route, the
+    executor and tools, and AnA drive.
+  - Then the expanded §14.4 spike.
+
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
 **Delivered**
@@ -1601,7 +1625,7 @@ no screen, route, service, table or component file.
   The reader holds no file now.
 - **Not examined:** duplicate names in a zip directory (`safeZip.ts`, "Not done here").
 
-#### F1 / S10 / S5 — RIM: what the agency holds is what was sent, and the queued filing work (session `session_011e42DEAR2U6W51Mjvgfgbt`, 2026-11-01 to 2026-11-08)
+#### F1 / S10 / S5 — RIM: what the agency holds is what was sent, and the queued filing work (session `session_011e42DEAR2U6W51Mjvgfgbt`, 2026-11-01 to 2026-11-08; updated after slice 2)
 
 **Delivered**
 
@@ -1623,6 +1647,15 @@ no screen, route, service, table or component file.
 - **Founder decision P-106 recorded:** the ten uncalled IND lifecycle routes are retired.
 - **The designs for the work queued below** are filed in `docs/evidence/RIM/2026-11-08-designs/`. Each was critiqued
   and revised, with the founder's and the coordinator's answers appended.
+- **A send to the agency's test environment is not a filing** (F1 slice 2, row D7). `eac69256c`, pushed as
+  `3b246e848..8b8052539` with every pre-push gate passing.
+  - A staging send or a staging MDN leaves the sequence 'pending'. The production send of that sequence files it with
+    a fresh signature, and the fold reads the production transmittal.
+  - A staging failure after the wire voids its signature and only then releases the claim.
+  - The client names where the package goes, in words, and says a test send is not a filing.
+  - Four review lenses ran on 2026-11-08. One fail-closed defect was fixed: a void that failed still released the
+    claim.
+  - No migration and no new non-test file. Evidence: `docs/evidence/D7-TEST-ENVIRONMENT-SEND/2026-11-01/`.
 
 **Found**
 
@@ -1636,24 +1669,24 @@ no screen, route, service, table or component file.
   `docs/evidence/RIM/2026-11-08-designs/p87-p106-ind-routes-caller-check.txt`.
 - **The splitter.** An oracle run of trunk's G3 over 1,261 inputs found 3,288 violations of its verbatim contract. The
   blind reading found four classes for S10 to fix red first.
+- **A void kept only in the tamper-proof log was reported as 'voided'.** Gate 1 reads only the chained row, so such a
+  signature stayed in force. This was fixed in slice 2 for every refused step.
+- **A transmit signature is not bound to its environment.** The sign payload carries `{intent, meaning}` only. This
+  is owed as a later F1 repair.
+- **`gateway-selection.test.ts` has been red on trunk since `5c5b89836`.** Its pool mock refuses `connect()`. This is
+  reported to the coordinating session.
 
-**In progress**
+**Next, in order** (the coordinating session's order of 2026-11-02, with P-103 and P-106 added; slice 2 is done)
 
-- **F1 slice 2: a send to the agency's test environment is not a filing.** The server part is built and green, with
-  five mutations, in the working tree. The client words, the review and the independent verification remain. The holds
-  are as `COORDINATION.md` records them.
-
-**Next, in order** (the coordinating session's order of 2026-11-02, with P-103 and P-106 added)
-
-1. Slice 2.
-2. The filing-types session's 3b slice 3 (b), then (c) under P-97.
-3. Repairs A to C.
-4. P-87 with P-106 (R1).
-5. P-93, P-94, P-86, P-92 with P-99, and P-96.
-6. P-103, the submission-ops package routes.
-7. S10.
-8. S9 with P-88.
-9. P-104's client-owned authority accounts for S5.
+1. The filing-types session's 3b slice 3 (b), then (c) under P-97.
+2. Repairs A to C. Repair A's design assumed `createSequence` already takes the identity lock. It does not, so the
+   live-number check adds the lock in a transaction.
+3. P-87 with P-106 (R1).
+4. P-93, P-94, P-86, P-92 with P-99, and P-96.
+5. P-103, the submission-ops package routes.
+6. S10.
+7. S9 with P-88.
+8. P-104's client-owned authority accounts for S5.
 
 Several decided designs still have open questions with the founder and the coordinator; each design lists them.
 

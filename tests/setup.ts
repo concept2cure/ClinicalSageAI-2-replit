@@ -131,6 +131,39 @@ vi.mock('pg', async importOriginal => {
   return { Pool: PoolStub, default: { Pool: PoolStub } };
 });
 
+/**
+ * The standing-rule gate on the stub pool.
+ *
+ * Since 2026-11-06 (`4852aa78`, `a2f9264a`) every AnA tool call reads the
+ * tenant's and the project's mandatory rules and the acting member's private
+ * rules (server/services/ana/governed-tool-gate.ts `loadToolSkillGates`), and
+ * fails closed when it cannot: SKILL_POLICY_UNAVAILABLE, nothing run. That is
+ * right in production, where the actor is a verified member before any tool
+ * runs. The stub above cannot say so. Its empty rows read as "no rules", which
+ * is true of it, but also as "not an active member" and "project not found",
+ * so every tool test on the stub refused: 144 files, red on trunk from
+ * 2026-11-06 (CI run 42515637919).
+ *
+ * The stub has no rules to read, so a gate reading it gets the snapshot the real
+ * gate returns for a tenant with none. Two cases keep the real gate unchanged:
+ *   - a test that hands the gate a real client (PGlite, a hand-built
+ *     `sqlClient`, or TEST_REAL_DB=1);
+ *   - an organization id the real gate would refuse.
+ * The gate's own tests (governedActionApprovalTenantPinned, ana-skills-routes,
+ * the pglite integrations) all pass a real client.
+ */
+vi.mock('../server/services/ana/governed-tool-gate', async importOriginal => {
+  const actual = await importOriginal<typeof import('../server/services/ana/governed-tool-gate')>();
+  if (process.env.TEST_REAL_DB === '1') return actual;
+  const { noStandingRulesSnapshot, refusedPolicyTenant } = await import('../server/services/ana/__tests__/_standing-rule-fixture');
+  const loadToolSkillGates: typeof actual.loadToolSkillGates = async (scope, call) => {
+    if (scope?.organizationId == null || refusedPolicyTenant(scope)) return actual.loadToolSkillGates(scope, call);
+    const client = scope.sqlClient ?? (await import('../server/db/runtime')).getPool();
+    return client === (mockPool as unknown) ? noStandingRulesSnapshot(scope) : actual.loadToolSkillGates(scope, call);
+  };
+  return { ...actual, loadToolSkillGates };
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECURITY TESTING UTILITIES
 // ═══════════════════════════════════════════════════════════════════════════════

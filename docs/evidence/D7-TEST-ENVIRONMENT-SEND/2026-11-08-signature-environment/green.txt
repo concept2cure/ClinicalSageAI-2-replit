@@ -1,0 +1,7 @@
+# GREEN: the transmit signature names its environment, final tree, 2026-11-08T22:56:03Z
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > throws VALIDATION naming the eSubmission Gateway; getGateway is never called
+   → expected 'AUDIT_UNCONFIRMED' to be 'VALIDATION' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 6 passed (7)
+      Tests  1 failed | 124 passed (125)
+# The one failure, gateway-selection 'throws VALIDATION naming the eSubmission Gateway' (AUDIT_UNCONFIRMED), is pre-existing on clean HEAD (its pool mock refuses connect; the coordinating session triages it). Its positive control passes, now with a signature naming 'staging'.

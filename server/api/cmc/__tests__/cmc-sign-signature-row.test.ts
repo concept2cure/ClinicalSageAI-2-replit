@@ -34,14 +34,14 @@ const h = vi.hoisted(() => {
      those ceremonies answer 409 and never reach the signature, which is the
      point of the preconditions.
 
-     `test_methods` names a method; `project_id` is null here, so the method
-     register is not readable for this row and the gate records the method as
-     not evaluated rather than refusing it (services/cmc/
-     analytical-method-source.ts, `specificationMethodVerdict`). That the gate
-     refuses an UNFIT method, and writes nothing when it does, is
+     `test_methods` names a method and `project_id` addresses a project, so the
+     method register below resolves it to a validated row. The gate refuses a
+     method it cannot resolve as readily as one it finds unfit (services/cmc/
+     analytical-method-source.ts, `specificationMethodVerdict`); which status
+     it answers for each case is
      specification-approve-method-gate.test.ts. */
   const ROW = {
-    id: 9, status: 'draft', approval_status: 'draft', project_id: null, tenant_id: '7',
+    id: 9, status: 'draft', approval_status: 'draft', project_id: 'c0ffee00-0000-4000-8000-000000000001', tenant_id: '7',
     organization_id: 7, batch_number: 'B-9', release_status: null,
     ich_q2_parameters: { characteristics: ['Specificity', 'Accuracy'] },
     validation_report: 'PV-RPT-011',
@@ -57,6 +57,14 @@ const h = vi.hoisted(() => {
          fails closed, which is the right behaviour and the wrong test. */
       if (/FROM users u/.test(sql)) {
         return { rows: [{ name: 'QA Signer', email: 'signer@example.test', title: 'QA Head' }], rowCount: 1 };
+      }
+      /* The analytical method register, which the specification approval's
+         ICH Q2 precondition resolves its named method against. */
+      if (/FROM cmc_source_objects/.test(sql)) {
+        return {
+          rows: [{ sourceKey: 'method:1', sourcePayload: { methodName: 'SE-HPLC', validationStatus: 'validated' }, isMethod: true }],
+          rowCount: 1,
+        };
       }
       if (/FROM qc_testing/.test(sql)) {
         state.qcReads += 1;

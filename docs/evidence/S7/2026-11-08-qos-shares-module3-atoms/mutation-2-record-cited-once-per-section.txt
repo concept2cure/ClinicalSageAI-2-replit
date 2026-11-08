@@ -1,0 +1,4 @@
+ × server/services/__tests__/m2-qos-shares-module3-atoms-and-methods.test.ts > the QOS cites the Module 3 sections’ own atoms > counts one record once when two sections composed from it 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ …(2) ] to deeply equal [ { sourceObjectId: 'spec-1', …(1) } ]
+      Tests  1 failed | 13 passed (14)
