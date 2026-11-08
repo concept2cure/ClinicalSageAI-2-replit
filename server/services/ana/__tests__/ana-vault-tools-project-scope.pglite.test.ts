@@ -115,7 +115,8 @@ beforeAll(async () => {
     CREATE TABLE user_intelligence_profiles (id serial PRIMARY KEY,user_id integer,organization_id integer,
       workflow_preferences jsonb DEFAULT '{}',UNIQUE(user_id,organization_id));
     CREATE TABLE audit_logs (id uuid PRIMARY KEY,tenant_id integer,user_id integer,record_id text,table_name text,
-      action text,new_values jsonb,occurred_at timestamptz DEFAULT now());
+      action text,new_values jsonb,occurred_at timestamptz DEFAULT now(),actor_id integer,target text,payload_hash text,
+      sha256_chain text,hmac_seal text,old_values json,ip_address text,user_agent text,reason text);
     CREATE TABLE concept2cure_review_assignments (organization_id integer, artifact_id integer, reviewer_id integer, status text);
     CREATE TABLE concept2cure_artifacts (id serial PRIMARY KEY, artifact_id text, organization_id integer, project_id integer,
       title text, type text DEFAULT 'document', category text DEFAULT 'document', ctd_section text,

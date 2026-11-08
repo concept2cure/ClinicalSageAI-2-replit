@@ -58,26 +58,26 @@ describe('ProjectBack, the one way back to the project', () => {
     expect(screen.getByRole('button', { name: 'Project' }).className).toBe('pj-back');
   });
 
-  it("names the project from the screen's own read when the shell holds only its id", () => {
-    /* A project opened from `?program=<id>` reaches the shell as `{ id }`
-       (restoreShellProject rehydrates the id only), so the link read "Project"
-       on Reporting, CMC, Vault and Project home (docs/evidence/DESIGN/D7/
-       2026-11-02-reporting/, finding 1). The screen that has read the project
-       passes its name. */
+  /* A project opened by its link alone reaches the shell as an id, and the top
+     bar's own read (Shell.tsx useNameProjectOpenedById) names it only once that
+     read answers. Until then, or if it fails, the link read "Project" (the
+     Reporting running-app run, docs/evidence/DESIGN/D7/2026-11-02-reporting/).
+     A screen that has read the project itself passes its name. */
+  it('names an id-only project by the name its screen read, until the shell has a title', () => {
     publishShellProject({ id: PID });
-    render(<ProjectBack onNav={vi.fn()} name="  BX-301 Phase 2  " />);
-    expect(screen.getByRole('button', { name: 'BX-301 Phase 2' }).className).toBe('pj-back');
+    render(<ProjectBack onNav={vi.fn()} name="C2C-101 anti-IL-23p19 mAb (IND)" />);
+    expect(screen.getByRole('button', { name: 'C2C-101 anti-IL-23p19 mAb (IND)' }).className).toBe('pj-back');
   });
 
-  it("keeps the shell's title over the screen's name, and falls back to the product or code the shell holds", () => {
-    publishShellProject({ id: PID, title: 'C2C-101' });
-    const { unmount } = render(<ProjectBack onNav={vi.fn()} name="Something older" />);
-    expect(screen.getByRole('button', { name: 'C2C-101' })).toBeTruthy();
+  it('prefers the shell title to the screen name, then the shell product and code, before "Project"', () => {
+    publishShellProject({ id: PID, title: 'Shell title' });
+    const { unmount } = render(<ProjectBack onNav={vi.fn()} name="Screen name" />);
+    expect(screen.getByRole('button', { name: 'Shell title' })).toBeTruthy();
     unmount();
-
-    publishShellProject({ id: PID, product: 'anti-IL-23p19 mAb', code: 'C2C-101' });
+    clearShellProject();
+    publishShellProject({ id: PID, product: 'Lumaril', code: 'LX-7' });
     render(<ProjectBack onNav={vi.fn()} name="   " />);
-    expect(screen.getByRole('button', { name: 'anti-IL-23p19 mAb' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Lumaril' })).toBeTruthy();
   });
 
   it('names a title that is not a string, as the copies did, and does not throw', () => {
