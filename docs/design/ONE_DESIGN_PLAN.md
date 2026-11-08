@@ -1522,6 +1522,62 @@ COORDINATION.md, row "Codespace setup".
   The reader holds no file now.
 - **Not examined:** duplicate names in a zip directory (`safeZip.ts`, "Not done here").
 
+#### F1 / S10 / S5 — RIM: what the agency holds is what was sent, and the queued filing work (session `session_011e42DEAR2U6W51Mjvgfgbt`, 2026-11-01 to 2026-11-08)
+
+**Delivered**
+
+- **What the agency holds is what was sent** (F1 slice 1, rows D7 and D2). `090f62af1`, with `72f2a942d`. It was pushed
+  as `33aa3f08a..72f2a942d` with every pre-push gate passing.
+  - The transmit guard (`server/services/submission-gateways/index.ts`) stamps the dispatch binding and the leaf
+    manifest of the package it sends, server-side and before the wire, on the transmittal row it already writes.
+  - The fold (`server/services/ectd/prior-sequence-loader.ts`) reads each filed sequence from the one transmittal its
+    attempt binds.
+  - A caller can no longer put a forged binding or manifest on a row.
+  - Older sends read from their compiles, labelled as such. A sent sequence with neither record is refused, by name, on
+    the filing path.
+  - No migration and no new file. Evidence: `docs/evidence/D7-ECTD-FILED-STATE-VIEW/2026-11-01-filed-is-what-was-sent/`.
+- **A stale Submission Center test** (F1). `28b287602`: it now pins the market-support read's method and path. It had
+  been stale since `c3794c8fe`. Evidence: `docs/evidence/D7-SUBMISSION-CENTER-NEW-FROM-PROJECT-TEST/2026-11-02/`.
+- **S10, the blind second reading** of the letter splitter's 177 questions in 49 letters.
+  - The package is `a0b2b6701` (`docs/evidence/S10/2026-11-02-blind-reading-package/`).
+  - The coordinating session's reading is `3bc851c5b` (`docs/evidence/S10/2026-11-02-blind-reading/`).
+- **Founder decision P-106 recorded:** the ten uncalled IND lifecycle routes are retired.
+- **The designs for the work queued below** are filed in `docs/evidence/RIM/2026-11-08-designs/`. Each was critiqued
+  and revised, with the founder's and the coordinator's answers appended.
+
+**Found**
+
+- **No git hooks in this session's container (2026-10-18 to 2026-11-02).** `core.hooksPath` was empty, so pushes from
+  it skipped `.husky/pre-push`. Hooks were installed on 2026-11-02. The seven ungated commits, `0308ee257` to
+  `408b0b481`, were checked by the coordinating session: nothing broken.
+- **A compile of a sequence already sent silently lifts slice 1's refusal.** `server/routes/ectd-compile.ts` has no
+  check that the sequence was sent. The P-99 design's first commit closes it.
+- **The corrected R1 inventory's two "probable" callers of the IND diff and manifest PDF routes are false matches.**
+  `IndLifecycle.tsx` posts only letter and report PDFs. The record is
+  `docs/evidence/RIM/2026-11-08-designs/p87-p106-ind-routes-caller-check.txt`.
+- **The splitter.** An oracle run of trunk's G3 over 1,261 inputs found 3,288 violations of its verbatim contract. The
+  blind reading found four classes for S10 to fix red first.
+
+**In progress**
+
+- **F1 slice 2: a send to the agency's test environment is not a filing.** The server part is built and green, with
+  five mutations, in the working tree. The client words, the review and the independent verification remain. The holds
+  are as `COORDINATION.md` records them.
+
+**Next, in order** (the coordinating session's order of 2026-11-02, with P-103 and P-106 added)
+
+1. Slice 2.
+2. The filing-types session's 3b slice 3 (b), then (c) under P-97.
+3. Repairs A to C.
+4. P-87 with P-106 (R1).
+5. P-93, P-94, P-86, P-92 with P-99, and P-96.
+6. P-103, the submission-ops package routes.
+7. S10.
+8. S9 with P-88.
+9. P-104's client-owned authority accounts for S5.
+
+Several decided designs still have open questions with the founder and the coordinator; each design lists them.
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for
