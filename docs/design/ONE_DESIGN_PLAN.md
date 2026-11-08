@@ -1375,6 +1375,35 @@ first.
    and Respond use the calm section pattern, and Respond lists Commitments from the page's one read. This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
    Module completion without the ring.
 
+#### D3 — The project page, D3-4 (session `session_01FTWcmXm7At3ZXBE5VWn6oS`, from 2026-11-08, P-107 item 7)
+
+- **D3-4, the step bodies**, `d50c5f07e`, `docs/evidence/DESIGN/D3/D3-4/`. It completes the six items of the
+  hand-off by path; nothing new.
+  - Plan holds the one Tasks and approvals, by due date, with the status in words. A Tasks handoff opens Plan.
+  - Evidence gains Protocol from the lifted records read.
+  - Author's Module completion is led by the figure line, with no ring.
+  - Submit's doors are small, and "Add a market" is ghost.
+  - Respond lists the commitments to the agency, and its Fulfil opens the existing dialog.
+- 36 cases were red on trunk's source and are green. 918 of 919 project tests pass; the failure is trunk's own
+  `projectHomeStageCss`.
+- D3 §6 was walked whole in the running app: C2C-101 and the NeuroPanel-Dx 510(k), at 1440 and 390, light and dark,
+  every step, with no failed request.
+- The walk found and fixed:
+  - a Tasks handoff dropped under React.StrictMode;
+  - module rows whose count was cut off;
+  - overflow and sub-44px touch targets at 390;
+  - the Filing card's broken label.
+- Also fixed in D3's tests, both red on trunk: the Vault-door tests now follow the founder's `5144702d21`, and a
+  biotech-plan fixture follows `3d9879dfc`.
+- **Found, for other owners** (COORDINATION.md row):
+  - `install-fresh.mjs` refuses `ctd_cross_references` (no RLS policy);
+  - the demo seed writes the Lumen pack's GMP deviations into other projects' data rooms;
+  - `AgencyInbox.tsx`'s orange draft button;
+  - `TaskBoard.tsx`'s `stage: 'review'`;
+  - the `documents` alias still sends a no-project visit to Projects.
+
+**Next:** S12, work projects (P-83, §1c), in the same files.
+
 #### F1 — saved conversation handoffs (Codex continuation, 2026-11-06)
 
 **Delivered**
