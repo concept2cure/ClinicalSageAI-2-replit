@@ -92,6 +92,8 @@ describe('the run scope', () => {
 
   it('the stream opens the run scope around every tool handler it runs', () => {
     const src = fs.readFileSync(path.resolve(__dirname, '../../../routes/ana-ri/stream.ts'), 'utf8');
-    expect(src).toMatch(/runWithRunScope\(\{ runId \}, \(\) =>\s*handler\(toolUse\.input, \{/);
+    // Since a2f9264a the scope's body builds a named context before the call; the handler is still inside it.
+    expect(src).toMatch(/runWithRunScope\(\{ runId \}, async \(\) => \{[\s\S]*?return handler\(toolUse\.input, toolContext\);\s*\}\)\)/);
+    expect(src.match(/handler\(toolUse\.input\b/g)).toHaveLength(1);
   });
 });

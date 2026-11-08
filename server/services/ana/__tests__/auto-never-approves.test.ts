@@ -8,8 +8,9 @@
  * that approves things. So this pins, in the source, where the policy may NOT
  * appear:
  *
- *   - anywhere in the gate's classifier (governed-tool-gate.ts), which keeps a
- *     single parameter so no caller can hand it a policy;
+ *   - anywhere in the gate's classifier (governed-tool-gate.ts), which takes
+ *     the call and, since P-104, the standing rules read from the database —
+ *     nothing a caller could hand a policy in;
  *   - anywhere in the governed-action route (utility.ts), the one place that
  *     sets `humanConfirmed: true`;
  *   - in the stream's approval code, from `settleApprovals` to the end of
@@ -46,17 +47,17 @@ function approvalSpan(stream: string): string {
   return stream.slice(start, end);
 }
 
-/** The object literal every tool handler is called with in the stream. */
+/**
+ * The context every tool handler is called with in the stream: its literal and
+ * everything done to it before the call. Since a2f9264a the literal is named
+ * (`toolContext`) so team coordination and the private lane can bind to it.
+ */
 function handlerContext(stream: string): string {
-  const at = stream.indexOf('handler(toolUse.input, {');
-  if (at < 0) throw new Error('handler call not found in stream.ts');
-  const open = stream.indexOf('{', at);
-  let depth = 0;
-  for (let i = open; i < stream.length; i++) {
-    if (stream[i] === '{') depth++;
-    else if (stream[i] === '}' && --depth === 0) return stream.slice(open, i + 1);
-  }
-  throw new Error('handler context literal is not closed');
+  const call = stream.indexOf('handler(toolUse.input, toolContext)');
+  if (call < 0) throw new Error('handler call not found in stream.ts');
+  const at = stream.lastIndexOf('const toolContext: ToolContext = {', call);
+  if (at < 0) throw new Error('handler context literal not found in stream.ts');
+  return stream.slice(at, call);
 }
 
 /** Every non-test .ts file under server/. */
@@ -83,8 +84,18 @@ describe('the run policy has no path to the approval gate', () => {
     expect(read('server/services/ana/governed-tool-gate.ts')).not.toMatch(POLICY);
   });
 
-  it('the classifier takes exactly one argument, so no caller can hand it a policy', () => {
-    expect(classifyToolCall.length).toBe(1);
+  it('the classifier takes the call and the standing rules the database holds, so no caller can hand it a policy', () => {
+    // Since P-104 (4852aa78) its second parameter is the tenant's standing-rule
+    // snapshot. Every caller that passes one passes what loadToolSkillGates read,
+    // and a rule can only add an approval, never take one away.
+    expect(classifyToolCall.length).toBe(2);
+    const withRules = [...stream.matchAll(/classifyToolCall\(([^()]*)\)/g)]
+      .map(m => m[1].split(',').map(a => a.trim())).filter(args => args.length > 1);
+    expect(withRules.length).toBeGreaterThan(0);
+    for (const [, rules] of withRules) expect(rules).toBe('gates');
+    expect(stream).toMatch(/const gates = await loadToolSkillGates\(/);
+    const gates = { organizationId: 1, userId: 2, projectId: null, rules: [], ruleHash: 'e'.repeat(64) };
+    expect(classifyToolCall({ name: 'set_qtl', input: { parameter: 'dropout', limit: 0.2 } }, gates).kind).toBe('NEEDS_APPROVAL');
   });
 
   it('never in the governed-action route that stamps humanConfirmed', () => {
