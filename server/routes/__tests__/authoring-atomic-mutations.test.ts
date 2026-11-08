@@ -139,10 +139,16 @@ const writeIndex = (re: RegExp) => clientSql().findIndex((s) => re.test(s));
 // When set, the client throws for the first query whose SQL matches — a
 // mid-transaction failure.
 let failOn: RegExp | null = null;
+const OPENED_AT = '2026-11-08T10:00:00.000Z';
+const CHANGED_AT = '2026-11-08T10:00:01.000Z';
+const openedSection = { id: 'S1', doc_id: DOC_ID, content: 'old text', title: 'Original title',
+  code: '3.2.P.5', track_changes: false, updated_at: OPENED_AT };
+let lockedSection: typeof openedSection | null;
 
 beforeEach(async () => {
   vi.clearAllMocks();
   failOn = null;
+  lockedSection = { ...openedSection };
   h.auditLogAction.mockResolvedValue(undefined);
 
   h.connect.mockImplementation(async () => ({ query: h.clientQuery, release: h.clientRelease }));
@@ -155,6 +161,9 @@ beforeEach(async () => {
     if (/^BEGIN|^COMMIT|^ROLLBACK/i.test(s)) return {};
     if (/FROM authoring_audit_trail/i.test(s) && /operation_type='CREATE'/.test(s)) return { rowCount:0,rows:[] };
     if (/SELECT doc_id::text FROM authoring_sections/.test(s)) return { rowCount:1,rows:[{doc_id:DOC_ID}] };
+    if (/SELECT[\s\S]*content[\s\S]*FROM authoring_sections[\s\S]*FOR UPDATE/i.test(s)) {
+      return { rowCount: lockedSection ? 1 : 0, rows: lockedSection ? [lockedSection] : [] };
+    }
     if (/UPDATE authoring_sections/i.test(s)) {
       return { rowCount: 1, rows: [{ id: 'S1', doc_id: DOC_ID, content: 'new text' }] };
     }
@@ -171,22 +180,24 @@ beforeEach(async () => {
   });
 });
 
-describe('PATCH /sections/:id — revision + update + audit are atomic', () => {
-  beforeEach(() => {
-    h.poolQuery.mockImplementation(async (sql: string) => {
+function mockEditableSectionReads() {
+  h.poolQuery.mockImplementation(async (sql: string) => {
     const governance = releaseGovernanceRead(sql);
     if (governance) return governance;
-      if (/FROM authoring_sections WHERE id = \$1/i.test(sql)) {
-        return { rowCount: 1, rows: [{ id: 'S1', doc_id: DOC_ID, content: 'old text' }] };
-      }
-      // canEditSection's parent-document lookup joins the section to its document
-      // to read the document status; a non-frozen parent must not 403 the save.
-      if (/JOIN authoring_documents/i.test(sql)) {
-        return { rowCount: 1, rows: [{ status: 'draft' }] };
-      }
-      return { rowCount: 0, rows: [] };
-    });
+    if (/FROM authoring_sections WHERE id = \$1/i.test(sql)) {
+      return { rowCount: 1, rows: [openedSection] };
+    }
+    // canEditSection's parent-document lookup joins the section to its document
+    // to read the document status; a non-frozen parent must not 403 the save.
+    if (/JOIN authoring_documents/i.test(sql)) {
+      return { rowCount: 1, rows: [{ status: 'draft' }] };
+    }
+    return { rowCount: 0, rows: [] };
   });
+}
+
+describe('PATCH /sections/:id — revision + update + audit are atomic', () => {
+  beforeEach(mockEditableSectionReads);
 
   it('brackets the revision, section update and audit in one BEGIN…COMMIT', async () => {
     const res = await request(makeApp())
@@ -228,6 +239,68 @@ describe('PATCH /sections/:id — revision + update + audit are atomic', () => {
     expect(sawRollback()).toBe(true);
     expect(sawCommit()).toBe(-1); // never committed
     expect(h.clientRelease).toHaveBeenCalledTimes(1); // released in finally
+  });
+
+  it('refuses a version that changed after the pre-read, under the parent and section locks', async () => {
+    lockedSection = { ...openedSection, content: 'The other author saved this.', updated_at: CHANGED_AT };
+    const res = await request(makeApp()).patch('/api/authoring/sections/S1')
+      .set('Authorization', await bearer())
+      .send({ content: 'stale replacement', changeReason: 'Amended the drafted section.', expectedUpdatedAt: OPENED_AT });
+
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ success: false, error: { code: 'SECTION_CHANGED' }, currentUpdatedAt: CHANGED_AT });
+    const parent = writeIndex(/SELECT status, locked_at FROM authoring_documents.*FOR UPDATE/i);
+    const section = writeIndex(/SELECT[\s\S]*FROM authoring_sections[\s\S]*FOR UPDATE/i);
+    expect(parent).toBeGreaterThan(sawBegin());
+    expect(section).toBeGreaterThan(parent);
+    expect(sawRollback()).toBe(true);
+    expect(sawCommit()).toBe(-1);
+    expect(clientSql().some(s => /UPDATE authoring_sections|INSERT INTO doc_revisions|INSERT INTO authoring_audit_trail/i.test(s))).toBe(false);
+    expect(h.chainedAudit).not.toHaveBeenCalled();
+    expect(h.clientRelease).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([null, 42, {}, [], '', '   ', 'not-a-timestamp'].map(value => ({ value })))('refuses supplied malformed version $value before reserving the document', async ({ value: expectedUpdatedAt }) => {
+    const res = await request(makeApp()).patch('/api/authoring/sections/S1')
+      .set('Authorization', await bearer())
+      .send({ content: 'new text', changeReason: 'Amended the drafted section.', expectedUpdatedAt });
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({ success: false, error: { code: 'INVALID_SECTION_VERSION' }, field: 'expectedUpdatedAt' });
+    expect(h.connect).not.toHaveBeenCalled();
+  });
+
+  it('keeps omitted-token saves compatible but audits the locked before-image', async () => {
+    lockedSection = { ...openedSection, content: 'An intervening saved version.', updated_at: CHANGED_AT };
+    const res = await request(makeApp()).patch('/api/authoring/sections/S1')
+      .set('Authorization', await bearer())
+      .send({ content: 'new text', changeReason: 'Amended the drafted section.' });
+    expect(res.status).toBe(200);
+    const audit = h.clientQuery.mock.calls.find(([sql]) => /INSERT INTO authoring_audit_trail/i.test(String(sql)));
+    expect(audit?.[1]?.[5]).toBe('An intervening saved version.');
+    expect(sawCommit()).toBeGreaterThan(sawBegin());
+  });
+
+  it('audits a metadata-only PATCH against the locked row while preserving omitted tokens', async () => {
+    lockedSection = { ...openedSection, title: 'Intervening title', updated_at: CHANGED_AT };
+    const res = await request(makeApp()).patch('/api/authoring/sections/S1')
+      .set('Authorization', await bearer()).send({ title: 'Reviewed title' });
+    expect(res.status).toBe(200);
+    const audit = h.clientQuery.mock.calls.find(([sql]) => /INSERT INTO authoring_audit_trail/i.test(String(sql)));
+    expect(audit?.[1]?.[10]).toMatchObject({ source: 'section-metadata', changes: [
+      { field: 'title', from: 'Intervening title', to: 'Reviewed title' },
+    ] });
+    expect(writeIndex(/INSERT INTO doc_revisions/i)).toBe(-1);
+  });
+
+  it('rolls back when the section disappeared after the pre-read', async () => {
+    lockedSection = null;
+    const res = await request(makeApp()).patch('/api/authoring/sections/S1')
+      .set('Authorization', await bearer())
+      .send({ content: 'new text', changeReason: 'Amended the drafted section.', expectedUpdatedAt: OPENED_AT });
+    expect(res.status).toBe(404);
+    expect(sawRollback()).toBe(true);
+    expect(writeIndex(/UPDATE authoring_sections/i)).toBe(-1);
+    expect(h.clientRelease).toHaveBeenCalledTimes(1);
   });
 });
 

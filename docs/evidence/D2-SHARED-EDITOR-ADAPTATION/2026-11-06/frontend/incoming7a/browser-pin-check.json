@@ -1,0 +1,27 @@
+{
+  "head": "e802750f45765e2900f7da8db672f2b8b67ee346",
+  "checks": [
+    {
+      "kind": "component",
+      "record": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/ui/browser-result/result.json",
+      "recordSha256": "0e3374f1ef22b46d8bc3ed3108df5dc05d3f14ba1e9c237e41d21e18f49ba221",
+      "selectedPins": 45,
+      "currentHashMismatches": [],
+      "incomingChangedPathIntersections": [],
+      "historicalRunId": null,
+      "browserRerun": false,
+      "interpretation": "Selected input currency only; historical runtime checkpoint is unchanged."
+    },
+    {
+      "kind": "native",
+      "record": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/ui/live-result/result.json",
+      "recordSha256": "aad4a639f10f388b4fd75d834922515f89b93ec3168055b8bbab71c5697a5ad4",
+      "selectedPins": 30,
+      "currentHashMismatches": [],
+      "incomingChangedPathIntersections": [],
+      "historicalRunId": "2026-11-06T22:18:51.983Z",
+      "browserRerun": false,
+      "interpretation": "Selected input currency only; historical runtime checkpoint is unchanged."
+    }
+  ]
+}

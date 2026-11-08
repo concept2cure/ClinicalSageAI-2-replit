@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { setAuthToken, clearAuthToken } from '@/utils/authToken';
 import { actorToken, PEER_DOC, peerBoard, peerContext, peerRead, peerReceipt } from './peerReviewFixtures';
+import type { AuthoringReviewContext, IndependentCheckContext } from '@shared/authoring/peer-review';
 
 const mocks = vi.hoisted(() => ({ apiRequest: vi.fn(), user: { id: 7, organizationId: 7 } }));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => mocks.user }));
@@ -63,6 +64,24 @@ describe('saved-content-bound human review', () => {
     await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/confirm|reload/i));
     expect(boardReads()).toBe(before);
     expect(screen.queryByText(/Approval recorded on the document/)).toBeNull();
+  });
+});
+
+/* J3 human test, 2026-11-06: the board's "Request changes..." opened the dialog at
+   "Not stated — choose", the same as "Record review decision". */
+describe('the board opens the decision the reviewer pressed', () => {
+  it('"Request changes..." opens with Request changes chosen and asks for the reason', async () => {
+    render(<Review surface={getSurface('review')!} segment="biopharma" onAsk={vi.fn()} onNav={vi.fn()} />);
+    fireEvent.click(await screen.findByRole('button', { name: /Request changes/ }));
+    await waitFor(() => expect((screen.getByLabelText('Decision') as HTMLSelectElement).value).toBe('changes_requested'));
+    expect(screen.getByLabelText('Reason (required)')).toBeTruthy();
+    expect(writes()).toHaveLength(0);
+  });
+
+  it('"Record review decision" still opens with nothing chosen', async () => {
+    await open();
+    await waitFor(() => expect(screen.getByRole('button', { name: /Record decision/ })).toBeTruthy());
+    expect((screen.getByLabelText('Decision') as HTMLSelectElement).value).toBe('');
   });
 });
 
@@ -179,5 +198,117 @@ describe('synchronous verdict dispatch boundary', () => {
     await act(async () => { await staleClick(); await staleClick(); });
     expect(writes()).toHaveLength(1);
     expect(onRecorded).toHaveBeenCalledTimes(confirmed ? 1 : 0);
+  });
+});
+
+const CHECK_RECEIPT = '3f2c1a10-0000-4000-8000-000000000088';
+const FINDING = 'b'.repeat(64);
+const independentCheck = (over: Partial<IndependentCheckContext> = {}): IndependentCheckContext => ({ required: true,
+  receiptId: CHECK_RECEIPT, snapshotHash: peerContext.snapshotHash, checkerVersion: 'test-checker-v1', standing: 'current',
+  semanticVerified: false, hardBlockCount: 0, findings: [], ...over });
+const independentContext = (check = independentCheck()): AuthoringReviewContext => ({ ...peerContext, canRunIndependentChecks: true, independentCheck: check });
+const hardFinding = { findingId: FINDING, category: 'missing_source', severity: 'high' as const, hard: true, open: true,
+  current: true, sectionId: peerContext.snapshot.sections[0].id, description: 'The recorded source link needs correction.' };
+const response = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body }) as Response;
+
+describe('independent findings within the existing human review dialog', () => {
+  it('runs checks without a model, refreshes the server receipt and unlocks an eligible approval', async () => {
+    let context = independentContext(independentCheck({ standing: 'missing', receiptId: null }));
+    const onRecorded = vi.fn();
+    mocks.apiRequest.mockImplementation(async (method: string, _url: string, body?: { action?: string }) => {
+      if (method === 'GET') return response(peerRead(context));
+      if (body?.action === 'run_independent_checks') { context = independentContext(); return response({ success: true, independentCheck: context.independentCheck }); }
+      return response(peerReceipt());
+    });
+    render(dialog({ onRecorded }));
+    fireEvent.change(await screen.findByLabelText('Decision'), { target: { value: 'approved' } });
+    expect((screen.getByRole('button', { name: 'Record approval' }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Run independent checks' }));
+    await screen.findByText('Checks are current. No blocking findings remain open.');
+    expect(writes()).toHaveLength(1);
+    expect(writes()[0][2]).toEqual({ action: 'run_independent_checks', expectedSnapshotHash: peerContext.snapshotHash });
+    expect(onRecorded).not.toHaveBeenCalled();
+    expect((screen.getByRole('button', { name: 'Record approval' }) as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.getByText(/Scientific and clinical meaning still require human review/)).toBeTruthy();
+  });
+
+  it('retains a human disagreement without letting it waive a current blocking finding', async () => {
+    const context = independentContext(independentCheck({ findings: [hardFinding], hardBlockCount: 1 }));
+    mocks.apiRequest.mockImplementation(async method => response(method === 'GET' ? peerRead(context) : peerReceipt('changes_requested')));
+    render(dialog()); await screen.findByLabelText('Decision');
+    expect(screen.getByText('The recorded source link needs correction.')).toBeTruthy();
+    expect((screen.getByRole('option', { name: /Resolve after the checks/ }) as HTMLOptionElement).disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Decision for finding 1'), { target: { value: 'rejected' } });
+    fireEvent.change(screen.getByLabelText('Reason for finding 1 (required)'), { target: { value: 'The source owner should review this disagreement.' } });
+    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'approved' } });
+    expect((screen.getByRole('button', { name: 'Record approval' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/does not waive this blocking finding/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'changes_requested' } });
+    fireEvent.change(screen.getByLabelText('Reason (required)'), { target: { value: 'The dose rationale requires revision.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Record change request' }));
+    await screen.findByLabelText('Your recorded decision');
+    expect(writes()[0][2]).toMatchObject({ independent_findings: { receiptId: CHECK_RECEIPT, snapshotHash: peerContext.snapshotHash,
+      dispositions: [{ findingId: FINDING, decision: 'rejected', reason: 'The source owner should review this disagreement.' }] } });
+  });
+
+  it('allows a reasoned human resolution only after the latest checks no longer reproduce the finding', async () => {
+    const context = independentContext(independentCheck({ findings: [{ ...hardFinding, current: false }], hardBlockCount: 1 }));
+    mocks.apiRequest.mockImplementation(async method => response(method === 'GET' ? peerRead(context) : peerReceipt()));
+    render(dialog()); await screen.findByLabelText('Decision');
+    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'approved' } });
+    fireEvent.change(screen.getByLabelText('Decision for finding 1'), { target: { value: 'resolved' } });
+    fireEvent.change(screen.getByLabelText('Reason for finding 1 (required)'), { target: { value: 'Corrected source link was verified after the rerun.' } });
+    expect((screen.getByRole('button', { name: 'Record approval' }) as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Record approval' }));
+    await screen.findByLabelText('Your recorded decision');
+    expect(writes()[0][2]).toMatchObject({ independent_findings: { dispositions: [{ findingId: FINDING, decision: 'resolved' }] } });
+  });
+});
+
+describe('independent check mutation reconciliation and session fencing', () => {
+  it('holds an unknown check outcome until an explicit reload recovers its actual server receipt', async () => {
+    let context = independentContext(independentCheck({ standing: 'missing', receiptId: null }));
+    mocks.apiRequest.mockImplementation(async method => {
+      if (method === 'GET') return response(peerRead(context));
+      context = independentContext(); return response({ error: 'Response interrupted after commit' }, 503);
+    });
+    render(dialog()); await screen.findByLabelText('Decision');
+    fireEvent.click(screen.getByRole('button', { name: 'Run independent checks' }));
+    expect((await screen.findByRole('alert')).textContent).toMatch(/whether independent checks were recorded/);
+    expect((screen.getByRole('button', { name: 'Run independent checks' }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Run independent checks' }));
+    expect(writes()).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Reload review record' }));
+    await screen.findByText('Checks are current. No blocking findings remain open.');
+    expect((screen.getByLabelText('Decision') as HTMLSelectElement).value).toBe('');
+  });
+
+  it('fences a stale approval and stale rerun callback immediately after a new blocking receipt', async () => {
+    let context = independentContext();
+    mocks.apiRequest.mockImplementation(async method => {
+      if (method === 'GET') return response(peerRead(context));
+      context = independentContext(independentCheck({ findings: [hardFinding], hardBlockCount: 1 }));
+      return response({ success: true, independentCheck: context.independentCheck });
+    });
+    const onRecorded = vi.fn();
+    const { result } = renderHook(() => usePeerReviewDecision({ documentId: PEER_DOC, userId: 7, organizationId: 7 }, () => true, onRecorded));
+    await waitFor(() => expect(result.current.context).toBeTruthy());
+    act(() => result.current.setDecision('approved'));
+    const oldRecord = result.current.record; const oldRun = result.current.runChecks;
+    await act(async () => { await oldRun(); await oldRecord(); await oldRun(); });
+    expect(writes()).toHaveLength(1); expect(onRecorded).not.toHaveBeenCalled();
+    expect(result.current.independentReady).toBe(false);
+  });
+
+  it('does not publish a delayed former actor’s findings into the replacement session', async () => {
+    let resolve!: (value: Response) => void;
+    mocks.apiRequest.mockImplementation(async method => method === 'POST' ? new Promise<Response>(done => { resolve = done; })
+      : response(peerRead({ ...independentContext(), actorId: String(mocks.user.id) })));
+    const view = render(dialog()); await screen.findByLabelText('Decision');
+    fireEvent.click(screen.getByRole('button', { name: 'Run independent checks' }));
+    mocks.user = { id: 8, organizationId: 7 }; setAuthToken(actorToken(8, 7)); view.rerender(dialog());
+    await screen.findByLabelText('Decision');
+    await act(async () => resolve(response({ success: true, independentCheck: independentCheck({ findings: [{ ...hardFinding, description: 'Retired actor finding canary' }], hardBlockCount: 1 }) })));
+    expect(screen.queryByText('Retired actor finding canary')).toBeNull();
   });
 });

@@ -1,0 +1,6 @@
+The composer at 1440 x 960, measured in the running app (CSS px). This was already wrong on trunk; D3-1 found it in the walk:
+
+Before: composer h=229.5, textarea h=67.5, .pj-composer-row h=128
+        The row's spacer was `<span className="sp" />`. `.sp` is the surface page class
+        (journey-v2.css:271, padding 32px 40px 96px), so the empty spacer was 128px tall.
+After:  composer h=133.5, .pj-composer-row h=32 (spacer removed; the row is justify-content:flex-end)

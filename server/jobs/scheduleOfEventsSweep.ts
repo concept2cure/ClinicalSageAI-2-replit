@@ -78,9 +78,12 @@ function emptySummary(): ScheduleSweepSummary {
  */
 async function claimScheduleForReview(
   client: RequestSqlClient,
-  plan: { scheduleId: number; orgId: number; projectId: number },
+  plan: { scheduleId: number | null; orgId: number; projectId: number },
   minAgeMs: number,
 ): Promise<boolean> {
+  // An unscheduled active project is first observed under the same estate lease;
+  // the service creates only its monitoring header under the project row lock.
+  if (plan.scheduleId === null) return true;
   const { rows } = await client.query(
     `UPDATE project_schedule_of_events
         SET last_reviewed_by_ana_at = now()
@@ -117,7 +120,7 @@ export async function runScheduleOfEventsSweep(
 
 /** Claim and review one plan under its own tenant's connection. Best-effort: a failure is counted. */
 async function reviewPlan(
-  p: { scheduleId: number; orgId: number; projectId: number },
+  p: { scheduleId: number | null; orgId: number; projectId: number },
   minAgeMs: number,
   summary: ScheduleSweepSummary,
 ): Promise<void> {
@@ -149,7 +152,7 @@ async function reviewPlan(
 
 async function sweepAll(minAgeMs: number): Promise<ScheduleSweepSummary> {
   const summary = emptySummary();
-  let plans: Array<{ scheduleId: number; orgId: number; projectId: number }>;
+  let plans: Array<{ scheduleId: number | null; orgId: number; projectId: number }>;
   try {
     plans = await listActiveSchedulePlans();
   } catch {

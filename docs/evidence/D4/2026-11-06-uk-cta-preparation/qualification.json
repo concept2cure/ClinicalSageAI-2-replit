@@ -1,0 +1,331 @@
+{
+  "date": "2026-11-06",
+  "plan": "F1",
+  "completes": "server/services/regulatory",
+  "launch": {
+    "workstream": "W3",
+    "rows": [
+      "D2",
+      "D4"
+    ]
+  },
+  "baseline": "21a21849d7cfb8a35794489a87fad2b849c7011c",
+  "sourceManifest": "source-sha256.anna-merged.json",
+  "sourceFiles": 14,
+  "sources": {
+    "index": "official-source-index.json",
+    "archive": "official-sources.tar.gz",
+    "officialSources": 5,
+    "quoteSpansVerified": 26,
+    "bodyArtifactHashesVerified": 15,
+    "limitations": "Current guidance plus obsolete-page caveat; linked eligibility/scenario tables not qualified.",
+    "archivedArtifactsVerified": 22
+  },
+  "red": {
+    "editorAndRealService": {
+      "failed": 2,
+      "passed": 27
+    },
+    "blueprint": {
+      "failed": 9,
+      "passed": 1
+    },
+    "channelAndChecklist": {
+      "failed": 8,
+      "passed": 25
+    }
+  },
+  "green": {
+    "integration": {
+      "passed": 350,
+      "suites": 14
+    },
+    "blueprint": {
+      "passed": 19,
+      "suites": 2
+    },
+    "channelChecklistStrategy": {
+      "passed": 51,
+      "suites": 5
+    },
+    "note": "Cohorts overlap; do not sum."
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 9,
+    "warningGrowth": 0
+  },
+  "build": {
+    "result": "pass",
+    "command": "npm run build",
+    "runtime": "Node 22.23.4",
+    "log": "build.txt.gz"
+  },
+  "repositoryGates": {
+    "result": "passed",
+    "source": "15bf1226e6bbdb8841beff4512c56ad6b38549fb",
+    "typeScriptErrors": 0,
+    "typeScriptBaseline": 0,
+    "warningGrowth": 0,
+    "log": "publication-accepted.txt.gz",
+    "note": "Normal publication accepted and remote independently verified. Prior ref-race snapshots remain retained.",
+    "secondPass": {
+      "source": "a3c841384269046342413a32e271ee19f19c04f1",
+      "typeScriptErrors": 0,
+      "typeScriptBaseline": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-second-ref-race.txt.gz",
+      "note": "All normal gates passed again; Git rejected a coordination-doc-only ref advance."
+    },
+    "thirdPass": {
+      "source": "53842d227388f7815eedf519233e972ea89689ba",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-third-ref-race.txt.gz",
+      "note": "All normal gates passed; concurrent Vault/navigation advance rejected the ref."
+    },
+    "fourthPass": {
+      "source": "0f2180f00a88c7472266295c988a47b3300d8ee6",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-fourth-ref-race.txt.gz",
+      "note": "All normal gates passed; the remote ref changed before lock to incoming Anna runtime P104."
+    },
+    "fifthPass": {
+      "source": "93740b36de192f2e43ee481b9b38f79a826ec92e",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-fifth-ref-race.txt.gz",
+      "note": "Anna-integrated source passed all normal gates; concurrent tasking/D3 ref advance rejected the lock."
+    },
+    "sixthPass": {
+      "source": "797e33c09621dcac9701b566807d2f157e782594",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-sixth-ref-race.txt.gz",
+      "note": "All normal gates passed; concurrent billing update rejected the lock."
+    },
+    "seventhPass": {
+      "source": "eda12c5661ae6ae9ea8b80d9727746678e6e3a49",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-seventh-ref-race.txt.gz",
+      "note": "All normal gates passed; concurrent conversation handoff update rejected the lock."
+    },
+    "eighthPass": {
+      "source": "ad7d7d5452d5939601010b14d3c0d06262def431",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "lintedFiles": 15,
+      "log": "gates-pass-eighth-ref-race.txt.gz",
+      "note": "All normal gates passed; concurrent ordinary-task repair rejected the lock."
+    },
+    "ninthPass": {
+      "source": "117554784eb22964aa8e3d337f95908e6616f726",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-ninth-ref-race.txt.gz",
+      "note": "All normal gates passed; concurrent commitments/activity project UI update rejected the ref."
+    },
+    "tenthPass": {
+      "source": "605ce3b8a225e7115a0fb39fa22c812519441c60",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "log": "gates-pass-tenth-ref-race.txt.gz",
+      "note": "Every normal gate passed; concurrent authoring project-authority/editor-list and gate-completion publication rejected the ref."
+    },
+    "eleventhPass": {
+      "source": "4a02adaec7377caac6046302cea720e19b26af42",
+      "typeScriptErrors": 0,
+      "warningGrowth": 0,
+      "lintedFiles": 16,
+      "log": "gates-pass-eleventh-ref-race.txt.gz",
+      "note": "Every normal gate passed; concurrent unified-task admission publication rejected the ref."
+    },
+    "initialSource": "79a2f3605ef7998f69009ba7baa7dd0da8dd03a1",
+    "checkedTypeScriptFiles": 16
+  },
+  "publication": {
+    "result": "accepted",
+    "source": "15bf1226e6bbdb8841beff4512c56ad6b38549fb",
+    "remoteVerified": "15bf1226e6bbdb8841beff4512c56ad6b38549fb",
+    "branch": "concept2cure-v2",
+    "verifiedAt": "2026-11-06T20:03:27.450540+00:00",
+    "method": "normal git push with every repository hook enabled",
+    "typeScriptErrors": 0,
+    "typeScriptBaseline": 0,
+    "warningGrowth": 0,
+    "coreManifest": "source-sha256.anna-merged.json",
+    "coreHashesMatched": 14,
+    "integrationTestHashMatched": true,
+    "sourceIntakeFixtureHashMatched": true,
+    "limits": "No deployment, live provider, IRAS technical validation/transmission or scientific qualification is claimed."
+  },
+  "limits": [
+    "No IRAS form generation, technical validation, transmission or agency qualification.",
+    "Initial submission date/lifecycle/product facts remain unassessed; no automatic rule selector.",
+    "No scientific/model/independent regulatory qualification or running-app screen completion is claimed.",
+    "Regional TA clinical-array matching and nonclinical source binding remain open.",
+    "CMC remains small-molecule US IND; legacy ind:mhra remains no-offer."
+  ],
+  "mergedIntegration": {
+    "source": "1281bf569d1144aab964d3671717fdd8f843a9d3",
+    "incoming": "e533082d6",
+    "passed": 161,
+    "suites": 15,
+    "build": "pass",
+    "sourceHashesMatched": 14,
+    "conflict": "Only COORDINATION.md; retained UK status row and latest D3 status."
+  },
+  "docOnlySynchronization": {
+    "incoming": "f5891e9d9",
+    "source": "005bbee492de7226b3622b40bb8fe26607b3e191",
+    "changed": [
+      ".design/claude-convergence/COORDINATION.md"
+    ],
+    "sourceHashesMatched": 14,
+    "testsAndBuild": "Previous merged checks apply; no application source changed."
+  },
+  "vaultIntegration": {
+    "incoming": "adb1c00cba37ae6c128b4d05b350d237ab5d80fb",
+    "source": "8b851f5cf89009bbb88f43e030b1e5f0df88cbd9",
+    "passed": 132,
+    "suites": 12,
+    "build": "pass",
+    "sourceHashesMatched": 14,
+    "review": "No UK/source/guard/one-editor blocker. Biostatistics rail decision is explicitly recorded in the incoming one-product baseline."
+  },
+  "originalSourceManifest": "source-sha256.json",
+  "sourceTransition": "source-hash-transition.json",
+  "currentMergedGates": {
+    "result": "passed",
+    "source": "15bf1226e6bbdb8841beff4512c56ad6b38549fb",
+    "log": "publication-accepted.txt.gz"
+  },
+  "annaIntegration": {
+    "incoming": "67348a526cc75f152df2e73e7bfbb65e815dc5fc",
+    "source": "ba1d327e2c00d459e0eaa7ec037489bf805a941a",
+    "passed": 705,
+    "suites": 30,
+    "uploadHook": {
+      "passed": 14,
+      "suites": 1
+    },
+    "ops": {
+      "passed": 31
+    },
+    "build": "pass",
+    "originalHashesUnchanged": 13,
+    "reviewedChangedFile": "server/services/ana/AnaDocumentDraftingService.ts",
+    "reviewedChange": "Four-line server-issued source-sensitivity carry; UK prompt/basis/currentness checks preserved.",
+    "currentManifestMatches": 14,
+    "limits": [
+      "No native PostgreSQL or live provider/gateway deployment qualification.",
+      "Selected Vault sensitivity checks and exact quoted spans do not prove semantic claim support or the full P104 spike.",
+      "Correspondence blocker checks do not establish exact-package clean-file readiness."
+    ]
+  },
+  "taskingD3Integration": {
+    "incoming": "57b13c599df7fa957809a4764963734b02522545",
+    "source": "bd91756d13b875a6d8ea4630b1e26d4c8b3a0b39",
+    "passed": 201,
+    "suites": 14,
+    "build": "pass",
+    "currentManifestMatches": 14,
+    "review": "Tasking admission/transaction and lifted project work/inbox reads preserve UK/editor/source scope.",
+    "nativeTaskingProof": "Retained by incoming owner; not rerun in this workstream.",
+    "conflict": "COORDINATION.md only; latest D3 row and released UK row retained."
+  },
+  "billingIntegration": {
+    "incoming": "c73ac5a2e5b0c69c04bcddd31b51e76d1f0aee60",
+    "source": "05519759f0c9e9a13f5d9b2d27713fe60b6c4266",
+    "passed": 75,
+    "suites": 4,
+    "build": "pass",
+    "currentManifestMatches": 14,
+    "review": "No UK/project/editor impact; portal role and authenticated-organization binding retained."
+  },
+  "conversationIntegration": {
+    "incoming": "c44a212688bcac9187b6c7e71cdaf390ffba6699",
+    "source": "3bbd5dc68c9f1c2cc4425875d36b61e390f89046",
+    "passed": 114,
+    "suites": 11,
+    "build": "pass",
+    "currentCoreManifestMatches": 14,
+    "review": "Existing project/editor/leave/stream ownership retained.",
+    "testCorrection": "integration-test-correction.json",
+    "testCorrectionLint": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "sourceManifestScope": "14 core UK repair files in current manifest; Biostatistics rail pin and source-import explicit edit-grant fixture have separate correction hashes.",
+  "ordinaryTaskIntegration": {
+    "incoming": "29a1b5ddb11941df199de9a0c155333d50ab99b1",
+    "source": "6f7dc696b5e3728dcc99f1eedeb97a1e631b842c",
+    "passed": 141,
+    "suites": 9,
+    "serverBuild": "pass",
+    "clientBuild": "Previous conversation client build applies; git diff confirms no client change.",
+    "currentCoreManifestMatches": 14,
+    "separateTestHashMatches": true,
+    "review": "Project/source precedence, fresh write scope, transactional workspace/admission and confirmed-commit notifications preserve UK task planning."
+  },
+  "knowledgeIntegration": {
+    "incoming": "965084590ccf7a569248cc1c6df0455785f7a722",
+    "source": "6c092d7529257245d1420693daa30476fb33660c",
+    "passed": 63,
+    "suites": 8,
+    "build": "pass",
+    "currentCoreManifestMatches": 14,
+    "separateTestHashMatches": true,
+    "review": "Commitments read uses verified integer project; existing activity moves into Records with independent errors. Profile facts/editor/drafting unchanged."
+  },
+  "authoringProjectIntegration": {
+    "remote": "c5baa0089774eb91d4bdd9fe60a6fbcf33b05bbc",
+    "merge": "1162f4a1c",
+    "closingDocsRemote": "53b9f15d8fe96767c8dbe6def2d7e8c5e03db7aa",
+    "closingDocsMerge": "cae0363a1",
+    "reviews": "Two independent read-only reviews found no UK/shared-editor compatibility blocker. Existing project write intent and scoped list integrity strengthened; no new app/editor/surface.",
+    "coreTests": {
+      "passed": 130,
+      "suites": 8,
+      "log": "editor-authority-tests.txt.gz"
+    },
+    "callerTests": {
+      "passed": 354,
+      "suites": 6,
+      "log": "editor-callers-green.txt.gz"
+    },
+    "testOnlyCorrection": "source-intake-fixture-correction.json",
+    "limits": "Counts overlap earlier cohorts. Incoming native PostgreSQL/browser evidence is retained with its owner and is not a local rerun.",
+    "lineageTests": {
+      "passed": 87,
+      "suites": 2,
+      "log": "editor-lineage-tests.txt.gz"
+    },
+    "build": {
+      "result": "passed",
+      "log": "editor-authority-build.txt.gz"
+    },
+    "fixtureReview": "Independent read-only review reconstructed the exact canonical before-hash by reversing only the explicit grant/new denial case. All preexisting assertions retained; after-hash and 27-case/lint receipts verified."
+  },
+  "unifiedTaskIntegration": {
+    "remote": "9c047a1ff919981d8b6e13f2a4c383294fb8a745",
+    "merge": "91e5871d84ec04923048f5d221e575790bf298cf",
+    "reviews": "Two independent read-only reviews found no UK/task-plan blocker or permission weakening. The alternate unified-task POST now reuses current actor/project admission, actual workspace and same-transaction task/audit writes; unconfirmed commit discards the request lease.",
+    "tests": {
+      "passed": 145,
+      "suites": 5,
+      "log": "unified-task-tests.txt.gz"
+    },
+    "build": {
+      "result": "passed",
+      "log": "unified-task-build.txt.gz",
+      "scope": "server; git diff4a02adaec..merge -- client is empty, so preceding client build still applies"
+    },
+    "coreHashesMatched": 14,
+    "bothIntegrationTestHashesMatched": true,
+    "limits": "Counts overlap earlier cohorts. Incoming owner native PostgreSQL proof is separate and not rerun here."
+  }
+}

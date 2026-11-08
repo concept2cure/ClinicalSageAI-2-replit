@@ -83,6 +83,7 @@ export interface StreamPostProcessingContext {
   orgId: string | number | null | undefined;
   userId: number | undefined;
   threadId: string | undefined;
+  runId?:string|null;
   /** req.user?.name, for command attribution. */
   userName: string | undefined;
   effectiveRole: UserRole;
@@ -160,6 +161,8 @@ export interface StreamPostProcessingContext {
   stopped?: boolean;
   /** Seals and writes the record; never rejects. */
   fileTurnRecord?: (outcome: TurnOutcome) => Promise<TurnRecordStatus>;
+  /** Server-only buffer release, after encrypted transcript and turn record are durably captured. */
+  releasePrivateOutput?:()=>void;
 }
 
 /**
@@ -327,6 +330,7 @@ export async function persistStoppedAnswer(
  * content so the client turn still closes cleanly.
  */
 export async function runStreamPostProcessing(ctx: StreamPostProcessingContext): Promise<void> {
+  if (ctx.res.locals?.ownerPrivateCapture===true) return runOwnerPrivatePostProcessing(ctx);
   const {
     res,
     fullContent,
@@ -711,4 +715,30 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       /* connection already gone */
     }
   }
+}
+
+/** Private derived content has no public-memory, provenance, draft or command side channel. */
+async function runOwnerPrivatePostProcessing(ctx:StreamPostProcessingContext):Promise<void> {
+  const {res,threadId,fileTurnRecord,turnRecorder}=ctx;
+  try {
+    if (!threadId || !ctx.runId || !fileTurnRecord || !turnRecorder || ctx.persistenceFailed || !ctx.releasePrivateOutput) throw new Error('PRIVATE_CAPTURE_REQUIRED');
+    const verification=ctx.fullContent?verifyTurnAnswer(ctx.fullContent,ctx.toolEvidenceCorpus):null;
+    const metadata=withTurnEnding(buildAssistantMetadata(ctx.toolTrace,null,ctx.reasoning,ctx.humanControls,ctx.plan),
+      {stoppedReason:stoppedTurnReason(ctx.stopped,ctx.stoppedReason),rounds:ctx.rounds,runPolicy:ctx.runPolicy,pendingSteps:ctx.pendingSteps,policyHolds:ctx.policyHolds});
+    const id=await saveMessage(threadId,'assistant',ctx.fullContent,undefined,undefined,
+      {...metadata,verification},{requireOwnerPrivate:true,runId:ctx.runId,intentId:'assistant-final'});
+    if (!id) throw new Error('PRIVATE_MESSAGE_NOT_RECORDED');
+    turnRecorder.setAnswer({stored:ctx.fullContent||null});turnRecorder.setMessageIds({assistant:id});
+    turnRecorder.setControls(ctx.humanControls);turnRecorder.setVerification(verification);
+    turnRecorder.setOutputs({drafts:ctx.collectedDrafts,executedActions:[],executedCommands:[]});
+    const record=await fileTurnRecord(ctx.stopped?'stopped':'answered');
+    if (record.status!=='recorded') throw new Error('PRIVATE_RECORD_NOT_RECORDED');
+    const {assertOwnerPrivateThreadCurrent}=await import('../../services/chat-thread-helpers');
+    await assertOwnerPrivateThreadCurrent(threadId);
+    ctx.releasePrivateOutput();
+    res.write(`data: ${JSON.stringify({type:'post_done',cleanedResponse:ctx.fullContent,turnRecord:record,queueMeta:buildQueueMeta({threadId,persistenceFailed:false})})}\n\n`);
+  } catch {
+    // No raw output, provider error or command is emitted on an unconfirmed private write.
+    res.write(`data: ${JSON.stringify({type:'error',code:'OWNER_PRIVATE_CAPTURE_UNAVAILABLE',message:'The private answer could not be securely recorded. No answer was released.'})}\n\n`);
+  } finally {res.end();}
 }

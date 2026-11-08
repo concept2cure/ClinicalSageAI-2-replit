@@ -1,0 +1,24 @@
+[
+  {
+    "viewport": "390x844",
+    "theme": "dark",
+    "project_context_retained": "6c89e2c1-2d76-4356-80cb-001821956b5a",
+    "rail_A_to_B": {
+      "url": "http://127.0.0.1:5000/concept2cure/conversation-thread/f1_recent_1793988502746_f194dfozc?program=6c89e2c1-2d76-4356-80cb-001821956b5a",
+      "messages": [
+        "F1 Recent conversation B"
+      ]
+    },
+    "palette_A_to_B": {
+      "url": "http://127.0.0.1:5000/concept2cure/conversation-thread/f1_recent_1793988502746_f194dfozc?program=6c89e2c1-2d76-4356-80cb-001821956b5a",
+      "messages": [
+        "F1 Recent conversation B"
+      ]
+    },
+    "same_thread_rail_preserved_composer": true,
+    "same_thread_palette_preserved_composer": true,
+    "same_thread_unsent_text_preserved": true,
+    "reload_retained_B": true,
+    "page_errors": []
+  }
+]

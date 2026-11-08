@@ -78,7 +78,7 @@ describe('compare two versions (critique 15)', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Compare with v2.0' }));
     const panel = await screen.findByTestId('vault-version-compare');
     expect(await within(panel).findByText('v1.0 → v2.0 (current)')).toBeTruthy();
-    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/c2c/project-vault/${PID}/documents/${V2}/compare?against=${V1}`);
+    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/c2c/project-vault/${PID}/documents/${V2}/compare?against=${V1}`, undefined, undefined, expect.any(AbortSignal));
     expect(panel.textContent).toContain('Different bytes: the SHA-256 differs.');
     expect(panel.textContent).toContain('Title: “Stability protocol” → “Stability protocol, revised”');
     expect(within(panel).getByRole('status').textContent).toBe('2 lines added, 1 line removed, 39 lines unchanged.');

@@ -5,6 +5,7 @@ vi.mock('../../db', () => ({ pool: { connect: h.connect } }));
 vi.mock('../../db/sessionScope', () => ({ applySessionScope: h.setup, clearSessionScope: h.clear }));
 vi.mock('../../services/auditService', () => ({ default: { logAction: vi.fn(async () => ({ persisted: true })) } }));
 import { registerTool, type ToolRunContext, type ToolOutcome } from '../tools/runtime';
+import { getTenantScope } from '../../db/tenantStore';
 const principal = { userId: 42, organizationId: 7, organizationUuid: '862955dc-b260-4e98-882b-89051db38dba',
   role: 'viewer', email: 'viewer@tenant.example', clientId: 'first-party', scopes: ['c2c:read'], tokenUse: 'platform' };
 const authInfo = { token: 'test-only', clientId: 'first-party', scopes: principal.scopes, extra: { principal } };
@@ -27,14 +28,15 @@ describe('authenticated MCP tool request executor', () => {
     let saved: ToolRunContext | undefined;
     const handler = capture(async ctx => {
       saved = ctx;
+      expect(getTenantScope()?.accountId).toBe(principal.userId);
       expect(ctx.sqlClient).toBe(ctx.ana.sqlClient);
       await ctx.sqlClient!.query('SELECT first');
       await ctx.ana.sqlClient!.query('SELECT second');
       return { kind: 'ok', summary: 'Read', data: {} };
     });
-    expect((await handler({}, { authInfo })).isError).not.toBe(true);
+    expect((await handler({ userId: 999, accountId: 999 }, { authInfo })).isError).not.toBe(true);
     expect(h.connect).toHaveBeenCalledTimes(1);
-    expect(h.setup).toHaveBeenCalledWith(expect.objectContaining({ query: h.query }), { tenantId: '7', role: 'viewer', orgUuid: principal.organizationUuid });
+    expect(h.setup).toHaveBeenCalledWith(expect.objectContaining({ query: h.query }), { tenantId: '7', role: 'viewer', orgUuid: principal.organizationUuid, accountId: principal.userId });
     expect(h.clear).toHaveBeenCalledTimes(1); expect(h.release).toHaveBeenCalledTimes(1);
     await expect(saved!.sqlClient!.query('SELECT released')).rejects.toThrow('released request DB client');
   });

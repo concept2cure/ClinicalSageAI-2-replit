@@ -2,7 +2,27 @@
 import { createHash } from 'node:crypto';
 import { AnaProjectScopeError } from '../../project-scope-admission.js';
 import type { AdmittedAnaSourceReadScope, AnaSourceReadScopeInput } from '../../source-read-scope.js';
+import { getTenantScope } from '../../../../db/tenantStore.js';
 const defaultProgram = '90000000-0000-4000-8000-000000000001';
+
+/** Current project/member and an empty policy store for isolated handler tests.
+ * The real admission and policy loaders run; these replies are no RLS proof. */
+export async function syntheticCurrentPolicyQuery(sql: string, params?: unknown[]) {
+  if (sql === "SELECT current_setting('app.current_tenant_id',true) AS tenant_scope,current_setting('app.current_account_id',true) AS owner_scope") {
+    const scope = getTenantScope();
+    return { rows: [{ tenant_scope: scope?.tenantId ?? '', owner_scope: scope?.accountId == null ? '' : String(scope.accountId) }] };
+  }
+  if (/FROM user_intelligence_profiles/.test(sql)) return { rows: [] };
+  if (/FROM regulatory_programs WHERE id = \$1/.test(sql)) return { rows: [{ id: params?.[0] }] };
+  if (/WHERE regulatory_program_id\s*=\s*\$1/.test(sql)) return { rows: [{ id: 11, clientWorkspaceId: null }] };
+  if (/SELECT id, regulatory_program_id FROM projects/.test(sql)) return { rows: [{ id: params?.[0], regulatory_program_id: null }] };
+  if (/FROM organization_users/.test(sql)) return { rows: [{ role: 'member' }] };
+  if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) return { rows: [{ id: params?.[2],
+    owner_id: 3, created_by_id: 3, settings: {}, visibility: 'org_public', members: [], review_assigned: false }] };
+  return { rows: [] };
+}
+export const syntheticCurrentPolicyClient = { query: syntheticCurrentPolicyQuery };
+
 async function syntheticActorRole(): Promise<string> {
   const { getTenantScope } = await import('../../../../db/tenantStore.js');
   return getTenantScope()?.role ?? 'member';

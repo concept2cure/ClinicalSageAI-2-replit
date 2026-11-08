@@ -45,7 +45,9 @@
    field is D0's `.c2c-input`; nothing here restyles it. */
 .rc-find{ display:flex; align-items:center; gap:8px; margin:0 0 16px; }
 .rc-find-l{ flex:0 0 auto; font-size:var(--fs-small); color:var(--text-300); }
-.rc-find-i{ flex:1 1 auto; min-width:0; }
+/* `.c2c-input` is width:100%, which in a wrapping row takes a whole line and
+   pushed Find under the field at 390. Here the field takes what Find leaves. */
+.rc-find .rc-find-i{ flex:1 1 0; width:auto; min-width:0; }
 @media (max-width:640px){ .rc-find{ flex-wrap:wrap; } .rc-find-l{ flex-basis:100%; } }
 /* The last search's result (step 5): quiet text, replaced by the next find. */
 .rc-result .rc-op-body{ font-size:var(--fs-small); color:var(--text-200); }
@@ -73,6 +75,7 @@
 .rc-pack{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; text-align:left; }
 .rc-pack .pj-card-foot{ margin-top:10px; }
 .rc-packs-none{ margin:0; font-size:var(--fs-small); color:var(--text-300); }
+.rc-packs + .rc-packs-none{ margin-top:12px; }
 .rc-nc-list{ margin:6px 0 0; padding-left:18px; }
 @media (max-width:640px){ .rc-packs{ grid-template-columns:1fr; } }
 
@@ -202,8 +205,9 @@
 .rl-card{ display:flex; flex-direction:column; gap:7px; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; padding:13px; }
 .rl-card-h{ font-size:13.5px; font-weight:600; color:var(--text-100); line-height:1.4; }
 .rl-card-meta{ font-size:11px; color:var(--text-400); line-height:1.45; }
-.rl-card-run{ align-self:flex-start; display:inline-flex; align-items:center; gap:5px; margin-top:auto; background:var(--accent-strong); color:var(--accent-on-strong); border:none; border-radius:8px; padding:6px 11px; font-size:11.5px; font-weight:600; cursor:pointer; }
-.rl-card-run:disabled{ opacity:.5; cursor:default; }
+/* A card's Run is D0's `btn ghost`: eighteen cards were eighteen orange fills
+   under a header that already has the page's one primary. Placement only here. */
+.rl-card-run{ align-self:flex-start; margin-top:auto; }
 .rl-card-run svg{ width:12px; height:12px; }
 .rl-card-lock{ display:inline-flex; align-items:center; gap:5px; margin-top:auto; font-size:11px; font-weight:600; color:var(--warning); background:var(--warning-muted); padding:4px 9px; border-radius:999px; align-self:flex-start; }
 .rl-card-lock svg{ width:12px; height:12px; }

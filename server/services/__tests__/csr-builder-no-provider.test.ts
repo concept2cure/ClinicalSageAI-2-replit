@@ -11,6 +11,7 @@ import { expect, it, vi } from 'vitest';
 const { complete } = vi.hoisted(() => ({ complete: vi.fn() }));
 vi.mock('../../lib/unified-ai-client.js', () => ({ ai: { chat: complete } }));
 import { draftCSRSectionWithProvenance, getICHE3Structure, type CSRBuildRequest } from '../csr-builder';
+import { workflowCopySectionContent } from '../authoring/workflow-copy-content';
 
 const request: CSRBuildRequest = {
   organizationId: 7, projectId: 11, userId: 2,
@@ -35,6 +36,20 @@ it('any deterministic reply is refused the same way, whatever model it names', a
   const drafted = await draftCSRSectionWithProvenance(section(), request);
   expect(drafted.source).toBe('template');
   expect(drafted.lineage).toMatchObject({ rejectedModelDraft: { reason: 'no_model_provider' } });
+});
+
+// The template's labelled fields reach the editor as separate paragraphs (2026-11-06). One newline apart, the
+// import's Markdown joined them, and the working-copy PDF's title page read "Protocol Number: X Phase: Phase 2 …".
+it.each([
+  ['1', ['CLINICAL STUDY REPORT', 'Protocol Number: SYN-001', 'Phase: Phase 2', 'Indication: Synthetic indication', 'Sponsor: Synthetic sponsor', 'Investigational Product: Synthetic product']],
+  ['2', ['Study Title: Synthetic study', 'Protocol Number: SYN-001', 'Study Phase: Phase 2', 'Indication: Synthetic indication', 'Sponsor: Synthetic sponsor']],
+])('the template of section %s keeps each labelled field its own paragraph in the editor', async (number, fields) => {
+  complete.mockResolvedValue({ content: FIXED, provider: 'anthropic', model: 'demo-mode', deterministic: true, usage: { totalTokens: 21 } });
+  const row = getICHE3Structure().find(r => r.number === number)!;
+  const drafted = await draftCSRSectionWithProvenance(row, request);
+  expect(drafted.source).toBe('template');
+  const html = workflowCopySectionContent(drafted.content);
+  for (const field of fields) expect(html).toContain(`<p>${field}</p>`);
 });
 
 it('a provider\'s draft is still accepted as an AI draft', async () => {

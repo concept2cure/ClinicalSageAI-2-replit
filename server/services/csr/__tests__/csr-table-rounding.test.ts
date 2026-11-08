@@ -5,6 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { buildDemographicsTable, buildExposureTable, roundHalfUp, type StudyData } from '../../csr-tabulation-builders';
+import { buildEfficacyTable } from '../csr-efficacy-table';
 
 const study = (weights: number[]): StudyData => ({ studyId: 'SYN', protocolNumber: 'SYN', efficacy: [], adverseEvents: [], disposition: [],
   treatmentArms: [{ armId: 'A', armName: 'A', randomized: weights.length, populations: { safety: weights.length, itt: weights.length, completed: weights.length } }],
@@ -26,5 +27,12 @@ describe('table figures round half away from zero on the decimal value', () => {
   it('prints exposure the same way', () => {
     const s = study([60]);
     expect(buildExposureTable({ ...s, exposure: [{ armId: 'A', meanExposureDays: 60.05, totalPersonYears: 1.005 }] }).rows[0].slice(3)).toEqual(['60.1', '1.01']);
+  });
+
+  it.each([[0.0004, '<0.001'], [0.9996, '>0.999'], [0, '0.000'], [1, '1.000'],
+    [0.001, '0.001'], [0.999, '0.999']] as const)('preserves the bound of an imported p-value %s', (pValue, display) => {
+    const s = study([60]);
+    s.efficacy = [{ endpointType: 'primary', endpointName: 'Synthetic endpoint', armId: 'A', value: 12, display: '12', pValue }];
+    expect(buildEfficacyTable(s, 'primary').rows[0][4]).toBe(display);
   });
 });

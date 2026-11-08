@@ -1,0 +1,5 @@
+  RED    transmittal-names-sequence — baselined SUB-2 → LX-12; observed false
+   → transmit/bytes-retained FAILS and is not baselined — the bytes the agency received can be read back by the transmittal and hash to its bundle_sha256
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Error: transmit/bytes-retained FAILS and is not baselined — the bytes the agency received can be read back by the transmittal and hash to its bundle_sha256
+      Tests  1 failed | 14 passed (15)

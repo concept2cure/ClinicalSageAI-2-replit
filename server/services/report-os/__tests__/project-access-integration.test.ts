@@ -1,7 +1,7 @@
 import { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const stubs = vi.hoisted(() => ({ query: vi.fn(), persist: vi.fn(), compute: vi.fn() }));
+const stubs = vi.hoisted(() => ({ query: vi.fn(), persist: vi.fn(), compute: vi.fn(), authorizeQuality: vi.fn(), collectQuality: vi.fn() }));
 vi.mock('../../../db', () => ({ getPool: () => ({ query: stubs.query }), pool: { query: stubs.query } }));
 vi.mock('../../../middleware/orgMembership', () => ({ GOVERNED_WRITE_ROLES: new Set(['admin', 'manager', 'member']) }));
 vi.mock('../scheduling/entitlement', () => ({ scheduledReportsEntitled: async () => ({ entitled: true, tier: 'professional', requiredTier: 'professional' }), scheduledReportsRefusal: () => ({ error: 'Not entitled' }) }));
@@ -10,12 +10,17 @@ vi.mock('../compute-run', () => ({ computeRunForType: stubs.compute }));
 vi.mock('../persistence', () => ({ persistReportRun: stubs.persist }));
 vi.mock('../../notifications/notification-service', () => ({ createNotification: vi.fn() }));
 vi.mock('../../auditService', () => ({ writeChainedAuditRow: vi.fn() }));
+vi.mock('../../qms/project-evidence', () => ({ authorizeQualityEvidenceSnapshot: stubs.authorizeQuality, readQualityProjectEvidence: stubs.collectQuality,
+  QualityEvidenceNotReadable: class extends Error { readonly code = 'QUALITY_RECORD_NOT_AVAILABLE'; readonly status = 404; },
+}));
 
 import { canAccessReportProject, canAccessReportScope, getAccessibleReportProjectIds } from '../project-access';
 import { validateSubscriptionConfiguration } from '../scheduling/configuration';
 import { generateAndDeliver } from '../scheduling/generate-deliver';
 import type { CreateSubscriptionInput } from '../scheduling/subscription-service';
 import type { ReportSubscriptionRow } from '../../../../shared/schema/report-os';
+import { QualityEvidenceNotReadable } from '../../qms/project-evidence';
+import { createNotification } from '../../notifications/notification-service';
 
 let database: PGlite;
 const query = (sql: string, params?: unknown[]) => database.query<Record<string, unknown>>(sql, params);
@@ -53,11 +58,18 @@ beforeAll(async () => {
     INSERT INTO report_program_group_projects VALUES (1,11,7),(1,12,7);
     INSERT INTO report_type_registry VALUES
       ('readiness.executive_digest','Readiness','readiness','["project"]','[]',true),
-      ('fcoi.disclosure_register','FCOI','fcoi','["account","program","project"]','[]',true);
+      ('fcoi.disclosure_register','FCOI','fcoi','["account","program","project"]','[]',true),
+      ('compliance.audit_assurance_pack','Quality assurance','compliance_audit','["project"]','[]',true);
+    CREATE TABLE regulatory_programs(id uuid PRIMARY KEY,organization_id int,deleted_at timestamp);
+    INSERT INTO regulatory_programs VALUES('00000000-0000-4000-8000-000000000011',7,NULL);
+    ALTER TABLE projects ADD COLUMN regulatory_program_id uuid;
+    UPDATE projects SET regulatory_program_id='00000000-0000-4000-8000-000000000011' WHERE id=11;
   `);
 }, 60_000);
 afterAll(async () => { await database?.close(); });
-beforeEach(() => { stubs.persist.mockReset(); stubs.compute.mockReset(); });
+beforeEach(() => { stubs.persist.mockReset(); stubs.compute.mockReset(); stubs.query.mockClear();
+  stubs.authorizeQuality.mockReset().mockResolvedValue(undefined); stubs.collectQuality.mockReset().mockResolvedValue([]);
+  vi.mocked(createNotification).mockClear(); });
 
 describe('reporting reuses the existing project-sharing boundary', () => {
   it('keeps use-only, public and pending-review admission read-only in explicit edit mode', async () => {
@@ -192,5 +204,36 @@ describe('ordinary scheduled reports retain current authority after computation'
       expect(stubs.compute).toHaveBeenCalledWith(expect.objectContaining({ programProjectIds: [11], scopeType: 'program', scopeId: '2' }));
       expect(stubs.persist).toHaveBeenCalledOnce();
     } finally { await database.exec('DELETE FROM report_program_group_projects WHERE program_group_id=2; DELETE FROM report_program_groups WHERE id=2'); }
+  });
+});
+
+describe('scheduled Quality reports retain exact authored-object access for every recipient', () => {
+  const programId = '00000000-0000-4000-8000-000000000011';
+  const native = { kind: 'qms_documents', id: '7', authoringDocumentId: '00000000-0000-4000-8000-000000000099' };
+  const receipt = { key: 'quality:qms_documents:7:working', title: 'Private SOP', sourceScope: 'project', version: '2', lifecycle: 'draft', native,
+    text: JSON.stringify({ evidenceKind: 'qms', sourceScope: 'project', programId, native, data: { content: 'Private procedure text' } }) };
+  const sub = () => ({ ...input, reportTypeId: 'compliance.audit_assurance_pack', id: 61, recipients: ['recipient@example.com'], enabled: true,
+    nextRunAt: new Date('2026-10-10T09:00:00Z'), createdAt: new Date('2026-10-09T10:00:00Z'), updatedAt: new Date('2026-10-09T10:00:00Z'), lastRunAt: null } as ReportSubscriptionRow);
+  const computed = () => ({ computed: { summary: { accessProjectIds: [11], domain: { qualityEvidence: { schemaVersion: 1, records: [receipt] } } },
+    providers: [], blockers: ['Quality assurance not assessed'], criticalBlockers: [], confidence: null } });
+
+  it('refuses delivery when a recipient can use the project but cannot view one embedded SOP', async () => {
+    stubs.compute.mockResolvedValueOnce(computed());
+    stubs.authorizeQuality.mockImplementation(async (_q, identity) => { if (identity.userId === 9) throw new QualityEvidenceNotReadable(); });
+    await expect(generateAndDeliver(sub(), new Date('2026-10-13T10:00:00Z'))).rejects.toMatchObject({ code: 'REPORT_RECIPIENT_PROJECT_ACCESS_DENIED', status: 403 });
+    expect(stubs.authorizeQuality.mock.calls.map(([, identity]) => identity.userId)).toEqual([99, 9]);
+    expect(stubs.persist).not.toHaveBeenCalled(); expect(createNotification).not.toHaveBeenCalled();
+    expect(stubs.query.mock.calls.some(([sql]) => sql.includes('UPDATE report_subscriptions'))).toBe(false);
+  });
+
+  it('rechecks object access on the enlisted transaction before any cursor, notification or delivery effect', async () => {
+    let revoked = false;
+    stubs.compute.mockResolvedValueOnce(computed());
+    stubs.authorizeQuality.mockImplementation(async (_q, identity) => { if (revoked && identity.userId === 9) throw new QualityEvidenceNotReadable(); });
+    stubs.persist.mockImplementationOnce(async (_rows, _actor, effect) => { revoked = true; return effect(client, { run: { id: 999 } }); });
+    await expect(generateAndDeliver(sub(), new Date('2026-10-13T10:00:00Z'))).rejects.toMatchObject({ code: 'REPORT_RECIPIENT_PROJECT_ACCESS_DENIED', status: 403 });
+    expect(stubs.persist).toHaveBeenCalledOnce(); expect(createNotification).not.toHaveBeenCalled();
+    expect(stubs.authorizeQuality.mock.calls.map(([, identity]) => identity.userId)).toEqual([99, 9, 99, 9]);
+    expect(stubs.query.mock.calls.some(([sql]) => sql.includes('UPDATE report_subscriptions'))).toBe(false);
   });
 });

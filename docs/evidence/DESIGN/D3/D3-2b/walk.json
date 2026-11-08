@@ -1,0 +1,65 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "0e8acdb9-40ba-41ed-bb5d-d0b3cf836a54",
+  "startedAt": "2026-11-06T19:09:58.125Z",
+  "steps": [
+    {
+      "name": "no read of the work or the inbox on any of eight step changes; the letters row opens Respond",
+      "atLoad": {
+        "work": 2,
+        "comms": 2
+      },
+      "afterSteps": {
+        "work": 2,
+        "comms": 2
+      },
+      "opened": "Respond"
+    },
+    {
+      "name": "the Filing and Team cards, 1440 light",
+      "lettersName": "Agency letters: None open",
+      "commitmentsName": "Commitments: None open",
+      "activityRows": 3,
+      "teamLines": [
+        "Nothing open"
+      ],
+      "shot": "screenshots/1440-light-filing-team.png"
+    },
+    {
+      "name": "the Filing and Team cards, 1440 dark",
+      "lettersName": "Agency letters: None open",
+      "commitmentsName": "Commitments: None open",
+      "activityRows": 3,
+      "teamLines": [
+        "Nothing open"
+      ],
+      "shot": "screenshots/1440-dark-filing-team.png"
+    },
+    {
+      "name": "the Filing and Team cards, 390 light",
+      "lettersName": "Agency letters: None open",
+      "commitmentsName": "Commitments: None open",
+      "activityRows": 3,
+      "teamLines": [
+        "Nothing open"
+      ],
+      "shot": "screenshots/390-light-filing-team.png"
+    }
+  ],
+  "urls": [
+    "http://127.0.0.1:5000/api/concept2cure/projects/0e8acdb9-40ba-41ed-bb5d-d0b3cf836a54/unified-work",
+    "http://127.0.0.1:5000/api/concept2cure/projects/0e8acdb9-40ba-41ed-bb5d-d0b3cf836a54/agency-communications",
+    "http://127.0.0.1:5000/api/concept2cure/projects/0e8acdb9-40ba-41ed-bb5d-d0b3cf836a54/unified-work",
+    "http://127.0.0.1:5000/api/concept2cure/projects/0e8acdb9-40ba-41ed-bb5d-d0b3cf836a54/agency-communications"
+  ],
+  "atLoad": {
+    "work": 2,
+    "comms": 2
+  },
+  "afterSteps": {
+    "work": 2,
+    "comms": 2
+  },
+  "result": "pass",
+  "finishedAt": "2026-11-06T19:10:20.433Z"
+}

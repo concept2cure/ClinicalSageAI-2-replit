@@ -97,6 +97,7 @@ import {
   type DeviceFilingRow,
 } from './DeviceFilings';
 import { isTrackedFilingId } from '@shared/types/task-filing-home';
+import { isDeviceOrDiagnosticProgram } from '@shared/constants/domain/product-types';
 import { SubmissionRequiredDeliverables, type SubmissionCoverageSequence } from './SubmissionRequiredDeliverables';
 import { useSubmissionReadSession, useSubmissionScopedRows } from './submissionScopedRead';
 import { getSurfaceMeta } from '../registryModel';
@@ -156,6 +157,8 @@ interface RegionProfileForm {
   name: string;
   formId?: string;
   required: boolean;
+  /** Application types that file this form. Absent = all of them. */
+  requiredFor?: string[];
   description: string;
   url?: string;
 }
@@ -204,6 +207,14 @@ function requiredModule1For(
   };
   walk(sections ?? []);
   return out;
+}
+
+/** The agency forms THIS application type files, by the same `requiredFor`
+ *  contract as requiredModule1For: an IND does not file Form 356h (J4 human
+ *  test, 2026-11-06). Unknown type: every form is kept. */
+function formsFor(forms: RegionProfileForm[] | undefined, applicationType: string | null | undefined): RegionProfileForm[] {
+  const app = applicationType ? String(applicationType).toLowerCase() : null;
+  return (forms ?? []).filter((f) => !f.requiredFor || !app || f.requiredFor.includes(app));
 }
 
 // (SUB_STATUS_TONE / SUB_STATUS_LABEL — the submission status chip — live in
@@ -386,6 +397,41 @@ function scopedMissReason(wanted: string, projectName: string | null, notOffered
   return `${head}. ${others} not listed here; the person can list them with "Show all of the organization's submissions" under the title.`;
 }
 
+/* ── Device filings follow the open project (B4, demo walk 2026-11-05) ──────
+   A drug IND's Submission Center showed "Device filings · eSTAR" and a 510(k)
+   assembly verdict. The platform follows the project's own record: the eSTAR
+   section, and its two reads, belong to a device or diagnostic project
+   (isDeviceOrDiagnosticProgram, the rule Project home and the market refusal
+   read). While that record is read, or when it cannot be read, the section is
+   not shown; nothing is guessed. With no project open the screen is the
+   organization's view and lists them as before. */
+function useDeviceFilingsShown(openProgramId: string | null): boolean {
+  const record = useLiveData<{ product_type?: string | null; program_type?: string | null }>(
+    openProgramId ? `/api/c2c/projects/${encodeURIComponent(openProgramId)}` : null, [openProgramId]);
+  if (!openProgramId) return true;
+  return !record.loading && !record.error && isDeviceOrDiagnosticProgram(record.data);
+}
+
+/** What AnA is told about the device filings: nothing it would read as "none
+ *  tracked" when the section is not shown for this project. */
+function deviceFilingFacts(
+  shown: boolean,
+  read: { loading: boolean; error?: unknown },
+  count: number,
+  assembly: AssemblyVerdictState,
+): Record<string, unknown> {
+  if (!shown) return { deviceFilings: 'not shown: the open project is not recorded as a device or diagnostic filing' };
+  return {
+    deviceFilings: read.loading || read.error ? null : count,
+    deviceFilingsUnavailable: read.error ? 'the eSTAR tracker read failed' : null,
+    deviceAssemblyVerdict:
+      assembly.state === 'ready'
+        ? { artifactKind: assembly.artifactKind, missingRequiredSections: assembly.missingRequired,
+            undeterminedSections: assembly.undetermined, otherBlockers: assembly.otherBlockers }
+        : assembly.state === 'error' ? 'unavailable' : 'loading',
+  };
+}
+
 /** The workspaces that operate on ONE selected sequence (fed by SeqPicker). */
 const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'dispatch', 'required-deliverables']);
 interface ScopedBuilderNotice extends Notice { builderGeneration?: number; builderSequenceId?: number }
@@ -483,13 +529,16 @@ export function SubmissionCenter({
     assessmentRan: false,
   });
 
-  // GET /api/510k/estar/submissions — the org's tracked eSTAR device filings.
+  const showDeviceFilings = useDeviceFilingsShown(openProgramId);
+  // GET /api/510k/estar/submissions — the org's tracked eSTAR device filings,
+  // read only where the section is shown (useDeviceFilingsShown).
   // { submissions } envelope (not the `{ data }` convention), so the shape is
   // guarded explicitly; a mismatched 200 reaches the error branch, never an
   // invented empty state.
+  const deviceFilingsPath = showDeviceFilings ? '/api/510k/estar/submissions' : null;
   const deviceRes = useLiveData<{ submissions: DeviceFilingRow[] }>(
-    '/api/510k/estar/submissions',
-    ['/api/510k/estar/submissions'],
+    deviceFilingsPath,
+    [deviceFilingsPath],
     hasKeys('submissions'),
   );
   const deviceFilingsRaw = deviceRes.data?.submissions;
@@ -497,10 +546,12 @@ export function SubmissionCenter({
 
   // POST /api/510k/estar/assemble — ONE org-wide device-assembly verdict for
   // the section header (read-only on the server; renders/persists nothing).
-  // One call per mount, never per-row.
+  // One call each time the section is shown, never per-row.
   const [assembly, setAssembly] = React.useState<AssemblyVerdictState>({ state: 'loading' });
   React.useEffect(() => {
+    if (!showDeviceFilings) return undefined;
     let cancelled = false;
+    setAssembly({ state: 'loading' });
     liveMutateOrNull<AssemblyVerdictPayload>('POST', '/api/510k/estar/assemble', {
       pathway: '510k',
       variant: 'device',
@@ -516,7 +567,7 @@ export function SubmissionCenter({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [showDeviceFilings]);
 
   // GET /api/submissions/:id/sequences — keyed on the selected submission (a real
   // numeric id). Null path while no submission is selected → the hook stays idle
@@ -1147,19 +1198,7 @@ export function SubmissionCenter({
         workingSequence: seq
           ? { id: seq.id, number: seq.sequenceNumber, status: seq.status, validation: seq.validationStatus }
           : null,
-        deviceFilings: deviceRes.loading
-          ? null
-          : deviceRes.error
-            ? null
-            : deviceFilings.length,
-        deviceFilingsUnavailable: deviceRes.error ? 'the eSTAR tracker read failed' : null,
-        deviceAssemblyVerdict:
-          assembly.state === 'ready'
-            ? { artifactKind: assembly.artifactKind, missingRequiredSections: assembly.missingRequired,
-                undeterminedSections: assembly.undetermined, otherBlockers: assembly.otherBlockers }
-            : assembly.state === 'error'
-              ? 'unavailable'
-              : 'loading',
+        ...deviceFilingFacts(showDeviceFilings, { loading: deviceRes.loading, error: deviceRes.error }, deviceFilings.length, assembly),
         lastServerNotice: notice ? { tone: notice.tone, text: notice.text } : null,
         /* The Planner's region profile. The three outcomes are kept apart here
            for the same reason they are on screen: an assistant told only
@@ -1185,7 +1224,7 @@ export function SubmissionCenter({
                     profile.data.module1Sections,
                     sub?.applicationType,
                   ).map((s) => ({ number: s.number, title: s.title })),
-                  requiredForms: (profile.data.forms ?? [])
+                  requiredForms: formsFor(profile.data.forms, sub?.applicationType)
                     .filter((f) => f.required)
                     .map((f) => ({ formId: f.formId ?? null, name: f.name })),
                   specificRequirements: profile.data.specificRequirements ?? [],
@@ -1199,13 +1238,13 @@ export function SubmissionCenter({
         'Select the working sequence the build and validation workspaces act on',
         'Move a sequence through its non-governed lifecycle transitions',
         'Freeze or dispatch a sequence (each requires a Part 11 e-signature and a clear gate; a missing release signature never blocks a freeze)',
-        'Open a tracked eSTAR device filing in the 510(k) surface',
+        ...(showDeviceFilings ? ['Open a tracked eSTAR device filing in the 510(k) surface'] : []),
       ],
     };
   }, [
     subs.loading, subs.error, list, sub, ws, seqs.loading, seqs.error, seqs.rows, seq,
     scopedTo, openProjectName, openProjectKnownName, notOffered, portfolioCountLine,
-    deviceRes.loading, deviceRes.error, deviceFilings.length, assembly, notice,
+    showDeviceFilings, deviceRes.loading, deviceRes.error, deviceFilings.length, assembly, notice,
     profile.loading, profile.error, profile.data,
   ]);
   usePublishSurfaceContext('submission-center', anaContext);
@@ -1475,7 +1514,7 @@ export function SubmissionCenter({
           </div>
         </div>
 
-        <DeviceFilingsCard
+        {showDeviceFilings && <DeviceFilingsCard
           res={deviceRes}
           filings={deviceFilings}
           assembly={assembly}
@@ -1492,7 +1531,7 @@ export function SubmissionCenter({
             setFilingLinkError(null); setNavTarget(null); setFilingTarget(f.id);
           }}
           onOpenPathway={() => onNav && onNav('device-510k')}
-        />
+        />}
         </>
       )}
 
@@ -1596,11 +1635,11 @@ export function SubmissionCenter({
                   })()}
 
                   {/* Agency forms. */}
-                  {profile.data.forms?.length > 0 && (
+                  {formsFor(profile.data.forms, sub.applicationType).length > 0 && (
                     <div className="sc-mt">
                       <div className="tl-spec-k sc-mb">Agency forms</div>
                       <div className="sc-chiprow">
-                        {profile.data.forms.map((f) => (
+                        {formsFor(profile.data.forms, sub.applicationType).map((f) => (
                           <span
                             key={f.formId ?? f.name}
                             className={`rd-chip tone-${f.required ? 'warn' : 'idle'}`}

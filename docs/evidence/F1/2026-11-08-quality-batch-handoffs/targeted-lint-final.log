@@ -1,0 +1,9 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+/workspace/scratch/3002d574f952/concept2cure-v2/server/services/capa-mdr/capaMdr.service.ts
+   651:1  warning  File has too many lines (1010). Maximum allowed is 500                           max-lines
+  1088:1  warning  Async function 'getTriageQueueTx' has a complexity of 21. Maximum allowed is 15  complexity
+
+✖ 2 problems (0 errors, 2 warnings)
+

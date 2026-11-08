@@ -176,7 +176,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         window.open(r.data.portalUrl, '_blank');
         return;
       }
-      fireToast(r.error ? 'Billing portal unavailable · ' + r.error : 'Billing portal unavailable', 'error');
+      fireToast(r.error && (r.status === 409 || r.status === 503) ? r.error : r.error ? 'Billing portal unavailable · ' + r.error : 'Billing portal unavailable', 'error'); // 409/503: the server's sentence
     });
   };
 
@@ -291,10 +291,13 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
             savings. Billing runs on Stripe Checkout + Customer Portal.
           </p>
         </div>
+        {/* No billing record yet: said beside the control, not answered with a failure (2026-11-06). */}
         {status && billingAdmin && (
-          <button className="sp-primary" onClick={managePortal}>
-            {I.creditCard || I.settings} Manage billing
-          </button>
+          <div style={{ textAlign: 'right' }}>
+            <button className="sp-primary" onClick={managePortal} disabled={status.billingAccount === false}
+              aria-describedby={status.billingAccount === false ? 'lic-billing-not-set-up' : undefined}>{I.creditCard || I.settings} Manage billing</button>
+            {status.billingAccount === false && <p id="lic-billing-not-set-up" className="sp-state" style={{ margin: '6px 0 0', maxWidth: 260 }}>Billing is set up the first time a subscription is checked out.</p>}
+          </div>
         )}
       </div>
 

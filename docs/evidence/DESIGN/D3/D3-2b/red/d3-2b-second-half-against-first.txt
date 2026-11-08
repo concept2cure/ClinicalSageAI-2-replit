@@ -1,0 +1,6 @@
+D3-2b second half's tests run against the first half's source (git stash of: client/src/concept2cure/v2/surfaces/ProjectHome.tsx client/src/concept2cure/v2/surfaces/ProjectRecords.tsx client/src/concept2cure/v2/surfaces/ProjectSide.tsx ), tests kept:
+      Tests  3 failed | 13 passed (16)
+ FAIL  client/src/concept2cure/v2/__tests__/projectActivityReason.test.tsx > the Project home feed names a governed act and its reason > a market added reads as that, with its agency and the reason recorded
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > one read, several readers (D3-2b) > a commitments read that failed says so, never "None open"
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > one read, several readers (D3-2b) > the Filing card says the open commitments, how many are overdue and the next due date, and opens Respond
+ Test Files  2 failed (2)

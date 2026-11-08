@@ -6,6 +6,10 @@ describe('getDatabaseUrl', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
+    // Baseline single-role tests are for non-Codespaces development. Codespaces
+    // has a deliberately stricter runtime role rule exercised below.
+    delete process.env.C2C_CODESPACE;
+    delete process.env.CODESPACES;
     delete process.env.DATABASE_URL;
     delete process.env.NEON_DATABASE_URL;
     delete process.env.DATABASE_NEON_NEW_SECRET;
@@ -104,6 +108,21 @@ describe('getDatabaseUrl', () => {
       expect(getRuntimeDatabaseUrl()).toBe(
         'postgresql://app_service:pw@host/db?sslmode=require',
       );
+    });
+
+    it('in Codespaces refuses fallback to owner when the app role is missing', async () => {
+      process.env.C2C_CODESPACE = '1';
+      process.env.DATABASE_URL = 'postgresql://owner:pw@host/db';
+      const { getRuntimeDatabaseUrl } = await loadModule();
+      expect(getRuntimeDatabaseUrl()).toBeUndefined();
+    });
+
+    it('in Codespaces uses only the explicit app role even if old owner env exists', async () => {
+      process.env.CODESPACES = 'true';
+      process.env.DATABASE_NEON_NEW_SECRET = 'postgresql://old_owner:pw@host/other';
+      process.env.APP_DATABASE_URL = 'postgresql://app_service:pw@host/db';
+      const { getRuntimeDatabaseUrl } = await loadModule();
+      expect(getRuntimeDatabaseUrl()).toBe('postgresql://app_service:pw@host/db');
     });
 
     it('returns undefined when neither runtime nor owner url is set', async () => {

@@ -6,8 +6,6 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
-import { C2CForm } from '../C2CForm';
-import type { C2CFormConfig } from '../C2CForm';
 import {
   // Canonical display config only — the category label map, the engine's two
   // research depths (pinned to the engine's own cost model by
@@ -52,11 +50,6 @@ interface DrBoard {
   configuredCount?: number;
 }
 
-/** POST /api/deep-research/connectors → { success } | { error }. */
-interface DrConnectorWrite {
-  success?: boolean;
-  error?: string;
-}
 /* GET /api/deep-research/jobs/:id → the orchestrator's DeepResearchJob, as JSON.
    Typed from the engine itself (type-only import, erased at build) because the
    hand-written copy that stood here had drifted from it on both fields that
@@ -89,7 +82,7 @@ interface FanoutRow {
 
 /* ════ DeepResearch — connectors & deep research surface ════ */
 
-export function DeepResearch({ onAsk }: SurfaceViewProps) {
+export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
 
   const [tab, setTab] = useState<'research' | 'connectors'>('research');
@@ -111,7 +104,6 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
   const [sel, setSel] = useState<string[]>([]);
   const [phase, setPhase] = useState<'idle' | 'running' | 'done'>('idle');
   const [jobs, setJobs] = useState<FanoutRow[]>([]);
-  const [form, setForm] = useState<ConnectorState | null>(null);
   const [depth, setDepth] = useState<ResearchDepth>('standard');
   const [toast, fireToast] = useToast();
 
@@ -161,10 +153,8 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
   const [jobId, setJobId] = useState<number | null>(null);
   const [job, setJob] = useState<DrRunJob | null>(null);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /* Bumped after a successful credential write so the board is re-read and the
-     connector's status comes back from the server rather than from a local flip. */
-  const [reload, setReload] = useState(0);
-  const [connBusy, setConnBusy] = useState('');
+  /* Re-read connector status from its server inventory. Credential entry lives in administration. */
+  const [reload] = useState(0);
 
   // Real deep-research allowance AND connector inventory for this org
   // (GET /api/deep-research/board). Honest null credits (rendered "—") when
@@ -358,24 +348,11 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
      /api/deep-research/jobs and spends metered research credits — the exact
      incident the note on `query` above records. Launching stays a human click.
 
-     Refusals are specific: an open credential drawer holds possibly-unsaved
-     values; an in-flight credential save shouldn't be reshuffled under; and a
-     switch away from a running research job would hide a live, metered spend
+     A switch away from a running research job would hide a live, metered spend
      (the person's own tab buttons can — AnA uninvited must not). */
   useSurfaceActionHandlers('deep-research', {
     'deep-research.open-tab': (params) => {
       const target = params.tab === 'connectors' ? 'connectors' : 'research';
-      if (form !== null) {
-        return {
-          ok: false,
-          reason:
-            `The "Configure ${form.name}" credential drawer is open with possibly unsaved values — ` +
-            'close or save it first.',
-        };
-      }
-      if (connBusy !== '') {
-        return { ok: false, reason: 'A connector credential save is in flight — let it finish first.' };
-      }
       if (tab === target) return { ok: true, detail: `Already on the ${target} tab` };
       if (target === 'connectors' && phase === 'running') {
         return {
@@ -433,64 +410,8 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
   }, [board.loading, board.error, tab, credits, connectorCount, configuredCount, phase]);
   usePublishSurfaceContext('deep-research', anaContext);
 
-  /**
-   * Open the credential drawer. Nothing is marked configured here.
-   *
-   * The old body flipped `configured: true` in local state for any connector
-   * that needs no credentials and toasted "<name> enabled" — a status change
-   * that never left the browser. It was also redundant: getConnectorCatalog
-   * computes `configured: !requiresCredentials || hasStoredCredentials`, so the
-   * server already reports every credential-free connector as configured. The
-   * only real transition a user can make from here is storing credentials, and
-   * that goes through storeConnector below.
-   */
-  const doConnect = (c: ConnectorState) => setForm(c);
-
-  /**
-   * REAL, awaited credential write — POST /api/deep-research/connectors
-   * (server/routes/deep-research.ts:186 → storeCredentials, AES-256-GCM,
-   * org-scoped, SSRF-guarded). The board is re-read afterwards so the card's
-   * status comes back from `connector_credentials`, not from a local flip.
-   *
-   * On failure the drawer stays open and says what happened. It used to close
-   * and render the connector as "connected" unconditionally, which meant a
-   * professional-tier gate (403) or a rejected baseUrl looked exactly like a
-   * successful connection until the next reload.
-   */
-  const storeConnector = async (c: ConnectorState, values: Record<string, string>) => {
-    if (connBusy) return;
-    setConnBusy(c.id);
-    try {
-      const res = await apiRequest('POST', '/api/deep-research/connectors', {
-        connectorId: c.id,
-        credentials: values,
-      });
-      const body = (await res.json().catch(() => null)) as DrConnectorWrite | null;
-      if (!res.ok || !body?.success) {
-        // The 403 branch is kept: the plan gate is a flow this surface explains
-        // in its own words. The other half read `body.error` first, which showed
-        // the enum token whenever the server sent a code alongside its sentence.
-        fireToast(
-          res.status === 403
-            ? 'Storing connector credentials needs a professional plan. Nothing was saved.'
-            : (serverMessage(body) ?? `Couldn't store the credentials (HTTP ${res.status}).`) +
-                ' Nothing was saved.',
-          'error',
-        );
-        return;
-      }
-      setForm(null);
-      setReload((n) => n + 1);
-      fireToast(c.name + ' credentials stored — re-reading connector status');
-    } catch (e) {
-      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
-      const detail =
-        known && (e as Error).message ? (e as Error).message : 'the request did not complete';
-      fireToast(`Couldn't reach the connector service — ${detail}. Nothing was saved.`, 'error');
-    } finally {
-      setConnBusy('');
-    }
-  };
+  // Credential capture has one home: client administration, with re-authentication and audit.
+  const doConnect = () => onNav('setup');
 
   return (
     <div className="sp" style={{ maxWidth: 1060 }}>
@@ -913,28 +834,16 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                             {c.creds ? 'credentials' : 'no credentials'}
                           </span>
                         </span>
-                        {/* "Disconnect" is gone rather than left as a control
-                            that lies. It flipped `configured: false` in local
-                            state only: the credentials stayed encrypted in
-                            connector_credentials, the connector kept working,
-                            and the card read "not configured" until the next
-                            reload — the most dangerous shape of a mock action on
-                            a security control. There is no DELETE
-                            /api/deep-research/connectors/:id to call; when one
-                            exists, this is where it belongs.
-                            "Enable" is gone for the same reason on the other
-                            side: a credential-free connector is already
-                            configured by the server's own definition, so there
-                            was nothing for it to enable. */}
+                        {/* Credentials have one secure capture/revoke home in client administration.
+                            This view reads connector inventory and keeps public-source search unchanged. */}
                         {c.configured ? (
                           <span className="sp-q-s">{c.creds ? 'credentials stored' : 'public'}</span>
                         ) : c.creds ? (
                           <button
                             className="sp-q-a"
-                            onClick={() => doConnect(c)}
-                            disabled={connBusy !== ''}
+                            onClick={doConnect}
                           >
-                            {I.plus} {connBusy === c.id ? 'Saving…' : 'Configure'}
+                            {I.lock} Manage credentials in Settings
                           </button>
                         ) : null /* Unreachable against the current server rule
                             (a credential-free connector is configured by
@@ -950,35 +859,6 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
         </div>
       )}
 
-      {form && (
-        <C2CForm
-          config={{
-            eyebrow:
-              'Connector — ' +
-              (DR_CATS[form.cat] || form.cat) +
-              ' — ' +
-              form.tier +
-              ' tier',
-            title: 'Configure ' + form.name,
-            sub: form.desc,
-            governed:
-              'Credentials are stored per-organization, AES-256-GCM encrypted, with SSRF guards on any baseUrl/tokenEndpoint.',
-            submitLabel: 'Store credentials & connect',
-            // The catalog marks which credential fields are secrets; render
-            // those as password inputs rather than plain text, which is what
-            // every one of them used to be.
-            fields: form.cf.map((f) => ({
-              key: f.field,
-              label: f.label,
-              type: (f.secret ? 'password' : 'text') as 'password' | 'text',
-              placeholder: f.placeholder,
-              required: !/optional/i.test(f.label),
-            })),
-          } as C2CFormConfig}
-          onCancel={() => setForm(null)}
-          onSubmit={(values) => void storeConnector(form, values)}
-        />
-      )}
       <C2CToast msg={toast} />
     </div>
   );

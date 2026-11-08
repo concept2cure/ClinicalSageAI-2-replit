@@ -43,10 +43,6 @@ async function readJson(method: 'GET' | 'POST', path: string, scope: PeerReviewS
 }
 
 const utc = (iso: string) => `${new Date(iso).toISOString().slice(0, 16).replace('T', ' ')} UTC`;
-const listOf = <T,>(body: unknown, key: string): T[] => {
-  const list = (body as Record<string, unknown> | null)?.[key];
-  return Array.isArray(list) ? list as T[] : [];
-};
 function studyDataChoice(d: StudyDataEntry): RunChoice {
   const source = d.sources?.[0];
   const what = d.via === 'imported-build' ? 'Study data the imported CSR build was drafted from' : 'Study data frozen for this document';
@@ -63,17 +59,55 @@ function useSavedRuns(scope: PeerReviewScope, programId: string | null) {
   const [runs, setRuns] = React.useState<RunChoice[] | null>(null);
   const [error, setError] = React.useState('');
   React.useEffect(() => {
+    // Never leave a previous document's retained choices visible when the
+    // reviewer changes project, document or selected account.
+    setRuns(null);
+    setError('');
     if (!programId) { setError('This document is not filed under a program, so no retained analysis run can be selected.'); return; }
     let live = true;
     const program = encodeURIComponent(programId);
-    Promise.all([
+    // The scientific evidence for this document is its own frozen study data.
+    // Earlier submission-package history is optional: failure to list package
+    // runs must not block scientific review of the document's retained data.
+    // Unlike the optional history, a failed document-data read fails CLOSED.
+    void Promise.allSettled([
       readJson('GET', `/api/submission-orchestrator/csr/study-data?programId=${program}&documentId=${encodeURIComponent(scope.documentId)}`, scope),
       readJson('GET', `/api/submission-orchestrator/runs?programId=${program}`, scope),
-    ]).then(([studyData, packageRuns]) => {
+    ]).then(([documentResult, historyResult]) => {
       if (!live) return;
-      setRuns([...listOf<StudyDataEntry>(studyData, 'studyData').map(studyDataChoice),
-        ...listOf<SavedRun>(packageRuns, 'runs').map((r) => ({ runId: r.runId, label: `Run ${r.runId.slice(0, 8)} · ${r.status} · started ${utc(r.startedAt)}` }))]);
-    }).catch((e: unknown) => { if (live) setError(e instanceof Error ? e.message : 'The saved runs could not be read.'); });
+      if (documentResult.status !== 'fulfilled') {
+        const e = documentResult.reason;
+        setError(e instanceof Error ? e.message : 'The document’s study data could not be read.');
+        return;
+      }
+      const saved = (documentResult.value as { studyData?: unknown } | null)?.studyData;
+      if (!Array.isArray(saved) || !saved.every(item =>
+          item && typeof item.studyDataId === 'string' &&
+          typeof item.createdAt === 'string' && Number.isFinite(Date.parse(item.createdAt)))) {
+        setError('The document’s frozen study-data list is incomplete. Its review inputs were not verified.');
+        return;
+      }
+      const documentRuns = (saved as StudyDataEntry[]).map(studyDataChoice);
+      if (historyResult.status === 'rejected') {
+        const e = historyResult.reason;
+        setRuns(documentRuns);
+        setError(`Earlier package-run history is unavailable: ${e instanceof Error ? e.message : 'The read failed.'} This document’s retained study data remains available.`);
+        return;
+      }
+      const historical = (historyResult.value as { runs?: unknown } | null)?.runs;
+      if (!Array.isArray(historical) || !historical.every(item =>
+          item && typeof item.runId === 'string' && typeof item.status === 'string' &&
+          typeof item.startedAt === 'string' && Number.isFinite(Date.parse(item.startedAt)))) {
+        setRuns(documentRuns);
+        setError('Earlier package-run history returned an incomplete list. This document’s retained study data remains available.');
+        return;
+      }
+      setRuns([...documentRuns,
+        ...(historical as SavedRun[]).map((item) => ({
+          runId: item.runId,
+          label: `Run ${item.runId.slice(0, 8)} · ${item.status} · started ${utc(item.startedAt)}`,
+        }))]);
+    });
     return () => { live = false; };
   }, [programId, scope]);
   return { runs, error };
@@ -146,7 +180,7 @@ function RunPicker({ m, runs, runError, disabled }: { m: EvidenceMap; runs: RunC
     <legend>1. The retained analysis run</legend>
     {runError && <p className="esign-err" role="alert">{runError}</p>}
     {!runError && runs === null && <p role="status">Reading the saved runs for this program…</p>}
-    {runs?.length === 0 && <p role="status">No retained clinical tables are available for this document: no study data is frozen for it, and its program has no saved package run. A CSR’s study data is frozen in its editor, under “Build from the study’s data”.</p>}
+    {!runError && runs?.length === 0 && <p role="status">No retained clinical tables are available for this document: no study data is frozen for it, and its program has no saved package run. A CSR’s study data is frozen in its editor, under “Build from the study’s data”.</p>}
     {runs?.map((r) => <label key={r.runId} className="rv-csr-run">
       <input type="checkbox" checked={m.selected.includes(r.runId)} onChange={(e) => toggle(r.runId, e.target.checked)} />
       {r.label}

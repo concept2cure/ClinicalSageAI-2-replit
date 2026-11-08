@@ -38,7 +38,7 @@ describe('generatePlanFromAssessment — derives the plan from the RACT', () => 
       [{ id: 3, strategy: 'hybrid' }],                                  // plan insert
       [{ id: 41 }], [{ id: 42 }], [{ id: 43 }],                         // action inserts
     ]);
-    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p', createdBy: 27 });
     expect(out.generated).toBe(true);
     expect(out.derivedFrom).toMatchObject({ assessmentId: 7, overallRisk: 'high', criticalFactors: 2, enhancedSites: 1 });
     // High overall risk → hybrid strategy, per defaultPlanStrategy.
@@ -64,7 +64,7 @@ describe('generatePlanFromAssessment — derives the plan from the RACT', () => 
       [{ id: 7, title: 'RACT v2', overall_risk: 'medium', status: 'active' }],
       [], [], [], [{ v: 0 }], [{ id: 3 }],
     ]);
-    await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    await generatePlanFromAssessment(exec, ORG, { programId: 'p', createdBy: 27 });
     const factorQuery = calls[1];
     expect(factorQuery.sql).toContain('assessment_id = $3');
     expect(factorQuery.args).toEqual([ORG, 'p', 7]);
@@ -72,7 +72,7 @@ describe('generatePlanFromAssessment — derives the plan from the RACT', () => 
 
   it('generates nothing when the study has no risk assessment to derive from', async () => {
     const { exec, calls } = mockExec([[]]);
-    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p', createdBy: 27 });
     expect(out.generated).toBe(false);
     expect(out.reason).toBe('no_assessment');
     // No plan and no actions were written.
@@ -83,34 +83,38 @@ describe('generatePlanFromAssessment — derives the plan from the RACT', () => 
     // The plan-approval endpoint would otherwise activate a monitoring
     // commitment whose risk basis nobody ever signed for. Fail closed.
     const { exec, calls } = mockExec([[{ id: 7, title: 'RACT', overall_risk: 'high', status: 'draft' }]]);
-    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p', createdBy: 27 });
     expect(out.generated).toBe(false);
     expect(out.reason).toBe('assessment_not_approved');
     expect(calls).toHaveLength(1);
   });
 
-  it('refuses an approved RACT that records no overall risk, and writes nothing', async () => {
-    // It used to be given 'medium', so the saved plan's strategy rested on a
-    // risk basis nobody recorded or signed for.
-    const { exec, calls } = mockExec([
-      [{ id: 7, title: 'RACT', overall_risk: null, status: 'active', version: 1 }],
-      [{ id: 21, ctq_factor: 'SAE reporting', risk_score: 20 }],
-      [],
-      [], [{ v: 0 }], [{ id: 3 }], [{ id: 41 }],   // what a write would have read back
-    ]);
-    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
-    expect(out.generated).toBe(false);
-    expect(out.reason).toBe('overall_risk_unrecorded');
-    expect(calls.some(c => /^\s*(INSERT|UPDATE|DELETE)/.test(c.sql))).toBe(false);
-  });
-
   it('has its own sentence for every reason it refuses with', () => {
     const reasons: Array<NonNullable<Awaited<ReturnType<typeof generatePlanFromAssessment>>['reason']>> =
-      ['no_assessment', 'assessment_not_approved', 'overall_risk_unrecorded', 'draft_already_open'];
+      ['no_assessment', 'assessment_not_approved', 'overall_risk_not_recorded', 'draft_already_open', 'actor_required'];
     const sentences = reasons.map(r => RBM_PLAN_REFUSAL[r]);
     for (const s of sentences) expect(s).toMatch(/\S/);
     expect(new Set(sentences).size).toBe(reasons.length);
-    expect(RBM_PLAN_REFUSAL.overall_risk_unrecorded).toMatch(/records no overall risk/);
+    expect(RBM_PLAN_REFUSAL.overall_risk_not_recorded).toMatch(/records no overall risk/);
+  });
+});
+
+describe('generated plans retain an actor and a recorded risk basis', () => {
+  it.each([null, undefined, '', 'unknown'])('refuses unrecorded overall risk %s before persisting a plan or actions', async overallRisk => {
+    const { exec, calls } = mockExec([
+      [{ id: 7, title: 'RACT', overall_risk: overallRisk, status: 'active' }],
+      [], [], [], [{ v: 0 }], [{ id: 3 }],
+    ]);
+    expect(await generatePlanFromAssessment(exec, ORG, { programId: 'p', createdBy: 27 }))
+      .toEqual({ generated: false, reason: 'overall_risk_not_recorded' });
+    expect(calls.some(c => /^\s*(INSERT|UPDATE|DELETE)/.test(c.sql))).toBe(false);
+  });
+
+  it.each([undefined, null, 0, -1, 1.5, NaN])('refuses an unverified generating actor %s before reading or writing', async createdBy => {
+    const { exec, calls } = mockExec([[]]);
+    expect(await generatePlanFromAssessment(exec, ORG, { programId: 'p', createdBy: createdBy as number }))
+      .toEqual({ generated: false, reason: 'actor_required' });
+    expect(calls).toHaveLength(0);
   });
 });
 
@@ -128,7 +132,7 @@ describe('derivePlanFromAssessment — the read-only half, shared with AnA', () 
     expect(read.calls.some(c => /^\s*(INSERT|UPDATE|DELETE)/.test(c.sql))).toBe(false);
 
     const write = mockExec([...script(), [], [{ v: 0 }], [{ id: 3 }], [{ id: 41 }], [{ id: 42 }], [{ id: 43 }]]);
-    const generated = await generatePlanFromAssessment(write.exec, ORG, { programId: 'p' });
+    const generated = await generatePlanFromAssessment(write.exec, ORG, { programId: 'p', createdBy: 27 });
     expect(derived.derived).toBe(true);
     if (!derived.derived) return;
     expect(derived.strategy).toBe('hybrid');
@@ -218,7 +222,7 @@ describe('draftPlan — infers the strategy only from the approved RACT', () => 
   it('refuses an approved RACT that records no overall risk, and writes nothing', async () => {
     const { exec, calls } = mockExec([[{ id: 1, title: 'RACT', overall_risk: null, status: 'active', version: 1 }], [], [{ v: 0 }], [{ id: 12 }]]);
     const out = await draftPlan(exec, ORG, { programId: 'p' });
-    expect(out).toMatchObject({ plan: null, refused: 'overall_risk_unrecorded' });
+    expect(out).toMatchObject({ plan: null, refused: 'overall_risk_not_recorded' });
     expect(inserts(calls)).toHaveLength(0);
   });
 

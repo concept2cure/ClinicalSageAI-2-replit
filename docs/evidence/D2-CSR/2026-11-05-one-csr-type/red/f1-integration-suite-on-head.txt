@@ -1,0 +1,12 @@
+# On HEAD before this change (54945d1d2e): the integration suite fails because 8626ff43ae stopped listing registry:ICH_CSR and did not update it
+ × server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > the full CSR remains one editable saved report > saves and reopens every canonical E3 heading from registry:ICH_CSR with its section policy 80ms
+ × server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > every supported active medicinal, device and diagnostics filing and component reaches the one editor > lists exact registry and component identities with explicit regional scope, without writes 258ms
+ × server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > every supported active medicinal, device and diagnostics filing and component reaches the one editor > creates and reopens all registry filings and existing document components with exact saved evidence 54007ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 298 passed (301)
+AssertionError: registry:ICH_CSR must be loadable from the one existing template picker: expected undefined to be defined
+ ❯ selected server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts:57:84
+     55| async function selected(entryId: string) {
+--
+AssertionError: ICH_CSR: expected undefined to be defined
+ ❯ server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts:278:30

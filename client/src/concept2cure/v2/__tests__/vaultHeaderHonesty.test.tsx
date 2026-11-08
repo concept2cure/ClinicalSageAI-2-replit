@@ -54,7 +54,7 @@ describe('Vault — header document count', () => {
   it('states no count when no project is open and nothing was read', async () => {
     vaultWith(() => ok({}));
     render(<Vault {...props()} />);
-    expect(await screen.findByText('Open a project to see its vault')).toBeTruthy();
+    expect(await screen.findByText("Choose a project's Vault")).toBeTruthy();
 
     expect(headerText(), 'a document count over a vault nobody read').not.toMatch(/\d+\s+documents?/);
     expect(apiRequest.mock.calls.filter(([, url]) => String(url).startsWith('/api/c2c/project-vault'))).toEqual([]);
@@ -137,10 +137,13 @@ describe('Vault — a refused read is a refusal', () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-301' };
     vaultWith(() => failed(403));
     render(<Vault {...props()} />);
-    expect(await screen.findByText(/Couldn.t load the project vault/)).toBeTruthy();
+    /* S6 V1 (2026-11-05): an uncoded 403 is the person's role, said through the one read classifier; the module
+       gate's and the release's 403s are said as themselves (vaultRefusalNotFailedRead.test.tsx). */
+    expect(await screen.findByText('Your role cannot do this')).toBeTruthy();
 
-    expect(document.body.textContent).toMatch(/don.t have access to this project.s documents/i);
+    expect(document.body.textContent).toMatch(/Your role cannot do this, so the project vault was not read\./);
     expect(document.body.textContent).not.toMatch(/didn.t respond/i);
+    expect(screen.queryByRole('button', { name: /try again|retry/i })).toBeNull();
   });
 
   it('a 5xx says the store did not respond, and offers a retry', async () => {

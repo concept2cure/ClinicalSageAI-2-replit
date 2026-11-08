@@ -122,3 +122,15 @@ describe('IndFormsPanel — an attachment is not a completion', () => {
   });
 });
 
+// J4 human test 2026-11-06: the Actions cell (nowrap) and the cards' action row ran past their cards; at 390 px the table clipped.
+describe('IndFormsPanel — the actions wrap and scroll instead of being clipped', () => {
+  it('the Actions cell wraps, and the table scrolls inside its card', async () => {
+    mockProgramListing();
+    render(<IndFormsPanel note={vi.fn()} />);
+    const cell = (await screen.findAllByRole('button', { name: /Build & check/ }))[0].closest('td') as HTMLElement;
+    expect(cell.style.whiteSpace).not.toBe('nowrap');
+    expect((cell.closest('table')!.parentElement as HTMLElement).style.overflowX).toBe('auto');
+    const css = (await import('node:fs')).readFileSync('client/src/concept2cure/v2/styles/coverage-v2.css', 'utf8');
+    expect(css.match(/\.indl-dcard-acts\{([^}]*)\}/)?.[1] ?? '').toMatch(/flex-wrap:\s*wrap/);
+  });
+});

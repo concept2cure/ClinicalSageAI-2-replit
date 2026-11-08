@@ -1,0 +1,13 @@
+B7 red: client/src/concept2cure/v2/__tests__/authoringFilingBarCsrGate.test.tsx against trunk's AuthoringFilingBar.tsx
+(an export of HEAD at 0b33248bad; the bar, EsignModal and reviewTaskState are unchanged on trunk since).
+
+ × client/src/concept2cure/v2/__tests__/authoringFilingBarCsrGate.test.tsx > a CSR without its scientific review says so before a password is asked (B7) > says why beside E-sign, and refuses Approval in the dialog before any password is sent 5055ms
+   → Unable to find an element with the text: /only after its scientific review/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/authoringFilingBarCsrGate.test.tsx > a CSR without its scientific review says so before a password is asked (B7) > leaves the review signature open: it is not what the gate refuses 5014ms
+   → Unable to find an element with the text: /only after its scientific review/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/authoringFilingBarCsrGate.test.tsx > a CSR without its scientific review says so before a password is asked (B7) > refuses Freeze before its dialog opens, with the same sentence 5018ms
+   → expected <button class="btn ghost" …(2)>…(1)</button> to have property "disabled" with value true
+ × client/src/concept2cure/v2/__tests__/authoringFilingBarCsrGate.test.tsx > a CSR without its scientific review says so before a password is asked (B7) > with a current approval, or a document that is not a CSR, or a read that failed, the server decides (as 
+   → expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed (4)

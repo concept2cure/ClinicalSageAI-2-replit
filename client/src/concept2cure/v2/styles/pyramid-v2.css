@@ -208,8 +208,84 @@
 @media(max-width:800px){
   .c2c-v2 .py-strip{grid-template-columns:repeat(2,1fr);}
   .c2c-v2 .py-glob-grid{grid-template-columns:1fr;}
+  /* A task row at phone width: the task's name on its own line, then its badge, role, hours and risk. The fixed
+     110px role column left the name a word per line under the role (program plan walk, 2026-11-04, 390 px). */
+  .c2c-v2 .py-row-main{flex-wrap:wrap;row-gap:2px;}
+  .c2c-v2 .py-row-t{flex:1 1 100%;}
+  .c2c-v2 .py-row-main .py-crit,.c2c-v2 .py-row-role,.c2c-v2 .py-row-h,.c2c-v2 .py-row-risk{order:1;}
+  .c2c-v2 .py-row-role{width:auto;}
 }
 
 /* A refused task-status write. Announced where the board is, because the revert
    would otherwise read as the dropdown snapping back on its own. */
 .py-status-err{margin:0 0 10px;padding:8px 11px;border-radius:var(--radius-md,8px);font-size:12px;line-height:1.5;color:var(--error,#b42318);background:color-mix(in srgb, var(--error,#b42318) 8%, transparent);border:1px solid color-mix(in srgb, var(--error,#b42318) 30%, transparent);}
+
+/* S11 step 3: a project's row carries its owner and due date (PyramidProject.tsx RowPlan). Colour only where the
+   task is behind, and always with the words. */
+.c2c-v2 .py-row-plan{display:flex;flex-direction:column;align-items:flex-end;gap:1px;width:128px;flex-shrink:0;font-size:10.5px;color:var(--text-400);text-align:right;}
+.c2c-v2 .py-row-owner{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;color:var(--text-300);}
+.c2c-v2 .py-row-due{white-space:nowrap;font-variant-numeric:tabular-nums;}
+.c2c-v2 .py-row-plan[data-standing="overdue"] .py-row-due{color:var(--error);}
+.c2c-v2 .py-row-plan[data-standing="late-to-start"] .py-row-due{color:var(--warning);}
+.c2c-v2 .py-sheet-sched{font-size:12px;color:var(--text-200);margin:0 0 6px;}
+@media(max-width:800px){
+  .c2c-v2 .py-row-plan{order:1;flex-direction:row;gap:8px;width:auto;align-items:baseline;}
+}
+
+/* S11 step 4: the Plan step's "Due for you" (PlanAssign.tsx DueForYou) and the content plan's join beside a document
+   (PyramidProject.tsx ProducedBy). Quiet lines; colour only where a task is past due, always with the words. */
+.c2c-v2 .pj-due-list{list-style:none;margin:0;padding:0;}
+.c2c-v2 .pj-due-row{display:flex;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px solid var(--bg-100);font-size:13px;}
+.c2c-v2 .pj-due-t{flex:1;min-width:0;color:var(--text-100);}
+.c2c-v2 .pj-due-k{font-size:11px;color:var(--text-400);white-space:nowrap;}
+.c2c-v2 .pj-due-d{font-size:12px;color:var(--text-300);white-space:nowrap;font-variant-numeric:tabular-nums;}
+.c2c-v2 .pj-due-row[data-late] .pj-due-d{color:var(--error);}
+.c2c-v2 .pj-plan-producedby{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--text-400);}
+@media(max-width:600px){
+  .c2c-v2 .pj-due-row{flex-wrap:wrap;row-gap:2px;}
+  .c2c-v2 .pj-due-t{flex:1 1 100%;}
+}
+
+/* THE_PROGRAM §8 item 3: workstreams, one quiet row each (PyramidProject.tsx Workstreams). Colour only on Blocked and
+   At risk, always beside the word. */
+.c2c-v2 .py-ws{margin-top:16px;}
+.c2c-v2 .py-ws-h{font-size:14px;font-weight:600;color:var(--text-100);margin:0 0 4px;}
+.c2c-v2 .py-ws-row{border-bottom:1px solid var(--bg-100);}
+.c2c-v2 .py-ws-row>summary{display:flex;align-items:baseline;gap:12px;padding:9px 0;cursor:pointer;font-size:13px;color:var(--text-300);}
+.c2c-v2 .py-ws-name{flex:1;min-width:0;color:var(--text-100);font-weight:500;}
+.c2c-v2 .py-ws-lead{width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.c2c-v2 .py-ws-n{width:130px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.c2c-v2 .py-ws-date{width:150px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.c2c-v2 .py-ws-status{width:84px;text-align:right;white-space:nowrap;color:var(--text-200);}
+.c2c-v2 .py-ws-row[data-status="blocked"] .py-ws-status{color:var(--error);}
+.c2c-v2 .py-ws-row[data-status="at-risk"] .py-ws-status{color:var(--warning);}
+.c2c-v2 .py-ws-row .py-wbs{margin:0 0 12px;}
+@media(max-width:800px){
+  .c2c-v2 .py-ws-row>summary{flex-wrap:wrap;row-gap:2px;}
+  .c2c-v2 .py-ws-name{flex:1 1 calc(100% - 100px);}
+  .c2c-v2 .py-ws-lead,.c2c-v2 .py-ws-n,.c2c-v2 .py-ws-date{width:auto;order:1;font-size:12px;}
+}
+
+/* THE_PROGRAM §8 item 4: one calm line (PyramidProject.tsx ScheduleLine). The critical path is the darker line; the
+   agency's clock after the submission is dashed; today is a thin mark. */
+.c2c-v2 .py-line{margin:16px 0 8px;}
+.c2c-v2 .py-line-track{position:relative;height:28px;margin:0 6px;}
+.c2c-v2 .py-line-base,.c2c-v2 .py-line-crit,.c2c-v2 .py-line-clock{position:absolute;top:13px;height:2px;border-radius:1px;}
+.c2c-v2 .py-line-base{background:var(--border);}
+.c2c-v2 .py-line-crit{background:var(--text-300);height:3px;top:12.5px;}
+.c2c-v2 .py-line-clock{border-top:2px dashed var(--border-strong);height:0;}
+.c2c-v2 .py-line-dot{position:absolute;top:9px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:var(--bg-000);border:2px solid var(--text-300);cursor:default;}
+.c2c-v2 .py-line-dot[data-kind="submission"]{width:12px;height:12px;margin-left:-6px;top:8px;background:var(--text-100);border-color:var(--text-100);}
+.c2c-v2 .py-line-dot[data-kind="clock"]{width:8px;height:8px;margin-left:-4px;top:10px;border-color:var(--border-strong);}
+.c2c-v2 .py-line-dot[data-kind="decision"]{border-color:var(--text-100);}
+.c2c-v2 .py-line-dot:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
+.c2c-v2 .py-line-today{position:absolute;top:2px;bottom:2px;width:0;border-left:1px solid var(--text-400);}
+.c2c-v2 .py-line-today>span{position:absolute;top:-14px;left:-14px;font-size:10.5px;color:var(--text-400);}
+.c2c-v2 .py-line figcaption{margin-top:6px;}
+
+/* THE_PROGRAM §5, §9 step 6: a Projects card's one quiet line about its plan (PyramidProject.tsx PortfolioLine).
+   Colour only when it is behind or blocked, beside the words. */
+.c2c-v2 .pj-card-plan{margin-top:6px;font-size:var(--fs-caption);color:var(--text-300);font-variant-numeric:tabular-nums;}
+.c2c-v2 .pj-card-plan[data-tone="warn"],.c2c-v2 .pj-list-sub[data-tone="warn"]{color:var(--warning);}
+.c2c-v2 .pj-card-plan[data-tone="err"],.c2c-v2 .pj-list-sub[data-tone="err"]{color:var(--error);}
+.c2c-v2 .pj-cards>.pf-sel-m{grid-column:1/-1;}

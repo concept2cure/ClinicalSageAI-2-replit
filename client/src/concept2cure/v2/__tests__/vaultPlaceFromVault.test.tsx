@@ -95,7 +95,7 @@ describe('Place into filing from the Vault', () => {
     expect(within(dialog).getByText("Pre-filled from this document's confirmed filing.")).toBeTruthy();
 
     await waitFor(() => expect(versionReads()).toBeGreaterThan(before));
-    expect(apiRequest).toHaveBeenCalledWith('GET', VERSIONS_URL);
+    expect(apiRequest).toHaveBeenCalledWith('GET', VERSIONS_URL, undefined, undefined, expect.any(AbortSignal));
     expect(await within(dialog).findByText('Review and approval: In review.')).toBeTruthy();
     expect(within(dialog).getByText(/This version would not be transmitted: in_review, not approved\./)).toBeTruthy();
   });

@@ -30,7 +30,11 @@ const receipt = { adapter: 'concept2cure.csr-source.v1', studyId: 'SYN-201', pro
 let database: PGlite;
 const q = () => ({ query: (sql: string, params?: unknown[]) => database.query(sql, params) }) as unknown as RequestSqlClient;
 const scope = { organizationId: 7, programId: PROGRAM, userId: 5 };
-const imported = (jobId: number) => JSON.stringify({ source: 'import', importSource: { kind: 'csr', jobId } });
+/** The stored shape (authoring-from-draft.ts): the origin names its build as `id`, the job id as text, with the
+ * selection beside it. The first version of this test used the selection's shape (`jobId`), and the list missed
+ * every real import (found in the running app, 2026-11-02). */
+const imported = (jobId: number) => JSON.stringify({ source: 'import', importSource: { kind: 'csr', id: String(jobId),
+  title: 'Synthetic study', programId: PROGRAM, selection: { kind: 'csr', jobId, sectionNumbers: ['1'] } } });
 
 beforeAll(async () => {
   database = new PGlite();

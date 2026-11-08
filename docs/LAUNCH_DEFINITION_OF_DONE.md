@@ -544,7 +544,7 @@ checked and the assessor did not, and how each is carried:
 
 The IND routes keep their paths and answer from the one assessor. A dispatch snapshot records which gate
 produced it, so cockpit drift does not report every old row as drifted.
-*(2026-11-02: superseded by P-100. The uncalled IND lifecycle routes are retired, and Submission Readiness is the one
+*(2026-11-02: superseded by P-105. The uncalled IND lifecycle routes are retired, and Submission Readiness is the one
 place a sequence's verdict is read.)*
 
 ### P-34 — Shadow Review stays a dispatch gate, with a signed human waiver for a provider outage
@@ -1932,7 +1932,114 @@ slice 1 (`090f62af1`, its evidence README, "Owed, not built here").
 - **What is not decided.** A re-filing is not required. Nothing restores a sequence silently.
 - **Owner.** RIM, under F1, after slice 2.
 
-### P-100 — The uncalled IND lifecycle routes are retired; a sequence's verdict is read per project
+### P-100 — While the coordinator is unavailable, each session records its own progress in the plan
+
+The founder, 2026-11-05: **"The coordinator is out of tokens so you need to be proactive and update the plan with your
+work achievements."**
+
+- **What is decided.** A session records what it delivered under its package in the plan's progress log
+  (`docs/design/ONE_DESIGN_PLAN.md` §3a), in a `Plan: PLAN` commit carrying `Founder-Decision: P-100`. An entry states
+  facts only:
+  - the commits, by SHA;
+  - the evidence, by path;
+  - what was found;
+  - what is next.
+- **What is not decided.** A progress entry changes no package's scope, paths, status or ownership. It adds no screen,
+  mount or table. Closing a package is still the founder's or the lead's act (§3, step 5). Any other change to the plan
+  still needs its own founder decision.
+- **Owner.** Each session, for its own package.
+
+### P-101 — The statistical analysis plan is written in the one editor; the second SAP system converges into it
+
+The founder, 2026-11-05, answering "the SAP is a document type in the one editor, and a separate SAP system also exists
+on the server (biostatPlatform.ts …) with no screen. Which is the SAP?": **"Converge into editor."** The question was
+raised by R1 (`docs/evidence/DESIGN/R1/2026-11-05-handoffs-and-decisions/README.md`, Decision A).
+
+- **What is decided.** The SAP is written in the one editor, as every document type is (Rule 4), as
+  `statistical_analysis_plan`. The useful engines of `server/routes/biostatPlatform.ts`'s statistics thread are
+  reached as that document's functions in the editor:
+  - analysis specifications;
+  - TLF shells;
+  - the CSR-section generator.
+
+  Its own SAP store (section edit, comments and their resolution, amendments, lock, versions) is retired. It is
+  migrated and deleted in the same change that reaches its replacement (working agreement: zero duplication; name
+  the replacement by path).
+- **What is not decided.** The order of the work, and whether any statistics-thread engine is itself retired. That
+  is for the owner after a "what already exists" review.
+- **Owner.** The one editor's holder (D4), with S3 for the engines' behaviour. It waits for the CSR demo, as D4-3
+  does.
+
+### P-102 — Informed consent is one record: the 21 CFR 50.25 checklist becomes the document type's checks in the one editor
+
+The founder, 2026-11-05, answering "should the /api/protocol-consent checklist and approval become the consent
+document's checks inside the one editor, as one record?": **"Yes, one record."** The question was raised by R1
+(`docs/evidence/DESIGN/R1/2026-11-05-handoffs-and-decisions/README.md`, Decision B).
+
+- **What is decided.** The `informed_consent` document type carries the 21 CFR 50.25 required-element checklist and
+  its completeness as the editor's checks for that type. Its approval runs through the editor's one signing. The
+  structured record behind `/api/protocol-consent` converges into that one record, not beside it. The protocol
+  workspace's Consent tab stays read-only until then.
+- **Owner.** The one editor's holder (D4), after the CSR demo. It was handed to them on 2026-11-05
+  (`COORDINATION.md`).
+
+### P-103 — The submission-ops package path is retired; the sequence is the one filing path
+
+The founder, 2026-11-05, answering "retire the six /api/submission-ops/packages/* routes? They are a second filing
+store that the sequence replaced on 17 Oct (FILING_SPINE F12)": **"Retire them."** The question was raised by R1
+(`docs/evidence/DESIGN/R1/2026-11-05-handoffs-and-decisions/README.md`, Decision C).
+
+- **What is decided.** The routes are unmounted, or excluded from the launch scope (`LAUNCH_EXCLUDED_API`, with the
+  F12 reason):
+  - `GET/POST …/packages/:id/milestones`;
+  - `POST …/packages/:id/preflight`;
+  - `POST …/packages/:id/publish`;
+  - `GET …/packages/:id/readiness-history`;
+  - `PUT …/packages/:id/regulatory-identifiers`.
+
+  The replacement is the sequence: Submission Center → sequence → Validation, Dispatch, sign, transmit
+  (`SubmissionSeqWorkspaces.tsx`; `POST /api/submissions/sequences/:id/transmit`). No package can be locked for
+  export outside it.
+- **What is not decided.** Whether other `/api/submission-ops/*` routes that a screen still calls are kept. Each is
+  judged on its own.
+- **Owner.** RIM, which holds S5.
+
+
+### P-104 — Extend the existing Anna runtime from the multi-agent architecture specification v0.5
+
+The founder, 2026-11-06, supplied **MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf** and directed:
+
+> "Study the attached document, align to the current roadmap, and add the attached plan to the current roadmap,
+> and you own this end to end. This is your assignment to build all of this in a very sophisticated way, not by
+> building new files, but extending what we already have done. Extend and bring to life. Build this out."
+
+- **What is decided.** Add one Anna-runtime epic to the canonical plan (§1d), mapped onto existing open packages
+  S1–S12 and D4, then extend the implementation in those existing homes. The supplied §15 plan-only handoff is
+  superseded by this explicit build instruction. Native in-product orchestration is the target; workers propose,
+  Anna disposes within runtime gates, humans sign/approve consequential actions. Parallel agents use distinct files
+  under one lead, on `concept2cure-v2`.
+- **Build order and evidence.** Preserve §11 phases 0–8 with the §14.4 spike expanded by §§19/23/26. Each downstream
+  phase waits for its fixture gate. §29 shared learning and §32 clean-file feedback follow the isolation/custody/
+  routing walls; no local test or code audit is represented as production qualification.
+- **Account direction reconciled.** The 2026-10-01 platform-or-client option in
+  `server/services/submission-gateways/gateway-accounts.ts` is the existing behavior. The supplied §17.2 now sets
+  the target for client filings to client-owned authority accounts with scoped revocable grants, exact-content
+  approval and no house-account fallback. Existing account rows and historical sender identities are not rewritten
+  by this decision; S5 must implement and prove the transition explicitly. Other authorities remain record-only
+  until their transport and verified onboarding are supported.
+- **Existing path scope.** S4 also covers the existing AI gateway, connectors, working/session memory and Vault
+  classification readers; S10 covers the existing orchestration route and pre-submission verdict. These additions
+  to package paths approve completion of current files only.
+- **What is not admitted.** No new file, screen, route, mount, service, table, tool, dependency or model. Extend the
+  existing code and records; a requirement needing an addition is recorded as a precise unresolved dependency.
+  Preserve the one editor, one sequence filing path, current client/jurisdiction/composition scope, independent
+  read-only workers, approved-model/PQ controls and human signing. No agency account creation, transmission,
+  provider enablement, certification claim or deployment is implied by roadmap status.
+- **Owner.** The lead owns end-to-end integration and acceptance; existing package owners keep their file holds.
+  The current roadmap is `docs/design/ONE_DESIGN_PLAN.md` and `docs/design/one-design-plan.json`, not the historical
+  CER-only or January vision roadmaps. Progress must name actual commits, checks and remaining dependencies.
+
+### P-105 — The uncalled IND lifecycle routes are retired; a sequence's verdict is read per project
 
 The founder, 2026-11-02, answered two questions.
 
@@ -1978,3 +2085,5 @@ mapping pass found:
 - **Owner.** RIM, under F1, after slice 2. The retirement commit names its replacement by path and shows the
   dispatch-readiness route still reached (working agreement). `tests/schema-contract/one-dispatch-verdict.contract.test.ts`
   changes with it, so it no longer requires the retired routes.
+
+*(Recorded locally on 2026-11-02 as P-100. That number was taken on origin on 2026-11-05 while this session was paused, so this is P-105.)*

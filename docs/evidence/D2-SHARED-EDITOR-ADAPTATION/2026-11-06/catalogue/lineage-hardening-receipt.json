@@ -1,0 +1,107 @@
+{
+  "recordedAt": "2026-11-06T19:54:39.198293+00:00",
+  "package": "F1",
+  "incomingCanonicalTarget": "53b9f15d8fe96767c8dbe6def2d7e8c5e03db7aa",
+  "incomingHardeningSourceCommit": "53b179b99b",
+  "before": {
+    "capturedAt": "2026-11-06T19:52:18.962310+00:00",
+    "head": "637737bb13f51363e15a75d6f4a27bfcbeb8e408",
+    "sourceInputs": {
+      "scripts/ci/check-lineage-save-gate.mjs": "a6794817ecc9e21ad11a54865dbc6d75505ca263badb072d20c0175604e30843",
+      "scripts/ci/lib/lineage-content-writers.mjs": "d7d07267353a73e085ffd262544b98c5e662eed0c3be4617cf0af2528c9089b1",
+      "scripts/ci/lib/lineage-authoring-transaction.mjs": "8d644c26a63fbc2f8e44d3f65a49f2d5300d7079a91aacabf69eafa4933acce1",
+      "scripts/ci/lib/lineage-request-transaction.mjs": "b59fa590f2b56641062b4b14dfc172612cf1adc504e484871e29db12b32f8e90",
+      "scripts/ci/lib/strip-comments.mjs": "2887abc86d3f874c6c38c524e07e158a701a6945ef970bd1fea828275617aec1",
+      "scripts/ci/lib/approved-sql-predicates.mjs": "c6688b005480c879f2725fcbc6ea45128dc667019f60559ac41c36f1ef2989ff",
+      "scripts/ci/__tests__/lineage-save-gate-strings.test.mjs": "3c3bf989767b889bcadf2c4c1f620c4096055a6efb5da0c2056e4df1ee732b4f",
+      "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "server/services/authoring/workflow-source-import.ts": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+      "server/services/authoring/authoring-from-draft.ts": "07831089bbc1ecc6cbdbac51c2eabcb4956af7c925ad0a165e4edf6db574822a",
+      "server/services/authoring/authoring-documents.ts": "4121f329bf846cee4c00b6a5eae2fc0e787158e7267f63bd64d1209c1d119274",
+      "server/services/authoring/authoring-section-seed.ts": "de53688969cd09271253997928da3d37389f4a7ce440cf790cfabaa41c0e4e86",
+      "server/services/authoring/authoring-create-outcome.ts": "04003e0687ab8398b8c319db10ce27162d491273530604b7703758af58bd73dc",
+      "server/services/authoring/revision-ledger.ts": "273fab4bf21344dc65c6017233a7b34db52a0d6287213ee006283cefab629c8d",
+      "server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts": "d0f00f7bde81fedd4a56bff2792f069ddc89d60ea4117c7aaeda147a2b9534a3",
+      "server/services/entitlements/api-prefix-map.ts": "818c7a40550af005b6d6fd99e9742b0b4acc38ce9ebebe5c39bfdb9ae45f8fc7",
+      "server/services/entitlements/launch-scope-api.ts": "56e43806061513fb555c4b840fd9a8da81356164345980942363b82a690dee35",
+      "shared/regulatory/app-registry.ts": "79552bd7f2491672915ea15b8907568c9708cfe2d02cfcd147c7ad90786a6b22"
+    }
+  },
+  "after": {
+    "capturedAt": "2026-11-06T19:54:39.198293+00:00",
+    "head": "637737bb13f51363e15a75d6f4a27bfcbeb8e408",
+    "sourceInputs": {
+      "scripts/ci/check-lineage-save-gate.mjs": "a6794817ecc9e21ad11a54865dbc6d75505ca263badb072d20c0175604e30843",
+      "scripts/ci/lib/lineage-content-writers.mjs": "d7d07267353a73e085ffd262544b98c5e662eed0c3be4617cf0af2528c9089b1",
+      "scripts/ci/lib/lineage-authoring-transaction.mjs": "8d644c26a63fbc2f8e44d3f65a49f2d5300d7079a91aacabf69eafa4933acce1",
+      "scripts/ci/lib/lineage-request-transaction.mjs": "b59fa590f2b56641062b4b14dfc172612cf1adc504e484871e29db12b32f8e90",
+      "scripts/ci/lib/strip-comments.mjs": "2887abc86d3f874c6c38c524e07e158a701a6945ef970bd1fea828275617aec1",
+      "scripts/ci/lib/approved-sql-predicates.mjs": "c6688b005480c879f2725fcbc6ea45128dc667019f60559ac41c36f1ef2989ff",
+      "scripts/ci/__tests__/lineage-save-gate-strings.test.mjs": "3c3bf989767b889bcadf2c4c1f620c4096055a6efb5da0c2056e4df1ee732b4f",
+      "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "server/services/authoring/workflow-source-import.ts": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+      "server/services/authoring/authoring-from-draft.ts": "07831089bbc1ecc6cbdbac51c2eabcb4956af7c925ad0a165e4edf6db574822a",
+      "server/services/authoring/authoring-documents.ts": "4121f329bf846cee4c00b6a5eae2fc0e787158e7267f63bd64d1209c1d119274",
+      "server/services/authoring/authoring-section-seed.ts": "de53688969cd09271253997928da3d37389f4a7ce440cf790cfabaa41c0e4e86",
+      "server/services/authoring/authoring-create-outcome.ts": "04003e0687ab8398b8c319db10ce27162d491273530604b7703758af58bd73dc",
+      "server/services/authoring/revision-ledger.ts": "273fab4bf21344dc65c6017233a7b34db52a0d6287213ee006283cefab629c8d",
+      "server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts": "d0f00f7bde81fedd4a56bff2792f069ddc89d60ea4117c7aaeda147a2b9534a3",
+      "server/services/entitlements/api-prefix-map.ts": "818c7a40550af005b6d6fd99e9742b0b4acc38ce9ebebe5c39bfdb9ae45f8fc7",
+      "server/services/entitlements/launch-scope-api.ts": "56e43806061513fb555c4b840fd9a8da81356164345980942363b82a690dee35",
+      "shared/regulatory/app-registry.ts": "79552bd7f2491672915ea15b8907568c9708cfe2d02cfcd147c7ad90786a6b22"
+    }
+  },
+  "changedInputs": [],
+  "checks": [
+    {
+      "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH node --test scripts/ci/__tests__/lineage-save-gate-strings.test.mjs",
+      "exitCode": 0,
+      "testsPassed": 49,
+      "testsFailed": 0,
+      "durationMilliseconds": 85059.188454,
+      "log": {
+        "path": "logs/shared-editor-lineage-hardening-2026-11-06-selftest.txt",
+        "bytes": 9356,
+        "sha256": "ca338261f774557675ded21832481840e8e0738e244d8c7b3969ae66768b9fdd",
+        "originalScratchPath": "/workspace/scratch/shared-editor-lineage-hardening-2026-11-06-selftest.txt"
+      }
+    },
+    {
+      "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npm run ci:lineage-save-gate",
+      "exitCode": 0,
+      "guardedPathsPassed": 22,
+      "log": {
+        "path": "logs/shared-editor-lineage-hardening-2026-11-06-gate.txt",
+        "bytes": 1771,
+        "sha256": "666c23566cdb67b924a460be340fb7a869ae4a41ba293470313d0e3314cf5834",
+        "originalScratchPath": "/workspace/scratch/shared-editor-lineage-hardening-2026-11-06-gate.txt"
+      }
+    },
+    {
+      "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --no-file-parallelism server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts",
+      "exitCode": 0,
+      "suitesPassed": 1,
+      "testsPassed": 207,
+      "durationSeconds": 3.55,
+      "log": {
+        "path": "logs/shared-editor-lineage-hardening-2026-11-06-launch.txt",
+        "bytes": 39043,
+        "sha256": "75368ba1d2b71c6963778272a96647397960549cc2aa12cd3f275433766c967b",
+        "originalScratchPath": "/workspace/scratch/shared-editor-lineage-hardening-2026-11-06-launch.txt"
+      }
+    }
+  ],
+  "readOnlyFindings": [
+    "Incoming content census distinguishes SQL SET content assignments from WHERE/RETURNING predicates and still detects quoted/commented/concatenated actual writes.",
+    "Incoming AST transaction proof checks the canonical Authoring seed, actual transaction client, awaited lineage and failure handling rather than unrelated BEGIN/helper strings. CSR callback proof remains strict.",
+    "Artifact materialization only reads current sources. Working-copy writes continue through existing createDocumentFromDraft, insertDocumentTx and insertSectionSeedTx with the actual same-client lineage gate.",
+    "Exact artifactDataEligibleSql imported-builder/literal-alias registration in approved-sql-predicates.mjs is intact; no scanner or baseline adjustment was made.",
+    "Exact stored-run reproduction remains within existing launch namespaces; MDX/source selector and guard contracts were not changed."
+  ],
+  "limitations": [
+    "Syntactic mutation tests and repository gate only; not a proof of every dynamic SQL path or runtime concurrency behavior.",
+    "No production/test edits, baseline changes, provider calls or full build/typecheck performed by this task."
+  ]
+}

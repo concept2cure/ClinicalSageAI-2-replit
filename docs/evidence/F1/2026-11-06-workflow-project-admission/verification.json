@@ -1,0 +1,69 @@
+{
+  "scope": "Plan:F1 existing workflow task project admission and restored execution environment",
+  "scopeVerified": true,
+  "date": "2026-11-06",
+  "branch": "concept2cure-v2",
+  "HEAD": "21a21849d7cfb8a35794489a87fad2b849c7011c",
+  "unit": {
+    "files": 26,
+    "passed": 316,
+    "failed": 0
+  },
+  "native": {
+    "files": 2,
+    "passed": 76,
+    "failed": 0
+  },
+  "typecheckInputs": 15425,
+  "checks": {
+    "unit": {
+      "exitCode": 0,
+      "sourcesUnchanged": true,
+      "elapsedSeconds": 54.23,
+      "evidence": "green/unit-status.json"
+    },
+    "native": {
+      "exitCode": 0,
+      "sourcesUnchanged": true,
+      "elapsedSeconds": 15.39,
+      "evidence": "green/native-status.json"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "sourcesUnchanged": true,
+      "elapsedSeconds": 72.1,
+      "evidence": "green/typecheck-status.json"
+    },
+    "build": {
+      "exitCode": 0,
+      "sourcesUnchanged": true,
+      "elapsedSeconds": 23.34,
+      "evidence": "green/build-status.json"
+    },
+    "lint": {
+      "exitCode": 0,
+      "sourcesUnchanged": true,
+      "elapsedSeconds": 2.28,
+      "evidence": "green/lint-status.json"
+    },
+    "gates": {
+      "exitCode": 0,
+      "sourcesUnchanged": true,
+      "elapsedSeconds": 51.16,
+      "evidence": "green/gates-status.json"
+    }
+  },
+  "newProductionFiles": 0,
+  "productionFilesChanged": [
+    "server/routes/taskManagement.routes.ts",
+    "server/services/tasking/task-project.ts"
+  ],
+  "dependencyManifestsSchemaPlanAndAllowancesUnchanged": true,
+  "indexUnchanged": true,
+  "committed": false,
+  "pushed": false,
+  "nativeAuthentication": "Synthetic request actor; actual current SQL project/actor admission with restricted role and FORCE tenant RLS",
+  "qualificationLimit": "Narrow canonical audit/tenant fixture; not full migration, deployed login or browser qualification",
+  "previousOctoberWorkingTreeRecovered": false,
+  "snapshotContext": "Pre-landing working-tree qualification at the HEAD above. The committed/pushed flags describe that snapshot; publication is recorded by canonical git history."
+}

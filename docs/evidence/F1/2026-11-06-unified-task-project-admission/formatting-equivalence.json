@@ -1,0 +1,6 @@
+{
+  "comparison": "TypeScript AST node kinds, literal/identifier values, operators, type-only flags and ordered children; excludes source text, locations, trivia and formatting",
+  "beforeNodes": 3240,
+  "afterNodes": 3240,
+  "structuralAstIdentical": true
+}

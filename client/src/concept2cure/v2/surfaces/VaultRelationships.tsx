@@ -37,6 +37,8 @@ export interface RelationshipShape {
     programId: string;
     programName: string | null;
     superseded: boolean;
+    /** Another client's project: recorded before relating across clients was refused (S6). An older server omits it. */
+    otherClient?: boolean;
   };
 }
 
@@ -48,14 +50,17 @@ function isCandidate(v: unknown): v is Candidate {
   return typeof c.id === 'string' && c.id.length > 0 && typeof c.title === 'string' && nullableText(c.version) &&
     !!c.program && typeof c.program.id === 'string' && c.program.id.length > 0 && nullableText(c.program.name);
 }
+function isRelatedVersion(o: RelationshipShape['other'] | undefined): boolean {
+  return !!o && typeof o.documentId === 'string' && typeof o.programId === 'string' &&
+    nullableText(o.title) && nullableText(o.version) && nullableText(o.programName) &&
+    typeof o.superseded === 'boolean' && (o.otherClient === undefined || typeof o.otherClient === 'boolean');
+}
 function isRelationship(v: unknown): v is RelationshipShape {
   if (!v || typeof v !== 'object') return false;
   const r = v as RelationshipShape;
   return typeof r.id === 'string' && r.id.length > 0 && ['supporting', 'references', 'based_on'].includes(r.type) &&
     ['outgoing', 'incoming'].includes(r.direction) && typeof r.label === 'string' && nullableText(r.note) &&
-    !!r.other && typeof r.other.documentId === 'string' && typeof r.other.programId === 'string' &&
-    nullableText(r.other.title) && nullableText(r.other.version) && nullableText(r.other.programName) &&
-    typeof r.other.superseded === 'boolean';
+    isRelatedVersion(r.other);
 }
 
 /** The three kinds, as a person choosing one reads them. */
@@ -82,12 +87,22 @@ async function call<T>(method: 'GET' | 'POST', url: string, body: unknown, faile
   return (json?.data ?? ({} as T));
 }
 
+/** The other end's project, when it is another one, and whether it is another client's. */
+function whereOther(o: RelationshipShape['other'], projectId: string): string {
+  if (o.programId === projectId) return '';
+  const project = o.programName ?? 'another project';
+  return o.otherClient ? ` (in ${project}, another client’s project)` : ` (in ${project})`;
+}
+
 /** The other end, in words: title, version, its project when it is another one, and whether it is current. */
 export function describeOther(r: RelationshipShape, projectId: string): string {
   const o = r.other;
-  const where = o.programId !== projectId ? ` (in ${o.programName ?? 'another project'})` : '';
   const later = o.superseded ? '. A later version of it exists; this relationship names this one' : '';
-  return `${o.title ?? 'Untitled'}${versionOf(o.version)}${where}${later}`;
+  /* S6: the Vault refuses a new relationship across clients; one recorded before that is said, not hidden. */
+  const across = o.otherClient
+    ? '. It relates two clients’ records, which the Vault no longer allows; it was recorded before that rule'
+    : '';
+  return `${o.title ?? 'Untitled'}${versionOf(o.version)}${whereOther(o, projectId)}${later}${across}`;
 }
 
 function useRelationships(projectId: string, documentId: string) {
@@ -128,7 +143,8 @@ function AddForm({ projectId, documentId, onAdded }: { projectId: string; docume
     setFound(null);
     try {
       const d = await call<{ scope?: string; results?: Candidate[] }>(
-        'GET', `/api/c2c/project-vault/search?q=${encodeURIComponent(q.trim())}&limit=10`, undefined, 'The library could not be searched.');
+        /* Within this project's sponsor (F1, S6 V2): a CRO never links one sponsor's document to another's. */
+        'GET', `/api/c2c/project-vault/search?q=${encodeURIComponent(q.trim())}&limit=10&sameClientAs=${encodeURIComponent(projectId)}`, undefined, 'The library could not be searched.');
       if (d.scope !== 'verified-accessible-programs' || !Array.isArray(d.results) || !d.results.every(isCandidate)) {
         throw new Error('The library could not be searched. No confirmed accessible result list was returned.');
       }

@@ -619,8 +619,27 @@ export const RUN_REFUSAL_TEXT = {
   RUN_LIMIT: 'You have three turns running. Stop one, or wait for one to finish.',
 } as const;
 
+/**
+ * The AI gateway's classified refusals (server/services/ai-gateway/gateway-error-map.ts).
+ * Their message is the gateway's own sentence, never a provider's text, and it
+ * names the cause: a refused API key, no qualified model, the organisation's
+ * placement policy. Until 2026-11-06 each of these read "AnA couldn't complete
+ * this request. Try again", so a wrong key looked like a broken product.
+ */
+const GATEWAY_REFUSAL_CODES: ReadonlySet<string> = new Set([
+  'PROVIDER_KEY_REFUSED',
+  'PROVIDER_ACCOUNT_REFUSED',
+  'MODEL_NOT_QUALIFIED',
+  'PLACEMENT_REFUSED',
+  'RATE_LIMITED',
+  'OVERLOADED',
+  'PROVIDER_UNAVAILABLE',
+  'INVALID_AI_RESPONSE',
+  'SOURCE_CONTEXT_UNAVAILABLE',
+]);
+
 export function streamRefusalText(err: unknown): string {
-  const failure = err as { code?: string; status?: number } | undefined;
+  const failure = err as { code?: string; status?: number; message?: string; serverSent?: boolean } | undefined;
   if (failure?.code === 'RUN_IN_PROGRESS' || failure?.code === 'RUN_LIMIT') return RUN_REFUSAL_TEXT[failure.code];
   if (failure?.code === 'THREAD_FORBIDDEN') {
     return 'That conversation belongs to another user. Select your own conversation or start a new one. Your request was not sent to the AI provider.';
@@ -630,6 +649,12 @@ export function streamRefusalText(err: unknown): string {
      "New conversation in <project>" from the code recorded on the message. */
   if (failure?.code === 'THREAD_PROJECT_MISMATCH') {
     return 'This conversation belongs to another project. Start a new conversation in the project you have open. Your request was not sent to the AI provider.';
+  }
+  /* Before the status lines: a qualified-model or placement refusal answers 403,
+     and "sign in again" would send the person after the wrong cause. */
+  if (failure?.code && GATEWAY_REFUSAL_CODES.has(failure.code) && typeof failure.message === 'string' &&
+      failure.message.trim() && failure.message !== 'Stream error') {
+    return `${failure.message.trim()} Prior turns are preserved.`;
   }
   if (failure?.status === 401) {
     return 'Your sign-in could not be verified. Sign in again to ask AnA. Prior turns are preserved.';

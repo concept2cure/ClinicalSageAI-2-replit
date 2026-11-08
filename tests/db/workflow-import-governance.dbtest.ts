@@ -10,7 +10,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { Pool, type PoolClient } from 'pg';
 import { databaseUrl } from '../setup.db';
 import type { WorkflowImportSource } from '../../shared/authoring/source-import';
-import { captureAssignedWorkflowReview, assertBoundWorkflowReviewReceipt } from './workflow-import-review-fixture';
+import { captureAssignedWorkflowReview, approveAssignedWorkflowReview, registerJoinedAnaReviewAcceptance, nativeMachineProtocolSource, nativeUnretainedCsrSource, withNativeReviewerStanding, replaceNativeWorkflowSections } from './workflow-import-review-fixture';
 
 const TAG = `workflowqa-${process.pid}-${Date.now().toString(36)}`;
 const PASSWORD = 'Workflow-Native-QA-Only-2026!';
@@ -41,17 +41,9 @@ async function protocol(): Promise<WorkflowImportSource> {
     VALUES ($1,$2,'protocol.population','Population','Adults with the recorded condition.',true,1,$3)`, [orgId,row.id,actors.author.id]);
   return { kind: 'protocol', documentId: Number(row.id) };
 }
-async function csr(model: string | null = null): Promise<WorkflowImportSource> {
-  const row = (await owner.query(`INSERT INTO csr_build_jobs
-    (organization_id,project_id,study_id,status,progress,sections_to_generate,study_info_snapshot,requested_by)
-    VALUES ($1,$2,$3,'complete',100,ARRAY['1'],$4::jsonb,$5) RETURNING id`,
-  [orgId,projectId,`${TAG}-${randomUUID()}`,JSON.stringify({title:`${TAG} known machine CSR`}),actors.author.id])).rows[0];
-  const content = '<p>Automated retained narrative states the trial summary supplied by the worker.</p>';
-  await owner.query(`INSERT INTO csr_section_outputs
-    (organization_id,project_id,job_id,section_number,content,content_hash,ai_generated,model,lineage)
-    VALUES ($1,$2,$3,'1',$4,$5,true,$6,'{}'::jsonb)`, [orgId,projectId,row.id,content,sha(content),model]);
-  return { kind: 'csr', jobId: Number(row.id), sectionNumbers: ['1'] };
-}
+const csr = () => nativeUnretainedCsrSource({ owner, organizationId: orgId, projectId, userId: actors.author.id, tag: TAG });
+const machineProtocol = async () => nativeMachineProtocolSource(owner, orgId, actors.author.id, await protocol());
+
 async function preview(source: WorkflowImportSource, actor = actors.author) {
   const response = await call(actor,'post','/import/source',{programId,source,previewOnly:true});
   expect(response.status,JSON.stringify(response.body)).toBe(200);
@@ -73,15 +65,9 @@ async function effects(docId: string) {
     (SELECT count(*)::int FROM authoring_exports WHERE doc_id=$1::text) AS exports`,[docId])).rows[0];
 }
 async function approveAssignedReview(docId: string) {
-  const asked = await call(actors.author,'post',`/documents/${docId}/request-review`,{ // RR5: the request names its review route's due date.
-    reviewers:[{id:String(actors.reviewer.id),name:'Native independent reviewer',email:actors.reviewer.email}],reason:REASON,route:{reviewDueDate:new Date(Date.now()+3*86_400_000).toISOString().slice(0,10)},
-  });
-  expect(asked.status,JSON.stringify(asked.body)).toBe(200);
-  const binding = await captureAssignedWorkflowReview(app, actors.reviewer, docId, orgId);
-  const reviewed = await call(actors.reviewer,'post',`/documents/${docId}/review`,{review_status:'approved',review_comments:REASON,expected:binding.expected});
-  expect(reviewed.status,JSON.stringify(reviewed.body)).toBe(200);
-  assertBoundWorkflowReviewReceipt(reviewed.body, binding);
+  return approveAssignedWorkflowReview({ app, author: actors.author, reviewer: actors.reviewer, documentId: docId, organizationId: orgId, reason: REASON });
 }
+
 async function adopt(docId: string) {
   await approveAssignedReview(docId);
   const signature = await call(actors.reviewer,'post',`/docs/${docId}/e-sign`,{
@@ -92,6 +78,12 @@ async function adopt(docId: string) {
   return signature;
 }
 const freeze = (id: string) => call(actors.author,'post',`/docs/${id}/freeze`,{meaning:'AUTHOR',reason:REASON,password:PASSWORD});
+
+registerJoinedAnaReviewAcceptance(() => ({
+  owner, app, organizationId: orgId, organizationUuid: orgUuid, projectId, programId,
+  author: actors.author, reviewer: actors.reviewer, password: PASSWORD, reason: REASON,
+  rememberDocument: id => { copiedIds.push(id); },
+}));
 
 /** Observe real PostgreSQL lock waits, rather than infer overlap from a timer. */
 async function waitForParentWait(holderPid: number, signing: boolean, behindEarlierWait = false): Promise<void> {
@@ -272,6 +264,16 @@ describe('workflow source snapshots and current sharing use real native data',()
 });
 
 describe('workflow identity never substitutes for canonical human adoption or qualification',() => {
+  it('holds a real CSR without retained scientific tables before approving or signing it',async () => {
+    const data = await pull(await csr()), id = data.doc.id;
+    const asked = await call(actors.author,'post',`/documents/${id}/request-review`,{reviewers:[{id:String(actors.reviewer.id)}],reason:REASON,route:{reviewDueDate:new Date(Date.now()+3*86_400_000).toISOString().slice(0,10)}});
+    expect(asked.status,JSON.stringify(asked.body)).toBe(200);
+    const binding = await captureAssignedWorkflowReview(app,actors.reviewer,id,orgId);
+    const reviewed = await call(actors.reviewer,'post',`/documents/${id}/review`,{review_status:'approved',review_comments:REASON,expected:binding.expected});
+    expect(reviewed.status).toBe(409); expect(codeOf(reviewed)).toBe('CSR_SCIENTIFIC_REVIEW_REQUIRED');
+    expect(codeOf(await freeze(id))).toBe('CSR_SCIENTIFIC_REVIEW_REQUIRED');
+    expect(await effects(id)).toEqual({signatures:0,frozen:0,exports:0});
+  });
   it('creates an unbound unknown-origin copy, rejects fingerprint-only release, then permits actual assigned reviewer adoption',async () => {
     const data = await pull(await protocol(),{title:'Forged title',signatureId:randomUUID(),status:'APPROVED',provenance:{model:'qualified-model',governedWrite:'allowed'}});
     const id = data.doc.id;
@@ -298,17 +300,17 @@ describe('workflow identity never substitutes for canonical human adoption or qu
     expect(kept.servedBy).toBeUndefined();
   });
 
-  it('holds positively machine-authored CSR without qualified generation evidence even after actual reviewer adoption',async () => {
-    const data = await pull(await csr('recorded-name-without-generation-proof'));
+  it('holds positively machine-authored protocol text without qualified generation evidence even after actual reviewer adoption',async () => {
+    const data = await pull(await machineProtocol());
     const id = data.doc.id;
-    expect(data.origin.sectionOrigins[0]).toMatchObject({originalAuthorship:'machine',modelEvidence:'recorded-name-only'});
+    expect(data.origin.sectionOrigins.find((row:{originalAuthorship:string})=>row.originalAuthorship==='machine')).toMatchObject({originalAuthorship:'machine',modelEvidence:'unrecorded'});
     await adopt(id);
     const before = await effects(id);
     const actions = [
       () => freeze(id),
       () => call(actors.author,'post',`/docs/${id}/e-sign`,{meaning:'APPROVER',intent:REASON,password:PASSWORD}),
       () => call(actors.author,'post',`/docs/${id}/sign`,{meaning:'APPROVER',reason:REASON,password:PASSWORD}),
-      () => call(actors.author,'post',`/docs/${id}/file-to-vault`,{format:'docx',documentType:'clinical-study-report'}),
+      () => call(actors.author,'post',`/docs/${id}/file-to-vault`,{format:'docx',documentType:'protocol'}),
     ];
     for(const action of actions) {
       const response = await action();
@@ -355,16 +357,16 @@ describe('full visible review and known machine qualification remain distinct',(
   });
 
   it('records a real reviewer signature without releasing known machine text when it clears the last workflow step',async () => {
-    const data = await pull(await csr());
+    const data = await pull(await machineProtocol());
     const id = data.doc.id;
     const submitted = await call(actors.author,'post',`/docs/${id}/submit`,{
       reason:REASON,workflow_steps:[{role:'REVIEWER',approver_email:actors.reviewer.email}],
     });
     expect(submitted.status,JSON.stringify(submitted.body)).toBe(200);
     await approveAssignedReview(id);
-    const reviewed = await call(actors.reviewer,'post',`/docs/${id}/sign`,{
+    const reviewed = await withNativeReviewerStanding({owner,organizationId:orgId,projectId,userId:actors.reviewer.id},()=>call(actors.reviewer,'post',`/docs/${id}/sign`,{
       meaning:'REVIEWER',reason:REASON,password:PASSWORD,adoptWorkflowSource:true,
-    });
+    }));
     expect(reviewed.status,JSON.stringify(reviewed.body)).toBe(200);
     expect(reviewed.body.workflowSourceAdoption).toMatchObject({scope:'full-document',originalAuthorshipDisclosed:true});
     expect(await effects(id)).toEqual({signatures:1,frozen:0,exports:0});
@@ -394,7 +396,7 @@ describe('full visible review and known machine qualification remain distinct',(
 describe('retained workflow identity and lifecycle changes fail closed',() => {
 
   it('allows real DOCX working bytes for held machine text with an explicit uncontrolled notice and no controlled export or seal',async () => {
-    const data = await pull(await csr());
+    const data = await pull(await machineProtocol());
     const id = data.doc.id;
     const response = await request(app).post(`/api/authoring/docs/${id}/working-copy`)
       .set('Authorization',`Bearer ${actors.author.token}`).send({format:'docx'}).buffer(true)
@@ -419,8 +421,8 @@ describe('retained workflow identity and lifecycle changes fail closed',() => {
   });
 
   it('does not lift a known-machine hold when displayed workflow provenance is removed',async () => {
-    const data = await pull(await csr());
-    expect(data.origin.sectionOrigins[0]).toMatchObject({originalAuthorship:'machine',model:null,modelEvidence:'unrecorded'});
+    const data = await pull(await machineProtocol());
+    expect(data.origin.sectionOrigins.find((row:{originalAuthorship:string})=>row.originalAuthorship==='machine')).toMatchObject({originalAuthorship:'machine',model:null,modelEvidence:'unrecorded'});
     // Simulated corrupt display metadata on this fixture only. The immutable
     // CREATE receipt and original source still exist and are authoritative.
     await owner.query('UPDATE authoring_documents SET provenance=NULL WHERE id=$1 AND tenant_id=$2',[data.doc.id,orgId]);
@@ -499,14 +501,11 @@ describe('current sealed records and later renditions retain their exact reviewe
   });
 
   it('permits an actual human replacement after current review without erasing original machine origin or fabricating PQ',async () => {
-    const data = await pull(await csr());
+    const data = await pull(await machineProtocol());
     const id = data.doc.id;
     expect(codeOf(await freeze(id))).toBe('WORKFLOW_MODEL_QUALIFICATION_REQUIRED');
-    const section = data.sections[0];
-    const replacement = await call(actors.author,'patch',`/sections/${section.id}`,{
-      content:'<p>Independent medical oversight established the authorized enrollment criteria through documented clinical review.</p>',changeReason:REASON,
-    });
-    expect(replacement.status,JSON.stringify(replacement.body)).toBe(200);
+    await replaceNativeWorkflowSections({app,token:actors.author.token,sections:data.sections,
+      content:'<p>Independent medical oversight established the authorized enrollment criteria through documented clinical review.</p>',reason:REASON});
     const unadopted = await freeze(id);
     expect(unadopted.status,JSON.stringify(unadopted.body)).toBe(409);
     expect(codeOf(unadopted)).toBe('WORKFLOW_HUMAN_ADOPTION_REQUIRED');
@@ -514,7 +513,7 @@ describe('current sealed records and later renditions retain their exact reviewe
     const released = await freeze(id);
     expect(released.status,JSON.stringify(released.body)).toBe(200);
     const kept = (await owner.query('SELECT provenance FROM authoring_documents WHERE id=$1',[id])).rows[0].provenance;
-    expect(kept.importSource.sectionOrigins[0]).toMatchObject({originalAuthorship:'machine',model:null,modelEvidence:'unrecorded'});
+    expect(kept.importSource.sectionOrigins.find((row:{originalAuthorship:string})=>row.originalAuthorship==='machine')).toMatchObject({originalAuthorship:'machine',model:null,modelEvidence:'unrecorded'});
     expect(kept.servedBy).toBeUndefined();
   });
 

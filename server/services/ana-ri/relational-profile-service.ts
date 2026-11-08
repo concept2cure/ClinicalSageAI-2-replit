@@ -32,7 +32,6 @@
 
 import { getPool } from '../../db/runtime.js';
 import { ensureGateway } from '../../routes/chat/shared.js';
-import { renderRelationalContextBlock } from './personality-core.js';
 import type {
   AnaToneCalibration,
   AnaEmotionalSignal,
@@ -88,74 +87,15 @@ interface ProfileRow {
   interaction_count: number;
 }
 
-async function loadProfiles(
-  organizationId: number,
-  userId: number,
-  projectId?: number | null
-): Promise<{ user: ProfileRow | null; project: ProfileRow | null }> {
-  const { rows } = await getPool().query(
-    `SELECT id, project_id, profile_summary, tone_calibration, emotional_signals,
-            acknowledged_mistakes, interaction_count
-       FROM ana_relational_profiles
-      WHERE organization_id = $1
-        AND user_id = $2
-        AND (project_id IS NULL OR project_id = $3)`,
-    [organizationId, userId, projectId ?? null]
-  );
-  let user: ProfileRow | null = null;
-  let project: ProfileRow | null = null;
-  for (const row of rows as ProfileRow[]) {
-    if (row.project_id === null) user = row;
-    else project = row;
-  }
-  return { user, project };
-}
-
-/**
- * Render AnA's relational notes for this (user, project) as a prompt block.
- * Returns '' when nothing has been learned yet or the table is absent.
- */
+/** Generic prompt/record callers receive availability only, never private notes. */
 export async function loadRelationalOverlay(input: {
   organizationId?: number | null;
   userId?: number | null;
   projectId?: number | null;
 }): Promise<string> {
-  const { organizationId, userId, projectId } = input;
-  if (!organizationId || !userId || !Number.isFinite(Number(userId))) return '';
-  try {
-    /* Only an integer projects.id names a project row. A program UUID that
-       reached here as Number(uuid) = NaN failed the whole read, the person's
-       own notes included (ana-14); the caller resolves the id first, and
-       anything else reads the person's notes alone, as reflectAfterTurn does. */
-    const { user, project } = await loadProfiles(
-      Number(organizationId),
-      Number(userId),
-      Number.isSafeInteger(projectId) && (projectId as number) > 0 ? (projectId as number) : null
-    );
-    if (!user && !project) return '';
-
-    const signals = [
-      ...(user?.emotional_signals ?? []),
-      ...(project?.emotional_signals ?? []),
-    ].slice(-1);
-
-    return renderRelationalContextBlock({
-      userNotes: user?.profile_summary ?? null,
-      projectNotes: project?.profile_summary ?? null,
-      toneCalibration: (user?.tone_calibration as Record<string, unknown>) ?? null,
-      recentEmotionalSignal: signals[0]?.signal ?? null,
-      acknowledgedMistakes: [
-        ...(user?.acknowledged_mistakes ?? []),
-        ...(project?.acknowledged_mistakes ?? []),
-      ],
-      interactionCount: (user?.interaction_count ?? 0) + (project?.interaction_count ?? 0),
-    });
-  } catch (err: any) {
-    if (!warnIfMissingTable(err, 'read')) {
-      logger.warn(`relational overlay load failed: ${err?.message}`);
-    }
-    return '';
-  }
+  if (!input.organizationId || !input.userId) return '';
+  return `## Personal working notes availability
+Personal working notes are not included in the shared context. A protected owner context may supply them for this reply.`;
 }
 
 /**
@@ -278,7 +218,12 @@ async function reflectScope(params: {
   userMessage: string;
   assistantMessage: string;
   profile: ProfileRow;
+  privateModelContext?: import('../ai-gateway/model-call-scope').OwnerPrivateModelContextCapsule;
 }): Promise<void> {
+  // No caller currently supplies this protected source capsule. Keep counters
+  // and existing private notes while the SDK-only reflection path is wired;
+  // never put an unprotected profile or derived reply into a model request.
+  if (!params.privateModelContext) return;
   const gw = ensureGateway();
   if (!gw || gw.getEnabledProviders().length === 0) return;
 

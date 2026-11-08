@@ -1,0 +1,179 @@
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > writes the document AND its Part 11 audit row (previously wrote NO audit at all)
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > stores the periodic review date the user named, which review-due reads (gap 5.1)
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > FAILS CLOSED — a broken audit write rolls the document back
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > rolls back register, editing copy, sections and both ledgers when canonical authoring audit fails after the QMS ledger was written
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses the whole creation if canonical creator ownership cannot persist
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > create_qms_document — controlled document creation is audited atomically > refuses without a verified actor (no anonymous controlled-document creation)
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > approve_qms_document — AnA cannot make a document effective > writes nothing and hands the approval to the person
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > revise_qms_document — controlled revision is audited atomically > bumps the version AND writes the audit row in one transaction
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > revise_qms_document — controlled revision is audited atomically > FAILS CLOSED — a broken audit write rolls the revision back
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > retire_qms_document — AnA cannot retire a controlled document > writes nothing and hands the retirement to the person
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > update_vault_document — new regulated version is audited atomically > writes v2 AND the audit row
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > update_vault_document — new regulated version is audited atomically > FAILS CLOSED — a broken audit write rolls the new version back
+ ✓ server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts > identity is derived from the verified principal, never from tool input > ignores spoofed organization_id / user_id in the tool input
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_vault_documents lists each open project of every sponsor, never a private project
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > each listed artifact names its project and its sponsor
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > read_vault_document, get_document_versions and compare_vault_versions answer a private artifact as a missing one
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > an artifact of an open project still reads, with its versions
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_governed_documents lists each open project of every sponsor, naming its project, never a private one
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > read_governed_document answers a private project's document as a missing one
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > global_search finds programs and artifact titles of open projects only
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > list_vault_documents lists only the open project's sponsor (open project as a program uuid)
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > list_vault_documents lists only the open project's sponsor (open project as a project id)
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > the three artifact reads answer another sponsor's artifact as a missing one
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > governed documents: only the open project's sponsor's are listed or read
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > global_search finds only the open project's sponsor's programs and artifacts
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > an open project the person cannot open is refused, and nothing is listed
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the sharing policy cannot be read: every tool says so
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the projects' program anchors cannot be read: the governed-document reads and global_search say so
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > a caller who is not a current member, or no identified caller, is refused
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > a private project's artifact is answered as a missing one, and nothing is written
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > inside a project, another sponsor's artifact is answered as a missing one, and nothing is written
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > a project the person can open but not change is refused, and nothing is written
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > with the project's edit right, the new version is written
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > a check that cannot run writes nothing, and says so
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > assemble_ectd_module_from_artifacts assembles only a project the person can open > an open project of the open sponsor assembles
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > assemble_ectd_module_from_artifacts assembles only a project the person can open > a private project, or another sponsor's from inside a project, reads as a project with no such artifacts
+ ✓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > assemble_ectd_module_from_artifacts assembles only a project the person can open > another organization's project reads as a project with no such artifacts
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts > a machine draft nobody has accepted > records every clause as the machine's, with NO asserter, and the requester as created_by
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts > a machine draft nobody has accepted > stays unaccepted across a later save that does not touch it — saving is not accepting
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts > a machine draft nobody has accepted > returns a clause to the human the moment they edit its words
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts > a machine draft nobody has accepted > is UPGRADED to accepted_machine_draft, naming the acceptor, when a human accepts it
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts > a machine draft nobody has accepted > the database refuses a machine_draft that names an asserter
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts > the guard is falsifiable > without the 20260908 migration the database refuses the machine_draft kind
+ ✓ server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts > legacy Ana artifact tools apply the canonical disposition gate before returning text > reads and lists stored kept text with original-unavailable markers, then excludes a later withdrawal
+ ✓ server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts > legacy Ana artifact tools apply the canonical disposition gate before returning text > excludes a superseded representation and refuses foreign artifact ids
+ ✓ server/services/ana/__tests__/artifact-disposition-tools.pglite.integration.test.ts > legacy Ana artifact tools apply the canonical disposition gate before returning text > reports a failed policy store explicitly and never returns the previously readable artifact text
+ ✓ server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts > AnA's outline read states the readiness denominator > marks each row counted by the trigger's rule, and the figure is approved over exactly those
+ ✓ server/services/ana/__tests__/read-governed-document-counted.pglite.test.ts > AnA's outline read states the readiness denominator > the message names the counted denominator, not every row
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — registration > registers a handler for lookup_regulatory_precedents
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — registration > registers a handler for compare_submission_against_precedent
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — registration > registers a handler for assess_claim_evidence_integrity
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — registration > registers a handler for simulate_reviewer_challenges
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — registration > registers a handler for predict_change_impact
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — registration > registers a handler for fetch_template_and_fill
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — registration > registers a handler for assemble_ectd_module_from_artifacts
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — registration > registers a handler for draft_510k_substantial_equivalence
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — registration > registers a handler for draft_clinical_overview_m2_5
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — registration > registers a handler for draft_fda_ir_response
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — registration > registers a handler for list_fda_forms
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — registration > registers a handler for prepare_fda_form
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — registration > registers a handler for amend_fda_form
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > lookup_regulatory_precedents rejects missing submission_type
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > compare_submission_against_precedent rejects missing precedent_id
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > compare_submission_against_precedent rejects missing submission_type
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > assess_claim_evidence_integrity rejects missing package_id
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > simulate_reviewer_challenges rejects missing assessment_id
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > predict_change_impact rejects missing change_type
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > fetch_template_and_fill rejects missing template_id
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > assemble_ectd_module_from_artifacts rejects missing module_number
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > draft_510k_substantial_equivalence rejects missing intended_use
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > draft_clinical_overview_m2_5 rejects missing indication
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > draft_fda_ir_response rejects empty / too-short ir_text
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > draft_510k_substantial_equivalence returns structure when inputs are complete (no AI, no DB)
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > draft_clinical_overview_m2_5 returns ICH M4E(R2) outline (no DB needed)
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — input validation (no DB needed) > draft_fda_ir_response extracts numbered questions from realistic IR text
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — tenant context enforcement > assess_claim_evidence_integrity refuses without organizationId
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — tenant context enforcement > simulate_reviewer_challenges refuses without organizationId
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — tenant context enforcement > predict_change_impact refuses without organizationId
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — tenant context enforcement > fetch_template_and_fill refuses without organizationId
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — tenant context enforcement > assemble_ectd_module_from_artifacts refuses without organizationId
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA new tool handlers — tenant context enforcement > lookup_regulatory_precedents accepts missing organizationId (global lookup)
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA biostatistics tools — registration + deterministic compute > registers a handler for compute_sample_size
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA biostatistics tools — registration + deterministic compute > registers a handler for compare_statistical_scenarios
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA biostatistics tools — registration + deterministic compute > registers a handler for assess_statistical_defensibility
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA biostatistics tools — registration + deterministic compute > registers a handler for analyze_missing_data_impact
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA biostatistics tools — registration + deterministic compute > registers a handler for generate_statistical_document
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA biostatistics tools — registration + deterministic compute > compute_sample_size returns an engine-computed N and power
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA biostatistics tools — registration + deterministic compute > compute_sample_size reports needs_parameters when design is missing
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA biostatistics tools — registration + deterministic compute > assess_statistical_defensibility returns a multi-dimension judgment
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA biostatistics tools — registration + deterministic compute > analyze_missing_data_impact returns adjusted power for a missing-data plan
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA biostatistics tools — registration + deterministic compute > generate_statistical_document drafts a SAP section grounded in the engine
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > AnA biostatistics tools — registration + deterministic compute > compare_statistical_scenarios returns both scenarios and a recommendation
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > generate_statistical_document — full template coverage > generates full_statistical_analysis_plan
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > generate_statistical_document — full template coverage > generates sap_section_draft
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > generate_statistical_document — full template coverage > generates sample_size_rationale
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > generate_statistical_document — full template coverage > generates statistical_methods_section
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > generate_statistical_document — full template coverage > generates interim_analysis_plan
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > generate_statistical_document — full template coverage > generates dsmb_charter
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > generate_statistical_document — full template coverage > generates tlf_shell_plan
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > generate_statistical_document — full template coverage > generates randomization_plan
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > generate_statistical_document — full template coverage > generates statistical_risk_memo
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > generate_statistical_document — full template coverage > generates design_assumption_note
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > generate_statistical_document — full template coverage > generates protocol_statistical_section
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > generate_statistical_document — full template coverage > generates submission_statistical_note
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > generate_statistical_document — full template coverage > generates statistical_reviewer_response
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > generate_statistical_document — full template coverage > generates scenario_comparison_brief
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > existing FDAFormGenerator — AnA adapter > lists the canonical registry with fail-closed release readiness
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > existing FDAFormGenerator — AnA adapter > prepares a registered form for the existing Document Studio contract
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > existing FDAFormGenerator — AnA adapter > requires an amendment reason and executes conditional validation
+ ✓ server/services/ana/__tests__/new-tool-handlers.test.ts > existing FDAFormGenerator — AnA adapter > escapes project values in the existing universal HTML generator
+ ✓ server/services/ana/__tests__/confirmed-write-role-gate.test.ts > a confirmed write needs an editor role > create_qms_document is a confirm-class write (the premise)
+ ✓ server/services/ana/__tests__/confirmed-write-role-gate.test.ts > a confirmed write needs an editor role > refuses a viewer, before the handler runs, and writes nothing
+ ✓ server/services/ana/__tests__/confirmed-write-role-gate.test.ts > a confirmed write needs an editor role > refuses someone who is not a member, before the handler runs, and writes nothing
+ ✓ server/services/ana/__tests__/confirmed-write-role-gate.test.ts > a confirmed write needs an editor role > refuses an unknown role, before the handler runs, and writes nothing
+ ✓ server/services/ana/__tests__/confirmed-write-role-gate.test.ts > a confirmed write needs an editor role > reads the role for the verified principal, not for anything in the input
+ ✓ server/services/ana/__tests__/confirmed-write-role-gate.test.ts > a confirmed write needs an editor role > fails closed when the role cannot be read
+ ✓ server/services/ana/__tests__/confirmed-write-role-gate.test.ts > a confirmed write needs an editor role > refuses a confirmed write with no identified member
+ ✓ server/services/ana/__tests__/confirmed-write-role-gate.test.ts > a confirmed write needs an editor role > lets an editor role through to the handler
+ ✓ server/services/ana/__tests__/confirmed-write-role-gate.test.ts > a confirmed write needs an editor role > does not ask for a role on a read
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every tool with a free-text input is classified — a new one cannot ship unclassified
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > no tool is in both maps
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every classified name is a real tool — no stale entries
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every entry says why
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > the scan still finds the tools the defect was found through
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > author_docx_native: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > commit_document_revision: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > draft_authoring_document: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > generate_document: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > insert_document_content: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > save_document_to_vault: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_biosketch_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_consent_element: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_dms_plan_element: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_protocol_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_vault_document: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > write_kit_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > write_q_sub_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > refused when the serving model is unknown — absent means refused
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > refused for GPT-4o, which the registry caps below high-risk
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > an approved model is not refused by the gate
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool that only analyses free text is not gated
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool calling another tool’s handler directly is gated too (assemble_crl_premortem_artifact → author_docx_native)
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Sonnet is refused and nothing is stored
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Opus clears the model gate — and, being a write, is put to a person, not run (P1-34)
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > and on a person's yes, the Opus-written content reaches the handler
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > the caller cannot vouch for the model: a servingModel in the toolContext is overwritten by the one in the response
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a confirm-tier tool is proposed on this door, even from an approved model — nothing is stored
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the stream door (source pin) > hands every tool call the model that produced it
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the stream door (source pin) > sets the served model from the first response and updates it after every round
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: Draft the clinical overview for this project as an authoring document
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: please write section 2.5.4 for me
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: Prepare a response to the FDA information request
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: compose the cover letter for the submission
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: take me to CMC
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: what does section 2.5 require?
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: summarise this thread
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: is the submission ready?
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > a drafting request on Balanced is scored high-risk and routed to the flagship tier
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > both routes compute the hint from the message (source pin)
+ ✓ server/services/ana/__tests__/read-vault-document-citable.test.ts > read_vault_document — what the model can cite > returns the resolved evidence_source_id and says how to pass it
+ ✓ server/services/ana/__tests__/read-vault-document-citable.test.ts > read_vault_document — what the model can cite > is null — and says so — when the artifact has no Data Room source
+ ✓ server/services/ana/__tests__/read-vault-document-citable.test.ts > read_vault_document — what the model can cite > resolves through the tenant-checking resolver, not from the row it just read
+ ✓ server/services/ana/__tests__/read-vault-document-citable.test.ts > read_vault_document — what the model can cite > still returns the document when attribution prep fails — a read is not lost to it
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > each is a confirm-tier write in the tool register (P1-34 folded the list of five into it)
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > save_document_to_vault is proposed to a person, carrying what it would do
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > update_vault_document is proposed to a person, carrying what it would do
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > file_chat_upload_to_vault is proposed to a person, carrying what it would do
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > seed_tmf is proposed to a person, carrying what it would do
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > save_report_definition is proposed to a person, carrying what it would do
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > an unreadable call is refused, not proposed
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > a read-only neighbour is not
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the registry refuses to run one no person confirmed > on a path that cannot ask, the handler answers with a proposal and writes nothing
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the registry refuses to run one no person confirmed > once a person has confirmed, it runs
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the registry refuses to run one no person confirmed > the confirmation is read from the context, never from what the model wrote
+ ✓ server/services/ana/__tests__/vault-named-tools-honesty.test.ts > Artifacts Center tools named "vault" > an empty listing says what it searched, not that the Vault is empty
+ ✓ server/services/ana/__tests__/vault-named-tools-honesty.test.ts > Artifacts Center tools named "vault" > an unknown id is not reported as absent from the Vault
+ ✓ server/services/ana/__tests__/vault-named-tools-honesty.test.ts > Artifacts Center tools named "vault" > their descriptions tell the model which store they read
+ Test Files  11 passed (11)
+      Tests  177 passed (177)

@@ -89,6 +89,31 @@ export type ReproductionResult =
       note?: string;
     };
 
+/** The stored run a design's figure was taken from, as a screen names it before asking for its reproduction. */
+export interface StoredRunRef {
+  runId: number;
+  recordedAt: string;
+  /** The stored outputs, as recorded: the figure is read from them, never recomputed here. */
+  outputs: unknown;
+}
+
+/**
+ * The latest stored run of this organization for one design and one purpose. A design's figure is written in the
+ * transaction that stores its run (bridge-service applySampleSizeToDesign), so the latest run for the purpose is the
+ * run behind the figure the design records, unless the figure was edited by hand afterwards; the caller compares.
+ */
+export async function latestRunFor(exec: Exec, organizationId: number, studyRef: number, purpose: string): Promise<StoredRunRef | null> {
+  const { rows } = await exec.query(
+    `SELECT id, created_at, outputs FROM public.stats_computation_runs
+      WHERE organization_id = $1 AND study_ref = $2 AND purpose = $3
+      ORDER BY created_at DESC, id DESC LIMIT 1`,
+    [organizationId, studyRef, purpose],
+  );
+  const run = rows[0];
+  if (!run) return null;
+  return { runId: Number(run.id), recordedAt: new Date(run.created_at).toISOString(), outputs: run.outputs };
+}
+
 /** Recompute a stored run of this organization from its stored inputs, and compare. */
 export async function reproduceComputationRun(exec: Exec, organizationId: number, runId: number): Promise<ReproductionResult> {
   const { rows } = await exec.query(

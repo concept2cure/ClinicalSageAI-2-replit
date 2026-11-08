@@ -180,7 +180,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Entry to everything. Partially built in ui_kits/home and ui_kits/mdx.',
+    notes: 'Entry to everything: every project the organization can open, found by search, and New project, where each project starts with its goal.',
   },
   {
     id: 'apps',
@@ -220,7 +220,12 @@ export const UI_SURFACES: UiSurface[] = [
     // retired device-workstream: the Client Review Room is drawn on the device
     // project's Review step (ProjectClientReview), for that project, and the
     // route admits the project before anything is read (P-61 item 5).
-    apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review'],
+    // 2026-11-04 (R1): the project's own reads under other namespaces, each project-admitted, claimed narrowly so
+    // the rest of the namespace stays unclaimed. '/api/charters/by-project': the objective of record
+    // (useProjectObjective, S1); nothing claimed it, so production refused it as unmapped. '/api/v1/pyramids/by-project':
+    // the program plan in the Plan step (PyramidProject.tsx, S11); longest prefix wins over the out-of-catalog
+    // 'pyramid' surface's '/api/v1/pyramids'.
+    apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review', '/api/charters/by-project', '/api/v1/pyramids/by-project'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -739,7 +744,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE, 'motion-discipline'],
-    notes: 'Org-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates. See ui_kits/tasking + ui_kits/task-tray.',
+    notes: 'The organization\'s tasks: each with its owner, due date and dependencies, the critical path, channels, messages, the activity feed, presence and mentions.',
   },
 
   {
@@ -851,7 +856,10 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'sigma',
     group: 'clinical',
     uiKit: null,
-    apiPrefixes: ['/api/biostat', '/api/ana-biostats', '/api/biostat-bridge'],
+    // The existing design assessment now also reaches stored-run reproduction, shared with protocol statistics.
+    // Claim those two namespaces, not the bridge root: filing-placements and unrelated children remain excluded
+    // by the launch re-proof (launch-reproof-narrowing.test.ts).
+    apiPrefixes: ['/api/biostat', '/api/ana-biostats', '/api/biostat-bridge/designs', '/api/biostat-bridge/computation-runs'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -861,7 +869,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'biostat-workbench',
-    label: 'Biostat workbench',
+    label: 'Design calculators',
     navTier: 'specialist',
     layoutMode: 'biostatistics',
     icon: 'sigma',
@@ -954,7 +962,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Classification, performance testing, risk analysis, IVDR, CLIA, CDx, LDT. See ui_kits/risk + ui_kits/labeling.',
+    notes: 'Classification, performance testing, risk analysis, IVDR, CLIA, CDx, LDT, with the device\'s risk file and labeling.',
   },
   {
     id: 'labeling',

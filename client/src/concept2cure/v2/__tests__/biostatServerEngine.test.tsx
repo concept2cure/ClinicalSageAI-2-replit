@@ -65,6 +65,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
    `apiRequest` throws for every non-OK status but 401. */
 import { ApiRequestError } from '@/lib/queryClient';
 import * as surfaceModule from '../surfaces/Biostatistics';
+import { isStatisticalSave, statisticalSaveReceipt } from './_statistical-handoff-fixture';
 
 const Surface = surfaceModule.Biostatistics as unknown as React.ComponentType<Record<string, unknown>>;
 
@@ -214,13 +215,15 @@ function serveEngine(over: (m: string, u: string, b?: any) => Response | Promise
   apiRequest.mockImplementation(async (m: string, u: string, b?: any) => {
     const o = over(m, u, b);
     if (o) return o;
-    if (m === 'POST' && u === COMPUTE) return res(COMPUTE_OK);
-    if (m === 'POST' && u === DOCUMENT) return res(DOC_RESPONSE);
+    if (m !== 'POST') return res({ data: [] });
+    if (isStatisticalSave(u, b)) return res(statisticalSaveReceipt(b, 'D-1'), 201);
+    if (u === COMPUTE) return res(COMPUTE_OK);
+    if (u === DOCUMENT) return res(DOC_RESPONSE);
     // Confirmed receipts: the writer proceeds only on `success: true` and a row
     // echoing the request's identity (authoringHandoff, since 9bd3ee734).
-    if (m === 'POST' && u === '/api/authoring/docs')
+    if (u === '/api/authoring/docs')
       return res({ success: true, document: { id: 'D-1', title: b?.title, client_program_id: b?.client_program_id } }, 201);
-    if (m === 'POST' && u === '/api/authoring/sections')
+    if (u === '/api/authoring/sections')
       return res({ success: true, section: { id: 'S-1', doc_id: b?.doc_id, code: b?.code, title: b?.title } }, 201);
     return res({ data: [] });
   });
@@ -357,9 +360,9 @@ describe('Biostatistics — the statistics come from the server engine', () => {
     expect(body).toMatchObject({ documentType: 'sample_size_rationale' });
     // The document is generated FROM the server's computation and judgment, so
     // the prose and the figures cannot disagree.
-    expect(body.computation).toMatchObject({ adjustedTotal: 733 });
-    expect(body.judgment).toMatchObject({ overallVerdict: 'adequate' });
-    expect(body.domainAdaptation).toMatchObject({ track: 'biotech_pharma' });
+    expect(body).not.toHaveProperty('computation');
+    expect(body).not.toHaveProperty('judgment');
+    expect(body).not.toHaveProperty('domainAdaptation');
     expect(body.input).toMatchObject({ endpointType: 'time_to_event' });
 
     expect(rendered()).toContain('733');
@@ -374,9 +377,11 @@ describe('Biostatistics — the statistics come from the server engine', () => {
     // A worked example here, so the bar's action says it copies the example.
     fireEvent.click(screen.getByRole('button', { name: /Copy example to editor/ }));
     await waitFor(() =>
-      expect(apiRequest.mock.calls.some((c) => c[1] === '/api/authoring/sections')).toBe(true),
+      expect(apiRequest.mock.calls.some((c) => isStatisticalSave(c[1], c[2]))).toBe(true),
     );
-    const section = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections')![2];
+    const saved = apiRequest.mock.calls.find((c) => isStatisticalSave(c[1], c[2]))![2];
+    expect(saved.expectedMarkdown).toBe(DOC_RESPONSE.content);
+    const section = statisticalSaveReceipt(saved, 'D-1').data.sections[0];
     // The engine's document as the page renders it: the editor stores section
     // content verbatim, so Markdown arrived as "## …" and "|---|" (2026-10-31).
     expect(section.content).toBe(document.querySelector('.bs-doc-render')!.innerHTML);

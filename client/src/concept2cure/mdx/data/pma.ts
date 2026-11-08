@@ -13,14 +13,6 @@ export interface PmaPhase {
   status: ProgramStatus;
 }
 
-export interface PmaModule {
-  id: string;
-  label: string;
-  docs: number;
-  status: 'complete' | 'active' | 'review' | 'draft';
-  desc: string;
-}
-
 export interface TrialMetric {
   label: string;
   metric: string;

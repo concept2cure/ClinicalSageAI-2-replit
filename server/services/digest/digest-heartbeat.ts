@@ -43,7 +43,7 @@
  * @module server/services/digest/digest-heartbeat
  */
 
-import { runProactiveDigest, PROACTIVE_DIGEST_CATEGORY } from './proactive-digest.js';
+import { runProactiveDigest, runRuleAlignmentDigest, PROACTIVE_DIGEST_CATEGORY } from './proactive-digest.js';
 import { runWithOrgJobScope, runWithSystemTenantScope } from '../../db/tenantStore';
 import { runScheduledOnce } from '../../db/scheduledOnce';
 import {
@@ -137,11 +137,14 @@ export async function runDigestHeartbeatTick(
     if (attemptedOrgs.has(orgId)) continue;
     orgsChecked++;
     try {
+      const alignment = await runWithOrgJobScope(orgId, 'digest-heartbeat:rule_alignment', () => runRuleAlignmentDigest(orgId, undefined, now));
+      digestsCreated += alignment.notificationsCreated;
       // DB idempotency: at most one digest per org per day, whoever fired it.
       const existing = await runWithSystemTenantScope('digest-heartbeat:idempotency', () =>
         pool.query(
           `SELECT 1 FROM mdx_notifications
             WHERE organization_id = $1 AND category = $2 AND created_at >= $3
+              AND COALESCE(metadata->>'kind','') <> 'rule_alignment'
             LIMIT 1`,
           [orgId, PROACTIVE_DIGEST_CATEGORY, windowStart]
         )

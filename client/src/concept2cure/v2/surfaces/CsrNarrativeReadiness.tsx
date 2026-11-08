@@ -59,8 +59,10 @@ export function CsrNarrativeReadiness({ programId, onNav, interactionBusy }: {
     {current?.error && <p role="alert">Couldn’t confirm CSR inputs. <button type="button" onClick={() => setRefresh(value => value + 1)}>Retry CSR readiness</button></p>}
     {data && <>
       <p>{data.completedSummaryCount === null ? 'Completed CSR summary count is unavailable for this project.' : `${data.completedSummaryCount} completed CSR ${data.completedSummaryCount === 1 ? 'summary is' : 'summaries are'} available for package reuse.`}</p>
-      <p>Raw clinical observations are not linked to the narrative generator. First-study AI narrative generation remains unavailable. The separate source-table controls can prepare deterministic tables for an explicitly selected source.</p>
-      <p>Retain original source material in Vault and prepare governed narrative content in Authoring. A source-table preview does not generate a clinical narrative.</p>
+      {/* F11 (demo walk 2026-11-05): this said first-study narrative generation was unavailable while the CSR
+          document composed every patient narrative from its frozen study data (editor/StudyDataBuild.tsx). */}
+      <p>Patient safety narratives (§12.3.2, §14.3.3) are composed in the CSR document, from the study data frozen there: open the CSR in Authoring and use “Build from the study’s data”. The source-table controls on this screen prepare tables for a selected source; they do not compose narratives.</p>
+      <p>Keep the original source files in the Vault. The CSR document freezes the study data it is built from.</p>
       <div style={{ display: 'flex', gap: 8 }}>
         <button type="button" className="nda-open" disabled={!onNav || interactionBusy} onClick={() => onNav?.('vault')}>Open Vault</button>
         <button type="button" className="nda-open" disabled={!onNav || interactionBusy} onClick={() => onNav?.('document-authoring')}>Open Authoring</button>

@@ -1,0 +1,30 @@
+Local automated browser availability attempt, 2026-11-08
+
+Purpose: run the existing authenticated browser smoke after repairing its
+synthetic identity seed. This is a launch diagnostic, not a browser-test pass.
+
+Node 22.23.4, @playwright/test 1.55.0 installed outside the repository and linked
+only under ignored node_modules. No package.json, lockfile, Playwright config,
+workflow, browser assertions or production source changed for this attempt.
+
+Executed from the repository:
+  const { chromium } = require('playwright');
+  const browser = await chromium.launch({
+    executablePath: '/usr/bin/chromium', headless: true
+  });
+
+Observed result: exit 1 before creating a browser context or navigating.
+Excerpts from the actual command output:
+  browserType.launch: Target page, context or browser has been closed
+  [17:17:1108/114413.541351:FATAL:chrome/browser/process_singleton_posix.cc:297]
+  Check failed: . socket() failed: Operation not permitted (1)
+  [1108/114413.542202:ERROR:third_party/crashpad/crashpad/util/linux/scoped_ptrace_attach.cc:27]
+  ptrace: Operation not permitted (1)
+  process did exit: exitCode=null, signal=SIGABRT
+
+No sandbox, syscall restriction, Chromium binary or browser test was changed to
+avoid the failure. GitHub's existing Tier 5 job is the available browser runner;
+its earlier Chromium installation passed, but its seed failed before launch.
+Native seed validation and role tests are separate evidence. This local attempt
+does not establish an application or browser-test failure and does not qualify
+the end-to-end journey.

@@ -331,7 +331,7 @@ describe('monitoring plan versioning — a signed plan stops being editable', ()
       [], [],
       [{ id: 12, version: 3 }],                   // an open draft
     ]);
-    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p', createdBy: 27 });
     expect(out.generated).toBe(false);
     expect(out.reason).toBe('draft_already_open');
     expect(calls.some(c => c.sql.includes('INSERT INTO rbm_monitoring_plans'))).toBe(false);

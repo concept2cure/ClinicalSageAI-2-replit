@@ -1,0 +1,182 @@
+{
+  "observedAt": "2026-11-06T22:16:13.607795+00:00",
+  "reviewerTask": "/root/editor_context_security_review",
+  "delegatedSourceReviewer": "/root/editor_context_security_review/incoming_e5_derivative_controls",
+  "package": "F1",
+  "comparisonBase": "f6127e72231bd9e9f302f596a672f58b1b40db15",
+  "incomingCanonical": "e5a1536fa0f94a609f93a9871bd579446854330c",
+  "reviewedIntegrationMerge": "d6cb7f9a9e10e20fea8daa97408c41c78b3b0942",
+  "status": "passed_scoped_combined_source_review_verification_owned_separately",
+  "method": "Independent read-only plan/caller/diff review of auto-merges and four catalog-resolved conflicts; delegated private source/derivative/tenant owner partition. Exact combined source pins below. Only review documentation written; no source/test edits, tests, compiler, browser/provider calls or git mutations by reviewers.",
+  "findings": [
+    "Resolved dispatch retains original captured callback plus private run-source gate, with the exact governed-request holder or issued-symbol fallback. It does not replace the native callback or trust serialized source authority.",
+    "Tenant SDK boundary runs credential audit, current derivative custody, combined current source recheck, then synchronous abort/pinned-body/PQ admission outside sanitizers. Platform/null rechecks stay outside credential catch; all five actual SDK sites retain source and abort/PQ, and three nonstream sites retain derivative custody and complete-body pinning.",
+    "Private authority pins verified org/user/compatible project/program and current source grants. Unassessed conversation/history intentionally retains baseline T3; recording source tiers cannot remove it. Derivative custody is a separate private exact-payload capability that reconstructs all context channels.",
+    "Auto-merged stream keeps the exact nativeSourceBeforeDispatch closure on both first and follow-up calls inside runWithSourceAuthority. Native source currentness is composed with the stronger private authority, not downgraded to fabricated T2.",
+    "Workflow-import governance still verifies immutable original origin, current source reservation, known-machine qualification and exact assigned-human adoption before release. Added independent checks are saved-snapshot/source/receipt bound and retain semanticVerified:false; approval, signature and model qualification are not inherited.",
+    "Generated derivative authoring validates exact output/HTML hashes and immutable served gateway proof, current canonical source binding and final PQ after custody awaits; it does not accept model/body metadata as attribution.",
+    "Incoming DB scope propagates verified req.user.id as the private account owner and clears it on release. Missing/changed/foreign owner scopes refuse rather than borrowing another actor. Generic tenant settings cannot mint derivative custody.",
+    "The exact artifact SQL builder caller remains alongside the two exact incoming source-currentness builder/import/alias registrations; no broad SQL allowance or baseline change was introduced.",
+    "P104 records deterministic custody/control components separately from still-pending real provider/model PQ, customer KMS/deployed locality, semantic verification and expanded spike acceptance. Team oversight uses existing homes, defaults off and does not grant child approval/sign/transmit rights."
+  ],
+  "nonBlockerLimitsTraced": [
+    "No speculative embedding repair added: private source authority retains T3, so frontier embeddings refuse before BYOK creation; allowed local embedding path rechecks authority after lookup and has no later tenant credential audit. Ordinary no-authority embeddings have no private source grants."
+  ],
+  "uiPinFinding": {
+    "componentSelectedPins": 45,
+    "incomingComponentIntersections": [],
+    "nativeSelectedPins": 25,
+    "incomingNativeIntersections": [
+      "server/routes/authoring.router.ts"
+    ],
+    "conclusion": "The old native receipt retains its own checkpoint and cannot claim current25-pin stability after this wave. Lead notified to refresh or explicitly retain historical scope. Component/native manifests are selected owners, not full dependency graphs; new model/owner/custody/peer-review behavior needs its separately owned tests."
+  },
+  "sourceFiles": [
+    {
+      "path": "docs/design/ONE_DESIGN_PLAN.md",
+      "sha256": "5098067ddcd13c67013681b56046b3e426e94a7f40a541f8dd6946bf7d66dcf1",
+      "bytes": 115336
+    },
+    {
+      "path": "docs/design/one-design-plan.json",
+      "sha256": "15a9c6c04d6d4f0bcdf95e26f8916b1b65997e478c80b0517d7ed71e8149ebcb",
+      "bytes": 49616
+    },
+    {
+      "path": "server/services/ai-gateway/gateway.ts",
+      "sha256": "8f8c5a384f083ff5d955ce26fd7b0525018c9c4bba68608f1615bb7096257109",
+      "bytes": 254256
+    },
+    {
+      "path": "server/services/ai-gateway/providers/clients.ts",
+      "sha256": "78cfd28032513f305a662a8391095f1768221abe3ec265eeabea4b39dda8367e",
+      "bytes": 10335
+    },
+    {
+      "path": "server/services/ai-gateway/model-call-scope.ts",
+      "sha256": "273d85c87022190207a71d91b58f77f2491b19fc58183ed3f84b9b7b1c8e27a2",
+      "bytes": 12991
+    },
+    {
+      "path": "server/services/ai-gateway/sensitive-placement-policy.ts",
+      "sha256": "604af3d04e0b181483dff33a87274fe1d9c78b1e5b36e26006064a0a582d1279",
+      "bytes": 14174
+    },
+    {
+      "path": "server/services/ai-gateway/types.ts",
+      "sha256": "285ecac64f8aa284fdd94c81e664d636ab258d87a2061b620ee176f8fb554ad0",
+      "bytes": 43382
+    },
+    {
+      "path": "server/services/ai-gateway/embeddings/embedding-provider.ts",
+      "sha256": "e6156f6fe27c29bf913b2807dc8e3f73fef01efe8724b9afc7e0aab2da6efca1",
+      "bytes": 23568
+    },
+    {
+      "path": "server/db/tenantStore.ts",
+      "sha256": "54cabd46a01a570e0a334f15e1f68ed9c8ac0357c6318d1de398b24051b33644",
+      "bytes": 12759
+    },
+    {
+      "path": "server/db/sessionScope.ts",
+      "sha256": "0366a47f024e7bac659282a8b7bf3548adc9b6fa3b0fbc1c8b34f6ec6de7b0bf",
+      "bytes": 4722
+    },
+    {
+      "path": "server/db/poolInstrumentation.ts",
+      "sha256": "8ff0fe0ada7cb6f2719e4bb754080158ad488fa3d855167348eb952663cc4f7b",
+      "bytes": 19911
+    },
+    {
+      "path": "server/db/withTenantConnection.ts",
+      "sha256": "7567ed8bc46d1f53f7432bb3384151eaec05ffbef07d78ba3c4d707627d06321",
+      "bytes": 9501
+    },
+    {
+      "path": "server/middleware/establishRequestTenantScope.ts",
+      "sha256": "54849dbf0a46851257c5a3fcd7fdb5242d2e16bbe53726c933a5260499ac309f",
+      "bytes": 16790
+    },
+    {
+      "path": "server/services/ai-gateway/providers/org-placement-writer.ts",
+      "sha256": "2786fb26d7ada6dde5a3537cde7f33e5504f7c6d567a079e94414559c5ae701d",
+      "bytes": 36145
+    },
+    {
+      "path": "server/services/security/field-encryption.ts",
+      "sha256": "85f3ce7d73096eb7183e0f656b963a5166f6f2bc456250c65a1499458a3bb67a",
+      "bytes": 14970
+    },
+    {
+      "path": "server/services/tenant/tenant-settings-writer.ts",
+      "sha256": "58c3a68380bb159d6615d1fccc912f932e3b86c928d3c4328c17764ed686c066",
+      "bytes": 12527
+    },
+    {
+      "path": "server/routes/ai-placement-policy.ts",
+      "sha256": "ce5a1cbf480011ff43267c5b9d7fb2434fd8a079565384295f9932e710b5eca7",
+      "bytes": 7039
+    },
+    {
+      "path": "server/routes/ana-ri/stream.ts",
+      "sha256": "70f11b2db9a7e6b44cea5d27e5a98fdf65772af9b51d95c0622218370080bcce",
+      "bytes": 235746
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/retained-source-context.ts",
+      "sha256": "331beee77add448d370ca847ac1f5f806b6cdef6765743f73702b42a5d53d061",
+      "bytes": 9364
+    },
+    {
+      "path": "server/services/authoring/workflow-import-governance.ts",
+      "sha256": "f709cf12c6ea7656f4b2fa1d126b474556cd17d68aa01e2294aaf78170a6dfc7",
+      "bytes": 33701
+    },
+    {
+      "path": "server/services/authoring/authoring-from-draft.ts",
+      "sha256": "05fdb79cb887a07216dfe18e7b03580b2bee7daa568182fbef5e8864f64a0741",
+      "bytes": 35939
+    },
+    {
+      "path": "server/services/authoring/peer-review.ts",
+      "sha256": "591b1ed12b6999da299f4caae118aa2a01743cc62fc9440ee15a3d7527a385a5",
+      "bytes": 35212
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "f9f5dd2fae430f5411e27466b5e09128f6ba2c7b4a5b04cda7f4ae530c5b6d94",
+      "bytes": 436542
+    },
+    {
+      "path": "server/services/ana/saved-document-critique.ts",
+      "sha256": "8b623e3477a89f3b9396c7105fe0bcc3107d1f84d034e35e9f9280a762e57c24",
+      "bytes": 31832
+    },
+    {
+      "path": "server/services/authoring/artifact-workflow-source.ts",
+      "sha256": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "bytes": 15210
+    },
+    {
+      "path": "server/services/authoring/authoring-source-import.ts",
+      "sha256": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "bytes": 34919
+    },
+    {
+      "path": "server/services/authoring/authoring-draft-template.ts",
+      "sha256": "b16879734790f80c2bef8fec03e08b450ef3c2987210bda579ba81bbaca9a170",
+      "bytes": 21009
+    },
+    {
+      "path": "scripts/ci/lib/approved-sql-predicates.mjs",
+      "sha256": "fda2da0b31426ca07a60e034883cb0d940e81b43140777a84fc0a7a38fa48fe7",
+      "bytes": 9883
+    }
+  ],
+  "canonicalPinManifestSha256": "d7428605a108f69d24075f81138d310b2ccdc9f817d0d562b415c18f344c0061",
+  "limits": [
+    "This receipt is source review only. Conflict diagnostics, focused suites, native refresh, final compiler/build and publication belong to their owners; no success/count is asserted here.",
+    "No real provider call, model/PQ approval, customer KMS grant, external terms/residency, semantic/scientific verification, deployment or complete client workflow acceptance is qualified.",
+    "Prior source/gate/UI receipts retain their exact historical checkpoints and are not relabeled by this review."
+  ]
+}

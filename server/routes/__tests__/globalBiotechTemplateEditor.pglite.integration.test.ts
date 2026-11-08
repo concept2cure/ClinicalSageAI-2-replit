@@ -41,6 +41,10 @@ const moduleStarts = new Set(['US_CTD_M1_REGIONAL', 'ICH_CTD_M2', 'ICH_CTD_M3', 
 const filings = GLOBAL_REGISTRY.filter(entry => entry.active && (entry.segment === 'pharma_biotech' || isDeviceRegistryEntry(entry)
   || moduleStarts.has(entry.id)) && regions.includes(entry.region));
 const components = DOCUMENT_TEMPLATES.filter(outline => outline.families.length > 0);
+/** One document type, one New document entry (D2-CSR F1): the registry CSR is offered as its E3 component only.
+ * Documents already made from registry:ICH_CSR keep resolving by its template id. */
+const listedFilings = filings.filter(entry => entry.id !== 'ICH_CSR');
+const CSR_PICKER_NAME = 'GLOBAL · Clinical Study Report (CSR)';
 const sharedPlanningIds = ['RI_STRATEGY', 'RI_GAP_ANALYSIS', 'RI_COMPETITIVE', 'RI_HA_MEETING'];
 interface ListedTemplate extends IndAuthoringTemplate {
   category: string;
@@ -170,9 +174,23 @@ describe('canonically backed module starts preserve regional identity and source
   });
 });
 
+/** The picker's CSR row; for the registry identity the picker no longer offers, the template a saved CSR made from it resolves. */
+async function csrTemplate(entryId: string) {
+  if (entryId === 'component:clinical_study_report') return selected(entryId);
+  expect((await listed()).some(template => template.entryId === entryId), `${entryId} is not offered a second time`).toBe(false);
+  const template = await builtinTemplates.getBuiltinAuthoringTemplate(builtinTemplates.builtinAuthoringTemplateId(entryId));
+  expect(template?.entryId).toBe(entryId);
+  return template!;
+}
+
 describe('the full CSR remains one editable saved report', () => {
+  it('is one New document entry, the E3 component', async () => {
+    const rows = (await listed()).filter(template => template.name.replace(/ — preparation worksheet$/, '') === CSR_PICKER_NAME);
+    expect(rows.map(row => row.entryId)).toEqual(['component:clinical_study_report']);
+  });
+
   it.each(['registry:ICH_CSR', 'component:clinical_study_report'])('saves and reopens every canonical E3 heading from %s with its section policy', async entryId => {
-    const template = await selected(entryId);
+    const template = await csrTemplate(entryId);
     const created = await create(template);
     expect(created.status, JSON.stringify(created.body)).toBe(201);
     const saved = await sections(created.body.document.id);
@@ -260,7 +278,7 @@ describe('every supported active medicinal, device and diagnostics filing and co
   it('lists exact registry and component identities with explicit regional scope, without writes', async () => {
     const before = await counts();
     const rows = await listed();
-    for (const filing of filings) expect(rows).toContainEqual(expect.objectContaining({
+    for (const filing of listedFilings) expect(rows).toContainEqual(expect.objectContaining({
       entryId: `registry:${filing.id}`, category: 'Regulatory reference',
       filingContext: { registryId: filing.id, region: filing.region, agency: filing.agency },
     }));
@@ -273,7 +291,7 @@ describe('every supported active medicinal, device and diagnostics filing and co
     const before = await counts();
     const rows = await listed();
     let sectionCount = 0;
-    for (const filing of filings) {
+    for (const filing of listedFilings) {
       const row = rows.find(template => template.entryId === `registry:${filing.id}`);
       expect(row, filing.id).toBeDefined();
       const outline = await getRegistryDocumentTemplate(filing.id);
@@ -288,10 +306,10 @@ describe('every supported active medicinal, device and diagnostics filing and co
       sectionCount += await verifyCopy(row!, component);
     }
     const after = await counts();
-    expect(after).toEqual({ docs: before.docs + filings.length + components.length,
+    expect(after).toEqual({ docs: before.docs + listedFilings.length + components.length,
       sections: before.sections + sectionCount, revisions: before.revisions + sectionCount,
       audits: before.audits + sectionCount, signatures: before.signatures });
-    console.info('Global biotech editor HTTP probe', { filings: filings.length, components: components.length, sections: sectionCount });
+    console.info('Global biotech editor HTTP probe', { filings: listedFilings.length, components: components.length, sections: sectionCount });
   }, 180_000);
 
 

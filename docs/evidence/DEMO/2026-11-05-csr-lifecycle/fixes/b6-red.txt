@@ -1,0 +1,20 @@
+B6 red: the new tests against trunk's shared/authoring/csr-scientific-review.ts (the one rule the screen offers by
+and the server verifies a claim by, reportedDisplayAt).
+
+ × client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences: study design is not a result (B6) > offers no trial phase, scheduled week or instrument item count 9ms
+   → expected [ ' this Phase 2 ', …(6) ] to deeply equal []
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences: study design is not a result (B6) > still offers every result: counts, a percentage, a difference and a p-value, including a count after an arm name 1ms
+ × server/services/authoring/__tests__/csr-claim-in-context.test.ts > a design number is not a reported result (B6) > refuses the "2" of "Phase 2" and the "12" of "Week 12", and verifies the "36" reported after them 5ms
+   → expected function to throw an error, but it didn't
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a design number is not a reported result (B6) > still verifies a real result beside them (control) 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 17 passed (19)
+
+What the screen offered as figures to map, before the fix (text around each):
++   " this Phase 2 ",
++   "e ADAS-Cog (11)",
++   "ed at Weeks 8 ",
++   "Weeks 8 and 16 ",
++   "d from Week 4 ",
++   "k 4 to Week 24.",
++   "nt. At Week 24 ",

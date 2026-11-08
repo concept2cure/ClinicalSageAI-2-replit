@@ -83,8 +83,15 @@
 
 import { qualifyServedModels, type QualifiedServedModel } from '../ai-governance/approved-models';
 import type { ServedModel } from '../ana/turn-record-models';
-import { MAX_TURN_RECORDS_PER_CHECK, verifyMachineText, type MachineClaimReason } from './machine-claim-verify';
-import { MACHINE_AUTHOR_IDS, type AcceptedMachineTextEntry, type MachineContributor } from './revision-ledger';
+import { MAX_TURN_RECORDS_PER_CHECK, verifyMachineText, type MachineClaimReason, type VerifiedMachineClaim } from './machine-claim-verify';
+import { ANA_MACHINE_AUTHOR_ID, MACHINE_AUTHOR_IDS, type AcceptedMachineTextEntry, type MachineContributor } from './revision-ledger';
+import { comparableText, MIN_MACHINE_CLAUSE_CHARS } from '../clinical-regulatory-evidence/machine-attribution';
+import { clauseSpans } from '../clinical-regulatory-evidence/lineage-gate';
+import { assertLineageCoversContent, assertLineageHashesMatchContent, listLiveMachineSpans } from '../clinical-regulatory-evidence/span-lineage.service';
+import type { WorkflowGovernanceInput } from './workflow-import-governance';
+import { loadTurnRecord, verifyStoredTurnRecord } from '../ana/turn-record-verify';
+import type { TurnRecordBody } from '../ana/turn-record';
+import { qualifiedPinRefusal } from '../ai-gateway/model-governance';
 
 type Queryable = { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -165,6 +172,97 @@ export function recordMayVouch(servedBy: ReadonlyArray<ServedModel>): boolean {
      reads as a guard and tests nothing. The LIST being non-empty is a
      different fact and does need its own test, above. */
   return qualified.length > 0 && qualified.every((m) => m.qualified);
+}
+
+/** Scientific numbers/operators stay literal while formatting cannot discharge known generated prose. */
+export function machineQualificationText(content: string): string {
+  return comparableText(content).replace(/[.,;:!?](?!\d)/g, ' ').replace(/\s+/g, ' ').trim();
+}
+type RetainedMachineGenesisRow = Record<string, any>;
+function originalMachineTextRemains(original: string[], sections: WorkflowGovernanceInput['sections']): boolean {
+  const current = sections.map(section => machineQualificationText(section.content ?? ''));
+  return original.some(content => clauseSpans(content).some(clause => {
+    const text = machineQualificationText(clause.text);
+    return text.length >= MIN_MACHINE_CLAUSE_CHARS && current.some(saved => saved.includes(text));
+  }) || (machineQualificationText(content).length > 0 && current.includes(machineQualificationText(content))));
+}
+function currentHumanEditRecorded(rows: RetainedMachineGenesisRow[], section: WorkflowGovernanceInput['sections'][number]): boolean {
+  return rows.some(row => row.audit_id && String(row.section_id) === section.id && ['CREATE', 'UPDATE'].includes(row.operation_type)
+    && row.metadata?.provenance?.source !== 'ana' && row.after_content === (section.content ?? ''));
+}
+async function currentCallDelivery(q: Queryable, input: WorkflowGovernanceInput, actorId: number,
+  projectId: number, call: TurnRecordBody['model']['calls'][number]): Promise<boolean> {
+  if (!call || typeof call.requestId !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(call.requestId)) return false;
+  const result = await q.query(`SELECT provider,model,resolved_model,metadata->'qualifiedModelPin' AS qualified_pin
+    FROM ai.gateway_audit_log WHERE request_id=$1::uuid AND organization_id=$2::text AND user_id=$3::text
+      AND project_id=$4::text AND success=true AND cached=false AND deterministic=false`,
+  [call.requestId, String(input.organizationId), String(actorId), String(projectId)]);
+  if (result.rows.length !== 1) return false;
+  const row = result.rows[0], pin = row.qualified_pin;
+  return Boolean(pin && row.provider === call.provider && row.resolved_model === call.model && row.model === pin.pinnedVersion
+    && row.provider === pin.provider && row.resolved_model === pin.pinnedVersion
+    && !qualifiedPinRefusal({ qualifiedModelPin: pin, taskType: 'document_drafting', riskTier: 'high' }));
+}
+/** A legacy model string or a call without its actual gateway receipt cannot qualify release. */
+export async function retainedTurnDeliveryQualified(q: Queryable, input: WorkflowGovernanceInput, claim: VerifiedMachineClaim): Promise<boolean> {
+  const stored = await loadTurnRecord(q, input.organizationId, claim.turnRecordId);
+  if (!stored || stored.recordSha256 !== claim.recordSha256 || !verifyStoredTurnRecord(stored).ok) return false;
+  const body = JSON.parse(stored.recordText) as TurnRecordBody, calls = body.model?.calls;
+  if (!Array.isArray(calls) || !calls.length || !Number.isSafeInteger(body.turn.actorUserId)) return false;
+  if (calls.some(call => !call || typeof call.requestId !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(call.requestId))) return false;
+  const project = await q.query('SELECT id FROM projects WHERE organization_id=$1 AND regulatory_program_id=$2',
+    [input.organizationId, input.doc.client_program_id]);
+  if (project.rows.length !== 1 || ![String(project.rows[0].id), String(input.doc.client_program_id)].includes(String(body.turn.projectId))) return false;
+  const present = await q.query("SELECT to_regclass('ai.gateway_audit_log') IS NOT NULL AS present");
+  if (present.rows[0]?.present !== true) return false;
+  for (const call of calls) if (!await currentCallDelivery(q, input, Number(body.turn.actorUserId), project.rows[0].id, call)) return false;
+  return true;
+}
+async function qualifiedMachineGenesis(q: Queryable, input: WorkflowGovernanceInput, genesis: RetainedMachineGenesisRow[]): Promise<boolean> {
+  const ordinary = [];
+  for (const row of genesis) {
+    const provenance = row.metadata.provenance;
+    if (provenance.generatedDerivative) {
+      const { verifyRetainedDerivativeGeneration } = await import('./authoring-from-draft');
+      const qualified = await verifyRetainedDerivativeGeneration(q, { organizationId: input.organizationId, creatorUserId: Number(row.chain_actor_id),
+        currentReaderUserId: Number(input.actor?.id), programId: String(input.doc.client_program_id ?? ''),
+        genesisHtml: row.after_content, proof: provenance.generatedDerivative });
+      if (!qualified) return false;
+    } else ordinary.push({ authorId: ANA_MACHINE_AUTHOR_ID, text: row.after_content, turnRecordId: provenance.turnId });
+  }
+  if (!ordinary.length) return true;
+  if (!await turnRecordStorePresent(q)) return false;
+  const verified = await verifyMachineText(q, input.organizationId, ordinary, { mayVouch: recordMayVouch });
+  if (verified.verified.length !== ordinary.length || verified.unverified.length) return false;
+  const checked = new Set<string>();
+  for (const claim of verified.verified) {
+    if (!checked.has(claim.turnRecordId) && !await retainedTurnDeliveryQualified(q, input, claim)) return false;
+    checked.add(claim.turnRecordId);
+  }
+  return true;
+}
+
+/** Caller supplies CREATE/UPDATE rows already reconciled to the immutable tenant audit chain. */
+export async function ordinaryMachineGenesisMayRelease(q: Queryable, input: WorkflowGovernanceInput,
+  rows: RetainedMachineGenesisRow[]): Promise<boolean> {
+  const genesis = rows.filter(row => row.operation_type === 'CREATE' && row.metadata?.provenance?.source === 'ana'
+    && typeof row.after_content === 'string' && comparableText(row.after_content));
+  const original = genesis.map(row => row.after_content as string);
+  let machineRemains = originalMachineTextRemains(original, input.sections);
+  for (const section of input.sections) {
+    const ref = { documentTable: 'authoring_sections', documentId: section.id }, content = section.content ?? '';
+    await assertLineageCoversContent(input.organizationId, ref, content, q);
+    await assertLineageHashesMatchContent(input.organizationId, ref, content, q);
+    const spans = await listLiveMachineSpans(input.organizationId, ref, q);
+    for (const span of spans) {
+      machineRemains = true;
+      const text = comparableText(content.slice(span.charStart, span.charEnd));
+      if (!original.some(saved => comparableText(saved).includes(text))) return false;
+    }
+  }
+  if (!machineRemains) return input.sections.every(section => currentHumanEditRecorded(rows, section));
+  if (!genesis.length) return false;
+  return qualifiedMachineGenesis(q, input, genesis);
 }
 
 /**

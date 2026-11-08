@@ -641,7 +641,7 @@ export function BiostatWorkbench(props: SurfaceViewProps) {
      cannot drift from what the user is reading. */
   const anaContext = useMemo(
     () => ({
-      summary: `Biostatistics workbench, "${active.title}" selected — ${active.subtitle}.`,
+      summary: `Biostatistics design calculators, "${active.title}" selected — ${active.subtitle}.`,
       facts: {
         calculatorId: active.id,
         endpoint: calculatorEndpoint(active),

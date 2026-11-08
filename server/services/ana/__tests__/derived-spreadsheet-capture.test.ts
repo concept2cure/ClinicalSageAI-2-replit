@@ -5,7 +5,13 @@ const h = vi.hoisted(() => ({
   mkdir: vi.fn(), writeFile: vi.fn(), unlink: vi.fn(), readFile: vi.fn(),
   createSource: vi.fn(), audit: vi.fn(), resolveProgram: vi.fn(), lockProgram: vi.fn(),
   processCapturedSource: vi.fn(),
+  storePut: vi.fn(), storeDelete: vi.fn(),
 }));
+// The byte store (LX-02): the derived workbook's durable copy, mocked as the disk is.
+vi.mock('../../storage/index.js', () => {
+  const provider = { name: 's3', put: h.storePut, delete: h.storeDelete };
+  return { getStorageProvider: () => provider, getStorageProviderFor: () => provider };
+});
 vi.mock('node:fs', () => ({ promises: {
   mkdir: h.mkdir, writeFile: h.writeFile, unlink: h.unlink, readFile: h.readFile,
 } }));
@@ -43,6 +49,10 @@ function params() {
 beforeEach(() => {
   vi.clearAllMocks();
   h.mkdir.mockResolvedValue(undefined); h.writeFile.mockResolvedValue(undefined); h.unlink.mockResolvedValue(undefined);
+  h.storePut.mockImplementation(async (opts: { bytes: Buffer }) => ({
+    vaultFileId: 'f-derived', vaultVersionId: 'obj-derived', provider: 's3', sizeBytes: opts.bytes.length, sha256: sha256Hex(opts.bytes),
+  }));
+  h.storeDelete.mockResolvedValue(true);
   h.readFile.mockResolvedValue(original);
   h.connect.mockResolvedValue({ query: h.query, release: h.release });
   h.query.mockImplementation(async (sql: string) => {
@@ -194,6 +204,9 @@ describe('derived spreadsheet upload — parent provenance and project capture',
     expect(h.query).not.toHaveBeenCalledWith('COMMIT');
     expect(h.unlink).toHaveBeenCalledOnce();
     expect(h.unlink.mock.calls[0][0]).not.toContain('file_original');
+    // The new workbook's durable copy goes too; the source's is never touched.
+    expect(h.storeDelete).toHaveBeenCalledOnce();
+    expect(h.storeDelete).toHaveBeenCalledWith('obj-derived', 7);
     expect(h.release).toHaveBeenCalledOnce();
   });
 
@@ -213,6 +226,7 @@ describe('derived spreadsheet failures and legacy compatibility', () => {
     });
     await expect(saveDerivedUpload(params())).rejects.toThrow(/connection lost/);
     expect(h.unlink).not.toHaveBeenCalled();
+    expect(h.storeDelete).not.toHaveBeenCalled();
     expect(h.release).toHaveBeenCalledOnce();
     expect(h.processCapturedSource).not.toHaveBeenCalled();
   });

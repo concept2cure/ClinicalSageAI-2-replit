@@ -1,6 +1,6 @@
 /**
  * launch-demo/packs/work-areas.mjs — the work areas a demo project is shown in:
- * Tasks, CMC / Module 3 and Biostatistics.
+ * Tasks, CMC / Module 3, Biostatistics, Plan and Communication's agency inbox.
  *
  * 2026-10-31: a client demo opened each of these on a seeded project and found
  * them empty — "No tasks on the board yet", a Module 3 with no specification,
@@ -17,7 +17,10 @@ import { must } from '../lib.mjs';
 const DAY = 86_400_000;
 const isoIn = (days) => new Date(Date.now() + days * DAY).toISOString();
 const dateIn = (days) => isoIn(days).slice(0, 10);
-const rowsOf = (j) => (Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : Array.isArray(j?.rows) ? j.rows : Array.isArray(j?.data?.rows) ? j.data.rows : []);
+// `documents` is the authoring list's key (GET /api/authoring/docs). Unread, the
+// Plan step found no started deliverable and started each again on every run
+// (2026-11-01: three copies of each on LMN-201).
+const rowsOf = (j) => (Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : Array.isArray(j?.rows) ? j.rows : Array.isArray(j?.data?.rows) ? j.data.rows : Array.isArray(j?.documents) ? j.documents : []);
 
 /* ───────────────────────── Tasks ───────────────────────── */
 
@@ -30,33 +33,120 @@ async function boardProjectId(api, program) {
 }
 
 /**
- * tasks: [{ title, moduleType, priority, status, dueInDays, description }]
- * Status is one the create form offers (pending | in-progress | review).
+ * tasks: [{ title, moduleType, priority, status, dueInDays, description, assignee?, criticalPath? }]
+ * Status is one the create form offers (pending | in-progress | review | blocked), or
+ * 'completed': created in progress, then moved to completed through the board's own
+ * status route (PATCH /api/tasks/tasks/:id), as a person closing it would.
+ * `assignee` is a person's name on the board's roster (GET /api/task-management/assignees);
+ * a name the roster does not hold leaves the task with its creator and is noted.
+ * A negative `dueInDays` makes an overdue task.
  */
+async function rosterIds(api, tasks) {
+  if (!tasks.some(t => t.assignee)) return new Map();
+  const roster = must(await api('GET', '/api/task-management/assignees'), 200, 'read the task roster');
+  return new Map((Array.isArray(roster.data) ? roster.data : []).map(r => [r.name, Number(r.id)]));
+}
+
+async function completeTask(api, id, t, label) {
+  const done = must(await api('PATCH', `/api/tasks/tasks/${encodeURIComponent(id)}`, {
+    status: 'completed', progress: 100,
+    reason: `Demo seed: ${label} work finished, so the board shows done work beside the open work.`,
+  }), 200, `complete task "${t.title}"`);
+  if (done.success !== true) throw new Error(`Tasking did not confirm "${t.title}" as completed.`);
+}
 export async function ensureTasks({ api, run, tally }, program, tasks, label) {
   await run.step(`Tasks: ${tasks.length} tasks on ${label}`, async () => {
+    // Seed definitions themselves must be unambiguous before ANY write.
+    if (tasks.some(t => typeof t.title !== 'string' || !t.title.trim()) ||
+        new Set(tasks.map(t => t.title)).size !== tasks.length) {
+      throw new Error('The demonstration contains duplicate or unnamed task definitions. No Tasking records were written.');
+    }
     const projectId = await boardProjectId(api, program);
     const board = must(await api('GET', '/api/task-management/board'), 200, 'read task board');
-    // Plain titles (each card names its project), so an earlier run is found by
-    // title within this project, not across the organisation.
-    const have = new Set(rowsOf(board).filter((t) => String(t.project) === String(projectId)).map((t) => t.title));
+    // Task Board already declares whether ALL its contributing stores were
+    // readable. A partial/unverified board is not an empty project: treating
+    // it as complete would mint duplicate tasks and false "nothing pending"
+    // outcomes on repeat demos.
+    if (board.success !== true || !Array.isArray(board.data) ||
+        board.meta?.partial !== false || !Array.isArray(board.meta.unreadSources) ||
+        board.meta.unreadSources.length > 0) {
+      throw new Error('The existing Task Board is incomplete or has unread sources. Reconcile the board before demo tasks are created or reused.');
+    }
+    // A title is an idempotency key only when unique within this project's
+    // actual board rows. Never pick an arbitrary duplicate by Map overwrite.
+    const withinProject = board.data.filter((t) => String(t.project) === String(projectId));
+    const have = new Map();
+    for (const row of withinProject) {
+      if (typeof row.title !== 'string' || !row.title.trim() || have.has(row.title)) {
+        throw new Error('The project Task Board contains malformed or duplicate task titles. Reconcile the task records before demo seeding.');
+      }
+      have.set(row.title, row);
+    }
     let created = 0;
+    const newlyCreated = [];
+    const people = await rosterIds(api, tasks);
+    const unassigned = [...new Set(tasks.filter(t => t.assignee && !people.has(t.assignee)).map(t => t.assignee))];
+    if (unassigned.length) run.note(`Tasks on ${label}: ${unassigned.join(', ')} not on this organisation's roster; their tasks stay with the person seeding.`);
     for (const t of tasks) {
-      if (have.has(t.title)) { tally.found('task'); continue; }
-      must(await api('POST', '/api/tasks/tasks', {
+      const existing = have.get(t.title);
+      if (existing) {
+        // A named task is reusable only if it still points to the same governed
+        // document. Titles alone never establish source linkage.
+        if (t.sourceEntityType === 'authoring_document' &&
+            String(existing.sourceDocumentId ?? existing.sourceEntityId ?? '') !== String(t.sourceEntityId)) {
+          throw new Error(`Existing task "${t.title}" does not link to its expected authoring document. Reconcile Tasking before retrying.`);
+        }
+        tally.found('task'); continue;
+      }
+      const acknowledgement = must(await api('POST', '/api/tasks/tasks', {
         title: t.title,
         description: t.description,
         moduleType: t.moduleType,
-        taskType: 'deliverable',
+        taskType: t.taskType ?? 'deliverable',
+        ...(t.category ? { category: t.category } : {}),
+        ...(t.moduleSource ? { moduleSource: t.moduleSource } : {}),
+        ...(t.sourceEntityType ? { sourceEntityType: t.sourceEntityType } : {}),
+        ...(t.sourceEntityId ? { sourceEntityId: t.sourceEntityId } : {}),
+        ...(t.moduleData ? { moduleData: t.moduleData } : {}),
         priority: t.priority ?? 'medium',
-        status: t.status ?? 'pending',
+        status: t.status === 'completed' ? 'in-progress' : (t.status ?? 'pending'),
+        ...(people.has(t.assignee) ? { assigneeId: people.get(t.assignee) } : {}),
+        ...(t.criticalPath ? { criticalPath: true } : {}),
         projectId,
         dueDate: isoIn(t.dueInDays ?? 14),
         regulatoryImpact: true,
         reason: `Demo seed: plan the ${label} work so the task board shows it.`,
       }), [200, 201], `create task "${t.title}"`);
+      // The real POST returns {success:true,data:{taskId,...}} after the
+      // transaction. An HTTP 200 without a committed task identity is not
+      // proof that a review task exists.
+      if (acknowledgement.success !== true ||
+          typeof acknowledgement.data?.taskId !== 'string' || !acknowledgement.data.taskId.trim()) {
+        throw new Error(`Tasking did not confirm the saved identity for "${t.title}". Recheck the existing board before retrying.`);
+      }
+      if (t.status === 'completed') await completeTask(api, acknowledgement.data.taskId, t, label);
+      newlyCreated.push({ task: t, id: acknowledgement.data.taskId });
       tally.created('task');
       created += 1;
+    }
+    if (newlyCreated.length) {
+      // One post-create board read makes the actual Tasking → editor handoff
+      // an observed persisted record, not merely a 200 from task create.
+      const settled = must(await api('GET', '/api/task-management/board'), 200, 'reopen saved demo tasks');
+      if (settled.success !== true || !Array.isArray(settled.data) ||
+          settled.meta?.partial !== false || !Array.isArray(settled.meta.unreadSources) ||
+          settled.meta.unreadSources.length > 0) {
+        throw new Error('Tasking creation was acknowledged but the complete saved board could not be verified. Inspect real task IDs before retrying.');
+      }
+      const scoped = settled.data.filter(card => String(card.project) === String(projectId));
+      for (const { task, id } of newlyCreated) {
+        const matches = scoped.filter(card => card.title === task.title);
+        if (matches.length !== 1 || String(matches[0].taskId ?? '') !== id ||
+            (task.sourceEntityType === 'authoring_document' &&
+              String(matches[0].sourceDocumentId ?? '') !== String(task.sourceEntityId))) {
+          throw new Error(`Tasking did not reopen the exact persisted task and authoring-document link for "${task.title}". Inspect Tasking before retrying.`);
+        }
+      }
     }
     return `${created} created, ${tasks.length - created} already there (board project ${projectId})`;
   });
@@ -224,6 +314,92 @@ export async function ensurePlanDocuments({ api, run, tally }, program, delivera
     }
     return `${created} started, ${deliverables.length - created} already started`;
   });
+}
+
+/* ───────────────────────── Communication: an agency letter ───────────────────────── */
+
+/**
+ * File an agency letter in the project's data room and log it in the
+ * project's agency inbox, linked to that file: the two writes Respond's "Add
+ * the agency's letter" makes (ProjectRespond.tsx). The letter goes up through
+ * the data room's own upload (POST /api/chat/upload, useChatUpload.ts), which
+ * reads its text as it records the source; the communication is the inbox's
+ * audited write (POST .../agency-communications), linked as `cre_source:<id>`,
+ * which the server checks is this project's source (refuseForeignLetterSources).
+ *
+ * The source is found again by its title (the file name) and the
+ * communication by that link, so a second run writes nothing. Then the
+ * inbox's own reads (question-proposals, commitment-proposals) must find in
+ * the letter what `letter.expect` says, or the step fails: a letter whose
+ * text the data room did not read, or that yields other commitments, is not
+ * the demonstration it is seeded for.
+ *
+ *   letter: { fileName, text, communication: { sourceType, communicationType,
+ *             sourceChannel, letterClass, urgency, responseRequired },
+ *             expect: { commitments: [ref…], questions: n } }
+ */
+export async function ensureAgencyLetter({ api, run, tally }, program, letter, label) {
+  const out = { title: letter.fileName, sourceId: null, eventId: null };
+  await run.step(`Communication: data-room source "${letter.fileName}" on ${label}`, async () => {
+    const listed = must(await api('GET', `/api/c2c/projects/${encodeURIComponent(program.id)}/sources?limit=200`), 200, 'read the data room');
+    const hit = (listed.sources ?? []).find((s) => s.title === letter.fileName);
+    if (hit) { out.sourceId = Number(hit.id); tally.found('data-room-source'); return `found ${out.sourceId}`; }
+    const form = new FormData();
+    form.append('file', new Blob([Buffer.from(letter.text, 'utf8')], { type: 'text/plain' }), letter.fileName);
+    form.append('projectId', program.id);
+    const up = must(await api('POST', '/api/chat/upload', form), 200, `upload ${letter.fileName} into the data room`);
+    if (!Number.isSafeInteger(Number(up.sourceId)) || Number(up.sourceId) <= 0) {
+      throw new Error(`the upload recorded no data-room source: ${JSON.stringify(up).slice(0, 300)}`);
+    }
+    if (up.dataRoom?.readable !== true) {
+      throw new Error(`the data room recorded source ${up.sourceId} but did not read its text: ${JSON.stringify(up.dataRoom ?? null).slice(0, 300)}`);
+    }
+    out.sourceId = Number(up.sourceId);
+    tally.created('data-room-source');
+    return `uploaded ${out.sourceId} (text read: ${up.dataRoom.processing?.status ?? 'processed'})`;
+  });
+
+  const commsPath = `/api/concept2cure/projects/${encodeURIComponent(program.id)}/agency-communications`;
+  const ref = `cre_source:${out.sourceId}`;
+  await run.step(`Communication: agency inbox entry for "${letter.communication.communicationType}" on ${label}`, async () => {
+    const comms = rowsOf(must(await api('GET', commsPath), 200, 'read the agency inbox'));
+    const hit = comms.find((c) => (c.linkedArtifactIds ?? []).includes(ref));
+    if (hit) { out.eventId = hit.id; tally.found('agency-communication'); return `found ${hit.id}`; }
+    const c = letter.communication;
+    const j = must(await api('POST', commsPath, {
+      sourceType: c.sourceType,
+      communicationType: c.communicationType,
+      sourceChannel: c.sourceChannel,
+      linkedSectionCodes: [],
+      linkedArtifactIds: [ref],
+      urgency: c.urgency,
+      responseRequired: c.responseRequired,
+      extractedIssues: [],
+      letterClass: c.letterClass,
+      visibilityTier: 'shared_client_c2c',
+    }), [200, 201], `log ${c.communicationType} in the agency inbox`);
+    out.eventId = j.data?.id ?? null;
+    if (!out.eventId) throw new Error(`the inbox logged no communication id: ${JSON.stringify(j).slice(0, 300)}`);
+    tally.created('agency-communication');
+    return `logged ${out.eventId}`;
+  });
+
+  await run.step(`Communication: the inbox reads "${letter.fileName}"`, async () => {
+    const base = `${commsPath}/${encodeURIComponent(out.eventId)}`;
+    const q = must(await api('GET', `${base}/question-proposals`), 200, 'read the letter\'s questions');
+    const k = must(await api('GET', `${base}/commitment-proposals`), 200, 'read the letter\'s commitments');
+    const unread = [...(q.data?.sources ?? []), ...(k.data?.sources ?? [])].filter((s) => s.state !== 'read');
+    if (unread.length) throw new Error(`the inbox could not read the letter: ${JSON.stringify(unread)}`);
+    const questions = q.data?.proposals ?? [];
+    const refs = (k.data?.proposals ?? []).map((p) => p.ref);
+    if (questions.length !== letter.expect.questions || refs.join(',') !== letter.expect.commitments.join(',')) {
+      throw new Error(`the inbox found ${questions.length} questions and commitments [${refs.join(', ')}]; expected ${letter.expect.questions} and [${letter.expect.commitments.join(', ')}]`);
+    }
+    const recorded = (k.data?.proposals ?? []).filter((p) => p.recordedCommitmentId !== null).length;
+    out.proposals = { questions: questions.length, commitments: refs, commitmentsRecorded: recorded };
+    return `${questions.length} questions, ${refs.length} commitments proposed${refs.length ? ` (${recorded} recorded)` : ''}`;
+  });
+  return out;
 }
 
 export { dateIn };

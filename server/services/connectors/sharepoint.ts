@@ -136,7 +136,7 @@ export class SharePointConnector implements DataConnector {
       });
 
       if (!res.ok) {
-        throw new Error(`SharePoint search failed: ${res.status} ${res.statusText}`);
+        throw new Error(`SharePoint search failed: ${res.status}`);
       }
 
       const data = await res.json();
@@ -254,8 +254,7 @@ export class SharePointConnector implements DataConnector {
     });
 
     if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      throw new Error(`SharePoint upload failed: ${res.status} ${errText.slice(0, 200)}`);
+      throw new Error(`SharePoint upload failed: ${res.status}`);
     }
 
     const data = await res.json() as GraphDriveItem;
@@ -280,7 +279,7 @@ export class SharePointConnector implements DataConnector {
     });
 
     if (!res.ok) {
-      throw new Error(`SharePoint listSites failed: ${res.status} ${res.statusText}`);
+      throw new Error(`SharePoint listSites failed: ${res.status}`);
     }
 
     const data = await res.json();
@@ -299,7 +298,7 @@ export class SharePointConnector implements DataConnector {
     });
 
     if (!res.ok) {
-      throw new Error(`SharePoint listDrives failed for site ${siteId}: ${res.status} ${res.statusText}`);
+      throw new Error(`SharePoint listDrives failed: ${res.status}`);
     }
 
     const data = await res.json();
@@ -331,9 +330,8 @@ export class SharePointConnector implements DataConnector {
     });
 
     if (!res.ok) {
-      const errorBody = await res.text().catch(() => '');
       this.tokenCache = null;
-      throw new Error(`SharePoint OAuth2 token request failed: ${res.status} ${errorBody}`);
+      throw new Error(`SharePoint OAuth2 token request failed: ${res.status}`);
     }
 
     const data = await res.json();

@@ -50,6 +50,48 @@ import {
   type ArtifactOrigin,
   type ArtifactSignatureState,
 } from '../../shared/artifact-governance.js';
+import { ProgramReadAccessError } from './c2c/current-program-access.js';
+
+/** A sponsor (client workspace) as a governed artifact names it. */
+export type ArtifactSponsor = { id: number; name: string };
+
+/** The sponsor named as the organisation records it, or none; a sponsor that cannot be named is a failure, never none. */
+export function artifactSponsor(id: number | string | null | undefined, name: string | null | undefined): ArtifactSponsor | null {
+  if (id === null || id === undefined) return null;
+  if (typeof name !== 'string' || !name.trim()) throw new Error('A sponsor of an accessible project could not be named.');
+  return { id: Number(id), name };
+}
+
+/**
+ * A CRO's sponsors never mix (F1, S6 V4, 2026-11-05). A CRO is one organisation working for several sponsors, each a
+ * client workspace, and the Vault's organization view named only each artifact's project, so inside sponsor A's
+ * project its "governed artifacts across your projects" listed sponsor B's too. Asked from inside a project, the
+ * accessible projects are narrowed to that project's sponsor's, read from the organisation's own project records; the
+ * narrowing only ever removes projects the caller can open. A project outside them is not found.
+ *
+ * `open` is the open project: its regulatory program uuid (the Vault's `sameClientAs`) or its `projects.id` (AnA's
+ * reads, where a legacy project has no program). Moved here from routes/artifacts-center-routes.ts (F1, 2026-11-05)
+ * so AnA's governed-artifact tools narrow the same way, never a second copy.
+ */
+export async function narrowToSponsorOf(orgId: number, projectIds: readonly number[], open: string | number): Promise<{ projectIds: number[]; client: ArtifactSponsor | null }> {
+  const { rows } = await pool.query<{ id: number; program_id: string | null; client_workspace_id: number | null; client_name: string | null }>(
+    `SELECT p.id, p.regulatory_program_id::text AS program_id, p.client_workspace_id, cw.name AS client_name
+       FROM projects p
+       LEFT JOIN client_workspaces cw ON cw.id = p.client_workspace_id AND cw.organization_id = p.organization_id
+      WHERE p.organization_id = $1 AND p.id = ANY($2::int[])`,
+    [orgId, [...projectIds]],
+  );
+  const workspaceOf = (r: { client_workspace_id: number | null }) => (r.client_workspace_id == null ? null : Number(r.client_workspace_id));
+  const isOpen = (r: { id: number; program_id: string | null }) =>
+    (typeof open === 'number' ? Number(r.id) === open : (r.program_id ?? '').toLowerCase() === open.toLowerCase());
+  const own = rows.filter(isOpen);
+  if (own.length === 0) throw new ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+  if (new Set(own.map(workspaceOf)).size !== 1) {
+    throw new ProgramReadAccessError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'This project needs one verified tracking record before its records can be supplied.');
+  }
+  const sponsor = workspaceOf(own[0]);
+  return { projectIds: rows.filter((r) => workspaceOf(r) === sponsor).map((r) => Number(r.id)), client: artifactSponsor(sponsor, own[0].client_name) };
+}
 
 /** One registry row as the read projects it. */
 export interface ArtifactRegistryRow {
@@ -70,6 +112,9 @@ export interface ArtifactRegistryRow {
   compiled_from: string | null;
   recorded_source: string | null;
   program: string | null;
+  /** The project's sponsor (client workspace), and its name, as the organisation records them (F1, S6 V4). */
+  client_workspace_id: number | string | null;
+  client_name: string | null;
   author_name: string | null;
   is_signed: boolean;
   is_reviewed: boolean;
@@ -116,6 +161,8 @@ export async function readArtifactRegistry(scope: ArtifactRegistryScope): Promis
        a.metadata ->> 'compiledFrom'                   AS compiled_from,
        a.metadata ->> 'source'                         AS recorded_source,
        COALESCE(p.code, p.name)                        AS program,
+       p.client_workspace_id                           AS client_workspace_id,
+       cw.name                                         AS client_name,
        COALESCE(au.name, au.email)                     AS author_name,
        EXISTS (
          SELECT 1
@@ -154,6 +201,7 @@ export async function readArtifactRegistry(scope: ArtifactRegistryScope): Promis
        (COUNT(*) OVER ())::int                         AS total_rows
      FROM concept2cure_artifacts a
      LEFT JOIN projects p ON p.id = a.project_id AND p.organization_id = a.organization_id
+     LEFT JOIN client_workspaces cw ON cw.id = p.client_workspace_id AND cw.organization_id = a.organization_id
      LEFT JOIN LATERAL public.actor_name(a.created_by_id) au ON TRUE
      WHERE a.organization_id = $1
        AND a.status <> 'archived'

@@ -12,6 +12,11 @@ vi.mock('../vault-filing.service', async (original) => ({
   ...await original<typeof import('../vault-filing.service')>(),
   resolveVaultView: vi.fn(async () => 'pharma'),
 }));
+/* The project's folders (vault-folders.ts): here the view's presets only, as the export read them before binders. */
+vi.mock('../vault-folders', async (original) => {
+  const real = await original<typeof import('../vault-folders')>();
+  return { ...real, readProgramFolderIndex: vi.fn(async () => real.buildFolderIndex('pharma', { binder: null, reason: '' }, [])) };
+});
 
 const confirmed = { id: 'doc-confirmed', folder_id: 'module-3', placement_status: 'confirmed', document_title: 'Confirmed specification' };
 const suggested = { id: 'doc-suggested', folder_id: 'module-3', placement_status: 'suggested', document_title: 'Suggested stability protocol' };

@@ -109,6 +109,25 @@ export type CorrespondenceIssueCategory =
   | 'inspection_compliance_issue'
   | 'other_unclassified';
 
+/** Proposed coding, with the agency's exact words kept separate from inference. */
+export type FeedbackRegister = 'objective' | 'subjective' | 'unclassified';
+export type FeedbackDeficiencyClass =
+  | 'missing_required_information' | 'format_validation_failure' | 'specification_failure' | 'unmet_explicit_requirement'
+  | 'presentation_expectation' | 'risk_framing_expectation' | 'precedent_argument_expectation' | 'unclassified';
+export interface FeedbackCoding {
+  register: FeedbackRegister;
+  deficiencyClass: FeedbackDeficiencyClass;
+  basis: 'deterministic_proposal';
+  humanConfirmed: boolean;
+}
+export interface CorrespondenceEvidenceSpan { start: number; end: number; text: string }
+export interface CorrespondenceHumanReview {
+  reviewedBy: number;
+  reviewedAt: string;
+  sourceTextDigest: string;
+  status: 'pending' | 'confirmed' | 'edited' | 'rejected';
+}
+
 export interface Submission {
   id: string;
   projectId: number;
@@ -179,6 +198,10 @@ export interface CorrespondenceIssue {
     confidenceTrace: Array<{ signal: string; score: number; deterministic: boolean }>;
     humanReviewRequired: boolean;
     responseDeadlineSignal?: string;
+    sourceTextDigest?: string;
+    evidenceSpan?: CorrespondenceEvidenceSpan;
+    feedbackCoding?: FeedbackCoding;
+    humanReview?: CorrespondenceHumanReview;
   };
 }
 

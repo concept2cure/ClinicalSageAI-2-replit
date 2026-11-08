@@ -30,18 +30,19 @@
 import type { PoolClient } from 'pg';
 import { randomUUID } from 'node:crypto';
 import { recordGovernedAction } from '../../routes/c2c/actions.js';
-import { ensureSubmissionSpine } from '../../routes/c2c/project-intake.js';
+import { ensureSubmissionSpine, submissionRegionFor } from '../../routes/c2c/project-intake.js';
+import { canonicalRegionOf } from '../../../shared/regulatory/region-identity.js';
 import { resolveDocumentClass, describeUnmappedClass } from './document-class.js';
 import { classNotSequencedReason, filingDocumentClassOf, filingTypeInSentence } from '../../../shared/regulatory/filing-document-classes.js';
 import { findActiveRulePack } from './rule-pack-lookup.js';
 import { readMarketSupport, documentAgencyFor } from '../regulatory/market-support.js';
 import { regionalSubtree, type PackSectionLike } from '../../../shared/regulatory/filing-scope.js';
-import { isDeviceFamily, productTypeForFilingType } from '../../../shared/constants/domain/product-types.js';
+import { isDeviceOrDiagnosticProgram } from '../../../shared/constants/domain/product-types.js';
 import { regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
 
 export type AddMarketRefusalCode =
   | 'PROJECT_NOT_FOUND' | 'DEVICE_PROGRAM' | 'MARKET_NOT_OFFERED' | 'UNMAPPED_PROGRAM_TYPE'
-  | 'NO_RULE_PACK' | 'MARKET_EXISTS' | 'NO_HOME_FILING' | 'NOT_AN_APPLICATION' | 'DEVICE_APPLICATION';
+  | 'NO_RULE_PACK' | 'MARKET_EXISTS' | 'MARKET_IDENTITY_UNVERIFIED' | 'NO_HOME_FILING' | 'NOT_AN_APPLICATION' | 'DEVICE_APPLICATION';
 
 export class AddMarketRefusal extends Error {
   constructor(readonly status: 404 | 409 | 422, readonly code: AddMarketRefusalCode, message: string) {
@@ -99,8 +100,7 @@ async function readProgram(client: PoolClient, programId: string, orgId: number)
 
 /** The market's class, pack and agency key, or the refusal that names what is missing. */
 async function resolveMarket(client: PoolClient, input: AddMarketInput, program: ProgramRow) {
-  if (isDeviceFamily(program.product_type) || isDeviceFamily(productTypeForFilingType(program.program_type))
-    || regionalDeviceApplicationClassOf(program.program_type)) {
+  if (isDeviceOrDiagnosticProgram(program)) {
     throw new AddMarketRefusal(422, 'DEVICE_PROGRAM',
       'A device or diagnostic project files on its own pathway, not as an eCTD market. Nothing was added.');
   }
@@ -155,9 +155,13 @@ async function resolveMarket(client: PoolClient, input: AddMarketInput, program:
  */
 async function existingDocument(client: PoolClient, input: AddMarketInput, klass: { docType: string; agency: string }) {
   const sub = await client.query(
-    `SELECT 1 FROM submissions WHERE program_id = $1 AND organization_id = $2 AND lower(application_type) = $3 AND deleted_at IS NULL LIMIT 1`,
+    `SELECT primary_region FROM submissions WHERE program_id = $1 AND organization_id = $2 AND lower(application_type) = $3 AND deleted_at IS NULL`,
     [input.programId, input.orgId, input.applicationType.toLowerCase()],
   );
+  if (sub.rows.some(row => !canonicalRegionOf(row.primary_region))) {
+    throw new AddMarketRefusal(409, 'MARKET_IDENTITY_UNVERIFIED',
+      'An existing filing has an unverified market. Confirm its recorded region before adding a market. Nothing was added.');
+  }
   const doc = await client.query(
     `SELECT id, filing_scope FROM c2c_documents WHERE project_id = $1 AND org_id = $2 AND doc_type = $3 AND agency = $4
       ORDER BY created_at LIMIT 1`,
@@ -176,7 +180,9 @@ async function existingDocument(client: PoolClient, input: AddMarketInput, klass
     throw new AddMarketRefusal(409, 'NO_HOME_FILING',
       'This project has no filing of its own yet, so no market can be added to it. Nothing was added.');
   }
-  if (sub.rows.length > 0 || found?.filing_scope === 'market') {
+  const requestedRegion = canonicalRegionOf(submissionRegionFor(input.applicationType, input.agency));
+  const submissionExists = requestedRegion && sub.rows.some(row => canonicalRegionOf(row.primary_region) === requestedRegion);
+  if (submissionExists || found?.filing_scope === 'market') {
     throw new AddMarketRefusal(409, 'MARKET_EXISTS',
       `This project already files ${input.applicationType.toUpperCase()} with ${input.agency}. Nothing was added.`);
   }

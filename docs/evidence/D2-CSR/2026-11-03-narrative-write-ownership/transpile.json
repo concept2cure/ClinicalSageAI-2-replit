@@ -1,0 +1,27 @@
+{
+  "node": "v22.16.0",
+  "typescript": "5.8.3",
+  "scope": "Syntax/transpilation only, not the repository-wide type-check",
+  "files": [
+    {
+      "file": "server/services/csr/csr-narrative-store.ts",
+      "blobSha": "a073764561660b257f0e77d3d2a0f1e17be99b2e",
+      "diagnostics": []
+    },
+    {
+      "file": "server/services/csr/csr-narrative-run.ts",
+      "blobSha": "83851cd6707e4c5626bc382a47e286b267970022",
+      "diagnostics": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-narrative-write-ownership.test.ts",
+      "blobSha": "752a1464fdc5633a2801b43e51467ed01733c226",
+      "diagnostics": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-narrative-write-ownership.pglite.test.ts",
+      "blobSha": "474b790c9106f172c016b4e4976c8c9eb34ef00a",
+      "diagnostics": []
+    }
+  ]
+}

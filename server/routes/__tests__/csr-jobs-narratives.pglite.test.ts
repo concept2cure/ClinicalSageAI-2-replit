@@ -17,10 +17,41 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const h = vi.hoisted(() => ({ database: null as unknown, client: null as unknown, tables: vi.fn(), adam: vi.fn() }));
+const h = vi.hoisted(() => ({ database: null as unknown, client: null as unknown, tables: vi.fn(), adam: vi.fn(),
+  afterNarrativePage: null as null | (() => Promise<void>), afterNarrativeQc: null as null | (() => Promise<void>),
+  afterLandedHeader: null as null | (() => Promise<void>), afterLandedSlice: null as null | (() => Promise<void>) }));
 vi.mock('../../db', () => ({ get db() { return h.database; } }));
-// The worker's tenant connection is the test database (one connection, as withTenantConnection gives).
-vi.mock('../../db/withTenantConnection.js', () => ({ withTenantConnection: async (_o: unknown, fn: (c: unknown) => Promise<unknown>) => fn(h.client) }));
+// Observe the real page query after Drizzle executed it. Mutations use the same
+// native test database; no page result or digest is supplied by the harness.
+vi.mock('../../db/drizzle-queryable', async original => {
+  const actual = await original<typeof import('../../db/drizzle-queryable')>();
+  return { ...actual, queryableFromDrizzle: (runner: Parameters<typeof actual.queryableFromDrizzle>[0]) => {
+    const native = actual.queryableFromDrizzle(runner);
+    return { query: async <R = Record<string, unknown>>(text: string, params?: unknown[]) => {
+      const result = await native.query<R>(text, params);
+      if (h.afterNarrativePage && /\bFROM csr_narrative_outputs\b/.test(text) && /\bLIMIT \$5\b/.test(text)) {
+        const change = h.afterNarrativePage; h.afterNarrativePage = null; await change();
+      }
+      if (h.afterNarrativeQc && /\bSELECT subject_id,\s*sequence,\s*status,\s*content,\s*content_hash,\s*facts_digest,\s*qc\b/.test(text)
+        && !/\bLIMIT\b/.test(text)) {
+        const change = h.afterNarrativeQc; h.afterNarrativeQc = null; await change();
+      }
+      if (h.afterLandedHeader && /\bSELECT content_hash,\s*char_length\(content\) AS length/.test(text)) {
+        const change = h.afterLandedHeader; h.afterLandedHeader = null; await change();
+      }
+      if (h.afterLandedSlice && /\bSELECT substr\(content,\s*\$3::int,\s*\$4::int\) AS text/.test(text)) {
+        const change = h.afterLandedSlice; h.afterLandedSlice = null; await change();
+      }
+      return result;
+    } };
+  } };
+});
+// The worker's tenant connection is the test database (one connection, as withOrganizationTenantConnection gives).
+// Its scope under row security, as a non-owner role, is proven in services/csr/__tests__/csr-worker-tenant-scope.pglite.test.ts.
+vi.mock('../../db/withTenantConnection.js', () => ({
+  withTenantConnection: async (_o: unknown, fn: (c: unknown) => Promise<unknown>) => fn(h.client),
+  withOrganizationTenantConnection: async (_org: number, _caller: string, fn: (c: unknown) => Promise<unknown>) => fn(h.client),
+}));
 vi.mock('../../services/csr-builder.js', () => ({ launchCSRBuildAsync: vi.fn() }));
 vi.mock('../../services/csr/saved-clinical-tables.js', () => ({ readSavedClinicalTables: h.tables }));
 vi.mock('../../services/csr/vault-source-input.js', () => ({ readCsrAdamDatasets: h.adam }));
@@ -32,6 +63,9 @@ vi.mock('../../services/csr/project-scope', async (original) => ({
 import router from '../csr-jobs';
 import { CsrSourceInputError } from '../../services/csr/source-access';
 import { adaeRows, narrativeBundle, narrativeDatasets } from '../../services/csr/__tests__/support/adam-narrative-synthetic';
+import { landSyntheticBuild, sha, subjectOf } from '../../services/csr/__tests__/support/narrative-reference-fixture';
+import { readCsrNarrativeReference } from '../../services/csr/csr-narrative-landed';
+import { narrativeSectionBlock } from '../../services/csr/narrative-section';
 
 const PROTOCOL = 'SYN-LMN201-PROTOCOL';
 const RUN = '0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31';
@@ -57,8 +91,243 @@ beforeAll(async () => {
 });
 afterAll(async () => { await pg?.close(); });
 beforeEach(() => {
+  h.afterNarrativePage = null;
+  h.afterNarrativeQc = null;
+  h.afterLandedHeader = null;
+  h.afterLandedSlice = null;
   h.tables.mockReset().mockResolvedValue({ runId: RUN, programId: PROGRAM, studies: [{ source: receipt, tables: {} }] });
   h.adam.mockReset().mockResolvedValue({ bundle: narrativeBundle(), datasets: narrativeDatasets(80), componentsApproved: true });
+});
+
+const nativeNarratives = { query: (text: string, params?: unknown[]) => pg.query<Record<string, unknown>>(text, params as never[]) };
+async function importedDigest(jobId: number) {
+  await landSyntheticBuild(nativeNarratives, jobId, 6, { length: 100 });
+  const read = await readCsrNarrativeReference(nativeNarratives, { organizationId: 7, jobId });
+  expect(read.state).toBe('verified');
+  if (read.state !== 'verified') throw new Error('The synthetic imported narrative reference was not verified.');
+  return read.reference.storeDigest;
+}
+async function replaceStoredNarrative(jobId: number, append = ' Synthetic rebuilt observation.') {
+  const old = await pg.query<{ content: string }>(`SELECT content FROM csr_narrative_outputs WHERE job_id=$1 AND sequence=0`, [jobId]);
+  const next = old.rows[0].content + append;
+  await pg.query(`UPDATE csr_narrative_outputs SET content=$2,content_hash=encode(sha256(convert_to($2,'UTF8')),'hex')
+    WHERE job_id=$1 AND sequence=0`, [jobId, next]);
+  await pg.query(`UPDATE csr_section_outputs SET content=replace(content,$2,$3),
+    content_hash=encode(sha256(convert_to(replace(content,$2,$3),'UTF8')),'hex')
+    WHERE job_id=$1 AND section_number='14.3.3'`, [jobId, old.rows[0].content, next]);
+}
+
+describe('imported narrative version on the existing paged read', () => {
+  it('acknowledges the exact imported store on every cursor page and leaves the current unpinned read available', async () => {
+    const digest = await importedDigest(71);
+    const first = await request(app).get(`/api/csr/jobs/71/narratives/text?limit=2&expectedStoreDigest=${digest}`);
+    expect(first.status).toBe(200);
+    expect(first.body.storeDigest).toBe(digest);
+    expect(first.body.narratives).toHaveLength(2);
+    const cursor = first.body.next;
+    const second = await request(app).get(`/api/csr/jobs/71/narratives/text?limit=2&expectedStoreDigest=${digest}&afterSequence=${cursor.sequence}&afterSubject=${encodeURIComponent(cursor.subjectId)}`);
+    expect(second.status).toBe(200);
+    expect(second.body.storeDigest).toBe(digest);
+    expect(second.body.narratives).toHaveLength(2);
+    expect(second.body.narratives[0].sequence).toBe(2);
+    const current = await request(app).get('/api/csr/jobs/71/narratives/text?limit=2');
+    expect(current.status).toBe(200);
+    expect(current.body.narratives).toHaveLength(2);
+    const qc = await request(app).get(`/api/csr/jobs/71/narratives?expectedStoreDigest=${digest}`);
+    expect(qc.status).toBe(200);
+    expect(qc.body.storeDigest).toBe(digest);
+    expect(qc.body.subjects).toHaveLength(6);
+    expect((await request(app).get('/api/csr/jobs/71/narratives')).body.subjects).toHaveLength(6);
+  });
+
+  it('refuses a later page after a valid rebuild changes a row outside that page', async () => {
+    const digest = await importedDigest(72);
+    const first = await request(app).get(`/api/csr/jobs/72/narratives/text?limit=2&expectedStoreDigest=${digest}`);
+    expect(first.status).toBe(200);
+    await replaceStoredNarrative(72);
+    const latest = await request(app).get('/api/csr/jobs/72/narratives/text?limit=2');
+    expect(latest.status).toBe(200);
+    expect(latest.body.narratives[0]).toMatchObject({ verified: true, text: expect.stringContaining('Synthetic rebuilt observation.') });
+    const cursor = first.body.next;
+    const stale = await request(app).get(`/api/csr/jobs/72/narratives/text?limit=2&expectedStoreDigest=${digest}&afterSequence=${cursor.sequence}&afterSubject=${encodeURIComponent(cursor.subjectId)}`);
+    expect(stale.status).toBe(409);
+    expect(stale.body.code).toBe('CSR_NARRATIVE_REFERENCE_CHANGED');
+    expect(stale.body).not.toHaveProperty('narratives');
+    expect(stale.body).not.toHaveProperty('next');
+    const staleQc = await request(app).get(`/api/csr/jobs/72/narratives?expectedStoreDigest=${digest}`);
+    expect(staleQc.status).toBe(409);
+    expect(staleQc.body.code).toBe('CSR_NARRATIVE_REFERENCE_CHANGED');
+    expect(staleQc.body).not.toHaveProperty('subjects');
+  });
+
+  it('refuses a store replacement after the actual page query and before the read returns', async () => {
+    const digest = await importedDigest(73);
+    h.afterNarrativePage = () => replaceStoredNarrative(73);
+    const stale = await request(app).get(`/api/csr/jobs/73/narratives/text?limit=2&expectedStoreDigest=${digest}`);
+    expect(h.afterNarrativePage).toBeNull();
+    expect(stale.status).toBe(409);
+    expect(stale.body.code).toBe('CSR_NARRATIVE_REFERENCE_CHANGED');
+    expect(stale.body).not.toHaveProperty('narratives');
+  });
+
+  it('refuses malformed or repeated imported-version pins instead of treating them as current reads', async () => {
+    for (const query of ['expectedStoreDigest=not-a-digest', `expectedStoreDigest=${'a'.repeat(64)}&expectedStoreDigest=${'b'.repeat(64)}`]) {
+      for (const suffix of ['/text', '']) {
+        const invalid = await request(app).get(`/api/csr/jobs/1/narratives${suffix}?${query}`);
+        expect(invalid.status).toBe(400);
+        expect(invalid.body.code).toBe('CSR_NARRATIVE_REFERENCE_INVALID');
+        expect(invalid.body).not.toHaveProperty('narratives');
+        expect(invalid.body).not.toHaveProperty('subjects');
+      }
+    }
+  });
+
+  it('refuses a store replacement after the actual QC query and before its rows return', async () => {
+    const digest = await importedDigest(74);
+    h.afterNarrativeQc = () => replaceStoredNarrative(74);
+    const stale = await request(app).get(`/api/csr/jobs/74/narratives?expectedStoreDigest=${digest}`);
+    expect(h.afterNarrativeQc).toBeNull();
+    expect(stale.status).toBe(409);
+    expect(stale.body.code).toBe('CSR_NARRATIVE_REFERENCE_CHANGED');
+    expect(stale.body).not.toHaveProperty('subjects');
+  });
+});
+
+const REMNANT = 'SYN-OLD-UNSELECTED';
+const remnantText = 'Synthetic old observation, not selected for the landed report.';
+const remnantQc = { armName: 'Synthetic old arm', categories: ['serious'] as const, events: ['Unselected old observation'], missingFields: [], prose: 'template' };
+async function referenceWithRemnant(jobId: number, quoted = false) {
+  await landSyntheticBuild(nativeNarratives, jobId, 6, { length: 100 });
+  await pg.query(`INSERT INTO csr_narrative_outputs (organization_id,job_id,subject_id,sequence,status,content,content_hash,facts_digest,qc)
+    VALUES (7,$1,$2,1,'composed',$3,$4,$5,$6::jsonb)`, [jobId, REMNANT, remnantText, sha(remnantText), sha('old facts'), JSON.stringify(remnantQc)]);
+  const quotedBlock = narrativeSectionBlock({ subjectId: REMNANT, armName: remnantQc.armName, categories: ['serious'], events: remnantQc.events, text: remnantText });
+  if (quoted) await replaceStoredNarrative(jobId, '\n\nSynthetic quotation within the selected subject, not an additional narrative:' + quotedBlock + '\n\nEnd of synthetic quotation.');
+  const read = await readCsrNarrativeReference(nativeNarratives, { organizationId: 7, jobId });
+  expect(read.state).toBe('verified');
+  if (read.state !== 'verified') throw new Error('Synthetic landed membership was not verified.');
+  expect(read.reference.narratives).toBe(6);
+  return { reference: read.reference, quotedBlock };
+}
+interface ImportedPageCursor { sequence: number; subjectId: string; landedOffset: number; proof: string }
+function importedPageUrl(jobId: number, reference: { storeDigest: string; landedSha256: string },
+  after?: ImportedPageCursor, qc = false, limit = 2) {
+  const query = new URLSearchParams({ limit: String(limit), expectedStoreDigest: reference.storeDigest, expectedLandedSha256: reference.landedSha256 });
+  if (after) {
+    query.set('afterSequence', String(after.sequence)); query.set('afterSubject', after.subjectId);
+    query.set('afterLandedOffset', String(after.landedOffset)); query.set('afterProof', after.proof);
+  }
+  return `/api/csr/jobs/${jobId}/narratives${qc ? '' : '/text'}?${query}`;
+}
+
+describe('exact imported landed membership and bounded pages', () => {
+  it('excludes valid old rows from both the report and visible-page QC while retaining the current store read', async () => {
+    const { reference } = await referenceWithRemnant(81);
+    const current = await request(app).get('/api/csr/jobs/81/narratives/text?limit=20');
+    expect(current.body.narratives).toHaveLength(7);
+    expect(current.body.narratives.find((row: { subjectId: string }) => row.subjectId === REMNANT)).toMatchObject({ verified: true });
+    const landed = await request(app).get(importedPageUrl(81, reference, undefined, false, 20));
+    expect(landed.status).toBe(200);
+    expect(landed.body.narratives.map((row: { subjectId: string }) => row.subjectId)).toEqual(Array.from({ length: 6 }, (_, i) => subjectOf(i)));
+    expect(landed.body).toMatchObject({ storeDigest: reference.storeDigest, landedSha256: reference.landedSha256, next: null });
+    const first = await request(app).get(importedPageUrl(81, reference));
+    expect(first.body.narratives).toHaveLength(2);
+    expect(first.body.next).toMatchObject({ sequence: 1, subjectId: subjectOf(1), landedOffset: expect.any(Number), proof: expect.stringMatching(/^[a-f0-9]{64}$/) });
+    const qcFirst = await request(app).get(importedPageUrl(81, reference, undefined, true));
+    expect(qcFirst.body.subjects.map((row: { subjectId: string }) => row.subjectId)).toEqual([subjectOf(0), subjectOf(1)]);
+    const second = await request(app).get(importedPageUrl(81, reference, first.body.next));
+    const qcSecond = await request(app).get(importedPageUrl(81, reference, first.body.next, true));
+    expect(second.body.narratives.map((row: { subjectId: string }) => row.subjectId)).toEqual([subjectOf(2), subjectOf(3)]);
+    expect(qcSecond.body.subjects.map((row: { subjectId: string }) => row.subjectId)).toEqual([subjectOf(2), subjectOf(3)]);
+    expect(qcSecond.body).toMatchObject({ storeDigest: reference.storeDigest, landedSha256: reference.landedSha256 });
+  });
+
+  it('does not treat a quoted complete Subject block as membership in the landed report', async () => {
+    const { reference } = await referenceWithRemnant(82, true);
+    const text = await request(app).get(importedPageUrl(82, reference, undefined, false, 20));
+    expect(text.status).toBe(200);
+    expect(text.body.narratives.map((row: { subjectId: string }) => row.subjectId)).toEqual(Array.from({ length: 6 }, (_, i) => subjectOf(i)));
+    expect(text.body.narratives[0].text).toContain(`Subject ${REMNANT}`);
+    const qc = await request(app).get(importedPageUrl(82, reference, undefined, true, 20));
+    expect(qc.body.subjects.map((row: { subjectId: string }) => row.subjectId)).not.toContain(REMNANT);
+  });
+
+  it('rejects a forged offset inside a quoted block and a modified proof on both existing reads', async () => {
+    const { reference, quotedBlock } = await referenceWithRemnant(83, true);
+    const first = await request(app).get(importedPageUrl(83, reference, undefined, false, 1));
+    expect(first.status).toBe(200);
+    const { rows } = await pg.query<{ end_offset: number }>(`SELECT strpos(content,$2)+char_length($2)-1 AS end_offset
+      FROM csr_section_outputs WHERE job_id=$1 AND section_number='14.3.3'`, [83, quotedBlock]);
+    const original = first.body.next as ImportedPageCursor;
+    const forged = { ...original, sequence: 1, subjectId: REMNANT, landedOffset: Number(rows[0].end_offset), proof: original.proof ?? '0'.repeat(64) };
+    const wrongProof = { ...original, proof: original.proof?.startsWith('0') ? '1' + original.proof.slice(1) : '0' + (original.proof ?? '1'.repeat(64)).slice(1) };
+    for (const cursor of [forged, wrongProof]) for (const qc of [false, true]) {
+      const invalid = await request(app).get(importedPageUrl(83, reference, cursor, qc));
+      expect(invalid.status).toBe(400);
+      expect(invalid.body.code).toBe('CSR_NARRATIVE_PAGE_INVALID');
+      expect(invalid.body).not.toHaveProperty('narratives'); expect(invalid.body).not.toHaveProperty('subjects');
+    }
+  });
+
+  it('refuses a landed-only version change before or after a real page query even when the store digest is unchanged', async () => {
+    const { reference } = await referenceWithRemnant(84);
+    const changeLanded = () => pg.query(`UPDATE csr_section_outputs SET content=content||$2,
+      content_hash=encode(sha256(convert_to(content||$2,'UTF8')),'hex') WHERE job_id=$1 AND section_number='14.3.3'`, [84, '\n\nSynthetic changed closing.']).then(() => undefined);
+    h.afterNarrativePage = changeLanded;
+    const during = await request(app).get(importedPageUrl(84, reference));
+    expect(h.afterNarrativePage).toBeNull();
+    expect(during.status).toBe(409);
+    expect(during.body.code).toBe('CSR_NARRATIVE_REFERENCE_CHANGED');
+    expect(during.body).not.toHaveProperty('narratives');
+    const later = await request(app).get(importedPageUrl(84, reference, undefined, true));
+    expect(later.status).toBe(409); expect(later.body.code).toBe('CSR_NARRATIVE_REFERENCE_CHANGED');
+    expect(later.body).not.toHaveProperty('subjects');
+  });
+});
+
+it('refuses an ABA swap of actual narrative and landed bytes between the admitted header and slice', async () => {
+  const { reference } = await referenceWithRemnant(86);
+  const original = (await pg.query<{ content: string; content_hash: string }>(`SELECT content,content_hash
+    FROM csr_narrative_outputs WHERE job_id=86 AND sequence=0`)).rows[0];
+  const landed = (await pg.query<{ content: string; content_hash: string }>(`SELECT content,content_hash
+    FROM csr_section_outputs WHERE job_id=86 AND section_number='14.3.3'`)).rows[0];
+  const swapped = original.content + ' Synthetic ABA-swapped observation.';
+  h.afterLandedHeader = async () => {
+    await pg.query(`UPDATE csr_narrative_outputs SET content=$1,content_hash=$2 WHERE job_id=86 AND sequence=0`, [swapped, sha(swapped)]);
+    // Deliberately leave the recorded landed hash at A while its actual bytes
+    // and the per-subject row are B; no fabricated query result is supplied.
+    await pg.query(`UPDATE csr_section_outputs SET content=replace(content,$1,$2)
+      WHERE job_id=86 AND section_number='14.3.3'`, [original.content, swapped]);
+  };
+  h.afterLandedSlice = async () => {
+    await pg.query(`UPDATE csr_narrative_outputs SET content=$1,content_hash=$2 WHERE job_id=86 AND sequence=0`, [original.content, original.content_hash]);
+    await pg.query(`UPDATE csr_section_outputs SET content=$1,content_hash=$2 WHERE job_id=86 AND section_number='14.3.3'`, [landed.content, landed.content_hash]);
+  };
+  const response = await request(app).get(importedPageUrl(86, reference));
+  expect(h.afterLandedHeader).toBeNull();
+  expect(h.afterLandedSlice).toBeNull();
+  const restored = await request(app).get('/api/csr/jobs/86/narratives/text?limit=1');
+  expect(restored.body.narratives[0]).toMatchObject({ text: original.content, verified: true });
+  expect(response.status).toBe(409);
+  expect(response.body.code).toBe('CSR_NARRATIVE_REFERENCE_CHANGED');
+  expect(response.body).not.toHaveProperty('narratives');
+});
+
+it('refuses QC-only ABA metadata even when every landed and narrative byte remains at the imported version', async () => {
+  const { reference } = await referenceWithRemnant(87);
+  const original = (await pg.query<{ qc: Record<string, unknown> }>(`SELECT qc FROM csr_narrative_outputs WHERE job_id=87 AND sequence=0`)).rows[0].qc;
+  const transient = { ...original, missingFields: ['Synthetic transient QC field'], prose: 'model', model: 'synthetic-aba-model' };
+  h.afterLandedHeader = () => pg.query(`UPDATE csr_narrative_outputs SET qc=$1::jsonb WHERE job_id=87 AND sequence=0`,
+    [JSON.stringify(transient)]).then(() => undefined);
+  h.afterLandedSlice = () => pg.query(`UPDATE csr_narrative_outputs SET qc=$1::jsonb WHERE job_id=87 AND sequence=0`,
+    [JSON.stringify(original)]).then(() => undefined);
+  const response = await request(app).get(importedPageUrl(87, reference, undefined, true));
+  expect(h.afterLandedHeader).toBeNull();
+  expect(h.afterLandedSlice).toBeNull();
+  const restored = await request(app).get('/api/csr/jobs/87/narratives');
+  expect(restored.body.subjects[0].qc).toEqual(original);
+  expect(response.status).toBe(409);
+  expect(response.body.code).toBe('CSR_NARRATIVE_REFERENCE_CHANGED');
+  expect(response.body).not.toHaveProperty('subjects');
 });
 
 /** Poll the status the board reads until the run leaves queued/running. */

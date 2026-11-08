@@ -48,7 +48,7 @@ vi.mock('../../../db', () => ({
   },
 }));
 
-import { findUnclaimedNumbers, findUnsuppliedStatistics, isStatisticalSection } from '../unsupplied-statistics';
+import { acceptEvidenceBoundDraft, findUnclaimedNumbers, findUnsuppliedStatistics, findUnsupportedCsrOutcomeConclusion, unsupportedCsrDeathCounts, unclaimedCsrSynopsisResults, isStatisticalSection, isCsrObservedResultsSection } from '../unsupplied-statistics';
 import { draftCSRSectionWithProvenance, type CSRBuildRequest, type CSRSection } from '../../csr-builder';
 import { loadCsrInputsForProject } from '../load-csr-inputs-for-project';
 
@@ -81,6 +81,46 @@ describe('findUnclaimedNumbers (evidence-bound sections)', () => {
   });
   it('does not let a reference word hide a percentage', () => {
     expect(findUnclaimedNumbers('section 11.5% of patients', known).map(f => f.text)).toEqual(['11.5']);
+  });
+
+  it.each([
+    ['<0.001', 'p=0.001'], ['0.001', 'p<0.001'], ['>0.999', 'p≥0.999'],
+    ['-2.50', 'The difference was 2.50.'], ['2.50', 'The difference was 2.5.'],
+    ['12%', '12 patients completed.'], ['12', '12% completed.'], ['0.001', 'p=0.001e-3'],
+  ])('does not let the supplied display %s authorize %s', (value, prose) => {
+    expect(findUnclaimedNumbers(prose, { claimed: [value] })).not.toEqual([]);
+  });
+
+  it('checks a conflicting occurrence even when an exact occurrence is also present', () => {
+    expect(findUnclaimedNumbers('p<0.001 in the table; p=0.001 in the conclusion.', { claimed: ['<0.001'] })).not.toEqual([]);
+  });
+
+  it('reads encoded operators as visible figures and ignores digits in markup', () => {
+    expect(findUnclaimedNumbers('<p data-run="99">p &lt; 0.001 and a difference of &#8722;2.50.</p>',
+      { claimed: ['<0.001', '-2.50'] })).toEqual([]);
+    expect(findUnclaimedNumbers('<p>p &gt; 0.001.</p>', { claimed: ['<0.001'] })).not.toEqual([]);
+    expect(findUnclaimedNumbers('<p title="x>99">p &lt;0.001.</p>', { claimed: ['<0.001'] })).toEqual([]);
+  });
+
+  it.each(['p&Lt;0.001', 'p&ne;0.001', 'p≈0.001', 'p=0.001&unknownunit;', 'p=0.001abc',
+    'p=0.001%3', 'p=0.001mg/mL'])('does not borrow supplied scalars across the boundary in %s', prose => {
+    expect(findUnclaimedNumbers(prose, { claimed: ['0.001', '0.001%', '0.001mg', '3'] })).not.toEqual([]);
+  });
+
+  it.each(['constructor', 'toString'])('refuses unknown entity &%s; without throwing', entity => {
+    expect(findUnclaimedNumbers(`<p>p &${entity};0.001.</p>`, { claimed: ['0.001'] })).not.toEqual([]);
+  });
+
+  it('decodes original draft prose once and never promotes a literal entity spelling to a threshold', () => {
+    expect(findUnclaimedNumbers('<p>p &amp;lt;0.001.</p>', { claimed: ['<0.001'] })).not.toEqual([]);
+    expect(findUnclaimedNumbers('<p>p &lt;0.001.</p>', { claimed: ['<0.001'] })).toEqual([]);
+  });
+
+  it.each(['ng/mL', 'µg/mL', 'pg/mL', 'copies/mL'])('keeps a separated %s concentration distinct from a count', unit => {
+    expect(findUnclaimedNumbers(`Concentration: 5 ${unit}.`, { claimed: ['5'] })).not.toEqual([]);
+    expect(findUnclaimedNumbers('5 subjects.', { claimed: [`5 ${unit}`] })).not.toEqual([]);
+    expect(findUnclaimedNumbers(`Concentration: 5 ${unit}.`, { claimed: [`5 ${unit}`] })).toEqual([]);
+    expect(findUnclaimedNumbers('5 subjects.', { claimed: ['5'] })).toEqual([]);
   });
 });
 
@@ -122,6 +162,177 @@ describe('findUnsuppliedStatistics', () => {
   it('treats methods and results sections as statistical, and ethics as not', () => {
     for (const n of ['2', '9.7', '10.1', '11.4', '12.2', '13', '14.2']) expect(isStatisticalSection(n)).toBe(true);
     for (const n of ['5', '7', '8.1', '9.1', '9.3']) expect(isStatisticalSection(n)).toBe(false);
+  });
+});
+
+describe('evidence-bound clinical result figures cannot borrow planned numbers', () => {
+  // Every record is synthetic. These tests distinguish the plan/metadata from
+  // observed outcomes; a matching decimal is not an analysis provenance link.
+  const evidence = {
+    evidenceDigest: 'e'.repeat(64),
+    tables: [{
+      key: 'deathsSAEsDiscontinuations',
+      title: 'Serious-event results', headers: ['Outcome', 'Study treatment'],
+      rows: [['Deaths', '300']],
+      sha256: 'f'.repeat(64),
+    }],
+  } as unknown as Parameters<typeof acceptEvidenceBoundDraft>[1];
+  const base = { sampleSize: 300, phase: '3', protocolNumber: 'SYN-300',
+    studyDesign: 'Phase 3, randomized', primaryEndpoint: 'Responder rate 95%' };
+  const attempt = (sectionNumber: string, prose: string, claims: unknown[] = []) => {
+    const lineage: Record<string, unknown> = {};
+    const accepted = acceptEvidenceBoundDraft({ sectionNumber, prose, claims },
+      evidence, base, lineage);
+    return { accepted, lineage };
+  };
+
+  it.each([
+    ['10.1', '300 participants completed the study.'],
+    ['11.4.1', 'The response rate was 95%.'],
+    ['12.2', 'A total of 300 patients died.'],
+    ['13', 'An odds ratio of 3 was observed.'],
+  ])('does not use planned metadata to support observed clinical facts in §%s', (section, prose) => {
+    expect(isCsrObservedResultsSection(section)).toBe(true);
+    expect(attempt(section, prose)).toMatchObject({
+      accepted: false, lineage: { rejectedModelDraft: { reason: 'unreconciled_figures' } },
+    });
+  });
+
+  it('allows a result figure only when a claimed cell matches the retained table', () => {
+    const claim = { table: 'deathsSAEsDiscontinuations', row: 0, column: 1, value: '300' };
+    expect(attempt('12.3', 'The source table records 300 deaths.', [claim])).toMatchObject({
+      accepted: true,
+      lineage: { reconciliation: { status: 'matches', basis: 'exact_retained_table_cell' } },
+    });
+  });
+
+  it.each([['Response (%)', true], ['95% CI', false], ['n (%)', false], ['Count (%)', false]])(
+    'requires a percent-only column for an implicit percentage unit (%s)', (header, accepted) => {
+    const percentageEvidence = { ...evidence, tables: [{ key: 'primaryEfficacy', title: 'Synthetic efficacy',
+      headers: ['Endpoint', header], rows: [['Response', '83.3']], sha256: 'a'.repeat(64) }] } as unknown as Parameters<typeof acceptEvidenceBoundDraft>[1];
+    const lineage: Record<string, unknown> = {};
+    expect(acceptEvidenceBoundDraft({ sectionNumber: '11.4', prose: 'The response rate was 83.3%.',
+      claims: [{ table: 'primaryEfficacy', row: 0, column: 1, value: '83.3' }] }, percentageEvidence, {}, lineage)).toBe(accepted);
+  });
+
+  it('does not prevent the documented planned enrollment in the statistical-methods section', () => {
+    expect(isCsrObservedResultsSection('9.7.1')).toBe(false);
+    expect(attempt('9.7.1', 'Enrollment of 300 participants was planned.')).toMatchObject({
+      accepted: true, lineage: { reconciliation: { status: 'not_assessed' } },
+    });
+  });
+});
+
+describe('qualitative clinical outcome claims require independent source-backed interpretation', () => {
+  const evidence = {
+    evidenceDigest: 'f'.repeat(64),
+    tables: [{
+      key: 'deathsSAEsDiscontinuations',
+      title: 'Deaths and serious events',
+      headers: ['Outcome', 'Treatment'], rows: [['Fatal adverse events', '0']],
+      sha256: 'a'.repeat(64),
+    }],
+  } as unknown as Parameters<typeof acceptEvidenceBoundDraft>[1];
+
+  it.each([
+    ['12.3', 'No deaths were reported in the treatment arm.', 'absence_of_safety_event'],
+    ['12.2', 'No serious adverse events occurred.', 'absence_of_safety_event'],
+    ['11.4.1', 'The primary endpoint was met.', 'endpoint_success'],
+    ['13', 'The treatment demonstrated noninferiority.', 'comparative_success'],
+    ['13', 'Treatment was well tolerated.', 'safety_or_benefit_risk_verdict'],
+    ['2', 'The primary endpoint was achieved.', 'endpoint_success'],
+  ])('refuses unsubstantiated §%s categorical assertion', (section, prose, category) => {
+    expect(findUnsupportedCsrOutcomeConclusion(section, prose)).toBe(category);
+    const lineage: Record<string, unknown> = {};
+    expect(acceptEvidenceBoundDraft({ sectionNumber: section, prose, claims: [] }, evidence, STUDY, lineage)).toBe(false);
+    expect(lineage.rejectedModelDraft).toMatchObject({ reason: 'unsubstantiated_outcome_conclusion', category });
+  });
+
+  it('retains truthful unknown-source prose rather than claiming no events', () => {
+    expect(findUnsupportedCsrOutcomeConclusion('12.3', 'The number of fatal events was not supplied.')).toBeNull();
+    expect(findUnsupportedCsrOutcomeConclusion('11.4.1', 'Whether the primary endpoint was met is not established.')).toBeNull();
+    expect(findUnsupportedCsrOutcomeConclusion('9.7.1', 'The primary endpoint was met in the prior literature.')).toBeNull();
+  });
+
+  it('still accepts an exact source-backed count rather than an ungrounded absence verdict', () => {
+    const lineage: Record<string, unknown> = {};
+    expect(acceptEvidenceBoundDraft({
+      sectionNumber: '12.3', prose: 'Fatal adverse events: 0 in the retained table.',
+      claims: [{ table: 'deathsSAEsDiscontinuations', row: 0, column: 1, value: '0' }],
+    }, evidence, STUDY, lineage)).toBe(true);
+    expect(lineage.reconciliation).toMatchObject({ status: 'matches' });
+  });
+});
+
+describe('ICH E3 synopsis separates planned study numbers from actual outcomes', () => {
+  it('does not mistake planned enrollment for observed completion even when both use 300', () => {
+    const prose = 'An enrollment of 300 was planned. 300 participants completed treatment.';
+    expect(unclaimedCsrSynopsisResults(prose, [])).toEqual(['300']);
+  });
+  it('permits clearly planned recruitment but requires current completion receipts', () => {
+    expect(unclaimedCsrSynopsisResults('We planned to enroll 300 participants.', [])).toEqual([]);
+    expect(unclaimedCsrSynopsisResults('Of 300 participants, 114 completed treatment.', ['300', '114']))
+      .toEqual([]);
+    expect(unclaimedCsrSynopsisResults('Of 300 participants, 114 completed treatment.', ['114']))
+      .toEqual(['300']);
+    expect(unclaimedCsrSynopsisResults('114 participants completed treatment.', []))
+      .toEqual(['114']);
+  });
+  it('preserves study identifiers and reference numbers when inspecting actual outcomes', () => {
+    expect(unclaimedCsrSynopsisResults(
+      'In SYN-300 (NCT05330182), 114 participants completed treatment (Table 14.1.1).',
+      [],
+    )).toEqual(['114']);
+  });
+});
+
+describe('death count semantic receipts', () => {
+  const evidence = {
+    evidenceDigest: 'd'.repeat(64),
+    tables: [{
+      key: 'analysisPopulations', title: 'Analysis populations',
+      headers: ['Population', 'Treatment'], rows: [['Safety population', '300']],
+      sha256: 'e'.repeat(64),
+    }, {
+      key: 'deathsSAEsDiscontinuations', title: 'Death and serious event counts',
+      headers: ['Outcome', 'Treatment'], rows: [['Fatal AEs', '1']],
+      sha256: 'f'.repeat(64),
+    }],
+  } as unknown as Parameters<typeof acceptEvidenceBoundDraft>[1];
+  const population = { table: 'analysisPopulations', row: 0, column: 1, value: '300' };
+  const death = { table: 'deathsSAEsDiscontinuations', row: 0, column: 1, value: '1' };
+
+  it('does not present the safety population as the number of deaths', () => {
+    const lineage: Record<string, unknown> = {};
+    const prose = '300 patients died during treatment.';
+    expect(unsupportedCsrDeathCounts(prose, [population], evidence)).toEqual(['300']);
+    expect(acceptEvidenceBoundDraft({
+      sectionNumber: '12.3.3', prose, claims: [population],
+    }, evidence, { plannedSampleSize: 300 }, lineage)).toBe(false);
+    expect(lineage.rejectedModelDraft).toMatchObject({
+      reason: 'outcome_cell_mismatch', category: 'death_count',
+    });
+  });
+
+  it('permits exact fatal-event counts from the correct source row', () => {
+    const lineage: Record<string, unknown> = {};
+    const prose = '1 patient died during treatment.';
+    expect(unsupportedCsrDeathCounts(prose, [death], evidence)).toEqual([]);
+    expect(acceptEvidenceBoundDraft({
+      sectionNumber: '12.3', prose, claims: [death],
+    }, evidence, {}, lineage)).toBe(true);
+    expect(lineage.reconciliation).toMatchObject({ status: 'matches' });
+  });
+
+  it('does not infer zero deaths from an absence of data', () => {
+    const lineage: Record<string, unknown> = {};
+    const prose = 'No deaths were reported.';
+    expect(acceptEvidenceBoundDraft({
+      sectionNumber: '12.3', prose, claims: [],
+    }, evidence, {}, lineage)).toBe(false);
+    expect(lineage.rejectedModelDraft).toMatchObject({
+      reason: 'unsubstantiated_outcome_conclusion',
+    });
   });
 });
 

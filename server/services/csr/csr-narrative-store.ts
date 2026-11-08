@@ -38,11 +38,41 @@ const savedOf = (row: Record<string, unknown>): SavedNarrative => ({
   factsDigest: String(row.facts_digest), qc: (row.qc ?? {}) as NarrativeQc,
 });
 
-type Job = { organizationId: number; jobId: number; projectId: number | null };
+/** Identity of the already-claimed queue attempt, never supplied by an API caller. */
+export interface NarrativeWriteAttempt { runId: number; attempt: number }
+type Job = { organizationId: number; jobId: number; projectId: number | null; narrativeAttempt?: NarrativeWriteAttempt };
+
+/** Called only inside the dedicated connection's write transaction. Lock the
+ * parent build before the narrative run, and keep both through COMMIT. This
+ * orders a save against cancellation and recovery without a SELECT/write gap.
+ * No model call or source retrieval runs while either lock is held.
+ * Readers and direct non-queued store callers retain the existing contract;
+ * the production queue always supplies its claimed narrativeAttempt.
+ */
+async function lockNarrativeWrite(q: NarrativeQueryable, job: Job): Promise<boolean> {
+  const parent = await q.query(`SELECT id, status FROM csr_build_jobs
+    WHERE id = $1 AND organization_id = $2 FOR UPDATE`, [job.jobId, job.organizationId]);
+  if (parent.rows.length !== 1 || parent.rows[0].status === 'cancelled') return false;
+  if (!job.narrativeAttempt) return true;
+  const { runId, attempt } = job.narrativeAttempt;
+  if (!Number.isSafeInteger(runId) || runId <= 0 || !Number.isSafeInteger(attempt) || attempt <= 0) return false;
+  const owned = await q.query(`SELECT id FROM csr_narrative_runs
+    WHERE id = $1 AND organization_id = $2 AND job_id = $3
+      AND status = 'running' AND attempt = $4 FOR UPDATE`,
+    [runId, job.organizationId, job.jobId, attempt]);
+  return owned.rows.length === 1;
+}
 
 async function saveNarrative(q: NarrativeQueryable, job: Job, row: SavedNarrative): Promise<boolean> {
-  // Saved only while the build is not cancelled: a stopped build keeps what it had.
-  const { rows } = await q.query(`INSERT INTO csr_narrative_outputs
+  // A heartbeat alone is too late: a model response can arrive after a
+  // replacement attempt starts. Check ownership atomically with the write.
+  await q.query('BEGIN');
+  try {
+    if (!await lockNarrativeWrite(q, job)) {
+      await q.query('ROLLBACK');
+      return false;
+    }
+    const { rows } = await q.query(`INSERT INTO csr_narrative_outputs
       (organization_id, job_id, subject_id, sequence, status, content, content_hash, facts_digest, qc)
     SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb
      WHERE EXISTS (SELECT 1 FROM csr_build_jobs WHERE id = $2 AND organization_id = $1 AND status <> 'cancelled')
@@ -52,7 +82,12 @@ async function saveNarrative(q: NarrativeQueryable, job: Job, row: SavedNarrativ
     WHERE csr_narrative_outputs.organization_id = EXCLUDED.organization_id
     RETURNING id`,
   [job.organizationId, job.jobId, row.subjectId, row.sequence, row.status, row.content, row.contentHash, row.factsDigest, JSON.stringify(row.qc)]);
-  return rows.length === 1;
+    await q.query('COMMIT');
+    return rows.length === 1;
+  } catch (err) {
+    await q.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  }
 }
 
 const UPSERT_SECTION = `INSERT INTO csr_section_outputs
@@ -95,6 +130,10 @@ async function streamNarrativesSection(q: NarrativeQueryable, job: Job, section:
 async function writeNarrativeSections(q: NarrativeQueryable, job: Job, sections: { narratives: StreamedNarrativeSection; crossReference: NarrativeSectionRow }) {
   await q.query('BEGIN');
   try {
+    if (!await lockNarrativeWrite(q, job)) {
+      throw new CsrNarrativeBuildError('CSR_NARRATIVE_BUILD_NOT_RUNNABLE', 409,
+        'This narrative attempt no longer owns a runnable build. Previously saved narratives and sections were kept.');
+    }
     const written: string[] = [];
     if (await streamNarrativesSection(q, job, sections.narratives)) written.push('14.3.3');
     const x = sections.crossReference;
@@ -155,7 +194,7 @@ export interface CsrNarrativeBuildDeps { q: NarrativeQueryable; sql: RequestSqlC
 
 /** Compose the narratives of one CSR build from its bound run's approved ADaM bundle, as the signed-in user. */
 export async function buildCsrNarratives(deps: CsrNarrativeBuildDeps,
-  input: { organizationId: number; jobId: number; userId: number; writer?: NarrativeProseWriter; onProgress?: NarrativeJobInput['onProgress'] }): Promise<NarrativeJobResult> {
+  input: { organizationId: number; jobId: number; userId: number; writer?: NarrativeProseWriter; narrativeAttempt?: NarrativeWriteAttempt; onProgress?: NarrativeJobInput['onProgress'] }): Promise<NarrativeJobResult> {
   const job = await readCsrNarrativeJob(deps.q, input.organizationId, input.jobId);
   const scope = { organizationId: input.organizationId, userId: input.userId, programId: job.run.programId };
   const [{ readSavedClinicalTables }, { readCsrAdamDatasets }] = await Promise.all([
@@ -168,15 +207,19 @@ export async function buildCsrNarratives(deps: CsrNarrativeBuildDeps,
   const { bundle, datasets } = await readCsrAdamDatasets(deps.connectable, scope, { documentId, expectedSha256: sha256 });
   if (bundle.studyInfo.protocolNumber !== job.studyId) throw new CsrNarrativeBuildError('CSR_EVIDENCE_STUDY_MISMATCH', 409, 'The ADaM bundle names another protocol. No narratives were composed.');
   return runNarrativeJob({ bundle, datasets, protocolNumber: job.studyId, writer: input.writer, onProgress: input.onProgress,
-    store: sqlNarrativeStore(deps.q, { organizationId: input.organizationId, jobId: input.jobId, projectId: job.projectId }),
+    store: sqlNarrativeStore(deps.q, { organizationId: input.organizationId, jobId: input.jobId,
+      projectId: job.projectId, narrativeAttempt: input.narrativeAttempt }),
     provenance: { runId: job.run.runId, manifestDocumentId: documentId, manifestSha256: sha256 } });
 }
 
 /** The per-subject QC list: what each narrative is missing, how it was written, and why any was refused. */
-export async function readCsrNarrativeQc(q: NarrativeQueryable, organizationId: number, jobId: number) {
+export type NarrativeReadAttester = (rows: SavedNarrative[]) => Promise<void>;
+export async function readCsrNarrativeQc(q: NarrativeQueryable, organizationId: number, jobId: number, verify?: NarrativeReadAttester) {
   const { rows } = await q.query(`SELECT subject_id, sequence, status, content, content_hash, facts_digest, qc
     FROM csr_narrative_outputs WHERE organization_id = $1 AND job_id = $2 ORDER BY sequence, subject_id`, [organizationId, jobId]);
-  return rows.map(savedOf).map(({ content: _content, factsDigest: _digest, ...row }) => row);
+  const captured = rows.map(savedOf);
+  await verify?.(captured);
+  return captured.map(({ content: _content, factsDigest: _digest, ...row }) => row);
 }
 
 /**
@@ -186,12 +229,15 @@ export async function readCsrNarrativeQc(q: NarrativeQueryable, organizationId: 
  * text is its recorded SHA-256; a row that fails it is shown as failing, never
  * hidden.
  */
-export async function readCsrNarrativeTextPage(q: NarrativeQueryable, organizationId: number, jobId: number, after: { sequence: number; subjectId: string } | null, limit: number) {
-  const size = Math.max(1, Math.min(50, Math.trunc(limit) || 20));
-  const { rows } = await q.query(`SELECT subject_id, sequence, content, content_hash, qc,
+export async function readCsrNarrativeTextPage(q: NarrativeQueryable, organizationId: number, jobId: number, after: { sequence: number; subjectId: string } | null,
+  limit: number | { size: number; verify?: NarrativeReadAttester }) {
+  const options: { size: number; verify?: NarrativeReadAttester } = typeof limit === 'number' ? { size: limit } : limit;
+  const size = Math.max(1, Math.min(50, Math.trunc(options.size) || 20));
+  const { rows } = await q.query(`SELECT subject_id, sequence, status, content, content_hash, facts_digest, qc,
       content_hash = encode(sha256(convert_to(content, 'UTF8')), 'hex') AS verified
     FROM csr_narrative_outputs WHERE organization_id = $1 AND job_id = $2 AND status = 'composed' AND (sequence, subject_id) > ($3::int, $4::text)
     ORDER BY sequence, subject_id LIMIT $5`, [organizationId, jobId, after?.sequence ?? -1, after?.subjectId ?? '', size + 1]);
+  await options.verify?.(rows.map(savedOf));
   const page = rows.slice(0, size).map(row => {
     const qc = (row.qc ?? {}) as NarrativeQc;
     return { subjectId: String(row.subject_id), sequence: Number(row.sequence), armName: String(qc.armName ?? ''), events: Array.isArray(qc.events) ? qc.events : [],

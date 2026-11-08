@@ -23,6 +23,12 @@
  * a second user), so the signer is not its author unless a case says so.
  * Before this it named none, and nothing compared the signer with the author;
  * the separation-of-duties cases are at the end.
+ *
+ * 2026-11-02 (F1, the review round advances): the REAL reviewer-assignment and
+ * review-decision routes are driven here too, as reviewers, against the review
+ * tables' own migration; the cases are the last three describes. The
+ * assignment's row lock is proved on a real server
+ * (tests/db/artifact-review-round-lock.dbtest.ts): PGlite is one connection.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import fs from 'node:fs';
@@ -124,7 +130,7 @@ import {
   ArtifactActContractError,
   commitSignedArtifactAct,
 } from '../../../services/artifact-signed-act';
-import { artifactStatusUpdate } from '../../../services/artifact-approval-act';
+import { artifactStatusUpdate, reviewQuorumVerdict } from '../../../services/artifact-approval-act';
 import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../../../shared/schema';
 import { eq } from 'drizzle-orm';
 
@@ -152,12 +158,15 @@ const AUTHOR = 778;
 const PROJECT = 3;
 const ARTIFACT = 'artifact_abc';
 
-function app() {
+/** Who sends the request: the signer unless a case says so (2026-11-02, F1: the review-round cases act as reviewers). */
+type Identity = { userId: number; userEmail: string; userRole: string };
+const SIGNER: Identity = { userId: USER, userEmail: 'signer@example.com', userRole: 'admin' };
+function app(as: Identity = SIGNER) {
   const a = express();
   a.use(express.json());
   a.use((req, _res, next) => {
     Object.assign(req as object, {
-      userId: USER, userEmail: 'signer@example.com', userRole: 'admin',
+      userId: as.userId, userEmail: as.userEmail, userRole: as.userRole,
       tenantContext: { organizationId: ORG }, tenantId: ORG,
     });
     next();
@@ -601,4 +610,312 @@ describe('P-18: the author cannot approve or release their own artifact', () => 
     expect(await auditHalf()).toEqual([]);
   });
 
+});
+
+/**
+ * 2026-11-02 (F1, the review round advances). POST …/reviewers assigned into the
+ * latest review round whatever its state, and the review tables allow one
+ * assignment per reviewer per round (c2c_review_assign_unique). The quorum reads
+ * only the latest round, and its refusals say "Route this document for review
+ * again". That was impossible once any reviewer had decided: re-assigning them
+ * answered 'already_assigned', a reviewer added to the round left the old
+ * decision in it, a completed assignment cannot be withdrawn, and a second
+ * decision is refused 409. So one request for changes, one rejection, or one
+ * edit after a decision left the artifact unapprovable for good.
+ *
+ * An assignment now joins the latest round while any assignment in it is
+ * neither completed nor withdrawn (the round is open), and opens the next round
+ * once every assignment in it is (the round is closed). A new round holds only
+ * the reviewers assigned to it: earlier decisions stay in the record and are not
+ * counted, so a reviewer who asked for changes is not carried forward (the
+ * founder's open question; nothing here carries anyone forward). A new round is
+ * not opened over an objection to the current version, and a latest round whose
+ * reviewers were all withdrawn is no review; both are pinned in their own
+ * describe.
+ *
+ * Everything is driven through the real routes as the users who act: the
+ * signer assigns and withdraws, each reviewer submits their own decision, and
+ * the quorum is the production reader over the same tables.
+ */
+const ADA = 779;
+const BEN = 780;
+const CAM = 781;
+const asReviewer = (userId: number): Identity => ({ userId, userEmail: `reviewer-${userId}@example.com`, userRole: 'reviewer' });
+const REVIEW_PATH = `/api/c2c/projects/${PROJECT}/artifacts/${ARTIFACT}`;
+const assign = (reviewerIds: number[]) => request(app()).post(`${REVIEW_PATH}/reviewers`).send({ reviewerIds });
+const decide = (userId: number, decision: 'approve' | 'request_changes' | 'reject') =>
+  request(app(asReviewer(userId))).post(`${REVIEW_PATH}/reviews/submit`).send({ decision, comment: `Recorded: ${decision}.` });
+const withdraw = (assignmentId: string) => request(app()).delete(`${REVIEW_PATH}/reviewers/${assignmentId}`);
+const ok = (res: request.Response) => {
+  expect(res.status, JSON.stringify(res.body)).toBe(200);
+  return res.body.data;
+};
+const assignmentRows = async () =>
+  (await run(`SELECT reviewer_id, review_round, status FROM concept2cure_review_assignments ORDER BY review_round, reviewer_id`)).rows;
+const decisionRows = async () =>
+  (await run(`SELECT reviewer_id, review_round, decision, version_reviewed FROM concept2cure_review_decisions ORDER BY review_round, reviewer_id`)).rows;
+const lastAssignmentEvent = async () =>
+  (await run(`SELECT source_description, details FROM concept2cure_provenance_events WHERE event_action = 'reviewer_assigned' ORDER BY id DESC LIMIT 1`)).rows[0];
+/** The production quorum, read as both approval doors read it. */
+const quorum = async (currentVersion: number) => {
+  const [{ id }] = (await run(`SELECT id FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT])).rows;
+  return reviewQuorumVerdict({ query: (text, params) => run(text, params ?? []) }, id, ORG, currentVersion);
+};
+/** The author revises the document under review: a new version, as the race case above edits it. */
+const editToVersion = (version: number) => run(`UPDATE concept2cure_artifacts SET version = $2 WHERE artifact_id = $1`, [ARTIFACT, version]);
+const addReviewers = () =>
+  holder.pg.exec(
+    `INSERT INTO users (id, email, name, password_hash) VALUES
+       (${ADA}, 'reviewer-${ADA}@example.com', 'Ada Reviewer', 'x'),
+       (${BEN}, 'reviewer-${BEN}@example.com', 'Ben Reviewer', 'x'),
+       (${CAM}, 'reviewer-${CAM}@example.com', 'Cam Reviewer', 'x')
+     ON CONFLICT (id) DO NOTHING;
+     INSERT INTO organization_users (organization_id, user_id, role) VALUES
+       (${ORG}, ${ADA}, 'reviewer'), (${ORG}, ${BEN}, 'reviewer'), (${ORG}, ${CAM}, 'reviewer')
+     ON CONFLICT DO NOTHING;`,
+  );
+
+describe('F1: the latest review round is closed, so routing the document again opens the next round', () => {
+  beforeAll(addReviewers);
+
+  it.each([
+    ['Ada asked for changes', 'request_changes', /did not approve \(decisions: request_changes\)/],
+    ['Ada rejected', 'reject', /did not approve \(decisions: reject\)/],
+    ['Ada approved, and the document was edited after', 'approve', /recorded against version 2; the artifact is now version 3/],
+  ] as const)('%s; routed to Ada again: round 2 opens, her approval of the new version meets the quorum, and the document is approved', async (_label, first, refusal) => {
+    await seed('review');
+    expect(ok(await assign([ADA]))).toMatchObject({ reviewRound: 1, assignments: [{ reviewerId: ADA, status: 'pending', reviewRound: 1 }] });
+    ok(await decide(ADA, first));
+    await editToVersion(3);
+    expect(await quorum(3)).toMatchObject({ met: false, message: expect.stringMatching(refusal) });
+
+    const again = ok(await assign([ADA]));
+    expect(again, 'routing again answered already_assigned in the closed round').toMatchObject({
+      reviewRound: 2,
+      previousRound: 1,
+      assignments: [{ reviewerId: ADA, status: 'pending', reviewRound: 2 }],
+    });
+    expect(await assignmentRows()).toEqual([
+      { reviewer_id: ADA, review_round: 1, status: 'completed' },
+      { reviewer_id: ADA, review_round: 2, status: 'pending' },
+    ]);
+    const opened = await lastAssignmentEvent();
+    expect(opened.details, 'the provenance event does not record that a round was opened').toMatchObject({ reviewerIds: [ADA], reviewRound: 2, previousRound: 1 });
+    expect(opened.source_description).toBe('Assigned 1 reviewer(s) for round 2');
+
+    expect(ok(await decide(ADA, 'approve'))).toMatchObject({ reviewRound: 2, versionReviewed: 3, roundSummary: { readyForApproval: true } });
+    expect(await quorum(3)).toEqual({ met: true });
+    expect(await decisionRows(), 'the first decision stays in the record').toEqual([
+      { reviewer_id: ADA, review_round: 1, decision: first, version_reviewed: 2 },
+      { reviewer_id: ADA, review_round: 2, decision: 'approve', version_reviewed: 3 },
+    ]);
+    ok(await putStatus(APPROVE));
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 3 });
+  });
+
+  it('Ada asked for changes twice: the third routing opens round 3 after round 2, and her approval of version 4 meets the quorum', async () => {
+    await seed('review');
+    ok(await assign([ADA]));
+    ok(await decide(ADA, 'request_changes'));
+    await editToVersion(3);
+    expect(ok(await assign([ADA]))).toMatchObject({ reviewRound: 2, previousRound: 1 });
+    ok(await decide(ADA, 'request_changes'));
+    await editToVersion(4);
+    expect(await quorum(4)).toMatchObject({ met: false, message: expect.stringMatching(/did not approve \(decisions: request_changes\)/) });
+
+    // The latest round is round 2, not round 1: read wrongly, Ada answers already_assigned in round 2 and the deadlock returns.
+    expect(ok(await assign([ADA])), 'the third routing did not open the round after the latest').toMatchObject({
+      reviewRound: 3,
+      previousRound: 2,
+      assignments: [{ reviewerId: ADA, status: 'pending', reviewRound: 3 }],
+    });
+    expect(await assignmentRows()).toEqual([
+      { reviewer_id: ADA, review_round: 1, status: 'completed' },
+      { reviewer_id: ADA, review_round: 2, status: 'completed' },
+      { reviewer_id: ADA, review_round: 3, status: 'pending' },
+    ]);
+    expect((await lastAssignmentEvent()).details).toMatchObject({ reviewRound: 3, previousRound: 2 });
+
+    expect(ok(await decide(ADA, 'approve'))).toMatchObject({ reviewRound: 3, versionReviewed: 4 });
+    expect(await quorum(4)).toEqual({ met: true });
+    ok(await putStatus(APPROVE));
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 4 });
+  });
+
+  it('every reviewer was withdrawn: the round is closed, and the same reviewer is assigned again in round 2', async () => {
+    await seed('review');
+    const [first] = ok(await assign([ADA])).assignments;
+    ok(await withdraw(first.assignmentId));
+
+    expect(ok(await assign([ADA])), 'the withdrawn reviewer answered already_assigned').toMatchObject({
+      reviewRound: 2,
+      previousRound: 1,
+      assignments: [{ reviewerId: ADA, status: 'pending', reviewRound: 2 }],
+    });
+    ok(await decide(ADA, 'approve'));
+    expect(await quorum(2)).toEqual({ met: true });
+  });
+
+  it('the round is chosen from the rows the quorum reads: another organization’s pending row on the artifact does not hold a closed round open', async () => {
+    await seed('review');
+    ok(await assign([ADA]));
+    ok(await decide(ADA, 'approve'));
+    // RLS is off here, as in every environment but production, so the route sees this row unless it scopes it out.
+    await run(`INSERT INTO organizations (id, name) VALUES (100, 'Other sponsor') ON CONFLICT (id) DO NOTHING`);
+    await run(
+      `INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, review_round, status)
+       SELECT 'asgn_other_org', id, 100, $2, $3, 1, 'pending' FROM concept2cure_artifacts WHERE artifact_id = $1`,
+      [ARTIFACT, CAM, USER],
+    );
+    expect(await quorum(2), 'the quorum does not count the other organization’s row').toEqual({ met: true });
+
+    expect(ok(await assign([BEN]))).toMatchObject({ reviewRound: 2, previousRound: 1 });
+  });
+});
+
+describe('F1: a new round holds only the reviewers assigned to it', () => {
+  beforeAll(addReviewers);
+
+  /* 2026-11-02 (F1; the adversarial review of the round repair). Once a closed
+     round opens the next one, two paths set a request for changes aside with
+     no approval of the document as it stands: assigning a reviewer into a new
+     round and withdrawing them (an all-withdrawn round met the quorum), and a
+     co-reviewer assigning themselves into a new round with the document
+     unchanged. Before F1 both were refused only because the artifact was
+     deadlocked. Now a new round is not opened over an objection to the current
+     version (objectionToCurrentVersion), and an all-withdrawn latest round is
+     no review (reviewQuorumVerdict, P-95). */
+  it('Ada asked for changes to version 2: with the document unchanged, assigning Ben does not open round 2 (409), and nothing is written', async () => {
+    await seed('review');
+    ok(await assign([ADA]));
+    ok(await decide(ADA, 'request_changes'));
+
+    const refused = await assign([BEN]);
+    expect(refused.status, JSON.stringify(refused.body)).toBe(409);
+    expect(JSON.stringify(refused.body)).toMatch(/1 reviewer\(s\) in round 1 asked for changes to version 2, and the document has not changed since\. Edit the document, then route it for review again\./);
+    expect(await assignmentRows()).toEqual([{ reviewer_id: ADA, review_round: 1, status: 'completed' }]);
+    expect(await quorum(2)).toMatchObject({ met: false, message: expect.stringMatching(/decisions: request_changes/) });
+  });
+
+  it('a co-reviewer who approved cannot assign themselves into a new round over Ada’s request for changes (409)', async () => {
+    await seed('review');
+    ok(await assign([ADA, BEN]));
+    ok(await decide(ADA, 'request_changes'));
+    ok(await decide(BEN, 'approve'));
+
+    const self = await request(app(asReviewer(BEN))).post(`${REVIEW_PATH}/reviewers`).send({ reviewerIds: [BEN] });
+    expect(self.status, JSON.stringify(self.body)).toBe(409);
+    expect(await assignmentRows()).toEqual([
+      { reviewer_id: ADA, review_round: 1, status: 'completed' },
+      { reviewer_id: BEN, review_round: 1, status: 'completed' },
+    ]);
+    const signed = await putStatus(APPROVE);
+    expect(signed.status, 'the request for changes was set aside').not.toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+  });
+
+  it('Ada asked for changes; the document is edited; Ben is assigned (round 2) and withdrawn: the quorum refuses an all-withdrawn round, and the approval is refused', async () => {
+    await seed('review');
+    ok(await assign([ADA]));
+    ok(await decide(ADA, 'request_changes'));
+    await editToVersion(3);
+
+    const [ben] = ok(await assign([BEN])).assignments;
+    expect(ben).toMatchObject({ reviewerId: BEN, status: 'pending', reviewRound: 2 });
+    ok(await withdraw(ben.assignmentId));
+
+    expect(await quorum(3)).toMatchObject({ met: false, message: expect.stringMatching(/every reviewer in the latest review round was withdrawn/) });
+    const signed = await putStatus(APPROVE);
+    expect(signed.status, 'approved with no approval on record').not.toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+
+    // The remedy works: assigning again opens round 3 (round 2 holds no objection), and an approval of version 3 meets the quorum.
+    expect(ok(await assign([BEN]))).toMatchObject({ reviewRound: 3, previousRound: 2 });
+    ok(await decide(BEN, 'approve'));
+    expect(await quorum(3)).toEqual({ met: true });
+  });
+
+  it('round 1 closed with an approval (quorum met): assigning Ben opens round 2, and the quorum then waits for Ben alone', async () => {
+    await seed('review');
+    ok(await assign([ADA]));
+    ok(await decide(ADA, 'approve'));
+    expect(await quorum(2)).toEqual({ met: true });
+
+    expect(ok(await assign([BEN]))).toMatchObject({
+      reviewRound: 2,
+      previousRound: 1,
+      assignments: [{ reviewerId: BEN, status: 'pending', reviewRound: 2 }],
+    });
+    // The consequence: a new round holds only the reviewers assigned to it.
+    // Ada's approval stays in round 1's record and is not counted in round 2,
+    // so the approval now waits for Ben, and Ben's approval alone will meet it.
+    expect(await quorum(2)).toMatchObject({ met: false, message: expect.stringMatching(/1 of 1 reviewers have not yet submitted/) });
+    const refused = await putStatus(APPROVE);
+    expect(refused.status, JSON.stringify(refused.body)).toBe(400);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+
+    ok(await decide(BEN, 'approve'));
+    expect(await quorum(2)).toEqual({ met: true });
+    expect(await decisionRows()).toEqual([
+      { reviewer_id: ADA, review_round: 1, decision: 'approve', version_reviewed: 2 },
+      { reviewer_id: BEN, review_round: 2, decision: 'approve', version_reviewed: 2 },
+    ]);
+  });
+});
+
+describe('F1: the latest review round is open, so an assignment joins it and the round is not split', () => {
+  beforeAll(addReviewers);
+
+  it.each([
+    ['pending', async () => undefined],
+    ['in progress', async () => run(`UPDATE concept2cure_review_assignments SET status = 'in_progress' WHERE reviewer_id = $1`, [ADA])],
+  ])('Ada is %s: Ben joins round 1, and the quorum waits for both', async (_label, setState) => {
+    await seed('review');
+    ok(await assign([ADA]));
+    await setState();
+
+    const added = ok(await assign([BEN]));
+    expect(added).toMatchObject({ reviewRound: 1, assignments: [{ reviewerId: BEN, status: 'pending', reviewRound: 1 }] });
+    expect(added, 'no round was opened').not.toHaveProperty('previousRound');
+    expect(ok(await assign([ADA])).assignments, 'a reviewer already in the open round').toEqual([
+      { reviewerId: ADA, status: 'already_assigned', reviewRound: 1 },
+    ]);
+    ok(await decide(ADA, 'approve'));
+    expect(await quorum(2)).toMatchObject({ met: false, message: expect.stringMatching(/1 of 2 reviewers have not yet submitted/) });
+    ok(await decide(BEN, 'approve'));
+    expect(await quorum(2)).toEqual({ met: true });
+  });
+
+  it('round 2 is open (Ada pending in it): Ben joins round 2, and no round is opened', async () => {
+    await seed('review');
+    ok(await assign([ADA]));
+    ok(await decide(ADA, 'request_changes'));
+    await editToVersion(3);
+    expect(ok(await assign([ADA]))).toMatchObject({ reviewRound: 2, previousRound: 1 });
+
+    // The latest round is round 2, and it is open. Read as round 1 (closed), the answer and the provenance would claim a round was opened.
+    const added = ok(await assign([BEN]));
+    expect(added).toMatchObject({ reviewRound: 2, assignments: [{ reviewerId: BEN, status: 'pending', reviewRound: 2 }] });
+    expect(added, 'no round was opened').not.toHaveProperty('previousRound');
+    expect((await lastAssignmentEvent()).details, 'the provenance records a round that was not opened').not.toHaveProperty('previousRound');
+    expect(await assignmentRows()).toEqual([
+      { reviewer_id: ADA, review_round: 1, status: 'completed' },
+      { reviewer_id: ADA, review_round: 2, status: 'pending' },
+      { reviewer_id: BEN, review_round: 2, status: 'pending' },
+    ]);
+    expect(await quorum(3)).toMatchObject({ met: false, message: expect.stringMatching(/2 of 2 reviewers have not yet submitted/) });
+  });
+
+  it('the round stays open while any reviewer has not decided: Ada asked for changes, Ben is pending, and Cam joins round 1', async () => {
+    await seed('review');
+    ok(await assign([ADA, BEN]));
+    ok(await decide(ADA, 'request_changes'));
+
+    expect(ok(await assign([CAM]))).toMatchObject({ reviewRound: 1, assignments: [{ reviewerId: CAM, status: 'pending', reviewRound: 1 }] });
+    expect(await assignmentRows()).toEqual([
+      { reviewer_id: ADA, review_round: 1, status: 'completed' },
+      { reviewer_id: BEN, review_round: 1, status: 'pending' },
+      { reviewer_id: CAM, review_round: 1, status: 'pending' },
+    ]);
+  });
 });

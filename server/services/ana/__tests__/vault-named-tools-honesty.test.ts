@@ -25,6 +25,17 @@ const pool = vi.hoisted(() => ({
   connect: vi.fn(),
 }));
 vi.mock('../../../db', () => ({ getPool: () => pool, pool, db: {} }));
+/* Since F1 (2026-11-05) these reads hold to the projects the person can open. The
+   policy has its own suite (ana-vault-tools-project-scope.pglite.test.ts); here it
+   names one open project, so the cases are about what the answers say. */
+vi.mock('../../c2c/current-program-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../c2c/current-program-access')>()),
+  readCurrentProgramActor: async () => ({ userId: 41, role: 'author' }),
+}));
+vi.mock('../../report-os/project-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../report-os/project-access')>()),
+  getAccessibleReportProjectIds: async () => [3],
+}));
 
 import { getToolHandler } from '../AnaToolExecutor';
 import { LIST_VAULT_DOCUMENTS, READ_VAULT_DOCUMENT } from '../document-surface-tool-defs';

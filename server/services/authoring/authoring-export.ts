@@ -561,10 +561,49 @@ async function renderPdf(
   }
 }
 
+/** A render must own one complete data snapshot before its first await.
+ * This is not a new review/signature or a replacement for the caller's DB
+ * reservation and final current-record check. All document types use it. */
+export class AuthoringExportSnapshotError extends Error {
+  readonly status = 409;
+  readonly code = 'EXPORT_SNAPSHOT_UNAVAILABLE';
+  constructor() {
+    super('The document export inputs could not be captured as one consistent snapshot. Nothing was rendered or filed. Reload the document before retrying.');
+    this.name = 'AuthoringExportSnapshotError';
+  }
+}
+
+function captureExportData<T>(value: T): T {
+  // Preserve nulls, dates and exact strings. JSON serialization would silently
+  // erase unsupported values or change dates. Never echo cloning errors,
+  // which may contain data from provenance or signature records.
+  try { return structuredClone(value); }
+  catch { throw new AuthoringExportSnapshotError(); }
+}
+
+function captureRenderArgs(args: RenderExportArgs): RenderExportArgs {
+  if (!EXPORT_FORMATS.includes(args.format) || (args.workingCopy && args.controlledCopy)) {
+    throw new AuthoringExportSnapshotError();
+  }
+  // The executor is a live resource, not render data. Do not clone it. Ignore
+  // caller companyPresentation entirely: the saved company revision below is
+  // the only authority for branding. Deep-copy nested provenance, signature
+  // Dates, section order and controlled-copy manifests, not just the arrays.
+  return { executor: args.executor, ...captureExportData({
+    tenantId: args.tenantId, doc: args.doc, sections: args.sections,
+    format: args.format, actor: args.actor, notice: args.notice,
+    signatures: args.signatures, workingCopy: args.workingCopy,
+    controlledCopy: args.controlledCopy,
+  }) };
+}
+
 /** Render one authoring document in one format. Throws on a renderer failure. */
 export async function renderAuthoringExport(args: RenderExportArgs): Promise<RenderedExport> {
+  // Shared by ordinary export, working copies, Vault filing, company letters
+  // and QMS controlled copies. No document-category-specific branch here.
+  args = captureRenderArgs(args);
   // Always resolve internally: callers cannot override a historical reference with current branding.
-  args = { ...args, companyPresentation: await readCorrespondencePresentation(args.executor, args.tenantId, args.doc) };
+  args = { ...args, companyPresentation: captureExportData(await readCorrespondencePresentation(args.executor, args.tenantId, args.doc)) };
   if ((args.workingCopy || args.controlledCopy) && args.format === 'xml') throw new Error('A working or controlled copy is rendered as DOCX or PDF only');
   await verifySavedDraftSourceReferences(args.doc, args.executor, args.tenantId, args.actor);
   if (!args.workingCopy) await assertWorkflowImportRelease(args.executor, {

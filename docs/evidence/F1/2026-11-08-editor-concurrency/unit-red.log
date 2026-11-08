@@ -1,0 +1,381 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts
+{
+  "timestamp": "2026-11-08T16:52:12.807Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T16:52:12.808Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts
+{
+  "timestamp": "2026-11-08T16:52:12.808Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > brackets the revision, section update and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-11-08T16:52:14.276Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > ROLLBACK + 500 when the section update fails mid-transaction
+Error updating section: Error: [vitest] No "UnverifiedMachineFormattingError" export is defined on the "../../services/clinical-regulatory-evidence/lineage-gate" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+    at VitestMocker.createError (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17)
+    at Object.get (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16)
+    at /workspace/scratch/3002d574f952/concept2cure-v2/server/routes/authoring.router.ts:2081:26
+    at processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  codeFrame: 'vi.mock(import("../../services/clinical-regulatory-evidence/lineage-gate"), async (importOriginal) => {\n' +
+    '  const actual = await importOriginal()\n' +
+    '  return {\n' +
+    '    ...actual,\n' +
+    '    // your mocked methods\n' +
+    '  }\n' +
+    '})'
+}
+{
+  "timestamp": "2026-11-08T16:52:14.303Z",
+  "level": "error",
+  "message": "[authoring-router] updating sections failed",
+  "context": {
+    "err": "[vitest] No \"UnverifiedMachineFormattingError\" export is defined on the \"../../services/clinical-regulatory-evidence/lineage-gate\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses a version that changed after the pre-read, under the parent and section locks
+{
+  "timestamp": "2026-11-08T16:52:14.309Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version null before reserving the document
+{
+  "timestamp": "2026-11-08T16:52:14.316Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version 42 before reserving the document
+{
+  "timestamp": "2026-11-08T16:52:14.321Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version {} before reserving the document
+{
+  "timestamp": "2026-11-08T16:52:14.324Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version [] before reserving the document
+{
+  "timestamp": "2026-11-08T16:52:14.327Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version '' before reserving the document
+{
+  "timestamp": "2026-11-08T16:52:14.330Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version '   ' before reserving the document
+{
+  "timestamp": "2026-11-08T16:52:14.341Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version 'not-a-timestamp' before reserving the document
+{
+  "timestamp": "2026-11-08T16:52:14.346Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > keeps omitted-token saves compatible but audits the locked before-image
+{
+  "timestamp": "2026-11-08T16:52:14.350Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > brackets the revision, section update and audit in one BEGIN…COMMIT 34ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > ROLLBACK + 500 when the section update fails mid-transaction 21ms
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses a version that changed after the pre-read, under the parent and section locks 8ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version null before reserving the document 4ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version 42 before reserving the document 4ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version {} before reserving the document 3ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version [] before reserving the document 3ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version '' before reserving the document 3ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version '   ' before reserving the document 12ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version 'not-a-timestamp' before reserving the document 4ms
+   → expected 200 to be 400 // Object.is equality
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > audits a metadata-only PATCH against the locked row while preserving omitted tokens
+{
+  "timestamp": "2026-11-08T16:52:14.354Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: RENAME on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > rolls back when the section disappeared after the pre-read
+{
+  "timestamp": "2026-11-08T16:52:14.360Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > brackets the snapshot, status update and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-11-08T16:52:14.387Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > ROLLBACK + 500 when the status update fails mid-transaction
+Error freezing document: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/scratch/3002d574f952/concept2cure-v2/server/routes/__tests__/authoring-atomic-mutations.test.ts:160:41)
+    at Object.Mock [as query] (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /workspace/scratch/3002d574f952/concept2cure-v2/server/routes/authoring.router.ts:5466:20
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-11-08T16:52:14.397Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > ROLLBACK + 500 when the signature insert fails mid-transaction
+Sign error: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/scratch/3002d574f952/concept2cure-v2/server/routes/__tests__/authoring-atomic-mutations.test.ts:160:41)
+    at Object.Mock [as query] (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /workspace/scratch/3002d574f952/concept2cure-v2/server/routes/authoring.router.ts:7775:20
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+{
+  "timestamp": "2026-11-08T16:52:14.401Z",
+  "level": "error",
+  "message": "[authoring-router] signing docs failed",
+  "context": {
+    "err": "injected mid-transaction failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > writes its audit record inside the same BEGIN…COMMIT, not on the pool after it
+{
+  "timestamp": "2026-11-08T16:52:14.404Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500
+CRITICAL: Failed to create audit trail: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/scratch/3002d574f952/concept2cure-v2/server/routes/__tests__/authoring-atomic-mutations.test.ts:160:41)
+    at Object.Mock [as query] (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/spy/dist/index.js:332:34)
+    at writeAuthoringAuditTrail (/workspace/scratch/3002d574f952/concept2cure-v2/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/scratch/3002d574f952/concept2cure-v2/server/routes/authoring.router.ts:746:9)
+    at /workspace/scratch/3002d574f952/concept2cure-v2/server/routes/authoring.router.ts:2342:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500
+Error reverting section: Error: injected mid-transaction failure
+    at Object.<anonymous> (/workspace/scratch/3002d574f952/concept2cure-v2/server/routes/__tests__/authoring-atomic-mutations.test.ts:160:41)
+    at Object.Mock [as query] (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/spy/dist/index.js:332:34)
+    at writeAuthoringAuditTrail (/workspace/scratch/3002d574f952/concept2cure-v2/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/scratch/3002d574f952/concept2cure-v2/server/routes/authoring.router.ts:746:9)
+    at /workspace/scratch/3002d574f952/concept2cure-v2/server/routes/authoring.router.ts:2342:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+{
+  "timestamp": "2026-11-08T16:52:14.408Z",
+  "level": "error",
+  "message": "[authoring-router] saving revert failed",
+  "context": {
+    "err": "injected mid-transaction failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > keeps omitted-token saves compatible but audits the locked before-image 5ms
+   → expected 'old text' to be 'An intervening saved version.' // Object.is equality
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > audits a metadata-only PATCH against the locked row while preserving omitted tokens 6ms
+   → expected { source: 'section-metadata', …(1) } to match object { source: 'section-metadata', …(1) }
+ × server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > rolls back when the section disappeared after the pre-read 4ms
+   → expected 200 to be 404 // Object.is equality
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > brackets the snapshot, status update and audit in one BEGIN…COMMIT 27ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > ROLLBACK + 500 when the status update fails mid-transaction 4ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT 5ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > ROLLBACK + 500 when the signature insert fails mid-transaction 3ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > writes its audit record inside the same BEGIN…COMMIT, not on the pool after it 3ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses a version that changed after the pre-read, under the parent and section locks
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/authoring-atomic-mutations.test.ts:248:24
+    246|       .send({ content: 'stale replacement', changeReason: 'Amended the…
+    247|
+    248|     expect(res.status).toBe(409);
+       |                        ^
+    249|     expect(res.body).toMatchObject({ success: false, error: { code: 'S…
+    250|     const parent = writeIndex(/SELECT status, locked_at FROM authoring…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version null before reserving the document
+ FAIL  server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version 42 before reserving the document
+ FAIL  server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version {} before reserving the document
+ FAIL  server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version [] before reserving the document
+ FAIL  server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version '' before reserving the document
+ FAIL  server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version '   ' before reserving the document
+ FAIL  server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > refuses supplied malformed version 'not-a-timestamp' before reserving the document
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/authoring-atomic-mutations.test.ts:265:24
+    263|       .set('Authorization', await bearer())
+    264|       .send({ content: 'new text', changeReason: 'Amended the drafted …
+    265|     expect(res.status).toBe(400);
+       |                        ^
+    266|     expect(res.body).toMatchObject({ success: false, error: { code: 'I…
+    267|     expect(h.connect).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > keeps omitted-token saves compatible but audits the locked before-image
+AssertionError: expected 'old text' to be 'An intervening saved version.' // Object.is equality
+
+Expected: "An intervening saved version."
+Received: "old text"
+
+ ❯ server/routes/__tests__/authoring-atomic-mutations.test.ts:277:29
+    275|     expect(res.status).toBe(200);
+    276|     const audit = h.clientQuery.mock.calls.find(([sql]) => /INSERT INT…
+    277|     expect(audit?.[1]?.[5]).toBe('An intervening saved version.');
+       |                             ^
+    278|     expect(sawCommit()).toBeGreaterThan(sawBegin());
+    279|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > audits a metadata-only PATCH against the locked row while preserving omitted tokens
+AssertionError: expected { source: 'section-metadata', …(1) } to match object { source: 'section-metadata', …(1) }
+
+- Expected
++ Received
+
+  {
+    "changes": [
+      {
+        "field": "title",
+-       "from": "Intervening title",
++       "from": "Original title",
+        "to": "Reviewed title",
+      },
+    ],
+    "source": "section-metadata",
+  }
+
+ ❯ server/routes/__tests__/authoring-atomic-mutations.test.ts:287:30
+    285|     expect(res.status).toBe(200);
+    286|     const audit = h.clientQuery.mock.calls.find(([sql]) => /INSERT INT…
+    287|     expect(audit?.[1]?.[10]).toMatchObject({ source: 'section-metadata…
+       |                              ^
+    288|       { field: 'title', from: 'Intervening title', to: 'Reviewed title…
+    289|     ] });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > rolls back when the section disappeared after the pre-read
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/authoring-atomic-mutations.test.ts:298:24
+    296|       .set('Authorization', await bearer())
+    297|       .send({ content: 'new text', changeReason: 'Amended the drafted …
+    298|     expect(res.status).toBe(404);
+       |                        ^
+    299|     expect(sawRollback()).toBe(true);
+    300|     expect(writeIndex(/UPDATE authoring_sections/i)).toBe(-1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 8 passed (19)
+   Start at  08:52:07
+   Duration  7.10s (transform 4.55s, setup 70ms, import 6.65s, tests 160ms, environment 0ms)
+

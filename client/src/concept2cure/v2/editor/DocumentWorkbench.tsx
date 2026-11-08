@@ -59,6 +59,7 @@ import { AuthoringCollab } from '../surfaces/AuthoringCollab';
 import { AuthoringCreateExport } from '../surfaces/AuthoringCreateExport';
 import type { AuthoringDocumentStart } from './useAuthoringCreation';
 import { NOTICE_UUID } from '@shared/types/notification-navigation';
+import { sectionNumberLabel } from '@shared/regulatory/section-code';
 import { newDocumentAction } from '../newDocumentAction';
 import { downloadBlob, safeFileName } from '../download';
 import { ProjectFilesPanel } from './ProjectFilesPanel';
@@ -69,7 +70,7 @@ import { useAuthoringRefileSavedText } from './AuthoringRefileSavedText';
 import { refileControlRefusal, refileSavedSource } from './authoringRefileSavedTextState';
 import { hasUnsavedSessionWork } from '@/lib/sessionChangeGuard';
 import { SendForReviewDialog } from './SendForReviewDialog';
-import { useProgramRead, programHeadline, programName } from './programSummary';
+import { useProgramRead, programHeadline, programName, offersIndLibrary } from './programSummary';
 import { askAnaToDraftPrompt, openConversationWithPrompt, originWithSavedVersion, prefillConversation, type AskOrigin, type SavedSectionVersion } from './askAnaToDraft';
 import { describeClaimsCheck, describeFigureCheck, describeProvenance } from './provenance';
 import { DraftFigureLine } from './DraftFigureLine';
@@ -86,10 +87,13 @@ import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { MenuButton, MenuItem, WORKING_COPY_NOTE, downloadWorkingCopy } from './DownloadMenu';
 import { StatusPill } from './CanvasDocumentList';
 import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
-import { CSR_TEMPLATE_ENTRY, StudyDataBuild } from './StudyDataBuild';
+import { StudyDataBuild } from './StudyDataBuild';
+import { isCsrTemplateId } from '@shared/authoring/csr-scientific-review';
 import { captureAssemblySourceIntent, captureSourceDocumentStartIntent, type AssemblySourceIntent, type AssemblySourceDocumentStartIntent } from './assemblySourceIntent';
 import { assemblySelectionKey } from './assemblySourceSelection';
 import { admitWorkbenchNavigation, workbenchAlreadyThere, workbenchAssemblyIntent, workbenchNavigationRefusal, type WorkbenchLeaveTarget } from './workbenchLeaveTarget';
+import { filingTargetInventoryKey, resolveFilingSectionTarget, workingFilingBinding } from './filingSectionTarget';
+import { filingAuthorityLabel, workbenchWritingFiling } from './writingAgencyPresentation';
 import { ImportSourceNotice } from './ImportSourceNotice';
 import { CsrNarrativeReferenceView, narrativeReferenceFor } from './CsrNarrativeReferenceView';
 import { authoringCurrentReadPath, authoringReadRefused, useAuthoringReadSession } from './authoringCurrentRead';
@@ -196,6 +200,39 @@ interface AuthSection {
   draftingRegion?: string | null;
   draftingRegionState?: import('@shared/authoring/writing-regions').DraftingRegionState;
 }
+
+interface SavedEditorSnapshot {
+  sectionId: string | null;
+  rows: AuthSection[];
+  dirty: boolean;
+  saving: boolean;
+}
+
+function sectionContentChanged(previous: AuthSection | undefined, next: AuthSection | undefined): boolean {
+  return !!previous && !!next && previous.content !== next.content;
+}
+
+function sectionVersionChanged(previous: AuthSection | undefined, next: AuthSection | undefined): boolean {
+  return sectionContentChanged(previous, next) || !!previous && !!next && previous.updated_at !== next.updated_at;
+}
+
+/** The buffer and its saved concurrency base move together, or neither moves. */
+function refreshedSectionRows(rows: AuthSection[], before: SavedEditorSnapshot, latest: SavedEditorSnapshot,
+  editor: RichSectionEditorHandle | null): { rows: AuthSection[]; held: boolean; remount: boolean } {
+  const previous = latest.rows.find(row => row.id === latest.sectionId);
+  const incoming = rows.find(row => row.id === latest.sectionId);
+  const requested = before.rows.find(row => row.id === latest.sectionId);
+  const held = !!editor && sectionVersionChanged(previous, incoming) &&
+    (latest.dirty || latest.saving || hasUnsavedSessionWork() || sectionVersionChanged(requested, previous));
+  return {
+    rows: held ? rows.map(row => row.id === previous?.id ? previous ?? row : row) : rows,
+    held,
+    remount: !!editor && !held && sectionContentChanged(previous, incoming),
+  };
+}
+
+const SECTION_REFRESH_HELD = 'The saved record changed while this section was open. Your loaded version and unsaved text were kept. Saving may be refused until the versions are reconciled.';
+const SECTION_REFRESH_FAILED = 'The saved sections could not be refreshed. The loaded text and any unsaved changes are still here.';
 
 interface AuthRevision {
   id: string;
@@ -1212,6 +1249,8 @@ export interface DocumentWorkbenchProps {
     onEditorBridge?: (bridge: EditorBridge | null) => void;
     /** A section the host asks to show; each new nonce is one request. */
     focusSection?: { id: string; nonce: number } | null;
+    /** A verified host read found saved changes; retained editors re-read without rebasing unsaved text. */
+    savedRefreshKey?: number;
   } | null;
   /** Surface-action bus id to register under, or null to register nothing —
    *  the canvas must not claim the bus while ConversationThread is on. */
@@ -1394,6 +1433,8 @@ export function DocumentWorkbench({
   useEffect(() => { setDraftPassage(null); }, [activeSectionId]);
   useEffect(() => { if (!aiDraftOpen) setDraftPassage(null); }, [aiDraftOpen]);
   const editorRef = useRef<RichSectionEditorHandle | null>(null);
+  const savedEditorRead = useRef({ sectionId: activeSectionId, rows: sections, dirty: editorDirty, saving, state: sectionsState });
+  savedEditorRead.current = { sectionId: activeSectionId, rows: sections, dirty: editorDirty, saving, state: sectionsState };
 
   /* ── A comment being anchored to a text range ──
      The editor's Comment button hands over the selection's anchor and waits;
@@ -1637,11 +1678,19 @@ export function DocumentWorkbench({
   /* The filing the open document is the editing copy of: an added market's
      Module 1 and 3.2.R when it is that market's copy (FILING_SPINE F22b),
      otherwise the project's home filing. */
-  const filing = useFilingOutline(projectIdForOutline, activeDoc?.c2c_document_id ?? null);
+  const binding = workingFilingBinding({ activeId: activeDocId, projectId: programId, listed: activeDoc,
+    header: sourceDocument, headerAnswered: Boolean(currentMetadata), headerAvailable: Boolean(metadataAvailable && !currentMetadata?.refused) });
+  const unboundDraft = Boolean(activeDocId && binding.known && binding.documentId === null);
+  // Keep the existing home-copy creation action; known-null copies borrow no requirements.
+  const filing = useFilingOutline(projectIdForOutline, binding.documentId,
+    { bindingUnavailable: Boolean(activeDocId && !binding.known), unboundDocument: unboundDraft });
   /* The outline's keys: a node the outline does not subdivide opens the
      document's sections under it (findSectionForNode; QA 2026-10-08, walk 2). */
   const outlineKeys = useMemo(() => Array.from(filing.flat, n => n.key), [filing.flat]);
-  const unboundDraft = !!activeDoc && activeDoc.module === null && !activeDoc.c2c_document_id;
+  const filingInventoryKey = useMemo(() => filingTargetInventoryKey(docs), [docs]);
+  const filingInventoryRef = useRef({ key: filingInventoryKey });
+  if (filingInventoryRef.current.key !== filingInventoryKey) filingInventoryRef.current = { key: filingInventoryKey };
+  const filingInventoryVisit = filingInventoryRef.current;
   const activeSection = sections.find(s => s.id === activeSectionId) ?? null;
   const docSealed =
     activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
@@ -2209,16 +2258,21 @@ export function DocumentWorkbench({
   const [storedStructure, setStructure] = useState<SectionStructure | null>(null);
   const structure = sectionsCurrent && sectionsState === 'ready' && !partialRead ? storedStructure : null;
   const sectionsGeneration = useRef(0);
+  const quietSectionRead = useRef<{ generation: number; quiet: boolean } | null>(null);
+  const [writtenRefreshKey, setWrittenRefreshKey] = useState(0);
   const loadedSectionsKey = useRef<string | null>(null);
   const loadSections = useCallback(async (docId: string, afterRead?: (rows: AuthSection[]) => void, recovery = false,
-    recoveryOwner?: { current: () => boolean; headers: Record<string, string> }) => {
+    recoveryOwner?: { current: () => boolean; headers: Record<string, string> }, options: { quiet?: boolean } = {}) => {
     if (recoveryOwner?.current() === false) throw new Error('The section recovery owner changed.');
     const scope = creationScopeRef.current;
     const generation = ++sectionsGeneration.current;
     const revision = authService.captureSessionReadGuard().sameRevision;
     const current = () => aliveRef.current && currentReadKey.current === readKey &&
       creationScopeRef.current === scope && generation === sectionsGeneration.current && readSession.sameRevision() && revision() && recoveryOwner?.current() !== false;
-    setSectionsState('loading');
+    const before = savedEditorRead.current;
+    const quiet = !!options.quiet && loadedSectionsKey.current === readKey && before.state === 'ready';
+    quietSectionRead.current = { generation, quiet };
+    if (!quiet) setSectionsState('loading');
     if (loadedSectionsKey.current !== readKey) setSections([]);
     loadedSectionsKey.current = readKey;
     setSectionsRead({ key: readKey });
@@ -2229,8 +2283,14 @@ export function DocumentWorkbench({
       if (recovery) throw new Error('The section recovery context changed.');
       return;
     }
+    quietSectionRead.current = null;
     if (!usableSectionRead(ok, body, docId, recovery)) {
-      if (authoringReadRefused(status, body)) {
+      const refused = authoringReadRefused(status, body);
+      if (quiet && !refused) {
+        setTargetNotice(SECTION_REFRESH_FAILED);
+        return;
+      }
+      if (refused) {
         metadataGeneration.current += 1;
         setMetadataRead({ key: readKey, refused: true });
       }
@@ -2240,7 +2300,13 @@ export function DocumentWorkbench({
       if (recovery) throw new Error('The section recovery read could not be verified.');
       return;
     }
-    const list = Array.isArray(body.sections) ? body.sections : [];
+    const incomingRows = Array.isArray(body.sections) ? body.sections : [];
+    const adopted = refreshedSectionRows(incomingRows, before, savedEditorRead.current, editorRef.current);
+    const list = adopted.rows;
+    // Keep the saved base with its live buffer: adopting only a newer timestamp would permit a blind overwrite.
+    setContentEpoch(epoch => adopted.remount ? epoch + 1 : epoch);
+    setTargetNotice(notice => adopted.held ? SECTION_REFRESH_HELD
+      : notice === SECTION_REFRESH_HELD || notice === SECTION_REFRESH_FAILED ? null : notice);
     setSectionsRead({ key: readKey, readScope: body.readScope });
     setSections(list);
     /* Two document-level facts no single section can show: a code filed twice,
@@ -2266,6 +2332,17 @@ export function DocumentWorkbench({
     afterRead?.(list);
   }, [programId, readKey, readSession]);
   sectionLoaderRef.current = loadSections;
+
+  /** Retire a pre-write background read before its old row can follow the confirmed write in one React batch. */
+  const retireQuietSectionRead = useCallback((scope: { key: string }, sectionId: string) => {
+    if (creationScopeRef.current !== scope || !savedEditorRead.current.rows.some(row => row.id === sectionId)) return;
+    const read = quietSectionRead.current;
+    if (!read?.quiet || read.generation !== sectionsGeneration.current) return;
+    sectionsGeneration.current += 1;
+    quietSectionRead.current = null;
+    // Re-read after the confirmed row commits, so other sections from the retired read are not left stale.
+    setWrittenRefreshKey(key => key + 1);
+  }, []);
 
   const openCreatedSection = useCallback(async (section: { id: string; code: string }) => {
     if (!activeDocId || programSwitchHeld) return;
@@ -2360,6 +2437,16 @@ export function DocumentWorkbench({
     void loadSections(activeDocId);
     return () => { sectionsGeneration.current += 1; };
   }, [activeDocId, loadSections, creationScopeKey, readRefusal]);
+
+  const savedRefreshKey = embedded?.savedRefreshKey;
+  const lastSavedRefresh = useRef({ readKey, value: savedRefreshKey, written: writtenRefreshKey });
+  useEffect(() => {
+    const previous = lastSavedRefresh.current;
+    lastSavedRefresh.current = { readKey, value: savedRefreshKey, written: writtenRefreshKey };
+    const unchanged = previous.value === savedRefreshKey && previous.written === writtenRefreshKey;
+    if (previous.readKey !== readKey || unchanged || !activeDocId || readRefusal) return;
+    void loadSections(activeDocId, undefined, false, undefined, { quiet: true });
+  }, [savedRefreshKey, writtenRefreshKey, readKey, activeDocId, readRefusal, loadSections]);
 
   /* F4: a click on an outline node with no section here starts it — created
      through POST /api/authoring/sections, opened, the cursor put in it — but
@@ -2484,6 +2571,25 @@ export function DocumentWorkbench({
         if (current() && !ceremonyOpen()) { setTargetNotice(null); setSourceDocumentStart(start); }
       } });
   }, [openPulledDocument]);
+  const openNamedFilingTarget = useCallback(async (intent: { target: EditorTarget; docType: string; scope: { key: string };
+    sequence: number; current: () => boolean }) => {
+    const { target, docType, scope, sequence, current } = intent;
+    const sameInventory = () => filingInventoryRef.current === filingInventoryVisit;
+    const result = await resolveFilingSectionTarget({ projectId: programId, docType, target, docs, read: readJson,
+      current: () => current() && sameInventory() && creationScopeRef.current === scope && navigationSequence.current === sequence });
+    if (!current() || !linkedReadStillCurrent(scope, sequence)) return;
+    if (!sameInventory()) { setTargetNotice('The accessible document list or its filing bindings changed. Retry the linked filing; nothing was selected.'); return; }
+    if (result.kind === 'retired') return;
+    if (result.kind !== 'match' && result.kind !== 'document') { setTargetNotice(`Couldn’t open ${describeEditorTarget(target)} — ${result.message}`); return; }
+    const sectionId = result.kind === 'match' ? result.section.id : undefined;
+    const label = result.kind === 'match' ? `${result.section.code} · ${result.section.title} — ${editorTargetDocLabel(docType)} filing`
+      : `${editorTargetDocLabel(docType)} filing’s working copy`;
+    // Recheck the captured visit through the unsaved decision; requestLeave advances its own navigation counter.
+    const opened = requestLeaveRef.current({ kind: 'document', id: result.documentId, sectionId,
+      current: () => current() && sameInventory() && creationScopeRef.current === scope });
+    setTargetNotice(null); setTreeScrollNonce(n => n + 1);
+    fireToast(opened ? `Opened ${label}.` : `${label} will open once you decide about the unsaved work here.`);
+  }, [docs, programId, filingInventoryVisit, linkedReadStillCurrent, fireToast]);
   useEffect(() => {
     if (targetAttemptedRef.current) return;
     if (!sectionOpenTarget || docsState === 'loading' || programSwitchHeld) return;
@@ -2545,13 +2651,12 @@ export function DocumentWorkbench({
       }
       return;
     }
-    // Only the section flow consults the governed outline; its guards below
-    // need the filing settled before the one attempt is spent.
-    if (filing.loading) return;
+    // A named family resolves its own filing, independently of the default outline.
+    if (!t.docType && filing.loading) return;
     targetAttemptedRef.current = true;
     // A hand-off that named no section carried only program scope, which
     // window.C2C_PROJECT already delivered. Nothing more was claimed.
-    if (!t.sectionCode && !t.sectionLabel) return;
+    if (!t.sectionCode && !t.sectionLabel && !t.filingDocumentId) return;
     // A navigation-directive target claims no document family; the guards and
     // notices below only speak of one when the sender actually named it.
     const family = editorTargetDocLabel(t.docType);
@@ -2564,23 +2669,14 @@ export function DocumentWorkbench({
       );
       return;
     }
-    if (t.docType && filing.document && filing.document.doc_type !== t.docType) {
-      setTargetNotice(
-        `Couldn’t open ${wanted} — this project’s governed dossier is ` +
-          `${filing.document.doc_type.toUpperCase()}, not ${family}. ` +
-          'Showing the editor’s default view instead.'
-      );
-      return;
-    }
     const scope = creationScopeRef.current;
     const sequence = navigationSequence.current;
     void (async () => {
       const revision = authService.captureSessionReadGuard().sameRevision;
       const current = () => aliveRef.current && currentReadKey.current === readKey && revision() && readSession.sameRevision();
-      // The docs list is program-scoped (or the org's current filter); a
-      // program's dossier is one or a few documents, so the search is bounded
-      // defensively rather than paged.
-      for (const d of docs.slice(0, 8)) {
+      if (t.docType) { await openNamedFilingTarget({ target: t, docType: t.docType, scope, sequence, current }); return; }
+      // Legacy untyped matching retains its behavior over the complete admitted list.
+      for (const d of docs) {
         const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
           authoringCurrentReadPath(d.id, programId, true)
         );
@@ -2635,6 +2731,7 @@ export function DocumentWorkbench({
     linkedReadStillCurrent,
     pinnedDocId,
     openSourceDocumentStart,
+    openNamedFilingTarget,
   ]);
 
   /* ── Open-by-document-type hand-off (navigate_to `authoringDocType`) ──
@@ -3378,6 +3475,7 @@ export function DocumentWorkbench({
         const adopted = (json as { section?: AuthSection })?.section;
         confirmedSaveVersionRef.current = { sectionId: activeSection.id, updatedAt: adopted?.updated_at ?? null };
         const persisted = adopted?.content ?? serialized;
+        retireQuietSectionRead(assemblyHostScope, activeSection.id);
         // Adopt the server row (revision counter, updated_at) into the tree.
         setSections(ss =>
           ss.map(s =>
@@ -3458,7 +3556,7 @@ export function DocumentWorkbench({
         setSaving(false);
       }
     },
-    [activeSection, rail, loadHistory, fireToast]
+    [activeSection, rail, loadHistory, fireToast, assemblyHostScope, retireQuietSectionRead]
   );
 
   /* ── Upload a figure into the governed image store ──
@@ -3506,6 +3604,7 @@ export function DocumentWorkbench({
   const toggleTrackChanges = useCallback(
     async (on: boolean) => {
       if (!activeSection) throw new Error('No section open');
+      const expectedUpdatedAt = activeSection.updated_at;
       /* apiRequest THROWS the server's real refusal (a frozen document), and the
          editor's toggleTrack swallows the rethrow to keep its state truthful —
          so the author got no reason at all. The reason is said here, then the
@@ -3514,6 +3613,7 @@ export function DocumentWorkbench({
       try {
         res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
           track_changes: on,
+          ...(expectedUpdatedAt ? { expectedUpdatedAt } : {}),
         });
       } catch (e) {
         fireToast(
@@ -3534,7 +3634,16 @@ export function DocumentWorkbench({
         );
         throw new Error('track toggle refused');
       }
-      setSections(ss => ss.map(s => (s.id === activeSection.id ? { ...s, track_changes: on } : s)));
+      const updatedAt = (json as { section?: AuthSection } | null)?.section?.updated_at;
+      // The mode changed against the version this editor loaded. Carry its new
+      // token without adopting content, and never regress a newer save that
+      // settled while this response was in flight. An unversioned request
+      // cannot vouch that the returned token still describes our loaded text.
+      setSections(ss => ss.map(s => (s.id === activeSection.id ? {
+        ...s, track_changes: on,
+        ...(expectedUpdatedAt && s.updated_at === expectedUpdatedAt && typeof updatedAt === 'string'
+          ? { updated_at: updatedAt } : {}),
+      } : s)));
       fireToast(
         on
           ? 'Track changes on — edits are captured as attributed suggestions until accepted or rejected.'
@@ -3594,6 +3703,7 @@ export function DocumentWorkbench({
         }
         const adopted = (json as { section?: AuthSection })?.section;
         const content = adopted?.content ?? '';
+        retireQuietSectionRead(assemblyHostScope, activeSection.id);
         setSections(ss =>
           ss.map(s => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content } : s))
         );
@@ -3611,7 +3721,7 @@ export function DocumentWorkbench({
         );
       }
     },
-    [activeSection, loadHistory, fireToast]
+    [activeSection, loadHistory, fireToast, assemblyHostScope, retireQuietSectionRead]
   );
 
   /* ── Add a comment on the active section ──
@@ -4010,6 +4120,7 @@ export function DocumentWorkbench({
         return;
       }
       const content = section.content;
+      retireQuietSectionRead(assemblyHostScope, activeSectionId);
       setSections(ss =>
         ss.map(x => (x.id === section.id ? { ...x, ...(section as Partial<AuthSection>), content } : x)),
       );
@@ -4032,7 +4143,7 @@ export function DocumentWorkbench({
       void loadSources(activeSectionId);
       if (activeDocId) void loadAudit(activeDocId);
     },
-    [activeSectionId, activeDocId, assemblyHostScope, markAssemblyAccepted, loadHistory, loadSources, loadAudit, fireToast],
+    [activeSectionId, activeDocId, assemblyHostScope, markAssemblyAccepted, loadHistory, loadSources, loadAudit, fireToast, retireQuietSectionRead],
   );
 
   /** Post one reviewer action — one decision, or a whole accept/reject-all.
@@ -4180,7 +4291,7 @@ export function DocumentWorkbench({
           </div>
           <div className="ed-tree-m">
             {unboundDraft ? 'Saved draft sections · unbound' : filing.document
-              ? `${filing.document.doc_type.toUpperCase()} · ${filing.document.agency.toUpperCase()} · ${
+              ? `${filing.document.doc_type.toUpperCase()} · ${filingAuthorityLabel(filing.document)} · ${
                   filing.flat.length
                 } sections`
               : docsState === 'ready'
@@ -4343,7 +4454,7 @@ export function DocumentWorkbench({
         )}
 
         {!unboundDraft && filing.document?.filing_scope === 'market' && (
-          <FilingGaps gaps={filing.gaps} agency={filing.document.agency} />
+          <FilingGaps gaps={filing.gaps} agency={filing.document.agency} docType={filing.document.doc_type} />
         )}
 
         {/* Why there is no outline, said plainly rather than as a blank pane.
@@ -4479,7 +4590,7 @@ export function DocumentWorkbench({
                           onClick={() => requestLeave({ kind: 'section', id: s.id })}
                           style={{ paddingLeft: 22 }}
                         >
-                          <span className="ed-num">{s.code}</span>
+                          <span className="ed-num">{sectionNumberLabel(s.code)}</span>
                           <span className="ed-lbl">{s.title}</span>
                           {num(s.comment_count) > 0 && (
                             <span
@@ -4744,7 +4855,7 @@ export function DocumentWorkbench({
                     <div role="group" aria-label="Panels" className="dlm-group">
                       {/* The section's citation count, as the old toggle said it ("Sources 3"). */}
                       <MenuItem label={`Sources${citations > 0 ? ` ${citations}` : ''}`} onChoose={fromMore('sources')} testId="sources-rail-open" />
-                      <MenuItem label="Project files" onChoose={fromMore('vault')} testId="vault-rail-open" />
+                      <MenuItem label="Vault" onChoose={fromMore('vault')} testId="vault-rail-open" />
                       <MenuItem label="Versions" onChoose={fromMore('history')} />
                       <MenuItem label="Exports" onChoose={fromMore('exports')} testId="exports-rail-open" />
                       <MenuItem label="Review tasks" onChoose={fromMore('tasks')} testId="tasks-rail-open" />
@@ -4889,8 +5000,14 @@ export function DocumentWorkbench({
         <div className="ed-doc-scroll" ref={docScrollRef}>
           <div className="ed-doc-inner">
             <AuthoringAssemblyBuild controller={assembly} />
-            {/* A clinical study report is built from the study's data here, in the one editor (RULE 4). */}
-            {programId && activeDocId && docTemplateContext?.templateSource?.entryId === CSR_TEMPLATE_ENTRY && <StudyDataBuild key={activeDocId} programId={programId} documentId={activeDocId} onNav={onNav} />}
+            {/* A clinical study report is built from the study's data here, in the one editor (RULE 4). A CSR is
+                known by its stored template id, the four built-in CSR templates the scientific review reads
+                (shared CSR_TEMPLATE_IDS), so one made from registry:ICH_CSR or the IND 5.3.5.1/5.3.5.2 report
+                templates gets it too, not only the E3 component (D2-CSR F1, 2026-11-05). */}
+            {programId && activeDocId && isCsrTemplateId(docTemplateId) && <StudyDataBuild key={activeDocId} programId={programId} documentId={activeDocId} onNav={onNav}
+              /* F6: the import wrote this document's sections on the server. Read them again and remount the
+                 canvas on the imported text, as a revert does, unless the person has unsaved typing open. */
+              onDocumentChanged={() => void loadSections(activeDocId, undefined, false, undefined, { quiet: true })} />}
             {viewMode === 'document' && activeDoc ? (
               /* The whole document, in order, as one read. Sections are shown,
                  not edited: editing is section-scoped because a revision, a
@@ -4951,7 +5068,7 @@ export function DocumentWorkbench({
                         aria-label={`${sec.code} ${sec.title}`}
                       >
                         <div className="ed-full-sec-h">
-                          <span className="ed-full-sec-num">{sec.code}</span>
+                          <span className="ed-full-sec-num">{sectionNumberLabel(sec.code)}</span>
                           <h2 className="ed-full-sec-t">{sec.title}</h2>
                           <button
                             className="btn ghost ed-full-edit"
@@ -5056,7 +5173,7 @@ export function DocumentWorkbench({
                     </div>
                   ) : (
                     <>
-                      <div className="ed-mast-num">{activeSection.code}</div>
+                      <div className="ed-mast-num">{sectionNumberLabel(activeSection.code)}</div>
                       <h1 className="ed-mast-t" style={{ display: 'inline' }}>
                         {activeSection.title}
                       </h1>
@@ -5121,7 +5238,7 @@ export function DocumentWorkbench({
                   <div className="ed-mast-meta">
                     {activeDoc?.title ?? ''}
                     {num(activeSection.revision_count) > 0
-                      ? ` · ${num(activeSection.revision_count)} revisions`
+                      ? ` · ${num(activeSection.revision_count)} revision${num(activeSection.revision_count) === 1 ? '' : 's'}`
                       : ''}
                     {num(activeSection.citation_count) > 0
                       ? ` · ${num(activeSection.citation_count)} citations`
@@ -5388,10 +5505,9 @@ export function DocumentWorkbench({
                     programId={programId}
                     sectionCode={activeSection.code}
                     sectionTitle={activeSection.title}
-                    recordedFiling={{ registryId: program?.id === programId ? program.registryId ?? null : null,
-                      draftingRegion: activeSection.draftingRegion, draftingRegionState: activeSection.draftingRegionState,
-                      state: !sectionsCurrent || sectionsState === 'loading' || programReadState === 'loading' ? 'loading'
-                        : sectionsState === 'error' || programReadState === 'error' ? 'error' : 'ready' }}
+                    recordedFiling={workbenchWritingFiling({ binding, filing, program, programId, programReadState,
+                      section: { draftingRegion: activeSection.draftingRegion, draftingRegionState: activeSection.draftingRegionState },
+                      sectionsCurrent, sectionsState })}
                     docSealed={docSealed}
                     editorDirty={dirty}
                     reviewSession={assembly.reviewSessions[activeSection.id]}
@@ -5542,7 +5658,8 @@ export function DocumentWorkbench({
                       precedingSourceIds: precedingCitations.ids,
                       resolutionState: citationResolutionState,
                       resolutionError: projectCatalogue.error ?? citationAdmission.error,
-                      onRetry: () => { loadProjectSources(); citationAdmission.retry(); },
+                      // A refused catalogue read (not licensed, not in this release, a role) offers no retry: none can change it.
+                      onRetry: projectCatalogue.error && !projectCatalogue.retryable ? undefined : () => { loadProjectSources(); citationAdmission.retry(); },
                       scopeKey: citationScope,
                       onCite: sourceId => citeSource(Number(sourceId)),
                     }}
@@ -6143,11 +6260,12 @@ export function DocumentWorkbench({
           source into the open section through the editor's own citation
           command, or insert a plain reference to a file that is not a source. */}
       {rail === 'vault' && (
-        <aside className="ed-comments" aria-label="Project files">
+        <aside className="ed-comments" aria-label="Vault">
           <ProjectFilesPanel
             programId={programId}
             readOwner={projectSourceOwner}
             programName={programName(program)}
+            indLibrary={offersIndLibrary(program)}
             sectionOpen={activeSection != null && !contentReadOnly}
             sectionCode={activeSection?.code ?? null}
             projectSources={projectSources.filter(sourceCitationEligible)}

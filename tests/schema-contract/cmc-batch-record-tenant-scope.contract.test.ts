@@ -215,7 +215,8 @@ beforeEach(async () => {
     INSERT INTO users (id, name, email) VALUES (42, 'QA Signer', 'qa-signer@example.invalid');
     CREATE TABLE qc_testing (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, project_id TEXT,
       batch_number TEXT, sample_id TEXT, test_method TEXT, test_results JSONB, specifications JSONB,
-      pass_fail_status TEXT, reviewed_by INTEGER);`);
+      pass_fail_status TEXT, reviewed_by INTEGER, sample_type TEXT, analyst INTEGER,
+      test_date TIMESTAMP, release_date TIMESTAMP, certificate_of_analysis TEXT, updated_at TIMESTAMP DEFAULT now());`);
   await pg.query(
     `INSERT INTO qc_testing (organization_id, project_id, batch_number, sample_id, test_method, pass_fail_status, reviewed_by)
      VALUES (1, $1, $2, 'S-1', 'Assay', 'pass', 42), (1, $1, $3, 'S-2', 'Assay', 'pass', 42)`,

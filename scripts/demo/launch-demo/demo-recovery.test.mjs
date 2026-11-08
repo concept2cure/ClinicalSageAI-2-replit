@@ -64,8 +64,27 @@ export const sha256 = value => createHash('sha256').update(value).digest('hex');
 export const makePdfBuffer = () => { throw new Error('PDF generation is not part of this unit test'); };
 `);
   for (const [file, fn] of [['authoring', 'ensureAuthoring'], ['protocol', 'ensureProtocol'], ['qms', 'ensureQms'], ['submission', 'ensureSubmission']]) {
-    await write(`scripts/demo/launch-demo/packs/biotech-${file}.mjs`, `import { state } from '../../../../state.mjs'; export async function ${fn}() { state.downstream.push('${fn}'); }\n`);
+    await write(`scripts/demo/launch-demo/packs/biotech-${file}.mjs`, `import { state } from '../../../../state.mjs'; export async function ${fn}() {
+      state.downstream.push('${fn}');
+      ${fn === 'ensureProtocol' ? "return { id: 'synthetic-protocol-id' };" : ''}
+    }\n`);
   }
+  // The production biotech pack now uses the EXISTING work-areas helpers
+  // (tasks, study design, CMC, plan). Supply those module exports in this
+  // isolated fixture; otherwise every test fails while importing the pack
+  // rather than testing its actual identity, scoping and seed behavior.
+  await write('scripts/demo/launch-demo/packs/biotech-work-content.mjs', `
+export const BIOTECH_CMC = { specs: [], stability: [], batches: [] };
+export const BIOTECH_STUDY_DESIGN = {};
+export const BIOTECH_TASKS = [];
+`);
+  await write('scripts/demo/launch-demo/packs/work-areas.mjs', `
+import { state } from '../../../../state.mjs';
+export async function ensureStudyDesign() { state.downstream.push('ensureStudyDesign'); }
+export async function ensureCmc() { state.downstream.push('ensureCmc'); }
+export async function ensureTasks() { state.downstream.push('ensureTasks'); }
+export async function ensurePlanDocuments() { state.downstream.push('ensurePlanDocuments'); }
+`);
   await write('scripts/demo/launch-demo/packs/biotech-content.mjs', `
 export const INDICATION = 'Fictional test indication', MOLECULE = 'C2C-101', PRODUCT_NAME = 'C2C-101', PROGRAM_NAME = 'C2C-101';
 export const PROVENANCE = { fictional: true }, SOPS = [], CHANGE = {}, VAULT_DOCS = [];

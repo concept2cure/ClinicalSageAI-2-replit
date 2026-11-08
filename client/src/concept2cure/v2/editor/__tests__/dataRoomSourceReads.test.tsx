@@ -17,6 +17,45 @@ const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data }
 beforeEach(() => { apiRequest.mockReset(); });
 afterEach(() => cleanup());
 
+/* The founder, 2026-11-05: a feature can be not licensed, not relevant to the project, blocked by
+   missing evidence, or unavailable to this user, and those are never one generic failure. The
+   Data Room said "could not be read" with a retry for every refusal, as the Vault did before
+   3c84ddc6ac. A refusal is now said as itself through the one read classifier, with no retry;
+   only a failure to answer offers one. */
+const refused = (status: number, code?: string) =>
+  Object.assign(new Error('Request refused.'), { name: 'ApiRequestError', status, ...(code ? { code } : {}) });
+
+describe('a Data Room refusal is said as itself, never as a failed read', () => {
+  it.each([
+    { name: 'a plan without the feature', err: refused(403, 'MODULE_NOT_LICENSED'), title: 'Not enabled for your organization' },
+    { name: 'a feature not in this release', err: refused(403, 'LAUNCH_SCOPE'), title: 'Not in this release' },
+    { name: 'a role that cannot read it', err: refused(403, 'FORBIDDEN'), title: 'Your role cannot do this' },
+    { name: 'an unconfirmed organization', err: refused(403, 'TENANT_REQUIRED'), title: 'Your organization could not be confirmed' },
+    { name: 'a project not in this organization', err: refused(404, 'PROJECT_NOT_FOUND'), title: 'Not found in your organization' },
+    { name: 'an expired session', err: refused(401, 'UNAUTHORIZED'), title: 'Your session has expired' },
+  ])('$name: its own words, no retry, and no "could not be read"', async ({ err, title }) => {
+    apiRequest.mockRejectedValue(err);
+    render(<DataRoomSourcesPanel programId={programId} />);
+    await screen.findByText(title);
+    expect(screen.queryByText('The data room could not be read')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+    expect(screen.queryByText('No sources in this project yet')).toBeNull();
+    expect(apiRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    { name: 'a server failure', err: refused(500) },
+    { name: 'a store that did not answer', err: refused(503, 'STORE_UNAVAILABLE') },
+    { name: 'no response at all', err: new Error('Failed to fetch') },
+  ])('$name stays a failed read that offers a retry', async ({ err }) => {
+    apiRequest.mockRejectedValueOnce(err).mockResolvedValue(ok(page()));
+    render(<DataRoomSourcesPanel programId={programId} />);
+    await screen.findByText('The data room could not be read');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await screen.findByText(source.title);
+  });
+});
+
 describe('Data Room reads preserve their exact project and search', () => {
   it('hides earlier actionable sources immediately while a different search is pending', async () => {
     apiRequest.mockImplementation(async (_method: string, url: string) => url.includes('&q=') ? new Promise(() => {}) : ok(page()));
@@ -54,7 +93,9 @@ describe('Data Room reads preserve their exact project and search', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect((screen.getByLabelText('Search the data room catalogue') as HTMLInputElement).value).toBe('');
     await screen.findByText('Other project source');
-    expect(apiRequest).toHaveBeenLastCalledWith('GET', expect.stringContaining(`${otherProgram}/sources?limit=50&offset=0`));
+    // The data layer's read signature: no body, no options, and the read's own abort signal.
+    expect(apiRequest).toHaveBeenLastCalledWith('GET', expect.stringContaining(`${otherProgram}/sources?limit=50&offset=0`),
+      undefined, undefined, expect.any(AbortSignal));
   });
 
   it('ignores an old project completion after a switch', async () => {

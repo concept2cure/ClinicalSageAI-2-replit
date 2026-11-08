@@ -145,3 +145,28 @@ describe('a session with no tenant', () => {
     expect(JSON.stringify(res.body)).not.toMatch(/INTERNAL_ERROR/);
   });
 });
+
+describe('a statistical document is based on a server computation', () => {
+  it('generates from the submitted inputs without accepting a computed-result receipt', async () => {
+    const res = await request(app()).post('/api/ana-biostats/document').send({
+      documentType: 'sample_size_rationale', input: BASE,
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.provenance.computationResults.sampleSize.perGroup).toBe(64);
+    expect(res.body.provenance.computationInputs.effectSize).toBe(0.5);
+  });
+
+  it('does not turn a caller-edited result into engine-generated evidence', async () => {
+    const computed = await request(app()).post('/api/ana-biostats/compute').send(BASE);
+    const forged = globalThis.structuredClone(computed.body.computation);
+    forged.sampleSize = { perGroup: 99999, total: 199998 };
+    const res = await request(app()).post('/api/ana-biostats/document').send({
+      documentType: 'sample_size_rationale', input: BASE, computation: forged,
+      judgment: computed.body.judgment, domainAdaptation: computed.body.domain,
+      regulatoryCustomization: computed.body.regulatory, engineVersion: 'caller-invented',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.provenance.computationResults.sampleSize.perGroup).toBe(64);
+    expect(JSON.stringify(res.body)).not.toContain('99999');
+  });
+});

@@ -47,7 +47,12 @@ describe('the filing spine’s project-page classes', () => {
   it('defines no class another v2 stylesheet already defines', () => {
     /* Shared context classes the block only scopes under, never defines. */
     const scopes = new Set(['c2c-v2', 'pj-lmod', 'pj-lmod-t']);
-    const mine = [...definedClasses(own.slice(at))].filter((c) => !scopes.has(c));
+    /* Classes the block defines that other sheets only place inside their own scope, never redefine globally:
+       a section header's action row (`.pj-sec-acts`) is laid out by the work-area pattern
+       (app-v2.css, `[data-work-area] .pj-sec-h > .pj-sec-acts`) and by Biostatistics' assessment
+       (coverage-v2.css, `.bs-assess-b > .pj-sec-acts`). */
+    const placedElsewhere = new Set(['pj-sec-acts']);
+    const mine = [...definedClasses(own.slice(at))].filter((c) => !scopes.has(c) && !placedElsewhere.has(c));
     const clashes: string[] = [];
     for (const f of readdirSync(STYLES).filter((n) => n.endsWith('.css') && !SKIP.has(n))) {
       const theirs = definedClasses(readFileSync(join(STYLES, f), 'utf8'));

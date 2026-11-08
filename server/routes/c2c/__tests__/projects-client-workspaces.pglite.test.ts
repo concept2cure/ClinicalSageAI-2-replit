@@ -233,7 +233,7 @@ describe('Projects pathway and workstream facets over the admitted portfolio', (
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.meta).toMatchObject({ count: 50, hasMore: true, counts: {
       total: 60, byWorkstream: { MDX: 49, Biotech: 10, Mystery: 1 },
-      byPathway: { pma: 20, cer: 10, ide: 10, ivdr: 5, mdl: 4, other: 11 }, filingWithin60Days: 20,
+      byPathway: { pma: 20, cer: 10, ide: 10, ind: 10, ivdr: 5, mdl: 4, other: 1 }, filingWithin60Days: 20,
     } });
     expect(Object.values(res.body.meta.counts.byPathway).reduce((sum, n) => Number(sum)+Number(n), 0)).toBe(60);
     expect(h.figureReads).toHaveLength(1);
@@ -251,7 +251,7 @@ describe('Projects pathway and workstream facets over the admitted portfolio', (
     expect(res.body.data[0].id).toBe(program(8));
     expect(res.body.meta).toMatchObject({ count: 7, hasMore: true, counts: {
       total: 20, byWorkstream: { MDX: 49, Biotech: 10, Mystery: 1 },
-      byPathway: { pma: 20, cer: 10, ide: 10, ivdr: 5, mdl: 4, other: 11 }, filingWithin60Days: 20,
+      byPathway: { pma: 20, cer: 10, ide: 10, ind: 10, ivdr: 5, mdl: 4, other: 1 }, filingWithin60Days: 20,
     } });
   });
 
@@ -275,12 +275,22 @@ describe('Projects pathway and workstream facets over the admitted portfolio', (
     expect(res.body.meta.clients).toEqual([{ id:A,name:'Client Alpha' },{ id:B,name:'Client Beta' }]);
   });
 
+  // Since 37d1e890e7 (2026-11-01, audit finding 4) a drug IND is its own pathway,
+  // not Other: Projects 41-50 are IND, and only the unknown 'mystery' type is Other.
   it('keeps Other rows visible and countable rather than dropping unknown filing types', async () => {
     const res = await list('?pathway=other');
     expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(res.body.data).toHaveLength(11);
+    expect(res.body.data).toHaveLength(1);
     expect(res.body.data.some((row: {id: string}) => row.id===program(60))).toBe(true);
-    expect(res.body.meta.counts.total).toBe(11);
+    expect(res.body.meta.counts.total).toBe(1);
+  });
+
+  it('counts a drug IND as IND, not Other', async () => {
+    const res = await list('?pathway=ind&limit=20');
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data).toHaveLength(10);
+    expect(res.body.data.every((row: {pathway: string; ws: string}) => row.pathway==='ind' && row.ws==='Biotech')).toBe(true);
+    expect(res.body.meta.counts.total).toBe(10);
   });
 
   it('does not count private, deleted or archived rows without admission', async () => {

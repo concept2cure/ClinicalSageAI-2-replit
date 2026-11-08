@@ -138,6 +138,17 @@ describe('Insights — Export produces a file and finalizes nothing', () => {
     expect(document.body.textContent).toMatch(/Saved Executive_Readiness_Digest_run77\.pdf/);
   });
 
+  it('an open report keeps the page to one primary: Export PDF is quiet', async () => {
+    // Seen in the running app (docs/evidence/DESIGN/D7/2026-11-02-reporting/,
+    // reporting-find-*): an open report made Export PDF a second orange fill
+    // beside the header's pack. D7 §D.6 accepts one.
+    wire();
+    const btn = await runThenExport();
+    expect(btn.closest('button')?.className).toMatch(/\bbtn ghost\b/);
+    const area = document.querySelector('[data-work-area="insights"]') as HTMLElement;
+    expect(area.querySelectorAll('.btn.primary, .sp-primary')).toHaveLength(1);
+  });
+
   it('exports a report the truthfulness gate holds below final as it stands, without sealing it', async () => {
     wire();
     await runThenExport();

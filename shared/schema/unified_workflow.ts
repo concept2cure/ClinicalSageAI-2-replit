@@ -339,15 +339,15 @@ export const documentCommentsRelations = relations(documentComments, ({ one, man
 
 // Insert schemas
 export const insertUnifiedDocumentSchema = createInsertSchema(unifiedDocuments, {
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export const insertDocumentVersionSchema = createInsertSchema(workflowDocumentVersions, {
-  content: z.record(z.any()).optional(),
+  content: z.record(z.string(), z.any()).optional(),
 });
 
 export const insertModuleDocumentSchema = createInsertSchema(moduleDocuments, {
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export const insertWorkflowTemplateSchema = createInsertSchema(workflowTemplates, {
@@ -361,7 +361,7 @@ export const insertWorkflowStepSchema = createInsertSchema(workflowSteps, {
 });
 
 export const insertDocumentWorkflowSchema = createInsertSchema(documentWorkflows, {
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export const insertWorkflowApprovalSchema = createInsertSchema(workflowApprovals, {

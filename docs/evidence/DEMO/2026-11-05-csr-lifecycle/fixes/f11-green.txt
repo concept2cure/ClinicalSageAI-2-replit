@@ -1,0 +1,21 @@
+F11 green.
+
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeReadiness.test.tsx > shows real summary reuse, says where narratives are composed, and connects recovery 284ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeReadiness.test.tsx > reports a failed or malformed response without claiming zero studies and offers read-only retry 62ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeReadiness.test.tsx > discards a former program response and fences recovery during a governed operation 68ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+
+Suites rendering the block or eCTD Compile (csrNarrativeReadiness, csrCardReach, studyDataSource, ectdCompile*):
+ Test Files  13 passed (13)
+      Tests  137 passed (137)
+
+Copy now: "Patient safety narratives (§12.3.2, §14.3.3) are composed in the CSR document, from the study data frozen
+there: open the CSR in Authoring and use “Build from the study’s data”. The source-table controls on this screen
+prepare tables for a selected source; they do not compose narratives." / "Keep the original source files in the Vault.
+The CSR document freezes the study data it is built from."
+
+Open: the server's readiness read (server/services/csr/program-source-readiness.ts:10-13, narrative.message) still says
+"First-study CSR drafting is unavailable until verified study data and complete study information are linked to this
+project." This screen does not render that message; it is reported, not changed here.
+Lint: both files clean.

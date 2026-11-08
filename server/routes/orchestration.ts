@@ -32,7 +32,11 @@ import {
   generateContinuitySnapshot,
   getLatestSnapshot,
 } from '../services/orchestration';
-import { deriveVerdict } from '../services/orchestration/pre-submission-gate-verdict';
+import {
+  deriveVerdict,
+  readCorrespondenceBlockerReview,
+  type CorrespondenceBlockerReview,
+} from '../services/orchestration/pre-submission-gate-verdict';
 import type { IchComplianceReport } from '../services/cmc/ich-compliance-checker';
 import type {
   OrchestrationStartRequest,
@@ -472,6 +476,7 @@ router.get('/pre-submission-gate/history/:projectId', async (req: Request, res: 
         crlRisk: v.crlRisk ?? null,
         rtfRisk: v.rtfRisk ?? null,
         ichStatus: v.ichStatus ?? null,
+        correspondenceReview: v.correspondenceReview ?? null,
       };
     });
 
@@ -536,13 +541,14 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
         )
       : Promise.resolve(null);
 
-    const [payload, ich] = await Promise.all([
+    const [payload, ich, correspondenceReview] = await Promise.all([
       assembleCrossObjectPayload({
         organizationId: orgId,
         projectId,
         module: body.module,
       }),
       ichPromise,
+      readCorrespondenceBlockerReview(orgId, projectId, submissionType),
     ]);
     const ichReport = ich?.ran ? ich.report : null;
     const crlAssessment = crlRtfNotAssessed('CRL');
@@ -559,6 +565,7 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
       cmcOpenCritical: payload.cmcSignals.contradictionCounts.critical,
       ichStatus: ich === null ? undefined : ich.ran ? ich.report.overallStatus : 'incomplete',
       ichFailCount: ichReport?.counts.fail ?? 0,
+      correspondenceReview,
     });
 
     const response = {
@@ -602,17 +609,15 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
       },
       crl: crlAssessment,
       rtf: rtfReport,
+      correspondenceReview,
       lastSignalAt: payload.lastSignalAt,
       assessedAt: new Date().toISOString(),
     };
 
     // Audit the verdict so "why did the system say ready" is traceable.
-    // Fire-and-forget — audit failure must not break the gate response.
-    void recordGateAudit(req, response).catch(err => {
-      logger.warn('Pre-submission gate audit failed', {
-        err: err instanceof Error ? err.message : String(err),
-      });
-    });
+    // A governed verdict is returned only after its evidence references are
+    // recorded. A failed audit cannot leave a successful, untraceable report.
+    await recordGateAudit(req, response);
 
     res.json(response);
   } catch (err) {
@@ -623,7 +628,7 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
 /**
  * Persist the gate verdict to `regulatory_audit_logs` so the regulatory
  * trail can later answer "what did the system say, when, and based on
- * what inputs". GxP-relevant entry; safe to call fire-and-forget.
+ * what inputs". GxP-relevant entry; awaited before returning the verdict.
  */
 async function recordGateAudit(req: Request, response: {
   projectId: number;
@@ -636,6 +641,7 @@ async function recordGateAudit(req: Request, response: {
   crl: { overallRisk: string; riskScore: number | null };
   rtf: { overallRisk: string; riskScore: number | null };
   ich: { overallStatus: string; counts: Record<string, number> | null } | null;
+  correspondenceReview: CorrespondenceBlockerReview;
   assessedAt: string;
 }): Promise<void> {
   let userId: number;
@@ -676,6 +682,7 @@ async function recordGateAudit(req: Request, response: {
       rtfScore: response.rtf.riskScore,
       ichStatus: response.ich?.overallStatus ?? null,
       ichCounts: response.ich?.counts ?? null,
+      correspondenceReview: response.correspondenceReview,
     },
     userId,
     userName,

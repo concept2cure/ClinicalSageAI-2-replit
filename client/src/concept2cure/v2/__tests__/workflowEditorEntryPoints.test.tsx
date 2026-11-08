@@ -31,7 +31,8 @@ describe('stored workflow entry points reuse the canonical intake', () => {
     apiRequest.mockResolvedValue(ok({ success: true, data: { program: { title: 'Study CSR', code: 'E3', readiness: 10 },
       meta: { jobId: 14, projectId: 2, programId: PID }, sections: [{ num: '11', label: 'Efficacy', status: 'draft' }] } }));
     render(<CsrWorkflow {...props} />); fireEvent.click(await screen.findByRole('button', { name: /11 Efficacy draft/ }));
-    expect(screen.getByTestId('selected-source').textContent).toContain(JSON.stringify({ programId: PID, source: { kind: 'csr', jobId: 14, sectionNumbers: ['11'] } }));
+    expect(screen.getByTestId('selected-source').textContent).toContain(JSON.stringify({ programId: PID, source: { kind: 'csr', jobId: 14, sectionNumbers: ['11'], approvedOnly: true } }));
+    // Only approved CSR text is imported from the board (940098aa); the server refuses any other section.
     fireEvent.click(screen.getByRole('button', { name: 'Open confirmed copy' }));
     expect(peekEditorTarget()).toMatchObject({ docId: 'saved-working-copy', sectionCode: 'actual-returned-code', programId: PID, docType: null });
     expect(props.onAsk).not.toHaveBeenCalled();

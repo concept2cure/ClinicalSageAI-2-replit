@@ -1,0 +1,167 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "startedAt": "2026-11-05T21:33:50.518Z",
+  "steps": [
+    {
+      "name": "sign in (one dev-login)",
+      "status": 200,
+      "email": "walk.owner@example.com"
+    },
+    {
+      "name": "set up through the API",
+      "projects": {
+        "ind301": "20f286bc-a71a-4508-8615-d2a50370d26d",
+        "ind303": "36814886-1b32-495f-a29e-517ad9e9374e",
+        "k510": "b158f7d9-0254-4ea7-8b6b-73138a193f24"
+      }
+    },
+    {
+      "name": "1440: 1. WALK-IND-301 line and workstreams",
+      "dots": [
+        "Planning complete · Jan 6, 2027",
+        "Pre-IND Engagement complete · Jan 28, 2027",
+        "Module 3 — Quality/CMC complete · Feb 19, 2027",
+        "Module 4 — Nonclinical complete · Mar 15, 2027",
+        "Module 5 — Clinical complete · Apr 13, 2027",
+        "Module 2 — CTD Summaries complete · May 5, 2027",
+        "Module 1 — Administrative complete · May 20, 2027",
+        "Submission (target date) · Jun 4, 2027",
+        "Study may proceed (day 30) · Jul 4, 2027"
+      ],
+      "caption": "Starts Dec 23, 2026 · submission Jun 4, 2027 · Study may proceed by Jul 4, 2027 (FDA, 21 CFR 312.40). The darker line is the critical path; each dot is a phase completing.",
+      "rows": [
+        "Planning | No lead | 7 of 7 tasks done | Completed | Done",
+        "Pre-IND Engagement | No lead | 0 of 7 tasks done | Completes Jan 28, 2027 | On track",
+        "Module 3 — Quality/CMC | No lead | 0 of 7 tasks done | Completes Feb 19, 2027 | On track",
+        "Module 4 — Nonclinical | No lead | 0 of 7 tasks done | Completes Mar 15, 2027 | On track",
+        "Module 5 — Clinical | No lead | 0 of 8 tasks done | Completes Apr 13, 2027 | On track",
+        "Module 2 — CTD Summaries | No lead | 0 of 7 tasks done | Completes May 5, 2027 | On track",
+        "Module 1 — Administrative | No lead | 0 of 8 tasks done | Completes May 20, 2027 | On track",
+        "QA Review & Submission | No lead | 0 of 7 tasks done | Completes Jun 4, 2027 | On track"
+      ],
+      "opened": [
+        "QC full IND package",
+        "Collect signatures",
+        "Compile eCTD",
+        "Validate eCTD",
+        "Submit IND",
+        "Archive submission package",
+        "QA Review & Submission Complete"
+      ]
+    },
+    {
+      "name": "1440: 2. WALK-IND-303 at risk",
+      "sentence": "Scheduled back from the target submission date, Feb 1, 2027: the work starts by Aug 20, 2026. 27 unfinished tasks are past their dates. 0 of 58 tasks have an owner.",
+      "rows": [
+        "Planning | No lead | 0 of 7 tasks done | Completes Sep 3, 2026 | At risk",
+        "Pre-IND Engagement | No lead | 0 of 7 tasks done | Completes Sep 25, 2026 | At risk",
+        "Module 3 — Quality/CMC | No lead | 0 of 7 tasks done | Completes Oct 19, 2026 | At risk",
+        "Module 4 — Nonclinical | No lead | 0 of 7 tasks done | Completes Nov 10, 2026 | At risk",
+        "Module 5 — Clinical | No lead | 0 of 8 tasks done | Completes Dec 9, 2026 | On track",
+        "Module 2 — CTD Summaries | No lead | 0 of 7 tasks done | Completes Dec 31, 2026 | On track",
+        "Module 1 — Administrative | No lead | 0 of 8 tasks done | Completes Jan 15, 2027 | On track",
+        "QA Review & Submission | No lead | 0 of 7 tasks done | Completes Feb 1, 2027 | On track"
+      ]
+    },
+    {
+      "name": "1440: 3. WALK-510K-401 clock, blocked, device note",
+      "caption": "Starts Apr 8, 2027 · submission Apr 30, 2027 · MDUFA decision by Jul 29, 2027 (FDA (CDRH), FD&C Act §510(k); MDUFA goals; FDA RTA policy). The darker line is the critical path; each dot is a phase completing. The agency’s days exclude clock stops, so the decision can come later.",
+      "rows": [
+        "Project Planning | No lead | 0 of 6 tasks done | Completes Apr 9, 2027 | On track",
+        "Device Characterization | No lead | 0 of 6 tasks done | Completes Apr 14, 2027 | Blocked",
+        "Predicate & Equivalence | No lead | 0 of 6 tasks done | Completes Apr 19, 2027 | On track",
+        "Testing & Evidence | No lead | 0 of 6 tasks done | Completes Apr 22, 2027 | On track",
+        "Labeling & IFU | No lead | 0 of 6 tasks done | Completes Apr 26, 2027 | On track",
+        "Submission Assembly | No lead | 0 of 6 tasks done | Completes Apr 28, 2027 | On track",
+        "QA Review & Submission | No lead | 0 of 6 tasks done | Completes Apr 30, 2027 | On track"
+      ],
+      "note": "The device workstreams above are listed by their own items, which have no work-breakdown key, so they are not counted in these workstreams."
+    },
+    {
+      "name": "1440: 4. Projects, one read, one line per card",
+      "batchReads": 1,
+      "cards": [
+        "WALK-510K-401 → 1 task blocked · Project Planning by Apr 9, 2027",
+        "WALK-IND-303 → 21 tasks past due · Planning by Sep 3, 2026",
+        "WALK-IND-302 → Not scheduled: no target date",
+        "WALK-IND-301 → On schedule · Pre-IND Engagement by Jan 28, 2027"
+      ],
+      "overflow": 0
+    },
+    {
+      "name": "390: 1. WALK-IND-301 line and workstreams",
+      "dots": [
+        "Planning complete · Jan 6, 2027",
+        "Pre-IND Engagement complete · Jan 28, 2027",
+        "Module 3 — Quality/CMC complete · Feb 19, 2027",
+        "Module 4 — Nonclinical complete · Mar 15, 2027",
+        "Module 5 — Clinical complete · Apr 13, 2027",
+        "Module 2 — CTD Summaries complete · May 5, 2027",
+        "Module 1 — Administrative complete · May 20, 2027",
+        "Submission (target date) · Jun 4, 2027",
+        "Study may proceed (day 30) · Jul 4, 2027"
+      ],
+      "caption": "Starts Dec 23, 2026 · submission Jun 4, 2027 · Study may proceed by Jul 4, 2027 (FDA, 21 CFR 312.40). The darker line is the critical path; each dot is a phase completing.",
+      "rows": [
+        "Planning | No lead | 7 of 7 tasks done | Completed | Done",
+        "Pre-IND Engagement | No lead | 0 of 7 tasks done | Completes Jan 28, 2027 | On track",
+        "Module 3 — Quality/CMC | No lead | 0 of 7 tasks done | Completes Feb 19, 2027 | On track",
+        "Module 4 — Nonclinical | No lead | 0 of 7 tasks done | Completes Mar 15, 2027 | On track",
+        "Module 5 — Clinical | No lead | 0 of 8 tasks done | Completes Apr 13, 2027 | On track",
+        "Module 2 — CTD Summaries | No lead | 0 of 7 tasks done | Completes May 5, 2027 | On track",
+        "Module 1 — Administrative | No lead | 0 of 8 tasks done | Completes May 20, 2027 | On track",
+        "QA Review & Submission | No lead | 0 of 7 tasks done | Completes Jun 4, 2027 | On track"
+      ],
+      "opened": [
+        "QC full IND package",
+        "Collect signatures",
+        "Compile eCTD",
+        "Validate eCTD",
+        "Submit IND",
+        "Archive submission package",
+        "QA Review & Submission Complete"
+      ]
+    },
+    {
+      "name": "390: 2. WALK-IND-303 at risk",
+      "sentence": "Scheduled back from the target submission date, Feb 1, 2027: the work starts by Aug 20, 2026. 27 unfinished tasks are past their dates. 0 of 58 tasks have an owner.",
+      "rows": [
+        "Planning | No lead | 0 of 7 tasks done | Completes Sep 3, 2026 | At risk",
+        "Pre-IND Engagement | No lead | 0 of 7 tasks done | Completes Sep 25, 2026 | At risk",
+        "Module 3 — Quality/CMC | No lead | 0 of 7 tasks done | Completes Oct 19, 2026 | At risk",
+        "Module 4 — Nonclinical | No lead | 0 of 7 tasks done | Completes Nov 10, 2026 | At risk",
+        "Module 5 — Clinical | No lead | 0 of 8 tasks done | Completes Dec 9, 2026 | On track",
+        "Module 2 — CTD Summaries | No lead | 0 of 7 tasks done | Completes Dec 31, 2026 | On track",
+        "Module 1 — Administrative | No lead | 0 of 8 tasks done | Completes Jan 15, 2027 | On track",
+        "QA Review & Submission | No lead | 0 of 7 tasks done | Completes Feb 1, 2027 | On track"
+      ]
+    },
+    {
+      "name": "390: 3. WALK-510K-401 clock, blocked, device note",
+      "caption": "Starts Apr 8, 2027 · submission Apr 30, 2027 · MDUFA decision by Jul 29, 2027 (FDA (CDRH), FD&C Act §510(k); MDUFA goals; FDA RTA policy). The darker line is the critical path; each dot is a phase completing. The agency’s days exclude clock stops, so the decision can come later.",
+      "rows": [
+        "Project Planning | No lead | 0 of 6 tasks done | Completes Apr 9, 2027 | On track",
+        "Device Characterization | No lead | 0 of 6 tasks done | Completes Apr 14, 2027 | Blocked",
+        "Predicate & Equivalence | No lead | 0 of 6 tasks done | Completes Apr 19, 2027 | On track",
+        "Testing & Evidence | No lead | 0 of 6 tasks done | Completes Apr 22, 2027 | On track",
+        "Labeling & IFU | No lead | 0 of 6 tasks done | Completes Apr 26, 2027 | On track",
+        "Submission Assembly | No lead | 0 of 6 tasks done | Completes Apr 28, 2027 | On track",
+        "QA Review & Submission | No lead | 0 of 6 tasks done | Completes Apr 30, 2027 | On track"
+      ],
+      "note": "The device workstreams above are listed by their own items, which have no work-breakdown key, so they are not counted in these workstreams."
+    },
+    {
+      "name": "390: 4. Projects, one read, one line per card",
+      "batchReads": 1,
+      "cards": [
+        "WALK-510K-401 → 1 task blocked · Project Planning by Apr 9, 2027",
+        "WALK-IND-303 → 21 tasks past due · Planning by Sep 3, 2026",
+        "WALK-IND-302 → Not scheduled: no target date",
+        "WALK-IND-301 → On schedule · Pre-IND Engagement by Jan 28, 2027"
+      ],
+      "overflow": 0
+    }
+  ],
+  "apiErrors": [],
+  "finishedAt": "2026-11-05T21:34:19.253Z"
+}

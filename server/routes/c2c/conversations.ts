@@ -193,7 +193,7 @@ router.post('/projects/:projectId/conversations', async (req: Request, res: Resp
     return sendSuccess(res.status(201), newConversation, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
     }
     logConcept2cureError('create conversation', error, { projectId: req.params.projectId });
     return sendError(res, 500, 'Failed to create conversation');
@@ -292,7 +292,7 @@ router.post(
       return sendSuccess(res.status(201), newMessage, { auditTrail: auditTrailFromEntry(auditOutcome) });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+        return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
       }
       logConcept2cureError('add message', error, { conversationId: req.params.conversationId });
       return sendError(res, 500, 'Failed to add message');
@@ -366,7 +366,7 @@ router.patch(
       }, { auditTrail: auditTrailFromEntry(auditOutcome) });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+        return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
       }
       logConcept2cureError('update conversation', error, {
         projectId: paramStr(req.params.projectId),

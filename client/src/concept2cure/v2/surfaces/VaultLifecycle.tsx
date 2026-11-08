@@ -375,6 +375,8 @@ interface ActionProps {
   signing?: VaultSigningPosture | null;
   /** Set by the actions: the step is on a named route (the approver signs on it). */
   routed?: boolean;
+  /** Said before the actions, only when there is one to take (the record's "Next step · v2.0", B8). */
+  lead?: React.ReactNode;
 }
 
 /** The open annotations on every version of the document, as a sentence; null when they could not be read. */
@@ -556,6 +558,7 @@ export function VersionLifecycleActions(p: ActionProps) {
   };
   return (
     <span className="vd-ver-acts">
+      {p.lead}
       <ActionButtons plan={plan} p={p} onForm={setForm} onAct={setAct}
         onStep={(step) => (step === 'send' ? setForm('send') : void openSignOff(step))} />
       {plan.blocked ? <span className="vd-ver-m">{plan.blocked}</span> : null}

@@ -461,3 +461,8 @@ export function getDeliverablesCatalog(
       deliverables: t.deliverables!,
     }));
 }
+
+// ─── Scheduling (S11) ───────────────────────────────────────────────────────
+// Split into ./SubmissionPyramidSchedule.ts when this file passed 500 lines (RULE 6: a split stays in its folder).
+// Re-exported, so every import of the engine is unchanged.
+export * from './SubmissionPyramidSchedule';

@@ -58,7 +58,11 @@ vi.mock('../../../db', () => {
   };
   const pool = {
     query: async (text: string) => {
-      if (/LEFT JOIN ind_sponsors/.test(text)) return { rows: [{ organization_name: 'Concept2Cure Therapeutics', application_number: rows.applicationNumber,
+      // Transmit reads the identity by submission (readSubmissionPackageIdentity, P-44
+      // dde2b39695): the submission's project and market, then the project's record.
+      // The project's home market is the EU's (primary agency EMA), so its number is the package's.
+      if (/FROM submissions/.test(text)) return { rowCount: 1, rows: [{ program_id: rows.submission.programId, primary_region: 'eu' }] };
+      if (/LEFT JOIN ind_sponsors/.test(text)) return { rows: [{ organization_name: 'Concept2Cure Therapeutics', application_number: rows.applicationNumber, primary_agency: 'EMA',
         applicant_sponsor_id: '22222222-2222-4222-8222-222222222222', sponsor_id: '22222222-2222-4222-8222-222222222222',
         sponsor_name: 'Concept2Cure Therapeutics', duns: '123456789', contact_name: 'Regulatory Contact', contact_phone: '+1 617 555 0100', contact_email: 'regulatory@example.test' }] };
       if (/FROM organizations/.test(text)) return { rowCount: 1, rows: [{ name: 'Concept2Cure Therapeutics' }] };

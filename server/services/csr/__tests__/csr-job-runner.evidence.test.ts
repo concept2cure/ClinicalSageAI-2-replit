@@ -62,7 +62,10 @@ function makeFakeDb(job: Record<string, any>) {
       return Promise.resolve();
     } }) }),
   };
-  return { db, persisted, job };
+  const transactional = Object.assign(db, {
+    transaction: async <T>(fn: (tx: typeof db) => Promise<T>): Promise<T> => fn(db),
+  });
+  return { db: transactional, persisted, job };
 }
 let fake: ReturnType<typeof makeFakeDb>;
 vi.mock('../../../db', () => ({ get db() { return fake.db; }, pool: { query: vi.fn() } }));

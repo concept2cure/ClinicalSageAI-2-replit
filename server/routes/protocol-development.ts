@@ -158,7 +158,7 @@ async function governedScoped(
 // ─── Documents ───────────────────────────────────────────────────────────────
 
 const docSchema = z.object({
-  programId: z.string().uuid(),
+  programId: z.string().guid(),
   protocolKind: KIND,
   title: z.string().min(1).max(500),
   protocolNumber: z.string().max(120).optional(),
@@ -245,7 +245,7 @@ router.patch('/documents/:id', async (req, res) => {
 
 // ─── Study design link (PROTOCOL-CONVERGENCE step 1b) ────────────────────────
 
-const programSchema = z.object({ programId: z.string().uuid(), reason }).strict();
+const programSchema = z.object({ programId: z.string().guid(), reason }).strict();
 router.post('/documents/:id/program', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });

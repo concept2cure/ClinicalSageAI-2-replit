@@ -42,12 +42,16 @@ export interface OrganizationArtifactRow {
   model: string | null;
   when: string;
   ver: string;
+  /** Numeric registry version for source intake; display `ver` is not identity. */
+  sourceVersion?: number | null;
   sig: boolean;
   sigVersion?: number | null;
   sigStale?: boolean | null;
   reviewed: boolean;
   sourceCount: number;
   prog: string;
+  /** The project's sponsor (client workspace), or null when it has none (F1, S6 V4). */
+  client?: { id: number; name: string } | null;
   ctdSection?: string | null;
   status?: string;
   origin?: ArtifactOrigin | null;
@@ -60,10 +64,13 @@ const isOrganizationRows = isRowsWith<OrganizationArtifactRow>('id', 'name', 've
 
 export type OrganizationArtifactsRead = ListState<OrganizationArtifactRow> & { reload: () => void };
 
-/** The listing, read only while `active`: a project's Vault reads it once a person opens it. */
-export function useOrganizationArtifacts(active: boolean): OrganizationArtifactsRead {
+/** The listing, read only while `active`: a project's Vault reads it once a person opens it. Inside a project
+ *  (`withinSponsorOf`), it is that project's sponsor's projects' artifacts (F1, S6 V4): a CRO's sponsors never mix. */
+export function useOrganizationArtifacts(active: boolean, withinSponsorOf?: string | null): OrganizationArtifactsRead {
   const [epoch, setEpoch] = useState(0);
-  const path = active ? ORGANIZATION_ARTIFACTS_PATH : null;
+  const path = !active ? null
+    : withinSponsorOf ? `${ORGANIZATION_ARTIFACTS_PATH}?sameClientAs=${encodeURIComponent(withinSponsorOf)}`
+    : ORGANIZATION_ARTIFACTS_PATH;
   const read = useLiveRows<OrganizationArtifactRow>(path, [path, epoch], isOrganizationRows);
   return { ...read, reload: () => setEpoch((n) => n + 1) };
 }
@@ -73,7 +80,11 @@ function organizationWindow(read: Pick<OrganizationArtifactsRead, 'rows' | 'meta
   const listed = read.rows.length;
   const m = read.meta ?? {};
   const total = typeof m.total === 'number' && m.total >= listed ? m.total : listed;
-  return { total, listed, truncated: m.truncated === true };
+  /* Narrowed to one sponsor's projects (F1, S6 V4): its name, said where the listing says whose projects it read. */
+  const c = m.client as { name?: unknown } | null | undefined;
+  const sponsor = c && typeof c.name === 'string' && c.name.trim() ? c.name : null;
+  const narrowed = 'client' in m;
+  return { total, listed, truncated: m.truncated === true, sponsor, narrowed, where: sponsor ? `the ${sponsor} projects you can open` : 'the projects you can open' };
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -138,7 +149,7 @@ export function organizationArtifactsFacts(read: Pick<OrganizationArtifactsRead,
   const w = organizationWindow(read);
   const count = (state: ArtifactSignatureState) => read.rows.filter((r) => organizationArtifactSignature(r) === state).length;
   return {
-    scope: 'the projects you can open',
+    scope: w.where,
     total: w.total,
     listed: w.listed,
     truncated: w.truncated,
@@ -149,7 +160,7 @@ export function organizationArtifactsFacts(read: Pick<OrganizationArtifactsRead,
     projects: [...new Set(read.rows.map((r) => r.prog).filter(Boolean))],
     // Enough to name an artifact back to the user, not the whole listing.
     artifacts: read.rows.slice(0, 15).map((r) => ({
-      id: r.id, name: r.name, kind: r.kind, format: r.fmt, version: r.ver, project: r.prog,
+      id: r.id, name: r.name, kind: r.kind, format: r.fmt, version: r.ver, project: r.prog, client: r.client?.name ?? null,
       model: r.model, updated: r.when, signature: organizationArtifactSignature(r), humanReviewRecorded: r.reviewed,
     })),
   };
@@ -211,8 +222,8 @@ interface RowActions {
   onAsk: (r: OrganizationArtifactRow) => void;
 }
 
-const OrganizationArtifactLine = React.forwardRef<HTMLDivElement, { row: OrganizationArtifactRow; focused: boolean } & RowActions>(
-  function OrganizationArtifactLine({ row: r, focused, downloadingId, onDownload, onOpenInEditor, onAsk }, ref) {
+const OrganizationArtifactLine = React.forwardRef<HTMLDivElement, { row: OrganizationArtifactRow; focused: boolean; showSponsor: boolean } & RowActions>(
+  function OrganizationArtifactLine({ row: r, focused, showSponsor, downloadingId, onDownload, onOpenInEditor, onAsk }, ref) {
     return (
       <div
         ref={ref}
@@ -230,7 +241,8 @@ const OrganizationArtifactLine = React.forwardRef<HTMLDivElement, { row: Organiz
           </span>
         </div>
         <div>{r.fmt ? <span className="rd-chip">{r.fmt.toUpperCase()}</span> : null}</div>
-        <div>{r.prog}</div>
+        {/* Across sponsors, each row says whose project it is; inside one sponsor, the heading does (F1, S6 V4). */}
+        <div>{r.prog}{showSponsor && r.client ? ` · ${r.client.name}` : ''}</div>
         <div>{r.model ?? 'Model not recorded'}</div>
         <div>{r.when}</div>
         <div>{artifactSignatureLine({ signature: organizationArtifactSignature(r), signedVersion: r.sigVersion ?? null }, r.ver)}</div>
@@ -239,7 +251,7 @@ const OrganizationArtifactLine = React.forwardRef<HTMLDivElement, { row: Organiz
             {I.download} {downloadingId === r.id ? 'Downloading…' : 'Download DOCX'}
           </button>
           <button type="button" className="btn ghost small" onClick={() => onOpenInEditor(r)}>
-            {I.penLine} Open in editor
+            {I.penLine} Work on document
           </button>
           <button type="button" className="btn ghost small" onClick={() => onAsk(r)}>
             {I.sparkles} Ask AnA
@@ -276,7 +288,7 @@ function OrganizationArtifactsBody({ read, focusId, ...actions }: { read: Organi
       </div>
     );
   }
-  if (read.rows.length === 0) return <div className="vd-dr-empty">No governed artifacts in the projects you can open yet.</div>;
+  if (read.rows.length === 0) return <div className="vd-dr-empty">No governed artifacts in {organizationWindow(read).where} yet.</div>;
   return (
     <>
       <div className="vd-dr-empty">
@@ -293,7 +305,8 @@ function OrganizationArtifactsBody({ read, focusId, ...actions }: { read: Organi
           <div></div>
         </div>
         {read.rows.map((r) => (
-          <OrganizationArtifactLine key={r.id} ref={r.id === focusId ? focusRow : undefined} row={r} focused={r.id === focusId} {...actions} />
+          <OrganizationArtifactLine key={r.id} ref={r.id === focusId ? focusRow : undefined} row={r} focused={r.id === focusId}
+            showSponsor={!organizationWindow(read).narrowed} {...actions} />
         ))}
       </div>
     </>
@@ -327,7 +340,7 @@ export function OrganizationGovernedArtifacts({
         <h2 id={headingId}>Governed artifacts across your projects</h2>
         {settled && (
           <span className="sec-sub">
-            {plural(w.total, 'governed artifact', 'governed artifacts')} in the projects you can open
+            {plural(w.total, 'governed artifact', 'governed artifacts')} in {w.where}
             {w.truncated ? ` · the newest ${w.listed} are listed` : ''}
           </span>
         )}

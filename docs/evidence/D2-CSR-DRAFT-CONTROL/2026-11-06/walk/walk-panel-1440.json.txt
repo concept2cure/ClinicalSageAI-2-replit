@@ -1,0 +1,88 @@
+{
+  "base": "http://127.0.0.1:5210",
+  "startedAt": "2026-11-06T22:54:08.831Z",
+  "steps": [
+    {
+      "name": "1440 open the AnA menu",
+      "http": [
+        "jm 503 GET /api/authoring/sections/e487d188-a78d-455f-8e0f-02dc865024fe/sources"
+      ],
+      "console": [
+        "jm Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "notes": [
+        "Draft with AnA\nDraft from sources\nDraft this section from Data Room evidence and accept it with recorded citations.\nReview with AnA\nReview section\nReview document\nReconcile project evidence\nPrepare targeted fixes\nAnA reads saved documents and project evidence. Proposed fixes remain tracked changes for your review."
+      ],
+      "shots": [
+        "shots/b-1440-ana-menu.png"
+      ],
+      "outcome": "pass",
+      "ms": 8149
+    },
+    {
+      "name": "1440 Draft from sources opens the panel",
+      "http": [],
+      "console": [],
+      "notes": [
+        "[Demo · MDX] NeuroPanel-Dx 510(k) · Planning · Unbound draft\n[Demo · MDX] SOP-104 Software Change Control\nSaved draft sections · unbound\nUnbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.\nall\ndraft\nin review\napproved\nfrozen\nFilings in this project\nFDA · K510 — home filing\nCreate editing copy\n—\n[Demo · MDX] SOP-104 Software Change Control\n9\nPurpose\nScope\nResponsibilities\nDefinitions\nProcedure\nReferences\nAttachments\nRevision history\nApproval\n—\n[Demo · MDX] SOP-103 Complaint Handling and MDR Reporting\n9\n—\n[Demo · MDX] SOP-102 Corrective and Preventive Action\n9\n—\n[Demo · MDX] SOP-101 Design Controls (21 CFR 820.30)\n9\n510k\n[Demo · MDX] Cybersecurity and Interoperability Summary\n6\n510k\n[Demo · MDX] "
+      ],
+      "shots": [
+        "shots/b-1440-panel.png"
+      ],
+      "outcome": "pass",
+      "ms": 681
+    },
+    {
+      "name": "1440 the panel's holds, read before drafting",
+      "http": [],
+      "console": [],
+      "notes": [
+        "generate disabled: false",
+        "panel text: Build document or section\nPurpose\nRename\nCheck\n[Demo · MDX] SOP-104 Software Change Control · 2 revisions · saved 11 h ago\nDraft Purpose from Data Room sources\nClose\n\nRetrieves evidence from this project’s Data Room and drafts Purpose from it. Nothing is saved until you accept the result — and accepting records the verified source spans behind the text, which a normal save cannot do.\n\nTone\nprofessional\nconcise\ndetailed\nRegion\nChoose writing region\nFDA\nHealth Canada\nEMA\nPMDA\nMHRA\nNMPA\nTGA\nSwissmedic\nANVISA\nCDSCO\nMFDS\nHSA\nContext (optional)\nRequirements (optional)\nDraft section Draft three alternatives\n\nThree alternatives ask for a professional, a concise and a detailed text in turn. Region, context and requirements apply to each. Each is a separate draft with its own check.\n\nParagraph\nHeading 1\nHeading 2\nHeading 3\nHeading 4\nHeading 5\nB\nI\nU\nx2\nx2\nab\n§ Ref\nCite\nTable\nCaption\nΩ…\n±\n°\nµ\n≤\n≥\n×\n"
+      ],
+      "shots": [
+        "shots/b-1440-panel-ready.png"
+      ],
+      "outcome": "pass",
+      "ms": 83
+    },
+    {
+      "name": "1440 Draft: no provider is a refusal",
+      "http": [
+        "jm 503 POST /api/authoring/sections/e487d188-a78d-455f-8e0f-02dc865024fe/ai/draft"
+      ],
+      "console": [
+        "jm Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "notes": [
+        "alerts: [\"Reviewed and signed in Quality\",\"No AI provider is configured for this deployment, so this section cannot be drafted. This is a server setting, not your connection. Nothing was changed.\"]",
+        "body present: 0",
+        "focused: ai-draft-generate"
+      ],
+      "shots": [
+        "shots/b-1440-draft-refused.png"
+      ],
+      "outcome": "pass",
+      "ms": 4175
+    },
+    {
+      "name": "1440 Draft three alternatives: no provider is a refusal",
+      "http": [
+        "jm 503 POST /api/authoring/sections/e487d188-a78d-455f-8e0f-02dc865024fe/ai/draft"
+      ],
+      "console": [
+        "jm Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "notes": [
+        "status/alerts: [\"No AI provider is configured for this deployment, so this section cannot be drafted. This is a server setting, not your connection. Nothing was changed.\",\"Attribution highlighting is paused while you edit — it describes the text as last saved.\"]",
+        "overflowX: 0"
+      ],
+      "shots": [
+        "shots/b-1440-alternatives-refused.png"
+      ],
+      "outcome": "pass",
+      "ms": 5135
+    }
+  ],
+  "finishedAt": "2026-11-06T22:54:31.099Z"
+}

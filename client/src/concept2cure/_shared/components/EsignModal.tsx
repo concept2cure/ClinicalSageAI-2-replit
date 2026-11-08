@@ -154,8 +154,9 @@ export interface EsignModalProps {
    */
   signedRows?: ReadonlyArray<{ label: string; value: string }>;
   onMeaningChange?: (meaning: EsigMeaning) => void;
-  /** A current source-read refusal blocks a new confirmation, never a sent mutation's outcome. */
-  commitRefusal?: string | null;
+  /** A current source-read refusal blocks a new confirmation, never a sent mutation's outcome. A function is
+   *  asked for the meaning chosen, so a refusal one meaning meets shows as soon as it is chosen (B7, 2026-11-05). */
+  commitRefusal?: string | null | ((meaning: EsigMeaning) => string | null);
   /** Identity shown as the signer. Server is the source of truth at /sign. */
   signer?: EsignSigner;
   /** Require a TOTP second factor (set when the signer is MFA-enrolled). */
@@ -246,8 +247,9 @@ export function EsignModal({
   const doneSummaryId = React.useId();
   const doneRef = React.useRef<HTMLButtonElement>(null);
   const restoreFocusRef = React.useRef<HTMLElement | null>(null);
-  const refusalRef = React.useRef(commitRefusal);
-  refusalRef.current = commitRefusal;
+  const refusal = typeof commitRefusal === 'function' ? commitRefusal(meaning) : commitRefusal;
+  const refusalRef = React.useRef(refusal);
+  refusalRef.current = refusal;
   const refusalId = React.useId();
 
   // Reset state when opened; remember the trigger to restore focus on close.
@@ -339,7 +341,7 @@ export function EsignModal({
   if (!open) return null;
 
   const canCommit =
-    !commitRefusal &&
+    !refusal &&
     reason.trim().length >= MIN_REASON &&
     password.length >= MIN_PASSWORD &&
     (!needCode || /^\d{6}$/.test(totp));
@@ -632,7 +634,7 @@ export function EsignModal({
                 {error}
               </div>
             ) : null}
-            {commitRefusal && <div className="es-error" role="status" id={refusalId}>{commitRefusal}</div>}
+            {refusal && <div className="es-error" role="status" id={refusalId}>{refusal}</div>}
 
             <div className="es-foot">
               <button
@@ -648,7 +650,7 @@ export function EsignModal({
                 type="button"
                 onClick={commit}
                 disabled={!canCommit || committing}
-                aria-describedby={commitRefusal ? refusalId : error ? errorId : undefined}
+                aria-describedby={refusal ? refusalId : error ? errorId : undefined}
               >
                 {committing ? (
                   <>

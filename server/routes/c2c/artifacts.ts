@@ -30,14 +30,14 @@ import {
   refuseArtifactTransition,
   refuseSignedArtifactAct,
 } from '../../services/artifact-approval-act';
-import { ArtifactActConflictError, ArtifactActContractError, commitSignedArtifactAct } from '../../services/artifact-signed-act';
+import { ArtifactActConflictError, ArtifactActContractError, commitSignedArtifactAct, type ArtifactTx } from '../../services/artifact-signed-act';
 import { SignerNotAttributableError } from '../../services/part11/resolve-signer-identity';
 import { interceptArtifactChange, interceptFeedback } from '../../services/intelligence/rim-interceptors.js';
 import { actorLabel, resolveActorNames } from '../../services/tenant/actor-names';
 import { evaluateAndInterceptGovernedDocument } from '../../src/control-plane/governed-document-evaluator';
 import { governedDecisionPersisted } from '../../services/governed-decision-ledger';
 import * as crypto from 'crypto';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, ne } from 'drizzle-orm';
 import { z } from 'zod';
 import { createScopedLogger } from '../../utils/logger';
 import { authMiddleware } from '../../auth';
@@ -155,7 +155,7 @@ const createArtifactSchema = z.object({
   content: z.string().min(1, 'Content must not be empty').max(1000000, 'Content too large'), // 1MB max, no empty
   templateId: z.string().min(1).max(200).optional(),
   ctdSection: z.string().max(50).optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
   clientTrack: z.enum(['biotech', 'device', 'diagnostics']).optional(),
   submissionProgram: z.enum(['ind', 'ectd', '510k', 'pma', 'cer', 'ivdr', 'general_ri']).optional(),
   persona: z
@@ -366,18 +366,27 @@ router.get(
 
 /**
  * GET /api/concept2cure/projects/all/artifacts-summary
- * Returns artifact count summary across all projects for the organization.
+ * Returns artifact count summary across the projects the caller may use.
+ *
+ * 2026-11-05 (F1, docs/evidence/F1/2026-11-05-listing-doors-scope/): it counted
+ * every artifact in the organization, a private project's included. It now
+ * counts the artifacts of the caller's accessible projects, the set the
+ * gallery above lists. A check that cannot run is an error, never a zero.
  */
 router.get('/projects/all/artifacts-summary', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
+    const actor = await requireCurrentProjectActor(req);
+    const accessible = await getAccessibleReportProjectIds(organizationId, actor, pool).catch(() => {
+      throw new ProjectAdmissionRefusal(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. No project data was supplied.');
+    });
 
-    const allArtifacts = await db
+    const allArtifacts = accessible.length === 0 ? [] : await db
       .select({
         status: concept2cureArtifacts.status,
       })
       .from(concept2cureArtifacts)
-      .where(eq(concept2cureArtifacts.organizationId, organizationId));
+      .where(and(eq(concept2cureArtifacts.organizationId, organizationId), inArray(concept2cureArtifacts.projectId, accessible)));
 
     const total = allArtifacts.length;
     const draft = allArtifacts.filter(a => a.status === 'draft').length;
@@ -388,6 +397,7 @@ router.get('/projects/all/artifacts-summary', async (req: Request, res: Response
 
     return sendSuccess(res, { total, draft, review, approved });
   } catch (error: any) {
+    if (error instanceof ProjectAdmissionRefusal) return sendError(res, error.status, error.message, undefined, error.code);
     logger.error('Failed to fetch artifacts summary', { error: error.message });
     return sendError(res, 500, 'Failed to fetch artifacts summary');
   }
@@ -791,7 +801,7 @@ router.post(
       return sendSuccess(res.status(201), newArtifact, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+        return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
       }
       logConcept2cureError('create artifact', error, { projectId: req.params.projectId });
       return sendError(res, 500, 'Failed to create artifact');
@@ -3560,8 +3570,186 @@ router.put(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * The review round a new reviewer assignment joins, read on `tx` while
+ * insertReviewAssignments holds the artifact's row.
+ *   - No assignment yet: round 1.
+ *   - The latest round is open (an assignment in it is neither completed nor
+ *     withdrawn): that round, so a reviewer can be added to it.
+ *   - The latest round is closed (every assignment in it is completed or
+ *     withdrawn): the next round, with `previousRound` naming the closed one.
+ *     `previousRound` is present only then, so the answer and the provenance
+ *     event record that a round was opened.
+ * A new round holds only the reviewers assigned to it. Earlier rounds'
+ * decisions stay in the record, and the quorum does not count them, so a
+ * reviewer who asked for changes is not carried into the new round (an open
+ * question for the founder; nothing here carries a reviewer forward). Two
+ * rules keep a new round from setting an objection aside: a round is not
+ * opened over a request for changes or a rejection of the current version
+ * (objectionToCurrentVersion), and a latest round whose every reviewer was
+ * withdrawn is no review (reviewQuorumVerdict, P-95).
+ *
+ * 2026-11-02 (F1, the review round advances): the route assigned into the
+ * latest round whatever its state. The tables allow one assignment per reviewer
+ * per round (c2c_review_assign_unique), and the quorum (reviewQuorumVerdict,
+ * server/services/artifact-approval-act.ts) reads only the latest round. A
+ * completed assignment cannot be withdrawn, and a second decision is refused.
+ * So after a request for changes, a rejection or an edit made after a decision,
+ * routing the document again answered 'already_assigned' or left the old
+ * decision in the round, and it could never be approved again. This reads the
+ * set the quorum and the decision route read: this artifact's assignments in
+ * this organization.
+ */
+async function reviewRoundForNewAssignment(
+  tx: ArtifactTx,
+  artifactPk: number,
+  organizationId: number
+): Promise<{ reviewRound: number; previousRound?: number }> {
+  const rounds = await tx
+    .select({ reviewRound: concept2cureReviewAssignments.reviewRound, status: concept2cureReviewAssignments.status })
+    .from(concept2cureReviewAssignments)
+    .where(
+      and(
+        eq(concept2cureReviewAssignments.artifactId, artifactPk),
+        eq(concept2cureReviewAssignments.organizationId, organizationId)
+      )
+    )
+    .orderBy(desc(concept2cureReviewAssignments.reviewRound));
+  if (rounds.length === 0) return { reviewRound: 1 };
+
+  const latest = rounds[0].reviewRound;
+  const open = rounds.some(
+    a => a.reviewRound === latest && a.status !== 'completed' && a.status !== 'withdrawn'
+  );
+  return open ? { reviewRound: latest } : { reviewRound: latest + 1, previousRound: latest };
+}
+
+/**
+ * Assign `reviewerIds` in one transaction that holds the artifact's row
+ * (SELECT … FOR UPDATE) while it chooses the round
+ * (reviewRoundForNewAssignment) and inserts one pending assignment per
+ * reviewer. A reviewer who already holds an assignment in that round
+ * (c2c_review_assign_unique) is answered 'already_assigned', and nothing is
+ * written for them.
+ *
+ * 2026-11-02 (F1, the review round advances): the rows, the insert and the
+ * 'already_assigned' answer moved here unchanged from the POST …/reviewers
+ * handler. The transaction and the row lock are new. Without them two
+ * assignments could choose their rounds at different moments: one read round
+ * N as open, the last pending reviewer decided, a second read N as closed and
+ * opened N + 1, and the first then inserted into N, a round the quorum no
+ * longer reads. That reviewer's decision, a rejection included, would never
+ * have been counted. Under the lock each assignment chooses its round after
+ * the previous one committed, so every assignment lands in the latest round
+ * or opens the next one. It is the row the signed approval locks first
+ * (artifact-signed-act.ts, lockCurrentSignedTarget).
+ */
+/**
+ * The objection a new round must not set aside: a request for changes or a
+ * rejection, recorded in the closed round by a reviewer who was not withdrawn,
+ * against the version the artifact still has. Null when there is none.
+ *
+ * 2026-11-02 (F1, the review round advances; found by the adversarial review of
+ * the round repair): once a closed round opens the next one, a reviewer-role
+ * user could assign themselves (or anyone) into a new round and approve over a
+ * co-reviewer's request for changes, with the document unchanged. A new round
+ * is for a changed document, or for a round that held no objection to this
+ * one; the document is edited first.
+ */
+async function objectionToCurrentVersion(
+  tx: ArtifactTx,
+  artifactPk: number,
+  organizationId: number,
+  closedRound: number,
+  currentVersion: number
+): Promise<string | null> {
+  const objections = await tx
+    .select({ decision: concept2cureReviewDecisions.decision })
+    .from(concept2cureReviewDecisions)
+    .innerJoin(concept2cureReviewAssignments, eq(concept2cureReviewAssignments.id, concept2cureReviewDecisions.assignmentId))
+    .where(
+      and(
+        eq(concept2cureReviewDecisions.artifactId, artifactPk),
+        eq(concept2cureReviewDecisions.organizationId, organizationId),
+        eq(concept2cureReviewDecisions.reviewRound, closedRound),
+        eq(concept2cureReviewDecisions.versionReviewed, currentVersion),
+        ne(concept2cureReviewDecisions.decision, 'approve'),
+        ne(concept2cureReviewAssignments.status, 'withdrawn')
+      )
+    );
+  if (objections.length === 0) return null;
+  const kinds = [...new Set(objections.map(o => (o.decision === 'reject' ? 'rejected' : 'asked for changes to')))].join(' or ');
+  return `Cannot open review round ${closedRound + 1}: ${objections.length} reviewer(s) in round ${closedRound} ${kinds} version ${currentVersion}, and the document has not changed since. Edit the document, then route it for review again.`;
+}
+
+type ReviewAssignmentOutcome =
+  | { refused: { status: 404 | 409; message: string } }
+  | { refused?: undefined; round: { reviewRound: number; previousRound?: number }; assignments: Array<{ reviewerId: number; status: string; reviewRound: number; assignmentId?: string }> };
+
+async function insertReviewAssignments(input: {
+  artifactPk: number;
+  organizationId: number;
+  assignedById: number;
+  reviewerIds: number[];
+  dueDate: Date | null;
+  notes?: string | null;
+}) {
+  const { artifactPk, organizationId, assignedById, reviewerIds, dueDate, notes } = input;
+  return db.transaction(async (tx): Promise<ReviewAssignmentOutcome> => {
+    // The version is read under the lock: an edit committed before it is the
+    // version a closed round's objection is compared with.
+    const [locked] = await tx
+      .select({ version: concept2cureArtifacts.version })
+      .from(concept2cureArtifacts)
+      .where(eq(concept2cureArtifacts.id, artifactPk))
+      .for('update');
+    if (!locked) return { refused: { status: 404, message: 'Artifact not found' } };
+    const round = await reviewRoundForNewAssignment(tx, artifactPk, organizationId);
+    const { reviewRound } = round;
+    if (round.previousRound !== undefined) {
+      const objection = await objectionToCurrentVersion(tx, artifactPk, organizationId, round.previousRound, locked.version);
+      if (objection) return { refused: { status: 409, message: objection } };
+    }
+
+    const allValues = reviewerIds.map(reviewerId => ({
+      assignmentId: `asgn_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
+      artifactId: artifactPk,
+      organizationId,
+      reviewerId,
+      assignedById,
+      reviewRound,
+      status: 'pending' as const,
+      dueDate,
+      notes: notes ? sanitizeContent(notes) : null,
+    }));
+
+    const inserted = await tx
+      .insert(concept2cureReviewAssignments)
+      .values(allValues)
+      .onConflictDoNothing()
+      .returning();
+
+    const assignments = reviewerIds.map(reviewerId => {
+      const row = inserted.find(r => r.reviewerId === reviewerId);
+      if (row) {
+        return {
+          assignmentId: row.assignmentId,
+          reviewerId: row.reviewerId,
+          status: row.status,
+          reviewRound: row.reviewRound,
+        };
+      }
+      return { reviewerId, status: 'already_assigned', reviewRound };
+    });
+    return { round, assignments };
+  });
+}
+
+/**
  * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers
- * Assign one or more reviewers to an artifact for the current review round.
+ * Assign one or more reviewers to an artifact: into the open review round, or
+ * into a new round when the latest is closed (reviewRoundForNewAssignment,
+ * under the artifact's row lock in insertReviewAssignments). The answer
+ * carries `previousRound` only when a new round was opened.
  * Only admin/approver/reviewer roles can assign reviewers.
  * Body: { reviewerIds: number[], dueDate?: string, notes?: string }
  */
@@ -3603,16 +3791,6 @@ router.post(
         );
       }
 
-      // Determine the current review round (max existing round, or 1 if none)
-      const existingAssignments = await db
-        .select({ reviewRound: concept2cureReviewAssignments.reviewRound })
-        .from(concept2cureReviewAssignments)
-        .where(eq(concept2cureReviewAssignments.artifactId, artifact.id))
-        .orderBy(desc(concept2cureReviewAssignments.reviewRound))
-        .limit(1);
-
-      const reviewRound = existingAssignments.length > 0 ? existingAssignments[0].reviewRound : 1;
-
       // Verify all reviewer IDs belong to the same organization
       const validReviewers = await db
         .select({ userId: organizationUsers.userId, role: organizationUsers.role })
@@ -3643,37 +3821,19 @@ router.post(
 
       const parsedDueDate = dueDate ? new Date(dueDate) : null;
 
-      // Batch insert all reviewer assignments in one query
-      const allValues = numericIds.map(reviewerId => ({
-        assignmentId: `asgn_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
-        artifactId: artifact.id,
+      // The open round, or a new one when the latest is closed, chosen under
+      // the artifact's row lock (2026-11-02, F1).
+      const outcome = await insertReviewAssignments({
+        artifactPk: artifact.id,
         organizationId,
-        reviewerId,
         assignedById: userId,
-        reviewRound,
-        status: 'pending' as const,
+        reviewerIds: numericIds,
         dueDate: parsedDueDate,
-        notes: notes ? sanitizeContent(notes) : null,
-      }));
-
-      const inserted = await db
-        .insert(concept2cureReviewAssignments)
-        .values(allValues)
-        .onConflictDoNothing()
-        .returning();
-
-      const results = numericIds.map(reviewerId => {
-        const row = inserted.find(r => r.reviewerId === reviewerId);
-        if (row) {
-          return {
-            assignmentId: row.assignmentId,
-            reviewerId: row.reviewerId,
-            status: row.status,
-            reviewRound: row.reviewRound,
-          };
-        }
-        return { reviewerId, status: 'already_assigned', reviewRound };
+        notes,
       });
+      if (outcome.refused) return sendError(res, outcome.refused.status, outcome.refused.message);
+      const { round, assignments: results } = outcome;
+      const { reviewRound } = round;
 
       // Log provenance for assignment
       await db.insert(concept2cureProvenanceEvents).values({
@@ -3691,7 +3851,7 @@ router.post(
         ipAddress: clientIpKey(req),
         details: {
           reviewerIds: numericIds,
-          reviewRound,
+          ...round,
           dueDate: parsedDueDate,
           assignmentCount: results.filter(r => r.status !== 'already_assigned').length,
         },
@@ -3705,7 +3865,7 @@ router.post(
 
       return sendSuccess(res, {
         artifactId: paramStr(req.params.artifactId),
-        reviewRound,
+        ...round,
         assignments: results,
       }, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {

@@ -12,6 +12,7 @@
  */
 
 import { formatDate } from './data';
+import type { LearningReviewView } from './qmsApproval';
 
 export type ChangeState =
   | 'proposed'
@@ -67,6 +68,7 @@ export interface ChangeControl {
    *  signed approve route. Absent when the row carries none, and then no move
    *  is offered: the browser does not keep its own copy of the state machine. */
   nextStates?: ChangeState[];
+  learningReview?: LearningReviewView | { unavailable: true } | null;
 }
 
 export interface ChangeSummary {

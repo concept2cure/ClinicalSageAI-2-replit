@@ -127,7 +127,12 @@ function makeFakeDb(job: Record<string, unknown>, retained: SavedOutput[] = []) 
       };
     },
   };
-  return { db, inserted, persisted, jobUpdates, job };
+  // This fixture tests output/placeholder behavior. The dedicated attempt
+  // suite evaluates conditional predicates and transactional rollback.
+  const transactional = Object.assign(db, {
+    transaction: async <T>(fn: (tx: typeof db) => Promise<T>): Promise<T> => fn(db),
+  });
+  return { db: transactional, inserted, persisted, jobUpdates, job };
 }
 
 let fake: ReturnType<typeof makeFakeDb>;
@@ -160,6 +165,42 @@ beforeEach(() => {
 
 const sectionDraft = (number: string, content: string) => ({ number, content, source: 'template', model: null, tokenCost: 0, lineage: null });
 const progressValues = () => fake.jobUpdates.filter(update => typeof update.progress === 'number').map(update => update.progress);
+
+describe('runCSRBuildJob — requester identity is mandatory', () => {
+  it.each([null, 0, -1])('refuses a queued job with requestedBy=%s without model work or rewriting sections', async requestedBy => {
+    const retained = [{ sectionNumber: '13', content: 'Previously saved, unapproved section.' }];
+    fake = makeFakeDb({ ...makeJob(), requestedBy }, retained);
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({
+      status: 'failed',
+      error: { reason: 'requester_missing', code: 'CSR_BUILD_REQUESTER_MISSING' },
+    });
+    expect(draftMock).not.toHaveBeenCalled();
+    expect(fake.persisted.map(r => r.content)).toContain('Previously saved, unapproved section.');
+  });
+});
+
+describe('runCSRBuildJob — sensitive error text is never persisted', () => {
+  it('stores a safe generic receipt for an SDK/SQL failure that contains clinical details', async () => {
+    fake = makeFakeDb(makeJob());
+    draftMock.mockRejectedValueOnce(new Error('Patient SYN-004 DOB and postgresql://owner:password@host/db'));
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed', error: { message: 'CSR_BUILD_STEP_FAILED' } });
+    expect(JSON.stringify(fake.job.error)).not.toMatch(/SYN-004|DOB|password|host\/db/);
+  });
+
+  it('preserves a stable CSR refusal code while dropping its untrusted message', async () => {
+    fake = makeFakeDb(makeJob());
+    draftMock.mockRejectedValueOnce(Object.assign(new Error('Untrusted subject SYN-004'), {
+      code: 'CSR_SOURCE_CHANGED',
+    }));
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed', error: {
+      code: 'CSR_SOURCE_CHANGED', message: 'CSR_SOURCE_CHANGED',
+    } });
+    expect(JSON.stringify(fake.job.error)).not.toContain('SYN-004');
+  });
+});
 
 describe('runCSRBuildJob — requested saved-output coverage', () => {
   it.each(['', ' \n\t '])('refuses completion when the requested draft has no usable content (%j)', async content => {

@@ -1,0 +1,182 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/artifact-workflow-source.test.ts
+{
+  "timestamp": "2026-11-06T18:28:51.700Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/artifact-workflow-source.test.ts
+{
+  "timestamp": "2026-11-06T18:29:04.314Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T18:29:04.317Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/artifact-workflow-source.test.ts
+{
+  "timestamp": "2026-11-06T18:29:04.317Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/artifact-workflow-source.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > creates an unbound draft with immutable genesis, preserving source approval facts without transferring approval/signatures
+{
+  "timestamp": "2026-11-06T18:29:05.993Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc cc99ad84-a37c-4c89-8f0c-ef56e4a591cf by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > previews the exact legacy identity and retained current version without authoring writes 173ms
+stdout | server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > reuses the actor copy with its saved edits without creating a duplicate
+{
+  "timestamp": "2026-11-06T18:29:06.178Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2bec2688-bf0b-4027-a388-77ae4758c805 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > creates an unbound draft with immutable genesis, preserving source approval facts without transferring approval/signatures 273ms
+stdout | server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > reuses the actor copy with its saved edits without creating a duplicate
+{
+  "timestamp": "2026-11-06T18:29:06.245Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 2bec2688-bf0b-4027-a388-77ae4758c805 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > keeps separate copies of successive recorded versions and refuses historical source selection
+{
+  "timestamp": "2026-11-06T18:29:06.523Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f8928775-0c41-4dee-a169-14e26b5e38b4 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > reuses the actor copy with its saved edits without creating a duplicate 334ms
+stdout | server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > keeps separate copies of successive recorded versions and refuses historical source selection
+{
+  "timestamp": "2026-11-06T18:29:06.715Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 10052d03-c4ab-495f-9959-b6b8f2c7461b by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > keeps separate copies of successive recorded versions and refuses historical source selection 390ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > refuses metadata drift after preview without authoring writes 54ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > refuses citations drift after preview without authoring writes 63ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > refuses content drift after preview without authoring writes 53ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > refuses version drift after preview without authoring writes 50ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > refuses lineage drift after preview without authoring writes 57ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > exact artifact head through the existing authoring source-import owner > refuses event drift after preview without authoring writes 55ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses association to another selected project instead of copying the source into it 32ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses foreign-organization before copy creation 27ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses other-project before copy creation 27ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses unbound before copy creation 24ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses archived before copy creation 27ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses empty before copy creation 30ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses hash-mismatch before copy creation 27ms
+stdout | server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses a newly private project and revoked current membership even for an existing copy
+{
+  "timestamp": "2026-11-06T18:29:07.451Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 976c93a0-78c3-4166-8db2-f1a928c92c64 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses version-mismatch before copy creation 24ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > reports unavailable project policy as unavailable rather than an empty or admitted source 15ms
+stdout | server/routes/__tests__/artifact-workflow-source.test.ts > current-head snapshot and authorship disclosures survive the saved editor copy > labels an unrecorded-hash legacy head and still requires independent human adoption
+{
+  "timestamp": "2026-11-06T18:29:07.663Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 317b7235-ecc2-4376-b5f0-41236f0436e2 by a***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses a newly private project and revoked current membership even for an existing copy 173ms
+   → expected 400 to be 403 // Object.is equality
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses malformed exact identity {"artifactId":" leading-space","version":3} 6ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses malformed exact identity {"artifactId":"id\nwith-control","version":3} 9ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses malformed exact identity {"artifactId":"id","version":0} 8ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses malformed exact identity {"artifactId":"id","version":1.5} 8ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses malformed exact identity {"artifactId":"id","version":"3"} 5ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > current-head snapshot and authorship disclosures survive the saved editor copy > labels an unrecorded-hash legacy head and still requires independent human adoption 259ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > current-head snapshot and authorship disclosures survive the saved editor copy > accepts normalized raw hashes and recognized current CMC source hashes without fabricating retained versions 51ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > current-head snapshot and authorship disclosures survive the saved editor copy > refuses an unverifiable legacy head (mismatching-hash) 32ms
+stdout | server/routes/__tests__/artifact-workflow-source.test.ts > current-head snapshot and authorship disclosures survive the saved editor copy > retains machine authorship and an unqualified model name from recorded generation metadata
+{
+  "timestamp": "2026-11-06T18:29:08.028Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc baf2c466-aa52-49d5-8da9-acce1cc118b3 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > current-head snapshot and authorship disclosures survive the saved editor copy > refuses an unverifiable legacy head (missing-updated-at) 34ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > current-head snapshot and authorship disclosures survive the saved editor copy > retains machine authorship and an unqualified model name from recorded generation metadata 158ms
+stdout | server/routes/__tests__/artifact-workflow-source.test.ts > current-head snapshot and authorship disclosures survive the saved editor copy > retains conversation generation evidence and dated accepted-machine spans through persisted verification
+{
+  "timestamp": "2026-11-06T18:29:08.305Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b906ba8f-1166-4950-a995-3907c05a1328 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > current-head snapshot and authorship disclosures survive the saved editor copy > attributes a model only to the exact current version rather than an unrelated historical generation event 77ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > current-head snapshot and authorship disclosures survive the saved editor copy > refuses machine lineage whose retained span hash disagrees with the exact source text 27ms
+stdout | server/routes/__tests__/artifact-workflow-source.test.ts > current-head snapshot and authorship disclosures survive the saved editor copy > preserves structured JSON as escaped source text rather than executing or inventing a rendered document
+{
+  "timestamp": "2026-11-06T18:29:08.532Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d595456b-6e38-4dd0-a51d-11067232a1d6 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > current-head snapshot and authorship disclosures survive the saved editor copy > retains conversation generation evidence and dated accepted-machine spans through persisted verification 238ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > current-head snapshot and authorship disclosures survive the saved editor copy > preserves structured JSON as escaped source text rather than executing or inventing a rendered document 138ms
+ ✓ server/routes/__tests__/artifact-workflow-source.test.ts > current-head snapshot and authorship disclosures survive the saved editor copy > honors canonical retained-data and withdrawn-data disposition policy for the exact artifact 67ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/artifact-workflow-source.test.ts > artifact source refusal preserves project and tenant boundaries > refuses a newly private project and revoked current membership even for an existing copy
+AssertionError: expected 400 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 400
+
+ ❯ server/routes/__tests__/artifact-workflow-source.test.ts:232:68
+    230|     }
+    231|     await db.pool.query('UPDATE organization_users SET role=$1 WHERE o…
+    232|     try { expect((await post({ ...body(source), reason })).status).toB…
+       |                                                                    ^
+    233|     finally { await db.pool.query('UPDATE organization_users SET role=…
+    234|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 34 passed (35)
+   Start at  18:28:47
+   Duration  21.29s (transform 7.95s, setup 109ms, import 6.78s, tests 14.02s, environment 1ms)
+

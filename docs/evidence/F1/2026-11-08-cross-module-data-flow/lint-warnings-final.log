@@ -1,0 +1,11 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:eslint-warning-ratchet] --since f9631c065af8760d8b879232385fb94663d19a24 (f9631c065) -- 75 lintable file(s) changed; linting both versions of each...
+
+    -1  server/routes/chat/upload.ts  (3 -> 2)
+
+[ci:eslint-warning-ratchet] net -1 warning(s) across the files changed since f9631c065af8760d8b879232385fb94663d19a24.

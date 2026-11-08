@@ -1,0 +1,23 @@
+{
+  "file": "client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx",
+  "canonicalSource": "c44a212688bcac9187b6c7e71cdaf390ffba6699",
+  "beforeSha256": "1fe4f1c38f413464497d34c36be799a2ac6910518837788e75c4f297ab50a890",
+  "afterSha256": "e3a52cd8d1c56a14dec0268adef39a0717470e6ce328d87557e5da7e170456ae",
+  "beforeMatchesCanonical": true,
+  "change": "Keep the existing Biostatistics rail-target assertion, but expect its founder-approved rail identity rather than Projects.",
+  "authority": "5144702d215053aeb879917638c636781672d585 and scripts/ci/one-product-baseline.json founderDecisions[rail:biostatistics]",
+  "red": {
+    "failed": 1,
+    "passed": 113,
+    "suites": 11
+  },
+  "productionChange": false,
+  "green": {
+    "passed": 114,
+    "suites": 11
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 0
+  }
+}

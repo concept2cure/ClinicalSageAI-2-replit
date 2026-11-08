@@ -8,11 +8,10 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { DOSSIER_READINESS_LABEL } from '../dossierReadiness';
-import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
+import { PJ_LIFECYCLE, PJ_LIFECYCLE_DEVICE } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { captureShellProjectGuard, projectStepId, readShellProject, shellProgramId, updateShellProject, useShellProject } from '../shellProject';
 import { consumeNavParams } from '../navParams';
-import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
 import { DocumentDisposition } from './DocumentDisposition';
 import { useProjectThreads, useWorkingThreads } from './projectThreads';
@@ -28,18 +27,22 @@ import { reviewStanding, type ReviewStandingGroup } from './reviewStanding';
 import { openReviewDocument } from './Review';
 import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
-import { DEVICE_FAMILY_PRODUCT_TYPES, productTypeForFilingType } from '@shared/constants/domain/product-types';
+import { isDeviceFamily, isDeviceOrDiagnosticProgram, workstreamForFilingType } from '@shared/constants/domain/product-types';
 import { isUsInd, useProgramMarkets } from './programSequence';
-import { StageBand, StageTracker } from './ProjectStages';
+import { StageTracker } from './ProjectStages';
 import { STEP_DOORS } from '../projectDoors';
 import { openProgramAction } from '../programAction';
 import { FileDropZone } from '../FileDropZone';
 import { ProjectRespond } from './ProjectRespond';
+import { ProjectObjective } from './ProjectObjective';
 import { ProjectMarkets, ProjectStatusLine, regionalPreparationReason } from './ProjectMarkets';
-import { ModuleCompletion, dossierFacts, dossierSummaryValue, useProjectDossier, type DossierState, type RowCopy } from './ProjectDossier';
+import { DossierReadinessCard, ModuleCompletion, dossierFacts, dossierSummaryValue, useProjectDossier, type DossierState, type RowCopy } from './ProjectDossier';
 import { editingCopyOf } from '../editor/editingCopy';
 import { sourceReadView } from '@shared/data-room-processing-status';
-import { ProjectTeamResponsibilities, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
+import { ProjectTeamCard, ProjectTeamDrawer, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
+import type { ProjectTeamMember } from '@shared/project-team';
+import { useAgencyInbox, type CommRow } from './AgencyInbox';
+import { isCommitmentsPayload, type CommitmentsPayload } from './CommitmentRow';
 import { ProjectSide } from './ProjectSide';
 import { ProjectClientReview } from './ProjectClientReview';
 import { ProjectTeamSharing } from './ProjectTeamSharing';
@@ -48,9 +51,10 @@ import { ProjectPlan } from './ProjectPlan';
 import { biotechPlanEntry } from './ProjectBiotechPlan';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { filingLifecycleReferenceFor } from '@shared/regulatory/filing-lifecycle-reference';
-import { ProjectSettings } from './ProjectSettings';
+import { ProjectSettings, type ProjectSettingsRequest } from './ProjectSettings';
 import { ProjectCoreWork } from './ProjectCoreWork';
-import { actionWords, enumWords } from './projectWords';
+import { actionWords, enumWords, filingTypeWords } from './projectWords';
+import { WS_LABEL } from './ProjectPortfolioFilters';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
 import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
@@ -136,8 +140,6 @@ const REGULATORY_PATH_LABEL: Record<string, string> = {
   '510k': '510(k)', de_novo: 'De Novo', pma: 'PMA', hde: 'HDE', ide: 'IDE', exempt: '510(k)-exempt',
 };
 const DEVICE_FLAG_LABEL: Record<string, string> = Object.fromEntries(DEVICE_FLAGS.map((f) => [f.id, f.label]));
-const isDeviceProgram = (productType: string | null | undefined): boolean =>
-  (DEVICE_FAMILY_PRODUCT_TYPES as readonly string[]).includes(String(productType ?? '').toLowerCase());
 
 /** GET /api/c2c/projects/:id/activity → { activity: [...] } (audit_logs). */
 interface ActivityRow {
@@ -230,9 +232,11 @@ function Anchored<T>(props: {
    and PDF viewer, and the same honest states (a failed read is an error with a
    retry, not an empty vault). Filing, uploads and version history stay in the
    Vault, which the header opens. */
-function ProjectEvidence({ pid, name, onNav, onAsk, available, monitoring, onMonitoring }: {
+function ProjectEvidence({ pid, name, onNav, onAsk, available, monitoring, onMonitoring, deviceFiling = false }: {
   pid: string; name: string | null; onNav: (id: string) => void; onAsk: (text: string) => void; available: (id: string) => boolean;
   monitoring: boolean; onMonitoring: () => void;
+  /** A device or diagnostic project files no IND, so its files have no IND document library. */
+  deviceFiling?: boolean;
 }) {
   const [toast, fireToast] = useToast();
   return (
@@ -246,7 +250,7 @@ function ProjectEvidence({ pid, name, onNav, onAsk, available, monitoring, onMon
           </button>
         )}
       </div>
-      <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} onAsk={onAsk} onNav={onNav}
+      <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} onAsk={onAsk} onNav={onNav} indLibrary={!deviceFiling}
         onOpenDocument={docId => openImportedDocument(docId, pid, onNav)} />
       <C2CToast msg={toast} />
     </section>
@@ -840,15 +844,71 @@ const WORK_SOURCE_LABEL: Record<string, string> = {
 const WORK_STATUS_TONE: Record<string, string> = { done: 'tone-ok', blocked: 'tone-warn' };
 const WORK_SHOWN = 10;
 
-function ProjectWorkPanel({ pid, title, onNav, targetId }: { pid: string | null; title: string; onNav: (id: string) => void; targetId?: string | null }) {
+/** The project's unified work, read once by the page (D3-2b, D3.md §4.10): the task panels and the Team card's
+ *  per-person lines render this one read. `version` re-reads it (after an assignment on Plan). */
+function useProjectWork(pid: string | null, version: number) {
+  const ident = pid ? encodeURIComponent(pid) : null;
+  return useLiveData<WorkViewRow>(ident ? `/api/concept2cure/projects/${ident}/unified-work` : null, [ident, version], hasKeys<WorkViewRow>('items'));
+}
+
+/** A recorded day in words, in UTC as the record keeps it: "Nov 5, 2026". */
+const dayWords = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** The Team card's work lines (D3-2b, D3.md §4.8 item 3), from the page's one work read: each member's open items by
+ *  the owner name the work records, then what no member holds. Nothing is said while the read is not in; a failed
+ *  read says so once, never "Nothing open". */
+function teamWork(work: DataState<WorkViewRow>, team: ProjectTeamMember[] | null, openPlan: () => void) {
+  if (work.loading || !team) return { workOf: undefined, workNotes: [] };
+  if (work.error || !work.data) return { workOf: undefined, workNotes: [{ text: 'Open work could not be read.' }] };
+  const open = (work.data.items ?? []).filter(item => item.status !== 'done');
+  const today = new Date().toISOString().slice(0, 10);
+  const names = new Set(team.map(member => member.name).filter(Boolean));
+  const workOf = (member: ProjectTeamMember) => {
+    const mine = open.filter(item => member.name && item.ownerName === member.name);
+    if (!mine.length) return { text: 'Nothing open', late: false };
+    const next = mine.map(item => item.dueAt?.slice(0, 10)).filter((day): day is string => Boolean(day)).sort()[0];
+    return { text: `${mine.length} open${next ? ` · next due ${dayWords(next)}` : ''}`, late: Boolean(next && next < today) };
+  };
+  const unassigned = open.filter(item => !item.ownerName).length;
+  const elsewhere = open.filter(item => item.ownerName && !names.has(item.ownerName)).length;
+  const workNotes = [
+    unassigned ? { text: `${plural(unassigned, 'open item', 'open items')} unassigned`, onOpen: openPlan } : null,
+    elsewhere ? { text: `${plural(elsewhere, 'open item', 'open items')} assigned to someone not on this list`, onOpen: openPlan } : null,
+  ].filter((note): note is { text: string; onOpen: () => void } => Boolean(note));
+  return { workOf, workNotes };
+}
+
+/** The Filing card's agency letters (D3-2b, D3.md §4.8 item 2), from the page's one inbox read: open letters and the
+ *  next response due. A read not in, or failed, says so. */
+/** The Filing card's commitments to the agency (D3-2b, D3.md §4.8 item 2): open ones, how many are overdue (the
+ *  server's effective status), and the next due date. A read not in, or failed, says so. */
+function commitmentsWords(state: DataState<CommitmentsPayload>): string {
+  if (state.loading) return 'Reading…';
+  if (state.error || !state.data) return 'Could not be read';
+  const open = state.data.commitments.filter(c => !['fulfilled', 'waived', 'released'].includes(c.effectiveStatus));
+  if (!open.length) return 'None open';
+  const overdue = open.filter(c => c.effectiveStatus === 'overdue').length;
+  const next = open.map(c => c.due_date?.slice(0, 10)).filter((day): day is string => Boolean(day)).sort()[0];
+  return `${open.length} open${overdue ? ` · ${overdue} overdue` : ''}${next ? ` · next due ${dayWords(next)}` : ''}`;
+}
+
+function lettersWords(live: { loading: boolean; error?: unknown }, comms: CommRow[]): string {
+  if (live.loading) return 'Reading…';
+  if (live.error) return 'Could not be read';
+  const open = comms.filter(c => c.closureStatus !== 'closed');
+  if (!open.length) return 'None open';
+  const due = (c: CommRow) => (c.responseClock?.state === 'dated' ? c.responseClock.dueDate : c.dueDate)?.slice(0, 10) ?? null;
+  const next = open.map(due).filter((day): day is string => Boolean(day)).sort()[0];
+  return `${open.length} open${next ? ` · next response due ${dayWords(next)}` : ''}`;
+}
+
+function ProjectWorkPanel({ pid, title, onNav, targetId, state }: {
+  pid: string | null; title: string; onNav: (id: string) => void; targetId?: string | null; state: DataState<WorkViewRow>;
+}) {
   const available = useSurfaceAvailable();
   const targetRef = useRef<HTMLDivElement>(null);
   const ident = pid ? encodeURIComponent(pid) : null;
-  const state = useLiveData<WorkViewRow>(
-    ident ? `/api/concept2cure/projects/${ident}/unified-work` : null,
-    [ident],
-    hasKeys<WorkViewRow>('items'),
-  );
   useEffect(() => {
     if (!state.loading && !state.error && targetId) {
       targetRef.current?.focus();
@@ -1179,8 +1239,13 @@ function ProjectQuality({ pid, onNav }: { pid: string; onNav: (id: string) => vo
    show it. The one remaining message is the standing intro — framing, not a
    reply, and it says nothing about what has been done. */
 
-function StartConversation({ productName, onNav }: { productName: string; onNav: (id: string) => void }) {
+function StartConversation({ onNav, starters = [] }: {
+  productName: string; onNav: (id: string) => void;
+  /** At most three suggestions for the open step (D3-1, D3.md §4.4). A suggestion fills the box; it never sends. */
+  starters?: string[];
+}) {
   const [draft, setDraft] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   /* docs/design/ONE_ANA_ONE_CANVAS.md §2.3: a project's page starts a
      conversation in the project, as Claude's project page does. It is not a
@@ -1188,7 +1253,10 @@ function StartConversation({ productName, onNav }: { productName: string; onNav:
      "Open full thread" link and a message in AnA's voice that no model wrote,
      a second place on the page that looked like talking to AnA. Now it says
      what it does, and a question typed here starts a new conversation in
-     this project, where AnA answers it. */
+     this project, where AnA answers it. D3-1 (2026-11-06): Claude's project
+     composer, "How can I help with this project?", with the step's
+     suggestions under it; the "Start a conversation in …" heading is gone
+     (`productName` stays for the conversation the question seeds). */
   const start = () => {
     const text = draft.trim();
     if (!text) return;
@@ -1197,25 +1265,32 @@ function StartConversation({ productName, onNav }: { productName: string; onNav:
   };
 
   return (
-    <section className="pj-convo" aria-labelledby="pj-start-h">
-      <div className="pj-start-h">
-        <h2 id="pj-start-h">Start a conversation in {productName}</h2>
-        <span className="sec-sub">AnA works with this project&apos;s sources, documents and submissions.</span>
-      </div>
+    <section className="pj-convo" aria-label="Ask AnA about this project">
       <div className="pj-composer">
         <textarea
-          rows={2}
-          aria-labelledby="pj-start-h"
-          placeholder={'Ask AnA to draft, reconcile or review…'}
+          ref={textareaRef}
+          rows={3}
+          aria-label="Ask AnA about this project"
+          aria-describedby="pj-compose-d"
+          placeholder="How can I help with this project?"
           value={draft}
           onChange={e => setDraft(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); start(); } }}
         />
+        <span id="pj-compose-d" className="sr-only">AnA works with this project&apos;s sources, documents and submissions. A question starts a new conversation in this project.</span>
+        {/* No `<span className="sp" />` spacer: `.sp` is the surface page's class, whose 128px of padding made the
+            send row the composer's tallest part (D3-1 walk). The row aligns its button to the end. */}
         <div className="pj-composer-row">
-          <span className="sp" />
           <button className="pj-comp-send" aria-label="Start the conversation" disabled={!draft.trim()} onClick={start}>{I.arrowUp}</button>
         </div>
       </div>
+      {starters.length > 0 && (
+        <div className="sp-starters pj-starters" role="group" aria-label="Suggestions">
+          {starters.map((text) => (
+            <button key={text} type="button" className="sp-starter" onClick={() => { setDraft(text); textareaRef.current?.focus(); }}>{text}</button>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -1244,7 +1319,7 @@ function ProjectConversations({ pid, onNav }: { pid: string; onNav: (id: string)
   };
   return (
     <section className="pj-sec" aria-labelledby="pj-threads-h">
-      <div className="pj-sec-h"><h2 id="pj-threads-h">Conversations</h2><span className="sec-sub">yours on this project, to resume</span></div>
+      <div className="pj-sec-h"><h2 id="pj-threads-h">Conversations</h2><span className="sec-sub">Yours on this project</span></div>
       <Anchored
         state={threads.state}
         loadingText="Loading conversations…"
@@ -1260,24 +1335,21 @@ function ProjectConversations({ pid, onNav }: { pid: string; onNav: (id: string)
           <>
             <div className="pj-files" data-testid="pj-threads">
               {threads.shown.map((t) => (
-                <button key={t.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => resumeThread(t.id)} title="Resume this conversation">
-                  <div className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</div>
-                  <div className="pj-file-m">
-                    {[fmtWhen(t.updated_at || t.created_at), working.has(t.id) ? workingMarkerLine(working.get(t.id)!) : 'Resume']
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </div>
+                <button key={t.id} type="button" className="pj-file pj-thread" onClick={() => resumeThread(t.id)} title="Resume this conversation">
+                  <span className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</span>
+                  {/* AnA's working marker while it works in the conversation, else when it last moved. */}
+                  <span className="pj-file-m">{working.has(t.id) ? workingMarkerLine(working.get(t.id)!) : fmtWhen(t.updated_at || t.created_at)}</span>
                 </button>
               ))}
             </div>
             {workingRead.failed && (
-              <div className="sec-sub" role="status" style={{ fontSize: 12, marginTop: 6 }}>{WORKING_UNREADABLE_LINE}</div>
+              <div className="sec-sub" role="status">{WORKING_UNREADABLE_LINE}</div>
             )}
             {threads.olderError && (
-              <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>{threads.olderError}</div>
+              <div className="sp-tone-warn" role="status">{threads.olderError}</div>
             )}
             {threads.hasOlder && (
-              <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px', marginTop: 8 }} disabled={threads.loadingOlder} onClick={threads.showOlder}>
+              <button type="button" className="btn ghost small pj-older" disabled={threads.loadingOlder} onClick={threads.showOlder}>
                 {threads.loadingOlder ? 'Loading older conversations…' : 'Show older conversations'}
               </button>
             )}
@@ -1486,8 +1558,39 @@ const filingCopyIn = (docs: ListRead) => (filingId: string): RowCopy => {
   return editingCopyOf(rows, filingId, (d) => d.filingDocumentId);
 };
 
+/** The project's audit read, every act with its actor, its words and the reason recorded with it (21 CFR 11.10(e)).
+ *  Since D3-2b it is the Records card's last disclosure, "Activity", on every step (it was a section of Author). */
+function ProjectActivity({ activityState }: { activityState: DataState<{ activity: ActivityRow[] }> }) {
+  return (
+    <Anchored
+      state={activityState}
+      loadingText="Loading activity…"
+      errorTitle="Couldn't load project activity"
+      errorHint="The project audit read didn't respond. Sign in and retry, or check the service is reachable."
+      emptyTitle="No recorded activity yet"
+      emptyHint="Audited actions on this project appear here as they happen."
+      isEmpty={(d) => (d.activity ?? []).length === 0}
+      render={(d) => (
+        <div className="pj-acts">
+          {(d.activity ?? []).map((a, i) => (
+            <div key={i} className="pj-act">
+              <span className="pj-act-w">{a.actor_name ?? (a.actor_id != null ? 'User ' + a.actor_id : 'System')}</span>
+              <span className="pj-act-t">
+                {activityLabel(a)}
+                {/* The reason recorded with the act, available for review (21 CFR 11.10(e)). */}
+                {a.reason ? <span data-testid="pj-act-reason">. Reason: {a.reason}</span> : null}
+              </span>
+              <span className="pj-act-n">{fmtWhen(a.occurred_at) ?? ''}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    />
+  );
+}
+
 function AuthorWorkspace({
-  pid, dossier, onNav, onAsk, activityState, docs, onRetryDocs, onOpenDoc, cmcComposes,
+  pid, dossier, onNav, onAsk, docs, onRetryDocs, onOpenDoc, cmcComposes,
 }: {
   /** regulatory_programs UUID — scopes the records to this project. */
   pid: string | null;
@@ -1495,7 +1598,6 @@ function AuthorWorkspace({
   dossier: DossierState;
   onNav: (id: string) => void;
   onAsk: (question: string) => void;
-  activityState: DataState<{ activity: ActivityRow[] }>;
   /** GET /api/authoring/docs?programId= — the project's documents. */
   docs: ListRead;
   onRetryDocs: () => void;
@@ -1510,48 +1612,14 @@ function AuthorWorkspace({
     <>
         <ProjectDocuments pid={pid} read={docs} onRetry={onRetryDocs} onOpen={onOpenDoc} onNav={onNav} available={available} cmcComposes={cmcComposes} />
 
-        {/* Module completion, from the same dossier read as the card (F23). */}
+        {/* The dossier's readiness detail, beside the modules it measures (D3-2a: it left the side column, whose Filing
+            card now carries the figure on every step). */}
+        <DossierReadinessCard read={dossier} copyFor={copyFor} onOpen={onOpenDoc} />
+
+        {/* Module completion, from the same dossier read as the card (F23). The project's records are the Records
+            card in Project knowledge, on every step (D3-2a). */}
         <ModuleCompletion read={dossier} copyFor={copyFor} onOpen={onOpenDoc} onAsk={onAsk} />
 
-        {/* Records in this project — REAL: GET /:id/records, every store read
-            by its project key (PF-17). A store it cannot read says so. */}
-        {pid && (
-          <section className="pj-sec" aria-label="Records in this project">
-            <div className="pj-sec-h"><h2>Records in this project</h2></div>
-            <ProjectRecords pid={pid} />
-          </section>
-        )}
-
-        {/* The project's audit read. Its team and tasks are on Plan (CLIENT_JOURNEY pass 3). */}
-        <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Activity</h2></div>
-          <div>
-            <Anchored
-              state={activityState}
-              loadingText="Loading activity…"
-              errorTitle="Couldn't load project activity"
-              errorHint="The project audit read didn't respond. Sign in and retry, or check the service is reachable."
-              emptyTitle="No recorded activity yet"
-              emptyHint="Audited actions on this project appear here as they happen."
-              isEmpty={(d) => (d.activity ?? []).length === 0}
-              render={(d) => (
-                <div className="pj-acts">
-                  {(d.activity ?? []).map((a, i) => (
-                    <div key={i} className="pj-act">
-                      <span className="pj-act-w">{a.actor_name ?? (a.actor_id != null ? 'User ' + a.actor_id : 'System')}</span>
-                      <span className="pj-act-t">
-                        {activityLabel(a)}
-                        {/* The reason recorded with the act, available for review (21 CFR 11.10(e)). */}
-                        {a.reason ? <span data-testid="pj-act-reason">. Reason: {a.reason}</span> : null}
-                      </span>
-                      <span className="pj-act-n">{fmtWhen(a.occurred_at) ?? ''}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            />
-          </div>
-        </section>
     </>
   );
 }
@@ -1570,13 +1638,13 @@ function ProjectReportsDoor({ onNav }: { onNav: (id: string) => void }) {
   const available = useSurfaceAvailable();
   const programId = shellProgramId(useShellProject());
   if (!programId || !available('insights')) return null;
+  /* The Work areas card's last row (D3-2a, D3.md §4.8 item 4): "Reports", with the full sentence as its name. */
   return (
-    <div className="pj-about-row">
-      {/* The name is a sentence, so it wraps at phone width rather than overflow. */}
-      <button type="button" className="pj-about-link" onClick={() => onNav('insights')}>
-        {REPORTS_DOOR} {I.right}
-      </button>
-    </div>
+    <button type="button" className="pj-work-area" aria-label={REPORTS_DOOR} title={REPORTS_DOOR} onClick={() => onNav('insights')}>
+      <span className="pj-work-area-ic" aria-hidden="true">{I.barChart}</span>
+      <span className="pj-work-area-l">Reports</span>
+      {I.right}
+    </button>
   );
 }
 
@@ -1592,22 +1660,28 @@ function openMarketOnSubmit(chooseStage: (stage: string) => void, submissionId: 
   });
 }
 
-/** The line under the project's name. Stored values are said in words
- *  (projectWords.ts): it read "active · priority: high · planning" (2026-10-31). */
-function ProjectTags({ tags: t }: { tags: {
-  clientType: string | null; submissionType: string | null; regionLabel: string | null; indication: string | null;
-  status: string | null; priority: string | null; phase: string | null;
-} }) {
+/* The byline under the project's name (D3-1, D3.md §4.2): the filing in words, its region, the indication, and
+   the status and priority only when they say something (not "active", not medium or low). The project code, the
+   client type, the phase and an ordinary status or priority are facts in Project knowledge, not the byline.
+   Stored values are said in words (projectWords.ts): it read "active · priority: high · planning" (2026-10-31). */
+type BylineTags = { filing: string | null; regionLabel: string | null; indication: string | null; status: string | null; priority: string | null };
+/** The byline's words, each with its tone: the status only when it is not "active", the priority only when high. */
+function bylineChips(t: BylineTags): Array<{ text: string; tone: string }> {
+  const chips: Array<{ text: string; tone: string }> = [];
+  for (const text of [t.filing, t.regionLabel, t.indication]) if (text) chips.push({ text, tone: '' });
+  const status = t.status && t.status !== 'active' ? enumWords(t.status) : null;
+  if (t.status && status) chips.push({ text: status, tone: PROGRAM_STATUS_TONE[t.status] ?? 'tone-idle' });
+  if (t.priority === 'high' || t.priority === 'critical') chips.push({ text: `${enumWords(t.priority)} priority`, tone: PRIORITY_TONE[t.priority] ?? 'tone-idle' });
+  return chips;
+}
+
+function ProjectTags({ tags }: { tags: BylineTags }) {
+  const chips = bylineChips(tags);
+  if (chips.length === 0) return null;
   return (
-    <div className="pj-tags">
-      {t.clientType && <span className="rd-chip tone-ai">{t.clientType}</span>}
-      {t.submissionType && <span className="rd-chip tone-idle">{t.submissionType}</span>}
-      {t.regionLabel && <span className="rd-chip tone-idle">{t.regionLabel}</span>}
-      {t.indication && <span className="rd-chip tone-idle">{t.indication}</span>}
-      {t.status && <span className={`rd-chip ${PROGRAM_STATUS_TONE[t.status] ?? 'tone-idle'}`}>{enumWords(t.status)}</span>}
-      {t.priority && <span className={`rd-chip ${PRIORITY_TONE[t.priority] ?? 'tone-idle'}`}>{enumWords(t.priority)} priority</span>}
-      {t.phase && <span className="rd-chip tone-idle">{enumWords(t.phase)}</span>}
-    </div>
+    <p className="pj-tags pj-byline">
+      {chips.map((c) => <span key={c.text} className={c.tone ? `rd-chip ${c.tone}` : 'rd-chip'}>{c.text}</span>)}
+    </p>
   );
 }
 
@@ -1619,14 +1693,13 @@ function ProjectHeaderDoors({ pid, prog, deviceFiling, cmcComposes, available, o
   available: (id: string) => boolean; onNav: (id: string) => void;
 }) {
   const read = pid && prog?.id === pid ? prog : null;
+  /* The Reports row is passed only when it will show, so a card with nothing to open is not drawn. */
+  const reports = Boolean(shellProgramId(useShellProject())) && available('insights');
   return (
-    <>
-      {read && (
-        <ProjectCoreWork programId={pid} available={available} onNav={onNav}
-          track={{ deviceFiling, riskBasedMonitoring: read.riskBasedMonitoring === true, cmcComposes }} />
-      )}
-      <ProjectReportsDoor onNav={onNav} />
-    </>
+    <ProjectCoreWork programId={pid} available={available} onNav={onNav}
+      track={read ? { deviceFiling, riskBasedMonitoring: read.riskBasedMonitoring === true, cmcComposes } : null}>
+      {reports && <ProjectReportsDoor onNav={onNav} />}
+    </ProjectCoreWork>
   );
 }
 
@@ -1689,10 +1762,31 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
   const [metadataEpoch, setMetadataEpoch] = useState(0);
   const projectPath = pid ? `/api/c2c/projects/${pid}` : null;
-  const progState = useLiveData<ProgramRow>(projectPath, [projectPath, metadataEpoch], undefined,
+  const progRead = useLiveData<ProgramRow>(projectPath, [projectPath, metadataEpoch], undefined,
     { key: JSON.stringify([pid, projectSession.actor, projectSession.key, metadataEpoch]), current: projectSession.sameRevision });
+  /* A read retired because the session changed under it (a sign-in being
+     adopted: useLiveData's READ_CONTEXT_CHANGED) is not a project that failed
+     to load. The page waits for the new session's read, as while loading,
+     rather than saying the record could not be read and dropping the
+     project's composer. */
+  const progState = progRead.code === 'READ_CONTEXT_CHANGED' ? { ...progRead, error: undefined, loading: true } : progRead;
   const teamActorScope = `${teamActor?.organizationId ?? ''}:${teamActor?.id ?? ''}`;
   const { state: teamState, reload: reloadTeam, verifiedProjectId: sharingProjectId } = useProjectTeam(pid, teamActorScope);
+  /* The reads several parts of the page render (D3-2b, D3.md §4.10): one read each, never one per reader. */
+  const [workVersion, setWorkVersion] = React.useState(0);
+  const work = useProjectWork(pid, workVersion);
+  const [inboxToast, fireInbox] = useToast();
+  const inbox = useAgencyInbox(pid, fireInbox);
+  /* The project's commitments to the agency, by the verified integer project id the route takes (D3.md §4.10;
+     null until the team read verifies it). The Filing card says them; Respond's Commitments (D3-4) will read the same. */
+  const commitPath = sharingProjectId !== null ? `/api/concept2cure/projects/${sharingProjectId}/commitments` : null;
+  const commitments = useLiveData<CommitmentsPayload>(commitPath, [commitPath], isCommitmentsPayload);
+  /* The Team drawer (D3.md §4.9), opened by the Team card's "Manage"; a project switch closes it. */
+  const [teamOpen, setTeamOpen] = React.useState(false);
+  React.useEffect(() => { setTeamOpen(false); }, [pid]);
+  /* Project settings opened from elsewhere on the page (About's "Edit"), focused on the field it names. */
+  const [settingsRequest, setSettingsRequest] = React.useState<ProjectSettingsRequest>({ n: 0 });
+  const openSettings = (focus?: ProjectSettingsRequest['focus']) => setSettingsRequest(previous => ({ n: previous.n + 1, focus }));
   const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null, [pid, metadataEpoch]);
   /* The dossier (FILING_SPINE F23): the readiness card, the module rows and
      what AnA is told, from one read. */
@@ -1748,7 +1842,9 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
   };
   const productName = sel?.product || prog?.product_name || (title ? title.split(' ')[0] : 'this project');
   const desc = prog?.description ?? null;
-  const clientType = sel?.ws ?? null;
+  /* The list carries the client type it projected (workstreamSqlCase); a page opened by its address derives it the
+     same way from the project's own read, so it is never "not recorded" for a filing whose type says it (D3-1 walk). */
+  const clientType = sel?.ws ?? workstreamForFilingType(prog?.program_type, prog?.product_type) ?? null;
   /* A filing document class is named by its label ("Prior Approval
      Supplement"), never its key ("pas"). */
   const submissionType = sel?.code || prog?.code || filingDocumentClassOf(prog?.program_type)?.label || prog?.program_type || null;
@@ -1772,15 +1868,15 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
      its class, path, product code, regulation, panel, predicate and flags —
      each field stated as absent when the row lacks it; a drug program shows
      the drug facts and no device block. */
-  const deviceProgram = isDeviceProgram(prog?.product_type);
-  /* A device or diagnostic filing: the program's product type, or a
-     selection made from the MDX workspace (the old Workspace grid's medtech
-     segment). Only a project that is read and is neither is an eCTD filing. */
+  const deviceProgram = isDeviceFamily(prog?.product_type);
+  /* A device or diagnostic filing: the program's own record (its product
+     type or filing class, isDeviceOrDiagnosticProgram, the rule Submission
+     Center and the market refusal read), or a selection made from the MDX
+     workspace (the old Workspace grid's medtech segment). Only a project that
+     is read and is neither is an eCTD filing. */
   const regionalApplication = regionalDeviceApplicationClassOf(prog?.program_type);
-  const deviceFiling = deviceProgram || isDeviceProgram(productTypeForFilingType(prog?.program_type)) || clientType === 'MDX' || !!regionalApplication;
-  const lifecycle = deviceFiling ? PJ_LIFECYCLE.map(item => item.id === 'plan' ? { ...item, now: item.nowDevice ?? item.now } : item.id === 'author'
-    ? { ...item, blurb: 'Author filing documents from the project’s device or diagnostic evidence', now: item.nowDevice ?? item.now }
-    : item.id === 'submit' ? { ...item, blurb: 'Assemble eSTAR or the applicable technical documentation', now: item.nowDevice ?? item.now } : item) : PJ_LIFECYCLE;
+  const deviceFiling = isDeviceOrDiagnosticProgram(prog) || clientType === 'MDX';
+  const lifecycle = deviceFiling ? PJ_LIFECYCLE_DEVICE : PJ_LIFECYCLE;
   /* A filing document class (a PAS, a CSR, a meeting package) is authored
      here and never built as a sequence, so it is no eCTD filing either
      (shared/regulatory/filing-document-classes.ts; review finding, 2026-10-18). */
@@ -1804,16 +1900,9 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
     const productType = prog?.product_type;
     if (pid && productType) updateShellProject({ productType });
   }, [pid, prog?.product_type]);
-  /* A project opened by its link alone (a reload, a shared link) is in the
-     shell by id, so the top bar could only say "Open project" while this page
-     named it. Once the read answers for this project, it names it there, as
-     Projects does on opening one; a name the shell already has is kept. */
-  useEffect(() => {
-    if (!pid || prog?.id !== pid) return;
-    const live = readShellProject();
-    if (!live || String(live.id) !== pid || live.title || live.code) return;
-    updateShellProject({ ...(prog.name ? { title: prog.name } : {}), ...(prog.code ? { code: prog.code } : {}) });
-  }, [pid, prog?.id, prog?.name, prog?.code]);
+  /* A project opened by its link alone is named in the shell by the top bar's
+     project chip (Shell.tsx useNameProjectOpenedById), on every screen, not
+     only this one. */
 
 
   const noProject = !pid;
@@ -1968,22 +2057,43 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
     if (step || target) chooseStage(step ?? 'review');
   }, [pid, chooseStage]);
 
+  /* The filing in words for the byline ("IND", "510(k)"), not the project's code (D3.md §4.2). */
+  const filingWords = filingTypeWords(prog?.program_type) ?? filingDocumentClassOf(prog?.program_type)?.label ?? submissionType;
+  /* Claude's project header (D3-1, D3.md §4.2–4.3): the name in the serif with its settings beside it, one quiet
+     byline, the description, then the objective of record (S1). It heads the main column when the project
+     reads, and stands above the empty or error state when it does not. */
+  const header = (
+    <header className="pj-top">
+      <div className="pj-top-l">
+        <div className="pj-title-row">
+          {/* The surface's own name when there is no project name to show —
+              a label for the screen, not a name posing as a project's. */}
+          <h1 className="pj-title">{title ?? 'Project home'}</h1>
+          {pid && <ProjectSettings programId={pid} request={settingsRequest} onSaved={() => setMetadataEpoch(value => value + 1)} />}
+        </div>
+        {progState.loading && <p role="status" className="pj-byline">Loading project…</p>}
+        <ProjectTags tags={{ filing: filingWords, regionLabel, indication, status, priority }} />
+        {desc && <p className="pj-desc">{desc}</p>}
+        {pid && prog?.id === pid && <ProjectObjective programId={pid} canEdit={prog.canChange !== false} onAsk={onAsk} />}
+      </div>
+    </header>
+  );
+  /* The composer's suggestions for the open step (D3.md §4.4), at most three: the step's own question (none on
+     Submit for a filing that builds no sequence; on Plan, which documents it needs when no plan is listed), then
+     the due work. The band that said "What to do now" is retired; this is where its guidance went. */
+  const sequenced = !documentClass && !regionalApplication;
+  const planListed = usInd || (!!pid && !!biotechPlanEntry(prog, pid)) || (deviceFiling && prog?.id === pid && !!mdxProjectPlan(prog));
+  const openStep = lifecycle.find(s => s.id === stage);
+  const stepStarter = stage === 'submit' && !sequenced ? null
+    : stage === 'plan' && !planListed ? 'Which documents does this filing need?'
+      : openStep?.starter ?? null;
+  const starters = [stepStarter, 'What is due this week, and who has it?'].filter((v): v is string => Boolean(v));
+
   return (
     <div className="page-inner pj">
       <button className="pj-back" onClick={() => onNav('projects')}>{I.left} All projects</button>
 
-      <div className="pj-top">
-        <div className="pj-top-l">
-          {/* The surface's own name when there is no project name to show —
-              a label for the screen, not a name posing as a project's. */}
-          <h1 className="pj-title">{title ?? 'Project home'}</h1>
-          {progState.loading && <div role="status" className="pj-desc" style={{ color: 'var(--text-400)' }}>Loading project…</div>}
-          {desc && <div className="pj-desc">{desc}</div>}
-          <ProjectTags tags={{ clientType, submissionType, regionLabel, indication, status, priority, phase }} />
-        </div>
-        {pid && <ProjectSettings programId={pid} onSaved={() => setMetadataEpoch(value => value + 1)} />}
-      </div>
-
+      {(noProject || progState.error) && header}
       {noProject ? (
         <EmptyState
           icon={I.folder}
@@ -2001,16 +2111,17 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
       ) : (
         <div className="pj-grid">
           <div className="pj-main">
+          {header}
           {/* Claude's project page (founder, 2026-11-01): the conversation with
               AnA first, then the work. The composer sits outside the step
               switch, so a half-typed message survives a change of step. */}
-          {pid && <StartConversation productName={productName} onNav={onNav} />}
+          {pid && <StartConversation productName={productName} onNav={onNav} starters={starters} />}
+          {/* The project's conversations, under the composer as Claude lists them (D3.md §4.5). */}
+          {pid && <ProjectConversations pid={pid} onNav={onNav} />}
           {/* A lifecycle belongs to a project; with none selected nothing here
               renders (the empty state above stands instead). */}
           <StageTracker stage={stage} setStage={chooseStage} lifecycle={lifecycle} />
-          {/* A filing that builds no sequence: NotSequencedState says what its Submit is. */}
-          <StageBand stage={stage} lifecycle={lifecycle} onStage={chooseStage} sequenced={!documentClass && !regionalApplication}
-            planListed={usInd || !!biotechPlanEntry(prog, pid) || (deviceFiling && prog?.id === pid && !!mdxProjectPlan(prog))} />
+          {openStep && <p className="pj-step-blurb">{openStep.blurb}</p>}
           {/* Plan — what the filing needs, who does it and by when, then the
               team and the project's tasks, moved from Author (pass 3). */}
           {stage === 'plan' && pid && (
@@ -2023,13 +2134,8 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                 requestAnimationFrame(() => document.querySelector('.pj-lc')?.scrollIntoView?.({ block: 'start', behavior: 'smooth' }));
               }}
               onOpenDocument={docId => openDocument({ id: docId } as BuiltDocument)}
-              team={<section className="pj-sec">
-                <div className="pj-sec-h"><h2>Team</h2></div>
-                <ProjectTeamResponsibilities programId={pid} state={teamState} onRetry={reloadTeam} />
-                {sharingProjectId !== null && <ProjectTeamSharing programId={pid} projectId={sharingProjectId}
-                  suspended={teamState.loading || Boolean(teamState.error)} onChanged={reloadTeam} />}
-              </section>}
-              tasks={<ProjectWorkPanel pid={pid} title="Tasks" onNav={onNav} />} />
+              onWorkChanged={() => setWorkVersion(value => value + 1)}
+              tasks={<ProjectWorkPanel pid={pid} title="Tasks" onNav={onNav} state={work} />} />
           )}
 
           {/* Evidence — the project's files, then its data room: every way a
@@ -2037,7 +2143,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
               room sat under Author. */}
           {stage === 'evidence' && pid && (
             <div className="pj-stagebody">
-              <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available}
+              <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available} deviceFiling={deviceFiling}
                 monitoring={prog?.id === pid && prog.riskBasedMonitoring === true && !progState.loading && !progState.error}
                 onMonitoring={() => { const bearer = getAuthToken(); if (bearer && monitoringMounted.current && monitoringCurrent() && projectSession.sameRevision() && authService.captureSessionReadGuard(bearer).current()) onNav('rbm'); }} />
               <DataRoom key={pid} pid={pid} onNav={onNav} onAsk={ask} />
@@ -2060,7 +2166,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
             <div className="pj-stagebody">
               {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
               {pid && available('quality') && <ProjectQuality key={pid} pid={pid} onNav={onNav} />}
-              <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} targetId={workTarget} />
+              <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} targetId={workTarget} state={work} />
               {/* What the client sees of this project's work (the Client Review
                   Room), for this project only: the device portfolio drew it for
                   the whole organization until it folded into Projects (D2, fold
@@ -2072,7 +2178,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
 
           {/* Respond: add the agency's letter, draft the answer from it with
               AnA, start the response sequence (F15). */}
-          {stage === 'respond' && pid && <ProjectRespond pid={pid} markets={markets} onNav={onNav} onAsk={ask} />}
+          {stage === 'respond' && pid && <ProjectRespond pid={pid} markets={markets} onNav={onNav} onAsk={ask} inbox={inbox} />}
 
           {/* Author — the project's documents, each opened by id, then module
               completion, records and activity. */}
@@ -2082,7 +2188,6 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
               dossier={dossier}
               onNav={onNav}
               onAsk={ask}
-              activityState={activityState}
               docs={docsRead}
               onRetryDocs={reloadDocs}
               onOpenDoc={openDocument}
@@ -2094,15 +2199,27 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
           {/* Beside every step (CLIENT_JOURNEY pass 4, decision 5): AnA's start box and the conversations held on
               this project. The steps come first; this column is outside the step switch, so a half-typed message
               survives a change of step (FILING_SPINE.md §2). Author adds its readiness and skills cards. */}
-          <aside className="pj-side pj-step-side" aria-label="About this project, and its conversations">
+          <aside className="pj-side" aria-labelledby="pj-knowledge-h">
+            <h2 id="pj-knowledge-h" className="pj-side-h">Project knowledge</h2>
             {/* Like Claude's project knowledge: what the project is, where its
                 filing stands, and its conversations, beside the work. */}
             <section className="pj-about" aria-label="About this project">
+              {/* "Edit" opens Project settings on the description (D3.md §4.8 item 1), for a person who may change it. */}
+              <div className="pj-card-h"><h3>About</h3>
+                {prog && pid && prog.id === pid && prog.canChange !== false && (
+                  <button type="button" className="pj-card-h-go" aria-haspopup="dialog" aria-label="Edit project details" onClick={() => openSettings('description')}>Edit</button>
+                )}</div>
               {prog && (
                 <section className="pj-facts" aria-label="Project identity">
                   <dl className="pj-fact"><dt>Client</dt><dd>{clientName ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
                   <dl className="pj-fact"><dt>Product</dt><dd>{prog.product_name ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
                   <dl className="pj-fact"><dt>Indication</dt><dd>{indication ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  {/* The byline's former facts (D3-1, zero capability loss; D3.md §4.8 item 1). */}
+                  <dl className="pj-fact"><dt>Client type</dt><dd>{clientType ? (WS_LABEL[clientType] ?? enumWords(clientType)) : <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Code</dt><dd>{sel?.code || prog.code || <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Phase</dt><dd>{phase ? enumWords(phase) : <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Status</dt><dd>{status ? enumWords(status) : <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Priority</dt><dd>{priority ? enumWords(priority) : <span className="pj-fact-none">not recorded</span>}</dd></dl>
                   {deviceProgram ? (
                     <>
                       <dl className="pj-fact"><dt>Device class</dt><dd>{prog.device_class ? `Class ${prog.device_class}` : <span className="pj-fact-none">not recorded</span>}</dd></dl>
@@ -2124,15 +2241,47 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                   )}
                 </section>
               )}
-              <ProjectHeaderDoors pid={pid} prog={prog} deviceFiling={deviceFiling} cmcComposes={cmcComposes} available={available} onNav={onNav} />
-              {pid && !progState.error && (
+            </section>
+            {/* Filing (D3-2a, D3.md §4.8 item 2): where the filing stands, on every step. The dossier's figure opens
+                Author, where its detail is; each market's line opens Submit at its verdict. */}
+            {pid && !progState.error && (
+              <section className="pj-card" aria-labelledby="pj-filing-h">
+                <div className="pj-card-h"><h3 id="pj-filing-h">Filing</h3></div>
+                {/* Each row's name says label and value apart ("Dossier readiness: 0%"); the spans alone ran together. */}
+                <button type="button" className="pj-k-row" aria-label={`${DOSSIER_READINESS_LABEL}: ${dossierSummaryValue(dossier)}`} onClick={() => chooseStage('author')}>
+                  <span className="pj-k-row-l">{DOSSIER_READINESS_LABEL}</span>
+                  <span className="pj-k-row-v">{dossierSummaryValue(dossier)}</span>
+                  {I.right}
+                </button>
                 <ProjectStatusLine markets={markets} documentClass={documentClass} regionalApplication={regionalApplication} reviews={{ ...reviews, cap: PROJECT_REVIEWS_LIMIT, inReview: isOutForReview }}
                   onOpenMarket={(submissionId) => openMarketOnSubmit(chooseStage, submissionId)} />
-              )}
-            </section>
-            {pid && <ProjectConversations pid={pid} onNav={onNav} />}
-            {stage === 'author' && <ProjectSide pid={pid} dossier={dossier} copyFor={filingCopyIn(docsRead)} onOpenDoc={openDocument} onAsk={onAsk} />}
+                <button type="button" className="pj-k-row" aria-label={`Agency letters: ${lettersWords(inbox.live, inbox.comms)}`} onClick={() => chooseStage('respond')}>
+                  <span className="pj-k-row-l">Agency letters</span>
+                  <span className="pj-k-row-v">{lettersWords(inbox.live, inbox.comms)}</span>
+                  {I.right}
+                </button>
+                {commitPath && (
+                  <button type="button" className="pj-k-row" aria-label={`Commitments: ${commitmentsWords(commitments)}`} onClick={() => chooseStage('respond')}>
+                    <span className="pj-k-row-l">Commitments</span>
+                    <span className="pj-k-row-v">{commitmentsWords(commitments)}</span>
+                    {I.right}
+                  </button>
+                )}
+              </section>
+            )}
+            {/* The team, on every step (D3-3; it left Plan). "Manage" opens the Team drawer. */}
+            {pid && <ProjectTeamCard programId={pid} state={teamState} onRetry={reloadTeam} onManage={() => setTeamOpen(true)}
+              {...teamWork(work, teamState.data?.team ?? null, () => chooseStage('plan'))} />}
+            <C2CToast msg={inboxToast} />
+            <ProjectHeaderDoors pid={pid} prog={prog} deviceFiling={deviceFiling} cmcComposes={cmcComposes} available={available} onNav={onNav} />
+            {/* What AnA knows, the skills it follows here, and the project's records: on every step (D3-2a). */}
+            <ProjectSide pid={pid} onAsk={onAsk} activity={<ProjectActivity activityState={activityState} />} />
           </aside>
+          {teamOpen && pid && (
+            <ProjectTeamDrawer programId={pid} state={teamState} onRetry={reloadTeam} onClose={() => setTeamOpen(false)}
+              sharing={sharingProjectId !== null && <ProjectTeamSharing programId={pid} projectId={sharingProjectId}
+                suspended={teamState.loading || Boolean(teamState.error)} onChanged={reloadTeam} />} />
+          )}
         </div>
       )}
     </div>

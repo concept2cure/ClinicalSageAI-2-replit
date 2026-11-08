@@ -76,6 +76,9 @@ export const FOLDED_MODULE_SUCCESSORS: Readonly<Record<string, string>> = Object
   // its MDX filter; projects is packaged at free, below device-workstream's
   // standard, so a plan that included the folded module includes it.
   'device-workstream': 'projects',
+  // P-39 step 4 (2026-10-30, catalog row retired 2026-11-05): Agency Meetings retired into
+  // Communication's Meetings tab; communication-center is packaged at standard, the folded module's tier.
+  'agency-meetings': 'communication-center',
 });
 
 /** Folded screens with no catalogue row ever, so no subscription to carry. */

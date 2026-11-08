@@ -1,0 +1,102 @@
+{
+  "baseline": "f9631c065af8760d8b879232385fb94663d19a24",
+  "pass": true,
+  "files": [
+    {
+      "file": "shared/authoring/csr-scientific-review.ts",
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "currentErrors": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/ana/csr-edited-section.ts",
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "currentErrors": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/ana/csr-saved-evidence.ts",
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "currentErrors": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/csr/unsupplied-statistics.ts",
+      "baselineWarnings": 1,
+      "currentWarnings": 1,
+      "currentErrors": 0,
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 251,
+          "message": "Function 'unsupportedCsrDeathCounts' has a complexity of 19. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/csrEvidenceMap.ts",
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "currentErrors": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/csr-scientific-review-core.ts",
+      "baselineWarnings": 3,
+      "currentWarnings": 3,
+      "currentErrors": 0,
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 70,
+          "message": "Function 'parseScientificReviewSubmission' has a complexity of 47. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 118,
+          "message": "Arrow function has a complexity of 19. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 161,
+          "message": "Function 'prepareScientificReviewReceipt' has a complexity of 35. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "file": "server/services/csr/__tests__/unsupplied-statistics.test.ts",
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "currentErrors": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/ana/__tests__/csr-edited-section.test.ts",
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "currentErrors": 0,
+      "messages": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts",
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "currentErrors": 0,
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/csr-claim-in-context.test.ts",
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "currentErrors": 0,
+      "messages": []
+    }
+  ]
+}

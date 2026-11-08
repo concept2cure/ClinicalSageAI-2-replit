@@ -11,7 +11,7 @@ import type { VaultVersionLifecycle } from '../vault/vault-lifecycle';
 
 export const reportPackageInputSchema = z.object({
   legalDocumentIds: z.array(z.string().trim().min(1).max(200)).min(1).max(50),
-  variantId: z.string().uuid().optional(),
+  variantId: z.string().guid().optional(),
 }).strict().refine(input => new Set(input.legalDocumentIds).size === input.legalDocumentIds.length,
   'Select each legal document only once.');
 

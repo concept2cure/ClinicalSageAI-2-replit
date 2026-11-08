@@ -1,0 +1,423 @@
+ateway/providers/__tests__/local-provider-gate0.test.ts > Gate 0 — local generation client activation > returns null when no local base URL is configured (no accidental activation) 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > Gate 0 — local generation client activation > returns a client when LOCAL_AI_BASE_URL is set 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > Gate 0 — local generation client activation > falls back to LITELLM_BASE_URL when LOCAL_AI_BASE_URL is absent 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > Gate 0 — on-prem / ZDR residency routing > classifies the local substrate as self-hosted, on-prem, zero-retention 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > Gate 0 — on-prem / ZDR residency routing > routes an on-prem-residency requirement ONLY to the local substrate 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > Gate 0 — on-prem / ZDR residency routing > satisfies a zero-data-retention requirement while shared frontier does not 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > creates fresh OpenAI clients for each tenant and request without a platform API key 4ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > uses fresh Anthropic regular and beta message clients with the tenant key and no retries 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > pins Moonshot to its fixed endpoint and keeps tenant keys separate from a configured platform key 4ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > rejects a captured grant that is revoked before any SDK create 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > rejects a captured grant that is expired before any SDK create 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > rejects a captured grant that is rotated before any SDK create 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > rejects a captured grant that is audit unavailable before any SDK create 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > rechecks the captured revision on every create, including reuse of the same client 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > runs final qualification after the awaited credential check and preserves a policy refusal before SDK dispatch 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > never falls back to a platform key when tenant availability or capture fails 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > returns null only for an explicitly platform-owned credential mode 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > final source and qualification checks before customer SDK use > composes source and derivative custody checks after credentials with synchronous PQ admission last 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > final source and qualification checks before customer SDK use > rechecks qualification after an awaited final source check without sanitizing its policy refusal 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK failures and embedding authority > strips arbitrary SDK errors, headers and causes while retaining HTTP 429 9ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK failures and embedding authority > strips arbitrary SDK errors, headers and causes while retaining HTTP 503 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK failures and embedding authority > drops malformed status fields and preserves direct cancellation without retaining SDK details 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK failures and embedding authority > rechecks asynchronous derivative custody after credential use and before synchronous PQ admission 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK failures and embedding authority > preserves a custody refusal after credential use and never reaches PQ or the SDK 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK failures and embedding authority > sanitizes async iterator failures and retains AbortError identity for cancellation 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK failures and embedding authority > uses the embedding grant purpose and exact captured authority for OpenAI embeddings 2ms
+stdout | server/services/ai-gateway/__tests__/model-call-scope.test.ts
+{
+  "timestamp": "2026-11-06T22:13:37.497Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:37.500Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts
+{
+  "timestamp": "2026-11-06T22:13:37.501Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/model-call-scope.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts
+{
+  "timestamp": "2026-11-06T22:13:37.569Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > private per-run source ceilings and current-source checkpoints > fills omitted SDK/audit identity only from private authority and refuses a forged actor before any SDK
+{
+  "timestamp": "2026-11-06T22:13:37.864Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/connectors/connector-registry.ts:342:26",
+    "queryPreview": "SELECT connector_id, credentials, is_valid FROM connector_credentials WHERE organization_id = $1 AND connector_id IN ('llm_anthropic','llm_openai','llm_moons...",
+    "enforcement": "off"
+  }
+}
+
+stdout | server/services/ai-gateway/__tests__/model-call-scope.test.ts > private per-run source ceilings and current-source checkpoints > fills omitted SDK/audit identity only from private authority and refuses a forged actor before any SDK
+{
+  "timestamp": "2026-11-06T22:13:37.868Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] input tier placement decision",
+  "context": {
+    "allowed": false,
+    "tierMax": 3,
+    "reasonCode": "DENY_INPUT_TIER",
+    "provider": "anthropic",
+    "lane": "B_frontier"
+  }
+}
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 24ms org=7 user=3 caller=- req=c7d56e83-0946-4efd-835e-bfa874f7f898
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > private per-run source ceilings and current-source checkpoints > fills omitted SDK/audit identity only from private authority and refuses a forged actor before any SDK
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:48038) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > rejects with a terminal policy error and never reaches a provider, the placement lookup or the rate bucket
+{
+  "timestamp": "2026-11-06T22:13:37.891Z",
+  "level": "warn",
+  "message": "[ai-gateway] [ai-gateway] refused a model call from a sub-agent's tool (search_literature, run agent_00000000-0000-4000-8000-000000000001, parent run_p); nothing was sent",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > refuses a call made from an async continuation started inside the scope
+{
+  "timestamp": "2026-11-06T22:13:37.901Z",
+  "level": "warn",
+  "message": "[ai-gateway] [ai-gateway] refused a model call from a sub-agent's tool (search_literature, run agent_00000000-0000-4000-8000-000000000001, parent run_p); nothing was sent",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > a reranker-style caller that catches the refusal keeps its fallback and completes
+{
+  "timestamp": "2026-11-06T22:13:37.904Z",
+  "level": "warn",
+  "message": "[ai-gateway] [ai-gateway] refused a model call from a sub-agent's tool (search_literature, run agent_00000000-0000-4000-8000-000000000001, parent run_p); nothing was sent",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > reaches the provider as before
+{
+  "timestamp": "2026-11-06T22:13:37.907Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5-5 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > reaches the provider as before
+{
+  "timestamp": "2026-11-06T22:13:37.908Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-5 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > reaches the provider as before
+{
+  "timestamp": "2026-11-06T22:13:37.909Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-4-8 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > reaches the provider as before
+{
+  "timestamp": "2026-11-06T22:13:37.909Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > reaches the provider as before
+{
+  "timestamp": "2026-11-06T22:13:37.910Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-4-6 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > reaches the provider as before
+{
+  "timestamp": "2026-11-06T22:13:37.910Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-haiku-4-5 failed: Model provider request failed.",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:37.911Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/usage-recorder.ts:104:16",
+    "queryPreview": "INSERT INTO api_usage_logs (organization_id, user_id, module, endpoint, model, request_count, tokens_used, cost_cents, metadata, created_at) VALUES ($1, $2, ...",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > a call made after the scoped work finished is not refused
+{
+  "timestamp": "2026-11-06T22:13:37.914Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5-5 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > a call made after the scoped work finished is not refused
+{
+  "timestamp": "2026-11-06T22:13:37.915Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-5 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > a call made after the scoped work finished is not refused
+{
+  "timestamp": "2026-11-06T22:13:37.916Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-4-8 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > a call made after the scoped work finished is not refused
+{
+  "timestamp": "2026-11-06T22:13:37.917Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > a call made after the scoped work finished is not refused
+{
+  "timestamp": "2026-11-06T22:13:37.918Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-4-6 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > a call made after the scoped work finished is not refused
+{
+  "timestamp": "2026-11-06T22:13:37.918Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-haiku-4-5 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > each route() sees its own caller's scope, however their awaits interleave
+{
+  "timestamp": "2026-11-06T22:13:37.920Z",
+  "level": "warn",
+  "message": "[ai-gateway] [ai-gateway] refused a model call from a sub-agent's tool (search_literature, run agent_00000000-0000-4000-8000-000000000001, parent run_p); nothing was sent",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > each route() sees its own caller's scope, however their awaits interleave
+{
+  "timestamp": "2026-11-06T22:13:37.923Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5-5 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > each route() sees its own caller's scope, however their awaits interleave
+{
+  "timestamp": "2026-11-06T22:13:37.923Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-5 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > each route() sees its own caller's scope, however their awaits interleave
+{
+  "timestamp": "2026-11-06T22:13:37.924Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-4-8 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > each route() sees its own caller's scope, however their awaits interleave
+{
+  "timestamp": "2026-11-06T22:13:37.924Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > each route() sees its own caller's scope, however their awaits interleave
+{
+  "timestamp": "2026-11-06T22:13:37.924Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-4-6 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > each route() sees its own caller's scope, however their awaits interleave
+{
+  "timestamp": "2026-11-06T22:13:37.925Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-haiku-4-5 failed: Model provider request failed.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > each route() sees its own caller's scope, however their awaits interleave
+{
+  "timestamp": "2026-11-06T22:13:37.931Z",
+  "level": "warn",
+  "message": "[ai-gateway] [ai-gateway] refused a model call from a sub-agent's tool (project_knowledge_search, run agent_00000000-0000-4000-8000-000000000001, parent run_p); nothing was sent",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > private per-run source ceilings and current-source checkpoints > fills omitted SDK/audit identity only from private authority and refuses a forged actor before any SDK 38ms
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > private per-run source ceilings and current-source checkpoints > keeps unknown history T3, preserves actual source tiers and rechecks every use without accepting serialized authority 3ms
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > private per-run source ceilings and current-source checkpoints > does not let two organizations or actors share a concurrent mutable source ceiling 1ms
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > private per-run source ceilings and current-source checkpoints > holds missing identity, rejects alias disagreement and cannot lose a new source while a checkpoint awaits 1ms
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > the scope > is empty outside, and names the run and tool inside 1ms
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > the scope > follows async continuations started inside it 7ms
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > rejects with a terminal policy error and never reaches a provider, the placement lookup or the rate bucket 3ms
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > is the exported SubAgentToolModelCallError, a GatewayPolicyError whose name is not overridden 1ms
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > refuses a call made from an async continuation started inside the scope 7ms
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > a caller that already stopped still reads as a cancel, not a refusal (the abort check comes first) 2ms
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > route() refuses a sub-agent's tool before spending anything > a reranker-style caller that catches the refusal keeps its fallback and completes 1ms
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > reaches the provider as before 8ms
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > outside the scope, route() is unchanged > a call made after the scoped work finished is not refused 7ms
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > each route() sees its own caller's scope, however their awaits interleave 12ms
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > the capture hazard, pinned: a timer armed inside the scope keeps it after the scope returned
+{
+  "timestamp": "2026-11-06T22:13:37.941Z",
+  "level": "warn",
+  "message": "[ai-gateway] [ai-gateway] refused a model call from a sub-agent's tool (search_literature, run agent_00000000-0000-4000-8000-000000000001, parent run_p); nothing was sent",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > the capture hazard, pinned: a memoized promise first created inside the scope refuses its later, unscoped callers too
+{
+  "timestamp": "2026-11-06T22:13:37.943Z",
+  "level": "warn",
+  "message": "[ai-gateway] [ai-gateway] refused a model call from a sub-agent's tool (search_literature, run agent_00000000-0000-4000-8000-000000000001, parent run_p); nothing was sent",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > the capture hazard, pinned: a timer armed inside the scope keeps it after the scope returned 11ms
+ ✓ server/services/ai-gateway/__tests__/model-call-scope.test.ts > scoped and unscoped work in flight at the same time > the capture hazard, pinned: a memoized promise first created inside the scope refuses its later, unscoped callers too 2ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > maps persisted classification PUBLIC conservatively 3ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > maps persisted classification INTERNAL conservatively 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > maps persisted classification CONFIDENTIAL conservatively 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > maps persisted classification CONTROLLED conservatively 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > maps persisted classification RESTRICTED conservatively 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > maps persisted classification null conservatively 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > maps persisted classification unrecognized conservatively 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > uses the highest input tier, even without any personal information 1ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > keeps raw confidential and restricted inputs away from openai 1ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > keeps raw confidential and restricted inputs away from anthropic 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > keeps raw confidential and restricted inputs away from bedrock 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > keeps raw confidential and restricted inputs away from vertex 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > keeps raw confidential and restricted inputs away from azure 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > allows local processing and ordinary low-tier placement without bypassing existing policy 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > input sensitivity tiers (spec v0.5 §24) > tiers up empty, malformed, and detector-uncertain bundles 2ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > no PII 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > ordinary PII 1ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > health information 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > shared without ZDR 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > unknown provider 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > missing region 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > region outside approval 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > detector failure 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > tenant policy lookup failure 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > allows only an authorized, reasoned ordinary-PII false-positive override and never a PHI override 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > production deployment guard > rejects missing mode, missing settings, and contradictory approval 2ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > production deployment guard > accepts an explicit internally consistent human-supplied contract 1ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > production deployment guard > rejects malformed fields instead of trusting a JSON type assertion 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses a zero-retention approval that names no agreement, saying what is missing 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses it at production boot through the existing path 1ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a blank reference 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with no reference 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a date that is not one 1ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a date in another format 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a string instead of an object 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > reads a JSON null as no agreement, as Terraform does 1ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > keeps the agreement it parsed 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > a self-hosted lane needs no agreement: no third party receives its text (ADR-0014 §1.5) 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > an approval without zero retention needs no agreement 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses a zero-retention approval for a provider whose registry entry retains data 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses one for Moonshot, which is never a zero-retention lane 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses one for a name the gateway does not route to 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses a registry zero-retention flag that no approval and agreement back 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > boots when both say so 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the dispatch decision relies on zero retention only when both keys say so and the agreement is in force > the registry alone, or the approval alone, is not zero retention 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the dispatch decision relies on zero retention only when both keys say so and the agreement is in force > an agreement that takes effect later is not yet in force 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the dispatch decision relies on zero retention only when both keys say so and the agreement is in force > a third-party lane with no agreement is not zero retention, even if the approval says so 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the dispatch decision relies on zero retention only when both keys say so and the agreement is in force > names the agreement an allowed dispatch relied on, and none when zero retention was not required 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant refuses source revocation after credential work without retry or disclosure
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant refuses source revocation after credential work without retry or disclosure
+AssertionError: expected "vi.fn()" to be called 2 times, but got 3 times
+ ❯ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts:125:19
+    123|     expect(error).toMatchObject({ code: 'SOURCE_CONTEXT_UNAVAILABLE' }…
+    124|     expect(`${String(error)}${JSON.stringify(error)}`).not.toContain('…
+    125|     expect(guard).toHaveBeenCalledTimes(2);
+       |                   ^
+    126|     expect(replacement).not.toHaveBeenCalled();
+    127|     expect(wire.create).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant keeps current-source SDK dispatch reachable
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant keeps current-source SDK dispatch reachable
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / platform keeps current-source SDK dispatch reachable
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / platform keeps current-source SDK dispatch reachable
+AssertionError: expected "vi.fn()" to be called 2 times, but got 3 times
+ ❯ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts:163:19
+    161|     held.resolve();
+    162|     expect((await outcome).content).toBe('Actual SDK boundary fixture.…
+    163|     expect(guard).toHaveBeenCalledTimes(2);
+       |                   ^
+    164|     expect(wire.create).toHaveBeenCalledTimes(1);
+    165|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant rechecks cancellation after the final source read awaits
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant rechecks cancellation after the final source read awaits
+Error: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts:167:16
+    165|   });
+    166|
+    167|   it.each(lanes)('%s / %s rechecks cancellation after the final source…
+       |                ^
+    168|     const { gateway, dispatch } = liveGateway();
+    169|     dispatch.mockRestore();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+
+ Test Files  1 failed | 11 passed (12)
+      Tests  8 failed | 368 passed (376)
+   Start at  22:11:15
+   Duration  142.44s (transform 13.62s, setup 441ms, import 36.37s, tests 102.31s, environment 2ms)
+

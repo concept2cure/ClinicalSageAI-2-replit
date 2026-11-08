@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { useAuthUser } from '@/services/portal/authService';
-import type { AuthoringReviewContext, AuthoringReviewRow } from '@shared/authoring/peer-review';
+import type { AuthoringReviewContext, AuthoringReviewRow, IndependentCheckContext } from '@shared/authoring/peer-review';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { AuthoredHtml } from '../editor/AuthoredHtml';
 import { registerCeremonyOpen } from '../ceremony';
 import { useDialog } from '../useDialog';
-import { peerReviewScope, type PeerVerdict } from './authoringPeerReview';
+import { peerReviewScope, type IndependentFindingDrafts, type PeerVerdict } from './authoringPeerReview';
 import { usePeerReviewDecision, type PeerReviewDecision } from './usePeerReviewDecision';
 import { CsrEvidenceReview } from './CsrEvidenceReview';
 import '../styles/review-decision.css';
@@ -17,6 +17,8 @@ export interface ReviewDecisionDialogProps {
   programId?: string | null;
   onClose: () => void;
   onRecorded: (receipt: AuthoringReviewRow) => void;
+  /** The decision the dialog opens at: "changes_requested" from the board's "Request changes...". */
+  initialDecision?: PeerVerdict;
 }
 
 export function ReviewDecisionDialog(props: ReviewDecisionDialogProps) {
@@ -32,7 +34,7 @@ export function ReviewDecisionDialog(props: ReviewDecisionDialogProps) {
 function DecisionSession(props: ReviewDecisionDialogProps & {
   scope: ReturnType<typeof peerReviewScope>; isCurrent: () => boolean;
 }) {
-  const state = usePeerReviewDecision(props.scope, props.isCurrent, props.onRecorded);
+  const state = usePeerReviewDecision(props.scope, props.isCurrent, props.onRecorded, props.initialDecision ?? '');
   const close = () => { if (!state.inFlight.current && state.current()) props.onClose(); };
   const dialogRef = useDialog(close);
   React.useEffect(registerCeremonyOpen, []);
@@ -43,6 +45,7 @@ function DecisionSession(props: ReviewDecisionDialogProps & {
         {state.loading && <p role="status">Loading the complete saved document and your review request…</p>}
         {state.error && <p className="esign-err" role="alert">{state.error}</p>}
         {state.context && <SavedReviewRead context={state.context} />}
+        <IndependentReviewStep state={state} />
         {state.receipt ? <DecisionReceipt receipt={state.receipt} /> : state.context?.canReview ? <DecisionFields state={state} /> :
           state.context && <p role="status">{state.context.unavailableReason ?? 'You cannot record a decision for this review request.'}</p>}
         <CsrStep state={state} scope={props.scope} programId={props.programId ?? null} />
@@ -91,6 +94,66 @@ function DecisionFields({ state }: { state: PeerReviewDecision }) {
   </>;
 }
 
+function independentStanding(check: IndependentCheckContext | undefined): string {
+  if (!check || check.standing === 'missing') return 'No independent check receipt is recorded.';
+  if (check.standing === 'stale') return 'The saved document or its source records changed. Run the checks again before approval.';
+  return check.hardBlockCount ? `Checks are current. ${check.hardBlockCount} blocking finding${check.hardBlockCount === 1 ? ' remains' : 's remain'} open; approval is held.`
+    : 'Checks are current. No blocking findings remain open.';
+}
+
+function IndependentReviewStep({ state }: { state: PeerReviewDecision }) {
+  const context = state.context;
+  if (!context || (!context.independentCheck && !context.canRunIndependentChecks)) return null;
+  const check = context.independentCheck;
+  const disabled = state.busy || state.blocked;
+  return <section className="rv-decision-read" aria-label="Independent saved-document checks">
+    <h3>Independent checks{!check ? ' (optional)' : ''}</h3>
+    <p>Checks the saved document and recorded source links without calling a model. Scientific and clinical meaning still require human review.</p>
+    <p role="status">{state.receipt ? 'This is the check record used for your verdict. Current finding standing comes from the refreshed review record.' : independentStanding(check)}</p>
+    {!state.receipt && context.canRunIndependentChecks && <div className="rv-decision-actions"><button type="button" className="btn ghost" disabled={disabled}
+      onClick={() => { void state.runChecks(); }}>{state.checking ? 'Running independent checks…' : 'Run independent checks'}</button>
+      <p>Rerunning clears unrecorded finding decisions so you can review the new result.</p></div>}
+    {check?.findings.map((finding, index) => <IndependentFinding key={finding.findingId} finding={finding} index={index}
+      context={context} draft={state.findingDrafts[finding.findingId]}
+      disabled={disabled || !!state.receipt || !context.canReview || check.standing !== 'current'}
+      onChange={patch => state.setFindingDraft(finding.findingId, patch)} />)}
+  </section>;
+}
+
+function IndependentFinding({ finding, index, context, draft, disabled, onChange }: {
+  finding: IndependentCheckContext['findings'][number]; index: number; context: AuthoringReviewContext;
+  draft?: IndependentFindingDrafts[string]; disabled: boolean;
+  onChange: (patch: Partial<IndependentFindingDrafts[string]>) => void;
+}) {
+  const label = `Finding ${index + 1}`;
+  const selectId = `rv-finding-${index}`;
+  return <section className="rv-decision-section" aria-label={label}>
+    <h4>{label}: {finding.category.replace(/[_-]+/g, ' ')}</h4>
+    <p>{finding.severity} · {finding.hard ? 'Blocks approval' : 'Advisory'} · {finding.open ? 'Open in this check record' : 'Resolved in history'}{findingSectionLabel(context, finding)}</p>
+    {finding.description && <p>{finding.description}</p>}
+    {finding.open && <>
+      {!finding.current && context.independentCheck?.standing === 'current' && <p>The current checks no longer report this finding. A human resolution is still required to close it.</p>}
+      <div className="esign-field"><label htmlFor={selectId}>Decision for {label.toLowerCase()}</label>
+        <select id={selectId} value={draft?.decision ?? ''} disabled={disabled}
+          onChange={event => onChange({ decision: event.target.value as IndependentFindingDrafts[string]['decision'] })}>
+          <option value="">No finding decision</option><option value="resolved" disabled={finding.current}>Resolve after the checks no longer report it</option>
+          <option value="rejected">Disagree with this finding</option>
+        </select>
+      </div>
+      {draft?.decision && <div className="esign-field"><label htmlFor={`${selectId}-reason`}>Reason for {label.toLowerCase()} (required)</label>
+        <textarea id={`${selectId}-reason`} rows={2} maxLength={2000} disabled={disabled} value={draft.reason}
+          onChange={event => onChange({ reason: event.target.value })} />
+      </div>}
+      {finding.hard && draft?.decision === 'rejected' && <p>Disagreement is retained in the record and does not waive this blocking finding.</p>}
+    </>}
+  </section>;
+}
+
+function findingSectionLabel(context: AuthoringReviewContext, finding: IndependentCheckContext['findings'][number]): string {
+  const section = context.snapshot.sections.find(item => item.id === finding.sectionId);
+  return section ? ` · ${section.code}${section.title ? ` — ${section.title}` : ''}` : '';
+}
+
 function DecisionReceipt({ receipt }: { receipt: AuthoringReviewRow }) {
   return <section className="rv-decision-receipt" aria-label="Your recorded decision" role="status">
     <h3>Your decision recorded — {PEER_VERDICT_LABEL[receipt.review_status as PeerVerdict]}</h3>
@@ -105,14 +168,14 @@ function DecisionActions({ state, onClose }: { state: PeerReviewDecision; onClos
   return <div className="esign-f rv-decision-actions">
     <button type="button" className="btn ghost" disabled={state.busy} onClick={onClose}>{state.receipt ? 'Close' : 'Cancel'}</button>
     {!state.receipt && <button type="button" className="btn ghost" disabled={state.busy || state.loading} onClick={() => { void state.load(); }}>Reload review record</button>}
-    {!state.receipt && state.context?.canReview && <button type="button" className="btn primary" disabled={!maySubmitDecision(state)} onClick={() => { void state.record(); }}>{state.busy ? 'Recording…' : label}</button>}
+    {!state.receipt && state.context?.canReview && <button type="button" className="btn primary" disabled={!maySubmitDecision(state)} onClick={() => { void state.record(); }}>{state.busy && !state.checking ? 'Recording…' : label}</button>}
   </div>;
 }
 
 function maySubmitDecision(state: PeerReviewDecision): boolean {
   const length = state.reason.trim().length;
   return !state.busy && !state.loading && !state.blocked && !!state.decision && length <= 4000 &&
-    (state.decision === 'approved' || length >= 8) && csrMapReady(state);
+    (state.decision === 'approved' || length >= 8) && csrMapReady(state) && state.independentReady;
 }
 
 /** A CSR's approval goes only with its completed scientific-review map (CsrEvidenceReview). */

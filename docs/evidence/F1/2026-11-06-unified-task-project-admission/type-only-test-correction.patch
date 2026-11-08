@@ -1,0 +1,13 @@
+diff --git a/server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts b/server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts
+index e0e808d5d..d30ff7703 100644
+--- a/server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts
++++ b/server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts
+@@ -382,7 +382,7 @@ describe('unified creation retains actual project and workspace admission', () =
+       projectId: 301, assigneeId: 42, assigneeName: 'Sarah', sourceEntityType: 'authoring_document', sourceEntityId: 'doc-1',
+       tags: ['review'], metadata: { section: '2.5' }, reason: 'From the project review' });
+     expect(res.status, JSON.stringify(res.body)).toBe(201);
+-    const row = (await pg.query('SELECT * FROM unified_tasks WHERE task_id=$1', [res.body.task.taskId])).rows[0];
++    const row = (await pg.query<Record<string, unknown>>('SELECT * FROM unified_tasks WHERE task_id=$1', [res.body.task.taskId])).rows[0];
+     expect(row).toMatchObject({ organization_id: ORG, created_by_id: 7, project_id: 301, client_workspace_id: 71,
+       status: 'pending', priority: 'medium', task_type: 'action', assignee_id: 42, assignee_name: 'Sarah',
+       source_entity_type: 'authoring_document', source_entity_id: 'doc-1', tags: ['review'], metadata: { section: '2.5' } });

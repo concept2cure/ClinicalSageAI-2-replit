@@ -1,0 +1,106 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "0e8acdb9-40ba-41ed-bb5d-d0b3cf836a54",
+  "startedAt": "2026-11-06T17:42:34.429Z",
+  "steps": [
+    {
+      "name": "the Team card on every step; Plan has no Team section",
+      "steps": [
+        {
+          "step": "Plan",
+          "card": true,
+          "rows": [
+            "JSJM SmithProject lead · Project owner · Owner"
+          ],
+          "mainTeam": false
+        },
+        {
+          "step": "Evidence",
+          "card": true,
+          "rows": [
+            "JSJM SmithProject lead · Project owner · Owner"
+          ],
+          "mainTeam": false
+        },
+        {
+          "step": "Author",
+          "card": true,
+          "rows": [
+            "JSJM SmithProject lead · Project owner · Owner"
+          ],
+          "mainTeam": false
+        },
+        {
+          "step": "Review",
+          "card": true,
+          "rows": [
+            "JSJM SmithProject lead · Project owner · Owner"
+          ],
+          "mainTeam": false
+        },
+        {
+          "step": "Submit",
+          "card": true,
+          "rows": [
+            "JSJM SmithProject lead · Project owner · Owner"
+          ],
+          "mainTeam": false
+        },
+        {
+          "step": "Respond",
+          "card": true,
+          "rows": [
+            "JSJM SmithProject lead · Project owner · Owner"
+          ],
+          "mainTeam": false
+        }
+      ]
+    },
+    {
+      "name": "Manage opens the Team drawer, 1440 light",
+      "card": "screenshots/1440-light-team-card.png",
+      "roster": true,
+      "sharing": [
+        "Project sharing"
+      ],
+      "notes": 1,
+      "focusInside": true,
+      "width": 440,
+      "focusAfterClose": "Manage team",
+      "shot": "screenshots/1440-light-team-drawer.png"
+    },
+    {
+      "name": "About \"Edit\" opens Project settings on the description",
+      "focused": "Project description",
+      "shot": "screenshots/1440-light-about-edit.png"
+    },
+    {
+      "name": "Manage opens the Team drawer, 390 light",
+      "card": "screenshots/390-light-team-card.png",
+      "roster": true,
+      "sharing": [
+        "Project sharing"
+      ],
+      "notes": 1,
+      "focusInside": true,
+      "width": 390,
+      "focusAfterClose": "Manage team",
+      "shot": "screenshots/390-light-team-drawer.png"
+    },
+    {
+      "name": "Manage opens the Team drawer, 1440 dark",
+      "card": "screenshots/1440-dark-team-card.png",
+      "roster": true,
+      "sharing": [
+        "Project sharing"
+      ],
+      "notes": 1,
+      "focusInside": true,
+      "width": 440,
+      "focusAfterClose": "Manage team",
+      "shot": "screenshots/1440-dark-team-drawer.png"
+    }
+  ],
+  "result": "pass",
+  "finishedAt": "2026-11-06T17:42:56.844Z"
+}

@@ -1,0 +1,350 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > passes claimed numbers and cross-references to report parts 4ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > refuses any other number, however it is written 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let a reference word hide a percentage 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display <0.001 authorize p=0.001 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display 0.001 authorize p<0.001 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display >0.999 authorize p≥0.999 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display -2.50 authorize The difference was 2.50. 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display 2.50 authorize The difference was 2.5. 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display 12% authorize 12 patients completed. 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display 12 authorize 12% completed. 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display 0.001 authorize p=0.001e-3 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > checks a conflicting occurrence even when an exact occurrence is also present 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > reads encoded operators as visible figures and ignores digits in markup 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not borrow supplied scalars across the boundary in p&Lt;0.001 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not borrow supplied scalars across the boundary in p&ne;0.001 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not borrow supplied scalars across the boundary in p≈0.001 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not borrow supplied scalars across the boundary in p=0.001&unknownunit; 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not borrow supplied scalars across the boundary in p=0.001abc 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not borrow supplied scalars across the boundary in p=0.001%3 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not borrow supplied scalars across the boundary in p=0.001mg/mL 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > refuses unknown entity &constructor; without throwing 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > refuses unknown entity &toString; without throwing 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > decodes original draft prose once and never promotes a literal entity spelling to a threshold 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > keeps a separated ng/mL concentration distinct from a count 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > keeps a separated µg/mL concentration distinct from a count 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > finds each kind of figure a model could invent 2ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits a figure the study information supplied, and a confidence level 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > finds a Bayesian result a model could invent: a posterior, an n/N and an unbracketed interval 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits a supplied phase written n/N, a date and a posterior placeholder 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits placeholder prose 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > treats methods and results sections as statistical, and ethics as not 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > does not use planned metadata to support observed clinical facts in §10.1 2ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > does not use planned metadata to support observed clinical facts in §11.4.1 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > does not use planned metadata to support observed clinical facts in §12.2 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > does not use planned metadata to support observed clinical facts in §13 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > allows a result figure only when a claimed cell matches the retained table 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > requires a percent-only column for an implicit percentage unit (Response (%)) 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > requires a percent-only column for an implicit percentage unit (95% CI) 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > requires a percent-only column for an implicit percentage unit (n (%)) 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > requires a percent-only column for an implicit percentage unit (Count (%)) 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > does not prevent the documented planned enrollment in the statistical-methods section 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > refuses unsubstantiated §12.3 categorical assertion 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > refuses unsubstantiated §12.2 categorical assertion 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > refuses unsubstantiated §11.4.1 categorical assertion 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > refuses unsubstantiated §13 categorical assertion 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > refuses unsubstantiated §13 categorical assertion 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > refuses unsubstantiated §2 categorical assertion 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > retains truthful unknown-source prose rather than claiming no events 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > still accepts an exact source-backed count rather than an ungrounded absence verdict 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > ICH E3 synopsis separates planned study numbers from actual outcomes > does not mistake planned enrollment for observed completion even when both use 300 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > ICH E3 synopsis separates planned study numbers from actual outcomes > permits clearly planned recruitment but requires current completion receipts 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > ICH E3 synopsis separates planned study numbers from actual outcomes > preserves study identifiers and reference numbers when inspecting actual outcomes 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > death count semantic receipts > does not present the safety population as the number of deaths 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > death count semantic receipts > permits exact fatal-event counts from the correct source row 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > death count semantic receipts > does not infer zero deaths from an absence of data 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > does not store a statistical-plan model draft that states figures nobody supplied 4ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > keeps a statistical-plan draft that states only the supplied planned sample size 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > retains non-statistical source-limited narrative drafting 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > the §9.7 template no longer asserts an analysis population or alpha nobody supplied 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > loadCsrInputsForProject — the Module 2 primary result > quotes the pointer to §11.4, never §11.4 text, even when the section states a result 1ms
+(node:39) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences > finds each reported figure that is exactly a retained cell, with every cell it could be 2ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences > never offers markup, or a figure inside a longer number ("12" in "10/12", "190" in "1190", "100" in a style) 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences > a section with no matching figure offers none 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > finds every encoded threshold with its raw entity and spacing intact 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p<0.001 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p&#60;0.001 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p&gt;0.001 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p≤0.001 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p>=0.001 2ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p=-0.001 2ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p=0.0010 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p=0.001e3 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p=0.001%3 2ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p=0.001mg 2ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p&Lt;0.001 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p&ne;0.001 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p≈0.001 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p=0.001&unknownunit; 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > includes an encoded sign and a percentage header’s unit in their raw spans 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not expose attribute digits after a quoted greater-than sign or hide a second operator 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from 95% CI 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from 95% confidence interval 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from n (%) 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from Count (%) 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from Number (%) 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > retains the explicit count and percent display of a combined column 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > refuses unknown entity &constructor; without consulting object prototypes 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > refuses unknown entity &toString; without consulting object prototypes 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not promote a literal entity spelling into a threshold in <p>p &amp;lt;0.001.</p> 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not promote a literal entity spelling into a threshold in p &lt;0.001. 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > offers the full ng/mL display without offering its bare count 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > offers the full µg/mL display without offering its bare count 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > keeps all exact candidate studies instead of choosing whichever was first 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > the map the screen builds is the map the server accepts > WebCrypto and node:crypto agree on the same text 5ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > the map the screen builds is the map the server accepts > a confirmed map passes the server verifier, which checks every claim 6ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > the map the screen builds is the map the server accepts > an edited section after mapping is refused by the server, so a stale map cannot approve 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > mapGaps says what still stops approval, and buildSubmission refuses while any remains > undecided figures, missing statements, no mapped result and both attestations 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > mapGaps says what still stops approval, and buildSubmission refuses while any remains > a blank section is named: the server approves a CSR only when every section is written 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > a section still holding a data placeholder is named > names the section and the placeholder, and the map cannot be submitted 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > a section still holding a data placeholder is named > a section without one is not named 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences: study design is not a result (B6) > offers no trial phase, scheduled week or instrument item count 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences: study design is not a result (B6) > still offers every result: counts, a percentage, a difference and a p-value, including a count after an arm name 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences: study design is not a result (B6) > reads only the word before the number: a count in brackets after an arm or a population is a result 0ms
+(node:51) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > refuses "190" claimed inside "1190" 5ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > refuses "12" claimed inside "12.5" 1ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > refuses digits inside markup 1ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > refuses a count followed by "%" when its column is not a percentage 1ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > accepts a whole figure, and a percentage-column value reported with its unit (controls) 2ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a design number is not a reported result (B6) > refuses the "2" of "Phase 2" and the "12" of "Week 12", and verifies the "36" reported after them 1ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a design number is not a reported result (B6) > still verifies a real result beside them (control) 0ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > accepts encoded signs/operators only when the quote includes their complete raw span 1ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > does not bind a scalar to digits after a comparator or sign outside the claimed quote 1ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > requires an implicit percentage unit to remain inside the raw quoted span 1ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > does not interpret 95% CI as a percent-only column 0ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > does not interpret 95% confidence interval as a percent-only column 0ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > does not interpret n (%) as a percent-only column 0ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > does not interpret Count (%) as a percent-only column 0ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > refuses threshold mapping for a visible literal entity: <p>p &amp;lt;0.001.</p> 0ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > refuses threshold mapping for a visible literal entity: p &lt;0.001. 0ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > verifies the entire ng/mL source display and refuses its bare count 2ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > verifies the entire µg/mL source display and refuses its bare count 1ms
+(node:59) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > is stated when the cell is verbatim, or every number of it survives a reformat 7ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > names the changed figure in the cell's shape, or an n/N with its denominator 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not take another claimed cell for a changed figure 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > names an n/N whose numerator coincides with another claimed cell's number 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > gives a one-number cell no shape: a different number is left to the unclaimed check 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > checks all conflicting shapes and ratios before accepting an exact occurrence 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not call <0.001 stated after its numeric meaning changes to p=0.001. 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not call 0.001 stated after its numeric meaning changes to p<0.001. 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not call -2.50 stated after its numeric meaning changes to The difference was 2.50. 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not call 2.50 stated after its numeric meaning changes to The difference was 2.5. 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not call 12% stated after its numeric meaning changes to 12 patients completed. 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not call 12 stated after its numeric meaning changes to 12% completed. 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not find a scalar count merely inside a ratio, suffix or longer number 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > preserves a correctly encoded figure and independently claimed aggregates 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (Response (%)) 2ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (%) 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (Percentage) 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (95% CI) 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (n (%)) 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (Count (%)) 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > retains an explicitly supplied percentage unit while rechecking the edited claim 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not treat 95% CI as a percent-only column for an edited claim 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not treat n (%) as a percent-only column for an edited claim 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not treat Count (%) as a percent-only column for an edited claim 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > CSR text is decoded according to its actual caller contract > does not decode a raw double-encoded comparator twice during an edited-claim check 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > CSR text is decoded according to its actual caller contract > preserves the exact ng/mL source display without equating it to a count 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > CSR text is decoded according to its actual caller contract > preserves the exact µg/mL source display without equating it to a count 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > CSR text is decoded according to its actual caller contract > rechecks already-rendered saved/draft text without another HTML interpretation: <p>p &amp;lt;0.001.</p> 6ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > CSR text is decoded according to its actual caller contract > rechecks already-rendered saved/draft text without another HTML interpretation: p &lt;0.001. 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > CSR text is decoded according to its actual caller contract > rechecks already-rendered saved/draft text without another HTML interpretation: <p>p &constructor;0.001.</p> 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > CSR text is decoded according to its actual caller contract > rechecks already-rendered saved/draft text without another HTML interpretation: <p>p &toString;0.001.</p> 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > CSR text is decoded according to its actual caller contract > rechecks already-rendered saved/draft text without another HTML interpretation: <p>p &lt;0.001.</p> 0ms
+(node:67) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-11-08T17:55:09.424Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:55:09.425Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-11-08T17:55:09.425Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-11-08T17:55:09.751Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reconciles a saved CSR whose every stated figure is its claimed retained cell 119ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails the document gate when the synopsis states 15/305 while §11.4 and the table state 16/305 42ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails it too when the synopsis carries no receipts at all and states a figure the body contradicts 39ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > names the exact cell when the retained source no longer says what the CSR states 40ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > records an unreadable retained run as blocked, never as agreement, and still completes the review 38ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reports every number a section states without a claim, blocking only in a results section 39ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > assesses an imported CSR whose title is the study title and whose module is unset, as the real import saves it 36ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks an unclaimed number in a results section that has no table mapping (§10.2) 36ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks when a section the import carried receipts for is no longer in the document 35ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > does not let an uncoded added section carry an unsupported result without a source conflict 37ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > checks a section with no code too: its numbers are listed and a contradicting n/N blocks 34ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reconciles an edit that rewords the sentence but keeps every figure, and names the section as edited and re-checked 33ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that changes 16/305 to 18/305, naming the figure and the cell it was meant to be 34ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that adds an unsourced number in §11 32ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks on a claimed figure an edit removed from a results section, naming the cell 35ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > still blocks an edited section whose retained cell has since changed 32ms
+(node:79) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/csr/__tests__/csr-assembly-review.test.ts
+{
+  "timestamp": "2026-11-08T17:55:15.134Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:55:15.135Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-assembly-review.test.ts
+{
+  "timestamp": "2026-11-08T17:55:15.135Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-assembly-review.test.ts
+[database] Database connection successful
+
+stderr | server/services/csr/__tests__/csr-assembly-review.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/csr/__tests__/csr-assembly-review.test.ts
+{
+  "timestamp": "2026-11-08T17:55:15.180Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the laboratory listing shows only what ADLB records > reads Baseline as not recorded when ADLB has no ABLFL, and an XPT date as a date 309ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > a listing value the PDF fonts cannot draw fails the source check > records the row as drawn, so a "?" in place of a character is a disagreement, and a lossless substitution is not 200ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > a run with no engine table does not claim a Section 14 document > says Section 14 is not supplied, files no tables leaf, and is incomplete 147ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > reads page count and named destinations from the cross-reference table, as a whole read does 38ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > falls back to a whole read for a leaf laid out otherwise (an xref stream), and still fails a destination it lacks 17ms
+(node:91) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > is accepted and reaches the §11.4 table, cell for cell as recorded 24ms
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > leaves a table without one byte-identical, so its scientific-review receipts still verify 10ms
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > never rounds a posterior up to certainty or down to impossibility 26ms
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > refuses reversed credible bounds, a probability outside 0–1 and a posterior with no hypothesis 21ms
+(node:107) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/csr/__tests__/csr-table-byte-identity.test.ts > a source that uses none of D10–D12 tabulates byte-identically to before > matches every digest pinned before the change 60ms
+(node:115) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/csr/__tests__/csr-results-claim-provenance.test.ts > CSR clinical outcomes always require retained analysis-cell claims > does not treat planned sample size as evidence of deaths or completions 9ms
+ ✓ server/services/csr/__tests__/csr-results-claim-provenance.test.ts > CSR clinical outcomes always require retained analysis-cell claims > excludes product and protocol IDs without excluding free-standing clinical figures 1ms
+ ✓ server/services/csr/__tests__/csr-results-claim-provenance.test.ts > CSR clinical outcomes always require retained analysis-cell claims > never issues a planned-metadata exemption in a results-section import 1ms
+ ✓ server/services/csr/__tests__/csr-results-claim-provenance.test.ts > CSR clinical outcomes always require retained analysis-cell claims > retains planned-design metadata support outside observed-results headings 1ms
+ ✓ server/services/csr/__tests__/csr-results-claim-provenance.test.ts > CSR clinical outcomes always require retained analysis-cell claims > blocks actual completion figures in a legacy synopsis even when the same number was planned 3ms
+ ✓ server/services/csr/__tests__/csr-results-claim-provenance.test.ts > CSR clinical outcomes always require retained analysis-cell claims > rechecks legacy imports instead of honoring stale metadata exemptions 1ms
+(node:123) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > verifies an unchanged section and keeps its exact source hash and opening 3ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > verifies unchanged narratives over multiple pages without whole-section selection 4ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > preserves the valid zero-subject selection with its exact opening hash 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > does not return a narrative reference for another tenant 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > continues refusing a section corrupted before its first read 1ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > continues reporting an invalid individual narrative hash 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > continues refusing a changed narrative-store digest 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > never mixes old section metadata with newly replaced section and narrative bytes 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > pins slices to the source hash rather than silently reading a replacement revision 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > refuses an opening edited after the final narrative window was read 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > refuses section text appended after the final store-digest read 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > refuses a landed section deleted during verification instead of certifying a ghost 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > rejects final content corruption even when its stored hash was not updated 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > also rechecks the opening for a zero-subject report 1ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > rejects streamed text whose reconstructed SHA-256 differs from the pinned section digest 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > rejects an opening-only stream with an incorrect pinned hash 2ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > rejects unhashed body replacement even when the newly supplied subject text is internally valid 0ms
+(node:131) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceVitals.test.ts > the vital-signs and concomitant-medication tables are reviewable > one list of table keys, the server’s and the review’s 2ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceVitals.test.ts > the vital-signs and concomitant-medication tables are reviewable > the tables hash covers them, and is unchanged for a run with neither 2ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceVitals.test.ts > the vital-signs and concomitant-medication tables are reviewable > the screen offers their cells, and the server accepts a map onto them 8ms
+(node:143) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > refuses the build's own placeholder, though the section's figure is correctly mapped 3ms
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > refuses a short placeholder ("[N]") and one split by markup 1ms
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > accepts a section with no placeholder, a numeric citation, or brackets inside markup only (controls) 4ms
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > one placeholder rule > the build and placement rule (csr-placeholders.ts) and the review's rule agree on plain text 1ms
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > one placeholder rule > the review reads the visible text: brackets inside markup are not a placeholder, and the placeholder it names is the text's 0ms
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > one placeholder rule > a message quotes a long placeholder cut and closed, never as if it ended mid-word 0ms
+(node:151) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > accepts an exactly matching, qualified synthetic TLF receipt 2ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > refuses missing and duplicate source records 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > refuses unreviewed or withdrawn source records 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > detects changed source version or missing page/table locator 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > detects analysis population and endpoint substitution 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > detects denominator, numerator and estimate drift 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > refuses unsupported inference or changed units 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > refuses invalid counts and duplicate claim identifiers 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > never equates no claims with a passed CSR 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > rejects invalid source-side facts even when a claim matches their invalid value 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > rejects a non-finite qualified source estimate 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > detects internally inconsistent observed proportions in qualified source data 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > does not recompute model-based estimates from raw counts 0ms
+(node:159) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > formats the boundary cases as the SAS convention does 1ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > prints a mean of 60.05 as 60.1, not 60.0 1ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > prints exposure the same way 1ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > preserves the bound of an imported p-value 0.0004 0ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > preserves the bound of an imported p-value 0.9996 0ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > preserves the bound of an imported p-value 0 0ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > preserves the bound of an imported p-value 1 0ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > preserves the bound of an imported p-value 0.001 0ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > preserves the bound of an imported p-value 0.999 0ms
+
+ Test Files  14 passed (14)
+      Tests  233 passed (233)
+   Start at  09:55:05
+   Duration  12.26s (transform 3.00s, setup 205ms, import 6.92s, tests 3.33s, environment 1ms)
+

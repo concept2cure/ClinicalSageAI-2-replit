@@ -23,7 +23,13 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 # CONFIGURATION - SINGLE SOURCE OF TRUTH
 # ============================================================================
 export DEFAULT_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/concept2cure-ri?sslmode=disable"
-export DATABASE_URL="${DATABASE_URL:-$DEFAULT_DATABASE_URL}"
+# Codespaces must inherit ONLY an explicitly selected DB connection. The
+# previous default silently introduced a local database when Neon was missing.
+if [[ "${C2C_CODESPACE:-}" == "1" || "${CODESPACES:-}" == "true" ]]; then
+    export DATABASE_URL="${DATABASE_URL:-}"
+else
+    export DATABASE_URL="${DATABASE_URL:-$DEFAULT_DATABASE_URL}"
+fi
 export DOCKER_DB_CONTAINER="concept2cure-riai-2-replit-db-1"
 export DB_NAME="concept2cure-ri"
 export DB_USER="postgres"
@@ -47,6 +53,10 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 is_sourced() {
     [[ "${BASH_SOURCE[0]}" != "${0}" ]]
+}
+
+is_codespace() {
+    [[ "${C2C_CODESPACE:-}" == "1" || "${CODESPACES:-}" == "true" ]]
 }
 
 fail() {
@@ -193,6 +203,10 @@ select_app_port() {
     local attempt=0
 
     while is_port_in_use "$candidate_port"; do
+        if is_codespace; then
+            log_error "Codespaces app port ${desired_port} is already in use. Stop the process using that port, then start the app again."
+            return 1
+        fi
         if [[ $attempt -eq 0 ]]; then
             log_warn "Port ${desired_port} is already in use. Searching for next available port..."
         fi
@@ -258,7 +272,7 @@ check_docker() {
 verify_connection_via_node() {
     log_info "Verifying database connection via Node.js driver..."
     if node -e "const { Client } = require('pg'); (async () => { const client = new Client({ connectionString: process.env.DATABASE_URL }); await client.connect(); await client.query('SELECT 1'); await client.end(); })().catch((error) => { console.error(error.message); process.exit(1); });" >/dev/null 2>&1; then
-        log_success "Database connection verified: $DATABASE_URL"
+        log_success "Database connection verified (credentials redacted)"
         return 0
     fi
     return 1
@@ -521,13 +535,13 @@ show_summary() {
     echo "============================================================================"
     echo -e "${GREEN}DATABASE CONFIGURATION SUMMARY${NC}"
     echo "============================================================================"
-    echo -e "DATABASE_URL: ${BLUE}${DATABASE_URL}${NC}"
+    echo -e "DATABASE_URL: ${BLUE}configured (credentials redacted)${NC}"
     echo -e "Container:    ${BLUE}${DOCKER_DB_CONTAINER}${NC}"
     echo -e "DB Strict:    ${BLUE}${REQUIRE_DATABASE_ON_STARTUP}${NC}"
     echo -e "App Port:     ${BLUE}${PORT:-$DEFAULT_APP_PORT}${NC}"
     echo ""
     echo "To verify in a new terminal, run:"
-    echo "  source scripts/startup.sh && echo \$DATABASE_URL"
+    echo "  npm run codespaces:doctor"
     echo ""
     echo "To start the dev server:"
     echo "  source scripts/startup.sh && main && npm run dev"
@@ -543,6 +557,33 @@ main() {
     echo "Concept2Cure.RI Database Startup Script"
     echo "============================================================================"
     echo ""
+
+    # A Codespace is a development editor, not permission to mutate Neon or
+    # re-create a local database. The earlier path read .env.local OVER an
+    # injected Codespaces secret, or fell back to a hardcoded local DSN, then
+    # wrote the chosen secret back into .env and echoed it into the console.
+    # The explicit app-role/schema doctor is the only Codespaces startup
+    # preflight; it never provisions, rewrites credentials or bypasses RLS.
+    if is_codespace; then
+        # The API is only supposed to hold a least-privilege runtime URL.
+        # Owner DSNs are optional and, when needed, belong to a distinct
+        # provisioning session. Never require the owner secret to start AnA.
+        if [[ -z "${APP_DATABASE_URL:-}" ]]; then
+            log_error "Codespaces requires APP_DATABASE_URL for the non-owner runtime role; no owner/local fallback."
+            return 1
+        fi
+        if [[ "$APP_DATABASE_URL" == "$DEFAULT_DATABASE_URL" ]]; then
+            log_error "Codespaces refuses the shared default local database URL as its runtime role."
+            return 1
+        fi
+        if ! node "$PROJECT_ROOT/scripts/ops/codespaces-doctor.mjs"; then
+            log_error "Codespaces database preflight failed. No startup mutation occurred."
+            return 1
+        fi
+        select_app_port || return 1
+        log_success "Codespaces DB prerequisites verified, app process not yet started."
+        return 0
+    fi
 
     load_env_file
 
@@ -597,12 +638,13 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main
 fi
 
-# Always export DATABASE_URL when sourced
-if [[ -f "$PROJECT_ROOT/.env" ]]; then
+# Legacy local development may read .env, but Codespaces MUST retain
+# the DB URLs injected by its secrets. Do not override them on 'source'.
+if ! is_codespace && [[ -f "$PROJECT_ROOT/.env" ]]; then
     env_database_url=$(grep -E '^DATABASE_URL=' "$PROJECT_ROOT/.env" | tail -n 1 | sed 's/^DATABASE_URL=//' || true)
     env_database_url="${env_database_url%\"}"
     env_database_url="${env_database_url#\"}"
     export DATABASE_URL="${env_database_url:-$DEFAULT_DATABASE_URL}"
 else
-    export DATABASE_URL="$DEFAULT_DATABASE_URL"
+    if ! is_codespace; then export DATABASE_URL="$DEFAULT_DATABASE_URL"; fi
 fi

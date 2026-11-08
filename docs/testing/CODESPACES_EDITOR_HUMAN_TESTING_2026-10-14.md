@@ -41,7 +41,97 @@ and limitations are recorded in the
 [regional template evidence](../evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/README.md)
 and [human-review evidence](../evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/README.md).
 
+## Open a Codespace (updated 2026-11-06)
+
+The Codespace now sets itself up. Opening one installs everything, creates a
+local PostgreSQL 16 database, seeds the demo projects and the CSR study, starts
+the app on port 5000 in development mode and opens it in your browser.
+
+1. **Add your model keys as Codespaces secrets, once.** On GitHub: your
+   repository → **Settings** → **Secrets and variables** → **Codespaces** →
+   **New repository secret**. Add **both** keys:
+   - `ANTHROPIC_API_KEY`: AnA drafts regulatory documents with an approved
+     Claude model, so drafting needs this key. `OPENAI_API_KEY` alone answers
+     chat but does not draft (the server's own `/readyz` says so).
+   - `OPENAI_API_KEY`: search uses OpenAI embeddings, including Vault search,
+     knowledge-base search and AnA's project memory. Without it,
+     `/readyz` reports `embedding_lane_down`, search fails, and AnA's Progress
+     panel reads "Memory: Could not be read". (Or: your account's **Settings** → **Codespaces** →
+   **Secrets**, and give the secret access to this repository.) A Codespace
+   reads its secrets when it starts. After adding one, **stop and start** the
+   Codespace (Codespaces menu → Stop Current Codespace, then open it again);
+   reloading the page is not enough. The start then restarts the app if the
+   running app had no key, and says what the app itself sees for AnA.
+   Do **not** add a `DATABASE_URL` or any other database secret. This Codespace
+   uses its own local database, and it does not pass such a secret to the app.
+2. **Create the Codespace on `concept2cure-v2`.** Repository page → **Code** →
+   **Codespaces** → **…** → **New with options** → branch `concept2cure-v2` →
+   machine type with 4 cores and 16 GB or more → **Create codespace**.
+3. **Wait.** The first creation takes about 15–25 minutes: `npm ci`, the
+   PostgreSQL install, the database provisioning (every migration), the first
+   client compile, then the demo seed. The terminal ends with a box that says
+   `Concept2Cure is running: https://…-5000.app.github.dev`. That page opens by
+   itself. If it does not, open **Ports** and click the globe beside port 5000.
+   Keep the port **Private**. A restart takes a minute or two, and it applies
+   any new migrations first.
+4. **Sign in.** On the sign-in page press **Demo access** (under **Dev only**).
+   It signs you in as `ana.author@concept2cure.pro`, the demo author, in the
+   organisation "Concept2Cure Therapeutics". Two more demo people exist for
+   reviews and approvals: `rhea.reviewer@concept2cure.pro` and
+   `ava.approver@concept2cure.pro`. Their password is `DEMO_SIGNER_PASSWORD`
+   in `~/.concept2cure-codespace/app.env`, in the Codespace's terminal:
+   `grep DEMO_SIGNER_PASSWORD ~/.concept2cure-codespace/app.env`.
+5. **See AnA draft a CSR.** **Projects** → **Xanomeline TTS Phase 2
+   (CDISCPILOT01)** → **Author** in the project's steps → open **CDISCPILOT01
+   Clinical Study Report**. In the editor, open **Build from the study's data**.
+   The study's datasets are uploaded and approved in Vault, and its tables are
+   frozen in the document. Press **Build CSR draft**. AnA drafts each section
+   with your key, and you review, edit and approve the sections in the same
+   editor. The Codespace never starts a build by itself, so it never spends
+   your key without you.
+
+What the setup did, and where to look when something is wrong:
+
+| Step | Where | Log |
+|---|---|---|
+| Dependencies, PostgreSQL 16 + pgvector, the database, the sign-in accounts | `.devcontainer/post-create.sh` | the creation log; `~/.concept2cure-codespace/provision.log` |
+| Database up, new migrations, the app, demo data, the CSR study | `.devcontainer/post-start.sh` | `/tmp/concept2cure-app.log`; `~/.concept2cure-codespace/{demo-seed,csr-study}.log` |
+
+- **Credentials.** `~/.concept2cure-codespace/` is outside the repository, and
+  its files are readable only by you. `owner.env` holds the database owner's
+  password. Only the provisioning step reads it. `app.env` is what the app
+  runs with: the `app_service` role, which is not an owner and does not bypass
+  row-level security, and random signing secrets. Nothing is committed or
+  printed.
+- **Update an existing Codespace before the demo:** in its terminal, confirm
+  `git branch --show-current` says `concept2cure-v2`, then run
+  `git pull --ff-only origin concept2cure-v2` and
+  `bash .devcontainer/post-start.sh`. The start checks the running backend's
+  public `/api/version` stamp against the checkout and restarts an older or
+  unverified backend. It also restarts when the running app lacks a key the
+  terminal has. A healthy backend already serving this commit is retained.
+  To force a restart: `pkill -f 'tsx --inspect=0 server/index.ts'; bash .devcontainer/post-start.sh`.
+  A terminal opened before a secret was added does not hold that secret; stop and start the Codespace instead.
+- **Check it:** `set -a; . ~/.concept2cure-codespace/app.env; set +a; npm run codespaces:doctor -- --check-app --probe-anthropic`.
+- **The CSR study's data** are the public CDISC pilot ADaM files (CDISCPILOT01).
+  They are fetched when the Codespace starts into `~/.concept2cure-codespace/cdisc-pilot`,
+  each checked against its pinned SHA-256. CDISC's terms forbid committing or
+  altering them, so they are never in the repository. The published CSR's
+  efficacy tables are not part of that download. Without a transcribed
+  `cdiscpilot01-efficacy-results.json` in that directory, the study's manifest
+  says efficacy was "not supplied", and the CSR's efficacy section says so too.
+  It is never invented.
+- **With `ANTHROPIC_API_KEY`** the start-up names what the key can do, using a model list that costs nothing:
+  `ANTHROPIC_API_KEY: key accepted; drafting models available: claude-opus-5-5, …`, or `BLOCKED` with the reason
+  (an invalid key, billing, or a key that can see none of the approved drafting models).
+- **Without `ANTHROPIC_API_KEY`** the app runs and `/readyz` answers 503 with
+  only `ana` down (`anaState: no_provider`); the start-up box says so. AnA cannot draft. The CSR build then
+  ends refused (demo replies are not saved as drafts). That is how it is designed.
+
 ## Prepare the local Codespace
+
+The steps below are the manual path, kept for a second, dedicated test
+database. The Codespace's own setup (above) already does them for its database.
 
 Use a Codespace dedicated to this test. Confirm the branch before updating it:
 
@@ -58,9 +148,9 @@ pg_isready -h 127.0.0.1 -p 5432
 
 Use Node 22 and PostgreSQL with the `vector` extension available. If dependencies,
 the local PostgreSQL cluster or extension are unavailable, record setup as
-blocked before the browser session. `.devcontainer/post-create.sh` treats some
-installation failures as optional, and `post-start.sh` starts a database without
-installing the complete application schema. Neither banner proves readiness.
+blocked before the browser session. Since 2026-11-06 the Codespace's own
+`post-start.sh` reports readiness only after `/readyz` answered; a dedicated
+test database still needs the steps below.
 
 Choose a **new local database**. The explicit loopback URLs below prevent an
 inherited `DATABASE_NEON_NEW_SECRET`, `DATABASE_URL` or ignored env file from

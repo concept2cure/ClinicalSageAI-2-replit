@@ -25,6 +25,7 @@ import request from 'supertest';
 import { Pool } from 'pg';
 import { createHash } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
+import { nativeCatalogRunId, seedNativeCatalogProject } from './catalog-native-fixture';
 
 /* The chained writer, real unless a case asks it to fail once. */
 const failNext = vi.hoisted(() => ({ on: false }));
@@ -112,9 +113,11 @@ beforeAll(async () => {
   await clearOwnChain();
   const u = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ('dbtest-vr16b@example.test', 'Cara Capturer', 'not-a-real-hash')
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
+       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, status = 'active' RETURNING id`,
   );
   userId = Number(u.rows[0].id);
+  await owner.query(`INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,'member')
+    ON CONFLICT (organization_id,user_id) DO UPDATE SET role='member'`, [org.id, userId]);
   await owner.query(`DELETE FROM regulatory_programs WHERE name LIKE $1`, [`${PROBE}%`]);
   const p = await owner.query(
     `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
@@ -122,6 +125,10 @@ beforeAll(async () => {
     [`${PROBE}program`, org.id],
   );
   programId = String(p.rows[0].id);
+  // Chat capture now evaluates the same current actor/private-project policy
+  // as the other governed writers. Seed its real parent, never a policy mock.
+  await seedNativeCatalogProject(owner, { organizationId: org.id, userId, programId,
+    namespace: `vr16b-${nativeCatalogRunId()}` });
 
   const { default: chatRouter } = await import('../../server/routes/chat');
   const { establishRequestTenantScope } = await import('../../server/middleware/establishRequestTenantScope');

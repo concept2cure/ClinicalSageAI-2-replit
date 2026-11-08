@@ -1,0 +1,28 @@
+{
+  "status": "failed",
+  "startedAt": "2026-11-06T18:53:45.482Z",
+  "stage": "1440:sign-in",
+  "scope": "Existing local production editor; authenticated real own-project positive, then injected HTTP-200 client-integrity faults. No model or submission actions.",
+  "cases": [],
+  "blockedMutations": [],
+  "externalRequestsBlocked": [
+    {
+      "host": "fonts.googleapis.com",
+      "method": "GET"
+    }
+  ],
+  "apiReadFailures": [],
+  "applicationMutationsForwarded": 0,
+  "authenticationException": "Only POST /api/auth/dev-login is allowed.",
+  "baseUrl": "http://127.0.0.1:5100",
+  "syntheticEmail": "scope.editor@example.test",
+  "programId": "1739faef-f7b4-4c07-934c-17e9456de00c",
+  "documentId": "561c87ff-5761-490a-99df-54f323398d2b",
+  "browserVersion": "156.0.8078.79",
+  "error": {
+    "name": "Error",
+    "code": "SYNTHETIC_DEV_LOGIN_FAILED",
+    "stage": "1440:sign-in"
+  },
+  "completedAt": "2026-11-06T18:53:47.475Z"
+}

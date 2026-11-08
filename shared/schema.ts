@@ -19044,6 +19044,8 @@ export const rbmPatientProfiles = pgTable(
     orgIdx:        index('rbm_patient_profiles_org_idx').on(table.organizationId),
     orgProgramIdx: index('rbm_patient_profiles_org_program_idx').on(table.organizationId, table.programId),
     statusIdx:     index('rbm_patient_profiles_status_idx').on(table.organizationId, table.status),
+    identityIdx:   uniqueIndex('rbm_patient_profiles_organization_id_program_id_subject_id_key')
+      .on(table.organizationId, table.programId, table.subjectId),
   }),
 );
 export type RbmPatientProfile = InferSelectModel<typeof rbmPatientProfiles>;

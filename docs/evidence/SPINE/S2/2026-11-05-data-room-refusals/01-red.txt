@@ -1,0 +1,18 @@
+ × client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'a plan without the feature
+ × client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'a feature not in this rele
+ × client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'a role that cannot read it
+ × client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'an unconfirmed organizatio
+ × client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'a project not in this orga
+ × client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'an expired session': its o
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'a server failure' stays a
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'a store that did not answ
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'no response at all' stays
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > hides earlier actionable sources
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadat
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadat
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadat
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadat
+ × client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > resets search, page and selected 
+ ✓ client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > ignores an old project completio
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 9 passed (16)

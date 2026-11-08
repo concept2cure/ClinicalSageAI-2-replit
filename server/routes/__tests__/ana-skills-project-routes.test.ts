@@ -171,6 +171,44 @@ describe('a skill written for a project', () => {
     expect(auditRows[0]).toMatchObject({ action: 'ana_skill.created' });
   });
 
+  it('creates a supported sourced project approval rule only after project write admission', async () => {
+    const sourceAuditEventId = '741e0191-6844-4f0c-a6f1-948914ba474a';
+    const binding = { policyType: 'requires_approval', enforcement: 'mandatory', toolName: 'check_dossier_consistency',
+      description: 'Ask this project lead before checking the dossier.' };
+    const client = fakeClient(sql => {
+      if (sql.includes('FROM audit_logs')) return [{ id: sourceAuditEventId, table_name: 'project_skill_settings',
+        action: 'ana_skill.project_turned_off', record_id: '9:labeling', user_id: 5, new_values: { projectId: 9 } }];
+      if (sql.includes('INSERT INTO account_skill_bundles')) return [{ id: 1, bundle_id: 'bundle_1', status: 'active', version: 1,
+        project_id: 9, policy_bindings: [binding], metadata: { standingRule: { sourceAuditEventId } } }];
+      return [];
+    });
+    const res = await request(appAs(EDITOR, client)).post(`/api/ana-skills/projects/${PROGRAM}/skills`)
+      .send({ ...SKILL, sourceAuditEventId, policyBindings: [binding], reason: REASON, projectId: 12345 });
+    expect(res.status).toBe(201);
+    expect(res.body.skill).toMatchObject({ projectId: 9, policyBindings: [binding], sourceAuditEventId });
+    expect(writes(client).find(q => q.sql.includes('INSERT INTO account_skill_bundles'))!.params[20]).toBe(9);
+    expect(auditRows[0]).toMatchObject({ userId: 5, tenantId: 42 });
+  });
+
+  it('refuses an unenforceable project action binding and another project correction source', async () => {
+    const sourceAuditEventId = '741e0191-6844-4f0c-a6f1-948914ba474a';
+    const unsupported = fakeClient();
+    const rule = { policyType: 'requires_approval', enforcement: 'mandatory', toolName: 'lookup_fda_guidance',
+      description: 'Ask the project lead before this guidance search.' };
+    const rejected = await request(appAs(EDITOR, unsupported)).post(`/api/ana-skills/projects/${PROGRAM}/skills`)
+      .send({ ...SKILL, sourceAuditEventId, policyBindings: [rule], reason: REASON });
+    expect(rejected.status).toBe(422);
+    expect(writes(unsupported)).toEqual([]);
+    const foreignSource = fakeClient(sql => sql.includes('FROM audit_logs') ? [{ id: sourceAuditEventId,
+      table_name: 'project_skill_settings', action: 'ana_skill.project_turned_off', record_id: '10:labeling',
+      user_id: 5, new_values: { projectId: 10 } }] : []);
+    const rejectedSource = await request(appAs(EDITOR, foreignSource)).post(`/api/ana-skills/projects/${PROGRAM}/skills`)
+      .send({ ...SKILL, sourceAuditEventId, reason: REASON });
+    expect(rejectedSource.status).toBe(422);
+    expect(rejectedSource.body.error.code).toBe('RULE_SOURCE_SCOPE_MISMATCH');
+    expect(writes(foreignSource)).toEqual([]);
+  });
+
   it('cannot replace a library skill: that is the organization’s decision', async () => {
     const client = fakeClient();
     const res = await request(appAs(EDITOR, client))

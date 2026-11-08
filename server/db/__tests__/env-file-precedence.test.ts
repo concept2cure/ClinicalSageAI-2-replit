@@ -47,6 +47,10 @@ function poolTarget(files: Record<string, string>, shellEnv: Record<string, stri
   );
 
   const env: NodeJS.ProcessEnv = { ...process.env };
+  // This suite's baseline cases are explicitly non-Codespaces .env precedence.
+  // Codespaces ignores env files, and has its own regression below.
+  delete env.C2C_CODESPACE;
+  delete env.CODESPACES;
   for (const key of ['DATABASE_URL', 'APP_DATABASE_URL', 'NEON_DATABASE_URL', 'DATABASE_NEON_NEW_SECRET']) {
     delete env[key];
   }
@@ -96,6 +100,33 @@ describe('the server pool honours .env.local over .env', () => {
         { DATABASE_URL: url('from_shell') }
       )
     ).toBe(url('from_shell'));
+  }, 60_000);
+});
+
+describe('Codespaces host-injected secrets', () => {
+  it('does not read stale .env files to supply missing database or provider secrets', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'codespace-host-secrets-'));
+    dirs.push(dir);
+    writeFileSync(path.join(dir, '.env'), 'DATABASE_URL=' + url('stale_env') + '\nOPENAI_API_KEY=stale-openai-value\n');
+    writeFileSync(path.join(dir, '.env.local'), 'DATABASE_URL=' + url('stale_local') + '\nANTHROPIC_API_KEY=stale-anthropic-value\n');
+    const moduleUrl = pathToFileURL(path.join(repoRoot, 'server/config/load-env-files.ts')).href;
+    writeFileSync(path.join(dir, 'probe.mjs'),
+      'await import(' + JSON.stringify(moduleUrl) + ');\n' +
+      'console.log(\'HOST=\' + JSON.stringify({ owner: process.env.DATABASE_URL ?? null, ' +
+      'app: process.env.APP_DATABASE_URL ?? null, ' +
+      'openai: process.env.OPENAI_API_KEY ?? null, anthropic: process.env.ANTHROPIC_API_KEY ?? null }));\n');
+    const env: NodeJS.ProcessEnv = { ...process.env };
+    for (const key of ['DATABASE_URL', 'APP_DATABASE_URL', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY']) delete env[key];
+    Object.assign(env, {
+      C2C_CODESPACE: '1', CODESPACES: 'true', NODE_ENV: 'development',
+      APP_DATABASE_URL: url('injected_runtime'),
+      TSX_TSCONFIG_PATH: path.join(repoRoot, 'tsconfig.json'),
+    });
+    const output = execFileSync(tsx, ['probe.mjs'], { cwd: dir, env, encoding: 'utf8', timeout: 60_000 });
+    const row = output.split('\n').find(line => line.startsWith('HOST='));
+    expect(row && JSON.parse(row.slice(5))).toEqual({
+      owner: null, app: url('injected_runtime'), openai: null, anthropic: null,
+    });
   }, 60_000);
 });
 

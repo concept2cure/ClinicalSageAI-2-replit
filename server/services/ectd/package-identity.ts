@@ -216,12 +216,15 @@ function applicationNumberGap(identity: LegacyReadableIdentity): string {
     : 'the submission is not anchored to a project, so no agency application number is recorded for it (anchor it, then record the number on the project)';
 }
 
-/** Named actionable gaps, using the existing FDA identifier/contact rules. */
-export function packageIdentityRefusal(
+/**
+ * Each fact the package names from the record and the record lacks, with its
+ * actionable gap, using the existing FDA identifier/contact rules. The refusal
+ * below joins them; the compile with nothing placed lists each (B3, 2026-11-05).
+ */
+export function packageIdentityGaps(
   identity: LegacyReadableIdentity,
-  outcome: string,
   options: { fda?: boolean } = {},
-): PackageIdentityMissingError | null {
+): { missing: PackageIdentityField[]; gaps: string[] } {
   const missing: PackageIdentityField[] = [];
   const gaps: string[] = [];
   if (!identity.applicationNumber) {
@@ -251,8 +254,18 @@ export function packageIdentityRefusal(
       gaps.push(problem.message);
     }
   }
+  return { missing, gaps };
+}
+
+/** Named actionable gaps, using the existing FDA identifier/contact rules. */
+export function packageIdentityRefusal(
+  identity: LegacyReadableIdentity,
+  outcome: string,
+  options: { fda?: boolean } = {},
+): PackageIdentityMissingError | null {
+  const { missing, gaps } = packageIdentityGaps(identity, options);
   return missing.length ? new PackageIdentityMissingError(missing,
-    `A package names its application and its applicant from the record, never a placeholder, and ${gaps.join('; and ')}. ${outcome}`) : null;
+    `A package names its application and its applicant from the record, never a placeholder, and ${gaps.map((g) => g.trim().replace(/\.+$/, '')).join('; and ')}. ${outcome}`) : null;
 }
 
 /**

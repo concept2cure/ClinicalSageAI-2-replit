@@ -273,11 +273,10 @@ export async function launchCSRBuildAsync(
   // runCSRBuildJob's own catch block; we still attach a .catch handler
   // here as a safety net so an unhandled rejection can't crash the process.
   setImmediate(() => {
-    runCSRBuildJob(enqueued.jobId).catch(err => {
-      console.error(
-        `[CSR Builder] runCSRBuildJob(${enqueued.jobId}) threw outside its own error handler:`,
-        err
-      );
+    runCSRBuildJob(enqueued.jobId).catch(() => {
+      // The job stores its own typed refusal; raw worker exceptions may carry
+      // uploaded study values or provider response details. Never echo them.
+      console.error(`[CSR Builder] runCSRBuildJob(${enqueued.jobId}) failed outside its own handler.`);
     });
   });
 
@@ -510,8 +509,11 @@ export async function draftCSRSectionWithProvenance(
       });
       const accepted = acceptSectionReply(section.number, reply, info, lineage, evidence);
       if (accepted) return done(accepted.content, 'ai', accepted.model, accepted.tokenCost);
-    } catch (err) {
-      console.warn(`[CSR Builder] AI drafting failed for section ${section.number}, using template:`, err);
+    } catch {
+      // Never log an SDK error object: its message/response may contain
+      // the clinical prompt, source-table cells or provider credentials.
+      // The source-grounded template below explicitly marks missing data.
+      console.warn(`[CSR Builder] AI drafting failed for section ${section.number}; a needs-data template will be used.`);
     }
   }
   // Template fallback. ai_generated MUST be false for this row.
@@ -642,8 +644,8 @@ async function generateSectionWithAI(
       return template();
     }
     return { content, isAI: Boolean(content?.trim()) };
-  } catch (err) {
-    console.warn(`[CSR Builder] AI drafting failed for section ${section.number}, using template:`, err);
+  } catch {
+    console.warn(`[CSR Builder] AI drafting failed for section ${section.number}; using needs-data template.`);
     return template();
   }
 }
@@ -731,8 +733,8 @@ export async function compareWithExistingCSRs(
       outcome: 'Unknown',
       similarity: indication.toLowerCase() === String(row.indication || '').toLowerCase() ? 0.95 : 0.6,
     }));
-  } catch (err) {
-    console.warn('[CSR Builder] Cross-study comparison query failed:', err);
+  } catch {
+    console.warn('[CSR Builder] Cross-study comparison query failed; no external rows returned.');
     return [];
   }
 }
@@ -744,8 +746,16 @@ export async function compareWithExistingCSRs(
 
 /** The registration line a title page or synopsis prints, when the source states one. */
 function registryLine(info: CSRBuildRequest['studyInfo']): string {
-  return info.nctNumber ? `ClinicalTrials.gov Identifier: ${info.nctNumber}\n` : '';
+  return info.nctNumber ? `ClinicalTrials.gov Identifier: ${info.nctNumber}${FIELD_BREAK}` : '';
 }
+
+/**
+ * Between two labelled fields of a title page or synopsis: a blank line. Both readers of this text treat a single
+ * newline as a soft wrap, the editor's import (Markdown, `workflow-copy-content.ts`) and the assembled report
+ * (`csr/csr-assembly-body.ts`), so fields one newline apart printed as one run-on line, "Protocol Number: X Phase:
+ * Phase 2 Indication: …" (2026-11-06, the CDISCPILOT01 working-copy PDF). Each field is its own paragraph.
+ */
+const FIELD_BREAK = '\n\n';
 
 /**
  * Template-based section generation (fallback when AI unavailable).
@@ -755,10 +765,10 @@ function generateSectionTemplate(
   info: CSRBuildRequest['studyInfo']
 ): string {
   const templates: Record<string, string> = {
-    '1': `CLINICAL STUDY REPORT\n\n${info.title}\n\nProtocol Number: ${info.protocolNumber}\n${registryLine(info)}Phase: ${info.phase}\nIndication: ${info.indication}\nSponsor: ${info.sponsor}\nInvestigational Product: ${info.investigationalProduct}\n${info.comparator ? `Comparator: ${info.comparator}\n` : ''}`,
+    '1': `CLINICAL STUDY REPORT\n\n${info.title}\n\nProtocol Number: ${info.protocolNumber}${FIELD_BREAK}${registryLine(info)}Phase: ${info.phase}${FIELD_BREAK}Indication: ${info.indication}${FIELD_BREAK}Sponsor: ${info.sponsor}${FIELD_BREAK}Investigational Product: ${info.investigationalProduct}\n${info.comparator ? `\nComparator: ${info.comparator}\n` : ''}`,
 
     // E3 does not number synopsis fields; the synopsis is one heading.
-    '2': `Study Title: ${info.title}\nProtocol Number: ${info.protocolNumber}\n${registryLine(info)}Study Phase: ${info.phase}\nIndication: ${info.indication}\nSponsor: ${info.sponsor}\n\nPrimary Objective: To evaluate ${info.primaryEndpoint} of ${info.investigationalProduct} in patients with ${info.indication}.\n${info.secondaryEndpoints?.length ? `\nSecondary Objectives:\n${info.secondaryEndpoints.map((e, i) => `${i + 1}. ${e}`).join('\n')}\n` : ''}\nRecorded plan: ${info.studyDesign}; investigational product: ${info.investigationalProduct}${info.comparator ? `; comparator: ${info.comparator}` : ''}.${info.sampleSize ? ` Approximately ${info.sampleSize} subjects were planned for enrollment.` : ''}${info.treatmentDuration ? ` Planned treatment duration: ${info.treatmentDuration}.` : ''}\n\nActual conduct, analysis populations, results and conclusions: [DATA TO BE INSERTED FROM SOURCE RECORDS]`,
+    '2': `Study Title: ${info.title}${FIELD_BREAK}Protocol Number: ${info.protocolNumber}${FIELD_BREAK}${registryLine(info)}Study Phase: ${info.phase}${FIELD_BREAK}Indication: ${info.indication}${FIELD_BREAK}Sponsor: ${info.sponsor}\n\nPrimary Objective: To evaluate ${info.primaryEndpoint} of ${info.investigationalProduct} in patients with ${info.indication}.\n${info.secondaryEndpoints?.length ? `\nSecondary Objectives:\n${info.secondaryEndpoints.map((e, i) => `${i + 1}. ${e}`).join('\n')}\n` : ''}\nRecorded plan: ${info.studyDesign}; investigational product: ${info.investigationalProduct}${info.comparator ? `; comparator: ${info.comparator}` : ''}.${info.sampleSize ? ` Approximately ${info.sampleSize} subjects were planned for enrollment.` : ''}${info.treatmentDuration ? ` Planned treatment duration: ${info.treatmentDuration}.` : ''}\n\nActual conduct, analysis populations, results and conclusions: [DATA TO BE INSERTED FROM SOURCE RECORDS]`,
 
     // Study metadata alone does not establish ethics approval, informed
     // consent or compliance; each E3 §5 heading says what its records must show.

@@ -1,0 +1,28 @@
+{
+  "exitCode": 1,
+  "sourcesBefore": {
+    "server/routes/unifiedTasks.routes.ts": "a23a3878a12c8f628ad47826b039bcaac4df547050922e076499d43fc5158398",
+    "server/services/unifiedTaskService.ts": "47453b50b459c0cb42b2dc3aa140cd78c2b570671ec12ebb1fc1f8365b993f3b",
+    "server/services/tasking/task-project.ts": "09bd032687f878562a61a1267ee261e19553ae4d2644bd9eff66fd8a1b16e7d4",
+    "tests/db/workflow-project-admission.dbtest.ts": "dffa2a2aedc751591b2f6483748726c981fde8115f48e71ecaa8cd37109da598"
+  },
+  "sourcesAfter": {
+    "server/routes/unifiedTasks.routes.ts": "a23a3878a12c8f628ad47826b039bcaac4df547050922e076499d43fc5158398",
+    "server/services/unifiedTaskService.ts": "47453b50b459c0cb42b2dc3aa140cd78c2b570671ec12ebb1fc1f8365b993f3b",
+    "server/services/tasking/task-project.ts": "09bd032687f878562a61a1267ee261e19553ae4d2644bd9eff66fd8a1b16e7d4",
+    "tests/db/workflow-project-admission.dbtest.ts": "dffa2a2aedc751591b2f6483748726c981fde8115f48e71ecaa8cd37109da598"
+  },
+  "sourcesUnchanged": true,
+  "command": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.db.config.ts",
+    "tests/db/workflow-project-admission.dbtest.ts",
+    "--testNamePattern",
+    "unified task project admission counterexamples",
+    "--reporter=verbose"
+  ],
+  "elapsedSeconds": 4.64
+}

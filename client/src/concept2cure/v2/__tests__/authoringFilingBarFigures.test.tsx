@@ -110,8 +110,8 @@ async function signAgain() {
 describe('when the server refuses over figures not in their cited sources', () => {
   it('asks about each figure by name, each starting at "go back", and sends no acknowledgement first', async () => {
     stubSignerChecks();
-    apiRequest.mockRejectedValueOnce(unverified('Not approved — 2 figures in this document are not in the sources their sections cite.'));
     const { fireToast } = renderBar();
+    apiRequest.mockRejectedValueOnce(unverified('Not approved — 2 figures in this document are not in the sources their sections cite.'));
     await approve();
     await waitFor(() => expect(screen.getByTestId('form-title').textContent).toBe('Figures are not in their cited sources'));
     expect(screen.getByTestId('form-fields').textContent).toBe('figure-0,figure-1');
@@ -124,8 +124,8 @@ describe('when the server refuses over figures not in their cited sources', () =
 
   it('re-signs with every key only when every figure is kept', async () => {
     stubSignerChecks();
-    apiRequest.mockRejectedValueOnce(unverified('Not approved.'));
     const { onChanged } = renderBar();
+    apiRequest.mockRejectedValueOnce(unverified('Not approved.'));
     await approve();
     await waitFor(() => expect(screen.getByTestId('form-fields').textContent).toBe('figure-0,figure-1'));
     answers.figures = { 'figure-0': 'keep', 'figure-1': 'keep' };
@@ -151,8 +151,8 @@ describe('when the server refuses over figures not in their cited sources', () =
 
   it('keeping one figure and correcting another sends nothing and goes back', async () => {
     stubSignerChecks();
-    apiRequest.mockRejectedValueOnce(unverified('Not approved.'));
     renderBar();
+    apiRequest.mockRejectedValueOnce(unverified('Not approved.'));
     await approve();
     await waitFor(() => expect(screen.getByTestId('form-fields').textContent).toBe('figure-0,figure-1'));
     const callsBefore = apiRequest.mock.calls.length;
@@ -165,8 +165,8 @@ describe('when the server refuses over figures not in their cited sources', () =
 
   it('a freeze asks the same, and re-seals with every key once every figure is kept', async () => {
     stubSignerChecks();
-    apiRequest.mockRejectedValueOnce(unverified('Not frozen.'));
     const { onChanged } = renderBar();
+    apiRequest.mockRejectedValueOnce(unverified('Not frozen.'));
     await signFreeze();
     await waitFor(() => expect(screen.getByTestId('form-fields').textContent).toBe('figure-0,figure-1'));
     expect(screen.getByTestId('form-sub').textContent).toMatch(/Freezing seals the text for filing/);
@@ -189,8 +189,8 @@ describe('the signed confirmation stays on screen after a question was answered'
     notSettled.status = 409;
     notSettled.code = 'DOCUMENT_NOT_SETTLED';
     notSettled.payload = { unresolved: { openComments: 1, pendingEdits: 0 } };
-    apiRequest.mockRejectedValueOnce(notSettled);
     renderBar();
+    apiRequest.mockRejectedValueOnce(notSettled);
     await approve();
     await waitFor(() => expect(screen.getByTestId('form-title').textContent).toMatch(/not settled/i));
     answers.figures = { acknowledge: 'approve' };

@@ -23,7 +23,7 @@
 import type { PoolClient } from 'pg';
 import { pool } from '../../db.js';
 import { writeChainedAuditRow } from '../auditService.js';
-import { getCurrentAccessibleProgramScope,requireCurrentProgramAccess,requireProgramScopeStillCurrent,ProgramReadAccessError } from '../c2c/current-program-access';
+import { getCurrentAccessibleProgramScope,requireCurrentProgramAccess,requireProgramScopeStillCurrent,verifiedProgramAnchors,ProgramReadAccessError } from '../c2c/current-program-access';
 import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import { requireGovernedReason } from '../../routes/governed-reason';
 import { readVersionFamily, supersededSql } from './vault-version-family.js';
@@ -55,6 +55,12 @@ export interface RelatedVersion {
   programName: string | null;
   /** A later version of it exists: the relationship names this one. */
   superseded: boolean;
+  /**
+   * It belongs to another client's project. Relating across clients is refused (OTHER_CLIENT); this marks one
+   * recorded before that, so it is said and can be removed (S6, 2026-11-05). Compared as addRelationship compares
+   * them: no sponsor and a sponsor differ. False when either project's anchor is not in the verified scope.
+   */
+  otherClient: boolean;
 }
 
 export interface Relationship {
@@ -167,8 +173,14 @@ export async function addRelationship(
     if (family?.some((v) => v.id === to.id)) {
       return refuse(409, 'SAME_DOCUMENT', 'These are versions of one document; their order is already recorded in its version history.');
     }
-    await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,programId:from.program_id,forShare:true});
-    await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,programId:to.program_id,forShare:true});
+    const fromAccess = await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,programId:from.program_id,forShare:true});
+    const toAccess = await requireCurrentProgramAccess(client,{organizationId:a.organizationId,userId:a.userId ?? undefined,programId:to.program_id,forShare:true});
+    /* A CRO's sponsors never mix (F1, S6 V3, 2026-11-05): a document is related only to documents of its own
+       sponsor's projects. The sponsor is each project's verified anchor's client workspace, never a request value.
+       The finder searches within the sponsor (VaultRelationships.tsx); this refuses a target named some other way. */
+    if (fromAccess.clientWorkspaceId !== toAccess.clientWorkspaceId) {
+      return refuse(409, 'OTHER_CLIENT', 'That document belongs to another client’s project. A document is related only to documents of its own client’s projects.');
+    }
     const ins = await client.query(
       `INSERT INTO public.vault_document_relationships
          (organization_id, program_id, from_document_id, to_document_id, relationship_type, note, created_by)
@@ -223,6 +235,19 @@ export async function removeRelationship(
   }));
 }
 
+/**
+ * Whether a program's sponsor differs from this one's, by the client workspace each verified anchor records. A
+ * program with no anchor in the scope is not claimed to differ.
+ */
+function sponsorDiffers(anchors: ReadonlyArray<{ programId: string; clientWorkspaceId: number | null }>, programId: string) {
+  const sponsor = new Map(anchors.map((a) => [a.programId.toLowerCase(), a.clientWorkspaceId]));
+  const mine = sponsor.get(programId.toLowerCase());
+  return (other: string): boolean => {
+    const theirs = sponsor.get(String(other).toLowerCase());
+    return mine !== undefined && theirs !== undefined && mine !== theirs;
+  };
+}
+
 /** Every live relationship of a version, both directions, oldest first. */
 export async function listRelationships(
   q: { query: PoolClient['query'] } | typeof pool,
@@ -261,6 +286,7 @@ export async function listRelationships(
     [p.documentId, p.organizationId, scope.programIds],
   );
   await requireProgramScopeStillCurrent(q,identity,scope);
+  const otherClient = sponsorDiffers(verifiedProgramAnchors(q,identity,scope), p.programId);
   return {
     ok: true,
     scope:'verified-accessible-related-programs',
@@ -283,6 +309,7 @@ export async function listRelationships(
           programId: r.other_program_id,
           programName: r.other_program_name ?? null,
           superseded: Boolean(r.other_superseded),
+          otherClient: otherClient(r.other_program_id),
         },
       };
     }),

@@ -13,9 +13,9 @@ import { recordAuditRow } from '../services/audit/audit-write-outcome.js';
 
 const log = createScopedLogger('csr-source-inputs');
 type RequireTenant = (req: Request, res: Response) => number | null;
-const Program = z.string().uuid();
+const Program = z.string().guid();
 const Preview = CsrSourceSelectionSchema.extend({ programId: Program }).strict();
-const Document = z.string().uuid();
+const Document = z.string().guid();
 const Freeze = z.object({ programId: Program, documentId: Document, source: CsrSourceSelectionSchema }).strict();
 function scope(req: Request, res: Response, tenant: RequireTenant, programId: unknown): CsrSourceScope | null {
   const organizationId = tenant(req, res);
@@ -87,7 +87,7 @@ export function createCsrSourceInputRouter(tenant: RequireTenant) {
   });
   router.get('/runs/:runId/clinical-tables', async (req, res) => {
     const current = scope(req, res, tenant, req.query.programId); if (!current) return;
-    const runId = z.string().uuid().safeParse(req.params.runId);
+    const runId = z.string().guid().safeParse(req.params.runId);
     if (!runId.success) return res.status(400).json({ error: 'CSR_RUN_ID_INVALID' });
     try { return res.json(await readSavedClinicalTables(requestPgClient(req), current, runId.data)); }
     catch (error) { return failure(res, error, 'reading retained CSR source tables'); }

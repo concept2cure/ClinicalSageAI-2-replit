@@ -57,6 +57,7 @@ function extractionStateOf(status: string): 'extracted' | 'pending' | 'failed' {
   return status === 'extraction_failed' ? 'failed' : 'extracted';
 }
 import { writeChainedAuditRow } from '../auditService.js';
+import { readProgramFolderIndex } from './vault-folders.js';
 import { getStorageProvider } from '../storage/index.js';
 import {
   discardUnrecordedBytes,
@@ -71,9 +72,7 @@ import { notifyTaskEvent } from '../tasking/task-side-effects.js';
 import {
   classifyForFiling,
   filingVocabularyRefusal,
-  resolveVaultView,
-  isFolderInView,
-  folderLabel,
+  resolveVaultFilingContext,
 } from './vault-filing.service.js';
 
 import type { VaultIngestArgs, VaultIngestResult } from './vault-ingest-types.js';
@@ -397,8 +396,9 @@ async function admitVaultDocument(
      not, the deterministic classifier proposes ('suggested', with confidence
      and rationale), and a file the rules cannot place stays visibly
      'unfiled'. The proposal never overwrites documentType — a filename is
-     not grounds to change a regulatory type field (see useVaultUpload). */
-  const vaultView = await resolveVaultView(args.programId, orgId);
+     not grounds to change a regulatory type field (see useVaultUpload).
+     The project's region and application select its Module 1 heading (S6). */
+  const { view: vaultView, jurisdiction, applicationKind } = await resolveVaultFilingContext(args.programId, orgId);
   let placement: {
     folderId: string | null;
     evidenceKind: string | null;
@@ -412,14 +412,16 @@ async function admitVaultDocument(
   if (checkIn) {
     placement = inheritedPlacement(checkIn.head);
   } else if (args.folderId) {
-    if (!isFolderInView(vaultView, args.folderId)) {
+    // Any folder of the project: presets, binder, people's folders (vault-folders.ts).
+    const folders = await readProgramFolderIndex(pool, args.programId, orgId, vaultView);
+    if (!folders.has(args.folderId)) {
       return { ok: false, status: 400, code: 'INVALID_FOLDER',
-        message: `Folder '${args.folderId}' does not exist in this project's ${vaultView} vault taxonomy.` };
+        message: `Folder '${args.folderId}' does not exist in this project's Vault.` };
     }
     placement = {
       folderId: args.folderId,
       evidenceKind: args.evidenceKind ?? null,
-      ctdSection: args.ctdSection ?? null,
+      ctdSection: args.ctdSection ?? folders.ctdSectionOf(args.folderId),
       status: 'confirmed',
       confidence: null,
       rationale: 'Filed by the uploader at ingest.',
@@ -432,7 +434,7 @@ async function admitVaultDocument(
       title: args.documentTitle,
       mimeType,
       extractedText,
-      view: vaultView,
+      view: vaultView, jurisdiction, applicationKind,
       documentType: args.documentType,
     });
     placement = {
@@ -578,7 +580,11 @@ async function admitVaultDocument(
         fileSize,
         mimeType,
         contentHash,
-        args.classification ?? checkIn?.head.classification ?? 'INTERNAL',
+        // Unreviewed client uploads are confidential, never implicitly T1.
+        // A version inherits its current head; same-bytes retries retain the
+        // recorded classification in ON CONFLICT above. This changes only a
+        // fresh admission with no declared or inherited classification.
+        args.classification ?? checkIn?.head.classification ?? 'CONFIDENTIAL',
         args.retentionPolicy ?? checkIn?.head.retention_policy ?? null,
         null,
         checkIn?.head.id ?? null,
@@ -758,7 +764,7 @@ async function admitVaultDocument(
          not just that bytes arrived. */
       filing: {
         ...filed,
-        folderLabel: folderLabel(vaultView, doc.folder_id ?? null),
+        folderLabel: (await readProgramFolderIndex(pool, args.programId, orgId, vaultView)).label(doc.folder_id ?? null),
         needsReview: doc.placement_status === 'unfiled',
       },
       ...(recorded ? { reupload: { unchanged: changes.length === 0, changes, differs } } : {}),

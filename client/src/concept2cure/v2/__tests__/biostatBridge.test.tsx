@@ -27,6 +27,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Biostatistics } from '../surfaces/Biostatistics';
+import { isStatisticalSave, statisticalSaveReceipt } from './_statistical-handoff-fixture';
 import { stashNavParamsForTarget, clearNavParams } from '../navParams';
 
 const Surface = Biostatistics as unknown as React.ComponentType<Record<string, unknown>>;
@@ -63,7 +64,7 @@ function assessment(over: Record<string, unknown> = {}) {
     adapter: { input: SIZED_INPUT, gaps: [{ field: 'attritionRate', message: 'No dropout rate; 15% assumed.', severity: 'defaulted', designPath: 'statisticalPlan.dropoutRate' }], mapped: ['alpha'] },
     computation: { method: 'Two-sample t-test', sampleSize: { total: 420, perGroup: 210 }, adjustedTotal: 526, power: 0.9 },
     judgment: { overallVerdict: 'adequate', overallRisk: 'low', actionRecommendation: 'proceed' },
-    provenance: { engine: 'c2c-stats', engineVersion: '1.0.0', inputsSha256: 'abcdef0123456789' },
+    provenance: { engine: 'c2c-stats', engineVersion: '1.0.0', inputsSha256: 'abcdef0123456789'.repeat(4) },
     filing: { programId: PROGRAM.id, programType: 'NDA', applicationType: 'nda', projectId: 42 },
     validation: { riskLevel: 'high', summary: '1 major finding', counts: { critical: 0, major: 1, minor: 0, info: 0 } },
     review: {
@@ -133,6 +134,10 @@ const engineDocReady = (type: string) =>
 /** The engine's two routes, or null when this is not one of them. */
 function engineRoute(method: string, path: string, body?: any) {
   if (method !== 'POST') return null;
+  if (isStatisticalSave(path, body)) {
+    posted.push({ path, body });
+    return { ok: true, status: 201, json: async () => statisticalSaveReceipt(body, 'doc-1') };
+  }
   if (path === '/api/ana-biostats/compute') {
     return { ok: true, status: 200, json: async () => ENGINE_COMPUTE };
   }
@@ -314,8 +319,9 @@ describe('Biostatistics — study design bridge', () => {
     fireEvent.click(screen.getByRole('button', { name: /Sample Size Rationale/ }));
     await engineDocReady('sample_size_rationale');
     fireEvent.click(screen.getAllByRole('button', { name: /^Save as a working document$/ })[0]);
-    await waitFor(() => expect(posted.some((p) => p.path === '/api/authoring/docs')).toBe(true));
-    expect(posted.find((p) => p.path === '/api/authoring/docs')!.body).toMatchObject({ module: 'M5', client_program_id: PROGRAM.id });
+    await waitFor(() => expect(posted.some(p => isStatisticalSave(p.path, p.body))).toBe(true));
+    expect(posted.find(p => isStatisticalSave(p.path, p.body))!.body).toMatchObject({ module: 'M5', programId: PROGRAM.id,
+      basis: { kind: 'study_design', studyId: 'STUDY-1', designInputsSha256: 'abcdef0123456789'.repeat(4) } });
   });
 
   it('applying the sample size requires a reason and reports only what the server confirmed', async () => {

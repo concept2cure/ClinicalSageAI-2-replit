@@ -57,6 +57,7 @@ jobs:
           missing=""
           [ -n "${{ secrets.NEON_API_KEY }}" ] || missing="$missing NEON_API_KEY"
           [ -n "$PROJECT_ID" ]                 || missing="$missing NEON_PROJECT_ID(secret or variable)"
+          [ -n "${{ vars.NEON_SAFE_PARENT_BRANCH }}" ] || missing="$missing NEON_SAFE_PARENT_BRANCH(approved non-production parent)"
           if [ -n "$missing" ]; then
             echo "::error::Missing Neon credential(s):$missing — this job proves Neon provisioning and must not report green without a Neon to prove it against."
             exit 1
@@ -81,17 +82,34 @@ jobs:
       - name: Install Postgres client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
+      - name: Bound proof branch lifetime to two hours
+        id: expiry
+        run: echo "expires_at=$(date -u -d '+2 hours' +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+
       - name: Create an ephemeral Neon branch
         id: neon
-        uses: neondatabase/create-branch-action@537d2f10d84e9de7cd2c2260ea176b5e4a8192d8 # v4
+        uses: neondatabase/create-branch-action@fb620d43d4c565abaf088b848a4e28e5c4ea4d9c # v6
         with:
           project_id: ${{ steps.creds.outputs.project_id }}
           api_key: ${{ secrets.NEON_API_KEY }}
           branch_name: provisioning-proof-${{ github.run_id }}
-          # Empty is fine: the action then branches from the project default.
-          # Whatever the parent is, nothing here writes to its database — the
-          # next step creates a separate, blank one inside the branch.
-          parent: ${{ secrets.NEON_PROD_BRANCH }}
+          # No default/production-parent fallback: require an explicitly approved
+          # non-production Neon branch. Even a copy-on-write clone of production
+          # would inherit sensitive data, despite provisioning a blank database later.
+          parent_branch: ${{ vars.NEON_SAFE_PARENT_BRANCH }}
+          # Copy schema only: no regulated/patient records enter a CI branch.
+          branch_type: schema-only
+          # Neon server-side expiration survives a cancelled job / lost runner.
+          expires_at: ${{ steps.expiry.outputs.expires_at }}
+
+      - name: Require a newly created proof branch
+        # Never adopt a pre-existing named branch. It could contain data or
+        # have an owner unrelated to this exact workflow run.
+        run: |
+          if [[ "${{ steps.neon.outputs.created }}" != "true" || -z "${{ steps.neon.outputs.branch_id }}" ]]; then
+            echo "::error::Neon did not confirm a newly created isolated branch; refusing provisioning"
+            exit 1
+          fi
 
       - name: Derive a BLANK database on the DIRECT host
         id: target
@@ -107,13 +125,16 @@ jobs:
           # endpoint and db_url_with_pooler is the pooled one; assert it rather
           # than trust it, because a pooled URL would silently change what this
           # job proves (and drizzle.config.ts would refuse it anyway).
-          case "$BRANCH_URL" in
-            *.pooler.*) echo "::error::db_url is a POOLER host; this job must use the direct endpoint"; exit 1 ;;
-          esac
+          # Neon's actual pooled hostname uses '-pooler.', not just '.pooler.'.
+          if [[ "$BRANCH_URL" == *-pooler.* || "$BRANCH_URL" == *.pooler.* ]]; then
+            echo "::error::db_url is a POOLER host; this job must use the direct endpoint"
+            exit 1
+          fi
 
-          # A Neon branch is a copy-on-write clone of its parent, so its database
-          # is NOT blank. Provisioning from scratch needs an empty one, so make
-          # one inside the branch. The branch is deleted at the end regardless.
+          # The schema-only branch carries the parent's schema but not its
+          # patient/client rows. Fresh-install proof still needs a completely
+          # empty database, so create one inside this ephemeral branch.
+          # This workflow is never permitted to write to the parent.
           SCRATCH="c2c_provisioning_proof_${{ github.run_id }}"
           psql "$BRANCH_URL" -v ON_ERROR_STOP=1 -c "CREATE DATABASE \"$SCRATCH\""
 
@@ -234,10 +255,11 @@ jobs:
         # are billed and quota-limited; leaking one per failed run is how a
         # project runs out of them. Same pinned action neon-preview-db.yml uses
         # for its PR cleanup.
-        if: always()
-        continue-on-error: true
+        if: always() && steps.neon.outputs.created == 'true' && steps.neon.outputs.branch_id != ''
+        # Deletion must fail visibly when Neon refuses it; do not claim cleanup
+        # if the action errored. Delete only the branch ID actually created.
         uses: neondatabase/delete-branch-action@4468d825d5a88ef4012f1705a82f02ec3072f776 # v3
         with:
           project_id: ${{ steps.creds.outputs.project_id }}
-          branch: provisioning-proof-${{ github.run_id }}
+          branch: ${{ steps.neon.outputs.branch_id }}
           api_key: ${{ secrets.NEON_API_KEY }}

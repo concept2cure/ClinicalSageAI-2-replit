@@ -111,7 +111,7 @@ describe('Project home — the "Project settings" control', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Project settings' }));
     fireEvent.change(await screen.findByRole('textbox', { name: 'Project description' }), { target: { value: 'Updated sponsor project description' } });
     fireEvent.click(screen.getByRole('button', { name: 'Review settings change' }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('dialog', { name: 'Save project settings' });
     fireEvent.change(within(dialog).getByPlaceholderText('Captured verbatim in the audit log. Be specific.'), { target: { value: 'Sponsor requested scope clarification' } });
     fireEvent.change(within(dialog).getByPlaceholderText('yes'), { target: { value: 'yes' } });
     await act(async () => { fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm and log' })); });

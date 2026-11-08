@@ -1,0 +1,35 @@
+{
+ "pma": {
+  "horizontalScroll": false,
+  "clippedPastRight": [
+   "Day-1000Agency / NB queries",
+   "ApprovalsYour pending e-sign · all projects",
+   "FilesFull filesystem",
+   "5. Pivotal trial—",
+   "6. Labeling—"
+  ],
+  "startOffered": false
+ },
+ "ivd": {
+  "horizontalScroll": false,
+  "clippedPastRight": [
+   "NB / GSPR0Agency / NB queries",
+   "ApprovalsYour pending e-sign · all projects",
+   "FilesFull filesystem",
+   "5GSPR complianceAnnex I · 20 requirements",
+   "6Assemble dossierTechnical file · declaration"
+  ],
+  "startOffered": false
+ },
+ "ivd-home": {
+  "horizontalScroll": false,
+  "clippedPastRight": [
+   "Start a conversation in Veritas assay",
+   "",
+   "Review",
+   "Submit",
+   "Respond"
+  ],
+  "startOffered": false
+ }
+}

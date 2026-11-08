@@ -18,6 +18,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+const sessionOwner = vi.hoisted(() => ({ value: { actor: '42:owner', key: 1, sameRevision: () => true } }));
+vi.mock('../editor/authoringCurrentRead', async importOriginal => ({
+  ...(await importOriginal<typeof import('../editor/authoringCurrentRead')>()), useAuthoringReadSession: () => sessionOwner.value,
+}));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
@@ -54,6 +58,7 @@ const puts: Array<{ url: string; body: any }> = [];
 const res = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body }) as Response;
 
 beforeEach(() => {
+  sessionOwner.value = { actor: '42:owner', key: 1, sameRevision: () => true };
   stored = [
     account({}),
     account({ environment: 'staging', status: 'platform_not_configured' }),
@@ -65,7 +70,7 @@ beforeEach(() => {
   apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
     if (method === 'GET' && url === '/api/gateway-accounts') {
       if (readFails) throw Object.assign(new Error('boom'), {});
-      return res({ organizationId: 42, accounts: stored });
+      return res({ organizationId: 42, canManage: true, accounts: stored });
     }
     if (method === 'PUT') {
       puts.push({ url, body });
@@ -109,8 +114,10 @@ describe('agency gateway accounts setting', () => {
     fireEvent.click(within(cell('fda-esg-production')).getByText('Change…'));
     fireEvent.change(screen.getByLabelText(/Submissions go out under/), { target: { value: 'client' } });
     fireEvent.change(screen.getByLabelText(/AS2 identifier/), { target: { value: 'OUR-AS2' } });
-    fireEvent.change(screen.getByLabelText(/ESG certificate/), { target: { value: '-----BEGIN CERTIFICATE-----\nx\n-----END CERTIFICATE-----' } });
-    fireEvent.change(screen.getByLabelText(/private key/), { target: { value: '-----BEGIN PRIVATE KEY-----\ny\n-----END PRIVATE KEY-----' } });
+    fireEvent.paste(screen.getByLabelText(/ESG certificate/), { clipboardData: { getData: () => '-----BEGIN CERTIFICATE-----\nx\n-----END CERTIFICATE-----' } });
+    fireEvent.paste(screen.getByLabelText(/private key/), { clipboardData: { getData: () => '-----BEGIN PRIVATE KEY-----\ny\n-----END PRIVATE KEY-----' } });
+    expect((screen.getByLabelText(/private key/) as HTMLInputElement).value).toBe('********');
+    expect(document.body.innerHTML).not.toContain('BEGIN PRIVATE KEY');
     fireEvent.change(screen.getByLabelText(/Reason for the change/), { target: { value: 'We file under our own FDA ESG account' } });
     fireEvent.change(screen.getByLabelText(/Password/), { target: { value: 'pw-123' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
@@ -119,7 +126,7 @@ describe('agency gateway accounts setting', () => {
     expect(puts[0].body).toMatchObject({
       mode: 'client',
       senderIdentifier: 'OUR-AS2',
-      credentials: { clientCertPem: expect.stringContaining('BEGIN CERTIFICATE'), clientKeyPem: expect.stringContaining('PRIVATE KEY') },
+      credentials: { clientCertPem: '-----BEGIN CERTIFICATE-----\nx\n-----END CERTIFICATE-----', clientKeyPem: '-----BEGIN PRIVATE KEY-----\ny\n-----END PRIVATE KEY-----' },
       reason: 'We file under our own FDA ESG account',
       reauth: { password: 'pw-123' },
     });
@@ -135,7 +142,7 @@ describe('agency gateway accounts setting', () => {
     fireEvent.change(screen.getByLabelText(/Reason for the change/), { target: { value: 'Trying a key that is not PEM' } });
     fireEvent.change(screen.getByLabelText(/Password/), { target: { value: 'pw-123' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(screen.getByText('Not changed: clientKeyPem must be PEM text.')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Not changed: check the certificate and private key PEM formatting.')).toBeTruthy());
     expect(cell('fda-esg-production').textContent).toContain('Platform account');
   });
 
@@ -158,4 +165,78 @@ describe('the transmittal log says whose account each transmittal went out under
     expect(accountLine({ metadata: {} })).toBeNull();
     expect(accountLine({ metadata: null })).toBeNull();
   });
+});
+
+
+describe('gateway secure capture ownership', () => {
+  it('masks multiline credentials, preserves exact newlines and clears on cancel', async () => {
+    render(<GatewayAccountsSetting />);
+    const row = await screen.findByTestId('gateway-account-fda-esg-production');
+    fireEvent.click(within(row).getByText('Change…'));
+    const key = screen.getByLabelText(/private key/) as HTMLInputElement;
+    expect(key.type).toBe('password'); expect(key.readOnly).toBe(true);
+    expect(key.getAttribute('data-secret-entry')).toBe('true');
+    fireEvent.paste(key, { clipboardData: { getData: () => 'MULTILINE_UI_CANARY\nsecond line' } });
+    expect(key.value).toBe('********');
+    expect(document.body.innerHTML).not.toContain('MULTILINE_UI_CANARY');
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(document.querySelector('[data-secret-entry]')).toBeNull();
+    fireEvent.click(within(row).getByText('Change…'));
+    expect((screen.getByLabelText(/private key/) as HTMLInputElement).value).toBe('');
+  });
+  it('never reflects a submitted secret from an error payload', async () => {
+    writeAnswer = { status: 400, body: { error: { code: 'INVALID', message: 'GATEWAY_ERROR_UI_CANARY' } } };
+    render(<GatewayAccountsSetting />);
+    const row = await screen.findByTestId('gateway-account-fda-esg-production');
+    fireEvent.click(within(row).getByText('Change…'));
+    fireEvent.change(screen.getByLabelText(/Reason for/), { target: { value: 'Rotate certificate safely' } });
+    fireEvent.change(screen.getByLabelText(/Password/), { target: { value: 'password fixture' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(document.body.textContent).not.toContain('GATEWAY_ERROR_UI_CANARY');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+  it('retires secret entry synchronously when the organisation changes', async () => {
+    const view = render(<GatewayAccountsSetting />);
+    const row = await screen.findByTestId('gateway-account-fda-esg-production');
+    fireEvent.click(within(row).getByText('Change…'));
+    fireEvent.paste(screen.getByLabelText(/private key/), { clipboardData: { getData: () => 'OLD_ORG_UI_CANARY' } });
+    sessionOwner.value = { actor: '43:other', key: 2, sameRevision: () => true };
+    view.rerender(<GatewayAccountsSetting />);
+    expect(document.querySelector('[data-secret-entry]')).toBeNull();
+    expect(document.body.textContent).not.toContain('OLD_ORG_UI_CANARY');
+    expect(puts).toHaveLength(0);
+    await screen.findByText(/gateway accounts could not be read/);
+  });
+});
+
+
+it('drops prior account authority when a reread is refused', async () => {
+  render(<GatewayAccountsSetting />);
+  const row = await screen.findByTestId('gateway-account-fda-esg-production');
+  fireEvent.click(within(row).getByText('Change…'));
+  fireEvent.change(screen.getByLabelText(/Reason for/), { target: { value: 'Verify current membership again' } });
+  fireEvent.change(screen.getByLabelText(/Password/), { target: { value: 'fixture password' } });
+  readFails = true;
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  await screen.findByText(/gateway accounts could not be read/);
+  expect(screen.queryByTestId('gateway-account-fda-esg-production')).toBeNull();
+  expect(screen.queryByText('Change…')).toBeNull();
+});
+
+
+it('clears captured PEM state before a later submit', async () => {
+  render(<GatewayAccountsSetting />);
+  const row = await screen.findByTestId('gateway-account-fda-esg-production');
+  fireEvent.click(within(row).getByText('Change…'));
+  fireEvent.change(screen.getByLabelText(/Submissions go out under/), { target: { value: 'client' } });
+  fireEvent.paste(screen.getByLabelText(/private key/), { clipboardData: { getData: () => 'CLEARED_PEM_UI_CANARY\nsecond line' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Clear captured credential' }));
+  expect((screen.getByLabelText(/private key/) as HTMLInputElement).value).toBe('');
+  fireEvent.change(screen.getByLabelText(/Reason for/), { target: { value: 'Keep the currently held key' } });
+  fireEvent.change(screen.getByLabelText(/Password/), { target: { value: 'fixture password' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  await waitFor(() => expect(puts).toHaveLength(1));
+  expect(puts[0].body.credentials).toBeUndefined();
+  expect(JSON.stringify(puts)).not.toContain('CLEARED_PEM_UI_CANARY');
 });

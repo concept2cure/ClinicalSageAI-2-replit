@@ -1887,13 +1887,17 @@
     white-space: nowrap;
   }
   /* Where a handed-over question was asked (ONE_ANA_ONE_CANVAS.md, slice 8). */
+  /* The composer's own inset (.ct-composer-wrap's 24 px, its 768 px column), so the chip starts where the composer
+     starts. Docked beside the editor it sat flush against the column's edge (2026-11-06, R1's demo-day sweep). */
   .ct-ask-origin {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     margin: 0 auto 8px;
+    padding: 0 24px;
     width: 100%;
-    max-width: 760px;
+    max-width: calc(768px + 48px);
     font-size: 13px;
     color: var(--text-200);
   }
@@ -2721,8 +2725,20 @@
   .ed-source-notice > summary {
     cursor: pointer;
   }
+  /* One column sized to the panel (B5, demo walk 2026-11-05): an `auto` track took its longest
+     unbreakable item's width, so at 390 wide the CSR's study-data panel ran past its right edge. */
   .ed-source-detail {
     margin-top: var(--space-2);
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ed-source-detail select {
+    max-width: 100%;
+  }
+  /* The CSR build, assembly and section-review blocks inside the panel lay out as inline grids
+     (style="display: grid": CsrRunBuilds, CsrAssemblyControl, CsrBuildProgress). Their `auto` track
+     took the widest select option's width (458px at 390 wide); their items may be as narrow as the panel. */
+  .ed-source-detail [style*="display: grid"] > * {
+    min-width: 0;
   }
   .ed-source-detail .de-desc {
     margin-bottom: 0;

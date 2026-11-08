@@ -1,7 +1,8 @@
 /**
  * Protocol development — the two acts that are electronic signatures.
  *
- * Finalizing a protocol and recording a reviewer's disposition both run the
+ * Finalizing a protocol, recording a reviewer's disposition and closing a
+ * deviation all run the
  * shared Part 11 EsignModal: §11.50 meaning, reason, and §11.200 re-entry of the
  * password, plus the authenticator code when the signer has one enrolled. The
  * modal pre-checks the password at /api/esignature/verify-password (rate
@@ -14,10 +15,11 @@
 import React from 'react';
 import { EsignModal, type EsigSignedManifest, type EsignModalProps, type EsignSigner } from '../../_shared/components/EsignModal';
 import { useAuthUser, type AuthUser } from '@/services/portal/authService';
-import { finalizeProtocol, recordReviewDisposition } from './ProtocolDevWrites';
+import { closeProtocolDeviation, finalizeProtocol, recordReviewDisposition } from './ProtocolDevWrites';
 
 export type ProtocolSigning =
   | { kind: 'finalize' }
+  | { kind: 'close-deviation'; deviationId: number; title: string }
   | {
       kind: 'disposition';
       assignmentId: number;
@@ -67,6 +69,14 @@ function actDefaults(signing: ProtocolSigning, documentId: number, documentTitle
       defaultMeaning: 'authorship',
     };
   }
+  if (signing.kind === 'close-deviation') {
+    return {
+      action: 'Close deviation',
+      target: `${signing.title || `Deviation ${signing.deviationId}`} · ${protocol}`,
+      targetMeta: 'The CAPA closure check runs first: the deviation must be assessed and every CAPA action completed or verified.',
+      defaultMeaning: 'approval',
+    };
+  }
   const decision = DISPOSITION_LABEL[signing.disposition] ?? signing.disposition;
   const onBehalf = signing.reviewerUserId === null;
   return {
@@ -92,7 +102,9 @@ export function ProtocolSignModal({ signing, documentId, documentTitle, onClose,
     const result =
       signing.kind === 'finalize'
         ? await finalizeProtocol(documentId, input)
-        : await recordReviewDisposition(signing.assignmentId, { disposition: signing.disposition, ...input });
+        : signing.kind === 'close-deviation'
+          ? await closeProtocolDeviation(signing.deviationId, input)
+          : await recordReviewDisposition(signing.assignmentId, { disposition: signing.disposition, ...input });
     onSigned(signing, result);
     return {
       meaning: input.meaning as EsigSignedManifest['meaning'],

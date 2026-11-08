@@ -250,6 +250,8 @@ const MIGRATIONS = [
   'migrations/20261008d_cre_source_study_ref.sql',
   'migrations/20260726_file_uploads_tenancy.sql',
   'db/migrations/20260828_file_uploads_checksum.sql',
+  // Where an upload's bytes are durably kept (LX-02): the provider and the object version.
+  'migrations/20261105_file_uploads_durable_object.sql',
   'migrations/20261006_document_data_dispositions.sql',
   // Authoring: the document loop, its ledger, seal, signatures, span lineage, aliases, provenance.
   'db/migrations/20260725_authoring_document_loop_tables.sql',
@@ -280,6 +282,8 @@ const MIGRATIONS = [
   'migrations/20260604_shadow_review.sql',
   'migrations/20261015_shadow_review_waiver.sql', // P-34: a failed run records its failure_code
   'migrations/20261015b_shadow_finding_disposition.sql', // P-35: the dispatch count reads who closed each critical
+  // The run's coverage (3cacf2e15a): dispatch reads leaf_manifest_digest, the leaves a complete run read.
+  'migrations/20261025_shadow_review_run_coverage.sql',
   // P-33: the one dispatch verdict reads the IND LOA and safety-report registers.
   'migrations/20260614_ind_safety_reports.sql',
   'migrations/20260614_ind_cross_references.sql',

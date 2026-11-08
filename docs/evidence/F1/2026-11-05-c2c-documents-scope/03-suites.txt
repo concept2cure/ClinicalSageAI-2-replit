@@ -1,0 +1,55 @@
+03-suites.txt — every server suite that reaches /api/c2c/documents (found by searching server/ and tests/ for the
+router's import and its URL), plus the new suite. Command: npx vitest run --config vitest.config.ts <the 21 files>
+
+With the change: 21 files, 351 of 351 pass (duration 314 s). Per file (passing cases):
+      3 server/__tests__/security/c2c-documents-delete-audit-order.contract.test.ts
+      2 server/__tests__/security/c2c-documents-evidence-link-audit-order.contract.test.ts
+      2 server/__tests__/security/c2c-documents-transition-audit-order.contract.test.ts
+     13 server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts
+     53 server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+      5 server/routes/c2c/__tests__/document-lock-ceremony.test.ts
+     25 server/routes/c2c/__tests__/documents-project-scope.pglite.test.ts
+     10 server/routes/c2c/__tests__/filing-section-respects-authoring-seal.test.ts
+      9 server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts
+      3 server/routes/c2c/__tests__/section-versions-route.test.ts
+     10 server/services/c2c/__tests__/document-readiness-counts-leaves.pglite.test.ts
+      7 server/services/c2c/__tests__/filing-lock-write-through.pglite.test.ts
+     18 server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts
+      8 server/services/ectd/__tests__/leaf-finalized-status-needs-a-signature.test.ts
+     93 tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+      7 tests/schema-contract/c2c-document-submit-requires-filing.contract.test.ts
+     39 tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+      6 tests/schema-contract/c2c-section-ana-backlink.contract.test.ts
+     17 tests/schema-contract/c2c-section-has-content.contract.test.ts
+     13 tests/schema-contract/c2c-section-lineage-gate.contract.test.ts
+      8 tests/schema-contract/c2c-section-save.contract.test.ts
+  Test Files  21 passed (21)
+  Tests  351 passed (351)
+
+At HEAD, before the change, the same 20 existing files: 20 files, 326 of 326 pass (duration 279 s).
+351 = 326 + the new suite's 25.
+
+Existing suites changed so their caller can open (and, for writes, change) the document's project:
+  - real policy, on PGlite (support/document-project-access.ts grantDocumentProjectEdit):
+      tests/schema-contract/c2c-document-submit-requires-filing.contract.test.ts
+      tests/schema-contract/c2c-section-save.contract.test.ts
+      tests/schema-contract/c2c-section-has-content.contract.test.ts
+      server/services/c2c/__tests__/_filing-write-harness.ts (node-status-follows-work, filing-lock-write-through)
+  - seats (the existing support/current-member.ts double) and canAccessReportProject granted, in mock-pool suites:
+      server/routes/c2c/__tests__/section-versions-route.test.ts
+      server/routes/c2c/__tests__/rule-pack-provenance-exposure.test.ts
+      server/routes/c2c/__tests__/filing-section-respects-authoring-seal.test.ts
+      server/routes/c2c/__tests__/document-lock-ceremony.test.ts
+      server/__tests__/security/c2c-documents-{delete,evidence-link,transition}-audit-order.contract.test.ts
+  - real database (vitest.db.config.ts), fixture only, NOT RUN here (no PostgreSQL in this session):
+      tests/db/actor-displays.dbtest.ts — its dossier document now names the reader's own program
+
+Gates (on the working tree, 2026-11-06):
+  node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD: no file changed its warning count since HEAD.
+    server/routes/c2c/documents.ts: 5 warnings before, 5 after, the same rules (max-lines; max-lines-per-function
+    and complexity on PATCH /:id/sections/:key and POST /:id/submit, whose line counts fell 135->132 and 115->112).
+    The new suite and support/document-project-access.ts: 0 warnings.
+  npm run -s ci:sql-interpolation: OK. server/routes/c2c/documents.ts holds 3 interpolations, its baseline 3.
+  node scripts/ci/check-tenant-isolation.mjs --strict-no-regression: OK, 0 findings (the fixture's users insert
+    carries a tenant-isolation-safe marker).
+  node scripts/ci/check-regulated-delete-audit.mjs: OK. node scripts/ci/check-sign-ceremony-status-acts.mjs: exit 0.

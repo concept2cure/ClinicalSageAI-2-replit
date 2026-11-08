@@ -29,44 +29,9 @@ env:
 
 jobs:
   # ═══════════════════════════════════════════════════════════════════════════
-  # 1. SETUP — Neon branch management
-  # ═══════════════════════════════════════════════════════════════════════════
-  setup:
-    runs-on: ubuntu-latest
-    # Its only step with an effect creates a Neon branch for a pull request,
-    # and no job needs its outputs; on a push it held a runner to do nothing.
-    if: github.event_name == 'pull_request'
-    outputs:
-      neon_branch: ${{ steps.neon.outputs.branch_id }}
-      db_url: ${{ steps.neon.outputs.db_url }}
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Check Neon secrets are present and non-empty
-        id: check_secrets
-        run: |
-          # Feature-branch PRs from forks and any PR running before the
-          # repo has Neon secrets configured will see empty/invalid keys.
-          # We gracefully skip the preview-branch creation in that case
-          # instead of failing the whole `setup` job (which then cascades
-          # into downstream jobs that depend on it).
-          if [ -z "${{ secrets.NEON_API_KEY }}" ] || [ -z "${{ secrets.NEON_PROJECT_ID }}" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::Neon secrets not configured; skipping preview branch creation"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create Neon preview branch (PRs only)
-        id: neon
-        if: github.event_name == 'pull_request' && steps.check_secrets.outputs.skip != 'true'
-        continue-on-error: true
-        uses: neondatabase/create-branch-action@537d2f10d84e9de7cd2c2260ea176b5e4a8192d8 # v4
-        with:
-          project_id: ${{ secrets.NEON_PROJECT_ID }}
-          api_key: ${{ secrets.NEON_API_KEY }}
-          branch_name: preview-${{ github.head_ref }}
-          parent: ${{ secrets.NEON_PROD_BRANCH }}
+  # Neon PR preview branching is owned exclusively by neon-preview-db.yml.
+  # No duplicate agent branch creation: it previously leaked branches and
+  # lacked cleanup receipts even when this workflow had skipped all audits.
 
   # 2. TYPE CHECK + LINT — removed 2026-10-30 (MR-02 Stage 3, OPS-25). It ran
   # on every push and duplicated ci.yml's Lint job, steps "Run TypeScript check

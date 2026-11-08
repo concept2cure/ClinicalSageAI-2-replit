@@ -99,9 +99,9 @@ const RETIRED: Retired[] = [
   cls('tb-detail', 4),
   cls('rbm-modal', 3),
   cls('cm-connect', 0),
-  cls('pj-stageband', 2),
+  cls('pj-stageband', 0), // D3-1 (2026-11-06): the project page's step band is gone; its guidance is the step's suggestion.
   /* The phrases' CSS is `.pj-stageband*` and `.cm-connect*`, ratcheted above. */
-  { name: 'What to do now', baseline: 1, kind: 'text', css: null },
+  { name: 'What to do now', baseline: 0, kind: 'text', css: null },
   { name: 'This work flows into', baseline: 1, kind: 'text', css: null },
 ];
 

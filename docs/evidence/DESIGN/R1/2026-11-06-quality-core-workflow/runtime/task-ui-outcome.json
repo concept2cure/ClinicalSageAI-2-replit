@@ -1,0 +1,75 @@
+{
+  "projectId": "6c89e2c1-2d76-4356-80cb-001821956b5a",
+  "taskId": "9f479f7d-4744-4227-9fb1-966e497b5770",
+  "capaId": "b5d01bb0-9ce9-46f8-a9cf-5558f80a2389",
+  "scope": "Real running app, existing fictional records; no API mocks, model requests, database writes or production edits",
+  "initialWalk": {
+    "observedFlowPassed": true,
+    "note": "Initial real desktop and mobile walks completed the source CTA. The first script result marked drawerSourceQuality false because it expected obsolete copy Quality system; actual drawer copy was Quality records and controlled documents. Screenshots preserve actual rendered results.",
+    "sourceText": "Quality records and controlled documents",
+    "projectFilter": {
+      "value": "1",
+      "label": "F1 Recent conversation verification"
+    },
+    "nativeDoor": "Open CAPA register",
+    "targetUrl": "http://127.0.0.1:5000/concept2cure/quality?qmsTab=capa&program=6c89e2c1-2d76-4356-80cb-001821956b5a",
+    "capaTabSelected": true,
+    "capaRecordVisible": true,
+    "shellProjectRetained": true,
+    "modelCalls": 0,
+    "httpErrors": [],
+    "pageErrors": [],
+    "views": [
+      {
+        "name": "desktop",
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "pageDimensions": {
+          "scrollWidth": 1176,
+          "clientWidth": 1176
+        },
+        "screenshots": [
+          "desktop-task-detail.png",
+          "desktop-quality-capa.png"
+        ]
+      },
+      {
+        "name": "mobile",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "pageDimensions": {
+          "scrollWidth": 847,
+          "clientWidth": 390
+        },
+        "screenshots": [
+          "mobile-task-detail.png",
+          "mobile-quality-capa.png"
+        ]
+      }
+    ]
+  },
+  "correctedRerun": {
+    "completed": false,
+    "reason": "Saved session inactivity warning then actual401 /api/v1/auth/session. Stopped without authentication retries.",
+    "details": "rerun-expired-session.json",
+    "note": "Task overview screenshots were overwritten by this warning; use initial preserved drawer and CAPA screenshots listed above."
+  },
+  "defects": [
+    {
+      "surface": "Quality CAPA",
+      "viewportWidth": 390,
+      "observed": "Outer .page scrollWidth847 exceeds clientWidth390; tabbar overflows beyond viewport.",
+      "candidateFiles": [
+        "client/src/concept2cure/quality/app.css:276",
+        "client/src/concept2cure/quality/App.tsx:349"
+      ],
+      "candidate": "qms-tabbar flex row has no local horizontal scrolling; diagnosis not runtime-proven by element geometry because saved session expired.",
+      "owner": "Quality/training hold, COORDINATION row49",
+      "changed": false
+    }
+  ]
+}

@@ -20,6 +20,8 @@ import { judgmentEngine } from '../services/ana-biostats/judgment-engine';
 import { domainAdapter } from '../services/ana-biostats/domain-adapter';
 import { regulatoryCustomizer } from '../services/ana-biostats/regulatory-customizer';
 import { documentGenerator } from '../services/ana-biostats/document-generator';
+import { AuthoringCreateOutcomeError, authoringCreationRecoveryPayload } from '../services/authoring/authoring-create-outcome';
+import type { GovernedStatisticalDocument, StatisticalDocumentType } from '../services/ana-biostats/types';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { clientError, orgRequired, serverError } from '../lib/api-response';
@@ -78,6 +80,10 @@ function biostatsError(res: Response, where: string, error: unknown): Response {
     });
   }
   if (e?.name === 'OrganizationContextRequired') return orgRequired(res);
+  if (e?.name === 'StatisticalDocumentSaveError' || e?.name === 'AuthoringProgramAccessError') {
+    const refusal = error as { status: number; code: string; message: string };
+    return res.status(refusal.status).json({ success: false, error: refusal.code, message: refusal.message });
+  }
   return serverError(res, logger, where, error);
 }
 
@@ -212,36 +218,51 @@ router.post('/validate', authenticateToken, async (req: Request, res: Response) 
 // 5. DOCUMENT GENERATION (standalone)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+async function saveStatisticalWorkbenchDocument(req: Request, res: Response, document: GovernedStatisticalDocument,
+  context: { orgId: number; userId: number }) {
+  const [{ pool }, { saveStatisticalDocumentToAuthoring }] = await Promise.all([
+    import('../db'), import('../services/ana-biostats/workflow-integrator'),
+  ]);
+  const { orgId, userId } = context;
+  const actorId = String(userId), email = typeof req.user?.email === 'string' ? req.user.email.toLowerCase() : null;
+  const outcome = await saveStatisticalDocumentToAuthoring({ pool, tenantId: orgId, actor: { id: actorId, email },
+    audit: { pool, tenantId: orgId, actorId, actorEmail: email ?? 'unknown', actorRole: String(req.user?.role ?? 'unknown'),
+      ipAddress: req.ip ?? 'unknown', userAgent: String(req.headers['user-agent'] ?? 'unknown') } }, req.body, document);
+  if (outcome.kind === 'refused') return res.status(outcome.status).json({ success: false, error: outcome.code ?? outcome.error, message: outcome.error });
+  return res.status(201).json({ success: true, data: { doc: { ...outcome.document, provenance: outcome.provenance }, sections: outcome.sections },
+    governance: outcome.binding.documentId ? { bound: true, c2cDocumentId: outcome.binding.documentId } : { bound: false, reason: outcome.binding.reason } });
+}
+
 /**
  * POST /api/ana-biostats/document
  *
- * Generate a governed statistical document from pre-computed results.
+ * Generate from a fresh server computation. An explicit save records the
+ * verified statistical basis through the canonical atomic authoring writer.
  */
 router.post('/document', authenticateToken, async (req: Request, res: Response) => {
   try {
     const orgId = resolveOrganizationId(req);
     const userId = resolveUserId(req);
 
-    const { documentType, input, computation, judgment, domainAdaptation, regulatoryCustomization, projectId } = req.body;
-
-    if (!documentType || !input || !computation || !judgment || !domainAdaptation) {
-      return res.status(400).json({
-        error: 'Missing required fields: documentType, input, computation, judgment, domainAdaptation',
-      });
+    const { documentType, input, action } = req.body;
+    const types: StatisticalDocumentType[] = ['sample_size_rationale', 'statistical_risk_memo', 'design_assumption_note',
+      'sap_section_draft', 'scenario_comparison_brief', 'statistical_reviewer_response', 'protocol_statistical_section',
+      'submission_statistical_note', 'full_statistical_analysis_plan', 'interim_analysis_plan', 'dsmb_charter',
+      'statistical_methods_section', 'tlf_shell_plan', 'randomization_plan'];
+    if (!types.includes(documentType) || !input || (action != null && action !== 'save_to_authoring')) {
+      return res.status(400).json({ error: 'A supported documentType and statistical input are required.' });
     }
-
-    const document = documentGenerator.generate(
-      documentType,
-      input,
-      computation,
-      judgment,
-      domainAdaptation,
-      regulatoryCustomization,
-      { projectId: projectId ?? 0, organizationId: orgId, userId }
-    );
-
+    const calculated = anaBiostatsOrchestrator.quickCompute(input);
+    if (!calculated.validation.valid || !calculated.computation || !calculated.judgment || !calculated.domain) {
+      return res.status(422).json({ error: 'The statistical inputs need correction before a document can be generated.', validation: calculated.validation });
+    }
+    const document = documentGenerator.generate(documentType, calculated.validation.normalizedInput,
+      calculated.computation, calculated.judgment, calculated.domain, calculated.regulatory,
+      { projectId: 0, organizationId: orgId, userId });
+    if (action === 'save_to_authoring') return await saveStatisticalWorkbenchDocument(req, res, document, { orgId, userId });
     return res.json(document);
   } catch (error: any) {
+    if (error instanceof AuthoringCreateOutcomeError) return res.status(503).json(authoringCreationRecoveryPayload(error));
     logger.error('Document generation error', { err: error instanceof Error ? error.message : String(error) });
     return biostatsError(res, 'generating the document', error);
   }

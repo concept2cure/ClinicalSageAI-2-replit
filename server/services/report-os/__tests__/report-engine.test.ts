@@ -50,7 +50,6 @@ describe('reportEngineFor', () => {
 
   it.each([
     'ema.rmp_psur_signal_alignment',
-    'compliance.audit_assurance_pack',
     'china_nmpa.ctd_module_gap_analysis',
     'usa_fda.estar_510k_equivalence_matrix',
     // A device filing has no Module 1 at all — it is not eCTD — so no market

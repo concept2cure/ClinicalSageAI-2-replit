@@ -49,7 +49,7 @@ export async function authorizeAuthoringProgram(q: Queryable, input: {
     const role = await currentRole(q, userId, tenantId, input.forWrite !== false);
     const anchor = await readProgramAnchorRow(q, { programId, orgId: tenantId, context: 'authoring-program-access', requireUnique: true });
     if (!anchor) throw new AuthoringProgramAccessError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'This project needs one verified tracking record before authoring.');
-    if (!await canAccessReportProject(tenantId, { userId, role }, anchor.id, q)) {
+    if (!await canAccessReportProject(tenantId, { userId, role }, anchor.id, q, { forWrite: input.forWrite !== false })) {
       throw new AuthoringProgramAccessError(403, 'PROJECT_PERMISSION_DENIED', 'You cannot author this project with your current access.');
     }
     return { principal: { id, email: principal?.email ?? actor.email, roles: [role.toUpperCase()] }, role, projectId: anchor.id, programId };

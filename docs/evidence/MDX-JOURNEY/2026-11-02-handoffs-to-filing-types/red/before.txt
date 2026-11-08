@@ -1,0 +1,7 @@
+# Item 1 red: server/services/ana/__tests__/advise-device-readiness-filed-copy.test.ts on trunk 2732409d0. The diverged-copy case fails: the advice reads a filed copy that is not the document's text as producible; the control passes.
+
+ × server/services/ana/__tests__/advise-device-readiness-filed-copy.test.ts > advise_device_readiness reads the filing, as assemble_device_submission does > a filed copy that is not the document's text: nothing producible, and the section and the remedy named 14ms
+   → the advice read a rewritten filed copy as producible: expected true to be false // Object.is equality
+ ✓ server/services/ana/__tests__/advise-device-readiness-filed-copy.test.ts > advise_device_readiness reads the filing, as assemble_device_submission does > when the filing agrees, or was not compared, the advice is unchanged 3ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)

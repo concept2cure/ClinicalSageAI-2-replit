@@ -378,7 +378,7 @@ async function draftPlanBasis(exec: Exec, organizationId: number, input: DraftPl
   const basis = await governingPlanBasis(exec, organizationId, input.programId);
   if (!basis.governing) return { refused: basis.reason, message: RBM_PLAN_REFUSAL[basis.reason] };
   const { assessment, recordedOverallRisk } = basis;
-  if (!recordedOverallRisk) return { refused: 'overall_risk_unrecorded', message: RBM_PLAN_REFUSAL.overall_risk_unrecorded };
+  if (!recordedOverallRisk) return { refused: 'overall_risk_not_recorded', message: RBM_PLAN_REFUSAL.overall_risk_not_recorded };
   const version = assessment.version ?? null;
   if (input.assessmentId != null && Number(input.assessmentId) !== Number(assessment.id)) {
     return {
@@ -534,7 +534,8 @@ export async function amendAssessment(
 }
 
 /** Why generatePlanFromAssessment saved nothing. */
-export type GeneratePlanRefusal = 'no_assessment' | 'assessment_not_approved' | 'overall_risk_unrecorded' | 'draft_already_open';
+export type GeneratePlanRefusal =
+  'no_assessment' | 'assessment_not_approved' | 'overall_risk_not_recorded' | 'draft_already_open' | 'actor_required';
 
 /**
  * The one sentence for each refusal. POST /api/mdx/rbm-monitoring-plans/generate
@@ -544,9 +545,9 @@ export type GeneratePlanRefusal = 'no_assessment' | 'assessment_not_approved' | 
 export const RBM_PLAN_REFUSAL: Readonly<Record<GeneratePlanRefusal, string>> = {
   no_assessment: 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan',
   assessment_not_approved: 'This study\'s risk assessment has not been approved. A monitoring plan must derive from a signed RACT — approve the assessment first.',
-  overall_risk_unrecorded: 'The approved risk assessment records no overall risk, so no monitoring strategy can be derived from it. ' +
-    'Record the overall risk in an amendment and approve it, then generate the plan again.',
+  overall_risk_not_recorded: 'The approved risk assessment records no overall risk. Record the overall risk in an amendment and approve it before generating a monitoring plan.',
   draft_already_open: 'A draft monitoring plan version is already open for this study — approve or archive it before generating another.',
+  actor_required: 'A verified generating user is required.',
 };
 
 export interface GeneratePlanResult {
@@ -721,18 +722,16 @@ export async function derivePlanFromAssessment(
 export async function generatePlanFromAssessment(
   exec: Exec,
   organizationId: number,
-  input: { programId: string; title?: string; createdBy?: number | null },
+  input: { programId: string; title?: string; createdBy: number },
 ): Promise<GeneratePlanResult> {
+  if (!Number.isSafeInteger(input.createdBy) || input.createdBy <= 0) return { generated: false, reason: 'actor_required' };
   const derivation = await derivePlanFromAssessment(exec, organizationId, input.programId);
   if (!derivation.derived) return { generated: false, reason: derivation.reason };
   const { assessment } = derivation;
 
-  // An approved assessment that records no overall risk gives no basis for a
-  // strategy. It was given 'medium' until 2026-11-02
-  // (docs/evidence/F1/2026-11-01-rbm-handlers/README.md, (b)); now it is
-  // refused, as AnA's generate_rbm_plan already refused it.
+  // A missing risk basis cannot become a persisted monitoring strategy.
+  if (derivation.recordedOverallRisk === null) return { generated: false, reason: 'overall_risk_not_recorded' };
   const overall = derivation.recordedOverallRisk;
-  if (!overall) return { generated: false, reason: 'overall_risk_unrecorded' };
   const strategy = defaultPlanStrategy(overall);
 
   // Generating lands a new plan VERSION, so it cannot silently sit alongside an
@@ -756,7 +755,7 @@ export async function generatePlanFromAssessment(
         criticalFactors: derivation.criticalFactors,
         enhancedSites: derivation.enhancedSites,
       }),
-      input.createdBy ?? null,
+      input.createdBy,
     ],
   )).rows[0];
 

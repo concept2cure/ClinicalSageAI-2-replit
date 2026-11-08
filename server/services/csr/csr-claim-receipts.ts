@@ -12,7 +12,7 @@
  */
 import { createHash } from 'node:crypto';
 import type { CsrAuthoringEvidence } from './cortex-authoring-context.js';
-import { findUnclaimedNumbers } from './unsupplied-statistics.js';
+import { findUnclaimedNumbers, isCsrObservedResultsSection } from './unsupplied-statistics.js';
 
 export const CSR_CLAIM_RECEIPTS_SCHEMA = 'c2c.csr-claim-receipts.v1' as const;
 
@@ -120,10 +120,20 @@ export function importedCsrSectionEvidence(
   if (!receipts || receipts.sectionNumber !== row.sectionNumber || receipts.outputSha256 !== row.contentHash ||
     sha(row.content) !== row.contentHash) return null;
   const claimed = receipts.claims.map(c => c.value);
-  const notClaimed = findUnclaimedNumbers(row.content, { claimed }).map(n => n.text);
-  const notSupplied = new Set(findUnclaimedNumbers(row.content, { claimed, studyInfo }).map(n => n.text));
+  // Metadata identifies the PLAN, not observed results. Prior imports could
+  // carry planned sample size, phase or protocol digits as an exemption for
+  // a result figure in §§10–13. Never issue that exemption on a new import.
+  // Structured study/protocol identifiers are excluded by the shared figure
+  // scanner itself; no result statistic is exempted by metadata.
+  const plannedOnly = isCsrObservedResultsSection(row.sectionNumber)
+    ? []
+    : (() => {
+        const notClaimed = findUnclaimedNumbers(row.content, { claimed }).map(n => n.text);
+        const notSupplied = new Set(findUnclaimedNumbers(row.content, { claimed, studyInfo }).map(n => n.text));
+        return notClaimed.filter(n => !notSupplied.has(n)).sort();
+      })();
   return { ...receipts, sectionSha256: sha(storedCopy),
-    studyInformationNumbers: notClaimed.filter(n => !notSupplied.has(n)).sort() };
+    studyInformationNumbers: plannedOnly };
 }
 
 /** A CSR section's imported evidence read back from a saved Authoring document; malformed is null. */

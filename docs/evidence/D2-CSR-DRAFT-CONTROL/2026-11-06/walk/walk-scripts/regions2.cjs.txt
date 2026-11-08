@@ -1,0 +1,22 @@
+const c = require('../walk/common.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.newPage(browser, { who: 'jm' });
+  await c.signIn(page, 'jm.smith@concept2cure.pro');
+  const seen = [];
+  page.on('response', async (r) => {
+    if (!r.url().includes('/api/')) return;
+    const t = await r.text().catch(() => '');
+    if (!t.includes('draftingRegionState')) return;
+    const states = [...t.matchAll(/"code":"([^"]*)"[^{}]*?"draftingRegion":(null|"[^"]*"),"draftingRegionState":"([^"]+)"/g)].slice(0, 6).map(m => `${m[1]}=${m[3]}/${m[2]}`);
+    const all = [...t.matchAll(/"draftingRegionState":"([^"]+)"/g)].map(m => m[1]);
+    const counts = all.reduce((a, s) => (a[s] = (a[s] || 0) + 1, a), {});
+    seen.push(`${r.status()} ${r.url().replace(c.BASE, '').slice(0, 120)} ${JSON.stringify(counts)} ${states.join(' ')}`);
+  });
+  for (const prog of ['b7ecb7f0-d48d-4a70-80bd-60369b4d8c2c', 'a7904b00-75d2-4603-8197-373df73dc7c1']) {
+    await page.goto(`${c.BASE}/concept2cure/document-authoring?program=${prog}`, { waitUntil: 'networkidle' });
+    await c.sleep(2500);
+  }
+  console.log(seen.join('\n'));
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

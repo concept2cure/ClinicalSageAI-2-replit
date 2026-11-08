@@ -16,7 +16,7 @@ import { BASE_SYSTEM_PROMPT } from '../../services/lumen-context/base-system-pro
 import { getSubmissionTypeContext } from '../../../shared/regulatory/submission-type-bridge';
 import type { UserIntelligence } from '../../services/user-intelligence';
 
-const H = vi.hoisted(() => ({ build: vi.fn(), requests: [] as Array<{ messages: Array<{ role: string; content: string }> }> }));
+const H = vi.hoisted(() => ({ boundary: vi.fn(), save: vi.fn(), artifact: vi.fn(), build: vi.fn(), requests: [] as Array<{ messages: Array<{ role: string; content: string }> }> }));
 
 vi.mock('../../db.js', () => {
   const pool = { query: async () => ({ rows: [] }) };
@@ -33,12 +33,14 @@ vi.mock('../../middleware/auth.js', () => ({
   },
 }));
 vi.mock('../../services/ana-context-builder.js', () => ({ buildContextAwarePrompt: H.build }));
-vi.mock('../../services/chat-thread-helpers.js', () => ({
+vi.mock('../../services/chat-thread-helpers.js', async importOriginal => ({
+  OwnerPrivateChatError: (await importOriginal<typeof import('../../services/chat-thread-helpers.js')>()).OwnerPrivateChatError,
+  threadHasOwnerPrivateBoundary: H.boundary,
   getOrCreateThread: async () => 'thread-1',
   getThreadMessages: async () => [],
   getWindowedMessages: async () => ({ messages: [], wasTruncated: false }),
   ThreadAccessError: class ThreadAccessError extends Error {},
-  saveChatMessage: async () => undefined,
+  saveChatMessage: H.save,
   deleteConversation: async () => undefined,
 }));
 vi.mock('../../services/ai-gateway/index.js', () => ({
@@ -89,7 +91,7 @@ vi.mock('../../services/shared-memory-contract.js', () => ({
   parseSharedMemoryContract: () => ({}),
   renderSharedMemoryForPrompt: () => '',
 }));
-vi.mock('../../services/governed-ana-execution.js', () => ({ executeGovernedAnaOperation: vi.fn() }));
+vi.mock('../../services/governed-ana-execution.js', () => ({ executeGovernedAnaOperation: H.artifact }));
 vi.mock('../../services/working-memory.js', () => ({
   summarizeAndStoreWorkingMemoryForThread: async () => undefined,
 }));
@@ -136,9 +138,30 @@ const chat = async (context: Record<string, unknown>) => {
   return res.body.context as Record<string, unknown>;
 };
 
-beforeEach(() => { H.build.mockReset(); H.requests.length = 0; });
+beforeEach(() => { H.build.mockReset(); H.requests.length = 0; H.boundary.mockReset().mockResolvedValue(false); H.save.mockClear(); H.artifact.mockClear(); });
 
 describe('POST /api/cortex/chat — the response context is what was read', () => {
+  it('holds an owner-private thread before saving messages, artifact execution, or making any SDK request', async () => {
+    H.build.mockResolvedValue({ systemPrompt: 'SYS', context: { project: null, documents: null } });
+    H.boundary.mockResolvedValue(true);
+    const response = await request(app).post('/api/cortex/chat').send({ message: 'PRIVATE_INPUT_CANARY', thread_id: 'thread-1' });
+    expect(response.status).toBe(409);
+    expect(response.body).toEqual({ code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE', error: 'Continue this private conversation through AnA’s protected conversation.' });
+    expect(H.boundary).toHaveBeenCalledWith('thread-1');
+    expect(H.build).toHaveBeenCalledOnce(); expect(H.save).not.toHaveBeenCalled(); expect(H.artifact).not.toHaveBeenCalled(); expect(H.requests).toEqual([]);
+    expect(JSON.stringify(response.body)).not.toContain('PRIVATE_INPUT_CANARY');
+  });
+
+  it('does not treat an unreadable private boundary as a public thread', async () => {
+    H.build.mockResolvedValue({ systemPrompt: 'SYS', context: { project: null, documents: null } });
+    H.boundary.mockRejectedValue(new Error('PRIVATE_BOUNDARY_CANARY'));
+    const response = await request(app).post('/api/cortex/chat').send({ message: 'Synthetic question', thread_id: 'thread-1' });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('OWNER_PRIVATE_CONTEXT_UNAVAILABLE');
+    expect(H.build).toHaveBeenCalledOnce(); expect(H.save).not.toHaveBeenCalled(); expect(H.artifact).not.toHaveBeenCalled(); expect(H.requests).toEqual([]);
+    expect(JSON.stringify(response.body)).not.toContain('PRIVATE_BOUNDARY_CANARY');
+  });
+
   it('passes real-base canonical intelligence and recorded filing scope to the gateway without a provider call', async () => {
     const selected = { id: 7, name: 'Recorded PMA', submissionType: 'US_PMA', phase: null,
       therapeuticArea: null, progress: 0, status: 'active', role: 'owner', lastAccessedAt: null };

@@ -38,6 +38,7 @@ import type { RenderedReport } from '../services/report-os/render/types';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
 import { readRunSeal, readSealForExport, readVerifiedSealedDocument } from '../services/report-os/sealing/run-seal';
 import { ReportTypeNotComputed, computeRunForType } from '../services/report-os/compute-run';
+import { QualityEvidenceUnavailable } from '../services/qms/project-evidence';
 import { buildRunPdf, type RunPdfContent } from '../services/report-os/pdf/run-pdf';
 import { buildBundlePdf, buildReportPackPdf, type ReportPackPdfItem } from '../services/report-os/pdf/bundle-pdf';
 import { ReportingPdfError } from '../services/report-os/pdf/writer';
@@ -92,7 +93,7 @@ import { ReportRegistryError, explicitReportRegistry } from '../services/report-
 import { UnsupportedReportClientScope } from '../services/report-os/client-scope';
 import { resolveOwnedReportScope, ReportScopeOwnershipError, type OwnedReportScopeInput } from '../services/report-os/scope-ownership';
 import { requestDb, requestPgClient, type RequestSqlClient } from '../db/requestDb';
-import { getAccessibleReportProjectIds, canAccessReportScope, recordedReportProjectIds, type ReportProjectActor, type ReportAccessScope } from '../services/report-os/project-access';
+import { getAccessibleReportProjectIds, canAccessReportScope, recordedReportProjectIds, createReportQualityAccessContext, type ReportQualityAccessContext, type ReportProjectActor, type ReportAccessScope } from '../services/report-os/project-access';
 import { hasOrganizationProjectManagementRole } from '../services/project-sharing-access';
 import { persistReportRun, ReportRunRecordingError } from '../services/report-os/persistence';
 import { readCurrentProgramActor, ProgramReadAccessError } from '../services/c2c/current-program-access';
@@ -117,18 +118,22 @@ interface ReportReadContext {
   actor: ReportProjectActor;
   client: RequestSqlClient;
   projectIds: readonly number[];
+  qualityAccessContext?: ReportQualityAccessContext;
 }
 
 async function canReadReportScope(req: Request, organizationId: number, scope: ReportAccessScope, context?: ReportReadContext): Promise<boolean> {
   const actor = context?.actor ?? reportActor(req);
-  if (scope.scopeType === 'account') return canAccessReportScope(organizationId, actor, scope, context?.client, context?.projectIds);
-  return canAccessReportScope(organizationId, actor, scope, context?.client, context?.projectIds ?? await accessibleProjectIds(req, organizationId));
+  if (scope.scopeType === 'account') return canAccessReportScope(organizationId, actor, scope, context?.client, { accessibleIds: context?.projectIds, qualityContext: context?.qualityAccessContext });
+  return canAccessReportScope(organizationId, actor, scope, context?.client, { accessibleIds: context?.projectIds ?? await accessibleProjectIds(req, organizationId), qualityContext: context?.qualityAccessContext });
 }
 
 async function canReadBundle(req: Request, bundle: ReportBundleRecord, context?: ReportReadContext): Promise<boolean> {
-  const ids = new Set(context?.projectIds ?? await accessibleProjectIds(req, bundle.organizationId));
+  const actor = context?.actor ?? reportActor(req), client = context?.client ?? getPool();
+  const projectIds = context?.projectIds ?? await getAccessibleReportProjectIds(bundle.organizationId, actor, client);
+  const current = { actor, client, projectIds, qualityAccessContext: context?.qualityAccessContext ?? createReportQualityAccessContext(client, { organizationId: bundle.organizationId, userId: actor.userId }) };
+  const ids = new Set(projectIds);
   if (!(bundle.projectIds ?? []).every(id => ids.has(id))) return false;
-  for (const item of bundle.items) if (!(await canReadReportScope(req, bundle.organizationId, { ...item, recorded: true }, context))) return false;
+  for (const item of bundle.items) if (!(await canReadReportScope(req, bundle.organizationId, { ...item, recorded: true }, current))) return false;
   return true;
 }
 router.use(authMiddleware);
@@ -156,7 +161,7 @@ const createProgramGroupSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   projectIds: z.array(z.number().int().positive()).min(1),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 const createProgramSnapshotSchema = z.object({
@@ -213,7 +218,7 @@ const createDeliverySchema = z
   .object({
     projectId: z.number().int().positive().optional(),
     runId: z.number().int().positive().optional(),
-    bundleId: z.string().uuid().optional(),
+    bundleId: z.string().guid().optional(),
     submissionId: z.string().optional(),
     channel: z.enum(['platform_send', 'external_pdf_export']),
     correspondenceType: z.string().max(80).optional(),
@@ -291,7 +296,7 @@ const REPORT_OS_BUNDLE_SUBCATEGORY = 'report_bundle_record';
 const REPORT_OS_DELIVERY_SUBCATEGORY = 'report_delivery_record';
 
 const reportBundleRecordSchema = z.object({
-  bundleId: z.string().uuid(),
+  bundleId: z.string().guid(),
   organizationId: z.number().int().positive(),
   name: z.string(),
   description: z.string().optional(),
@@ -317,11 +322,11 @@ const reportBundleRecordSchema = z.object({
 });
 
 const reportDeliveryRecordSchema = z.object({
-  deliveryId: z.string().uuid(),
+  deliveryId: z.string().guid(),
   organizationId: z.number().int().positive(),
   projectId: z.number().int().positive().optional(),
   runId: z.number().int().positive().optional(),
-  bundleId: z.string().uuid().optional(),
+  bundleId: z.string().guid().optional(),
   submissionId: z.string().optional(),
   channel: z.enum(['platform_send', 'external_pdf_export']),
   correspondenceType: z.string().optional(),
@@ -331,7 +336,7 @@ const reportDeliveryRecordSchema = z.object({
   status: z.enum(['sent', 'exported', 'queued', 'failed']),
   requestedBy: z.number().int().positive().optional(),
   createdAt: z.string(),
-  correspondenceId: z.string().uuid().optional(),
+  correspondenceId: z.string().guid().optional(),
   signatureIds: z.array(z.number().int().positive()).optional(),
 });
 
@@ -1763,7 +1768,7 @@ router.post('/runs', async (req: Request, res: Response) => {
         scopeType,
         scopeId,
         clientWorkspaceId,
-        ...(reportTypeId === 'lifecycle.obligation_calendar' ? { recordContext: { executor: requestPgClient(req), userId: requestedBy } } : {}),
+        ...(['lifecycle.obligation_calendar', 'compliance.audit_assurance_pack'].includes(reportTypeId) ? { recordContext: { executor: requestPgClient(req), userId: requestedBy } } : {}),
         declared: {
           label: type[0].label,
           region: typeof governance.region === 'string' ? governance.region : null,
@@ -1857,6 +1862,7 @@ router.post('/runs', async (req: Request, res: Response) => {
     if (error instanceof ReportScopeOwnershipError) return res.status(error.status).json({ error: error.message, code: error.code });
     if (error instanceof UnsupportedReportClientScope) return res.status(422).json({ error: error.message, code: error.code });
     if (error instanceof ProgramReadAccessError) return res.status(error.status).json({ error: error.message, code: error.code });
+    if (error instanceof QualityEvidenceUnavailable) return res.status(error.status).json({ error: error.message, code: error.code });
     return serverError(res, logger, 'saving runs', error);
   }
 });
@@ -2316,7 +2322,7 @@ router.get('/runs/:id', async (req: Request, res: Response) => {
     if (organizationId == null) return;
     const runId = Number(req.params.id);
     if (!Number.isSafeInteger(runId) || runId <= 0) return res.status(400).json({ error: 'Invalid run id' });
-    const history = await inTenantTransaction(organizationId, async client => listReportRunHistory(organizationId, { runId, limit: 1, accessibleProjectIds: await getAccessibleReportProjectIds(organizationId, reportActor(req), client), allowUnboundProgramReports: hasOrganizationProjectManagementRole(reportActor(req).role) }, client));
+    const history = await inTenantTransaction(organizationId, async client => listReportRunHistory(organizationId, { runId, limit: 1, actor: reportActor(req), accessibleProjectIds: await getAccessibleReportProjectIds(organizationId, reportActor(req), client), allowUnboundProgramReports: hasOrganizationProjectManagementRole(reportActor(req).role) }, client));
     const run = history.data[0];
     if (!run) return res.status(404).json({ error: 'Run not found' });
     return res.json({ data: run });
@@ -2332,7 +2338,7 @@ router.get('/runs', async (req: Request, res: Response) => {
     const parsed = listRunsSchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
     if (!(await workspaceIsOrganisations(organizationId, parsed.data.clientWorkspaceId))) return res.status(403).json(WORKSPACE_NOT_IN_ORGANIZATION);
-    const history = await inTenantTransaction(organizationId, async client => listReportRunHistory(organizationId, { ...parsed.data, accessibleProjectIds: await getAccessibleReportProjectIds(organizationId, reportActor(req), client), allowUnboundProgramReports: hasOrganizationProjectManagementRole(reportActor(req).role) }, client));
+    const history = await inTenantTransaction(organizationId, async client => listReportRunHistory(organizationId, { ...parsed.data, actor: reportActor(req), accessibleProjectIds: await getAccessibleReportProjectIds(organizationId, reportActor(req), client), allowUnboundProgramReports: hasOrganizationProjectManagementRole(reportActor(req).role) }, client));
     return res.json(history);
   } catch (error: any) {
     return serverError(res, logger, 'loading runs', error);
@@ -2492,7 +2498,7 @@ function requireCompleteReportPack(bundle: ReportBundleRecord): void {
       bundle.runIds.some(id => !Number.isSafeInteger(id) || id < 1) ||
       itemIds.some(id => !Number.isSafeInteger(id) || id < 1) ||
       new Set(bundle.items.map(item => item.runUuid)).size !== itemIds.length ||
-      bundle.items.some(item => !z.string().uuid().safeParse(item.runUuid).success ||
+      bundle.items.some(item => !z.string().guid().safeParse(item.runUuid).success ||
         !item.reportTypeId.trim() || !reportScopeEnum.includes(item.scopeType as ReportScope) || !item.scopeId.trim())) {
     throw new ReportBundleError('The saved report pack has inconsistent report identities. Nothing was exported.', 'REPORT_BUNDLE_CORRUPT');
   }
@@ -2510,9 +2516,10 @@ async function requireCurrentReportPackAccess(
 ): Promise<void> {
   const actor = await readCurrentProgramActor(client, { organizationId: bundle.organizationId, userId: getUserId(req) });
   const allowed = await getAccessibleReportProjectIds(bundle.organizationId, actor, client);
+  const qualityContext = createReportQualityAccessContext(client, { organizationId: bundle.organizationId, userId: actor.userId });
   if (!(bundle.projectIds ?? []).every(id => allowed.includes(id))) reportPackNotFound();
   for (const scope of [...bundle.items, ...runs]) {
-    if (!await canAccessReportScope(bundle.organizationId, actor, { ...scope, recorded: true }, client, allowed)) reportPackNotFound();
+    if (!await canAccessReportScope(bundle.organizationId, actor, { ...scope, recorded: true }, client, { accessibleIds: allowed, qualityContext })) reportPackNotFound();
   }
 }
 
@@ -2553,9 +2560,8 @@ function requireReportPackIdentityMatches(item: ReportBundleItem, identity: Repo
       identity.scopeType !== item.scopeType || identity.scopeId !== item.scopeId) reportPackNotFound();
 }
 
-/** Only IDs are reserved; only identity and canonical historical parent IDs
- * are read before admitting actual current scopes. dependencySummary can
- * itself contain the retained lineage body, so it is never loaded here. */
+/** Reserve identities first. Canonical source receipts are admitted after current
+ * project scope, before any retained report body is rendered or exported. */
 async function reserveAndAdmitReportPackRuns(client: PoolClient, req: Request, bundle: ReportBundleRecord): Promise<void> {
   const reserved = await client.query(
     'SELECT id FROM report_runs WHERE organization_id = $1 AND id = ANY($2::int[]) ORDER BY id FOR SHARE',
@@ -2576,10 +2582,11 @@ async function reserveAndAdmitReportPackRuns(client: PoolClient, req: Request, b
   if (identities.length !== bundle.runIds.length || byId.size !== bundle.runIds.length) reportPackNotFound();
   const actor = await readCurrentProgramActor(client, { organizationId: bundle.organizationId, userId: getUserId(req) });
   const allowed = await getAccessibleReportProjectIds(bundle.organizationId, actor, client);
+  const qualityContext = createReportQualityAccessContext(client, { organizationId: bundle.organizationId, userId: actor.userId });
   for (const item of bundle.items) {
     const identity = byId.get(item.runId);
     requireReportPackIdentityMatches(item, identity);
-    if (!await canAccessReportScope(bundle.organizationId, actor, identity!, client, allowed)) reportPackNotFound();
+    if (!await canAccessReportScope(bundle.organizationId, actor, { ...identity!, runId: item.runId }, client, { accessibleIds: allowed, qualityContext })) reportPackNotFound();
   }
 }
 
@@ -2711,7 +2718,7 @@ async function sendReportPackageRoute(req: Request, res: Response) {
   try {
     const organizationId = authedOrgId(req);
     if (!organizationId || !getUserId(req)) return res.status(403).json({ error: 'Authenticated tenant context required' });
-    const bundleId = z.string().uuid().safeParse(req.params.bundleId);
+    const bundleId = z.string().guid().safeParse(req.params.bundleId);
     const input = reportPackageInputSchema.safeParse(req.body);
     if (!bundleId.success || !input.success) return res.status(400).json({ error: { code: 'INVALID_REPORT_PACKAGE', message: 'A valid bundle and one to fifty distinct legal document IDs are required.' } });
     const exportId = randomUUID();

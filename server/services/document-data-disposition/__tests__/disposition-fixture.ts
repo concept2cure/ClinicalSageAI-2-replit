@@ -35,6 +35,9 @@ const catalogAttribution = fs.readFileSync(
   path.join(migrationsDir, '20261008e_document_catalog_attribution.sql'), 'utf8',
 );
 
+/** Where an upload's bytes are durably kept (LX-02), read from its migration for the same reason. */
+const uploadObject = fs.readFileSync(path.join(migrationsDir, '20261105_file_uploads_durable_object.sql'), 'utf8');
+
 const DDL = `
   CREATE TABLE organizations (id integer PRIMARY KEY, status text);
   CREATE TABLE users (id integer PRIMARY KEY, status text);
@@ -110,6 +113,8 @@ export async function createDispositionHarness() {
   // fixture applying each one twice is what proves they are replay-safe.
   await pg.exec(catalogAttribution);
   await pg.exec(catalogAttribution);
+  await pg.exec(uploadObject);
+  await pg.exec(uploadObject);
   async function seed(options: { enabled?: boolean; auditFails?: boolean; invalidAudit?: boolean; auditInput?: (entry: DispositionAuditEntry) => void } = {}) {
     const org = ++orgCounter;
     const program = randomUUID();

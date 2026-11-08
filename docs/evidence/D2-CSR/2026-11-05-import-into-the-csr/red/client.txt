@@ -1,0 +1,14 @@
+# F6 panel tests against the HEAD CsrRunBuilds.tsx, StudyDataBuild.tsx, CsrBuildProgress.tsx
+   ✓ Submission Center carries no CSR build and no study data: both are the CSR document’s, in the editor  331ms
+   ✓ carries the narrative build and the assembly for a build of the saved run, in the CSR document’s editor  358ms
+   ✓ a newly queued build is selected in the editor; nothing navigates to the board  313ms
+   ✓ states that no build exists for the run, and a refused build list as an alert, never an empty list 105ms
+   ✓ follows a drafting build until it ends, then stops re-reading the list 121ms
+   ✓ says why a failed build stopped, as the list states it, and refuses a list whose reason is not text 121ms
+   ✓ reviews the selected build section by section, with the ICH E3 labels, and approves against the content hash 191ms
+   × imports exactly the approved sections into this document, with this document as the target, and opens no other document 5070ms
+   × states a refused import by name, and refuses a reply that is not for this document 5030ms
+   ✓ refuses a headings read whose template flag is not a yes or no, never guessing which rows are drafted 34ms
+   ✓ states a refused headings read as an alert, never an empty review 37ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 9 passed (11)

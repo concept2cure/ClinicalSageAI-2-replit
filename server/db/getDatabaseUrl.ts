@@ -79,6 +79,13 @@ export function getRuntimeDatabaseUrl(): string | undefined {
   if (runtimeUrl && runtimeUrl.trim() !== '') {
     return cleanDatabaseUrl(runtimeUrl);
   }
+  // Codespaces MUST NOT use DATABASE_URL / legacy Neon owner credentials
+  // as the API's runtime pool. Direct "tsx server/index.ts" must have the same
+  // refusal as npm run dev and post-start. Other local development preserves
+  // legacy single-role compatibility; production has its separate boot gate.
+  if (process.env.C2C_CODESPACE === '1' || process.env.CODESPACES === 'true') {
+    return undefined;
+  }
   return getDatabaseUrl();
 }
 

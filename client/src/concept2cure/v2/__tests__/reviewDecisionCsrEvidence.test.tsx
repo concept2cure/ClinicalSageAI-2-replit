@@ -51,6 +51,9 @@ beforeEach(() => {
   mocks.apiRequest.mockImplementation(async (method: string, url: string) => {
     const json = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
     if (url.endsWith('/reviews')) return json(peerRead(csrContext));
+    // The document's own frozen study data is read beside the package runs; a body that is not that list fails
+    // closed (dac7ef326c). This document has none.
+    if (url.startsWith('/api/submission-orchestrator/csr/study-data')) return json({ studyData: [] });
     if (url.startsWith('/api/submission-orchestrator/runs')) return json({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026-10-28T09:00:00Z' }] });
     if (url.endsWith('/csr-evidence/preview')) return json({ success: true, preview: { runs, tablesSha256: 'd'.repeat(64), snapshotHash: csrContext.snapshotHash } });
     if (method === 'POST' && url.endsWith('/review')) {
@@ -104,6 +107,7 @@ describe('the review decision for a CSR', () => {
     mocks.apiRequest.mockImplementation(async (method: string, url: string) => {
       const json = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body });
       if (url.endsWith('/reviews')) return json(peerRead(unlabelled));
+      if (url.startsWith('/api/submission-orchestrator/csr/study-data')) return json({ studyData: [] });
       if (url.startsWith('/api/submission-orchestrator/runs')) return json({ runs: [] });
       if (method === 'POST' && url.endsWith('/review')) {
         return json({ success: false, error: { code: 'CSR_SCIENTIFIC_REVIEW_REQUIRED', message: 'Approve this CSR only after mapping its saved result claims.' } }, 409);
@@ -161,13 +165,21 @@ describe('the study data a CSR is reviewed against', () => {
   const STUDY_DATA = '920a530f-6e01-4b27-81e5-1e9e66ce595c';
   const entry = (via: string) => ({ studyDataId: STUDY_DATA, createdAt: '2026-11-02T02:57:55.000Z', createdBy: 1, via,
     sources: [{ adapter: 'concept2cure.csr-source.v1', studyId: 'CDI02', protocolNumber: 'LMN-201-CDI02', version: '1', sha256: 'c'.repeat(64) }] });
-  const serve = (lists: { runs?: unknown; studyData?: unknown; studyDataFails?: boolean }) => {
+  const serve = (lists: {
+    runs?: unknown; runsFails?: boolean; runsMalformed?: boolean;
+    studyData?: unknown; studyDataFails?: boolean; studyDataMalformed?: boolean;
+  }) => {
     mocks.apiRequest.mockImplementation(async (method: string, url: string) => {
       const json = (body: unknown, ok = true) => ({ ok, status: ok ? 200 : 503, json: async () => body });
       if (url.endsWith('/reviews')) return json(peerRead(csrContext));
-      if (url.startsWith('/api/submission-orchestrator/runs')) return json({ runs: lists.runs ?? [] });
+      if (url.startsWith('/api/submission-orchestrator/runs')) {
+        if (lists.runsFails) return json({ message: 'Package history store is unavailable.' }, false);
+        if (lists.runsMalformed) return json({ runs: null });
+        return json({ runs: lists.runs ?? [] });
+      }
       if (url.startsWith('/api/submission-orchestrator/csr/study-data')) {
-        return lists.studyDataFails ? json({ message: 'The document’s study data could not be read.' }, false) : json({ studyData: lists.studyData ?? [] });
+        return lists.studyDataFails ? json({ message: 'The document’s study data could not be read.' }, false)
+          : lists.studyDataMalformed ? json({ studyData: null }) : json({ studyData: lists.studyData ?? [] });
       }
       if (url.endsWith('/csr-evidence/preview')) return json({ success: true, preview: { runs: [{ ...runs[0], runId: STUDY_DATA }], tablesSha256: 'd'.repeat(64), snapshotHash: csrContext.snapshotHash } });
       return json({ success: true });
@@ -212,6 +224,41 @@ describe('the study data a CSR is reviewed against', () => {
     await openApproval();
     expect(await screen.findByText(/Build from the study’s data/)).toBeTruthy();
     expect(screen.queryByText(/eCTD compile/)).toBeNull();
+  });
+
+  it('allows mapped review of frozen document data if separate package-run history is unreadable', async () => {
+    serve({ studyData: [entry('this-document')], runsFails: true });
+    await openApproval();
+    expect((await screen.findByRole('alert')).textContent).toMatch(/Earlier package-run history is unavailable/);
+    const source = await screen.findByLabelText(/Study data frozen for this document/);
+    fireEvent.click(source);
+    fireEvent.click(screen.getByRole('button', { name: 'Read the retained tables' }));
+    await screen.findByText('2. Each figure in the saved text');
+    const preview = posts().find(call => String(call[1]).endsWith('/csr-evidence/preview'))!;
+    expect(preview[2]).toEqual({ runIds: [STUDY_DATA] });
+  });
+
+  it('does not report an empty history when package-run discovery itself failed', async () => {
+    serve({ studyData: [], runsFails: true });
+    await openApproval();
+    expect((await screen.findByRole('alert')).textContent).toMatch(/Earlier package-run history is unavailable/);
+    expect(screen.queryByText(/No retained clinical tables are available for this document/)).toBeNull();
+    expect((screen.getByRole('button', { name: /Record approval/ }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('names malformed package history without hiding the document’s saved study data', async () => {
+    serve({ studyData: [entry('this-document')], runsMalformed: true });
+    await openApproval();
+    expect((await screen.findByRole('alert')).textContent).toMatch(/incomplete list/);
+    expect(await screen.findByLabelText(/Study data frozen for this document/)).toBeTruthy();
+  });
+
+  it('fails closed on malformed document study data even if package history is readable', async () => {
+    serve({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026-10-28T09:00:00Z' }], studyDataMalformed: true });
+    await openApproval();
+    expect((await screen.findByRole('alert')).textContent).toMatch(/document’s frozen study-data list is incomplete/);
+    expect(screen.queryByLabelText(/Run 0b6f2f5e/)).toBeNull();
+    expect(screen.queryByRole('button', { name: /Record approval/ })?.hasAttribute('disabled')).toBe(true);
   });
 
   it('a failed read of the study data is said, never shown as nothing to choose', async () => {

@@ -27,6 +27,7 @@ import { InsightsDevicePortfolio, type DevicePortfolioView } from './InsightsDev
 import { LIBRARY_VIEWS, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
 import type { BundlePdfContent, ReportRunRow } from './insightsLibraryModel';
 import { getSurfaceMeta } from '../registryModel';
+import { getApplicationType } from '@shared/regulatory/global-document-registry';
 
 /* ── Entitlement tiers (mdx-entitlements) ── */
 
@@ -200,6 +201,8 @@ interface ProgramCtx {
   // Filing and agency come from authorized recorded registry metadata.
   // Missing/unverifiable context and the unsourced action date stay null.
   filing: string | null;
+  // The registry id of that filing (e.g. 'US_IND'); decides which packs fit.
+  registryId: string | null;
   indication: string | null;
   readiness: number | null;
   scope: string;
@@ -308,6 +311,7 @@ function leadToProgramCtx(lp: CanvasLeadProgram): ProgramCtx {
     code: programName(lp),
     label: lp.label,
     filing: lp.filing,
+    registryId: lp.registryId ?? null,
     indication: lp.indication,
     readiness: lp.readiness,
     scope: lp.scope,
@@ -347,11 +351,21 @@ interface Preset {
 }
 
 /** A pack as defined: what it is for, in words that name no report. */
+/** The filings a pack is for, matched on the application registry's type and
+ *  family (shared/regulatory/global-document-registry). Absent: any filing. */
+interface PackFit {
+  applicationTypes?: string[];
+  families?: string[];
+  /** What it is for, as a reader says it: "a BLA". */
+  for: string;
+}
+
 interface PresetDef {
   id: string;
   label: string;
   types: string[];
   purpose: string;
+  fit?: PackFit;
 }
 
 /* A preset describes what the PACK contains — never what the reader's filing is
@@ -372,18 +386,18 @@ interface PresetDef {
    insightsReportsRunWhatTheyName.test.tsx (1b). */
 const RO_PRESETS: Record<string, PresetDef[]> = {
   pharma: [
-    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], purpose: 'For the run-up to an action date.' },
+    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], purpose: 'For the run-up to an action date.', fit: { families: ['marketing_authorization'], for: 'a marketing application' } },
     { id: 'globalfile', label: 'Global filing harmonization', types: ['ema.maa_readiness_assessment', 'china_nmpa.ctd_module_gap_analysis', 'provenance.evidence_trace_report'], purpose: 'For reusing the US dossier in other regions.' },
   ],
   biotech: [
-    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], purpose: 'For closing gaps before a BLA is filed.' },
+    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], purpose: 'For closing gaps before a BLA is filed.', fit: { applicationTypes: ['BLA'], for: 'a BLA' } },
     { id: 'nonclin', label: 'Nonclinical & CMC readiness', types: ['nonclinical.study_send_register', 'compliance.audit_assurance_pack'], purpose: 'For confirming Module 4 is submission-grade.' },
   ],
   medtech: [
-    { id: 'clearance', label: '510(k) clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'compliance.audit_assurance_pack'], purpose: 'For keeping a 510(k) and the quality system ready for review.' },
+    { id: 'clearance', label: '510(k) clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'compliance.audit_assurance_pack'], purpose: 'For keeping a 510(k) and the quality system ready for review.', fit: { applicationTypes: ['510(k)'], for: 'a 510(k)' } },
   ],
   diagnostics: [
-    { id: 'ivdperf', label: 'IVD performance & clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'provenance.evidence_trace_report'], purpose: 'For an IVD 510(k) and the claims it rests on.' },
+    { id: 'ivdperf', label: 'IVD performance & clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'provenance.evidence_trace_report'], purpose: 'For an IVD 510(k) and the claims it rests on.', fit: { applicationTypes: ['510(k)'], for: 'a 510(k)' } },
   ],
   cro: [
     { id: 'sponsor', label: 'Sponsor oversight pack', types: ['etmf.completeness_pack', 'inspection.readiness_pack'], purpose: 'For oversight across the sponsors and sites you run.' },
@@ -409,7 +423,7 @@ function roNamedList(labels: string[]): string {
  *  ones are listed once, as not computed in this release (roNotComputed), not
  *  as tiles inside packs. Each description is the pack's purpose and the
  *  reports it holds, by their catalog labels, so it names no other. */
-function roPresetsForSeg(seg: string, types: ReportType[]): Preset[] {
+function roPacksForSeg(seg: string, types: ReportType[]): Array<Preset & { fit?: PackFit }> {
   const runs = new Map(types.filter((t) => t.runnable).map((t) => [t.typeId, t.label] as const));
   return (RO_PRESETS[seg] || RO_PRESETS.pharma)
     .map(({ purpose, ...p }) => {
@@ -417,6 +431,32 @@ function roPresetsForSeg(seg: string, types: ReportType[]): Preset[] {
       return { ...p, types: held, why: `${purpose} It holds ${roNamedList(held.map((id) => runs.get(id) ?? id))}.` };
     })
     .filter((p) => p.types.length > 0);
+}
+
+/** Whether a pack fits the project's recorded filing. `null` when the filing is
+ *  not recorded or not in the registry: then nothing is known against it, and
+ *  the pack is offered, its card saying what it is for, as before. */
+function roPackFits(fit: PackFit | undefined, registryId: string | null | undefined): boolean | null {
+  if (!fit) return true;
+  const app = registryId ? getApplicationType(registryId) : undefined;
+  if (!app) return null;
+  return Boolean(fit.applicationTypes?.includes(app.applicationType) || fit.families?.includes(app.applicationFamily));
+}
+
+/** The packs offered for this project: the segment's, holding reports the
+ *  catalog computes, and fitting its filing (a BLA pack is not offered on an
+ *  IND). Seen in the running app, 2026-11-02. */
+function roPresetsForSeg(seg: string, types: ReportType[], registryId?: string | null): Preset[] {
+  return roPacksForSeg(seg, types).filter((p) => roPackFits(p.fit, registryId) !== false).map(({ fit: _fit, ...p }) => p);
+}
+
+/** The packs not offered because the filing does not fit, said rather than
+ *  dropped: "Not offered for this IND: the BLA assembly pack (for a BLA)." */
+function roPacksNotOffered(seg: string, types: ReportType[], registryId?: string | null): string | null {
+  const app = registryId ? getApplicationType(registryId) : undefined;
+  const out = roPacksForSeg(seg, types).filter((p) => roPackFits(p.fit, registryId) === false);
+  if (!app || out.length === 0) return null;
+  return `Not offered for this ${app.applicationType}: ${roNamedList(out.map((p) => `${p.label} (for ${p.fit?.for})`))}.`;
 }
 
 /** The program's catalog types no engine computes, by label, each once. */
@@ -530,7 +570,7 @@ function roPortfolioFrom(programs: CanvasPortfolioProgram[]): PortfolioRow[] {
    preset is now offered as what it is: the standard starting pack for the
    segment. */
 function roSuggestForClient(p: ProgramCtx, seg: string, types: ReportType[]) {
-  const preset: Preset | null = roPresetsForSeg(seg, types)[0] ?? null;
+  const preset: Preset | null = roPresetsForSeg(seg, types, p.registryId)[0] ?? null;
   /* THE WORD "READY" IS NOT THE SERVER'S TO GIVE AWAY.
      This read `${p.code} is ${p.readiness}% ready` off the score alone. For a
      filing type with no resolved required-artifact matrix the score is section
@@ -1600,7 +1640,8 @@ function ROSealLine({ seal }: { seal: ReportSeal }) {
   );
 }
 
-/** Export reads; Finalize, when offered, signs. */
+/** Export reads; Finalize, when offered, signs. Both are quiet: the page's one
+    primary is the header's (D7 §D.6), and an open report made Export a second. */
 function ROReportActions({ report, onExport, onFinalize, exporting = false }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
@@ -1609,7 +1650,7 @@ function ROReportActions({ report, onExport, onFinalize, exporting = false }: {
 }) {
   return (
     <div className="ro-rep-actions">
-      <button type="button" className="sp-primary" disabled={exporting} aria-busy={exporting} onClick={() => onExport(report)}>{I.download || I.fileText} {exporting ? 'Preparing PDF…' : 'Export PDF'}</button>
+      <button type="button" className="btn ghost" disabled={exporting} aria-busy={exporting} onClick={() => onExport(report)}>{I.download || I.fileText} {exporting ? 'Preparing PDF…' : 'Export PDF'}</button>
       {onFinalize && <button type="button" className="btn ghost" onClick={onFinalize}>{I.shieldCheck} Finalize…</button>}
     </div>
   );
@@ -1636,12 +1677,15 @@ export function InsightsCanvas(props: OwnedSurfaceViewProps) {
    project and goes back to it; with no project open there is nowhere to go
    back to, so it renders nothing rather than a dead link. Every state of the
    canvas (signed out, loading, a failed read, no project, the live canvas)
-   carries the same head, so the page is the same page while it loads. */
-function ReportingHead({ onNav, sub, note, acts }: { onNav?: (id: string) => void; sub?: React.ReactNode; note?: React.ReactNode; acts?: React.ReactNode }) {
+   carries the same head, so the page is the same page while it loads.
+   A project opened from the address carries only its id, so the link would
+   have read "Project" (seen in the running app, 2026-11-02): it names the
+   project from the canvas's own read when the shell has no title for it. */
+function ReportingHead({ onNav, sub, note, acts, name }: { onNav?: (id: string) => void; sub?: React.ReactNode; note?: React.ReactNode; acts?: React.ReactNode; name?: string }) {
   const project = useShellProject();
   return (
     <>
-      {project && <button type="button" className="pj-back" onClick={() => onNav?.('project-home')}>{I.left} {project.title ?? 'Project'}</button>}
+      {project && <button type="button" className="pj-back" onClick={() => onNav?.('project-home')}>{I.left} {project.title || name || shellProgramName() || 'Project'}</button>}
       <header className="ph">
         <div>
           <h1 className="ph-title">{getSurfaceMeta('insights').label}</h1>
@@ -2154,7 +2198,8 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     );
   }
   const p = program; // narrowed non-null past the guards above
-  const packs = roPresetsForSeg(seg, catalog);
+  const packs = roPresetsForSeg(seg, catalog, p.registryId);
+  const packsNotOffered = roPacksNotOffered(seg, catalog, p.registryId);
   const notComputed = roNotComputed(catalog);
   const segLabel = SEG_LABEL[seg] || seg;
 
@@ -2162,6 +2207,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     <div className="page-inner rc" data-work-area="insights" {...ownerEvents}>
       <ReportingHead
         onNav={onNav}
+        name={p.label}
         sub={<>Governed reports for {p.code}. {suggest.facts} Every value is computed from the governed record; nothing is estimated.</>}
         note={!canWrite && (
           <p className="ph-sub" role="note" data-testid="rc-view-only">
@@ -2317,6 +2363,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
                 ) : (
                   <p className="rc-packs-none">No standard pack for {segLabel} can run here. Find a report above, or open the Catalog.</p>
                 )}
+                {packsNotOffered && <p className="rc-packs-none" data-testid="rc-packs-not-offered">{packsNotOffered}</p>}
               </section>
               {/* P-26: the program's report types no engine computes, listed
                   once, here, and never as tiles inside a pack. Asking for one

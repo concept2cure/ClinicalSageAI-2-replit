@@ -1,0 +1,6 @@
+# the fixed script on a fresh cluster (C2C_PGDATA=/var/lib/postgresql/c2c-verify-green, port 5434)
+[setup-local-db] Applying the out-of-band migration set (deploy-migrate)
+[setup-local-db] Demo account ready: jm.smith@concept2cure.pro
+[setup-local-db]   tables:      1023
+[setup-local-db]   pgvector:    installed
+✅ Schema migration complete — safe to roll services.

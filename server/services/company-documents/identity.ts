@@ -64,7 +64,7 @@ export async function readCompanyFilingIdentity(req: Request, sequenceId: number
     explanation: 'Company presentation is compared with recorded filing facts. A reviewed role difference does not change the applicant, sponsor or agency records.' } };
 }
 const reviewSchema = z.object({ sequenceId: z.number().int().positive(), expectedRevision: z.number().int().nonnegative(),
-  variantId: z.string().uuid().optional(),
+  variantId: z.string().guid().optional(),
   profileHash: z.string().regex(/^[a-f0-9]{64}$/), filingHash: z.string().regex(/^[a-f0-9]{64}$/),
   companyRole: z.enum(['sponsor', 'applicant', 'legal_manufacturer', 'local_representative', 'parent_brand']),
   reason: z.string().trim().min(8).max(2000) }).strict();

@@ -123,7 +123,8 @@ function manifestFor(actor: AssemblySourceIdentity, states: SourceState[], query
   });
   const limitations = ['Selected references record assembly intent, not citation support, model consumption, scientific qualification or filing approval.'];
   if (entries.some(entry => entry.span.start !== 0 || entry.span.end !== entry.span.totalChars)) limitations.push('Only the recorded bounded excerpts were selected; this is not whole-document review.');
-  if (entries.some(entry => entry.originalFileAvailable === false || entry.disposition === 'keep_data')) limitations.push('Eligible extracted data was retained for a source whose original file is unavailable.');
+  if (states.some(state => state.extractionMethod !== 'native-record-projection' && (state.originalFileAvailable === false || state.disposition === 'keep_data'))) limitations.push('Eligible extracted data was retained for a source whose original file is unavailable.');
+  if (states.some(state => state.extractionMethod === 'native-record-projection')) limitations.push('Native record snapshots have no uploaded original. Their recorded scope and lifecycle must be retained; selecting them does not establish approval.');
   if (states.some(state => state.extractionMethod?.includes('ocr'))) limitations.push('OCR text may misread figures, identifiers and dates; verify against the original page when available.');
   const base = { version: 1 as const, programId: actor.programId, entries, limitations };
   const manifest = { ...base, fingerprint: hash(base) };

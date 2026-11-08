@@ -689,7 +689,8 @@ describe('shadow review — real runs and persisted findings', () => {
     expect(document.body.textContent).toContain('Basis: 21 CFR 314.50');
     expect(document.body.textContent).toContain('Critical');
     expect(document.body.textContent).toContain('Open');
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/shadow-review/91/findings');
+    // A live read carries its read-deadline signal (c3794c8fef, liveGetOrNull).
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/shadow-review/91/findings', undefined, undefined, expect.any(AbortSignal));
   });
 
   it('a failed run POST surfaces the server error and records nothing locally', async () => {
@@ -717,6 +718,29 @@ describe('shadow review — real runs and persisted findings', () => {
     );
     // Still the honest empty run list — no fabricated run row.
     expect(document.body.textContent).toContain('No shadow reviews for sequence 0000 yet');
+  });
+
+  /* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): the server records
+     a failed run (with its reason) before it answers the error, but the list was
+     not read again, so the tester saw only the older run and its older reason. */
+  it('a failed run is read back from the server, and its reason is not doubled-stopped', async () => {
+    let posted = false;
+    mockApi((method, url) => {
+      if (method === 'GET' && url === '/api/submissions/sequences/21/shadow-review') {
+        return { ok: true, status: 200, json: async () => (posted ? [{ ...SHADOW_RUNS[0], id: 92, status: 'failed', summary: null, failureCode: 'no_provider_configured' }] : []) };
+      }
+      if (method === 'POST' && url === '/api/submissions/sequences/21/shadow-review') {
+        posted = true;
+        return { ok: false, status: 503, json: async () => ({ error: { code: 'PROVIDER_UNAVAILABLE', message: 'No AI provider is configured on this deployment.' } }) };
+      }
+      return undefined;
+    });
+    render(<SubmissionCenter {...props()} />);
+    await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
+    await openWorkspace('Shadow review');
+    fireEvent.click(await screen.findByRole('button', { name: /Run shadow review/ }));
+    await waitFor(() => expect(document.body.textContent).toContain('#92'));
+    expect(document.body.textContent).toContain('No AI provider is configured on this deployment. No findings were recorded.');
   });
 });
 

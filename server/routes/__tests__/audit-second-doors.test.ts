@@ -25,7 +25,8 @@ vi.mock('../../db', () => ({
   pool: {
     query: async (sql: string) => {
       h.sql.push(sql.replace(/\s+/g, ' ').trim());
-      return { rows: [], rowCount: 0 };
+      // The search reads the caller's project scope first (F1, 2026-11-05): a current member of no project here.
+      return { rows: /FROM organization_users ou/.test(sql) ? [{ role: 'member' }] : [], rowCount: 0 };
     },
   },
   getPool: () => ({}),

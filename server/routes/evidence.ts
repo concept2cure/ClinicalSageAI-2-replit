@@ -9,8 +9,12 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
+import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { db } from '../db';
+import { requestConnectable, type RequestSqlClient } from '../db/requestDb';
+import { stableStringify } from '../../shared/canonical-json';
+import { governedReason } from './governed-reason';
 import { setRequestQuery } from '../utils/expressQuery';
 import { eq, and, desc, asc, sql, count, or, ilike } from 'drizzle-orm';
 import { evidenceObjects, evidenceLinks } from '../../shared/schema/programs';
@@ -73,6 +77,11 @@ const evidenceCategoryEnum = z.enum([
 const sourceTypeEnum = z.enum(['internal', 'external', 'literature', 'agency', 'standard_body']);
 const evidenceLevelEnum = z.enum(['I', 'II', 'III', 'IV', 'V']);
 const statusEnum = z.enum(['pending', 'approved', 'rejected', 'superseded']);
+const REVIEW_METADATA = ['verificationReceipt', 'verificationInvalidation', 'verificationComments'] as const;
+const evidenceMetadata = z.record(z.string(), z.unknown()).refine(
+  value => !REVIEW_METADATA.some(key => Object.prototype.hasOwnProperty.call(value, key)),
+  'Verification records are written by the governed review, not supplied as metadata.',
+);
 
 const createEvidenceSchema = z.object({
   title: z.string().min(1).max(500),
@@ -84,7 +93,7 @@ const createEvidenceSchema = z.object({
   sourceType: sourceTypeEnum,
   sourceReference: z.string().optional(),
   sourceCitation: z.string().optional(),
-  programId: z.string().uuid().optional(),
+  programId: z.string().guid().optional(),
   documentId: z.number().optional(),
   documentVersion: z.string().optional(),
   pageRange: z.string().optional(),
@@ -102,15 +111,23 @@ const createEvidenceSchema = z.object({
   testType: z.string().optional(),
   testLab: z.string().optional(),
   testDate: z.string().datetime().optional(),
-  testResults: z.record(z.unknown()).optional(),
+  testResults: z.record(z.string(), z.unknown()).optional(),
   tags: z.array(z.string()).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: evidenceMetadata.optional(),
 });
 
-const updateEvidenceSchema = createEvidenceSchema.partial();
+const contentHash = z.string().regex(/^[0-9a-f]{64}$/);
+const updateEvidenceSchema = createEvidenceSchema.partial().extend({
+  reason: governedReason,
+  expectedContentHash: contentHash.optional(),
+}).strict();
+const verifyEvidenceSchema = z.object({
+  approved: z.boolean(), expectedContentHash: contentHash, reason: governedReason,
+  comments: z.string().trim().max(4000).optional(),
+}).strict();
 
 const createLinkSchema = z.object({
-  evidenceId: z.string().uuid(),
+  evidenceId: z.string().guid(),
   targetType: z.enum(['claim', 'section', 'requirement', 'standard', 'question']),
   targetId: z.string(),
   targetPath: z.string().optional(),
@@ -122,7 +139,7 @@ const createLinkSchema = z.object({
 const queryParamsSchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
-  programId: z.string().uuid().optional(),
+  programId: z.string().guid().optional(),
   evidenceType: evidenceTypeEnum.optional(),
   evidenceCategory: evidenceCategoryEnum.optional(),
   status: statusEnum.optional(),
@@ -145,7 +162,7 @@ const validateBody = (schema: z.ZodSchema) => (req: Request, res: Response, next
     if (error instanceof z.ZodError) {
       res.status(400).json({
         success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: error.errors },
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid request body', details: error.issues },
       });
       return;
     }
@@ -166,7 +183,7 @@ const validateQuery =
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid query parameters',
-            details: error.errors,
+            details: error.issues,
           },
         });
         return;
@@ -183,6 +200,185 @@ const sortColumnMap: Record<string, any> = {
   qualityScore: evidenceObjects.qualityScore,
   relevanceScore: evidenceObjects.relevanceScore,
 };
+
+type EvidenceRecord = typeof evidenceObjects.$inferSelect;
+const evidenceColumns = {
+  title: 'title', code: 'code', description: 'description', evidenceType: 'evidence_type',
+  evidenceCategory: 'evidence_category', evidenceLevel: 'evidence_level', sourceType: 'source_type',
+  sourceReference: 'source_reference', sourceCitation: 'source_citation', programId: 'program_id',
+  documentId: 'document_id', documentVersion: 'document_version', pageRange: 'page_range', excerpt: 'excerpt',
+  qualityScore: 'quality_score', relevanceScore: 'relevance_score', validFrom: 'valid_from', validUntil: 'valid_until',
+  authors: 'authors', publicationDate: 'publication_date', journal: 'journal', doi: 'doi', pmid: 'pmid',
+  abstract: 'abstract', testType: 'test_type', testLab: 'test_lab', testDate: 'test_date',
+  testResults: 'test_results', tags: 'tags', metadata: 'metadata',
+} as const;
+const dateFields = new Set(['validFrom', 'validUntil', 'publicationDate', 'testDate']);
+
+function metadataOf(value: unknown): Record<string, unknown> {
+  if (value === null || value === undefined) return {};
+  if (typeof value !== 'object' || Array.isArray(value)) throw new EvidenceRefusal(409, 'EVIDENCE_METADATA_UNREADABLE', 'The evidence metadata needs review before it can be changed.');
+  return { ...value as Record<string, unknown> };
+}
+
+function materialEvidenceValue(key: string, raw: unknown): unknown {
+  const value = raw ?? null;
+  if (key === 'metadata') {
+    const material = metadataOf(value);
+    for (const reserved of REVIEW_METADATA) delete material[reserved];
+    return material;
+  }
+  if (dateFields.has(key) && value !== null) return value instanceof Date ? value.toISOString() : new Date(value as string).toISOString();
+  if ((key === 'qualityScore' || key === 'relevanceScore') && value !== null) return String(Number(value));
+  return value;
+}
+
+/** Human-review binding, versioned independently of review state and audit timestamps. */
+export function evidenceContentHash(evidence: EvidenceRecord): string {
+  const content: Record<string, unknown> = { id: evidence.id, organizationId: evidence.organizationId };
+  for (const key of Object.keys(evidenceColumns) as Array<keyof typeof evidenceColumns>) content[key] = materialEvidenceValue(key, evidence[key]);
+  return createHash('sha256').update(stableStringify({ schemaVersion: 1, content })).digest('hex');
+}
+
+function evidenceRow(row: Record<string, unknown>): EvidenceRecord {
+  const mapped: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(row)) mapped[key.replace(/_([a-z])/g, (_all, letter: string) => letter.toUpperCase())] = value;
+  return mapped as EvidenceRecord;
+}
+
+class EvidenceRefusal extends Error {
+  constructor(readonly status: number, readonly code: string, message: string) { super(message); }
+}
+
+/** Fresh authority on the same request executor, retaining membership and project locks until commit. */
+async function admitEvidenceWriter(req: Request, client: RequestSqlClient, organizationId: number, programId: string | null): Promise<number> {
+  const rawUserId = req.user?.id;
+  const userId = typeof rawUserId === 'number' ? rawUserId : typeof rawUserId === 'string' && /^\d+$/.test(rawUserId) ? Number(rawUserId) : NaN;
+  if (!Number.isSafeInteger(userId) || userId <= 0) throw new EvidenceRefusal(401, 'ACTOR_REQUIRED', 'A signed-in reviewer is required.');
+  const { readCurrentProgramActor, requireCurrentProgramAccess } = await import('../services/c2c/current-program-access');
+  const { GOVERNED_WRITE_ROLES } = await import('../middleware/orgMembership');
+  const actor = await readCurrentProgramActor(client, { organizationId, userId, forShare: true });
+  if (!GOVERNED_WRITE_ROLES.has(actor.role)) throw new EvidenceRefusal(403, 'EVIDENCE_WRITE_DENIED', 'Your current organization role cannot change evidence.');
+  req.userId = actor.userId;
+  if (programId !== null) {
+    const access = await requireCurrentProgramAccess(client, { organizationId, userId, programId, forShare: true });
+    const { requireProjectAdmission } = await import('./c2c/project-access');
+    await requireProjectAdmission(req, String(access.projectId), true, { executor: client, programId, forShare: true });
+  }
+  return actor.userId;
+}
+
+async function mutateEvidence<T>(req: Request, work: (client: RequestSqlClient, before: EvidenceRecord, userId: number) => Promise<T>): Promise<T> {
+  const organizationId = Number(getSecureOrgId(req));
+  if (!Number.isSafeInteger(organizationId) || organizationId <= 0) throw new EvidenceRefusal(401, 'UNAUTHORIZED', 'Tenant context required.');
+  const client = await requestConnectable(req).connect();
+  let committing = false;
+  try {
+    await client.query('BEGIN');
+    const scope = await client.query('SELECT program_id FROM evidence_objects WHERE id=$1 AND organization_id=$2', [String(req.params.id), organizationId]);
+    if (scope.rows.length !== 1) throw new EvidenceRefusal(404, 'NOT_FOUND', 'Evidence object not found.');
+    const programId = scope.rows[0].program_id as string | null;
+    const userId = await admitEvidenceWriter(req, client, organizationId, programId);
+    if (req.body.programId !== undefined && req.body.programId !== programId) {
+      await admitEvidenceWriter(req, client, organizationId, req.body.programId);
+    }
+    const result = await client.query('SELECT * FROM evidence_objects WHERE id=$1 AND organization_id=$2 FOR UPDATE', [String(req.params.id), organizationId]);
+    if (result.rows.length !== 1) throw new EvidenceRefusal(404, 'NOT_FOUND', 'Evidence object not found.');
+    const before = evidenceRow(result.rows[0]);
+    if (before.programId !== programId) throw new EvidenceRefusal(409, 'EVIDENCE_SCOPE_CHANGED', 'The evidence project changed. Re-read it before recording a decision.');
+    const out = await work(client, before, userId);
+    committing = true;
+    await client.query('COMMIT');
+    return out;
+  } catch (error) {
+    if (committing) {
+      client.release(error instanceof Error ? error : new Error('Evidence transaction outcome unknown'));
+      throw new EvidenceRefusal(500, 'OUTCOME_UNKNOWN', 'The evidence change could not be confirmed. Re-read the evidence before trying again.');
+    }
+    try { await client.query('ROLLBACK'); }
+    catch (rollbackError) { client.release(rollbackError instanceof Error ? rollbackError : new Error('Evidence rollback failed')); }
+    throw error;
+  } finally { client.release(); }
+}
+
+function failedEvidenceMutation(res: Response, error: unknown): Response {
+  const failure = error as { status?: unknown; code?: unknown; message?: unknown };
+  if (failure instanceof EvidenceRefusal || (typeof failure.status === 'number' && [403,404,409,503].includes(failure.status))) {
+    return res.status(failure.status as number).json({ success: false, error: { code: failure.code, message: failure.message } });
+  }
+  logger.error('Evidence change not recorded', { error: error instanceof Error ? error.message : String(error) });
+  return res.status(500).json({ success: false, error: { code: 'EVIDENCE_CHANGE_NOT_RECORDED', message: 'The evidence change and its audit record were not recorded.' } });
+}
+
+async function auditEvidence(client: RequestSqlClient, before: EvidenceRecord, userId: number,
+  input: { action: string; reason: string; details: Record<string, unknown> }): Promise<void> {
+  const { writeChainedAuditRow } = await import('../services/auditService');
+  await writeChainedAuditRow(client, { tenantId: before.organizationId, userId, action: input.action,
+    resourceType: 'evidence_objects', resourceId: before.id, reason: input.reason,
+    details: { ...input.details, reason: input.reason } });
+}
+
+type EvidenceUpdate = z.infer<typeof updateEvidenceSchema>;
+async function updateEvidenceContent(client: RequestSqlClient, before: EvidenceRecord, updates: EvidenceUpdate, userId: number): Promise<EvidenceRecord> {
+  const patch: Record<string, unknown> = {};
+  for (const key of Object.keys(evidenceColumns) as Array<keyof typeof evidenceColumns>) {
+    if (updates[key] === undefined || key === 'metadata') continue;
+    patch[evidenceColumns[key]] = updates[key];
+  }
+  const metadata = metadataOf(updates.metadata ?? before.metadata);
+  const previousMetadata = metadataOf(before.metadata);
+  for (const reserved of REVIEW_METADATA) {
+    if (Object.prototype.hasOwnProperty.call(previousMetadata, reserved)) metadata[reserved] = previousMetadata[reserved];
+  }
+  patch.metadata = metadata;
+  // The row's actual column types govern JSON, UUID, timestamp and numeric
+  // conversion. Key presence preserves omitted fields without interpolating SQL.
+  const updated = await client.query(`UPDATE evidence_objects AS saved SET
+    title=CASE WHEN $1::jsonb ? 'title' THEN patch.title ELSE saved.title END,
+    code=CASE WHEN $1::jsonb ? 'code' THEN patch.code ELSE saved.code END,
+    description=CASE WHEN $1::jsonb ? 'description' THEN patch.description ELSE saved.description END,
+    evidence_type=CASE WHEN $1::jsonb ? 'evidence_type' THEN patch.evidence_type ELSE saved.evidence_type END,
+    evidence_category=CASE WHEN $1::jsonb ? 'evidence_category' THEN patch.evidence_category ELSE saved.evidence_category END,
+    evidence_level=CASE WHEN $1::jsonb ? 'evidence_level' THEN patch.evidence_level ELSE saved.evidence_level END,
+    source_type=CASE WHEN $1::jsonb ? 'source_type' THEN patch.source_type ELSE saved.source_type END,
+    source_reference=CASE WHEN $1::jsonb ? 'source_reference' THEN patch.source_reference ELSE saved.source_reference END,
+    source_citation=CASE WHEN $1::jsonb ? 'source_citation' THEN patch.source_citation ELSE saved.source_citation END,
+    program_id=CASE WHEN $1::jsonb ? 'program_id' THEN patch.program_id ELSE saved.program_id END,
+    document_id=CASE WHEN $1::jsonb ? 'document_id' THEN patch.document_id ELSE saved.document_id END,
+    document_version=CASE WHEN $1::jsonb ? 'document_version' THEN patch.document_version ELSE saved.document_version END,
+    page_range=CASE WHEN $1::jsonb ? 'page_range' THEN patch.page_range ELSE saved.page_range END,
+    excerpt=CASE WHEN $1::jsonb ? 'excerpt' THEN patch.excerpt ELSE saved.excerpt END,
+    quality_score=CASE WHEN $1::jsonb ? 'quality_score' THEN patch.quality_score ELSE saved.quality_score END,
+    relevance_score=CASE WHEN $1::jsonb ? 'relevance_score' THEN patch.relevance_score ELSE saved.relevance_score END,
+    valid_from=CASE WHEN $1::jsonb ? 'valid_from' THEN patch.valid_from ELSE saved.valid_from END,
+    valid_until=CASE WHEN $1::jsonb ? 'valid_until' THEN patch.valid_until ELSE saved.valid_until END,
+    authors=CASE WHEN $1::jsonb ? 'authors' THEN patch.authors ELSE saved.authors END,
+    publication_date=CASE WHEN $1::jsonb ? 'publication_date' THEN patch.publication_date ELSE saved.publication_date END,
+    journal=CASE WHEN $1::jsonb ? 'journal' THEN patch.journal ELSE saved.journal END,
+    doi=CASE WHEN $1::jsonb ? 'doi' THEN patch.doi ELSE saved.doi END,
+    pmid=CASE WHEN $1::jsonb ? 'pmid' THEN patch.pmid ELSE saved.pmid END,
+    abstract=CASE WHEN $1::jsonb ? 'abstract' THEN patch.abstract ELSE saved.abstract END,
+    test_type=CASE WHEN $1::jsonb ? 'test_type' THEN patch.test_type ELSE saved.test_type END,
+    test_lab=CASE WHEN $1::jsonb ? 'test_lab' THEN patch.test_lab ELSE saved.test_lab END,
+    test_date=CASE WHEN $1::jsonb ? 'test_date' THEN patch.test_date ELSE saved.test_date END,
+    test_results=CASE WHEN $1::jsonb ? 'test_results' THEN patch.test_results ELSE saved.test_results END,
+    tags=CASE WHEN $1::jsonb ? 'tags' THEN patch.tags ELSE saved.tags END,
+    metadata=patch.metadata, updated_by=$2, updated_at=NOW()
+    FROM json_populate_record(NULL::evidence_objects, $1::json) AS patch
+    WHERE saved.id=$3 AND saved.organization_id=$4 RETURNING saved.*`,
+  [JSON.stringify(patch), String(userId), before.id, before.organizationId]);
+  return evidenceRow(updated.rows[0]);
+}
+
+function hasEvidenceReview(before: EvidenceRecord): boolean {
+  return before.isVerified === true || before.verifiedBy !== null || before.verifiedAt !== null ||
+    before.status === 'approved' || before.status === 'rejected' || metadataOf(before.metadata).verificationReceipt !== undefined;
+}
+async function invalidateSupportReviews(client: RequestSqlClient, evidence: EvidenceRecord): Promise<boolean> {
+  const out = await client.query(`UPDATE evidence_links SET is_verified=false, verified_by=NULL, verified_at=NULL
+    WHERE evidence_id=$1 AND organization_id=$2 AND (is_verified=true OR verified_by IS NOT NULL OR verified_at IS NOT NULL) RETURNING id`,
+    [evidence.id, evidence.organizationId]);
+  return out.rows.length > 0;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ROUTES: Evidence CRUD
@@ -470,7 +666,7 @@ router.get('/:id', requireUuidId, async (req: Request, res: Response) => {
       .from(evidenceLinks)
       .where(and(eq(evidenceLinks.evidenceId, id), eq(evidenceLinks.organizationId, orgIdNum)));
 
-    res.json({ success: true, data: { ...evidence, links } });
+    res.json({ success: true, data: { ...evidence, links }, meta: { contentHash: evidenceContentHash(evidence) } });
   } catch (error) {
     logger.error('GET /:id error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
@@ -561,77 +757,44 @@ router.post('/', validateBody(createEvidenceSchema), async (req: Request, res: R
  * PATCH /api/evidence/:id
  * Update an evidence object
  */
-router.patch('/:id', validateBody(updateEvidenceSchema), async (req: Request, res: Response) => {
+router.patch('/:id', requireUuidId, validateBody(updateEvidenceSchema), async (req: Request, res: Response) => {
   try {
-    const id = String(req.params.id);
-    const updates = req.body;
-    const orgId = getSecureOrgId(req);
-    if (!orgId) {
-      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Tenant context required' } });
-    }
-    const orgIdNum = parseInt(orgId, 10);
-    const userId = (req as any).user?.id ? String((req as any).user.id) : 'system';
-
-    const existing = await db
-      .select({ id: evidenceObjects.id })
-      .from(evidenceObjects)
-      .where(and(eq(evidenceObjects.id, id), eq(evidenceObjects.organizationId, orgIdNum)))
-      .limit(1);
-
-    if (existing.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: { code: 'NOT_FOUND', message: `Evidence object ${id} not found` },
-      });
-    }
-
-    const updateValues: Record<string, any> = { updatedBy: userId, updatedAt: new Date() };
-
-    if (updates.title !== undefined) updateValues.title = updates.title;
-    if (updates.code !== undefined) updateValues.code = updates.code;
-    if (updates.description !== undefined) updateValues.description = updates.description;
-    if (updates.evidenceType !== undefined) updateValues.evidenceType = updates.evidenceType;
-    if (updates.evidenceCategory !== undefined) updateValues.evidenceCategory = updates.evidenceCategory;
-    if (updates.evidenceLevel !== undefined) updateValues.evidenceLevel = updates.evidenceLevel;
-    if (updates.sourceType !== undefined) updateValues.sourceType = updates.sourceType;
-    if (updates.sourceReference !== undefined) updateValues.sourceReference = updates.sourceReference;
-    if (updates.sourceCitation !== undefined) updateValues.sourceCitation = updates.sourceCitation;
-    if (updates.programId !== undefined) updateValues.programId = updates.programId;
-    if (updates.documentId !== undefined) updateValues.documentId = updates.documentId;
-    if (updates.documentVersion !== undefined) updateValues.documentVersion = updates.documentVersion;
-    if (updates.pageRange !== undefined) updateValues.pageRange = updates.pageRange;
-    if (updates.excerpt !== undefined) updateValues.excerpt = updates.excerpt;
-    if (updates.qualityScore !== undefined) updateValues.qualityScore = updates.qualityScore != null ? String(updates.qualityScore) : null;
-    if (updates.relevanceScore !== undefined) updateValues.relevanceScore = updates.relevanceScore != null ? String(updates.relevanceScore) : null;
-    if (updates.validFrom !== undefined) updateValues.validFrom = updates.validFrom ? new Date(updates.validFrom) : null;
-    if (updates.validUntil !== undefined) updateValues.validUntil = updates.validUntil ? new Date(updates.validUntil) : null;
-    if (updates.authors !== undefined) updateValues.authors = updates.authors;
-    if (updates.publicationDate !== undefined) updateValues.publicationDate = updates.publicationDate ? new Date(updates.publicationDate) : null;
-    if (updates.journal !== undefined) updateValues.journal = updates.journal;
-    if (updates.doi !== undefined) updateValues.doi = updates.doi;
-    if (updates.pmid !== undefined) updateValues.pmid = updates.pmid;
-    if (updates.abstract !== undefined) updateValues.abstract = updates.abstract;
-    if (updates.testType !== undefined) updateValues.testType = updates.testType;
-    if (updates.testLab !== undefined) updateValues.testLab = updates.testLab;
-    if (updates.testDate !== undefined) updateValues.testDate = updates.testDate ? new Date(updates.testDate) : null;
-    if (updates.testResults !== undefined) updateValues.testResults = updates.testResults;
-    if (updates.tags !== undefined) updateValues.tags = updates.tags;
-    if (updates.metadata !== undefined) updateValues.metadata = updates.metadata;
-
-    const [evidence] = await db
-      .update(evidenceObjects)
-      .set(updateValues)
-      .where(and(eq(evidenceObjects.id, id), eq(evidenceObjects.organizationId, orgIdNum)))
-      .returning();
-
-    res.json({ success: true, data: evidence });
-  } catch (error) {
-    logger.error('PATCH /:id error', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({
-      success: false,
-      error: { code: 'INTERNAL_ERROR', message: 'Failed to update evidence' },
+    const updates = req.body as z.infer<typeof updateEvidenceSchema>;
+    const out = await mutateEvidence(req, async (client, before, userId) => {
+      const beforeHash = evidenceContentHash(before);
+      if (updates.expectedContentHash && updates.expectedContentHash !== beforeHash) {
+        throw new EvidenceRefusal(409, 'EVIDENCE_CHANGED', 'The evidence changed. Re-read it before recording this change.');
+      }
+      let updated = await updateEvidenceContent(client, before, updates, userId);
+      // Bind the actual saved values, including database decimal/date normalization.
+      const nextHash = evidenceContentHash(updated);
+      const contentChanged = beforeHash !== nextHash;
+      const changedFields = (Object.keys(evidenceColumns) as Array<keyof typeof evidenceColumns>).filter(key =>
+        stableStringify(materialEvidenceValue(key, before[key])) !== stableStringify(materialEvidenceValue(key, updated[key])));
+      const verificationInvalidated = contentChanged && hasEvidenceReview(before);
+      const supportVerificationInvalidated = contentChanged ? await invalidateSupportReviews(client, before) : false;
+      let invalidation: Record<string, unknown> | null = null;
+      if (verificationInvalidated) {
+        const metadata = metadataOf(updated.metadata);
+        delete metadata.verificationReceipt;
+        delete metadata.verificationComments;
+        invalidation = { schemaVersion: 1, previousContentHash: beforeHash, contentHash: nextHash,
+          changedFields, invalidatedBy: userId, invalidatedAt: new Date().toISOString(),
+          reason: 'Evidence content or source changed; review of the current content is required.' };
+        metadata.verificationInvalidation = invalidation;
+        const reset = await client.query(`UPDATE evidence_objects SET is_verified=false, verified_by=NULL,
+          verified_at=NULL, status='pending', metadata=$1::json WHERE id=$2 AND organization_id=$3 RETURNING *`,
+          [JSON.stringify(metadata), before.id, before.organizationId]);
+        updated = evidenceRow(reset.rows[0]);
+      }
+      await auditEvidence(client, before, userId, { action: verificationInvalidated ? 'evidence.verification_invalidated' : 'evidence.updated', reason: updates.reason,
+        details: { previousContentHash: beforeHash, contentHash: nextHash, changedFields, verificationInvalidated,
+          supportVerificationInvalidated, previousVerification: metadataOf(before.metadata).verificationReceipt ?? null } });
+      return { data: updated, meta: { contentHash: nextHash, verificationInvalidated, supportVerificationInvalidated,
+        ...(invalidation ? { reason: invalidation } : {}) } };
     });
-  }
+    return res.json({ success: true, ...out });
+  } catch (error) { return failedEvidenceMutation(res, error); }
 });
 
 /**
@@ -686,56 +849,35 @@ router.delete('/:id', requireUuidId, async (req: Request, res: Response) => {
  * POST /api/evidence/:id/verify
  * Verify an evidence object
  */
-router.post('/:id/verify', requireUuidId, async (req: Request, res: Response) => {
+router.post('/:id/verify', requireUuidId, validateBody(verifyEvidenceSchema), async (req: Request, res: Response) => {
   try {
-    const id = String(req.params.id);
-    const { approved, comments } = req.body;
-    const orgId = getSecureOrgId(req);
-    if (!orgId) {
-      return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Tenant context required' } });
-    }
-    const orgIdNum = parseInt(orgId, 10);
-    const userName = (req as any).user?.name || (req as any).user?.email || 'System';
-
-    const existing = await db
-      .select({ id: evidenceObjects.id })
-      .from(evidenceObjects)
-      .where(and(eq(evidenceObjects.id, id), eq(evidenceObjects.organizationId, orgIdNum)))
-      .limit(1);
-
-    if (existing.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: { code: 'NOT_FOUND', message: `Evidence object ${id} not found` },
-      });
-    }
-
-    const now = new Date();
-    const updateVals: Record<string, any> = {
-      isVerified: !!approved,
-      verifiedBy: userName,
-      verifiedAt: now,
-      status: approved ? 'approved' : 'rejected',
-      updatedAt: now,
-    };
-    if (comments) {
-      updateVals.metadata = sql`jsonb_set(COALESCE(${evidenceObjects.metadata}::jsonb, '{}'::jsonb), '{verificationComments}', ${JSON.stringify(comments)}::jsonb)`;
-    }
-
-    const [evidence] = await db
-      .update(evidenceObjects)
-      .set(updateVals)
-      .where(and(eq(evidenceObjects.id, id), eq(evidenceObjects.organizationId, orgIdNum)))
-      .returning();
-
-    res.json({ success: true, data: evidence });
-  } catch (error) {
-    logger.error('POST /:id/verify error', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({
-      success: false,
-      error: { code: 'INTERNAL_ERROR', message: 'Failed to verify evidence' },
+    const decision = req.body as z.infer<typeof verifyEvidenceSchema>;
+    const out = await mutateEvidence(req, async (client, before, userId) => {
+      const currentHash = evidenceContentHash(before);
+      if (decision.expectedContentHash !== currentHash) {
+        throw new EvidenceRefusal(409, 'EVIDENCE_CHANGED', 'The evidence changed after it was read. Review the current content before deciding.');
+      }
+      const reviewedAt = new Date().toISOString();
+      const metadata = metadataOf(before.metadata);
+      delete metadata.verificationInvalidation;
+      metadata.verificationReceipt = { schemaVersion: 1, method: 'human_review', contentHash: currentHash,
+        approved: decision.approved, reviewerUserId: userId, reviewedAt, reason: decision.reason };
+      if (decision.comments) metadata.verificationComments = decision.comments;
+      else delete metadata.verificationComments;
+      const updated = await client.query(`UPDATE evidence_objects
+        SET is_verified=$1, verified_by=$2, verified_at=$3, status=$4, metadata=$5::json,
+            updated_by=$6, updated_at=NOW() WHERE id=$7 AND organization_id=$8 RETURNING *`,
+        [decision.approved, decision.approved ? String(userId) : null, decision.approved ? reviewedAt : null,
+          decision.approved ? 'approved' : 'rejected', JSON.stringify(metadata), String(userId), before.id, before.organizationId]);
+      const supportVerificationInvalidated = decision.approved ? false : await invalidateSupportReviews(client, before);
+      await auditEvidence(client, before, userId, { action: decision.approved ? 'evidence.verified' : 'evidence.rejected', reason: decision.reason,
+        details: { contentHash: currentHash, previousVerified: before.isVerified, receipt: metadata.verificationReceipt,
+          comments: decision.comments ?? null, supportVerificationInvalidated } });
+      return { data: evidenceRow(updated.rows[0]), meta: { contentHash: currentHash, audited: true,
+        verificationMethod: 'human_review' } };
     });
-  }
+    return res.json({ success: true, ...out });
+  } catch (error) { return failedEvidenceMutation(res, error); }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

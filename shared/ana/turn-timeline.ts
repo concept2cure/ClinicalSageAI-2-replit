@@ -89,7 +89,42 @@ export type TaskEvent = EventBase & { kind: 'task'; task: string; change: TaskCh
 
 export type EndEvent = EventBase & { kind: 'end'; outcome: TurnEndOutcome; stoppedReason: string | null };
 
-export type TimelineEvent = NoteEvent | StepEvent | TaskEvent | EndEvent;
+export type WorkerPhase = 'assigned' | 'started' | 'checking' | 'waiting' | 'reported' | 'held' | 'stopped';
+export type WorkerOutcome = 'completed' | 'incomplete' | 'cancelled' | 'failed';
+export type WorkerDisposition = 'pending' | 'accepted_as_proposal' | 'rework' | 'rejected';
+export interface WorkerReceipt { eventId: string; eventHash: string }
+export interface WorkerEstimate {
+  basis: 'observed_check_durations'; scope: 'remaining_checks'; lowerMs: number; upperMs: number; sampleCount: number; at: string;
+}
+/** A content-free projection of an appended coordination record. Completion
+ * counts describe measured work; neither counts nor a report approve a filing. */
+export interface WorkerSnapshot {
+  parent: string; worker: string; revision: number; parentStep: string; task: string | null;
+  /** Optional exact title from a currently admitted canonical project task. */
+  taskCaption?: string;
+  /** Current parent liveness from an admitted run-row read; never a fabricated worker outcome. */
+  parentState?: 'running' | 'paused' | 'awaiting_approval' | 'finished' | 'cancelled' | 'failed' | 'stale';
+  role: 'research' | 'verify'; workKind: 'research' | 'verification'; label: string;
+  phase: WorkerPhase; outcome: WorkerOutcome | null; completed: number | null; total: number | null;
+  basis: 'deterministic_checks' | 'observed_steps' | null; parentDisposition: WorkerDisposition;
+  estimate: WorkerEstimate | null; receipt: WorkerReceipt;
+}
+export type WorkerEvent = EventBase & WorkerSnapshot & { kind: 'worker' };
+export interface ProjectTeamMonitor {
+  state: 'current' | 'stale' | 'unavailable'; snapshotRevisionId: number | null;
+  work: { total: number; completed: number; percentage: number | null };
+  gates: { source: TeamGateState; document: TeamGateState; filing: TeamGateState }; blockers: string[];
+}
+type TeamGateState = 'not_assessed' | 'unavailable' | 'blocked' | 'satisfied';
+export interface ProjectTeamSnapshot {
+  organizationId: number; projectId: number; projectRef: string; asOf: string; cursor: string | null; complete: boolean;
+  goal: ProjectTeamGoal | null; workers: WorkerSnapshot[]; projectMonitor?: ProjectTeamMonitor;
+}
+export interface ProjectTeamGoal {
+  alias: string; label: 'Project objective'; version: number; summary?: string; truncated?: boolean;
+  source?: { charterId: number; sectionKey: 'objectives'; version: number; contentHash: string; status: string; locked: boolean };
+}
+export type TimelineEvent = NoteEvent | StepEvent | TaskEvent | WorkerEvent | EndEvent;
 
 /**
  * The live mirror's cap (AnA detach DT1, docs/design/ANA_DETACH_2026-10-08.md
@@ -114,7 +149,7 @@ export interface TimelineTextRef {
 
 /** The sealed form: a note's text is a reference to its blob, shared with the round's prose. */
 export type SealedNoteEvent = Omit<NoteEvent, 'text'> & { text: TimelineTextRef };
-export type SealedTimelineEvent = SealedNoteEvent | StepEvent | TaskEvent | EndEvent;
+export type SealedTimelineEvent = SealedNoteEvent | StepEvent | TaskEvent | WorkerEvent | EndEvent;
 
 /** A person's control as the Summary shows it: never who took it. */
 /**
@@ -213,6 +248,105 @@ function readTask(r: Record<string, any>, base: EventBase): TaskEvent | null {
     : null;
 }
 
+const workerPhases = new Set(['assigned', 'started', 'checking', 'waiting', 'reported', 'held', 'stopped']);
+const workerOutcomes = new Set(['completed', 'incomplete', 'cancelled', 'failed']);
+const workerDispositions = new Set(['pending', 'accepted_as_proposal', 'rework', 'rejected']);
+const teamGates = new Set(['not_assessed', 'unavailable', 'blocked', 'satisfied']);
+const objectOf = (v: unknown): Record<string, unknown> | null => v !== null && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : null;
+const integer = (v: unknown): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;
+const positive = (v: unknown): v is number => integer(v) && v > 0;
+const opaque = (v: unknown): v is string => str(v) && /^[a-z0-9][a-z0-9_.:-]{0,199}$/i.test(v);
+const isoTime = (v: unknown): v is string => str(v) && v.length <= 40 && Number.isFinite(Date.parse(v));
+const hash = (v: unknown): v is string => str(v) && /^[a-f0-9]{64}$/.test(v);
+export const workerLabel = (role: WorkerSnapshot['role']): string => role === 'verify' ? 'Check assigned work' : 'Research assigned work';
+
+function readWorkerReceipt(raw: unknown): WorkerReceipt | null {
+  const r = objectOf(raw);
+  return r && str(r.eventId) && /^[a-f0-9]{8}-[a-f0-9-]{27}$/i.test(r.eventId) && hash(r.eventHash)
+    ? { eventId: r.eventId, eventHash: r.eventHash } : null;
+}
+function readWorkerEstimate(raw: unknown): WorkerEstimate | null {
+  const r = objectOf(raw);
+  if (!r || r.basis !== 'observed_check_durations' || r.scope !== 'remaining_checks' || !integer(r.lowerMs) || !integer(r.upperMs) ||
+    r.lowerMs > r.upperMs || !integer(r.sampleCount) || r.sampleCount < 3 || !isoTime(r.at)) return null;
+  return { basis: 'observed_check_durations', scope: 'remaining_checks', lowerMs: r.lowerMs, upperMs: r.upperMs, sampleCount: r.sampleCount, at: r.at };
+}
+function workerIdentityReads(r: Record<string, unknown>): boolean {
+  return opaque(r.parent) && str(r.worker) && /^w[1-9]\d{0,4}$/.test(r.worker) && positive(r.revision) &&
+    str(r.parentStep) && /^s[1-9]\d*$/.test(r.parentStep) && (r.task === null || str(r.task) && /^t[1-9]\d*$/.test(r.task));
+}
+function workerProgressReads(r: Record<string, unknown>): boolean {
+  const counts = [r.completed, r.total].every(v => v === null || integer(v));
+  const bounded = r.total === null || integer(r.total) && integer(r.completed) && r.completed <= r.total;
+  return counts && bounded && (r.basis === null || r.basis === 'deterministic_checks' || r.basis === 'observed_steps');
+}
+function workerStatesRead(r: Record<string, unknown>): boolean {
+  return (r.role === 'research' || r.role === 'verify') && str(r.phase) && workerPhases.has(r.phase) &&
+    (r.outcome === null || str(r.outcome) && workerOutcomes.has(r.outcome)) && str(r.parentDisposition) && workerDispositions.has(r.parentDisposition);
+}
+function workerOptionalFieldsRead(r: Record<string, unknown>): boolean {
+  return (r.taskCaption === undefined || str(r.taskCaption) && Boolean(r.taskCaption.trim()) && r.taskCaption.length <= 200) &&
+    (r.parentState === undefined || ['running', 'paused', 'awaiting_approval', 'finished', 'cancelled', 'failed', 'stale'].includes(String(r.parentState)));
+}
+/** Strict known-field projection; raw objectives, peer bodies and errors never
+ * become labels, even when supplied beside an otherwise valid event. */
+export function readWorkerSnapshot(raw: unknown): WorkerSnapshot | null {
+  const r = objectOf(raw); if (!r || !workerIdentityReads(r) || !workerProgressReads(r)) return null;
+  if (!workerStatesRead(r)) return null;
+  if (!workerOptionalFieldsRead(r)) return null;
+  const receipt = readWorkerReceipt(r.receipt), estimate = r.estimate === null ? null : readWorkerEstimate(r.estimate);
+  if (!receipt || r.estimate !== null && !estimate) return null;
+  return { parent: String(r.parent), worker: String(r.worker), revision: Number(r.revision), parentStep: String(r.parentStep), task: r.task as string | null,
+    role: r.role as WorkerSnapshot['role'], workKind: r.role === 'verify' ? 'verification' : 'research', label: workerLabel(r.role as WorkerSnapshot['role']), phase: r.phase as WorkerPhase,
+    outcome: r.outcome as WorkerOutcome | null, completed: r.completed as number | null, total: r.total as number | null,
+    basis: r.basis as WorkerSnapshot['basis'], parentDisposition: r.parentDisposition as WorkerDisposition, estimate, receipt,
+    ...(str(r.taskCaption) ? { taskCaption: r.taskCaption } : {}),
+    ...(r.parentState ? { parentState: r.parentState as WorkerSnapshot['parentState'] } : {}) };
+}
+function readTeamMonitor(raw: unknown): ProjectTeamMonitor | null {
+  const r = objectOf(raw), work = objectOf(r?.work), gates = objectOf(r?.gates);
+  if (!r || !work || !gates || !['current', 'stale', 'unavailable'].includes(String(r.state)) ||
+    r.snapshotRevisionId !== null && !positive(r.snapshotRevisionId) || !teamWorkReads(work)) return null;
+  if (![gates.source, gates.document, gates.filing].every(v => str(v) && teamGates.has(v)) || !Array.isArray(r.blockers) || r.blockers.length > 40 ||
+    !r.blockers.every(v => str(v) && /^[A-Z][A-Z0-9_]{0,79}$/.test(v))) return null;
+  return { state: r.state as ProjectTeamMonitor['state'], snapshotRevisionId: r.snapshotRevisionId as number | null,
+    work: { total: Number(work.total), completed: Number(work.completed), percentage: work.percentage as number | null },
+    gates: gates as unknown as ProjectTeamMonitor['gates'], blockers: r.blockers };
+}
+function teamWorkReads(work: Record<string, unknown>): boolean {
+  if (!integer(work.total) || !integer(work.completed) || work.completed > work.total) return false;
+  if (work.percentage === null) return true;
+  return work.total > 0 && typeof work.percentage === 'number' && Number.isFinite(work.percentage) &&
+    Math.abs(work.percentage - work.completed * 100 / work.total) <= 0.5000001;
+}
+function projectTeamHeaderReads(r: Record<string, unknown>): boolean {
+  return positive(r.organizationId) && positive(r.projectId) && opaque(r.projectRef) && isoTime(r.asOf) &&
+    (r.cursor === null || opaque(r.cursor)) && typeof r.complete === 'boolean' && Array.isArray(r.workers) && r.workers.length <= 128;
+}
+export function readProjectTeamSnapshot(raw: unknown): ProjectTeamSnapshot | null {
+  const r = objectOf(raw); if (!r || !projectTeamHeaderReads(r) || !Array.isArray(r.workers)) return null;
+  const workers = r.workers.map(readWorkerSnapshot); if (workers.some(v => v === null)) return null;
+  const goal = r.goal === null ? null : readTeamGoal(r.goal), monitor = r.projectMonitor === undefined ? undefined : readTeamMonitor(r.projectMonitor);
+  if (r.goal !== null && !goal || monitor === null) return null;
+  return { organizationId: Number(r.organizationId), projectId: Number(r.projectId), projectRef: String(r.projectRef), asOf: String(r.asOf), cursor: r.cursor as string | null,
+    complete: r.complete as boolean, goal,
+    workers: workers.filter((v): v is WorkerSnapshot => v !== null), ...(monitor ? { projectMonitor: monitor } : {}) };
+}
+function readTeamGoal(raw: unknown): ProjectTeamGoal | null {
+  const r = objectOf(raw); if (!r || !opaque(r.alias) || r.label !== 'Project objective' || !positive(r.version)) return null;
+  const base: ProjectTeamGoal = { alias: r.alias, label: 'Project objective', version: r.version };
+  if (r.summary === undefined && r.source === undefined && r.truncated === undefined) return base;
+  const source = readObjectiveSource(r.source, r.version);
+  if (!str(r.summary) || r.summary.length > 600 || typeof r.truncated !== 'boolean' || !source) return null;
+  return { ...base, summary: r.summary, truncated: r.truncated, source };
+}
+function readObjectiveSource(raw: unknown, version: number): ProjectTeamGoal['source'] | null {
+  const s = objectOf(raw);
+  if (!s || !positive(s.charterId) || s.sectionKey !== 'objectives' || s.version !== version || !hash(s.contentHash) || !str(s.status) ||
+    !/^[a-z][a-z0-9_-]{0,39}$/i.test(s.status) || typeof s.locked !== 'boolean') return null;
+  return { charterId: s.charterId, sectionKey: 'objectives', version, contentHash: s.contentHash, status: s.status, locked: s.locked };
+}
+
 /**
  * One event from a `timeline` frame or a Summary payload, or null when it is
  * not one. A field it cannot read is left out; an event with a kind it does
@@ -223,6 +357,9 @@ export function readTimelineEvent(raw: unknown): TimelineEvent | null {
   const r = raw as Record<string, any>;
   if (typeof r.seq !== 'number' || !str(r.at) || typeof r.round !== 'number') return null;
   const base: EventBase = { seq: r.seq, at: r.at, round: r.round };
+  return readEventKind(r, base);
+}
+function readEventKind(r: Record<string, any>, base: EventBase): TimelineEvent | null {
   switch (r.kind) {
     case 'note':
       return str(r.text) && r.text.trim() ? { ...base, kind: 'note', text: r.text } : null;
@@ -230,6 +367,9 @@ export function readTimelineEvent(raw: unknown): TimelineEvent | null {
       return readStep(r, base);
     case 'task':
       return readTask(r, base);
+    case 'worker': {
+      const worker = readWorkerSnapshot(r); return worker ? { ...base, kind: 'worker', ...worker } : null;
+    }
     case 'end':
       return OUTCOMES.has(r.outcome)
         ? { ...base, kind: 'end', outcome: r.outcome, stoppedReason: str(r.stoppedReason) ? r.stoppedReason : null }

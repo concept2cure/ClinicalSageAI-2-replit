@@ -1,0 +1,10 @@
+# vault-source-input.test.ts, the F5 cases, on the old listCsrVaultSources (metadata only)
+ × vault-source-input.test.ts > the clinical source list offers clinical sources only > offers the bundle manifest and a supporting source, and not the efficacy results, a dataset or other JSON 18ms
+ ✓ vault-source-input.test.ts > the clinical source list offers clinical sources only > offers a manifest that declares its format but breaks its contract, so its preview names the issues 1ms
+ × vault-source-input.test.ts > the clinical source list offers clinical sources only > names a file it could not read, or whose bytes fail their digest, instead of leaving it out 2ms
+ × vault-source-input.test.ts > the clinical source list offers clinical sources only > reads at most a bounded number of bytes, and says the list reached its limit beyond them 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'cdiscpilot01-adam-bundle', …(5) ] to deeply equal [ 'cdiscpilot01-adam-bundle', …(1) ]
+AssertionError: expected [ …(3) ] to deeply equal [ Array(1) ]
+AssertionError: expected [ { …(5) }, { …(5) }, { …(5) }, …(4) ] to have a length of 5 but got 7
+      Tests  3 failed | 1 passed | 22 skipped (26)

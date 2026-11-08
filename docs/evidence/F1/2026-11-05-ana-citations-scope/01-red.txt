@@ -1,0 +1,92 @@
+# 01-red: the new suite on the unchanged router (git show HEAD:server/routes/ana-features.ts), 2026-11-05
+# npx vitest run server/routes/__tests__/ana-citations-project-scope.pglite.test.ts --reporter=verbose
+# The 8 that pass on red are the regression guards: accessible reads, the editor's run, and the routes' own 400s.
+
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact route answers an artifact of a project the person cannot open as a missing artifact > GET /citations/:artifactId: a private project's artifact, and another organization's, read as no artifact 549ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact route answers an artifact of a project the person cannot open as a missing artifact > GET /citations/:artifactId/gaps: a private project's artifact, and another organization's, read as no artifact 13ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact route answers an artifact of a project the person cannot open as a missing artifact > GET /citations/:artifactId/expectations: a private project's artifact, and another organization's, read as no artifact 23ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact route answers an artifact of a project the person cannot open as a missing artifact > GET /citations/:artifactId/runs: a private project's artifact, and another organization's, read as no artifact 24ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact route answers an artifact of a project the person cannot open as a missing artifact > GET /citations/:artifactId/export: a private project's artifact, and another organization's, read as no artifact 37ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact route answers an artifact of a project the person cannot open as a missing artifact > GET /citations/:artifactId/export?format=csv: a private project's artifact, and another organization's, read as no artifact 38ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact route answers an artifact of a project the person cannot open as a missing artifact > POST /citations/:artifactId/export.docx: a private project's artifact, and another organization's, read as no artifact 28ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact route answers an artifact of a project the person cannot open as a missing artifact > POST /citations/run: a private project's artifact, and another organization's, read as no artifact 9ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact route answers an artifact of a project the person cannot open as a missing artifact > the not-found answers are the routes’ own: 404 for a read, an empty history for the run list 8ms
+ ✓ server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact of a project the person can open still reads > its citations, with each sentence and its sources 6ms
+ ✓ server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact of a project the person can open still reads > another sponsor’s project the person can open: the route names one artifact, so it reads 4ms
+ ✓ server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact of a project the person can open still reads > its run history, and one run 7ms
+ ✓ server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact of a project the person can open still reads > the private project’s owner reads its artifact and diffs its runs 12ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a run route answers a run of a project the person cannot open as a missing run > GET /citations/runs/:runId 11ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a run route answers a run of a project the person cannot open as a missing run > GET /citations/runs/:runId/diff 14ms
+ ✓ server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a run route answers a run of a project the person cannot open as a missing run > a malformed run id is still the route’s own 400 2ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > rollup: a private project, and another organization's, are refused as a project that does not exist 4ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > stale: a private project, and another organization's, are refused as a project that does not exist 4ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > trends: a private project, and another organization's, are refused as a project that does not exist 18ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > section-coverage: a private project, and another organization's, are refused as a project that does not exist 755ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > graph: a private project, and another organization's, are refused as a project that does not exist 16ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > search: a private project, and another organization's, are refused as a project that does not exist 13ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > gaps-by-rule: a private project, and another organization's, are refused as a project that does not exist 4ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > export: a private project, and another organization's, are refused as a project that does not exist 4ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > export?format=csv: a private project, and another organization's, are refused as a project that does not exist 9ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > snapshot: a private project, and another organization's, are refused as a project that does not exist 5ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > diff: a private project, and another organization's, are refused as a project that does not exist 5ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > readiness-impact: a private project, and another organization's, are refused as a project that does not exist 11ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > POST batch-run: a private project, and another organization's, are refused as a project that does not exist 3ms
+ ✓ server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > a project the person can open reads: rollup, graph, search, export and gaps-by-rule 28ms
+ ✓ server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a project route admits only a project the person can open > a malformed project id is still the route’s own 400 3ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a write needs the project’s edit right > POST /citations/run: a member who can read the project but not edit it is refused, and nothing runs 2ms
+ ✓ server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a write needs the project’s edit right > POST /citations/run: the project’s editor runs it 4ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a write needs the project’s edit right > POST /citations/projects/:projectId/batch-run: refused without the edit right, run with it 3ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a write needs the project’s edit right > POST /citations/runs/prune removes every project’s run history: a member is refused, an administrator prunes 3ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a check that cannot run is an error with a code, never an answer > the sharing policy unreadable: 503 PROJECT_ACCESS_UNAVAILABLE, and no citation 4ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a check that cannot run is an error with a code, never an answer > the current membership unreadable: 503 PROJECT_ACCESS_UNAVAILABLE, and no citation 3ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a check that cannot run is an error with a code, never an answer > the artifact’s project unreadable: 503 PROJECT_ACCESS_UNAVAILABLE, and no citation 4ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a check that cannot run is an error with a code, never an answer > the run’s project unreadable: 503 PROJECT_ACCESS_UNAVAILABLE, and no citation 3ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a check that cannot run is an error with a code, never an answer > the project policy on a project route unreadable: 503 PROJECT_ACCESS_UNAVAILABLE, and no citation 3ms
+ × server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > a check that cannot run is an error with a code, never an answer > a person who is no longer a member is refused before any artifact is looked up, whether it exists or not 6ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 33 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  33 failed | 8 passed (41)
+exit=1
+
+# First failure in full:
+366: FAIL  server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact route answers an artifact of a project the person cannot open as a missing artifact > GET /citations/:artifactId: a private project's artifact, and another organization's, read as no artifact
+⎯⎯⎯⎯⎯⎯ Failed Tests 33 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact route answers an artifact of a project the person cannot open as a missing artifact > GET /citations/:artifactId: a private project's artifact, and another organization's, read as no artifact
+AssertionError: GET /citations/:artifactId a-priv: {"artifactId":"a-priv","citationRunId":"0b000000-0000-4000-8000-000000000002","citationsAt":"2026-11-05T15:59:02.881Z","ctdSection":"2.5","citations":[{"gap":null,"text":"Private claim sentence.","flags":[],"status":"gap","charEnd":23,"sources":[{"artifactId":"src-1","sectionCode":"2.5","relationship":"supports","passageSnippet":"Private claim sentence. (source)","relevanceScore":0.9}],"charStart":0,"contentHash":"h","sentenceIndex":0,"paragraphIndex":0}],"stats":{"totalSentences":1,"supportedCount":1,"contradictedCount":0,"gapCount":0,"totalReadinessDelta":0,"filingBlocked":false},"isStale":false,"ranAgainstContentHash":"h","currentContentHash":"h"}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/ana-citations-project-scope.pglite.test.ts:196:86
+    194|       for (const hiddenId of ['a-priv', 'a-theirs']) {
+    195|         const hidden = await send(hiddenId);
+    196|         expect(hidden.status, `${name} ${hiddenId}: ${JSON.stringify(h…
+       |                                                                                      ^
+    197|         expect(without(hidden.body, hiddenId), name).toBe(without(miss…
+    198|         // A route echoes the id it was asked for, as it does for an i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/33]⎯
+
+ FAIL  server/routes/__tests__/ana-citations-project-scope.pglite.test.ts > an artifact route answers an artifact of a project the person cannot open as a missing artifact > GET /citations/:artifactId/gaps: a private project's artifact, and another organization's, read as no artifact
+AssertionError: GET /citations/:artifactId/gaps a-priv: {"artifactId":"a-priv","ctdSection":"2.5","gaps":[{"gap":null,"text":"Private claim sentence.","flags":[],"status":"gap","charEnd":23,"sources":[{"artifactId":"src-1","sectionCode":"2.5","relationship":"supports","passageSnippet":"Private claim sentence. (source)","relevanceScore":0.9}],"charStart":0,"contentHash":"h","sentenceIndex":0,"paragraphIndex":0}],"rollup":{"critical":0,"major":0,"minor":0,"info":0,"unclassified":1,"totalReadinessDelta":0,"filingBlocked":false},"isStale":false}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/ana-citations-project-scope.pglite.test.ts:196:86
+    194|       for (const hiddenId of ['a-priv', 'a-theirs']) {
+    195|         const hidden = await send(hiddenId);
+    196|         expect(hidden.status, `${name} ${hiddenId}: ${JSON.stringify(h…
+       |                                                                                      ^
+    197|         expect(without(hidden.body, hiddenId), name).toBe(without(miss…
+    198|         // A route echoes the id it was asked for, as it does for an i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/33]⎯
+

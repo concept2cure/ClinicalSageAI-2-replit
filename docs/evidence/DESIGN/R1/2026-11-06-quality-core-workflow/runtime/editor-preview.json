@@ -1,0 +1,911 @@
+{
+  "success": true,
+  "data": {
+    "version": 1,
+    "docId": "e4518a32-5216-4a8a-b34b-f495cbe79fc3",
+    "programId": "6c89e2c1-2d76-4356-80cb-001821956b5a",
+    "templateId": "05b65c39-4f70-548b-b935-3f3c153f1621",
+    "selection": {
+      "target": "document"
+    },
+    "targetSnapshot": "7ecc42a27ad67ba3f53824075517072f04770e80f9e25dea6e31ca9196e10845",
+    "templateSnapshot": "20520bc6a9b10809c2d06801fab6b560f3fb4e4052d2b0fe5f22f96408dcec7d",
+    "templateName": "M3 \u00b7 Module 3: Quality \u2014 preparation worksheet",
+    "draftRegion": "FDA",
+    "limitations": [
+      "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+      "Confirm applicability to the product and IND stage; reference requirements can also cover later development.",
+      "Additional working headings organize preparation; confirm actual filing placement through the governed workflow.",
+      "Use and retain the original form, dataset, certificate or signed record; this preparation worksheet does not replace it."
+    ],
+    "rows": [
+      {
+        "code": "3",
+        "title": "Quality",
+        "content": "",
+        "ordering": 0,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nChemistry, manufacturing, and controls (CMC) data for drug substance and drug product.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.1",
+        "title": "Table of Contents of Module 3",
+        "content": "",
+        "ordering": 1,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nThe ICH M4 heading 3.1 Table of Contents of Module 3; the record holds no brief for it.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2",
+        "title": "Body of Data",
+        "content": "",
+        "ordering": 2,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nThe ICH M4 heading 3.2 Body of Data; the record holds no brief for it.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S",
+        "title": "Drug Substance",
+        "content": "",
+        "ordering": 3,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nFull drug substance CMC data.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.1",
+        "title": "General Information (Drug Substance)",
+        "content": "",
+        "ordering": 4,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This is a preparation template: AnA does not draft it. Retain its originals and complete it manually.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.1 anchors the entire drug-substance dossier by unambiguously identifying the active moiety and its fundamental properties. An FDA reviewer reads it first to confirm the substance's identity, salt/hydrate form, and the properties (solubility, pKa, polymorphism, hygroscopicity, and for biologics higher-order structure and heterogeneity) that will drive formulation, control strategy, and stability. Acceptability requires internal consistency: the structure, molecular formula, and molecular weight stated here must exactly match those elucidated in 3.2.S.3.1. For biologics, describe the general nature (e.g., glycoprotein, mAb, isotype, expression system) and known post-translational modifications. This section is descriptive, not data-heavy, but errors here propagate throughout Module 3.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.1.1",
+        "title": "Nomenclature",
+        "content": "",
+        "ordering": 5,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nScale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Reconcile the actual drug substance identity across sponsor-controlled records. Record established and provisional names separately, including the sponsor code and available registry identifiers. Distinguish the active moiety from the supplied salt, hydrate or other form, and identify each substance separately for a multi-substance product. An unavailable INN, USAN or CAS number is a gap, never a guessed identifier.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.1.2",
+        "title": "Structure",
+        "content": "",
+        "ordering": 6,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nScale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Describe the structure represented in the supplied characterization record. For a chemical substance, retain the documented stereochemistry, formula and relative molecular mass for the actual form. For a biological substance, use the appropriate supplied sequence or structural schematic and identified modifications. Do not calculate a mass from a guessed formula or transfer a chemical template to a cell or gene therapy without a product-specific basis. Refer supporting analytical evidence to S.3.1.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.1.3",
+        "title": "General Properties",
+        "content": "",
+        "ordering": 7,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nScale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. List the relevant properties supported by the substance record, retaining the measurement conditions, method, units and material identity. Discuss biological activity for a biological substance when the evidence supports it. Separate measured values from qualitative observations and planned characterization; avoid imposing a small-molecule property checklist on other modalities. Cross-reference detailed characterization and control methods instead of inventing numerical property values.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.2",
+        "title": "Manufacture (Drug Substance) \u2014 Overview",
+        "content": "",
+        "ordering": 8,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.2 is the container for the full manufacturing narrative and must present a coherent, end-to-end story from starting materials to purified drug substance. The FDA reviewer uses it to judge whether the process is adequately described, controlled, and (at NDA/BLA) validated, and whether the control strategy per ICH Q11 is justified by process understanding. Acceptability depends on consistency across the S.2 sub-sections: the process described in S.2.2 must reconcile with the flow diagram, the controls in S.2.4, the validation in S.2.5, and the development rationale in S.2.6. For IND submissions, phase-appropriate detail is expected\u2014more emphasis on safety-relevant controls and less on full validation\u2014whereas NDA/BLA requires the complete package. Cross-reference rather than duplicate detailed content held in the sub-sections.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.2.1",
+        "title": "Manufacturer(s)",
+        "content": "",
+        "ordering": 9,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.2.1 must name every manufacturer, contract manufacturer, and testing laboratory involved in producing and controlling the drug substance, with full legal name, physical address, and FEI/DUNS identifier where available. FDA uses this section to schedule pre-approval inspections and to verify that each named site holds the appropriate registration and CGMP status. Acceptability requires that each site's specific responsibility be stated (e.g., synthesis of regulated starting material, final purification, release testing, micro/stability testing, storage) so the reviewer can map the process steps to responsible facilities. Any site performing a GMP operation on the drug substance\u2014including contract testing\u2014must appear here and must match the sites cited elsewhere in the application (Form FDA 356h for NDA/BLA).",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.2.2",
+        "title": "Description of Manufacturing Process and Process Controls",
+        "content": "",
+        "ordering": 10,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.2.2 is the technical heart of the manufacture section: it must describe the process sequentially from starting materials (small molecule) or from cell bank through harvest and purification (biologic) to the packaged drug substance, in enough detail for a reviewer to understand each transformation and its controls. Reviewers assess whether operating parameters, reagents, solvents, catalysts, and in-process controls are defined and whether ranges are consistent with the validated/characterized process. Acceptability requires a complete annotated flow diagram, a representative batch/scale statement, identification of any reprocessing/reworking, and clearly stated in-process controls (IPCs) with acceptance criteria for each critical step. For biologics per ICH Q5A\u2013Q5E, include culture duration limits, cell age, bioreactor scale, harvest criteria, chromatography and viral clearance steps, and pooling strategy. Alternate processes or sites must be described and justified.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.2.3",
+        "title": "Control of Materials",
+        "content": "",
+        "ordering": 11,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.2.3 must list and control every material used to make the drug substance and demonstrate that their quality is adequate for their role. Reviewers scrutinize the justification and specification of regulated starting materials (ICH Q11) for small molecules, and for biologics they focus heavily on cell bank characterization (MCB/WCB per ICH Q5A/Q5B/Q5D) and the safety of raw materials of animal/human origin (TSE/BSE and adventitious agents). Acceptability requires specifications for starting materials and critical reagents, a description and characterization of cell banking systems, generation/qualification/storage/genetic stability data for cell banks, and adventitious-agent safety documentation. The section must make clear which materials are quality-critical and how their control assures consistent drug substance quality; gaps here are a leading cause of complete-response and information-request findings.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.2.4",
+        "title": "Controls of Critical Steps and Intermediates",
+        "content": "",
+        "ordering": 12,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.2.4 identifies which process steps are critical to drug substance quality and specifies the controls\u2014in-process tests and acceptance criteria\u2014that keep them in control, plus specifications for isolated intermediates. Reviewers evaluate whether the designation of critical steps is justified by the process understanding presented in S.2.6 and whether the acceptance criteria are tight enough to assure quality yet supported by data. Acceptability requires a clear link between critical quality attributes/critical process parameters and the controls listed here, with each critical control traceable to development data. For biologics, this includes controls on bioburden, endotoxin, and key purification-step performance, and specifications for pooled harvest or key intermediates. This section should not merely restate S.2.2 IPCs but should distinguish and justify the critical subset.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.2.5",
+        "title": "Process Validation and/or Evaluation",
+        "content": "",
+        "ordering": 13,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.2.5 demonstrates that the manufacturing process is capable of consistently producing drug substance meeting its specifications. For NDA/BLA, reviewers expect a process validation package (prospective validation of consecutive commercial-scale batches, or a lifecycle/continuous-verification approach per the FDA 2011 Process Validation guidance and ICH Q11) and, for biologics, validation of critical purification and viral-clearance steps. Acceptability requires a validation protocol summary, results demonstrating that CPPs stayed within range and CQAs met acceptance criteria across batches, and evaluation of consistency. The level of detail is phase-appropriate: for IND, an evaluation/description of process control suffices, and full validation is not required at early phases; for aseptic/sterile or biologic steps, specific validation (e.g., viral clearance studies per ICH Q5A) is expected even earlier. Distinguish validation (routine, non-dedicated equipment steps) from evaluation (specialized biologic steps studied at small scale).",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.2.6",
+        "title": "Manufacturing Process Development",
+        "content": "",
+        "ordering": 14,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.2.6 tells the story of how the process evolved and why the final process and its controls are appropriate, providing the ICH Q11 development rationale that underpins S.2.2 and S.2.4. Reviewers use it to assess comparability of drug substance across development (linking clinical, stability, and validation batches) and to understand the scientific basis\u2014risk assessments, design of experiments, and criticality determinations\u2014for the control strategy. Acceptability requires a batch-history/genealogy table, a summary of significant process and site changes with their rationale and impact assessment, comparability data bridging pre- and post-change material (critical for biologics per ICH Q5E), and the identification of CQAs and CPPs. For NDA/BLA this section justifies design space claims (if any) and the overall control strategy; for IND it documents development to date and any changes affecting the batches used in clinical/nonclinical studies.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.3",
+        "title": "Characterisation (Drug Substance) \u2014 Overview",
+        "content": "",
+        "ordering": 15,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.3 integrates the evidence that the drug substance is what the sponsor claims it is (structure) and what else is present (impurities). Reviewers read it to confirm that the elucidated structure supports the proposed identity and that the impurity profile is fully understood and controlled. Acceptability rests on the completeness of S.3.1 (orthogonal structural methods) and S.3.2 (identification, origin, and control rationale for all impurities), and on consistency with the control strategy in S.4. For biologics, characterization is far more extensive\u2014primary/higher-order structure, post-translational modifications, biological activity, and heterogeneity per ICH Q6B\u2014and forms the basis for comparability. This overview should orient the reviewer and cross-reference the detailed sub-sections rather than duplicating them.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.3.1",
+        "title": "Elucidation of Structure and Other Characteristics",
+        "content": "",
+        "ordering": 16,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.3.1 must present definitive, orthogonal evidence that establishes the covalent structure, stereochemistry, and solid-state/physical characteristics of the drug substance. Reviewers verify that the assigned structure is supported by mutually corroborating spectroscopic and analytical data (e.g., IR, UV, NMR, MS, elemental analysis, X-ray for small molecules; peptide mapping, MS, sequencing, disulfide mapping, glycan analysis, and higher-order structure methods for biologics). Acceptability requires that all structural features stated in S.1\u2014molecular formula, stereocenters, salt form, polymorph\u2014be experimentally supported here, and that physicochemical properties relevant to performance (polymorphism, particle size, solubility) be characterized. For biologics, primary structure, post-translational modifications, higher-order structure, and biological activity must be demonstrated per ICH Q6B. Structural conclusions must be internally consistent with the impurity and control sections.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.3.2",
+        "title": "Impurities",
+        "content": "",
+        "ordering": 17,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.3.2 must present a complete accounting of actual and potential impurities\u2014process-related, degradation-related, residual solvents, elemental impurities, and for genotoxic concerns mutagenic impurities\u2014together with their origin, structure where known, and the rationale for their control. Reviewers assess conformity with ICH Q3A (impurities in new drug substances), Q3C (residual solvents), Q3D (elemental impurities), and M7 (mutagenic impurities), verifying that observed levels are at or below qualification thresholds or are qualified by safety data. Acceptability requires an impurity fate-and-purge discussion linked to the synthetic route (S.2.2/S.2.3), identification of impurities above the identification threshold, and justification for proposed specification limits. For biologics per ICH Q6B, process-related impurities (host cell protein, DNA, leachables from resins) and product-related substances/impurities (aggregates, fragments, charge variants) must be characterized and controlled. Qualification of impurities not covered by thresholds must be explicitly addressed.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.4",
+        "title": "Control of Drug Substance \u2014 Overview",
+        "content": "",
+        "ordering": 18,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.4 assembles the complete control package for the drug substance and must present a coherent control strategy in which the specification (S.4.1), the methods (S.4.2), their validation (S.4.3), the supporting batch data (S.4.4), and the justification (S.4.5) all reconcile. Reviewers read it to judge whether routine release and stability testing will reliably ensure the quality, safety, and efficacy of every batch. Acceptability depends on internal consistency\u2014every specification test must have a described, validated method and batch data demonstrating capability\u2014and on conformity with ICH Q6A (small molecules) or Q6B (biologics). This overview orients the reviewer and should cross-reference, not duplicate, the sub-sections.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.4.1",
+        "title": "Specification",
+        "content": "",
+        "ordering": 19,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.4.1 is the formal specification\u2014the tests, methods, and acceptance criteria that define what a compliant batch of drug substance must meet. Reviewers verify that the specification is complete per ICH Q6A (universal tests: description, identification, assay, impurities; plus specific tests such as physicochemical properties, particle size, polymorphic form, water content, residual solvents, microbial limits) or ICH Q6B for biologics (identity, purity/impurities, potency, quantity, plus product-specific attributes), and that acceptance criteria are appropriately justified in S.4.5. Acceptability requires that each specified test link to a numbered analytical procedure in S.4.2 and that the criteria be consistent with batch data (S.4.4), stability (S.7), and impurity qualification (S.3.2). The specification must be presented in a clear tabular format and dated/version-controlled.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.4.2",
+        "title": "Analytical Procedures",
+        "content": "",
+        "ordering": 20,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.4.2 provides the full description of every analytical procedure referenced in the specification, in enough detail that a qualified analyst could reproduce the method. Reviewers check that each method is described completely\u2014reagents, system suitability, sample/standard preparation, chromatographic or spectroscopic conditions, calculations\u2014and that methods are suitable for their intended purpose per ICH Q2(R2). Acceptability requires that every specification test in S.4.1 have a corresponding method here, that compendial methods be cited with any product-specific modifications stated, and that for biologics the bioassay/potency and impurity methods be described with appropriate system-suitability and reference-standard use. Incomplete method descriptions\u2014especially missing system suitability or ambiguous integration/calculation\u2014are a common source of information requests.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.4.3",
+        "title": "Validation of Analytical Procedures",
+        "content": "",
+        "ordering": 21,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.4.3 demonstrates that the analytical procedures in S.4.2 are fit for purpose by presenting validation data appropriate to each method type per ICH Q2(R2). Reviewers verify that the validation characteristics match the method's purpose\u2014specificity for identity; specificity, accuracy, precision, linearity, range, and quantitation/detection limits for assay and impurity methods; and appropriate parameters for bioassays. Acceptability requires a validation summary for each method with results against pre-defined acceptance criteria, plus, for compendial methods, verification of suitability under actual conditions of use. The level of validation is phase-appropriate for IND (qualified/suitably validated methods) but must be complete for NDA/BLA. For biologics, potency and impurity methods require particular attention to accuracy, precision, and specificity given assay variability, and stability-indicating capability must be demonstrated.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.4.4",
+        "title": "Batch Analyses",
+        "content": "",
+        "ordering": 22,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.4.4 provides the empirical evidence\u2014actual test results for relevant batches\u2014that the process consistently produces drug substance meeting the specification. Reviewers use it to confirm that acceptance criteria are realistic and met, to assess batch-to-batch consistency, and to link the batches used in nonclinical, clinical, stability, and validation studies to the control strategy. Acceptability requires a description of each batch (number, date, site, scale, manufacturing process version, use/disposition) and a results table reporting each specification parameter for each batch, with methods identified. The batches presented must include those pivotal to the application (clinical, primary stability, process validation) and must be consistent with S.2.6 genealogy, S.4.1 limits, and S.7 stability. Numeric results\u2014not merely 'complies'\u2014are expected for quantitative attributes.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.4.5",
+        "title": "Justification of Specification",
+        "content": "",
+        "ordering": 23,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This is a preparation template: AnA does not draft it. Retain its originals and complete it manually.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.4.5 justifies why each test is included (or excluded) and why each acceptance criterion is set where it is, tying the specification back to development knowledge, batch data, stability, impurity qualification, and safety. Reviewers use it to judge whether the specification adequately controls quality without being either too loose (permitting substandard material) or arbitrarily tight. Acceptability requires that acceptance criteria be justified by manufacturing capability (batch data in S.4.4), stability behavior (S.7), toxicological qualification of impurities (S.3.2, ICH Q3A), clinical experience, and relevant compendial/ICH standards (Q6A/Q6B). The narrative should explain omission of routine tests (e.g., not testing for a Class 1 solvent never used), the basis for identity strategy, and for biologics the relationship of potency and impurity limits to lots used in clinical studies. This is often where reviewers challenge over-wide limits, so data-anchored reasoning is essential.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.5",
+        "title": "Reference Standards or Materials",
+        "content": "",
+        "ordering": 24,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.5 documents the reference standards and materials that anchor quantitative and qualitative testing of the drug substance. Reviewers assess whether primary and working standards are adequately characterized and qualified, and, for biologics, whether a two-tiered reference standard system (primary/reference against which working standards are calibrated) is established and maintained per ICH Q6B. Acceptability requires the source, preparation, characterization, qualification protocol, storage, and, where relevant, assigned potency/purity values and expiry/re-qualification approach for each standard. Compendial reference standards (USP/Ph.Eur.) may be cited with traceability, while in-house standards require full characterization consistent with S.3.1. For impurity and system-suitability standards, identity and purity must be established. A weak or uncharacterized reference standard undermines every quantitative result in the dossier.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.6",
+        "title": "Container Closure System",
+        "content": "",
+        "ordering": 25,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.6 describes the packaging that protects the drug substance and demonstrates its suitability for storage and shipment. Reviewers assess whether the container closure system provides adequate protection (light, moisture, oxygen), whether materials of construction are identified and controlled, and whether suitability\u2014protection, compatibility, safety, and performance\u2014is supported, drawing on the FDA container-closure guidance and ICH Q6A. Acceptability requires description of each packaging component (primary, secondary, and any protective/inner packaging), materials of construction with compendial references, specifications for critical components, and a justification of suitability consistent with the stability program (S.7), which is typically conducted in the proposed container. For drug substances stored frozen or as biologics, extractables/leachables and compatibility over intended hold conditions warrant attention. The container used in stability studies must match the proposed commercial container or be bridged.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.S.7",
+        "title": "Stability (Drug Substance)",
+        "content": "",
+        "ordering": 26,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nSection 3.2.S.7 establishes how long and under what conditions the drug substance remains within specification, supporting the proposed retest period/shelf life and storage statement. Reviewers evaluate the stability program against ICH Q1A(R2) (design, conditions, testing frequency), Q1B (photostability), Q1E (data evaluation/extrapolation), and for biologics Q5C, checking that stability-indicating methods, appropriate storage conditions (long-term, intermediate, accelerated), and stressed studies support the claim. Acceptability requires a stability protocol and commitment, results on primary batches (typically at least three, representative of the commercial process), a data-driven proposal for the retest period/shelf life with any extrapolation justified per Q1E, and a post-approval stability commitment. For biologics, real-time/real-condition data govern because accelerated data are supportive only, and forced-degradation studies establish degradation pathways. Storage statement wording must be consistent with the demonstrated conditions and container (S.6).",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P",
+        "title": "Drug Product",
+        "content": "",
+        "ordering": 27,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nFull drug product CMC data.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.1",
+        "title": "Description and Composition of the Drug Product",
+        "content": "",
+        "ordering": 28,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nState the dosage form, route of administration, and each strength, then present a composition table listing every component, its quantity per unit dose, the unit of measure, its function, and a reference to its quality standard (USP/NF, Ph.Eur., JP, or in-house). Declare any overage explicitly with a cross-reference to its justification in 3.2.P.2, and clearly mark components removed during processing (e.g., water, nitrogen, solvents). Describe the type of container closure system at a high level and reference 3.2.P.7 for detail, and for reconstitutable or co-packaged products describe the diluent and any administration device. Keep component names and grade descriptors identical to those used in 3.2.P.3.2 and 3.2.P.4 so the reviewer can reconcile the three sections without ambiguity.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.2",
+        "title": "Pharmaceutical Development",
+        "content": "",
+        "ordering": 29,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This is a preparation template: AnA does not draft it. Retain its originals and complete it manually.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nDefine the QTPP and derive the CQAs, then narrate the development of the formulation, the drug substance\u2013excipient compatibility studies, and the selection of the container closure system and manufacturing process. Present the risk assessments (ICH Q9) that prioritized material attributes and process parameters, the studies (including DoE) that established their relationship to CQAs, and, if a QbD approach is used, the design space and its verification. Address overages with quantitative justification, discuss physicochemical and biological properties relevant to performance (dissolution, particle size, polymorphic form), and for solutions/parenterals justify pH, tonicity, and antioxidant/preservative selection with any preservative effectiveness data. Explicitly connect development conclusions to the elements of the control strategy so the reviewer sees the through-line from science to specification.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.2.1",
+        "title": "Components of the Drug Product",
+        "content": "",
+        "ordering": 30,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nAn ICH M4 heading within 3.2.P.2 Pharmaceutical Development; the record holds no brief of its own for it. Draft it to the 3.2.P.2 brief.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.2.1.1",
+        "title": "Drug Substance",
+        "content": "",
+        "ordering": 31,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nScale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Explain which documented substance properties affect the proposed formulation and its performance. Evaluate the supplied substance-excipient compatibility evidence and, for more than one active substance, relevant interactions between them. Tie each observation to the actual substance form, formulation and study conditions. This is a formulation-development assessment, not a second identity dossier; link to S.1 and P.1. Missing studies cannot establish compatibility or justify the absence of a risk.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.2.1.2",
+        "title": "Excipients",
+        "content": "",
+        "ordering": 32,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nScale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Explain each excipient choice and function using the actual composition record. Relate the documented amount or concentration and material characteristics to the proposed product performance. Distinguish a supplied rationale from one still requiring sponsor assessment, and identify relevant novel-excipient or route-specific questions without inventing safety findings. Reconcile the formulation with P.1 and direct excipient control information to P.4.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.2.2",
+        "title": "Drug Product",
+        "content": "",
+        "ordering": 33,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nAn ICH M4 heading within 3.2.P.2 Pharmaceutical Development; the record holds no brief of its own for it. Draft it to the 3.2.P.2 brief.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.2.2.1",
+        "title": "Formulation Development",
+        "content": "",
+        "ordering": 34,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nScale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Explain the supplied formulation history in relation to the intended route and use. Identify which version supports each nonclinical or clinical batch and what differs from the proposed formulation in P.1. Discuss comparative in vitro or in vivo results only when supplied and relevant, retaining their scope and limitations. For an initial IND, do not describe an unselected commercial formulation as final or treat a planned bridging study as a completed demonstration.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.2.2.2",
+        "title": "Overages",
+        "content": "",
+        "ordering": 35,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nScale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Determine from the sponsor composition and batch records whether any formulation overage is used. If present, record its material, source-supported amount, purpose and justification, and reconcile it with P.1 and the batch formula in P.3.2. Keep processing losses, excess fill and an active-ingredient overage distinct where the records distinguish them. State that no overage is used only when the supplied record establishes that fact; silence is unresolved.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.2.2.3",
+        "title": "Physicochemical and Biological Properties",
+        "content": "",
+        "ordering": 36,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nScale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Identify the documented product properties relevant to performance for the actual dosage form and route. Keep product-level evidence separate from drug-substance properties. Discuss measured physical, chemical, activity or potency attributes only as supported by the supplied reports, retaining formulation, batch, methods, units and conditions. Do not infer preserved potency, reconstitution performance or acceptable aggregation from a generic modality label.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.2.3",
+        "title": "Manufacturing Process Development",
+        "content": "",
+        "ordering": 37,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nScale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Explain the supplied process selection and development history, linking it to the current process in P.3.3. Identify documented critical aspects and meaningful differences among processes used for the relevant clinical batches. Discuss sterilization selection when relevant to the dosage form, supported by the actual process records. Do not describe exploratory changes as validated or manufacture a comparability conclusion; keep proposed work and unresolved performance effects explicit.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.2.4",
+        "title": "Container Closure System",
+        "content": "",
+        "ordering": 38,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nScale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Assess the selected container closure in relation to the documented storage, transport and use of the product, referring to the description in P.7. Discuss relevant protection, material compatibility, safety and delivery performance only within the supplied evidence. Retain tested materials, formulation, contact conditions and source version. A packaging description alone does not establish suitability, freedom from leachables, or performance through an unsupported shelf life.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.2.5",
+        "title": "Microbiological Attributes",
+        "content": "",
+        "ordering": 39,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nScale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Establish from the supplied product record whether the dosage form is sterile or nonsterile and whether a preservative system is used. Explain the documented microbial-control approach for that context; discuss preservative evidence or sterile-container integrity only when relevant and supported. A reason for omitting a test needs an actual sponsor assessment. Missing sterility, preservative or integrity evidence remains a gap, never an inferred acceptable result.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.2.6",
+        "title": "Compatibility",
+        "content": "",
+        "ordering": 40,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nScale to the known development phase and modality; leave absent facts and applicability unresolved. For an early IND, distinguish available safety-relevant evidence from planned work; do not demand a complete marketing dossier. Do not fabricate results or declare scientific qualification: cite supplied sponsor source identities and versions. Determine from the intended-use record whether reconstitution, dilution or an administration device is involved. Discuss the supplied compatibility evidence for those actual combinations, preserving diluent, concentration, container/device, contact time and conditions. Keep observed outcomes and supported limits separate from plans or assumptions, and reconcile the proposed use instructions with the study scope. Never invent an in-use hold time or assert compatibility for an untested configuration.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.3",
+        "title": "Manufacture",
+        "content": "",
+        "ordering": 41,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nProvide a brief orienting overview of the manufacturing approach and then defer to the sub-sections for detail, ensuring the batch scale, process train, and sites are described identically throughout. Confirm that all manufacturers listed in P.3.1 map to the operations they perform, that the batch formula in P.3.2 scales consistently to the process in P.3.3, and that the critical steps controlled in P.3.4 flow from the development rationale in P.2. Keep this parent section lean and use it to signal the manufacturing strategy (e.g., conventional, continuous, aseptic vs. terminal sterilization).",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.3.1",
+        "title": "Manufacturer(s)",
+        "content": "",
+        "ordering": 42,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nTabulate each manufacturer, contract manufacturer, packager, and contract testing laboratory with full legal name, complete street address, and the specific responsibility (e.g., drug product manufacture, primary/secondary packaging, release testing, stability testing, sterilization). Include the FEI number and, for U.S. submissions, DUNS numbers, and ensure each site's role reconciles with the process steps in P.3.3 and the analytical work in P.5.2. Note the registration/GMP status where appropriate and ensure names/addresses exactly match the Form FDA 356h and the establishment information elsewhere in the application. Do not list a site generically as \"manufacturer\" when it performs only packaging or testing.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.3.2",
+        "title": "Batch Formula",
+        "content": "",
+        "ordering": 43,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nPresent a batch formula table for the representative/commercial batch size listing every component, its quantity per batch, units, and reference to its quality standard, with subtotals and theoretical yield. Represent overages exactly as in P.1 and note components removed during processing (with an accounting of volatile/removed materials). If multiple batch sizes or strengths are claimed, provide a formula for each or clearly describe the scaling relationship, and confirm the batch size matches P.3.5 validation batches. Ensure component names, grades, and standards are identical to P.1 and P.4 so the three sections reconcile exactly.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.3.3",
+        "title": "Description of Manufacturing Process and Process Controls",
+        "content": "",
+        "ordering": 44,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nProvide a process flow diagram and a sequential narrative covering each unit operation, the equipment type (not necessarily brand), key process parameters with target values and ranges, and the in-process controls with their acceptance criteria and test points. Identify critical steps and reprocessing/rework provisions, state hold times and storage conditions for intermediates and bulk, and define the batch and its numbering scheme. For sterile products, describe filtration, filling, lyophilization, and sterilization (terminal or aseptic) with the associated parameters and reference to P.3.5 and A.2; for solid orals, cover granulation/blending/compression/coating with the relevant parameters. Ensure operating ranges are consistent with the design space or validated ranges and that in-process controls trace back to CQAs identified in P.2.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.3.4",
+        "title": "Controls of Critical Steps and Intermediates",
+        "content": "",
+        "ordering": 45,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nList each critical step and each isolated intermediate, and for each provide the controlled attributes/parameters, the test methods, and the acceptance criteria, with a concise justification of the limits derived from development studies and risk assessment. Distinguish critical process parameters (CPPs) from in-process controls and give the rationale for criticality designations. For intermediates that are stored, provide their specification and stability/hold-time basis, and cross-reference the validation in P.3.5 that demonstrates the controls perform as intended. Ensure the criteria here are numerically consistent with the in-process controls stated in P.3.3.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.3.5",
+        "title": "Process Validation and/or Evaluation",
+        "content": "",
+        "ordering": 46,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nState the validation approach (traditional three-batch, continuous process verification, or hybrid) and provide the protocol scope: critical steps evaluated, sampling plans, acceptance criteria, and the batch sizes/sites covered. For NDA/BLA, summarize executed process performance qualification (PPQ) results against acceptance criteria, including sterilization/aseptic process validation (media fills, sterilization cycle validation) with cross-reference to A.2 where relevant. For IND phases, present the validation strategy and commitment and any process evaluation data available at scale. Address hold-time validation, mixing/homogeneity, filtration validation, and reprocessing validation as applicable, and ensure the validated ranges reconcile with P.3.3/P.3.4 and that PPQ batches align with those referenced in P.5.4 and P.8.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.4",
+        "title": "Control of Excipients",
+        "content": "",
+        "ordering": 47,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nFor each excipient, state the applied standard (USP/NF, Ph.Eur., JP, or in-house) and provide the specification where in-house or where additional tests supplement the monograph, including functionality-related characteristics where relevant. Address the safety dimensions explicitly: compendial compliance, elemental impurities (ICH Q3D risk assessment contribution), residual solvents (ICH Q3C), and TSE/BSE certification for animal-derived excipients (cross-reference A.2). For novel excipients, provide full information analogous to a drug substance (manufacture, characterization, control, stability, and safety) in the appropriate sub-sections (P.4.1\u2013P.4.6) and reference supporting safety data. Ensure excipient names and grades exactly match P.1 and P.3.2 and that any human/animal-origin materials are flagged with their control approach.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.5",
+        "title": "Control of Drug Product",
+        "content": "",
+        "ordering": 48,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nProvide a brief orienting overview of the drug product control strategy and defer detail to the sub-sections, ensuring that specifications (P.5.1), methods (P.5.2), validation (P.5.3), batch data (P.5.4), impurities (P.5.5), and justification (P.5.6) are mutually consistent. Confirm that release and shelf-life specifications are distinguished where they differ and that the specification reflects the CQAs from P.2. Keep the parent concise and use it to signal any product-specific control considerations (e.g., biologic potency assay strategy, dissolution approach).",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.5.1",
+        "title": "Specification(s)",
+        "content": "",
+        "ordering": 49,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nProvide the specification as a table listing each test, the analytical procedure reference (linking to P.5.2), and the acceptance criteria, with separate release and shelf-life columns where they differ. Include the universal tests (description, identification, assay, impurities) and dosage-form-specific tests per ICH Q6A: for solid orals, dissolution and uniformity of dosage units; for parenterals, sterility, endotoxins, particulate matter, pH, and container/closure integrity; for products with preservatives, antimicrobial preservative content. Include degradation products with individual and total limits consistent with ICH Q3B(R2), and for biologics include potency, identity, purity/impurities, and quantity per ICH Q6B. Ensure every test maps to a method in P.5.2 and a justification in P.5.6, and that limits are consistent with batch data (P.5.4) and stability (P.8).",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.5.2",
+        "title": "Analytical Procedures",
+        "content": "",
+        "ordering": 50,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nFor each test in the specification, provide the analytical procedure: principle, reagents/standards, equipment/column, sample and standard preparation, instrument parameters, run conditions, system suitability criteria, and calculation. For compendial methods, cite the current monograph and describe any product-specific modification (which then requires verification/validation). Include system suitability requirements (resolution, tailing, precision, S/N) for chromatographic methods and describe the reference standard used (linking to P.6). Ensure each described method maps one-to-one to a specification test in P.5.1 and to the validation in P.5.3, and describe biologic potency/bioassay procedures with their controls where applicable.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.5.3",
+        "title": "Validation of Analytical Procedures",
+        "content": "",
+        "ordering": 51,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nFor each in-house method, present the validation summary organized by the ICH Q2(R2) characteristics relevant to the method category (specificity, accuracy, precision including repeatability and intermediate precision, linearity and range, LOD/LOQ for impurity methods, robustness, and stability of solutions). State the acceptance criteria and the results against them, and demonstrate specificity in the presence of degradation products (forced degradation cross-referenced to P.5.5/P.8). For compendial methods, provide verification data confirming suitability under actual conditions of use, including any product matrix interference assessment. Address method transfer where testing occurs at multiple sites, and ensure the validated methods correspond exactly to those described in P.5.2 and the tests in P.5.1.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.5.4",
+        "title": "Batch Analyses",
+        "content": "",
+        "ordering": 52,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nProvide a batch analysis table listing, for each representative batch, the batch number, size, manufacturing site and date, and the use of the batch (e.g., clinical, stability, PPQ, primary stability), with results for every test in the specification reported quantitatively (not merely \"conforms\"). Include the batches used for clinical trials, process validation (P.3.5), and stability (P.8) so the reviewer can cross-link them, and describe the analytical procedures and specification version applied. Present impurity/degradation results numerically to support the limits in P.5.1 and the discussion in P.5.6, and identify any out-of-trend or atypical results with explanation. Ensure batch identities reconcile across P.3.5, P.5.4, and P.8.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.5.5",
+        "title": "Characterisation of Impurities",
+        "content": "",
+        "ordering": 53,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nProvide an inventory of degradation products and product-related impurities with their identities/structures where known, origins (hydrolysis, oxidation, photolysis, drug substance\u2013excipient interaction), and observed levels, distinguishing them from drug-substance impurities carried into the product. Compare each against the ICH Q3B(R2) reporting, identification, and qualification thresholds (which are dose-dependent), and describe the qualification (toxicological/clinical) basis for any impurity above the qualification threshold. Reference the forced degradation studies and stability data (P.8) that reveal the degradation pathways, and address specific safety-relevant impurities such as nitrosamines, elemental impurities (ICH Q3D), and, for biologics, product-related substances/aggregates per ICH Q6B. Ensure the impurities discussed correspond to the limits in P.5.1 and the methods' demonstrated specificity in P.5.3.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.5.6",
+        "title": "Justification of Specification(s)",
+        "content": "",
+        "ordering": 54,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This is a preparation template: AnA does not draft it. Retain its originals and complete it manually.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nJustify, test by test, the inclusion of each specification parameter and the basis for each acceptance criterion, referencing the QTPP/CQAs (P.2), batch data (P.5.4), stability trends (P.8), impurity qualification (P.5.5), clinical exposure, and compendial requirements. Explain any test omissions (e.g., skip testing, parametric release, periodic verification) and justify limits that are tighter or wider than compendial defaults. Address the dissolution acceptance criterion's clinical relevance/discrimination, the basis for impurity limits relative to qualified levels, and the distinction between release and shelf-life criteria in terms of stability change. Ensure the justification is internally consistent with every referenced section so a reviewer can trace each limit to its evidence.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.6",
+        "title": "Reference Standards or Materials",
+        "content": "",
+        "ordering": 55,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nIdentify each reference standard and material (drug substance/API standard, impurity/degradant standards, and any performance standards), stating source, grade (compendial vs. in-house primary/working), and the characterization tests used to establish identity, purity, and assigned value/potency. Describe the qualification of primary standards and the establishment of working standards against them, plus the requalification/stability monitoring program. For impurity reference materials, describe how identity and purity were confirmed to support the impurity methods in P.5.2/P.5.3, and for biologics describe the two-tiered (primary/working) reference standard system and its traceability. Ensure the standards described correspond to those cited in P.5.2.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.7",
+        "title": "Container Closure System",
+        "content": "",
+        "ordering": 56,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nDescribe each primary packaging component (container, closure, and any liner, seal, or delivery component) with materials of construction, and provide specifications and drawings/descriptions. Establish suitability across the four dimensions from the FDA guidance: protection (light/moisture/oxygen barrier, cross-referenced to stability P.8), compatibility (leaching and sorption studies), safety (extractables/leachables assessment scaled to route \u2014 most rigorous for inhalation and parenteral), and performance (functional testing such as delivery dose, container closure integrity, and device function). Reference the relevant compendial standards (USP <661>/<661.1>/<661.2>, <381>, <87>/<88> biological reactivity), describe secondary packaging where it provides protection, and address CCI method and acceptance in P.5.1 where applicable. Ensure the described system matches P.1 and the stability configuration in P.8.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.P.8",
+        "title": "Stability",
+        "content": "",
+        "ordering": 57,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nPresent the stability summary and conclusion (proposed shelf life, storage statement, and any in-use/reconstitution period), then the stability protocol and the data. Describe the number and provenance of primary batches (per ICH Q1A(R2), generally three for NDA, at least two pilot-scale), the storage conditions (long-term, intermediate, accelerated appropriate to the climatic zone and product), container orientations, and test intervals, using stability-indicating methods (link to P.5.2/P.5.3). Include photostability (ICH Q1B), thermal cycling/freeze-thaw where relevant, and in-use stability for multi-dose or reconstituted products; evaluate and extrapolate data per ICH Q1E with statistical analysis where used to justify extrapolation. Provide the shelf-life specification (which may differ from release), state the post-approval stability commitment to continue long-term studies and place annual batches on stability, and ensure batches reconcile with P.5.4 and P.3.5. Address bracketing/matrixing (ICH Q1D) if used.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.A",
+        "title": "Appendices (Facilities and Equipment, Adventitious Agents Safety Evaluation, Excipients)",
+        "content": "",
+        "ordering": 58,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nFor A.1, describe the facility layout, equipment, and product/personnel/material/waste flows relevant to contamination and cross-contamination control for multiproduct or biologic manufacture, with segregation and campaign/changeover controls. For A.2, provide the adventitious agents safety evaluation: for non-viral agents, the sourcing and TSE/BSE control of animal-derived materials (with certificates and EDQM CEP where available); for viral safety of biologics, the testing of cell banks and raw materials plus viral clearance/inactivation validation per ICH Q5A(R2); and microbial/mycoplasma controls. For A.3, provide full information on any novel excipient (safety, manufacture, characterization, control), cross-referencing P.4.6. Include only the appendices relevant to the product and clearly state where an appendix is not applicable.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.2.R",
+        "title": "Regional Information",
+        "content": "",
+        "ordering": 59,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nInclude the U.S. regional quality items FDA expects for the submission type: representative executed batch records (and the master production/batch record) for the primary/exhibit batches, any comparability protocols proposed for post-approval changes, and regional method validation or additional information as requested. Ensure executed batch records correspond to the batches in P.5.4/P.3.5 and reflect the process in P.3.3, and that any proposed comparability protocol is scoped to specific changes with predefined acceptance criteria. State which items are provided and cross-reference the harmonized sections; for other regions, adapt the content to that authority's defined regional requirements. Keep this section aligned with the master and executed records so no discrepancy exists between the described process and the documented execution.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      },
+      {
+        "code": "3.3",
+        "title": "Literature References",
+        "content": "",
+        "ordering": 60,
+        "disposition": "append",
+        "aiDraftable": false,
+        "aiDraftableReason": "This section requires manual source preparation; retain the original outputs, forms and signed records.",
+        "draftingGuidance": "Platform reference guidance for a working outline. Assess applicability to the product and current IND stage, use verified supporting records, and explain missing or non-applicable evidence. These expectations do not add required filing sections or establish completeness, approval or submission readiness.\n\nThe ICH M4 heading 3.3 Literature References; the record holds no brief for it.",
+        "gaps": [
+          "No authored text is stored for this section."
+        ]
+      }
+    ],
+    "gaps": [
+      "3: No authored text is stored for this section.",
+      "3.1: No authored text is stored for this section.",
+      "3.2: No authored text is stored for this section.",
+      "3.2.S: No authored text is stored for this section.",
+      "3.2.S.1: No authored text is stored for this section.",
+      "3.2.S.1.1: No authored text is stored for this section.",
+      "3.2.S.1.2: No authored text is stored for this section.",
+      "3.2.S.1.3: No authored text is stored for this section.",
+      "3.2.S.2: No authored text is stored for this section.",
+      "3.2.S.2.1: No authored text is stored for this section.",
+      "3.2.S.2.2: No authored text is stored for this section.",
+      "3.2.S.2.3: No authored text is stored for this section.",
+      "3.2.S.2.4: No authored text is stored for this section.",
+      "3.2.S.2.5: No authored text is stored for this section.",
+      "3.2.S.2.6: No authored text is stored for this section.",
+      "3.2.S.3: No authored text is stored for this section.",
+      "3.2.S.3.1: No authored text is stored for this section.",
+      "3.2.S.3.2: No authored text is stored for this section.",
+      "3.2.S.4: No authored text is stored for this section.",
+      "3.2.S.4.1: No authored text is stored for this section.",
+      "3.2.S.4.2: No authored text is stored for this section.",
+      "3.2.S.4.3: No authored text is stored for this section.",
+      "3.2.S.4.4: No authored text is stored for this section.",
+      "3.2.S.4.5: No authored text is stored for this section.",
+      "3.2.S.5: No authored text is stored for this section.",
+      "3.2.S.6: No authored text is stored for this section.",
+      "3.2.S.7: No authored text is stored for this section.",
+      "3.2.P: No authored text is stored for this section.",
+      "3.2.P.1: No authored text is stored for this section.",
+      "3.2.P.2: No authored text is stored for this section.",
+      "3.2.P.2.1: No authored text is stored for this section.",
+      "3.2.P.2.1.1: No authored text is stored for this section.",
+      "3.2.P.2.1.2: No authored text is stored for this section.",
+      "3.2.P.2.2: No authored text is stored for this section.",
+      "3.2.P.2.2.1: No authored text is stored for this section.",
+      "3.2.P.2.2.2: No authored text is stored for this section.",
+      "3.2.P.2.2.3: No authored text is stored for this section.",
+      "3.2.P.2.3: No authored text is stored for this section.",
+      "3.2.P.2.4: No authored text is stored for this section.",
+      "3.2.P.2.5: No authored text is stored for this section.",
+      "3.2.P.2.6: No authored text is stored for this section.",
+      "3.2.P.3: No authored text is stored for this section.",
+      "3.2.P.3.1: No authored text is stored for this section.",
+      "3.2.P.3.2: No authored text is stored for this section.",
+      "3.2.P.3.3: No authored text is stored for this section.",
+      "3.2.P.3.4: No authored text is stored for this section.",
+      "3.2.P.3.5: No authored text is stored for this section.",
+      "3.2.P.4: No authored text is stored for this section.",
+      "3.2.P.5: No authored text is stored for this section.",
+      "3.2.P.5.1: No authored text is stored for this section.",
+      "3.2.P.5.2: No authored text is stored for this section.",
+      "3.2.P.5.3: No authored text is stored for this section.",
+      "3.2.P.5.4: No authored text is stored for this section.",
+      "3.2.P.5.5: No authored text is stored for this section.",
+      "3.2.P.5.6: No authored text is stored for this section.",
+      "3.2.P.6: No authored text is stored for this section.",
+      "3.2.P.7: No authored text is stored for this section.",
+      "3.2.P.8: No authored text is stored for this section.",
+      "3.2.A: No authored text is stored for this section.",
+      "3.2.R: No authored text is stored for this section.",
+      "3.3: No authored text is stored for this section."
+    ],
+    "sources": {
+      "version": 1,
+      "programId": "6c89e2c1-2d76-4356-80cb-001821956b5a",
+      "entries": [
+        {
+          "source": {
+            "kind": "data-room",
+            "sourceId": 159,
+            "expectedChecksum": "cb3256f5b1f7f527b352681a9aa5e461dec18067743122ff06228ab2966a1c33"
+          },
+          "title": "Nonconformance: NC-PROJECT-QUALITY-20261106",
+          "contentHash": "cb3256f5b1f7f527b352681a9aa5e461dec18067743122ff06228ab2966a1c33",
+          "extractedTextSha256": "cb3256f5b1f7f527b352681a9aa5e461dec18067743122ff06228ab2966a1c33",
+          "version": null,
+          "originalFileAvailable": false,
+          "disposition": null,
+          "span": {
+            "start": 0,
+            "end": 866,
+            "totalChars": 866,
+            "sha256": "cb3256f5b1f7f527b352681a9aa5e461dec18067743122ff06228ab2966a1c33"
+          }
+        }
+      ],
+      "limitations": [
+        "Selected references record assembly intent, not citation support, model consumption, scientific qualification or filing approval.",
+        "Eligible extracted data was retained for a source whose original file is unavailable."
+      ],
+      "fingerprint": "d1d66350b1832f5295d0454f5547310ce73ee9115be2884c8f124d05193d7983"
+    },
+    "fingerprint": "43fe2eb5ef086bbc4cc1eb584ce5869b15bcc4ff1b3df2cac6afca0dfd2c5180"
+  }
+}

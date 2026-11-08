@@ -20,6 +20,13 @@ import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db, pool } from '../db';
 import { actorLabel, resolveActorNames } from './tenant/actor-names';
 import { regulatoryPrograms } from '../../shared/schema/programs';
+import { mapToPma } from './pathway-engines/pma/pma-mapper';
+import {
+  governedSectionsToDeviceSections,
+  loadGovernedDeviceDocument,
+  loadGovernedSectionRows,
+  sectionsToLeaves,
+} from './pathway-engines/estar/estar-content-leaves';
 import { auditLogs, cerv2510kSections, deviceTestStandards, submissionTransmittals } from '../../shared/schema';
 import { qSubmissions, qSubMeetings, qSubQuestions, qSubCommitments } from '../../shared/schema/q-sub';
 import {
@@ -121,12 +128,24 @@ export interface LiteratureResult {
   productName: string;
 }
 
+/**
+ * One 21 CFR 814 PMA module of a project's PMA document, as the PMA mapper
+ * (`pathway-engines/pma/pma-mapper.ts`) scores it for the assembly verdict.
+ */
 export interface PmaModule {
-  id: 'preclinical' | 'clinical' | 'manufacturing' | 'labeling' | 'statistical' | 'financial';
+  /** The mapper's slot id ('admin-regulatory', 'clinical', …). */
+  id: string;
+  /** The conventional PMA module number the mapper carries. */
+  module: number;
   label: string;
-  desc: string;
-  docs: number;
-  status: 'complete' | 'active' | 'review' | 'draft';
+  /** Required for an original PMA (21 CFR 814.20); the rest are conditional. */
+  required: boolean;
+  /** Section codes the verdict counts: written and finished (approved or locked). */
+  finished: string[];
+  /** Section codes written but not finished (a draft, or in review). */
+  written: string[];
+  /** present: the verdict counts the module; written: only unfinished text; not_started: nothing written. */
+  status: 'present' | 'written' | 'not_started';
 }
 
 export interface TrialMetric {
@@ -744,30 +763,24 @@ export async function getLiterature(
 
 /* ─── PMA modules ────────────────────────────────────────────── */
 
-const PMA_MODULE_DEFS: Array<{
-  id: PmaModule['id'];
-  label: string;
-  desc: string;
-  categories: string[];
-  keyPatterns: string[];
-}> = [
-  { id: 'preclinical',   label: 'Preclinical',   desc: 'Bench, animal, biocompatibility',
-    categories: ['testing', 'preclinical'], keyPatterns: ['preclinical', 'biocompat', 'bench', 'animal', 'sterilization'] },
-  { id: 'clinical',      label: 'Clinical',      desc: 'Pivotal trial — enrollment + safety',
-    categories: ['clinical'], keyPatterns: ['clinical', 'pivotal', 'investigation', 'ide'] },
-  { id: 'manufacturing', label: 'Manufacturing', desc: 'QS Regulation 21 CFR 820',
-    categories: ['device'], keyPatterns: ['manufacturing', 'production', 'cmc', 'process'] },
-  { id: 'labeling',      label: 'Labeling',      desc: 'Professional labeling · IFU',
-    categories: ['additional'], keyPatterns: ['labeling', 'ifu', 'instructions-for-use', 'prof-label'] },
-  { id: 'statistical',   label: 'Statistical',   desc: 'SAP · interim analysis · borrowing',
-    categories: [], keyPatterns: ['stat', 'sap', 'analysis-plan', 'interim'] },
-  { id: 'financial',     label: 'Financial',     desc: 'Investigator disclosures · user fee',
-    categories: ['administrative'], keyPatterns: ['financial', 'user-fee', 'disclosure', 'cover-sheet'] },
-];
-
-/** Group cerv2_510k_sections rows for the program's org by the kit's
- *  PMA module taxonomy. Section.category + section.sectionKey patterns
- *  determine which module each section rolls into. */
+/**
+ * The project's PMA modules: its own PMA document (`c2c_documents` of class
+ * `pma`, the filing the PMA package export reads), scored by the PMA mapper —
+ * the same computation as the assembly verdict and the "Original PMA" readiness
+ * check, so the screen cannot say other than they do.
+ *
+ * Until 2026-11-02 (MDX journey M18) this grouped `cerv2_510k_sections`, the
+ * legacy 510(k) store, which has no project link, by a six-card kit taxonomy
+ * with its own keyword rules: every PMA project showed its organization's 510(k)
+ * sections, a project with no PMA document showed every module "complete", and
+ * none showed its own document.
+ *
+ * The mapper is asked twice over the same leaves: as the verdict asks it, which
+ * counts finished text, and with every written leaf counted, which finds the
+ * written ones. A card tells written from finished without a second matcher.
+ * Null when the project is not in this organization; [] when it has no PMA
+ * document. A failed read throws, for the route to report.
+ */
 export async function getPmaModules(
   orgId: number,
   programId: string,
@@ -775,35 +788,18 @@ export async function getPmaModules(
   const program = await requireProgramInOrg(orgId, programId);
   if (!program) return null;
 
-  const sections = await db
-    .select({
-      category:   cerv2510kSections.category,
-      sectionKey: cerv2510kSections.sectionKey,
-      status:     cerv2510kSections.status,
-      completion: cerv2510kSections.completionPercentage,
-    })
-    .from(cerv2510kSections)
-    .where(eq(cerv2510kSections.organizationId, orgId));
+  const doc = await loadGovernedDeviceDocument(orgId, programId, pool, ['pma']);
+  if (!doc) return [];
+  const leaves = sectionsToLeaves(governedSectionsToDeviceSections(await loadGovernedSectionRows(doc.id, pool)));
+  const verdict = mapToPma({ leaves, submissionType: 'original' });
+  const anyWritten = mapToPma({ leaves: leaves.map((l) => ({ ...l, substantive: true })), submissionType: 'original' });
+  const writtenBySlot = new Map(anyWritten.sections.map((s) => [s.id, s.sources]));
 
-  return PMA_MODULE_DEFS.map((def) => {
-    const matched = sections.filter((s) => {
-      const cat = (s.category ?? '').toLowerCase();
-      const key = (s.sectionKey ?? '').toLowerCase();
-      return def.categories.includes(cat) || def.keyPatterns.some((p) => key.includes(p));
-    });
-    const total = matched.length;
-    if (total === 0) {
-      return { id: def.id, label: def.label, desc: def.desc, docs: 0, status: 'draft' as const };
-    }
-    const allDone = matched.every((m) => ['validated', 'approved'].includes(m.status ?? ''));
-    const anyReview = matched.some((m) => ['ready_for_review', 'in_review'].includes(m.status ?? ''));
-    const anyTodo  = matched.some((m) => (m.status ?? 'todo') === 'todo');
-    let status: PmaModule['status'];
-    if (allDone)         status = 'complete';
-    else if (anyReview)  status = 'review';
-    else if (anyTodo)    status = 'draft';
-    else                 status = 'active';
-    return { id: def.id, label: def.label, desc: def.desc, docs: total, status };
+  return verdict.sections.map((s) => {
+    const finished = [...s.sources];
+    const written = (writtenBySlot.get(s.id) ?? []).filter((code) => !finished.includes(code));
+    const status: PmaModule['status'] = s.present ? 'present' : written.length > 0 ? 'written' : 'not_started';
+    return { id: s.id, module: s.module, label: s.label, required: s.required, finished, written, status };
   });
 }
 

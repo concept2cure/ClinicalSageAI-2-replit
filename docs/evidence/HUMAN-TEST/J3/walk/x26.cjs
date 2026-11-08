@@ -1,0 +1,35 @@
+const { c, openDoc } = require('./lib.cjs');
+const prog = '1078548e-39d6-4132-84d7-3cbeb64890d0';
+const T = 'NeuroPanel-Dx 510(k) Summary (J3 walk)';
+(async () => {
+  const b = await c.chromium.launch();
+  const p = await c.signIn(b, 'author');
+  await openDoc(p, T, /Device Description/, prog);
+  await p.getByRole('button', { name: 'More document actions' }).click(); await p.waitForTimeout(500);
+  await p.getByRole('menuitem', { name: /Send for review/ }).click(); await p.waitForTimeout(1200);
+  const d = p.getByRole('dialog').last();
+  await d.getByText('Rhea Reviewer').click();
+  await d.getByLabel(/Reason for the request/).fill('J3 walk: review the 510(k) device description');
+  await d.getByLabel(/Review due/).fill('2026-11-20');
+  await d.getByRole('button', { name: 'Send for review' }).click(); await p.waitForTimeout(3000);
+  const r = await c.signIn(b, 'reviewer');
+  await r.goto(`${c.BASE}/concept2cure/review?program=${prog}`, { waitUntil: 'networkidle' }); await r.waitForTimeout(1500);
+  await r.getByText(T).first().click(); await r.waitForTimeout(1500);
+  await r.getByRole('button', { name: /Request changes/ }).first().click(); await r.waitForTimeout(1200);
+  const rd = r.getByRole('dialog').last();
+  await c.shot(r, 'x-48-request-changes.png');
+  console.info('RC dialog', (await rd.innerText()).slice(-900));
+  const ta = rd.locator('textarea').first();
+  await ta.fill('Please name the predicate device and its 510(k) number in section 3.');
+  await r.waitForTimeout(400);
+  const btns = await rd.getByRole('button').allInnerTexts(); console.info('btns', btns);
+  await rd.getByRole('button', { name: /Request changes|Record|Send/ }).last().click(); await r.waitForTimeout(3000);
+  await c.shot(r, 'x-49-changes-requested.png');
+  console.info('after RC', (await c.mainText(r)).slice(0, 1200));
+  // author view
+  await openDoc(p, T, /Device Description/, prog);
+  await c.shot(p, 'x-50-author-after-changes.png');
+  console.info('AUTHOR', (await p.locator('body').innerText()).match(/[^\n]*(change|Change)[^\n]*/g)?.slice(0, 12));
+  console.info(c.apiErrors);
+  await b.close();
+})();

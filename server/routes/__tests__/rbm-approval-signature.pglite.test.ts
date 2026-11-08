@@ -170,6 +170,51 @@ describe('mounted RBM approvals persist their electronic signature', () => {
   });
 });
 
+describe('generated monitoring plans keep their actual author and risk basis', () => {
+  const generate = async () => {
+    await db.exec("DELETE FROM rbm_monitoring_plans WHERE status='draft'");
+    return request(app()).post('/api/mdx/rbm-monitoring-plans/generate')
+      .send({ programId: PROGRAM, createdBy: 8 });
+  };
+
+  it('retains the authenticated generator and ignores a body-supplied author', async () => {
+    const out = await generate();
+    expect(out.status).toBe(201);
+    expect(out.body.data).toMatchObject({ created_by: 3, status: 'draft', assessment_id: 10 });
+    expect((await rows('SELECT created_by FROM rbm_monitoring_plans WHERE id=$1', [out.body.data.id]))[0])
+      .toEqual({ created_by: 3 });
+  });
+
+  it('refuses the generator as approver, then permits an independent signed approval', async () => {
+    const out = await generate();
+    expect(out.status).toBe(201);
+    const item = { ...KINDS[1], id: Number(out.body.data.id) };
+    const refused = await approve(item);
+    expect(refused.status).toBe(403);
+    expect(refused.body.details?.code).toBe('RBM_SELF_APPROVAL');
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+    expect((await approve(item, {}, 9)).status).toBe(200);
+    expect(await row(item)).toMatchObject({ created_by: 3, approved_by: 9, status: 'active' });
+    expect((await rows('SELECT * FROM audit_logs'))[0].payload).toMatchObject({ twoPersonRule: 'enforced' });
+  });
+
+  it('uses the request-pinned connection throughout generation', async () => {
+    h.poolForbidden = true;
+    const out = await generate();
+    expect(out.status).toBe(201);
+  });
+
+  it('refuses an approved assessment with no overall risk without persisting anything', async () => {
+    await db.query('UPDATE rbm_risk_assessments SET overall_risk=NULL WHERE id=$1', [10]);
+    const out = await generate();
+    expect(out.status).toBe(409);
+    expect(out.body.error).toMatch(/overall risk/i);
+    expect(out.body.error).not.toMatch(/No risk assessment exists/i);
+    expect(await rows("SELECT * FROM rbm_monitoring_plans WHERE status='draft'")).toHaveLength(0);
+    expect(await rows('SELECT * FROM rbm_monitoring_actions WHERE plan_id <> 20')).toHaveLength(0);
+  });
+});
+
 describe('a failed signature rolls back the whole approval', () => {
   it.each(KINDS)('$kind approval, archival and ledger all roll back', async item => {
     await db.exec(`CREATE OR REPLACE FUNCTION reject_signature_write() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'fixture signature storage unavailable'; END $$;

@@ -51,23 +51,31 @@ export function workAreasFor(track: WorkAreaTrack): WorkArea[] {
 
 interface Props {
   programId: string | null;
-  track: WorkAreaTrack;
+  /** Null until the project's read says its track: the areas wait for it, a child row (Reports) does not. */
+  track: WorkAreaTrack | null;
   available: (id: string) => boolean;
   onNav: (id: string) => void;
+  /** Rows after the work areas, in the same card (the Reports row, ProjectHome `ProjectReportsDoor`). */
+  children?: React.ReactNode;
 }
 
-export function ProjectCoreWork({ programId, track, available, onNav }: Props) {
-  const areas = workAreasFor(track).filter((area) => available(area.id));
-  if (!programId || !areas.length) return null;
+/** The Work areas card in Project knowledge (D3-2a, D3.md §4.8 item 4): each area a row with its icon, its label and
+ *  a chevron, its description in the title. The card's heading names the group; the navigation keeps its name. */
+export function ProjectCoreWork({ programId, track, available, onNav, children }: Props) {
+  const areas = track ? workAreasFor(track).filter((area) => available(area.id)) : [];
+  if (!programId || (!areas.length && !children)) return null;
   return (
-    <nav className="pj-work-areas" aria-label="This project’s work areas" data-testid="pj-work-areas">
-      <span className="pj-work-areas-k" aria-hidden="true">Work areas</span>
+    <nav className="pj-card pj-work-areas" aria-label="This project’s work areas" data-testid="pj-work-areas">
+      <div className="pj-card-h"><h3>Work areas</h3></div>
       {areas.map((area) => (
-        <button key={area.id} type="button" className="pj-about-link pj-work-area" title={area.describe}
+        <button key={area.id} type="button" className="pj-work-area" title={area.describe}
           onClick={() => { if (available(area.id)) onNav(area.id); }}>
-          {area.label} {I.right}
+          <span className="pj-work-area-ic" aria-hidden="true">{I[getSurfaceMeta(area.id).icon as keyof typeof I] ?? I.grid}</span>
+          <span className="pj-work-area-l">{area.label}</span>
+          {I.right}
         </button>
       ))}
+      {children}
     </nav>
   );
 }

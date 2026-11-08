@@ -18,8 +18,11 @@ import {
 import { GatewayContextWindowError } from './context-budget';
 import { isTenantPlacementRefusal } from './gateway-outcome';
 import { NO_PQ_QUALIFIED_MODEL } from './model-governance';
+import { APPROVED_MODELS } from '../ai-governance/approved-models';
 
 export type GatewayErrorCode =
+  | 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE'
+  | 'DERIVATIVE_USE_REFUSED'
   | 'SOURCE_CONTEXT_UNAVAILABLE'
   | 'PLACEMENT_REFUSED'
   | 'MODEL_NOT_QUALIFIED'
@@ -27,6 +30,8 @@ export type GatewayErrorCode =
   | 'OVERLOADED'
   | 'TOKEN_LIMIT_EXCEEDED'
   | 'PROVIDER_UNAVAILABLE'
+  | 'PROVIDER_KEY_REFUSED'
+  | 'PROVIDER_ACCOUNT_REFUSED'
   | 'INVALID_AI_RESPONSE';
 
 export interface ClassifiedGatewayError {
@@ -40,6 +45,8 @@ export interface ClassifiedGatewayError {
  * submissions.ts and ectd-documents.ts predate this export and agree with it.
  */
 export const GATEWAY_ERROR_HTTP_STATUS: Readonly<Record<GatewayErrorCode, number>> = {
+  OWNER_PRIVATE_CONTEXT_UNAVAILABLE: 409,
+  DERIVATIVE_USE_REFUSED: 403,
   SOURCE_CONTEXT_UNAVAILABLE: 409,
   // Not an outage: the organization's own policy excludes every lane that
   // could serve the request, and retrying cannot change that.
@@ -53,6 +60,13 @@ export const GATEWAY_ERROR_HTTP_STATUS: Readonly<Record<GatewayErrorCode, number
   OVERLOADED: 503,
   TOKEN_LIMIT_EXCEEDED: 413,
   PROVIDER_UNAVAILABLE: 503,
+  // The provider refused this deployment's API key: configuration, not load,
+  // and never the person's own sign-in (a 401 here would tell them to sign in
+  // again). 503, as an unconfigured provider answers.
+  PROVIDER_KEY_REFUSED: 503,
+  // The key is good but its account cannot be served: no credit or quota left,
+  // or no access to the model. Configuration again, so the same 503.
+  PROVIDER_ACCOUNT_REFUSED: 503,
   INVALID_AI_RESPONSE: 502,
 };
 
@@ -91,28 +105,92 @@ export function classifyGatewayError(
   if (err instanceof GatewayNoProviderError) {
     return { code: 'PROVIDER_UNAVAILABLE', message: 'No AI provider is available to handle this request.' };
   }
+  if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE') {
+    return { code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE', message: 'Private context or encrypted capture could not be verified. Check the current session and private custody configuration before retrying.' };
+  }
   if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'SOURCE_CONTEXT_UNAVAILABLE') {
     return { code: 'SOURCE_CONTEXT_UNAVAILABLE', message: 'Selected project sources changed or are no longer available. Check project access and current source versions before retrying this section.' };
   }
+  if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'DERIVATIVE_USE_REFUSED') {
+    return { code: 'DERIVATIVE_USE_REFUSED', message: 'The approved derivative, its source access or its local verification is no longer valid. Review current custody and approval before drafting again.' };
+  }
   const refusal = classifyPolicyRefusal(err);
   if (refusal) return refusal;
-  if (err instanceof GatewayAllProvidersFailedError) {
-    const msg = err.message || '';
-    // 529 = Anthropic "Overloaded" (and generic provider overload/503). Distinct
-    // from a 429 rate-limit: it is transient back-pressure, retried with backoff
-    // in the gateway, and surfaced as a clean "retry shortly" rather than a fault.
-    if (/\b529\b|overloaded/i.test(msg)) {
-      return { code: 'OVERLOADED', message: 'The AI provider is overloaded right now. Please retry in a moment.' };
-    }
-    if (/429|rate.?limit/i.test(msg)) {
-      return { code: 'RATE_LIMITED', message: 'The AI provider is rate limiting requests. Try again shortly.' };
-    }
-    if (/token|context length|max.?tokens/i.test(msg)) {
-      return { code: 'TOKEN_LIMIT_EXCEEDED', message: 'The input is too large for a single AI request.' };
-    }
-    return { code: 'PROVIDER_UNAVAILABLE', message: 'The AI provider is temporarily unavailable.' };
-  }
+  if (err instanceof GatewayAllProvidersFailedError) return classifyAllProvidersFailed(err.message || '');
   return { code: 'PROVIDER_UNAVAILABLE', message: 'The AI request could not be completed.' };
+}
+
+/** Every model tried failed: why, from the gateway's own summary of the last error. */
+/**
+ * Whose answer the last error was: its own text first, then the models tried. "Tried:" lists registry ids and the
+ * last error is one provider's reply, so a fallback across providers is named by the reply, not by the first id.
+ */
+function providerNamed(msg: string): string {
+  const last = msg.split(/Last error:/i).pop() ?? msg;
+  for (const text of [last, msg]) {
+    if (/\banthropic\b|\bclaude-|credit balance is too low|not_found_error|x-api-key/i.test(text)) return 'Anthropic';
+    if (/\bopenai\b|\bgpt-|insufficient_quota|exceeded your current quota|incorrect api key|does not exist or you do not have access/i.test(text)) return 'OpenAI';
+  }
+  return '';
+}
+
+/**
+ * A valid key whose account the provider will not serve: no credit or quota left, or no access to the model. Before
+ * the rate-limit check, because OpenAI answers a spent quota with a 429; read as a rate limit it said "Try again
+ * shortly" for as long as anyone kept trying (2026-11-06, gateway-error-map-key-refused.test.ts).
+ */
+function classifyAccountRefusal(msg: string): ClassifiedGatewayError | null {
+  const provider = providerNamed(msg);
+  const who = provider ? `The AI provider (${provider})` : 'The AI provider';
+  if (/credit balance is too low|insufficient_quota|exceeded your current quota/i.test(msg)) {
+    return {
+      code: 'PROVIDER_ACCOUNT_REFUSED',
+      message: `${who} refused the request because this deployment's account has no credit or quota left. ` +
+        'Retrying will not change this; an administrator must add credit to the provider account.',
+    };
+  }
+  if (/not_found_error|model_not_found|does not exist or you do not have access/i.test(msg)) {
+    return {
+      code: 'PROVIDER_ACCOUNT_REFUSED',
+      message: `${who} does not offer the requested model to this deployment's account. ` +
+        'Retrying will not change this; an administrator must give the account access to the model.',
+    };
+  }
+  return null;
+}
+
+function classifyAllProvidersFailed(msg: string): ClassifiedGatewayError {
+  const account = classifyAccountRefusal(msg);
+  if (account) return account;
+  // 529 = Anthropic "Overloaded" (and generic provider overload/503). Distinct
+  // from a 429 rate-limit: it is transient back-pressure, retried with backoff
+  // in the gateway, and surfaced as a clean "retry shortly" rather than a fault.
+  if (/\b529\b|overloaded/i.test(msg)) {
+    return { code: 'OVERLOADED', message: 'The AI provider is overloaded right now. Please retry in a moment.' };
+  }
+  if (/429|rate.?limit/i.test(msg)) {
+    return { code: 'RATE_LIMITED', message: 'The AI provider is rate limiting requests. Try again shortly.' };
+  }
+  // The provider refused the key itself (401 authentication, or a 403 that
+  // says the key lacks permission). Until 2026-11-06 this read "temporarily
+  // unavailable", and the founder, holding keys, saw only "try again"
+  // (gateway-error-map-key-refused.test.ts). Before the size check, whose bare
+  // "token" would read an expired OAuth token as too large an input. Neither the provider's text nor
+  // any part of the key is repeated.
+  if (/\b401\b|authentication_error|invalid x-api-key|incorrect api key|invalid api key|api key does not have permission/i.test(msg)) {
+    // providerNamed: the reply's own wording first, then the registry ids tried.
+    const provider = providerNamed(msg);
+    return {
+      code: 'PROVIDER_KEY_REFUSED',
+      message:
+        `${provider ? `The AI provider (${provider})` : 'The AI provider'} refused this deployment's API key, ` +
+        'so the request was not answered. Retrying will not change this; an administrator must set a valid key.',
+    };
+  }
+  if (/token|context length|max.?tokens/i.test(msg)) {
+    return { code: 'TOKEN_LIMIT_EXCEEDED', message: 'The input is too large for a single AI request.' };
+  }
+  return { code: 'PROVIDER_UNAVAILABLE', message: 'The AI provider is temporarily unavailable.' };
 }
 
 /**
@@ -145,8 +223,9 @@ function classifyPolicyRefusal(err: unknown): ClassifiedGatewayError | null {
       code: 'MODEL_NOT_QUALIFIED',
       message:
         'No model approved for regulatory drafting and review is configured on this deployment ' +
-        'for this request, so it was not sent to one that is not approved for it. Retrying will ' +
-        'not change this; an administrator needs to enable an approved model.',
+        'for this request, so it was not sent to one that is not approved for it. ' +
+        `Regulatory drafting is approved only for models served by ${HIGH_RISK_PROVIDERS}. Retrying will ` +
+        'not change this; an administrator needs to enable one of those providers.',
     };
   }
   if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'RATE_LIMIT_EXCEEDED') {
@@ -206,10 +285,25 @@ function classifyPolicyRefusal(err: unknown): ClassifiedGatewayError | null {
 function classifyModelGovernanceRefusal(err: unknown): ClassifiedGatewayError | null {
   if (!(err instanceof GatewayPolicyError)) return null;
   const { code, reason } = err as { code?: unknown; reason?: unknown };
+  if (code === 'QUALIFIED_MODEL_PIN_REFUSED') return { code: 'MODEL_NOT_QUALIFIED', message: err.message };
+  if (code === 'TENANT_CREDENTIAL_UNAVAILABLE') return { code: 'PROVIDER_UNAVAILABLE', message: err.message };
   if (code === 'MODEL_NOT_PQ_QUALIFIED') return { code: 'MODEL_NOT_QUALIFIED', message: NO_PQ_QUALIFIED_MODEL };
   if (code !== 'MODEL_NOT_GOVERNED') return null;
   return { code: 'MODEL_NOT_QUALIFIED', message: MODEL_NOT_GOVERNED_COPY[String(reason)] ?? MODEL_NOT_GOVERNED_COPY['no-entry'] };
 }
+
+/**
+ * Who serves the models approved for regulatory drafting, read from the registry, in words a person reads. Walked
+ * 2026-11-06 with only an OpenAI key: the conversation said "enable an approved model" without saying which, and
+ * /readyz named the providers. Now both read the same registry, so the sentence cannot drift from what is approved.
+ */
+const PROVIDER_WORDS: Readonly<Record<string, string>> = {
+  anthropic: 'Anthropic', bedrock: 'Amazon Bedrock', vertex: 'Google Vertex AI', openai: 'OpenAI', azure: 'Azure OpenAI',
+};
+const HIGH_RISK_PROVIDERS = ((): string => {
+  const names = [...new Set(APPROVED_MODELS.filter(m => m.approvedForHighRisk).map(m => PROVIDER_WORDS[m.provider] ?? m.provider))];
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}` : names[0] ?? 'no provider';
+})();
 
 const MODEL_NOT_GOVERNED_COPY: Readonly<Record<string, string>> = {
   'unknown-model': 'This request was not sent: it named a model this platform does not have.',

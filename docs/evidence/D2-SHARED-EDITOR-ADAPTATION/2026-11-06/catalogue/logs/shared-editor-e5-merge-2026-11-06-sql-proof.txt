@@ -1,0 +1,232 @@
+TAP version 13
+# Subtest: artifactDataEligibleSql current-source proof requires its exact caller, import and literal alias
+ok 1 - artifactDataEligibleSql current-source proof requires its exact caller, import and literal alias
+  ---
+  duration_ms: 108.954417
+  type: 'test'
+  ...
+# Subtest: capturedDataEligibleSql current-source proof requires its exact caller, import and literal alias
+ok 2 - capturedDataEligibleSql current-source proof requires its exact caller, import and literal alias
+  ---
+  duration_ms: 24.810869
+  type: 'test'
+  ...
+# Subtest: eSTAR attachment proof names the exact caller, import, binary builder and literal alias
+ok 3 - eSTAR attachment proof names the exact caller, import, binary builder and literal alias
+  ---
+  duration_ms: 3.747566
+  type: 'test'
+  ...
+# Subtest: eSTAR dynamic or wrong aliases cannot inherit the literal proof
+ok 4 - eSTAR dynamic or wrong aliases cannot inherit the literal proof
+  ---
+  duration_ms: 7.909686
+  type: 'test'
+  ...
+# Subtest: eSTAR helper from another import or a shadowed binding cannot receive proof
+ok 5 - eSTAR helper from another import or a shadowed binding cannot receive proof
+  ---
+  duration_ms: 6.277368
+  type: 'test'
+  ...
+# Subtest: eSTAR approval subtracts only the canonical predicate and keeps additional raw values counted
+ok 6 - eSTAR approval subtracts only the canonical predicate and keeps additional raw values counted
+  ---
+  duration_ms: 3.164961
+  type: 'test'
+  ...
+# Subtest: eSTAR caller gains no other builder or caller allowance
+ok 7 - eSTAR caller gains no other builder or caller allowance
+  ---
+  duration_ms: 13.928355
+  type: 'test'
+  ...
+# Subtest: proof retains exact source, builder, module, alias and counted opening
+ok 8 - proof retains exact source, builder, module, alias and counted opening
+  ---
+  duration_ms: 2.005135
+  type: 'test'
+  ...
+# Subtest: a valid AST call outside the raw regex count never creates a subtraction
+ok 9 - a valid AST call outside the raw regex count never creates a subtraction
+  ---
+  duration_ms: 7.445737
+  type: 'test'
+  ...
+# Subtest: duplicate counted offsets cannot subtract the same expression twice
+ok 10 - duplicate counted offsets cannot subtract the same expression twice
+  ---
+  duration_ms: 4.100841
+  type: 'test'
+  ...
+# Subtest: only a direct first argument to query receives proof
+ok 11 - only a direct first argument to query receives proof
+  ---
+  duration_ms: 4.600301
+  type: 'test'
+  ...
+# Subtest: caller paths are exact and do not normalize alternative paths into approval
+ok 12 - caller paths are exact and do not normalize alternative paths into approval
+  ---
+  duration_ms: 0.231717
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql(alias)
+ok 13 - unproved expression remains counted: vaultDataEligibleSql(alias)
+  ---
+  duration_ms: 2.588119
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql(req.body.alias)
+ok 14 - unproved expression remains counted: vaultDataEligibleSql(req.body.alias)
+  ---
+  duration_ms: 11.095368
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("s")
+ok 15 - unproved expression remains counted: vaultDataEligibleSql("s")
+  ---
+  duration_ms: 1.549363
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("d.x")
+ok 16 - unproved expression remains counted: vaultDataEligibleSql("d.x")
+  ---
+  duration_ms: 1.381333
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("d; SELECT 1")
+ok 17 - unproved expression remains counted: vaultDataEligibleSql("d; SELECT 1")
+  ---
+  duration_ms: 1.761694
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql(`d`)
+ok 18 - unproved expression remains counted: vaultDataEligibleSql(`d`)
+  ---
+  duration_ms: 1.459141
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("\\x64")
+ok 19 - unproved expression remains counted: vaultDataEligibleSql("\\x64")
+  ---
+  duration_ms: 22.69901
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("d", req.body.x)
+ok 20 - unproved expression remains counted: vaultDataEligibleSql("d", req.body.x)
+  ---
+  duration_ms: 1.654916
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql(...["d"])
+ok 21 - unproved expression remains counted: vaultDataEligibleSql(...["d"])
+  ---
+  duration_ms: 1.972149
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql?.("d")
+ok 22 - unproved expression remains counted: vaultDataEligibleSql?.("d")
+  ---
+  duration_ms: 1.820505
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql<string>("d")
+ok 23 - unproved expression remains counted: vaultDataEligibleSql<string>("d")
+  ---
+  duration_ms: 4.754425
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql.call(null, "d")
+ok 24 - unproved expression remains counted: vaultDataEligibleSql.call(null, "d")
+  ---
+  duration_ms: 1.828018
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: (vaultDataEligibleSql)("d")
+ok 25 - unproved expression remains counted: (vaultDataEligibleSql)("d")
+  ---
+  duration_ms: 16.441652
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: (vaultDataEligibleSql("d"))
+ok 26 - unproved expression remains counted: (vaultDataEligibleSql("d"))
+  ---
+  duration_ms: 1.403989
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: String(vaultDataEligibleSql("d"))
+ok 27 - unproved expression remains counted: String(vaultDataEligibleSql("d"))
+  ---
+  duration_ms: 1.316396
+  type: 'test'
+  ...
+# Subtest: unproved expression remains counted: vaultDataEligibleSql("d") + req.query.x
+ok 28 - unproved expression remains counted: vaultDataEligibleSql("d") + req.query.x
+  ---
+  duration_ms: 1.44086
+  type: 'test'
+  ...
+# Subtest: named import aliases and specifier-level type-only imports fail closed
+ok 29 - named import aliases and specifier-level type-only imports fail closed
+  ---
+  duration_ms: 6.604843
+  type: 'test'
+  ...
+# Subtest: catch/function/declaration shadowing cannot borrow another scope import proof
+ok 30 - catch/function/declaration shadowing cannot borrow another scope import proof
+  ---
+  duration_ms: 6.699601
+  type: 'test'
+  ...
+# Subtest: malformed syntax receives no partial parser proof
+ok 31 - malformed syntax receives no partial parser proof
+  ---
+  duration_ms: 1.338049
+  type: 'test'
+  ...
+# Subtest: multiple actual template spans retain their own opening offsets
+ok 32 - multiple actual template spans retain their own opening offsets
+  ---
+  duration_ms: 2.357509
+  type: 'test'
+  ...
+# Subtest: query type arguments and trivia do not change the import binding proof
+ok 33 - query type arguments and trivia do not change the import binding proof
+  ---
+  duration_ms: 2.168561
+  type: 'test'
+  ...
+# Subtest: a nested backtick cannot make a later uncounted expression eligible
+ok 34 - a nested backtick cannot make a later uncounted expression eligible
+  ---
+  duration_ms: 2.116792
+  type: 'test'
+  ...
+# Subtest: content eligibility proof is restricted to its exact caller, import and alias: server/services/figureGenerationService.ts
+ok 35 - content eligibility proof is restricted to its exact caller, import and alias: server/services/figureGenerationService.ts
+  ---
+  duration_ms: 10.339574
+  type: 'test'
+  ...
+# Subtest: content eligibility proof is restricted to its exact caller, import and alias: server/services/autoExtractionPipeline.ts
+ok 36 - content eligibility proof is restricted to its exact caller, import and alias: server/services/autoExtractionPipeline.ts
+  ---
+  duration_ms: 10.523316
+  type: 'test'
+  ...
+# Subtest: content eligibility proof is restricted to its exact caller, import and alias: server/services/keywordExtractionService.ts
+ok 37 - content eligibility proof is restricted to its exact caller, import and alias: server/services/keywordExtractionService.ts
+  ---
+  duration_ms: 39.556925
+  type: 'test'
+  ...
+1..37
+# tests 37
+# suites 0
+# pass 37
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2120.806904

@@ -8,7 +8,18 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { deriveVerdict } from '../server/services/orchestration/pre-submission-gate-verdict';
+import { deriveVerdict, reviewCorrespondenceBlockers } from '../server/services/orchestration/pre-submission-gate-verdict';
+import { runGovernedIssueParser } from '../server/services/regulatory-correspondence/issue-parser';
+
+function confirmedIssue(id: string, status: 'confirmed' | 'edited', resolution = 'open') {
+  const text = 'Missing CMC stability data.';
+  const issue = runGovernedIssueParser(text, 'letter').issues.find(item => item.blocker)!;
+  const extraction = issue.structuredExtraction!;
+  extraction.feedbackCoding!.humanConfirmed = true;
+  extraction.humanReview = { reviewedBy: 11, reviewedAt: '2026-11-06T12:00:00.000Z', sourceTextDigest: extraction.sourceTextDigest!, status };
+  return { id, correspondence_id: 'letter', category: issue.category, blocker: true, source_excerpt: issue.sourceExcerpt,
+    human_review_status: status, resolution_status: resolution, structured_extraction: extraction, parsed_text: text, direction: 'inbound' };
+}
 
 describe('pre-submission gate verdict', () => {
   const baseInput = {
@@ -159,6 +170,51 @@ describe('pre-submission gate verdict', () => {
         ichFailCount: 0,
       });
       expect(r.verdict).toBe('ready');
+    });
+  });
+
+  describe('human-reviewed correspondence blockers', () => {
+    it('holds on a confirmed unresolved blocker even with otherwise clean checks', () => {
+      const correspondenceReview = reviewCorrespondenceBlockers([
+        confirmedIssue('confirmed', 'confirmed'),
+        confirmedIssue('edited', 'edited', 'in_progress'),
+      ]);
+      const r = deriveVerdict({ ...baseInput, correspondenceReview });
+      expect(r.verdict).toBe('hold');
+      expect(r.rationale).toContain('2 unresolved human-confirmed correspondence blocker(s)');
+      expect(correspondenceReview.blockingIssueIds).toEqual(['confirmed', 'edited']);
+    });
+
+    it('requires human review of pending or unknown blocker classifications', () => {
+      const correspondenceReview = reviewCorrespondenceBlockers([
+        { id: 'pending', blocker: true, human_review_status: 'pending', resolution_status: 'open' },
+        { id: 'unknown', blocker: true, human_review_status: 'unexpected', resolution_status: 'open' },
+      ]);
+      expect(deriveVerdict({ ...baseInput, correspondenceReview })).toMatchObject({
+        verdict: 'conditional', rationale: ['2 potential correspondence blocker(s) await human review'],
+      });
+    });
+    it('does not turn old confirmed flags or changed source text into current confirmed findings', () => {
+      const old = { id: 'old', blocker: true, human_review_status: 'confirmed', resolution_status: 'open' };
+      const stale = { ...confirmedIssue('stale', 'confirmed'), parsed_text: 'The letter changed.' };
+      expect(reviewCorrespondenceBlockers([old, stale])).toMatchObject({ blockingIssueIds: [], pendingIssueIds: ['old', 'stale'] });
+    });
+
+    it('does not resurrect rejected, resolved, waived or nonblocking issues', () => {
+      const correspondenceReview = reviewCorrespondenceBlockers([
+        { id: 'rejected', blocker: true, human_review_status: 'rejected', resolution_status: 'open' },
+        { id: 'resolved', blocker: true, human_review_status: 'confirmed', resolution_status: 'resolved' },
+        { id: 'waived', blocker: true, human_review_status: 'confirmed', resolution_status: 'waived' },
+        { id: 'comment', blocker: false, human_review_status: 'pending', resolution_status: 'open' },
+      ]);
+      expect(deriveVerdict({ ...baseInput, correspondenceReview }).verdict).toBe('ready');
+      expect(correspondenceReview).toMatchObject({ checkedIssueCount: 4, blockingIssueIds: [], pendingIssueIds: [], subjectiveFit: 'not_assessed' });
+    });
+
+    it('holds when correspondence could not be checked rather than claiming a clean file', () => {
+      expect(deriveVerdict({ ...baseInput, correspondenceReview: {
+        status: 'unavailable', checkedIssueCount: null, blockingIssueIds: [], pendingIssueIds: [], subjectiveFit: 'not_assessed',
+      } })).toMatchObject({ verdict: 'hold', rationale: ['Correspondence blockers could not be read — review is unverified'] });
     });
   });
 });

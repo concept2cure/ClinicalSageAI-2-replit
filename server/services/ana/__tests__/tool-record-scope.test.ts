@@ -103,17 +103,18 @@ describe('the registry wrapper', () => {
   });
 
   it('covers the real tools too: a read for another tenant is refused before it reads', async () => {
-    const out = JSON.parse(await getToolHandler('list_cmc_registers')!({ program_id: THEIRS }, { organizationId: 7 } as never));
+    const out = JSON.parse(await getToolHandler('list_project_documents')!({ program_id: THEIRS }, CTX as never));
     expect(out.code).toBe('PROGRAM_NOT_IN_ORGANIZATION');
   });
 
-  it('an RBM read is admitted by RBM first, which wants an identified member before it looks at the program', async () => {
-    // rbmToolAdmissionRefusal runs ahead of the program check (b602ecad9), so a
-    // caller with no user is refused there, for any program, ours or not.
-    for (const programId of [THEIRS, OURS]) {
-      const out = JSON.parse(await getToolHandler('get_rbm_attention')!({ programId }, { organizationId: 7 } as never));
-      expect(out.code).toBe('RBM_ACTOR_REQUIRED');
-    }
+  // Since b602ecad97 (2026-10-30) an RBM tool is admitted by RBM's own gate first
+  // (rbm-access.ts rbmToolAdmissionRefusal: an identified member, the RBM
+  // entitlement, the program's admission). Another tenant's program is not found there.
+  it("an RBM read for another tenant's program is refused by RBM's own admission, before it reads", async () => {
+    const out = JSON.parse(await getToolHandler('get_rbm_attention')!({ programId: THEIRS }, CTX as never));
+    expect(out.code).toBe('PROJECT_NOT_FOUND');
+    const anonymous = JSON.parse(await getToolHandler('get_rbm_attention')!({ programId: THEIRS }, { organizationId: 7 } as never));
+    expect(anonymous.code).toBe('RBM_ACTOR_REQUIRED');
   });
 });
 

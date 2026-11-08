@@ -876,7 +876,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'biostatistics',
     label: 'Load a persisted study design',
     description:
-      'Seed the designer from one of the program\'s persisted study designs (resolved against the live list by id or title; honest misses and ambiguity refusals). A read — the engine recomputes on screen; writing the sample size back to the design and raising tasks stay governed human acts.',
+      'Seed the designer from one of the project\'s persisted study designs (resolved against the live list by id or title; honest misses and ambiguity refusals). A read — the engine recomputes on screen; writing the sample size back to the design and raising tasks stay governed human acts.',
     params: [
       { name: 'design', required: true, description: 'The study design id or title as listed in the designer\'s study picker (case-insensitive; partial titles resolve when unambiguous).' },
     ],

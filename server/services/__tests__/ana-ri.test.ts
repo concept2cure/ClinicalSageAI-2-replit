@@ -1205,7 +1205,7 @@ describe('AnA RI Context Enrichment', () => {
     expect(result.enrichmentMeta?.detectedAppMention).toBe('biostat-workbench');
     expect(result.sources).toContain('app:biostat-workbench');
     expect(result.block).toContain('=== INVOKED APPS');
-    expect(result.block).toContain('Biostatistics workbench (id: biostat-workbench)');
+    expect(result.block).toContain('Biostatistics design calculators (id: biostat-workbench)');
     expect(result.rewrittenMessage).toBe('size a two-arm superiority study');
   });
 

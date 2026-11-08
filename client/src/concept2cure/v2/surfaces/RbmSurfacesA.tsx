@@ -510,6 +510,8 @@ export function RbmKris({ board, onReload }: SubProps) {
       )}
       <div className="rbm-bar">
         <span className="rbm-bar-info">{kris.length} indicators — seed from the TransCelerate library or define study-specific KRIs</span>
+        {/* The library seed the bar names, as the engine write it is (J5-03): it was reachable only by asking AnA. */}
+        {kris.length === 0 && <button className="rbm-btn" disabled={mut.busy} onClick={() => void mut.run(async () => { await rbmWrite('POST', '/rbm-kris/seed', { programId: board.programId }); })}>Seed the standard KRI library</button>}
         <button className="rbm-btn pri" disabled={mut.busy} onClick={() => setCfg({ mode: 'new' })}>{I.zap}New KRI</button>
       </div>
       <div className="rbm-kri-grid">{kris.map(k => (
@@ -616,6 +618,7 @@ export function RbmQtls({ board, onReload }: SubProps) {
       )}
       <div className="rbm-bar">
         <span className="rbm-bar-info">{qtls.length} tolerance limits — study-level — secondary limit is the RBQM early warning</span>
+        {qtls.length === 0 && <button className="rbm-btn" disabled={mut.busy} onClick={() => void mut.run(async () => { await rbmWrite('POST', '/rbm-qtls/seed', { programId: board.programId }); })}>Seed the default QTLs</button>}
         <button className="rbm-btn pri" disabled={mut.busy} onClick={() => setCfg({ mode: 'new' })}>{I.zap}New QTL</button>
       </div>
       <div className="rbm-card">

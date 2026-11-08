@@ -1,0 +1,53 @@
+{
+  "baselineCommit": "ccc797bd708528dbc50523c52b4125b011ef7eb8",
+  "productionPath": "server/services/ana-ri/memory-acceptance.ts",
+  "baselineGitBlob": "87ac36d8e473b559fe3797ad1a1fdcca9ee74360",
+  "repairedGitBlob": "bdc40014b2bf166e67543b59f847ce3bdd931d47",
+  "baselineSha256": "d72f9437d5c6edf73e62b69600f2145485a91b76d5148f4dc1eaf5ab59736898",
+  "repairedSha256": "c0f7ef63da6c09b6fa4689768f8b6d2d23949d66c04da72ab118d8a84619008e",
+  "suitePath": "tests/services/ana/memory-acceptance-fidelity.test.cjs",
+  "suiteSha256": "4b839afa37bb921472f6ebe0405eb6f8b70a0dad5619976f113118e7b37a90b1",
+  "runtime": {
+    "node": "22.16.0",
+    "typescript": "5.8.3",
+    "focusedTypecheckNodeTypes": "25.1.0 (preinstalled ts-node dependency; not repository lockfile)"
+  },
+  "execution": {
+    "baseline": {
+      "passed": 30,
+      "failed": 27,
+      "skipped": 0,
+      "exitCode": 1
+    },
+    "repaired": {
+      "passed": 57,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0
+    },
+    "focusedSemanticTypecheckExitCode": 0,
+    "testSyntaxCheckExitCode": 0
+  },
+  "unchangedPolicyBlockSha256": {
+    "confidenceFunction": "29af557f4aa89ab7908afef12949f7ec15499422e178a75188751c262875c520",
+    "thresholds": "fbb74acb1bdde448cd945564f12e174c9561c6023de332083616ab879948895d",
+    "phrasePairs": "0b9dbc60c4f7931d25f302c6fb68516ab0fcbbe73fb8942353b1b25ce2e9324c",
+    "acceptanceDisposition": "469c8499bec9159a86dbdd23a211b38e13d515e94c7baf4c8aa2abc0e342517c"
+  },
+  "rawSha256": {
+    "before.tap": "4941d15589a4ff402771639ce136aca8f00fe63d209be4a1bc5ac3f58a8e52a7",
+    "after.tap": "db25874313b63fcad6bd8bf630f37327d4174bed6f774f79045158d2a9a07429",
+    "typecheck.txt": "c7799a903bafd7b9f7c6c2bc094186a1f478a4074c41e0ad047be1aec6a09da1"
+  },
+  "archiveSha256": "8956a893561d219b904818e26cf13a921eb5bbf57e1996a8aeddad4392ec90e0",
+  "scope": "Complete production module executed after TypeScript transpilation. No mocked memory logic, database, model, clock or evidence-validation service. All content is synthetic.",
+  "notRun": [
+    "repository Vitest suites",
+    "whole-repository semantic typecheck",
+    "full build",
+    "local pre-push hooks",
+    "database/consolidation job integration",
+    "authenticated chat/editor/browser journey",
+    "deployed runtime verification"
+  ]
+}

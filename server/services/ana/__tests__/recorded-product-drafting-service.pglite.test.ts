@@ -220,3 +220,52 @@ describe('service dispatch and post-provider boundaries re-read actual records',
     expect(h.provider).toHaveBeenCalledTimes(1);
   });
 });
+
+
+describe('recorded UK CTA uses shared drafting with explicit IRAS boundaries', () => {
+  it('prepares content for external combined review without inventing IRAS form formatting', async () => {
+    await pg.exec(`UPDATE regulatory_programs SET primary_agency='MHRA' WHERE id='${PROGRAM}'`);
+    await service.draftDocument(request({ sectionType: 'uk_cta_protocol' }));
+    const system = String(captured().messages[0].content);
+    expect(captured().metadata).toMatchObject({ submissionType: 'UK_CTA', recordedSubmissionType: 'UK_CTA' });
+    expect(system).toContain('Combined IRAS review (MHRA and REC)');
+    expect(system).toMatch(/no IRAS field schema/i);
+    expect(system).toMatch(/complete.{0,30}validat.{0,30}IRAS/i);
+    expect(system).not.toContain('Use IRAS formatting requirements');
+    expect(prompt()).toMatch(/platform convention.*not a regulatory requirement/i);
+    expect(prompt()).toContain('2026-11-06');
+    expect(prompt()).toContain('https://www.gov.uk/guidance/clinical-trials-for-medicines-notifiable-trials');
+    expect(prompt()).toContain('https://www.gov.uk/guidance/clinical-trials-for-medicines-clinical-trials-regulations-transitional-arrangements');
+    expect(prompt()).toContain('hra.nhs.uk/');
+  });
+});
+
+describe('regional protocol preparation reuses clinical therapeutic guidance', () => {
+  it.each([
+    ['UK_CTA', 'uk_cta_protocol'],
+    ['EU_CTA', 'PART_I.PROTOCOL'],
+    ['EU_CTA', 'PART_I.SYNOPSIS'],
+    ['CA_CTA', '1.7.1'],
+    ['CA_CTA', '1.4.1'],
+    ['CA_CTA_A', '1.7.1'],
+  ])('reaches the recorded product guidance at %s / %s', async (submissionType, sectionType) => {
+    await service.draftDocument(request({ submissionType, sectionType }));
+    expect(captured().metadata?.requirementsSource).toBe(`blueprint:regional:${submissionType}:${sectionType}`);
+    expect(prompt()).toContain('### Endpoint Considerations');
+    expect(prompt()).toContain('### Statistical Considerations');
+    expect(prompt()).toContain('Therapeutic Area Context — Oncology');
+    expect(prompt()).toContain('not scientific evidence');
+    expect(captured().metadata?.productContextSource).toBe('recorded-unqualified');
+  });
+
+  it.each([
+    ['UK_CTA', 'uk_cta_quality'], ['UK_CTA', 'uk_cta_nonclinical'],
+    ['UK_CTA', 'uk_cta_application_form'], ['EU_CTA', 'PART_I.IMPD_Q'],
+    ['EU_CTA', 'FORM.COVER'], ['EU_CTA', 'PART_II.CONSENT'],
+    ['CA_CTA', '2.3'], ['CA_CTA', '1.2.1'], ['CA_CTA_A', '1.4.1'],
+  ])('keeps clinical arrays out of %s / %s', async (submissionType, sectionType) => {
+    await service.draftDocument(request({ submissionType, sectionType }));
+    expect(prompt()).not.toContain('### Endpoint Considerations');
+    expect(prompt()).not.toContain('### Statistical Considerations');
+  });
+});

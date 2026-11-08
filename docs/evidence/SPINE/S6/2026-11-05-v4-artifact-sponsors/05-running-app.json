@@ -1,0 +1,32 @@
+[
+ {
+  "project": "biotech",
+  "asked": [
+   "/api/artifacts-center?sameClientAs=f935c59e-4749-4547-941e-13d66a850538"
+  ],
+  "sub": "1 governed artifact in the Concept2Cure Therapeutics projects you can open",
+  "rows": [
+   "v1[Local check] C2C-101 clinical overview draftDocument0 cited sources · Human review requiredDOCXC2C-101Model not recordedjust nowNot signe"
+  ],
+  "errors": {
+   "console": [],
+   "pageErrors": [],
+   "failed": []
+  }
+ },
+ {
+  "project": "mdx",
+  "asked": [
+   "/api/artifacts-center?sameClientAs=b200e032-5bbe-4cf8-b273-3371c7247702"
+  ],
+  "sub": "1 governed artifact in the Northwind Diagnostics projects you can open",
+  "rows": [
+   "v1[Local check] NeuroPanel-Dx device description draftDocument0 cited sources · Human review requiredDOCXNEURModel not recordedjust nowNot s"
+  ],
+  "errors": {
+   "console": [],
+   "pageErrors": [],
+   "failed": []
+  }
+ }
+]

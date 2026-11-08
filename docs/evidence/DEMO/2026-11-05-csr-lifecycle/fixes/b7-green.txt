@@ -1,0 +1,32 @@
+B7 green.
+
+1. The bar's suites (the new file, and the two existing files):
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBarCsrGate.test.tsx > a CSR without its scientific review says so before a password is asked (B7) > says why beside E-sign, and refuses Approval in the dialog before any password is sent 380ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBarCsrGate.test.tsx > a CSR without its scientific review says so before a password is asked (B7) > leaves the review signature open: it is not what the gate refuses 116ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBarCsrGate.test.tsx > a CSR without its scientific review says so before a password is asked (B7) > refuses Freeze before its dialog opens, with the same sentence 31ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBarCsrGate.test.tsx > a CSR without its scientific review says so before a password is asked (B7) > with a current approval, or a document that is not a CSR, or a read that failed, the server decides (as before) 164ms
+ Test Files  3 passed (3)
+      Tests  38 passed (38)
+
+   The existing files queued the signing POST's answer with mockResolvedValueOnce before rendering; the bar now reads
+   the document's reviews on mount, so nine tests render first and queue after (no assertion changed).
+
+2. Every suite rendering the bar, the shared EsignModal, or the review state (59 files):
+ × client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx > shadow review — real runs and persisted findings > lists the sequence runs and the selected run findings with acknowledged state 64ms
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > Shadow review tab — waived and failed runs > a failed run the server does not call waivable gets no pointer 5037ms
+ × client/src/concept2cure/v2/editor/__tests__/authoringConversationScopeLive.test.tsx > retains the same dirty TipTap buffer across a project switch and return, without saving or sending old-project context 5251ms
+ × client/src/concept2cure/v2/editor/__tests__/authoringConversationScopeLive.test.tsx > sends the confirmed saved version when the person saves in the canonical canvas before the first Enter 5074ms
+ × client/src/concept2cure/v2/editor/__tests__/authoringConversationScopeLive.test.tsx > keeps a newer confirmed saved version when the canvas is closed before the first Enter 5047ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed | 56 passed (59)
+      Tests  5 failed | 678 passed (683)
+   The five failures fail identically on the HEAD export without this change: submissionCenterGovernedWorkspaces
+   (shadow review), shadowReviewWaiver (1), authoringConversationScopeLive (3). Pre-existing, not touched.
+
+3. The running app (own server on 5300, fresh database, RLS on), as Ava Approver on the CSR working copy:
+   {"noteBesideEsign":true,"refusalInDialog":1,"signDisabled":true,"freezeDisabled":true,"credentialRequests":0}
+   The sentence stands beside E-sign before anything is opened; choosing Approval refuses in the dialog with Sign
+   disabled, and no password check or signature request is sent. Screenshot: b7-green-approver-esign.png.
+
+Lint: AuthoringFilingBar.tsx 0 warnings (as on HEAD; complexity 14, 500 lines), reviewTaskState.ts 0,
+authoringFilingBar.test.tsx 1 (as on HEAD), the new test file 0. EsignModal.tsx is outside the lint set.

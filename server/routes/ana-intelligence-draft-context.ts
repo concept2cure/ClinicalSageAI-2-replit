@@ -5,6 +5,32 @@ import { requestPgClient } from '../db/requestDb.js';
 import { AnaProjectScopeError } from '../services/ana/project-scope-admission';
 import { looksLikeProgramUuid, parseIntegerProjectId } from '../lib/project-id';
 import { classifyGatewayError, isGatewayError } from '../services/ai-gateway/gateway-error-map';
+import type { ModelConfig } from '../services/ai-gateway/types';
+
+/** An explicit protected reference can never degrade into ordinary drafting. */
+export function selectedDraftDerivative(body: unknown): string | undefined {
+  const input = body && typeof body === 'object' ? body as Record<string, unknown> : {};
+  if (input.derivativeId === undefined) return undefined;
+  if (typeof input.derivativeId !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(input.derivativeId)) {
+    throw new AnaProjectScopeError(400, 'DERIVATIVE_DRAFT_SCOPE_REQUIRED', 'Choose a valid approved derivative reference.');
+  }
+  return input.derivativeId;
+}
+
+export function assertOrdinaryDraftStream(body: unknown): void {
+  const input = body && typeof body === 'object' ? body as Record<string, unknown> : {};
+  if (input.derivativeId !== undefined || input.qualifiedModelPin !== undefined) {
+    throw new AnaProjectScopeError(400, 'NONSTREAMING_REQUIRED', 'Approved derivatives and qualified model pins require the nonstreaming drafting endpoint.');
+  }
+}
+
+/** Pure offline readiness: never probes a provider or grants qualification. */
+export async function qualificationReadinessForModels(models: ModelConfig[]) {
+  const [{ qualificationPreflight }, { localQualificationReadiness }] = await Promise.all([
+    import('../eval/pq/verify-pq-record.js'), import('../eval/localai/oq-live-check.js'),
+  ]);
+  return { preflight: qualificationPreflight(), local: localQualificationReadiness({ registry: models }) };
+}
 
 /** Explicit scope cannot degrade into a general draft or a UUID's integer prefix. */
 export function selectedDraftProject(body: unknown): string | number | undefined {

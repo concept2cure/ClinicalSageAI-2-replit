@@ -25,8 +25,18 @@ import request from 'supertest';
 
 const query = vi.fn();
 vi.mock('../../../db.js', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
+/* Project access (F1, 2026-11-05): a document's outline is read only if its program is one the caller can open.
+   Those reads are answered from seats (support/current-member.ts); the rule itself is proven on PostgreSQL in
+   documents-project-scope.pglite.test.ts. The rule packs are reference data and are not held to a project. */
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
 
 import documentsRouter from '../documents';
+import { clearSeats, seatMember, seatProgram } from './support/current-member';
+
+const PROGRAM = '11111111-1111-4111-8111-111111111111';
 
 /**
  * Mirrors the production mount in server/bootstrap/register-inline-routes.ts:
@@ -37,7 +47,7 @@ import documentsRouter from '../documents';
 function appWith(org: number | null) {
   const app = express();
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    if (org !== null) (req as unknown as { organizationId: number }).organizationId = org;
+    if (org !== null) Object.assign(req, { organizationId: org, userId: 1 });
     next();
   });
   app.get('/api/c2c/rule-packs', (req, res, next) => {
@@ -67,7 +77,12 @@ function withoutProvenanceReads(sql: string): string {
   return sql.replace(/to_jsonb\(\w+\)\s*->>\s*'[a-z_]+'(\s+AS\s+[a-z_]+)?/gi, '');
 }
 
-beforeEach(() => query.mockReset());
+beforeEach(() => {
+  query.mockReset();
+  clearSeats();
+  seatMember(7, 1, 'member');
+  seatProgram(7, PROGRAM);
+});
 
 const RAW_COLUMNS = ['source_basis', 'confidence', 'review_status', 'governing_rule', 'uncertainties',
   'reviewed_by', 'reviewed_at', 'review_scope'];
@@ -192,7 +207,8 @@ describe('GET /api/c2c/documents/:id/outline — provenance travels with the tre
   const DOC_ID = '11111111-2222-3333-4444-555555555555';
 
   function mockOutline(provenanceCols: Record<string, string | null>) {
-    // 1st query: document joined to its rule pack. 2nd: live sections.
+    // 1st query: the document is one the caller can open. 2nd: document joined to its rule pack. 3rd: live sections.
+    query.mockResolvedValueOnce({ rows: [{ id: DOC_ID, project_id: PROGRAM, status: 'draft' }] });
     query.mockResolvedValueOnce({
       rows: [
         {
@@ -257,7 +273,7 @@ describe('GET /api/c2c/documents/:id/outline — provenance travels with the tre
     mockOutline({ source_basis: null, confidence: null, review_status: null, governing_rule: null, uncertainties: null });
     await request(appWith(7)).get(`/api/c2c/documents/${DOC_ID}/outline`);
 
-    const [sql] = query.mock.calls[0] as [string];
+    const [sql] = query.mock.calls[1] as [string];
     for (const col of RAW_COLUMNS) {
       expect(sql).toContain(`to_jsonb(rp) ->> '${col}' AS ${col}`);
     }

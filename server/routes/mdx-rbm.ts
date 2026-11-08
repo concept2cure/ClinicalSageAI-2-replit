@@ -846,7 +846,7 @@ const createSignalBody = z.object({
   severity: z.enum(SEVERITY).optional(),
   title: z.string().min(1).max(400),
   detail: z.string().max(4000).optional().nullable(),
-  statistic: z.record(z.unknown()).optional().nullable(),
+  statistic: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
 router.post('/rbm-signals', async (req, res) => {
@@ -1364,17 +1364,17 @@ router.post('/rbm-monitoring-plans/generate', async (req, res) => {
   const parsed = generatePlanBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
 
-  const client = await pool.connect();
+  const client = await requestConnectable(req).connect();
   try {
     await client.query('BEGIN');
     await recheckRbmWrite(req, client);
-    const result = await generatePlanFromAssessment(client, orgId, parsed.data);
+    const result = await generatePlanFromAssessment(client, orgId, { ...parsed.data, createdBy: getUserId(req)! });
     if (!result.generated) {
       await client.query('ROLLBACK');
       // Each refusal answers with its own sentence; a reason with none is a defect, not "no assessment".
       const reason = result.reason;
       if (!reason) throw new Error('generatePlanFromAssessment saved nothing and gave no reason.');
-      return clientError(res, 409, RBM_PLAN_REFUSAL[reason]);
+      return clientError(res, reason === 'actor_required' ? 403 : 409, RBM_PLAN_REFUSAL[reason]);
     }
     await client.query('COMMIT');
     return created(res, { ...result.plan, actions: result.actions }, {

@@ -23,6 +23,7 @@ vi.mock('../navEntitlements', async original => {
 
 import { ReportEngine } from '../surfaces/ReportEngine';
 import { Biostatistics } from '../surfaces/Biostatistics';
+import { isStatisticalSave, statisticalSaveReceipt } from './_statistical-handoff-fixture';
 import { BiostatWorkbench } from '../surfaces/BiostatWorkbench';
 import { PvCockpit } from '../surfaces/PvCockpit';
 import { CmChange } from '../surfaces/CmcModule';
@@ -119,7 +120,7 @@ const BOARD = {
   meta: { projectId: PROGRAM, portfolioProvisioned: true, sectionsProvisioned: null, generatedAt: '2026-10-16T12:00:00Z' },
 };
 function authoringCalls() {
-  return apiRequest.mock.calls.filter(([method, url]) => method === 'POST' && String(url).startsWith('/api/authoring/'));
+  return apiRequest.mock.calls.filter(([method, url, body]) => method === 'POST' && (String(url).startsWith('/api/authoring/') || isStatisticalSave(url, body)));
 }
 function specialistResponse(method: string, url: string): Response | Promise<Response> {
   if (url.startsWith('/api/cmc/module3-board')) return json(200, { success: true, data: BOARD });
@@ -160,6 +161,14 @@ beforeEach(async () => {
   sectionReply = () => sectionReceipt(sectionCode);
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: Record<string, unknown>) => {
+    if (method === 'POST' && isStatisticalSave(url, body)) {
+      const response = await createReply();
+      if (!response.ok) return response;
+      const payload = await response.clone().json();
+      if (payload.success !== true || !payload.document) return response;
+      const receipt = statisticalSaveReceipt(body, payload.document.id, { organizationId: 8, governance: payload.governance });
+      return json(response.status, { ...receipt, ...(payload.governance ? {} : { governance: undefined }) });
+    }
     if (method === 'POST' && url === '/api/authoring/docs') return createReply();
     if (method === 'POST' && url === '/api/authoring/sections') {
       sectionCode = String(body?.code); return sectionReply();
@@ -288,7 +297,7 @@ describe('Biostatistics distinguishes saved working documents from filed documen
     fireEvent.click(screen.getByRole('button', { name: 'Save the example as a working document' }));
     await waitFor(() => expect(document.querySelector('.de-toast')).not.toBeNull());
     const message = document.querySelector('.de-toast')?.textContent ?? '';
-    expect(authoringCalls()).toHaveLength(2);
+    expect(authoringCalls()).toHaveLength(1);
     expect(message).toMatch(/saved/i);
     expect(message).not.toMatch(/filed to the dossier/i);
     if (bound === false) expect(message).toContain('Not bound to a filing');

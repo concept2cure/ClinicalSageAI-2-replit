@@ -35,7 +35,7 @@ import type { PickedFiles } from '../FileDropZone';
 import { VAULT_UPLOAD_EXTENSIONS, VAULT_UPLOAD_MAX_BYTES } from '@shared/constants/document-intake-formats';
 import { extensionOf } from '@shared/constants/upload-name-bindings';
 import {
-  VAULT_CLASSIFICATIONS, VAULT_DOC_KINDS, VAULT_INGEST_DOCUMENT_TYPES, vaultIngestTypeLabel,
+  VAULT_CLASSIFICATIONS, VAULT_DOC_KINDS, VAULT_INGEST_DOCUMENT_TYPES, docKindsForView, vaultIngestTypeLabel, type VaultViewId,
   type VaultClassification, type VaultIngestDocumentType,
 } from '@shared/constants/domain/vault-taxonomy';
 import type { VaultUploadFileFields, VaultUploadFileStatus } from '../useVaultUpload';
@@ -183,9 +183,43 @@ function SendingBar({ row }: { row: StagedFile }) {
   return <progress className="vd-stage-progress" max={s.total} value={s.sent ?? 0} aria-label={`Sending ${row.path}`} />;
 }
 
-function StagedRow({ row, folders, repeated, busy, onChange, onRemove }: {
+/**
+ * A row's filing, once the person chose its folder: the evidence kind, from the project's view (docKindsForView), and
+ * a CTD section for a CTD-numbered filing (S6 V9). A filing that is not CTD-numbered is offered none, since the Vault
+ * refuses one there, unless the row holds one (a manifest's), which is shown so it can be seen and cleared.
+ */
+function FiledFields({ id, row, view, locked, onChange }: {
+  id: string; row: StagedFile; view: VaultViewId | null | undefined; locked: boolean;
+  onChange: (patch: Partial<StagedFile>) => void;
+}) {
+  const kinds = view ? docKindsForView(view) : VAULT_DOC_KINDS;
+  const offersCtd = !view || view === 'pharma' || view === 'biotech' || Boolean(row.ctdSection.trim());
+  return (
+    <>
+      <span />
+      <span className="vd-d-idx">Recorded as filed by you.</span>
+      <label htmlFor={`${id}-kind`}>Evidence kind (optional)</label>
+      <select id={`${id}-kind`} className="c2c-input" value={row.evidenceKind} disabled={locked}
+        onChange={(e) => onChange({ evidenceKind: e.target.value })}>
+        <option value="">Not stated</option>
+        {kinds.map((k) => <option key={k.value} value={k.value}>{k.one}</option>)}
+      </select>
+      {offersCtd ? (
+        <>
+          <label htmlFor={`${id}-section`}>CTD section (optional)</label>
+          <input id={`${id}-section`} className="c2c-input" value={row.ctdSection} placeholder="e.g. 3.2.P.8" disabled={locked}
+            onChange={(e) => onChange({ ctdSection: e.target.value })} />
+        </>
+      ) : null}
+    </>
+  );
+}
+
+function StagedRow({ row, folders, repeated, busy, onChange, onRemove, view }: {
   row: StagedFile;
   folders: ReadonlyArray<{ id: string; label: string }>;
+  /** The project's view: it selects the evidence kinds offered, and whether a CTD section is (S6 V9). */
+  view?: VaultViewId | null;
   repeated: boolean;
   busy: boolean;
   onChange: (patch: Partial<StagedFile>) => void;
@@ -228,8 +262,8 @@ function StagedRow({ row, folders, repeated, busy, onChange, onRemove }: {
           <label htmlFor={`${id}-class`}>Classification</label>
           <select id={`${id}-class`} className="c2c-input" value={row.classification} disabled={locked}
             onChange={(e) => onChange({ classification: e.target.value as VaultClassification | '' })}>
-            <option value="">Internal (default)</option>
-            {VAULT_CLASSIFICATIONS.filter((c) => c !== 'INTERNAL').map((c) => <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>)}
+            <option value="">Confidential (default)</option>
+            {VAULT_CLASSIFICATIONS.map((c) => <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>)}
           </select>
           <label htmlFor={`${id}-folder`}>Folder</label>
           <select id={`${id}-folder`} className="c2c-input" value={row.folderId} disabled={locked}
@@ -237,30 +271,18 @@ function StagedRow({ row, folders, repeated, busy, onChange, onRemove }: {
             <option value="">No folder chosen: the Vault suggests one, or leaves it Unfiled</option>
             {folders.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
           </select>
-          {row.folderId ? (
-            <>
-              <span />
-              <span className="vd-d-idx">Recorded as filed by you.</span>
-              <label htmlFor={`${id}-kind`}>Evidence kind (optional)</label>
-              <select id={`${id}-kind`} className="c2c-input" value={row.evidenceKind} disabled={locked}
-                onChange={(e) => onChange({ evidenceKind: e.target.value })}>
-                <option value="">Not stated</option>
-                {VAULT_DOC_KINDS.map((k) => <option key={k.value} value={k.value}>{k.one}</option>)}
-              </select>
-              <label htmlFor={`${id}-section`}>CTD section (optional)</label>
-              <input id={`${id}-section`} className="c2c-input" value={row.ctdSection} placeholder="e.g. 3.2.P.8" disabled={locked}
-                onChange={(e) => onChange({ ctdSection: e.target.value })} />
-            </>
-          ) : null}
+          {row.folderId ? <FiledFields id={id} row={row} view={view} locked={locked} onChange={onChange} /> : null}
         </div>
       </div>
     </li>
   );
 }
 
-export function VaultUploadStaging({ staging, folders, uploading, onChange, onRemove, onUpload, onDone }: {
+export function VaultUploadStaging({ staging, folders, uploading, onChange, onRemove, onUpload, onDone, view }: {
   staging: Staging;
   folders: ReadonlyArray<{ id: string; label: string }>;
+  /** The project's view (S6 V9). */
+  view?: VaultViewId | null;
   uploading: boolean;
   onChange: (key: string, patch: Partial<StagedFile>) => void;
   onRemove: (key: string) => void;
@@ -316,7 +338,7 @@ export function VaultUploadStaging({ staging, folders, uploading, onChange, onRe
       {rows.length > 0 && <VaultUploadManifestControls rows={rows} folders={folders} busy={uploading} onChange={onChange} />}
       {rows.length > 0 && <ul className="vd-stage-list" role="list">
         {rows.map((r) => (
-          <StagedRow key={r.key} row={r} folders={folders} repeated={repeated.has(r.key)} busy={uploading}
+          <StagedRow key={r.key} row={r} folders={folders} repeated={repeated.has(r.key)} busy={uploading} view={view}
             onChange={(patch) => onChange(r.key, patch)} onRemove={() => remove(r.key)} />
         ))}
       </ul>}

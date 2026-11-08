@@ -143,7 +143,7 @@ export interface ConnectorSetupStep {
 export interface ConnectorSetupGuide {
   overview: string;
   prerequisites: string[];
-  credentialFields: { field: string; label: string; placeholder: string; secret: boolean }[];
+  credentialFields: { field: string; label: string; placeholder: string; secret: boolean; required?: boolean; multiline?: boolean }[];
   steps: ConnectorSetupStep[];
   troubleshooting: string[];
 }
@@ -460,13 +460,13 @@ export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
       credentialFields: [
         { field: 'clientId', label: 'Azure AD Application (Client) ID', placeholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', secret: false },
         { field: 'clientSecret', label: 'Client Secret', placeholder: 'Your Azure AD app client secret', secret: true },
-        { field: 'baseUrl', label: 'Tenant Domain', placeholder: 'yourtenant.sharepoint.com', secret: false },
+        { field: 'tenantId', label: 'Azure AD Tenant ID', placeholder: 'Your Azure AD tenant ID', secret: false },
       ],
       steps: [
         { step: 1, title: 'Register an Azure AD application', instructions: 'Go to Azure Portal > Azure Active Directory > App registrations > New registration. Name it "ClinicalSageAI SharePoint Connector". Set "Accounts in this organizational directory only".' },
         { step: 2, title: 'Configure API permissions', instructions: 'In the app registration, go to API Permissions > Add a permission > Microsoft Graph > Application permissions. Add: Sites.Read.All, Files.Read.All. Click "Grant admin consent".' },
         { step: 3, title: 'Create a client secret', instructions: 'Go to Certificates & Secrets > New client secret. Set an appropriate expiry. Copy the secret value immediately — it won\'t be shown again.' },
-        { step: 4, title: 'Enter credentials', instructions: 'Enter the Application (Client) ID, the client secret, and your SharePoint tenant domain below.' },
+        { step: 4, title: 'Enter credentials', instructions: 'Enter the Application (Client) ID, the client secret, and your Azure AD tenant ID below.' },
       ],
       troubleshooting: [
         'Error "AADSTS700016": The application ID is incorrect. Verify the Client ID in Azure AD.',
@@ -495,7 +495,7 @@ export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
       ],
       credentialFields: [
         { field: 'baseUrl', label: 'FHIR Server Base URL', placeholder: 'https://fhir.example.com/r4', secret: false },
-        { field: 'apiKey', label: 'Bearer Token / API Key', placeholder: 'Your FHIR server authentication token', secret: true },
+        { field: 'apiKey', label: 'Bearer Token / API Key (alternative to OAuth credentials)', placeholder: 'Your FHIR server authentication token', secret: true, required: false },
         { field: 'clientId', label: 'OAuth Client ID (optional)', placeholder: 'SMART on FHIR client ID', secret: false },
         { field: 'clientSecret', label: 'OAuth Client Secret (optional)', placeholder: 'SMART on FHIR client secret', secret: true },
       ],
@@ -533,7 +533,7 @@ export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
       credentialFields: [
         { field: 'clientId', label: 'Azure AD Application (Client) ID', placeholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', secret: false },
         { field: 'clientSecret', label: 'Client Secret', placeholder: 'Your Azure AD app client secret', secret: true },
-        { field: 'baseUrl', label: 'Tenant ID', placeholder: 'Your Azure AD tenant ID', secret: false },
+        { field: 'tenantId', label: 'Tenant ID', placeholder: 'Your Azure AD tenant ID', secret: false },
         { field: 'username', label: 'Target User ID (optional)', placeholder: 'User ID to access a specific user\'s drive', secret: false },
       ],
       steps: [
@@ -569,7 +569,7 @@ export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
       ],
       credentialFields: [
         { field: 'clientId', label: 'Service Account Email', placeholder: 'myservice@project-id.iam.gserviceaccount.com', secret: false },
-        { field: 'clientSecret', label: 'Private Key (from JSON key file)', placeholder: '-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----', secret: true },
+        { field: 'clientSecret', label: 'Private Key (from JSON key file)', placeholder: 'Paste the complete PEM private key', secret: true, multiline: true },
         { field: 'username', label: 'Impersonate User (optional)', placeholder: 'user@yourdomain.com (for domain-wide delegation)', secret: false },
       ],
       steps: [

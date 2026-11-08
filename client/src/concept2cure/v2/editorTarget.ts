@@ -92,6 +92,8 @@ export interface EditorSectionRef {
 }
 
 export interface EditorTarget {
+  /** Exact governed filing, distinct from the editable authoring document. */
+  filingDocumentId?: string;
   assemblySources?: EditorAssemblySources;
   /** An owned request for the existing New document form, never an existing document. */
   sourceDocumentStart?: EditorAssemblySources;
@@ -164,7 +166,7 @@ function sourceContextAvailable(current?: () => boolean): boolean {
 const documentStartOwners = new WeakMap<object, EditorSourceOwner>();
 function readDocumentStart(raw: Partial<EditorTarget> & EditorSectionRef): EditorAssemblySources | null | undefined {
   if (raw.sourceDocumentStart === undefined) return undefined;
-  if (raw.assemblySources !== undefined || [raw.docType, raw.docId, raw.sectionCode, raw.sectionLabel,
+  if (raw.assemblySources !== undefined || raw.filingDocumentId !== undefined || [raw.docType, raw.docId, raw.sectionCode, raw.sectionLabel,
     raw.code, raw.label, raw.returnTo].some(value => value != null)
     || typeof raw.programId !== 'string' || !NOTICE_UUID.test(raw.programId)) return null;
   const value = raw.sourceDocumentStart;
@@ -185,6 +187,13 @@ function readOwnedDocumentStart(raw: Partial<EditorTarget>): EditorAssemblySourc
 function targetIsFresh(raw: Partial<EditorTarget>, now: number): raw is Partial<EditorTarget> & { setAt: number } {
   return typeof raw.setAt === 'number' && Number.isFinite(raw.setAt)
     && Math.abs(now - raw.setAt) <= EDITOR_TARGET_TTL_MS;
+}
+
+function freshTargetShape(value: unknown, now: number): value is Partial<EditorTarget> & { setAt: number } {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<EditorTarget>;
+  return (candidate.docType == null || typeof candidate.docType === 'string' && candidate.docType.trim().length > 0)
+    && targetIsFresh(candidate, now);
 }
 
 /** Admit a fresh owned command once. Form editing can outlive the channel TTL;
@@ -225,6 +234,22 @@ const str = (v: unknown): string | null => {
   return s.length > 0 ? s : null;
 };
 
+/** A safe opaque lookup key, never a title, path, or authority grant. The
+ * receiving editor must still verify it against the current project's filing. */
+export function isEditorFilingDocumentId(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(value);
+}
+
+function readFilingDocumentIntent(raw: Partial<EditorTarget> & { within?: string | null }): string | null | undefined {
+  if (raw.filingDocumentId === undefined) return undefined;
+  if (!isEditorFilingDocumentId(raw.filingDocumentId)
+    || typeof raw.docType !== 'string' || !raw.docType.trim()
+    || typeof raw.programId !== 'string' || !raw.programId.trim()
+    || raw.docId != null || raw.sectionWithin != null || raw.within != null
+    || raw.assemblySources !== undefined || raw.sourceDocumentStart !== undefined) return null;
+  return raw.filingDocumentId;
+}
+
 /** Publish a target for the editor's next mount. Replaces, never merges —
  *  the same rule window.C2C_PROJECT writes follow. */
 export function setEditorTarget(
@@ -235,6 +260,7 @@ export function setEditorTarget(
     returnTo?: EditorReturnTo | null;
     assemblySources?: EditorAssemblySources;
     sourceDocumentStart?: EditorAssemblySources;
+    filingDocumentId?: string;
     /** See EditorTarget.sectionWithin. */
     within?: string | null;
   },
@@ -242,13 +268,16 @@ export function setEditorTarget(
 ): void {
   if (typeof window === 'undefined') return;
   const sourceContext = target.assemblySources !== undefined || target.sourceDocumentStart !== undefined;
-  if (sourceContext && !sourceContextAvailable(sourceContextCurrent)) return;
+  if (sourceContext && !sourceContextAvailable(sourceContextCurrent)) { clearEditorTarget(); return; }
+  const filingDocumentId = readFilingDocumentIntent(target);
+  if (filingDocumentId === null) { clearEditorTarget(); return; }
   const sourceDocumentStart = readDocumentStart(target);
   if (sourceDocumentStart === null) { clearEditorTarget(); return; }
   const assemblySources = target.assemblySources === undefined ? undefined
     : readAssemblyIntent(target.assemblySources, target.docId, target.programId);
   if (assemblySources === null) { clearEditorTarget(); return; }
   const published: EditorTarget = {
+    ...(filingDocumentId ? { filingDocumentId } : {}),
     ...(assemblySources ? { assemblySources } : {}),
     ...(sourceDocumentStart ? { sourceDocumentStart } : {}),
     docType: str(target.docType),
@@ -316,24 +345,22 @@ export function clearEditorTarget(): void {
  */
 export function peekEditorTarget(now: number = Date.now()): EditorTarget | null {
   if (typeof window === 'undefined') return null;
-  const raw = window.C2C_EDITOR_TARGET;
-  if (!raw || typeof raw !== 'object') return null;
-  const t = raw as Partial<EditorTarget>;
+  const t = window.C2C_EDITOR_TARGET;
   // A named family is any registry spelling (see EditorTargetDocType); an
   // ABSENT family (null / undefined) is a legitimate target that simply claims
   // less. Garbage — a number, an object, an empty string — is still refused
   // outright: a family that is not a string is not a claim this channel made.
-  if (t.docType != null && (typeof t.docType !== 'string' || t.docType.trim().length === 0)) {
-    return null;
-  }
   // Stale (unconsumed from an earlier visit) or stamped in the future (a
   // clock that cannot be trusted) — either way, no claim is honoured.
-  if (!targetIsFresh(t, now)) return null;
+  if (!freshTargetShape(t, now)) return null;
+  const filingDocumentId = readFilingDocumentIntent(t);
+  if (filingDocumentId === null) return null;
   const assemblySources = readOwnedAssemblyIntent(t);
   if (assemblySources === null) return null;
   const sourceDocumentStart = readOwnedDocumentStart(t);
   if (sourceDocumentStart === null) return null;
   const target: EditorTarget = {
+    ...(filingDocumentId ? { filingDocumentId } : {}),
     ...(assemblySources ? { assemblySources } : {}),
     ...(sourceDocumentStart ? { sourceDocumentStart } : {}),
     docType: str(t.docType),

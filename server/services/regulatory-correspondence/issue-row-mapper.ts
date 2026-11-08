@@ -23,7 +23,7 @@
  * @module server/services/regulatory-correspondence/issue-row-mapper
  */
 
-import type { CorrespondenceIssue } from '@shared/types/regulatory-correspondence';
+import type { CorrespondenceIssue, CorrespondenceHumanReview, FeedbackCoding } from '@shared/types/regulatory-correspondence';
 
 /** A `c2c_correspondence_issues` row, as node-postgres returns it. */
 export interface CorrespondenceIssueRow {
@@ -60,6 +60,30 @@ function stringArray(value: unknown): string[] {
   return [];
 }
 
+const objectRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+function sourceDetails(r: Record<string, unknown>): Partial<NonNullable<CorrespondenceIssue['structuredExtraction']>> {
+  const span = r.evidenceSpan;
+  const evidenceSpan = objectRecord(span) && Number.isSafeInteger(span.start) && Number.isSafeInteger(span.end)
+    && typeof span.text === 'string' ? { start: Number(span.start), end: Number(span.end), text: span.text } : undefined;
+  const coding = r.feedbackCoding;
+  const feedbackCoding = objectRecord(coding) && ['objective', 'subjective', 'unclassified'].includes(String(coding.register))
+    && coding.basis === 'deterministic_proposal' && typeof coding.deficiencyClass === 'string'
+    ? { register: coding.register as FeedbackCoding['register'], deficiencyClass: coding.deficiencyClass as FeedbackCoding['deficiencyClass'],
+      basis: 'deterministic_proposal' as const, humanConfirmed: coding.humanConfirmed === true } : undefined;
+  return {
+    ...(typeof r.sourceTextDigest === 'string' ? { sourceTextDigest: r.sourceTextDigest } : {}),
+    ...(evidenceSpan ? { evidenceSpan } : {}), ...(feedbackCoding ? { feedbackCoding } : {}),
+    ...reviewDetails(r.humanReview),
+  };
+}
+function reviewDetails(value: unknown): Partial<NonNullable<CorrespondenceIssue['structuredExtraction']>> {
+  if (!objectRecord(value) || !Number.isSafeInteger(value.reviewedBy) || Number(value.reviewedBy) <= 0
+      || typeof value.reviewedAt !== 'string' || !Number.isFinite(Date.parse(value.reviewedAt))
+      || typeof value.sourceTextDigest !== 'string' || !['pending', 'confirmed', 'edited', 'rejected'].includes(String(value.status))) return {};
+  return { humanReview: { reviewedBy: Number(value.reviewedBy), reviewedAt: value.reviewedAt, sourceTextDigest: value.sourceTextDigest,
+    status: value.status as CorrespondenceHumanReview['status'] } };
+}
+
 function structured(value: unknown): CorrespondenceIssue['structuredExtraction'] {
   const raw =
     typeof value === 'string'
@@ -90,6 +114,7 @@ function structured(value: unknown): CorrespondenceIssue['structuredExtraction']
           : NonNullable<CorrespondenceIssue['structuredExtraction']>['confidenceTrace'])
       : [],
     humanReviewRequired: r.humanReviewRequired !== false,
+    ...sourceDetails(r),
     ...(typeof r.responseDeadlineSignal === 'string'
       ? { responseDeadlineSignal: r.responseDeadlineSignal }
       : {}),

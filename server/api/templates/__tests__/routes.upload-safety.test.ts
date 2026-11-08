@@ -17,6 +17,7 @@ import express from 'express';
 import request from 'supertest';
 import fs from 'node:fs';
 import path from 'node:path';
+import JSZip from 'jszip';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const createTemplate = vi.fn();
@@ -95,10 +96,15 @@ function uploadFile(buffer: Buffer, filename: string) {
 
 // Signature-bearing payloads.
 const PDF_BYTES = Buffer.from('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n');
-const ZIP_BYTES = Buffer.concat([
-  Buffer.from([0x50, 0x4b, 0x03, 0x04]),
-  Buffer.from('word/document.xml payload'),
-]);
+// A readable Word container: since SEC-17 (2261f1d7c2) an upload that is a ZIP
+// archive must have a central directory the server can read, so the ZIP magic
+// followed by junk is refused 422 ARCHIVE_LIMITS_EXCEEDED before anything else.
+let ZIP_BYTES: Buffer;
+beforeAll(async () => {
+  const word = new JSZip();
+  word.file('word/document.xml', '<w:document/>', { createFolders: false });
+  ZIP_BYTES = await word.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+});
 const OLE_BYTES = Buffer.concat([
   Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]),
   Buffer.alloc(64, 0x20),

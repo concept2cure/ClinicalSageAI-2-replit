@@ -55,7 +55,6 @@ import type { PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger.js';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
 import {
-  foldersForView,
   VAULT_FOLDER_PRESETS,
   VAULT_VIEWS,
   VAULT_DOC_KINDS,
@@ -68,13 +67,16 @@ import {
   resolveOrgVaultView,
   resolveVaultView,
   folderLabel,
-  cabinetFolderOf,
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { sourceReadView } from '../../../shared/data-room-processing-status.js';
 import { sourceProcessingSummary } from '../../services/clinical-regulatory-evidence/data-room-processing-read.js';
 import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vault-coverage.js';
 import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
+import {
+  binderFolderId, buildFolderIndex, createProgramFolder, personFolderId, readProgramFolderIndex, renameProgramFolder,
+  type BinderNode, type PersonFolder, type ProgramFolderIndex,
+} from '../../services/vault/vault-folders.js';
 import { regionalSubtree } from '../../../shared/regulatory/filing-scope.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
@@ -107,7 +109,7 @@ import { programInOrganization } from '../../services/c2c/program-access';
 import { installProjectRouteAccess, sendProjectAccessFailure } from './project-route-access';
 import {
   ProgramReadAccessError, getCurrentAccessibleProgramScope, readCurrentProgramActor, requireCurrentProgramAccess,
-  type CurrentProgramAccess,
+  verifiedProgramAnchors, type CurrentAccessibleProgramScope, type CurrentProgramAccess,
 } from '../../services/c2c/current-program-access';
 import { requestConnectable, requestPgClient } from '../../db/requestDb';
 import {
@@ -143,6 +145,8 @@ interface VaultDoc {
   src?: 'authored' | 'upload' | 'artifact';
   /** Artifact-only: what the registry records of its governance. */
   artifact?: ArtifactLeafFacts;
+  /** Exact governed section key, or null for a whole-document fallback leaf. */
+  filingSectionKey?: string | null;
   /** Upload-only extras (all projected from real columns). */
   docId?: string;
   originalFileAvailable?: boolean;
@@ -173,6 +177,8 @@ interface VaultDoc {
  */
 interface ArtifactLeafFacts {
   artifactId: string;
+  /** Current recorded head version; null when it cannot name an exact import source. */
+  version: number | null;
   kind: string;
   format: string;
   /** The model the writer recorded; null when none was (never invented). */
@@ -215,9 +221,21 @@ interface UploadFiling {
 
 interface VaultFolder {
   id: string;
+  /** Present only on a real governed filing's root folder. */
+  filingDocumentId?: string;
   code: string;
   label: string;
   children: Array<VaultFolder | VaultDoc>;
+  /** In the cabinet (S6): a binder heading, a view preset, a folder a person made, or a review queue. */
+  kind?: 'binder' | 'preset' | 'person' | 'queue';
+  /** A binder heading the filing's outline marks mandatory. */
+  required?: boolean;
+  /** Who made a person's folder. */
+  madeBy?: string | null;
+  /** The cabinet's binder: the rule pack its folders are read from. */
+  binder?: { docType: string; agency: string; version: string; label: string };
+  /** Said plainly: why the cabinet has no binder (no outline for this filing or region yet). */
+  note?: string;
 }
 
 /** One Data Room source with its derived pipeline stage. */
@@ -565,6 +583,66 @@ function normalizeFolderId(raw: unknown): string | null | undefined {
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** The library's `sameClientAs`: a project id, none, or a value that is not a project id. */
+function sameClientAsOf(raw: unknown): string | null | 'invalid' {
+  const value = typeof raw === 'string' ? raw.trim() : '';
+  if (!value) return null;
+  return UUID_RE.test(value) ? value : 'invalid';
+}
+
+/** Two narrowings of the verified accessible set, applied together; neither ever widens it. */
+function bothNarrowings(byProject: string[] | undefined, bySponsor: string[] | undefined): string[] | undefined {
+  if (!byProject || !bySponsor) return bySponsor ?? byProject;
+  return byProject.filter((id) => bySponsor.includes(id.toLowerCase()));
+}
+
+/** A sponsor (client workspace) as a library hit names it. */
+type LibrarySponsor = { id: number; name: string };
+
+/**
+ * The library's sponsors (F1, S6 V2, 2026-11-05). A CRO works for several sponsors inside one organisation, each a
+ * client workspace, and the library listed every accessible project's documents together with no sponsor named. So a
+ * consultant in sponsor A's project, asking "all my projects", got sponsor B's documents in the same list.
+ *
+ * Asked from inside a project (`sameClientAs`), the library is that project's sponsor's projects: the sponsor is the
+ * one recorded on the project's verified anchor (`verifiedProgramAnchors`), never a value the client sends, and the
+ * narrowing only ever removes projects from the verified accessible set. A project that is not in that set is not
+ * found. Every hit names its own sponsor, or none when its project has no client workspace; a sponsor whose name
+ * cannot be read fails the search rather than show the hit as having none.
+ */
+async function librarySponsors(
+  identity: { organizationId: number; userId: number | undefined },
+  scope: CurrentAccessibleProgramScope,
+  sameClientAs: string | null,
+): Promise<{ allowed?: string[]; client?: LibrarySponsor | null; sponsorOf: (programId: string) => LibrarySponsor | null }> {
+  const anchors = verifiedProgramAnchors(pool, identity, scope);
+  const workspaceOf = new Map(anchors.map((a) => [a.programId, a.clientWorkspaceId]));
+  const ids = [...new Set(anchors.map((a) => a.clientWorkspaceId).filter((id): id is number => id !== null))];
+  const names = new Map<number, string>();
+  if (ids.length) {
+    const { rows } = await pool.query<{ id: number; name: string }>(
+      'SELECT id, name FROM client_workspaces WHERE organization_id = $1 AND id = ANY($2::int[])',
+      [identity.organizationId, ids],
+    );
+    for (const row of rows) names.set(Number(row.id), String(row.name));
+  }
+  const named = (id: number | null | undefined): LibrarySponsor | null => {
+    if (id === null || id === undefined) return null;
+    const name = names.get(id);
+    if (!name || !name.trim()) throw new Error('A sponsor of an accessible project could not be named.');
+    return { id, name };
+  };
+  const sponsorOf = (programId: string) => named(workspaceOf.get(programId.toLowerCase()));
+  if (!sameClientAs) return { sponsorOf };
+  const own = anchors.find((a) => a.programId === sameClientAs.toLowerCase());
+  if (!own) throw new ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+  return {
+    allowed: anchors.filter((a) => a.clientWorkspaceId === own.clientWorkspaceId).map((a) => a.programId),
+    client: named(own.clientWorkspaceId),
+    sponsorOf,
+  };
+}
+
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Org id from tenant/user context (integer — c2c tables key on numeric org). */
@@ -808,54 +886,107 @@ function whereFiled(folderId: string): string {
 }
 
 /**
- * The filing cabinet: the program's vault-view folder taxonomy with every
- * uploaded document placed where its (suggested or confirmed) filing says,
- * plus an always-visible Unfiled queue. Folders render even when empty — the
- * cabinet IS the dossier shape a regulatory associate expects to see.
+ * The filing cabinet: the project's folders with every uploaded document placed
+ * where its (suggested or confirmed) filing says, plus an always-visible
+ * Unfiled queue. Folders render even when empty — the cabinet IS the dossier
+ * shape a regulatory associate expects to see.
+ *
+ * The folders are the project's own (vault-folders.ts, S6 2026-11-06): the
+ * binder its filing type and region select (the active rule pack's outline,
+ * down to CTD or device section, with the region's Module 1), the view's
+ * presets the binder does not replace (sequences, correspondence, templates),
+ * and the folders people made, each under the folder it was made in. Without an
+ * index (the regression tests' call) it is the view's presets, as before.
  * Exported for the tree-merge regression test.
  */
-export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFolder {
-  const unfiled = uploads.filter(u => !cabinetFolderOf(u));
-  const inView = new Set(foldersForView(view).map(f => f.id));
+/** Each upload by the folder the tree shows it in; those whose folder this project lacks, apart. */
+function sortUploads(index: ProgramFolderIndex, uploads: UploadRow[]) {
+  const unfiled: UploadRow[] = [];
   const byFolder = new Map<string, UploadRow[]>();
-  /* Filed to a folder this view does not have. The view is resolved per read
+  /* Filed to a folder this project does not have. The view is resolved per read
      and not stored on the row, so a document filed under a device folder on a
      program that now reads as pharma (or one filed while the view lookup had
      fallen back) belongs to no folder here. It used to be dropped from the tree
      while still counted; it is shown, with where it was filed. */
   const otherView: UploadRow[] = [];
   for (const u of uploads) {
-    const folder = cabinetFolderOf(u);
-    if (!folder) continue;
-    if (!inView.has(folder)) {
-      otherView.push(u);
-      continue;
-    }
-    const list = byFolder.get(folder) ?? [];
-    list.push(u);
-    byFolder.set(folder, list);
+    const folder = index.treeFolderOf(u);
+    if (!folder) unfiled.push(u);
+    else if (!index.has(folder)) otherView.push(u);
+    else byFolder.set(folder, [...(byFolder.get(folder) ?? []), u]);
   }
-  const children: Array<VaultFolder | VaultDoc> = [];
-  children.push({
-    id: 'cab-unfiled',
-    code: '',
-    label: 'Unfiled · needs review',
-    // Not in the index: a section here is the classifier's suggestion, not a place.
-    children: unfiled.map(u => ({ ...uploadLeaf(view, u), num: '—' })),
-  });
-  foldersForView(view).forEach((folder, i) => {
-    children.push({
-      id: `cab-${folder.id}`,
-      code: '',
-      label: folder.label,
-      children: indexedLeaves(view, i + 1, byFolder.get(folder.id) ?? []),
+  return { unfiled, byFolder, otherView };
+}
+
+/** The cabinet's folder nodes: binder headings, presets and people's folders, each holding its own leaves. */
+function cabinetNodeBuilder(view: VaultViewId, index: ProgramFolderIndex, byFolder: Map<string, UploadRow[]>) {
+  const personUnder = new Map<string, PersonFolder[]>();
+  for (const f of index.person) {
+    const parent = f.parentId != null ? personFolderId(f.parentId) : (f.parentKey && index.has(f.parentKey) ? f.parentKey : '');
+    personUnder.set(parent, [...(personUnder.get(parent) ?? []), f]);
+  }
+  const binderUnder = new Map<string | null, BinderNode[]>();
+  for (const n of index.binder?.nodes ?? []) binderUnder.set(n.parentKey, [...(binderUnder.get(n.parentKey) ?? []), n]);
+  let ordinal = 0;
+  const leaves = (id: string, own: number) => indexedLeaves(view, own, byFolder.get(id) ?? []);
+  const personNodes = (parent: string, depth = 0): VaultFolder[] =>
+    depth > 32 ? [] : (personUnder.get(parent) ?? []).map((f) => {
+      const own = ++ordinal;
+      return {
+        id: `cab-${f.folderId}`, code: '', label: f.name, kind: 'person', madeBy: f.createdBy,
+        children: [...personNodes(f.folderId, depth + 1), ...leaves(f.folderId, own)],
+      };
     });
-  });
+  const binderNode = (n: BinderNode): VaultFolder => {
+    const id = binderFolderId(n.key);
+    const own = ++ordinal;
+    return {
+      id: `cab-${id}`,
+      code: /^M[1-5]$/.test(n.key) ? '' : n.key,
+      label: n.label,
+      kind: 'binder',
+      ...(n.mandatory ? { required: true } : {}),
+      children: [...(binderUnder.get(n.key) ?? []).map(binderNode), ...personNodes(id), ...leaves(id, own)],
+    };
+  };
+  const presetNode = (folder: { id: string; label: string }): VaultFolder => {
+    const own = ++ordinal;
+    return { id: `cab-${folder.id}`, code: '', label: folder.label, kind: 'preset', children: [...personNodes(folder.id), ...leaves(folder.id, own)] };
+  };
+  return { binderRoots: () => (binderUnder.get(null) ?? []).map(binderNode), presetNode, personNodes };
+}
+
+/** A leaf names its folder as the project names it: a binder heading or a person's folder has no preset label. */
+function nameLeafFolders(index: ProgramFolderIndex, nodes: Array<VaultFolder | VaultDoc>): void {
+  for (const n of nodes) {
+    if ('children' in n) nameLeafFolders(index, n.children);
+    else if (n.filing?.folderId) n.filing.folderLabel = index.label(n.filing.folderId) || n.filing.folderLabel;
+  }
+}
+
+export function filingCabinet(view: VaultViewId, uploads: UploadRow[], folders?: ProgramFolderIndex): VaultFolder {
+  const index = folders ?? buildFolderIndex(view, { binder: null, reason: '' }, []);
+  const { unfiled, byFolder, otherView } = sortUploads(index, uploads);
+  const build = cabinetNodeBuilder(view, index, byFolder);
+  const children: Array<VaultFolder | VaultDoc> = [
+    {
+      id: 'cab-unfiled',
+      code: '',
+      label: 'Unfiled · needs review',
+      kind: 'queue',
+      // Not in the index: a section here is the classifier's suggestion, not a place.
+      children: unfiled.map(u => ({ ...uploadLeaf(view, u), num: '—' })),
+    },
+    ...build.binderRoots(),
+    ...index.presets.map(build.presetNode),
+    ...build.personNodes(''),
+  ];
   if (otherView.length > 0) {
     children.push({
       id: 'cab-other-view',
       code: '',
       label: 'Filed under another view · needs review',
+      kind: 'queue',
       children: otherView.map(u => ({
         ...uploadLeaf(view, u),
         num: '—',
@@ -863,10 +994,14 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
       })),
     });
   }
+  nameLeafFolders(index, children);
+  const binder = index.binder;
   return {
     id: 'cabinet',
     code: '',
-    label: 'Source files · filing cabinet',
+    label: binder ? `Filing binder · ${binder.label}` : 'Source files · filing cabinet',
+    ...(binder ? { binder: { docType: binder.docType, agency: binder.agency, version: binder.version, label: binder.label } } : {}),
+    ...(index.binderMissing ? { note: index.binderMissing } : {}),
     children,
   };
 }
@@ -909,6 +1044,7 @@ function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined):
   const label = spec.label ?? spec.key;
   const leaf: VaultDoc = {
     id: `sec-${doc.id}-${spec.key}`,
+    filingSectionKey: spec.key,
     num: spec.key,
     title: label,
     type: mandatory ? 'Required' : 'Optional',
@@ -930,6 +1066,7 @@ function docLevelLeaf(doc: DocRow, hasSections: boolean): VaultDoc {
   const docTitle = doc.title || doc.doc_type || 'Document';
   return {
     id: `doc-${doc.id}`,
+    filingSectionKey: null,
     num: '—',
     title: docTitle,
     type: 'Document',
@@ -989,10 +1126,16 @@ function documentFolder(doc: DocRow, live: Map<string, LiveSection>): VaultFolde
     : [docLevelLeaf(doc, live.size > 0)];
   return {
     id: `vaultdoc-${doc.id}`,
+    filingDocumentId: doc.id,
     code: (doc.doc_type ?? '').toUpperCase(),
     label: doc.title || doc.doc_type || 'Document',
     children,
   };
+}
+
+/** Whether the Library holds a filing document whose rule pack lists its sections: the outline coverage points to (S6). */
+function hasFilingOutline(docs: ReadonlyArray<DocRow>): boolean {
+  return docs.some((d) => Array.isArray(d.required_sections) && d.required_sections.length > 0);
 }
 
 /** Missing table (42P01) / missing column (42703) — a store this environment
@@ -1247,6 +1390,7 @@ export function artifactLeaf(row: ArtifactRegistryRow): VaultDoc {
     sizeLabel: formatContentBytes(Number(row.content_bytes)),
     artifact: {
       artifactId: row.artifact_id,
+      version: version != null && Number.isSafeInteger(version) && version > 0 ? version : null,
       kind: g.kind,
       format: g.fmt,
       model: g.model,
@@ -1539,21 +1683,29 @@ export default function createProjectVaultRoutes(): Router {
     if ('refusal' in parsed) return res.status(400).json({ success: false, ...parsed.refusal });
     const { filters, programIds } = parsed;
     const narrowed: { allowedProgramIds?: string[]; programIds?: string[] } = programIds.length ? { allowedProgramIds: programIds, programIds } : {};
+    const sameClientAs = sameClientAsOf(req.query.sameClientAs);
+    if (sameClientAs === 'invalid') {
+      return res.status(400).json({ success: false, error: 'INVALID_PROJECT', message: 'The project the library is scoped by must be a project id.' });
+    }
     try {
-      const currentScope = await getCurrentAccessibleProgramScope(pool, { organizationId: orgId, userId: governedActorId(req) ?? undefined });
+      const identity = { organizationId: orgId, userId: governedActorId(req) ?? undefined };
+      const currentScope = await getCurrentAccessibleProgramScope(pool, identity);
+      const sponsors = await librarySponsors(identity, currentScope, sameClientAs);
+      const scoped = sameClientAs ? { client: sponsors.client } : {};
       if (!q && !hasVaultFilters(filters)) {
-        return res.json({ success: true, data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY', scope: 'verified-accessible-programs' } });
+        return res.json({ success: true, data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY', scope: 'verified-accessible-programs', ...scoped } });
       }
+      const allowed = bothNarrowings(narrowed.allowedProgramIds, sponsors.allowed);
       const found = await searchVaultDocuments(pool, {
         organizationId: orgId, userId: currentScope.actor.userId, programId: null, q, limit, offset, includeSuperseded, filters,
-        allowedProgramIds: narrowed.allowedProgramIds, facets: wantsFacets(req.query, offset),
+        allowedProgramIds: allowed, facets: wantsFacets(req.query, offset),
       }, currentScope);
       return res.json({
         success: true,
         data: {
           query: q, mode: found.mode, filters, programIds: narrowed.programIds, facets: found.facets,
-          total: found.total, limit, offset, includeSuperseded, scope: 'verified-accessible-programs',
-          results: found.results.map((r) => ({ ...r, size: prettySize(r.sizeBytes) })),
+          total: found.total, limit, offset, includeSuperseded, scope: 'verified-accessible-programs', ...scoped,
+          results: found.results.map((r) => ({ ...r, size: prettySize(r.sizeBytes), client: sponsors.sponsorOf(r.program.id) })),
         },
       });
     } catch (err) {
@@ -1780,7 +1932,9 @@ export default function createProjectVaultRoutes(): Router {
           total: counts.total ?? uploads.length,
           truncated,
         };
-        tree.push(filingCabinet(view, uploads));
+        // The project's folders: its filing's binder, the view's presets, the folders people made.
+        const folders = await readProgramFolderIndex(pool, id, orgId, view, project);
+        tree.push(filingCabinet(view, uploads, folders));
       } catch (err) {
         if (!isMissingStore(err)) throw err;
         uploadsStoreMissing = true;
@@ -1902,6 +2056,7 @@ export default function createProjectVaultRoutes(): Router {
         primaryAgency: project.primary_agency,
         programId: id,
         organizationId: orgId,
+        filingOutlineInLibrary: hasFilingOutline(docsRes.rows as DocRow[]),
       });
       // 9) Legal holds (MR-08 Stage 5): an unread hold is reported, never shown as none.
       const legalHolds = await readHoldNoticesOrUnavailable(id, orgId, unavailable);
@@ -2456,6 +2611,65 @@ export default function createProjectVaultRoutes(): Router {
         err: err instanceof Error ? err.message : String(err),
       });
       return res.status(500).json({ success: false, error: 'Failed to record the filing decision' });
+    }
+  });
+
+  /* Folders a person makes (S6, the founder, 2026-11-06: "files, folders …
+     just like Veeva"). POST /:id/folders makes one under any folder of the
+     project's tree (its binder, a preset, another person's folder, or the top);
+     POST /:id/folders/:folderId/rename renames one a person made. Each is a
+     governed write: the same role gate and program write authority as filing,
+     and a chained audit row naming who, when and the reason given, in the
+     same transaction (vault-folders.ts). public.document_folders, the store the
+     legacy /api/folders route wrote with no project, now carries the project. */
+  const folderWriteBase = (req: Request, orgId: number, programId: string, reason: unknown) => ({
+    programId,
+    organizationId: orgId,
+    userId: governedActorId(req),
+    reason: typeof reason === 'string' ? reason : '',
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+  const sendFolderOutcome = (res: Response, outcome: Awaited<ReturnType<typeof createProgramFolder>>) =>
+    outcome.ok
+      ? res.json({ success: true, folder: outcome.folder })
+      : res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+  const folderStorePending = (res: Response, err: unknown, what: string) => {
+    if ((err as { code?: string })?.code === '42P01' || (err as { code?: string })?.code === '42703') {
+      return res.status(409).json({ success: false, error: 'STORE_PENDING', message: 'Folders cannot be made here until the database is migrated.' });
+    }
+    logger.error(`project vault folder ${what} error`, { err: err instanceof Error ? err.message : String(err) });
+    return res.status(500).json({ success: false, error: `Failed to ${what} the folder` });
+  };
+
+  router.post('/:id/folders', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    const body = (req.body ?? {}) as { name?: unknown; parentFolderId?: unknown; reason?: unknown };
+    try {
+      const outcome = await createProgramFolder({
+        ...folderWriteBase(req, orgId, id, body.reason),
+        name: body.name,
+        parentFolderId: typeof body.parentFolderId === 'string' && body.parentFolderId.trim() ? body.parentFolderId.trim() : null,
+      });
+      return sendFolderOutcome(res, outcome);
+    } catch (err) {
+      return folderStorePending(res, err, 'make');
+    }
+  });
+
+  router.post('/:id/folders/:folderId/rename', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    const folderId = Array.isArray(req.params.folderId) ? (req.params.folderId[0] ?? '') : req.params.folderId;
+    const body = (req.body ?? {}) as { name?: unknown; reason?: unknown };
+    try {
+      const outcome = await renameProgramFolder({ ...folderWriteBase(req, orgId, id, body.reason), folderId, name: body.name });
+      return sendFolderOutcome(res, outcome);
+    } catch (err) {
+      return folderStorePending(res, err, 'rename');
     }
   });
 

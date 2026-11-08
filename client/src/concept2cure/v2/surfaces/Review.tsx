@@ -220,6 +220,8 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
   const [thread, setThread] = useState<ReviewComment[]>([]);
   const [reply, setReply] = useState('');
   const [decisionFor, setDecisionFor] = useState<ReviewItem | null>(null);
+  /* The verdict the reviewer pressed: "Request changes..." opens at it (J3, 2026-11-06). */
+  const [decisionStart, setDecisionStart] = useState<'changes_requested' | undefined>(undefined);
   // Shared comment-write state guards a double submit.
   const [requesting, setRequesting] = useState(false);
   const [scope, setScope] = useState<Scope>('all');
@@ -274,7 +276,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
 
   /** Re-read the board from the server after a confirmed write. */
   const refreshBoard = () => setBoardEpoch((e) => e + 1);
-  const decisionDialog = decisionFor && <ReviewDecisionDialog documentId={decisionFor.id} programId={decisionFor.programId ?? null} onClose={() => setDecisionFor(null)} onRecorded={(receipt) => {
+  const decisionDialog = decisionFor && <ReviewDecisionDialog documentId={decisionFor.id} programId={decisionFor.programId ?? null} initialDecision={decisionStart} onClose={() => setDecisionFor(null)} onRecorded={(receipt) => {
     refreshBoard(); fireToast(recordedNotice(receipt));
   }} />;
 
@@ -655,8 +657,8 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
             <div className="dt-acts">
               {item.awaitingMyReview
                 ? <>
-                    <button className="btn ghost" onClick={() => setDecisionFor(item)}>{I.close} Request changes...</button>
-                    <button className="btn primary" onClick={() => setDecisionFor(item)}>{I.shieldCheck} Record review decision</button>
+                    <button className="btn ghost" onClick={() => { setDecisionStart('changes_requested'); setDecisionFor(item); }}>{I.close} Request changes...</button>
+                    <button className="btn primary" onClick={() => { setDecisionStart(undefined); setDecisionFor(item); }}>{I.shieldCheck} Record review decision</button>
                   </>
                 : hasRecordedReview(item)
                   ? <RecordedReviewStanding item={item} />

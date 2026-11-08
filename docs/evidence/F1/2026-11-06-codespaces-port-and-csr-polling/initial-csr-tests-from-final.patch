@@ -1,0 +1,47 @@
+--- a/client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx
++++ b/client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx
+@@ -139,44 +138,0 @@
+-it('applies arriving progress while a newer poll is outstanding, then keeps completion over older replies', async () => {
+-  vi.useFakeTimers();
+-  const oldest = deferred<ReturnType<typeof ok>>();
+-  const progress = deferred<ReturnType<typeof ok>>();
+-  const completion = deferred<ReturnType<typeof ok>>();
+-  const running = runOf({ status: 'running', subjectsDone: 0, subjectsTotal: 2 });
+-  const complete = runOf({ status: 'complete', subjectsDone: 2, subjectsTotal: 2,
+-    result: { status: 'complete', selected: 2, composed: 2, refused: 0, sections: { written: ['14.3.3', '12.3.2'], kept: [] } } });
+-  let statusReads = 0;
+-  let qcReads = 0;
+-  apiRequest.mockImplementation(async (_method: string, path: string) => {
+-    if (path.endsWith('/narratives/status')) {
+-      statusReads += 1;
+-      if (statusReads === 2) return oldest.promise;
+-      if (statusReads === 3) return progress.promise;
+-      if (statusReads === 4) return completion.promise;
+-      return ok({ run: statusReads === 1 ? running : complete });
+-    }
+-    if (path.endsWith('/narratives')) return ok({ subjects: ++qcReads === 1 ? [] : rows });
+-    return ok({});
+-  });
+-  const changed = vi.fn();
+-  await act(async () => { render(<CsrNarrativeBuild jobId={41} headings={headings} onChanged={changed} pollMs={10} />); });
+-  expect(screen.getByText('Composing narratives: 0 of 2 subjects.')).toBeTruthy();
+-  await act(async () => { vi.advanceTimersByTime(30); });
+-  expect(statusReads).toBe(4);
+-
+-  // Network latency can exceed the polling interval; a pending later read must not starve arrived progress.
+-  await act(async () => { progress.resolve(ok({ run: runOf({ status: 'running', subjectsDone: 1, subjectsTotal: 2 }) })); });
+-  expect(screen.getByText('Composing narratives: 1 of 2 subjects.')).toBeTruthy();
+-  expect(screen.getByLabelText('Narrative progress').getAttribute('value')).toBe('1');
+-  expect(changed).not.toHaveBeenCalled();
+-
+-  await act(async () => { completion.resolve(ok({ run: complete })); });
+-  expect(screen.getByText(/2 of 2 narratives composed from the ADaM rows/)).toBeTruthy();
+-  expect(within(screen.getByLabelText('Narrative QC')).getByText('Septic shock')).toBeTruthy();
+-  await act(async () => { oldest.resolve(ok({ run: running })); });
+-  expect(screen.getByText(/2 of 2 narratives composed from the ADaM rows/)).toBeTruthy();
+-  expect(screen.queryByLabelText('Narrative progress')).toBeNull();
+-  await act(async () => { vi.advanceTimersByTime(30); });
+-  expect(statusReads).toBe(4);
+-  expect(changed).toHaveBeenCalledTimes(1);
+-});
+-

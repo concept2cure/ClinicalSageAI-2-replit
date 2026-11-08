@@ -55,6 +55,10 @@ import { readControlActorNames } from '../../services/ana/control-actor-names.js
 import { resolveThreadStore } from '../../services/chat-thread-helpers.js';
 import { readsEveryRecord } from './record-access.js';
 import { extractRequestContext, sendError, sendSuccess } from './shared.js';
+import { readOwnerPrivateBoundary, ownerPrivateReceiptForHistory } from '../../services/ana/run-control';
+
+type PrivateRecord=NonNullable<Awaited<ReturnType<typeof import('../../services/ana/turn-record-verify')['loadOwnerPrivateTurnRecord']>>>;
+const decodedPrivateRecords=new WeakMap<StoredTurnRecord,PrivateRecord>();
 
 export const TURN_RECORD_EXPORT_ACTION = 'ana.turn.exported';
 export const TURN_RECORD_EXPORT_FORMAT = 'ana-turn-record-export/1';
@@ -108,7 +112,10 @@ async function recordFor(
     sendError(res, 404, 'Turn record not found', null, 'TURN_RECORD_NOT_FOUND');
     return null;
   }
-  const record = await loadTurnRecord(requestPgClient(req), access.orgId, id);
+  const privateResult=await privateRecordFor(req,res,access,id);
+  if (privateResult.handled) return privateResult.record;
+  const q=requestPgClient(req);
+  const record = await loadTurnRecord(q, access.orgId, id);
   if (!record) {
     sendError(res, 404, 'Turn record not found', null, 'TURN_RECORD_NOT_FOUND');
     return null;
@@ -125,6 +132,28 @@ async function recordFor(
     'TURN_RECORD_NOT_YOURS',
   );
   return null;
+}
+
+async function privateRecordFor(req:Request,res:Response,access:Extract<Access,{ok:true}>,id:string) {
+  const q=requestPgClient(req);
+  const heads=await q.query('SELECT id,run_id,thread_id,schema_version FROM ana_turn_records WHERE organization_id=$1 AND id=$2',[access.orgId,id]);
+  const head=heads.rows[0];
+  const boundary=head?await readOwnerPrivateBoundary(q,{organizationId:access.orgId,runId:typeof head.run_id==='string'?head.run_id:null,
+    threadId:typeof head.thread_id==='string'?head.thread_id:null}):null;
+  if (boundary) {
+    res.locals.ownerPrivateCapture=true;
+    if (access.userId!==boundary.ownerUserId) {
+      sendError(res,403,'This private record belongs to its owner.',null,'OWNER_PRIVATE_RECORD_DENIED');return {handled:true as const,record:null};
+    }
+    await ownerPrivateReceiptForHistory(q,{organizationId:access.orgId,userId:access.userId,runId:boundary.runId,threadId:boundary.threadId});
+    if (head?.schema_version==='ana-owner-private-turn/1') {
+      const {loadOwnerPrivateTurnRecord}=await import('../../services/ana/turn-record-verify');
+      const privateRecord=await loadOwnerPrivateTurnRecord(q,access.orgId,id,access.userId);
+      if (!privateRecord || !privateRecord.verification.ok) throw new Error('PRIVATE_RECORD_UNVERIFIED');
+      decodedPrivateRecords.set(privateRecord.stored,privateRecord);return {handled:true as const,record:privateRecord.stored};
+    }
+  }
+  return {handled:false as const,record:null};
 }
 
 const metaOf = (r: StoredTurnRecord) => ({
@@ -197,12 +226,29 @@ async function listRecords(req: Request, res: Response) {
         limit: Number(req.query.limit) || 100,
         withServedBy: true,
       })
-    ).map(listedFor(access));
-    return sendSuccess(res, { records }, { count: records.length });
-  } catch (err: any) {
-    console.error('[turn-records] list failed:', err?.message);
+    );
+    const visible=await visibleRecordListings(req,res,access,records);
+    return sendSuccess(res, { records:visible }, { count: visible.length });
+  } catch {
+    console.error('[turn-records] list failed');
     return sendError(res, 500, 'The turn records could not be read', null, 'TURN_RECORDS_UNAVAILABLE');
   }
+}
+
+async function visibleRecordListings(req:Request,res:Response,access:Extract<Access,{ok:true}>,records:ListedTurnRecord[]) {
+  const visible=[];
+    for (const record of records) {
+      const q=requestPgClient(req);
+      const head=record.threadId?{thread_id:record.threadId,run_id:null}:(await q.query('SELECT thread_id,run_id FROM ana_turn_records WHERE organization_id=$1 AND id=$2',[access.orgId,record.id])).rows[0];
+      const boundary=head?await readOwnerPrivateBoundary(q,{organizationId:access.orgId,threadId:typeof head.thread_id==='string'?head.thread_id:null,
+        runId:typeof head.run_id==='string'?head.run_id:null}):null;
+      if (boundary) {
+        res.locals.ownerPrivateCapture=true;
+        if (access.userId!==boundary.ownerUserId) continue;
+        visible.push({...listedFor(access)(record),ownerPrivate:true,servedBy:undefined});
+      } else visible.push(listedFor(access)(record));
+    }
+  return visible;
 }
 
 /** GET /turn-records/:id — one record, re-verified from the stored bytes. */
@@ -212,6 +258,10 @@ async function readRecord(req: Request, res: Response) {
   try {
     const record = await recordFor(req, res, access);
     if (!record) return;
+    const privateRecord=decodedPrivateRecords.get(record);
+    if (privateRecord) return sendSuccess(res,{...metaOf(record),record:privateRecord.decoded.body,chain:record.chain,
+      ownerPrivate:true,decodedRecordSha256:privateRecord.decoded.recordSha256,verdict:privateRecordVerdict(privateRecord),ownerPrivateVerification:privateRecord.verification,
+      ...(req.query.texts==='1'||req.query.texts==='true'?{texts:Object.fromEntries(privateRecord.decoded.texts)}:{})});
     const verdict = verifyStoredTurnRecord(record);
     const withTexts = req.query.texts === '1' || req.query.texts === 'true';
     return sendSuccess(res, {
@@ -221,8 +271,8 @@ async function readRecord(req: Request, res: Response) {
       verdict,
       ...(withTexts ? { texts: Object.fromEntries(record.texts) } : {}),
     });
-  } catch (err: any) {
-    console.error('[turn-records] read failed:', err?.message);
+  } catch {
+    console.error('[turn-records] read failed');
     return sendError(res, 500, 'The turn record could not be read', null, 'TURN_RECORD_UNAVAILABLE');
   }
 }
@@ -238,6 +288,13 @@ async function readSummary(req: Request, res: Response) {
   try {
     const record = await recordFor(req, res, access, 'summary');
     if (!record) return;
+    const privateRecord=decodedPrivateRecords.get(record);
+    if (privateRecord) {
+      const inner={...record,recordText:privateRecord.decoded.recordText,recordSha256:privateRecord.decoded.recordSha256,texts:privateRecord.decoded.texts};
+      const summary=buildTurnSummary(inner,privateRecordVerdict(privateRecord));
+      return sendSuccess(res,{...summary,recordSha256:record.recordSha256,decodedRecordSha256:privateRecord.decoded.recordSha256,
+        ownerPrivate:true,ownerPrivateVerification:privateRecord.verification});
+    }
     const summary = buildTurnSummary(record, verifyStoredTurnRecord(record));
     // Who took each control, for this reader (DT3 review: an administrator's
     // cancel was shown as the asker's "You stopped the run").
@@ -247,10 +304,16 @@ async function readSummary(req: Request, res: Response) {
       readControlActorNames,
     );
     return sendSuccess(res, { ...summary, controls: summary.controls === null ? null : controls });
-  } catch (err: any) {
-    console.error('[turn-records] summary read failed:', err?.message);
+  } catch {
+    console.error('[turn-records] summary read failed');
     return sendError(res, 500, "The turn's summary could not be read", null, 'TURN_SUMMARY_UNAVAILABLE');
   }
+}
+
+function privateRecordVerdict(record:PrivateRecord) {
+  const proof=record.verification;
+  return {ok:proof.ok,recordIntact:proof.outerRecordIntact&&proof.innerRecordIntact,chainCarriesHash:proof.outerChainCarriesHash,
+    chainPayloadIntact:proof.outerChainPayloadIntact,textsIntact:proof.textsIntact,missingTexts:[],alteredTexts:[]};
 }
 
 /** GET /turn-records/:id/export — recorded on the chain first, then handed over. */
@@ -260,11 +323,14 @@ async function exportRecord(req: Request, res: Response) {
   let record: StoredTurnRecord | null;
   try {
     record = await recordFor(req, res, access);
-  } catch (err: any) {
-    console.error('[turn-records] export read failed:', err?.message);
+  } catch {
+    console.error('[turn-records] export read failed');
     return sendError(res, 500, 'The turn record could not be read', null, 'TURN_RECORD_UNAVAILABLE');
   }
   if (!record) return;
+
+  const privateRecord=decodedPrivateRecords.get(record);
+  if (privateRecord) return exportPrivateRecord(req,res,access,privateRecord);
 
   const verdict = verifyStoredTurnRecord(record);
   const tenantChain = await walkTenantChain(access.orgId);
@@ -300,6 +366,19 @@ async function exportRecord(req: Request, res: Response) {
       howToVerify: HOW_TO_VERIFY,
     },
   });
+}
+
+async function exportPrivateRecord(req:Request,res:Response,access:Extract<Access,{ok:true}>,privateRecord:PrivateRecord) {
+  const record=privateRecord.stored;
+  return sendAuditedExport(requestConnectable(req),res,{tenantId:access.orgId,userId:access.userId,action:TURN_RECORD_EXPORT_ACTION,
+    resourceType:TURN_RECORD_RESOURCE,resourceId:record.id,details:{recordSha256:record.recordSha256,
+      format:'ana-owner-private-turn-record-export/1',ownerPrivate:true,verdictOk:privateRecord.verification.ok},
+    filename:`ana-private-turn-${record.id}.json`,headers:{'X-Turn-Record-Sha256':record.recordSha256},refusalCode:'TURN_RECORD_EXPORT_NOT_RECORDED',
+    body:{format:'ana-owner-private-turn-record-export/1',record:{...metaOf(record),recordText:record.recordText},
+      ciphertextTexts:Object.fromEntries(record.texts),chain:record.chain,verification:privateRecord.verification,
+      decoded:{recordText:privateRecord.decoded.recordText,recordSha256:privateRecord.decoded.recordSha256,texts:Object.fromEntries(privateRecord.decoded.texts)},
+      howToVerify:['Hash the stored ciphertext container and ciphertextTexts independently from the decoded record and decoded texts.',
+        'The audit chain binds record.recordSha256 of the ciphertext container. It does not bind the decoded plaintext hash as if it were the stored hash.']}});
 }
 
 /** Register the turn-record read endpoints on the given router. */

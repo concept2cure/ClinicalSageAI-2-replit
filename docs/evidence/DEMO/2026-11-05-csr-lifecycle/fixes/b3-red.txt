@@ -1,0 +1,10 @@
+B3 red: the new tests in tests/routes/ectd-compile-spine.test.ts against trunk's server/routes/ectd-compile.ts.
+
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — nothing placed yet, said plainly > names the application number, the bound sponsor and its D-U-N-S first, and where to record them 18ms
+   → expected 'This program has no linked section-tr…' to match /application number/i
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — nothing placed yet, said plainly > says nothing internal: no store, id-space or contract wording in any error, finding or blocker 3ms
+   → expected '["This program has no linked section-…' not to match /legacy|numeric project|section-track…/i
+ × tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — nothing placed yet, said plainly > with the application and the applicant recorded, the first error says nothing is placed and where to place it 3ms
+   → expected 'This program has no linked section-tr…' to match /No document has been placed/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 34 skipped (37)

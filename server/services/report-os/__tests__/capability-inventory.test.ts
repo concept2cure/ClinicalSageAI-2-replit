@@ -5,9 +5,9 @@ import { REGIONAL_REPORT_TYPE_IDS } from '../regional/filing-types';
 import { reportCapabilityCounts, reportCapabilityInventory } from '../capability-inventory';
 
 describe('authoritative report completion inventory', () => {
-  it('reconciles all 61 generated registry definitions to 23 engine-backed, 5 prediction and 33 uncomputed types', () => {
+  it('reconciles all 61 generated registry definitions to 24 engine-backed, 5 prediction and 32 uncomputed types', () => {
     const inventory = reportCapabilityInventory();
-    expect(reportCapabilityCounts(inventory)).toEqual({ defined: 61, engineBacked: 23, predictionUnavailable: 5, uncomputed: 33 });
+    expect(reportCapabilityCounts(inventory)).toEqual({ defined: 61, engineBacked: 24, predictionUnavailable: 5, uncomputed: 32 });
     expect(new Set(inventory.map(row => row.typeId)).size).toBe(61);
     const seed = readFileSync('migrations/20260930_report_type_registry_seed.sql', 'utf8');
     for (const row of inventory) {

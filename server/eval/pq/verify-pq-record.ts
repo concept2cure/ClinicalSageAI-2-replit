@@ -1,17 +1,30 @@
 /** Offline, fail-closed claim verification against repository-owned evidence. */
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { PqProtocol, RegistryPqClaim, computeVerdict, servedModelMatches } from './pq-verdict.js';
 import { hasCompletedProviderFlags } from './output-integrity.js';
-import { extractionCriteriaProblems as sharedExtractionCriteriaProblems } from './pq-criteria.js';
+import { extractionCriteriaProblems as sharedExtractionCriteriaProblems, ragCriteriaProblems } from './pq-criteria.js';
 
 export interface CanonicalPqEvidence {
   protocolText: string;
   docBankText: string;
   ragGoldText: string;
   corpusManifestText: string;
+}
+
+export interface QualificationPreflight {
+  kind: 'qualification-prerequisites';
+  status: 'blocked' | 'ready_to_evaluate';
+  readyToEvaluate: boolean;
+  qualifiesModel: false;
+  blockers: Array<{ code: string; message: string; count?: number }>;
+  protocol: { id: string | null; status: string | null; approved: boolean };
+  counts: { generationTasks: number; extractionTasks: number; ragPositiveItems: number; ragNegativeControls: number;
+    ragRequiredPositiveItems: number | null; openGoldChecks: number; missingGoldEvidence: number;
+    sourceEntries: number; requiredSourceEntries: number; reviewedSources: number; publishers: number;
+    requiredPublisherTerms: number; reviewedPublisherTerms: number };
 }
 interface Rules { computeVerdict: typeof computeVerdict; servedModelMatches: typeof servedModelMatches }
 type Row = Record<string, unknown>;
@@ -24,16 +37,151 @@ const sameIds = (actual: unknown, expected: string[]) => Array.isArray(actual) &
 const validDate = (v: unknown) => nonempty(v) && /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))?$/.test(v) &&
   Number.isFinite(Date.parse(v)) && new Date(v.slice(0, 10)).toISOString().slice(0, 10) === v.slice(0, 10);
 
+/** Source modules and the shipped dist/index.js bundle share the nearest package root. */
+export function qualificationEvidenceRoot(): string {
+  let dir = path.dirname(fileURLToPath(import.meta.url));
+  for (;;) {
+    if (existsSync(path.join(dir, 'package.json'))) return realpathSync(dir);
+    const parent = path.dirname(dir);
+    if (parent === dir) throw new Error('Qualification package root is unavailable');
+    dir = parent;
+  }
+}
+
 export function readCanonicalPqEvidence(): CanonicalPqEvidence {
-  const dir = path.dirname(fileURLToPath(import.meta.url));
-  const read = (relative: string) => readFileSync(path.join(dir, relative), 'utf8');
-  return { protocolText: read('pq-protocol.json'), docBankText: read('../doc-quality/gold-tasks.json'),
-    ragGoldText: read('../rag/gold-dataset.json'), corpusManifestText: read('../rag/guidance-corpus-manifest.json') };
+  return { protocolText: readQualificationAsset('server/eval/pq/pq-protocol.json'),
+    docBankText: readQualificationAsset('server/eval/doc-quality/gold-tasks.json'),
+    ragGoldText: readQualificationAsset('server/eval/rag/gold-dataset.json'),
+    corpusManifestText: readQualificationAsset('server/eval/rag/guidance-corpus-manifest.json') };
+}
+
+/** Build assets contain only reviewed registry references and the canonical inputs, never a run directory. */
+export function readQualificationAsset(reference: string): string {
+  const root = qualificationEvidenceRoot();
+  if (path.isAbsolute(reference)) throw new Error('Repository-relative qualification evidence required');
+  const source = path.resolve(root, reference);
+  if (!source.startsWith(`${root}${path.sep}`)) throw new Error('Qualification reference leaves package');
+  const candidate = existsSync(source) ? source : path.resolve(root, 'dist/runtime-assets', reference);
+  const file = realpathSync(candidate);
+  if (!file.startsWith(`${root}${path.sep}`)) throw new Error('Qualification evidence leaves package');
+  return readFileSync(file, 'utf8');
+}
+
+function emptyQualificationPreflight(): QualificationPreflight {
+  return { kind: 'qualification-prerequisites', status: 'blocked', readyToEvaluate: false, qualifiesModel: false,
+    blockers: [], protocol: { id: null, status: null, approved: false },
+    counts: { generationTasks: 0, extractionTasks: 0, ragPositiveItems: 0, ragNegativeControls: 0,
+      ragRequiredPositiveItems: null, openGoldChecks: 0, missingGoldEvidence: 0, sourceEntries: 0, requiredSourceEntries: 0,
+      reviewedSources: 0, publishers: 0, requiredPublisherTerms: 0, reviewedPublisherTerms: 0 } };
+}
+
+function preflightTaskBank(protocol: PqProtocol, bank: Row, report: QualificationPreflight): void {
+  const tasks: Row[] = Array.isArray(bank.tasks) ? bank.tasks.filter(object) : [];
+  for (const phase of ['generation', 'extraction'] as const) {
+    const component = protocol.components[phase];
+    if (!component?.required) continue;
+    const runnable = tasks.filter(task => task.taskType === phase && nonempty(task.input));
+    report.counts[phase === 'generation' ? 'generationTasks' : 'extractionTasks'] = runnable.length;
+    const floor = component.criteria?.minTasksPerDocType;
+    const perType = new Map<string, number>();
+    for (const task of runnable) perType.set(String(task.docType), (perType.get(String(task.docType)) ?? 0) + 1);
+    if (!Number.isSafeInteger(floor) || floor < 1 || !runnable.length || [...perType.values()].some(count => count < floor)) {
+      report.blockers.push({ code: 'DOCUMENT_SAMPLE_SHORTFALL', message: `The ${phase} bank does not meet its approved per-document sample floor.` });
+    }
+    preflightTaskCriteria(phase, component.criteria, report);
+  }
+}
+
+function preflightTaskCriteria(phase: 'generation' | 'extraction', criteria: unknown, report: QualificationPreflight): void {
+  if (phase === 'extraction' && sharedExtractionCriteriaProblems(object(criteria) ? criteria : undefined).length) {
+    report.blockers.push({ code: 'EXTRACTION_CRITERIA_INVALID', message: 'Extraction acceptance criteria are incomplete or malformed.' });
+  }
+  if (phase === 'generation' && (!object(criteria) || !unit(criteria.minSectionCoverage) ||
+      typeof criteria.maxForbiddenHits !== 'number' || !Number.isSafeInteger(criteria.maxForbiddenHits) || criteria.maxForbiddenHits < 0)) {
+    report.blockers.push({ code: 'GENERATION_CRITERIA_INVALID', message: 'Generation acceptance criteria are incomplete or malformed.' });
+  }
+}
+
+function preflightSourceReview(report: QualificationPreflight): void {
+  const count = report.counts;
+  if (!count.requiredSourceEntries || count.reviewedSources < count.requiredSourceEntries) report.blockers.push({ code: 'SOURCE_REVIEW_INCOMPLETE', message: 'Required source versions, hashes or provenance remain unverified.', count: count.requiredSourceEntries - count.reviewedSources });
+  if (!count.requiredPublisherTerms || count.reviewedPublisherTerms < count.requiredPublisherTerms) report.blockers.push({ code: 'PUBLISHER_TERMS_UNVERIFIED', message: 'Reuse terms for required publishers need verification.', count: count.requiredPublisherTerms - count.reviewedPublisherTerms });
+}
+
+function preflightRequiredSources(positives: Row[], sources: Row[], report: QualificationPreflight): Row[] {
+  const keys = new Set(positives.flatMap(item => Array.isArray(item.expectedSourceKeys) ? item.expectedSourceKeys.filter(nonempty) : []));
+  const required = sources.filter(source => keys.has(`${source.document_code}@${source.version}`));
+  if (!keys.size || required.length !== keys.size || new Set(required.map(source => `${source.document_code}@${source.version}`)).size !== keys.size) {
+    report.blockers.push({ code: 'SOURCE_IDENTITY_UNRESOLVED', message: 'Gold source keys do not resolve to distinct canonical source versions.' });
+  }
+  return required;
+}
+
+function preflightPublisherCounts(required: Row[], manifest: Row) {
+  const publishers: Row = object(manifest.publishers) ? manifest.publishers : {};
+  const names = new Set(required.map(source => object(source.redistribution) ? source.redistribution.termsOf : null).filter(nonempty));
+  const reviewed = [...names].map(name => publishers[name]).filter(object)
+    .filter(publisher => publisher.termsVerified === true && nonempty(publisher.terms) && nonempty(publisher.termsUrl));
+  return { publishers: Object.keys(publishers).length, requiredPublisherTerms: names.size, reviewedPublisherTerms: reviewed.length };
+}
+
+function preflightRagBank(protocol: PqProtocol, gold: Row, manifest: Row, report: QualificationPreflight): void {
+  const component = protocol.components.rag;
+  if (!component?.required) return;
+  const items: Row[] = Array.isArray(gold.items) ? gold.items.filter(object) : [];
+  const positives = items.filter(item => !Array.isArray(item.tags) || !item.tags.includes('negative-control'));
+  const sources: Row[] = Array.isArray(manifest.entries) ? manifest.entries.filter(object) : [];
+  const requiredSources = preflightRequiredSources(positives, sources, report);
+  const required = component.criteria?.minScoredItems;
+  Object.assign(report.counts, { ragPositiveItems: positives.length, ragNegativeControls: items.length - positives.length,
+    ragRequiredPositiveItems: Number.isSafeInteger(required) ? required : null,
+    openGoldChecks: positives.filter(item => Array.isArray(item.openChecks) && item.openChecks.length).length,
+    missingGoldEvidence: positives.filter(item => !reviewedGold(item, { keysProvisional: false })).length,
+    sourceEntries: sources.length, requiredSourceEntries: requiredSources.length,
+    reviewedSources: requiredSources.filter(source => reviewedSource(source, manifest)).length,
+    ...preflightPublisherCounts(requiredSources, manifest) });
+  if (ragCriteriaProblems(component.criteria).length) report.blockers.push({ code: 'RAG_CRITERIA_INVALID', message: 'RAG acceptance criteria are incomplete or malformed.' });
+  if (!Number.isSafeInteger(required) || positives.length < required) report.blockers.push({ code: 'RAG_SAMPLE_SHORTFALL', message: 'The positive RAG bank is below its approved sample floor.', count: positives.length });
+  if (gold.keysProvisional !== false) report.blockers.push({ code: 'RAG_KEYS_PROVISIONAL', message: 'Official-source version keys still require review.' });
+  if (report.counts.openGoldChecks) report.blockers.push({ code: 'RAG_GOLD_OPEN_CHECKS', message: 'Gold answers retain unresolved official-text checks.', count: report.counts.openGoldChecks });
+  if (report.counts.missingGoldEvidence) report.blockers.push({ code: 'RAG_GOLD_EVIDENCE_MISSING', message: 'Positive gold items lack reviewed source keys, sections or quotations.', count: report.counts.missingGoldEvidence });
+  preflightSourceReview(report);
+}
+
+function preflightProtocol(protocol: PqProtocol, report: QualificationPreflight): void {
+  report.protocol = { id: nonempty(protocol.protocolId) ? protocol.protocolId : null, status: nonempty(protocol.status) ? protocol.status : null,
+    approved: protocol.status === 'approved' && nonempty(protocol.approvedBy) && validDate(protocol.approvedOn) };
+  if (!report.protocol.approved) report.blockers.push({ code: 'PROTOCOL_NOT_APPROVED', message: 'The responsible owner has not approved the canonical qualification protocol.' });
+  if (!object(protocol.components.generation) || protocol.components.generation.required !== true) report.blockers.push({ code: 'GENERATION_COMPONENT_MISSING', message: 'The canonical drafting protocol does not declare its required generation component.' });
+  for (const [name, component] of Object.entries(protocol.components)) {
+    if (!object(component) || !component.required) continue;
+    if (!component.executable || !['generation', 'extraction', 'rag'].includes(name)) report.blockers.push({ code: 'REQUIRED_COMPONENT_UNAVAILABLE', message: 'A required qualification component cannot be executed and measured.' });
+  }
+}
+
+/** Offline prerequisite diagnostics. Ready means evaluation may begin; it never establishes a model PQ PASS. */
+export function qualificationPreflight(suppliedEvidence?: CanonicalPqEvidence): QualificationPreflight {
+  const report = emptyQualificationPreflight();
+  try {
+    const evidence = suppliedEvidence ?? readCanonicalPqEvidence();
+    const protocol: unknown = JSON.parse(evidence.protocolText);
+    const bank: unknown = JSON.parse(evidence.docBankText);
+    const gold: unknown = JSON.parse(evidence.ragGoldText);
+    const manifest: unknown = JSON.parse(evidence.corpusManifestText);
+    if (![protocol, bank, gold, manifest].every(object) || !object((protocol as Row).components)) throw new Error('Invalid canonical evidence');
+    const p = protocol as unknown as PqProtocol;
+    preflightProtocol(p, report);
+    preflightTaskBank(p, bank as Row, report);
+    preflightRagBank(p, gold as Row, manifest as Row, report);
+  } catch { report.blockers.push({ code: 'CANONICAL_EVIDENCE_UNAVAILABLE', message: 'Canonical qualification inputs are unavailable or malformed.' }); }
+  report.readyToEvaluate = report.blockers.length === 0;
+  report.status = report.readyToEvaluate ? 'ready_to_evaluate' : 'blocked';
+  return report;
 }
 
 function taskAttributionValid(row: Row, entry: RegistryPqClaim, rules: Rules): boolean {
   return row.servedModelVerified === true && typeof row.servedModel === 'string' &&
-    rules.servedModelMatches(row.servedModel, entry.pinnedVersion) && row.servedProvider === entry.provider;
+    (entry.pq.pinKind ? row.servedModel === entry.pinnedVersion : rules.servedModelMatches(row.servedModel, entry.pinnedVersion)) && row.servedProvider === entry.provider;
 }
 
 function taskMetricProblems(row: Row, phase: 'generation' | 'extraction'): string[] {
@@ -130,7 +278,14 @@ function ragCanonicalProblems(rag: unknown, gold: Row, manifest: Row, evidence: 
       attribution.generator.pinnedVersion !== entry.pinnedVersion || attribution.generator.provider !== entry.provider) problems.push('RAG generator is not the registry model being qualified');
   for (const item of gold.items) problems.push(...ragGoldProblems(item, rag.items, gold, manifest));
   for (const row of rag.items) problems.push(...capturedRagProblems(row, rag.scope));
+  problems.push(...strictRagPinProblems(rag.items, entry));
   return problems;
+}
+
+function strictRagPinProblems(items: Row[], entry: RegistryPqClaim): string[] {
+  return entry.pq.pinKind && items.some(row => row.generatorCalled === true &&
+    (row.servedModel !== entry.pinnedVersion || row.servedProvider !== entry.provider))
+    ? ['strict RAG output differs from the immutable registry pin'] : [];
 }
 
 function recordHeaderProblems(rec: Row, entry: RegistryPqClaim): string[] {
@@ -138,6 +293,9 @@ function recordHeaderProblems(rec: Row, entry: RegistryPqClaim): string[] {
   if (rec.modelId !== entry.id) problems.push(`record is for "${String(rec.modelId)}"`);
   if (rec.pinnedVersion !== entry.pinnedVersion) problems.push(`record qualified ${String(rec.pinnedVersion)}; re-qualification is owed`);
   if (!nonempty(entry.provider) || rec.provider !== entry.provider) problems.push('record provider is missing or differs from the registry');
+  if (entry.pq.intendedUses !== undefined && (!entry.pq.intendedUses.length ||
+      new Set(entry.pq.intendedUses).size !== entry.pq.intendedUses.length ||
+      !sameIds(rec.intendedUses, [...entry.pq.intendedUses]))) problems.push('record intended uses are missing, duplicated or differ from the registry');
   if (entry.pq.status === 'failed') {
     if (rec.verdict !== 'FAIL') problems.push(`claims failed; the record says ${String(rec.verdict)}`);
     return problems;

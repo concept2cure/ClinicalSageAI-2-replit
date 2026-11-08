@@ -6,13 +6,15 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
-import { useAuthoringHandoff, openSavedAuthoring, type AuthoringHandoffResult } from '../authoringHandoff';
+import { useAuthoringHandoff, openSavedAuthoring, statisticalOriginMatches, type AuthoringHandoffResult, type StatisticalDraftHandoff } from '../authoringHandoff';
 import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { consumeNavParams } from '../navParams';
-import { readShellProject, shellProgramId, type ShellProject } from '../shellProject';
+import { captureShellProjectGuard, readShellProject, shellProgramId, type ShellProject } from '../shellProject';
+import { authService } from '@/services/portal/authService';
+import { stableStringify } from '@shared/canonical-json';
 import { setEditorTarget } from '../editorTarget';
 import { isDeviceFamily } from '@shared/constants/domain/product-types';
 import {
@@ -35,6 +37,7 @@ import {
   useDesignAssessment,
   verdictTone,
   verdictWord,
+  type DesignAssessment,
 } from './biostatBridge';
 import { statusWords } from '../editor/CanvasDocumentList';
 
@@ -242,7 +245,7 @@ interface GovernedDocumentResponse {
   content: string;
   version?: number;
   status?: string;
-  provenance?: { generatedAt?: string; engineVersion?: string };
+  provenance?: { generatedAt?: string; engineVersion?: string; computationInputs?: EngineInput; [key: string]: unknown };
 }
 
 /** A statistical document the engine can generate, as this screen offers it. */
@@ -379,17 +382,42 @@ function defaultPresetFor(project: ShellProject | null): string {
    the example) and document type when the text has not changed. The hand-off's
    own lane remembers only its LAST payload, so saving the rationale, then the
    SAP, then the rationale again minted a third document; this remembers each. */
-interface SavedWorkingDoc { docId: string; programId: string; code: string; content: string; title: string }
+interface SavedWorkingDoc { docId: string; programId: string; code: string; content: string; title: string; draft: StatisticalDraftHandoff; actor: string }
+const statisticalActor = () => `${authService.getUser()?.organizationId ?? ''}:${authService.getUser()?.id ?? ''}`;
 
-/** Whether the copy saved earlier is still readable — the same document read
- *  the hand-off's own recovery confirms with (authoringHandoffRecovery.ts). A
- *  copy someone deleted, or a read that fails, is never "reused": a new one is
- *  written instead. */
-async function stillSaved(prior: SavedWorkingDoc): Promise<boolean> {
+type SavedStatisticalResponse = { success?: unknown; document?: { id?: unknown; client_program_id?: unknown;
+  provenance?: { statisticalSource?: unknown } } } | null;
+
+function savedStatisticalDocumentMatches(body: SavedStatisticalResponse, prior: SavedWorkingDoc): boolean {
+  return body?.success === true && body.document?.id === prior.docId && body.document.client_program_id === prior.programId
+    && statisticalOriginMatches(body.document.provenance?.statisticalSource, prior.draft, prior.programId);
+}
+
+function statisticalDraftFromPreview(documentType: string, input: EngineInput, preview: GovernedDocumentResponse,
+  source: { isExample: boolean; exampleName: string; loadedDesign: DesignAssessment | null }): StatisticalDraftHandoff | undefined {
+  const { isExample, exampleName, loadedDesign } = source;
+  let basis: StatisticalDraftHandoff['basis'];
+  if (isExample) basis = { kind: 'worked_example', label: exampleName };
+  else if (loadedDesign?.provenance?.inputsSha256) {
+    basis = { kind: 'study_design', studyId: loadedDesign.studyId, designInputsSha256: loadedDesign.provenance.inputsSha256,
+      ...(loadedDesign.sizingRun?.state === 'found' ? { sizingRunId: loadedDesign.sizingRun.runId } : {}) };
+  } else return undefined;
+  return { documentType, input: preview.provenance?.computationInputs ?? input, expectedMarkdown: preview.content, basis };
+}
+
+/** Recheck the retained copy's exact statistical basis and section before
+ * reuse. An unavailable or changed record stops the action; it never silently
+ * creates another document after losing confirmation of this one. */
+async function stillSaved(prior: SavedWorkingDoc, current: () => boolean): Promise<boolean> {
   try {
     const res = await apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(prior.docId)}`);
-    const body = (await res.json().catch(() => null)) as { success?: unknown; document?: { id?: unknown } } | null;
-    return res.ok && body?.success === true && body.document?.id === prior.docId;
+    if (!current()) return false;
+    const body = (await res.json().catch(() => null)) as SavedStatisticalResponse;
+    if (!current() || !res.ok || !savedStatisticalDocumentMatches(body, prior)) return false;
+    const response = await apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(prior.docId)}/sections`);
+    const sections = await response.json().catch(() => null);
+    return current() && response.ok && sections?.success === true && Array.isArray(sections.sections)
+      && sections.sections.some((s: { doc_id?: unknown; code?: unknown }) => s.doc_id === prior.docId && s.code === prior.code);
   } catch {
     return false;
   }
@@ -432,7 +460,8 @@ type EngineState =
 type DocState =
   | { kind: 'idle' }
   | { kind: 'generating' }
-  | { kind: 'ready'; markdown: string; title: string; version?: number; status?: string; engineVersion?: string }
+  | { kind: 'ready'; markdown: string; title: string; version?: number; status?: string; engineVersion?: string;
+      provenance?: GovernedDocumentResponse['provenance']; statisticalDraft?: StatisticalDraftHandoff }
   | { kind: 'failed'; message: string };
 
 /**
@@ -649,10 +678,6 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       const r = await postEngine<GovernedDocumentResponse>('/api/ana-biostats/document', {
         documentType: docDef.id,
         input: ready.input,
-        computation: ready.computation,
-        judgment: ready.judgment,
-        domainAdaptation: ready.domain,
-        regulatoryCustomization: ready.regulatory,
       });
       if (cancelled || gen !== docGeneration.current) return;
       if (!r.ok) {
@@ -670,10 +695,12 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         version: r.data.version,
         status: r.data.status,
         engineVersion: r.data.provenance?.engineVersion,
+        provenance: r.data.provenance,
+        statisticalDraft: statisticalDraftFromPreview(docDef.id, ready.input, r.data, { isExample, exampleName, loadedDesign }),
       });
     })();
     return () => { cancelled = true; };
-  }, [ready, docDef]);
+  }, [ready, docDef, isExample, exampleName, loadedDesign]);
 
   const md = doc.kind === 'ready' ? doc.markdown : '';
   const html = useMemo(() => (md ? renderSafeMarkdown(md) : ''), [md]);
@@ -708,6 +735,8 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const opening = handoff.state?.phase === 'pending';
   const attaching = opening;
   const savedWorking = useRef(new Map<string, SavedWorkingDoc>());
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
   /* What reaches the editor is the document as the page renders it — HTML, the
      same `html` the preview shows. Until 2026-10-31 this sent `md`, the engine's
@@ -718,32 +747,39 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
      example can never sit in a project looking like that project's document. */
   const savedTitle = isExample ? `${docTitle} — worked example: ${exampleName}` : docTitle;
   const docCode = docDef?.id || 'statistical_document';
+  const statisticalDraft = doc.kind === 'ready' ? doc.statisticalDraft : undefined;
   const savedKey = `${shellProgramId() ?? ''}|${isExample ? 'example:' + preset : 'design:' + (selectedStudyId ?? '')}|${docType}`;
   /* Synchronous when there is nothing to reuse, so a first click reaches the
      writer in the same tick and the hand-off's one creation lane still blocks
      a second, simultaneous click. */
   const savedCandidate = (): SavedWorkingDoc | null => {
     const prior = savedWorking.current.get(savedKey);
-    return prior && prior.content === html && prior.programId === shellProgramId() ? prior : null;
+    return prior && prior.content === html && prior.programId === shellProgramId() && prior.actor === statisticalActor()
+      && stableStringify(prior.draft) === stableStringify(statisticalDraft) ? prior : null;
   };
   const confirmed = async (prior: SavedWorkingDoc): Promise<SavedWorkingDoc | null> => {
-    if (await stillSaved(prior)) return prior;
-    savedWorking.current.delete(savedKey);
+    const project = captureShellProjectGuard(), session = authService.captureSessionReadGuard(), actor = statisticalActor();
+    const current = () => mounted.current && project() && session.sameRevision() && statisticalActor() === actor;
+    if (await stillSaved(prior, current)) return prior;
+    if (current()) fireToast('Could not confirm the existing working document and its statistical basis. Check that document before requesting another copy.', 'error');
     return null;
   };
   const remember = (r: AuthoringHandoffResult) => {
-    if (r.ok) savedWorking.current.set(savedKey, { docId: r.docId, programId: r.programId, code: r.code, content: html, title: savedTitle });
+    if (r.ok && statisticalDraft) savedWorking.current.set(savedKey, { docId: r.docId, programId: r.programId, code: r.code,
+      content: html, title: savedTitle, draft: statisticalDraft, actor: statisticalActor() });
   };
   const write = () => saveToAuthoring({
     // Statistical documentation files under Module 5; the server would default to M3.
-    title: savedTitle, module: filingModule, code: docCode, content: html, subject: 'the document',
+    title: savedTitle, module: filingModule, code: docCode, content: html, subject: 'the document', statisticalDraft,
   });
 
   const openEditor = async () => {
     if (handoff.blocked) return;
     if (!html.trim()) { fireToast('Nothing to open yet — the engine has not returned the document.', 'error'); return; }
+    if (!statisticalDraft) { fireToast('Reload the study design before saving its statistical basis.', 'error'); return; }
     const candidate = savedCandidate();
     const prior = candidate ? await confirmed(candidate) : null;
+    if (candidate && !prior) return;
     if (prior && onNav) {
       // The copy saved earlier this session, unchanged: open it, write nothing.
       setEditorTarget({ docType: null, docId: prior.docId, programId: prior.programId, code: prior.code });
@@ -751,9 +787,8 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       return;
     }
     const r = await write();
-    // Navigate only on a clean write. On a half-failure the document exists
-    // but is empty, so going there would show the user an editor without
-    // their work — stay put and say so.
+    // Navigate only after the complete atomic document/section/source receipt.
+    // An uncertain result stays here for the existing exact-record recovery.
     if (!r.isCurrent()) return;
     if (!r.ok) { fireToast(r.message, 'error'); return; }
     remember(r);
@@ -767,8 +802,10 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const saveWorking = async () => {
     if (handoff.blocked) return;
     if (!html.trim()) { fireToast('Nothing to save yet — the engine has not returned the document.', 'error'); return; }
+    if (!statisticalDraft) { fireToast('Reload the study design before saving its statistical basis.', 'error'); return; }
     const candidate = savedCandidate();
     const prior = candidate ? await confirmed(candidate) : null;
+    if (candidate && !prior) return;
     if (prior) {
       fireToast(`Already saved as the working document “${prior.title}”. Nothing new was written — open it from Document authoring.`);
       return;

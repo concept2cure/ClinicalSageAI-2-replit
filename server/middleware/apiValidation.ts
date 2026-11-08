@@ -40,7 +40,7 @@ export interface ValidationErrorResponse {
 function formatZodErrors(error: ZodError): ValidationErrorResponse {
   return {
     error: 'Validation Error',
-    details: error.errors.map(err => ({
+    details: error.issues.map(err => ({
       field: err.path.join('.'),
       message: err.message,
       code: err.code,
@@ -58,7 +58,7 @@ export function validate(options: ValidationOptions) {
       if (options.body && req.body) {
         const result = options.body.safeParse(req.body);
         if (!result.success) {
-          logger.warn('Body validation failed', { errors: result.error.errors });
+          logger.warn('Body validation failed', { errors: result.error.issues });
           res.status(400).json(formatZodErrors(result.error));
           return;
         }
@@ -69,7 +69,7 @@ export function validate(options: ValidationOptions) {
       if (options.query && req.query) {
         const result = options.query.safeParse(req.query);
         if (!result.success) {
-          logger.warn('Query validation failed', { errors: result.error.errors });
+          logger.warn('Query validation failed', { errors: result.error.issues });
           res.status(400).json(formatZodErrors(result.error));
           return;
         }
@@ -81,7 +81,7 @@ export function validate(options: ValidationOptions) {
       if (options.params && req.params) {
         const result = options.params.safeParse(req.params);
         if (!result.success) {
-          logger.warn('Params validation failed', { errors: result.error.errors });
+          logger.warn('Params validation failed', { errors: result.error.issues });
           res.status(400).json(formatZodErrors(result.error));
           return;
         }
@@ -101,7 +101,7 @@ export function validate(options: ValidationOptions) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // UUID validation
-export const uuidSchema = z.string().uuid();
+export const uuidSchema = z.string().guid();
 
 // Pagination schema
 export const paginationSchema = z.object({
@@ -120,7 +120,7 @@ export const dateRangeSchema = z.object({
 // Search schema
 export const searchSchema = z.object({
   query: z.string().min(1).max(500),
-  filters: z.record(z.string()).optional(),
+  filters: z.record(z.string(), z.string()).optional(),
 });
 
 // ID param schema
@@ -138,7 +138,7 @@ export const createDocumentSchema = z.object({
   name: z.string().min(1).max(255),
   category: z.string().min(1),
   content: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   tags: z.array(z.string()).optional(),
 });
 
@@ -164,7 +164,7 @@ export const createDeviceProfileSchema = z.object({
 // Submission schemas
 export const createSubmissionSchema = z.object({
   type: z.enum(['510k', 'PMA', 'De_Novo', 'IND', 'NDA', 'BLA']),
-  projectId: z.string().uuid(),
+  projectId: z.string().guid(),
   targetAgency: z.string().min(1),
   targetDate: z.coerce.date().optional(),
 });

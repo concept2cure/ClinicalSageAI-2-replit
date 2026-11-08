@@ -256,6 +256,22 @@ export function productTypeForFilingType(
   return laneRefinedProduct(base, key, lane);
 }
 
+/**
+ * Does this program file as a device or diagnostic? Read from its own record:
+ * a device-family product type, or a filing type that implies one (a 510(k), a
+ * PMA, a regional device application). A drug or biologic IND, NDA or BLA does
+ * not. The one rule for a program record: the market refusal
+ * (server/services/c2c/add-project-market.ts), Project home and Submission
+ * Center's device filings read it.
+ */
+export function isDeviceOrDiagnosticProgram(
+  program: { product_type?: string | null; program_type?: string | null } | null | undefined,
+): boolean {
+  if (!program) return false;
+  return isDeviceFamily(program.product_type) || isDeviceFamily(productTypeForFilingType(program.program_type))
+    || regionalDeviceApplicationClassOf(program.program_type) !== null;
+}
+
 /** Every filing type this vocabulary can classify. */
 export function listClassifiableFilingTypes(): string[] {
   return [...new Set([...Object.keys(FILING_TYPE_PRODUCT_CLASS), ...regionalDeviceApplicationClassTypes()])];

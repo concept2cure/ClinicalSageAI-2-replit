@@ -103,7 +103,7 @@ export function requireAuthedOrgId(req: Request, res: Response): RequireOk | Req
  * (withoutOrgId). Moved here from server/services/cmc/register-writes.ts, which
  * re-exports both, so every router reaches the same pair.
  */
-export function withoutTenantKey<S extends z.AnyZodObject>(schema: S): S {
+export function withoutTenantKey<S extends z.ZodObject>(schema: S): S {
   return schema.omit({ organizationId: true } as never) as unknown as S;
 }
 

@@ -1,0 +1,22 @@
+[
+  "client/src/concept2cure/v2/__tests__/authoringCreationActorOwnership.test.tsx",
+  "client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx",
+  "client/src/concept2cure/v2/__tests__/authoringTemplatePickerAssembly.test.tsx",
+  "client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx",
+  "client/src/concept2cure/v2/__tests__/indBriefingBookStart.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/useScopedDocuments.test.tsx",
+  "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+  "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts",
+  "server/routes/__tests__/authoringCrfSourceImport.pglite.integration.test.ts",
+  "server/routes/__tests__/authoringCsrImportIntoDocument.pglite.integration.test.ts",
+  "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+  "server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts",
+  "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts",
+  "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts",
+  "server/services/authoring/__tests__/authoring-program-access.pglite.test.ts",
+  "server/services/authoring/__tests__/csr-reviewer-standing.test.ts",
+  "server/services/csr/__tests__/csr-study-data-list.pglite.test.ts",
+  "server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts"
+]

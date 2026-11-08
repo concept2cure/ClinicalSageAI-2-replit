@@ -1,0 +1,989 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts
+{
+  "timestamp": "2026-11-06T20:42:13.597Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:13.602Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts
+{
+  "timestamp": "2026-11-06T20:42:13.602Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first
+{
+  "timestamp": "2026-11-06T20:42:14.571Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.572Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over
+{
+  "timestamp": "2026-11-06T20:42:14.585Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.586Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails
+{
+  "timestamp": "2026-11-06T20:42:14.595Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.600Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails
+{
+  "timestamp": "2026-11-06T20:42:14.609Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5-5 failed: Model provider request failed (HTTP 400).",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails
+[AI Gateway Audit] ✓ anthropic/claude-opus-5 task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted
+{
+  "timestamp": "2026-11-06T20:42:14.613Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.614Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 1ms org=- user=- caller=- req=a81a7e42-ca69-4388-b2a4-e2aa5172701c
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served
+{
+  "timestamp": "2026-11-06T20:42:14.621Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.621Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served
+[AI Gateway Audit] ✓ anthropic/claude-opus-5 task=document_drafting tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why
+{
+  "timestamp": "2026-11-06T20:42:14.630Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.633Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why
+{
+  "timestamp": "2026-11-06T20:42:14.654Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/connectors/connector-registry.ts:342:26",
+    "queryPreview": "SELECT connector_id, credentials, is_valid FROM connector_credentials WHERE organization_id = $1 AND connector_id IN ('llm_anthropic','llm_openai','llm_moons...",
+    "enforcement": "off"
+  }
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 21ms org=42 user=- caller=- req=eaa5608e-a517-4249-a693-f2a08b6c0af3
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first 21ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over 7ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails 21ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted 6ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served 9ms
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to
+{
+  "timestamp": "2026-11-06T20:42:14.670Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.673Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 1ms org=- user=- caller=- req=6109f18b-44c0-4a76-b0d7-6224003b2a81
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no such row names no row
+{
+  "timestamp": "2026-11-06T20:42:14.680Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.681Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no such row names no row
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 1ms org=- user=- caller=- req=1d63207c-37be-4cac-8eee-65406fcbd494
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no such row names no row
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > control: a known row whose provider is not configured still falls through to strategy, as before
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > control: a known row whose provider is not configured still falls through to strategy, as before
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > explicit: refused in production, naming it
+{
+  "timestamp": "2026-11-06T20:42:14.687Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.688Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.688Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > explicit: refused in production, naming it
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: cost_optimized chat (local-default costs nothing) is not served by it in production
+{
+  "timestamp": "2026-11-06T20:42:14.696Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.697Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.697Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: cost_optimized chat (local-default costs nothing) is not served by it in production
+{
+  "timestamp": "2026-11-06T20:42:14.699Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/usage-recorder.ts:104:16",
+    "queryPreview": "INSERT INTO api_usage_logs (organization_id, user_id, module, endpoint, model, request_count, tokens_used, cost_cents, metadata, created_at) VALUES ($1, $2, ...",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: cost_optimized chat (local-default costs nothing) is not served by it in production
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: a tenant allowed only its own models is refused in production, not served a placeholder
+{
+  "timestamp": "2026-11-06T20:42:14.702Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.703Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.703Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: a tenant allowed only its own models is refused in production, not served a placeholder
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > fallback: it is not on the production ladder
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before
+{
+  "timestamp": "2026-11-06T20:42:14.712Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.712Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before
+[AI Gateway Audit] ✓ local/local-default task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: a local entry that pins a weights digest is selectable in production
+{
+  "timestamp": "2026-11-06T20:42:14.715Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.716Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.716Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: a local entry that pins a weights digest is selectable in production
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > serves verified evidence and exact provider version (local=false)
+{
+  "timestamp": "2026-11-06T20:42:14.722Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.722Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > serves verified evidence and exact provider version (local=false)
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5-20261101 task=document_drafting tokens=2 1ms org=- user=- caller=- req=unit-response
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > serves verified evidence and exact provider version (local=false)
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > serves verified evidence and exact provider version (local=true)
+{
+  "timestamp": "2026-11-06T20:42:14.729Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.729Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > serves verified evidence and exact provider version (local=true)
+[AI Gateway Audit] ✓ local/weights@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa task=document_drafting tokens=2 1ms org=- user=- caller=- req=unit-response
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > serves verified evidence and exact provider version (local=true)
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered id before reading any caller path or dispatching
+{
+  "timestamp": "2026-11-06T20:42:14.734Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.735Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered id before reading any caller path or dispatching
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 0ms org=- user=- caller=- req=3cf4c017-0439-43d8-a8ba-c44ab909046b
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered id before reading any caller path or dispatching
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered provider before reading any caller path or dispatching
+{
+  "timestamp": "2026-11-06T20:42:14.737Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.738Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered provider before reading any caller path or dispatching
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 1ms org=- user=- caller=- req=ce6ef6a8-e036-49b9-8471-65e2ece7e5df
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered provider before reading any caller path or dispatching
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pinnedVersion before reading any caller path or dispatching
+{
+  "timestamp": "2026-11-06T20:42:14.741Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.741Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pinnedVersion before reading any caller path or dispatching
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 0ms org=- user=- caller=- req=7227b141-e3b5-4bf5-90a3-2b10a086e32f
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pinnedVersion before reading any caller path or dispatching
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered intendedUse before reading any caller path or dispatching
+{
+  "timestamp": "2026-11-06T20:42:14.745Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.745Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered intendedUse before reading any caller path or dispatching
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 0ms org=- user=- caller=- req=88f948ed-9c52-4e76-9070-43fb9971814a
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered intendedUse before reading any caller path or dispatching
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pqReference before reading any caller path or dispatching
+{
+  "timestamp": "2026-11-06T20:42:14.748Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.749Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pqReference before reading any caller path or dispatching
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 1ms org=- user=- caller=- req=e446fe3b-00aa-487f-a723-8de5ba944810
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pqReference before reading any caller path or dispatching
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pqSha256 before reading any caller path or dispatching
+{
+  "timestamp": "2026-11-06T20:42:14.756Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.756Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pqSha256 before reading any caller path or dispatching
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 0ms org=- user=- caller=- req=33c95a96-7933-47fd-92b2-f3c512b089bc
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pqSha256 before reading any caller path or dispatching
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin null without a default
+{
+  "timestamp": "2026-11-06T20:42:14.760Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.760Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin null without a default
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 1ms org=- user=- caller=- req=358dc167-9c98-45e2-b236-122c0d86503c
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin null without a default
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why 36ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to 13ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no such row names no row 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > control: a known row whose provider is not configured still falls through to strategy, as before 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > explicit: refused in production, naming it 9ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: cost_optimized chat (local-default costs nothing) is not served by it in production 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: a tenant allowed only its own models is refused in production, not served a placeholder 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > fallback: it is not on the production ladder 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: a local entry that pins a weights digest is selectable in production 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > serves verified evidence and exact provider version (local=false) 8ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > serves verified evidence and exact provider version (local=true) 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered id before reading any caller path or dispatching 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered provider before reading any caller path or dispatching 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pinnedVersion before reading any caller path or dispatching 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered intendedUse before reading any caller path or dispatching 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pqReference before reading any caller path or dispatching 7ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pqSha256 before reading any caller path or dispatching 4ms
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin {} without a default
+{
+  "timestamp": "2026-11-06T20:42:14.767Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.767Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin {} without a default
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 0ms org=- user=- caller=- req=b162a8a8-5a33-4662-b5d4-1c68be656f62
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin {} without a default
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin {"id":"only-id"} without a default
+{
+  "timestamp": "2026-11-06T20:42:14.771Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.772Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin {"id":"only-id"} without a default
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 1ms org=- user=- caller=- req=9b2b43b6-c11b-4aa9-82d0-2f326266ac47
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin {"id":"only-id"} without a default
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not substitute for an disabled pin
+{
+  "timestamp": "2026-11-06T20:42:14.775Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.775Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not substitute for an disabled pin
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 1ms org=- user=- caller=- req=f7c283a1-11ef-4799-a915-03eb7421ec99
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not substitute for an disabled pin
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not substitute for an drifted pin
+{
+  "timestamp": "2026-11-06T20:42:14.778Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.778Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not substitute for an drifted pin
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 1ms org=- user=- caller=- req=e98f9e51-5f27-4b27-ad41-2f29ee7784a7
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not substitute for an drifted pin
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not substitute for an wrong-task pin
+{
+  "timestamp": "2026-11-06T20:42:14.782Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.782Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not substitute for an wrong-task pin
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 2ms org=- user=- caller=- req=7cf3d791-ecb4-4b37-ada8-2943999f7802
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not substitute for an wrong-task pin
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not fall back to any other qualified or unqualified model after a provider failure
+{
+  "timestamp": "2026-11-06T20:42:14.786Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.786Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not fall back to any other qualified or unqualified model after a provider failure
+[AI Gateway Audit] ✗ anthropic/claude-opus-5-5-20261101 task=document_drafting tokens=0 12ms org=- user=- caller=- req=ad0f5350-a21b-429a-971d-3d99f718d68d
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not fall back to any other qualified or unqualified model after a provider failure
+{
+  "timestamp": "2026-11-06T20:42:14.799Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5-5-20261101 failed: Model provider request failed (HTTP 400).",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not fall back to any other qualified or unqualified model after a provider failure
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {}
+{
+  "timestamp": "2026-11-06T20:42:14.800Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.801Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {}
+[AI Gateway Audit] ✗ anthropic/claude-opus-5-5-20261101 task=document_drafting tokens=2 1ms org=- user=- caller=- req=unit-response
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {}
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"resolvedModel":"different-version"}
+{
+  "timestamp": "2026-11-06T20:42:14.806Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.807Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"resolvedModel":"different-version"}
+[AI Gateway Audit] ✗ anthropic/claude-opus-5-5-20261101 task=document_drafting tokens=2 1ms org=- user=- caller=- req=unit-response
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"resolvedModel":"different-version"}
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"provider":"openai"}
+{
+  "timestamp": "2026-11-06T20:42:14.809Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.810Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"provider":"openai"}
+[AI Gateway Audit] ✗ openai/claude-opus-5-5-20261101 task=document_drafting tokens=2 1ms org=- user=- caller=- req=unit-response
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"provider":"openai"}
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"cached":true}
+{
+  "timestamp": "2026-11-06T20:42:14.811Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.812Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"cached":true}
+[AI Gateway Audit] ✗ anthropic/claude-opus-5-5-20261101 task=document_drafting tokens=2 1ms org=- user=- caller=- req=unit-response
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"cached":true}
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"deterministic":true}
+{
+  "timestamp": "2026-11-06T20:42:14.816Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.817Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"deterministic":true}
+[AI Gateway Audit] ✗ anthropic/claude-opus-5-5-20261101 task=document_drafting tokens=2 1ms org=- user=- caller=- req=unit-response
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"deterministic":true}
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses streaming before dispatch
+{
+  "timestamp": "2026-11-06T20:42:14.820Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.820Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses streaming before dispatch
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 1ms org=- user=- caller=- req=04ec916e-fdfa-4440-a7b9-73603e024d50
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses streaming before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses streaming before dispatch
+{
+  "timestamp": "2026-11-06T20:42:14.823Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.823Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses streaming before dispatch
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 0ms org=- user=- caller=- req=1e1f5aea-cc3c-4d1e-bba2-4517fc99e08f
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses streaming before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses deterministic fixture text even outside production
+{
+  "timestamp": "2026-11-06T20:42:14.826Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.826Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses deterministic fixture text even outside production
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 0ms org=- user=- caller=- req=188c382a-5ec0-4bf9-adb6-bfeb61fa19b4
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses deterministic fixture text even outside production
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > rejects changed evidence bytes, even if the file still claims PASS
+{
+  "timestamp": "2026-11-06T20:42:14.829Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.830Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > rejects changed evidence bytes, even if the file still claims PASS
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 1ms org=- user=- caller=- req=ec380fc1-4143-482c-9866-94dca6d157c4
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > rejects changed evidence bytes, even if the file still claims PASS
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > rechecks evidence after an awaited source checkpoint, before the real dispatch boundary
+{
+  "timestamp": "2026-11-06T20:42:14.833Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.833Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > rechecks evidence after an awaited source checkpoint, before the real dispatch boundary
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 2ms org=- user=- caller=- req=fdfc7385-d1b5-495f-ab2d-e59f6fa189bb
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > rechecks evidence after an awaited source checkpoint, before the real dispatch boundary
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses evidence changed in the platform-client resolution continuation before any SDK call
+{
+  "timestamp": "2026-11-06T20:42:14.838Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.840Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses evidence changed in the platform-client resolution continuation before any SDK call
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5-20261101 task=document_drafting tokens=2 cost=$0.00002 3ms org=42 user=- caller=- req=2c6aeb43-cf08-4765-ae36-4f4dce64f165
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses evidence changed in the platform-client resolution continuation before any SDK call
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > captures the caller pin before any await so later mutation cannot change the version
+{
+  "timestamp": "2026-11-06T20:42:14.854Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.854Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > captures the caller pin before any await so later mutation cannot change the version
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5-20261101 task=document_drafting tokens=2 1ms org=- user=- caller=- req=unit-response
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > captures the caller pin before any await so later mutation cannot change the version
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin null without a default 8ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin {} without a default 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin {"id":"only-id"} without a default 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not substitute for an disabled pin 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not substitute for an drifted pin 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not substitute for an wrong-task pin 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > does not fall back to any other qualified or unqualified model after a provider failure 15ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {} 6ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"resolvedModel":"different-version"} 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"provider":"openai"} 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"cached":true} 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > withholds a response that cannot prove the serving pin: {"deterministic":true} 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses streaming before dispatch 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses streaming before dispatch 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses deterministic fixture text even outside production 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > rejects changed evidence bytes, even if the file still claims PASS 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > rechecks evidence after an awaited source checkpoint, before the real dispatch boundary 6ms
+ × server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses evidence changed in the platform-client resolution continuation before any SDK call 16ms
+   → promise resolved "{ …(17) }" instead of rejecting
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > captures the caller pin before any await so later mutation cannot change the version 7ms
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > never accepts a header-only PASS or an unreviewed alias
+{
+  "timestamp": "2026-11-06T20:42:14.871Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.873Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > lists verified qualified pins, while the real pending registry offers none
+{
+  "timestamp": "2026-11-06T20:42:14.876Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.876Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > enables existing rows separately for two tenants without global keys or global registry mutation
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 cost=$0.00002 2ms org=101 user=- caller=- req=5d5a1b93-ccc0-46c5-b418-3b5605f48351
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=0 cost=$0.00002 2ms org=202 user=- caller=- req=bcf6b30b-f31e-4266-a72c-9b1dba9daa15
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > enables existing rows separately for two tenants without global keys or global registry mutation
+[AI Gateway Audit] AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > enables existing rows separately for two tenants without global keys or global registry mutation
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > refuses revoked cards without using an enabled platform key or silently substituting another model
+{
+  "timestamp": "2026-11-06T20:42:14.887Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.887Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > refuses revoked cards wi

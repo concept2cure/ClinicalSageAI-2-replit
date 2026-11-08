@@ -1,0 +1,49 @@
+Start 00-discover: full-program context, 0 semantic targets, heap 7168 MB
+Resource 00-discover 0.0s: pid 84, RSS 88 kB, HWM 88 kB
+Resource 00-discover 20.0s: pid 84, RSS 3405776 kB, HWM 3405776 kB
+Resource 00-discover 40.0s: pid 84, RSS 5959356 kB, HWM 5959356 kB
+Worker exit 00-discover: {"phase": "00-discover", "exitCode": 0, "elapsedSeconds": 49.094, "cumulativeCompletedChildPeakRssKiB": 6198660}
+Completed 00-discover: 0 diagnostics
+Discovery: 15470 full-program files; 65 changed targets; 10 changed files outside the configured program; snapshot ea28604b60eb2af20593f5487f71542d5cfc4823690328fd0b8cebdf53882a6f
+Start 01-check: full-program context, 20 semantic targets, heap 7168 MB
+Resource 01-check 0.0s: pid 92, RSS 60 kB, HWM 60 kB
+Resource 01-check 20.0s: pid 92, RSS 3435376 kB, HWM 3435376 kB
+Resource 01-check 40.0s: pid 92, RSS 6108604 kB, HWM 6113696 kB
+Resource 01-check 60.0s: pid 92, RSS 6758852 kB, HWM 6758852 kB
+Worker exit 01-check: {"phase": "01-check", "exitCode": 0, "elapsedSeconds": 67.538, "cumulativeCompletedChildPeakRssKiB": 6900720}
+Completed 01-check: 0 diagnostics
+Supplemental changed-target progress 20/65; full publication gate remains separate
+Start 02-check: full-program context, 20 semantic targets, heap 7168 MB
+Resource 02-check 0.0s: pid 100, RSS 52 kB, HWM 52 kB
+Resource 02-check 20.0s: pid 100, RSS 3379280 kB, HWM 3379280 kB
+Resource 02-check 40.0s: pid 100, RSS 5998904 kB, HWM 5998904 kB
+Worker exit 02-check: {"phase": "02-check", "exitCode": 0, "elapsedSeconds": 50.193, "cumulativeCompletedChildPeakRssKiB": 6900720}
+Completed 02-check: 0 diagnostics
+Supplemental changed-target progress 40/65; full publication gate remains separate
+Start 03-check: full-program context, 20 semantic targets, heap 7168 MB
+Resource 03-check 0.0s: pid 108, RSS 60 kB, HWM 60 kB
+Resource 03-check 20.0s: pid 108, RSS 3365332 kB, HWM 3365332 kB
+Resource 03-check 40.0s: pid 108, RSS 5960064 kB, HWM 5960064 kB
+Worker exit 03-check: {"phase": "03-check", "exitCode": 0, "elapsedSeconds": 49.495, "cumulativeCompletedChildPeakRssKiB": 6900720}
+Completed 03-check: 0 diagnostics
+Supplemental changed-target progress 60/65; full publication gate remains separate
+Start 04-check: full-program context, 5 semantic targets, heap 7168 MB
+Resource 04-check 0.0s: pid 116, RSS 60 kB, HWM 60 kB
+Resource 04-check 20.0s: pid 116, RSS 3263688 kB, HWM 3263688 kB
+Resource 04-check 40.0s: pid 116, RSS 5857376 kB, HWM 5857376 kB
+Worker exit 04-check: {"phase": "04-check", "exitCode": 0, "elapsedSeconds": 49.442, "cumulativeCompletedChildPeakRssKiB": 6900720}
+Completed 04-check: 3 diagnostics
+ERROR TS2741 /workspace/scratch/3002d574f952/concept2cure-v2/server/services/csr/__tests__/csr-table-rounding.test.ts:35:19: Property 'value' is missing in type '{ endpointType: "primary"; endpointName: string; armId: string; display: string; pValue: 0 | 1 | 0.0004 | 0.9996 | 0.001 | 0.999; }' but required in type 'EfficacyResult'.
+ERROR TS2322 /workspace/scratch/3002d574f952/concept2cure-v2/server/services/qms/__tests__/changeControl.pglite.integration.test.ts:404:40: Type '(sql: string, params: unknown[] | undefined) => Promise<{ rows: unknown[]; rowCount: number; }>' is not assignable to type '(text: string, params?: unknown[] | undefined) => Promise<{ rows: Record<string, unknown>[]; }>'.
+  Type 'Promise<{ rows: unknown[]; rowCount: number; }>' is not assignable to type 'Promise<{ rows: Record<string, unknown>[]; }>'.
+    Type '{ rows: unknown[]; rowCount: number; }' is not assignable to type '{ rows: Record<string, unknown>[]; }'.
+      Types of property 'rows' are incompatible.
+        Type 'unknown[]' is not assignable to type 'Record<string, unknown>[]'.
+          Type 'unknown' is not assignable to type 'Record<string, unknown>'.
+ERROR TS2322 /workspace/scratch/3002d574f952/concept2cure-v2/server/services/qms/__tests__/changeControl.pglite.integration.test.ts:420:40: Type '(sql: string, params: unknown[] | undefined) => Promise<{ rows: unknown[]; rowCount: number; }>' is not assignable to type '(text: string, params?: unknown[] | undefined) => Promise<{ rows: Record<string, unknown>[]; }>'.
+  Type 'Promise<{ rows: unknown[]; rowCount: number; }>' is not assignable to type 'Promise<{ rows: Record<string, unknown>[]; }>'.
+    Type '{ rows: unknown[]; rowCount: number; }' is not assignable to type '{ rows: Record<string, unknown>[]; }'.
+      Types of property 'rows' are incompatible.
+        Type 'unknown[]' is not assignable to type 'Record<string, unknown>[]'.
+          Type 'unknown' is not assignable to type 'Record<string, unknown>'.
+Stopped immediately after the first completed worker with actual errors. This is not a full gate result.

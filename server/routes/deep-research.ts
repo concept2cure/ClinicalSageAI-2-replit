@@ -18,21 +18,44 @@ import {
 } from '../services/deep-research-orchestrator.js';
 import {
   getConnectorCatalog,
-  storeCredentials,
+  listCredentialCards, currentCredentialCardRole, mayManageCredentialCards, writeCredentialCard, CredentialCardRefusal, type CredentialCardChange,
 } from '../services/connectors/connector-registry.js';
 import { getUsageSummary } from '../services/usage-metering.js';
 import { ai } from '../lib/unified-ai-client.js';
 import { serverError } from '../lib/api-response';
 import {
+  readDataRoomProjectScope,
   retrieveDataRoomEvidence,
   RETRIEVAL_STATUS_MESSAGE,
   type RetrievalStatus,
 } from '../services/data-room-retrieval';
+import { ProgramReadAccessError, type ProgramAccessExecutor } from '../services/c2c/current-program-access';
+import { resolveOrgId } from '../types/auth-request';
+import { authedUserId } from '../utils/authedActor';
 import { createScopedLogger } from '../utils/logger';
+import { requestConnectable, requestPgClient } from '../db/requestDb';
+import { verifyReauth } from './c2c/actions';
 
 const logger = createScopedLogger('deep-research');
 
 const router = Router();
+
+/**
+ * The projects a generated document may draw Data Room evidence from: every
+ * project the person can open (F1, 2026-11-05). It searched every atom in the
+ * organization. Null, with the refusal sent, when the check refuses or cannot
+ * run: that is an error, never a document "grounded" in nothing.
+ */
+async function documentEvidenceProjects(req: Request, res: Response, pool: ProgramAccessExecutor): Promise<number[] | null> {
+  try {
+    return await readDataRoomProjectScope(pool, { organizationId: resolveOrgId(req), userId: authedUserId(req) });
+  } catch (error) {
+    const failure = error instanceof ProgramReadAccessError ? error
+      : new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. Nothing was generated.');
+    res.status(failure.status).json({ error: failure.message, code: failure.code });
+    return null;
+  }
+}
 
 // All routes require authentication
 router.use(authenticateToken);
@@ -196,11 +219,15 @@ router.get('/jobs/:id/stream', async (req: Request, res: Response) => {
  */
 router.get('/connectors', async (req: Request, res: Response) => {
   try {
-    const orgId = (req as any).user?.organizationId || (req as any).tenantContext?.organizationId;
+    const orgId = resolveOrgId(req);
     if (!orgId) return res.status(400).json({ error: 'Organization context required' });
-
-    const catalog = await getConnectorCatalog(Number(orgId));
-    res.json({ connectors: catalog });
+    const userId = authedUserId(req);
+    const role = userId === null ? null : await currentCredentialCardRole(requestPgClient(req), Number(orgId), Number(userId));
+    if (role === null) return res.status(403).json({ error: { code: 'CREDENTIAL_MEMBERSHIP_REQUIRED', message: 'Current membership of this organization is required.' } });
+    const canManage = ['admin', 'owner'].includes(role);
+    const [catalog, credentialCards] = await Promise.all([getConnectorCatalog(Number(orgId)),
+      canManage ? listCredentialCards(Number(orgId), true, requestPgClient(req)) : Promise.resolve([])]);
+    res.json({ organizationId: Number(orgId), canManage, connectors: catalog, credentialCards });
   } catch (err) {
     return serverError(res, logger, 'loading connectors', err);
   }
@@ -209,29 +236,47 @@ router.get('/connectors', async (req: Request, res: Response) => {
 /**
  * POST /api/deep-research/connectors — Store connector credentials
  */
-router.post('/connectors', requireTier('professional'), async (req: Request, res: Response) => {
+function credentialCaptureBody(body: unknown): body is CredentialCardChange & { reauth?: Parameters<typeof verifyReauth>[1] } {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return false;
+  const input = body as Record<string, unknown>;
+  if (Object.keys(input).some(key => !['connectorId', 'action', 'credentials', 'scopes', 'expiresAt', 'reason', 'reauth'].includes(key))) return false;
+  if (typeof input.connectorId !== 'string' || !['capture', 'rotate', 'revoke'].includes(String(input.action))) return false;
+  if (typeof input.reason !== 'string' || input.reason.trim().length < 10) return false;
+  if (input.scopes !== undefined && (!Array.isArray(input.scopes) || input.scopes.some(scope => typeof scope !== 'string'))) return false;
+  return input.expiresAt === undefined || input.expiresAt === null || typeof input.expiresAt === 'string';
+}
+router.post('/connectors', async (req: Request, res: Response) => {
+  let client: Awaited<ReturnType<ReturnType<typeof requestConnectable>['connect']>> | undefined;
+  let commitAttempted = false;
+  let discardConnection: Error | undefined;
   try {
-    const orgId = (req as any).user?.organizationId || (req as any).tenantContext?.organizationId;
+    const orgId = resolveOrgId(req);
     if (!orgId) return res.status(400).json({ error: 'Organization context required' });
-
-    const { connectorId, credentials } = req.body;
-    if (!connectorId || !credentials) {
-      return res.status(400).json({ error: 'connectorId and credentials are required' });
+    const userId = authedUserId(req);
+    if (userId === null || !await mayManageCredentialCards(requestPgClient(req), Number(orgId), Number(userId))) {
+      return res.status(403).json({ error: { code: 'CREDENTIAL_ADMIN_REQUIRED', message: 'Only this organization’s administrator can manage its credentials.' } });
     }
-
-    try {
-      await storeCredentials(Number(orgId), connectorId, credentials);
-    } catch (storeErr) {
-      const msg = storeErr instanceof Error ? storeErr.message : String(storeErr);
-      // SSRF guard rejections (unsafe baseUrl/tokenEndpoint) are client errors.
-      if (/public https URL|metadata|non-https/i.test(msg)) {
-        return res.status(400).json({ error: msg });
-      }
-      throw storeErr;
+    const body = req.body;
+    if (!credentialCaptureBody(body)) {
+      return res.status(400).json({ error: { code: 'CREDENTIAL_CHANGE_INVALID', message: 'Choose a credential card and action, and provide its required fields and reason.' } });
     }
-    res.json({ success: true });
-  } catch (err) {
-    return serverError(res, logger, 'saving connectors', err);
+    const reauth = await verifyReauth(Number(userId), body.reauth);
+    if (!reauth.ok) return res.status(401).json({ error: { code: 'REAUTH_REQUIRED', message: 'Confirm your password and second factor before changing credentials.' } });
+    client = await requestConnectable(req).connect();
+    await client.query('BEGIN');
+    const credentialCard = await writeCredentialCard(client, Number(orgId), Number(userId), body as CredentialCardChange);
+    commitAttempted = true;
+    await client.query('COMMIT');
+    return res.json({ success: true, organizationId: Number(orgId), credentialCard });
+  } catch (error) {
+    if (commitAttempted) discardConnection = new Error('Credential commit acknowledgement unavailable');
+    if (client && !commitAttempted) await client.query('ROLLBACK').catch(() => undefined);
+    if (error instanceof CredentialCardRefusal) return res.status(error.status).json({ error: { code: error.code, message: error.message } });
+    // Neither an arbitrary provider/DB message nor the capture body is logged.
+    logger.error('Credential change could not be confirmed', { commitAttempted });
+    return res.status(503).json({ error: { code: 'CREDENTIAL_CHANGE_UNCONFIRMED', message: 'The credential change could not be confirmed. Re-read its status before trying again.' } });
+  } finally {
+    client?.release(discardConnection);
   }
 });
 
@@ -376,6 +421,8 @@ router.post('/document/generate', requireTier('standard'), async (req: Request, 
     // for every remaining section and was only logged, so an outage read as
     // "no sources" (services/data-room-retrieval.ts says why that matters).
     const { pool } = await import('../db.js');
+    const projectIds = await documentEvidenceProjects(req, res, pool);
+    if (!projectIds) return;
     const dataRoomEvidence = new Map<string, string>();
     const retrievalBySection = new Map<string, RetrievalStatus>();
     for (const tmpl of templates) {
@@ -383,6 +430,7 @@ router.post('/document/generate', requireTier('standard'), async (req: Request, 
       const retrieval = await retrieveDataRoomEvidence(pool, searchQuery, {
         limit: 3,
         minSemanticScore: 0.65,
+        projectIds,
       });
       retrievalBySection.set(tmpl.number, retrieval.status);
       if (retrieval.cause) {

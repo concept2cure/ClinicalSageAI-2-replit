@@ -124,7 +124,7 @@ function TypeCard({
       ) : (
         <button
           type="button"
-          className="rl-card-run"
+          className="btn ghost rl-card-run"
           disabled={!canRun || busy || Boolean(unavailableReason)}
           onClick={() => onRun(type)}
           title={runControlTitle(canRun, unavailableReason)}

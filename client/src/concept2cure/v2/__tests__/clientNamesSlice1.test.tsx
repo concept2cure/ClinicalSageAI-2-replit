@@ -43,11 +43,14 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 /* `permissions` as the session carries them (server sessionPermissions): an
    administrator's include billing:admin, a member's do not (P-68). */
 const auth = vi.hoisted(() => ({ roles: ['admin', 'user'] as string[], permissions: ['governed:write', 'billing:admin'] as string[] }));
+/* One signed-in account, the same object on every render, as the session provides it. The navigation verdicts are
+   read only for an account with an id, once per account visit (navEntitlements.tsx useNavigationReadOwner). */
+const authUser = vi.hoisted(() => ({
+  id: 11, organizationId: 7, firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe',
+  get roles() { return auth.roles; }, get permissions() { return auth.permissions; },
+}));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({
-    user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: auth.roles, permissions: auth.permissions },
-    logout: vi.fn(),
-  }),
+  useAuth: () => ({ user: authUser, logout: vi.fn() }),
 }));
 vi.mock('@/contexts/TenantContext', () => ({
   useTenant: () => ({ tenant: null, organizationId: 7, currentOrganization: null }),
