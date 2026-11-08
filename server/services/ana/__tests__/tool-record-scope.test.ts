@@ -27,13 +27,9 @@ vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
 vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
 // The registry's mandatory-skill check (governed-tool-gate.ts, P-104) reads the
 // organisation's rules from the database; here the organisation has none, so the
-// program check is what these cases see (as in nonclinical-drafts-refuse-model-figures.test.ts).
-vi.mock('../governed-tool-gate.js', async orig => ({
-  ...await orig<typeof import('../governed-tool-gate.js')>(),
-  loadToolSkillGates: async (scope?: { organizationId?: number; userId?: number; projectId?: number }) => scope?.organizationId
-    ? { organizationId: scope.organizationId, userId: scope.userId ?? null, projectId: scope.projectId ?? null,
-      rules: [], ruleHash: 'e'.repeat(64) } : null,
-}));
+// program check is what these cases see (_standing-rule-fixture.ts).
+vi.mock('../governed-tool-gate.js', async orig =>
+  (await import('./_standing-rule-fixture')).withNoStandingRules(await orig()));
 
 import { foreignProgramRefusal, foreignRecordRefusal, RECORD_SCOPES } from '../tool-record-scope';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
