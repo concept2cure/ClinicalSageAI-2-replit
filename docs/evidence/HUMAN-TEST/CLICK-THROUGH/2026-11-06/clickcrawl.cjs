@@ -12,6 +12,7 @@
 //   env MAXSTOPS       stop after this many stops (default 400)
 // Each account holds 5 concurrent sessions (shared/auth/session-policy.ts): run at most 3 of these as one person,
 // and sign any other test browser out, or the runs' sessions are superseded and every screen shows sign-in.
+/* global getComputedStyle, innerHeight -- page code passed to page.evaluate runs in the browser */
 const { chromium } = require('playwright');
 const fs = require('fs');
 const [BASE, EMAIL, OUT, SEEDS] = process.argv.slice(2);
@@ -91,9 +92,8 @@ async function openStop(page, stop) {
   }
 }
 
-(async () => {
-  const browser = await chromium.launch();
-  const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true })).newPage();
+// What a page reports while the run works: errors, failed requests, downloads.
+function watch(page) {
   const ev = { errors: [], api: [], downloads: 0 };
   page.on('pageerror', (e) => ev.errors.push('pageerror: ' + String(e.message || e).slice(0, 240)));
   page.on('console', (m) => { if (m.type() === 'error') ev.errors.push('console: ' + m.text().slice(0, 240)); });
@@ -104,11 +104,12 @@ async function openStop(page, stop) {
   });
   page.on('download', () => { ev.downloads++; });
   page.on('dialog', (d) => d.dismiss().catch(() => {}));
-  await login(page);
-  FRESH = await page.evaluate(() => ({ l: { ...localStorage }, s: { ...sessionStorage } }));
+  return ev;
+}
 
+// The stops to crawl: the seeds, Home, and every screen a click reaches, held to ALLOW.
+function stopQueue() {
   const ALLOW = process.env.ALLOW ? new RegExp(process.env.ALLOW) : null;
-  const FULL = (process.env.FULL_PROGRAMS || '').split(',').filter(Boolean);
   const queue = []; const known = new Set();
   const norm = (u) => { try { const x = new URL(u, BASE); x.searchParams.delete('docId'); return x.pathname + (x.search || ''); } catch { return null; } };
   const add = (url, tabs = []) => {
@@ -117,76 +118,116 @@ async function openStop(page, stop) {
   };
   for (const s of SEEDS ? JSON.parse(fs.readFileSync(SEEDS, 'utf8')) : []) add(s.url, s.tabs || []);
   add('/concept2cure');
+  return { queue, add };
+}
 
-  if (process.env.DISCOVER === '1') {
-    const record = async (label, act) => {
-      await page.goto(BASE + '/concept2cure', { waitUntil: 'networkidle' }).catch(() => {}); await page.waitForTimeout(1000);
-      const b = await snapshot(page); ev.errors.length = 0; ev.api.length = 0;
-      let clickErr = null; try { await act(); } catch (e) { clickErr = String(e.message).split('\n')[0].slice(0, 160); }
-      await page.waitForTimeout(1800);
-      const a = await snapshot(page);
-      const effect = clickErr ? 'click-failed' : a.url !== b.url ? 'navigated' : (a.h !== b.h || a.attrs !== b.attrs) ? 'changed' : 'nothing';
-      fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop: { url: '/concept2cure', tabs: ['(rail)'] }, control: { role: 'rail', name: label }, effect, url: a.url, errors: ev.errors.slice(0, 6), api: ev.api.slice(0, 6), newFail: [], stuck: [], clickErr }) + '\n');
-      if (a.url !== b.url) add(a.url);
-      await page.keyboard.press('Escape').catch(() => {});
-    };
-    await page.goto(BASE + '/concept2cure', { waitUntil: 'networkidle' }).catch(() => {});
-    const railNames = await page.$$eval('.rail button', (bs) => bs.map((b) => (b.getAttribute('aria-label') || b.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean));
-    const seen = {};
-    for (const n of railNames) {
-      if (n === 'Collapse') continue;
-      const k = seen[n] = (seen[n] ?? -1) + 1;
-      await record(n, () => page.locator('.rail button').filter({ hasText: n }).nth(k).click({ timeout: 4000 }));
-    }
-    const acct = page.locator('.rail button').filter({ hasText: new RegExp(EMAIL.split('.')[0], 'i') }).first();
-    await page.goto(BASE + '/concept2cure', { waitUntil: 'networkidle' }).catch(() => {});
-    let items = [];
-    if (await acct.count()) { await acct.click().catch(() => {}); await page.waitForTimeout(800); items = await page.$$eval('[role="menuitem"], [role="menu"] button, [role="menu"] a', (es) => es.map((e) => (e.innerText || e.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim()).filter(Boolean)); }
-    for (const it of items) {
-      if (/sign out|log out/i.test(it)) continue;
-      await record('account menu › ' + it, async () => { await acct.click({ timeout: 4000 }); await page.waitForTimeout(600); await page.locator('[role="menuitem"], [role="menu"] button, [role="menu"] a').filter({ hasText: it }).first().click({ timeout: 4000 }); });
-    }
+// One click from Home (a rail button or an account-menu item), recorded with where it lands.
+async function recordFromHome(page, ev, add, label, act) {
+  await page.goto(BASE + '/concept2cure', { waitUntil: 'networkidle' }).catch(() => {}); await page.waitForTimeout(1000);
+  const b = await snapshot(page); ev.errors.length = 0; ev.api.length = 0;
+  let clickErr = null; try { await act(); } catch (e) { clickErr = String(e.message).split('\n')[0].slice(0, 160); }
+  await page.waitForTimeout(1800);
+  const a = await snapshot(page);
+  const effect = clickErr ? 'click-failed' : a.url !== b.url ? 'navigated' : (a.h !== b.h || a.attrs !== b.attrs) ? 'changed' : 'nothing';
+  fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop: { url: '/concept2cure', tabs: ['(rail)'] }, control: { role: 'rail', name: label }, effect, url: a.url, errors: ev.errors.slice(0, 6), api: ev.api.slice(0, 6), newFail: [], stuck: [], clickErr }) + '\n');
+  if (a.url !== b.url) add(a.url);
+  await page.keyboard.press('Escape').catch(() => {});
+}
+
+// DISCOVER=1: each rail button and each account-menu item from Home is a click to check and a stop to crawl.
+async function discover(page, ev, add) {
+  await page.goto(BASE + '/concept2cure', { waitUntil: 'networkidle' }).catch(() => {});
+  const railNames = await page.$$eval('.rail button', (bs) => bs.map((b) => (b.getAttribute('aria-label') || b.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean));
+  const seen = {};
+  for (const n of railNames.filter((n) => n !== 'Collapse')) {
+    const k = seen[n] = (seen[n] ?? -1) + 1;
+    await recordFromHome(page, ev, add, n, () => page.locator('.rail button').filter({ hasText: n }).nth(k).click({ timeout: 4000 }));
   }
+  const acct = page.locator('.rail button').filter({ hasText: new RegExp(EMAIL.split('.')[0], 'i') }).first();
+  await page.goto(BASE + '/concept2cure', { waitUntil: 'networkidle' }).catch(() => {});
+  if (!(await acct.count())) return;
+  await acct.click().catch(() => {}); await page.waitForTimeout(800);
+  const items = await page.$$eval('[role="menuitem"], [role="menu"] button, [role="menu"] a', (es) => es.map((e) => (e.innerText || e.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim()).filter(Boolean));
+  for (const it of items.filter((it) => !/sign out|log out/i.test(it))) {
+    await recordFromHome(page, ev, add, 'account menu › ' + it, async () => { await acct.click({ timeout: 4000 }); await page.waitForTimeout(600); await page.locator('[role="menuitem"], [role="menu"] button, [role="menu"] a').filter({ hasText: it }).first().click({ timeout: 4000 }); });
+  }
+}
 
+// One control on a freshly opened stop: click it and record what happened.
+// What the click did, from the page before (b) and after (a) it.
+function effectOf(clickErr, b, a, downloaded) {
+  if (clickErr) return 'click-failed';
+  if (!a || !b) return 'unknown';
+  if (a.url !== b.url) return 'navigated';
+  if (a.h !== b.h || a.attrs !== b.attrs) return 'changed';
+  return downloaded ? 'download' : 'nothing';
+}
+
+// The page after a click. Loading text the click added gets 4.5 more seconds before it counts as stuck.
+async function afterClick(page, bt) {
+  await page.waitForTimeout(1500);
+  let a = await snapshot(page).catch(() => null);
+  let at = await bodyText(page).catch(() => '');
+  let stuck = [];
+  if (count(at, LOADING_TEXT) > count(bt, LOADING_TEXT)) {
+    await page.waitForTimeout(4500);
+    at = await bodyText(page).catch(() => '');
+    a = await snapshot(page).catch(() => a);
+    stuck = at.match(LOADING_TEXT) || [];
+  }
+  const newFail = count(at, FAIL_TEXT) > count(bt, FAIL_TEXT) ? (at.match(FAIL_TEXT) || []) : [];
+  return { a, stuck, newFail };
+}
+
+// One control on a freshly opened stop: click it and record what happened.
+async function clickOne(page, ev, add, stop, c) {
+  await openStop(page, stop);
+  const b = await snapshot(page).catch(() => null);
+  const bt = await bodyText(page).catch(() => '');
+  const loc = await locate(page, c).catch(() => null);
+  if (!loc) { fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop, control: c, outcome: 'not-found-after-reopen' }) + '\n'); return; }
+  ev.errors.length = 0; ev.api.length = 0; const dl0 = ev.downloads;
+  let clickErr = null;
+  try { await loc.click({ timeout: 4000 }); } catch (e) { clickErr = String(e.message).split('\n')[0].slice(0, 160); }
+  const { a, stuck, newFail } = await afterClick(page, bt);
+  const effect = effectOf(clickErr, b, a, ev.downloads > dl0);
+  fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop, control: c, effect, url: a?.url, errors: ev.errors.slice(0, 6), api: ev.api.slice(0, 6), newFail: newFail.slice(0, 6), stuck: stuck.slice(0, 4), clickErr }) + '\n');
+  if (effect === 'navigated') add(a.url);
+  if (c.href?.startsWith('/concept2cure')) add(c.href);
+  await page.keyboard.press('Escape').catch(() => {});
+}
+
+// One stop: open it, record how it loaded, queue its tabs, and click each control (full projects only).
+async function crawlStop(page, ev, add, stop) {
+  ev.errors.length = 0; ev.api.length = 0;
+  await openStop(page, stop);
+  const t0 = await bodyText(page).catch(() => '');
+  fs.appendFileSync(LOG, JSON.stringify({ kind: 'stop', stop, errors: ev.errors.splice(0), api: ev.api.splice(0), fail: t0.match(FAIL_TEXT) || [], loading: t0.match(LOADING_TEXT) || [] }) + '\n');
+  if ((stop.tabs || []).length < 2) {
+    const tabs = await page.$$eval(TAB_SEL, (ts) => ts.filter((t) => t.getBoundingClientRect().width > 2).map((t) => (t.getAttribute('aria-label') || t.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean)).catch(() => []);
+    for (const t of tabs) add(stop.url, [...(stop.tabs || []), t]);
+  }
+  const full = (process.env.FULL_PROGRAMS || '').split(',').filter(Boolean);
+  const prog = (stop.url.match(/[?&]program=([^&#]+)/) || [])[1];
+  if (prog && full.length && !full.includes(prog)) return 0;
+  const stepNames = await page.$$eval('button.pj-lc-stage', (bs) => bs.map((b) => (b.getAttribute('aria-label') || b.innerText || '').replace(/\s+/g, ' ').trim())).catch(() => []);
+  const list = (await controls(page)).filter((c) => c.role !== 'tab' && !stepNames.includes(c.name) && !SKIP.test(c.name) && !(c.href && /^https?:/.test(c.href) && !c.href.startsWith(BASE)));
+  for (const c of list) await clickOne(page, ev, add, stop, c);
+  return list.length;
+}
+
+(async () => {
+  const browser = await chromium.launch();
+  const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true })).newPage();
+  const ev = watch(page);
+  await login(page);
+  FRESH = await page.evaluate(() => ({ l: { ...localStorage }, s: { ...sessionStorage } }));
+  const { queue, add } = stopQueue();
+  if (process.env.DISCOVER === '1') await discover(page, ev, add);
   let clicks = 0;
   for (let qi = 0; qi < queue.length && qi < Number(process.env.MAXSTOPS || 400); qi++) {
     if (sessionEnded) { fs.appendFileSync(LOG, JSON.stringify({ kind: 'fatal', error: 'session ended (401 on the session read); stopping' }) + '\n'); break; }
-    const stop = queue[qi];
-    ev.errors.length = 0; ev.api.length = 0;
-    await openStop(page, stop);
-    const t0 = await bodyText(page).catch(() => '');
-    fs.appendFileSync(LOG, JSON.stringify({ kind: 'stop', stop, errors: ev.errors.splice(0), api: ev.api.splice(0), fail: t0.match(FAIL_TEXT) || [], loading: t0.match(LOADING_TEXT) || [] }) + '\n');
-    if ((stop.tabs || []).length < 2) {
-      const tabs = await page.$$eval(TAB_SEL, (ts) => ts.filter((t) => t.getBoundingClientRect().width > 2).map((t) => (t.getAttribute('aria-label') || t.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean)).catch(() => []);
-      for (const t of tabs) add(stop.url, [...(stop.tabs || []), t]);
-    }
-    const prog = (stop.url.match(/[?&]program=([^&#]+)/) || [])[1];
-    if (prog && FULL.length && !FULL.includes(prog)) continue;
-    const stepNames = await page.$$eval('button.pj-lc-stage', (bs) => bs.map((b) => (b.getAttribute('aria-label') || b.innerText || '').replace(/\s+/g, ' ').trim())).catch(() => []);
-    const list = (await controls(page)).filter((c) => c.role !== 'tab' && !stepNames.includes(c.name) && !SKIP.test(c.name));
-    for (const c of list) {
-      if (c.href && /^https?:/.test(c.href) && !c.href.startsWith(BASE)) continue;
-      await openStop(page, stop);
-      const b = await snapshot(page).catch(() => null);
-      const bt = await bodyText(page).catch(() => '');
-      const loc = await locate(page, c).catch(() => null);
-      if (!loc) { fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop, control: c, outcome: 'not-found-after-reopen' }) + '\n'); continue; }
-      ev.errors.length = 0; ev.api.length = 0; const dl0 = ev.downloads;
-      let clickErr = null;
-      try { await loc.click({ timeout: 4000 }); } catch (e) { clickErr = String(e.message).split('\n')[0].slice(0, 160); }
-      await page.waitForTimeout(1500);
-      let a = await snapshot(page).catch(() => null);
-      let at = await bodyText(page).catch(() => '');
-      let stuck = [];
-      if (count(at, LOADING_TEXT) > count(bt, LOADING_TEXT)) { await page.waitForTimeout(4500); at = await bodyText(page).catch(() => ''); a = await snapshot(page).catch(() => a); stuck = at.match(LOADING_TEXT) || []; }
-      const newFail = count(at, FAIL_TEXT) > count(bt, FAIL_TEXT) ? (at.match(FAIL_TEXT) || []) : [];
-      const effect = clickErr ? 'click-failed' : (!a || !b) ? 'unknown' : a.url !== b.url ? 'navigated' : (a.h !== b.h || a.attrs !== b.attrs) ? 'changed' : ev.downloads > dl0 ? 'download' : 'nothing';
-      fs.appendFileSync(LOG, JSON.stringify({ kind: 'click', stop, control: c, effect, url: a?.url, errors: ev.errors.slice(0, 6), api: ev.api.slice(0, 6), newFail: newFail.slice(0, 6), stuck: stuck.slice(0, 4), clickErr }) + '\n');
-      if (a && b && a.url !== b.url) add(a.url);
-      if (c.href && c.href.startsWith('/concept2cure')) add(c.href);
-      await page.keyboard.press('Escape').catch(() => {});
-      clicks++;
-    }
+    clicks += await crawlStop(page, ev, add, queue[qi]);
   }
   fs.appendFileSync(LOG, JSON.stringify({ kind: 'end', stops: queue.length, clicks }) + '\n');
   // Sign out, so this run's session does not hold one of the account's five slots.
