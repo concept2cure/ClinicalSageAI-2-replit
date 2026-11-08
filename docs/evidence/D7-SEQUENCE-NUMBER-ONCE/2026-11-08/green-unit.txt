@@ -1,0 +1,6 @@
+# Every non-DB test naming createSequence, transitionSequence or their routes, and every submission-service test, after repair A, 2026-11-08T23:28:52Z
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > throws VALIDATION naming the eSubmission Gateway; getGateway is never called
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 43 passed | 1 skipped (45)
+      Tests  1 failed | 588 passed | 2 skipped (591)
+# The one failure, gateway-selection 'throws VALIDATION' (AUDIT_UNCONFIRMED), is pre-existing on trunk and with the coordinating session.

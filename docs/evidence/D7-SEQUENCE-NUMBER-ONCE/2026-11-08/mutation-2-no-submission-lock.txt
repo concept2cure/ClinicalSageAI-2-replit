@@ -1,0 +1,8 @@
+MUTATION 2-no-submission-lock: replaced [    const locked = await lockSubmissionPackageIdentity(q, ctx.organizationId, input.submissionId, { forUpdate: true });] with [    const locked = await lockSubmissionPackageIdentity(q, ctx.organizationId, input.submissionId);], 2026-11-08T23:27:39Z
+ ✓ tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > a second live 0000 is refused, by name
+ × tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > two creates of 0000 in flight together: the one that waits for the submission sees the other and is refused
+ ✓ tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > a removed 0000 does not hold its number
+ ✓ tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > a sequence removed while its transition is in flight does not move
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+restored sha256 2b46ed443513fc02b2dbe62c0ec601309846dae9a8de31bf8edb4f391be67d39 (expected 2b46ed443513fc02b2dbe62c0ec601309846dae9a8de31bf8edb4f391be67d39)
