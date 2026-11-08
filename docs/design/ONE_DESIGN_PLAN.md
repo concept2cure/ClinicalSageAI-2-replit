@@ -1441,6 +1441,59 @@ COORDINATION.md, row "Codespace setup".
 4. **No real model output has been seen in a Codespace.** No session had a key. The founder's first run, with both
    keys, is the qualification.
 
+#### L1 (rows D7, D6) — prior filings read back as filed state, and archive names checked where they are read (session `session_01Gx2fiwvxaXi6mQgddPqMaG`, 2026-11-01 to 2026-11-02)
+
+**Delivered**
+
+- **A sequence filed elsewhere reads back as filed state** (MR-10 Stage 9, slice 1). `90f1c747`, with three
+  consumer tests repaired in `013250f8`. `server/services/legacy-importer/filed-sequence-reader.ts` reads an eCTD
+  3.2.2 sequence from its bytes: `index.xml`, the regional backbone, `index-md5.txt` and every checksum. It produces
+  the leaf manifest the platform's own compiles store (`SequenceLeafManifestEntry`). A round-trip test shows that
+  manifest folds through `loadFiledStateBySubmission` into the same filed state as the platform's own sequences.
+  `detector.ts` was converged onto it, and filename guesses stay suggestions. Evidence:
+  `docs/evidence/MR-10/2026-11-01-filed-sequence-reader/`; design:
+  `docs/design/FILED_SEQUENCE_READER_2026-11-01.md`.
+- **Three independent reviews, and every finding fixed.**
+  - First round: 35 findings, fixed in `7e7fae33` (33 of 37 new cases failed first).
+  - Second round: fixed in `24694d13`. 16 of 18 cases failed first; one hung until killed.
+  - Draft review: the last of 24 confirmed issues fixed in `be491687`. A grouped-form pointer
+    (`../../nda999999/…`) must climb through this application's own folder.
+
+  Each new guard was removed in turn and turned a test red.
+- **The upload guard checks each zip name where its readers read it** (row D6, SEC-17 follow-up), `ab29caae`.
+  `server/services/archive/safeZip.ts` checked the central directory's name, but JSZip reads the local header's
+  name and a Unicode Path field's. So a crafted zip naming `/x` passed. It is now refused at every caller. Evidence:
+  `docs/evidence/D6/2026-11-02-zip-names-checked-where-read/`.
+
+**Found, for other owners**
+
+- **P-99 (RIM).** `readFiledSequenceArchive` already re-derives a sequence's leaf manifest from its exact bytes,
+  deterministically, refusing what it cannot verify. Re-deriving an unrecorded sent sequence from its kept bytes can
+  reach it rather than build a second reader (RULE 3).
+- **Trunk is red on 2026-11-08** (CI run `42515637919` at `c88d89239`):
+  - 20 Lint guardrails;
+  - every test shard;
+  - integration tests;
+  - the secret scan;
+  - the tenant-purge ratchet.
+
+  Among them, `ci:audit-logs-fixture` names four fixtures whose `audit_logs` lacks the audit writer's columns, so
+  their governed writes roll back:
+  - `rbm-approval-signature.pglite.test.ts`;
+  - `regulatory-correspondence-project-scope.test.ts`;
+  - `governedActionApprovalTenantPinned.test.ts`;
+  - `ana-vault-tools-project-scope.pglite.test.ts`.
+
+**Next, and what it waits on**
+
+- **Stage 9's next steps wait on founder decisions:**
+  - where an imported prior filing is recorded (a migration);
+  - whether the Vault admits `.zip`;
+  - whether the ICH and regional DTDs are vendored for validation.
+
+  The reader holds no file now.
+- **Not examined:** duplicate names in a zip directory (`safeZip.ts`, "Not done here").
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for
