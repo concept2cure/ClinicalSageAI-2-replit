@@ -1,0 +1,125 @@
+# Review finding: the RACT form's edit cleared the seed mark with the ratings unchanged.
+# Red: the new cases, run against the working-tree mdx-rbm.ts before the review fix (presence check at deriveItemPatch).
+# Command: npx vitest run server/routes/__tests__/rbm-assessment-integrity.test.ts -t 'library-default mark'
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/rbm-assessment-integrity.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/rbm-assessment-integrity.test.ts
+{
+  "timestamp": "2026-11-02T05:09:37.159Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/rbm-assessment-integrity.test.ts
+{
+  "timestamp": "2026-11-02T05:09:37.294Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T05:09:37.295Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/rbm-assessment-integrity.test.ts
+{
+  "timestamp": "2026-11-02T05:09:37.295Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > refuses a title change on the 'active' signed version
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > refuses a title change on the 'archived' signed version
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > cannot reopen the 'active' signed version with status=draft
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > cannot reopen the 'archived' signed version with status=draft
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > continues to edit an unsigned draft
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses editing a factor linked to the 'active' assessment
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses editing a factor linked to the 'archived' assessment
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses adding a factor under the 'active' signed assessment
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses adding a factor under the 'archived' signed assessment
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > continues to edit a factor linked to a draft
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses a factor whose assessment is 'omitted', and writes nothing
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses a factor whose assessment is 'null', and writes nothing
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > continues to add a factor to a draft
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a new factor is saved by the actuator's one insert > infers criticality from the band when isCritical is omitted, as addCtqFactor does
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a new factor is saved by the actuator's one insert > keeps the status, owner and ref code the RACT form posts
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a new factor is saved by the actuator's one insert > calls addCtqFactor once, for the tenant and the named assessment
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is kept by an edit of 'the mitigation alone' 66ms
+ × server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is kept by an edit of 'the RACT form, status changed and rat…' 25ms
+   → expected {} to deeply equal { ratingSource: 'default_seed', …(1) }
+ × server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is kept by an edit of 'the RACT form, mitigation changed and…' 16ms
+   → expected {} to deeply equal { ratingSource: 'default_seed', …(1) }
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is cleared when a person changes the rating: 'the RACT form with a new likelihood' 16ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is cleared when a person changes the rating: 'the RACT form with a new impact' 17ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is cleared when a person changes the rating: 'the impact alone' 13ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is carried into an amendment, so the copy does not read as tailored 12ms
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the seed route on a study that already has an assessment > answers 409 and writes nothing
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > does not disclose another project or tenant child through the public assessment
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > does not copy or return a private-project retained child in a public amendment
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > records the amendment creator independently of the prior version author
+ ↓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > requires a second person to approve the amendment opened by this actor
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is kept by an edit of 'the RACT form, status changed and rat…'
+ FAIL  server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is kept by an edit of 'the RACT form, mitigation changed and…'
+AssertionError: expected {} to deeply equal { ratingSource: 'default_seed', …(1) }
+
+- Expected
++ Received
+
+- {
+-   "ratingFrom": {
+-     "ctqFactor": "Seeded factor",
+-     "table": "DEFAULT_CTQ_FACTORS",
+-   },
+-   "ratingSource": "default_seed",
+- }
++ {}
+
+ ❯ server/routes/__tests__/rbm-assessment-integrity.test.ts:218:32
+    216|     await mark(22);
+    217|     expect((await request(app()).patch('/api/mdx/rbm-risk-items/22').s…
+    218|     expect(await metadata(22)).toEqual(MARK);
+       |                                ^
+    219|   });
+    220|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed | 21 skipped (28)
+   Start at  05:09:33
+   Duration  6.78s (transform 1.88s, setup 118ms, import 3.28s, tests 3.04s, environment 0ms)
+
+
+# ---- Mutation, after the fix: the CASE's clear branch replaced by 'THEN metadata' (never clears), then restored.
+# The three 'is cleared' cases go red, so they would catch an over-correction that keeps the mark on a real re-rating.
+# Command: same as above.
+
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is kept by an edit of 'the mitigation alone' 73ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is kept by an edit of 'the RACT form, status changed and rat…' 24ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is kept by an edit of 'the RACT form, mitigation changed and…' 23ms
+ × server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is cleared when a person changes the rating: 'the RACT form with a new likelihood' 28ms
+   → expected { ratingFrom: { …(2) }, …(1) } to not have property "ratingSource"
+ × server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is cleared when a person changes the rating: 'the RACT form with a new impact' 24ms
+   → expected { ratingFrom: { …(2) }, …(1) } to not have property "ratingSource"
+ × server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is cleared when a person changes the rating: 'the impact alone' 19ms
+   → expected { ratingFrom: { …(2) }, …(1) } to not have property "ratingSource"
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is carried into an amendment, so the copy does not read as tailored 18ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 4 passed | 21 skipped (28)

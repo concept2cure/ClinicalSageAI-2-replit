@@ -1,20 +1,36 @@
 /** One canonical seed body, and the one owned RBM write transaction; ownership is explicit, never inferred from connect(). */
 import type { RequestSqlClient } from '../../db/requestDb';
 import { requireRbmProgram, type RbmActor } from './rbm-access';
-import { DEFAULT_CTQ_FACTORS, scoreRisk, overallRiskFromScores } from './rbm-engine';
+import { DEFAULT_CTQ_FACTORS, scoreRisk, overallRiskFromScores, defaultCtqSeedMark } from './rbm-engine';
+import { RbmAssessmentEditError } from './rbm-actuator';
 interface SeedInput { programId: string; title?: string; framework?: string }
 interface SeedLease extends RequestSqlClient { release(error?: Error): void }
 export interface RbmSeedPool { connect(): Promise<SeedLease> }
+/**
+ * A seed starts a study's FIRST assessment only. Checked in the seed's own
+ * transaction under a per-study advisory lock, held until COMMIT or ROLLBACK, so
+ * two concurrent seeds serialize and the second sees the first's row and is
+ * refused. The write recheck's FOR SHARE on the program serializes nothing.
+ */
+async function refuseExistingAssessment(client: RequestSqlClient, organizationId: number, programId: string): Promise<void> {
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext('rbm_risk_assessment_seed:' || $1::text || ':' || $2::uuid::text))`, [organizationId, programId]);
+  const { rows } = await client.query(`SELECT id, version, status FROM rbm_risk_assessments
+    WHERE organization_id=$1 AND program_id=$2 AND deleted_at IS NULL ORDER BY version DESC, id DESC LIMIT 1`, [organizationId, programId]);
+  const row = rows[0];
+  if (row) throw new RbmAssessmentEditError(409, 'RBM_ASSESSMENT_EXISTS', `Nothing was seeded: the study already has a risk assessment (version ${row.version}, ${row.status}).`);
+}
 async function writeSeed(client: RequestSqlClient, actor: RbmActor, input: SeedInput): Promise<Record<string, unknown> & { items: Array<Record<string, unknown>> }> {
   await requireRbmProgram(client, actor, { programId: input.programId }, true);
+  await refuseExistingAssessment(client, actor.organizationId, input.programId);
   const overall = overallRiskFromScores(DEFAULT_CTQ_FACTORS.map(f => scoreRisk(f.likelihood, f.impact).score));
   const { rows } = await client.query(`INSERT INTO rbm_risk_assessments (organization_id, program_id, title, framework, overall_risk, status, created_by)
     VALUES ($1,$2,$3,$4,$5,'draft',$6) RETURNING *`, [actor.organizationId, input.programId, input.title ?? 'Risk assessment (RACT)', input.framework ?? 'ich_e6r3', overall, actor.userId]);
   const assessment = rows[0];
   if (!assessment) throw new Error('Assessment seed identity missing');
+  // Each factor is marked as an untailored library rating (defaultCtqSeedMark) until a person re-rates it.
   for (const f of DEFAULT_CTQ_FACTORS) {
-    await client.query(`INSERT INTO rbm_risk_items (organization_id, assessment_id, program_id, category, ctq_factor, risk_description, likelihood, impact, risk_score, is_critical, mitigation, status)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'open')`, [actor.organizationId, assessment.id, input.programId, f.category, f.ctqFactor, f.riskDescription, f.likelihood, f.impact, scoreRisk(f.likelihood, f.impact).score, f.isCritical, f.mitigation]);
+    await client.query(`INSERT INTO rbm_risk_items (organization_id, assessment_id, program_id, category, ctq_factor, risk_description, likelihood, impact, risk_score, is_critical, mitigation, status, metadata)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'open',$12)`, [actor.organizationId, assessment.id, input.programId, f.category, f.ctqFactor, f.riskDescription, f.likelihood, f.impact, scoreRisk(f.likelihood, f.impact).score, f.isCritical, f.mitigation, JSON.stringify(defaultCtqSeedMark(f.ctqFactor))]);
   }
   const items = await client.query('SELECT * FROM rbm_risk_items WHERE organization_id=$1 AND assessment_id=$2 ORDER BY risk_score DESC,id', [actor.organizationId, assessment.id]);
   return { ...assessment, items: items.rows };

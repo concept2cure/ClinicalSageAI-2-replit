@@ -1,0 +1,65 @@
+# HEAD b391bfad2 + this change; npx vitest run --maxWorkers=1 the three D0 guards
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > reads the client TSX and the v2 stylesheets 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-head`: no more than 18 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-eyebrow`: no more than 18 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-title`: no more than 18 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-state`: no more than 23 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-head`: no more than 11 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-eyebrow`: no more than 9 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-title`: no more than 11 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-sub`: no more than 10 uses, and gone from the CSS at 0 24ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-head`: no more than 0 uses, and gone from the CSS at 0 14ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-kicker`: no more than 0 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-title`: no more than 0 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-head`: no more than 5 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-kicker`: no more than 2 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-eyebrow`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-cta`: no more than 13 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `landing-newproj`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-primary`: no more than 50 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `btn sm`: no more than 14 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-card`: no more than 15 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tabs`: no more than 11 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tab`: no more than 13 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-subtab`: no more than 0 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sc-ws`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cc-tab`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-seg`: no more than 2 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ml-seg`: no more than 4 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cl-toast`: no more than 1 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `tb-detail`: no more than 4 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-modal`: no more than 3 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-connect`: no more than 0 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-stageband`: no more than 2 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `What to do now`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `This work flows into`: no more than 1 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > reads the v2 stylesheets and resolves nesting and :is() lists 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .btn is defined in exactly one stylesheet, app-v2.css 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card is defined in exactly one stylesheet, app-v2.css 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card-h is defined in exactly one stylesheet, app-v2.css 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .rd-chip is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-lead is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-k is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .ph-title is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .seg is defined in exactly one stylesheet, app-v2.css 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .tab is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .reg-tbl th is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-input is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-empty-state is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de is defined in exactly one stylesheet, journey-v2.css 0ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de-toast is defined in exactly one stylesheet, journey-v2.css 0ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-seclbl is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > retired alias .btn.sm is defined at most once, in app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > reads the stylesheets it guards 61ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > every allowlist entry carries a written reason 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > no `text-transform: uppercase` in v2/styles/*.css or design-system/colors_and_type.css 158ms
+
+ Test Files  3 passed (3)
+      Tests  54 passed (54)
+   Start at  04:51:37
+   Duration  9.34s (transform 676ms, setup 377ms, import 7.13s, tests 588ms, environment 0ms)
+
+exit 0
