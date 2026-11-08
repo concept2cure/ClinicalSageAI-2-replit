@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSearch } from 'wouter';
 import { I } from '../icons';
-import { useLiveData, EmptyState, ErrorState } from '../dataConnect';
+import { useLiveData, EmptyState, ErrorState, ProjectBack } from '../dataConnect';
 import { apiRequest, errorCodeOf, serverMessage } from '@/lib/queryClient';
 import { downloadBlob, safeFileName } from '../download';
 import { getOrgId } from '@/utils/authToken';
@@ -1673,19 +1673,17 @@ export function InsightsCanvas(props: OwnedSurfaceViewProps) {
 }
 
 /* The work area's back link and page header (D5 §WA.4.2, D7 §D.4 steps 1-2).
-   The title is the surface's registry label. The back link names the open
-   project and goes back to it; with no project open there is nowhere to go
-   back to, so it renders nothing rather than a dead link. Every state of the
-   canvas (signed out, loading, a failed read, no project, the live canvas)
-   carries the same head, so the page is the same page while it loads.
-   A project opened from the address carries only its id, so the link would
-   have read "Project" (seen in the running app, 2026-11-02): it names the
-   project from the canvas's own read when the shell has no title for it. */
+   The title is the surface's registry label. Every state of the canvas
+   (signed out, loading, a failed read, no project, the live canvas) carries
+   the same head, so the page is the same page while it loads. The way back is
+   the one shared link (dataConnect.tsx ProjectBack, D0-7). It renders nothing
+   with no project open. It is given the canvas's own read of the project, so
+   a project opened from the address by id alone is named, not "Project", until
+   the shell's title arrives (seen in the running app, 2026-11-02). */
 function ReportingHead({ onNav, sub, note, acts, name }: { onNav?: (id: string) => void; sub?: React.ReactNode; note?: React.ReactNode; acts?: React.ReactNode; name?: string }) {
-  const project = useShellProject();
   return (
     <>
-      {project && <button type="button" className="pj-back" onClick={() => onNav?.('project-home')}>{I.left} {project.title || name || shellProgramName() || 'Project'}</button>}
+      <ProjectBack onNav={onNav} name={name} />
       <header className="ph">
         <div>
           <h1 className="ph-title">{getSurfaceMeta('insights').label}</h1>
