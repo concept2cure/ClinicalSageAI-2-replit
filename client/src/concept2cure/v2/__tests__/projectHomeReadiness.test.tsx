@@ -24,7 +24,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
@@ -123,6 +123,27 @@ describe('project home — Dossier readiness', () => {
     expect(card.textContent).not.toMatch(/\b(0|10)%/);
     await waitFor(() => expect(seen.ctx?.summary).toContain('dossier readiness 62%'));
     expect((seen.ctx?.facts as { dossier?: { home?: unknown } }).dossier?.home).toEqual(measured(62, 50));
+  });
+
+  /* D3-4 (D3.md §4.7 Author item 2, §6 item 10): the figure line leads Module completion; no ring is drawn; what the
+     figure means and its as-of time are a closed "How this is measured"; the two supporting measures are closed
+     disclosures under the modules. */
+  it('leads Module completion with the figure line, draws no ring, and discloses how it is measured', async () => {
+    mockProgram(program(), dossier(measured(0, 72), { measuredAt: '2026-10-08T21:14:00.000Z' }));
+    const { container } = render(<ProjectHome {...props()} />);
+    const lead = await readinessCard();
+    await waitFor(() => expect(lead.textContent).toContain('0 of 72 sections approved or locked.'));
+    const modules = screen.getByRole('region', { name: 'Module completion' });
+    expect(modules.contains(lead), 'the lead is inside Module completion').toBe(true);
+    expect(lead.querySelector('[data-testid="pj-dossier-home"]')?.textContent).toMatch(/^0 of 72 sections approved or locked\./);
+    expect(container.querySelector('.pj-map-ring, .pj-map'), 'no drawn ring').toBeNull();
+    const how = within(lead).getByText('How this is measured').closest('details') as HTMLElement;
+    expect(how.hasAttribute('open')).toBe(false);
+    expect(how.textContent).toMatch(/Measured /);
+    for (const name of ['Artifact section status', 'Section tracking']) {
+      const disclosure = within(modules).getByText(name, { selector: 'summary' }).closest('details') as HTMLElement;
+      expect(disclosure.hasAttribute('open'), `${name} starts closed`).toBe(false);
+    }
   });
 
   /* Filing-spine design review, open item 9 (2026-10-08): the figure is
@@ -236,8 +257,8 @@ describe('project home — one dossier read for the card and the module rows (F2
   });
 });
 
-/** The aside card headed "Dossier readiness" — the one readiness the page states. */
+/** Module completion's lead, headed "Dossier readiness" (D3-4: it was a card with a drawn ring until 2026-11-08). */
 async function readinessCard(): Promise<HTMLElement> {
   const h = await screen.findByText('Dossier readiness', { selector: 'h3' });
-  return h.closest('.pj-card') as HTMLElement;
+  return h.closest('[data-testid="pj-dossier"]') as HTMLElement;
 }
