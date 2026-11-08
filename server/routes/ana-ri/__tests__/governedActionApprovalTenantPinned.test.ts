@@ -155,7 +155,8 @@ async function createMandatorySkillFixture(pg: PGlite, source: string) {
       CREATE TABLE concept2cure_artifacts (id INTEGER, organization_id INTEGER, project_id INTEGER);
       CREATE TABLE concept2cure_review_assignments (artifact_id INTEGER, reviewer_id INTEGER, organization_id INTEGER, status TEXT);
       CREATE TABLE account_skill_bundles (id SERIAL PRIMARY KEY, bundle_id TEXT, organization_id INTEGER, project_id INTEGER, version INTEGER, status TEXT, policy_bindings JSON, metadata JSON);
-      CREATE TABLE audit_logs (id UUID PRIMARY KEY, tenant_id INTEGER, table_name TEXT, record_id TEXT, action TEXT, user_id INTEGER, new_values JSON, occurred_at timestamptz DEFAULT now());
+      CREATE TABLE audit_logs (id UUID PRIMARY KEY, tenant_id INTEGER, table_name TEXT, record_id TEXT, action TEXT, user_id INTEGER, new_values JSON, occurred_at timestamptz DEFAULT now(),
+        actor_id INTEGER, target TEXT, payload_hash TEXT, sha256_chain TEXT, hmac_seal TEXT, old_values JSON, ip_address TEXT, user_agent TEXT, reason TEXT);
       CREATE TABLE user_intelligence_profiles(id SERIAL PRIMARY KEY,user_id INTEGER,organization_id INTEGER,workflow_preferences JSONB NOT NULL DEFAULT '{}',UNIQUE(user_id,organization_id));
       INSERT INTO organizations VALUES (1, 'active'), (2, 'active');
       INSERT INTO users VALUES (42, 'active');
