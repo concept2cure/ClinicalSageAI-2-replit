@@ -44,6 +44,7 @@ import type { ProjectTeamMember } from '@shared/project-team';
 import { useAgencyInbox, type CommRow } from './AgencyInbox';
 import { isCommitmentsPayload, type CommitmentsPayload } from './CommitmentRow';
 import { ProjectSide } from './ProjectSide';
+import { ProjectProtocol, useProjectRecords } from './ProjectRecords';
 import { ProjectClientReview } from './ProjectClientReview';
 import { ProjectTeamSharing } from './ProjectTeamSharing';
 import { mdxProjectPlan } from './ProjectMdxWorkflow';
@@ -243,11 +244,11 @@ function ProjectEvidence({ pid, name, onNav, onAsk, available, monitoring, onMon
     <section className="pj-sec pj-evidence" aria-labelledby="pj-evidence-h">
       <div className="pj-sec-h">
         <h2 id="pj-evidence-h">Project files</h2>
-        {monitoring && available('rbm') && <button type="button" className="btn ghost" onClick={onMonitoring}>Open risk-based monitoring {I.right}</button>}
-        {available('vault') && (
-          <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('vault')}>
-            {STEP_DOORS.vault} {I.right}
-          </button>
+        {((monitoring && available('rbm')) || available('vault')) && (
+          <span className="pj-sec-acts">
+            {available('vault') && <button type="button" className="btn small" onClick={() => onNav('vault')}>{STEP_DOORS.vault} {I.right}</button>}
+            {monitoring && available('rbm') && <button type="button" className="btn small" onClick={onMonitoring}>Open risk-based monitoring {I.right}</button>}
+          </span>
         )}
       </div>
       <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} onAsk={onAsk} onNav={onNav} indLibrary={!deviceFiling}
@@ -501,7 +502,6 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
     <section className="pj-sec">
       <div className="pj-sec-h">
         <h2>Data room</h2>
-        {pid && <button type="button" className="btn ghost" disabled={state.loading} title="Refresh only reads status; it does not retry processing" onClick={() => setReloadKey(k => k + 1)}>Refresh sources</button>}
         <span className="sec-sub">
           {/* A failed read must not read as "no sources". Someone who just
               dropped a file in here would take an empty list as data loss. */}
@@ -515,6 +515,11 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                 ? `${total} source${total === 1 ? '' : 's'} · ${readable} readable on this page${truncated || offset > 0 ? ` (showing ${offset + 1}\u2013${offset + sources.length})` : ''} — what this project's documents are written from`
                 : "the sources this project's documents are written from"}
         </span>
+        {pid && (
+          <span className="pj-sec-acts">
+            <button type="button" className="btn small" disabled={state.loading} title="Refresh only reads status; it does not retry processing" onClick={() => setReloadKey(k => k + 1)}>Refresh sources</button>
+          </span>
+        )}
       </div>
 
       {/* Drop zone — the whole panel accepts a drag, and clicking opens the
@@ -701,12 +706,12 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
       {(offset > 0 || truncated) && (
         <div className="cm-pushbar" style={{ marginTop: 8 }}>
           {offset > 0 && (
-            <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => setOffset(o => Math.max(0, o - SOURCES_PAGE))}>
+            <button className="btn small" onClick={() => setOffset(o => Math.max(0, o - SOURCES_PAGE))}>
               Newer sources
             </button>
           )}
           {truncated && (
-            <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => setOffset(o => o + SOURCES_PAGE)}>
+            <button className="btn small" onClick={() => setOffset(o => o + SOURCES_PAGE)}>
               Older sources
             </button>
           )}
@@ -723,7 +728,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
 
       <div className="cm-pushbar" style={{ marginTop: 12 }}>
         {available('source-tracer') && (
-          <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('source-tracer')}>
+          <button className="btn small" onClick={() => onNav('source-tracer')}>
             Trace a claim to its source {I.right}
           </button>
         )}
@@ -736,8 +741,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         <DataRoomBuildAction pid={pid} pinned={pinned} sources={sources} onNav={onNav} disabled={uploading || !sourceReadConfirmed} />
         {pinned.length === 0 && groundable.length > 0 && (
           <button
-            className="btn ghost"
-            style={{ fontSize: 12, padding: '4px 12px' }}
+            className="btn small"
             disabled={uploading || !sourceReadConfirmed}
             title={`Ask AnA to draft from ${handedWords} in this data room`}
             onClick={() => handOff(
@@ -750,8 +754,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         )}
         {pinned.length > 0 && (
           <button
-            className="btn"
-            style={{ fontSize: 12, padding: '4px 12px' }}
+            className="btn small"
             disabled={uploading || !sourceReadConfirmed}
             onClick={() => handOff(
               pinned,
@@ -841,8 +844,21 @@ const WORK_SOURCE_LABEL: Record<string, string> = {
   filing: 'Tracked filing',
   board: 'Task board',
 };
-const WORK_STATUS_TONE: Record<string, string> = { done: 'tone-ok', blocked: 'tone-warn' };
 const WORK_SHOWN = 10;
+
+/** Open work by its due date, earliest first, undated last (D3.md §4.7 Plan item 3). The work view's own order
+ *  breaks ties, so two items due the same day keep the order the server gave them. */
+function byDueDate(items: WorkItemRow[]): WorkItemRow[] {
+  const at = (w: WorkItemRow) => { const t = w.dueAt ? Date.parse(w.dueAt) : NaN; return Number.isNaN(t) ? Infinity : t; };
+  return items.map((w, i) => ({ w, i })).sort((a, b) => (at(a.w) - at(b.w)) || (a.i - b.i)).map(({ w }) => w);
+}
+
+/** The status in words at the row's right (D3.md §4.7, §4.11 item 3): "Blocked · blocking the filing" where the
+ *  item holds the filing, in the warning tone with its icon when blocked. The chip and the separate "blocking" are gone. */
+function WorkStatus({ w }: { w: WorkItemRow }) {
+  const words = [enumWords(w.status || 'open'), w.blocking ? 'blocking the filing' : null].filter(Boolean).join(' · ');
+  return <span className="pj-work-status" data-blocked={w.status === 'blocked' || undefined}>{w.status === 'blocked' && I.alertTriangle}{words}</span>;
+}
 
 /** The project's unified work, read once by the page (D3-2b, D3.md §4.10): the task panels and the Team card's
  *  per-person lines render this one read. `version` re-reads it (after an assignment on Plan). */
@@ -903,9 +919,12 @@ function lettersWords(live: { loading: boolean; error?: unknown }, comms: CommRo
   return `${open.length} open${next ? ` · next response due ${dayWords(next)}` : ''}`;
 }
 
-function ProjectWorkPanel({ pid, title, onNav, targetId, state }: {
-  pid: string | null; title: string; onNav: (id: string) => void; targetId?: string | null; state: DataState<WorkViewRow>;
+/** Tasks and approvals: the project's open work by due date, on Plan only (D3-4, D3.md §4.7 Plan item 3). It was a
+ *  second panel on Review over the same read; the Tasks handoff now opens Plan with the requested row first. */
+function ProjectWorkPanel({ pid, onNav, targetId, state }: {
+  pid: string | null; onNav: (id: string) => void; targetId?: string | null; state: DataState<WorkViewRow>;
 }) {
+  const title = 'Tasks and approvals';
   const available = useSurfaceAvailable();
   const targetRef = useRef<HTMLDivElement>(null);
   const ident = pid ? encodeURIComponent(pid) : null;
@@ -919,7 +938,7 @@ function ProjectWorkPanel({ pid, title, onNav, targetId, state }: {
     <section className="pj-sec" aria-label={title}>
       <div className="pj-sec-h">
         <h2>{title}</h2>
-        <span className="sec-sub">tasks, review threads and approvals on this project</span>
+        <span className="sec-sub">On this project, by due date</span>
       </div>
       {!ident ? null : isUnanchored(state) ? (
         <EmptyState
@@ -938,7 +957,7 @@ function ProjectWorkPanel({ pid, title, onNav, targetId, state }: {
           isEmpty={(d) => (d.items ?? []).length === 0}
           render={(d) => {
             const items = d.items ?? [];
-            const open = items.filter((w) => w.status !== 'done');
+            const open = byDueDate(items.filter((w) => w.status !== 'done'));
             const target = targetId ? items.find((w) => w.id === targetId) : null;
             const shown = target
               ? [target, ...open.filter((w) => w.id !== target.id).slice(0, WORK_SHOWN - 1)]
@@ -950,36 +969,33 @@ function ProjectWorkPanel({ pid, title, onNav, targetId, state }: {
                 <div className="pj-files" data-testid="pj-work">
                   {shown.map((w) => {
                     const due = fmtDue(w.dueAt);
+                    const overdue = due && w.status !== 'done' && w.dueAt && Date.parse(w.dueAt) < Date.now();
+                    const meta = [WORK_SOURCE_LABEL[w.source] ?? enumWords(w.source), w.ownerName ?? 'Unassigned',
+                      w.priority ? `${enumWords(w.priority)} priority` : null].filter(Boolean).join(' · ');
                     return (
-                      <div key={w.id} className="pj-file" style={{ cursor: 'default' }}
+                      <div key={w.id} className="pj-file"
                         ref={w.id === targetId ? targetRef : undefined}
                         tabIndex={w.id === targetId ? -1 : undefined}
                         data-work-target={w.id === targetId || undefined}
                         aria-label={w.id === targetId ? `Requested task: ${w.title}` : undefined}>
                         <div className="pj-file-top">
-                          <span className="pj-file-badge">{WORK_SOURCE_LABEL[w.source] ?? w.source}</span>
-                          <span className={`rd-chip ${WORK_STATUS_TONE[w.status] ?? 'tone-idle'}`}>
-                            {enumWords(w.status || 'open')}
-                          </span>
-                          {w.blocking && <span className="sp-tone-warn" style={{ fontSize: 11 }}>blocking</span>}
+                          <span className="pj-file-n">{w.title}</span>
+                          <WorkStatus w={w} />
                         </div>
-                        <div className="pj-file-n">{w.title}</div>
                         <div className="pj-file-m">
-                          {[w.ownerName, w.priority ? `priority ${w.priority}` : null, due ? `due ${due}` : 'no due date']
-                            .filter(Boolean)
-                            .join(' · ')}
+                          {meta} · {overdue ? <span className="pj-overdue">{I.clock}Due {due}</span> : due ? `Due ${due}` : 'No due date'}
                         </div>
                       </div>
                     );
                   })}
                 </div>
-                <div className="sec-sub" style={{ fontSize: 11.5, marginTop: 8 }}>
+                <div className="sec-sub pj-work-count">
                   {hiddenOpen > 0 ? `+${hiddenOpen} more open · ` : ''}
                   {done > 0 ? `${done} done · ` : ''}
                   {items.length} item{items.length === 1 ? '' : 's'} total
                 </div>
                 {d.summary?.partial && (
-                  <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>
+                  <div className="sp-tone-warn pj-work-count" role="status">
                     One of the stores this list reads could not be read, so it may be incomplete and every count is a minimum.
                   </div>
                 )}
@@ -995,8 +1011,8 @@ function ProjectWorkPanel({ pid, title, onNav, targetId, state }: {
           to, so the door opens the same board. Shown only when that board is
           in this release. */}
       {available('tasks') && (
-        <div style={{ marginTop: 8 }}>
-          <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('tasks')}>{STEP_DOORS.allTasks} {I.right}</button>
+        <div className="pj-work-count">
+          <button type="button" className="btn small" onClick={() => onNav('tasks')}>{STEP_DOORS.allTasks} {I.right}</button>
         </div>
       )}
     </section>
@@ -1143,7 +1159,7 @@ function ProjectReviews({ state, onRetry, onNav, available }: {
             onlyProgram). Not offered when it is not in this release. */}
         {available('review') && (
           <span className="pj-sec-acts">
-            <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('review')}>
+            <button type="button" className="btn small" onClick={() => onNav('review')}>
               {STEP_DOORS.reviewBoard} {I.right}
             </button>
           </span>
@@ -1203,7 +1219,7 @@ function ProjectQuality({ pid, onNav }: { pid: string; onNav: (id: string) => vo
         <h2 id="pj-quality-h">Quality</h2>
         <span className="sec-sub">this project’s quality records</span>
         <span className="pj-sec-acts">
-          <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('quality')}>
+          <button type="button" className="btn small" onClick={() => onNav('quality')}>
             {STEP_DOORS.quality} {I.right}
           </button>
         </span>
@@ -1214,7 +1230,7 @@ function ProjectQuality({ pid, onNav }: { pid: string; onNav: (id: string) => vo
         ))}
       </dl>
       {rows.some((row) => row.failed) && (
-        <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px', marginTop: 8 }} onClick={() => setEpoch((e) => e + 1)}>Try again</button>
+        <button type="button" className="btn small pj-retry" onClick={() => setEpoch((e) => e + 1)}>Try again</button>
       )}
     </section>
   );
@@ -1407,7 +1423,7 @@ function ProjectDocumentRow({ doc, onOpen }: { doc: BuiltDocument; onOpen: (doc:
         </span>
       </div>
       <div className="cdl-row-actions">
-        <button type="button" className="btn ghost" onClick={() => onOpen(doc)} aria-label={`Open ${doc.title}`}>
+        <button type="button" className="btn small" onClick={() => onOpen(doc)} aria-label={`Open ${doc.title}`}>
           {I.penLine} Open
         </button>
       </div>
@@ -1526,19 +1542,19 @@ function ProjectDocuments({ pid, read, onRetry, onOpen, onNav, available, cmcCom
               program key (PF-14). They carry it since 20261014_protocol_program_scope.sql
               and the workspace lists the open project's, so the door names the job. */}
           {available('protocol-dev') && (
-            <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('protocol-dev')}>
+            <button type="button" className="btn small" onClick={() => onNav('protocol-dev')}>
               {STEP_DOORS.protocol} {I.right}
             </button>
           )}
           {available('document-authoring') && (
-            <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={openAuthoring}>
+            <button type="button" className="btn small" onClick={openAuthoring}>
               {STEP_DOORS.editor} {I.right}
             </button>
           )}
           {/* CMC / Module 3 reads the open program; offered where it composes, with the name Plan's
               phase 3 gives the same job (section 9: one job, one name). */}
           {cmcComposes && available('cmc') && (
-            <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('cmc')}>
+            <button type="button" className="btn small" onClick={() => onNav('cmc')}>
               {STEP_DOORS.cmc} {I.right}
             </button>
           )}
@@ -1612,13 +1628,11 @@ function AuthorWorkspace({
     <>
         <ProjectDocuments pid={pid} read={docs} onRetry={onRetryDocs} onOpen={onOpenDoc} onNav={onNav} available={available} cmcComposes={cmcComposes} />
 
-        {/* The dossier's readiness detail, beside the modules it measures (D3-2a: it left the side column, whose Filing
-            card now carries the figure on every step). */}
-        <DossierReadinessCard read={dossier} copyFor={copyFor} onOpen={onOpenDoc} />
-
-        {/* Module completion, from the same dossier read as the card (F23). The project's records are the Records
-            card in Project knowledge, on every step (D3-2a). */}
-        <ModuleCompletion read={dossier} copyFor={copyFor} onOpen={onOpenDoc} onAsk={onAsk} />
+        {/* Module completion, led by the dossier's figure line and markets (D3-4, D3.md §4.7 Author item 2), from one
+            dossier read (F23). The figure itself is the Filing card's first row, on every step; the project's records
+            are the Records card there too (D3-2a). */}
+        <ModuleCompletion read={dossier} copyFor={copyFor} onOpen={onOpenDoc} onAsk={onAsk}
+          lead={<DossierReadinessCard read={dossier} copyFor={copyFor} onOpen={onOpenDoc} />} />
 
     </>
   );
@@ -1778,9 +1792,11 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
   const [inboxToast, fireInbox] = useToast();
   const inbox = useAgencyInbox(pid, fireInbox);
   /* The project's commitments to the agency, by the verified integer project id the route takes (D3.md §4.10;
-     null until the team read verifies it). The Filing card says them; Respond's Commitments (D3-4) will read the same. */
+     null until the team read verifies it). The Filing card and Respond's Commitments render this one read; a recorded
+     fulfilment reads it again. */
   const commitPath = sharingProjectId !== null ? `/api/concept2cure/projects/${sharingProjectId}/commitments` : null;
-  const commitments = useLiveData<CommitmentsPayload>(commitPath, [commitPath], isCommitmentsPayload);
+  const [commitVersion, setCommitVersion] = useState(0);
+  const commitments = useLiveData<CommitmentsPayload>(commitPath, [commitPath, commitVersion], isCommitmentsPayload);
   /* The Team drawer (D3.md §4.9), opened by the Team card's "Manage"; a project switch closes it. */
   const [teamOpen, setTeamOpen] = React.useState(false);
   React.useEffect(() => { setTeamOpen(false); }, [pid]);
@@ -1788,6 +1804,8 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
   const [settingsRequest, setSettingsRequest] = React.useState<ProjectSettingsRequest>({ n: 0 });
   const openSettings = (focus?: ProjectSettingsRequest['focus']) => setSettingsRequest(previous => ({ n: previous.n + 1, focus }));
   const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null, [pid, metadataEpoch]);
+  /* The project's records, read once for the Records card and Evidence's Protocol (D3-4, D3.md §4.10). */
+  const records = useProjectRecords(pid, metadataEpoch);
   /* The dossier (FILING_SPINE F23): the readiness card, the module rows and
      what AnA is told, from one read. */
   const dossier = useProjectDossier(pid);
@@ -1799,7 +1817,11 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
   const markets = useProgramMarkets(pid);
   const reviews = useProjectReviews(pid);
 
-  const [workTarget, setWorkTarget] = useState<string | null>(null);
+  /* The task a Tasks handoff asked for, kept with its project, so another project never shows it and nothing has to
+     clear it: an effect that cleared it on mount ran again under React.StrictMode after the handoff was consumed, and
+     dropped it (walked 2026-11-08, D3-4). */
+  const [handedTask, setHandedTask] = useState<{ pid: string; id: string } | null>(null);
+  const workTarget = handedTask && handedTask.pid === pid ? handedTask.id : null;
   const rememberedStep = projectStepId(sel?.step);
   const [stepSelection, setStepSelection] = useState(() => ({
     pid, stage: rememberedStep ?? 'author', chosen: rememberedStep !== null,
@@ -1818,7 +1840,6 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
     setStepSelection({ pid, stage: step, chosen: true });
     updateShellProject({ step });
   }, [pid]);
-  useEffect(() => { setWorkTarget(null); }, [pid]);
   useEffect(() => {
     // A first empty project starts on Plan. Remember even this default so
     // creating its first document and returning does not jump it to Author.
@@ -2053,8 +2074,11 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
     const params = consumeNavParams('project-home');
     const step = projectStepId(params?.stage);
     const target = params?.workId;
-    if (target) setWorkTarget(target);
-    if (step || target) chooseStage(step ?? 'review');
+    if (target) setHandedTask({ pid, id: target });
+    /* A task handed over opens Plan, the one place the project's work is listed (D3-4, D3.md §4.6 item 4), whatever
+       step it names: the Tasks board still sends stage 'review' with every task. */
+    if (target) chooseStage('plan');
+    else if (step) chooseStage(step);
   }, [pid, chooseStage]);
 
   /* The filing in words for the byline ("IND", "510(k)"), not the project's code (D3.md §4.2). */
@@ -2135,18 +2159,20 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
               }}
               onOpenDocument={docId => openDocument({ id: docId } as BuiltDocument)}
               onWorkChanged={() => setWorkVersion(value => value + 1)}
-              tasks={<ProjectWorkPanel pid={pid} title="Tasks" onNav={onNav} state={work} />} />
+              tasks={<ProjectWorkPanel pid={pid} onNav={onNav} targetId={workTarget} state={work} />} />
           )}
 
-          {/* Evidence — the project's files, then its data room: every way a
-              source comes into the project (FILING_SPINE.md F3). The data
-              room sat under Author. */}
+          {/* Evidence, in spine order (D3.md §4.7): the data room, the protocol, then the project's files: every way a
+              source comes into the project (FILING_SPINE.md F3). */}
           {stage === 'evidence' && pid && (
             <div className="pj-stagebody">
+              <DataRoom key={pid} pid={pid} onNav={onNav} onAsk={ask} />
+              {/* The protocol, from the page's one records read (D3-4, D3.md §4.7 Evidence item 2). A device filing has
+                  no study protocol workspace; its study designs, if any, are on the Records card. */}
+              {!deviceFiling && <ProjectProtocol state={records} available={available} onNav={onNav} />}
               <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available} deviceFiling={deviceFiling}
                 monitoring={prog?.id === pid && prog.riskBasedMonitoring === true && !progState.loading && !progState.error}
                 onMonitoring={() => { const bearer = getAuthToken(); if (bearer && monitoringMounted.current && monitoringCurrent() && projectSession.sameRevision() && authService.captureSessionReadGuard(bearer).current()) onNav('rbm'); }} />
-              <DataRoom key={pid} pid={pid} onNav={onNav} onAsk={ask} />
             </div>
           )}
 
@@ -2159,14 +2185,12 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
             </div>
           )}
 
-          {/* Review — this filing's reviews, each opening its document (F7),
-              then the program's tasks and approvals from the unified work
-              view, asked by the program UUID (see ProjectWorkPanel). */}
+          {/* Review — this filing's reviews, each opening its document (F7), and its quality records. The project's
+              tasks and approvals are on Plan (D3-4, D3.md §4.7). */}
           {stage === 'review' && (
             <div className="pj-stagebody">
               {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
               {pid && available('quality') && <ProjectQuality key={pid} pid={pid} onNav={onNav} />}
-              <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} targetId={workTarget} state={work} />
               {/* What the client sees of this project's work (the Client Review
                   Room), for this project only: the device portfolio drew it for
                   the whole organization until it folded into Projects (D2, fold
@@ -2178,7 +2202,12 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
 
           {/* Respond: add the agency's letter, draft the answer from it with
               AnA, start the response sequence (F15). */}
-          {stage === 'respond' && pid && <ProjectRespond pid={pid} markets={markets} onNav={onNav} onAsk={ask} inbox={inbox} />}
+          {stage === 'respond' && pid && <ProjectRespond pid={pid} markets={markets} onNav={onNav} onAsk={ask} inbox={inbox}
+            commitments={commitPath ? commitments : null}
+            commitmentsUnverified={commitPath || teamState.loading ? null : teamState.error
+              ? "This project's record could not be verified, so its commitments are not listed."
+              : 'This project has no tracking record, so no commitment to the agency is kept on it.'}
+            projectId={sharingProjectId} onCommitmentsChanged={() => setCommitVersion(value => value + 1)} />}
 
           {/* Author — the project's documents, each opened by id, then module
               completion, records and activity. */}
@@ -2275,7 +2304,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
             <C2CToast msg={inboxToast} />
             <ProjectHeaderDoors pid={pid} prog={prog} deviceFiling={deviceFiling} cmcComposes={cmcComposes} available={available} onNav={onNav} />
             {/* What AnA knows, the skills it follows here, and the project's records: on every step (D3-2a). */}
-            <ProjectSide pid={pid} onAsk={onAsk} activity={<ProjectActivity activityState={activityState} />} />
+            <ProjectSide pid={pid} onAsk={onAsk} records={records} activity={<ProjectActivity activityState={activityState} />} />
           </aside>
           {teamOpen && pid && (
             <ProjectTeamDrawer programId={pid} state={teamState} onRetry={reloadTeam} onClose={() => setTeamOpen(false)}

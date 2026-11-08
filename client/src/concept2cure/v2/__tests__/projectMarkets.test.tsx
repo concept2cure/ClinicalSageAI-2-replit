@@ -267,6 +267,21 @@ describe('Submit — opening the Submission Center, and the list’s own states'
     expect(consumeNavParams(resolveSurfaceIdForTarget('submission-center'))).toEqual({ ws: 'portfolio' });
   });
 
+  /* D3-4 (D3.md §4.7 Submit, §6 item 11): no orange on the project page except send. "Add a market" is a ghost button,
+     first among the header's doors; every other door, and each to-do's act, is a transparent small button. */
+  it('"Add a market" is a ghost button, first in the header; the other doors and each act are small buttons', async () => {
+    serve();
+    await openSubmit();
+    const markets = await screen.findByTestId('pj-markets');
+    await marketRow('ONC-221 IND');
+    const doors = Array.from(markets.querySelectorAll<HTMLButtonElement>('.pj-sec-h .pj-sec-acts > button'));
+    expect(doors[0]?.textContent).toMatch(/Add a market/);
+    expect(doors[0]?.className).toBe('btn ghost small');
+    for (const door of doors.slice(1)) expect(door.className, door.textContent ?? '').toBe('btn small');
+    expect(markets.querySelector('.btn.primary'), 'no primary button among the markets').toBeNull();
+    for (const act of Array.from(markets.querySelectorAll('.pj-mkt-todo-act'))) expect(act.classList.contains('small')).toBe(true);
+  });
+
   it('a project with no submission says so in words and offers Add a market', async () => {
     serve({ subs: [] });
     await openSubmit();

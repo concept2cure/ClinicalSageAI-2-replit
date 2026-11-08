@@ -415,7 +415,15 @@
    journey-v2.css owns that class for the Program journey's stage cells, and
    two global rules on one class merge (flex, padding and min-width leaked
    both ways). */
-.c2c-v2 .pj-stagebody{display:flex;flex-direction:column;gap:20px;min-width:0;}
+.c2c-v2 .pj-stagebody{display:flex;flex-direction:column;gap:32px;min-width:0;}
+/* The step bodies (D3-4, D3.md §4.7): their rows are app-v2.css's .pj block; these are the parts only they have. */
+/* Tasks and approvals: the status in words at the row's right, the warning tone and its icon only when blocked. */
+.c2c-v2 .pj-work-status{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;font-size:var(--fs-small);color:var(--text-300);}
+.c2c-v2 .pj-work-status[data-blocked]{color:var(--warning);}
+.c2c-v2 .pj-overdue{display:inline-flex;align-items:center;gap:4px;color:var(--warning);}
+.c2c-v2 :is(.pj-work-status, .pj-overdue) svg{width:14px;height:14px;flex-shrink:0;}
+.c2c-v2 :is(.pj-work-count, .pj-retry){margin-top:8px;}
+
 /* Two or more doors in one section header. */
 .c2c-v2 .pj-sec-acts{display:inline-flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;}
 /* A module with no document of this project to open: a row, not a link, so
@@ -496,6 +504,10 @@
 .c2c-v2 .pj-status{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin:0 0 16px;font-size:12px;color:var(--text-300);}
 .c2c-v2 .pj-status-item{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px;}
 .c2c-v2 .pj-status-item svg{width:13px;height:13px;}
+/* In the Filing card the market's line is a row like the others: its words wrap and its chevron stays at the right,
+   on the first line (it fell to a line of its own, walked 2026-11-08, D3-4). */
+.c2c-v2 [aria-labelledby="pj-filing-h"] .pj-status-open{flex-wrap:nowrap;align-items:flex-start;width:100%;text-align:left;}
+.c2c-v2 [aria-labelledby="pj-filing-h"] .pj-status-open .pj-status-go{margin-left:auto;flex-shrink:0;}
 .c2c-v2 .pj-status-item b{font-weight:600;color:var(--text-200);}
 .c2c-v2 .pj-status-item[data-tone=ok]{color:var(--success);}
 .c2c-v2 .pj-status-item[data-tone=blocked]{color:var(--error);}
@@ -511,7 +523,10 @@
 .c2c-v2 .pj-work-area-ic{display:inline-flex;color:var(--text-300);}
 .c2c-v2 .pj-work-area-ic svg{width:16px;height:16px;}
 .c2c-v2 :is(.pj-work-area-l, .pj-k-row-l){flex:1;min-width:0;overflow-wrap:anywhere;}
-.c2c-v2 .pj-k-row-v{font-weight:500;color:var(--text-100);white-space:nowrap;}
+/* The label keeps its words whole and the value wraps beside it: "Commitments" broke as "Commitme / nts" beside
+   "4 open · next due Mar 1, 2027" (walked 2026-11-08, D3-4). */
+.c2c-v2 .pj-k-row-l{flex:0 1 auto;min-width:min-content;overflow-wrap:normal;}
+.c2c-v2 .pj-k-row-v{flex:1 1 auto;min-width:0;font-weight:500;color:var(--text-100);text-align:right;}
 /* What AnA knows (D3-2a, D3.md §4.8 item 5): saved text keeps its line breaks and never overflows the card. */
 .c2c-v2 .pj-knows{overflow-wrap:anywhere;}
 .c2c-v2 .pj-knows-t{white-space:pre-wrap;overflow-wrap:anywhere;}
@@ -528,7 +543,7 @@
 .c2c-v2 .pj-respond{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px;}
 .c2c-v2 .pj-respond-step{display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
 .c2c-v2 .pj-respond-pick{width:100%;max-width:480px;}
-.c2c-v2 .pj-respond-t{margin:0;font-size:13px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .pj-respond-t{margin:0;font-size:var(--fs-section);font-weight:600;color:var(--text-100);}
 
 /* Plan (CLIENT_JOURNEY_2026-10-25 pass 3): what the filing needs, by phase.
    Each phase opens to its deliverables, which are the IND library's entries. */
@@ -556,6 +571,8 @@
 @media(max-width:600px){.c2c-v2 .pj-core-work-controls select{flex:1 1 100%;}.c2c-v2 .pj-core-work-controls button{width:100%;}}
 /* A door names its job in a sentence, so it wraps rather than overflow (as .pj-sec-acts does). */
 .c2c-v2 .pj-plan-door>button{height:auto;min-height:32px;padding-top:6px;padding-bottom:6px;white-space:normal;text-align:left;}
+/* D0's touch target holds here too (D3.md §6 item 14): the door's own height above outranked it. */
+@media (pointer: coarse){.c2c-v2 .pj-plan-door>button{min-height:44px;}}
 /* The device workstreams sit in the step body, whose gap spaces them. */
 .c2c-v2 .pj-plan-device>section{margin:0;}
 @media(max-width:600px){.c2c-v2 .pj-plan-phase>summary{flex-wrap:wrap;gap:2px 8px;}.c2c-v2 .pj-plan-phase-n{width:100%;padding-left:20px;}.c2c-v2 .pj-plan-assigned{display:block;margin-left:0;}.c2c-v2 .pj-plan-assigned::before{content:none;}}

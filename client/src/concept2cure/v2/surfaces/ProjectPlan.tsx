@@ -179,9 +179,10 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
       {prog && <ProjectProgramPlan programId={pid} read={pyramid} projectId={projectId} workstreamNote={deviceWorkstreamNote(devicePlan)} owners={assignments.byPyramidTask}
         ownersUnread={Boolean(assignments.error)} onAssigned={assigned}
         onNav={onNav} onAsk={onAsk} />}
-      {prog && <FilingLifecycleReference filingId={prog.submission_type_id} recorded={{ programType: prog.program_type, primaryAgency: prog.primary_agency }} />}
-      {/* Read again after each Assign, so the new task is listed without a reload. */}
+      {/* Tasks and approvals, by due date, before the reference (D3-4, D3.md §4.7 Plan item 1). Read again after each
+          Assign, so the new task is listed without a reload. */}
       <React.Fragment key={epoch}>{tasks}</React.Fragment>
+      {prog && <FilingLifecycleReference filingId={prog.submission_type_id} recorded={{ programType: prog.program_type, primaryAgency: prog.primary_agency }} />}
     </div>
   );
 }
