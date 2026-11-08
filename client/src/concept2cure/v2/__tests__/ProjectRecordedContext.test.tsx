@@ -36,7 +36,7 @@ function deferred() {
   return { promise: new Promise<Response>(done => { resolve = done; }), resolve: (value: Response) => resolve(value) };
 }
 /* The records read is the page's (D3-4, D3.md §4.10); these cases are about the recorded profile, so it is reading. */
-const side = (pid: string | null = PID) => <ProjectSide pid={pid} records={{ data: null, loading: true }} />;
+const side = (pid: string | null = PID) => <ProjectSide pid={pid} records={{ data: null, loading: true, empty: false }} />;
 beforeEach(() => {
   login(); tenant.currentOrganization = { id: 7 }; tenant.currentClientWorkspace = { id: '21', organizationId: '7' };
   window.C2C_PROJECT = { id: PID, title: 'Current project' }; request.mockReset(); serve(answer());

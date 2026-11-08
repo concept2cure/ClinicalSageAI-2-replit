@@ -228,7 +228,7 @@ describe('Respond lists the commitments to the agency (D3-4)', () => {
     source_question_id: null, source_question_ref: null, source_communication_type: null,
     fulfilment: { state: 'none', rule: { signatureRequired: false, evidence: 'none' }, sequence: null, vaultVersion: null }, ...over,
   });
-  const read = (rows: unknown[]) => ({ data: { commitments: rows } as never, loading: false });
+  const read = (rows: unknown[]) => ({ data: { commitments: rows } as never, loading: false, empty: rows.length === 0 });
 
   it('lists each commitment and its "Record fulfilment" opens the project-door dialog', async () => {
     render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} commitments={read([commitment()])} projectId={11} />);
@@ -243,7 +243,7 @@ describe('Respond lists the commitments to the agency (D3-4)', () => {
     expect(screen.getByText('No commitments to the agency on this project.')).toBeTruthy();
     unmount();
     const retry = vi.fn();
-    const failed = render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} commitments={{ data: null, loading: false, error: 'boom', status: 500 }} projectId={11} onCommitmentsChanged={retry} />);
+    const failed = render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} commitments={{ data: null, loading: false, empty: false, error: 'boom', status: 500 }} projectId={11} onCommitmentsChanged={retry} />);
     expect(screen.getByText("Couldn't load this project's commitments")).toBeTruthy();
     expect(screen.queryByText('No commitments to the agency on this project.')).toBeNull();
     failed.unmount();
