@@ -1,0 +1,13 @@
+[ci:migration-drop-safety] FAIL — 1 replay-unsafe DROP(s) or replacement(s).
+
+  table:public.report_bundle_projects
+    dropped by : migrations/20261109_probe_drop.sql
+    created by : migrations/20261108_report_bundle_register.sql
+    effect     : REPEATED — the creator runs first every deploy, so this re-adds
+                 and re-drops it on every deploy. Any data written into it between
+                 deploys is destroyed, silently.
+
+[ci:migration-drop-safety] The applier re-runs every file on every deploy, so a DROP cannot remove
+  something another file in the set re-creates. Amend the creating migration in
+  place (CLAUDE.md RULE 1) instead of appending a DROP. If a pairing is genuinely
+  safe, record it in scripts/ci/migration-drop-safety-baseline.json with a reason.
