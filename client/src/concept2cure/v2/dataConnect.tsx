@@ -819,17 +819,30 @@ export function EmptyState({
  *   the channel's own `shellProgramName` reads it, `String(v ?? '')`, because
  *   the global is loosely typed and restored from storage with only its id
  *   checked: a `.trim()` on a non-string would take the work area down.
+ * - **A project opened by its link alone is in the shell by id only.** The
+ *   top bar names it once its own read answers (Shell.tsx
+ *   `useNameProjectOpenedById`); until then, or if that read fails, the link
+ *   read "Project" (the Reporting running-app run,
+ *   docs/evidence/DESIGN/D7/2026-11-02-reporting/). A screen that has read
+ *   the project itself passes that `name`. The label is the first non-blank
+ *   of: the shell's title (it names the project open now), `name`, the
+ *   shell's product, its code, then "Project". The design is the
+ *   coordinator's (2026-11-02), rebuilt here because its commit never reached
+ *   origin.
  *
  * The look is `.pj-back` in `styles/app-v2.css`, and its focus ring is the
  * shared `.c2c-v2 button:focus-visible`. `ProjectHome`'s "All projects" link
  * shares the class but leaves the project, so it is not this component.
  */
-export function ProjectBack({ onNav }: { onNav?: (id: string) => void }) {
+export function ProjectBack({ onNav, name }: { onNav?: (id: string) => void; name?: string | null }) {
   const project = useShellProject();
   if (!project) return null;
+  const label = [project.title, name, project.product, project.code]
+    .map((v) => String(v ?? '').trim())
+    .find(Boolean) ?? 'Project';
   return (
     <button type="button" className="pj-back" onClick={() => onNav?.('project-home')}>
-      {I.left} {String(project.title ?? '').trim() || 'Project'}
+      {I.left} {label}
     </button>
   );
 }
