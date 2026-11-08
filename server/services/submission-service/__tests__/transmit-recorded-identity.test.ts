@@ -25,7 +25,7 @@ vi.mock('../../../db', () => {
   const textOf = (q: any) => (q?.queryChunks ?? []).map((c: any) => Array.isArray(c?.value) ? c.value.join('') : '?').join('');
   const execute = async (q: any) => {
     const text = textOf(q);
-    if (text.includes('c2c_ana_actions')) return { rows: [{ id: 'signature', payload: { intent: 'transmit', meaning: 'release' } }] };
+    if (text.includes('c2c_ana_actions')) return { rows: [{ id: 'signature', payload: { intent: 'transmit', meaning: 'release', environment: 'staging' } }] };
     if (text.includes('electronic_signatures')) return { rows: [{ id: 5, bound_payload_digest: 'approved', binding_basis: 'ectd-sequence-leaf-manifest-sha256', is_valid: true, verification_status: 'valid', superseded_by: null }] };
     return { rows: [] };
   };

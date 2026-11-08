@@ -68,7 +68,9 @@ const poolCalls: Array<{ text: string; params?: unknown[] }> = [];
 const recordedIdentity = () => ({ programId: 'p-1', applicationNumber: '123456', applicantName: 'Concept2Cure Therapeutics',
   applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantId: '123456789',
   contact: { name: 'Regulatory Contact', phone: '+1 617 555 0100', email: 'regulatory@example.test' } });
-const state = { dispatchStatus: 'pending' as string, signatureActionId: null as string | null, attemptId: null as string | null, signatureSpent: false, spendAfterLock: false, signatureVoided: false };
+const state = { dispatchStatus: 'pending' as string, signatureActionId: null as string | null, attemptId: null as string | null, signatureSpent: false, spendAfterLock: false, signatureVoided: false,
+  /** The environment the signature names: the send's own unless a case says otherwise (F1, row D7). */
+  signedEnvironment: 'staging' as 'staging' | 'production' };
 
 vi.mock('../../../db', () => {
   const rowsFor = (tableName: string) => {
@@ -90,7 +92,8 @@ vi.mock('../../../db', () => {
   const textOf = (q: any): string => (q?.queryChunks ?? []).map((c: any) => (Array.isArray(c?.value) ? c.value.join('') : '?')).join('');
   const execute = async (q: any) => {
     const t = textOf(q);
-    if (t.includes('c2c_ana_actions')) return { rows: [{ id: 'sig-1', payload: { intent: 'transmit', meaning: 'release' } }] };
+    // The signature names the environment of the send it was given for (F1, row D7, 2026-11-08).
+    if (t.includes('c2c_ana_actions')) return { rows: [{ id: 'sig-1', payload: { intent: 'transmit', meaning: 'release', environment: state.signedEnvironment } }] };
     if (t.includes('audit_logs')) return { rows: state.signatureSpent ? [{ action: 'ECTD_TRANSMITTED' }] : [] };
     if (t.includes('electronic_signatures')) return { rows: [{ bound_payload_digest: 'd', binding_basis: 'ectd-sequence-leaf-manifest-sha256', superseded_by: null, is_valid: true, verification_status: 'valid' }] };
     return { rows: [] };
@@ -254,10 +257,13 @@ afterEach(() => {
   for (const k of Object.keys(process.env)) if (/^FDA_ESG_(?!STAGING_)/.test(k)) delete process.env[k];
 });
 
-const transmit = (environment: 'staging' | 'production' = 'staging') => transmitSequence({
-  sequenceId: 1, ctx: { organizationId: 7, userId: 11 }, signatureActionId: 'sig-1',
-  environment, applicationId: '123456',
-}).catch((e) => e);
+const transmit = (environment: 'staging' | 'production' = 'staging') => {
+  state.signedEnvironment = environment;
+  return transmitSequence({
+    sequenceId: 1, ctx: { organizationId: 7, userId: 11 }, signatureActionId: 'sig-1',
+    environment, applicationId: '123456',
+  }).catch((e) => e);
+};
 /** What a person is told when a test send failed after the wire. */
 const TEST_SEND_RELEASED = /agency's test environment, which files nothing/;
 

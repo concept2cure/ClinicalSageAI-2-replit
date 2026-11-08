@@ -349,6 +349,12 @@ function transmittedSentence(seq: SeqRow, a: TransmitAnswer, environment: string
   return `${sent}${held}`;
 }
 
+/** The environment a transmit signature names, so it authorizes a send there
+ *  only (the server refuses it for the other, F1, row D7, 2026-11-08). */
+function transmitEnvironmentField(f: { kind: string; transmit?: TransmitRequest }): { environment?: string } {
+  return f.kind === 'transmit' && f.transmit?.environment ? { environment: f.transmit.environment } : {};
+}
+
 /** What the transmit's signer reads before signing: where the package goes, in
  *  words, and that a test send is not a filing (F1, row D7, 2026-11-01). */
 function transmitTargetLine(t: TransmitRequest | undefined): string {
@@ -935,8 +941,9 @@ export function SubmissionCenter({
       {
         target: `ectd-sequence:${f.seq.id}`,
         reason: input.reason,
-        // A disposition's signature names the finding and how it is closed (P-35).
-        payload: { intent: f.kind, meaning: input.meaning, ...dispositionFields(f.disposition) },
+        // A disposition's signature names the finding and how it is closed (P-35);
+        // a transmit's names where the package goes (F1, row D7, 2026-11-08).
+        payload: { intent: f.kind, meaning: input.meaning, ...dispositionFields(f.disposition), ...transmitEnvironmentField(f) },
         reauth: { password: input.password, ...(input.totp ? { totp: input.totp } : {}) },
       },
     );

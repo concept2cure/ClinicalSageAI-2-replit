@@ -197,7 +197,8 @@ export async function assertNoActiveTransmittal(input: GovernedTransmitInput, bu
 type ActiveHolder = NonNullable<Awaited<ReturnType<typeof findActiveTransmittal>>>;
 
 /** The agency environment a send went to, as an operator reads it. */
-const ENVIRONMENT_WORDS: Record<string, string> = {
+/** The agency's environments in words, as every screen and refusal says them (also read by submission-service.ts). */
+export const ENVIRONMENT_WORDS: Record<string, string> = {
   staging: "the agency's test environment",
   production: "the agency's production environment",
 };

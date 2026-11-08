@@ -30,14 +30,16 @@ export const testSendSeedSql = (org: number, user: number, program: string) => `
     (28, 'F1 test send fails after the wire', 'ind', 'biotech', 'fda', ${org}, ${user}, '${program}'),
     (29, 'F1 production send fails after the wire', 'ind', 'biotech', 'fda', ${org}, ${user}, '${program}'),
     (30, 'F1 test send fails after the wire, its void fails', 'ind', 'biotech', 'fda', ${org}, ${user}, '${program}'),
-    (31, 'F1 test send answers, its record fails', 'ind', 'biotech', 'fda', ${org}, ${user}, '${program}');
+    (31, 'F1 test send answers, its record fails', 'ind', 'biotech', 'fda', ${org}, ${user}, '${program}'),
+    (32, 'F1 a signature names its environment', 'ind', 'biotech', 'fda', ${org}, ${user}, '${program}');
   INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status, dispatch_status) VALUES
     (167, 27, 'fda', '0000', ${org}, ${user}, 'dispatched', 'pending'),
     (168, 27, 'fda', '0001', ${org}, ${user}, 'validated', NULL),
     (169, 28, 'fda', '0000', ${org}, ${user}, 'dispatched', 'pending'),
     (170, 29, 'fda', '0000', ${org}, ${user}, 'dispatched', 'pending'),
     (171, 30, 'fda', '0000', ${org}, ${user}, 'dispatched', 'pending'),
-    (172, 31, 'fda', '0000', ${org}, ${user}, 'dispatched', 'pending');
+    (172, 31, 'fda', '0000', ${org}, ${user}, 'dispatched', 'pending'),
+    (173, 32, 'fda', '0000', ${org}, ${user}, 'dispatched', 'pending');
   INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
     (167, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${org}, ${user}),
     -- 0001 files the same document in the same section: it waits on 0000 being filed (filingOrderRefusal).
@@ -45,7 +47,8 @@ export const testSendSeedSql = (org: number, user: number, program: string) => `
     (169, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${org}, ${user}),
     (170, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${org}, ${user}),
     (171, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${org}, ${user}),
-    (172, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${org}, ${user});
+    (172, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${org}, ${user}),
+    (173, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${org}, ${user});
 `;
 
 /** The gateway's own words for a send that failed after the whole bundle left. */

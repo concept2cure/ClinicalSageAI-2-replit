@@ -398,6 +398,8 @@ describe("a send to the agency's test environment is not a filing (F1, row D7): 
     expect(document.body.textContent).toContain('A test send is not a filing; sequence 0000 is not on file at the agency and can still be filed with the agency.');
     expect(document.body.textContent).not.toMatch(/staging/i);
     expect(posts.find((p) => p.url.endsWith('/transmit'))?.body).toEqual({ signatureActionId: 'act_tx3', environment: 'staging', applicationId: '000512' });
+    // The signature names the environment it is given for (F1, row D7, 2026-11-08).
+    expect(posts.find((p) => p.url === '/api/c2c/actions/sign')?.body).toMatchObject({ payload: { intent: 'transmit', environment: 'staging' } });
   });
 
   it('a production send says it was sent to the production environment and files the sequence, and how the agency now holds it', async () => {
@@ -412,6 +414,7 @@ describe("a send to the agency's test environment is not a filing (F1, row D7): 
     expect(document.body.textContent).not.toContain('test send');
     expect(document.body.textContent).not.toContain('(production)');
     expect(posts.find((p) => p.url.endsWith('/transmit'))?.body).toEqual({ signatureActionId: 'act_tx3', environment: 'production', applicationId: '000512' });
+    expect(posts.find((p) => p.url === '/api/c2c/actions/sign')?.body).toMatchObject({ payload: { intent: 'transmit', environment: 'production' } });
   });
 
   it('a test send whose request failed says it filed nothing, not that nothing was sent', async () => {

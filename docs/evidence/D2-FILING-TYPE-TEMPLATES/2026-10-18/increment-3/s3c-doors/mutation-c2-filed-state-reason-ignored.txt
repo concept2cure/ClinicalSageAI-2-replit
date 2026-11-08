@@ -1,0 +1,6 @@
+MUTATION c2-filed-state-reason-ignored in client/src/concept2cure/v2/surfaces/EctdFiledState.tsx (on the final code and tests, 2026-11-08T22:32:37.262207Z): replaced [    if (read && 'notApplicable' in read) { setView(null); setNotApplicable(read.notApplicable); setState('not_applicable'); return; }] with [    if (read && 'notApplicable' in read) { setView(null); setState('error'); return; }]
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > a project that is not an application and never filed > shows why nothing is on file, not a failed read 5036ms
+      Tests  1 failed | 10 skipped (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > a project that is not an application and never filed > shows why nothing is on file, not a failed read
+restored sha256 580ab73de338dca4f241a163ad6193a6151f16d010f2c826902c8a6af2d1bbb2 (expected 580ab73de338dca4f241a163ad6193a6151f16d010f2c826902c8a6af2d1bbb2)
