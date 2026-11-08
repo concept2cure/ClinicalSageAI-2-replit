@@ -1,0 +1,3 @@
+# Pre-existing, identical with submission-service.ts at HEAD (the change stashed), 2026-11-08T22:12:57Z:
+# - projects-create.test.ts 'reuses only a spine already anchored to THIS program': its vi.mock of submission-service exports no SubmissionError (500, not 201).
+# - irb-ibc-create-tools-record-unstated-as-null.test.ts: 4 cases.
