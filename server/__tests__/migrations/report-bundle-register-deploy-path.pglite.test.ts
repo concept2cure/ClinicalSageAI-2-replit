@@ -55,7 +55,8 @@ const record = (bundleId: string, organizationId: number, runIds: number[], proj
   } });
 
 /** How persistBundleRecord wrote a pack: the same content under each covered project. */
-async function legacyPack(pg: PGlite, bundleId: string, organizationId: number, runIds: number[], projectIds: number[], name?: string, at = '2026-10-01 10:00:00') {
+type LegacyPack = { bundleId: string; organizationId: number; runIds: number[]; projectIds: number[]; name?: string; at?: string };
+async function legacyPack(pg: PGlite, { bundleId, organizationId, runIds, projectIds, name, at = '2026-10-01 10:00:00' }: LegacyPack) {
   for (const projectId of projectIds) {
     await pg.query(
       `INSERT INTO project_memory_entries (project_id, organization_id, category, subcategory, title, content, source_document_type, created_at)
@@ -81,9 +82,9 @@ describe(FILE, () => {
     const pg = new PGlite();
     try {
       await pg.exec(PREREQUISITES);
-      await legacyPack(pg, A, 7, [41, 42], [1, 2], 'Older name', '2026-10-01 10:00:00');
-      await legacyPack(pg, A, 7, [41, 42], [1, 2], 'Newest name', '2026-10-02 10:00:00');
-      await legacyPack(pg, B, 8, [51], [3]);
+      await legacyPack(pg, { bundleId: A, organizationId: 7, runIds: [41, 42], projectIds: [1, 2], name: 'Older name', at: '2026-10-01 10:00:00' });
+      await legacyPack(pg, { bundleId: A, organizationId: 7, runIds: [41, 42], projectIds: [1, 2], name: 'Newest name', at: '2026-10-02 10:00:00' });
+      await legacyPack(pg, { bundleId: B, organizationId: 8, runIds: [51], projectIds: [3] });
       // A corrupt copy is skipped with a notice; it must not abort the deploy.
       await pg.query(`INSERT INTO project_memory_entries (project_id, organization_id, category, subcategory, title, content, source_document_type)
                       VALUES (1, 7, 'regulatory', 'report_bundle_record', 'bundle:${C}', '{not json', 'report_os_state')`);
@@ -139,7 +140,7 @@ describe(FILE, () => {
       // without a word. The count must catch it.
       await pg.query(`INSERT INTO report_bundles (id, organization_id, name, created_at, record, byte_length, payload_hash)
         VALUES ('${A}', 8, 'Someone else', now(), '{"bundleId":"${A}","organizationId":8}', 1, 'h')`);
-      await legacyPack(pg, A, 7, [41], [1]);
+      await legacyPack(pg, { bundleId: A, organizationId: 7, runIds: [41], projectIds: [1] });
       await expect(pg.exec(sql())).rejects.toThrow(/report-pack register/);
     } finally {
       await pg.close();
@@ -150,8 +151,8 @@ describe(FILE, () => {
     const pg = new PGlite();
     try {
       await pg.exec(PREREQUISITES);
-      await legacyPack(pg, A, 7, [41], [1]);
-      await legacyPack(pg, B, 8, [51], [3]);
+      await legacyPack(pg, { bundleId: A, organizationId: 7, runIds: [41], projectIds: [1] });
+      await legacyPack(pg, { bundleId: B, organizationId: 8, runIds: [51], projectIds: [3] });
       await pg.exec(sql());
       await pg.exec(SWEEP_SQL);
       await pg.exec(`CREATE ROLE report_runtime NOLOGIN NOSUPERUSER NOBYPASSRLS;
