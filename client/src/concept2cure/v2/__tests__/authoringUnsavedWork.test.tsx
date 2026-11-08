@@ -67,6 +67,8 @@ import { clearEditorTarget } from '../editorTarget';
 import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }, programId = new URLSearchParams(url.split('?')[1]).get('programId')) => programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
 
 function canvasEl(): HTMLElement | null {
   return document.querySelector<HTMLElement>('.rse-body .tiptap');
@@ -159,7 +161,7 @@ function mockApi(over?: (method: string, url: string, body?: unknown) => Respons
   apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
     const custom = over?.(method, url, body);
     if (custom) return custom;
-    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, DOCS));
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(sections);
     if (method === 'GET' && url.startsWith('/api/authoring/sections/'))
       return ok({ success: true, revisions: [], sources: [], citations: [] });
@@ -598,14 +600,14 @@ describe('program switches preserve the current authoring decision', () => {
     const pending = heldResponse(); const baseline = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation((method: string, url: string, body?: unknown) => {
       if (url.startsWith('/api/authoring/docs?') && url.includes(`programId=${PROGRAM_A}`)) return pending.promise;
-      if (url.startsWith('/api/authoring/docs?') && url.includes(`programId=${PROGRAM_B}`)) return Promise.resolve(ok({ documents: [{ ...DOCS.documents[0], id: 'B1', title: 'Program B draft' }] }));
+      if (url.startsWith('/api/authoring/docs?') && url.includes(`programId=${PROGRAM_B}`)) return Promise.resolve(ok(scopedList(url, { documents: [{ ...DOCS.documents[0], id: 'B1', title: 'Program B draft' }] })));
       if (url.split('?')[0] === '/api/authoring/docs/B1/sections') return Promise.resolve(ok({ sections: [{ ...SECTIONS.sections[0], id: 'BS1', doc_id: 'B1', content: 'Program B stored text.' }] }));
       return baseline(method, url, body);
     });
     publishShellProject({ id: PROGRAM_A }); render(<DocumentAuthoring {...props()} />);
     await act(async () => { publishShellProject({ id: PROGRAM_B }); });
     await waitFor(() => expect(canvasText()).toBe('Program B stored text.'));
-    await act(async () => { pending.resolve(ok(DOCS)); await pending.promise; });
+    await act(async () => { pending.resolve(ok({ ...DOCS, documents: DOCS.documents.map(row => ({ ...row, program_id: PROGRAM_A })) })); await pending.promise; });
     expect(canvasText()).toBe('Program B stored text.'); expect(screen.queryByText('Nonclinical Overview')).toBeNull();
   });
 

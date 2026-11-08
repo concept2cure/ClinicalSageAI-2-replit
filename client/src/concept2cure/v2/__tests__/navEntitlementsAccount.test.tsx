@@ -129,8 +129,7 @@ it('rejects a well-formed answer for the wrong authenticated organization', () =
 it('accepts an organization supplied as canonical numeric text in the account profile', () => {
   h.user = { id: '5', organizationId: '7' }; assert.equal(loaded().resolved, true);
 });
-it.each([0, -1, 7.5, NaN, 2_147_483_648, '', '7junk', ' 7 ', '07'])
-  ('does not issue a read for invalid account organization %s', organizationId => {
+it.each([0, -1, 7.5, NaN, 2_147_483_648, '', '7junk', ' 7 ', '07'])('does not issue a read for invalid account organization %s', organizationId => {
     h.user = { id: 5, organizationId }; unresolved(render()); assert.equal(h.reads.length, 0);
   });
 it('does not invent an organization for a supported older account profile without that field', () => {
@@ -145,8 +144,7 @@ it('keeps an independently resolved current admin fact on an unresolved current 
   const value = render(); assert.equal(value.resolved, false); assert.equal(value.platformAdmin, true);
   h.user = { id: 5, organizationId: 8 }; unresolved(render());
 });
-it.each(['projects', 'vault', 'authoring', 'submission-center', 'rbm', 'cmc', 'biostatistics'])
-  ('retires a captured %s verdict without creating a feature-specific context', id => {
+it.each(['projects', 'vault', 'authoring', 'submission-center', 'rbm', 'cmc', 'biostatistics'])('retires a captured %s verdict without creating a feature-specific context', id => {
     render(); h.deliver(0, grant(7, { surfaces: [
       { id, label: id, entitled: true, source: 'included', requiredTier: null },
     ] }));

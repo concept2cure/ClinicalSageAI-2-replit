@@ -1600,6 +1600,29 @@ no screen, route, service, table or component file.
     replay and drop-safety work, shown red first. It is not started, because the coordinator's file hold can't be
     asked for while it is unavailable.
   - Re-walk Reporting in the running app at the current head. The ProjectBack switch has jsdom evidence only.
+- **Update, 2026-11-08 (later the same day):**
+  - **C-3 landed** (`Plan: L1`, P-91): `aadca02cc7` and `17315d82fd`, with evidence
+    `docs/evidence/L1-C3-REPORT-BUNDLE-REGISTER/2026-11-08/`.
+    - `public.report_bundles`, `report_bundle_runs` and `report_bundle_projects` replace the `bundle:<uuid>`
+      memory path, which is deleted.
+    - A blank database built by install-fresh plus deploy-migrate applies it twice, and
+      `tests/db/report-pack-export.dbtest.ts` passes 8 of 8 as `app_service`.
+    - **Missed, and fixed by the coordinator:** the three tables were not in the tenant purge list
+      (`PURGE_CHILD_TABLES`), so `ci:purge-coverage` went red. The fix is `360d4de53d`, pushing at the time of
+      writing. A new org-keyed table goes into that list in the same commit, and `ci:purge-coverage` is run on a
+      blank database before the push.
+  - **Running-app re-walk** (`aaec73f581`, `docs/evidence/DESIGN/D7/2026-11-08-reporting-rewalk/`). The shared
+    back link and the Bundles tab hold. It **found** the page saying "4 critical gaps outstanding" beside a digest
+    that said 23. That is fixed in `c37e5c8f6b` (F1, red first): the orchestrator cut the critical list to four
+    before it was counted. All 24 captures at `c9e45ef009` pass.
+  - **Two stale tests, red on trunk since `98661f418b`** (the assurance pack gained an engine):
+    - `b29a5b1d66`, suggestion-service;
+    - `e67f9fe798`, insights-canvas-catalog.
+
+    Each is shown red with the engine removed.
+  - **Next:**
+    - Nothing open in D7-D's steps.
+    - The Bundles screen's "Choose legal companions for ZIP" is reached but was not walked to an export.
 
 #### L1 (rows D7, D6) — prior filings read back as filed state, and archive names checked where they are read (session `session_01Gx2fiwvxaXi6mQgddPqMaG`, 2026-11-01 to 2026-11-02)
 
