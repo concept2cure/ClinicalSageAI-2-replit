@@ -22,6 +22,7 @@
  * stub.
  */
 import type * as Gate from '../governed-tool-gate';
+import type * as Router from '../../ana-context-router';
 
 type GateScope = Parameters<typeof Gate.loadToolSkillGates>[0];
 type GateSnapshot = Awaited<ReturnType<typeof Gate.loadToolSkillGates>>;
@@ -45,5 +46,29 @@ export function withNoStandingRules(actual: typeof Gate): typeof Gate {
     ...actual,
     loadToolSkillGates: async (scope, call) =>
       refusedPolicyTenant(scope) ? actual.loadToolSkillGates(scope, call) : noStandingRulesSnapshot(scope),
+  };
+}
+
+/**
+ * The same private rules on the model's side. Since `a2f9264a` the AnA stream
+ * issues the acting member's private rules as owner-private model context
+ * before it reads the conversation (`../../ana-context-router.ts`
+ * `issuePrivateRuleModelContext`), and the turn stops when it cannot. A stub
+ * `sqlClient` cannot verify the member, so a suite about something else
+ * declares its member has no private rules:
+ *
+ *   vi.mock('…/services/ana-context-router.js', async orig =>
+ *     (await import('…/_standing-rule-fixture')).withNoPrivateRules(await orig()));
+ *
+ * It then gets what the real issuer returns for a member with none: no
+ * context (null). A scope the real issuer refuses outright is still refused.
+ */
+export function withNoPrivateRules(actual: typeof Router): typeof Router {
+  return {
+    ...actual,
+    issuePrivateRuleModelContext: async (client, scope) =>
+      refusedPolicyTenant(scope) || !Number.isSafeInteger(scope.userId) || scope.userId <= 0
+        ? actual.issuePrivateRuleModelContext(client, scope)
+        : null,
   };
 }

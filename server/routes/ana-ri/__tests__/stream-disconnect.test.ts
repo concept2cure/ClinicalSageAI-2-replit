@@ -308,7 +308,8 @@ describe('a page that closed before a new conversation had its thread', () => {
       await closed;
       proceed.resolve();
       await pending.started;
-      expect(h.state.stamps, 'the thread step ran').toHaveLength(1);
+      // Stamped before its private context is prepared (a2f9264a), then after the question is saved.
+      expect(h.state.stamps, 'the thread step ran').toHaveLength(2);
       expect(io.signal?.aborted).toBe(true);
       expect(io.internalStop).toHaveBeenCalledWith(expect.anything(), 'run_test', 'client_disconnected', 7);
       expect(h.state.detachStamps).toEqual([]);
@@ -369,31 +370,21 @@ describe('completed and durable stream lifecycle', () => {
   });
 
   // DT3 test 2: what still stops. A turn that asked to drive no longer does
-  // (D-7, decided 2026-10-22): it detaches, above.
-  it.each([
-    ['an unowned run (no person)', { user: { organizationId: 7 } }, {}],
-  ] as const)('stops %s on disconnect, as client_disconnected', async (_name, state, body) => {
-    Object.assign(h.state, state);
-    const pending = startPendingGateway(body);
-    try {
-      await pending.started;
-      const closed = new Promise<void>(resolve => io.response!.once('close', resolve));
-      io.response!.destroy();
-      await closed;
-      io.response!.emit('close');
-      expect(io.signal?.aborted).toBe(true);
-      expect(io.internalStop).toHaveBeenCalledTimes(1);
-      expect(io.internalStop).toHaveBeenCalledWith(expect.anything(), 'run_test', 'client_disconnected', 7);
-      expect(io.humanControl).not.toHaveBeenCalled();
-      await pending.record;
-      expect(io.records[0].outcome).toBe('stopped');
-      expect(io.records[0].body?.controls).toEqual([]);
-      expect(h.state.detachStamps).toEqual([]);
-      expect(h.state.endRuns).toEqual([]);
-    } finally {
-      pending.release();
-      await pending.reader;
-    }
+  // (D-7, decided 2026-10-22): it detaches, above. An unowned run (no person)
+  // would stop, never detach; since a2f9264a (P-104) it is refused before its
+  // conversation (OWNER_PRIVATE_ACTOR_REQUIRED), so no model call is ever left
+  // running unseen.
+  it('refuses an unowned run (no person) before any model call, so nothing runs on unseen', async () => {
+    h.state.user = { organizationId: 7 };
+    const events = await turn(app, { message: 'Compare the endpoints' });
+    expect(events.filter(e => e.type === 'error')).toEqual([expect.objectContaining({ code: 'OWNER_PRIVATE_OUTPUT_HELD' })]);
+    expect(io.gateway).not.toHaveBeenCalled();
+    expect(h.state.toolRuns).toBe(0);
+    expect(io.humanControl).not.toHaveBeenCalled();
+    expect(io.records.map(r => r.outcome)).toEqual(['failed']);
+    expect(io.records[0].body?.controls).toEqual([]);
+    expect(h.state.detachStamps).toEqual([]);
+    await vi.waitFor(() => expect(h.state.endRuns).toEqual([{ status: 'failed', stoppedReason: 'error' }]));
   });
 });
 
