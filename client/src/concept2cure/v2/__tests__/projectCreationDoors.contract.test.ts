@@ -46,13 +46,23 @@ describe('existing project doors keep their reachable destination', () => {
 
   it.each([
     'v2/LaunchScopeGate.tsx', 'mdx/MdxSurfaceHost.tsx',
-    'v2/surfaces/Vault.tsx', 'v2/surfaces/CommunicationCenter.tsx',
+    'v2/surfaces/CommunicationCenter.tsx',
     'v2/surfaces/CroPortfolio.tsx',
     'v2/surfaces/ProjectHome.tsx', 'v2/surfaces/HomeSections.tsx',
     'v2/surfaces/Surfaces.tsx', 'v2/surfaces/WorkflowCatalog.tsx',
     'quality/ControlledDocumentDialogs.tsx',
   ])('%s retains its Projects index door', file => {
     expect(callsDestination(source(file), 'projects')).toBe(true);
+  });
+
+  /* Vault no longer sends a person with no project open to Projects (the founder, 2026-11-06, 5144702d21): it
+     lists the projects whose Vaults they can open, from the same project read Projects and the palette use, and a
+     row opens that project and its Vault. */
+  it('v2/surfaces/Vault.tsx lists the projects it can open in place of a Projects door', () => {
+    const vault = source('v2/surfaces/Vault.tsx');
+    expect(calls(vault).some(call => call.expression.getText() === 'usePaletteProjects')).toBe(true);
+    expect(callsDestination(vault, 'vault')).toBe(true);
+    expect(vault).toMatch(/data-testid="vault-project-list"/);
   });
 
   it.each([

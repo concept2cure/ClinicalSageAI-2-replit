@@ -12,11 +12,14 @@
 | D3-3 | The team as a card on every step and a drawer ("Manage"): roster, sharing, authority note once. Plan's Team section is gone. `ProjectSettings` takes `request` (opens on a field); About's "Edit" uses it. | `6cd6d7c92` | `D3-3/` |
 | D3-2a | Project knowledge the same on all six steps: About, Filing, Team, Work areas, What AnA knows, Skills, Records. The readiness card moved to Author. Work areas and Reports are rows. | `8225e3075` | `D3-2a/` |
 | D3-2b | One read, several readers. Unified work, agency inbox and commitments are each read once by `ProjectWorkspace`. Filing gains Agency letters and Commitments rows; Team gains each person's open work. Activity is the Records card's last disclosure. | `900e6eb44`, `e84c4f1ef` | `D3-2b/` |
+| D3-4 | The step bodies (session `01FTWcmXm7…`, 2026-11-08). Tasks and approvals on Plan only, by due date, status in words; a Tasks handoff opens Plan, whatever step it names, and survives StrictMode. Evidence: Data room, Protocol (from the lifted records read), Project files. Author: Module completion led by the figure line, no ring, "How this is measured" and the two supporting measures closed. Submit: "Add a market" ghost and first, every door and act small. Respond lists the commitments from the page's one read, "Record fulfilment" opening the existing dialog. D3 §6 walked whole on C2C-101 and the NeuroPanel-Dx 510(k), 1440 and 390, light and dark. | see `D3-4/README.md` | `D3-4/` |
 
 Each step's README has a "What already exists" table, a capability-kept ledger, red-first test runs, the gate
 results, and a running-app walk script (`walk.cjs`) with its log and screenshots at 1440 and 390, light and dark.
 
-## What is left: D3-4, the step bodies (D3.md §4.7, §4.11, §4.12)
+## Done since: D3-4, the step bodies (D3.md §4.7, §4.11, §4.12)
+
+D3-4 landed on 2026-11-08 (`D3-4/README.md`); the starting points below are kept as the record of what it started from.
 
 Starting points, as the code stands at `965084590c`:
 
