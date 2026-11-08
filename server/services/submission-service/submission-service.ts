@@ -712,23 +712,45 @@ export async function createSequence(
   // does not get one past. The reason is the market verdict's.
   const refused = sequenceTypeRefusal(input.region, input.type) ?? sequenceTypeRefusal(parent.primaryRegion, input.type);
   if (refused) throw new SubmissionError('VALIDATION', refused);
-  // Sequences declared filed outside the platform (filed-sequence-baseline.ts):
-  // their numbers are taken, and one of them opened the Original Application.
-  const baseline = await readCurrentFiledBaseline(queryableFromDrizzle(db), ctx.organizationId, input.submissionId);
-  const filedElsewhere = sequenceCreationRefusal(baseline, input.region, input);
-  if (filedElsewhere) throw new SubmissionError('INVALID_STATE', filedElsewhere);
-  const [row] = await db
-    .insert(ectdSequences)
-    .values({
-      submissionId: input.submissionId,
-      region: input.region,
-      sequenceNumber: input.sequenceNumber,
-      type: input.type ?? 'original',
-      status: 'draft',
-      organizationId: ctx.organizationId,
-      createdBy: ctx.userId,
-    })
-    .returning();
+  // F1 repair A (2026-11-08): under the submission's row lock, so two creates
+  // of one number in flight together cannot both pass the checks below.
+  const row = await db.transaction(async (tx) => {
+    const q = queryableFromDrizzle(tx);
+    const locked = await lockSubmissionPackageIdentity(q, ctx.organizationId, input.submissionId, { forUpdate: true });
+    if (!locked) throw new SubmissionError('NOT_FOUND', 'Submission not found for this organization.');
+    // Sequences declared filed outside the platform (filed-sequence-baseline.ts):
+    // their numbers are taken, and one of them opened the Original Application.
+    const baseline = await readCurrentFiledBaseline(q, ctx.organizationId, input.submissionId);
+    const filedElsewhere = sequenceCreationRefusal(baseline, input.region, input);
+    if (filedElsewhere) throw new SubmissionError('INVALID_STATE', filedElsewhere);
+    // A number a live sequence of this submission and region holds is used once.
+    // The filed fold joins compiles to sequences by number, so a second live 0000
+    // would corrupt what the agency is read to hold (row D7). A removed sequence
+    // holds no number. No unique index: a deployed tenant may already hold
+    // duplicates (RULE 1), and the evidence carries the query that finds them.
+    const taken = await q.query(
+      `SELECT 1 FROM ectd_sequences WHERE submission_id = $1 AND organization_id = $2 AND region = $3
+          AND sequence_number = $4 AND deleted_at IS NULL LIMIT 1`,
+      [input.submissionId, ctx.organizationId, input.region, input.sequenceNumber],
+    );
+    if (taken.rows.length > 0) {
+      throw new SubmissionError('INVALID_STATE',
+        `Sequence ${input.sequenceNumber} already exists in this submission. A sequence number is used once. Nothing was created.`);
+    }
+    const [inserted] = await tx
+      .insert(ectdSequences)
+      .values({
+        submissionId: input.submissionId,
+        region: input.region,
+        sequenceNumber: input.sequenceNumber,
+        type: input.type ?? 'original',
+        status: 'draft',
+        organizationId: ctx.organizationId,
+        createdBy: ctx.userId,
+      })
+      .returning();
+    return inserted;
+  });
   // Part 11 §11.10(e). The INSERT above is committed before this runs; a failed
   // audit write never deletes the sequence (a filing's sequence numbering is
   // regulatory state — removing a created sequence to make its log row's absence
@@ -833,6 +855,9 @@ export async function transitionSequence(
         eq(ectdSequences.id, id),
         eq(ectdSequences.organizationId, ctx.organizationId),
         eq(ectdSequences.status, seq.status),
+        // A sequence removed while this transition was in flight does not move
+        // (F1 repair A, 2026-11-08); it is the lost compare-and-set below.
+        isNull(ectdSequences.deletedAt),
       ),
     )
     .returning();

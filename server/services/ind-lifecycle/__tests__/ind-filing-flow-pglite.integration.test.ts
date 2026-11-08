@@ -63,6 +63,8 @@ function reportableEvent(): AdverseEvent {
 beforeAll(async () => {
   harness = await createIndPgliteDb({ submissionCore: true });
   holder.db = harness.db;
+  // createSequence locks the organisation and the submission row first (F1 repair A, 2026-11-08).
+  await harness.pglite.exec('CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT)');
   const seedRendered = async (renderedFrom: string, sectionCode: string, md5: string) => {
     const r = await harness.pglite.query<{ id: number | string }>(
       `INSERT INTO rendered_leaf_files
