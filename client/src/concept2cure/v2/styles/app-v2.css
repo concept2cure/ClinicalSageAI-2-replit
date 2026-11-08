@@ -3989,7 +3989,20 @@
    long indication in the byline, a record's title in Project knowledge, and a door that names its job all wrap. */
 .c2c-v2 .pj-side .pj-act{flex-wrap:wrap;min-width:0;}
 .c2c-v2 .pj-side .pj-act-w{flex-shrink:1;min-width:0;overflow-wrap:anywhere;}
-@media (max-width: 640px) { .c2c-v2 .pj-main .btn{white-space:normal;max-width:100%;text-align:left;} .c2c-v2 .pj-main .pj-sec-acts{justify-content:flex-start;flex-basis:100%;} }
+/* At 390 a section's actions ran past the page's edge ("See every sequence in Submission Center" on the Submit step,
+   human test J1, 2026-11-06): on a phone the head wraps and its actions wrap under the heading, starting left.
+   Moved here from project-home-v2.css (2026-11-08), whose rules may not name this sheet's classes. */
+@media (max-width: 640px) {
+  .c2c-v2 .pj .pj-sec-h { flex-wrap: wrap; }
+  .c2c-v2 .pj .pj-sec-acts { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; max-width: 100%; }
+  .c2c-v2 .pj-main .pj-sec-acts { justify-content: flex-start; flex-basis: 100%; }
+  .c2c-v2 .pj-main .btn, .c2c-v2 .pj .pj-sec-acts > .btn { white-space: normal; max-width: 100%; text-align: left; }
+}
+/* New project's filing tabs (Pharma & Biotech, Medical Devices, Diagnostics & IVD, Cross-Cutting Documents) are 661px
+   wide; at 390 the last two were cut off, so a diagnostics company could not open its own tab on a phone (human test
+   J1, 2026-11-06). The row scrolls sideways in place. Moved here from project-home-v2.css (2026-11-08). */
+.c2c-v2 .npw .rpk-tabs { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.c2c-v2 .npw .rpk-tabs > * { flex-shrink: 0; }
 /* A module row says its name and its count in full, on its own line above the bar (walked 2026-11-08: a 104px
    ellipsis cut "Module 1 · Administrative · 0 of 13 approved or locked" to "Module 1 · Admin…", so the count was
    only in the row's accessible name). */

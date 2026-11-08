@@ -8,7 +8,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { DOSSIER_READINESS_LABEL } from '../dossierReadiness';
-import { PJ_LIFECYCLE, PJ_LIFECYCLE_DEVICE } from '../fixtures/project-home-data';
+import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { captureShellProjectGuard, projectStepId, readShellProject, shellProgramId, updateShellProject, useShellProject } from '../shellProject';
 import { consumeNavParams } from '../navParams';
@@ -29,7 +29,7 @@ import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { isDeviceFamily, isDeviceOrDiagnosticProgram, workstreamForFilingType } from '@shared/constants/domain/product-types';
 import { isUsInd, useProgramMarkets } from './programSequence';
-import { StageTracker } from './ProjectStages';
+import { StageTracker, lifecycleFor } from './ProjectStages';
 import { STEP_DOORS } from '../projectDoors';
 import { openProgramAction } from '../programAction';
 import { FileDropZone } from '../FileDropZone';
@@ -1897,7 +1897,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
      is read and is neither is an eCTD filing. */
   const regionalApplication = regionalDeviceApplicationClassOf(prog?.program_type);
   const deviceFiling = isDeviceOrDiagnosticProgram(prog) || clientType === 'MDX';
-  const lifecycle = deviceFiling ? PJ_LIFECYCLE_DEVICE : PJ_LIFECYCLE;
+  const lifecycle = lifecycleFor(deviceFiling);
   /* A filing document class (a PAS, a CSR, a meeting package) is authored
      here and never built as a sequence, so it is no eCTD filing either
      (shared/regulatory/filing-document-classes.ts; review finding, 2026-10-18). */

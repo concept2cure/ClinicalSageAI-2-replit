@@ -161,11 +161,13 @@ describe('New project: Team members leaves the form, and the review says where p
     });
     window.C2C_PROJECT = { id: PID, title: 'Aurora CGM' };
     render(<ProjectHome surface={{ id: 'project-home' } as never} segment="medtech" onNav={vi.fn()} onAsk={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Plan' }));
-    const heading = await screen.findByRole('heading', { name: 'Team' });
-    const section = heading.closest('section') as HTMLElement;
-    expect(await within(section).findByLabelText('Organization member')).toBeTruthy();
-    expect(within(section).getByRole('button', { name: 'Grant sharing' })).toBeTruthy();
+    /* Since D3-3 the Team section is the Team card in Project knowledge, on every step; its "Manage" opens the Team
+       drawer, which holds the sharing controls. */
+    const card = await screen.findByRole('region', { name: 'Team' });
+    fireEvent.click(await within(card).findByRole('button', { name: /^Manage/ }));
+    const drawer = await screen.findByRole('dialog');
+    expect(await within(drawer).findByLabelText('Organization member')).toBeTruthy();
+    expect(within(drawer).getByRole('button', { name: 'Grant sharing' })).toBeTruthy();
   });
 });
 
