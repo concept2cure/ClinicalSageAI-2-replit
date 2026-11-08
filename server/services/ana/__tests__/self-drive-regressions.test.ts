@@ -335,12 +335,18 @@ describe('navigate_to — project-scope screens and programs', () => {
   const ctx = (): ToolContext => ({ organizationId: 5, userId: 1, projectId: null });
 
   it('with no program open and none named, asks which — listing this org\'s programs', async () => {
-    const out = await call('navigate_to', { target: 'vault' }, ctx());
+    // Documents, not the Vault: the Vault went global on 2026-11-06 (5144702d21, the founder) and with none open
+    // shows its organization view, not an "open a program" state. A program named for it still opens (below).
+    const out = await call('navigate_to', { target: 'documents' }, ctx());
     expect(out.status, 'moved onto an empty "open a program" state').toBe('needs_project');
     expect(out.directive).toBeUndefined();
     expect(out.programs.map((p: { code?: string }) => p.code)).toContain('BX-301');
     // Scoped to the person's organisation — never a cross-tenant list.
     expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('organization_id = $1'), expect.arrayContaining([5]));
+
+    const vault = await call('navigate_to', { target: 'vault' }, ctx());
+    expect(vault.status).toBe('navigation_ready');
+    expect(vault.directive.program).toBeUndefined();
   });
 
   it('opens the named program — by code — on the directive', async () => {

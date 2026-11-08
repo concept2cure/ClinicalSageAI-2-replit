@@ -52,6 +52,13 @@ export interface NavigationTarget {
   /** Logical grouping (module/area) for discovery. */
   group: string;
   /**
+   * A global screen that shows ONE program when one is open or named, and its
+   * own view across programs when none is: the Vault, global since 2026-11-06.
+   * Its scope says the screen opens with no program; this says a program named
+   * for it is still opened there (see programNeedOf).
+   */
+  programOptional?: boolean;
+  /**
    * The token the chat client applies as `action.path`. Defaults to `id`; set
    * explicitly only when the client path differs from the canonical id.
    */
@@ -122,7 +129,9 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // Global since 2026-11-06, by the founder: "Vault … should be accessible all the time, not just from within the
   // project, but on the left rail." With a project open it is that project's vault; with none, Vault's own view of the
   // governed documents across the projects the person can open (Vault.tsx, the organization view).
-  { id: 'vault', label: 'Vault', description: 'The document vault: the open project\'s, or, with no project open, the governed documents across your projects.', scope: 'global', group: 'project' },
+  // programOptional: "take me to BX-301's Vault" still opens BX-301's. Global alone dropped the program named, and AnA
+  // said she had opened it over the organization view (self-drive-regressions.test.ts, 4b).
+  { id: 'vault', label: 'Vault', description: 'The document vault: the open project\'s, or, with no project open, the governed documents across your projects. Pass `program` to open one program\'s vault.', scope: 'global', group: 'project', programOptional: true },
   { id: 'section-workspace', label: 'Section Workspace', description: 'The CTD section authoring workspace.', scope: 'project', group: 'project', params: [{ name: 'sectionCode', required: false, description: 'CTD section code to open, e.g. "3.2.P.8".' }] },
   { id: 'csr-workflow', label: 'CSR Workflow', description: 'The clinical study report workflow.', scope: 'project', group: 'project' },
   { id: 'ind-checklist', label: 'IND forms', description: 'The IND checklist and Forms 1571, 1572 and 3674.', scope: 'project', group: 'project' },
@@ -278,6 +287,20 @@ const TARGETS_BY_ID: ReadonlyMap<string, NavigationTarget> = new Map(
 /** Look up a navigation target by id. */
 export function findNavigationTarget(id: string): NavigationTarget | undefined {
   return TARGETS_BY_ID.get(id);
+}
+
+/**
+ * Whether a screen shows one program. 'required': a project screen, which with
+ * none open is an "open a program" state, so AnA asks which before moving.
+ * 'optional': a global screen that shows the program open or named, and its
+ * own view across programs with none (programOptional). 'none': the program
+ * plays no part. An unknown id is 'none'; resolveNavigation refuses it anyway.
+ */
+export function programNeedOf(targetId: string): 'required' | 'optional' | 'none' {
+  const target = TARGETS_BY_ID.get(targetId);
+  if (!target) return 'none';
+  if (target.scope === 'project') return 'required';
+  return target.programOptional ? 'optional' : 'none';
 }
 
 /** All navigable target ids (e.g. for prompt/catalog injection or validation). */

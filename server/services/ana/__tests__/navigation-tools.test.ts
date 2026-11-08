@@ -162,6 +162,15 @@ describe('act_on_screen', () => {
       ),
     );
     expect(global.status).toBe('action_ready');
+
+    // The Vault is global since 2026-11-06 (5144702d21): with none open it selects in its organization view.
+    const orgView = JSON.parse(
+      await getToolHandler('act_on_screen')!(
+        { action: 'vault.focus-document', params: { artifactId: 'artifact_1' } },
+        { organizationId: null, userId: null, projectId: null, liveDrive: true },
+      ),
+    );
+    expect(orgView.status).toBe('action_ready');
   });
 
   it('opening a program by act names the direct route for one the Projects list does not show', async () => {
