@@ -90,6 +90,8 @@ import {
 import { readShellProject, publishShellProject } from '../shellProject';
 import { usePaletteProjects, type PaletteProject } from '../paletteProjects';
 import { useDialog } from '../useDialog';
+import { VaultFolderEdit, type FolderEditMode } from './VaultFolderEdit';
+import { cabinetFolderOptions, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
 import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason, type ImportSource } from '../editor/SourceImportDialog';
 import { artifactImportId } from '@shared/authoring/source-import';
@@ -1653,16 +1655,14 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
     [tree],
   );
   /* Folder options for "Move to…" — derived from the server's cabinet (the
-     program's real view taxonomy), never a client-side folder list. */
-  const cabinetFolders = useMemo(() => {
-    if (!cabinet) return [] as Array<{ id: string; label: string }>;
-    return cabinet.children
-      .filter((c): c is VaultFolder => !isVaultDoc(c) && (c as VaultFolder).id !== 'cab-unfiled')
-      .map((c) => ({ id: c.id.replace(/^cab-/, ''), label: c.label }));
-  }, [cabinet]);
-  /* An upload may name only a folder of this program's own view: the cabinet's
-     "filed under another view" group is listed for review, and ingest refuses it. */
-  const uploadFolders = useMemo(() => cabinetFolders.filter((f) => f.id !== 'other-view'), [cabinetFolders]);
+     project's binder, its presets and the folders people made, at every depth),
+     never a client-side folder list (vaultFolders.ts). The review queues are
+     not places to file to. */
+  const cabinetFolders = useMemo(() => cabinetFolderOptions(cabinet), [cabinet]);
+  /* An upload may name any folder the server accepts: the same list. */
+  const uploadFolders = cabinetFolders;
+  /* New folder and Rename folder (S6): the form open, or none. */
+  const [folderEdit, setFolderEdit] = useState<FolderEditMode | null>(null);
   const [moveTarget, setMoveTarget] = useState('');
   /* The uploaded documents a person may file at a missing section (VR-15). */
   const coverageDocuments = useMemo<CoverageDocument[]>(() => {
@@ -2211,9 +2211,21 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
      with the library first. The drop zone is the whole page, so a file dropped
      anywhere on it is staged in the Uploads view. */
 
-  /** "Add files" and "Add a folder" open the picker on the view where what is chosen is staged. */
+  /** "Add files" and "Upload a folder" open the picker on the view where what is chosen is staged. */
   const addFiles = () => { setView('uploads'); uploadControls.current?.chooseFiles(); };
   const addFolder = () => { setView('uploads'); uploadControls.current?.chooseFolder(); };
+  /** New folder: made in the cabinet folder open in the tree, or at its top. */
+  const newFolder = () => { setView('library'); leaveFind(); setFolderEdit({ kind: 'create', parentId: newFolderParentOf(activeFolder) }); };
+  const folderMade = (folderId: string) => {
+    /* The folder it was made in is opened, so the new folder shows beneath it. */
+    const parent = folderEdit?.kind === 'create' && folderEdit.parentId ? `cab-${folderEdit.parentId}` : null;
+    setExpanded((e) => ({ ...e, cabinet: true, ...(parent ? { [parent]: true } : {}) }));
+    setFolderEdit(null);
+    setVaultEpoch((n) => n + 1);
+    setView('library');
+    setActiveFolder(`cab-${folderId}`);
+    leaveFind();
+  };
   const headerParts = vaultHeaderParts(vault);
   /* The tab's count is the server's programme-wide uploads count, never the window shown. */
   const uploadCount = vault?.documentCounts?.uploads ?? vault?.uploadsWindow?.total ?? null;
@@ -2489,7 +2501,7 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
               >
                 <option value="">Move to…</option>
                 {cabinetFolders.map((f) => (
-                  <option key={f.id} value={f.id}>{f.label}</option>
+                  <option key={f.id} value={f.id}>{indentedLabel(f)}</option>
                 ))}
               </select>
               <button
@@ -2801,8 +2813,16 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
             {!searching && folder && (
               <span className="vd-here">
                 {folder.code ? <b>{folder.code}</b> : null} {folder.label}
+                {(folder as CabinetFolder).kind === 'person' && (folder as CabinetFolder).madeBy
+                  ? <>{' '}<span className="vd-sub-part">· made by {(folder as CabinetFolder).madeBy}</span></> : null}
               </span>
             )}
+            {!searching && folder && canWrite && projectId && personFolderOf(folder.id) ? (
+              <button type="button" className="sp-ask" data-testid="vault-rename-folder"
+                onClick={() => setFolderEdit({ kind: 'rename', folderId: personFolderOf(folder.id)!, name: folder.label })}>
+                Rename
+              </button>
+            ) : null}
             {searching && (
               <span className="vd-here">
                 {appliedView ? <>View &ldquo;{appliedView.label}&rdquo;{viewChanged ? ' (changed)' : ''} · </> : null}
@@ -2834,6 +2854,20 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
               Searching…
             </div>
           )}
+          {!searching && folder && folder.id.startsWith('cab') && (cabinet as CabinetFolder | null)?.note ? (
+            /* Said plainly: this filing or region has no binder template yet. */
+            <div className="scaf-note" role="status" data-testid="vault-binder-note">{(cabinet as CabinetFolder).note}</div>
+          ) : null}
+          {folderEdit && projectId ? (
+            <VaultFolderEdit
+              key={folderEdit.kind === 'rename' ? folderEdit.folderId : `new-${folderEdit.parentId}`}
+              projectId={projectId}
+              mode={folderEdit}
+              folders={cabinetFolders}
+              onDone={folderMade}
+              onCancel={() => setFolderEdit(null)}
+            />
+          ) : null}
           {!searching ? <ConfirmSuggestedBar docs={folderDocs} state={confirmSuggested} /> : null}
           {!searching && projectId && folder ? (
             <FolderExportButton projectId={projectId} treeFolderId={folder.id} label={folder.label}
@@ -3073,11 +3107,22 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
               <button
                 type="button"
                 className="btn ghost"
+                disabled={!projectId || !cabinet}
+                onClick={newFolder}
+                title={projectId ? 'Make a folder in this project’s Vault, in the folder open on the left' : 'Open a project first.'}
+                data-testid="vault-new-folder-button"
+              >
+                {I.folder} New folder
+              </button>
+              <button
+                type="button"
+                className="btn ghost"
                 disabled={!projectId}
                 onClick={addFolder}
+                title="Choose a folder of files on your computer to upload into this project’s Vault"
                 data-testid="vault-upload-folder-button"
               >
-                {I.folder} Add a folder
+                {I.upload} Upload a folder
               </button>
               <button
                 ref={addFilesButton}
