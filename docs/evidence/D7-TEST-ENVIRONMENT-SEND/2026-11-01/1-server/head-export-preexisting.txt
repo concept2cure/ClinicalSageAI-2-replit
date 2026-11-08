@@ -1,0 +1,79 @@
+# Pre-existing failure check: tests/db/commitment-fulfilment-evidence.dbtest.ts on a CLEAN export of HEAD 72f2a942d
+# (git archive HEAD into a scratch directory, node_modules symlinked; same database and env as green.txt). Run: 2026-11-02T03:51:27Z
+# The one failure here, 'a project with no program > is refused at the project door', is the same assertion (expected 200 to be 404) that fails in green.txt;
+# F1 slice 1's README recorded it too. It is not caused by this part.
+
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/5d0b158e-991f-5354-8b6b-8cf5f02b467a/scratchpad/f1s2/head-export
+
+{"level":30,"time":"2026-11-02T03:51:07.906Z","pid":2183,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-02T03:51:07.908Z","pid":2183,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-02T03:51:07.908Z","pid":2183,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/commitment-fulfilment-evidence.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/commitment-fulfilment-evidence.dbtest.ts
+[database] Database connection successful
+
+{"level":20,"time":"2026-11-02T03:51:11.722Z","pid":2183,"hostname":"vm","context":{"auditId":"audit_1793591471719_26313ad4ebe671d1","action":"CREATE","entityType":"project","entityId":"proj_1232"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 4ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > the filed rule is the platform one: sent and acknowledged 0ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > offers only this project's sequences the agency received, and this project's Vault 41ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer reads the options as unable to write or sign 34ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR that names nothing is refused before the password, which is never checked 26ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR with no date is refused before the password: the server never chooses the signed date 21ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > evidence but no password is a missing signature component 21ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence still pending transmit, before the password, and records nothing 25ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence the agency rejected, before the password, and records nothing 25ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a frozen sequence never dispatched, before the password, and records nothing 25ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's sequence, before the password, and records nothing 18ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's sequence, before the password, and records nothing 17ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's Vault version, before the password, and records nothing 18ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's Vault version, before the password, and records nothing 19ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version that does not exist, before the password, and records nothing 27ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version whose data was withdrawn, before the password, and records nothing 36ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer cannot fulfil it at either door 20ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > signs: the row names the sequence and the version with its sha256, and the signature binds them 82ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > the list names what met it, who signed, and that the signature matches the record 38ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > a second fulfilment is refused 16ms
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > is refused at the project door, and nothing about the commitment changes 39ms
+   → {"success":true,"data":{"commitment":{"id":1186,"commitmentType":"pmc","status":"open","submission":null},"rule":{"signatureRequired":true,"evidenceRequired":true,"dateRequired":true,"meanings":["approval","responsibility"]},"projectLinked":false,"sequences":[],"sequencesTruncated":false,"vault":{"programId":null},"viewer":{"canWrite":true,"writeRefusal":null,"canSign":true,"signAuthorityRefusal":null}}}: expected 200 to be 404 // Object.is equality
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > fulfils unsigned, naming a sequence, with a resolve ledger row 42ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > refuses a password: it takes none 25ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > offers a member only the sequences of programs they can open; the signer, who can open Q, is offered its sequence too 52ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a commitment made under a submission is offered only that submission's sequences, and names it to a reader who can open it 98ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a member who cannot open program Q cannot name its sequence: 404, nothing about it said 14ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > the signer, who can open it, signs; the member's list says only that it is in a project they cannot open 92ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > tenant isolation > another organisation's admin reaches neither the options nor the fulfilment 56ms
+{"level":20,"time":"2026-11-02T03:51:12.763Z","pid":2183,"hostname":"vm","context":{"auditId":"audit_1793591472760_818c270c8920ec11","action":"CREATE","entityType":"project","entityId":"proj_1236"},"msg":"[concept2cure-api] Audit entry persisted"}
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows 2ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > more than 200 sequences the agency received: the list keeps the most recent > on a project's door: the newer submission's sequences are offered, newest first, and the oldest are the ones cut 91ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > more than 200 sequences the agency received: the list keeps the most recent > on the organisation's door, with no submission: the same, across every program the person can open 30ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > is refused at the project door, and nothing about the commitment changes
+AssertionError: {"success":true,"data":{"commitment":{"id":1186,"commitmentType":"pmc","status":"open","submission":null},"rule":{"signatureRequired":true,"evidenceRequired":true,"dateRequired":true,"meanings":["approval","responsibility"]},"projectLinked":false,"sequences":[],"sequencesTruncated":false,"vault":{"programId":null},"viewer":{"canWrite":true,"writeRefusal":null,"canSign":true,"signAuthorityRefusal":null}}}: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ tests/db/commitment-fulfilment-evidence.dbtest.ts:223:52
+    221|     )).rows[0].id);
+    222|     const opts = await request(app).get(optionsUrl(project.Z, cid)).se…
+    223|     expect(opts.status, JSON.stringify(opts.body)).toBe(404);
+       |                                                    ^
+    224|     const res = await request(app).post(fulfilUrl(project.Z, cid)).set…
+    225|     expect(res.status, JSON.stringify(res.body)).toBe(404);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 passed (31)
+   Start at  03:51:05
+   Duration  7.80s (transform 3.30s, setup 69ms, import 238ms, tests 7.12s, environment 0ms)
+

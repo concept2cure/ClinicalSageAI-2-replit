@@ -124,6 +124,10 @@ describe('a governed step is asked before anyone signs (finding: signature befor
   });
 });
 
+/* F1 (row D7, 2026-11-01): the transmit button names where the package goes.
+   The Dispatch tab offers the agency's test environment first. */
+const TEST_SEND_BUTTON = /Send sequence 0000 to the agency's test environment \(Part 11 e-signature\)/;
+const FILING_BUTTON = /File sequence 0000 with the agency \(Part 11 e-signature\)/;
 const TRANSMIT = (configured: { staging: boolean | null; production: boolean | null }) => ({
 sequenceStatus: 'dispatched', dispatchStatus: 'pending', route: { ok: true, region: 'fda', gateway: 'esg' },
 configured, recordedApplicationNumber: '000512', gate: CLEAR, refusal: configured.staging || configured.production ? null : 'This sequence\'s agency gateway has no staging or production credentials configured for this organization, so nothing can be sent. Nothing was signed or transmitted.',
@@ -162,8 +166,8 @@ describe('the dispatched sequence has a package and a transmit (the blocker)', (
     openWorkspace('Dispatch');
     await waitFor(() => expect(document.body.textContent).toContain('FDA ESG (FDA)'));
     expect(document.body.textContent).toContain('Transmit is not available:');
-    expect(document.body.textContent).toContain('FDA ESG has no staging credentials configured for this organization, so nothing can be sent.');
-    const transmit = screen.getByRole('button', { name: /Transmit sequence 0000/ }) as HTMLButtonElement;
+    expect(document.body.textContent).toContain("FDA ESG has no credentials for the agency's test environment configured for this organization, so nothing can be sent.");
+    const transmit = screen.getByRole('button', { name: TEST_SEND_BUTTON }) as HTMLButtonElement;
     expect(transmit.disabled).toBe(true);
     expect((screen.getByLabelText('Agency application number') as HTMLInputElement).value).toBe('000512');
   });
@@ -176,7 +180,7 @@ describe('the dispatched sequence has a package and a transmit (the blocker)', (
       : undefined);
     await ready(); openWorkspace('Dispatch');
     await waitFor(() => expect(document.body.textContent).toContain('Agency transport prerequisites are unavailable.'));
-    expect((screen.getByRole('button', { name: /Transmit sequence 0000/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: TEST_SEND_BUTTON }) as HTMLButtonElement).disabled).toBe(true);
     expect(calledWith('POST', '/api/c2c/actions/sign')).toHaveLength(0);
     expect(verifyPassword).not.toHaveBeenCalled();
   });
@@ -223,17 +227,18 @@ describe('the dispatched sequence has a package and a transmit (the blocker)', (
       if (url.includes('/sequences/21/') || url === '/api/c2c/actions/sign') posts.push({ url, body });
       if (url === '/api/submissions/sequences/21/governed-precheck') return ok({ step: 'transmit', cleared: true, refusal: null, transmit: TRANSMIT({ staging: true, production: false }) });
       if (url === '/api/c2c/actions/sign') return ok({ actionId: 'act_tx1', sha256Chain: 'beef' });
-      if (url === '/api/submissions/sequences/21/transmit') return ok({ transmitted: true, gateway: 'esg', transmittalId: 41, status: 'submitted', dispatchStatus: 'sent' });
+      // F1 (row D7): a send to the agency's test environment leaves the sequence 'pending'.
+      if (url === '/api/submissions/sequences/21/transmit') return ok({ transmitted: true, gateway: 'esg', transmittalId: 41, status: 'submitted', dispatchStatus: 'pending' });
       return undefined;
     });
     await ready();
     openWorkspace('Dispatch');
-    const transmit = await screen.findByRole('button', { name: /Transmit sequence 0000/ });
+    const transmit = await screen.findByRole('button', { name: TEST_SEND_BUTTON });
     await waitFor(() => expect((transmit as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(transmit);
     expect(await screen.findByRole('dialog')).toBeTruthy();
     await sign();
-    await waitFor(() => expect(document.body.textContent).toContain('handed to FDA ESG (staging) — transmittal #41'));
+    await waitFor(() => expect(document.body.textContent).toContain("Sequence 0000 sent to the agency's test environment through FDA ESG — transmittal #41"));
     const urls = posts.map((p) => p.url);
     expect(urls.slice(-3)).toEqual(['/api/submissions/sequences/21/governed-precheck', '/api/c2c/actions/sign', '/api/submissions/sequences/21/transmit']);
     expect(posts.find((p) => p.url === '/api/c2c/actions/sign')?.body).toMatchObject({ target: 'ectd-sequence:21', payload: { intent: 'transmit' } });
@@ -264,7 +269,7 @@ describe('a transmit signature serves only the transmit it was given for (P-23)'
     });
     await ready();
     openWorkspace('Dispatch');
-    const transmit = await screen.findByRole('button', { name: /Transmit sequence 0000/ });
+    const transmit = await screen.findByRole('button', { name: TEST_SEND_BUTTON });
     fireEvent.change(screen.getByLabelText('Agency application number'), { target: { value: '000999' } });
     await waitFor(() => expect((transmit as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(transmit);
@@ -288,13 +293,152 @@ describe('a transmit signature serves only the transmit it was given for (P-23)'
     });
     await ready();
     openWorkspace('Dispatch');
-    const transmit = await screen.findByRole('button', { name: /Transmit sequence 0000/ });
+    const transmit = await screen.findByRole('button', { name: TEST_SEND_BUTTON });
     await waitFor(() => expect((transmit as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(transmit);
     expect(await screen.findByRole('dialog')).toBeTruthy();
     await sign();
-    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Not transmitted — FDA ESG has no staging credentials'));
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain("Not sent — FDA ESG has no credentials configured for the agency's test environment for this organization. Nothing was sent; the attempt is recorded. Add the credentials, then send again."));
     expect(screen.getByRole('alert').textContent).toContain('The signature given for it is now void; a new attempt is signed again.');
+  });
+});
+
+/* F1 (row D7, 2026-11-01): a send to the agency's test environment is not a
+   filing. The server leaves the sequence 'pending' after one, so it can still be
+   filed with the agency (submission-service.ts toDispatchStatus). The person is
+   told so in words: by the button before anything is signed, by the signing
+   dialog, and by the answer after the send. The stored environment value
+   ('staging', 'production') never reaches the screen. */
+const BOTH = TRANSMIT({ staging: true, production: true });
+function transmitApi(transmitAnswer: () => Response) {
+  const posts: Array<{ url: string; body: unknown }> = [];
+  mockApi((method, url, body) => {
+    if (method !== 'POST') return undefined;
+    if (url.includes('/sequences/21/') || url === '/api/c2c/actions/sign') posts.push({ url, body });
+    if (url === '/api/submissions/sequences/21/governed-precheck') return ok({ step: 'transmit', cleared: true, refusal: null, transmit: BOTH });
+    if (url === '/api/c2c/actions/sign') return ok({ actionId: 'act_tx3', sha256Chain: 'beef' });
+    if (url === '/api/submissions/sequences/21/transmit') return transmitAnswer();
+    return undefined;
+  });
+  return posts;
+}
+const dialogText = () => screen.getByRole('dialog').textContent ?? '';
+/** A dispatched 0000 on the Dispatch tab: choose where the package goes and open its signing dialog. */
+async function openTransmitDialog(environment: 'staging' | 'production', transmitAnswer: () => Response) {
+  seqs = [seqRow({ status: 'dispatched' })];
+  const posts = transmitApi(transmitAnswer);
+  await ready();
+  openWorkspace('Dispatch');
+  if (environment === 'production') fireEvent.change(await screen.findByLabelText('Environment'), { target: { value: 'production' } });
+  const button = await screen.findByRole('button', { name: environment === 'production' ? FILING_BUTTON : TEST_SEND_BUTTON });
+  await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(button);
+  expect(await screen.findByRole('dialog')).toBeTruthy();
+  return posts;
+}
+const failedWith = (status: number, code: string, message: string) => () =>
+  ({ ok: false, status, json: async () => ({ error: { code, message } }), headers: new Headers() }) as unknown as Response;
+
+describe("a send to the agency's test environment is not a filing (F1, row D7): before anyone signs", () => {
+  it('the transmit button names where the package goes, and the choice is in words', async () => {
+    seqs = [seqRow({ status: 'dispatched' })];
+    transmitApi(() => ok({}));
+    await ready();
+    openWorkspace('Dispatch');
+    expect(await screen.findByRole('button', { name: TEST_SEND_BUTTON })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: FILING_BUTTON })).toBeNull();
+    const choice = screen.getByLabelText('Environment');
+    expect(within(choice).getAllByRole('option').map((o) => o.textContent)).toEqual(['Agency test environment', 'Agency production environment']);
+    expect(document.body.textContent).toContain('Test environment credentialsconfigured');
+    fireEvent.change(choice, { target: { value: 'production' } });
+    expect(await screen.findByRole('button', { name: FILING_BUTTON })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: TEST_SEND_BUTTON })).toBeNull();
+    // The stored value never reaches the screen.
+    expect(document.body.textContent).not.toMatch(/staging/i);
+  });
+
+  it('a credential the test environment lacks is said in words before anything is signed', async () => {
+    seqs = [seqRow({ status: 'dispatched' })];
+    mockApi((method, url) => method === 'POST' && url === '/api/submissions/sequences/21/governed-precheck'
+      ? ok({ step: 'transmit', cleared: true, refusal: null, transmit: TRANSMIT({ staging: null, production: true }) })
+      : undefined);
+    await ready();
+    openWorkspace('Dispatch');
+    await waitFor(() => expect(document.body.textContent).toContain(
+      "Whether FDA ESG is configured for the agency's test environment could not be checked, so nothing can be sent until it can.",
+    ));
+    expect((screen.getByRole('button', { name: TEST_SEND_BUTTON }) as HTMLButtonElement).disabled).toBe(true);
+    expect(document.body.textContent).not.toMatch(/staging/i);
+  });
+
+  it('the dispatch status is said in words: a send in flight as one, never as stored', async () => {
+    seqs = [seqRow({ status: 'dispatched' })];
+    mockApi((method, url) => method === 'POST' && url === '/api/submissions/sequences/21/governed-precheck'
+      ? ok({ step: 'transmit', cleared: true, refusal: null, transmit: { ...BOTH, dispatchStatus: 'transmitting' } })
+      : undefined);
+    await ready();
+    openWorkspace('Dispatch');
+    await waitFor(() => expect(document.body.textContent).toContain(
+      'Dispatch statusa send is in flight and not yet confirmed; confirm at the agency before sending again',
+    ));
+    expect(document.body.textContent).not.toMatch(/Dispatch statustransmitting/);
+  });
+});
+
+describe("a send to the agency's test environment is not a filing (F1, row D7): the signing dialog and the answer", () => {
+  it('after a test send, the person reads that it is not a filing and that the sequence can still be filed', async () => {
+    const posts = await openTransmitDialog('staging', () => ok({ transmitted: true, gateway: 'esg', transmittalId: 41, status: 'submitted', dispatchStatus: 'pending' }));
+    // What the signer reads before signing.
+    expect(dialogText()).toContain("sends the package to the agency's test environment, application 000512; a test send is not a filing, and the sequence can still be filed with the agency");
+    expect(dialogText()).not.toMatch(/staging/i);
+    await sign();
+    await waitFor(() => expect(document.body.textContent).toContain(
+      "Sequence 0000 sent to the agency's test environment through FDA ESG — transmittal #41, gateway status submitted, signed by",
+    ));
+    expect(document.body.textContent).toContain('A test send is not a filing; sequence 0000 is not on file at the agency and can still be filed with the agency.');
+    expect(document.body.textContent).not.toMatch(/staging/i);
+    expect(posts.find((p) => p.url.endsWith('/transmit'))?.body).toEqual({ signatureActionId: 'act_tx3', environment: 'staging', applicationId: '000512' });
+  });
+
+  it('a production send says it was sent to the production environment and files the sequence, and how the agency now holds it', async () => {
+    const posts = await openTransmitDialog('production', () => ok({ transmitted: true, gateway: 'esg', transmittalId: 42, status: 'submitted', dispatchStatus: 'sent' }));
+    expect(dialogText()).toContain("sends the package to the agency's production environment, application 000512; this files the sequence with the agency");
+    expect(dialogText()).not.toContain('test send');
+    await sign();
+    await waitFor(() => expect(document.body.textContent).toContain(
+      "Sequence 0000 sent to the agency's production environment through FDA ESG — transmittal #42, gateway status submitted, signed by",
+    ));
+    expect(document.body.textContent).toContain('Sequence 0000 is now sent to the agency.');
+    expect(document.body.textContent).not.toContain('test send');
+    expect(document.body.textContent).not.toContain('(production)');
+    expect(posts.find((p) => p.url.endsWith('/transmit'))?.body).toEqual({ signatureActionId: 'act_tx3', environment: 'production', applicationId: '000512' });
+  });
+
+  it('a test send whose request failed says it filed nothing, not that nothing was sent', async () => {
+    await openTransmitDialog('staging', failedWith(500, 'INTERNAL', 'Request failed.'));
+    await sign();
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('A test send is not a filing, so nothing was filed.'));
+    expect(screen.getByRole('alert').textContent).not.toContain('Nothing was sent');
+  });
+
+  /* F1 (row D7, 2026-11-08, review): a production send that failed may have reached
+     the agency. The server's sentence says which; the screen adds nothing that could
+     contradict it, and never "Nothing was sent". */
+  it('a production send whose request failed shows the server\'s words and never says nothing was sent', async () => {
+    await openTransmitDialog('production', failedWith(502, 'GATEWAY', 'FDA ESG AS2 returned HTTP 502 after the whole bundle was sent; FDA may hold it.'));
+    await sign();
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('FDA may hold it'));
+    expect(screen.getByRole('alert').textContent).not.toContain('Nothing was sent');
+    expect(screen.getByRole('alert').textContent).not.toContain('test send');
+  });
+
+  it('a production send the agency has not yet confirmed is said to be unconfirmed, never "not on file"', async () => {
+    await openTransmitDialog('production', () => ok({ transmitted: true, gateway: 'esg', transmittalId: 43, status: 'in_transit', dispatchStatus: 'transmitting' }));
+    await sign();
+    await waitFor(() => expect(document.body.textContent).toContain(
+      'Whether the agency holds sequence 0000 is not yet confirmed; check the transmittal list before sending again.',
+    ));
+    expect(document.body.textContent).not.toContain('is now not on file');
   });
 });
 

@@ -1,0 +1,9 @@
+MUTATION 9-no-test-send-claim-after-the-wire (on the final code, 2026-11-08T21:34:36Z): replaced [    if (environment !== 'production') attempt.testSendClaim = attemptId;
+  } catch (err) {] with [  } catch (err) {]
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send the agency answered, whose result cannot be recorded, is released and its signature voided 298ms
+   → a test send whose record failed held the sequence: expected { …(3) } to deeply equal { dispatch_status: 'pending', …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send the agency answered, whose result cannot be recorded, is released and its signature voided
+AssertionError: a test send whose record failed held the sequence: expected { …(3) } to deeply equal { dispatch_status: 'pending', …(2) }
+      Tests  1 failed | 14 skipped (15)
+restored sha256 1eb39576d1bbe6976ac537e782854a73ce70999758cccbb9d35d2ac2463474d6 (expected 1eb39576d1bbe6976ac537e782854a73ce70999758cccbb9d35d2ac2463474d6)

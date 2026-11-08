@@ -46,6 +46,7 @@ import { normalizeCtdCode } from '@shared/regulatory/section-code';
 import { downloadBlob } from '../download';
 import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
 import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
+import { dispatchWords } from './CommitmentRow';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 /* The Truth Engine's recorded cross-document checks, which had no screen: the
    route's own comment said no browser client called it. */
@@ -1734,6 +1735,33 @@ export interface TransmitRequest {
   applicationId: string;
 }
 
+/**
+ * Where a transmit goes, in words: the Dispatch tab, the signing dialog, the
+ * transmit's answer and the receipt upload all say it from here, and never as
+ * the stored value. The phrases are the server's (governed-transmit-checks.ts
+ * ENVIRONMENT_WORDS). F1 (row D7, 2026-11-01): a send to the agency's test
+ * environment ('staging') files nothing, so the sequence stays unfiled and can
+ * still be filed with the agency (submission-service.ts toDispatchStatus).
+ */
+export function environmentWords(environment: string | null | undefined): string {
+  if (environment === 'staging') return "the agency's test environment";
+  if (environment === 'production') return "the agency's production environment";
+  return environment ? 'an environment this screen does not name' : 'an environment not recorded';
+}
+/** What a send to the agency's test environment is not, wherever one is shown (F1, row D7). */
+export const TEST_SEND_NOT_A_FILING = 'A test send is not a filing';
+
+/** A sequence's dispatch status in words (F1, row D7, 2026-11-08). How the agency
+ *  holds it is dispatchWords' (CommitmentRow.tsx), the one map; a send still in
+ *  flight is said as one, never as "not on file at the agency"; a status this
+ *  screen does not know, or none, is not recorded, never 'pending'. After a test
+ *  send the sequence is not on file, as before it. */
+function dispatchStatusWords(status: string | null | undefined): string {
+  if (status === 'transmitting') return 'a send is in flight and not yet confirmed; confirm at the agency before sending again';
+  if (status === 'pending' || status === 'sent' || status === 'acknowledged' || status === 'rejected') return dispatchWords(status);
+  return 'not recorded';
+}
+
 /** POST /sequences/:seqId/governed-precheck {step:'transmit'} → its `transmit`. */
 export interface TransmitReadiness {
   sequenceStatus: string;
@@ -1769,9 +1797,10 @@ function transmitBlockedBy(t: TransmitReadiness, env: 'staging' | 'production'):
   const transport = t.transportReadiness?.[env];
   if (transport?.implementation === 'unavailable') return transport.reason;
   const gw = gatewayLabel(t.route.gateway);
-  if (t.configured[env] === null) return `Whether ${gw} is configured for ${env} could not be checked, so nothing can be sent until it can.`;
+  const where = environmentWords(env);
+  if (t.configured[env] === null) return `Whether ${gw} is configured for ${where} could not be checked, so nothing can be sent until it can.`;
   if (t.configured[env] !== true) {
-    return `${gw} has no ${env} credentials configured for this organization, so nothing can be sent. An administrator adds them under Gateway accounts.`;
+    return `${gw} has no credentials for ${where} configured for this organization, so nothing can be sent. An administrator adds them under Gateway accounts.`;
   }
   return null;
 }
@@ -1831,12 +1860,13 @@ function TransmitFacts({ t }: { t: TransmitReadiness }) {
     ['Applicant', t.recordedApplicant ?? 'not recorded'],
     ['Application number', t.recordedApplicationNumber ?? 'not recorded'],
     ['Gateway', t.route.ok ? `${gatewayLabel(t.route.gateway)} (${t.route.region.toUpperCase()})` : 'none for this filing'],
-    ['Staging credentials', credentialWord(t.configured.staging)],
+    // The agency's test environment by its name, not the stored 'staging' (F1, row D7).
+    ['Test environment credentials', credentialWord(t.configured.staging)],
     ['Production credentials', credentialWord(t.configured.production)],
     ['Agency qualification', 'not verified — credentials alone do not establish agency acceptance'],
-    ['Staging transport', t.transportReadiness?.staging?.reason ?? 'could not be checked'],
+    ['Test environment transport', t.transportReadiness?.staging?.reason ?? 'could not be checked'],
     ['Production transport', t.transportReadiness?.production?.reason ?? 'could not be checked'],
-    ['Dispatch status', t.dispatchStatus ?? 'pending'],
+    ['Dispatch status', dispatchStatusWords(t.dispatchStatus)],
   ];
   return (
     <div className="tl-spec-grid sc-spec">
@@ -1860,7 +1890,7 @@ interface DossierTransmittal {
   ack_received_at?: string | null;
   submitted_by?: number | null;
   submitted_by_name?: string | null;
-  /** transmitSequence records the sequence NUMBER it filed and the environment. */
+  /** transmitSequence records the sequence NUMBER it carried and the environment. */
   metadata?: { sequence?: string | null; environment?: string | null } | null;
 }
 
@@ -1871,9 +1901,11 @@ const whenOf = (iso: string | null | undefined): string | null => (iso ? new Dat
  * /api/mdx/gateways/transmittals?program_id=&region=, for the project this
  * submission belongs to and the region its gateway serves (`region`, from the
  * server's transmit route). A transmittal row records the sequence number it
- * filed, not the sequence, so the list says it is filtered by project and
+ * carried, not the sequence, so the list says it is filtered by project and
  * region and marks this sequence's rows. A failed or misshapen read is an
- * error, never "none sent"; a submission with no project is not listed.
+ * error, never "none sent"; a submission with no project is not listed. Each
+ * row says where it went in words, and a send to the agency's test environment
+ * that it is not a filing (F1, row D7, 2026-11-01).
  */
 function DossierTransmissions({ programId, region, sequenceNumber }: { programId: string | null | undefined; region: string; sequenceNumber: string }) {
   const path = programId
@@ -1885,8 +1917,8 @@ function DossierTransmissions({ programId, region, sequenceNumber }: { programId
   if (!programId) {
     body = (
       <div className="scaf-note">
-        This submission is not anchored to a project, so its transmissions cannot be listed by project here. Anchor it to its project,
-        under the submission&#39;s title, to list them.
+        This submission is not anchored to a project, so its transmissions cannot be listed by project here, test sends included
+        (a test send files nothing). Anchor it to its project, under the submission&#39;s title, to list them.
       </div>
     );
   } else if (live.loading) {
@@ -1918,7 +1950,13 @@ function DossierTransmissions({ programId, region, sequenceNumber }: { programId
                 {` · ${acked ? `acknowledged ${acked}` : 'not acknowledged'}`}
                 {` · sent by ${sender}`}
                 {whenOf(t.submitted_at) ? ` on ${whenOf(t.submitted_at)}` : ''}
-                {t.metadata?.environment ? ` (${t.metadata.environment})` : ''}
+                {/* Where it went, in words. After a reload the sequence reads only
+                    'pending', so this row is where a test send stays said (F1, row D7). */}
+                {t.metadata?.environment
+                  ? ` to ${environmentWords(t.metadata.environment)}${
+                      t.metadata.environment === 'staging' ? ` (${TEST_SEND_NOT_A_FILING.toLowerCase()})` : ''
+                    }`
+                  : ' (environment not recorded)'}
                 {t.error_message ? ` · ${t.error_message}` : ''}
               </span>
             </div>
@@ -1932,7 +1970,7 @@ function DossierTransmissions({ programId, region, sequenceNumber }: { programId
       <div className="tl-spec-k sc-mb">Transmissions and acknowledgements</div>
       {programId && !live.loading && !live.error && (
         <div className="scaf-note sc-mb">
-          Filtered by project and {market}, not by sequence: a transmittal records the number of the sequence it filed.
+          Filtered by project and {market}, not by sequence: a transmittal records the number of the sequence it carried.
         </div>
       )}
       {body}
@@ -1986,8 +2024,8 @@ function TransmitPanel({ seq, programId, onTransmit, canSign }: { seq: SeqRow; p
         <div className="sc-field">
           <label htmlFor="sc-tx-env">Environment</label>
           <select id="sc-tx-env" className="sc-subpick" value={environment} onChange={(e) => setEnvironment(e.target.value as 'staging' | 'production')}>
-            <option value="staging">Staging (agency test)</option>
-            <option value="production">Production</option>
+            <option value="staging">Agency test environment</option>
+            <option value="production">Agency production environment</option>
           </select>
         </div>
         <div className="sc-field">
@@ -2000,7 +2038,12 @@ function TransmitPanel({ seq, programId, onTransmit, canSign }: { seq: SeqRow; p
           disabled={blockedBy !== null || !appNumber || !canSign}
           onClick={() => onTransmit({ environment, applicationId: appNumber })}
         >
-          {I.rocket} Transmit sequence {seq.sequenceNumber} (Part 11 e-signature)
+          {/* The button names where the package goes: a test send files nothing (F1, row D7). */}
+          {I.rocket}{' '}
+          {environment === 'production'
+            ? `File sequence ${seq.sequenceNumber} with the agency`
+            : `Send sequence ${seq.sequenceNumber} to ${environmentWords(environment)}`}{' '}
+          (Part 11 e-signature)
         </button>
       </div>
       {blockedBy ? (

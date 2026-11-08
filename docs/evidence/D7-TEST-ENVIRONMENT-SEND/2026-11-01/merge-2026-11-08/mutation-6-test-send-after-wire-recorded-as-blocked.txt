@@ -1,0 +1,6 @@
+# MUTATION: transmitSequence passes () => true for refusedBeforeWire, so a test send that failed after the wire also writes TRANSMIT_BLOCKED ('refused before any package reached the agency')
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send that fails after the wire releases the claim and voids its signature; a fresh one files in production 308ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ [ …(2) ], …(1) ] to deeply equal [ [ …(2) ] ]
++     "TRANSMIT_BLOCKED",
+      Tests  1 failed | 12 skipped (13)
