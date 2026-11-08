@@ -1,0 +1,9 @@
+# GREEN on real PostgreSQL 16 (app_service, RLS on), after the change, 2026-11-08T22:27:55Z
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > never reads another organisation’s filings, and answers empty for a program with no submission
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a leaf only an earlier preview of the sent sequence carried is not on file
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a sequence sent with no compile on record is filed, read from what its transmit recorded
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > a project that is not an application keeps its filed state once it has filed (P-97) > a clinical study report project that filed shows what is on file
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > a project that is not an application keeps its filed state once it has filed (P-97) > a clinical study report project that never filed is refused, by name
+      Tests  7 passed (7)

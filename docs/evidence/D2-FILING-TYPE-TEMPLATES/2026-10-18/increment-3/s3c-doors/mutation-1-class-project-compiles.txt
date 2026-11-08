@@ -1,0 +1,12 @@
+MUTATION 1-class-project-compiles in server/routes/ectd-compile.ts (on the final code and tests, 2026-11-08T22:32:03.538238Z): replaced [  const documentClass = filingDocumentClassOf(anchor.programType);
+  if (!documentClass) return null;] with [  const documentClass = null as ReturnType<typeof filingDocumentClassOf>;
+  if (!documentClass) return null;]
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > 'csr'/'compile' is refused with the class sentence after the anchor read alone 9ms
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > 'csr'/'status' is refused with the class sentence after the anchor read alone 2ms
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > 'csr'/'validate' is refused with the class sentence after the anchor read alone 1ms
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > 'pas'/'compile' is refused with the class sentence after the anchor read alone 1ms
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > 'pas'/'status' is refused with the class sentence after the anchor read alone 1ms
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > 'pas'/'validate' is refused with the class sentence after the anchor read alone 1ms
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > an imported validator report does not reach a class project either 6ms
+ ✓ server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > a regional device project keeps its own sentence 1ms
+restored sha256 c9014c2134604cc6775bf3e595ef81262501b8d25da32ea40e32c7f8329ea4b8 (expected c9014c2134604cc6775bf3e595ef81262501b8d25da32ea40e32c7f8329ea4b8)

@@ -169,6 +169,64 @@ async function readJson<T = any>(method: 'GET' | 'POST', path: string, body?: un
 
 function sevTone(s: string) { return s === 'error' ? 'err' : s === 'warning' ? 'warn' : 'ok'; }
 
+/** The set-region action's answer while readiness has not said whether the
+ *  sequence records its own region; null once it has. A project the server does
+ *  not compile as an eCTD sequence has no region to set (3b slice 3 (c)). */
+function readinessRegionRefusal(
+  state: 'idle' | 'loading' | 'ready' | 'error' | 'not_applicable', note: string | null,
+): { ok: false; reason: string; retry?: true } | null {
+  if (state === 'loading' || state === 'idle') {
+    return {
+      ok: false,
+      reason: 'Compilation readiness is still loading, so whether this sequence already records its own region is not known yet.',
+      retry: true,
+    };
+  }
+  if (state === 'not_applicable') {
+    return { ok: false, reason: note ?? 'This project is not compiled as an eCTD sequence, so it has no region to set.' };
+  }
+  if (state === 'error') {
+    return {
+      ok: false,
+      reason:
+        'Compilation readiness could not be read, so whether this sequence records its own region is unknown and the ' +
+        'Region menu may not be on screen. That is a failed read, not a sequence without a recorded region.',
+    };
+  }
+  return null;
+}
+
+/** What the person is told when a compile was refused: the server's reason
+ *  for a project it does not compile as an eCTD sequence, else its refusal. */
+function compileFailureWords(status: number, body: unknown): string {
+  if (status === 401) return 'Sign in to your tenant to compile.';
+  const refusal = (body as { error?: { message?: string } } | null)?.error?.message;
+  return notApplicableReason(status, body) ?? `Compile refused (HTTP ${status}) — ${refusal ?? 'nothing was assembled'}.`;
+}
+
+/** The readiness read's state as the conversation is told it: a project not
+ *  compiled as an eCTD sequence is said so, with the server's reason. */
+function readinessWords(state: string, note: string | null): string {
+  if (state !== 'not_applicable') return state;
+  return `not computed: ${note ?? 'this project is not compiled as an eCTD sequence'}`;
+}
+
+/** What the person is told when validation did not run: the server's reason
+ *  for a project it does not compile as an eCTD sequence, never a bare status. */
+function validationFailureWords(status: number, body: unknown): string {
+  if (status === 401) return 'Sign in to your tenant to validate.';
+  return notApplicableReason(status, body) ?? `Validation didn’t run (HTTP ${status}).`;
+}
+
+/** The server's reason when it does not compile this project as an eCTD
+ *  sequence (422 ECTD_NOT_APPLICABLE: a filing document class or a regional
+ *  device project, 3b slice 3 (c)); null for any other answer. */
+function notApplicableReason(status: number, body: unknown): string | null {
+  const error = (body as { error?: { code?: unknown; message?: unknown } } | null)?.error;
+  if (status !== 422 || error?.code !== 'ECTD_NOT_APPLICABLE') return null;
+  return typeof error.message === 'string' && error.message.trim() ? error.message : null;
+}
+
 /**
  * Like `readJson`, but PRESERVES the failure. `apiRequest` throws
  * `ApiRequestError` for every non-OK status except 401, and `readJson`'s catch
@@ -868,7 +926,10 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
   const [submissionType, setSubmissionType] = useState<(typeof SUB_TYPES)[number]>('initial');
 
   const [status, setStatus] = useState<StatusView | null>(null);
-  const [statusState, setStatusState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [statusState, setStatusState] = useState<'idle' | 'loading' | 'ready' | 'error' | 'not_applicable'>('idle');
+  /** Why the server does not compile this project as an eCTD sequence, in its
+   *  words (422 ECTD_NOT_APPLICABLE, 3b slice 3 (c)); null otherwise. */
+  const [statusNote, setStatusNote] = useState<string | null>(null);
   const [findings, setFindings] = useState<ValidationResult[] | null>(null);
   // Distinguishes "validation ran and returned zero findings" (a real clean pass)
   // from "validation did not run" (POST failed). Without this, an errored POST
@@ -1000,8 +1061,14 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
     if (identPath == null || !current()) return;
     const request = ++readRevision.current.status;
     setStatusState('loading');
-    const { ok, body } = await readJson<StatusView>('GET', `/api/ectd-compile/${identPath}/status${seqQuery}`);
+    const { ok, status: st, body } = await readJsonKeepingError<StatusView>('GET', `/api/ectd-compile/${identPath}/status${seqQuery}`);
     if (!current() || readRevision.current.status !== request) return;
+    // A project that is not an application is not compiled as an eCTD sequence:
+    // the server says so with its reason, which is the project's kind, not a
+    // failed read (3b slice 3 (c), P-97).
+    const notApplicable = notApplicableReason(st, body);
+    if (notApplicable) { setStatus(null); setStatusNote(notApplicable); setStatusState('not_applicable'); return; }
+    setStatusNote(null);
     // A reply without modules is a failed read, never an empty one (F23 6/9).
     if (!ok || !isStatusView(body)) { setStatusState('error'); setStatus(null); return; }
     setStatus(body); setStatusState('ready');
@@ -1045,12 +1112,12 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
     const request = ++actionRevision.current;
     setBusy('validate');
     try {
-      const { ok, status: st, body } = await readJson<{ valid: boolean; results: ValidationResult[]; summary: { pass: number; warnings: number; errors: number } }>(
+      const { ok, status: st, body } = await readJsonKeepingError<{ valid: boolean; results: ValidationResult[]; summary: { pass: number; warnings: number; errors: number } }>(
         'POST', `/api/ectd-compile/${identPath}/validate`, { ...regionBody, ...seqBody },
       );
       if (!actionCurrent(request)) return;
       if (!ok || !body) {
-        fireToast(st === 401 ? 'Sign in to your tenant to validate.' : `Validation didn’t run (HTTP ${st}).`, 'error');
+        fireToast(validationFailureWords(st, body), 'error');
         // Do NOT collapse a failed run into an empty findings list — that reads
         // as a clean pass. Flag the failure and keep any prior findings visible.
         setValidationFailed(true); return;
@@ -1104,7 +1171,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
     const request = ++actionRevision.current;
     setBusy('compile');
     try {
-      const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, {
+      const { ok, status: st, body } = await readJsonKeepingError<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, {
         ...(recordedType ? {} : { submissionType }),
         ...regionBody,
         ...seqBody,
@@ -1112,11 +1179,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
       });
       if (!actionCurrent(request)) return;
       if (!ok || !body) {
-        const refusal = (body as { error?: { message?: string } } | null)?.error?.message;
-        fireToast(
-          st === 401 ? 'Sign in to your tenant to compile.' : `Compile refused (HTTP ${st}) — ${refusal ?? 'nothing was assembled'}.`,
-          'error',
-        );
+        fireToast(compileFailureWords(st, body), 'error');
         return;
       }
       setCompileResult(body);
@@ -1142,7 +1205,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
     () => ({
       summary: (ident == null
         ? 'eCTD compile, with no project open — nothing can be assembled until one is.'
-        : `eCTD compile for ${region} (${submissionType}). Readiness is ${statusState}` +
+        : `eCTD compile for ${region} (${submissionType}). Readiness is ${readinessWords(statusState, statusNote)}` +
           (status ? `: ${statusReadinessWords(status)}` : '') +
           (findings ? `; ${findings.length} validation finding(s)` : '; not yet validated') + '.') +
         ` ${ectdReferenceSummary(reference)}`,
@@ -1237,7 +1300,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
       ],
     }),
     [
-      ident, region, submissionType, statusState, status, findings, compileResult, history.length,
+      ident, region, submissionType, statusState, statusNote, status, findings, compileResult, history.length,
       orchState, orchErrorDetail, orchRun, orchCounts, signed, signedRefusal, orchAuditErr, orchAudit.length, reference,
     ],
   );
@@ -1293,21 +1356,8 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
       }
       const blocked = busyRefusal();
       if (blocked) return blocked;
-      if (statusState === 'loading' || statusState === 'idle') {
-        return {
-          ok: false,
-          reason: 'Compilation readiness is still loading, so whether this sequence already records its own region is not known yet.',
-          retry: true,
-        };
-      }
-      if (statusState === 'error') {
-        return {
-          ok: false,
-          reason:
-            'Compilation readiness could not be read, so whether this sequence records its own region is unknown and the ' +
-            'Region menu may not be on screen. That is a failed read, not a sequence without a recorded region.',
-        };
-      }
+      const unread = readinessRegionRefusal(statusState, statusNote);
+      if (unread) return unread;
       if (recordedRegion) {
         return {
           ok: false,
@@ -1482,7 +1532,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
       </div>
 
       {/* ── Readiness ── (EctdModuleReadiness.tsx, F23 6/9) */}
-      <EctdModuleReadiness status={status} state={statusState} />
+      <EctdModuleReadiness status={status} state={statusState} reason={statusNote} />
 
       {/* ── Compile result ──
           `errors` and `warnings` are read through these locals rather than off

@@ -123,8 +123,15 @@ function ModuleRow({ m, basis }: { m: ModuleReadiness; basis?: ReadinessBasis })
   );
 }
 
-function ReadinessBody({ status, state }: { status: StatusView | null; state: 'idle' | 'loading' | 'ready' | 'error' }) {
+/** What the readiness read answered; 'not_applicable' is a project the server
+ *  does not compile as an eCTD sequence (3b slice 3 (c)), never a failed read. */
+type ReadinessState = 'idle' | 'loading' | 'ready' | 'error' | 'not_applicable';
+
+function ReadinessBody({ status, state, reason }: { status: StatusView | null; state: ReadinessState; reason?: string | null }) {
   if (state === 'loading' || state === 'idle') return <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading readiness…" /></div>;
+  if (state === 'not_applicable') {
+    return <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Not compiled as an eCTD sequence" hint={reason ?? undefined} /></div>;
+  }
   if (state === 'error' || !status) {
     return (
       <div style={{ padding: 16 }}>
@@ -162,7 +169,7 @@ function ReadinessBody({ status, state }: { status: StatusView | null; state: 'i
 /** The module readiness card. The chip reports what was counted: placement in
  *  a sequence, or content completeness for a project's section store; never
  *  "submission-ready", which the blockers panel decides. */
-export function EctdModuleReadiness({ status, state }: { status: StatusView | null; state: 'idle' | 'loading' | 'ready' | 'error' }) {
+export function EctdModuleReadiness({ status, state, reason }: { status: StatusView | null; state: ReadinessState; reason?: string | null }) {
   return (
     <div className="pj-card">
       <div className="pj-card-h">
@@ -170,7 +177,7 @@ export function EctdModuleReadiness({ status, state }: { status: StatusView | nu
         {status && <StatusChip status={status} />}
       </div>
       <div className="pj-card-b" style={{ padding: 0 }}>
-        <ReadinessBody status={status} state={state} />
+        <ReadinessBody status={status} state={state} reason={reason} />
       </div>
     </div>
   );
