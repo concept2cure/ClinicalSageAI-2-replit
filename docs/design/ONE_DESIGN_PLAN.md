@@ -1601,6 +1601,46 @@ COORDINATION.md, row "Codespace setup".
 
 Several decided designs still have open questions with the founder and the coordinator; each design lists them.
 
+#### D5 / S7 / F1 — CMC and Biostatistics work areas; the figure engines measured (session `session_01GJidg5q1KFNfFT2VZyjcqw`, 2026-11-01 to 2026-11-02)
+
+**What already exists (RULE 3).** `CmcModule.tsx` with its nine tabs and 21 register forms, `Biostatistics.tsx`,
+`BiostatWorkbench.tsx` with 29 deterministic engines, `biostatBridge.tsx`, `biostatEngineResult.tsx`, the §WA
+work-area pattern (D5-0) and the labelled-figure lexicon with its seven consumers. Nothing below is a new screen,
+route, service, table or AnA tool; one file was split and one shared component adopted.
+
+| Slice | Commit / evidence | Verification and limit |
+|---|---|---|
+| D5-0, D5-1, D5-2 | `943b78cb7`, `94f24dba0`, `97c66423f`; `docs/evidence/DESIGN/D5/2026-11-01/` | The work-area pattern in CSS, then CMC onto it: tile groups retired, one state vocabulary (`cmcStateWord`), halves and starters. |
+| D5-3a | `cac363bfb`; `docs/evidence/DESIGN/D5/2026-11-01/` | Biostatistics' frame and the document as an artifact. Measured at 1440: orange fills 4 → 1, uppercase 81 → 0, sideways scroll +8px → 0. |
+| D5-3b | `e0534a80f`; `docs/evidence/DESIGN/D5/2026-11-02-d5-3b/` | The design assessment and the governed documents. Walked against a REAL design seeded through `POST /api/study-design/persist`: 137 subjects, 90% power, "Inadequate", 4 of 10 checks; gates EST-001/PWR-003/PWR-006/MTH-001/MIS-002/POP-001 moved from printed text into each row's `title`, the input record likewise. Both governed writes still open their reason form. |
+| D5-4 | `2505ca402`; `docs/evidence/DESIGN/D5/2026-11-02-d5-4/` | The design calculators as a work area. Filled primaries 4 → 1 (the chosen engine of 29 was one of them); `.pj-card` inside the work area 4 → 0; one input height. Assurance computed 0.771146 live. |
+| D5 shared back link and ask-row name | `428795100` | `ProjectBack` (D0-7) replaces two private copies; `role="group"` on CMC's and Biostatistics' ask rows — an `aria-label` on a role-less div has no accessible name. Each shown red on exactly that mutation. |
+| F1 — the labelled-figure lexicon | `docs/evidence/F1/2026-11-01-labelled-figure-lexicon/` | Recall over 15 PubMed phase-III abstracts, on a committed re-runnable corpus: 20% → 47% of governed sentences. One false positive removed (`\bOR\b` under `/i` read the English "or" as an odds ratio). The table split to `intelligence/labelled-figures.ts`; all seven consumers unmoved. |
+| F1 — two figure engines, measured not converged | `dac3acbbc`; `docs/evidence/F1/2026-11-02-two-figure-engines/` | The arm/event frame the lexicon lacks already exists: `truth-engine/clinical-claims/` (8,476 lines) models study, population, arm, measure, scope, endpoint, effect type, scale, interval. Three callers reach it; `POST /api/submissions/:id/consistency` does not, and reads the narrow lexicon over the same input. Per sentence the lexicon labels 47%, the claims engine frames 0% and SEES 91%; fed whole documents, 3 framed and 428 unframed. **Routing the check at the claims engine today would report LESS, not more** — it refuses without a frame, correctly. Convergence is a RULE 3 decision and was not taken. |
+
+**Found, not fixed.**
+1. **A GxP screen promises a refusal that does not happen.** The Specifications tab says "A limit whose method is
+   not validated cannot be approved" and renders a banner saying the same. `POST /api/cmc/specifications/:id/approve`
+   checks not-found, already-approved, signing authority, re-authentication, reason and the ledger — never method
+   validation; the banner disables nothing. `noMethod` is `!method`, i.e. "no method name was typed", not "the named
+   method is not validated": a specification naming a method whose register row is still `development` passes.
+2. **The spec → method → result chain is joined by free text**, not by reference: `qc_testing.test_method` is text,
+   `qc_testing.specifications` is JSON, `qc_specifications.testParameters[].testMethod` is a string. Hence the
+   capability engine must refuse when criterion *strings* disagree, and a spec revision does not flag the results
+   judged against the old limit.
+3. **No CMC data is read out of a document.** No extraction, LIMS, ELN or instrument integration;
+   `certificate_of_analysis` is a text reference. `source-evidence.ts` records provenance to a Vault version, it does
+   not ingest. Every register row is typed, or committed from AnA's guided interview.
+4. **This container was a week stale**, so 18 CMC suites failed to load on `z.string().guid` (a zod 4 API) against an
+   installed zod 3.25.76 while the lockfile said 4.6.7 (`76adba84d`). `npm ci` fixed it; the repository was never
+   broken. 1,714 server and 374 client CMC/biostat tests pass at `bc5a34030`.
+
+**What is next.** Roadmap phase 4 (CMC / Module 3) acceptance under S7/S12: fixture batch/stability tables matching
+expected cells, OOS flagged explicitly, QOS and Module 3 sharing atoms and method references, with the P-28
+small-molecule US-IND boundary unchanged. Then the D0 refused-read rule in `CmcModule.tsx` (13 sites, the most of any
+screen in `docs/evidence/D0/2026-11-06-refused-read-one-rule/03-adoption-list.txt`), and J5-13 — the biotech demo is a
+monoclonal antibody, so Module 3 build is correctly refused there and the demo cannot show it.
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for
