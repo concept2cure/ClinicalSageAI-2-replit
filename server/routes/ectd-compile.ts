@@ -44,7 +44,7 @@ import { writeChainedAuditRow } from '../services/auditService';
 import type { AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { parseEvalidatorJsonReport } from '../services/ectd/external-validator/lorenz-adapter';
 import { tallyFindings, type ExternalValidationFinding } from '../services/ectd/external-validator/types';
-import { resolveSequenceSpine, resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
+import { resolveSequenceSpine, resolveSubmissionSpine, nonApplicationEctdReason, dispatchedSequenceOfProject, type SubmissionSpine } from '../services/cmc/submission-spine';
 import { sectionMatches } from '../services/ectd/section-code-match';
 import {
   loadSpineLeaves,
@@ -69,9 +69,6 @@ import {
 } from '../services/ectd/required-sections';
 import { serverError, isConversionCapacityError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
-import { regionalDeviceApplicationClassOf } from '../../shared/regulatory/filing-catalog';
-import { classNotSequencedReason, filingDocumentClassOf, filingTypeInSentence } from '../../shared/regulatory/filing-document-classes';
-import { FILED_DISPATCH_STATUSES } from '../services/submission-service/filed-dispatch';
 import type { SubmissionBundle } from '../services/submission-gateways/types';
 import type { DtdValidationEvidence, DtdFileValidation } from '../../shared/regulatory/ectd-dtd-validation';
 import { hasPassedPackageDtdValidation, dtdFileValidationPassed } from '../services/ectd/dtd-bundler';
@@ -248,59 +245,14 @@ async function anchorFromRequest(
   return { orgId, anchor, ident };
 }
 
-/**
- * Only an application enters medicinal compilation, readiness, validation or
- * the filed state. A regional device working document is not one, and neither
- * is a filing document class (a CSR, a supplement, a meeting package): it is
- * authored here and filed in an application's sequence, or sent by no sequence
- * this platform builds (shared/regulatory/filing-document-classes.ts). Until
- * 2026-11-01 (3b slice 3) a class project compiled a draft backbone here and
- * was measured against the ICH CTD baseline, while createSubmission and
- * add-project-market.ts already refused it a submission and a market with the
- * same classNotSequencedReason sentence.
- */
+/** A project that is not an application (a regional device working document,
+ *  or a filing document class) is not compiled as an eCTD sequence: 422 with
+ *  the reason (3b slice 3 (c); submission-spine.ts nonApplicationEctdReason). */
 function refuseNonApplicationEctd(res: Response, anchor: CompileAnchor): boolean {
-  const message = nonApplicationEctdMessage(anchor);
+  const message = nonApplicationEctdReason(anchor.programType);
   if (!message) return false;
   res.status(422).json({ error: { code: 'ECTD_NOT_APPLICABLE', message } });
   return true;
-}
-
-/** Why a project that is not an application is not compiled as an eCTD
- *  sequence, in the words its refusal gives; null for an application. */
-function nonApplicationEctdMessage(anchor: CompileAnchor): string | null {
-  if (regionalDeviceApplicationClassOf(anchor.programType)) {
-    return 'Device preparation projects are not eCTD applications. No submission package is built or transmitted for this preparation pathway.';
-  }
-  const documentClass = filingDocumentClassOf(anchor.programType);
-  if (!documentClass) return null;
-  return `This project is ${filingTypeInSentence(documentClass.docType, true)}, authored here and not compiled as an eCTD sequence. ${classNotSequencedReason(documentClass)}`;
-}
-
-/**
- * Founder decision P-97 (2026-11-02, "Keep filed state regardless"): a project
- * that is not an application, but already has a dispatched sequence, keeps its
- * filed-state view, read-only. Such a sequence exists only where a submission
- * was anchored to the project before 5ab138ed3 refused that. This is the latest
- * such sequence of any submission anchored to the project (a program anchor by
- * its id, a numeric one by the program its project names), or null when it has
- * none. It throws when the read fails: that is not "nothing filed".
- */
-async function dispatchedSequenceOfProject(anchor: CompileAnchor, orgId: number): Promise<number | null> {
-  const { rows } = await pool.query(
-    `SELECT s.id
-       FROM ectd_sequences s
-       JOIN submissions sub ON sub.id = s.submission_id AND sub.organization_id = s.organization_id AND sub.deleted_at IS NULL
-      WHERE s.organization_id = $1 AND s.deleted_at IS NULL
-        AND sub.program_id = COALESCE($2::uuid,
-              (SELECT p.regulatory_program_id FROM projects p WHERE p.id = $3 AND p.organization_id = $1))
-        AND (s.status = 'dispatched' OR s.dispatch_status = ANY($4::text[]))
-      ORDER BY s.id DESC
-      LIMIT 1`,
-    [orgId, anchor.programId, anchor.numericProjectId, [...FILED_DISPATCH_STATUSES]],
-  );
-  const id = Number(rows[0]?.id);
-  return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
 
 /**
@@ -1544,9 +1496,8 @@ router.get('/:projectIdent/filed-state', async (req: Request, res: Response) => 
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
-  // P-97: a project that is not an application is refused here too, unless it
-  // already has a dispatched sequence; then what is on file stays readable.
-  const notApplicable = nonApplicationEctdMessage(anchor);
+  // P-97: refused here too unless the project already has a dispatched sequence.
+  const notApplicable = nonApplicationEctdReason(anchor.programType);
   let filedSequenceId: number | null = null;
   if (notApplicable) {
     try {
@@ -1560,9 +1511,7 @@ router.get('/:projectIdent/filed-state', async (req: Request, res: Response) => 
   try {
     const chosen = await spineForRequest(req, res, anchor, orgId);
     if (!chosen) return;
-    // A program of no drug application type resolves no spine by its type, so
-    // with no sequence named, the submission that holds its dispatched
-    // sequence is the one read: nothing filed is hidden (P-97).
+    // No spine resolves for such a type: fold the dispatched sequence's own (P-97).
     const spine = chosen.spine ?? (filedSequenceId !== null ? await resolveSequenceSpine(anchor, orgId, filedSequenceId) : null);
     if (!spine) {
       return res.json({ projectIdent: ident, submissionId: null, throughSequence: null, sequences: [], leaves: [] });

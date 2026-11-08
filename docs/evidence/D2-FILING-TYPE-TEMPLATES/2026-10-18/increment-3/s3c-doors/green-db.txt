@@ -7,3 +7,4 @@
  ✓ tests/db/ectd-filed-state-view.dbtest.ts > a project that is not an application keeps its filed state once it has filed (P-97) > a clinical study report project that filed shows what is on file
  ✓ tests/db/ectd-filed-state-view.dbtest.ts > a project that is not an application keeps its filed state once it has filed (P-97) > a clinical study report project that never filed is refused, by name
       Tests  7 passed (7)
+      Tests  7 passed (7)

@@ -58,6 +58,17 @@ decision **P-97** (`docs/LAUNCH_DEFINITION_OF_DONE.md`, 2026-11-02, "Keep filed 
 
 There is no migration, no new non-test file, and no new route, token or screen.
 
+**The size ceiling (a follow-up commit).** The pre-push repo-health gate refused the push: `ectd-compile.ts` grew from
+98,914 to 102,811 bytes, and no file may newly cross 100,000. Any new file under `server/routes/` counts as a new route
+under RULE 6, so a split there is not allowed. The two new helpers therefore moved into
+`server/services/cmc/submission-spine.ts`, the existing owner of the program-to-submission convention:
+`nonApplicationEctdReason(programType)` and `dispatchedSequenceOfProject(anchor, orgId)`. `ectd-compile.ts` keeps thin
+call sites and is now 99,827 bytes.
+
+`tests/routes/ectd-readiness-boundaries.test.ts` mocked that module whole, so its mock is now partial, keeping its two
+stubs. `green-after-split.txt` shows 18 files and 220 tests passing, and `green-db.txt` 7/7 on real Postgres again.
+`mutation-1-class-project-compiles.txt` was re-run against the moved function and fails as before.
+
 ## Proof
 
 | File | What it shows |
