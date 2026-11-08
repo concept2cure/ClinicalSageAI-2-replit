@@ -179,7 +179,10 @@ describe('each type says whether an engine computes it over a program', () => {
     expect(runnable['readiness.executive_digest']).toBe(true);
     expect(runnable['nonclinical.study_send_register']).toBe(true);
     expect(runnable['ema.rmp_psur_signal_alignment']).toBe(false);
-    expect(runnable['compliance.audit_assurance_pack']).toBe(false);
+    // Runnable since 98661f418b (R1, 2026-11-06): Quality evidence, computed for one project
+    // (report-engine.ts DOMAIN_REPORT_TYPE_IDS, computeQualityEvidenceReport). It was false
+    // here while the pack had no engine.
+    expect(runnable['compliance.audit_assurance_pack']).toBe(true);
     expect(runnable['provenance.evidence_trace_report']).toBe(false);
     const reports = res.body.data.reportTypes as Array<{ typeId: string }>;
     expect(reports.find(t => t.typeId === 'usa_fda.nda_bla_filing_readiness')).toMatchObject({
