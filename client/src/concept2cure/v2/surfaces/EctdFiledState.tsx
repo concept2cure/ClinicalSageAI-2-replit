@@ -199,19 +199,28 @@ function ModuleTable({ module, leaves }: { module: string; leaves: FiledLeaf[] }
   );
 }
 
-/** The view, or null when the read failed or answered something that is not one. */
-async function readFiledState(identPath: string, seqQuery: string): Promise<FiledStateView | null> {
+/** The view; the server's reason when it does not read a filed state for this
+ *  project (422 ECTD_NOT_APPLICABLE: not an application, and nothing dispatched,
+ *  3b slice 3 (c) under P-97); or null when the read failed or answered
+ *  something that is not one. */
+async function readFiledState(identPath: string, seqQuery: string): Promise<FiledStateView | { notApplicable: string } | null> {
   try {
     const res = await apiRequest('GET', `/api/ectd-compile/${identPath}/filed-state${seqQuery}`);
     const body: unknown = await res.json().catch(() => null);
     return res.ok && isFiledStateView(body) ? body : null;
-  } catch {
+  } catch (err) {
+    const { status, payload } = (err ?? {}) as { status?: unknown; payload?: unknown };
+    const error = (payload as { error?: { code?: unknown; message?: unknown } } | null)?.error;
+    if (status === 422 && error?.code === 'ECTD_NOT_APPLICABLE' && typeof error.message === 'string' && error.message.trim()) {
+      return { notApplicable: error.message };
+    }
     return null;
   }
 }
 
-function headline(state: 'loading' | 'error' | 'ready', view: FiledStateView | null): string {
+function headline(state: 'loading' | 'error' | 'ready' | 'not_applicable', view: FiledStateView | null): string {
   if (state === 'error') return 'not loaded';
+  if (state === 'not_applicable') return 'not an eCTD application';
   if (state === 'loading' || !view) return '…';
   if (view.throughSequence) return `through sequence ${view.throughSequence}`;
   return unknownClause(view.sequences) ? 'not fully known' : 'nothing on file';
@@ -237,8 +246,9 @@ function FiledStateBody({ view }: { view: FiledStateView }) {
 }
 
 export function EctdFiledState({ identPath, seqQuery, isScopeCurrent }: { identPath: string | null; seqQuery: string; isScopeCurrent: () => boolean }) {
-  const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
+  const [state, setState] = useState<'loading' | 'error' | 'ready' | 'not_applicable'>('loading');
   const [view, setView] = useState<FiledStateView | null>(null);
+  const [notApplicable, setNotApplicable] = useState<string | null>(null);
   const revision = useRef(0);
   const load = useCallback(async () => {
     if (identPath == null || !isScopeCurrent()) return;
@@ -246,12 +256,14 @@ export function EctdFiledState({ identPath, seqQuery, isScopeCurrent }: { identP
     setState('loading');
     const read = await readFiledState(identPath, seqQuery);
     if (!isScopeCurrent() || revision.current !== request) return;
-    setView(read); setState(read ? 'ready' : 'error');
+    if (read && 'notApplicable' in read) { setView(null); setNotApplicable(read.notApplicable); setState('not_applicable'); return; }
+    setNotApplicable(null); setView(read); setState(read ? 'ready' : 'error');
   }, [identPath, seqQuery, isScopeCurrent]);
   useEffect(() => { void load(); }, [load]);
 
   let body: React.ReactNode;
   if (state === 'loading') body = <EmptyState icon={I.clock} title="Loading what is on file…" busy />;
+  else if (state === 'not_applicable') body = <EmptyState icon={I.fileText} title="Nothing is on file for this project" hint={notApplicable ?? undefined} />;
   else if (state === 'error' || !view) {
     body = <EmptyState tone="error" icon={I.alertTriangle} title="What is on file didn’t respond." hint="It is not shown as empty until it loads." retry={load} />;
   } else if (view.submissionId == null) {
