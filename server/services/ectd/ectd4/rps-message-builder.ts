@@ -3,7 +3,7 @@
  *
  * Emits the single RPS submission-unit message that replaces the v3.2.2
  * `index.xml` + regional backbone. The message is an HL7 v3 `PORP_IN000001UV`
- * interaction (namespace `urn:hl7-org:rps`) carrying:
+ * interaction (namespace `urn:hl7-org:v3`) carrying:
  *   - the Submission Unit (id UUID, submission-unit-type code + OID, title,
  *     statusCode, sequenceNumber),
  *   - its Submission (submission-type code) and Application (application-type
@@ -32,8 +32,10 @@ import {
 import { messageId as deriveMessageId } from './ids';
 import type { RpsMessageInput, RpsContextOfUse, RpsDocument } from './types';
 
-/** RPS message + regional namespaces. */
-const RPS_NS = 'urn:hl7-org:rps';
+/** The FDA-linked ICH PORP_IN000001UV.xsd declares this targetNamespace.
+ * https://www.fda.gov/media/193873/download?attachment
+ * Matching the namespace does not establish complete schema qualification. */
+const RPS_NS = 'urn:hl7-org:v3';
 const XSI_NS = 'http://www.w3.org/2001/XMLSchema-instance';
 
 function esc(s: string): string {

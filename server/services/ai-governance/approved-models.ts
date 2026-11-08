@@ -32,6 +32,11 @@ export interface PqStatus {
   status: 'pending' | 'passed' | 'failed';
   /** Path to the executed PQ record. Null until a run exists. */
   reference: string | null;
+  /** Strict pins require a reviewed immutable artifact and the exact executed record bytes. */
+  pinKind?: 'provider_snapshot' | 'weights_sha256';
+  recordSha256?: string;
+  /** Uses measured by that record. Absent legacy metadata grants no strict qualified pin. */
+  intendedUses?: readonly TaskType[];
 }
 
 export interface ApprovedModel {
@@ -286,6 +291,7 @@ export const APPROVED_MODELS: ApprovedModel[] = [
  * attempts one outside the tests.
  */
 for (const entry of APPROVED_MODELS) {
+  if (entry.pq.intendedUses) Object.freeze(entry.pq.intendedUses);
   Object.freeze(entry.pq);
   Object.freeze(entry);
 }

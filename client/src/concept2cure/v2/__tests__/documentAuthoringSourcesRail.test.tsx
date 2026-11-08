@@ -116,8 +116,9 @@ function mockApi(routes: Routes = {}) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (url.startsWith('/api/authoring/docs?')) {
       return ok({
+        success: true,
         documents: [
-          { id: DOC, title: 'CTD 3.2.P', module: 'M3', product_code: null, status: 'draft', updated_at: null, section_count: 1 },
+          { id: DOC, title: 'CTD 3.2.P', module: 'M3', product_code: null, status: 'draft', updated_at: null, section_count: 1, program_id: PID },
         ],
       });
     }
@@ -298,7 +299,7 @@ describe('DocumentAuthoring — recording a source', () => {
     });
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (url.startsWith('/api/authoring/docs?')) {
-        return ok({ documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null }] });
+        return ok({ success: true, documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null, program_id: PID }] });
       }
     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
       if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
@@ -329,7 +330,7 @@ describe('DocumentAuthoring — re-reading a source', () => {
     mockApi({ sections: () => ok({ sources: [citation({ state: 'changed' })] }) });
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (url.startsWith('/api/authoring/docs?')) {
-        return ok({ documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null }] });
+        return ok({ success: true, documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null, program_id: PID }] });
       }
     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
       if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
@@ -355,7 +356,7 @@ describe('DocumentAuthoring — re-reading a source', () => {
     mockApi({ sections: () => ok({ sources: [citation()] }) });
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (url.startsWith('/api/authoring/docs?')) {
-        return ok({ documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null }] });
+        return ok({ success: true, documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null, program_id: PID }] });
       }
     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
       if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });

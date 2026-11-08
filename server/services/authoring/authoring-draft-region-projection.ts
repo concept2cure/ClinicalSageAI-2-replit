@@ -2,8 +2,8 @@
  * generation re-reads source, manual-preparation and jurisdiction authority. */
 import type { RequestSqlClient } from '../../db/requestDb';
 import { savedTemplateReview } from '../ana/saved-template-review';
-import { savedSectionTemplateReference } from './authoring-draft-template';
-import { writingAgencyOf, type SectionDraftingRegion } from '../../../shared/authoring/writing-regions';
+import { recordedTemplateWritingAgency, savedSectionTemplateReference } from './authoring-draft-template';
+import type { SectionDraftingRegion } from '../../../shared/authoring/writing-regions';
 
 export async function projectSectionDraftingRegions(
   q: RequestSqlClient,
@@ -25,7 +25,7 @@ export async function projectSectionDraftingRegions(
       else if (reference.sourceVerification !== 'full-recorded') projection = { draftingRegion: null, draftingRegionState: 'unavailable' };
       else if (context?.region === 'GLOBAL') projection = { draftingRegion: null, draftingRegionState: 'global' };
       else {
-        const agency = writingAgencyOf(context?.region);
+        const agency = recordedTemplateWritingAgency(source);
         projection = { draftingRegion: agency, draftingRegionState: agency ? 'recorded' : 'unavailable' };
       }
       return [section.sectionId, projection];

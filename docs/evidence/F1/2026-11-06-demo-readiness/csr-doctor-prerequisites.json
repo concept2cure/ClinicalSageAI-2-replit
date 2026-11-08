@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "node",
+    "scripts/ops/codespaces-doctor.mjs",
+    "--json"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.174,
+  "rawOutput": "csr-doctor-prerequisites.log.gz",
+  "rawGzipSha256": "aa09614c4f643203710751ca8b8b11070eeca3586a004cb3e9bb73cc324a4fed"
+}

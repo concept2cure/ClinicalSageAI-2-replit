@@ -126,6 +126,7 @@ export type SubmissionErrorCode =
   | 'VALIDATION'
   | 'GOVERNED_REQUIRED'
   | 'DISPATCH_BLOCKED'
+  | 'AUDIT_UNCONFIRMED'
   | 'FORBIDDEN'
   | 'CROSS_PROJECT'
   | 'ALREADY_PLACED'
@@ -165,6 +166,7 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   VALIDATION: 400,
   GOVERNED_REQUIRED: 403,
   DISPATCH_BLOCKED: 422,
+  AUDIT_UNCONFIRMED: 503,
   FORBIDDEN: 403,
   CROSS_PROJECT: 409,
   ALREADY_PLACED: 409,
@@ -1034,7 +1036,7 @@ async function governedSignatureVerdict(
   // refused (P-23, voidRefusedStepSignature). The void is also on the signature
   // row (checked below); this ledger read holds even where that write failed.
   const spentBy = await signatureSpentBy(signatureActionId, target, ctx.organizationId);
-  if (spentBy === SIGNATURE_VOIDED_ACTION) {
+  if (spentBy === SIGNATURE_VOIDED_ACTION || spentBy === 'TRANSMIT_BLOCKED') {
     return refuse(
       `this signature was given for a ${INTENT_LABEL[step]} the server refused, so it is void; sign again for a new attempt`,
     );
@@ -1129,7 +1131,7 @@ async function signatureSpentBy(signatureActionId: string, target: string, organ
       AND table_name = 'ectd_sequence'
       AND record_id = ${sequenceId}
       AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED', ${SHADOW_REVIEW_WAIVED_ACTION},
-                     ${SHADOW_FINDING_DISPOSITIONED_ACTION}, ${SIGNATURE_VOIDED_ACTION})
+                     ${SHADOW_FINDING_DISPOSITIONED_ACTION}, ${SIGNATURE_VOIDED_ACTION}, 'TRANSMIT_BLOCKED')
       AND (new_values::jsonb ->> 'signatureActionId') = ${signatureActionId}
     LIMIT 1
   `;
@@ -1255,12 +1257,61 @@ async function voidingSignatureOnRefusal<T>(
     if (!(await voidable(err))) throw err;
     const refusal = err instanceof Error ? err.message : String(err);
     const outcome = await voidRefusedStepSignature(sig.signatureActionId, sig.sequenceId, sig.ctx, sig.step, refusal);
+    if (sig.step === 'transmit') await recordBlockedSequenceTransmit(sig);
     const sentence = voidedSignatureSentence(outcome, sig.step);
     if (!sentence) throw err;
     if (err instanceof SubmissionError) throw new SubmissionError(err.code, `${err.message}${sentence}`);
     if (err instanceof Error) err.message = `${err.message}${sentence}`;
     throw err;
   }
+}
+
+type BlockedTransmitScope = { signatureActionId: string; sequenceId: number; ctx: { organizationId: number; userId: number } };
+function verifiedPackageSha(value: unknown): string | null {
+  return typeof value === 'string' && /^[a-f0-9]{64}$/.test(value) ? value : null;
+}
+function blockedTransmitAuditRefusal(): SubmissionError {
+  return new SubmissionError('AUDIT_UNCONFIRMED', 'Transmission remains blocked. Its audit record could not be confirmed; review the tenant audit history before another attempt.');
+}
+
+/** A pre-wire refusal is a tenant-visible event, separate from voiding its approval. */
+async function recordBlockedSequenceTransmit(input: BlockedTransmitScope): Promise<void> {
+  const client = await pool.connect().catch(() => { throw blockedTransmitAuditRefusal(); });
+  let commitAttempted = false, discard: Error | undefined;
+  try {
+    await client.query('BEGIN');
+    const scope = await client.query(`SELECT s.program_id FROM ectd_sequences e
+      JOIN submissions s ON s.id=e.submission_id AND s.organization_id=e.organization_id
+      WHERE e.id=$1 AND e.organization_id=$2 AND e.deleted_at IS NULL FOR SHARE OF e,s`,
+    [input.sequenceId, input.ctx.organizationId]);
+    if (scope.rows.length === 1) await writeBlockedTransmitEvent(client, input, scope.rows[0].program_id);
+    commitAttempted = true;
+    await client.query('COMMIT');
+  } catch {
+    discard = new Error('Blocked transmission audit acknowledgement unavailable');
+    if (!commitAttempted) await client.query('ROLLBACK').catch(() => undefined);
+    throw blockedTransmitAuditRefusal();
+  } finally { client.release(discard); }
+}
+
+async function writeBlockedTransmitEvent(client: PoolClient, input: BlockedTransmitScope, programId: unknown): Promise<void> {
+  const target = `ectd-sequence:${input.sequenceId}`;
+  const approved = await client.query(`SELECT a.id,e.bound_payload_digest FROM c2c_ana_actions a
+    JOIN electronic_signatures e ON e.organization_id=a.org_id AND e.signed_target=a.target
+      AND e.signature_manifest::jsonb->>'actionId'=a.id AND e.binding_basis=$5
+    WHERE a.id=$1 AND a.org_id=$2 AND a.proposed_by=$3 AND a.target=$4
+      AND a.command='sign' AND a.state='executed' AND a.payload::jsonb->>'intent'='transmit'`,
+  [input.signatureActionId, input.ctx.organizationId, input.ctx.userId, target, BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST]);
+  const binding = await deriveGovernedTargetBinding(client, target, input.ctx.organizationId);
+  const approvedSha256 = approved.rows.length === 1 ? verifiedPackageSha(approved.rows[0].bound_payload_digest) : null;
+  const currentSha256 = binding.basis === BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST ? verifiedPackageSha(binding.digest) : null;
+  await writeChainedAuditRow(client, { tenantId: input.ctx.organizationId, userId: input.ctx.userId,
+    action: 'TRANSMIT_BLOCKED', resourceType: 'ectd_sequence', resourceId: input.sequenceId,
+    reason: 'Transmission was refused before any package reached the agency.',
+    details: { schemaVersion: 1, step: 'transmit', programId: typeof programId === 'string' ? programId : null,
+      signatureActionId: approved.rows.length === 1 ? approved.rows[0].id : null,
+      approvedSha256, currentSha256, bindingBasis: BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST,
+      reasonCode: approvedSha256 && currentSha256 && approvedSha256 !== currentSha256 ? 'approved_package_changed' : 'pre_wire_refused', transmitted: false } });
 }
 
 
@@ -2696,6 +2747,7 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
   const voided = await voidRefusedStepSignature(
     signatureActionId, sequenceId, ctx, 'transmit', `Not transmitted: ${result.reason ?? 'the gateway did not send it'}.`,
   );
+  await recordBlockedSequenceTransmit({ signatureActionId, sequenceId, ctx });
   return { ...result, signatureVoided: voided === 'voided' };
 }
 

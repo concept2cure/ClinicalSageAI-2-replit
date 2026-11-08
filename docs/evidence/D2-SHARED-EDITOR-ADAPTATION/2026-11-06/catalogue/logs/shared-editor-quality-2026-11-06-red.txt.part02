@@ -1,0 +1,306 @@
+ests__/project-access-integration.test.ts > scheduled Quality reports retain exact authored-object access for every recipient > refuses delivery when a recipient can use the project but cannot view one embedded SOP 59ms
+ ✓ server/services/report-os/__tests__/project-access-integration.test.ts > scheduled Quality reports retain exact authored-object access for every recipient > rechecks object access on the enlisted transaction before any cursor, notification or delivery effect 109ms
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-11-06T21:35:55.658Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-11-06T21:35:55.718Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T21:35:55.719Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-11-06T21:35:55.720Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > does not claim Standard or grant a base report for unread null tier 38ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > does not claim Standard or grant a base report for unread platinum tier 9ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > retains a positively recorded free tier and its base entitlement 5ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > retains a positively recorded standard tier and its base entitlement 5ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > retains a positively recorded professional tier and its base entitlement 5ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > retains a positively recorded enterprise tier and its base entitlement 3ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > does not show a multi-project delivery after access to one carried project is lost 13ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > keeps a delivery visible only when all carried scopes still exist and are permitted 7ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > omits a delivery whose saved target run no longer exists 7ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > refuses corrupt or mismatched-tenant delivery data ({"deliveryRecord":) 8ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > refuses corrupt or mismatched-tenant delivery data ({"deliveryRecord":{"deliveryId":"22222222-2222-4222-8222-222222222222","organizationId":99,"projectId":11,"bundleId":"11111111-1111-4111-8111-111111111111","channel":"external_pdf_export","recipients":["partner"],"subject":"Restricted review pack","message":"Private project12 finding","status":"exported","createdAt":"2026-10-13T12:00:00Z"}}) 3ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > omits every group whose complete member set is inaccessible, while showing an authorized group 4ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses changing an inaccessible group before any membership can be replaced 16ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses adding an inaccessible project to a new or accessible existing group 10ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > checks historical snapshot project sets rather than changed live group membership 4ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses invalid saved snapshot membership instead of implying an empty register 4ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses taking a snapshot of an inaccessible live group 4ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > derives snapshot membership from the owned group despite a forged public-only binding in the request 5ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses one currently private scope before its retained body is read, without identifying it 30ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses observed project withdrawal after rendering despite the earlier allowed set 1020ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses observed scope withdrawal after rendering even when its project remains accessible 890ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses an actor whose current active membership is absent before any body read 14ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses an observed active membership withdrawal after rendering 703ms
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > retains policy lookup failure as an error, without interpreting it as an empty packet
+{
+  "timestamp": "2026-11-06T21:36:01.845Z",
+  "level": "error",
+  "message": "[report-os] loading export.pdf failed",
+  "context": {
+    "err": "sharing verification unavailable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > uses current canonical actor roles and the same owned client for every scope/allowlist read 712ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > retains policy lookup failure as an error, without interpreting it as an empty packet 24ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > the existing assurance pack computes native Quality facts > routes the existing type only to supported Quality scopes 5ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > the existing assurance pack computes native Quality facts > requires a current verified actor and executor instead of producing an empty or organization report 4ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > the existing assurance pack computes native Quality facts > passes the exact admitted project, actor and executor to the canonical reader and retains its facts 12ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > the existing assurance pack computes native Quality facts > deduplicates organization context and retains only projects contributing evidence in an organization run 1ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > the existing assurance pack computes native Quality facts > reads explicit organization context when there are no accessible projects, without inventing an empty completeness result 1ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > the existing assurance pack computes native Quality facts > refuses a private, missing or malformed tracking project 99 without an organization fallback 1ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > the existing assurance pack computes native Quality facts > refuses a private, missing or malformed tracking project 0 without an organization fallback 1ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > the existing assurance pack computes native Quality facts > refuses a private, missing or malformed tracking project 00000000-0000-4000-8000-000000000011 without an organization fallback 1ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > the existing assurance pack computes native Quality facts > refuses a private, missing or malformed tracking project 11.0 without an organization fallback 1ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > the existing assurance pack computes native Quality facts > refuses an unverified client claim, unsupported scope, and another organization account 2ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > the existing assurance pack computes native Quality facts > propagates collector failure, observed access revocation and conflicting snapshots instead of reporting partial counts 1ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > the existing assurance pack computes native Quality facts > cannot finalize native facts as audit assurance under the existing type rules 1ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > the existing assurance pack computes native Quality facts > renders project evidence and organization context separately with its unassessed checks 2ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > the existing assurance pack computes native Quality facts > refuses an unsupported saved Quality snapshot instead of displaying malformed facts as an empty register 0ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > native Quality report presentation > renders readable business facts in the view and PDF without changing the sealed input 1439ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > native Quality report presentation > keeps record qualifications ahead of a shortened excerpt and marks additional array facts 1ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report.test.ts > native Quality report presentation > shows a readable unavailable-details note instead of falling back to malformed raw source text 1ms
+ ✓ server/services/qms/__tests__/project-evidence.test.ts > native Quality evidence admission > labels organization QA context and strips arbitrary metadata without changing stable identity 17ms
+ ✓ server/services/qms/__tests__/project-evidence.test.ts > native Quality evidence admission > omits denied authored text and propagates failed verification instead of an empty success 6ms
+ ✓ server/services/qms/__tests__/project-evidence.test.ts > native Quality evidence admission > keeps the working revision distinct from its authorized release in force 5ms
+ ✓ server/services/qms/__tests__/project-evidence.test.ts > native Quality evidence admission > refuses a family overflow rather than silently losing native records 18ms
+ ✓ server/services/qms/__tests__/project-evidence.test.ts > native Quality evidence admission > keeps withdrawn approval historical and refuses an unavailable approval check 3ms
+ ✓ server/services/qms/__tests__/project-evidence.test.ts > native Quality evidence admission > rechecks current admission and returns null only for a genuinely absent selected identity 2ms
+ ✓ server/services/qms/__tests__/project-evidence.test.ts > native Quality evidence admission > keeps canonical capa_records business facts and changes identity text when they change 3ms
+ ✓ server/services/qms/__tests__/project-evidence.test.ts > native Quality evidence admission > keeps canonical capa_actions business facts and changes identity text when they change 2ms
+ ✓ server/services/qms/__tests__/project-evidence.test.ts > native Quality evidence admission > keeps canonical qms_management_reviews business facts and changes identity text when they change 3ms
+ ✓ server/services/qms/__tests__/project-evidence.test.ts > native Quality evidence admission > keeps canonical qmp_section_gating business facts and changes identity text when they change 1ms
+ ✓ server/services/qms/__tests__/project-evidence.test.ts > native Quality evidence admission > uses the exact retained authored parent for historical access, not the latest working copy grant 2ms
+ ✓ server/services/qms/__tests__/project-evidence.test.ts > native Quality evidence admission > tracks the canonical standing periodic review without rewriting or trusting the static register date 1ms
+ ✓ server/services/qms/__tests__/project-evidence.test.ts > native Quality evidence SQL admission > enforces project, tenant, workspace and exact training-version boundaries in SQL 4926ms
+ ✓ server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current exact-object admission for retained Quality reports > denies the whole report when project access remains but one authored source is no longer readable 1190ms
+ ✓ server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current exact-object admission for retained Quality reports > rechecks exact retained authoring parents, deduplicates repeated receipts, and admits a fully authorized report 29ms
+ ✓ server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current exact-object admission for retained Quality reports > does not bypass native authorization for organization-only account output 13ms
+ ✓ server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current exact-object admission for retained Quality reports > rejects a wrong project binding, inconsistent receipt or missing native manifest 29ms
+ ✓ server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current exact-object admission for retained Quality reports > propagates unavailable source admission and refuses a membership change during receipt authorization 26ms
+ ✓ server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current exact-object admission for retained Quality reports > loads canonical receipts for stripped bundle items and verifies the exact stored run identity 31ms
+ ✓ server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current exact-object admission for retained Quality reports > batches native-register admission once per actor/program and keeps historical facts without matching current text 17ms
+ ✓ server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current exact-object admission for retained Quality reports > rechecks authored bindings per report in an executor/actor-bound read, and refuses forged or rebound contexts 65ms
+ ✓ server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current exact-object admission for retained Quality reports > refuses a current role change rather than reusing a previous authored-object grant in the same read 26ms
+ ✓ server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current exact-object admission for retained Quality reports > retains organization ownership while admitting a workspace-bound QMP through its project context, without caching that grant for another workspace 21ms
+ ✓ server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current exact-object admission for retained Quality reports > admits organization account context through the union of current admitted project workspaces and explicit organization context 12ms
+stderr | server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current authored-object grants within batched report reads > rechecks real authored-object grants across saved reports in the same batched read after revocation
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current authored-object grants within batched report reads > rechecks real authored-object grants across saved reports in the same batched read after revocation
+{
+  "timestamp": "2026-11-06T21:36:15.892Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current authored-object grants within batched report reads > rechecks real authored-object grants across saved reports in the same batched read after revocation
+{
+  "timestamp": "2026-11-06T21:36:16.025Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T21:36:16.027Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current authored-object grants within batched report reads > rechecks real authored-object grants across saved reports in the same batched read after revocation
+{
+  "timestamp": "2026-11-06T21:36:16.028Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts > current authored-object grants within batched report reads > rechecks real authored-object grants across saved reports in the same batched read after revocation 805ms
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts
+{
+  "timestamp": "2026-11-06T21:36:17.789Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/source-context-admission.pglite.test.ts
+{
+  "timestamp": "2026-11-06T21:36:20.992Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T21:36:20.994Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts
+{
+  "timestamp": "2026-11-06T21:36:20.995Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows 219ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses a private destination even when the actor owns an unbound conversation source 95ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > refuses an unassigned organization member before source text or bytes 33ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > allows an explicitly shared project and honors revocation on the next read 44ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > refuses a selected source from another organization 40ms
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > fails closed on missing and ambiguous program relationships
+{
+  "timestamp": "2026-11-06T21:36:33.347Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "current-program-access",
+    "programId": "59858df8-bcbe-4945-8853-7163049d2fbc",
+    "projectIds": [
+      8,
+      9
+    ]
+  }
+}
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > fails closed on missing and ambiguous program relationships 36ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > keeps global public references readable without relabeling private records 24ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > rejects malformed IDs rather than dropping them into an unscoped turn 17ms
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > inspect_uploaded_document refuses a private upload before file content can reach the tool
+{
+  "timestamp": "2026-11-06T21:36:33.545Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/account-skill-bundles.ts:323:33",
+    "queryPreview": "SELECT id, bundle_id, organization_id, project_id, version, status, policy_bindings, metadata FROM account_skill_bundles WHERE organization_id = $1 AND statu...",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > inspect_uploaded_document refuses a private upload before file content can reach the tool 175ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > read_uploaded_document refuses a private upload before file content can reach the tool 38ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > ocr_document_pages refuses a private upload before file content can reach the tool 27ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > read_spreadsheet refuses a private upload before file content can reach the tool 25ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > search_large_document refuses a private upload before file content can reach the tool 160ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload metadata even to its uploader after project access was lost 26ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload bytes before the filesystem is read 38ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > uses the same canonical byte and integrity reader once current sharing permits it 48ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > restricts a conversation-only upload to its authenticated uploader 56ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > does not discard a historic private association after source deletion 41ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses suspended membership and unavailable verification before bytes 32ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > conversation captures retain creator and recorded ancestry checks > allows a genuinely unbound capture only to its active creator and upload owner 62ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > conversation captures retain creator and recorded ancestry checks > upload ownership cannot substitute for capture creator identity 37ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > conversation captures retain creator and recorded ancestry checks > an unbound capture cannot erase a same-checksum recorded private parent (deleted=false) 58ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > conversation captures retain creator and recorded ancestry checks > an unbound capture cannot erase a same-checksum recorded private parent (deleted=true) 66ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts > Quality report source isolation with the actual sharing policy > reads only admitted project records and explicit organization context, never private/foreign/deleted/ambiguous parents 36ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts > Quality report source isolation with the actual sharing policy > refuses unadmitted tracking project 12 before any native record read 7ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts > Quality report source isolation with the actual sharing policy > refuses unadmitted tracking project 13 before any native record read 6ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts > Quality report source isolation with the actual sharing policy > refuses unadmitted tracking project 14 before any native record read 5ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts > Quality report source isolation with the actual sharing policy > refuses unadmitted tracking project 15 before any native record read 5ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts > Quality report source isolation with the actual sharing policy > refuses unadmitted tracking project 999 before any native record read 6ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts > Quality report source isolation with the actual sharing policy > admits the other private project only for its owner 13ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts > Quality report source isolation with the actual sharing policy > refuses an inactive actor and access revoked while native facts are being collected 17ms
+ ✓ server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts > Quality report source isolation with the actual sharing policy > carries exact native facts and scope disclosures into the existing renderer 19ms
+ ✓ server/services/report-os/__tests__/run-history-quality-access.pglite.test.ts > native Quality admission in saved report history > admits canonical whole reports before totals, ordering and pagination on the same executor 33ms
+ ✓ server/services/report-os/__tests__/run-history-quality-access.pglite.test.ts > native Quality admission in saved report history > excludes denied titles, exact IDs and type counts before search or page construction 23ms
+ ✓ server/services/report-os/__tests__/run-history-quality-access.pglite.test.ts > native Quality admission in saved report history > denies Quality packs and embedded or malformed Quality payloads when no actor is supplied 18ms
+ ✓ server/services/report-os/__tests__/run-history-quality-access.pglite.test.ts > native Quality admission in saved report history > propagates an unavailable admission decision without issuing a count or page query 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > reads exact native text only after current parent admission and rechecks before supply 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > cannot supply native text without a verified current actor 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > does not convert denied or failed native permission checks into successful empty context 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > refuses changed native facts and retained-text tampering before handing context to a model 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > never cuts a supplementary character into a lone UTF-16 surrogate 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > refuses withdrawn native data before text and rechecks withdrawal after the read 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > labels bounded native excerpts truthfully 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts > native records on the existing immutable source spine > captures truthful native identity/text with no invented upload or original file 26ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts > native records on the existing immutable source spine > refreshes idempotently and retains exact predecessors when native facts change 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts > native records on the existing immutable source spine > does not retire records omitted from another actor’s admitted view 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts > native records on the existing immutable source spine > rolls capture and retirement back together when its audit cannot be written 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts > native records on the existing immutable source spine > refuses duplicate/empty identities before changing the catalogue 6ms
+stderr | server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts
+{
+  "timestamp": "2026-11-06T21:36:53.881Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > native source parent and freshness admission > batches current native reads within one actor invocation through the canonical admitted collector 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > native source parent and freshness admission > refuses stale native selections even before a catalogue refresh supersedes the capture 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > native source parent and freshness admission > refuses altered retained text even when the native record and recorded checksum still agree 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > native source parent and freshness admission > does not turn failed verification into an empty successful source set 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > native source parent and freshness admission > retains historical text after change while requiring current exact-parent permission 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > refuses another project source and never reads its body
+AssertionError: {"success":false,"error":"ASSEMBLY_SOURCES_UNAVAILABLE","message":"Current access to every selected project source could not be verified. No source content was supplied."}: expected 403 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 403
+
+ ❯ server/routes/__tests__/authoring-assembly.pglite.test.ts:249:60
+    247|     seam.sql.length = 0;
+    248|     const response = await preview({ sources: [source] });
+    249|     expect(response.status, JSON.stringify(response.body)).toBe(409);
+       |                                                            ^
+    250|     expect(response.body.data).toBeUndefined();
+    251|     expect(seam.sql.some(sql => /^SELECT extracted_text FROM cre_evide…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 12 passed (13)
+      Tests  1 failed | 247 passed (248)
+   Start at  21:34:54
+   Duration  119.65s (transform 20.01s, setup 426ms, import 43.45s, tests 71.48s, environment 2ms)
+

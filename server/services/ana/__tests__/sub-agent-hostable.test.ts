@@ -10,7 +10,8 @@ import { describe, expect, it } from 'vitest';
 
 import { readTimelineEvent } from '@shared/ana/turn-timeline';
 
-import { subAgentsHostable } from '../sub-agent-stream';
+import { subAgentsHostable, ownerPrivateStreamBuffer } from '../sub-agent-stream';
+import { runAgentInputForWire, runAgentResultForWire } from '../sub-agent-shape';
 
 describe('subAgentsHostable', () => {
   it.each([
@@ -24,6 +25,35 @@ describe('subAgentsHostable', () => {
     [{ runId: 'run_1', runOrgId: 8, orgId: 7 }, false],
   ])('%o → %s', (turn, hostable) => {
     expect(subAgentsHostable(turn)).toBe(hostable);
+  });
+});
+
+describe('owner-private live output capture', () => {
+  it('keeps worker briefs, reports, peer text and source bodies out of the operational wire', () => {
+    expect(runAgentInputForWire({ role: 'research', objective: 'PRIVATE_CANARY_384', instructions: 'SECRET', text: 'PEER_SECRET' }, 's1'))
+      .toEqual({ action: 'spawn', assignment: 's1', role: 'research' });
+    const wire = runAgentResultForWire(JSON.stringify({ status: 'completed', agent: { role: 'research', objective: 'PRIVATE_CANARY_384' },
+      report: 'PEER_SECRET', source: 'SOURCE_SECRET', trace: { steps: ['SECRET'] } }));
+    expect(JSON.parse(wire)).toMatchObject({ status: 'completed', agent: { role: 'research' }, reportDisposition: 'pending' });
+    for (const value of ['PRIVATE_CANARY_384', 'PEER_SECRET', 'SOURCE_SECRET', 'SECRET']) expect(wire).not.toContain(value);
+  });
+  it('keeps content and legacy agent frames off the wire until the protected commit callback, while measured worker progress stays live', () => {
+    const wire: string[] = [], buffer = ownerPrivateStreamBuffer(frame => { wire.push(frame); return true; }, () => true);
+    const content = `data: ${JSON.stringify({ type: 'text', content: 'PRIVATE_CANARY_384' })}\n\n`;
+    const legacy = `data: ${JSON.stringify({ type: 'agent_event', objective: 'PRIVATE_CANARY_384' })}\n\n`;
+    const progress = `data: ${JSON.stringify({ type: 'timeline', event: { kind: 'worker', worker: 'w1', completed: 1, total: 3 } })}\n\n`;
+    buffer.write(content); buffer.write(legacy); buffer.write(progress);
+    expect(wire).toEqual([progress]); expect(wire.join('')).not.toContain('PRIVATE_CANARY_384');
+    // The caller is the postprocessor after encrypted message/record/audit and
+    // current owner admission. This unit fixture qualifies ordering, not KMS.
+    buffer.release(); expect(wire).toEqual([progress, content, legacy]);
+  });
+  it('holds oversized output and emits only a fixed failure notice without provider or private details', () => {
+    const wire: string[] = [], buffer = ownerPrivateStreamBuffer(frame => { wire.push(frame); return true; }, () => true);
+    buffer.write('x'.repeat(2_000_001));
+    expect(() => buffer.release()).toThrow('PRIVATE_OUTPUT_BUFFER_LIMIT');
+    buffer.write(`data: ${JSON.stringify({ type: 'error', error: 'PRIVATE_CANARY_384' })}\n\n`);
+    expect(wire.join('')).toContain('OWNER_PRIVATE_OUTPUT_HELD'); expect(wire.join('')).not.toContain('PRIVATE_CANARY_384');
   });
 });
 

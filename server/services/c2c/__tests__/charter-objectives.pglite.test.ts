@@ -24,6 +24,7 @@ import {
   objectivesBodySchema,
   objectivesContextBlock,
   readProjectObjectives,
+  readProjectObjectivesOnExecutor,
   recordProjectObjectives,
 } from '../charter-objectives';
 
@@ -97,6 +98,20 @@ describe('the project objective of record', () => {
       body: body('Show LMN-201 meets its primary and key secondary endpoints, and file the NDA and the MAA.', 'Again'), now });
     expect(r).toMatchObject({ version: 2, unchanged: true });
     expect((await readProjectObjectives(db as never, { orgId: 1, projectId: 10 })).history).toHaveLength(2);
+  });
+
+  it('reads the same canonical objective and version history on a caller-owned SQL executor',async()=>{
+    const q={query:async(text:string,values?:unknown[])=>pg.query<Record<string,unknown>>(text,values)};
+    expect(await readProjectObjectivesOnExecutor(q,{orgId:1,projectId:10})).toEqual(await readProjectObjectives(db as never,{orgId:1,projectId:10}));
+    expect(await readProjectObjectivesOnExecutor(q,{orgId:2,projectId:10})).toEqual({charterId:null,current:null,history:[]});
+  });
+
+  it('refuses raw executor content whose bytes no longer match the canonical version hash',async()=>{
+    const q={query:async(text:string,values?:unknown[])=>pg.query<Record<string,unknown>>(text,values)};
+    const saved=(await pg.query<{content:string}>("SELECT content FROM charter_sections WHERE section_key='objectives'")).rows[0].content;
+    await pg.query("UPDATE charter_sections SET content=$1 WHERE section_key='objectives'",[saved+' ']);
+    try { await expect(readProjectObjectivesOnExecutor(q,{orgId:1,projectId:10})).rejects.toMatchObject({code:'OBJECTIVES_UNREADABLE'}); }
+    finally { await pg.query("UPDATE charter_sections SET content=$1 WHERE section_key='objectives'",[saved]); }
   });
 
   it("keeps another organisation's project apart", async () => {

@@ -1,0 +1,204 @@
+{
+  "recordedAt": "2026-11-06T20:13:54.601947+00:00",
+  "package": "F1",
+  "scope": "UK CTA canonical convergence compatibility with existing saved agency, exact outline and artifact import owners",
+  "before": {
+    "capturedAt": "2026-11-06T20:12:17.984817+00:00",
+    "head": "5283da69cb953d7c4c8970d80fd14f8fe81879ce",
+    "canonicalBaseRevision": "53b9f15d8fe96767c8dbe6def2d7e8c5e03db7aa",
+    "incomingRevision": "b86b489405a30a07d4ed1c0d46abdd4037449dcb",
+    "previousMerged53bRevision": "637737bb13f51363e15a75d6f4a27bfcbeb8e408",
+    "frozen11RuntimeComparison": [
+      {
+        "path": "client/src/concept2cure/v2/useFilingOutline.ts",
+        "previousMerged53bSha256": "0e98df97ae5ca3795025a2a644482ff7c7f9102f89cbfde626686220377c9cd4",
+        "currentSha256": "0e98df97ae5ca3795025a2a644482ff7c7f9102f89cbfde626686220377c9cd4",
+        "unchanged": true,
+        "matchesOriginalFrozenPin": true,
+        "touchedByIncomingCanonicalDelta": false
+      },
+      {
+        "path": "server/services/authoring/authoring-draft-template.ts",
+        "previousMerged53bSha256": "0beb24ff53d7bcf8de01882c7012f256f543465820c92517097187b929d4e97d",
+        "currentSha256": "0beb24ff53d7bcf8de01882c7012f256f543465820c92517097187b929d4e97d",
+        "unchanged": true,
+        "matchesOriginalFrozenPin": true,
+        "touchedByIncomingCanonicalDelta": false
+      },
+      {
+        "path": "server/services/authoring/authoring-draft-region-projection.ts",
+        "previousMerged53bSha256": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6",
+        "currentSha256": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6",
+        "unchanged": true,
+        "matchesOriginalFrozenPin": true,
+        "touchedByIncomingCanonicalDelta": false
+      },
+      {
+        "path": "shared/authoring/source-import.ts",
+        "previousMerged53bSha256": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+        "currentSha256": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+        "unchanged": true,
+        "matchesOriginalFrozenPin": true,
+        "touchedByIncomingCanonicalDelta": false
+      },
+      {
+        "path": "server/services/authoring/artifact-workflow-source.ts",
+        "previousMerged53bSha256": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+        "currentSha256": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+        "unchanged": true,
+        "matchesOriginalFrozenPin": true,
+        "touchedByIncomingCanonicalDelta": false
+      },
+      {
+        "path": "server/services/authoring/authoring-source-import.ts",
+        "previousMerged53bSha256": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+        "currentSha256": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+        "unchanged": true,
+        "matchesOriginalFrozenPin": true,
+        "touchedByIncomingCanonicalDelta": false
+      },
+      {
+        "path": "server/services/authoring/workflow-source-import.ts",
+        "previousMerged53bSha256": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+        "currentSha256": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+        "unchanged": true,
+        "matchesOriginalFrozenPin": true,
+        "touchedByIncomingCanonicalDelta": false
+      },
+      {
+        "path": "server/services/authoring/import-source-references.ts",
+        "previousMerged53bSha256": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+        "currentSha256": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+        "unchanged": true,
+        "matchesOriginalFrozenPin": true,
+        "touchedByIncomingCanonicalDelta": false
+      },
+      {
+        "path": "server/services/authoring/workflow-import-governance.ts",
+        "previousMerged53bSha256": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+        "currentSha256": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+        "unchanged": true,
+        "matchesOriginalFrozenPin": true,
+        "touchedByIncomingCanonicalDelta": false
+      },
+      {
+        "path": "server/routes/artifacts-center-routes.ts",
+        "previousMerged53bSha256": "fb401a68211827f58e0181858b831c29620949d9d4e1fd4a79533e77cd0b053b",
+        "currentSha256": "fb401a68211827f58e0181858b831c29620949d9d4e1fd4a79533e77cd0b053b",
+        "unchanged": true,
+        "matchesOriginalFrozenPin": true,
+        "touchedByIncomingCanonicalDelta": false
+      },
+      {
+        "path": "scripts/ci/lib/approved-sql-predicates.mjs",
+        "previousMerged53bSha256": "c6688b005480c879f2725fcbc6ea45128dc667019f60559ac41c36f1ef2989ff",
+        "currentSha256": "c6688b005480c879f2725fcbc6ea45128dc667019f60559ac41c36f1ef2989ff",
+        "unchanged": true,
+        "matchesOriginalFrozenPin": true,
+        "touchedByIncomingCanonicalDelta": false
+      }
+    ],
+    "testFiles": [
+      "server/services/authoring/__tests__/authoring-draft-template.test.ts",
+      "server/services/authoring/__tests__/authoring-draft-region-projection.test.ts",
+      "server/routes/__tests__/authoring-draft-recorded-filing.test.ts",
+      "server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts",
+      "server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts",
+      "server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts",
+      "server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts",
+      "server/services/authoring/__tests__/authoring-source-import.test.ts"
+    ],
+    "sourceInputs": {
+      "server/services/authoring/__tests__/authoring-draft-template.test.ts": "85dccfdb175f5ccad2d6ca196481a6c3d4c58b59970184e7ca760857e54b4a1f",
+      "server/services/authoring/__tests__/authoring-draft-region-projection.test.ts": "a18213f0acd3130513b71b6595f7ba98ebb64aa303d4b39688922a72bfc17249",
+      "server/routes/__tests__/authoring-draft-recorded-filing.test.ts": "547333bfae34c2f3e4a04a57abcd0742099df5c13dcca73b7cfa3120c844066e",
+      "server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts": "fd4254d3908d6ec8def2b295be0326572094997c547770f1232f7a71c4bd1db0",
+      "server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts": "146fb3f5b181c0d868753ec90de73bb5973d7e6bed9df5bd562999e4fb8f04a4",
+      "server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts": "5e962c2bcedaf10108d45f105ea7b67ef5591db979215bf9ea58ed46351444d5",
+      "server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts": "7c1c43d63d4c216304615c55ae1a8db8bf2db9515b542964387f78b6b6006e39",
+      "server/services/authoring/__tests__/authoring-source-import.test.ts": "79ac15c6720971525b09e04c7114386d2699d1e5d1409c79990453e454fd8124",
+      "client/src/concept2cure/v2/useFilingOutline.ts": "0e98df97ae5ca3795025a2a644482ff7c7f9102f89cbfde626686220377c9cd4",
+      "server/services/authoring/authoring-draft-template.ts": "0beb24ff53d7bcf8de01882c7012f256f543465820c92517097187b929d4e97d",
+      "server/services/authoring/authoring-draft-region-projection.ts": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6",
+      "shared/authoring/source-import.ts": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+      "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "server/services/authoring/workflow-source-import.ts": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+      "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+      "server/services/authoring/workflow-import-governance.ts": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+      "server/routes/artifacts-center-routes.ts": "fb401a68211827f58e0181858b831c29620949d9d4e1fd4a79533e77cd0b053b",
+      "scripts/ci/lib/approved-sql-predicates.mjs": "c6688b005480c879f2725fcbc6ea45128dc667019f60559ac41c36f1ef2989ff",
+      "shared/regulatory/global-document-registry.ts": "e6f14800e0d3f8380c37f5ed6014f2bfa7cb34d118b1adea898504db3652dd08",
+      "shared/regulatory/project-bootstrap.ts": "e208cbc6981f9b5c824fab7350f9062daa6016fa4d61df5905564f4e80f6076d",
+      "shared/regulatory/uk-cta-authoring.ts": "d4164c61f97394afcb7182514bc3bacea06bff7a01e5cb24eb4d66c7d35f3d96",
+      "server/services/regulatory/sectionBlueprintCatalog.ts": "785a2045d25de3e62e6100d33cf4130edc4e5f19691b3391a337690acc293ccb",
+      "server/services/regulatory/taskBlueprintCatalog.ts": "9f155d0e6529f97cb6cbc7f2c2b9b84ccb31d92692c06c3883d6997c7a438c4e",
+      "server/services/regulatory/registry/blueprints/ukCtaBlueprint.ts": "e1df128a58e72f1db5a67fe3eade54509c74aaf19f99b542a86a38626e9ed00a",
+      "server/services/regulatory/registry/submittabilityCoverage.ts": "4f640db4cca872ce50ec4b236ad4aca4aaef3589db4386acae0ac16e4ba4c194",
+      "server/services/ana/AnaDocumentDraftingService.ts": "5c788319d0a59dddbf7f845079b1913726e4ac0675402c1a7d9fadbdc05168c2",
+      "server/services/global-ri/clinical-trial-application-requirements.ts": "c10d4afbe7709bf775cda355cb466577d1def79b9c3bd39f7ecf9f915f206719"
+    }
+  },
+  "after": {
+    "capturedAt": "2026-11-06T20:13:54.601947+00:00",
+    "head": "5283da69cb953d7c4c8970d80fd14f8fe81879ce",
+    "sourceInputs": {
+      "server/services/authoring/__tests__/authoring-draft-template.test.ts": "85dccfdb175f5ccad2d6ca196481a6c3d4c58b59970184e7ca760857e54b4a1f",
+      "server/services/authoring/__tests__/authoring-draft-region-projection.test.ts": "a18213f0acd3130513b71b6595f7ba98ebb64aa303d4b39688922a72bfc17249",
+      "server/routes/__tests__/authoring-draft-recorded-filing.test.ts": "547333bfae34c2f3e4a04a57abcd0742099df5c13dcca73b7cfa3120c844066e",
+      "server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts": "fd4254d3908d6ec8def2b295be0326572094997c547770f1232f7a71c4bd1db0",
+      "server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts": "146fb3f5b181c0d868753ec90de73bb5973d7e6bed9df5bd562999e4fb8f04a4",
+      "server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts": "5e962c2bcedaf10108d45f105ea7b67ef5591db979215bf9ea58ed46351444d5",
+      "server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts": "7c1c43d63d4c216304615c55ae1a8db8bf2db9515b542964387f78b6b6006e39",
+      "server/services/authoring/__tests__/authoring-source-import.test.ts": "79ac15c6720971525b09e04c7114386d2699d1e5d1409c79990453e454fd8124",
+      "client/src/concept2cure/v2/useFilingOutline.ts": "0e98df97ae5ca3795025a2a644482ff7c7f9102f89cbfde626686220377c9cd4",
+      "server/services/authoring/authoring-draft-template.ts": "0beb24ff53d7bcf8de01882c7012f256f543465820c92517097187b929d4e97d",
+      "server/services/authoring/authoring-draft-region-projection.ts": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6",
+      "shared/authoring/source-import.ts": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+      "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "server/services/authoring/workflow-source-import.ts": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+      "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+      "server/services/authoring/workflow-import-governance.ts": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+      "server/routes/artifacts-center-routes.ts": "fb401a68211827f58e0181858b831c29620949d9d4e1fd4a79533e77cd0b053b",
+      "scripts/ci/lib/approved-sql-predicates.mjs": "c6688b005480c879f2725fcbc6ea45128dc667019f60559ac41c36f1ef2989ff",
+      "shared/regulatory/global-document-registry.ts": "e6f14800e0d3f8380c37f5ed6014f2bfa7cb34d118b1adea898504db3652dd08",
+      "shared/regulatory/project-bootstrap.ts": "e208cbc6981f9b5c824fab7350f9062daa6016fa4d61df5905564f4e80f6076d",
+      "shared/regulatory/uk-cta-authoring.ts": "d4164c61f97394afcb7182514bc3bacea06bff7a01e5cb24eb4d66c7d35f3d96",
+      "server/services/regulatory/sectionBlueprintCatalog.ts": "785a2045d25de3e62e6100d33cf4130edc4e5f19691b3391a337690acc293ccb",
+      "server/services/regulatory/taskBlueprintCatalog.ts": "9f155d0e6529f97cb6cbc7f2c2b9b84ccb31d92692c06c3883d6997c7a438c4e",
+      "server/services/regulatory/registry/blueprints/ukCtaBlueprint.ts": "e1df128a58e72f1db5a67fe3eade54509c74aaf19f99b542a86a38626e9ed00a",
+      "server/services/regulatory/registry/submittabilityCoverage.ts": "4f640db4cca872ce50ec4b236ad4aca4aaef3589db4386acae0ac16e4ba4c194",
+      "server/services/ana/AnaDocumentDraftingService.ts": "5c788319d0a59dddbf7f845079b1913726e4ac0675402c1a7d9fadbdc05168c2",
+      "server/services/global-ri/clinical-trial-application-requirements.ts": "c10d4afbe7709bf775cda355cb466577d1def79b9c3bd39f7ecf9f915f206719"
+    }
+  },
+  "changedInputs": [],
+  "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --no-file-parallelism server/services/authoring/__tests__/authoring-draft-template.test.ts server/services/authoring/__tests__/authoring-draft-region-projection.test.ts server/routes/__tests__/authoring-draft-recorded-filing.test.ts server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts server/services/authoring/__tests__/authoring-source-import.test.ts",
+  "exitCode": 0,
+  "result": {
+    "suitesPassed": 8,
+    "testsPassed": 152,
+    "durationSeconds": 48.54
+  },
+  "log": {
+    "originalScratchPath": "/workspace/scratch/shared-editor-uk-cta-2026-11-06-green.txt",
+    "bytes": 42965,
+    "sha256": "3aeb1f4480762550a1300d481e085f27570e579d0f109ada4137aff1d5ecf138",
+    "orderedParts": [
+      "logs/shared-editor-uk-cta-2026-11-06-green.txt"
+    ]
+  },
+  "readOnlyFindings": [
+    "Exact UK_CTA registry identity retains agency MHRA, already supported by WRITING_AGENCIES and the strict actual saved-agency resolver.",
+    "UK preparation is an explicit medicinal-trial IRAS scaffold; device investigations and IVD performance studies remain excluded and missing applicability remains unresolved.",
+    "No incoming canonical delta changes any of the eleven repaired runtime owners. Their actual merged bytes match the prior merged53b tree and original frozen source receipt.",
+    "The bare canonical53b tree did not contain our local artifact adapter. Therefore preservation is compared to the prior merged53b source tree637737bb13f51363e15a75d6f4a27bfcbeb8e408, rather than pretending that adapter existed in canonical53b.",
+    "AnA route and preparation provenance changes branch on exact UK_CTA identity; no region-derived substitution for actual Notified_Body or another receiving agency.",
+    "No outline list/response identity DTO, artifact selector/source fingerprint/governance contract, or independent-unbound-copy semantics changed."
+  ],
+  "limitations": [
+    "Focused compatibility tests only; not current legal applicability, IRAS schema validation/transmission, model qualification or complete product acceptance.",
+    "No source/test edits or full build/typecheck performed by this task."
+  ]
+}

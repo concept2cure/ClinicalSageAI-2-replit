@@ -50,9 +50,21 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 
 type Body = { tone?: string; region?: string; passage?: { quote: string; prefix: string; suffix: string } };
 const SEC2 = 'aaaaaaaa-0000-4000-8000-000000000013';
+function filingFixtureRead(url: string, context: { binding: string | null; filing: Record<string, unknown>; status: number }) {
+  if (url.startsWith('/api/c2c/documents?')) return ok({ documents: url.includes('scope=market') || !context.binding ? [] : [context.filing] }, context.status);
+  if (url === `/api/c2c/documents/${context.binding}/outline`) return ok({ document: context.filing,
+    outline: [{ key: '11.4.1', label: 'Analysis of Efficacy', parent_key: null, path_order: 0 }] }, context.status);
+  if (url.startsWith('/api/c2c/documents/')) return ok({ success: false }, 404);
+  return null;
+}
 function serve(content: string, opts: { qualified?: boolean; echo?: boolean; refuse?: ApiRequestError;
-  draftingRegion?: string | null; programRegistryId?: string } = {}) {
-  const { qualified = true, echo = true, refuse, draftingRegion = 'FDA', programRegistryId = 'US_IND' } = opts;
+  draftingRegion?: string | null; programRegistryId?: string; binding?: string | null; filingAgency?: string;
+  filingDocType?: string; filingReadStatus?: number; unknownBinding?: boolean } = {}) {
+  const { qualified = true, echo = true, refuse, draftingRegion = 'FDA', programRegistryId = 'US_IND', binding = null,
+    filingAgency = 'pmda', filingDocType = 'jnda', filingReadStatus = 200, unknownBinding = false } = opts;
+  const savedDoc = { ...doc, client_program_id: PID, ...(!unknownBinding ? { c2c_document_id: binding } : {}) };
+  const filing = { id: binding ?? 'unselected-filing', project_id: PID, doc_type: filingDocType, agency: filingAgency,
+    title: 'Exact secondary filing', status: 'draft', readiness: 0, filing_scope: 'home' };
   const draftingScope = { draftingRegion, draftingRegionState: draftingRegion === null ? 'not-recorded' : 'recorded' };
   const section = { id: SEC, doc_id: DOC, code: '11.4.1', title: 'Analysis of Efficacy', content, order_index: 0, updated_at: AT,
     ...draftingScope };
@@ -67,12 +79,11 @@ function serve(content: string, opts: { qualified?: boolean; echo?: boolean; ref
         ...(echo && body?.passage ? { passage: body.passage } : {}),
         metadata: { tone, model: 'qualified-test-model', provider: 'anthropic', sourcesRetrieved: 1, attributableSources: 0, retrievalStatus: 'ok' } } });
     }
-    if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
-    if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
+    if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [{ ...savedDoc, program_id: PID }] });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: savedDoc });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section, second] });
     if (method === 'GET' && url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'Recorded program', registry_id: programRegistryId });
-    if (url.startsWith('/api/c2c/documents/')) return ok({ success: false }, 404);
-    return ok({ success: true });
+    return filingFixtureRead(url, { binding, filing, status: filingReadStatus }) ?? ok({ success: true });
   });
 }
 
@@ -183,6 +194,31 @@ describe('The workbench passes the recorded writing scope into passage drafts', 
     expect(drafts().map(call => (call[2] as Body).region)).toEqual([expectedAgency, expectedAgency, expectedAgency]);
     expect(drafts().every(call => (call[2] as Body).passage?.quote === QUOTE)).toBe(true);
     expect(patched()).toHaveLength(0);
+  });
+});
+
+describe('The shared workbench supplies exact binding to passage writing defaults', () => {
+  it('uses a supported secondary agency instead of its US primary project', async () => {
+    serve(CURRENT, { draftingRegion: null, binding: 'secondary-japanese-filing' });
+    await openSection('as the protocol required'); select(QUOTE, 1); offer();
+    await waitFor(() => expect((within(panel()).getByRole('button', { name: 'Draft three alternatives for this passage' }) as HTMLButtonElement).disabled).toBe(false));
+    await threeForPassage();
+    expect(drafts().map(call => (call[2] as Body).region)).toEqual(['PMDA', 'PMDA', 'PMDA']);
+    expect(patched()).toHaveLength(0);
+  });
+
+  it.each(['cer', 'mdr', 'ivdr'])('holds the %s storage EMA key without inventing a writing authority', async filingDocType => {
+    serve(CURRENT, { draftingRegion: null, binding: 'secondary-device-filing', filingAgency: 'ema', filingDocType });
+    await openSection('as the protocol required'); select(QUOTE, 1); offer();
+    await waitFor(() => expect((within(panel()).getByRole('button', { name: 'Draft three alternatives for this passage' }) as HTMLButtonElement).disabled).toBe(true));
+    expect(drafts()).toHaveLength(0);
+  });
+
+  it.each([{ unknownBinding: true, draftingRegion: 'PMDA' }, { binding: 'secondary-filing', filingReadStatus: 403 }])('holds unavailable binding with retained section context %j', async options => {
+    serve(CURRENT, { draftingRegion: null, ...options });
+    await openSection('as the protocol required'); select(QUOTE, 1); offer();
+    await waitFor(() => expect((within(panel()).getByRole('button', { name: 'Draft three alternatives for this passage' }) as HTMLButtonElement).disabled).toBe(true));
+    expect(drafts()).toHaveLength(0); expect(patched()).toHaveLength(0);
   });
 });
 

@@ -1,0 +1,432 @@
+{
+  "retrievedAt": "2026-11-06T18:05:30.827304+00:00",
+  "checkedOn": "2026-11-06",
+  "scope": "Discovery of current publisher guidance for initial medicinal-product UK CTA preparation; no automatic applicability, IRAS schema, or scientific/legal/agency qualification.",
+  "limitations": [
+    "Initial submission date, not wall-clock date, decides old/new rules. The preparation outline must leave this unresolved when no initial-date input exists.",
+    "HRA 2 July 2026 document table still links the obsolete MHRA apply-for-authorisation page, which expressly applies only before 28 April 2026. Current MHRA approval/transitional guidance governs stated post-change descriptions; no blanket HRA link currency claim.",
+    "MHRA approval guidance repeats the non-clinical paragraph under Previous clinical trial and human experience data. Use its unambiguous GCP and registry bullets; retain this publisher inconsistency instead of inventing intended wording.",
+    "Notifiable inclusion/exclusion and simplified-IMPD scenario tables are linked as separate documents/images; only narrative and its explicit conditions were read. No automated eligibility or exemption derivation is supported.",
+    "CTD M3 quality and preferably M4 nonclinical headings concern scientific content within the IMP dossier; they do not turn UK CTA into an eCTD filing or supply an IRAS form schema.",
+    "GMP exemption for an authorised unmodified IMP and separate-authority approvals are conditional. Simplified IMPD/prior-reference must not automatically waive trial-specific GMP and labels.",
+    "Not-mandatory IRAS upload categories can still be required for a particular study, e.g. SoECAT for applicable non-commercial NHS/HSC studies. Unknown applicability is never a waiver."
+  ],
+  "sources": [
+    {
+      "key": "approval",
+      "url": "https://www.gov.uk/guidance/clinical-trials-for-medicines-apply-for-approval-in-the-uk",
+      "retrievalUrl": "https://www.gov.uk/api/content/guidance/clinical-trials-for-medicines-apply-for-approval-in-the-uk",
+      "resolvedUrl": "https://www.gov.uk/api/content/guidance/clinical-trials-for-medicines-apply-for-approval-in-the-uk",
+      "retrievedAt": "2026-11-06T18:04:06.440563+00:00",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "title": "Clinical trials for medicines: apply for approval in the UK",
+      "firstPublishedAt": "2025-06-25T00:00:00+01:00",
+      "publicUpdatedAt": "2026-04-28T00:01:00+01:00",
+      "changeHistory": [
+        {
+          "note": "1. Updated wording to give flexibility on location of information about the IMP\r\n\r\n2. Clarified that only UK IMPDs can be cross-referenced\r\n\r\nThe amended Clinical Trials Regulations took full effect on 28 April 2026. As such, this guidance should now be considered effective and is no longer in draft.",
+          "public_timestamp": "2026-04-27T23:01:00Z"
+        },
+        {
+          "note": "Updated link to guidance for IMP+device trials.",
+          "public_timestamp": "2026-03-09T09:00:12Z"
+        },
+        {
+          "note": "Added link to publication 'Figure 1. Applying for clinical trials approval in the UK'. Updated link to combined trial of IMP and device guidance. Added link to guidance on common issues with applications. Added guidance on IMP dossier content for IMPs that require reconstitution, dissolving, dispersion, mixing or dilution for the purpose of their administration to a participant. Added link to QP's declaration template. ",
+          "public_timestamp": "2026-01-12T09:00:00Z"
+        },
+        {
+          "note": "Version numbers and dates added to all figures where appropriate. Validation of applications: added text to confirm that any deficiencies in the application that are identified during validation checks will be communicated to the applicant by day 5. Medicinal products for xenogenic cell therapy: added text to clarify that applications involving ATMPs follow the standard approval timelines (unless xenogenic). Applying for clinical trial approval flowchart: updated Figure 1 to make clearer where timelines are sponsor-driven. Appeals: added additional information on the appeals process. Cross-referencing and simplified investigational medicinal product dossiers: edited the table setting out where a simplified IMPD is accepted to make the scenarios and the information required clearer.",
+          "public_timestamp": "2025-10-01T10:35:21Z"
+        },
+        {
+          "note": "Link to feedback questionnaire removed following closure of questionnaire.",
+          "public_timestamp": "2025-08-21T13:54:07Z"
+        },
+        {
+          "note": "First published.",
+          "public_timestamp": "2025-06-24T23:00:00Z"
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "approval.raw.json",
+          "sha256": "5f2b2f97f457be7a875cb2a580861c93495154f3d7f7cef239ba6d122c521d9c",
+          "bytes": 61034
+        },
+        {
+          "path": "approval.body.html",
+          "sha256": "be89a6c326462206c2a623e73586f39de0650b6da62a2925fa4c5032836a16f2",
+          "bytes": 45358
+        },
+        {
+          "path": "approval.plain.txt",
+          "sha256": "627e5c59028c81e2c45513e3922602d1e6148a67dd53e9fd9296e5835d9792a7",
+          "bytes": 34102
+        }
+      ],
+      "quotes": [
+        {
+          "id": "effective",
+          "text": "The amended Clinical Trials Regulations took full effect on 28 April 2026. As such, this guidance should now be considered effective and is no longer in draft.",
+          "start": 0,
+          "end": 159,
+          "plainArtifact": "approval.plain.txt"
+        },
+        {
+          "id": "scope",
+          "text": "Clinical trials of a medicinal product",
+          "start": 1092,
+          "end": 1130,
+          "plainArtifact": "approval.plain.txt"
+        },
+        {
+          "id": "joint-approval",
+          "text": "Per regulation 12 of the Clinical Trials Regulations, a clinical trial must not start until it has received a joint ‘clinical trial approval’, consisting of both:\n\na favourable opinion from an ethics committee\n\nan authorisation from the licensing authority, i.e. the Medicines and Healthcare products Regulatory Agency (MHRA)",
+          "start": 1978,
+          "end": 2303,
+          "plainArtifact": "approval.plain.txt"
+        },
+        {
+          "id": "combined-iras",
+          "text": "Applications for approval of a clinical trial must use a combined procedure in which a single application (including the documentation) is submitted through the Integrated Research Application System (IRAS) and reviewed in parallel by the licensing authority and a suitable research ethics committee.",
+          "start": 2749,
+          "end": 3049,
+          "plainArtifact": "approval.plain.txt"
+        },
+        {
+          "id": "exception",
+          "text": "In exceptional circumstances, an applicant may submit separate applications to the licensing authority for a clinical trial authorisation and to an ethics committee for a favourable opinion. Written approval must be obtained in advance by contacting the licensing authority at clintrialhelpline@mhra.gov.uk.",
+          "start": 3211,
+          "end": 3518,
+          "plainArtifact": "approval.plain.txt"
+        },
+        {
+          "id": "cover-letter",
+          "text": "A cover letter is mandatory and should include the following:",
+          "start": 15171,
+          "end": 15232,
+          "plainArtifact": "approval.plain.txt"
+        },
+        {
+          "id": "quality-structure",
+          "text": "Quality data should be structured in accordance with Module 3 of the Common Technical Document.",
+          "start": 21990,
+          "end": 22085,
+          "plainArtifact": "approval.plain.txt"
+        },
+        {
+          "id": "gmp-exemption",
+          "text": "The IMP dossier should include confirmation that locations of drug product manufacturing (where manufacturing is as defined in regulation 2 of the Clinical Trials Regulations) are compliant with Good Manufacturing Practice (GMP). This is not required if the IMP has a marketing authorisation in the UK or EU and is not modified.",
+          "start": 22941,
+          "end": 23269,
+          "plainArtifact": "approval.plain.txt"
+        },
+        {
+          "id": "nonclinical",
+          "text": "The applicant must include summaries of the available non-clinical pharmacology and toxicology data for the IMP, preferably structured according to the headings of the current version of Module 4 of the ICH Common Technical Document and structured in tables with a brief accompanying narrative.",
+          "start": 25501,
+          "end": 25795,
+          "plainArtifact": "approval.plain.txt"
+        },
+        {
+          "id": "impd-ref",
+          "text": "cross-reference a UK IMP dossier from a previously approved clinical trial that used the same IMP (if this IMP dossier is from a different organisation or sponsor, a letter of authorisation is also required). Note that GMP documents and labelling documents are trial-specific and cannot be cross-referenced from a previously approved trial",
+          "start": 28794,
+          "end": 29133,
+          "plainArtifact": "approval.plain.txt"
+        },
+        {
+          "id": "simplified-gmp",
+          "text": "See the following table which summarises scenarios in which a simplified IMP dossier may be submitted. Note that GMP information and labelling is still required in all cases.",
+          "start": 29625,
+          "end": 29799,
+          "plainArtifact": "approval.plain.txt"
+        },
+        {
+          "id": "ib-alternative",
+          "text": "If the IMP is already authorised in the EU, EEA or an ICH country, the IB may be replaced with the SmPC or equivalent. However:\n\nif the IMP is not being used according to its authorised conditions of use, this SmPC must be supplemented with relevant non-clinical and clinical data to support its use in the clinical trial",
+          "start": 30874,
+          "end": 31195,
+          "plainArtifact": "approval.plain.txt"
+        },
+        {
+          "id": "rec-exclusion",
+          "text": "This guidance does not include documents that are reviewed only by the ethics committee. For these documents, and for optional documents that may be submitted alongside the application for clinical trial approval, refer to the HRA guidance on document management for combined review applications.",
+          "start": 32485,
+          "end": 32781,
+          "plainArtifact": "approval.plain.txt"
+        },
+        {
+          "id": "editable-documents",
+          "text": "Note that all documents must have copy and paste functionality and that password-protected documents are not accepted.",
+          "start": 32783,
+          "end": 32901,
+          "plainArtifact": "approval.plain.txt"
+        }
+      ]
+    },
+    {
+      "key": "transition",
+      "url": "https://www.gov.uk/guidance/clinical-trials-for-medicines-clinical-trials-regulations-transitional-arrangements",
+      "retrievalUrl": "https://www.gov.uk/api/content/guidance/clinical-trials-for-medicines-clinical-trials-regulations-transitional-arrangements",
+      "resolvedUrl": "https://www.gov.uk/api/content/guidance/clinical-trials-for-medicines-clinical-trials-regulations-transitional-arrangements",
+      "retrievedAt": "2026-11-06T18:04:07.291315+00:00",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "title": "Clinical trials for medicines: Clinical Trials Regulations transitional arrangements",
+      "firstPublishedAt": "2025-06-25T00:00:00+01:00",
+      "publicUpdatedAt": "2026-07-15T12:54:40+01:00",
+      "changeHistory": [
+        {
+          "note": "Minor wording changes to reflect that new regulations are now in force",
+          "public_timestamp": "2026-07-15T11:54:40Z"
+        },
+        {
+          "note": "Clarified: It is not necessary to modify labels that have already been approved to replace the term “patient”, “subject” or similar with “participant”, although use of the term “participant” is strongly encouraged for labels approved after 28 April 2026.\r\n\r\nThe amended Clinical Trials Regulations took full effect on 28 April 2026. As such, this guidance should now be considered effective and is no longer in draft.",
+          "public_timestamp": "2026-04-27T23:01:00Z"
+        },
+        {
+          "note": "Clarified timelines for submitting notification of intent to follow old pharmacovigilance rules. Clarified that labelling updates to comply with the new regulations must be approved by the MHRA if they are substantial. Added guidance on post-QP certification labelling on or after 28 April 2026.",
+          "public_timestamp": "2026-02-17T13:55:11Z"
+        },
+        {
+          "note": "Added clarification that NIMPs are not included in the Part 7 (labelling) transitional arrangements.",
+          "public_timestamp": "2026-01-12T09:00:01Z"
+        },
+        {
+          "note": "Version numbers and dates added to all figures where appropriate. Summary: edited the Labelling section of the summary table for accuracy (change from \"labelled\" to \"manufactured\").",
+          "public_timestamp": "2025-10-01T10:35:35Z"
+        },
+        {
+          "note": "Link to feedback questionnaire removed following closure of questionnaire.",
+          "public_timestamp": "2025-08-21T13:55:16Z"
+        },
+        {
+          "note": "First published.",
+          "public_timestamp": "2025-06-24T23:00:00Z"
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "transition.raw.json",
+          "sha256": "ebaccba535b5ff4cfb84b806347bbe05cbd05989eeeccec84d2a6ce28e619f59",
+          "bytes": 33266
+        },
+        {
+          "path": "transition.body.html",
+          "sha256": "5d50848fde286258c39e3532c4e6323e943ce26505db2a18a8d417d352ff7491",
+          "bytes": 20762
+        },
+        {
+          "path": "transition.plain.txt",
+          "sha256": "6d893cba9fd3bd57c150010d89424a1a0cff26751dbeb76d1149fba6d1a630a3",
+          "bytes": 17079
+        }
+      ],
+      "quotes": [
+        {
+          "id": "old-rules",
+          "text": "If an application to approve a clinical trial is submitted before this date (even if an outcome has not been received by 28 April 2026), that trial will be considered an ‘old rules clinical trial’, per schedule 14 of the amended Clinical Trials Regulations.",
+          "start": 505,
+          "end": 762,
+          "plainArtifact": "transition.plain.txt"
+        },
+        {
+          "id": "new-rules",
+          "text": "Any application for approval of a clinical trial submitted on or after 28 April 2026 will be considered a ‘new rules clinical trial’.",
+          "start": 764,
+          "end": 897,
+          "plainArtifact": "transition.plain.txt"
+        },
+        {
+          "id": "route-independent",
+          "text": "Note that whether a trial was submitted through the combined review process or through separate applications to the licensing authority and ethics committee has no impact on its status as an old rules or new rules clinical trial. The transitional arrangements in this guidance apply regardless of the route of submission.",
+          "start": 899,
+          "end": 1220,
+          "plainArtifact": "transition.plain.txt"
+        }
+      ]
+    },
+    {
+      "key": "notifiable",
+      "url": "https://www.gov.uk/guidance/clinical-trials-for-medicines-notifiable-trials",
+      "retrievalUrl": "https://www.gov.uk/api/content/guidance/clinical-trials-for-medicines-notifiable-trials",
+      "resolvedUrl": "https://www.gov.uk/api/content/guidance/clinical-trials-for-medicines-notifiable-trials",
+      "retrievedAt": "2026-11-06T18:04:08.188692+00:00",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "title": "Clinical trials for medicines: notifiable trials",
+      "firstPublishedAt": "2025-06-25T00:00:00+01:00",
+      "publicUpdatedAt": "2026-04-28T00:01:00+01:00",
+      "changeHistory": [
+        {
+          "note": "1. Added a copy of the Confirmation of Notifiable Trial Criteria form.\r\n\r\n2. Clarified that IND refers to investigational new drug (no change note needed).\r\n\r\nThe amended Clinical Trials Regulations took full effect on 28 April 2026. As such, this guidance should now be considered effective and is no longer in draft.",
+          "public_timestamp": "2026-04-27T23:01:00Z"
+        },
+        {
+          "note": "Updated publication 'Additional criteria for notifiable trials' to include an introductory sentence. ",
+          "public_timestamp": "2026-01-12T09:00:01Z"
+        },
+        {
+          "note": "Changed subheading from “Guidance on categorising certain clinical trials as ‘notifiable’” To “Guidance on clinical trials that are categorised as ‘notifiable’\" and added new documents ",
+          "public_timestamp": "2025-10-01T10:35:06Z"
+        },
+        {
+          "note": "Link to feedback questionnaire removed following closure of questionnaire.",
+          "public_timestamp": "2025-08-21T13:54:48Z"
+        },
+        {
+          "note": "First published.",
+          "public_timestamp": "2025-06-24T23:00:00Z"
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "notifiable.raw.json",
+          "sha256": "3dedb511d96cbba2339acbfdc4e81a1dc41695d4993657f287e874df7a0fd453",
+          "bytes": 24496
+        },
+        {
+          "path": "notifiable.body.html",
+          "sha256": "d987c7d3a3507bd45383cae36ca8ad73ba035ec294559e7031ebf84c6b13c6b4",
+          "bytes": 12172
+        },
+        {
+          "path": "notifiable.plain.txt",
+          "sha256": "398784dc3669a42d6be359db5b0c627563d9d553e9f1a2241f975f572d6d8fc6",
+          "bytes": 8920
+        }
+      ],
+      "quotes": [
+        {
+          "id": "notifiable-conditional",
+          "text": "Where the trial meets at least one of the inclusion criteria and does not meet any of the exclusion criteria, the trial would be eligible for automatic authorisation.",
+          "start": 2503,
+          "end": 2669,
+          "plainArtifact": "notifiable.plain.txt"
+        },
+        {
+          "id": "notifiable-extra",
+          "text": "Applications for approval of a notifiable trial must be submitted through the same combined review process with the same accompanying documents as applications for non-notifiable clinical trials. In addition to the standard accompanying documents, the applicant must complete the Confirmation of notifiable trial criteria form and submit this with their application. The cover letter must also include a statement that the application is for approval of a notifiable clinical trial.",
+          "start": 3844,
+          "end": 4326,
+          "plainArtifact": "notifiable.plain.txt"
+        },
+        {
+          "id": "notifiable-not-start",
+          "text": "Note that if the licensing authority provides automatic authorisation, the trial still cannot proceed unless a combined decision that the trial is approved (or approved with conditions) is received.",
+          "start": 1782,
+          "end": 1980,
+          "plainArtifact": "notifiable.plain.txt"
+        }
+      ]
+    },
+    {
+      "key": "hra",
+      "url": "https://www.hra.nhs.uk/planning-and-improving-research/policies-standards-legislation/clinical-trials-investigational-medicinal-products-ctimps/combined-ways-working-pilot/document-management-combined-review-applications/",
+      "retrievalUrl": "https://www.hra.nhs.uk/planning-and-improving-research/policies-standards-legislation/clinical-trials-investigational-medicinal-products-ctimps/combined-ways-working-pilot/document-management-combined-review-applications/",
+      "resolvedUrl": "https://www.hra.nhs.uk/planning-and-improving-research/policies-standards-legislation/clinical-trials-investigational-medicinal-products-ctimps/combined-review/document-management-combined-review-applications/",
+      "retrievedAt": "2026-11-06T18:04:10.903496+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "title": "Document management for combined review applications",
+      "firstPublishedAt": null,
+      "publicUpdatedAt": "2026-07-02",
+      "changeHistory": null,
+      "artifacts": [
+        {
+          "path": "hra.raw.html",
+          "sha256": "4aebf9fd3ce873584ae0aad92be666451f4aea45fee301d625595ceaf2c74229",
+          "bytes": 125183
+        },
+        {
+          "path": "hra.body.html",
+          "sha256": "4aebf9fd3ce873584ae0aad92be666451f4aea45fee301d625595ceaf2c74229",
+          "bytes": 125183
+        },
+        {
+          "path": "hra.plain.txt",
+          "sha256": "a0af9174c31a477286742b2b810687e925165492be4d50b5068ada4df6bbb0d5",
+          "bytes": 21283
+        }
+      ],
+      "dateEvidence": "Visible page text: Last updated on 2 Jul 2026",
+      "quotes": [
+        {
+          "id": "last-updated",
+          "text": "Last updated on 2 Jul 2026",
+          "start": 3426,
+          "end": 3452,
+          "plainArtifact": "hra.plain.txt"
+        },
+        {
+          "id": "verification-vs-review",
+          "text": "This table is to help you select the right option from the menu for each document. It also shows which documents are mandatory for IRAS verification or required for regulatory review, and which review body each is sent to when you submit your initial application.",
+          "start": 3633,
+          "end": 3896,
+          "plainArtifact": "hra.plain.txt"
+        },
+        {
+          "id": "insurance-alternative",
+          "text": "For studies sponsored by an NHS/HSC organisation, additional insurance is not usually needed, and evidence of insurance or indemnity is not usually required. Where no additional insurance is in place for such a study, upload a Word document stating: ‘This study is sponsored by an NHS/HSC organisation and no additional insurance for design or management of the research is required’.",
+          "start": 7945,
+          "end": 8329,
+          "plainArtifact": "hra.plain.txt"
+        },
+        {
+          "id": "ci-cv",
+          "text": "A copy of the Chief Investigator’s CV is mandatory for submission of an initial application and submission of a modification to change the Chief Investigator.",
+          "start": 10258,
+          "end": 10416,
+          "plainArtifact": "hra.plain.txt"
+        },
+        {
+          "id": "conditional-soecat",
+          "text": "A Schedule of Events or a SoECAT is required for all non-commercial studies with participating NHS/HSC organisations where a UK Local Information Pack is required.",
+          "start": 19264,
+          "end": 19427,
+          "plainArtifact": "hra.plain.txt"
+        }
+      ]
+    },
+    {
+      "key": "old-approval",
+      "url": "https://www.gov.uk/guidance/clinical-trials-for-medicines-apply-for-authorisation-in-the-uk",
+      "retrievalUrl": "https://www.gov.uk/api/content/guidance/clinical-trials-for-medicines-apply-for-authorisation-in-the-uk",
+      "resolvedUrl": "https://www.gov.uk/api/content/guidance/clinical-trials-for-medicines-apply-for-authorisation-in-the-uk",
+      "retrievedAt": "2026-11-06T18:04:47.408897+00:00",
+      "status": 200,
+      "title": "Clinical trials for medicines: apply for authorisation in the UK",
+      "firstPublishedAt": "2014-12-18T00:00:00+00:00",
+      "publicUpdatedAt": "2026-03-31T11:44:08+01:00",
+      "artifacts": [
+        {
+          "path": "old-approval.raw.json",
+          "sha256": "7e931663677da532f08ed3f654c597e3d03d32c73f6fdc8998f6a5756f6fdba1",
+          "bytes": 81388
+        },
+        {
+          "path": "old-approval.body.html",
+          "sha256": "a7b07e94f5d245ae979d92c2eea3ca2fc8935d148b451b16f39ffef4abd3d374",
+          "bytes": 45266
+        },
+        {
+          "path": "old-approval.plain.txt",
+          "sha256": "599fddc21172178be0df9091ff9d50cf5028985ede7f57293d518d98260e83d0",
+          "bytes": 31771
+        }
+      ],
+      "quotes": [
+        {
+          "id": "obsolete",
+          "text": "This guidance should only be followed prior to 28 April 2026. From 28 April 2026, please see Clinical trials for medicines: MHRA guidance",
+          "start": 0,
+          "end": 137,
+          "plainArtifact": "old-approval.plain.txt"
+        }
+      ]
+    }
+  ]
+}

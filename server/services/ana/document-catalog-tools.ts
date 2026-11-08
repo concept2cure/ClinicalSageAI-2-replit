@@ -42,6 +42,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { recordCurrentRunSource } from '../ai-gateway/model-call-scope.js';
+import { sensitivityTierForClassification } from '../ai-gateway/sensitive-placement-policy.js';
 import { LEGACY_CATALOG_VERIFICATION_SCOPE } from '../../../shared/ana/catalog-facts.js';
 import type { ToolContext } from './AnaToolExecutor.js';
 import type { ProjectDocumentPage } from '../vault/document-catalog.service.js';
@@ -302,8 +304,7 @@ const NOT_RECORDED =
 
 interface ReadWindow {
   span: { start: number; end: number };
-  text: string;
-  charCount: number;
+  text: string; charCount: number;
   coverage: Awaited<ReturnType<CatalogService['getReadCoverage']>>;
   /** Prospective only: host admission and the receipt write are still pending. */
   recorded: boolean;
@@ -316,31 +317,22 @@ function readResult(doc: LoadedDocument, catalog: Catalog, w: ReadWindow): strin
   const comprehension =
     w.comprehension === 'withheld' ? { comprehensionWithheld: COMPREHENSION_WITHHELD } : w.comprehension ? { comprehension: w.comprehension } : {};
   return JSON.stringify({
-    ok: true,
-    documentId: doc.id,
-    contentHash: doc.contentHash,
-    extractedTextSha256: w.extractedTextSha256,
-    fileName: doc.fileName,
-    documentTitle: doc.documentTitle,
-    ...sourceAvailabilityPresentation(doc),
-    sourceAccess: doc.sourceAccess,
-    extractionMethod: catalog.extractionMethod,
-    ...comprehension,
+    ok: true, documentId: doc.id,
+    contentHash: doc.contentHash, extractedTextSha256: w.extractedTextSha256,
+    fileName: doc.fileName, documentTitle: doc.documentTitle,
+    ...sourceAvailabilityPresentation(doc), sourceAccess: doc.sourceAccess,
+    extractionMethod: catalog.extractionMethod, ...comprehension,
     /* An OCR'd scan is not the same evidence as a born-digital text layer, and
        the method alone does not say how well it read. The mean confidence
        travels with the window so a low-confidence recognition is qualified
        rather than quoted as if it were typed. Null for methods that do not
        produce one (utf8, pdf-text, docx, xlsx). */
     extractionConfidence: catalog.extractionConfidence,
-    window: { start: w.span.start, end: w.span.end, text: w.text },
-    totalChars: w.charCount,
+    window: { start: w.span.start, end: w.span.end, text: w.text }, totalChars: w.charCount,
     coverage: {
-      scope: 'legacy_byte_history',
-      prospective: w.recorded,
-      currentActorExtractionProof: false,
-      providerServedProof: false,
-      coveredChars: w.coverage.coveredChars,
-      complete: w.coverage.complete,
+      scope: 'legacy_byte_history', prospective: w.recorded,
+      currentActorExtractionProof: false, providerServedProof: false,
+      coveredChars: w.coverage.coveredChars, complete: w.coverage.complete,
       uncoveredRanges: w.coverage.uncovered.slice(0, 10),
     },
     message: doc.sourceAccess.notice + ' ' + coverageMessage(w.coverage, w.charCount, w.span.end) + (w.recorded ? ' This is prospective coverage; no receipt write is acknowledged by this result.' : NOT_RECORDED) + ocrCaveat(catalog),
@@ -350,10 +342,10 @@ function readResult(doc: LoadedDocument, catalog: Catalog, w: ReadWindow): strin
 /** Source eligibility is separate from the metadata/body delivery projection. */
 function sourceReadMatches(before: LoadedDocument, after: LoadedDocument | null, textHash: string, storedStatus: string | null): boolean {
   if (!after) return false;
-  return after.id === before.id && after.programId === before.programId && after.contentHash === before.contentHash &&
-    after.extractedTextSha256 === textHash && after.isCurrent === before.isCurrent && after.disposition === before.disposition &&
-    after.originalFileAvailable === before.originalFileAvailable && after.sourceAccess.currentUseEligible === before.sourceAccess.currentUseEligible &&
-    storedCatalogStatus(after) === storedStatus;
+  return [after.id === before.id, after.programId === before.programId, after.contentHash === before.contentHash,
+    after.classification === before.classification, after.extractedTextSha256 === textHash, after.isCurrent === before.isCurrent,
+    after.disposition === before.disposition, after.originalFileAvailable === before.originalFileAvailable,
+    after.sourceAccess.currentUseEligible === before.sourceAccess.currentUseEligible, storedCatalogStatus(after) === storedStatus].every(Boolean);
 }
 function storedCatalogStatus(doc: LoadedDocument): string | null { return doc.catalog?.status ?? null; }
 function fitDocumentReadWindow(catalog: Catalog, render: (size: number, comprehension: ReadWindow['comprehension']) => string, asked: number) {
@@ -372,10 +364,22 @@ function deferDocumentWindow(ctx: ToolContext | undefined, doc: LoadedDocument, 
   });
 }
 
-async function handleReadProjectDocument(
-  input: Record<string, unknown>,
-  ctx?: ToolContext,
-): Promise<string> {
+function registerDocumentRoutingSource(svc: CatalogService, actor: ReturnType<typeof sourceReadInput>, doc: LoadedDocument,
+  bounds: { textHash: string; catalogStatus: string | null }, scope: Extract<Awaited<ReturnType<typeof catalogScope>>, { programId: unknown }>) {
+  const { textHash, catalogStatus } = bounds, pinned = Object.freeze({ ...doc, sourceAccess: Object.freeze({ ...doc.sourceAccess }) });
+  const admitted = Object.freeze({ ...doc.admittedScope, accessibleProgramIds: Object.freeze([...doc.admittedScope.accessibleProgramIds]) });
+  recordCurrentRunSource({ organizationId: admitted.organizationId, userId: admitted.userId, projectId: admitted.projectId, programId: doc.programId,
+    origin: { projectId: actor.projectId ?? actor.projectRef },
+    key: `vault:${doc.id}:${doc.contentHash}:${textHash}:${String(doc.classification)}`, tier: sensitivityTierForClassification(doc.classification),
+    recheck: async () => {
+      const fresh = await svc.loadDocumentForActor({ ...actor, documentId: pinned.id }, { includeText: true });
+      if (!sourceReadMatches(pinned, fresh, textHash, catalogStatus)) throw new Error('SOURCE_ROUTING_CHANGED');
+      await svc.revalidateActorSourceScope(actor, admitted);
+      await requireProgramScopeStillCurrent(scope.executor, { organizationId: admitted.organizationId, userId: admitted.userId, programId: scope.programId }, scope.accessibleScope);
+    } });
+}
+
+async function handleReadProjectDocument(input: Record<string, unknown>, ctx?: ToolContext): Promise<string> {
   const gate = await requireDocumentAccess(ctx, 'read_project_document');
   if ('refusal' in gate) return JSON.stringify({ ok: false, error: gate.refusal, ...('code' in gate ? { code: gate.code } : {}) });
   const { svc, orgId } = gate;
@@ -387,7 +391,7 @@ async function handleReadProjectDocument(
   if (CHAT_UPLOAD_ID.test(documentId)) return unknownDocumentRefusal(documentId, 'read_project_document');
   const scope = await catalogScope(ctx, orgId, null, 'read');
   if ('error' in scope) return JSON.stringify({ ok: false, ...scope });
-  const actor = sourceReadInput(ctx, orgId);
+  const actor = Object.freeze(sourceReadInput(ctx, orgId));
   const doc = await svc.loadDocumentForActor({ ...actor, documentId }, { includeText: true });
   if (!doc) {
     return unknownDocumentRefusal(documentId, 'read_project_document');
@@ -395,8 +399,7 @@ async function handleReadProjectDocument(
   const boundary = catalogDocumentBoundary(scope, doc.programId);
   if (boundary) return boundary;
 
-  const sourceCatalogStatus = storedCatalogStatus(doc);
-  const text = doc.extractedText ?? '';
+  const sourceCatalogStatus = storedCatalogStatus(doc), text = doc.extractedText ?? '';
   const extractedTextSha256 = createHash('sha256').update(text).digest('hex');
   const unreadable = await ensureReadable(svc, doc, text);
   if (unreadable) return unreadable;
@@ -434,6 +437,7 @@ async function handleReadProjectDocument(
   if (recorded) deferDocumentWindow(ctx, doc, {
     extractedTextSha256, charCount, span: readWindowSpan(text, offset, fit.size), result: fit.result,
   });
+  registerDocumentRoutingSource(svc, actor, doc, { textHash: extractedTextSha256, catalogStatus: sourceCatalogStatus }, scope);
   return fit.result;
 }
 

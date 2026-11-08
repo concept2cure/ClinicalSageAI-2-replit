@@ -1,0 +1,20 @@
+{
+  "extends": "/workspace/Concept2cure-v2/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "incremental": true,
+    "tsBuildInfoFile": "/tmp/c2c-unified-native.tsbuildinfo"
+  },
+  "include": [
+    "/workspace/Concept2cure-v2/server/**/*.d.ts",
+    "/workspace/Concept2cure-v2/tests/db/workflow-project-admission.dbtest.ts",
+    "/workspace/Concept2cure-v2/tests/db/workflow-project-native-fixture.ts",
+    "/workspace/Concept2cure-v2/server/auth.ts",
+    "/workspace/Concept2cure-v2/server/middleware/tenantContext.ts",
+    "/workspace/Concept2cure-v2/shared/types/third-party.d.ts",
+    "/workspace/Concept2cure-v2/server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts",
+    "/workspace/Concept2cure-v2/server/routes/__tests__/unifiedTasks.routes.test.ts",
+    "/workspace/Concept2cure-v2/server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts",
+    "/workspace/Concept2cure-v2/server/services/tasking/__tests__/task-project-admission.test.ts"
+  ]
+}

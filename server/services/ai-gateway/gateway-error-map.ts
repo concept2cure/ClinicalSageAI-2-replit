@@ -21,6 +21,8 @@ import { NO_PQ_QUALIFIED_MODEL } from './model-governance';
 import { APPROVED_MODELS } from '../ai-governance/approved-models';
 
 export type GatewayErrorCode =
+  | 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE'
+  | 'DERIVATIVE_USE_REFUSED'
   | 'SOURCE_CONTEXT_UNAVAILABLE'
   | 'PLACEMENT_REFUSED'
   | 'MODEL_NOT_QUALIFIED'
@@ -43,6 +45,8 @@ export interface ClassifiedGatewayError {
  * submissions.ts and ectd-documents.ts predate this export and agree with it.
  */
 export const GATEWAY_ERROR_HTTP_STATUS: Readonly<Record<GatewayErrorCode, number>> = {
+  OWNER_PRIVATE_CONTEXT_UNAVAILABLE: 409,
+  DERIVATIVE_USE_REFUSED: 403,
   SOURCE_CONTEXT_UNAVAILABLE: 409,
   // Not an outage: the organization's own policy excludes every lane that
   // could serve the request, and retrying cannot change that.
@@ -101,8 +105,14 @@ export function classifyGatewayError(
   if (err instanceof GatewayNoProviderError) {
     return { code: 'PROVIDER_UNAVAILABLE', message: 'No AI provider is available to handle this request.' };
   }
+  if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE') {
+    return { code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE', message: 'Private context or encrypted capture could not be verified. Check the current session and private custody configuration before retrying.' };
+  }
   if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'SOURCE_CONTEXT_UNAVAILABLE') {
     return { code: 'SOURCE_CONTEXT_UNAVAILABLE', message: 'Selected project sources changed or are no longer available. Check project access and current source versions before retrying this section.' };
+  }
+  if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'DERIVATIVE_USE_REFUSED') {
+    return { code: 'DERIVATIVE_USE_REFUSED', message: 'The approved derivative, its source access or its local verification is no longer valid. Review current custody and approval before drafting again.' };
   }
   const refusal = classifyPolicyRefusal(err);
   if (refusal) return refusal;
@@ -275,6 +285,8 @@ function classifyPolicyRefusal(err: unknown): ClassifiedGatewayError | null {
 function classifyModelGovernanceRefusal(err: unknown): ClassifiedGatewayError | null {
   if (!(err instanceof GatewayPolicyError)) return null;
   const { code, reason } = err as { code?: unknown; reason?: unknown };
+  if (code === 'QUALIFIED_MODEL_PIN_REFUSED') return { code: 'MODEL_NOT_QUALIFIED', message: err.message };
+  if (code === 'TENANT_CREDENTIAL_UNAVAILABLE') return { code: 'PROVIDER_UNAVAILABLE', message: err.message };
   if (code === 'MODEL_NOT_PQ_QUALIFIED') return { code: 'MODEL_NOT_QUALIFIED', message: NO_PQ_QUALIFIED_MODEL };
   if (code !== 'MODEL_NOT_GOVERNED') return null;
   return { code: 'MODEL_NOT_QUALIFIED', message: MODEL_NOT_GOVERNED_COPY[String(reason)] ?? MODEL_NOT_GOVERNED_COPY['no-entry'] };

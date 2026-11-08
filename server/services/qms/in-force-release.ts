@@ -49,6 +49,28 @@ export interface InForceRelease {
   pendingEffective?: boolean;
 }
 
+/** Optional native-source reader policy. Ordinary register callers retain their existing behavior. */
+export interface QmsReleaseReadOptions {
+  admitRelease?: (identity: { id: number; organization_id: number; authoring_document_id?: unknown }) => Promise<boolean>;
+}
+
+const previousReleaseSql = (projection:string) => `SELECT DISTINCT ON (document_id) ${projection}
+  FROM qms_document_versions
+  WHERE organization_id = $1 AND document_id = ANY($2::int[]) AND record_kind IN ('signed', 'legacy-registry')
+    AND version IS DISTINCT FROM (SELECT d.version FROM qms_documents d WHERE d.id = document_id AND d.organization_id = $1)
+  ORDER BY document_id, approved_at DESC, id DESC`;
+
+async function previousReleases(client:InForceSqlClient,organizationId:number,documents:number[],options:QmsReleaseReadOptions) {
+  if (!options.admitRelease) return (await client.query(previousReleaseSql('document_id, controlled_document'),[organizationId,documents])).rows;
+  const identities=await client.query(previousReleaseSql('id,document_id,authoring_document_id'),[organizationId,documents]);
+  const admitted:number[]=[];
+  for (const row of identities.rows) if (await options.admitRelease({id:Number(row.document_id),organization_id:organizationId,
+    authoring_document_id:row.authoring_document_id==null ? null : String(row.authoring_document_id)})) admitted.push(Number(row.id));
+  if (!admitted.length) return [];
+  // Immutable version ids pin the exact parents admitted above; a later version cannot substitute its prose.
+  return (await client.query('SELECT document_id,controlled_document FROM qms_document_versions WHERE organization_id=$1 AND id=ANY($2::int[])',[organizationId,admitted])).rows;
+}
+
 /** The UTC day, YYYY-MM-DD. */
 const utcDay = (v: unknown, fallback: string) =>
   v instanceof Date ? v.toISOString().slice(0, 10) : typeof v === 'string' && v.length >= 10 ? v.slice(0, 10) : fallback;
@@ -82,6 +104,7 @@ export async function readInForceReleases(
   client: InForceSqlClient,
   organizationId: number,
   rows: readonly QmsDocumentRow[],
+  options: QmsReleaseReadOptions = {},
 ): Promise<Map<number, InForceRelease>> {
   const result = new Map<number, InForceRelease>();
   const revising: QmsDocumentRow[] = [];
@@ -89,20 +112,13 @@ export async function readInForceReleases(
   for (const row of rows) {
     if (row.organization_id !== organizationId || row.deleted_at) continue;
     if (isPendingEffective(row)) { revising.push(row); pending.add(row.id); }
-    else if (row.status === 'effective') result.set(row.id, { release: row, underRevision: false });
+    else if (row.status === 'effective' && (!options.admitRelease || await options.admitRelease(row))) result.set(row.id, { release: row, underRevision: false });
     // Only a revision has a predecessor: both revise paths record metadata.lastRevision
     // (controlled-document-service.ts). A first draft has nothing in force to look up.
     else if (QMS_UNDER_REVISION_STATES.has(row.status) && openedAsRevision(row)) revising.push(row);
   }
   if (!revising.length) return result;
-  const { rows: versions } = await client.query(
-    `SELECT DISTINCT ON (document_id) document_id, controlled_document
-       FROM qms_document_versions
-      WHERE organization_id = $1 AND document_id = ANY($2::int[]) AND record_kind IN ('signed', 'legacy-registry')
-        AND version IS DISTINCT FROM (SELECT d.version FROM qms_documents d WHERE d.id = document_id AND d.organization_id = $1)
-      ORDER BY document_id, approved_at DESC, id DESC`,
-    [organizationId, revising.map((row) => row.id)],
-  );
+  const versions=await previousReleases(client,organizationId,revising.map(row=>row.id),options);
   const latest = new Map(versions.map((v) => [Number(v.document_id), v.controlled_document]));
   for (const live of revising) {
     const release = asRelease(live, latest.get(live.id));

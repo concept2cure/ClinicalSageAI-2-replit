@@ -55,6 +55,16 @@ export type TaskType =
   | 'embedding'
   | 'general';
 
+/** An exact, evidence-bound model choice. Values are checked against the controlled registry. */
+export interface QualifiedModelPin {
+  id: string;
+  provider: ProviderName;
+  pinnedVersion: string;
+  intendedUse: TaskType;
+  pqReference: string;
+  pqSha256: string;
+}
+
 export type RoutingStrategy =
   | 'task_based'      // Route based on task type → provider capabilities
   | 'cost_optimized'  // Cheapest model that meets quality threshold
@@ -371,6 +381,23 @@ export interface GatewayMessage {
   cacheControl?: boolean;
 }
 
+/** Server-callable derivative entry point. The approved custody record supplies
+ * every byte of model context; caller messages, tools and metadata are never used. */
+export interface DerivativeGatewayRequest {
+  organizationId: number;
+  userId: number;
+  projectId: number;
+  derivativeId: string;
+  taskType: 'document_drafting' | 'document_analysis' | 'regulatory_review';
+  provider?: ProviderName;
+  model?: string;
+  qualifiedModelPin?: QualifiedModelPin;
+  maxTokens?: number;
+  temperature?: number;
+  apiEffort?: 'low' | 'medium' | 'high' | 'max';
+  signal?: AbortSignal;
+}
+
 export interface GatewayRequest {
   /** Task categorization for routing decisions */
   taskType: TaskType;
@@ -379,6 +406,9 @@ export interface GatewayRequest {
    * repeated after outbound capacity is granted for every dispatch attempt.
    * Never a wire input, metadata field or serialized source authority. */
   beforeDispatch?: () => Promise<void>;
+  /** @internal Notification after durable owner-private capture is active.
+   * Tightens output buffering only; it grants no read/write/model authority. */
+  onOwnerPrivateCapture?: () => void;
 
   /**
    * The caller's risk classification for this request, where it has one — the
@@ -506,6 +536,9 @@ export interface GatewayRequest {
 
   /** Explicit model override (bypasses routing) */
   model?: string;
+
+  /** Require this qualified version and evidence; never substitute another model or demo output. */
+  qualifiedModelPin?: QualifiedModelPin;
 
   /** Routing strategy override */
   strategy?: RoutingStrategy;
@@ -681,6 +714,17 @@ export interface GatewayResponse {
    * payload was permitted where it went.
    */
   placementReasonCode?: string;
+
+  /** Exact local token reinjection only; this does not verify factual or semantic support. */
+  derivativeVerification?: {
+    kind: 'deterministic_token_roundtrip';
+    derivativeId: string;
+    payloadSha256: string;
+    semanticVerified: false;
+    originTier: 2;
+    effectiveTier: 1;
+    resultingContentTier: 2;
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

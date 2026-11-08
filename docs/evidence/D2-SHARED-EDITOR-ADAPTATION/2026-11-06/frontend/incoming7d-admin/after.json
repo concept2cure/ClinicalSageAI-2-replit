@@ -1,0 +1,92 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/surfaces/AdminSettings.tsx",
+    "bytes": 22137,
+    "sha256": "f9a19ad905ffa9faec48ef06033c54ae94a206a77f1f34ce20ab07532a49c0b9",
+    "gitBlob": "fafbc828abbc220a0b434503f8d418bbbd5e73e6"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/GatewayAccountsSetting.tsx",
+    "bytes": 14240,
+    "sha256": "13dc19fc067deb01d3446383206c67cab90cf8039eb236903682ab970ed875e0",
+    "gitBlob": "b425575242ceda7deab8d6d1912358899df81578"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/AdminSkills.tsx",
+    "bytes": 23613,
+    "sha256": "9fd3058e9c369c12dc71055a2ec75f87c529113edccdfba79b20fe4c09be7008",
+    "gitBlob": "7992e8393c56999de0f1746287c499497dbd6519"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/AdminSkillForms.ts",
+    "bytes": 7288,
+    "sha256": "547282cba896e47d54a055eb33e118556e05a12b9dc840a75c1650f95a904e21",
+    "gitBlob": "c490a77eb6e55a09b1bc6e1ddd28c784e1b2c91d"
+  },
+  {
+    "path": "client/src/concept2cure/v2/SkillStudioParts.tsx",
+    "bytes": 16407,
+    "sha256": "f7e23156615cfc518a9c68a208852c6e5ba11ca3d3f31b586388ef05375a438e",
+    "gitBlob": "e7f558305b0c48f3186cbeee5d6f444c0dc8597f"
+  },
+  {
+    "path": "client/src/concept2cure/v2/C2CForm.tsx",
+    "bytes": 15009,
+    "sha256": "74f0cb40e640be496bf45074477db19b1b25cfe7c3fd2483166f2defc6b7e2e0",
+    "gitBlob": "437c090c7e40d77cc3514d7b7b108901b7505375"
+  },
+  {
+    "path": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+    "bytes": 3869,
+    "sha256": "eeb1c7f6670a9372216bbb844bc11f52632e74e127260a3e9a29d50586a657d7",
+    "gitBlob": "93ad8226bd095ee6ce82b7d6e050efedaf3ba9a5"
+  },
+  {
+    "path": "client/src/services/portal/authService.tsx",
+    "bytes": 55628,
+    "sha256": "959331a8300594b1d1d7ff74fa75518310ccfded283b3a69564b9bad3aa56b54",
+    "gitBlob": "50ef15bf0f6fd8684fb0abb8ad3978e2f85dfa70"
+  },
+  {
+    "path": "client/src/lib/queryClient.ts",
+    "bytes": 25722,
+    "sha256": "c7a3bffda9567c044c424ae0db361cac96c2389de69e2e6f80a41eac50cde612",
+    "gitBlob": "b83fcc66c03348c96aa761755f9b2c1d709c73a4"
+  },
+  {
+    "path": "shared/ana/skills.ts",
+    "bytes": 14222,
+    "sha256": "a43a1305b401d55c1484056263416949177032b3afc7e6002b48d980d67970c7",
+    "gitBlob": "0a3ca1283d441697509a9cc0ec257a229292923c"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx",
+    "bytes": 28345,
+    "sha256": "36eb8b6c70a43e60cd9157ff2776004e19ea7ea82779dc37f29b3fe2740b7d3c",
+    "gitBlob": "813ebc213c6b7d781c1071c26a028ee67f607b8c"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/adminSkills.test.tsx",
+    "bytes": 13161,
+    "sha256": "66b1f4e44da0261a54b9e77163e6b8232a582a26756610caabef383f6d3f7daf",
+    "gitBlob": "05ff56b32f382aa3cd7066fcd7f424ea399709e1"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx",
+    "bytes": 13593,
+    "sha256": "23e5d04c1e4a15f0ab4bf54badd7336d42674301a98352a1b68dfdecba7e23d4",
+    "gitBlob": "4d05ba1545c20cf224a1a2ae46b7ed2e948f45b2"
+  },
+  {
+    "path": "tests/setup.ts",
+    "bytes": 17904,
+    "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "gitBlob": "e127691f615afa52ea3d9f2191183247a05c6584"
+  },
+  {
+    "path": "vitest.config.ts",
+    "bytes": 3983,
+    "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "gitBlob": "8935bc6c016ffc6bbfbb41cb54e2f5220f7f2215"
+  }
+]

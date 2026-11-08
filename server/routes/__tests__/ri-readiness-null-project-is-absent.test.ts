@@ -14,7 +14,7 @@ import express from 'express';
 import request from 'supertest';
 import { mockPool } from '../../../tests/setup';
 
-const h = vi.hoisted(() => ({ computeReadiness: vi.fn() }));
+const h = vi.hoisted(() => ({ computeReadiness: vi.fn(), recordInteraction: vi.fn(), projectAdmission: vi.fn(), userId: 5 as number | null }));
 
 vi.mock('../../db/runtime', () => ({ pool: mockPool, getPool: () => mockPool, db: mockPool, getDb: () => mockPool }));
 vi.mock('../../services/intelligence/regulatory-intelligence.js', async (importOriginal) => ({
@@ -22,12 +22,22 @@ vi.mock('../../services/intelligence/regulatory-intelligence.js', async (importO
   computeReadiness: h.computeReadiness,
 }));
 
+vi.mock('../../services/intelligence/ana-failure-learning.js', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../services/intelligence/ana-failure-learning.js')>()),
+  recordInteraction: h.recordInteraction,
+}));
+vi.mock('../c2c/project-access.js', async importOriginal => ({
+  ...(await importOriginal<typeof import('../c2c/project-access.js')>()),
+  requireProjectAdmission: h.projectAdmission,
+}));
+
 import router from '../regulatory-intelligence';
+import { ProjectAdmissionRefusal } from '../c2c/project-access';
 
 const app = express();
 app.use(express.json());
 app.use((req, _res, next) => {
-  Object.assign(req, { user: { id: 5, userId: 5, role: 'admin', organizationId: 7 }, userId: 5 });
+  Object.assign(req, { user: { id: h.userId, userId: h.userId, role: 'admin', organizationId: 7 }, userId: h.userId });
   next();
 });
 app.use('/api/regulatory-intelligence', router);
@@ -37,6 +47,9 @@ const post = (body: Record<string, unknown>) => request(app).post('/api/regulato
 
 beforeEach(() => {
   h.computeReadiness.mockReset().mockResolvedValue({ ok: true });
+  h.userId = 5;
+  h.projectAdmission.mockReset().mockResolvedValue(undefined);
+  h.recordInteraction.mockReset().mockResolvedValue({ interactionId: 'interaction-1' });
 });
 
 describe('POST /api/regulatory-intelligence/readiness', () => {
@@ -60,5 +73,36 @@ describe('POST /api/regulatory-intelligence/readiness', () => {
       expect(res.status, JSON.stringify(projectId)).toBe(400);
     }
     expect(h.computeReadiness).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('authenticated correction attribution', () => {
+  const correction = { agency: 'FDA', documentType: 'protocol', intent: 'review', outcome: 'edited', correctionText: 'Use the approved wording.' };
+  const record = (over: Record<string, unknown> = {}) => request(app).post('/api/regulatory-intelligence/interactions').send({ ...correction, ...over });
+  it('records the session actor and tenant despite forged body identity', async () => {
+    expect((await record({ userId: 999, organizationId: 999, projectId: null })).status).toBe(201);
+    expect(h.recordInteraction).toHaveBeenCalledWith(expect.objectContaining({ userId: 5, organizationId: 7, projectId: undefined }));
+    expect(h.projectAdmission).not.toHaveBeenCalled();
+  });
+  it('requires current write admission for a stated project before recording', async () => {
+    expect((await record({ projectId: 12 })).status).toBe(201);
+    expect(h.projectAdmission).toHaveBeenCalledWith(expect.anything(), '12', true);
+    expect(h.recordInteraction).toHaveBeenCalledWith(expect.objectContaining({ projectId: 12, userId: 5 }));
+  });
+  it('records nothing when project admission refuses', async () => {
+    h.projectAdmission.mockRejectedValue(new ProjectAdmissionRefusal(403, 'PROJECT_MEMBERSHIP_REQUIRED', 'Project access is required.'));
+    expect((await record({ projectId: 12 })).status).toBe(403);
+    expect(h.recordInteraction).not.toHaveBeenCalled();
+  });
+  it('records nothing without a valid authenticated actor', async () => {
+    h.userId = null;
+    expect((await record({ userId: 5 })).status).toBe(401);
+    expect(h.recordInteraction).not.toHaveBeenCalled();
+  });
+  it.each([0, -1, 1.5, '', 'not-a-project', true, [12], {}])('refuses invalid project %j without admission or correction write', async projectId => {
+    expect((await record({ projectId })).status).toBe(400);
+    expect(h.projectAdmission).not.toHaveBeenCalled();
+    expect(h.recordInteraction).not.toHaveBeenCalled();
   });
 });

@@ -10,6 +10,11 @@
  */
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseAgentBrief } from '../sub-agent-limits';
+import { createHash } from 'node:crypto';
+import { draftSourceIdentityForText } from '../draft-source-identity';
+import type { DraftSource } from '../draft-project-sources';
+import { syntheticCurrentPolicyClient } from './support/source-read-tool-fixture';
+import { runWithTenantScope } from '../../../db/tenantStore';
 
 const dbState = vi.hoisted(() => ({ rows: [] as unknown[] }));
 
@@ -24,11 +29,64 @@ vi.mock('../../../db.js', async importOriginal => {
   return { ...real, db: { ...(real.db as object), select: () => chain } };
 });
 
+const sourceId = '10000000-0000-4000-8000-000000000001';
+const enrollment = 'In Study DPL-301, a total of 300 patients were randomized.';
+function storedSource(text = enrollment, extra: Partial<DraftSource> = {}): DraftSource {
+  const span = { start: 0, end: text.length, totalChars: text.length };
+  return { ...draftSourceIdentityForText(text, span), documentId: sourceId, programId: '20000000-0000-4000-8000-000000000002',
+    contentHash: createHash('sha256').update(`stored:${text}`).digest('hex'), text, span, title: 'Recorded study',
+    extractionMethod: 'pdf-text', extractionConfidence: null, originalFileAvailable: true, disposition: null,
+    sourceAvailability: 'available', completeText: true, sensitivityTier: 2, ...extra };
+}
+describe('bounded independent clinical-claim comparison', () => {
+  it('rejects a wrong framed number despite a correct source quotation and citation marker', () => {
+    const source = storedSource(`${enrollment} The protocol defined the analysis.`);
+    const result = compareStoredSourceClaims('In Study DPL-301, a total of 999 patients were randomized [1]. The source states "The protocol defined the analysis."', [source]);
+    expect(result.reading.outcome).toBe('fail');
+    expect(result.output.findings).toContainEqual(expect.objectContaining({ disposition: 'rejected', reason: 'NUMERIC_SOURCE_CONTRADICTION' }));
+    expect(result.output).toMatchObject({ method: SOURCE_CLAIM_METHOD, qualification: 'general_prose_unverified', sources: [{ documentId: sourceId, contentHash: source.contentHash, referenceSchemaVersion: 2, extractedTextSha256: source.extractedTextSha256, spanSha256: source.spanSha256 }] });
+  });
+  it('rejects an arm-swapped comparison through the canonical clinical frames', () => {
+    const draft = 'In the safety population of Study DX-301, serious adverse events were reported in 3.3% of Drug X patients and 4.6% of placebo patients.';
+    const source = storedSource('In the safety population of Study DX-301, serious adverse events were reported in 4.6% of Drug X patients and 3.3% of placebo patients.');
+    expect(compareStoredSourceClaims(draft, [source]).reading.outcome).toBe('fail');
+  });
+  it('rejects the existing explicit-zero denial form against a nonzero recorded count', () => {
+    const text = 'In the safety population of Study DX-301, serious adverse events were reported in 14 (4.6%) Drug X-treated patients and 10 (3.3%) placebo-treated patients.';
+    const draft = 'In the safety population of Study DX-301, serious adverse events were reported in 14 (4.6%) Drug X-treated patients and in no placebo-treated patients.';
+    expect(compareStoredSourceClaims(draft, [storedSource(text)]).reading.outcome).toBe('fail');
+  });
+  it('does not promote matching numbers or generic prose to semantic verification', () => {
+    for (const draft of [enrollment, 'The trial was successful and did not demonstrate a safety concern.']) {
+      const result = compareStoredSourceClaims(draft, [storedSource()]);
+      expect(result.reading.outcome).toBe('see_result'); expect(result.output.qualification).toBe('general_prose_unverified');
+    }
+  });
+  it('rejects unsupported complete clinical claims only over complete non-OCR selected sources', () => {
+    const draft = 'In the safety population of Study DPL-301, serious adverse events were reported in 4.6% of Drug X patients and 3.3% of placebo patients.';
+    expect(compareStoredSourceClaims(draft, [storedSource()]).reading.outcome).toBe('fail');
+    for (const extra of [{ completeText: false }, { extractionMethod: 'pdf-ocr' }]) {
+      const result = compareStoredSourceClaims(draft, [storedSource(enrollment, extra)]);
+      expect(result.reading.outcome).toBe('see_result'); expect(result.output.findings.every(f => f.disposition === 'unverified')).toBe(true);
+    }
+  });
+  it.each([[], ['not-a-uuid'], Array(9).fill(sourceId), 'source prose', [sourceId, null]])('refuses invalid Vault source selection: %j', ids => {
+    expect(parseAgentBrief({ role: 'verify', objective: 'Check figures', instructions: 'Read the recorded source', text_to_check: enrollment, source_document_ids: ids })).toMatchObject({ error: 'INVALID_AGENT_BRIEF' });
+  });
+  it('pins and deduplicates version IDs and refuses source-check input on a research role', () => {
+    const input = { role: 'verify', objective: 'Check figures', instructions: 'Read the recorded source', text_to_check: enrollment, source_document_ids: [sourceId, sourceId] };
+    expect(parseAgentBrief(input)).toMatchObject({ sourceDocumentIds: [sourceId] });
+    expect(parseAgentBrief({ ...input, role: 'research' })).toMatchObject({ error: 'INVALID_AGENT_BRIEF' });
+  });
+});
+
 import {
   HARNESS_CHECKS,
   agentResultSummary,
   agentTraceStatus,
   aggregateVerdict,
+  compareStoredSourceClaims,
+  SOURCE_CLAIM_METHOD,
   dossierCheckSkipped,
   readDossierCheck,
   readGroundingCheck,
@@ -36,10 +94,11 @@ import {
   type CheckReading,
 } from '../sub-agent-result';
 
-const CTX = { organizationId: 7, userId: 3 } as never;
+const CTX = { organizationId: 7, userId: 3, sqlClient: syntheticCurrentPolicyClient } as never;
 async function run(tool: string, input: Record<string, unknown>): Promise<string> {
   const { getToolHandler } = await import('../AnaToolExecutor');
-  return getToolHandler(tool)!(input, CTX);
+  return runWithTenantScope({ tenantId: '7', accountId: 3, source: 'test', caller: 'sub-agent-verifier-owner' },
+    () => getToolHandler(tool)!(input, CTX));
 }
 const PAD = ' The analysis followed the prespecified statistical analysis plan for the study.';
 const artifact = (id: number, content: string) => ({ id, artifactId: `a-${id}`, title: `Doc ${id}`, content, ctdSection: null, status: 'draft' });

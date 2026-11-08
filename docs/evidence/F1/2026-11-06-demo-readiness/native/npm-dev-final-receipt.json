@@ -1,0 +1,52 @@
+{
+  "observedAt": "2026-11-06T20:16:30.706Z",
+  "command": "npm run dev",
+  "sourceHead": "c50f8782ad8ef622872578ae4fae41e14d18caa1",
+  "expectedHead": "c50f8782ad8ef622872578ae4fae41e14d18caa1",
+  "nodeVersion": "v22.23.4",
+  "sourceHeadMatches": true,
+  "versionHttpStatus": 200,
+  "version": {
+    "commit": "c50f8782ad8ef622872578ae4fae41e14d18caa1",
+    "startedAt": "2026-11-06T20:16:11.690Z"
+  },
+  "runtime": {
+    "role": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false
+  },
+  "readinessHttpStatus": 503,
+  "readiness": {
+    "ready": false,
+    "failed": [
+      "ana"
+    ],
+    "dependencies": {
+      "database": "ok",
+      "schema": "ok",
+      "ana": "down",
+      "storage": "ok",
+      "virusScan": "skipped",
+      "redis": "skipped",
+      "worker": "skipped"
+    },
+    "schemaState": "ready",
+    "anaState": "no_provider",
+    "capabilityRegistry": "seeded",
+    "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or AI_BEDROCK_ENABLED / AI_VERTEX_ENABLED) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE. OPENAI_API_KEY or KIMI_API_KEY alone answer chat but not regulatory drafting, which only an approvedForHighRisk model may serve."
+  },
+  "devLogin": {
+    "status": 200,
+    "email": "ana.author@concept2cure.pro"
+  },
+  "persistedDatabase": true,
+  "csrStatePreserved": true,
+  "aiDraftingQualified": false,
+  "persistedCsrVerification": {
+    "status": 200,
+    "frozenStudyDataCount": 1,
+    "expectedFrozenIdPresent": true,
+    "programId": "d8e5065c-c55a-43de-9879-cdaa7c230cde",
+    "documentId": "7a430471-3692-4575-a1ff-1abe010210fc"
+  }
+}

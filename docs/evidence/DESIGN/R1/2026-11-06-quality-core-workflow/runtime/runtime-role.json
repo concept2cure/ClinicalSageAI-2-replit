@@ -1,0 +1,7 @@
+{
+  "role": "app_service",
+  "superuser": false,
+  "bypassrls": false,
+  "rlsEnforce": "on",
+  "purpose": "Local fictional Quality workflow verification; same runtime connection settings as the application."
+}

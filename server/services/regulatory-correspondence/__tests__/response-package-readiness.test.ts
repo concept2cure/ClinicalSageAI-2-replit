@@ -15,8 +15,17 @@
  *    escaped — no issues at all — reported `review_ready`: nothing assessed,
  *    reported ready for review.
  */
-import { describe, it, expect } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, it, expect, vi } from 'vitest';
+import { createRequire } from 'node:module';
+import { PGlite } from '@electric-sql/pglite';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import type { Pool } from 'pg';
+import * as schema from '../../../../shared/schema';
+import type { RequestDb } from '../../../db/requestDb';
 import type { CorrespondenceIssue } from '@shared/types/regulatory-correspondence';
+import { runGovernedIssueParser } from '../issue-parser';
+import { computeCorrespondenceIssueImpact, synchronizeReviewedCorrespondenceIssueImpact, createCanonicalTasksForIssue } from '../operating-layer';
+vi.mock('../../../db', () => ({ db: {} }));
 
 import { compileGovernedResponseAssembly } from '../response-package-compiler';
 import {
@@ -109,6 +118,143 @@ describe('the DB row reaches the compiler as the contract it declares', () => {
     // And the checklist names the regulator's actual ask, not the fallback.
     expect(compiled.evidenceChecklist[0].item).toContain('ISO 10993 endpoint matrix');
     expect(compiled.evidenceChecklist[0].item).not.toContain('Issue evidence attachment');
+  });
+});
+
+// Actual Postgres statements and transaction rollback qualify the derived
+// publishing blocker. No blocker write, source loader or mapper is mocked.
+const letterText = 'Required stability data are missing for the drug product.';
+let pg: PGlite;
+let executor: RequestDb;
+let currentIssue: CorrespondenceIssue;
+const impactInput = () => ({ orgId: 2, projectId: 7, submissionId: 'sub-1', correspondenceId: 'corr-1', issue: currentIssue });
+const blockers = async () => (await pg.query<{ id: number; org_id: number; project_id: number; blocker_type: string; status: string; package_db_id: number | null }>('SELECT id,org_id,project_id,blocker_type,status,package_db_id FROM c2c_blockers ORDER BY id')).rows;
+
+async function saveIssue(issue: CorrespondenceIssue = currentIssue) {
+  currentIssue = issue;
+  await pg.query('UPDATE c2c_correspondence_issues SET human_review_status=$1,resolution_status=$2,source_excerpt=$3,structured_extraction=$4::jsonb WHERE id=$5',
+    [issue.humanReviewStatus, issue.resolutionStatus, issue.sourceExcerpt, JSON.stringify(issue.structuredExtraction), issue.id]);
+}
+async function reviewed(status: CorrespondenceIssue['humanReviewStatus'] = 'confirmed') {
+  const issue = globalThis.structuredClone(currentIssue);
+  issue.humanReviewStatus = status;
+  const extraction = issue.structuredExtraction!;
+  extraction.feedbackCoding!.humanConfirmed = status === 'confirmed' || status === 'edited';
+  extraction.humanReview = { reviewedBy: 11, reviewedAt: '2026-11-06T10:00:00.000Z', sourceTextDigest: extraction.sourceTextDigest!, status };
+  await saveIssue(issue);
+}
+const sync = () => synchronizeReviewedCorrespondenceIssueImpact(impactInput(), executor);
+
+beforeAll(async () => {
+  pg = new PGlite();
+  // Bridge only the pg driver's query protocol. Generic result rows stay typed;
+  // Drizzle's array-row decoding is exercised against actual PGlite results.
+  const client = { async query(config: string | { text: string; rowMode?: string }, params?: unknown[]) {
+    const result = await pg.query<Record<string, unknown>>(typeof config === 'string' ? config : config.text, params);
+    return { rows: typeof config === 'object' && config.rowMode === 'array' ? result.rows.map(Object.values) : result.rows };
+  } };
+  executor = drizzle(client as unknown as Pool, { schema });
+  await pg.exec(`
+    CREATE TABLE c2c_submissions (id TEXT PRIMARY KEY,organization_id INT,project_id INT);
+    CREATE TABLE c2c_correspondence (id TEXT PRIMARY KEY,organization_id INT,project_id INT,submission_id TEXT,parsed_text TEXT,direction TEXT);
+    CREATE TABLE c2c_correspondence_issues (id TEXT PRIMARY KEY,correspondence_id TEXT,category TEXT,severity TEXT,blocker BOOLEAN,response_required BOOLEAN,source_excerpt TEXT,confidence NUMERIC,human_review_status TEXT,mapped_ctd_sections JSONB,mapped_artifact_ids JSONB,resolution_status TEXT,structured_extraction JSONB);
+  `);
+  const kit = createRequire(import.meta.url)('drizzle-kit/api') as typeof import('drizzle-kit/api');
+  const tables = { c2cBlockers: schema.c2cBlockers, c2cProjectWorkItems: schema.c2cProjectWorkItems,
+    c2cSubmissionPackages: schema.c2cSubmissionPackages, c2cPackageSections: schema.c2cPackageSections };
+  // Use the actual stored columns/defaults; unrelated domain FK targets are
+  // outside this fixture. Tenant ownership is proved by the real source join.
+  for (const statement of await kit.generateMigration(kit.generateDrizzleJson({}), kit.generateDrizzleJson(tables))) {
+    if (/^CREATE TABLE/.test(statement)) await pg.exec(statement);
+  }
+}, 60_000);
+afterAll(async () => { await pg?.close(); });
+beforeEach(async () => {
+  await pg.exec('TRUNCATE c2c_blockers,c2c_correspondence_issues,c2c_correspondence,c2c_submissions,c2c_submission_packages,c2c_package_sections,c2c_project_work_items RESTART IDENTITY');
+  currentIssue = runGovernedIssueParser(letterText, 'corr-1').issues.find(issue => issue.blocker)!;
+  expect(currentIssue).toBeDefined();
+  await pg.exec("INSERT INTO c2c_submissions VALUES ('sub-1',2,7)");
+  await pg.query("INSERT INTO c2c_correspondence VALUES ('corr-1',2,7,'sub-1',$1,'inbound')", [letterText]);
+  await pg.query(`INSERT INTO c2c_correspondence_issues VALUES ($1,'corr-1',$2,$3,$4,TRUE,$5,0.78,$6,$7::jsonb,'[]',$8,$9::jsonb)`,
+    [currentIssue.id,currentIssue.category,currentIssue.severity,currentIssue.blocker,currentIssue.sourceExcerpt,currentIssue.humanReviewStatus,JSON.stringify(currentIssue.mappedCtdSections),currentIssue.resolutionStatus,JSON.stringify(currentIssue.structuredExtraction)]);
+  await pg.exec("INSERT INTO c2c_submission_packages(package_id,org_id,project_id,package_family,title) VALUES ('pkg-1',2,7,'nda','Current active submission'); INSERT INTO c2c_package_sections(section_id,org_id,package_db_id,section_key,section_label) VALUES ('sec-1',2,1,'3.2.S','CMC')");
+});
+
+describe('correspondence-derived publishing blockers follow current human review', () => {
+  it.each(['outbound', 'internal'])('closes a historical own blocker when the letter is %s', async direction => {
+    await reviewed(); await sync();
+    expect((await blockers()).map(b => b.status)).toEqual(['open']);
+    await pg.query('UPDATE c2c_correspondence SET direction=$1', [direction]);
+    expect(await sync()).toMatchObject({ blockerOpened: false, readinessPenalty: 0 });
+    expect((await blockers()).map(b => b.status)).toEqual(['resolved']);
+  });
+  it('intake proposals create triage work without a publishing blocker or readiness penalty', async () => {
+    expect(await computeCorrespondenceIssueImpact(impactInput(), executor)).toMatchObject({ blockerOpened: false, readinessPenalty: 0 });
+    const tasks = await createCanonicalTasksForIssue({ orgId: 2,projectId: 7,issue: currentIssue,ownerUserId: 11,ownerName: 'Reviewer',linkedSectionKeys: [] }, executor);
+    expect(tasks[0]).toMatchObject({ blockerImpact: 'none' });
+    expect(tasks[0].taskType).not.toBe('publish_gate_remediation');
+    expect(await blockers()).toEqual([]);
+    expect((await pg.query<{ blocker_type: string | null }>('SELECT blocker_type FROM c2c_project_work_items')).rows[0].blocker_type).toBeNull();
+  });
+  it('opens once for a current confirmed objective issue, closes on resolution, and reopens the same row', async () => {
+    await reviewed();
+    expect(await sync()).toMatchObject({ blockerOpened: true, readinessPenalty: 15 });
+    expect(await sync()).toMatchObject({ blockerOpened: false });
+    const [first] = await blockers();
+    await saveIssue({ ...currentIssue, resolutionStatus: 'resolved' });
+    await sync();
+    expect(await blockers()).toEqual([{ ...first, status: 'resolved' }]);
+    await saveIssue({ ...currentIssue, resolutionStatus: 'open' });
+    expect(await sync()).toMatchObject({ blockerOpened: true });
+    expect(await blockers()).toEqual([first]);
+  });
+  it.each(['pending','rejected'] as const)('clears historical orphan blockers after %s while preserving other scope/type', async status => {
+    await pg.query(`INSERT INTO c2c_blockers(blocker_id,org_id,project_id,package_db_id,blocker_type,title,status) VALUES
+      ('own',2,7,1,'regulatory_correspondence_issue',$1,'open'),('duplicate',2,7,NULL,'regulatory_correspondence_issue',$1,'open'),
+      ('foreign',3,7,1,'regulatory_correspondence_issue',$1,'open'),('otherproject',2,8,1,'regulatory_correspondence_issue',$1,'open'),('otherkind',2,7,1,'validation_error',$1,'open')`, [`Regulatory issue ${currentIssue.id}`]);
+    await reviewed(status); await sync();
+    expect((await blockers()).map(b => b.status)).toEqual(['resolved','resolved','open','open','open']);
+  });
+  it.each(['waived','resolved'] as const)('clears an accepted blocker when the issue becomes %s', async resolutionStatus => {
+    await reviewed(); await sync(); await saveIssue({ ...currentIssue, resolutionStatus }); await sync();
+    expect((await blockers()).map(b => b.status)).toEqual(['resolved']);
+  });
+  it.each(['subjective','unclassified'] as const)('a human-confirmed %s issue never becomes an objective publish gate', async register => {
+    const text = register === 'subjective' ? 'Stability data presentation needs clearer organization.' : 'Stability data are supplied for review.';
+    const parsed = runGovernedIssueParser(text, 'corr-1').issues.find(issue => issue.blocker)!;
+    parsed.id = currentIssue.id; await saveIssue(parsed);
+    await pg.query('UPDATE c2c_correspondence SET parsed_text=$1', [text]); await reviewed();
+    expect(currentIssue.structuredExtraction?.feedbackCoding?.register).toBe(register);
+    expect(await sync()).toMatchObject({ blockerOpened: false, readinessPenalty: 0 });
+    expect(await blockers()).toEqual([]);
+  });
+  it.each(['source_changed','span_changed','review_digest','missing_actor','missing_review','forged_coding'] as const)('does not gate from invalid/stale evidence: %s', async failure => {
+    await reviewed(); await sync();
+    const extraction = currentIssue.structuredExtraction!;
+    if (failure === 'source_changed') await pg.query('UPDATE c2c_correspondence SET parsed_text=$1', [`${letterText} Revised.`]);
+    if (failure === 'span_changed') extraction.evidenceSpan!.text = 'Fabricated missing data';
+    if (failure === 'review_digest') extraction.humanReview!.sourceTextDigest = '0'.repeat(64);
+    if (failure === 'missing_actor') extraction.humanReview!.reviewedBy = 0;
+    if (failure === 'missing_review') delete extraction.humanReview;
+    if (failure === 'forged_coding') extraction.feedbackCoding!.deficiencyClass = 'presentation_expectation';
+    await saveIssue();
+    expect(await sync()).toMatchObject({ blockerOpened: false, readinessPenalty: 0 });
+    expect((await blockers()).map(b => b.status)).toEqual(['resolved']);
+  });
+  it('uses the stored review rather than a caller claiming confirmation and refuses foreign ownership', async () => {
+    const original = globalThis.structuredClone(currentIssue); await reviewed(); const forged = globalThis.structuredClone(currentIssue); await saveIssue(original);
+    expect(await synchronizeReviewedCorrespondenceIssueImpact({ ...impactInput(), issue: forged }, executor)).toMatchObject({ blockerOpened: false });
+    expect(await synchronizeReviewedCorrespondenceIssueImpact({ ...impactInput(), orgId: 3 }, executor)).toMatchObject({ blockerOpened: false });
+    await pg.exec('UPDATE c2c_submissions SET project_id=8'); await reviewed();
+    expect(await sync()).toMatchObject({ blockerOpened: false }); expect(await blockers()).toEqual([]);
+  });
+  it('rolls the derived blocker back with a refused review audit in the caller transaction', async () => {
+    await pg.exec('BEGIN'); await reviewed(); await sync();
+    expect((await blockers()).map(b => b.status)).toEqual(['open']);
+    await expect(pg.exec("CREATE TEMP TABLE refusal (allowed BOOLEAN CHECK(allowed)); INSERT INTO refusal VALUES (FALSE)")).rejects.toThrow();
+    await pg.exec('ROLLBACK');
+    expect(await blockers()).toEqual([]);
+    expect((await pg.query<{ human_review_status: string }>('SELECT human_review_status FROM c2c_correspondence_issues')).rows[0].human_review_status).toBe('pending');
   });
 });
 

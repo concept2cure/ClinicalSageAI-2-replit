@@ -1,0 +1,40 @@
+{
+  "runtimeProbe": {
+    "user": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false
+  },
+  "protectedTables": [
+    {
+      "relname": "authoring_documents",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "authoring_sections",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "organization_users",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "projects",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    },
+    {
+      "relname": "regulatory_programs",
+      "relrowsecurity": true,
+      "relforcerowsecurity": true
+    }
+  ],
+  "observedDatabaseConnections": [
+    {
+      "usename": "app_service",
+      "connections": 2
+    }
+  ]
+}

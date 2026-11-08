@@ -58,6 +58,8 @@ export interface WithTenantConnectionOptions {
   role?: string | null;
   source?: TenantScopeSource;
   caller?: string;
+  /** Explicit trusted target owner; never inherited or used as the human audit actor. */
+  accountId?: number | null;
 }
 
 export async function withTenantConnection<T>(
@@ -75,6 +77,7 @@ export async function withTenantConnection<T>(
     role: opts.role ?? null,
     source: opts.source ?? 'job',
     caller: opts.caller,
+    accountId: opts.accountId ?? null,
   };
 
   // The scope is entered BEFORE the checkout, and everything — connect,
@@ -177,7 +180,7 @@ async function runOnScopedClient<T>(
     // pattern in tenantContext middleware. They are cleared in the
     // `finally` below to be safe in case the connection comes back into
     // the pool (it does — release() returns it).
-    await applySessionScope(client, { tenantId, orgUuid: opts.orgUuid ?? '', role: opts.role ?? '' });
+    await applySessionScope(client, { tenantId, orgUuid: opts.orgUuid ?? '', role: opts.role ?? '', accountId: opts.accountId ?? null });
 
     return await fn(client);
   } catch (error) {

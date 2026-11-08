@@ -49,7 +49,8 @@ beforeAll(async () => {
     'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql',
     'migrations/20260908_span_lineage_machine_draft.sql', 'db/migrations/20260725_authoring_audit_trail.sql',
     'db/migrations/20260725_authoring_signatures_and_workflow.sql', 'db/migrations/20260725_authoring_signature_freeze_binding.sql',
-    'migrations/20260728_authoring_reviews.sql']) await pg.exec(migration(file));
+    'migrations/20260728_authoring_reviews.sql',
+    'migrations/20260921_audit_logs_chain_seq.sql']) await pg.exec(migration(file));
 }, 90_000);
 afterAll(async () => { await pg.close(); });
 

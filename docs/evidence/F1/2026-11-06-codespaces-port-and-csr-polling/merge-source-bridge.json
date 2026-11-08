@@ -1,0 +1,40 @@
+{
+  "sourceCommit": "b180c0518c66d6876482e02a5d028e7f42b80950",
+  "acceptedMerge": "2216b9decb0dada59f967d116c72984f4ca6d7d7",
+  "ownedCodeUnchangedByMerge": {
+    "scripts/startup.sh": "6fa61b2280e2db604cc858408b9ad9c4408e919b448b5872ef0c83fd7ae68cd0",
+    "scripts/ci/__tests__/dev-port-selection.test.mjs": "8721914b05b33c0ba8ecdf02b4b98607c3e9403f7d7befcb9f086158b61f2088",
+    "client/src/concept2cure/v2/surfaces/CsrBuildProgress.tsx": "ead551aad70795a7b4169d590c9b5681f4132ccc63dde80d74069812f6ac160b",
+    "client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx": "c8c95c8748a14a73b668ccb8e552d7b0591ceb8a6552df2b7363dd1b4aa121f9"
+  },
+  "changedSharedNamedInputs": [
+    "client/src/concept2cure/v2/SkillStudio.tsx",
+    "client/src/concept2cure/v2/SkillStudioParts.tsx",
+    "client/src/concept2cure/v2/surfaces/AdminSettings.tsx",
+    "client/src/concept2cure/v2/surfaces/AdminSkillForms.ts",
+    "client/src/concept2cure/v2/surfaces/AdminSkills.tsx",
+    "client/src/concept2cure/v2/surfaces/ReviewDecisionDialog.tsx",
+    "client/src/concept2cure/v2/surfaces/authoringPeerReview.ts",
+    "client/src/concept2cure/v2/surfaces/usePeerReviewDecision.ts",
+    "server/db/poolInstrumentation.ts",
+    "server/db/sessionScope.ts",
+    "server/db/tenantStore.ts",
+    "server/eval/pq/verify-pq-record.ts",
+    "server/services/ai-gateway/embeddings/embedding-provider.ts",
+    "server/services/ai-gateway/gateway.ts",
+    "server/services/ai-gateway/model-call-scope.ts",
+    "server/services/ai-gateway/providers/clients.ts",
+    "server/services/ai-gateway/sensitive-placement-policy.ts",
+    "server/services/ai-gateway/types.ts",
+    "server/services/observability/redaction.ts",
+    "shared/ana/skills.ts",
+    "shared/authoring/peer-review.ts"
+  ],
+  "mergedChecks": [
+    "source-push",
+    "csr-merged",
+    "build-merged",
+    "browser-delivery",
+    "manual-editor"
+  ]
+}

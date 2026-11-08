@@ -5,7 +5,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getTenantScope, type TenantScope } from '../../db/tenantStore';
 
-type Plan = { scheduleId: number; orgId: number; projectId: number };
+type Plan = { scheduleId: number | null; orgId: number; projectId: number };
 type Client = { query: ReturnType<typeof vi.fn>; release: ReturnType<typeof vi.fn>; scope?: TenantScope };
 const m = vi.hoisted(() => ({
   list: vi.fn(), review: vi.fn(), humanReview: vi.fn(), claim: vi.fn(),
@@ -38,7 +38,7 @@ const PLANS: Plan[] = [
 const tenantClients = () => m.clients.filter(c => c.scope?.tenantId !== '0');
 const expectedScope = (orgId: number) => ({
   tenantId: String(orgId), orgUuid: null, role: null,
-  source: 'job', caller: 'schedule-of-events-sweep:review',
+  source: 'job', caller: 'schedule-of-events-sweep:review',accountId:null,
 });
 
 beforeEach(() => {
@@ -100,7 +100,7 @@ describe('schedule sweep tenant admission', () => {
     expect(m.globalQuery).not.toHaveBeenCalled();
     expect(tenantClients().map(c => c.scope)).toEqual(PLANS.map(p => expectedScope(p.orgId)));
     for (const client of tenantClients()) {
-      expect(client.query.mock.calls[0][1]).toEqual([client.scope?.tenantId, '', '']);
+      expect(client.query.mock.calls[0][1]).toEqual([client.scope?.tenantId, '', '', '']);
       expect(client.release).toHaveBeenCalledWith(undefined);
     }
     expect(getTenantScope()).toBeUndefined();

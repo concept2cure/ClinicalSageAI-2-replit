@@ -72,7 +72,7 @@ function mockApi(routes: Routes = {}) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (url.startsWith('/api/authoring/docs?')) {
-      return ok({ documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
+      return ok({ success: true, documents: [{ id: DOC, program_id: PID, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
     }
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);

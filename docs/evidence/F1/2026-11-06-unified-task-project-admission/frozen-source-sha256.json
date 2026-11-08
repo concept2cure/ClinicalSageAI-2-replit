@@ -1,0 +1,11 @@
+{
+  "server/routes/__tests__/_unified-tasks-pglite-harness.ts": "ec162c04219d6827eeed43ea8da12cd1ff1fe583c76da3896ec1192451a94834",
+  "server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts": "a27a0714cd1ce43d1a4d91def468309083d003e5d9674d30a374e3f432213acd",
+  "server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts": "7e630e21ecdb6cf8a4f053f59e43db52e9d192e321286aba2e1a5b88771caacb",
+  "server/routes/__tests__/unifiedTasks.routes.test.ts": "34ffb5cb249d01a813f24f54a6c2549f7ac61c8a6fe91bb4f7708177b8d0418f",
+  "server/routes/unifiedTasks.routes.ts": "d619caa363a0fce59c001f6a5aa2a3ebfecffa497ea86b82c0bace50902eecd1",
+  "server/services/tasking/__tests__/task-project-admission.test.ts": "b00eee0c1d38830e8c20fe7c683c309ba9cefc4dd6a24766d34b113f9b7519b5",
+  "server/services/tasking/task-project.ts": "0dc2b50d3fcf9085c9511629dc36402229af98e9097feccb7fa50fd76ebd29ea",
+  "tests/db/workflow-project-admission.dbtest.ts": "57edb92b5c9243804642c6237ea53d984eac5faca202662169de25374b0df187",
+  "tests/db/workflow-project-native-fixture.ts": "bd803bada51bfee27f2f741ed2c7158b4fd1fd1682d6bebb2f4e7bd02c9cfe8a"
+}

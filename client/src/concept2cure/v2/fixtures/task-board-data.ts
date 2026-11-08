@@ -154,6 +154,7 @@ export const TB_SRC: Record<string, TaskSource> = {
   // work is, never which table holds it (2026-10-31: a client demo read
   // "project_tasks -- legacy/CRO" and "in-memory -- not persisted").
   unified: { l: 'Board', t: 'Tasks created on this board' },
+  quality: { l: 'Quality', t: 'Quality records and controlled documents' },
   section: { l: 'Section', t: 'Work on a document section' },
   pyramid: { l: 'Pyramid', t: 'Planning view, not saved' },
   wbs: { l: 'WBS', t: "A project's work breakdown" },

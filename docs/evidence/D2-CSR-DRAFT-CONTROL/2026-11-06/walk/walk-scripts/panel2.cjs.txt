@@ -1,0 +1,58 @@
+const c = require('../walk/common.cjs');
+const VP = process.argv[3] === 'phone' ? c.VIEWPORTS.phone : c.VIEWPORTS.desktop;
+const tag = process.argv[3] === 'phone' ? '390' : '1440';
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.newPage(browser, { who: 'jm', viewport: VP });
+  await c.signIn(page, 'jm.smith@concept2cure.pro');
+  const prog = process.env.PROG || 'a7904b00-75d2-4603-8197-373df73dc7c1';
+  await c.step(`${tag} open the AnA menu`, async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/document-authoring?program=${prog}`, { waitUntil: 'networkidle' });
+    await c.sleep(2000);
+    await page.locator('[data-testid="ed-ana"]').first().click();
+    await c.sleep(600);
+    await c.shot(page, `b-${tag}-ana-menu.png`);
+    s.notes.push(await page.locator('[role="menu"], [role="group"][aria-label="Draft"]').first().innerText().catch(() => ''));
+  });
+  await c.step(`${tag} Draft from sources opens the panel`, async (s) => {
+    await page.getByRole('menuitem', { name: /Draft from sources/ }).first().click().catch(async () => page.getByText('Draft from sources', { exact: true }).first().click());
+    await page.locator('[data-testid="ai-draft-generate"]').waitFor({ timeout: 15000 });
+    await c.sleep(500);
+    await c.shot(page, `b-${tag}-panel.png`);
+    s.notes.push((await c.textOf(page, '[data-testid="ai-draft-panel"], .ai-draft-panel, aside, section')).slice(0, 800));
+  });
+  await c.step(`${tag} the panel's holds, read before drafting`, async (s) => {
+    const gen = page.locator('[data-testid="ai-draft-generate"]');
+    s.notes.push('generate disabled: ' + await gen.isDisabled());
+    s.notes.push('panel text: ' + (await page.locator('[data-testid="ai-draft-generate"]').locator('xpath=ancestor::*[self::section or self::div][4]').innerText().catch(() => '')).slice(0, 900));
+    if (await gen.isDisabled()) {
+      const region = page.getByLabel('Region', { exact: true });
+      const opts = await region.locator('option').allInnerTexts().catch(() => []);
+      s.notes.push('region options: ' + JSON.stringify(opts));
+      const fda = opts.find(o => /FDA/.test(o));
+      if (fda) { await region.selectOption({ label: fda }); await c.sleep(600); s.notes.push('chose ' + fda + '; generate disabled now: ' + await gen.isDisabled()); }
+    }
+    await c.shot(page, `b-${tag}-panel-ready.png`);
+  });
+  await c.step(`${tag} Draft: no provider is a refusal`, async (s) => {
+    await page.locator('[data-testid="ai-draft-generate"]').click({ timeout: 8000 });
+    await c.sleep(4000);
+    await c.shot(page, `b-${tag}-draft-refused.png`);
+    const alerts = await page.locator('[role="alert"], [data-testid*="refusal"], [data-testid*="error"]').allInnerTexts();
+    s.notes.push('alerts: ' + JSON.stringify(alerts).slice(0, 700));
+    s.notes.push('body present: ' + (await page.locator('[data-testid="ai-draft-body"]').count()));
+    s.notes.push('focused: ' + await page.evaluate(() => (document.activeElement?.getAttribute('data-testid') || document.activeElement?.textContent || '').slice(0, 80)));
+  });
+  await c.step(`${tag} Draft three alternatives: no provider is a refusal`, async (s) => {
+    const alt = page.locator('[data-testid="ai-draft-alternatives"]');
+    if (!(await alt.count())) { s.notes.push('no alternatives control'); return { outcome: 'note' }; }
+    await alt.click({ timeout: 8000 });
+    await c.sleep(5000);
+    await c.shot(page, `b-${tag}-alternatives-refused.png`);
+    const alerts = await page.locator('[role="alert"], [role="status"]').allInnerTexts();
+    s.notes.push('status/alerts: ' + JSON.stringify(alerts.filter(Boolean)).slice(0, 900));
+    s.notes.push('overflowX: ' + await c.overflowX(page));
+  });
+  c.save(`panel-${tag}`);
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

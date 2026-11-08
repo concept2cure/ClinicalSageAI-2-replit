@@ -1,0 +1,23 @@
+{
+  "checks": [
+    "integrated-regression",
+    "integrated-lineage",
+    "integrated-gates",
+    "integrated-build",
+    "integrated-browser",
+    "retry1-client",
+    "retry1-build",
+    "retry1-browser"
+  ],
+  "vitest": "571 cases / 22 suites on integrated source; affected client suites rerun after the exact frontend merge if publication-bridge.json is present. Overlapping runs are not added.",
+  "node": "119 cases; unchanged server/CI inputs across frontend-only merge",
+  "browser": "8 cases at 1440/390; real positive and injected client-integrity faults",
+  "compiler": "Full CLI tsc exit 0, unchanged zero baseline, normal pre-push",
+  "acceptedSourceHead": "c5baa0089774eb91d4bdd9fe60a6fbcf33b05bbc",
+  "limitations": "OPEN_ITEMS.md; no live provider/agency/deployment, native concurrency or full CSR acceptance",
+  "distinctVitestCases": 587,
+  "distinctVitestSuites": 24,
+  "countMethod": "571 - 106 + 122 cases; 22 - 8 + 10 suites. Exact client overlay; not one 587-case invocation.",
+  "nodeCases": 119,
+  "browserCases": 8
+}

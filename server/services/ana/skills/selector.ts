@@ -35,6 +35,7 @@ import {
   type TherapeuticArea,
 } from '../../../../shared/ana/skills.js';
 import { resolveToRegistryId } from '../../../../shared/regulatory/submission-type-bridge.js';
+import type { AppliedStandingRule } from '../../account-skill-bundles.js';
 
 /** A skill as the selector sees it: library and organization skills alike. */
 export interface SelectableSkill extends SkillFacets {
@@ -99,6 +100,7 @@ export interface PassedOverSkill {
 }
 
 export interface SkillSelection {
+  standingRules?: AppliedStandingRule[];
   selected: SelectedSkill[];
   passedOver: PassedOverSkill[];
   /** How many skills were looked at. */

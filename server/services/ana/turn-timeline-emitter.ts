@@ -36,12 +36,13 @@
 
 import type { StepFact, StepSource } from '@shared/ana/step-verbs';
 import type { StepEvent, StepRecordTimes as RecordedStepTimes, StepStatus, TimelineEvent, TurnEndOutcome } from '@shared/ana/turn-timeline';
-import { notAuthorisedStep } from '@shared/ana/turn-timeline';
+import { notAuthorisedStep, readWorkerSnapshot } from '@shared/ana/turn-timeline';
 import { TaskIds, taskChanges, type PlanStep } from '@shared/ana/plan-diff';
 import type { GatewayServerToolUse } from '../ai-gateway/types.js';
 import { presentStep, stepMessage } from './step-presentation.js';
 import { serverToolStepFields } from './server-tool-steps.js';
 import type { RunEventsMirror } from './run-events.js';
+import { assertCoordinationProjection } from './run-events.js';
 import type { TurnRecorder } from './turn-record.js';
 import { UPDATE_PLAN_TOOL_NAME } from './turn-plan.js';
 
@@ -95,6 +96,7 @@ export class TurnTimeline {
   /** Each step's task, fixed when the step first appears (S5). */
   private readonly taskOf = new Map<string, string | null>();
   private readonly shown = new Map<string, Shown>();
+  private readonly workers = new Map<string, string>();
   private pendingNote = '';
   private plan: PlanStep[] = [];
   private readonly tasks = new TaskIds();
@@ -138,6 +140,24 @@ export class TurnTimeline {
       this.handles.set(toolUseId, h);
     }
     return h;
+  }
+
+  /** Public aliases are allocated from this turn's actual announced call. */
+  workerBinding(call: StepCall): { worker: string; parentStep: string; task: string | null } {
+    const parentStep = this.handleFor(call.id);
+    if (!this.taskOf.has(parentStep)) this.taskOf.set(parentStep, this.taskInProgress(call.name));
+    let worker = this.workers.get(call.id);
+    if (!worker) { worker = `w${this.workers.size + 1}`; this.workers.set(call.id, worker); }
+    return { worker, parentStep, task: this.taskOf.get(parentStep) ?? null };
+  }
+
+  /** The audit append/read issuer supplies an opaque receipt capability.
+   * JSON labels, raw child frames and the lossy mirror cannot mint one. */
+  worker(round: number, projection: unknown): void {
+    const issued = assertCoordinationProjection(projection), snapshot = readWorkerSnapshot(issued.snapshot);
+    if (!snapshot || ![...this.handles.values()].includes(snapshot.parentStep) ||
+      this.taskOf.get(snapshot.parentStep) !== snapshot.task) throw new Error('WORKER_PROJECTION_SCOPE_UNVERIFIED');
+    this.emitTimeline({ kind: 'worker', round, ...snapshot });
   }
 
   private step(round: number, call: StepCall, fields: Omit<StepEvent, 'seq' | 'at' | 'kind' | 'round' | 'step' | 'task'>): StepEvent {

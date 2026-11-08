@@ -46,6 +46,7 @@ export type ReportEngine = 'readiness' | 'domain' | 'lineage' | 'regional';
 
 /** The report type ids the research-compliance domain providers compute. */
 export const DOMAIN_REPORT_TYPE_IDS = [
+  'compliance.audit_assurance_pack',
   'fcoi.disclosure_register', 'ha.commitment_register', 'iacuc.protocol_register', 'irb.submission_register',
   'ibc.registration_register', 'nonclinical.study_send_register', 'grants.portfolio_register', 'rim.registration_grid',
   'inspection.readiness_pack', 'controlled_substances.inventory_ledger', 'lifecycle.obligation_calendar',
@@ -82,10 +83,19 @@ function engineForType(typeId: string): ReportEngine | null {
 
 /** Declared applicability and the engine's actual scope must both permit a run.
  * Domain counts remain organization-wide unless a provider truly narrows them. */
+function computedScopeFor(typeId: string, scopeType: string, engine: ReportEngine | null): ReportAvailability['computedScope'] {
+  if (scopeType === 'project' && ['grants.portfolio_register', 'compliance.audit_assurance_pack'].includes(typeId)) return 'project';
+  return engine === 'domain' ? 'organization' : engine === 'lineage' ? 'document' : engine ? 'project' : null;
+}
+
+function qualityScopeRefusal(typeId: string, scopeType: string): string | null {
+  return typeId === 'compliance.audit_assurance_pack' && !['project', 'account'].includes(scopeType)
+    ? 'Quality evidence is computed for one project or the organization only.' : null;
+}
+
 export function reportAvailability(typeId: string, scopeType: string, allowedScopes?: readonly string[]): ReportAvailability {
   const engine = engineForType(typeId);
-  const computedScope = typeId === 'grants.portfolio_register' && scopeType === 'project' ? 'project'
-    : engine === 'domain' ? 'organization' : engine === 'lineage' ? 'document' : engine ? 'project' : null;
+  const computedScope = computedScopeFor(typeId, scopeType, engine);
   if (allowedScopes && !allowedScopes.includes(scopeType)) {
     return { engine, computedScope, runnable: false, availabilityReason: `This report does not allow ${scopeType} scope.` };
   }
@@ -93,6 +103,8 @@ export function reportAvailability(typeId: string, scopeType: string, allowedSco
     return { engine, computedScope, runnable: false, availabilityReason: 'This scope is unavailable until its ownership can be verified.' };
   }
   if (!engine) return { engine, computedScope, runnable: false, availabilityReason: 'No engine computes this report in this release.' };
+  const qualityRefusal = qualityScopeRefusal(typeId, scopeType);
+  if (qualityRefusal) return { engine, computedScope, runnable: false, availabilityReason: qualityRefusal };
   if (((engine === 'readiness' || engine === 'regional') && scopeType !== 'project') ||
       (engine === 'lineage' && scopeType !== 'document')) {
     return { engine, computedScope, runnable: false, availabilityReason: `This engine computes ${computedScope} scope only.` };

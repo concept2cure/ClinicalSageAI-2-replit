@@ -430,7 +430,7 @@ export const SELECT_EXPOSURE_RESPONSE_DOSE: AnaTool = {
 export const DRAFT_NONCLINICAL_OVERVIEW_M2_4: AnaTool = {
   name: 'draft_nonclinical_overview_m2_4',
   description:
-    "Draft the Module 2.4 Nonclinical Overview (ICH M4S) for the open project. Its studies, NOAELs and findings come from the project's recorded nonclinical studies only: do not pass studies, doses, NOAELs or findings, and do not restate them from the conversation. Until nonclinical studies are recorded against a project it returns the record's ICH M4S outline (2.4.1 to 2.4.6: overview of the nonclinical testing strategy, pharmacology, pharmacokinetics, toxicology, integrated overview and conclusions, list of literature references; each heading with its key content) and says that no study is recorded; figures given in the call are refused and named as not used. Use this for Module 2.4 / nonclinical-overview requests. Report what it returns as it is: never fill a heading with a study, NOAEL or finding it did not return.",
+    "Draft the Module 2.4 Nonclinical Overview (ICH M4S) from the open project’s governed nonclinical_studies records through protected actor/project access. Do not pass studies, doses, NOAELs, findings or drug identity, or restate them from the conversation. Only finalized studies and studies in reporting for their own IND submission are read. Missing inputs remain gaps; unavailable or empty sources return an explicit refusal or requirements outline. Supplied figures are refused. Module 2.6 tables are preparation worksheets. Report only the returned facts; source reports, GLP compliance and scientific applicability are not verified. Re-read on a later turn before claiming the snapshot is current.",
   input_schema: {
     type: 'object',
     properties: {
@@ -594,7 +594,7 @@ export const CHARACTERIZE_PK: AnaTool = {
 export const DRAFT_NONCLINICAL_SUMMARIES_M2_6: AnaTool = {
   name: 'draft_nonclinical_summaries_m2_6',
   description:
-    "Draft the Module 2.6 Nonclinical Written and Tabulated Summaries (ICH M4S) for the open project. Its studies, NOAELs and findings come from the project's recorded nonclinical studies only: do not pass studies, doses, NOAELs or findings, and do not restate them from the conversation. Until nonclinical studies are recorded against a project it returns the record's ICH M4S outline (the 2.6.1 introduction, the 2.6.2/2.6.4/2.6.6 written summaries and the 2.6.3/2.6.5/2.6.7 tabulated summaries for pharmacology, pharmacokinetics and toxicology, each heading with its key content) and says that no study is recorded; figures given in the call are refused and named as not used. Use this for Module 2.6 requests. Report what it returns as it is: never fill a heading or a table with a figure it did not return.",
+    "Draft the Module 2.6 Nonclinical Written and Tabulated Summaries (ICH M4S) from the open project’s governed nonclinical_studies records through protected actor/project access. Do not pass studies, doses, NOAELs, findings or drug identity, or restate them from the conversation. Only finalized studies and studies in reporting for their own IND submission are read. Missing inputs remain gaps; unavailable or empty sources return an explicit refusal or requirements outline. Supplied figures are refused. Module 2.6 tables are preparation worksheets. Report only the returned facts; source reports, GLP compliance and scientific applicability are not verified. Re-read on a later turn before claiming the snapshot is current.",
   input_schema: {
     type: 'object',
     properties: {
@@ -609,7 +609,7 @@ export const DRAFT_NONCLINICAL_SUMMARIES_M2_6: AnaTool = {
 export const LOAD_NONCLINICAL_PROGRAM: AnaTool = {
   name: 'load_nonclinical_program',
   description:
-    "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: present-studies for assess_nonclinical_program and species-NOAELs for compute_fih_dose. These are model-extracted rows, not an approved starting-dose or readiness basis. Do not pass them on as a program determination; worksheet tools label any relayed values as stated inputs, not records they read. The Module 2.4 and 2.6 drafts do not take these studies: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
+    "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: present-studies for assess_nonclinical_program and species-NOAELs for compute_fih_dose. These are model-extracted rows, not an approved starting-dose or readiness basis. Do not pass them on as a program determination; worksheet tools label any relayed values as stated inputs, not records they read. The Module 2.4/2.6 tools do not accept these extracted studies; they resolve their own protected governed project records, or return an explicit source refusal/outline. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
   input_schema: {
     type: 'object',
     properties: {
@@ -622,7 +622,7 @@ export const LOAD_NONCLINICAL_PROGRAM: AnaTool = {
 export const GET_NONCLINICAL_TEMPLATE: AnaTool = {
   name: 'get_nonclinical_template',
   description:
-    "Fetch a blank structured template (form) for a Module 4 study report (4.2.1 pharmacology, 4.2.2 PK, 4.2.3 toxicology), the Module 2.6 nonclinical summaries, or a first-in-human dose-justification memo. Pass a template key (a granule id like 'm4-2-3-toxicology' or a section code like '4.2.3'); omit it to list the available templates. Use this when starting a nonclinical document from scratch (no ingested data yet) — the scaffold's [PLACEHOLDER] tokens guide what to fill. For Module 2.4 and 2.6, the draft_nonclinical_* tools take no studies and return the ICH M4S outline until nonclinical studies are recorded against a project.",
+    "Fetch a blank structured template (form) for a Module 4 study report (4.2.1 pharmacology, 4.2.2 PK, 4.2.3 toxicology), the Module 2.6 nonclinical summaries, or a first-in-human dose-justification memo. Pass a template key (a granule id like 'm4-2-3-toxicology' or a section code like '4.2.3'); omit it to list the available templates. Use this when starting a nonclinical document from scratch (no ingested data yet) — the scaffold's [PLACEHOLDER] tokens guide what to fill. The draft_nonclinical_* tools accept no study figures; they read protected governed project records themselves, or return an explicit source refusal/outline.",
   input_schema: {
     type: 'object',
     properties: {

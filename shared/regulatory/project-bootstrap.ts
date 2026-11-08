@@ -31,6 +31,7 @@ import {
 import { DEVICE_AUTHORING_SECTION_CORRECTIONS } from './device-authoring-sections';
 import { ICH_M11_PROTOCOL_BASIS, ICH_M11_PROTOCOL_SECTIONS } from './protocol-m11';
 import { consentElementCitation, INFORMED_CONSENT_ELEMENTS, type ConsentApplicability } from './informed-consent-elements';
+import { sectionBlueprint as ukCtaSections, taskBlueprint as ukCtaTasks } from './uk-cta-authoring';
 
 // ─── Section Blueprints ───────────────────────────────────────────────────────
 
@@ -803,8 +804,9 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   eu_maa_sections: { id: 'eu_maa_sections', name: 'MAA Sections (CTD)', sections: CTD_SECTIONS.map(s => ({ ...s, required: true })) },
   eu_cer_sections: { id: 'eu_cer_sections', name: 'CER Sections (EU MDR)', sections: CER_SECTIONS },
 
-  // Regional clinical trial applications (full CTD, mirroring EU_CTA / US_IND)
-  uk_cta_sections: { id: 'uk_cta_sections', name: 'UK Clinical Trial Authorisation (MHRA)', sections: CTD_SECTIONS },
+  // UK uses its own medicinal-trial preparation record, not a full CTD.
+  uk_cta_sections: ukCtaSections,
+  // Other regional clinical-trial fallbacks retain their existing scope.
   ca_cta_a_sections: { id: 'ca_cta_a_sections', name: 'Canada CTA Amendment', sections: CTD_SECTIONS },
   au_cta_sections: { id: 'au_cta_sections', name: 'Australia Clinical Trial Approval (TGA)', sections: CTD_SECTIONS },
   ch_cta_sections: { id: 'ch_cta_sections', name: 'Switzerland Clinical Trial Application (Swissmedic)', sections: CTD_SECTIONS },
@@ -1321,6 +1323,7 @@ const DEVICE_SOFTWARE_TASKS: MilestoneDefinition[] = [
 const DEFAULT_DRUG_TASKS: MilestoneDefinition[] = DRUG_MARKETING_TASKS;
 
 const TASK_BLUEPRINTS: Record<string, TaskBlueprint> = {
+  uk_cta_tasks: ukCtaTasks,
   // Drug / cross-cutting families
   drug_cta_tasks: { id: 'drug_cta_tasks', name: 'Clinical Trial Application Tasks', milestones: DRUG_CTA_TASKS },
   drug_marketing_tasks: { id: 'drug_marketing_tasks', name: 'Marketing Authorisation Tasks', milestones: DRUG_MARKETING_TASKS },

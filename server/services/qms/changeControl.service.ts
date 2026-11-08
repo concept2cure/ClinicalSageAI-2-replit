@@ -20,6 +20,59 @@
 import { pool } from '../../db';
 import type { RequestSqlClient } from '../../db/requestDb';
 import { queryRowsClient } from '../../db/queryRowsClient';
+import { AGENCIES, DOCUMENT_TYPES, AggregateLearningRefusedError, LEARNING_COHORT_MINIMUM, learningClassOf } from '../intelligence/ana-failure-learning';
+import { learningPromotionOf, type LearningPromotion, type ReviewedLearningArtifact } from './change-approval-signature';
+import { runWithSystemTenantScope } from '../../db/tenantStore';
+import { withTenantConnection } from '../../db/withTenantConnection';
+
+/** Fixed aggregate projection only. Tenant/source identities are counted inside SQL and never returned. */
+type LearningCohortBins = Pick<ReviewedLearningArtifact, 'classKey' | 'agency' | 'documentType'>;
+async function learningCohortRows(q: RequestSqlClient, input: LearningCohortBins) {
+  return q.query(`SELECT COUNT(DISTINCT a.tenant_id)::int AS tenant_count,
+      COUNT(DISTINCT (a.tenant_id,a.record_id))::int AS event_count
+    FROM audit_logs a JOIN organizations o ON o.id=a.tenant_id
+    WHERE a.action='ana_pattern.contributed' AND a.table_name='aggregate_learning' AND o.status='active'
+      AND o.settings->'learningContributionPolicy'->>'enabled'='true'
+      AND o.settings->'learningContributionPolicy'->>'version'=a.new_values::jsonb->>'policyVersion'
+      AND o.settings::jsonb->'learningContributionPolicy'=(SELECT p.new_values::jsonb->'policy' FROM audit_logs p
+        WHERE p.tenant_id=o.id AND p.action='ana_pattern.contribution_policy' AND p.table_name='aggregate_learning'
+          AND p.record_id=o.id::text AND p.chain_seq IS NOT NULL ORDER BY p.chain_seq DESC LIMIT 1)
+      AND a.new_values::jsonb->>'schemaVersion'='1' AND a.new_values::jsonb->>'count'='1'
+      AND a.new_values::jsonb->>'classKey'=$1 AND a.new_values::jsonb->>'agency'=$2
+      AND a.new_values::jsonb->>'documentType'=$3
+      AND (a.new_values::jsonb-ARRAY['schemaVersion','classKey','agency','documentType','count','policyVersion','sourceAuditEventId'])='{}'::jsonb`,
+  [input.classKey, input.agency, input.documentType]);
+}
+export async function readLearningCohort(input: LearningCohortBins, current?: RequestSqlClient) {
+  learningClassOf(input.classKey);
+  if (!AGENCIES.includes(input.agency) || !DOCUMENT_TYPES.includes(input.documentType)) throw new AggregateLearningRefusedError(400);
+  // A caller already inside the fixed receipt reader reuses its transaction;
+  // this never elevates the supplied executor or accepts SQL/callback input.
+  const result = current ? await learningCohortRows(current, input)
+    : await runWithSystemTenantScope('aggregate-learning:cohort', () => withTenantConnection({
+      tenantId: '0', role: 'app_super_admin', source: 'job', caller: 'aggregate-learning:cohort',
+    }, q => learningCohortRows(q, input)));
+  const row = result.rows[0], tenantCount = Number(row?.tenant_count), eventCount = Number(row?.event_count);
+  if (!Number.isSafeInteger(tenantCount) || tenantCount < LEARNING_COHORT_MINIMUM ||
+      !Number.isSafeInteger(eventCount) || eventCount < tenantCount) throw new AggregateLearningRefusedError(409);
+  return { tenantCount, eventCount, cohortMinimum: LEARNING_COHORT_MINIMUM };
+}
+
+export async function listReviewedLearningLibrary() {
+  const ids = await runWithSystemTenantScope('aggregate-learning:directory', () => withTenantConnection({
+    tenantId: '0', role: 'app_super_admin', source: 'job', caller: 'aggregate-learning:directory',
+  }, q => q.query(`SELECT DISTINCT controlled_document->'metadata'->'learningPromotion'->'artifact'->>'libraryVersionId' AS id
+    FROM qms_document_versions WHERE record_kind='signed'
+      AND controlled_document->'metadata'->'learningPromotion'->'artifact'->>'kind'='aggregate_learning_v1'
+    ORDER BY id LIMIT 25`)));
+  const { loadReviewedLearningLibraryArtifact } = await import('./controlled-document-service');
+  const artifacts = [];
+  for (const row of ids.rows) {
+    try { artifacts.push(await loadReviewedLearningLibraryArtifact(String(row.id))); }
+    catch (error) { if (!(error instanceof AggregateLearningRefusedError)) throw error; }
+  }
+  return artifacts;
+}
 
 // ─── enums ──────────────────────────────────────────────────────────────────
 export const CHANGE_TYPES = [
@@ -72,7 +125,9 @@ export class ChangeApprovalRequiresSignatureError extends Error {
 }
 
 
+export type LearningReviewProjection = (LearningPromotion & { instructions: string }) | { unavailable: true } | null;
 export interface ChangeControlRow {
+  learning_review?: LearningReviewProjection;
   id: number;
   organization_id: number;
   change_number: string;
@@ -187,6 +242,12 @@ const IMPLEMENTATION_OVERDUE_SQL =
 
 /** A register row with the server-computed overdue flag. */
 export type ChangeControlListRow = ChangeControlRow & { implementation_overdue: boolean };
+function learningReviewView(row: ChangeControlRow): LearningReviewProjection {
+  try {
+    const promotion = learningPromotionOf(row.metadata);
+    return promotion ? { ...promotion, instructions: learningClassOf(promotion.artifact.classKey).instruction } : null;
+  } catch { return { unavailable: true }; }
+}
 
 export async function listChanges(orgId: number, opts: { status?: string; changeType?: string; programId?: string | null } = {}, client: RequestSqlClient = pool): Promise<ChangeControlListRow[]> {
   const args: unknown[] = [orgId];
@@ -199,7 +260,7 @@ export async function listChanges(orgId: number, opts: { status?: string; change
        FROM qms_change_controls WHERE ${where} ORDER BY created_at DESC`,
     args,
   );
-  return rows;
+  return rows.map(row => ({ ...row, learning_review: learningReviewView(row) }));
 }
 
 /** The lifecycle moves CHANGE_TRANSITIONS allows from a state (approval among them: it is the signed route). */
@@ -212,7 +273,7 @@ export async function getChange(orgId: number, id: number, client: RequestSqlCli
     `SELECT * FROM qms_change_controls WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
     [id, orgId],
   );
-  return rows[0] ?? null;
+  return rows[0] ? { ...rows[0], learning_review: learningReviewView(rows[0]) } : null;
 }
 
 export async function updateChange(orgId: number, id: number, p: {

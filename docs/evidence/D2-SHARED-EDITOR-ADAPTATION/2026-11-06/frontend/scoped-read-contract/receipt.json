@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "package": "F1",
+  "launchRow": "D2",
+  "scope": "Existing real Authoring/Workbench Vault and source-start integration after the canonical scoped-list confirmation contract.",
+  "canonicalMergeCommit": "637737bb13f51363e15a75d6f4a27bfcbeb8e408",
+  "incomingCommit": "53b9f15d8f",
+  "headAtPackaging": "e31f5c84f16f728c740c77fb4dd8fbc57a9e1481",
+  "packagedAtUtc": "2026-11-06T19:58:17.680267+00:00",
+  "workdir": "/workspace/ClinicalSageAI-2-replit",
+  "red": {
+    "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --fileParallelism=false client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx",
+    "exitCode": 1,
+    "suitesFailed": 2,
+    "testsFailed": 19,
+    "testsPassed": 7,
+    "totalTests": 26,
+    "log": {
+      "path": "red.log.gz",
+      "sha256": "88db069a2a5769c3dd1400b3976dee3242f4c65ec63688472a2588d4428d5bcd",
+      "bytes": 8435,
+      "originalSha256": "75b2c39726c91181a4e026cf27a8aabd6d21dc8aa560711da8240f6439d49104",
+      "originalBytes": 552808,
+      "originalLines": 13734,
+      "gzipMtime": 0
+    },
+    "interpretation": "Stale ordinary-list fixtures omit success:true and exact program_id, so the canonical project read correctly withholds them."
+  },
+  "green": {
+    "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --fileParallelism=false client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx",
+    "exitCode": 0,
+    "suitesPassed": 3,
+    "testsPassed": 43,
+    "log": {
+      "path": "green.log",
+      "sha256": "41e2cb5a19022c617dc25f06e91c48058b52f24d22febceead20443d796d11e4",
+      "bytes": 10149,
+      "originalSha256": "41e2cb5a19022c617dc25f06e91c48058b52f24d22febceead20443d796d11e4",
+      "originalBytes": 10149,
+      "originalLines": 64,
+      "gzipMtime": null
+    }
+  },
+  "fixtureCorrections": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+      "changes": "Only success:true on the list envelope and program_id:PID on the existing row."
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx",
+      "changes": "Only success:true on the list envelope and program_id:PID on the existing row."
+    }
+  ],
+  "fixturePatch": {
+    "path": "fixture-correction.patch",
+    "sha256": "2c9e58440634a309c4822245162a431738d695368a51f477c1428c7c2962f5d5"
+  },
+  "assertionChanges": false,
+  "productionChanges": false,
+  "selectedInputs": 13,
+  "selectedInputsUnchangedDuringGreen": true,
+  "changedBetweenRedAndGreen": [
+    "client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx",
+    "client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx"
+  ],
+  "inputManifests": [
+    {
+      "path": "red-inputs.json",
+      "sha256": "3e7f9a7ee9c24d025a19524169cba11f5538eaffdd8c2bc3424830a0fe5fb094"
+    },
+    {
+      "path": "green-before.json",
+      "sha256": "ef967816cdf2f2fc785d210666810ef8ce00752b7c7c5320edb57364e8489d83"
+    },
+    {
+      "path": "green-after.json",
+      "sha256": "ef967816cdf2f2fc785d210666810ef8ce00752b7c7c5320edb57364e8489d83"
+    }
+  ],
+  "diffCheck": {
+    "command": "git diff --check -- client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx",
+    "exitCode": 0,
+    "path": "diff-check.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "excluded": [
+    {
+      "suite": "documentAuthoringSourcesRail.test.tsx",
+      "reason": "Already passed unchanged in the risk_project_ui agent\u2019s current scoped-read cohort; not rerun here."
+    },
+    {
+      "suite": "Standalone Vault, source-dialog and transport suites",
+      "reason": "Do not invoke the ordinary useScopedDocuments project-list read; prior results are not repeated as evidence of this contract."
+    }
+  ],
+  "limits": "Selected pins are not an exhaustive transitive dependency inventory. These synthetic integration tests establish fixture compatibility and preserve existing assertions; they do not establish deployed acceptance, durable backend persistence or full MDX scientific automation. RED and GREEN cases overlap; do not add counts as unique coverage."
+}

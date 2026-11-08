@@ -1,0 +1,7 @@
+{
+  "file": "server/services/authoring/__tests__/authoring-source-import.test.ts",
+  "canonicalSource": "c5baa0089774eb91d4bdd9fe60a6fbcf33b05bbc",
+  "beforeSha256": "bdfc013f1eb365156294d24dc6b46dfbdad0b4e4b6d5284173c7b731d649c9d0",
+  "initialResult": "10 failed/339 passed in five caller suites; all failures in this fixture",
+  "redLog": "editor-callers-fixture-red.txt.gz"
+}

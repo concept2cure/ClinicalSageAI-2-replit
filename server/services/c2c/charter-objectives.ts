@@ -49,6 +49,7 @@ import { documentAgencyFor } from '../regulatory/market-support';
 import { actorLabel, resolveActorNames } from '../tenant/actor-names';
 import { PROGRAM_TO_DOC_TYPE } from './document-class';
 import { createScopedLogger } from '../../utils/logger.js';
+import type { RequestSqlClient } from '../../db/requestDb';
 
 const log = createScopedLogger('charter-objectives');
 
@@ -225,10 +226,7 @@ async function projectCharter(db: Db, orgId: number, projectId: number) {
   const rows = await db.select({ id: projectCharters.id }).from(projectCharters)
     .where(and(eq(projectCharters.organizationId, orgId), eq(projectCharters.projectId, projectId)))
     .orderBy(projectCharters.id).limit(2);
-  if (rows.length > 1) {
-    throw new CharterObjectivesRefusal(409, 'CHARTER_AMBIGUOUS', 'This project has more than one charter, so its objective of record cannot be named. Nothing was read or changed.');
-  }
-  return rows[0] ?? null;
+  return singleObjectiveRow(rows,'charter') ?? null;
 }
 
 async function objectivesSection(db: Db, charterId: number, lock = false) {
@@ -240,10 +238,14 @@ async function objectivesSection(db: Db, charterId: number, lock = false) {
     .where(and(eq(charterSections.charterId, charterId), eq(charterSections.sectionKey, OBJECTIVES_SECTION_KEY)))
     .orderBy(charterSections.id).limit(2);
   const rows = lock ? await q.for('update') : await q;
-  if (rows.length > 1) {
-    throw new CharterObjectivesRefusal(409, 'OBJECTIVES_AMBIGUOUS', "This project's charter has more than one objectives section. Nothing was read or changed.");
-  }
-  return rows[0] ?? null;
+  return singleObjectiveRow(rows,'section') ?? null;
+}
+
+function singleObjectiveRow<T>(rows: T[], kind: 'charter' | 'section'): T | undefined {
+  if (rows.length > 1) throw new CharterObjectivesRefusal(409,kind === 'charter' ? 'CHARTER_AMBIGUOUS' : 'OBJECTIVES_AMBIGUOUS',
+    kind === 'charter' ? 'This project has more than one charter, so its objective of record cannot be named. Nothing was read or changed.'
+      : "This project's charter has more than one objectives section. Nothing was read or changed.");
+  return rows[0];
 }
 
 /** The project's current objective, and every recorded version, newest first. */
@@ -282,6 +284,42 @@ export async function readProjectObjectives(db: Db, scope: { orgId: number; proj
       };
     }),
   };
+}
+
+/** The same canonical objective on a caller-owned SQL connection (scheduler, actor-admitted monitor). */
+export async function readProjectObjectivesOnExecutor(client: RequestSqlClient, scope: { orgId: number; projectId: number }): Promise<ObjectivesRecord> {
+  const charters = await client.query(`SELECT id FROM project_charters WHERE organization_id=$1 AND project_id=$2 ORDER BY id LIMIT 2`, [scope.orgId,scope.projectId]);
+  const charter = singleObjectiveRow(charters.rows,'charter');
+  if (!charter) return { charterId: null,current: null,history: [] };
+  const charterId = positiveObjectiveId(charter.id);
+  const sections = await client.query(`SELECT id,content,version,content_hash,status,read_only,updated_at,updated_by
+    FROM charter_sections WHERE charter_id=$1 AND section_key=$2 ORDER BY id LIMIT 2`, [charterId,OBJECTIVES_SECTION_KEY]);
+  const section = singleObjectiveRow(sections.rows,'section');
+  if (!section) return { charterId,current: null,history: [] };
+  if (typeof section.content !== 'string' || sha256(section.content) !== section.content_hash) {
+    throw new CharterObjectivesRefusal(409,'OBJECTIVES_UNREADABLE','The recorded objective content does not match its canonical version hash.');
+  }
+  const content = parseContent(typeof section.content === 'string' ? section.content : null);
+  if (!content) throw new CharterObjectivesRefusal(409,'OBJECTIVES_UNREADABLE',"This project's objective is recorded, but its current version could not be read.");
+  const events = await client.query(`SELECT event_type,occurred_at,actor_user_id,reason,after_value FROM charter_audit_events
+    WHERE organization_id=$1 AND charter_id=$2 AND entity_type='section' AND entity_id=$3 ORDER BY occurred_at DESC,id DESC LIMIT 50`,
+    [scope.orgId,charterId,positiveObjectiveId(section.id)]);
+  return { charterId,current: { content,version: positiveObjectiveId(section.version),contentHash: String(section.content_hash ?? ''),
+    status: String(section.status ?? 'draft'),updatedAt: new Date(String(section.updated_at)).toISOString(),
+    updatedBy: section.updated_by == null ? null : positiveObjectiveId(section.updated_by),locked: section.read_only === true },
+    history: events.rows.map(objectiveHistoryOnExecutor) };
+}
+
+function positiveObjectiveId(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0) throw new CharterObjectivesRefusal(409,'OBJECTIVES_UNREADABLE','The recorded objective identity could not be read.');
+  return value;
+}
+
+function objectiveHistoryOnExecutor(row: Record<string, unknown>): ObjectivesHistoryEntry {
+  const after = row.after_value && typeof row.after_value === 'object' ? row.after_value as Record<string,unknown> : {};
+  return { version: typeof after.version === 'number' ? after.version : null,eventType: String(row.event_type),
+    occurredAt: new Date(String(row.occurred_at)).toISOString(),actorUserId: positiveObjectiveId(row.actor_user_id),
+    reason: typeof row.reason === 'string' ? row.reason : null,content: parseContent(typeof after.content === 'string' ? after.content : null) };
 }
 
 export interface RecordObjectivesInput {

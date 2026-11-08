@@ -1,0 +1,10 @@
+{
+  "argv": [
+    "node",
+    "scripts/seed-admin.mjs"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.508,
+  "rawOutput": "seed-ana.log.gz",
+  "rawGzipSha256": "9cb1785324b3cf7ec1bca192cb52688d82d978aea048506b7c42b74af3fa848c"
+}

@@ -63,7 +63,9 @@ export const issueReviewSchema = z.object({
   mappedArtifactIds: z.array(z.string().max(64)).optional(),
   resolutionStatus: z.enum(['open', 'in_progress', 'resolved', 'waived']).optional(),
   owner: z.string().max(200).optional(),
-});
+  // Echo the exact letter version the person read, never an actor or a pass flag.
+  sourceTextDigest: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+}).strict();
 
 export const responsePackageCreateSchema = z.object({
   organizationId: z.coerce.number().int().positive().optional(),

@@ -1,5 +1,6 @@
 /** Navigation conveys verified record identity; it never grants object access. */
 import { SUBMISSION_WORKSPACES } from './submission-ui';
+import { resolveSurfaceAction } from '../navigation/surface-actions';
 export type NotificationTargetSurface = 'insights' | 'tasks' | 'document-authoring' | 'project-home' | 'submission-center' | 'gateway-transmittals' | 'protocol-dev' | 'quality' | 'conversation-thread' | 'vault';
 export interface NotificationRecordTarget {
   surface: NotificationTargetSurface;
@@ -22,7 +23,7 @@ export const noticeSafeSectionCode = (value: string): boolean => value.length > 
 const allowedKeys: Record<NotificationTargetSurface, readonly string[]> = {
   insights: ['reportRunId'], tasks: ['taskId'], 'document-authoring': ['documentId', 'sectionCode'],
   'project-home': [], 'submission-center': ['submissionId', 'sequenceId', 'ws'],
-  'gateway-transmittals': ['transmittalId'], 'protocol-dev': ['protocol', 'protocolScope'], quality: ['qmsDocumentId', 'qmsIntent'],
+  'gateway-transmittals': ['transmittalId'], 'protocol-dev': ['protocol', 'protocolScope'], quality: ['qmsDocumentId', 'qmsIntent', 'qmsTab'],
   'conversation-thread': ['threadId'],
   // A Vault version: a review route's notice opens it (RR1b, REVIEW_ROUTING §2.11).
   vault: ['documentId'],
@@ -38,7 +39,9 @@ const validParams: Record<NotificationTargetSurface, (p: Record<string, string>)
   'gateway-transmittals': p => noticePositiveId(p.transmittalId),
   'protocol-dev': p => noticePositiveId(p.protocol) && (p.protocolScope === undefined || p.protocolScope === 'unfiled'),
   // `qmsIntent: 'read'`: a training task's notice opens the training reader (MR-12 Stage 4 slice 4b).
-  quality: p => noticePositiveId(p.qmsDocumentId) && (p.qmsIntent === undefined || p.qmsIntent === 'read'),
+  quality: p => p.qmsDocumentId !== undefined
+    ? noticePositiveId(p.qmsDocumentId) && (p.qmsIntent === undefined || p.qmsIntent === 'read') && (p.qmsTab === undefined || p.qmsTab === 'sop')
+    : p.qmsIntent === undefined && typeof p.qmsTab === 'string' && resolveSurfaceAction('quality.open-tab', { tab: p.qmsTab }).ok,
   'conversation-thread': p => noticeThreadId(p.threadId),
   vault: p => typeof p.documentId === 'string' && NOTICE_UUID.test(p.documentId),
 };

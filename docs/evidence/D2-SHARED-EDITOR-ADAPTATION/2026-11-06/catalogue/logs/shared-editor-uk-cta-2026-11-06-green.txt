@@ -1,0 +1,384 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/authoring/__tests__/authoring-draft-template.test.ts
+{
+  "timestamp": "2026-11-06T20:12:43.924Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:12:43.953Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-draft-template.test.ts
+{
+  "timestamp": "2026-11-06T20:12:43.954Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-draft-template.test.ts
+[database] Database connection successful
+
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > calls the existing validator for the captured document/project and one saved section without extra SQL 17ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > honors an assembled section’s identity, region and limits over a different/manual parent 8ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > keeps exact Unicode, quotes, newlines and checklist text without shortening the reference 7ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > preserves null for an unbound document instead of inventing a program sentinel 7ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > keeps an ad-hoc document available without inventing a template or eligibility record 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"aiDraftable":false} 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"kind":"preparation"} 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"authoringMode":"manual"} 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses a selected manual section even when its parent permits drafting 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > does not infer complete source fields or eligibility from current-reference text 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > does not treat current E3 reference identity as a retained historical section policy 29ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > retains historical identity-only source fields without filling missing eligibility 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > still enforces an explicit negative restriction in historical identity-only fields 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > reports canonical validation failure as unavailable instead of using another/current template 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a CSR drafts as a CSR whatever template it was made from > drafts the component CSR New document offers as a CSR, though its source records no registry id 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a CSR drafts as a CSR whatever template it was made from > keeps a non-CSR document as it was 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses unsupported actual notified-body agency for component:performance_evaluation_report without substituting EMA 241ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses unsupported actual notified-body agency for registry:EU_PER without substituting EMA 124ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > keeps the actual IVDR technical-document manual limit ahead of any writing preference 171ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > does not interpret an unsupported recorded agency as a geographic region code 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives US writing control only when the caller omitted it 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives CA writing control only when the caller omitted it 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives EU writing control only when the caller omitted it 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives JP writing control only when the caller omitted it 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an explicit region conflicting with the recorded section 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > does not inherit a receiving region from the parent when the selected section is GLOBAL 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > requires an explicit writing region when the saved reference has no receiving region 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > requires an explicit writing region when the saved reference has no receiving region 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "" 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "unknown" 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "GLOBAL" 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region null 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region {} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region 7 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_CSR template identity for the document kind 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_PROTOCOL template identity for the document kind 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_IB template identity for the document kind 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the entire mandatory reference block has one UTF-8 byte budget > accepts the exact full-block ASCII boundary and refuses the next byte without clipping 5ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the entire mandatory reference block has one UTF-8 byte budget > counts multibyte Unicode rather than JavaScript character length 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the one prompt composer retains caller and evidence inputs separately > keeps exact tone/context/requirements and the source-attribution envelope, with a working-draft instruction 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > appends to the one prompt and changes nothing before it; without a revision the prompt is the same 7ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > reads the revise field: absent is no revision; a malformed one is refused, trimmed instructions are kept 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > admits a live, current, complete base and names what the revision is derived from 25ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the draft route’s revision parts > reads nothing for a request that is not a revision, and spreads empty parts 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the draft route’s revision parts > reads the named candidate once and refuses before reading when the request is malformed 2ms
+stdout | server/services/authoring/__tests__/authoring-source-import.test.ts
+{
+  "timestamp": "2026-11-06T20:12:48.317Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:12:48.319Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts
+{
+  "timestamp": "2026-11-06T20:12:48.320Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-source-import.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts
+{
+  "timestamp": "2026-11-06T20:12:49.324Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires one actual project relationship (ambiguous)
+{
+  "timestamp": "2026-11-06T20:12:52.922Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "authoring-program-access",
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "projectIds": [
+      42,
+      43
+    ]
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses use-only project membership before source metadata, bytes, conversion or creation 7ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses private project access before source metadata, bytes, conversion or creation 2ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires a current writable membership (viewer) 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires a current writable membership (null) 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 7tail before any lookup 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 0 before any lookup 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 9007199254740992 before any lookup 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses a noncanonical numeric actor 2147483648 before any lookup 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > refuses mismatched principal and audit actor identities before any lookup 2ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires one actual project relationship (unanchored) 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > requires one actual project relationship (ambiguous) 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > fails closed when current sharing cannot be read 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > source → one authoring working copy > rechecks sharing on the creation transaction after conversion 4ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses foreign projects before reading source bytes or writing 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses unavailable source identities before reading bytes 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses a superseded or unverified current version (false) after locking its exact source row 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses a superseded or unverified current version (undefined) after locking its exact source row 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses altered original bytes and records no authoring document 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > escapes extracted text, keeps custom types and verified origin, and states conversion loss 5ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > retains Word tables/headings and makes missing codes and embedded figures visible 4ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > refuses a changed source inside the canonical transaction 4ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > reopens the exact saved draft and keeps its edits and warnings 2ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > uses the captured upload with the same source hash rather than guessed Vault identities 3ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > requires the stated change reason "" 2ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > requires the stated change reason "short" 1ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > drops caller supplied import-source provenance at the public draft door 0ms
+ ✓ server/services/authoring/__tests__/authoring-source-import.test.ts > exact source intake, integrity, conversion and draft reuse > rejects source/program SQL-shaped inputs before any SQL or byte read 1ms
+stdout | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+{
+  "timestamp": "2026-11-06T20:12:54.265Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:12:54.267Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+{
+  "timestamp": "2026-11-06T20:12:54.268Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Database connection successful
+
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report an EU CTA submittable through the medicines dossier gateway 3ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > names the channel it cannot transmit to, rather than reporting a bare gap 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report a centralised-procedure filing submittable through CESP 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > routes every centralised EMA eCTD filing to the eSubmission Gateway, not CESP 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > keeps national, MRP and DCP filings on CESP — the positive control 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > is the one channel function: CTIS is a portal, an IVDR PER retains its Notified Body recipient 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > lists the unconnected centralised filings in the integration backlog 3ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > counts the portal-only channel in the report rather than hiding it in submittable 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > an EMA filing outside the centralised procedure is not sent to the eSubmission Gateway > does not claim the centralised procedure or the eSubmission Gateway for an EMA IRIS filing 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > an EMA filing outside the centralised procedure is not sent to the eSubmission Gateway > fails closed for each actual recipient whose channel is not modelled — never the CESP region default 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > the registry declares IRIS for the EMA filings that go through IRIS > declares IRIS, not eCTD, on orphan designation, PIP, scientific advice and PRIME 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > the registry declares IRIS for the EMA filings that go through IRIS > routes every entry the registry declares IRIS to EMA IRIS, and no other entry 5ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > the registry declares IRIS for the EMA filings that go through IRIS > never reports an IRIS filing submittable, and keeps the centralised MAA on the eSubmission Gateway 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > corrected device recipient identity cannot inherit a regional gateway > EU_PERF_STUDY recipient has no modelled submission channel 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > corrected device recipient identity cannot inherit a regional gateway > EU_REF_LAB recipient has no modelled submission channel 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > corrected device recipient identity cannot inherit a regional gateway > JP_NINTEI recipient has no modelled submission channel 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > UK medicinal trial preparation uses its combined IRAS route > declares a regional IRAS application without changing the saved display name 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > UK medicinal trial preparation uses its combined IRAS route > names combined review as unconnected and leaves date and exceptional-route assessment open 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > UK medicinal trial preparation uses its combined IRAS route > reports the missing connector without claiming portal-only transmission or filing readiness 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > UK medicinal trial preparation uses its combined IRAS route > preserves the existing UK marketing and US IND routes 0ms
+stdout | server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+{
+  "timestamp": "2026-11-06T20:12:57.540Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:12:57.542Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+{
+  "timestamp": "2026-11-06T20:12:57.542Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > uses the recorded Canadian CTA for an omitted or blank filing choice: undefined 159ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > uses the recorded Canadian CTA for an omitted or blank filing choice: "" 56ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > uses the recorded Canadian CTA for an omitted or blank filing choice: "   " 47ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > keeps recorded TA/modality/stage/population above conflicting declarations without calling them scientific evidence 47ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > preserves an explicit filing choice and states its disagreement with the recorded application 65ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > keeps ambiguous charters and declared fallback distinct instead of choosing a charter 47ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > keeps a recorded broad biologic unassessed even when a caller supplies a specific modality 80ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > carries exact ICH_PROTOCOL identity into the shared clinical profile selection 46ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > carries exact ICH_CSR identity into the shared clinical profile selection 57ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > refuses unauthorized project access before dispatch: {"projectId":"11111111-2222-4333-8444-000000000021","userId":7} 12ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > refuses unauthorized project access before dispatch: {"projectId":"11111111-2222-4333-8444-000000000011","userId":8} 18ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > emits successful recorded-project chunks in order after the post-provider check 52ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > emits no chunks when charter changes after provider streaming begins 59ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > emits no chunks when access changes after provider streaming begins 65ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > preserves live streaming for an ordinary request without a project 25ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses a charter changed while the outbound call waits, before model effect 62ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses changed charter after provider response instead of returning draft text 41ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses changed access after provider response instead of returning draft text 87ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses changed filing after provider response instead of returning draft text 42ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded UK CTA uses shared drafting with explicit IRAS boundaries > prepares content for external combined review without inventing IRAS form formatting 64ms
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+{
+  "timestamp": "2026-11-06T20:13:13.481Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+{
+  "timestamp": "2026-11-06T20:13:16.603Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:13:16.605Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+{
+  "timestamp": "2026-11-06T20:13:16.605Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a Health Canada CTA section is drafted with its recorded application and requirements
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > leaves a legacy CTD number unindexed for UK CTA and states the requested writing-region mismatch
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a project whose application cannot be resolved is told so, and no jurisdiction is assumed
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a US IND section is drafted for FDA with the US IND record, as before
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > carries the charter and product facts into the actual gateway prompt as unqualified records
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not choose an arbitrary charter when more than one is recorded
+[turn-record] could not write the turn record: pool.connect is not a function
+
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a Health Canada CTA section is drafted with its recorded application and requirements 1395ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > leaves a legacy CTD number unindexed for UK CTA and states the requested writing-region mismatch 33ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a project whose application cannot be resolved is told so, and no jurisdiction is assumed 20ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a US IND section is drafted for FDA with the US IND record, as before 17ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > carries the charter and product facts into the actual gateway prompt as unqualified records 22ms
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not retain a response after the charter changes during generation
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the one editor receives the cited UK preparation outline > uses UK protocol preparation and scope from the recorded filing, without a new editor path
+[turn-record] could not write the turn record: pool.connect is not a function
+
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not choose an arbitrary charter when more than one is recorded 10ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not call a provider or park a draft if the recorded facts cannot be read 8ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not retain a response after the charter changes during generation 8ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the one editor receives the cited UK preparation outline > uses UK protocol preparation and scope from the recorded filing, without a new editor path 13ms
+ ✓ server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts > CTA_REQUIREMENTS > models every market with a non-empty, well-formed component set 3ms
+ ✓ server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts > CTA_REQUIREMENTS > uses unique component codes within each market 1ms
+ ✓ server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts > assessCtaReadiness > retains the other markets' component-presence verdict when all required components are provided 1ms
+ ✓ server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts > assessCtaReadiness > flags a missing FDA Investigator's Brochure as a MISSING_COMPONENT error and not ready 1ms
+ ✓ server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts > assessCtaReadiness > treats an unrecognized provided component as a warning but stays ready 0ms
+ ✓ server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts > assessCtaReadiness > requires the IMPD for an EU CTA 0ms
+ ✓ server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts > assessCtaReadiness > returns an UNKNOWN_MARKET error for an unmodeled market 1ms
+ ✓ server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts > assessCtaReadiness > is deterministic — identical input yields identical output 1ms
+ ✓ server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts > UK CTA baseline preparation and unresolved applicability > cannot report ready from the six legacy labels and does not call them unknown 1ms
+ ✓ server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts > UK CTA baseline preparation and unresolved applicability > projects the canonical outline's baseline rows and guidance without another legal list 1ms
+ ✓ server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts > UK CTA baseline preparation and unresolved applicability > stays unassessed when every baseline label is present, with the canonical dated basis and limits 2ms
+ ✓ server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts > UK CTA baseline preparation and unresolved applicability > recognizes conditional rows without requiring them universally or treating them as waivers 1ms
+ ✓ server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts > UK CTA baseline preparation and unresolved applicability > calls a missing UK baseline row preparation, while preserving the other market wording 0ms
+ ✓ server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts > UK CTA preparation uses one medicinal-trial outline > selects a dedicated IRAS preparation outline through the existing catalog 5ms
+ ✓ server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts > UK CTA preparation uses one medicinal-trial outline > preserves the six historical component identities and baseline alternatives 2ms
+ ✓ server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts > UK CTA preparation uses one medicinal-trial outline > prepares product science as evidence groups without demanding standalone uploads 2ms
+ ✓ server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts > UK CTA preparation uses one medicinal-trial outline > keeps GMP exceptions and trial-specific reference restrictions explicit 1ms
+ ✓ server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts > UK CTA preparation uses one medicinal-trial outline > keeps conditional MHRA material unresolved rather than universally mandatory 1ms
+ ✓ server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts > UK CTA preparation uses one medicinal-trial outline > separates REC baseline preparation and conditional local-information documents 2ms
+ ✓ server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts > UK preparation context and shared project bootstrap > carries dated platform provenance, every relevant source and an unassessed initial-date boundary 5ms
+ ✓ server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts > UK preparation context and shared project bootstrap > uses the same section object for client/shared bootstrap and server drafting 0ms
+ ✓ server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts > UK preparation context and shared project bootstrap > uses the same dedicated task object for shared and server planning 2ms
+ ✓ server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts > UK preparation context and shared project bootstrap > keeps US IND and UK marketing on their existing outlines 1ms
+stdout | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+{
+  "timestamp": "2026-11-06T20:13:22.025Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:13:22.027Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+{
+  "timestamp": "2026-11-06T20:13:22.027Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+[database] Database connection successful
+
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source component:performance_evaluation_report 88ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source registry:EU_PER 42ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source registry:EU_IVDR 44ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > validates the complete admitted batch once and returns only section agency/state 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > honors a Japanese assembled section over its US parent and does not affect another section 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > preserves GLOBAL assembled scope instead of inheriting the parent 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > keeps a truly unrecorded template distinct from a failed source read 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > does not promote identity-only source fields into a recorded receiving region 0ms
+
+ Test Files  8 passed (8)
+      Tests  152 passed (152)
+   Start at  20:12:33
+   Duration  48.54s (transform 17.78s, setup 502ms, import 36.73s, tests 8.52s, environment 1ms)
+

@@ -92,7 +92,7 @@ async function signIn(page, email, password = PASSWORDS[email], { shotPrefix = n
   for (let i = 0; i < 6; i += 1) await page.getByLabel(`Digit ${i + 1}`).fill(code[i]);
   await sleep(300);
   if (/\/login/.test(new URL(page.url()).pathname)) {
-    const verify = page.locator('button[type="submit"]').first();
+    const verify = page.getByRole('button', { name: 'Verify', exact: true });
     if (await verify.isEnabled().catch(() => false)) await verify.click().catch(() => {});
   }
   await page.waitForURL((u) => !u.pathname.endsWith('/login'), { timeout: 20000 });
@@ -129,8 +129,8 @@ function serverLogEntries(match) {
 /** The newest dev OTP code logged for `email` after `since` (ms). */
 async function otpFor(email, since) {
   for (let i = 0; i < 40; i += 1) {
-    const hit = serverLogEntries('Dev OTP code').filter((e) => e.time >= since || Date.parse(e.time) >= since)
-      .filter((e) => JSON.stringify(e).includes(email)).pop();
+    const hit = serverLogEntries('Dev OTP code').filter((e) => Date.parse(e.time) >= since)
+      .filter((e) => { const j = JSON.stringify(e); const [u, d] = email.split('@'); return j.includes(email) || j.includes(`${u[0]}***@${d}`); }).pop();
     if (hit) {
       const code = hit.code ?? hit.context?.code ?? JSON.stringify(hit).match(/"code":"(\d{6})"/)?.[1];
       if (code) return String(code);

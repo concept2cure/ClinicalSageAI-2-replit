@@ -21,6 +21,14 @@ import {
   describeInvestigationStatus,
   type InvestigationRow,
 } from './deep-investigation.js';
+import type { RequestSqlClient } from '../../db/requestDb';
+import { admitAnaProjectScope, readActiveAnaActorRole, AnaProjectScopeError } from './project-scope-admission';
+import { readProjectObjectiveMonitor, projectMonitorForTeam } from '../projects/schedule-of-events/service';
+import { readRunCoordination } from './run-events';
+import { readProjectTeamSnapshot, type ProjectTeamSnapshot } from '../../../shared/ana/turn-timeline';
+import { createHash } from 'node:crypto';
+import { stableStringify } from '../../../shared/canonical-json';
+import { isLiveRunStatus, STALE_AFTER_MS } from './run-status';
 
 /** A completed run older than this is no longer "recent" for the summary. */
 export const RECENTLY_COMPLETED_WINDOW_MS = 24 * 60 * 60_000;
@@ -138,4 +146,62 @@ export async function getAgentActivity(organizationId: number): Promise<AgentAct
   } catch {
     return { activeCount: 0, stalledCount: 0, recentlyCompletedCount: 0, items: [] };
   }
+}
+
+/** Project-readable, receipt-verified worker metadata. Peer briefs, reports and private preferences never enter this projection. */
+export async function loadProjectTeamActivity(client: RequestSqlClient, input: {
+  organizationId: number; userId: number; projectRef: string; runId?: string;
+}): Promise<ProjectTeamSnapshot> {
+  input={...input};
+  await readActiveAnaActorRole(client,input);
+  const admitted = await admitAnaProjectScope(client,{organizationId: input.organizationId,userId: input.userId,projectRef: input.projectRef});
+  if (admitted.projectId === null || !admitted.projectRef) throw new AnaProjectScopeError(400,'ANA_PROJECT_SCOPE_INVALID','Choose a project for its team activity.');
+  const refs = [...new Set([String(admitted.projectId),admitted.programId,admitted.projectRef].filter((ref): ref is string => ref !== null))];
+  const runs = await client.query(`SELECT id,status,heartbeat_at FROM ana_runs WHERE organization_id=$1 AND project_id=ANY($2::text[])
+    AND ($3::text IS NULL OR id::text=$3) ORDER BY created_at DESC,id DESC LIMIT 33`,[input.organizationId,refs,input.runId ?? null]);
+  if (input.runId && runs.rows.length !== 1) throw new AnaProjectScopeError(404,'ANA_PROJECT_NOT_FOUND','That run is not available in this project.');
+  const workers: ProjectTeamSnapshot['workers'] = [];
+  const receipts: string[] = [];
+  let currentParents = true;
+  for (const run of runs.rows.slice(0,32)) {
+    if (typeof run.id !== 'string' || !run.id) throw new Error('The project run identity could not be verified.');
+    const board = await readRunCoordination(client,{runId: run.id,organizationId: input.organizationId,userId: input.userId,
+      projectId: admitted.projectId,...(admitted.programId ? {programId: admitted.programId} : {})});
+    const parentState = teamParentState(run);
+    workers.push(...board.workers.map(worker => ({...worker,parentState})));
+    if (!currentParentWorkers(parentState,board.workers)) currentParents=false;
+    receipts.push(...board.receipts.map(receipt => receipt.eventHash));
+  }
+  await readActiveAnaActorRole(client,input);
+  await assertTeamProjectCurrent(client,input,admitted);
+  const monitor = await readProjectObjectiveMonitor(input.organizationId,admitted.projectId,{actorUserId:input.userId,executor:client});
+  await assertTeamProjectCurrent(client,input,admitted);
+  const snapshot = readProjectTeamSnapshot({ organizationId: input.organizationId,projectId: admitted.projectId,projectRef: admitted.projectRef,
+    asOf: new Date().toISOString(),cursor: receipts.length ? createHash('sha256').update(stableStringify(receipts)).digest('hex') : null,
+    complete: teamActivityComplete(runs.rows.length,workers.length,monitor.state,currentParents),goal: monitor.goal,workers: workers.slice(0,128),
+    projectMonitor: projectMonitorForTeam(monitor) });
+  if (!snapshot) throw new Error('The project team snapshot could not be verified.');
+  return snapshot;
+}
+
+async function assertTeamProjectCurrent(client:RequestSqlClient,input:{organizationId:number;userId:number;projectRef:string},
+  admitted:Awaited<ReturnType<typeof admitAnaProjectScope>>):Promise<void> {
+  const after=await admitAnaProjectScope(client,input);
+  if (after.projectId!==admitted.projectId || after.programId!==admitted.programId) throw new AnaProjectScopeError(403,'ANA_PROJECT_ACCESS_DENIED','The project relationship changed. Refresh its team activity.');
+}
+
+function currentParentWorkers(parent:string,workers:ProjectTeamSnapshot['workers']):boolean {
+  return parent==='running' || !workers.some(worker=>['assigned','started','checking','waiting'].includes(worker.phase));
+}
+function teamActivityComplete(runCount:number,workerCount:number,monitorState:string,currentParents:boolean):boolean {
+  return runCount<=32 && workerCount<=128 && monitorState==='current' && currentParents;
+}
+function teamParentState(run: Record<string,unknown>): NonNullable<ProjectTeamSnapshot['workers'][number]['parentState']> {
+  const status=run.status;
+  if (status!=='running' && status!=='paused' && status!=='awaiting_approval' && status!=='finished' && status!=='cancelled' && status!=='failed') return 'stale';
+  if (isLiveRunStatus(status)) {
+    const beat=new Date(String(run.heartbeat_at)).getTime();
+    if (!Number.isFinite(beat) || Date.now()-beat>STALE_AFTER_MS) return 'stale';
+  }
+  return status;
 }

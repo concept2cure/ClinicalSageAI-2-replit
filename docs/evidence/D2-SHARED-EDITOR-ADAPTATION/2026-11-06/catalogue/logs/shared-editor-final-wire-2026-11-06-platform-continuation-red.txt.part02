@@ -1,0 +1,341 @@
+thout using an enabled platform key or silently substituting another model
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 1ms org=101 user=- caller=- req=4a6ad7ec-47ea-46ad-951c-02bf77b1976f
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > refuses revoked cards without using an enabled platform key or silently substituting another model
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > contains a credential revoked after selection at the fresh SDK boundary, without platform fallback
+{
+  "timestamp": "2026-11-06T20:42:14.891Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:14.891Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > contains a credential revoked after selection at the fresh SDK boundary, without platform fallback
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 1ms org=101 user=- caller=- req=ae51cfec-5ad5-4dd4-825c-e79a753655e4
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > contains a credential revoked after selection at the fresh SDK boundary, without platform fallback
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > refuses a supplied invalid actor instead of interpreting it as background work
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 2ms org=101 user=invalid-actor caller=- req=f4efb506-9652-4dc9-90e8-6e127181271c
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > refuses a supplied invalid actor instead of interpreting it as background work
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > keeps arbitrary SDK error text out of the final error and failure ledger
+{
+  "timestamp": "2026-11-06T20:42:14.899Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: Model provider request failed (HTTP 400).",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > keeps arbitrary SDK error text out of the final error and failure ledger
+[AI Gateway Audit] ✗ openai/gpt-4o task=chat tokens=0 0ms org=- user=- caller=- req=8f3952d0-7939-468f-8bba-d497e40fb477
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > keeps arbitrary SDK error text out of the final error and failure ledger
+{
+  "timestamp": "2026-11-06T20:42:14.899Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o-mini failed: Model provider request failed (HTTP 400).",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > keeps arbitrary SDK error text out of the final error and failure ledger
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:37120) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > never accepts a header-only PASS or an unreviewed alias 14ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > lists verified qualified pins, while the real pending registry offers none 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > enables existing rows separately for two tenants without global keys or global registry mutation 6ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > refuses revoked cards without using an enabled platform key or silently substituting another model 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > preserves explicitly disabled providers and canonically disabled rows even with an active tenant key 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > contains a credential revoked after selection at the fresh SDK boundary, without platform fallback 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > refuses a supplied invalid actor instead of interpreting it as background work 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > tenant-owned model availability and SDK dispatch > keeps arbitrary SDK error text out of the final error and failure ledger 2ms
+stdout | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+{
+  "timestamp": "2026-11-06T20:42:16.599Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T20:42:16.603Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+{
+  "timestamp": "2026-11-06T20:42:16.603Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant keeps current-source SDK dispatch reachable
+{
+  "timestamp": "2026-11-06T20:42:16.726Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/usage-recorder.ts:104:16",
+    "queryPreview": "INSERT INTO api_usage_logs (organization_id, user_id, module, endpoint, model, request_count, tokens_used, cost_cents, metadata, created_at) VALUES ($1, $2, ...",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant refuses source revocation after credential work without retry or disclosure 15ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant refuses source revocation after credential work without retry or disclosure 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / platform refuses source revocation after credential work without retry or disclosure 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / platform refuses source revocation after credential work without retry or disclosure 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant cancels during credential work before any SDK call 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant cancels during credential work before any SDK call 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / platform cancels during credential work before any SDK call 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / platform cancels during credential work before any SDK call 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant keeps current-source SDK dispatch reachable 28ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant keeps current-source SDK dispatch reachable 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / platform keeps current-source SDK dispatch reachable 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / platform keeps current-source SDK dispatch reachable 9ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant rechecks cancellation after the final source read awaits 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant rechecks cancellation after the final source read awaits 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / platform rechecks cancellation after the final source read awaits 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / platform rechecks cancellation after the final source read awaits 1ms
+ × server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic checks cancellation in the platform-client promise continuation before SDK create 9ms
+   → expected { …(17) } to match object { name: 'GatewayAbortedError', …(1) }
+(21 matching properties omitted from actual)
+ × server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai checks cancellation in the platform-client promise continuation before SDK create 3ms
+   → expected { …(13) } to match object { name: 'GatewayAbortedError', …(1) }
+(17 matching properties omitted from actual)
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > leaves ordinary no-source calls on the existing path 1ms
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback
+{
+  "timestamp": "2026-11-06T20:42:16.835Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: Model provider request failed (HTTP 400).",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > also rechecks before retrying a fallback provider
+{
+  "timestamp": "2026-11-06T20:42:16.839Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: Model provider request failed (HTTP 400).",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > runs the guard after capacity is granted, refuses queued revocation, and releases the permit 54ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > captures the original guard before the first route await 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a synchronous guard refusal terminal and safe without provider-health accounting 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a asynchronous guard refusal terminal and safe without provider-health accounting 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback null before placement or dispatch 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback "pretend guard" before placement or dispatch 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback 7 before placement or dispatch 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback {} before placement or dispatch 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > sanitizes a callback getter failure before any await 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > rechecks before a primary retry and never dispatches revoked retry work 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback 7ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > also rechecks before retrying a fallback provider 13ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > preserves a transient retry when the source remains current 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > honors cancellation during a guard wait (resolve), releases capacity and never dispatches canceled work 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > honors cancellation during a guard wait (reject), releases capacity and never dispatches canceled work 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > qualified model pin transport and evidence > refuses evidence changed in the platform-client resolution continuation before any SDK call
+AssertionError: promise resolved "{ …(17) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "cacheHit": undefined,
++   "cacheStats": undefined,
++   "cached": false,
++   "citations": undefined,
++   "content": "Must not be sent with changed evidence.",
++   "deterministic": false,
++   "finishReason": "end_turn",
++   "latencyMs": 3,
++   "model": "claude-opus-5-5-20261101",
++   "provider": "anthropic",
++   "requestId": "2c6aeb43-cf08-4765-ae36-4f4dce64f165",
++   "resolvedModel": "claude-opus-5-5-20261101",
++   "serverToolUses": undefined,
++   "structuredOutputEnforced": false,
++   "thinking": undefined,
++   "toolUses": undefined,
++   "usage": {
++     "estimatedCostUsd": 0.000024,
++     "inputTokens": 1,
++     "outputTokens": 1,
++     "totalTokens": 2,
++   },
+  }
+
+ ❯ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts:362:82
+    360|       return client;
+    361|     });
+    362|     await expect(f.route({ organizationId: ORG, beforeDispatch: async …
+       |                                                                                  ^
+    363|       code: 'QUALIFIED_MODEL_PIN_REFUSED', reason: 'evidence-mismatch',
+    364|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic checks cancellation in the platform-client promise continuation before SDK create
+AssertionError: expected { …(17) } to match object { name: 'GatewayAbortedError', …(1) }
+(21 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "name": "GatewayAbortedError",
+-   "phase": "pre_call",
++   "cacheHit": undefined,
++   "cacheStats": undefined,
++   "cached": false,
++   "citations": undefined,
++   "content": "Actual SDK boundary fixture.",
++   "deterministic": false,
++   "finishReason": "end_turn",
++   "latencyMs": 0,
++   "model": "claude-opus-5-5",
++   "provider": "anthropic",
++   "requestId": "a0f414e3-24e6-4346-8ba6-ced8f405cb39",
++   "resolvedModel": "claude-opus-5-5",
++   "serverToolUses": undefined,
++   "structuredOutputEnforced": false,
++   "thinking": undefined,
++   "toolUses": undefined,
++   "usage": {
++     "estimatedCostUsd": 0.000024,
++     "inputTokens": 1,
++     "outputTokens": 1,
++     "totalTokens": 2,
++   },
+  }
+
+ ❯ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts:200:19
+    198|       provider, organizationId: 7, userId: 3, signal: controller.signa…
+    199|     })).catch(error => error);
+    200|     expect(error).toMatchObject({ name: 'GatewayAbortedError', phase: …
+       |                   ^
+    201|     expect(wire.create).not.toHaveBeenCalled();
+    202|     expect(failures).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai checks cancellation in the platform-client promise continuation before SDK create
+AssertionError: expected { …(13) } to match object { name: 'GatewayAbortedError', …(1) }
+(17 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "name": "GatewayAbortedError",
+-   "phase": "pre_call",
++   "cached": false,
++   "content": "Actual SDK boundary fixture.",
++   "deterministic": false,
++   "effectiveSeed": 18615114,
++   "finishReason": "stop",
++   "latencyMs": 0,
++   "model": "gpt-4o",
++   "provider": "openai",
++   "requestId": "0edc91c8-01cf-45f7-aee3-1f2f8e8df6aa",
++   "resolvedModel": "gpt-4o",
++   "thinking": undefined,
++   "toolUses": undefined,
++   "usage": {
++     "estimatedCostUsd": 0.00002,
++     "inputTokens": 1,
++     "outputTokens": 1,
++     "totalTokens": 2,
++   },
+  }
+
+ ❯ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts:200:19
+    198|       provider, organizationId: 7, userId: 3, signal: controller.signa…
+    199|     })).catch(error => error);
+    200|     expect(error).toMatchObject({ name: 'GatewayAbortedError', phase: …
+       |                   ^
+    201|     expect(wire.create).not.toHaveBeenCalled();
+    202|     expect(failures).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 81 passed (84)
+   Start at  20:42:07
+   Duration  9.08s (transform 3.44s, setup 336ms, import 7.20s, tests 527ms, environment 0ms)
+

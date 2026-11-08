@@ -1,0 +1,82 @@
+{
+  "observedAt": "2026-11-06T19:54:14.473318+00:00",
+  "reviewerTask": "/root/editor_context_security_review",
+  "package": "F1",
+  "branch": "concept2cure-v2",
+  "comparisonBase": "965084590ccf7a569248cc1c6df0455785f7a722",
+  "incomingCanonical": "53b9f15d8fe96767c8dbe6def2d7e8c5e03db7aa",
+  "reviewedIntegrationMerge": "637737bb13f51363e15a75d6f4a27bfcbeb8e408",
+  "coordinationHeadAtReview": "637737bb13f51363e15a75d6f4a27bfcbeb8e408",
+  "status": "passed_no_scoped_production_blocker",
+  "method": "Read-only incoming source, caller and actual server DTO inspection; production source was not edited. Only these review evidence files were written at the lead agent request.",
+  "testsRunByReviewer": false,
+  "compilerRunByReviewer": false,
+  "browserRunByReviewer": false,
+  "findings": [
+    "The stricter authorizeAuthoringProgram forWrite option must remain: creation/reuse target admission uses write access; source verification uses explicit read admission where appropriate.",
+    "Artifact source-read admission does not grant target-write access; creation repeats target authorization inside the existing transaction before saving.",
+    "Ordinary project lists now require success:true and each row.program_id equal to the selected project; authoring-document-read.ts emits that canonical field and envelope.",
+    "Legacy organization listing remains distinct and cannot supply project creation recovery authority.",
+    "Existing account/project/revision read ownership remains intact.",
+    "Incoming lineage writer/transaction hardening is preserved; no gate or baseline bypass is introduced by this merge."
+  ],
+  "fixtureAssumptionsIdentified": [
+    "Scoped cases in documentAuthoringEditor.test.tsx must return success:true plus row.program_id.",
+    "The filingOutlinePerMarket.test.tsx list fixture must echo row.program_id.",
+    "Correcting these DTO fixtures is appropriate; weakening the incoming guard is not."
+  ],
+  "limits": [
+    "No test, compiler or browser qualification is claimed by this source review.",
+    "The old e533 security review remains unchanged and is not relabeled as this merge.",
+    "Prior component/native selected pins did not include these two incoming guards; unchanged selected pins alone do not qualify newly exercised behavior.",
+    "Full lineage-parser correctness, native concurrency, deployed acceptance and controlled release remain outside this bounded integration review."
+  ],
+  "sourceFiles": [
+    {
+      "path": "server/services/authoring/authoring-program-access.ts",
+      "sha256": "d9542298789769b00890a169e300eae51544fb857eea97338bec18b3650e92d5",
+      "bytes": 3729
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useScopedDocuments.ts",
+      "sha256": "74015b1a86e423c6ffde74cad6e849aa1efe6ef5a77e417b0fa992737427af43",
+      "bytes": 4547
+    },
+    {
+      "path": "server/services/authoring/authoring-document-read.ts",
+      "sha256": "ffe5e0e9334ce26f4b7671a0eca44251d6d72b422b9374a678014dfe98471bfe",
+      "bytes": 13810
+    },
+    {
+      "path": "server/services/authoring/authoring-source-import.ts",
+      "sha256": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "bytes": 34919
+    },
+    {
+      "path": "server/services/authoring/import-source-references.ts",
+      "sha256": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+      "bytes": 7846
+    },
+    {
+      "path": "server/services/authoring/artifact-workflow-source.ts",
+      "sha256": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "bytes": 15210
+    },
+    {
+      "path": "scripts/ci/check-lineage-save-gate.mjs",
+      "sha256": "a6794817ecc9e21ad11a54865dbc6d75505ca263badb072d20c0175604e30843",
+      "bytes": 30133
+    },
+    {
+      "path": "scripts/ci/lib/lineage-authoring-transaction.mjs",
+      "sha256": "8d644c26a63fbc2f8e44d3f65a49f2d5300d7079a91aacabf69eafa4933acce1",
+      "bytes": 33223
+    },
+    {
+      "path": "scripts/ci/lib/lineage-content-writers.mjs",
+      "sha256": "d7d07267353a73e085ffd262544b98c5e662eed0c3be4617cf0af2528c9089b1",
+      "bytes": 7332
+    }
+  ],
+  "canonicalPinManifestSha256": "d093605ac932d21721c84ea76803d1a975cc1b1fc5ee8be4f98bdddbdbc0cf28"
+}

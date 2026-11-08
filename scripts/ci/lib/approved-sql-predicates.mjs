@@ -10,6 +10,20 @@ const VAULT_BUILDERS = new Map([
 const ARTIFACT_BUILDERS = new Map([
   ['artifactDataEligibleSql', './document-data-disposition/eligibility'],
 ]);
+// The existing Authoring importer reads the same disposition policy under its
+// source lock. Only this exact imported builder and literal alias receive proof.
+const AUTHORING_ARTIFACT_BUILDERS = new Map([
+  ['artifactDataEligibleSql', '../document-data-disposition/eligibility'],
+]);
+// Current-source rechecks retain the same canonical disposition policy. These
+// two exact callers accept only the imported builder and their literal alias;
+// no request value or other helper receives an allowance.
+const ANA_ARTIFACT_BUILDERS = new Map([
+  ['artifactDataEligibleSql', '../document-data-disposition/eligibility.js'],
+]);
+const ANA_CAPTURED_BUILDERS = new Map([
+  ['capturedDataEligibleSql', '../document-data-disposition/eligibility'],
+]);
 const REPORT_VAULT_BINARY_BUILDERS = new Map([
   ['vaultBinaryAvailableSql', '../document-data-disposition/eligibility'],
 ]);
@@ -51,6 +65,8 @@ const VAULT_FOLDER_EXPORT_BUILDERS = new Map([
   ['vaultBinaryAvailableSql', '../document-data-disposition/eligibility.js'],
 ]);
 const CALLERS = new Map([
+  ['server/services/ana/AnaToolExecutor.ts', { alias: 'a', builders: ANA_ARTIFACT_BUILDERS }],
+  ['server/services/ana/saved-document-critique.ts', { alias: 's', builders: ANA_CAPTURED_BUILDERS }],
   ['server/services/vault/vault-version-restore.ts', { alias: 's', builders: VAULT_RESTORE_BUILDERS }],
   ['server/services/vault/vault-folder-export.ts', { alias: 'd', builders: VAULT_FOLDER_EXPORT_BUILDERS }],
   ['server/routes/c2c/project-vault.ts', { alias: 'd', builders: VAULT_FILTER_FROM_ROUTES }],
@@ -64,6 +80,7 @@ const CALLERS = new Map([
   ['server/services/figureGenerationService.ts', { alias: 'a', builders: ARTIFACT_BUILDERS }],
   ['server/services/autoExtractionPipeline.ts', { alias: 'a', builders: ARTIFACT_BUILDERS }],
   ['server/services/keywordExtractionService.ts', { alias: 'a', builders: ARTIFACT_BUILDERS }],
+  ['server/services/authoring/artifact-workflow-source.ts', { alias: 'a', builders: AUTHORING_ARTIFACT_BUILDERS }],
   ['server/services/report-os/report-package-legal.ts', { alias: 'd', builders: REPORT_VAULT_BINARY_BUILDERS }],
   ['server/services/pathway-engines/estar/estar-attachment-source-access.ts', { alias: 'd', builders: ESTAR_VAULT_BINARY_BUILDERS }],
 ]);

@@ -219,6 +219,153 @@ and extensions, not a declaration that the seven spike checks passed. Semantic c
 coverage for legacy/unassessed inputs, a durable RuleRecord/hard-gate runtime, scoped credential-grant migration,
 local derivative round-trip and full clean-file review remain unresolved acceptance dependencies.
 
+**Continuation component evidence (P-104).** The existing homes now contain three verified extensions.
+**F1, `852eb1287`:** `server/services/account-canon.ts` commits a canon mutation and its immutable event together;
+15 component tests pass. **F1, `026c0e96f`:** `server/services/submission-gateways/gateway-accounts.ts` and `index.ts`
+recheck the current organization/gateway/environment authority fingerprint after `archiveSentPackage` awaits and
+immediately before transport; changed mode, sender, rotated or deleted credentials refuse without fallback.
+54 tests pass. This is authority-credential freshness, separate from account-canon memory. **S4, `4852aa78b`:**
+sourced mandatory `policy_bindings` are enforced through the existing skill store, governed runtime and Skills
+administration/studio; 78 runtime tests and 10 UI tests pass. The project-mandatory tool envelope is specifically
+`check_dossier_consistency`; no broader tool class, full RuleRecord store or complete §23 fixture is inferred.
+These statuses mean **implemented component verified**, not complete v0.5 acceptance.
+
+**Hard dependencies remain unresolved.** The `local-default` approved-model entry still pins a placeholder rather
+than concrete weights, is not high-risk approved and has no passed PQ (`server/services/ai-governance/approved-models.ts`).
+There is no established reversible tenant-local token-map custody or approved derivative policy for the §26
+round-trip. Existing redaction does not supply that derivative contract. These limitations keep the expanded spike
+**acceptance pending**; no model is enabled, provider terms verified or external retention/residency assurance made
+by this update. Record actual evidence before changing those statuses.
+
+### Continuing founder direction — concrete model pins and credential custody
+
+The founder further directed on 2026-11-06: **“We need the ability to have pinned to qualified models, not
+placeholders.”** Extend the controlled registry and existing qualification verifier with an exact provider/model
+snapshot or local weights digest, intended use, executed PQ record reference and content hash. A strict pin never
+silently changes model or falls back to an unqualified one. Missing, altered, wrong-scope or incomplete evidence
+refuses execution. A source-code change or customer key is not a qualification pass; existing pending entries stay
+pending. The existing nonstream drafting endpoint and model catalog expose this capability; unsupported streaming
+must refuse before releasing any text. Runtime packaging includes only verified registry-referenced records and
+canonical qualification assets, never an entire evidence directory or customer trace collection.
+
+The founder also requested a **secure vault-type card in Client Administration** for client-owned third-party
+accounts (Veeva Vault, ClinicalTrials.gov and FDA) and client-owned Claude/OpenAI/Kimi keys. Extend the existing
+connector-credential store and agency-account card rather than duplicate them. Capture is write-only to the UI:
+current tenant administration authority, fresh authentication, stated reason, encrypted credentials, scoped
+versioned grants, expiry, rotation/revocation and an atomic audit are required. Saved secrets never return in API
+metadata, AnA context, browser persistence, audit or errors. Revocation preserves a tombstone so a client-owned
+credential cannot silently fall back to a platform key. Model SDKs and embeddings use fresh request-scoped tenant
+credentials and retain all placement, model/PQ and approval gates. Provider availability cannot depend solely on a
+platform environment key. Registry/portal accounts without a verified adapter are identified as storage-only,
+never “connected” or transmission-ready. FDA ESG certificates remain in the existing authority-account card.
+
+These instructions continue P-104 within the existing files. No new source file, screen, mount, table, dependency,
+provider/model entry or fabricated qualification is approved. The ledger lists the exact additional existing
+implementation and build paths. Full v0.5 acceptance remains pending until its fixture gates pass.
+
+### Continued execution — finish the remaining controls (P-104)
+
+The founder reaffirmed the end-to-end assignment after publication of `9c7a618981c53b79e8fd66ba51970d91f65c326a`:
+all completed work belongs on the canonical branch, and implementation must continue. The prior release is
+verified in canonical history. Missing real model qualification does not prevent finishing deterministic code,
+tenant-bound qualification plumbing, governed evidence, source-bound correspondence review or custody controls.
+
+**What already exists.** `server/services/security/field-encryption.ts` supplies encryption primitives;
+`server/services/observability/redaction.ts` supplies irreversible telemetry redaction; existing tenant storage
+supplies organization-scoped immutable bytes; `org-placement-writer.ts` and `routes/ai-placement-policy.ts` own the
+placement setting and its governed transaction; `tenant-settings-writer.ts` owns generic settings isolation.
+Extend these with a separate typed derivative contract, never treating ordinary redaction or a public label as an
+attestation. Existing `AdminSettings.tsx`, the nonstream drafting endpoint and `AnaDocumentDraftingService.ts`
+reach the workflow. No new source file, table, route mount, model entry or dependency is approved.
+
+**Active slices.** F1 repairs bind every PQ phase to its verified tenant/programme, invalidate verification when
+material evidence changes, and join exact letter spans/current human review to blocker open/resolve/reopen. S4
+implements explicit-span/minimal-template derivatives, tenant-key/AAD encrypted map custody in existing storage,
+managed settings metadata, fresh human reauthentication over the exact residual payload hash, policy/source/actor
+rechecks, buffered derivative-only gateway dispatch and deterministic local token reinjection verification. Raw
+Tier 3 remains local. Unknown/missing/duplicate tokens, stale or revoked approvals, changed source/policy and foreign
+scope refuse. This is a deterministic path; no heuristic certifies arbitrary prose and no model certifies itself.
+
+The prototype must be callable through the existing API and Administration cards, not only test helpers. Actual
+customer KMS grants, deployed locality, provider terms, model PQ and semantic document verification retain their
+own evidence gates. Component and integration results are recorded after execution; no phase is marked accepted
+merely by declaring a dependency or implementing an interface.
+
+**Existing owner and digest homes.** `user_intelligence_profiles` and `ana_relational_profiles` already hold
+personal context; their current creator migrations are replayed on canonical deployment. The owner boundary is
+repaired there and in the existing authenticated tenant/account scope, rather than storing personal rules in the
+organization directory. Private-rule CRUD follows that native proof. Existing `proactive-digest.ts`,
+`digest-heartbeat.ts`, `scheduled-jobs.ts` and `create-task.ts` receive verified rule-version snapshots, atomic
+content-minimal notices and explicitly system-attributed review tasks. A scheduled job never borrows a human's
+identity. Existing Skills administration remains the human ledger; runtime source authority extends the existing
+model-call scope and readers instead of trusting a caller's declared tier.
+
+### Project team, immutable coordination and visible oversight (P-104 continuation)
+
+The founder further directs that AnA acts as player-coach over specialized workers and the whole project's
+objectives, including CSR, CTD, IND and registration workstreams. Extend the current project objectives/task graph,
+`run_agent`, turn timeline/record and existing conversation work view. Do not create a second project manager.
+Workers need scoped peer awareness and bounded communications so they can coordinate inside their authorized
+assignment; AnA still assesses results, reconciles dependencies and escalates the required human decisions.
+
+The existing canonical charter objective reader gains a caller-owned SQL executor adapter so the schedule monitor
+reads the same admitted snapshot as its task/dependency checks. Aggregate-learning review reaches the existing
+QMS change approval body and dialog: a named current curator explicitly reviews the exact generic artifact and
+invariant under the existing signature ceremony. The managed contribution setting has no generic settings door;
+server-only system reads return fixed aggregate classes/counts or verified public-artifact receipts, never tenant
+source text or an arbitrary privileged query. Legacy wisdom remains quarantined.
+
+The existing conversation gains a subtle **Show team** toggle, **off by default**. Opening it shows worker
+assignments, real status/blockers, measurable completed/total steps and AnA's actual assessment against the project
+goal. Unknown totals have no invented percentage; completion estimates require an execution basis and otherwise
+say unavailable. Hiding the panel affects presentation only. The live view, reload and another authorized device
+must agree with immutable records, including failure, interruption, rework and supersession.
+
+**What already exists.** `shared/ana/turn-timeline.ts`, `turn-timeline-emitter.ts`, `run-events.ts`, the sealed turn
+recorder and the conversation's activity/work/summary components already describe and replay AnA's work. The live
+mirror is intentionally lossy and the recorder seals at turn end, so neither alone can authorize immutable peer
+decisions before broadcast. Extend existing append-only chained audit and record blobs as the durable authority;
+keep wire/mirror/UI as projections. Every explicit operational decision must name its assignment, source/finding
+basis, controlled rule and actual model, with attributable revisions rather than overwrite. Child workers cannot
+lock, sign, transmit, approve themselves or turn an unverified proposal into a filing fact. Models remain fallible;
+source validation and independent/human approval are the control, not a promise of zero hallucinations.
+
+The existing `chat-thread-helpers.ts`, AnA history/record handlers, legacy chat handlers and
+`cortex-unified.ts` share the same permanent owner-private boundary. Generic model-context readers receive
+private placeholders; only an authenticated owner history read or a privately issued model capsule may decrypt.
+Private context activates encrypted run/thread capture before message persistence and enters model payloads only
+at the final governed boundary, with fresh owner, source, key and project admission. Unprotected external tool
+queries and governed write proposals remain held until their exact payload has an encrypted approval/egress path.
+These existing paths are included in S4; no route, table, screen or source file is added.
+
+The next bounded extensions finish the remaining reachable controls in these same packages:
+
+- **S5 exact final-package approval:** the existing governed precheck prepares and retains immutable ZIP bytes;
+  the current signature ceremony resolves the preparation receipt and binds its actual byte hash, destination,
+  application, source heads and current actor. Transmission reuses those bytes, rechecks current authority and
+  integrity after awaits, and consumes one claimed attempt. The current dry-run assembly retains its contract.
+- **S4 private proposals:** the existing pending approval, conversation signoff and authoring transaction store the
+  entire proposal/check/rationale encrypted, provide a fresh-owner exact preview, and require explicit exact-content
+  sharing. A successful actual gateway output/tool-argument receipt with current drafting qualification authorizes
+  machine genesis. Consent, fixed document ID, required ownership and execution receipt commit together; uncertain
+  commits reconcile that exact identity before release or retry. Read-only intent, cancellation, current source/key,
+  hard gates and independent review remain enforced.
+- **S9 client-confirmed repair:** the current task ledger, both task APIs, board, source/task writers and reminder
+  sweep preserve an immutable opening marker and transition chain. A real current affected client confirms an exact
+  proposal bound to current QMS/CAPA, signed fix version and verified tenant/project rule evidence. Generic closure,
+  mirror writes, stale metadata replacement and generic reopen cannot bypass this history. Existing Part 11 signoff
+  remains a separate requirement where the task requires it.
+- **S10 feedback source continuity:** existing agency question proposals carry source/checksum/extracted-text and
+  exact-span proof into the current Record action. The same governed transaction admits the current linked source
+  and actor before storing a source-backed question. Manual edits remain explicitly manual. Reuse the current
+  retained-source guard for every retained source kind and all descendant model calls. Human clock confirmation,
+  reviewed objective/subjective coding, denominator-aware metrics and exact-package clean-file review follow in
+  the existing correspondence/submission paths, with insufficient history stated explicitly.
+
+These scope extensions add no source file, screen, mount, table, tool or dependency. Their implementation stays
+pending until its own tests and real browser checks pass; the reviewed-learning and privacy components above do
+not imply that these later gates have already passed.
+
 ### Milestones in the existing roadmap — §11 build order
 
 Each row is **queued for v0.5 acceptance** until its stated fixture is run and recorded. A file's existence or an
@@ -467,11 +614,115 @@ worker decision rights and package-byte integrity. The full TypeScript no-regres
 Additional component-suite counts above overlap this run and are not additive. Validation uses synthetic fixtures
 and mocked provider transport; no live model/gateway call or real-PostgreSQL deployment is claimed.
 
-**Next.** Record the remaining implementation commits and consolidated
-checks, then execute the expanded fixture contract. Exact quotation checks cannot establish semantic claim support.
+**Next.** Resolve the model/deployment and derivative-custody dependencies, then execute the expanded fixture
+contract. Exact quotation checks cannot establish semantic claim support.
 No provider call, live transmission, authority-account transition, full derivative round-trip, production rollout,
 customer IQ/OQ or complete spike pass is asserted by these component checks. Phases 1–8 stay queued behind their
 stated gates.
+
+#### F1 / S4 — Anna runtime continuation (2026-11-06, P-104)
+
+| Slice | Commit and component evidence | Status / boundary |
+|---|---|---|
+| Atomic account canon | `852eb1287`; existing `server/services/account-canon.ts` and confidence/audit test, 15 passing cases | **Implemented component verified.** Fact and immutable event commit or roll back together. |
+| Authority freshness at the wire | `026c0e96f`; existing gateway accounts/dispatch services, 54 passing tests | **Implemented component verified.** Recheck authority after archive awaits; changed sender/mode/rotation/deletion refuses. Historical account ownership migration is not asserted. |
+| Sourced mandatory approval rules | `4852aa78b`; existing `policy_bindings`, Skills store/runtime and administration/studio, 78 runtime + 10 UI tests | **Implemented component verified.** Project-mandatory scope is `check_dossier_consistency`; broader tool permissions and full §23 acceptance remain gated. |
+| Qualified model pin capability | `e6a7c391c`; existing controlled registry, gateway, draft endpoint/catalog, PQ verifier and build adapter | **Implemented component verified.** Exact immutable identity and task-scoped PQ content hash are checked before dispatch and output release; substitution, unverified streaming and demo output refuse. Eight packaging checks pass; plain-Node claim read reports 16 pending and zero passed. No pending entry becomes qualified. |
+| Client administration credential vault | `e6a7c391c`; existing encrypted connector store, gateway account card, Admin Settings capture and fresh tenant SDK/embedding seams | **Implemented component verified.** Fourteen cards: all nine existing credential-required connectors, three LLM providers, and PRS/FDA portal storage-only. Client-admin re-authentication, scope/expiry/rotation/revocation, atomic audit, metadata-only reads and tenant-specific SDK use with no platform fallback. Actual database audit-trigger fixtures revoke membership during use and prove no send occurs. |
+
+The new capture surface reuses existing files/cards/dialogs. PEM capture is paste-only: exact multiline text stays
+in ephemeral form state and the password input contains a fixed mask, with clear/replace controls. LLM keys use
+password inputs. Submission, cancellation, session/org changes and late receipts are fenced; secrets do not enter
+AnA context, browser persistence, errors or audit. Storage is not connection validation: PRS/FDA portal actions are
+explicitly not connected, and a stored client model key does not qualify a model. Current grants are checked for
+scope/expiry/revocation and bound to their tenant/provider immediately before deterministic SDK use.
+
+**Existing connector compatibility.** `5992db35e` carries all eight other authenticated connectors into the same
+administration workflow: Google Drive, Box, SharePoint, OneDrive, Medidata, FHIR, SAM.gov and Ellucian. Existing
+catalog field schemas remain the authority; Microsoft tenant IDs map explicitly to adapter headers and Google PEM
+capture preserves exact bytes. Only the five existing upload adapters receive an upload-purpose option. All 51
+connector compatibility cases and 22 administration cases pass, including capture/rotate/revoke, real adapter execution against mocked
+Google OAuth/search transport, and secret-free audit reasons for four PEM whitespace/newline representations.
+
+**Agency account reasons.** `1458f32d3` also removes new and previously held credential values from stored FDA/agency
+account change reasons and uses that same safe writer result in the chained audit. The 21 service and eight route
+tests include actual database capture/rotation/platform-revert canaries, multiline variants and safely clearing
+unreadable prior credentials. Credential bytes and the last-mile transmission authority fingerprint are preserved.
+
+**Consolidated integration checks.** After merging shared-branch work, all 28 changed existing Vitest suites pass
+with 599 tests, and all eight offline packaging checks pass. The production client/server build succeeds and its
+plain-Node qualification verifier reads the packaged assets. The plan and committed-secret gates pass; changed
+files have no ESLint errors and zero net warning growth. These counts overlap component runs above and are not
+additive. Canonical TypeScript checking reports zero errors against a zero baseline. The mandatory pre-push gate
+rechecks the published commit and refuses compiler, plan, lint or security regressions.
+
+Promotion of a future passed model must ship its exact registered, verified record as well as the four canonical
+qualification assets. The current Docker context excludes `docs/evidence`; a record registered there requires a
+single-file inclusion or an existing shipped source-owned evidence path. Do not include an entire PQ/trace tree.
+
+These components extend the same §1d epic without new files, tables, routes, tools or model entries. The expanded
+spike stays **acceptance pending**;
+local qualified weights/PQ, the joined seven-prototype spike and customer deployment evidence remain unresolved.
+Reversible custody, explicit attestation and local reinjection are now implemented and component tested below;
+actual tenant KMS grants, deployed locality and provider/model qualification retain their own gates. Component
+suite counts overlap earlier runs and are not additive. No external provider terms or live service result is
+claimed. This lane's completed file holds are released to the lead; other sessions' holds are unaffected.
+
+#### P-104 continuation — implementation evidence
+
+`649303b43` binds evidence review and correspondence blocker lifecycle to exact current source and human review.
+`fd0421456` repairs the database owner boundary for private profiles; 167 targeted tests and 49 native RLS tests
+pass under a non-superuser/non-bypass role. The canonical 462-file deploy set replayed twice without failures;
+restrictive owner policies survive the later generic sweeps. Private RuleRecord management is the next slice.
+
+`b8cee0745` and `e464ee0ce` join tenant-bound qualification, sourced rule lifecycle, encrypted derivative custody,
+private source authority, nested generation provenance, durable independent checks and review UI. Real browser
+checks cover the administration/rule lifecycle and independent-check dialog (22 checks), with nine native controls.
+Alignment digest/task/audit proof passes 111 cases and uses an explicit system actor; it does not close a repair.
+Ordinary sourced prose now carries exact original/extraction/classification pins through release, not only figures.
+
+`e464ee0ce` also closes a separate legacy global-wisdom path. Promotion/read/reinforcement is held before queries;
+ownerless historical rows are quarantined by FORCE RLS/no policies. All 59 focused tests pass. A full canonical
+replay preserves that quarantine; native runtime read/write denial holds even with the platform-role string and
+enforcement switch disabled. Tenant-local learning remains available. Cohort size alone authorizes no sharing.
+
+These counts overlap component runs and are not additive. Synthetic model/KMS/transport boundaries are identified
+in their fixtures; no real model PQ, customer KMS grant, provider terms approval or scientific correctness is
+asserted. The built plain-Node qualification verifier reports all 16 registry entries pending. The production
+client/server build and all eight packaging tests pass. The final merged consolidation passes 1,195 tests in
+54 existing suites; changed-file lint has zero errors and 14 fewer warnings, with no baseline increase. The
+committed-secret gate passes. The canonical full-program compiler completes with zero errors against a zero
+baseline on the merged tree. Publication still requires all mandatory pre-push gates; the full expanded spike
+remains acceptance pending.
+
+#### P-104 team, private custody and reviewed-learning component evidence
+
+`a2f9264a5` extends the existing conversation and runtime. The team toggle is off by default; 18 actual browser
+checks and 121 UI checks cover measured progress, AnA disposition and hidden-view behavior. Registered parallel
+workers, durable coordination/refusals, cancellation, private tool holds and safe wire projections pass 20 runtime
+checks. The canonical objective/task/dependency monitor passes 158 focused checks. Its filing observation is
+explicitly non-authorizing and bracketed by current heads, rather than claimed to be an atomic release decision.
+
+Personal rules now have owner-only correction/version/conflict/revoke controls. The existing-table owner-index
+convergence and native owner CRUD/RLS suite pass 30 cases; generic private-context omission passes 11. The actual
+browser adds 10 private-rule checks. Current private UI and telemetry pass 45 cases. Whole private turn/message
+custody, owner-only history/record reads, revoked-rule history, malicious peer data and key rotation pass the latest
+34-case SQL/AES fixture. Final SDK-only private expansion, exact prepared payload hash, opaque child lineage,
+revoked authority, floor T3 and no streaming/cache/demo pass 24 gateway tests with SDK transport substituted.
+These are separate boundaries, not a claim of live model qualification or one joined full-spike pass.
+
+Reviewed shared learning passes 260 focused cases and 16 native QMS cases: audited explicit opt-in, server cohort,
+closed-vocabulary generic classes/counts, exact immutable artifact plus current human signatures, explicit tenant
+Skills installation and fresh approval checks. Post-deploy native RLS passes 49 cases and the canonical 462-file
+migration replay passes. Existing global raw wisdom stays quarantined. Automatic private reflection, historical
+pre-boundary immutable exposure remediation, final ZIP pre-wire byte approval and joined authoring qualification
+acceptance remain separately tracked; no incomplete path is described as accepted.
+
+`5c5b89836` adds private HTTP body suppression, safe existing owner-index convergence and immutable pre-wire
+`TRANSMIT_BLOCKED` evidence. Exact one-byte signed-manifest mutation and canonical transmit/QMS regressions pass
+107 cases. This approval binds the signed leaf manifest; it does not establish approval of a final ZIP bitstream.
+The new batch is committed locally and merged with canonical work; publication and final merged gates follow.
+Counts in this section overlap broader suites and must not be summed. All 16 real model PQ entries remain pending.
 
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
@@ -910,6 +1161,15 @@ with the person in control".
   - the accept sends the option set.
 
   Proof: red 12, then green 70 of 70; regression 53 files and 728 tests; 8 of 8 mutations killed.
+- **The running-app walk, finished except what needs a model key**, `891e1884b` and `aa211c406`, in the same walk folder.
+  - Works: the drafting panel opens and refuses honestly with no provider, at 1440 and 390. Reporting's device section
+    (F4), Projects' activity line and the device Client Review Room (F6) work, and both retired ids resolve.
+  - Fixed, then re-walked: focus now returns after a draft request; the panel shows no internal section id.
+  - Handed on:
+    - every section of the seeded C2C-101 Quality Overall Summary reads `draftingRegionState: unavailable`, which holds
+      drafting there;
+    - five workbench suites are red since `53b179b99`;
+    - two D4 layout issues, at 1440 and 390.
 - **The running-app walk, started**, `468ee75a5`, `docs/evidence/D2-CSR-DRAFT-CONTROL/2026-11-06/walk/`. P-72 slice 1a
   re-owned the pre-auth lookups (`ae12195a5`). Sign-in and the reset request work through them in the running app, as
   the runtime role with RLS and the launch gate enforced, at 1440 and 390 px. The wrong-password and wrong-code
@@ -933,9 +1193,9 @@ All were proven by tests. Until this walk, none was opened in the running app.
 
 **Next**
 
-1. The rest of the walk: the drafting panel's honest refusals with no model key, F4/F6, and the audit-chain verdict.
-2. To D4's holder: slices 3–4 decision 4, in `DocumentWorkbench.tsx` `onReviewSection`.
-3. With a model key: walk the figure gate end to end on an imported CSR's §11.4.1.
+1. To D4's holder: slices 3–4 decision 4, in `DocumentWorkbench.tsx` `onReviewSection`.
+2. With a model key: walk the figure gate end to end on an imported CSR's §11.4.1, with revise and passage
+   alternatives.
 
 #### D3 — The project page (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, from 2026-11-06)
 
@@ -1045,6 +1305,28 @@ Plain generic navigation to the conversation, with no saved-thread selection,
 can still drop its saved-thread URL suffix. It is a separate D1/F1 repair;
 the saved-selection slice does not change it. Other packages retain their owners
 and holds in `COORDINATION.md`; no package is marked closed here.
+
+#### R1 / S2 — Quality through the project evidence workflow (Codex, 2026-11-06)
+
+The existing Quality work area already sits beside RBM, CMC and Biostatistics. Its native records now feed the
+existing project source catalogue, shared document builds and Compliance & Audit Assurance Pack, with current
+project/object access, immutable snapshot lineage and truthful lifecycle/approval qualifications. The existing
+TaskBoard retains native Quality source links and canonical project placement, including training readers,
+delegated periodic approvers and same-date numeric CAPA/action reassignment.
+
+Source: `1e904a0550`, `b25fd60fb7`, `98661f418b`, `11e4252671`, `f92b2be3f7`, `f4c230dfac`, `bb79304fa2`.
+Merged with origin `7d771e124a` in `b97d50039d`. Node 22 merged checks: tasking 18 suites / 302 tests,
+source boundaries 8 / 83, reporting 10 / 118; full compiler zero and production builds pass. Actual project
+catalogue → task/Quality and catalogue → one editor flows were used on desktop/mobile; a structure-only build
+retained its native source receipt. The reporting flow passed 27 live checks, including readable PDF and complete
+sealed native data/provenance. No model generation, signing, approval, filing or external delivery is claimed.
+
+Evidence and the pre-implementation “What already exists” inventory:
+`docs/evidence/DESIGN/R1/2026-11-06-quality-core-workflow/README.md`;
+`docs/design/QUALITY_CORE_WORKFLOW_2026-11-06.md`. No app, screen, table, API mount, editor, generator, AnA tool or
+dependency was added. Quality's register project filter/QP3 and the observed mobile tab overflow remain with the
+current Quality/Project holders in `COORDINATION.md`; their held files were not edited. The same source/task/build/report
+contract is the completion pattern for the existing CMC, RBM and Biostatistics owners; parity is not claimed.
 
 ## 4. How everyone works
 

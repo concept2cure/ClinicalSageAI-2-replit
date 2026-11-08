@@ -13,6 +13,167 @@
 import { pool } from '../db.js';
 import { programInOrganization } from './c2c/program-access.js';
 import { writeChainedAuditRow } from './auditService.js';
+import { createHash,randomUUID } from 'node:crypto';
+import { stableStringify } from '../../shared/canonical-json';
+import { getTenantScope } from '../db/tenantStore';
+import type { RequestSqlClient } from '../db/requestDb';
+import { admitAnaProjectScope, readActiveAnaActorRole } from './ana/project-scope-admission';
+import { verifySequencedRow } from './audit/chain-row';
+import { hashPayload } from './audit/chain';
+import { z } from 'zod';
+
+export const OWNER_PRIVATE_MESSAGE_PLACEHOLDER='[Owner-private conversation content]';
+const PRIVATE_MESSAGE_ACTION='chat.message.owner_private.saved';
+export class OwnerPrivateChatError extends Error {
+  readonly code='OWNER_PRIVATE_CHAT_UNAVAILABLE';
+  constructor(){super('Owner-private conversation content could not be securely captured or read.');this.name='OwnerPrivateChatError';}
+}
+type PrivateBoundary=NonNullable<Awaited<ReturnType<typeof import('./ana/run-control')['readOwnerPrivateBoundary']>>>;
+type ChatMessageRow={id:number;role:string;content:string;metadata?:unknown;tokens_used?:number};
+const privateHash=(value:unknown)=>createHash('sha256').update(stableStringify(value)).digest('hex');
+
+/** Classification comes from the permanent chained run boundary, never a browser metadata flag. */
+async function threadPrivacy(q:RequestSqlClient,threadId:string) {
+  const found=await q.query('SELECT id,user_id,organization_id,program_id,metadata FROM chat_threads WHERE id=$1',[threadId]);
+  const row=found.rows[0]; if (!row) return null;
+  const organizationId=Number(row.organization_id);
+  if (!Number.isSafeInteger(organizationId) || organizationId<=0) return null;
+  const {readOwnerPrivateBoundary}=await import('./ana/run-control');
+  const boundary=await readOwnerPrivateBoundary(q,{organizationId,threadId});
+  if (!boundary && row.metadata && typeof row.metadata==='object' && 'ownerPrivateThread' in row.metadata) throw new OwnerPrivateChatError();
+  if (boundary && Number(row.user_id)!==boundary.ownerUserId) throw new OwnerPrivateChatError();
+  return boundary;
+}
+export async function threadHasOwnerPrivateBoundary(threadId:string,q:RequestSqlClient=pool):Promise<boolean> {
+  return (await threadPrivacy(q,threadId))!==null;
+}
+
+async function admitPrivateChat(q:RequestSqlClient,boundary:PrivateBoundary):Promise<void> {
+  const scope=getTenantScope();
+  if (scope?.tenantId!==String(boundary.organizationId) || scope.accountId!==boundary.ownerUserId || scope.role==='app_super_admin') throw new OwnerPrivateChatError();
+  const input={organizationId:boundary.organizationId,userId:boundary.ownerUserId};
+  await readActiveAnaActorRole(q,input);
+  if (boundary.projectId!==null) await admitAnaProjectScope(q,{...input,projectId:boundary.projectId});
+}
+
+async function privateChatTransaction<T>(operation:(q:RequestSqlClient)=>Promise<T>):Promise<T> {
+  const client=await pool.connect(); let began=false,commitStarted=false,released=false;
+  try {
+    await client.query('BEGIN');began=true;
+    const result=await operation(client);
+    commitStarted=true;await client.query('COMMIT');return result;
+  } catch {
+    if (began && !commitStarted) await client.query('ROLLBACK').catch(()=>undefined);
+    // An uncertain COMMIT is never retried as a fresh write.
+    client.release(true);released=true;throw new OwnerPrivateChatError();
+  } finally { if (!released) client.release(); }
+}
+
+function privateMessageBundle(row:{role:string;content:string;model?:string|null;tokens?:number;metadata?:unknown}) {
+  return {schema:'owner-private-chat-message/1',role:row.role,content:row.content,model:row.model??null,tokens:row.tokens??0,metadata:row.metadata??null};
+}
+async function sealedMessage(q:RequestSqlClient,boundary:PrivateBoundary,bundle:ReturnType<typeof privateMessageBundle>) {
+  const [{ownerPrivateReceiptForHistory},{sealOwnerPrivateText}]=await Promise.all([import('./ana/run-control'),import('./ana/turn-record')]);
+  const receipt=await ownerPrivateReceiptForHistory(q,{organizationId:boundary.organizationId,userId:boundary.ownerUserId,threadId:boundary.threadId,runId:boundary.runId});
+  const box=await sealOwnerPrivateText(q,receipt,stableStringify(bundle));
+  return {ownerPrivateMessage:{schemaVersion:1,box}};
+}
+async function auditPrivateMessage(q:RequestSqlClient,boundary:PrivateBoundary,input:{id:number;role:string;metadata:unknown;intentHash:string;captureIntentId?:string;runId?:string}) {
+  const {id,role,metadata,intentHash}=input;
+  await writeChainedAuditRow(q,{tenantId:boundary.organizationId,userId:boundary.ownerUserId,action:PRIVATE_MESSAGE_ACTION,
+    resourceType:'chat_message',resourceId:String(id),details:{threadId:boundary.threadId,runId:input.runId??null,privacyRunId:boundary.runId,markerHash:boundary.markerHash,
+      messageId:id,role,intentHash,captureIntentId:input.captureIntentId??`legacy:${id}`,storedPayloadSha256:privateHash({role,content:OWNER_PRIVATE_MESSAGE_PLACEHOLDER,model:null,tokens_used:0,metadata})}});
+}
+async function verifyPrivateMessageAudit(q:RequestSqlClient,boundary:PrivateBoundary,row:ChatMessageRow):Promise<void> {
+  const found=await q.query(`SELECT * FROM audit_logs WHERE tenant_id=$1 AND action=$2 AND new_values->>'messageId'=$3
+    ORDER BY chain_seq DESC LIMIT 2`,[boundary.organizationId,PRIVATE_MESSAGE_ACTION,String(row.id)]);
+  if (found.rows.length!==1) throw new OwnerPrivateChatError();
+  const audit=found.rows[0],details=audit.new_values;
+  if (!details || typeof details!=='object') throw new OwnerPrivateChatError();
+  const recorded=details as Record<string,unknown>;
+  if (recorded.threadId!==boundary.threadId || Number(audit.actor_id)!==boundary.ownerUserId || hashPayload(details)!==audit.payload_hash ||
+    recorded.storedPayloadSha256!==privateHash({role:row.role,content:row.content,model:null,tokens_used:0,metadata:row.metadata})) throw new OwnerPrivateChatError();
+  const verified=await verifySequencedRow(q,{action:String(audit.action),actor_id:boundary.ownerUserId,target:String(audit.target),payload_hash:String(audit.payload_hash),
+    occurred_at:audit.occurred_at as string|Date,tenant_id:boundary.organizationId,sha256_chain:audit.sha256_chain as string,
+    hmac_seal:audit.hmac_seal as string|null,chain_seq:audit.chain_seq as string|number});
+  if (verified.link!=='linked' || !['valid','no-key'].includes(verified.seal)) throw new OwnerPrivateChatError();
+}
+
+/** Called after the server records its immutable run boundary and before any private source or output can be delivered. */
+export async function markThreadOwnerPrivate(threadId:string,receipt:Parameters<typeof import('./ana/run-control')['assertRunOwnerPrivacyReceipt']>[0]):Promise<void> {
+  const {assertRunOwnerPrivacyReceipt}=await import('./ana/run-control');
+  const claimed=assertRunOwnerPrivacyReceipt(receipt);
+  if (claimed.threadId!==threadId) throw new OwnerPrivateChatError();
+  await privateChatTransaction(async q=>{
+    const held=await q.query('SELECT id,title,system_prompt,metadata FROM chat_threads WHERE id=$1 AND organization_id=$2 FOR UPDATE',[threadId,claimed.organizationId]);
+    if (held.rows.length!==1) throw new OwnerPrivateChatError();
+    const boundary=await threadPrivacy(q,threadId);
+    if (!boundary || boundary.ownerUserId!==claimed.ownerUserId || boundary.projectId!==claimed.projectId) throw new OwnerPrivateChatError();
+    await admitPrivateChat(q,boundary);
+    await migratePrivateMessages(q,boundary);
+    await sealPrivateThreadHeader(q,boundary,held.rows[0]);
+    await admitPrivateChat(q,boundary);
+  });
+}
+
+async function migratePrivateMessages(q:RequestSqlClient,boundary:PrivateBoundary):Promise<void> {
+    const rows=await q.query('SELECT id,role,content,model,tokens_used,metadata FROM chat_messages WHERE thread_id=$1 ORDER BY id FOR UPDATE',[boundary.threadId]);
+    for (const row of rows.rows) {
+      if (row.metadata && typeof row.metadata==='object' && 'ownerPrivateMessage' in row.metadata) {
+        if (typeof row.role!=='string' || typeof row.content!=='string') throw new OwnerPrivateChatError();
+        await openPrivateMessage(q,boundary,{id:Number(row.id),role:row.role,content:row.content,metadata:row.metadata});continue;
+      }
+      if (typeof row.role!=='string' || typeof row.content!=='string') throw new OwnerPrivateChatError();
+      const bundle=privateMessageBundle({role:row.role,content:row.content,model:typeof row.model==='string'?row.model:null,tokens:Number(row.tokens_used)||0,metadata:row.metadata});
+      const metadata=await sealedMessage(q,boundary,bundle);const id=Number(row.id);
+      await q.query('UPDATE chat_messages SET content=$2,model=NULL,tokens_used=0,metadata=$3::jsonb WHERE id=$1 AND thread_id=$4',[id,OWNER_PRIVATE_MESSAGE_PLACEHOLDER,JSON.stringify(metadata),boundary.threadId]);
+      await auditPrivateMessage(q,boundary,{id,role:row.role,metadata,intentHash:privateHash(bundle)});
+    }
+}
+async function sealPrivateThreadHeader(q:RequestSqlClient,boundary:PrivateBoundary,held:Record<string,unknown>):Promise<void> {
+    const prior=held.metadata;
+    if (prior && typeof prior==='object' && 'ownerPrivateThreadBox' in prior) {
+      await readPrivateThreadHeader(q,boundary,prior);return;
+    }
+    await writePrivateThreadHeader(q,boundary,{schema:'owner-private-chat-thread/1',title:held.title??null,systemPrompt:held.system_prompt??null,metadata:prior??null});
+}
+
+const privateThreadSchema=z.object({schema:z.literal('owner-private-chat-thread/1'),title:z.unknown(),systemPrompt:z.unknown(),metadata:z.unknown()}).strict();
+async function readPrivateThreadHeader(q:RequestSqlClient,boundary:PrivateBoundary,metadata:unknown) {
+  const stored=z.object({ownerPrivateThread:z.object({schemaVersion:z.literal(1),markerHash:z.string()}).strict(),ownerPrivateThreadBox:z.unknown()}).strict().parse(metadata);
+  const rows=await q.query(`SELECT * FROM audit_logs WHERE tenant_id=$1 AND action='chat.thread.owner_private.saved'
+    AND new_values->>'threadId'=$2 ORDER BY chain_seq DESC LIMIT 1`,[boundary.organizationId,boundary.threadId]);
+  const row=rows.rows[0],details=row?.new_values;
+  if (!row || !details || typeof details!=='object' || !('storedMetadataSha256' in details) || details.storedMetadataSha256!==privateHash(metadata) || hashPayload(details)!==row.payload_hash) throw new OwnerPrivateChatError();
+  const proof=await verifySequencedRow(q,{action:String(row.action),actor_id:boundary.ownerUserId,target:String(row.target),payload_hash:String(row.payload_hash),
+    occurred_at:row.occurred_at as string|Date,tenant_id:boundary.organizationId,sha256_chain:row.sha256_chain as string,hmac_seal:row.hmac_seal as string|null,chain_seq:row.chain_seq as string|number});
+  if (proof.link!=='linked' || !['valid','no-key'].includes(proof.seal)) throw new OwnerPrivateChatError();
+  const {openOwnerPrivateText}=await import('./ana/turn-record');
+  return privateThreadSchema.parse(JSON.parse(await openOwnerPrivateText(q,stored.ownerPrivateThreadBox,
+    {organizationId:boundary.organizationId,userId:boundary.ownerUserId,threadId:boundary.threadId})));
+}
+async function writePrivateThreadHeader(q:RequestSqlClient,boundary:PrivateBoundary,payload:z.infer<typeof privateThreadSchema>):Promise<void> {
+  const [{ownerPrivateReceiptForHistory},{sealOwnerPrivateText}]=await Promise.all([import('./ana/run-control'),import('./ana/turn-record')]);
+  const grant=await ownerPrivateReceiptForHistory(q,{organizationId:boundary.organizationId,userId:boundary.ownerUserId,threadId:boundary.threadId,runId:boundary.runId});
+  const box=await sealOwnerPrivateText(q,grant,stableStringify(payload));
+  const metadata={ownerPrivateThread:{schemaVersion:1,markerHash:boundary.markerHash},ownerPrivateThreadBox:box};
+  await q.query(`UPDATE chat_threads SET title=$3,system_prompt=NULL,metadata=$4::jsonb WHERE id=$1 AND organization_id=$2`,
+    [boundary.threadId,boundary.organizationId,'Owner-private conversation',JSON.stringify(metadata)]);
+  await writeChainedAuditRow(q,{tenantId:boundary.organizationId,userId:boundary.ownerUserId,action:'chat.thread.owner_private.saved',resourceType:'chat_thread',resourceId:boundary.threadId!,
+    details:{threadId:boundary.threadId,markerHash:boundary.markerHash,storedMetadataSha256:privateHash(metadata)}});
+}
+
+async function openPrivateMessage(q:RequestSqlClient,boundary:PrivateBoundary,row:ChatMessageRow):Promise<ChatMessageRow> {
+  await verifyPrivateMessageAudit(q,boundary,row);
+  const stored=z.object({ownerPrivateMessage:z.object({schemaVersion:z.literal(1),box:z.unknown()}).strict()}).strict().parse(row.metadata).ownerPrivateMessage;
+  if (row.content!==OWNER_PRIVATE_MESSAGE_PLACEHOLDER) throw new OwnerPrivateChatError();
+  const {openOwnerPrivateText}=await import('./ana/turn-record');
+  const text=await openOwnerPrivateText(q,stored.box,{organizationId:boundary.organizationId,userId:boundary.ownerUserId,threadId:boundary.threadId});
+  const parsed=z.object({schema:z.literal('owner-private-chat-message/1'),role:z.enum(['user','assistant','system','tool']),content:z.string(),
+    model:z.string().nullable(),tokens:z.number(),metadata:z.unknown()}).strict().parse(JSON.parse(text));
+  if (parsed.role!==row.role) throw new OwnerPrivateChatError();
+  return {...row,content:parsed.content,metadata:parsed.metadata};
+}
 
 /**
  * Ensure critical chat tables exist. Called lazily on first use.
@@ -290,13 +451,33 @@ function estimateTokens(text: string): number {
  * and had nothing to join on.
  */
 export async function getThreadMessages(
-  threadId: string
+  threadId: string,
+  options:{metadataOnly?:boolean}={},
 ): Promise<Array<{ id: number; role: string; content: string; metadata?: unknown }>> {
+  const boundary=await threadPrivacy(pool,threadId);
   const result = await pool.query(
     'SELECT id, role, content, metadata FROM chat_messages WHERE thread_id = $1 ORDER BY created_at ASC',
     [threadId]
   );
+  if (boundary) {
+    return result.rows.map(row=>({id:row.id,role:row.role,content:OWNER_PRIVATE_MESSAGE_PLACEHOLDER,metadata:{ownerPrivate:true}}));
+  }
+  void options;
   return result.rows;
+}
+
+/** Explicit human history read. Generic model-context readers always receive private placeholders. */
+export async function readOwnerPrivateThreadMessages(q:RequestSqlClient,input:{threadId:string;organizationId:number;userId:number}):Promise<ChatMessageRow[]> {
+  const boundary=await threadPrivacy(q,input.threadId);
+  if (!boundary || boundary.organizationId!==input.organizationId || boundary.ownerUserId!==input.userId) throw new OwnerPrivateChatError();
+  await admitPrivateChat(q,boundary);
+  const rows=await q.query('SELECT id,role,content,metadata FROM chat_messages WHERE thread_id=$1 ORDER BY created_at ASC,id ASC',[input.threadId]);
+  const messages=[];
+  for (const row of rows.rows) {
+    if (typeof row.id!=='number' || typeof row.role!=='string' || typeof row.content!=='string') throw new OwnerPrivateChatError();
+    messages.push(await openPrivateMessage(q,boundary,{id:row.id,role:row.role,content:row.content,metadata:row.metadata}));
+  }
+  await admitPrivateChat(q,boundary);return messages;
 }
 
 /**
@@ -308,16 +489,38 @@ export async function getThreadMessages(
  * working preference: what each turn actually loaded is on its turn record.
  */
 export async function recordThreadSkills(threadId: string, organizationId: number, keys: string[]): Promise<void> {
-  await pool.query(
+  await privateChatTransaction(async q=>{
+  await q.query('SELECT id FROM chat_threads WHERE id=$1 AND organization_id=$2 FOR UPDATE',[threadId,organizationId]);
+  const boundary=await threadPrivacy(q,threadId);
+  if (boundary) {
+    await admitPrivateChat(q,boundary);
+    const row=(await q.query('SELECT metadata FROM chat_threads WHERE id=$1 AND organization_id=$2',[threadId,organizationId])).rows[0];
+    const payload=await readPrivateThreadHeader(q,boundary,row?.metadata);
+    const prior=payload.metadata && typeof payload.metadata==='object'?payload.metadata:{};
+    await writePrivateThreadHeader(q,boundary,{...payload,metadata:{...prior,skills:[...keys]}});
+    await admitPrivateChat(q,boundary);return;
+  }
+  await q.query(
     `UPDATE chat_threads
         SET metadata = COALESCE(metadata::jsonb, '{}'::jsonb) || jsonb_build_object('skills', $1::jsonb)
       WHERE id = $2 AND organization_id = $3`,
     [JSON.stringify(keys), threadId, organizationId]
   );
+  });
 }
 
 /** The skills kept on a conversation, or null when it holds none (never picked, or not an AnA thread). */
 export async function readThreadSkills(threadId: string, organizationId: number): Promise<string[] | null> {
+  const boundary=await threadPrivacy(pool,threadId);
+  if (boundary) {
+    if (getTenantScope()?.accountId!==boundary.ownerUserId) return null;
+    await admitPrivateChat(pool,boundary);
+    const row=(await pool.query('SELECT metadata FROM chat_threads WHERE id=$1 AND organization_id=$2',[threadId,organizationId])).rows[0];
+    const payload=await readPrivateThreadHeader(pool,boundary,row?.metadata);
+    const metadata=payload.metadata && typeof payload.metadata==='object'?payload.metadata as Record<string,unknown>:{};
+    await admitPrivateChat(pool,boundary);
+    return Array.isArray(metadata.skills)?metadata.skills.filter((key):key is string=>typeof key==='string'):null;
+  }
   const { rows } = await pool.query(
     `SELECT metadata -> 'skills' AS skills FROM chat_threads WHERE id = $1 AND organization_id = $2`,
     [threadId, organizationId]
@@ -381,11 +584,9 @@ export async function getWindowedMessages(
   wasTruncated: boolean;
 }> {
   // Load all messages newest-first so we can pick the most recent ones
-  const result = await pool.query(
-    'SELECT role, content, tokens_used FROM chat_messages WHERE thread_id = $1 ORDER BY created_at DESC',
-    [threadId]
-  );
-  const allMessages = result.rows;
+  const boundary=await threadPrivacy(pool,threadId);
+  const allMessages=boundary?(await getThreadMessages(threadId)).reverse().map(message=>({...message,tokens_used:0})):
+    (await pool.query('SELECT role,content,tokens_used FROM chat_messages WHERE thread_id=$1 ORDER BY created_at DESC',[threadId])).rows;
   const totalMessages = allMessages.length;
 
   // Reserve tokens for working memory summary if provided
@@ -398,7 +599,7 @@ export async function getWindowedMessages(
   const selected: Array<{ role: string; content: string }> = [];
   let tokensUsed = 0;
   for (const msg of allMessages) {
-    const msgTokens = msg.tokens_used > 0 ? msg.tokens_used : estimateTokens(msg.content);
+    const msgTokens = msg.tokens_used>0?msg.tokens_used:estimateTokens(msg.content);
     if (tokensUsed + msgTokens > remaining && selected.length > 0) break;
     // Always include at least the most recent message
     selected.push({ role: msg.role, content: msg.content });
@@ -425,21 +626,69 @@ export async function getWindowedMessages(
  * turn record (services/ana/turn-record.ts) can name the question and the
  * answer it is the record of.
  */
-export async function saveChatMessage(
-  threadId: string,
-  role: string,
-  content: string,
-  model?: string,
-  tokens?: number,
-  metadata?: Record<string, unknown> | null
-): Promise<number | null> {
-  const inserted = await pool.query(
+interface ChatCaptureOptions {requireOwnerPrivate?:boolean;runId?:string;intentId?:string}
+type SaveChatMessageArguments=[threadId:string,role:string,content:string,model?:string,tokens?:number,
+  metadata?:Record<string,unknown>|null,options?:ChatCaptureOptions];
+export async function saveChatMessage(...args:SaveChatMessageArguments): Promise<number | null> {
+  const [threadId,role,content,model,tokens,metadata,options]=args;
+  return privateChatTransaction(async q=>{
+  await q.query('SELECT id FROM chat_threads WHERE id=$1 FOR UPDATE',[threadId]);
+  const boundary=await threadPrivacy(q,threadId);
+  if (options?.requireOwnerPrivate && !boundary) throw new OwnerPrivateChatError();
+  if (boundary) return saveOwnerPrivateMessage(q,threadId,privateMessageBundle({role,content,model,tokens,metadata}),options);
+  const inserted = await q.query(
     'INSERT INTO chat_messages (thread_id, role, content, model, tokens_used, metadata, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id',
     [threadId, role, content, model || null, tokens || 0, metadata ? JSON.stringify(metadata) : null]
   );
-  await pool.query('UPDATE chat_threads SET updated_at = NOW() WHERE id = $1', [threadId]);
+  await q.query('UPDATE chat_threads SET updated_at = NOW() WHERE id = $1', [threadId]);
   const id = Number((inserted as { rows?: Array<{ id?: unknown }> })?.rows?.[0]?.id);
   return Number.isFinite(id) ? id : null;
+  });
+}
+
+async function saveOwnerPrivateMessage(q:RequestSqlClient,threadId:string,bundle:ReturnType<typeof privateMessageBundle>,options:ChatCaptureOptions={}):Promise<number> {
+  const {role}=bundle;
+  if (!['user','assistant','system','tool'].includes(role)) throw new OwnerPrivateChatError();
+  const intentHash=privateHash(bundle);
+    const boundary=await privateWriteBoundary(q,threadId,options.runId);
+    await admitPrivateChat(q,boundary);
+    const captureIntentId=options.runId?`${options.runId}:${options.intentId??role}`:randomUUID();
+    const previous=await q.query(`SELECT new_values FROM audit_logs WHERE tenant_id=$1 AND action=$2
+      AND new_values->>'threadId'=$3 AND new_values->>'captureIntentId'=$4 ORDER BY chain_seq DESC LIMIT 2`,
+      [boundary.organizationId,PRIVATE_MESSAGE_ACTION,threadId,captureIntentId]);
+    if (previous.rows.length>1) throw new OwnerPrivateChatError();
+    if (previous.rows.length===1) return verifiedPrivateMessageRetry(q,boundary,previous.rows[0].new_values,intentHash);
+    const metadata=await sealedMessage(q,boundary,bundle);
+    const inserted=await q.query(`INSERT INTO chat_messages(thread_id,role,content,model,tokens_used,metadata,created_at)
+      VALUES($1,$2,$3,NULL,0,$4::jsonb,NOW()) RETURNING id`,[threadId,role,OWNER_PRIVATE_MESSAGE_PLACEHOLDER,JSON.stringify(metadata)]);
+    const id=Number(inserted.rows[0]?.id);if (!Number.isSafeInteger(id) || id<=0) throw new OwnerPrivateChatError();
+    await auditPrivateMessage(q,boundary,{id,role,metadata,intentHash,captureIntentId,runId:options.runId});
+    await q.query('UPDATE chat_threads SET updated_at=NOW() WHERE id=$1 AND organization_id=$2',[threadId,boundary.organizationId]);
+    await admitPrivateChat(q,boundary);return id;
+}
+async function privateWriteBoundary(q:RequestSqlClient,threadId:string,runId?:string):Promise<PrivateBoundary> {
+  const boundary=await threadPrivacy(q,threadId);if (!boundary) throw new OwnerPrivateChatError();
+  if (!runId) return boundary;
+  const {readOwnerPrivateMarkers}=await import('./ana/run-control');
+  const marker=(await readOwnerPrivateMarkers(q,{organizationId:boundary.organizationId,runId})).find(item=>item.runId===runId&&item.threadId===threadId&&item.ownerUserId===boundary.ownerUserId);
+  if (!marker) throw new OwnerPrivateChatError();return marker;
+}
+
+export async function assertOwnerPrivateThreadCurrent(threadId:string):Promise<void> {
+  const boundary=await threadPrivacy(pool,threadId);if (!boundary) throw new OwnerPrivateChatError();
+  await admitPrivateChat(pool,boundary);
+  const {ownerPrivateReceiptForHistory}=await import('./ana/run-control');
+  await ownerPrivateReceiptForHistory(pool,{organizationId:boundary.organizationId,userId:boundary.ownerUserId,runId:boundary.runId,threadId});
+}
+async function verifiedPrivateMessageRetry(q:RequestSqlClient,boundary:PrivateBoundary,details:unknown,intentHash:string):Promise<number> {
+  if (!details || typeof details!=='object' || !('messageId' in details)) throw new OwnerPrivateChatError();
+  const id=Number(details.messageId);if (!Number.isSafeInteger(id) || id<=0) throw new OwnerPrivateChatError();
+  const rows=await q.query('SELECT id,role,content,metadata FROM chat_messages WHERE id=$1 AND thread_id=$2',[id,boundary.threadId]);
+  const row=rows.rows[0];if (!row || typeof row.role!=='string' || typeof row.content!=='string') throw new OwnerPrivateChatError();
+  const opened=await openPrivateMessage(q,boundary,{id,role:row.role,content:row.content,metadata:row.metadata});
+  const stored=details as Record<string,unknown>;
+  if (stored.intentHash!==intentHash || stored.storedPayloadSha256!==privateHash({role:row.role,content:row.content,model:null,tokens_used:0,metadata:row.metadata}) || typeof opened.content!=='string') throw new OwnerPrivateChatError();
+  await admitPrivateChat(q,boundary);return id;
 }
 
 export const CONVERSATION_DELETED_AUDIT_ACTION = 'chat.thread.deleted';

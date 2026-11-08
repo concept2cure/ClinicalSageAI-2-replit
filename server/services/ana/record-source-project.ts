@@ -15,10 +15,12 @@
  * @module server/services/ana/record-source-project
  */
 import { looksLikeProgramUuid } from '../../lib/project-id.js';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import type { RequestDb, RequestSqlClient } from '../../db/requestDb.js';
 
 export interface RecordSourceRefusal {
   ok: false;
-  status: 'needs_project' | 'needs_data' | 'cross_project' | 'access_denied';
+  status: 'needs_project' | 'needs_data' | 'cross_project' | 'access_denied' | 'unavailable';
   message: string;
   /** True when the call carried figures the composer does not use. */
   ignoredSuppliedFigures: boolean;
@@ -32,6 +34,8 @@ export interface RecordSourceContext {
   projectId?: number | null;
   /** The open project as the client sent it: a regulatory_programs uuid under the v2 shell. */
   projectRef?: string | null;
+  /** Backend request connection, never a model-supplied source field. */
+  sqlClient?: RequestSqlClient;
 }
 
 /** What a composer reads and for which module, for the messages: "Module 2.5 is composed from the project's …". */
@@ -40,6 +44,8 @@ export interface RecordSourceSubject {
   source: string;
   /** Assessment label when the caller is not a Module 2 composer. */
   label?: string;
+  /** Native sources must not resolve through the legacy shared connection. */
+  requiresRequestClient?: boolean;
 }
 
 export function integerId(v: unknown): number | null {
@@ -84,6 +90,19 @@ export async function scopeRefusal(err: unknown, subject: RecordSourceSubject, i
   };
 }
 
+/** Legacy callers retain their shared runner; native sources require the
+ * caller-owned connection before any policy or record query is made. */
+function requestClientRefusal(ctx: RecordSourceContext | undefined, subject: RecordSourceSubject, ignoredSuppliedFigures: boolean): RecordSourceRefusal | null {
+  if (!subject.requiresRequestClient || ctx?.sqlClient) return null;
+  return { ok: false, status: 'unavailable', code: 'RECORD_SOURCE_CLIENT_UNAVAILABLE', ignoredSuppliedFigures,
+    message: 'The protected source binding requires the current request connection. No project or study source was read; availability was not established.' };
+}
+
+async function recordSourceDatabase(ctx: RecordSourceContext | undefined): Promise<RequestDb | null> {
+  if (ctx?.sqlClient) return drizzle(ctx.sqlClient as never) as RequestDb;
+  return (await import('../../db.js')).db;
+}
+
 /** The project a composer reads, resolved as the actor; or why not. */
 export async function resolveRecordSourceProject(
   input: Record<string, unknown>,
@@ -104,8 +123,11 @@ export async function resolveRecordSourceProject(
     };
   }
   const actorUserId = integerId(ctx?.userId) ?? undefined;
-  const [{ db }, { resolveCsrScope, CsrScopeError }] = await Promise.all([import('../../db.js'), import('../csr/project-scope.js')]);
+  const missingClient = requestClientRefusal(ctx, subject, ignoredSuppliedFigures);
+  if (missingClient) return missingClient;
+  const { resolveCsrScope, CsrScopeError } = await import('../csr/project-scope.js');
   try {
+    const db = await recordSourceDatabase(ctx);
     if (!db) throw new Error('The database is not initialized.');
     const scope = await resolveCsrScope(db, organizationId, target.scope, { forWrite: false, actorUserId });
     if (!scope.projectId) throw new CsrScopeError('CSR_PROJECT_NOT_FOUND', 404, 'The project could not be resolved.');
@@ -122,7 +144,7 @@ export async function resolveRecordSourceProject(
           `so its ${subject.source} are not read here: a project's Module 2 is written from its own records.`,
       };
     }
-    return { ok: true, organizationId, projectId: scope.projectId, ...(actorUserId ? { actorUserId } : {}) };
+    return { ok: true, organizationId, projectId: scope.projectId, actorUserId };
   } catch (err) {
     return scopeRefusal(err, subject, ignoredSuppliedFigures);
   }

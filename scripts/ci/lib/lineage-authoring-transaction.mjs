@@ -1,5 +1,6 @@
 /** Bounded proof of the canonical authoring seed and transaction call graph. */
 import ts from 'typescript';
+import { contentWriteCount } from './lineage-content-writers.mjs';
 
 export const AUTHORING_TRANSACTION = Object.freeze({
   owner: 'server/services/authoring/authoring-documents.ts',
@@ -226,4 +227,283 @@ export function authoringTransactionFindings(texts) {
       .every(name => imported(owner, name, './authoring-create-outcome'))) return ['canonical authoring seed/transaction imports are missing'];
   return [...transactionFindings(owner, 'insertDocumentTx'), ...transactionFindings(owner, 'createSection'),
     ...lifecycleFindings(lifecycle), ...seedFindings(seed)];
+}
+
+// The CSR importer already owns a SERIALIZABLE callback transaction. Prove
+// that bounded call graph rather than treating a parameter named `q` as a pool
+// or accepting an unrelated BEGIN/helper elsewhere in the file.
+const uncast = node => node && (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node) || ts.isParenthesizedExpression(node))
+  ? uncast(node.expression) : node;
+const literal = (node, text) => Boolean(node && ts.isStringLiteral(node) && node.text === text);
+const namesAre = (nodes, names) => nodes.length === names.length && names.every((name, index) => id(nodes[index], name));
+const referencesAre = (root, name, nodes) => {
+  const references = descendants(root, node => id(node, name));
+  return references.length === nodes.length && references.every(node => nodes.includes(node));
+};
+const declaration = (statement, name) => statement && ts.isVariableStatement(statement)
+  && statement.declarationList.declarations.length === 1 && id(statement.declarationList.declarations[0].name, name)
+  ? statement.declarationList.declarations[0] : undefined;
+
+function importBeginMap(source) {
+  const entries = source.statements.map(statement => declaration(statement, 'BEGIN_AT')).filter(Boolean);
+  const object = uncast(entries[0]?.initializer);
+  if (entries.length !== 1 || !object || !ts.isObjectLiteralExpression(object) || object.properties.length !== 2) return false;
+  const expected = new Map([['SERIALIZABLE', 'BEGIN ISOLATION LEVEL SERIALIZABLE'],
+    ['REPEATABLE READ', 'BEGIN ISOLATION LEVEL REPEATABLE READ']]);
+  return object.properties.every(item => ts.isPropertyAssignment(item)
+    && expected.has(item.name.text) && literal(item.initializer, expected.get(item.name.text)))
+    && new Set(object.properties.map(item => item.name.text)).size === 2
+    && descendants(source, node => id(node, 'BEGIN_AT')).length === 3;
+}
+
+function rollbackDiscard(handler) {
+  if (!handler || !ts.isArrowFunction(handler) || handler.parameters.length || !ts.isBlock(handler.body)
+    || handler.body.statements.length !== 1) return false;
+  const action = handler.body.statements[0];
+  const expression = ts.isExpressionStatement(action) ? action.expression : undefined;
+  return expression && ts.isBinaryExpression(expression) && expression.operatorToken.kind === ts.SyntaxKind.EqualsToken
+    && id(expression.left, 'discard') && ts.isNewExpression(expression.right) && id(expression.right.expression, 'Error');
+}
+
+function importRollback(transaction) {
+  const caught = transaction.catchClause;
+  if (!caught || caught.block.statements.length !== 2 || !id(caught.variableDeclaration?.name, 'error')) return false;
+  const rollback = value(caught.block.statements[0]);
+  if (!rollback || !ts.isCallExpression(rollback) || !ts.isPropertyAccessExpression(rollback.expression)
+    || rollback.expression.name.text !== 'catch' || !query(rollback.expression.expression, 'ROLLBACK')) return false;
+  return rollback.arguments.length === 1 && rollbackDiscard(rollback.arguments[0])
+    && ts.isThrowStatement(caught.block.statements[1]) && id(caught.block.statements[1].expression, 'error');
+}
+
+function importRelease(transaction) {
+  const statements = transaction.finallyBlock?.statements;
+  const release = statements?.length === 1 && ts.isExpressionStatement(statements[0]) ? statements[0].expression : undefined;
+  return release && ts.isCallExpression(release) && property(release.expression, 'client', 'release')
+    && namesAre(release.arguments, ['discard']);
+}
+
+function acquiredImportTransaction(fn) {
+  const client = declaration(fn.body.statements[0], 'client');
+  const connect = awaited(uncast(client?.initializer));
+  const connectOwner = connect && ts.isCallExpression(connect) && ts.isPropertyAccessExpression(connect.expression)
+    && connect.expression.name.text === 'connect' ? connect.expression.expression : undefined;
+  const discard = declaration(fn.body.statements[1], 'discard');
+  const transaction = fn.body.statements[2];
+  if (!client || !connectOwner || !property(connectOwner, 'ctx', 'pool') || connect.arguments.length
+    || !discard || discard.initializer || !ts.isTryStatement(transaction)) return undefined;
+  return transaction;
+}
+
+function importBeginCall(opened) {
+  const argument = opened?.arguments?.[0];
+  return query(opened) && opened.arguments.length === 1 && argument && ts.isElementAccessExpression(argument)
+    && id(argument.expression, 'BEGIN_AT') && id(argument.argumentExpression, 'isolation');
+}
+
+function importWorkSequence(transaction) {
+  const statements = transaction.tryBlock.statements;
+  if (statements.length !== 4) return false;
+  const result = declaration(statements[1], 'result');
+  const work = result && awaited(result.initializer);
+  const returned = statements[3];
+  return importBeginCall(value(statements[0])) && call(work, 'work') && namesAre(work.arguments, ['client'])
+    && query(value(statements[2]), 'COMMIT') && ts.isReturnStatement(returned) && id(returned.expression, 'result');
+}
+
+function importWrapperBinding(source, fn) {
+  const calls = descendants(source, node => call(node, 'inTransaction'));
+  return calls.length === 2 && referencesAre(source, 'inTransaction', [fn.name, ...calls.map(node => node.expression)]);
+}
+
+function importWrapperFindings(source) {
+  const fn = bodyFunction(source, 'inTransaction');
+  if (!fn || !namesAre(fn.parameters.map(parameter => parameter.name), ['ctx', 'isolation', 'work'])
+    || fn.body.statements.length !== 3 || !importBeginMap(source) || !importWrapperBinding(source, fn)) return ['CSR transaction wrapper or fixed isolation map changed'];
+  const transaction = acquiredImportTransaction(fn);
+  if (!transaction || !importWorkSequence(transaction)) return ['CSR work must await its acquired client strictly between actual BEGIN and COMMIT'];
+  if (!importRollback(transaction) || !importRelease(transaction)
+    || descendants(fn.body, node => id(node, 'client')).length !== 6) return ['CSR failure must await same-client ROLLBACK and release without rebinding'];
+  return [];
+}
+
+function directAwaitedCall(body, name) {
+  const calls = descendants(body, node => call(node, name));
+  return calls.length === 1 && body.statements.some(statement => value(statement) === calls[0]) ? calls[0] : undefined;
+}
+
+function plainObject(object) {
+  if (!object || !ts.isObjectLiteralExpression(object)) return false;
+  const supported = object.properties.every(item => (ts.isPropertyAssignment(item) || ts.isShorthandPropertyAssignment(item))
+    && ts.isIdentifier(item.name));
+  return supported && new Set(object.properties.map(item => item.name.text)).size === object.properties.length;
+}
+
+function objectValue(object, name) {
+  if (!plainObject(object)) return undefined;
+  const properties = object.properties.filter(item => ts.isPropertyAssignment(item) && id(item.name, name));
+  return properties.length === 1 ? uncast(properties[0].initializer) : undefined;
+}
+
+function importContentQuery(fn) {
+  const calls = descendants(fn.body, node => ts.isCallExpression(node) && property(node.expression, 'q', 'query'));
+  const update = calls[0];
+  if (calls.length !== 1 || !fn.body.statements.some(statement => value(statement) === update)
+    || !literal(update.arguments[0], 'UPDATE authoring_sections SET content = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3 AND doc_id = $4 RETURNING id')) return undefined;
+  const inputs = update.arguments[1];
+  return inputs && ts.isArrayLiteralExpression(inputs) && inputs.elements.length === 4
+    && id(inputs.elements[0], 'content') && id(inputs.elements[1], 'sectionId')
+    && property(inputs.elements[2], 'ctx', 'tenantId') && property(inputs.elements[3], 'doc', 'id') ? update : undefined;
+}
+
+function mutationTarget(node) {
+  if (ts.isBinaryExpression(node) && node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment
+    && node.operatorToken.kind <= ts.SyntaxKind.LastAssignment) return node.left;
+  if (ts.isDeleteExpression(node)) return node.expression;
+  if ((ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node))
+    && [ts.SyntaxKind.PlusPlusToken, ts.SyntaxKind.MinusMinusToken].includes(node.operator)) return node.operand;
+  return undefined;
+}
+
+function changesName(root, name) {
+  return descendants(root, node => {
+    const target = mutationTarget(node);
+    return target && descendants(target, child => id(child, name)).length > 0;
+  }).length > 0;
+}
+
+function storedBinding(fn, name, sourceName) {
+  const entries = descendants(fn.body, node => ts.isVariableDeclaration(node) && id(node.name, name));
+  const binding = entries[0];
+  if (entries.length !== 1 || !(binding.parent.flags & ts.NodeFlags.Const)
+    || !binding.initializer || !ts.isNonNullExpression(binding.initializer)) return false;
+  return property(binding.initializer.expression, 'section', sourceName) && !changesName(fn.body, name);
+}
+
+function importSectionBindings(fn) {
+  const scope = fn.parameters[0]?.name;
+  if (!scope || !ts.isObjectBindingPattern(scope) || scope.elements.length !== 4
+    || !namesAre(scope.elements.map(element => element.name), ['q', 'ctx', 'input', 'admitted'])
+    || scope.elements.some(element => element.propertyName || element.initializer || element.dotDotDotToken)) return undefined;
+  if (!storedBinding(fn, 'content', 'stored') || !storedBinding(fn, 'sectionId', 'sectionId')) return undefined;
+  return scope.elements[0].name;
+}
+
+function transactionControl(body) {
+  return descendants(body, node => ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)
+    && node.expression.name.text === 'query' && node.arguments[0] && ts.isStringLiteral(node.arguments[0])
+    && /^(?:BEGIN|COMMIT|ROLLBACK)\b/i.test(node.arguments[0].text.trim())).length > 0;
+}
+
+function lineageActor(node) {
+  return node && ts.isPropertyAccessExpression(node) && node.name.text === 'id' && property(node.expression, 'ctx', 'actor');
+}
+
+function importLineageTarget(target) {
+  return plainObject(target) && target.properties.length === 2
+    && literal(objectValue(target, 'documentTable'), 'authoring_sections') && id(objectValue(target, 'documentId'), 'sectionId');
+}
+
+function importLineageIdentity(gate) {
+  return gate && gate.arguments.length === 6 && id(gate.arguments[0], 'q')
+    && property(gate.arguments[1], 'ctx', 'tenantId') && id(gate.arguments[3], 'content') && lineageActor(gate.arguments[4]);
+}
+
+function importSectionGate(update, gate) {
+  return update && importLineageIdentity(gate) && update.end < gate.pos && importLineageTarget(gate.arguments[2])
+    && id(objectValue(objectValue(gate.arguments[5], 'machineDraft'), 'authorId'), 'WORKFLOW_IMPORT_AUTHOR_ID');
+}
+
+function importSectionReferences(fn, q, update, gate, clients) {
+  return clients.every(node => id(node, 'q')) && !transactionControl(fn.body)
+    && referencesAre(fn, 'q', [q, update.expression.expression, gate.arguments[0], ...clients]);
+}
+
+function importSectionFindings(source) {
+  const fn = bodyFunction(source, 'writeSection');
+  const q = fn && importSectionBindings(fn);
+  if (!q || !namesAre(fn.parameters.slice(1).map(parameter => parameter.name), ['section', 'approval'])) return ['CSR section scope or actual stored-content bindings changed'];
+  const update = importContentQuery(fn);
+  const gate = directAwaitedCall(fn.body, 'enforceAuthorLineage');
+  const revision = directAwaitedCall(fn.body, 'createRevision');
+  const filing = directAwaitedCall(fn.body, 'commitSectionToFiling');
+  const audit = directAwaitedCall(fn.body, 'writeAuthoringAuditTrail');
+  if (!importSectionGate(update, gate) || !revision || !filing || !audit
+    || descendants(fn.body, ts.isReturnStatement).length || changesName(fn.body, 'ctx')) return ['CSR content UPDATE must reach canonical lineage with unchanged stored bytes, section, tenant and actor'];
+  const revisionClient = revision.arguments[0];
+  const filingClient = objectValue(filing.arguments[0], 'client');
+  const auditClient = objectValue(audit.arguments[1], 'executor');
+  if (!importSectionReferences(fn, q, update, gate, [revisionClient, filingClient, auditClient])) {
+    return ['CSR write, lineage, revision, filing and audit must retain the same unshadowed callback client'];
+  }
+  return [];
+}
+
+function importScope(callback) {
+  const scopes = callback.body.statements.map(statement => declaration(statement, 'scope')).filter(Boolean);
+  const scope = scopes[0];
+  const initial = scope?.initializer;
+  return scopes.length === 1 && initial && ts.isObjectLiteralExpression(initial) && initial.properties.length === 4
+    && initial.properties.every((item, index) => ts.isShorthandPropertyAssignment(item)
+      && id(item.name, ['q', 'ctx', 'input', 'admitted'][index])) ? scope : undefined;
+}
+
+function importSectionLoop(callback) {
+  const loops = callback.body.statements.filter(ts.isForOfStatement);
+  const loop = loops[0];
+  const write = loop && value(loop.statement);
+  return loops.length === 1 && id(loop.expression, 'writes') && call(write, 'writeSection')
+    && id(write.arguments[0], 'scope') && id(write.arguments[1], 'section') ? write : undefined;
+}
+
+function importWriteCallback(source) {
+  const fn = bodyFunction(source, 'writeImport');
+  const returned = fn?.body.statements.length === 1 && ts.isReturnStatement(fn.body.statements[0]) ? fn.body.statements[0].expression : undefined;
+  if (!call(returned, 'inTransaction') || returned.arguments.length !== 3 || !id(returned.arguments[0], 'ctx')
+    || !literal(returned.arguments[1], 'SERIALIZABLE')) return undefined;
+  const callback = returned.arguments[2];
+  if (!ts.isArrowFunction(callback) || !callback.modifiers?.some(item => item.kind === ts.SyntaxKind.AsyncKeyword)
+    || !namesAre(callback.parameters.map(parameter => parameter.name), ['q']) || !ts.isBlock(callback.body)) return undefined;
+  return callback;
+}
+
+function importCallbackWork(callback) {
+  const scope = importScope(callback);
+  const write = importSectionLoop(callback);
+  const admit = directAwaitedCall(callback.body, 'admitAndPlan');
+  const approved = directAwaitedCall(callback.body, 'approvals');
+  const fingerprints = descendants(callback.body, node => call(node, 'recordedFingerprint'));
+  const fingerprint = fingerprints[0];
+  if (!scope || !write || !admit || !approved || fingerprints.length !== 1 || !ts.isAwaitExpression(fingerprint.parent)
+    || !id(admit.arguments[0], 'q') || !id(approved.arguments[0], 'q') || !id(fingerprint.arguments[0], 'q')) return undefined;
+  const records = descendants(callback.body, node => call(node, 'recordImport'));
+  const record = records[0];
+  return records.length === 1 && ts.isAwaitExpression(record.parent) && id(record.arguments[0], 'scope')
+    ? { scope, write, admit, approved, fingerprint, record } : undefined;
+}
+
+function importCallbackReferences(callback, work) {
+  const { scope, write, admit, approved, fingerprint, record } = work;
+  const shorthand = scope.initializer.properties[0].name;
+  return !transactionControl(callback.body)
+    && referencesAre(callback, 'q', [callback.parameters[0].name, admit.arguments[0], approved.arguments[0], shorthand, fingerprint.arguments[0]])
+    && referencesAre(callback, 'scope', [scope.name, write.arguments[0], record.arguments[0]]);
+}
+
+function importCallbackFindings(source) {
+  const callback = importWriteCallback(source);
+  if (!callback) return ['CSR write must enter the actual SERIALIZABLE wrapper with its async q callback'];
+  const work = importCallbackWork(callback);
+  if (!work || !importCallbackReferences(callback, work)) return ['CSR callback must await admitted writes without rebinding, committing or replacing q/scope'];
+  const { write } = work;
+  if (!referencesAre(source, 'writeSection', [bodyFunction(source, 'writeSection')?.name, write.expression])) return ['every CSR section write must run through the awaited transaction loop'];
+  return [];
+}
+
+export function csrImportTransactionFindings(text) {
+  const source = ts.createSourceFile('csr-import.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  if (source.parseDiagnostics.length) return ['CSR import source has syntax errors'];
+  if (!imported(source, 'enforceAuthorLineage', '../clinical-regulatory-evidence/lineage-gate')
+    || descendants(source, node => id(node, 'enforceAuthorLineage')).length !== 2) return ['CSR import must use the unshadowed canonical author-lineage helper'];
+  if (contentWriteCount(text, ['authoring_sections']) !== 1) return ['CSR import has an unreviewed additional or missing content writer'];
+  return [...importWrapperFindings(source), ...importSectionFindings(source), ...importCallbackFindings(source)];
 }

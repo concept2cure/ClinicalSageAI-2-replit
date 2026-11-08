@@ -1,0 +1,56 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > opens the selected empty project instead of the first roster row and does not seed data 628ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > requires a choice without a shell project and carries an admitted choice to Vault and Tasks 364ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > does not replace an unavailable explicit project with another project 81ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > withdraws the old project while the next board is pending 174ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > starts monitoring for the open project with the deterministic RACT seed, then reads the roster again (J5-03) 109ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > an empty roster with a project open offers to start it, not "select it when setting up a project" (J5-03) 58ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > a seed button on an empty board runs the engine write, not an AnA turn (J5-03) 75ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > reports a malformed roster read as failure, with no wrong-project board 30ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > reports a unavailable roster read as failure, with no wrong-project board 40ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > keeps relationship reconciliation distinct from a successful empty roster 50ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > retires retained project selection after account replacement and project A to B to A 134ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > retires the old selector and admits a fresh visit after a batched project A to B to A 138ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > blocks retained navigation after raw browser bearer drift or unmount 72ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > preserves the selected project across canonical bearer refresh without extra reads 52ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > keeps admitted project and conversation scope during the normal persisted-record board reload 97ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM extract bytes belong to the current input choice > cannot submit previous rows under the name of a file still being read 563ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM extract bytes belong to the current input choice > submits the newest file even if an older read completes last 101ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM extract bytes belong to the current input choice > keeps paste as the current source when an earlier file callback arrives 93ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM extract bytes belong to the current input choice > ignores an older read error while the replacement file is pending 68ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM extract bytes belong to the current input choice > clears stale rows on read failure and permits reading the same file again 120ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM extract bytes belong to the current input choice > handles a read that cannot start without retaining the previous extract 61ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM extract bytes belong to the current input choice > withdraws duplicate reprocessing authorization for new paste content 127ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM extract bytes belong to the current input choice > withdraws duplicate reprocessing authorization for new file content 168ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM extract bytes belong to the current input choice > keeps a successfully read current file and its provenance paired 80ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM extract bytes belong to the current input choice > withdraws stale duplicate authorization when Source feed changes 132ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM extract bytes belong to the current input choice > withdraws stale duplicate authorization when Data cutoff changes 100ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM extract bytes belong to the current input choice > does not enable an empty file as an extract 36ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM saved run receipts survive their parent refresh > keeps the saved outcome visible until closing before refreshing its parent board 88ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM saved run receipts survive their parent refresh > keeps duplicate recovery visible without refreshing an unchanged board 81ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM saved run receipts survive their parent refresh > still refreshes a saved load when another input clears its displayed outcome 77ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM saved run receipts survive their parent refresh > shows duplicate recovery after trying to load the saved extract again 91ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx > RBM saved run receipts survive their parent refresh > keeps an in-flight save mounted on Escape and refreshes after its receipt is dismissed 59ms
+ ✓ client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx > a confirmed collaboration message is never resent to retry its optional task > retains delivery after an optional task HTTP refusal 450ms
+ ✓ client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx > a confirmed collaboration message is never resent to retry its optional task > retains delivery after an optional task thrown refusal 93ms
+ ✓ client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx > a confirmed collaboration message is never resent to retry its optional task > keeps a known message HTTP refusal editable and retryable, without creating a task 38ms
+ ✓ client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx > a confirmed collaboration message is never resent to retry its optional task > keeps a known message thrown refusal editable and retryable, without creating a task 32ms
+ ✓ client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx > a confirmed collaboration message is never resent to retry its optional task > does not report a lost message acknowledgement as definitely unsent or permit an automatic repeat 35ms
+ ✓ client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx > a confirmed collaboration message is never resent to retry its optional task > does not claim a lost task acknowledgement means no task was created 57ms
+ ✓ client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx > a confirmed collaboration message is never resent to retry its optional task > closing a partial result and opening a new composer starts fresh intake 97ms
+ ✓ client/src/concept2cure/v2/__tests__/collabTaskOpenProject.test.tsx > header Task — the open project > opens on the project anchored to the open program and saves the task under it 700ms
+ ✓ client/src/concept2cure/v2/__tests__/collabTaskOpenProject.test.tsx > header Task — the open project > starts on "Choose a project" with nothing open, and saves nothing until one is chosen 348ms
+ ✓ client/src/concept2cure/v2/__tests__/collabTaskOpenProject.test.tsx > header Task — the open project > does not guess when the open program has no task project 157ms
+ ✓ client/src/concept2cure/v2/__tests__/collabTaskOpenProject.test.tsx > header Task — the open project > tells an open board to re-read, and the confirmation names no task id 356ms
+ ✓ client/src/concept2cure/v2/__tests__/collabTaskOpenProject.test.tsx > header Task — the open project > sends a due date picked on the calendar as the end of that day 288ms
+ ✓ client/src/concept2cure/v2/__tests__/collabTaskOpenProject.test.tsx > taskProjectFor > maps a program UUID to its anchored project, case-insensitively, and takes a listed id as it is 1ms
+ ✓ client/src/concept2cure/v2/__tests__/collabTaskOpenProject.test.tsx > taskProjectFor > guesses nothing: no id, an unknown id, or two projects on one program is "" 1ms
+ ✓ client/src/concept2cure/v2/__tests__/collabTaskOpenProject.test.tsx > taskProjectFor > reads only a calendar date as a due date 1ms
+
+ Test Files  4 passed (4)
+      Tests  47 passed (47)
+   Start at  22:42:41
+   Duration  18.64s (transform 3.67s, setup 882ms, import 5.25s, tests 6.84s, environment 4.14s)
+

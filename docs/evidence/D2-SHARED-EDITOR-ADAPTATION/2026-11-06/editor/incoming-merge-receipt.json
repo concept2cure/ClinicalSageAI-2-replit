@@ -1,0 +1,111 @@
+{
+  "observedAt": "2026-11-06T19:03:24.804120+00:00",
+  "testedCombinedHead": "74f6e51d627e15c223a0ecbe90c6d21e0b6f3742",
+  "testedCommittedTree": "0e85bda622593e73bd7a618cba5f9c88b7f91bac",
+  "incomingCanonical": "67348a526cc75f152df2e73e7bfbb65e815dc5fc",
+  "restoredSourceCommit": "93e92859f4",
+  "state": "Production frozen; only two approved test fixtures corrected by this agent. No commit/full compiler.",
+  "sourceAndTestPins": {
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "3e7bae441a5b31728c396dfe98b455d64dca4f6488b268b42de57e06f7f7c007",
+    "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx": "63e3d682bb30f549570e891f76c4e52a1d6d9cf97dfc9ee2cd8ac861f0d7343b",
+    "client/src/concept2cure/v2/registryModel.ts": "24947d526bf4eb008948055e3c7f8b66d2a0212e673720659186becada30de97",
+    "client/src/concept2cure/v2/editor/filingSectionTarget.ts": "1522a4ffee3efd492883bb927f348e0fe2fac1097e7f64be7e17be2ddccbe5d8",
+    "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts": "7d13ca6860c8b3ec0f66637612dafb2417b4f59b4dbf37227851778dbe318e17",
+    "client/src/concept2cure/v2/editor/writingAgencyPresentation.ts": "356cfe02766c57b6c280cad03111e4de33021056600c8fee85a51e08b79024fe",
+    "client/src/concept2cure/v2/editor/FilingMarkets.tsx": "2d4f0828bca74fec16cc7dc276a58a5e0a0f1bc1a6d96261a826afb5ac132634",
+    "client/src/concept2cure/v2/editor/__tests__/writingAgencyPresentation.test.ts": "c0c9c9e5997fd555bfcc6e3d0815585aa555d9b092bb6b1973ef0b6223dae384",
+    "client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx": "a9ef9d5d60d9c4966ea51c632867c19fc2490fc7760fdea2d096548e629508ad",
+    "client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx": "81e971fbbd6c724c205c68c9e852673753b1c175d587df965a649ab4593011a5",
+    "client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx": "d60531e4bcabe7d35a0c6908281200d2b6e29fa25f803fc42ccd6078c018b315",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx": "970e61f8d4d862b7489e2532d4ddc050f2cb027881957664b8549caa3e1d5fb4",
+    "client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx": "8f8ff09220e1eb78772eaa9432361e1898a97bdb5d4a2519dcf594f50088c8c0",
+    "client/src/concept2cure/v2/__tests__/registryModel.test.ts": "50624a430a99c290eabab8e444551b2ba74eb3cc9e1a29ea853a1629f0c8cd31",
+    "client/src/concept2cure/v2/editor/__tests__/filingSectionTarget.test.tsx": "cae04fee2a7611e7001ecfa706349de9dc494d850c845e3f353804ac00ed2cea"
+  },
+  "mergedSourceReview": {
+    "Workbench": "Only two display/accessibility Project files to Vault renames relative to restored source93e92859f4; all context/resolver/held-navigation/agency logic unchanged.",
+    "ProjectFilesPanel": "Existing header and close label renamed to Vault; same project and read-owner props/actions.",
+    "Navigation": "Biostatistics rail addition has the matching recorded founder decision in one-product-baseline.json."
+  },
+  "writingFixture": {
+    "file": "client/src/concept2cure/v2/editor/__tests__/writingAgencyPresentation.test.ts",
+    "change": "Only error:null to error:undefined; no assertion/runtime changes or new casts.",
+    "tests": 11,
+    "suites": 1,
+    "result": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "fullCompilerByThisAgent": false
+  },
+  "incomingInitialCohort": {
+    "suites": 7,
+    "passedSuites": 6,
+    "failedSuites": 1,
+    "passedTests": 120,
+    "failedTests": 1,
+    "durationSeconds": 159.39,
+    "receipt": "incoming-client-red.txt.gz",
+    "passedByFile": {
+      "client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx": 19,
+      "client/src/concept2cure/v2/editor/__tests__/projectFilesAssemblyFlow.test.tsx": 9,
+      "client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx": 15,
+      "client/src/concept2cure/v2/editor/__tests__/filingSectionTarget.test.tsx": 33,
+      "client/src/concept2cure/v2/__tests__/registryModel.test.ts": 30,
+      "client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx": 8,
+      "client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx": 6
+    },
+    "failedByFile": {
+      "client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx": 1
+    },
+    "classification": "Sole failure expected an ambient IND outline request for an explicitly unbound copy; stale fixture and obsolete expectation, not a production defect."
+  },
+  "conversationFixture": {
+    "file": "client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx",
+    "change": "Exact current header/list project identity and null binding; truthful home/market DTOs. After confirmed unbound read, assert no ambient outline. Existing conversation identity and absent dossier/submissionType/regulatorBody assertions retained.",
+    "suites": 1,
+    "tests": 9,
+    "result": "passed",
+    "runnerExitCode": 0,
+    "durationSeconds": 14.52,
+    "lintExitCode": 0,
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "receipt": "incoming-conversation-fixture-green.txt.gz"
+  },
+  "composedCompatibility": {
+    "unchangedPassingSuites": 6,
+    "unchangedPassingTests": 112,
+    "correctedFileSuites": 1,
+    "correctedFilePassingTests": 9,
+    "totalSuites": 7,
+    "totalPassingTests": 121,
+    "qualification": "Composed from the six unchanged passing suites in initial cohort plus the complete corrected-file rerun. This is NOT represented as a fresh all-seven-suite rerun."
+  },
+  "logs": {
+    "incoming-client-red.txt.gz": {
+      "originalBytes": 40434,
+      "originalSha256": "fbc6d67829e612f6717beec58ba506ec05a1559a3cf1d0b894ccb0d79ec74a51"
+    },
+    "writing-fixture-green.txt.gz": {
+      "originalBytes": 2870,
+      "originalSha256": "d937fbb219b02b1de7646c0bc01c73aacdfc96c0eb4221e3659d31d89cc31ef1"
+    },
+    "writing-fixture-eslint.txt.gz": {
+      "originalBytes": 0,
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "incoming-conversation-fixture-green.txt.gz": {
+      "originalBytes": 2431,
+      "originalSha256": "63ce38167e2be6905ccb1994fe3da7e7e466cd9f8fd97c937219f29c23b4b30d"
+    },
+    "incoming-conversation-fixture-eslint.txt.gz": {
+      "originalBytes": 0,
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "limits": [
+    "No production source changed by these fixture corrections.",
+    "Tests use actual components with synthetic HTTP; no deployed/native PostgreSQL/provider qualification is claimed here.",
+    "Root owns final compiler/build/browser gates and publication."
+  ]
+}

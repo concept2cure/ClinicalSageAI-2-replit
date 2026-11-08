@@ -143,6 +143,8 @@ interface VaultDoc {
   src?: 'authored' | 'upload' | 'artifact';
   /** Artifact-only: what the registry records of its governance. */
   artifact?: ArtifactLeafFacts;
+  /** Exact governed section key, or null for a whole-document fallback leaf. */
+  filingSectionKey?: string | null;
   /** Upload-only extras (all projected from real columns). */
   docId?: string;
   originalFileAvailable?: boolean;
@@ -173,6 +175,8 @@ interface VaultDoc {
  */
 interface ArtifactLeafFacts {
   artifactId: string;
+  /** Current recorded head version; null when it cannot name an exact import source. */
+  version: number | null;
   kind: string;
   format: string;
   /** The model the writer recorded; null when none was (never invented). */
@@ -215,6 +219,8 @@ interface UploadFiling {
 
 interface VaultFolder {
   id: string;
+  /** Present only on a real governed filing's root folder. */
+  filingDocumentId?: string;
   code: string;
   label: string;
   children: Array<VaultFolder | VaultDoc>;
@@ -969,6 +975,7 @@ function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined):
   const label = spec.label ?? spec.key;
   const leaf: VaultDoc = {
     id: `sec-${doc.id}-${spec.key}`,
+    filingSectionKey: spec.key,
     num: spec.key,
     title: label,
     type: mandatory ? 'Required' : 'Optional',
@@ -990,6 +997,7 @@ function docLevelLeaf(doc: DocRow, hasSections: boolean): VaultDoc {
   const docTitle = doc.title || doc.doc_type || 'Document';
   return {
     id: `doc-${doc.id}`,
+    filingSectionKey: null,
     num: '—',
     title: docTitle,
     type: 'Document',
@@ -1049,6 +1057,7 @@ function documentFolder(doc: DocRow, live: Map<string, LiveSection>): VaultFolde
     : [docLevelLeaf(doc, live.size > 0)];
   return {
     id: `vaultdoc-${doc.id}`,
+    filingDocumentId: doc.id,
     code: (doc.doc_type ?? '').toUpperCase(),
     label: doc.title || doc.doc_type || 'Document',
     children,
@@ -1312,6 +1321,7 @@ export function artifactLeaf(row: ArtifactRegistryRow): VaultDoc {
     sizeLabel: formatContentBytes(Number(row.content_bytes)),
     artifact: {
       artifactId: row.artifact_id,
+      version: version != null && Number.isSafeInteger(version) && version > 0 ? version : null,
       kind: g.kind,
       format: g.fmt,
       model: g.model,

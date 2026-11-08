@@ -81,7 +81,7 @@ function canvasEditor(): Editor {
 
 const DOCS = {
   success: true,
-  documents: [{ id: 'D1', title: 'Nonclinical Overview', module: 'M3', product_code: 'ABC', status: 'draft', updated_at: '2026-07-20T10:00:00Z', section_count: 1 }],
+  documents: [{ id: 'D1', title: 'Nonclinical Overview', module: 'M3', product_code: 'ABC', status: 'draft', updated_at: '2026-07-20T10:00:00Z', section_count: 1, program_id: '11111111-1111-4111-8111-111111111111' }],
 };
 const SECTIONS = {
   success: true,
@@ -126,17 +126,20 @@ describe('DocumentAuthoring — saved draft and filing trees', () => {
     const programId = '11111111-1111-4111-8111-111111111111';
     publishShellProject({ id: programId, title: 'Clinical program' });
     apiRequest.mockImplementation(async (_method: string, url: string) => {
-      if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [{ ...DOCS.documents[0], title: 'Saved CSR copy', module, c2c_document_id: c2cDocumentId }] });
+      if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [{ ...DOCS.documents[0], program_id: programId, title: 'Saved CSR copy', module, c2c_document_id: c2cDocumentId }] });
+      if (url.split('?')[0] === '/api/authoring/docs/D1') return ok({ document: { ...DOCS.documents[0], id: 'D1', client_program_id: programId,
+        module, c2c_document_id: c2cDocumentId } });
       if (url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok({ sections: [{ ...SECTIONS.sections[0], code: '1', title: 'Title Page' }] });
-      if (url.startsWith('/api/c2c/documents?')) return ok({ documents: [{ id: 'filing-id' }] });
-      if (url === '/api/c2c/documents/filing-id/outline') return ok({ document: { id: 'filing-id', title: 'Project IND filing', doc_type: 'ind', agency: 'fda' },
+      if (url.startsWith('/api/c2c/documents?')) return ok({ documents: url.includes('scope=market') ? [] : [{ id: 'filing-id', project_id: programId,
+        title: 'Project IND filing', doc_type: 'ind', agency: 'fda' }] });
+      if (url === '/api/c2c/documents/filing-id/outline') return ok({ document: { id: 'filing-id', project_id: programId, title: 'Project IND filing', doc_type: 'ind', agency: 'fda', filing_scope: 'home' },
         outline: [{ key: 'M1', parent_key: null, label: 'IND administrative module', path_order: 1, mandatory: true },
           { key: '1.1', parent_key: 'M1', label: 'FDA forms', path_order: 2, mandatory: true }] });
       return ok({ success: true });
     });
     render(<DocumentAuthoring {...props()} />);
     await waitFor(() => expect(canvasText()).toBe(SECTIONS.sections[0].content));
-    await waitFor(() => expect(apiRequest.mock.calls.some(([, url]) => url === '/api/c2c/documents/filing-id/outline')).toBe(true));
+    if (c2cDocumentId) await waitFor(() => expect(apiRequest.mock.calls.some(([, url]) => url === '/api/c2c/documents/filing-id/outline')).toBe(true));
     expect(document.querySelector('.ed-tree')?.textContent).toContain('Saved CSR copy');
     if (c2cDocumentId) {
       expect(screen.queryByText(/Unbound working copy/)).toBeNull();

@@ -149,6 +149,7 @@ describe('app.current_org_id on a per-user request', () => {
     // deployment's mode (unset here, so empty; 'on' in production).
     expect([...vars.keys()].sort()).toEqual([
       'app.bypass_rls',
+      'app.current_account_id',
       'app.current_org_id',
       'app.current_tenant_id',
       'app.current_user_role',
@@ -156,7 +157,24 @@ describe('app.current_org_id on a per-user request', () => {
       'app.rls_enforce',
     ]);
     expect(vars.get('app.current_user_role')).toBe('admin');
+    expect(vars.get('app.current_account_id')).toBe('');
     expect([vars.get('app.bypass_rls'), vars.get('app.is_admin')]).toEqual(['', '']);
+  });
+
+  it('sets and clears the verified account owner with the tenant on the request connection', async () => {
+    const res = makeRes();
+    const req = makeReq({ user: { id: '7', userId: 99, organizationId: '42', role: 'member' }, userId: 99 });
+    establishRequestTenantScope(req, res, () => undefined);
+    await req.dbClient.query('SELECT 1');
+    const applied = new Map<string, unknown>();
+    for (const statement of issued) readSetConfigs(statement, applied);
+    expect(applied.get('app.current_account_id')).toBe('7');
+    issued.length = 0;
+    res.finish();
+    await vi.waitFor(() => expect(issued.some(statement => statement.text.includes("set_config('app.current_account_id', '', false)"))).toBe(true));
+    const cleared = new Map<string, unknown>();
+    for (const statement of issued) readSetConfigs(statement, cleared);
+    expect(cleared.get('app.current_account_id')).toBe('');
   });
 });
 

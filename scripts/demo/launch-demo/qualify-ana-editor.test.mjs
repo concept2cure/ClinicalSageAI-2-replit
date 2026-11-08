@@ -14,6 +14,8 @@ const valid = { success: true, source: 'model', draft: {
 test('a real source-grounded AnA draft must have model, candidate, and audit turn', () => {
   assert.equal(checkAnADraft(valid).draftId, candidateId);
   assert.equal(checkAnADraft(valid).sourceCount, 3);
+  assert.throws(() => checkAnADraft({ ...valid, draft: { ...valid.draft,
+    draftId: '11111111-2222-4333-777777777777' } }), /did not produce/);
   assert.throws(() => checkAnADraft({ ...valid, source: 'template' }), /did not produce/);
   assert.throws(() => checkAnADraft({ ...valid, draft: { ...valid.draft, draftId: undefined } }), /did not produce/);
   assert.throws(() => checkAnADraft({ ...valid, draft: { ...valid.draft,

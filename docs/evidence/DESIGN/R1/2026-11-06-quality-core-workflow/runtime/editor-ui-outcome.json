@@ -1,0 +1,80 @@
+{
+  "projectId": "6c89e2c1-2d76-4356-80cb-001821956b5a",
+  "documentId": "e4518a32-5216-4a8a-b34b-f495cbe79fc3",
+  "passed": true,
+  "flow": "Actual project Evidence \u2192 native Quality source checkbox \u2192 Build in editor \u2192 existing working document \u2192 one shared editor \u2192 Preview build \u2192 structure-only Build document \u2192 Check saved sources \u2192 mobile reopen and Check saved sources",
+  "template": {
+    "id": "05b65c39-4f70-548b-b935-3f3c153f1621",
+    "name": "M3 \u00b7 Module 3: Quality \u2014 preparation worksheet"
+  },
+  "templateScopeControl": "Quality Manual whole-document template was refused409 for M3 document without write; selected existing matching M3 worksheet successfully.",
+  "previewStatus": 200,
+  "buildStatus": 200,
+  "builtSectionCount": 61,
+  "draftWithAnaChecked": false,
+  "modelCalls": 0,
+  "signed": false,
+  "approved": false,
+  "filed": false,
+  "persistedSource": {
+    "sourceId": 159,
+    "title": "Nonconformance: NC-PROJECT-QUALITY-20261106",
+    "checksum": "cb3256f5b1f7f527b352681a9aa5e461dec18067743122ff06228ab2966a1c33",
+    "excerpt": {
+      "start": 0,
+      "end": 866,
+      "totalChars": 866,
+      "sha256": "cb3256f5b1f7f527b352681a9aa5e461dec18067743122ff06228ab2966a1c33"
+    },
+    "eventId": "f610c42c-4167-4ada-8305-b0af9a4231a6",
+    "sameHistoricalEventAfterMobileReopen": true
+  },
+  "desktop": {
+    "passed": true,
+    "editorUrl": "http://127.0.0.1:5000/concept2cure/document-authoring?program=6c89e2c1-2d76-4356-80cb-001821956b5a",
+    "editorMounted": true,
+    "shellProjectRetained": true,
+    "editorMetrics": {
+      "scrollWidth": 1176,
+      "clientWidth": 1176
+    },
+    "httpErrors": [],
+    "pageErrors": []
+  },
+  "mobile": {
+    "passed": true,
+    "url": "http://127.0.0.1:5000/concept2cure/document-authoring?program=6c89e2c1-2d76-4356-80cb-001821956b5a",
+    "canonicalEditorBars": 1,
+    "programRetainedInUrl": true,
+    "programRetainedInShell": true,
+    "pageDimensions": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "httpErrors": [],
+    "pageErrors": []
+  },
+  "screenshots": [
+    "desktop-project-native-source.png",
+    "desktop-select-existing-working-document.png",
+    "desktop-preview-native-manifest.png",
+    "desktop-shared-editor-selected-source.png",
+    "mobile-project-native-source.png",
+    "mobile-select-existing-working-document.png",
+    "mobile-shared-editor-saved-reference.png",
+    "mobile-shared-editor.png"
+  ],
+  "receipts": [
+    "preview-receipt.json",
+    "build-receipt.json",
+    "saved-sources-receipt.json",
+    "mobile-reopened-saved-sources-receipt.json"
+  ],
+  "limitations": [
+    "Structure-only assembly creates stored template structure and records selected-source history. It creates no scientific narrative, approval, citation-verification or filing.",
+    "Initial Quality Manual mismatch refusal retained separately in template-scope-refusal*.json."
+  ],
+  "noProductionEdits": true,
+  "noApiFallback": true,
+  "noMockedApis": true
+}

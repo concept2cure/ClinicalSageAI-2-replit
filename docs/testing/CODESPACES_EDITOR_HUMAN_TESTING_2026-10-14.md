@@ -103,8 +103,14 @@ What the setup did, and where to look when something is wrong:
   runs with: the `app_service` role, which is not an owner and does not bypass
   row-level security, and random signing secrets. Nothing is committed or
   printed.
-- **Restart the app:** `bash .devcontainer/post-start.sh` restarts it by itself when the running app lacks a key
-  the terminal has. To force a restart: `pkill -f 'tsx --inspect=0 server/index.ts'; bash .devcontainer/post-start.sh`.
+- **Update an existing Codespace before the demo:** in its terminal, confirm
+  `git branch --show-current` says `concept2cure-v2`, then run
+  `git pull --ff-only origin concept2cure-v2` and
+  `bash .devcontainer/post-start.sh`. The start checks the running backend's
+  public `/api/version` stamp against the checkout and restarts an older or
+  unverified backend. It also restarts when the running app lacks a key the
+  terminal has. A healthy backend already serving this commit is retained.
+  To force a restart: `pkill -f 'tsx --inspect=0 server/index.ts'; bash .devcontainer/post-start.sh`.
   A terminal opened before a secret was added does not hold that secret; stop and start the Codespace instead.
 - **Check it:** `set -a; . ~/.concept2cure-codespace/app.env; set +a; npm run codespaces:doctor -- --check-app --probe-anthropic`.
 - **The CSR study's data** are the public CDISC pilot ADaM files (CDISCPILOT01).
