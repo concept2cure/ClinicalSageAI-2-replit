@@ -1,0 +1,9 @@
+MUTATION 7-release-whatever-the-void (on the final code, 2026-11-08T21:34:17Z): replaced [const outOfForce = voidOutcome === 'voided';] with [const outOfForce = true;]
+    "err": "VOID_FAILURE_CANARY"
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send that fails after the wire, whose signature cannot be voided, keeps its claim; that signature never files it 285ms
+   → a test send whose signature is still live released its claim: expected { dispatch_status: 'pending', …(2) } to deeply equal { …(3) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send that fails after the wire, whose signature cannot be voided, keeps its claim; that signature never files it
+AssertionError: a test send whose signature is still live released its claim: expected { dispatch_status: 'pending', …(2) } to deeply equal { …(3) }
+      Tests  1 failed | 14 skipped (15)
+restored sha256 1eb39576d1bbe6976ac537e782854a73ce70999758cccbb9d35d2ac2463474d6 (expected 1eb39576d1bbe6976ac537e782854a73ce70999758cccbb9d35d2ac2463474d6)

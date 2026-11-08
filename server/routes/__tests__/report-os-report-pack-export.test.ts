@@ -176,7 +176,7 @@ function prepare(options: PacketOptions = {}) {
   const linked = { action: 'report_os.run_finalized', actor_id: 5, target: 'report_run:41',
     payload_hash: createHash('sha256').update(nv).digest('hex'), occurred_at: new Date('2026-09-30T13:00:01Z') };
   const chainRow = { ...linked, nv, tenant_id: 7, chain_seq: 1, sha256_chain: deriveChainHash(linked, '0'.repeat(64)), hmac_seal: null };
-  h.queued.select.push([{ title: `bundle:${id}`, content: JSON.stringify({ bundleRecord: bundle }), createdAt: at }],
+  h.queued.select.push([{ id, record: bundle, createdAt: at.toISOString() }], // the pack's row in report_bundles (P-91)
     [{ typeId: type.typeId, family: type.family }]); // Also make the pre-increment manifest path observable in red.
   let fullReads = 0;
   const sealRows = (sql: string, values: unknown[]) => {
@@ -194,7 +194,7 @@ function prepare(options: PacketOptions = {}) {
   };
   h.respond.fn = (sql, arrayMode) => {
     const values = h.params.at(-1) ?? [];
-    if (/select .* from "project_memory_entries"/.test(sql)) return [[`bundle:${id}`, JSON.stringify({ bundleRecord: bundle }), at.toISOString()]];
+    if (/select .* from "report_bundles"/.test(sql)) return [[id, bundle, at.toISOString()]];
     if (/select "type_id", "family" from "report_type_registry"/.test(sql)) return [[type.typeId, type.family]];
     if (/select .* from "report_type_registry"/.test(sql)) return [driverRow(reportTypeRegistry, type)];
     if (/SELECT ou.role/.test(sql)) return [{ role: 'manager' }];

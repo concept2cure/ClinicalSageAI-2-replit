@@ -3790,6 +3790,11 @@ export const C2C_MIGRATION_FILES = [
   // table's guarded CREATE is its existing shape. Public with organization_id INTEGER NOT
   // NULL, so the sweep below gives it a tenant policy when it has none. No DROP.
   'migrations/20261106_document_folders_project_scope.sql',
+  // The report-pack register's own tables (P-91, C-3, 2026-11-08). Public with
+  // organization_id INTEGER NOT NULL, so the sweep below policies them; its backfill
+  // carries every legacy bundle:<uuid> memory pack once, ON CONFLICT DO NOTHING, and
+  // fails the deploy if one was neither carried nor reported. Drops nothing.
+  'migrations/20261108_report_bundle_register.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

@@ -89,8 +89,16 @@ async function retainedBundle(runs: Run[], label: string): Promise<string> {
     projectIds: [...new Set(runs.map(run => run.projectId))], runIds: runs.map(run => run.id), items: runs.map(run => ({ runId: run.id, runUuid: run.runUuid,
       reportTypeId: TYPE, reportTypeLabel: 'Synthetic native retained report', scopeType: 'project', scopeId: String(run.projectId),
       status: 'completed', confidence: 90, blockers: [], createdAt: run.body.generatedAt })) };
-  const profile = Number((await owner.query('SELECT id FROM project_intelligence_profiles WHERE organization_id=$1 AND project_id=$2', [orgId, partial.projectId])).rows[0].id);
-  await owner.query("INSERT INTO project_memory_entries(project_profile_id,project_id,organization_id,category,subcategory,title,content,source_document_type) VALUES($1,$2,$3,'regulatory','report_bundle_record',$4,$5,'report_os_state')", [profile, partial.projectId, orgId, `bundle:${bundleId}`, JSON.stringify({ bundleRecord: bundle })]);
+  // One row per pack in the register, its runs and projects as rows of their own (P-91, C-3).
+  const content = JSON.stringify({ bundleRecord: bundle });
+  await owner.query('INSERT INTO report_bundles(id,organization_id,name,created_by,created_at,record,byte_length,payload_hash) VALUES($1,$2,$3,$4,$5,$6::jsonb,$7,$8)',
+    [bundleId, orgId, bundle.name, actors.author.id, bundle.createdAt, JSON.stringify(bundle), Buffer.byteLength(content), createHash('sha256').update(content).digest('hex')]);
+  for (const [index, run] of runs.entries()) {
+    await owner.query('INSERT INTO report_bundle_runs(bundle_id,organization_id,run_id,position) VALUES($1,$2,$3,$4)', [bundleId, orgId, run.id, index + 1]);
+  }
+  for (const projectId of bundle.projectIds) {
+    await owner.query('INSERT INTO report_bundle_projects(bundle_id,organization_id,project_id) VALUES($1,$2,$3)', [bundleId, orgId, projectId]);
+  }
   return bundleId;
 }
 async function provisionActors() {

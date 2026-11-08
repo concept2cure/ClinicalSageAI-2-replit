@@ -71,7 +71,9 @@ import {
   ValidationWorkspace,
   VerdictNote,
   clause,
+  environmentWords,
   mutateVerbatim,
+  TEST_SEND_NOT_A_FILING,
   type GovernedKind,
   type GovernedPrecheck,
   type Notice,
@@ -81,6 +83,7 @@ import {
 import '../styles/submission-v2.css';
 import { NewSubmissionForm } from './NewSubmissionForm';
 import { gatewayLabel } from '../gatewayLabels';
+import { dispatchWords } from './CommitmentRow';
 import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { consumeNavParams, stashNavParamsForTarget, NAV_PARAMS_EVENT } from '../navParams';
@@ -316,19 +319,47 @@ const GOVERNED_PAST: Record<GovernedKind, string> = {
  *  (P-23). */
 type TransmitAnswer = { transmitted?: boolean; reason?: string; gateway?: string; transmittalId?: number; status?: string; dispatchStatus?: string; signatureVoided?: boolean };
 
-/** The server's honest "nothing was sent" (`transmitted: false`), as a sentence. */
+/** The server's honest "nothing was sent" (`transmitted: false`), as a sentence.
+ *  The environment is said in words, never as stored (F1, row D7). */
 function notTransmittedSentence(a: TransmitAnswer, environment: string | undefined): string {
   const sentence = a.reason === 'gateway_not_configured'
-    ? `Not transmitted — ${gatewayLabel(a.gateway)} has no ${environment ?? ''} credentials configured for this organization. Nothing was sent; the attempt is recorded.`
-    : `Not transmitted — ${clause(a.reason ?? 'the server did not send it')}. Nothing was sent.`;
+    ? `Not sent — ${gatewayLabel(a.gateway)} has no credentials configured for ${environmentWords(environment)} for this organization. Nothing was sent; the attempt is recorded. Add the credentials, then send again.`
+    : `Not sent — ${clause(a.reason ?? 'the server did not send it')}. Nothing was sent.`;
   return a.signatureVoided ? `${sentence} The signature given for it is now void; a new attempt is signed again.` : sentence;
 }
 
-/** A performed transmit, as the server reported it. */
-function transmittedSentence(seq: SeqRow, a: TransmitAnswer, environment: string | undefined): string {
-  return `Sequence ${seq.sequenceNumber} handed to ${gatewayLabel(a.gateway)} (${environment ?? 'environment not recorded'}) — transmittal #${
-    a.transmittalId ?? 'not returned'
-  }, status ${a.status ?? 'not returned'}`;
+/** A performed transmit, as the server reported it, with who signed it. The
+ *  environment is said in words, never as stored. F1 (row D7, 2026-11-01): a
+ *  send to the agency's test environment is said to be one, and not a filing,
+ *  always: whatever it answered, the sequence can still be filed. How the agency
+ *  now holds a production send is said by dispatchWords (CommitmentRow.tsx),
+ *  and only for a status it names: any other is not yet confirmed, never "not
+ *  on file" just after a send. */
+function transmittedSentence(seq: SeqRow, a: TransmitAnswer, environment: string | undefined, signed: string): string {
+  const n = seq.sequenceNumber;
+  const record = `transmittal #${a.transmittalId ?? 'not returned'}, gateway status ${a.status ?? 'not returned'}, ${signed}`;
+  const sent = `Sequence ${n} sent to ${environmentWords(environment)} through ${gatewayLabel(a.gateway)} — ${record}.`;
+  if (environment === 'staging') {
+    return `${sent} ${TEST_SEND_NOT_A_FILING}; sequence ${n} is ${dispatchWords('pending')} and can still be filed with the agency.`;
+  }
+  const named = a.dispatchStatus === 'sent' || a.dispatchStatus === 'acknowledged' || a.dispatchStatus === 'rejected';
+  const held = named
+    ? ` Sequence ${n} is now ${dispatchWords(a.dispatchStatus)}.`
+    : ` Whether the agency holds sequence ${n} is not yet confirmed; check the transmittal list before sending again.`;
+  return `${sent}${held}`;
+}
+
+/** What the transmit's signer reads before signing: where the package goes, in
+ *  words, and that a test send is not a filing (F1, row D7, 2026-11-01). */
+function transmitTargetLine(t: TransmitRequest | undefined): string {
+  const application = `application ${t?.applicationId ?? 'not given'}`;
+  if (t?.environment === 'production') {
+    return `sends the package to ${environmentWords(t.environment)}, ${application}; this files the sequence with the agency`;
+  }
+  if (t?.environment === 'staging') {
+    return `sends the package to ${environmentWords(t.environment)}, ${application}; ${TEST_SEND_NOT_A_FILING.toLowerCase()}, and the sequence can still be filed with the agency`;
+  }
+  return `sends the package to the agency gateway (environment not chosen), ${application}`;
 }
 
 /** The open project as the create form's programme: the org's own row when
@@ -962,13 +993,22 @@ export function SubmissionCenter({
       { signatureActionId, environment: f.transmit?.environment, applicationId: f.transmit?.applicationId },
     );
     if (done.error || !done.data || typeof done.data.transmitted !== 'boolean') {
-      throw new Error(`${clause(done.error ?? 'The transmit was not performed')}. Nothing was sent.`);
+      // The server's own sentence says whether anything reached the agency: a
+      // refusal before the wire says nothing was sent, a failure after it says the
+      // agency may hold the package. Nothing is added that could contradict it
+      // (F1, row D7, 2026-11-08). A send to the agency's test environment files
+      // nothing whatever became of it, so that is said.
+      const after = f.transmit?.environment === 'staging' ? ` ${TEST_SEND_NOT_A_FILING}, so nothing was filed.` : '';
+      throw new Error(`${clause(done.error ?? 'The server did not confirm the transmit; check the transmittal list before sending again')}.${after}`);
     }
     setSeqBump((b) => b + 1);
     if (!done.data.transmitted) throw new Error(notTransmittedSentence(done.data, f.transmit?.environment));
     setNotice({
       tone: 'ok',
-      text: `${transmittedSentence(f.seq, done.data, f.transmit?.environment)}, signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}.`,
+      text: transmittedSentence(
+        f.seq, done.data, f.transmit?.environment,
+        `signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}`,
+      ),
     });
     return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
   };
@@ -1967,7 +2007,7 @@ export function SubmissionCenter({
                   ? shadowWaiverTargetLine(flow.waiver)
                   : flow.kind === 'shadow-finding-disposition'
                     ? shadowDispositionTargetLine(flow.disposition)
-                    : `sends the package to the agency gateway (${flow.transmit?.environment ?? 'environment not chosen'}), application ${flow.transmit?.applicationId ?? 'not given'}`
+                    : transmitTargetLine(flow.transmit)
           }`}
           defaultMeaning={
             flow.kind === 'freeze'

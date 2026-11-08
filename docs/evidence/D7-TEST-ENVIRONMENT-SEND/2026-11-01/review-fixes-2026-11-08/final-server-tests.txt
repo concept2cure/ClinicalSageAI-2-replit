@@ -1,0 +1,43 @@
+# Every test under server/services/submission-service/__tests__, submission-gateways/__tests__ and ectd/__tests__, final working tree (HEAD b0bb8dccc + slice 2), 2026-11-08T21:35:08Z
+vitest exit=1
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > keeps a retained draft filing receipt after the editable source changes
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > an ordinary rich-Word PDF files and places through the native Vault path without an HTML engine
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > an unavailable strict converter refuses before Vault admission and export recording
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17)
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > Authoring refiling preserves submission version pins > new numeric refiling links the successor while the old leaf stays pinned and blocked
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > Authoring refiling preserves submission version pins > new numeric PDF and Word renditions keep separate version families
+ ✓ server/services/submission-gateways/__tests__/gateway-accounts.test.ts > what the organisation sees > every gateway × environment, platform by default, with whether it can send
+ × server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > every `new CredentialError(` in server/ is at an audited pre-request site
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > throws VALIDATION naming the eSubmission Gateway; getGateway is never called
+ × server/services/submission-service/__tests__/transmit-refusals.test.ts > transmit claim — source contract > never releases the claim after the bytes may have left a production send
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > hmac posture: seal only, no envelope, and an absent envelope is "unsigned"
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: the envelope is written BESIDE the seal and both verify
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: a tampered envelope, or one from another org, fails closed
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a stored envelope with the posture downgraded to hmac is "failed", never accepted
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a malformed posture throws (the boot gate, seen from the seam)
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  4 failed | 203 passed | 2 skipped (209)
+      Tests  10 failed | 2658 passed | 12 skipped (2680)
+
+# Reading of the 10 failures above (2026-11-08T21:47:24Z):
+# - 7 x placement-vault-leaf-parity.pglite.test.ts and 1 x refused-before-wire.test.ts: pre-existing, identical on clean HEAD b0bb8dccc
+#   (pre-existing-server-failures-on-clean-head.txt).
+# - 1 x gateway-selection.test.ts ('expected AUDIT_UNCONFIRMED to be VALIDATION'): pre-existing, identical on clean HEAD b0bb8dccc
+#   (its pool mock refuses connect, and trunk's 5c5b89836 records TRANSMIT_BLOCKED on a client). Run below.
+# - 1 x transmit-refusals.test.ts 'source contract': this slice's own test, anchored on the release line before the review
+#   fixes reshaped it. Its anchors were updated and it gained the after-the-wire marking (mutation-9b-source-contract.txt). Rerun below.
+## gateway-selection.test.ts on CLEAN HEAD b0bb8dccc
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > throws VALIDATION naming the eSubmission Gateway; getGateway is never called
+   → expected 'AUDIT_UNCONFIRMED' to be 'VALIDATION' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 10 passed (11)
+## transmit-refusals.test.ts and gateway-selection.test.ts on the FINAL tree (submission-service.ts sha256 1eb39576d1bbe697…)
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > throws VALIDATION naming the eSubmission Gateway; getGateway is never called
+   → expected 'AUDIT_UNCONFIRMED' to be 'VALIDATION' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 25 passed (26)
+## After moving the test-send helpers and seed into __tests__/_test-send-fixture.ts and splitting the long describe blocks (lint ratchet; no assertion changed), 2026-11-08T21:58:50Z: the slice's four server test files
+ Test Files  4 passed (4)
+      Tests  63 passed (63)
