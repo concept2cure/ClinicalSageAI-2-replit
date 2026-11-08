@@ -28,7 +28,8 @@
     "P-101",
     "P-102",
     "P-103",
-    "P-104"
+    "P-104",
+    "P-105"
   ],
   "alwaysAllowed": [
     "**/__tests__/**",
@@ -691,6 +692,9 @@
       "decision": "P-104",
       "title": "Extend the existing Anna runtime \u2014 Multi-Agent Architecture Spec v0.5",
       "source": "MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf \u00a7\u00a71\u201332",
+      "baseSource": "MULTI-AGENT-ARCHITECTURE-SPEC-20261105.md (v0.4) \u00a7\u00a71\u201315, mapped in \u00a71d; v0.5 and P-104 govern where they differ",
+      "ownerDecision": "P-105",
+      "owner": "session_01KZK3jgtmQBgNepqLjXjS3k (sole owner; other packages keep their file holds)",
       "planSection": "docs/design/ONE_DESIGN_PLAN.md \u00a71d",
       "status": "acceptance_pending",
       "newFilesApproved": false,
