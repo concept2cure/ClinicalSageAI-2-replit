@@ -57,6 +57,7 @@ function extractionStateOf(status: string): 'extracted' | 'pending' | 'failed' {
   return status === 'extraction_failed' ? 'failed' : 'extracted';
 }
 import { writeChainedAuditRow } from '../auditService.js';
+import { readProgramFolderIndex } from './vault-folders.js';
 import { getStorageProvider } from '../storage/index.js';
 import {
   discardUnrecordedBytes,
@@ -72,8 +73,6 @@ import {
   classifyForFiling,
   filingVocabularyRefusal,
   resolveVaultFilingContext,
-  isFolderInView,
-  folderLabel,
 } from './vault-filing.service.js';
 
 import type { VaultIngestArgs, VaultIngestResult } from './vault-ingest-types.js';
@@ -413,14 +412,16 @@ async function admitVaultDocument(
   if (checkIn) {
     placement = inheritedPlacement(checkIn.head);
   } else if (args.folderId) {
-    if (!isFolderInView(vaultView, args.folderId)) {
+    // Any folder of the project: presets, binder, people's folders (vault-folders.ts).
+    const folders = await readProgramFolderIndex(pool, args.programId, orgId, vaultView);
+    if (!folders.has(args.folderId)) {
       return { ok: false, status: 400, code: 'INVALID_FOLDER',
-        message: `Folder '${args.folderId}' does not exist in this project's ${vaultView} vault taxonomy.` };
+        message: `Folder '${args.folderId}' does not exist in this project's Vault.` };
     }
     placement = {
       folderId: args.folderId,
       evidenceKind: args.evidenceKind ?? null,
-      ctdSection: args.ctdSection ?? null,
+      ctdSection: args.ctdSection ?? folders.ctdSectionOf(args.folderId),
       status: 'confirmed',
       confidence: null,
       rationale: 'Filed by the uploader at ingest.',
@@ -763,7 +764,7 @@ async function admitVaultDocument(
          not just that bytes arrived. */
       filing: {
         ...filed,
-        folderLabel: folderLabel(vaultView, doc.folder_id ?? null),
+        folderLabel: (await readProgramFolderIndex(pool, args.programId, orgId, vaultView)).label(doc.folder_id ?? null),
         needsReview: doc.placement_status === 'unfiled',
       },
       ...(recorded ? { reupload: { unchanged: changes.length === 0, changes, differs } } : {}),

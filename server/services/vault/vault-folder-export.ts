@@ -15,7 +15,8 @@ import type { Pool } from 'pg';
 import { readArchiveAuditExtract, archiveActorIdentity, type WithheldDocument } from './vault-seal-archive.js';
 import type { ArchivedFile } from './vault-archive-builder.js';
 import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
-import { cabinetFolderOf, folderLabel, isFolderInView, resolveVaultView } from './vault-filing.service.js';
+import { cabinetFolderOf, resolveVaultView } from './vault-filing.service.js';
+import { readProgramFolderIndex } from './vault-folders.js';
 import { readSealDocumentRows, VaultSealError } from './vault-seal.service.js';
 import type { VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
 
@@ -50,11 +51,15 @@ export async function planFolderExport(
     throw err;
   }
   const view = await resolveVaultView(p.programId, p.organizationId, q);
-  if (!isFolderInView(view, p.folderId)) {
+  // The project's own folders: presets, its binder, the folders people made (vault-folders.ts).
+  const folders = await readProgramFolderIndex(q, p.programId, p.organizationId, view);
+  if (!folders.has(p.folderId)) {
     return { ok: false, status: 404, code: 'FOLDER_NOT_FOUND', message: `There is no such folder in this project's Vault. ${NOTHING}` };
   }
-  const label = folderLabel(view, p.folderId) || p.folderId;
-  const rows = programRows.filter((r) => cabinetFolderOf(r) === p.folderId);
+  const label = folders.label(p.folderId) || p.folderId;
+  // Where the tree shows a row, so the ZIP holds what the folder showed.
+  // A module preset a binder stands in for still exports what was filed to it.
+  const rows = programRows.filter((r) => folders.treeFolderOf(r) === p.folderId || cabinetFolderOf(r) === p.folderId);
   if (!rows.length) {
     return { ok: false, status: 409, code: 'FOLDER_EMPTY', message: `${label} holds no documents to export. ${NOTHING}` };
   }

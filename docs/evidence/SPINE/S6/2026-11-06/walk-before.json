@@ -1,0 +1,51 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "startedAt": "2026-11-06T18:38:40.755Z",
+  "steps": [
+    {
+      "name": "before: ind Vault",
+      "project": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "header": "Inspection readiness\nAdd a folder\nAdd files",
+      "folders": [
+        "IND C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 0/72",
+        "M1 Module 1 · Administrative (US regional — FDA eCTD Module 1 Specification v2.3) 0/13",
+        "1.1 Forms 0/3",
+        "1.3 Administrative information 0/2",
+        "1.4 References 0/2",
+        "1.12 Other correspondence 0/2",
+        "1.14 Labeling 0/2",
+        "M2 Module 2 · Summaries 0/12",
+        "2.3 Quality overall summary 0/2",
+        "2.6 Nonclinical written and tabulated summaries 0/6",
+        "M3 Module 3 · Quality (CMC) 0/20",
+        "3.2.S Drug substance 0/7",
+        "3.2.P Drug product 0/8",
+        "3.2.A Appendices 0/3",
+        "M4 Module 4 · Nonclinical study reports 0/19",
+        "4.2.1 Pharmacology 0/4",
+        "4.2.2 Pharmacokinetics 0/7",
+        "4.2.3 Toxicology 0/7",
+        "M5 Module 5 · Clinical study reports 0/8",
+        "5.3 Clinical study reports 0/6",
+        "5.3.5 Reports of efficacy and safety studies 0/3",
+        "Source files · filing cabinet 0/6"
+      ]
+    },
+    {
+      "name": "before: 510k Vault",
+      "project": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+      "header": "Inspection readiness\nAdd a folder\nAdd files",
+      "folders": [
+        "K510 [Demo · MDX] NeuroPanel-Dx 510(k) — 510(k) × FDA · eSTAR (nIVD/IVD v7.0) · 21 CFR Part 807 0/31",
+        "A Administrative 0/9",
+        "B Device description 0/3",
+        "C Substantial equivalence 0/2",
+        "D Design, manufacturing and labeling 0/6",
+        "E Performance and safety testing 0/8",
+        "F Quality management 0/1",
+        "G References and additional information 0/2",
+        "Source files · filing cabinet 0/6"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "startedAt": "2026-11-06T18:47:13.858Z",
+  "steps": [
+    {
+      "name": "1. the header: New folder beside Upload a folder",
+      "header": "Inspection readiness New folder Upload a folder Add files"
+    },
+    {
+      "name": "Pivotal study 184713",
+      "breadcrumb": "Pivotal study 184713 · made by Ana Author"
+    },
+    {
+      "name": "3. Renamed, with a reason",
+      "from": "Pivotal study 184713",
+      "to": "Pivotal study CDISCPILOT01 184713"
+    },
+    {
+      "name": "4. A study file moved into the folder",
+      "folderId": "uf:5"
+    },
+    {
+      "name": "5. the audit trail: read from audit_logs after the walk (README, audit.txt)",
+      "folderId": "uf:5"
+    },
+    {
+      "name": "6. at 390"
+    }
+  ]
+}
