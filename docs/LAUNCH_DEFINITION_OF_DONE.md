@@ -2234,3 +2234,32 @@ RIM's recommendation. The founder accepted every recommendation.
   - The coordinating session's rulings on RIM's coordinator questions are coordination, not founder decisions. RIM
     appends them to its designs.
 - **Owner.** RIM (`011e42…`), under F1 and S5, in the order recorded in COORDINATION.md.
+
+### P-109 — S12's work projects live inside their filing project; a deliverable is a Vault version family
+
+Decided 2026-11-08 by the coordinating session (`01JbQU…`) under the founder's delegation of that day ("No you decide as
+the global sme", P-107). The project-page session (`01FTWcmX…`) asked four questions after inventorying S12
+(`docs/evidence/SPINE/S12/2026-11-08-what-already-exists/README.md`).
+
+- **What is decided.**
+  1. **A work project is a child of its filing project.** It hangs off the filing project's anchored integer `projects`
+     row (`parent_project_id`, depth 2 or 3) and is anchored to the same `regulatory_programs` row. It is reached through
+     the existing `server/routes/project-hierarchy.ts`. A work project gets no new `program_type`, and `projects.ts` and
+     `project-intake.ts` do not change.
+  2. **No cross-project exception.** Because a work project sits inside its filing project's program, its deliverable
+     feeding that filing is a citation within one program. `citation-ends.ts`'s isolation rule is unchanged.
+     - Reusing a deliverable across different programs, such as an IND's CMC work feeding the NDA, stays refused until
+       a later decision.
+     - If `citation-ends.ts` checks the integer project id rather than the program, the session reports that before
+       changing anything.
+  3. **A deliverable is a Vault document's version family**, the governed record.
+     - Only an approved version feeds a filing section.
+     - `c2c_artifact_section_map` is the link from a Vault family to the section it feeds, with its owner and due date.
+       It is not a second deliverable store.
+     - Data-room sources stay inputs, with their lineage.
+     - Vault changes go through S6's holder.
+  4. **S12's ledger paths gain `server/services/c2c/program-project-anchor.ts`**, so the anchor accepts a parent.
+     Nothing else is added.
+- **What is not decided.** Feeds across programs. Whether a work project may outlive or move between filing projects.
+  No new file, route, table, screen or tool is approved (RULE 6).
+- **Owner.** The project-page session (`01FTWcmX…`), which holds D3's files for S12.
