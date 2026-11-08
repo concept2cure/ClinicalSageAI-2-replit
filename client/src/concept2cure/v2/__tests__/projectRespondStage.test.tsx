@@ -26,10 +26,12 @@ import { C2CToast, useToast } from '../toast';
 
 /* D3-2b: the page reads the agency inbox once and hands it to Respond (and to the Filing card), and shows its
    notices once. This mounts Respond the way the page does. */
-function Respond(props: Omit<React.ComponentProps<typeof ProjectRespond>, 'inbox'>) {
+type RespondProps = React.ComponentProps<typeof ProjectRespond>;
+function Respond({ commitments = null, projectId = null, onCommitmentsChanged = () => {}, ...props }:
+  Omit<RespondProps, 'inbox' | 'commitments' | 'projectId' | 'onCommitmentsChanged'> & Partial<Pick<RespondProps, 'commitments' | 'projectId' | 'onCommitmentsChanged'>>) {
   const [toast, fire] = useToast();
   const inbox = useAgencyInbox(props.pid, fire);
-  return <><ProjectRespond {...props} inbox={inbox} /><C2CToast msg={toast} /></>;
+  return <><ProjectRespond {...props} inbox={inbox} commitments={commitments} projectId={projectId} onCommitmentsChanged={onCommitmentsChanged} /><C2CToast msg={toast} /></>;
 }
 import { consumeNavParams } from '../navParams';
 
@@ -214,5 +216,43 @@ describe('A letter uploaded in Respond names the submission it concerns (gap 6.5
     fireEvent.change(screen.getByLabelText(/The submission this letter concerns/), { target: { value: '' } });
     upload(container);
     expect(await loggedBody()).not.toHaveProperty('linkedSubmissionId');
+  });
+});
+
+/* D3-4 (D3.md §4.7 Respond item 3, §6 item 11): Respond lists the project's commitments to the agency from the page's one
+   read, with Communication's row and its "Record fulfilment" dialog on the project's door. */
+describe('Respond lists the commitments to the agency (D3-4)', () => {
+  const commitment = (over: Record<string, unknown> = {}) => ({
+    id: 9, project_id: 11, organization_id: 1, commitment_type: 'pmc', description: 'Submit the 12-month stability data',
+    regulatory_basis: '21 CFR 314.81', due_date: '2099-03-01', status: 'open', effectiveStatus: 'open', fulfilled_date: null,
+    source_question_id: null, source_question_ref: null, source_communication_type: null,
+    fulfilment: { state: 'none', rule: { signatureRequired: false, evidence: 'none' }, sequence: null, vaultVersion: null }, ...over,
+  });
+  const read = (rows: unknown[]) => ({ data: { commitments: rows } as never, loading: false, empty: rows.length === 0 });
+
+  it('lists each commitment and its "Record fulfilment" opens the project-door dialog', async () => {
+    render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} commitments={read([commitment()])} projectId={11} />);
+    const section = screen.getByRole('region', { name: 'Commitments to the agency' });
+    expect(section.textContent).toContain('Submit the 12-month stability data');
+    fireEvent.click(screen.getByRole('button', { name: 'Record fulfilment' }));
+    await waitFor(() => expect(apiRequest.mock.calls.some(([, url]) => url === '/api/concept2cure/projects/11/commitments/9/fulfilment-options')).toBe(true));
+  });
+
+  it('says there are none, says a failed read failed, and waits while the read is not in', () => {
+    const { unmount } = render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} commitments={read([])} projectId={11} />);
+    expect(screen.getByText('No commitments to the agency on this project.')).toBeTruthy();
+    unmount();
+    const retry = vi.fn();
+    const failed = render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} commitments={{ data: null, loading: false, empty: false, error: 'boom', status: 500 }} projectId={11} onCommitmentsChanged={retry} />);
+    expect(screen.getByText("Couldn't load this project's commitments")).toBeTruthy();
+    expect(screen.queryByText('No commitments to the agency on this project.')).toBeNull();
+    failed.unmount();
+    render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} commitments={null} commitmentsUnverified={null} projectId={null} />);
+    expect(screen.getByRole('region', { name: 'Commitments to the agency' }).textContent).toContain('Reading this project’s commitments…');
+  });
+
+  it('keeps the step heading for screen readers only', () => {
+    render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} />);
+    expect(screen.getByRole('heading', { name: 'Respond', level: 2 }).className).toBe('sr-only');
   });
 });

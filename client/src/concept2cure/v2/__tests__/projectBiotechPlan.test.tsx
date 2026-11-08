@@ -39,7 +39,8 @@ function wire() {
     if (url.startsWith('/api/authoring/docs')) return reply({ success: true, documents: [] });
     if (url.startsWith('/api/tasks')) return reply({ success: true, data: [] });
     if (url.startsWith('/api/c2c/documents?')) return reply({ documents: url.includes('scope=market') ? [] : [
-      { id: 'filing-bla', doc_type: 'bla', agency: 'fda', title: 'Recorded BLA filing', status: 'draft' }] });
+      /* The filing read verifies each row is the open project's (useFilingOutline.ts isFiling, 3d9879dfc). */
+      { id: 'filing-bla', doc_type: 'bla', agency: 'fda', title: 'Recorded BLA filing', status: 'draft', project_id: PID }] });
     if (url.endsWith('/outline')) return reply({ document: { id: 'filing-bla', doc_type: 'bla', agency: 'fda', title: 'Recorded BLA filing', status: 'draft' },
       outline: [{ key: '2.7.4', parent_key: null, label: 'Recorded clinical safety summary', mandatory: true, path_order: 1, status: 'todo' }] });
     return reply({});

@@ -1,0 +1,3799 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "programs": [
+    "6065271c-d4b0-4936-aad1-02855423a738",
+    "a9e43625-0eda-42d2-8c39-846c484801de"
+  ],
+  "startedAt": "2026-11-08T23:00:12.954Z",
+  "runs": [
+    {
+      "program": "6065271c-d4b0-4936-aad1-02855423a738",
+      "width": 1440,
+      "dark": false,
+      "key": "p1-1440-light",
+      "steps": [
+        {
+          "label": "Plan",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Prepare Forms 1571, 1572 and 3674 in IND",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Place approved documents in the sequence",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "See all tasks in Tasks",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Due for you",
+              "What this IND needs",
+              "Program plan",
+              "Tasks and approvals"
+            ],
+            "rows": [
+              {
+                "title": "Approve the clinical protocol synopsis",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 13, 2026"
+              },
+              {
+                "title": "Review sample size and power for Protocol C2C-101-201",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 15, 2026"
+              },
+              {
+                "title": "Finalise drug substance specification for the IND (§3.2.S.4.1)",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 18, 2026"
+              },
+              {
+                "title": "Complete Form FDA 1571 and 1572 for sequence 0000",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Urgent priority · Due Nov 22, 2026"
+              },
+              {
+                "title": "Record the 6-month pull of the drug product stability study",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Medium priority · Due Nov 29, 2026"
+              },
+              {
+                "title": "Draft the Investigator's Brochure summary of nonclinical findings",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Medium priority · Due Dec 6, 2026"
+              }
+            ],
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": true,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-1440-light-1-plan.png",
+          "parts": [
+            "screenshots/p1-1440-light-1-plan-section.png"
+          ]
+        },
+        {
+          "label": "Evidence",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Refresh sources",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Trace a claim to its source",
+              "Write from these sources",
+              "Open in Study & Protocol Design",
+              "Open Biostatistics",
+              "Add or find files in Vault",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Data room",
+              "Protocol",
+              "Project files"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [
+              "[Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasisPhase 2 · Draft"
+            ],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-1440-light-2-evidence.png",
+          "parts": [
+            "screenshots/p1-1440-light-2-evidence-section.png"
+          ]
+        },
+        {
+          "label": "Author",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Write the protocol in the protocol works",
+              "Find or start a document in the editor",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Ask AnA: critical path to filing",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Documents",
+              "Module completion"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": {
+              "first": "0 of 72 sections approved or locked.No editing copy of this filing yet.",
+              "howOpen": false
+            },
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-1440-light-3-author.png",
+          "parts": [
+            "screenshots/p1-1440-light-3-author-section.png"
+          ]
+        },
+        {
+          "label": "Review",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Review documents on the review board",
+              "Manage quality records in Quality",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Reviews",
+              "Quality"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-1440-light-4-review.png",
+          "parts": []
+        },
+        {
+          "label": "Submit",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Add a market",
+              "Compile and download",
+              "Prepare Forms 1571, 1572 and 3674 in IND",
+              "See every sequence in Submission Center",
+              "Place a document",
+              "Place a document",
+              "Place a document",
+              "Place a document",
+              "Place a document",
+              "Place a document",
+              "Place a document",
+              "Place a document",
+              "Open Shadow Review",
+              "Open Dispatch",
+              "Build the IND · FDA (US) sequence in Sub",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Markets"
+            ],
+            "rows": null,
+            "doors": [
+              {
+                "text": "Add a market",
+                "cls": "btn ghost small"
+              },
+              {
+                "text": "Compile and download",
+                "cls": "btn small"
+              },
+              {
+                "text": "Prepare Forms 1571, 1572 and 3674 in IND forms",
+                "cls": "btn small"
+              },
+              {
+                "text": "See every sequence in Submission Center",
+                "cls": "btn small"
+              }
+            ],
+            "acts": [
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act"
+            ],
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-1440-light-5-submit.png",
+          "parts": [
+            "screenshots/p1-1440-light-5-submit-section.png"
+          ]
+        },
+        {
+          "label": "Respond",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Choose the letter file",
+              "Open Communication",
+              "Start a response sequence in Submission ",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Respond",
+              "Commitments to the agency"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": "Commitments to the agencyPMCD3-4 walk: confirm the 12-month stability pull (2026-11-08T22:39)due Mar 1, 2027 · recorded from FDA information request (fictional ",
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-1440-light-6-respond.png",
+          "parts": [
+            "screenshots/p1-1440-light-6-respond-section.png"
+          ]
+        }
+      ],
+      "failed": [],
+      "title": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)"
+    },
+    {
+      "program": "6065271c-d4b0-4936-aad1-02855423a738",
+      "width": 1440,
+      "dark": true,
+      "key": "p1-1440-dark",
+      "steps": [
+        {
+          "label": "Plan",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Prepare Forms 1571, 1572 and 3674 in IND",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Place approved documents in the sequence",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Prepare with AnA",
+              "Create from template",
+              "Assign",
+              "Work with AnA",
+              "See all tasks in Tasks",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Due for you",
+              "What this IND needs",
+              "Program plan",
+              "Tasks and approvals"
+            ],
+            "rows": [
+              {
+                "title": "Approve the clinical protocol synopsis",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 13, 2026"
+              },
+              {
+                "title": "Review sample size and power for Protocol C2C-101-201",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 15, 2026"
+              },
+              {
+                "title": "Finalise drug substance specification for the IND (§3.2.S.4.1)",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 18, 2026"
+              },
+              {
+                "title": "Complete Form FDA 1571 and 1572 for sequence 0000",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Urgent priority · Due Nov 22, 2026"
+              },
+              {
+                "title": "Record the 6-month pull of the drug product stability study",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Medium priority · Due Nov 29, 2026"
+              },
+              {
+                "title": "Draft the Investigator's Brochure summary of nonclinical findings",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Medium priority · Due Dec 6, 2026"
+              }
+            ],
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": true,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-1440-dark-1-plan.png",
+          "parts": [
+            "screenshots/p1-1440-dark-1-plan-section.png"
+          ]
+        },
+        {
+          "label": "Evidence",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Refresh sources",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Trace a claim to its source",
+              "Write from these sources",
+              "Open in Study & Protocol Design",
+              "Open Biostatistics",
+              "Add or find files in Vault",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Data room",
+              "Protocol",
+              "Project files"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [
+              "[Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasisPhase 2 · Draft"
+            ],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-1440-dark-2-evidence.png",
+          "parts": [
+            "screenshots/p1-1440-dark-2-evidence-section.png"
+          ]
+        },
+        {
+          "label": "Author",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Write the protocol in the protocol works",
+              "Find or start a document in the editor",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Ask AnA: critical path to filing",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Documents",
+              "Module completion"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": {
+              "first": "0 of 72 sections approved or locked.No editing copy of this filing yet.",
+              "howOpen": false
+            },
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-1440-dark-3-author.png",
+          "parts": [
+            "screenshots/p1-1440-dark-3-author-section.png"
+          ]
+        },
+        {
+          "label": "Review",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Review documents on the review board",
+              "Manage quality records in Quality",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Reviews",
+              "Quality"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-1440-dark-4-review.png",
+          "parts": []
+        },
+        {
+          "label": "Submit",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Add a market",
+              "Compile and download",
+              "Prepare Forms 1571, 1572 and 3674 in IND",
+              "See every sequence in Submission Center",
+              "Place a document",
+              "Place a document",
+              "Place a document",
+              "Place a document",
+              "Place a document",
+              "Place a document",
+              "Place a document",
+              "Place a document",
+              "Open Shadow Review",
+              "Open Dispatch",
+              "Build the IND · FDA (US) sequence in Sub",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Markets"
+            ],
+            "rows": null,
+            "doors": [
+              {
+                "text": "Add a market",
+                "cls": "btn ghost small"
+              },
+              {
+                "text": "Compile and download",
+                "cls": "btn small"
+              },
+              {
+                "text": "Prepare Forms 1571, 1572 and 3674 in IND forms",
+                "cls": "btn small"
+              },
+              {
+                "text": "See every sequence in Submission Center",
+                "cls": "btn small"
+              }
+            ],
+            "acts": [
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act"
+            ],
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-1440-dark-5-submit.png",
+          "parts": [
+            "screenshots/p1-1440-dark-5-submit-section.png"
+          ]
+        },
+        {
+          "label": "Respond",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Choose the letter file",
+              "Open Communication",
+              "Start a response sequence in Submission ",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Respond",
+              "Commitments to the agency"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": "Commitments to the agencyPMCD3-4 walk: confirm the 12-month stability pull (2026-11-08T22:39)due Mar 1, 2027 · recorded from FDA information request (fictional ",
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-1440-dark-6-respond.png",
+          "parts": [
+            "screenshots/p1-1440-dark-6-respond-section.png"
+          ]
+        }
+      ],
+      "failed": [],
+      "title": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)"
+    },
+    {
+      "program": "6065271c-d4b0-4936-aad1-02855423a738",
+      "width": 390,
+      "dark": false,
+      "key": "p1-390-light",
+      "steps": [
+        {
+          "label": "Plan",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Due for you",
+              "What this IND needs",
+              "Program plan",
+              "Tasks and approvals"
+            ],
+            "rows": [
+              {
+                "title": "Approve the clinical protocol synopsis",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 13, 2026"
+              },
+              {
+                "title": "Review sample size and power for Protocol C2C-101-201",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 15, 2026"
+              },
+              {
+                "title": "Finalise drug substance specification for the IND (§3.2.S.4.1)",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 18, 2026"
+              },
+              {
+                "title": "Complete Form FDA 1571 and 1572 for sequence 0000",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Urgent priority · Due Nov 22, 2026"
+              },
+              {
+                "title": "Record the 6-month pull of the drug product stability study",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Medium priority · Due Nov 29, 2026"
+              },
+              {
+                "title": "Draft the Investigator's Brochure summary of nonclinical findings",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Medium priority · Due Dec 6, 2026"
+              }
+            ],
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": true,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-390-light-1-plan.png",
+          "parts": [
+            "screenshots/p1-390-light-1-plan-section.png"
+          ]
+        },
+        {
+          "label": "Evidence",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Data room",
+              "Protocol",
+              "Project files"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [
+              "[Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasisPhase 2 · Draft"
+            ],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-390-light-2-evidence.png",
+          "parts": [
+            "screenshots/p1-390-light-2-evidence-section.png"
+          ]
+        },
+        {
+          "label": "Author",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Documents",
+              "Module completion"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": {
+              "first": "0 of 72 sections approved or locked.No editing copy of this filing yet.",
+              "howOpen": false
+            },
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-390-light-3-author.png",
+          "parts": [
+            "screenshots/p1-390-light-3-author-section.png"
+          ]
+        },
+        {
+          "label": "Review",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Reviews",
+              "Quality"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-390-light-4-review.png",
+          "parts": []
+        },
+        {
+          "label": "Submit",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Markets"
+            ],
+            "rows": null,
+            "doors": [
+              {
+                "text": "Add a market",
+                "cls": "btn ghost small"
+              },
+              {
+                "text": "Compile and download",
+                "cls": "btn small"
+              },
+              {
+                "text": "Prepare Forms 1571, 1572 and 3674 in IND forms",
+                "cls": "btn small"
+              },
+              {
+                "text": "See every sequence in Submission Center",
+                "cls": "btn small"
+              }
+            ],
+            "acts": [
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act"
+            ],
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-390-light-5-submit.png",
+          "parts": [
+            "screenshots/p1-390-light-5-submit-section.png"
+          ]
+        },
+        {
+          "label": "Respond",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Respond",
+              "Commitments to the agency"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": "Commitments to the agencyPMCD3-4 walk: confirm the 12-month stability pull (2026-11-08T22:39)due Mar 1, 2027 · recorded from FDA information request (fictional ",
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-390-light-6-respond.png",
+          "parts": [
+            "screenshots/p1-390-light-6-respond-section.png"
+          ]
+        }
+      ],
+      "failed": [],
+      "title": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)"
+    },
+    {
+      "program": "6065271c-d4b0-4936-aad1-02855423a738",
+      "width": 390,
+      "dark": true,
+      "key": "p1-390-dark",
+      "steps": [
+        {
+          "label": "Plan",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Due for you",
+              "What this IND needs",
+              "Program plan",
+              "Tasks and approvals"
+            ],
+            "rows": [
+              {
+                "title": "Approve the clinical protocol synopsis",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 13, 2026"
+              },
+              {
+                "title": "Review sample size and power for Protocol C2C-101-201",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 15, 2026"
+              },
+              {
+                "title": "Finalise drug substance specification for the IND (§3.2.S.4.1)",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 18, 2026"
+              },
+              {
+                "title": "Complete Form FDA 1571 and 1572 for sequence 0000",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Urgent priority · Due Nov 22, 2026"
+              },
+              {
+                "title": "Record the 6-month pull of the drug product stability study",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Medium priority · Due Nov 29, 2026"
+              },
+              {
+                "title": "Draft the Investigator's Brochure summary of nonclinical findings",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Medium priority · Due Dec 6, 2026"
+              }
+            ],
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": true,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-390-dark-1-plan.png",
+          "parts": [
+            "screenshots/p1-390-dark-1-plan-section.png"
+          ]
+        },
+        {
+          "label": "Evidence",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Data room",
+              "Protocol",
+              "Project files"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [
+              "[Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasisPhase 2 · Draft"
+            ],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-390-dark-2-evidence.png",
+          "parts": [
+            "screenshots/p1-390-dark-2-evidence-section.png"
+          ]
+        },
+        {
+          "label": "Author",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Documents",
+              "Module completion"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": {
+              "first": "0 of 72 sections approved or locked.No editing copy of this filing yet.",
+              "howOpen": false
+            },
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-390-dark-3-author.png",
+          "parts": [
+            "screenshots/p1-390-dark-3-author-section.png"
+          ]
+        },
+        {
+          "label": "Review",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Reviews",
+              "Quality"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-390-dark-4-review.png",
+          "parts": []
+        },
+        {
+          "label": "Submit",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Markets"
+            ],
+            "rows": null,
+            "doors": [
+              {
+                "text": "Add a market",
+                "cls": "btn ghost small"
+              },
+              {
+                "text": "Compile and download",
+                "cls": "btn small"
+              },
+              {
+                "text": "Prepare Forms 1571, 1572 and 3674 in IND forms",
+                "cls": "btn small"
+              },
+              {
+                "text": "See every sequence in Submission Center",
+                "cls": "btn small"
+              }
+            ],
+            "acts": [
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act",
+              "btn small pj-mkt-todo-act"
+            ],
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-390-dark-5-submit.png",
+          "parts": [
+            "screenshots/p1-390-dark-5-submit-section.png"
+          ]
+        },
+        {
+          "label": "Respond",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Respond",
+              "Commitments to the agency"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": "Commitments to the agencyPMCD3-4 walk: confirm the 12-month stability pull (2026-11-08T22:39)due Mar 1, 2027 · recorded from FDA information request (fictional ",
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p1-390-dark-6-respond.png",
+          "parts": [
+            "screenshots/p1-390-dark-6-respond-section.png"
+          ]
+        }
+      ],
+      "failed": [],
+      "title": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)"
+    },
+    {
+      "program": "a9e43625-0eda-42d2-8c39-846c484801de",
+      "width": 1440,
+      "dark": false,
+      "key": "p2-1440-light",
+      "steps": [
+        {
+          "label": "Plan",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Choose predicates and build the SE compa",
+              "Prepare a Pre-Sub for FDA",
+              "Assign",
+              "Prepare this work with AnA",
+              "Build the risk file and design-control t",
+              "Assign",
+              "Prepare this work with AnA",
+              "Build the risk file and design-control t",
+              "Assign",
+              "Prepare this work with AnA",
+              "Build the usability engineering file",
+              "Assign",
+              "Prepare this work with AnA",
+              "Add this work’s sources on Evidence",
+              "Assign",
+              "Prepare this work with AnA",
+              "Add this work’s sources on Evidence",
+              "Assign",
+              "Prepare this work with AnA",
+              "Add this work’s sources on Evidence",
+              "Assign",
+              "Prepare this work with AnA",
+              "Check the software and cybersecurity doc",
+              "Assign",
+              "Prepare this work with AnA",
+              "Add this work’s sources on Evidence",
+              "Assign",
+              "Prepare this work with AnA",
+              "Write this work’s documents on Author",
+              "Assign",
+              "Prepare this work with AnA",
+              "Write the label and IFU",
+              "Assign",
+              "Prepare this work with AnA",
+              "Add this work’s sources on Evidence",
+              "Assign",
+              "Prepare this work with AnA",
+              "Build the risk file and design-control t",
+              "Assign",
+              "Prepare this work with AnA",
+              "Assemble the eSTAR",
+              "Assign",
+              "Prepare this work with AnA",
+              "Answer the agency on Respond",
+              "Assign",
+              "Prepare this work with AnA",
+              "Check each label’s UDI",
+              "Assign",
+              "Prepare this work with AnA",
+              "Run post-market surveillance and CAPA",
+              "Assign",
+              "Prepare this work with AnA",
+              "See all tasks in Tasks",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Due for you",
+              "What this 510(k) needs",
+              "Program plan",
+              "Tasks and approvals"
+            ],
+            "rows": [
+              {
+                "title": "Approve the analytical performance study report",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 14, 2026"
+              },
+              {
+                "title": "Complete the predicate comparison table for the 510(k)",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 17, 2026"
+              },
+              {
+                "title": "Close the eSTAR sections still missing required content",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Urgent priority · Due Nov 22, 2026"
+              },
+              {
+                "title": "Update the cybersecurity bill of materials",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Medium priority · Due Nov 29, 2026"
+              }
+            ],
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": true,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-1440-light-1-plan.png",
+          "parts": [
+            "screenshots/p2-1440-light-1-plan-section.png"
+          ]
+        },
+        {
+          "label": "Evidence",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Refresh sources",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Trace a claim to its source",
+              "Write from these sources",
+              "Add or find files in Vault",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Data room",
+              "Project files"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-1440-light-2-evidence.png",
+          "parts": []
+        },
+        {
+          "label": "Author",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Write the protocol in the protocol works",
+              "Find or start a document in the editor",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Ask AnA: critical path to filing",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Documents",
+              "Module completion"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": {
+              "first": "0 of 31 sections approved or locked.No editing copy of this filing yet.",
+              "howOpen": false
+            },
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-1440-light-3-author.png",
+          "parts": [
+            "screenshots/p2-1440-light-3-author-section.png"
+          ]
+        },
+        {
+          "label": "Review",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Review documents on the review board",
+              "Manage quality records in Quality",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Reviews",
+              "Quality"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-1440-light-4-review.png",
+          "parts": []
+        },
+        {
+          "label": "Submit",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Assemble the eSTAR",
+              "See every sequence in Submission Center",
+              "Open Shadow Review",
+              "Build the 510(k) · FDA (US) sequence in ",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Markets"
+            ],
+            "rows": null,
+            "doors": [
+              {
+                "text": "Assemble the eSTAR",
+                "cls": "btn small"
+              },
+              {
+                "text": "See every sequence in Submission Center",
+                "cls": "btn small"
+              }
+            ],
+            "acts": [
+              "btn small pj-mkt-todo-act"
+            ],
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-1440-light-5-submit.png",
+          "parts": [
+            "screenshots/p2-1440-light-5-submit-section.png"
+          ]
+        },
+        {
+          "label": "Respond",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Choose the letter file",
+              "Open Communication",
+              "Start a response sequence in Submission ",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Respond",
+              "Commitments to the agency"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": "Commitments to the agencyNo commitments to the agency on this project.Commitments made in answers to this project's agency letters, and PMR, PMC and REMS commit",
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-1440-light-6-respond.png",
+          "parts": [
+            "screenshots/p2-1440-light-6-respond-section.png"
+          ]
+        }
+      ],
+      "failed": [],
+      "title": "[Demo · MDX] NeuroPanel-Dx 510(k)"
+    },
+    {
+      "program": "a9e43625-0eda-42d2-8c39-846c484801de",
+      "width": 1440,
+      "dark": true,
+      "key": "p2-1440-dark",
+      "steps": [
+        {
+          "label": "Plan",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Choose predicates and build the SE compa",
+              "Prepare a Pre-Sub for FDA",
+              "Assign",
+              "Prepare this work with AnA",
+              "Build the risk file and design-control t",
+              "Assign",
+              "Prepare this work with AnA",
+              "Build the risk file and design-control t",
+              "Assign",
+              "Prepare this work with AnA",
+              "Build the usability engineering file",
+              "Assign",
+              "Prepare this work with AnA",
+              "Add this work’s sources on Evidence",
+              "Assign",
+              "Prepare this work with AnA",
+              "Add this work’s sources on Evidence",
+              "Assign",
+              "Prepare this work with AnA",
+              "Add this work’s sources on Evidence",
+              "Assign",
+              "Prepare this work with AnA",
+              "Check the software and cybersecurity doc",
+              "Assign",
+              "Prepare this work with AnA",
+              "Add this work’s sources on Evidence",
+              "Assign",
+              "Prepare this work with AnA",
+              "Write this work’s documents on Author",
+              "Assign",
+              "Prepare this work with AnA",
+              "Write the label and IFU",
+              "Assign",
+              "Prepare this work with AnA",
+              "Add this work’s sources on Evidence",
+              "Assign",
+              "Prepare this work with AnA",
+              "Build the risk file and design-control t",
+              "Assign",
+              "Prepare this work with AnA",
+              "Assemble the eSTAR",
+              "Assign",
+              "Prepare this work with AnA",
+              "Answer the agency on Respond",
+              "Assign",
+              "Prepare this work with AnA",
+              "Check each label’s UDI",
+              "Assign",
+              "Prepare this work with AnA",
+              "Run post-market surveillance and CAPA",
+              "Assign",
+              "Prepare this work with AnA",
+              "See all tasks in Tasks",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Due for you",
+              "What this 510(k) needs",
+              "Program plan",
+              "Tasks and approvals"
+            ],
+            "rows": [
+              {
+                "title": "Approve the analytical performance study report",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 14, 2026"
+              },
+              {
+                "title": "Complete the predicate comparison table for the 510(k)",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 17, 2026"
+              },
+              {
+                "title": "Close the eSTAR sections still missing required content",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Urgent priority · Due Nov 22, 2026"
+              },
+              {
+                "title": "Update the cybersecurity bill of materials",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Medium priority · Due Nov 29, 2026"
+              }
+            ],
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": true,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-1440-dark-1-plan.png",
+          "parts": [
+            "screenshots/p2-1440-dark-1-plan-section.png"
+          ]
+        },
+        {
+          "label": "Evidence",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Refresh sources",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Work on document",
+              "Trace a claim to its source",
+              "Write from these sources",
+              "Add or find files in Vault",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Data room",
+              "Project files"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-1440-dark-2-evidence.png",
+          "parts": []
+        },
+        {
+          "label": "Author",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Write the protocol in the protocol works",
+              "Find or start a document in the editor",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Open",
+              "Ask AnA: critical path to filing",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Documents",
+              "Module completion"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": {
+              "first": "0 of 31 sections approved or locked.No editing copy of this filing yet.",
+              "howOpen": false
+            },
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-1440-dark-3-author.png",
+          "parts": [
+            "screenshots/p2-1440-dark-3-author-section.png"
+          ]
+        },
+        {
+          "label": "Review",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Review documents on the review board",
+              "Manage quality records in Quality",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Reviews",
+              "Quality"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-1440-dark-4-review.png",
+          "parts": []
+        },
+        {
+          "label": "Submit",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Assemble the eSTAR",
+              "See every sequence in Submission Center",
+              "Open Shadow Review",
+              "Build the 510(k) · FDA (US) sequence in ",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Markets"
+            ],
+            "rows": null,
+            "doors": [
+              {
+                "text": "Assemble the eSTAR",
+                "cls": "btn small"
+              },
+              {
+                "text": "See every sequence in Submission Center",
+                "cls": "btn small"
+              }
+            ],
+            "acts": [
+              "btn small pj-mkt-todo-act"
+            ],
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-1440-dark-5-submit.png",
+          "parts": [
+            "screenshots/p2-1440-dark-5-submit-section.png"
+          ]
+        },
+        {
+          "label": "Respond",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 764,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "26px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": [
+              "",
+              "Ask AnA to propose it",
+              "Set the objective",
+              "Choose the letter file",
+              "Open Communication",
+              "Start a response sequence in Submission ",
+              "Deploy a skill",
+              "Turn one off here",
+              "Write a skill"
+            ]
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Respond",
+              "Commitments to the agency"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": "Commitments to the agencyNo commitments to the agency on this project.Commitments made in answers to this project's agency letters, and PMR, PMC and REMS commit",
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-1440-dark-6-respond.png",
+          "parts": [
+            "screenshots/p2-1440-dark-6-respond-section.png"
+          ]
+        }
+      ],
+      "failed": [],
+      "title": "[Demo · MDX] NeuroPanel-Dx 510(k)"
+    },
+    {
+      "program": "a9e43625-0eda-42d2-8c39-846c484801de",
+      "width": 390,
+      "dark": false,
+      "key": "p2-390-light",
+      "steps": [
+        {
+          "label": "Plan",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Due for you",
+              "What this 510(k) needs",
+              "Program plan",
+              "Tasks and approvals"
+            ],
+            "rows": [
+              {
+                "title": "Approve the analytical performance study report",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 14, 2026"
+              },
+              {
+                "title": "Complete the predicate comparison table for the 510(k)",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 17, 2026"
+              },
+              {
+                "title": "Close the eSTAR sections still missing required content",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Urgent priority · Due Nov 22, 2026"
+              },
+              {
+                "title": "Update the cybersecurity bill of materials",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Medium priority · Due Nov 29, 2026"
+              }
+            ],
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": true,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-390-light-1-plan.png",
+          "parts": [
+            "screenshots/p2-390-light-1-plan-section.png"
+          ]
+        },
+        {
+          "label": "Evidence",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Data room",
+              "Project files"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-390-light-2-evidence.png",
+          "parts": []
+        },
+        {
+          "label": "Author",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Documents",
+              "Module completion"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": {
+              "first": "0 of 31 sections approved or locked.No editing copy of this filing yet.",
+              "howOpen": false
+            },
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-390-light-3-author.png",
+          "parts": [
+            "screenshots/p2-390-light-3-author-section.png"
+          ]
+        },
+        {
+          "label": "Review",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Reviews",
+              "Quality"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-390-light-4-review.png",
+          "parts": []
+        },
+        {
+          "label": "Submit",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Markets"
+            ],
+            "rows": null,
+            "doors": [
+              {
+                "text": "Assemble the eSTAR",
+                "cls": "btn small"
+              },
+              {
+                "text": "See every sequence in Submission Center",
+                "cls": "btn small"
+              }
+            ],
+            "acts": [
+              "btn small pj-mkt-todo-act"
+            ],
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-390-light-5-submit.png",
+          "parts": [
+            "screenshots/p2-390-light-5-submit-section.png"
+          ]
+        },
+        {
+          "label": "Respond",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Respond",
+              "Commitments to the agency"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": "Commitments to the agencyNo commitments to the agency on this project.Commitments made in answers to this project's agency letters, and PMR, PMC and REMS commit",
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-390-light-6-respond.png",
+          "parts": [
+            "screenshots/p2-390-light-6-respond-section.png"
+          ]
+        }
+      ],
+      "failed": [],
+      "title": "[Demo · MDX] NeuroPanel-Dx 510(k)"
+    },
+    {
+      "program": "a9e43625-0eda-42d2-8c39-846c484801de",
+      "width": 390,
+      "dark": true,
+      "key": "p2-390-dark",
+      "steps": [
+        {
+          "label": "Plan",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Due for you",
+              "What this 510(k) needs",
+              "Program plan",
+              "Tasks and approvals"
+            ],
+            "rows": [
+              {
+                "title": "Approve the analytical performance study report",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 14, 2026"
+              },
+              {
+                "title": "Complete the predicate comparison table for the 510(k)",
+                "status": "In progress",
+                "meta": "Task board · JM Smith · High priority · Due Nov 17, 2026"
+              },
+              {
+                "title": "Close the eSTAR sections still missing required content",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Urgent priority · Due Nov 22, 2026"
+              },
+              {
+                "title": "Update the cybersecurity bill of materials",
+                "status": "Open",
+                "meta": "Task board · JM Smith · Medium priority · Due Nov 29, 2026"
+              }
+            ],
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": true,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-390-dark-1-plan.png",
+          "parts": [
+            "screenshots/p2-390-dark-1-plan-section.png"
+          ]
+        },
+        {
+          "label": "Evidence",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Data room",
+              "Project files"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-390-dark-2-evidence.png",
+          "parts": []
+        },
+        {
+          "label": "Author",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Documents",
+              "Module completion"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": {
+              "first": "0 of 31 sections approved or locked.No editing copy of this filing yet.",
+              "howOpen": false
+            },
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-390-dark-3-author.png",
+          "parts": [
+            "screenshots/p2-390-dark-3-author-section.png"
+          ]
+        },
+        {
+          "label": "Review",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Reviews",
+              "Quality"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-390-dark-4-review.png",
+          "parts": []
+        },
+        {
+          "label": "Submit",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Markets"
+            ],
+            "rows": null,
+            "doors": [
+              {
+                "text": "Assemble the eSTAR",
+                "cls": "btn small"
+              },
+              {
+                "text": "See every sequence in Submission Center",
+                "cls": "btn small"
+              }
+            ],
+            "acts": [
+              "btn small pj-mkt-todo-act"
+            ],
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": null,
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-390-dark-5-submit.png",
+          "parts": [
+            "screenshots/p2-390-dark-5-submit-section.png"
+          ]
+        },
+        {
+          "label": "Respond",
+          "facts": {
+            "inOrder": true,
+            "side": [
+              "About",
+              "Filing",
+              "Team",
+              "Work areas",
+              "What AnA knows",
+              "Skills",
+              "Records"
+            ],
+            "upper": [],
+            "mainWidth": 330,
+            "band": false,
+            "title": {
+              "family": "Lora, ui-serif, Georgia, \"Times New Roman\", serif",
+              "size": "22px",
+              "weight": "500"
+            },
+            "settings": true,
+            "hScroll": 0,
+            "ring": false,
+            "smallButtons": []
+          },
+          "body": {
+            "heads": [
+              "Conversations",
+              "Respond",
+              "Commitments to the agency"
+            ],
+            "rows": null,
+            "doors": null,
+            "acts": null,
+            "lead": null,
+            "tasksOnStep": false,
+            "protocol": [],
+            "commitments": "Commitments to the agencyNo commitments to the agency on this project.Commitments made in answers to this project's agency letters, and PMR, PMC and REMS commit",
+            "recordsInMain": false,
+            "primary": []
+          },
+          "img": "screenshots/p2-390-dark-6-respond.png",
+          "parts": [
+            "screenshots/p2-390-dark-6-respond-section.png"
+          ]
+        }
+      ],
+      "failed": [],
+      "title": "[Demo · MDX] NeuroPanel-Dx 510(k)"
+    }
+  ],
+  "finishedAt": "2026-11-08T23:03:11.671Z"
+}
