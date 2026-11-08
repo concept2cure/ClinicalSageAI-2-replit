@@ -232,6 +232,10 @@ describe('RBM v2 surfaces persist their writes', () => {
     expect(method).toBe('PATCH');
     expect(url).toBe('/api/mdx/rbm-risk-items/21');
     expect(body).toMatchObject({ mitigation: 'Central review + KRI' });
+    // The stored ratings ride along unchanged. The route therefore keeps the seed's
+    // library-default mark unless a value differs from the stored one
+    // (rbm-assessment-integrity.test.ts, "the library-default mark").
+    expect(body).toMatchObject({ likelihood: 3, impact: 5 });
     for (const k of ['riskDescription', 'assignedTo', 'residualLikelihood', 'residualImpact']) {
       expect(body).not.toHaveProperty(k);
     }
@@ -419,6 +423,12 @@ describe('RBM RACT — versioned amendment of a signed assessment', () => {
     render(<RbmRact board={approvedBoard()} onReload={vi.fn()} />);
     expect(screen.getByText(/v2 — active — approved 2026-06-01 by Jordan Chen/)).toBeTruthy();
     expect(screen.getByText(/v1 — archived — approved 2026-04-02 by Sam Okafor/)).toBeTruthy();
+  });
+
+  it('does not offer Add CtQ factor when the study has no risk assessment', () => {
+    render(<RbmRact board={board({ assessment: null })} onReload={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /Add CtQ factor/ })).toHaveProperty('disabled', true);
+    expect(writes()).toEqual([]);
   });
 
   it('does not offer Amend on a draft — a draft is already editable', () => {

@@ -380,6 +380,7 @@ function registerIndependentAuditFailureCase(fixture: {
     await expect(independentReviewServices.runAuthoringIndependentCheck(failed, { tenantId: ORG, actorId: AUTHOR.id,
       documentId: doc.id, expectedSnapshotHash: current.reviewContext.snapshotHash }, { ipAddress: '127.0.0.1', userAgent: 'audit-failure-fixture' })).rejects.toThrow();
     expect((await fixture.connection.query("SELECT 1 FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type LIKE 'INDEPENDENT_CHECK_%'", [doc.id])).rows).toHaveLength(0);
+    // tenant-isolation-safe: an assertion that NO audit row exists for this document; scoped to one tenant it would pass over a row written under the wrong one
     expect((await fixture.connection.query("SELECT 1 FROM audit_logs WHERE new_values->>'docId'=$1 AND action LIKE 'authoring.section.INDEPENDENT_CHECK_%'", [doc.id])).rows).toHaveLength(0);
   });
 }

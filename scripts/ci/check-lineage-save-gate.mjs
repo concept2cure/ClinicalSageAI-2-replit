@@ -87,8 +87,12 @@ const ROOT = process.cwd();
 const NOT_PROSE = [
   {
     file: 'server/services/c2c/charter-objectives.ts',
-    why: 'the fixed objectives charter section is canonical JSON of project intent (objective, successCriteria and source descriptors), not filing narrative; recordOnTransaction retains the actual actor/reason, SHA-256 version chain and same-transaction append-only charter audit. The reviewed source fingerprint below is mandatory: serialization, writers, attribution, versioning or audit changes require this classification to be reviewed again.',
-    reviewedSourceSha256: 'e56313e879203aa35a34610faf7e6b8b74c91c9f47a1640d8310951008afbe2a',
+    why: 'the fixed objectives charter section is canonical JSON of project intent (objective, successCriteria and source descriptors), not filing narrative; recordOnTransaction retains the actual actor/reason, SHA-256 version chain and same-transaction append-only charter audit. The reviewed source fingerprint below is mandatory: serialization, writers, attribution, versioning or audit changes require this classification to be reviewed again. Re-reviewed 2026-11-08 at a2f9264a5: that change folds the two ambiguity refusals into singleObjectiveRow (same codes and messages) and adds readProjectObjectivesOnExecutor, a read-only reader; recordOnTransaction and every write are unchanged.',
+    reviewedSourceSha256: '5cf12cc5a9125a7f46c1247f315d1ee9fc7de4f725bf71188600e49ba553398f',
+  },
+  {
+    file: 'server/services/chat-thread-helpers.ts',
+    why: "chat_messages.content is the conversation transcript, not a governed document. Its writers append a turn (INSERT INTO chat_messages) and, since a2f9264a5, replace an owner-private message with the fixed OWNER_PRIVATE_MESSAGE_PLACEHOLDER once its sealed copy is captured (UPDATE chat_messages SET content). Text reaches a document only through the guarded apply paths (submission-chat-apply-rewrite.ts, AnaToolExecutor.ts)",
   },
   {
     file: 'server/services/AssemblyLine.ts',
