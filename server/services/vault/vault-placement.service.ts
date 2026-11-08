@@ -62,7 +62,8 @@
 
 import { pool } from '../../db.js';
 import { writeChainedAuditRow } from '../auditService.js';
-import { resolveVaultView, resolveVaultFilingContext, isFolderInView, folderLabel, filingVocabularyRefusal, classifyForFiling } from './vault-filing.service.js';
+import { resolveVaultView, resolveVaultFilingContext, filingVocabularyRefusal, classifyForFiling } from './vault-filing.service.js';
+import { readProgramFolderIndex, type ProgramFolderIndex } from './vault-folders.js';
 import { requireCurrentVaultProgramWrite } from './vault-write-authority.js';
 import { ProgramReadAccessError } from '../c2c/current-program-access.js';
 import type { VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
@@ -150,7 +151,7 @@ function invalid(code: string, message: string, status = 400): PlaceVaultDocumen
  */
 function resolveTargetFolder(
   args: PlaceVaultDocumentArgs,
-  view: VaultViewId,
+  folders: ProgramFolderIndex,
   currentFolderId: string | null,
 ): { folderId: string | null } | { refusal: PlaceVaultDocumentResult } {
   const { confirm, folderId } = args;
@@ -168,11 +169,13 @@ function resolveTargetFolder(
   if (folderId === null) return { folderId: null };
   if (typeof folderId === 'string' && folderId.trim()) {
     const target = folderId.trim();
-    if (!isFolderInView(view, target)) {
+    /* The project's own folders: its view's presets, its filing's binder and
+       the folders people made in it (vault-folders.ts). */
+    if (!folders.has(target)) {
       return {
         refusal: invalid(
           'INVALID_FOLDER',
-          `Folder '${target}' does not exist in this project's ${view} vault taxonomy.`,
+          `Folder '${target}' does not exist in this project's Vault (its ${folders.view} folders, its binder or the folders made in it).`,
         ),
       };
     }
@@ -279,12 +282,13 @@ export async function placeVaultDocument(
       await client.query('ROLLBACK');
       return invalid('CONFLICT', 'Its filing changed since this list was loaded, so it was not confirmed. Reload and check it.', 409);
     }
-    const target = resolveTargetFolder(args, view, before.folder_id);
+    const folders = await readProgramFolderIndex(client, programId, organizationId, view);
+    const target = resolveTargetFolder(args, folders, before.folder_id);
     if ('refusal' in target) {
       await client.query('ROLLBACK');
       return target.refusal;
     }
-    const result = await writePlacement(client, args, view, before, target.folderId);
+    const result = await writePlacement(client, args, folders, before, target.folderId);
     await requireCurrentVaultProgramWrite(client, identity);
     await client.query('COMMIT');
     return result;
@@ -314,7 +318,7 @@ interface PlacementRow {
 async function writePlacement(
   client: { query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }> },
   args: PlaceVaultDocumentArgs,
-  view: VaultViewId,
+  folders: ProgramFolderIndex,
   before: PlacementRow,
   targetFolder: string | null,
 ): Promise<PlaceVaultDocumentResult> {
@@ -350,7 +354,7 @@ async function writePlacement(
         args.evidenceKind ?? null,
         // An explicit move to a non-CTD folder clears a stale CTD section;
         // confirming keeps what the classifier read.
-        args.ctdSection ?? (args.confirm ? before.ctd_section : null),
+        args.ctdSection ?? (targetFolder ? folders.ctdSectionOf(targetFolder) : null) ?? (args.confirm ? before.ctd_section : null), // a binder heading's own section
         newStatus,
         rationale,
         // placed_by/placed_at record the PERSON who placed it (shared/schema/
@@ -384,7 +388,7 @@ async function writePlacement(
         ...(args.agent ?? {}),
         programId,
         documentTitle: before.document_title,
-        view,
+        view: folders.view,
         // The evidence kind on both ends too (VR-05): a move can change what
         // the document is taken to be, and the row said nothing of it.
         from: {
@@ -405,7 +409,7 @@ async function writePlacement(
 
     return {
       ok: true,
-      view,
+      view: folders.view,
       documentTitle: before.document_title,
       before: {
         folderId: before.folder_id,
@@ -414,7 +418,7 @@ async function writePlacement(
       },
       filing: {
         folderId: after.folder_id,
-        folderLabel: folderLabel(view, after.folder_id),
+        folderLabel: folders.label(after.folder_id),
         evidenceKind: after.evidence_kind,
         ctdSection: after.ctd_section,
         placementStatus: after.placement_status,

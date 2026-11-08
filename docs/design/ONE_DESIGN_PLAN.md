@@ -1135,6 +1135,53 @@ in the running app where a screen changed. Where either was not possible, its RE
 
 1. Answers to the founder questions above, which decide this lane's next slices.
 
+#### S6 — The Vault's folders and filing binders, like Veeva's (session `session_01QoxbLZMScz1c2iFESBLn9J`, 2026-11-06)
+
+Started by the lead (`011Dpx…`) for the founder's ask of 2026-11-06: *"a Vault user interface, files, folders … just
+like Veeva … templates and folders for the full IND pyramid of potential filing types across all the therapeutic areas
+and regions … Anna needs to have autonomous control over all of this, agentically."* Evidence:
+`docs/evidence/SPINE/S6/2026-11-06/` (README with "What already exists", before/after screenshots, walks, audit rows).
+
+**Delivered: step 1 of 4, plus most of step 2** (S6 `b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
+
+- **Folders a person makes.** `public.document_folders` (it existed, reached only by the uncalled legacy `/api/folders`)
+  gains `program_id` and `parent_key` (`migrations/20261106_document_folders_project_scope.sql`, additive, in the set
+  before the sweep pair). `server/services/vault/vault-folders.ts` holds the project's folder index and the governed
+  writers; POST `/api/c2c/project-vault/:id/folders` and `/:id/folders/:folderId/rename`. Each change writes a chained
+  audit row with who, when and the reason (required). The Vault's header has **New folder** (made in the folder open
+  in the tree) beside **Upload a folder** (the old "Add a folder", which uploads); a person's folder has **Rename**;
+  "Move to…" lists every folder at its depth. Placement, upload-into-a-folder and folder export accept any folder of
+  the index. Walked in the CSR study's Vault: made in 5.3, renamed, `adsl.xpt` moved in, three audit rows.
+- **The cabinet is the filing's binder.** It is the active rule pack of the project's document class (the
+  scaffolder's own resolution, `document-class.ts` + `rule-pack-lookup.ts`): a US IND gets FDA Module 1 and CTD to
+  section; an NDA, MAA (EU Module 1), 510(k) (eSTAR A–G), EU MDR and IVDR (Annex II) each get their own pack.
+  Folder ids: preset (`module-3`), binder heading (`bn:3.2.S.4`, which also records its CTD section), a person's
+  (`uf:12`). A row filed to a module preset shows at its CTD heading. With no pack, the folders stop at module level
+  and the cabinet says why (`note`).
+
+**Not done, for the next session** (holds released in `.design/claude-convergence/COORDINATION.md`):
+
+1. **Step 2's walk.** Projects exist for it on a fresh Codespace only if made again: NDA, MAA, EU MDR and EU IVDR were
+   created through `POST /api/c2c/projects` (`clientWorkspaceId` required when several workspaces exist). The app
+   refuses a J-NDA (PMDA requires eCTD 4.0) and a Health Canada NDS (no outline), so neither binder can be shown in a
+   project yet; the J-NDA pack exists. Shoot each binder; restart the app first (the leaf's folder label fix in
+   `filingCabinet`, `nameLeafFolders`, is not yet seen in the running app; the record pane read `uf:5`).
+2. **Step 3, the pyramid in Vault.** Design settled, not built: extend `vault.open-folder`
+   (`shared/navigation/surface-actions.ts`, handler in `Vault.tsx`) with an exact `folderId` resolved to the nearest
+   binder heading; in `Pyramid.tsx` `PyTaskSheet` add "Open in Vault" beside each Document-binding code (wired in
+   `PyramidProject.tsx` through `applySurfaceAction`, Plan: S11); in the Vault, read
+   `GET /api/v1/pyramids/by-project/:id` once and list under a binder folder the tasks whose `ctd` codes fall in it.
+3. **Step 4, AnA.** Extend `place_project_document` (`server/services/ana/document-catalog-tool-defs.ts`,
+   `document-placement-tools.ts`, Plan: S4) so `folder_id` names a binder heading or a person's folder, and add an
+   input that makes a folder through `createProgramFolder` with AnA's provenance (`anaToolProvenance`); let
+   `list_project_documents` return the folder index. A document AnA places stays a suggestion a person confirms.
+4. **Duplicates to converge:** the legacy `/api/folders` route (`server/routes/folder-management.js`) writes the same
+   table with no project; retire it onto `project-vault.ts` with its contract test
+   (`server/__tests__/security/tenant-isolation-folders.contract.test.ts`).
+5. **Running the gates here:** `ci:typecheck-no-regression` does not complete on a 15 GB machine with the app running;
+   stop the app before `git push`. `ci:check-css-selector-shadowing` is red on trunk (`journey-v2.css`,
+   `protocol-dev-editing.css`), not from this work.
+
 #### L1 (row D2) — CSR drafting with the person in control, and the running-app walk of its screens (session `session_01T2wooCZu46W7msw4TJuuzr`)
 
 Design: `docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md`. The holds are in COORDINATION.md, in the row "CSR drafting

@@ -1,0 +1,7 @@
+         created_at         |       action        |              record_id               |             who             |                              why                              |               what                | made_in 
+----------------------------+---------------------+--------------------------------------+-----------------------------+---------------------------------------------------------------+-----------------------------------+---------
+ 2026-11-06 18:47:21.496683 | vault.document.file | 06ceee7d-3e31-40f9-be48-87b90a08c0a5 | ana.author@concept2cure.pro | The ADSL dataset belongs with the pivotal study it describes. | uf:5                              | 
+ 2026-11-06 18:47:20.349587 | vault.folder.rename | uf:5                                 | ana.author@concept2cure.pro | Named for the study it holds, as the TMF names it.            | Pivotal study CDISCPILOT01 184713 | 
+ 2026-11-06 18:47:19.476275 | vault.folder.create | uf:5                                 | ana.author@concept2cure.pro | A place for the pivotal study’s ADaM datasets and outputs.    | Pivotal study 184713              | bn:5.3
+(3 rows)
+
