@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type Request } from 'express';
 import { getPool } from '../../db';
 import { z } from 'zod';
 import { writeThroughSpecification } from '../../services/cmc-write-through';
@@ -503,6 +503,52 @@ async function approvalTargetRefusal(
   return { status: 409, body: { success: false, error: verdict.code, message: verdict.message } };
 }
 
+/**
+ * Whether this specification is approvable AT ALL, asked before the signer is
+ * asked for their password.
+ *
+ * Nobody signs into a refusal. A limit whose analytical method is unfit, or
+ * one already approved, is turned away without anyone typing their password
+ * over an act that was never going to complete — which is why this read sits
+ * ahead of the re-authentication rather than inside the transaction alone.
+ *
+ * This read is not the authority. The same question is asked again under
+ * FOR UPDATE, and that second answer is the one the write commits against;
+ * this one only decides whether to ask for a password.
+ *
+ * Both ceremony calls — `checkSigningAuthority` and `verifyReauth` — stay IN
+ * the handler, beside the signed write, and only this approvability read is
+ * extracted. `ci:sign-ceremony` reads both there, and it is right to: a
+ * ceremony folded behind a helper is how a later edit removes one without
+ * anybody seeing it go.
+ */
+async function approvalApprovabilityRefusal(
+  id: string,
+  orgId: number,
+): Promise<{ status: number; body: Record<string, unknown> } | null> {
+  const preflight = await getPool().query(
+    `SELECT * FROM quality_specifications WHERE id = $1 AND tenant_id = $2`,
+    [id, orgId],
+  );
+  return approvalTargetRefusal(preflight.rows[0], orgId);
+}
+
+/**
+ * The tenant a signature is attributed to, or null when none is attached.
+ *
+ * Number(), not parseInt: a malformed tenant ('7abc') is refused, not read as
+ * 7. `resolveOrgId` (server/types/auth-request) parses a string tenant with
+ * parseInt, which reads that as tenant 7 — so the signing path keeps its own
+ * stricter reading rather than widening the shared one beneath a signature.
+ * (The three read routes above hold the raw value unconverted; converging them
+ * onto this changes what reaches `tenant_id` in their SQL, so it is its own
+ * change, not a rider on a signature fix.)
+ */
+function signingTenantOf(req: Request): number | null {
+  const orgId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
+  return Number.isFinite(orgId) && orgId > 0 ? orgId : null;
+}
+
 // POST /api/cmc/specifications/:id/approve - Governed e-signature approval
 // (high-risk sign). The ONLY path to approval; routed through the
 // mutation-primitives ledger (audit_logs + c2c_ana_actions).
@@ -518,9 +564,8 @@ router.post('/:id/approve', async (req, res) => {
   }
   const { reason, meaning, reauth, idempotencyKey } = validationResult.data;
 
-  // Number(), not parseInt: a malformed tenant ('7abc') is refused, not read as 7.
-  const orgId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
-  if (!Number.isFinite(orgId) || orgId <= 0) {
+  const orgId = signingTenantOf(req);
+  if (!orgId) {
     return res.status(401).json({ error: 'Tenant context required' });
   }
   const userId = resolveActorUserId(req);
@@ -528,11 +573,19 @@ router.post('/:id/approve', async (req, res) => {
     return res.status(401).json({ error: 'AUTH_REQUIRED' });
   }
 
-  // Signing authority (§11.10(g)), then the re-auth gate, before any write.
-  // Until the P0-10b fix round only the password was checked, so a viewer
-  // could approve.
+  // Signing authority (§11.10(g)) before the password: until P0-10b only the
+  // password was checked, so a viewer could approve.
   const authority = await checkSigningAuthority(userId, orgId);
-  if (authority) return res.status(authority.status).json({ success: false, error: authority.code, message: authority.message });
+  if (authority) {
+    return res.status(authority.status).json({ success: false, error: authority.code, message: authority.message });
+  }
+
+  // Then whether this limit can be approved at all — before the password, so
+  // nobody re-authenticates into a refusal.
+  const blocked = await approvalApprovabilityRefusal(id, orgId);
+  if (blocked) return res.status(blocked.status).json(blocked.body);
+
+  // The re-auth gate, beside the write it authorises (§11.10, ci:sign-ceremony).
   const reauthResult = await verifyReauth(userId, reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');
