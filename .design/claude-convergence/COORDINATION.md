@@ -187,9 +187,16 @@ extending existing files. The canonical scope, six-component audit, phase/packag
 and unresolved acceptance are in `docs/design/ONE_DESIGN_PLAN.md` §1d; P-104 is recorded in the launch decision log.
 This is an extension of the current packages, not a parallel program or a release claim.
 
+**Owner from 2026-11-08 (P-105).** The founder gave the whole epic to one session: *"you own all of the attached
+alone."* That session is `session_01KZK3jgtmQBgNepqLjXjS3k` (Claude Code). It replaces the Anna architecture lead
+below, and no other session takes an epic slice. Holds that sessions have registered on this page for their own
+packages still stand. An epic slice asks here before it touches a file someone else holds. The specification is v0.5,
+`docs/design/MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf`. v0.4 is superseded.
+
 | Scope | Holder | Handoff |
 |---|---|---|
-| Plan §1d, existing plan ledger, P-104 decision, historical roadmap pointer and this coordination entry | Anna architecture lead (`Codex`, 2026-11-06), roadmap agent | Publish plan before implementation; root owns integration and records actual checks. |
+| The whole Anna-runtime epic: plan §1d, the ledger's `anna-runtime` entry, sequencing, integration, acceptance, progress log | `session_01KZK3jgtmQBgNepqLjXjS3k`, alone, from 2026-11-08 (P-105) | Each slice names its existing files here before it changes them; no new files, tables, mounts, tools or models. |
+| Plan §1d, existing plan ledger, P-104 decision, historical roadmap pointer and this coordination entry | Anna architecture lead (`Codex`, 2026-11-06), roadmap agent; **superseded by P-105 on 2026-11-08** | Publish plan before implementation; root owns integration and records actual checks. |
 | Runtime, trust, locality and memory audit | Anna architecture lead's independent agents, read-only until exact files assigned | Preserve current file holds above. Each implementation agent gets disjoint existing files; no new files/tables/mounts/tools. |
 
 The account target changes from the historical platform/client choice to client-owned accounts for client filings.

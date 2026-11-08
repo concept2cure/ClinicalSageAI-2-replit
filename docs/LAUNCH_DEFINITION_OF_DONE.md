@@ -544,8 +544,6 @@ checked and the assessor did not, and how each is carried:
 
 The IND routes keep their paths and answer from the one assessor. A dispatch snapshot records which gate
 produced it, so cockpit drift does not report every old row as drifted.
-*(2026-11-02: superseded by P-105. The uncalled IND lifecycle routes are retired, and Submission Readiness is the one
-place a sequence's verdict is read.)*
 
 ### P-34 — Shadow Review stays a dispatch gate, with a signed human waiver for a provider outage
 
@@ -2039,51 +2037,81 @@ The founder, 2026-11-06, supplied **MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.
   The current roadmap is `docs/design/ONE_DESIGN_PLAN.md` and `docs/design/one-design-plan.json`, not the historical
   CER-only or January vision roadmaps. Progress must name actual commits, checks and remaining dependencies.
 
-### P-105 — The uncalled IND lifecycle routes are retired; a sequence's verdict is read per project
+### P-105 — Spec v0.5 is the current Anna-runtime specification (v0.4 superseded), and one session owns the epic alone
 
-The founder, 2026-11-02, answered two questions.
+The founder, 2026-11-08, first supplied **MULTI-AGENT-ARCHITECTURE-SPEC-20261105.md** (v0.4, §§1–15) and directed:
 
-The first: "Eight IND lifecycle routes have never had a caller. Three are a second dispatch verdict beside Submission
-Readiness: dispatch-gate, dispatch-gate/snapshot plus snapshots, and validate. Five give the same verdict in other
-forms: cockpit, submission drift, portfolio drift plus its CSV, and the uncalled dashboard and overview. The drift
-routes only work on a snapshot table that deployed databases don't create. P-33 said 'The IND routes keep their
-paths.' Retire them, overriding that sentence?" The answer: **"Retire all."**
+> "Stay perfectly aligned to the new roadmap and rules. But you must add the attached plan to the main new roadmap
+> and you own all of the attached alone."
 
-The second: "Should Reporting & analytics carry one organisation-wide list of every sequence's live verdict, across all
-application types?" The answer: **"No, per project only."**
+Then, the same day, a correction, supplying **MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf**:
 
-RIM raised it, re-checking the IND routes against the corrected R1 inventory (`d8f559377`). The coordinating session's
-mapping pass found:
-- none of the routes has ever had a client, AnA or MCP caller;
-- each answers from the one assessor and writes nothing;
-- the only writer of `ind_dispatch_snapshots` is the snapshot route itself;
-- `migrations/20260610_ind_dispatch_snapshots.sql` is not in `C2C_MIGRATION_FILES`, so on a database built by
-  deploy-migrate alone the snapshot read fails.
+> "Correction — there's a newer version than the one I just sent. v0.5, from November 6 (105 KB, 32 sections),
+> supersedes v0.4. … this is the current plan."
 
-- **What is decided.** These routes under `/api/ind-lifecycle` are retired:
-  - `POST /sequence/:seqId/dispatch-gate`;
-  - `POST /sequence/:seqId/dispatch-gate/snapshot` and `GET /sequence/:seqId/snapshots`;
-  - `GET /sequence/:seqId/validate`;
-  - `POST /submission/:id/cockpit` and `POST /submission/:id/drift`;
-  - `GET /portfolio/drift` and `GET /portfolio/drift/csv`;
-  - `POST /submission/:id/dashboard` and `GET /submission/:id/overview`.
+- **What is decided.**
+  1. **v0.5 is the current specification, and v0.4 is superseded.**
+     - v0.5 is the version P-104 placed at `docs/design/ONE_DESIGN_PLAN.md` §1d.
+     - Its source of record is now in the repository: `docs/design/MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf`,
+       sha256 `4564aff5d1da81520ed187abf5d5f20be11f74c7d407244bba33d685229b36c4`.
+     - Its change note says §§1–15 are unchanged from v0.4. §1d maps every one of its 32 sections onto the epic.
+     - v0.4 §15's "consider and plan, do not build yet" stays superseded by P-104's build instruction.
+     - It is one epic, not a second backlog.
+  2. **The Anna-runtime epic has one owner:** the Claude Code session `session_01KZK3jgtmQBgNepqLjXjS3k`. The epic is
+     `architectureEpics` `anna-runtime` in `docs/design/one-design-plan.json`.
+     - It replaces the Anna architecture lead (Codex, 2026-11-06) as the epic's lead, for sequencing, integration,
+       acceptance and the epic's progress log.
+     - No other session takes an epic slice.
+- **What is not decided.**
+  - Other packages' scope is unchanged, and so are their holders' file holds for their own work (plan §4.6, one
+    session per file). When an epic slice needs a file someone else holds, the owner asks for it in
+    `.design/claude-convergence/COORDINATION.md`.
+  - §14.5's open questions stay open, because P-104 does not decide them:
+    1. Is Anna customer-facing first, or internal-only?
+    2. What is the model cost and latency budget per document type?
+    3. Do Anna's internal dispositions need the same IQ/OQ validation package as user-facing approvals? That is to
+       be scoped with the first design partner.
+  - No new file, screen, route, mount, service, table, tool, dependency, integration or model is approved (RULE 6).
+    §13.2's vendors are suggestions, not admissions. Committing the specification PDF as the source of record is a
+    document, not a capability.
+  - P-104's account target, its gates and its phase order are unchanged.
+- **Owner.** `session_01KZK3jgtmQBgNepqLjXjS3k`.
 
-  Their OpenAPI entries, route tests and the services only they use go in the same change. A service another caller
-  still reads stays. The reachable replacement is Submission Readiness (P-33):
-  - `GET /api/submissions/sequences/:seqId/dispatch-readiness`;
-  - shown in Submission Center's Validation and Dispatch tabs (`SubmissionSeqWorkspaces.tsx`);
-  - shown in the project's Submit step (`ProjectMarkets.tsx`, `DispatchReadiness.tsx`);
-  - a stored Validated stage that no longer holds is reported by `validatedStage`
-    (`assess-dispatch-readiness.ts`).
+### P-106 — The ten IND lifecycle routes with no caller are retired; a sequence's verdict is read per project only
 
-  P-33's sentence "The IND routes keep their paths" is superseded. Its rule that every verdict answers from the one
-  assessor stands.
-- **What is not decided.** Nothing is dropped from the database. `ind_dispatch_snapshots` and its rows stay, under
-  RULE 1, and existing rows remain readable through the audit trail. No organisation-wide verdict list is built, in
-  Reporting or anywhere else. The other IND routes (letters, reports, P-87's diff and manifest) are not touched by
-  this decision.
-- **Owner.** RIM, under F1, after slice 2. The retirement commit names its replacement by path and shows the
-  dispatch-readiness route still reached (working agreement). `tests/schema-contract/one-dispatch-verdict.contract.test.ts`
-  changes with it, so it no longer requires the retired routes.
+The founder, 2026-11-08, confirming in the RIM session (`011e42…`) the decision the coordinating session relayed on
+2026-11-02. Its record commit (`9bb710e98`) never reached origin, and the number it carried was used for P-100. P-105 was taken the same day by the Anna-runtime decision above. The
+question was raised by the RIM session's caller check against the corrected R1 inventory (`d8f559377`). The answer:
+**"Yes, record and retire."**
 
-*(Recorded locally on 2026-11-02 as P-100. That number was taken on origin on 2026-11-05 while this session was paused, so this is P-105.)*
+- **What is decided.** Ten IND lifecycle routes are retired:
+  - `POST /api/ind-lifecycle/sequence/:seqId/dispatch-gate`;
+  - `POST /api/ind-lifecycle/sequence/:seqId/dispatch-gate/snapshot`;
+  - `GET /api/ind-lifecycle/sequence/:seqId/snapshots`;
+  - `GET /api/ind-lifecycle/sequence/:seqId/validate`;
+  - `POST /api/ind-lifecycle/submission/:id/cockpit`;
+  - `POST /api/ind-lifecycle/submission/:id/drift`;
+  - `GET /api/ind-lifecycle/portfolio/drift`;
+  - `GET /api/ind-lifecycle/portfolio/drift/csv`;
+  - `POST /api/ind-lifecycle/submission/:id/dashboard`;
+  - `GET /api/ind-lifecycle/submission/:id/overview`.
+
+  Nothing in the client, AnA, MCP or scripts calls them. Each reads the one assessor (`annotatedGatesForSubmission`)
+  and writes nothing, except the snapshot route, the only writer of `ind_dispatch_snapshots`.
+- **Also decided: no organisation-wide verdict list.** A sequence's verdict is read per project only.
+- **The replacement, named by path in the removing commit:** `GET /api/submissions/sequences/:seqId/dispatch-readiness`,
+  shown in `client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx` (Validation, Dispatch) and in
+  `ProjectMarkets.tsx` / `DispatchReadiness.tsx` (Submit). A Validated stage that no longer holds is shown through
+  `validatedStage`.
+- **Services.** A service only these routes use is deleted with them. A service another caller still reads is kept,
+  each checked by import, not by name.
+- **Superseded.** P-33's sentence "The IND routes keep their paths". Its one-assessor rule stands.
+- **What is not decided.** Nothing is dropped. `ind_dispatch_snapshots` stays (RULE 1). Its migration,
+  `20260610_ind_dispatch_snapshots.sql`, is in the install-fresh baseline only, not in `C2C_MIGRATION_FILES`.
+- **Proof the removing commit carries:**
+  - the dispatch-readiness route is shown still reached;
+  - the R1 inventory is run again, showing the ten are gone and no other route lost its caller;
+  - the history search (`git log --all --diff-filter=D`);
+  - the plain-text segment searches.
+- **Owner.** RIM, under `Plan: R1`, after F1 slice 2, together with P-87's deletion of the IND diff and manifest
+  routes.
