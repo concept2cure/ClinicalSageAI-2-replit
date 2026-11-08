@@ -1,0 +1,9 @@
+MUTATION 1-transactional-creator-does-not-ask: replaced [  if (input.programId != null) await refuseNonApplicationProject(client, input.programId, ctx.organizationId);
+] with [], 2026-11-08T22:12:48Z
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > no creator writes a submission into a project that is not an application > the transactional creator refuses a clinical study report project, as the standalone one does
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > no creator writes a submission into a project that is not an application > the transactional creator refuses a regional device preparation project
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: promise resolved "undefined" instead of rejecting
+AssertionError: promise resolved "undefined" instead of rejecting
+      Tests  2 failed | 2 passed (4)
+restored sha256 46b6dfef1c4d03951465a9a4d961232a65856cfefb61373c62120e3b3d25c64f (expected 46b6dfef1c4d03951465a9a4d961232a65856cfefb61373c62120e3b3d25c64f)

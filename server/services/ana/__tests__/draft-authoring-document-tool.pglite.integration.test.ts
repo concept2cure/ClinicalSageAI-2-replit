@@ -21,6 +21,7 @@ import { runWithTenantScope } from '../../../db/tenantStore';
 import { draftSourceIdentityForText } from '../draft-source-identity';
 import { registerDraftSourceToolIdentityControls, registerReviewedDerivativeToolControls } from './support/draft-source-tool-v2-controls';
 import { AUTHORING_TOOL_MIGRATIONS, DISPOSITION_IMPACT_PREREQ, authoringCountsOn } from './support/authoring-tool-db';
+import { PRIVATE_RULE_STORE_DDL, asRequestOwner, ownerScopedClient } from './support/request-owner';
 
 /** The request's tenant scope, as the global /api gate opens it for every AnA
  *  turn. Since 9c266724f the actor source read (withAnaSourceReadScope) and the
@@ -55,14 +56,15 @@ vi.mock('../../../db.js', () => ({
 
 const T = 240_000;
 let jdb: JourneyDb;
-const requestExecutor = { query: (text: string, values?: unknown[]) => jdb.pglite.query<Record<string, unknown>>(text, values) };
+// The request's connection, carrying its verified owner (support/request-owner.ts).
+const requestExecutor = ownerScopedClient((text, values) => jdb.pglite.query<Record<string, unknown>>(text, values));
 let handler: (input: Record<string, unknown>, ctx?: Record<string, unknown>) => Promise<string>;
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ + VAULT_DDL + DISPOSITION_IMPACT_PREREQ,
     migrations: [...AUTHORING_TOOL_MIGRATIONS],
-    testOnlySql: AUTHORING_ACCESS_DDL,
+    testOnlySql: AUTHORING_ACCESS_DDL + PRIVATE_RULE_STORE_DDL,
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
@@ -85,7 +87,8 @@ beforeAll(async () => {
   await import('../AnaToolExecutor');
   const found = approvedToolHandler('draft_authoring_document');
   expect(found, 'draft_authoring_document is not registered').toBeDefined();
-  handler = (input, ctx) => found!(input, { sqlClient: requestExecutor, ...ctx } as never);
+  // Every tool call reads its member's private rules first (P-104): it runs as that verified member.
+  handler = (input, ctx) => asRequestOwner(ctx, () => found!(input, { sqlClient: requestExecutor, ...ctx } as never));
 }, T);
 
 afterAll(async () => {
@@ -248,14 +251,15 @@ describe('project catalog — source-version truth', () => {
       // Its identity only: the stale record's content never leaves the database.
       expect(loaded?.catalog).toMatchObject({ version: 'other', status: 'cataloged', summary: null, keyData: null, charCount: 0 });
       const { getToolHandler } = await import('../AnaToolExecutor');
+      const readCtx = { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM };
       const read = JSON.parse(await runWithTenantScope({ tenantId: String(ORG), role: 'member', source: 'test' }, () =>
-        getToolHandler('read_project_document')!({ document_id: SOURCE_ID }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM })));
+        asRequestOwner(readCtx, () => getToolHandler('read_project_document')!({ document_id: SOURCE_ID }, readCtx))));
       expect(read).toMatchObject({ ok: false, code: 'SOURCE_VERSION_CHANGED' });
       expect(JSON.stringify(read)).not.toContain('9 of 10');
       // A 'cataloged' record for other bytes is not a studied document: placement refuses before any write.
       vi.stubEnv('ANA_DOCUMENT_CATALOG_FORCE_ON', 'true');
       try {
-        const placed = JSON.parse(await getToolHandler('place_project_document')!({ document_id: SOURCE_ID, folder_id: 'module-5', rationale: 'The stale record says CSR.' }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
+        const placed = JSON.parse(await asRequestOwner(readCtx, () => getToolHandler('place_project_document')!({ document_id: SOURCE_ID, folder_id: 'module-5', rationale: 'The stale record says CSR.' }, { ...readCtx, humanConfirmed: true })));
         expect(placed).toMatchObject({ ok: false, refused: true, code: 'SOURCE_VERSION_CHANGED' });
       } finally { vi.unstubAllEnvs(); }
       const receipts = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.document_read_receipts WHERE document_id=$1', [SOURCE_ID]);
@@ -317,7 +321,7 @@ describe('draft_authoring_document', () => {
 
   it('refuses a foreign open project at current policy admission before any authoring write', async () => {
     const out = JSON.parse(await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, humanConfirmed: true, projectRef: OTHER_PROGRAM }));
-    expect(out).toMatchObject({ error: 'SKILL_POLICY_UNAVAILABLE', success: false });
+    expect(out).toMatchObject({ code: 'ANA_PROJECT_NOT_FOUND', error: 'Project not found.' }); // the gate's admission, in its own words
   });
 
   it('with the open program (uuid projectRef): the document, its sections and its provenance exist', async () => {
@@ -366,7 +370,7 @@ describe('draft_authoring_document', () => {
     );
     const before = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
     const out = JSON.parse(await handler({ ...input, title: 'Foreign anchor draft' }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, humanConfirmed: true, projectId: 44 }));
-    expect(out).toMatchObject({ error: 'SKILL_POLICY_UNAVAILABLE', success: false });
+    expect(out).toMatchObject({ code: 'ANA_PROJECT_NOT_FOUND', error: 'Project not found.' }); // the gate's admission, in its own words
     const after = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
     expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n);
   });

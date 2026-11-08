@@ -775,6 +775,30 @@ acceptance remain separately tracked; no incomplete path is described as accepte
 The new batch is committed locally and merged with canonical work; publication and final merged gates follow.
 Counts in this section overlap broader suites and must not be summed. All 16 real model PQ entries remain pending.
 
+#### S4 / F1 — Anna runtime: the epic's own red on trunk (2026-11-08, P-105 owner `session_01KZK3jgtmQBgNepqLjXjS3k`)
+
+Evidence: `docs/evidence/SPINE/S4/2026-11-08-anna-trunk-red/README.md`.
+
+- **Found.** Since `4852aa78`/`a2f9264a`, every AnA tool reads standing rules and fails closed. Old fixtures cannot
+  answer that read, so 144 of the 366 suites reaching AnA's tools refused before their subject ran. A local probe
+  recorded the swallowed errors: 906 non-member, 273 owner-scope and 241 project-not-found.
+- **Delivered.** All commits are on `concept2cure-v2`.
+  - `e739190890`: the stub pool gets the real gate's empty-rule snapshot, and there is one shared declaration for
+    hand-built stubs.
+  - `fd52dceb45`: every loop round dispatches with its tenant (`ci:ai-tenant-binding` green).
+  - `02d0bad57a`: one declaration, not four copies.
+  - `c55704def0`: production serves the credential vault, the placement setting and the private-rule ledger
+    (`ci:launch-scope-api` green).
+  - `df385e5984`: a project AnA cannot use is refused as that, and eight real-database suites meet the independent
+    check.
+- **Result.** Of the 144 gate-refused suites, 127 pass on the merged tree. No suite moved from passing to failing, and
+  the gate's own suites pass unchanged.
+- **Next.**
+  - `ci:step-presentation`: two import cuts, with no RULE 2 defect behind them.
+  - About 40 AnA suites red for other causes, being diagnosed in three disjoint file sets: the stream route, the
+    executor and tools, and AnA drive.
+  - Then the expanded §14.4 spike.
+
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
 **Delivered**

@@ -314,8 +314,14 @@ async function refuseForeignProgram(
  * anchored an IND submission to such a project all the same (2026-10-29, CSR
  * path review): a second IND spine beside the sponsor's real one. Refused here
  * with the add-market sentence.
+ *
+ * A regional device preparation project is no application either
+ * (add-project-market.ts DEVICE_PROGRAM), and an IND was anchored to one the
+ * same way: insertSubmissionRow refuses only a regional device application
+ * type. Both creators ask, so neither refusal rests on their callers
+ * (2026-11-01, 3b slice 3).
  */
-async function refuseDocumentClassProject(
+async function refuseNonApplicationProject(
   q: { query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }> },
   programId: string,
   organizationId: number,
@@ -324,7 +330,12 @@ async function refuseDocumentClassProject(
     'SELECT program_type FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL',
     [programId, organizationId],
   )).rows[0] as { program_type?: unknown } | undefined;
-  const own = typeof row?.program_type === 'string' ? filingDocumentClassOf(row.program_type) : null;
+  const programType = typeof row?.program_type === 'string' ? row.program_type : null;
+  if (regionalDeviceApplicationClassOf(programType)) {
+    throw new SubmissionError('DEVICE_PREPARATION_ONLY',
+      'No submission is created in this project: it is a regional device preparation project, whose outline does not support canonical submission creation yet. Nothing was created.');
+  }
+  const own = filingDocumentClassOf(programType);
   if (own) {
     throw new SubmissionError('NOT_AN_APPLICATION',
       `No submission is created in this project: it is ${filingTypeInSentence(own.docType, true)}. ${classNotSequencedReason(own)} Nothing was created.`);
@@ -357,7 +368,7 @@ export async function createSubmission(
   ctx: { organizationId: number; userId: number }
 ): Promise<CreatedSubmission> {
   if (input.programId != null) await refuseForeignProgram(pool, input.programId, ctx.organizationId);
-  if (input.programId != null) await refuseDocumentClassProject(pool, input.programId, ctx.organizationId);
+  if (input.programId != null) await refuseNonApplicationProject(pool, input.programId, ctx.organizationId);
   const row = await insertSubmissionRow(db, input, ctx);
   // Part 11 §11.10(e). `recordAuditRow` neither throws nor rejects, and the
   // INSERT above is already committed when it runs, so the submission stands
@@ -405,8 +416,11 @@ export async function createSubmissionTx(
   ctx: { organizationId: number; userId: number }
 ): Promise<Submission> {
   // On the caller's client, so a project inserted earlier in the same
-  // uncommitted transaction (intake) is seen.
+  // uncommitted transaction (intake) is seen. Intake and Add a market create
+  // no spine in a class or regional device project; this creator refuses one
+  // itself, as createSubmission does, rather than rest on them.
   await refuseForeignProgram(client, input.programId, ctx.organizationId);
+  if (input.programId != null) await refuseNonApplicationProject(client, input.programId, ctx.organizationId);
   return insertSubmissionRow(drizzle(client), input, ctx);
 }
 
