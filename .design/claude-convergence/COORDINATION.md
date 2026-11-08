@@ -8,6 +8,20 @@ The coordinating session is `session_01JbQUvBxcGHdBgkgAydQKpx`, "UI and workflow
 `session_011Dpx…`'s plan (the D0–D7 specs, `18261a908`). Send it your package, step and file list before you
 change a file that another package's spec also names.
 
+## Decided 2026-11-08 under the founder's delegation (P-107): what each lane does next
+
+The founder delegated the open questions to the coordinating session ("No you decide as the global sme"). The record is
+`docs/LAUNCH_DEFINITION_OF_DONE.md` P-107 (`b1700dc8f6`). Sessions that cannot receive messages read their item here.
+
+| Lane | Decided | Next |
+|---|---|---|
+| Vault parity (`01KnUG…`) or S6's holder | (1) No cross-sponsor library view for a CRO: with no project open, the Vault asks which sponsor first. (2) Device coverage follows the eSTAR mapper; the rule pack converges onto it (D4/D6 is a defect, red first). (3) A seal says when its version was superseded. (4) Retention is FD3 (c). (5) Renditions are PDFs through the existing `pdf-converter.ts`, bound to the source's SHA-256. (6) Binders are editable views, audited, never altering a document | Take them in your order, red first, with hold rows here |
+| R1 (`01QoxbLdKp…`) | R1's next area is CMC / Module 3, then RBM. The 171 uncalled route files are retired by their owning lane only when there is no caller in any history and the capability is reachable elsewhere. The replacement is named by path, the inventory re-run, batches of 20 or fewer, nothing dropped (RULE 1) | Turn the list into per-lane batches with replacements named; release `ProtocolDev*` and `pdev-view-*` unless CMC's reach needs them |
+| Design continuation (`011Dpx…`) | Its §3a progress entry may be committed under `Founder-Decision: P-100`; that is not a plan amendment. Handoff item (a), the empty-state `tone-idle` class, was already fixed by `1d789b516` | Commit the entry |
+| Anna runtime (`01KZK3…`, messaged) | §14.5 decided: internal first; budgets per document type from measured spike runs (2× p95, stop and ask; until measured, 60 s interactive, 30 min background); internal dispositions in the validation package by risk | Plan §1d row updated |
+| Project page (`01FTWcmX…`, new, started 2026-11-08) | D3-4 (the step bodies), then S12 (work projects) | It adds its own hold row on `Project*.tsx` before its first edit |
+| CMC (`01GJidg5…`, messaged) | F1: the Specifications approve route must refuse a limit whose method is not validated (the screen says it does; the server never checks) | Red first; hold row here |
+
 ## Locked now
 
 The build order is `.design/claude-convergence/BUILD_ORDER.md`. D0-1 to D0-4 are pushed (D0-4 is `1dee898e9`, on origin at `29eb219f9`), so
