@@ -158,7 +158,7 @@ It is shown in the project's Plan step. Package S11.
 Work projects (CMC, biostatistics, risk-based monitoring and others) are projects of their own under the product
 program. Their deliverables are mapped to the downstream documents they feed (P-83, the study's §7a). Package S12.
 
-## 1d. Anna runtime — extend the existing product (founder decision P-104, 2026-11-06)
+## 1d. Anna runtime — extend the existing product (founder decisions P-104, 2026-11-06, and P-105, 2026-11-08)
 
 The founder supplied **Multi-Agent Architecture Spec v0.5, 2026-11-06**, §§1–32, and directed:
 
@@ -173,6 +173,34 @@ still required before its downstream phase starts. Existing packages remain open
 file, service, tool, screen, route, mount, table, dependency or model is approved by this decision. If a requirement
 cannot be met by extending the existing objects, record that precise dependency in this epic before implementing
 it. No work silently weakens isolation, signatures, launch scope, model qualification or a fail-closed gate.
+
+**Spec v0.4 and one owner (P-105, 2026-11-08).** The founder then supplied **v0.4, 2026-11-05**, §§1–15, the version
+that came before v0.5. The direction: *"add the attached plan to the main new roadmap and you own all of the
+attached alone."*
+
+- **Owner.** The epic has one owner: the Claude Code session `session_01KZK3jgtmQBgNepqLjXjS3k`. It replaces the
+  2026-11-06 Anna architecture lead, and no other session takes an epic slice. Other packages' holders keep their
+  file holds for their own work (§4.6). An epic slice asks for a held file in `COORDINATION.md`.
+- **How v0.4 maps.** v0.4 is this epic's base, not a second backlog. Where it differs from v0.5, v0.5 and P-104
+  govern.
+
+| v0.4 section | Where it lives in this epic |
+|---|---|
+| §1 principles (provenance, deterministic/LLM split, drafter ≠ checker, stateless workers, escalation) | RULE 2; the audit below; "Where the code corrects the spec": the workers stay read-only, not writable sandboxes |
+| §§2–3 data model, worker contracts, roster, orchestrator loop | Mapped onto the existing tenant keys, artifact versions, lineage and task records, and onto `sub-agent*.ts` and `agentic-workflow-tools.ts`; no duplicate Project/Atom/Task store |
+| §4 document factories | Phases 2 and 8; a document type is data in the one editor (RULE 4) |
+| §5 biostatistics, §6 CMC / Module 3, §7 lab/QNS and RBM | Phases 3, 4 and 5. P-101 keeps the SAP in the editor, and P-28's composition boundary holds |
+| §8 canvas, audit and Part 11 | Phase 2, in the one editor |
+| §9 QMS | Phase 6 |
+| §10 publishing, submission and correspondence | Phase 7, on the one sequence path (P-103) |
+| §11 stack and build order | The milestones below, phases 0–8. The stack is a suggestion, not an admission (RULE 6) |
+| §12 topology (Vault, RIM, LIMS, tasking, communications, reporting) | The existing S6, S5, S3/S8, S9 and S10 packages and Reporting (D7): one object model, the existing one |
+| §13.1 runtime components, §13.5 decision rights | The six-component audit below; P-104's decision rights |
+| §§13.2–13.4 build vs leverage | Suggested vendors only: no new integration without an `approvedAdditions` entry |
+| §§14.1–14.2 options A, B and C | Go/no-go below: A is the target, C the honest fallback, and B the integration surface (the D8 connector) |
+| §14.3 audit, §14.4 spike | The audit below, and check 1 of the expanded spike |
+| §14.5 risks and open questions | Isolation is spike check 4, and the fixture gates are the evaluation harness. **Still open for the founder:** whether Anna is customer-facing first or internal-only; the model cost and latency budget per document type; and whether Anna's internal dispositions need the user-facing approvals' IQ/OQ package, to be scoped with the first design partner |
+| §15 plan-only hand-off | Superseded by P-104's build instruction |
 
 **Account decision reconciled.** `server/services/submission-gateways/gateway-accounts.ts` implements the founder's
 2026-10-01 choice of platform or client accounts, with no row defaulting to platform. The supplied §17.2 now directs
@@ -370,8 +398,8 @@ not imply that these later gates have already passed.
 
 Each row is **queued for v0.5 acceptance** until its stated fixture is run and recorded. A file's existence or an
 older local test does not mark this row green. The two-week spike is a maximum investigation window, not a delay
-before coding; a failed check is a Finding with a named dependency. The lead owns sequencing and integration,
-package owners retain their current file holds, and independent review checks each merged slice.
+before coding; a failed check is a Finding with a named dependency. The epic's owner (P-105) owns sequencing and
+integration, package owners retain their current file holds, and independent review checks each merged slice.
 
 | §11 phase / milestone | Existing packages and implementation home | Required acceptance evidence |
 |---|---|---|
@@ -411,7 +439,7 @@ agency test accounts, customer IQ/OQ and model PQ remain explicit dependencies; 
    frontier payload; tokens remain. The mapping stays tenant-local; deterministic merge restores the exact seeded
    text and local verification checks the result. Missing attestation/map, wrong tenant or policy blocks the call.
 
-**Go/no-go.** Native Anna remains the implementation target (Option A). The lead records each check's command,
+**Go/no-go.** Native Anna remains the implementation target (Option A). The epic's owner records each check's command,
 fixture, result and unresolved Finding in this plan's progress log, linked to the actual test output/commit. No
 fabricated green status, provider call or fixture coverage. If the spike fails, keep the existing copilot experience
 honestly limited (Option C); do not market orchestration as qualified. External MCP (Option B) stays an integration
