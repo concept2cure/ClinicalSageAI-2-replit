@@ -18,7 +18,7 @@ afterEach(() => cleanup());
 describe('Project knowledge: no selected project', () => {
   /* D3-2a: Memory and Instructions are one card, "What AnA knows", which says once that it cannot read. */
   it('offers no profile absence claim or request without a current project', () => {
-    render(<ProjectSide pid={null} />);
+    render(<ProjectSide pid={null} records={{ data: null, loading: false, empty: false }} />);
     const card = screen.getByRole('heading', { name: 'What AnA knows' }).closest('section') as HTMLElement;
     expect(within(card).getAllByText('Select a project and sign in to read its saved profile context.')).toHaveLength(1);
     expect(screen.queryByRole('heading', { name: 'Records' })).toBeNull();

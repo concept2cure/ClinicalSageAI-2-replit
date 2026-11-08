@@ -14,9 +14,13 @@ describe('one destination for a project-scoped visit', () => {
   });
 
   it('uses the shared target scope for normal and aliased destinations', () => {
-    for (const id of ['project-home', 'review', 'vault', 'documents', 'ind-lifecycle']) {
+    for (const id of ['project-home', 'review', 'documents', 'ind-lifecycle']) {
       expect(destinationFor(id, false), id).toEqual({ surfaceId: 'projects' });
     }
+    /* Vault is reachable from the rail at all times (the founder, 2026-11-06, 5144702d21): with no project open it
+       opens itself and lists the projects whose Vaults the person can open. */
+    expect(destinationFor('vault', false)).toEqual({ surfaceId: 'vault' });
+    expect(destinationFor('vault', true)).toEqual({ surfaceId: 'vault' });
     expect(destinationFor('review', true)).toEqual({ surfaceId: 'review' });
     expect(destinationFor('documents', true)).toEqual({ surfaceId: 'vault' });
   });

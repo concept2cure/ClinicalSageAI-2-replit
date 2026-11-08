@@ -58,7 +58,7 @@ describe('Project home — Plan lists this project\'s tasks, and no other', () =
   it('has no "Your tasks" section that is not about this project', async () => {
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="biotech" />);
     openPlan();
-    expect(await screen.findByRole('region', { name: 'Tasks' })).toBeTruthy();
+    expect(await screen.findByRole('region', { name: 'Tasks and approvals' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Your tasks' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'See your tasks in Tasks' })).toBeNull();
     expect(document.body.textContent).not.toMatch(/not filtered to this project/);
@@ -70,7 +70,7 @@ describe('Project home — Plan lists this project\'s tasks, and no other', () =
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project' } as never} onAsk={vi.fn()} onNav={onNav} segment="biotech" />);
     openPlan();
     /* Slice A.1: it read "Open task board", naming only where it went (section 9, Door names). */
-    const panel = await screen.findByRole('region', { name: 'Tasks' });
+    const panel = await screen.findByRole('region', { name: 'Tasks and approvals' });
     fireEvent.click(within(panel).getByRole('button', { name: 'See all tasks in Tasks' }));
     expect(onNav).toHaveBeenCalledWith('tasks');
     // Everyone's tasks: the board is not asked to filter to the person.
