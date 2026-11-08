@@ -2192,3 +2192,45 @@ global sme."** The coordinating session decided as follows, as P-28 was decided 
   - item 3: the Vault parity lane `01KnUG…`, or S6's holder;
   - items 4 and 5: R1's session;
   - item 7: the new project-page session.
+
+### P-108 — Held FDA sends, retiring and size, onboarding uploads, and restoring an unrecorded send: RIM's recommendations accepted
+
+The founder, 2026-11-08, answered four questions put in the coordinating session (`01JbQU…`). They were RIM's open
+questions from its designs for P-86, P-92, P-93, P-94 and P-99 (`docs/evidence/RIM/2026-11-08-designs/`), each put with
+RIM's recommendation. The founder accepted every recommendation.
+
+1. **Held FDA sends (P-92).** Asked: "(a) Once an Ack3 has arrived, 'received' needs the Ack3 to accept; a failed Ack3
+   after an Ack2 is recorded as a technical rejection. (b) Where the platform's own record proves nothing left (no
+   message formed, refused before the wire), a narrow signed release may cite that proof instead of a letter from FDA,
+   since FDA can't confirm a send it never got. (c) If FDA's verified answer later contradicts a signed settlement,
+   FDA's answer wins, through a second signed act that re-opens it; both records are kept, and resends are refused
+   meanwhile." Answer: **"Accept all three."**
+   - **(b) amends P-92:** for a send the platform's own record proves never left, a signed release cites that proof,
+     not FDA's written confirmation of non-receipt.
+   - (a) means completing `filed-sequence-rejection.ts` for the sequence spine, under F1.
+2. **Retiring sequences and the size limit (P-86, P-93).** Asked: "(a) A production attempt that records nothing
+   reached FDA (released as not received on FDA's written confirmation, or refused before any connection) is not a
+   'bound production send', so the sequence can be retired by P-86's signed act. (b) The 1 GiB limit has no FDA source:
+   FDA's documented maximum is 10 GB (Form 5640 v2.0). Build at 1 GiB anyway, since that fails closed, and never call
+   1 GiB FDA's limit. (c) Build no settlement path for a legacy hold older than the per-attempt binding of 2026-10-14;
+   the runbook escalates if one is ever found (expected zero)." Answer: **"Accept all three."**
+3. **Onboarding uploads (P-94).** Asked: "(a) An upload counts as approved when the same bytes, matched by content hash,
+   are already approved by the Vault's existing act in the same project, with no new act. The alternative is
+   requiring every upload to be replaced by a Vault version. (b) Retire ctd_onboarding_documents as a source of
+   placeable leaves; it has no upload caller in any history and no deploy applier. Its replacement is
+   VaultPlaceIntoSubmission.tsx." Answer: **"Accept both."** The coordinating session's ruling of the same day reads
+   "placed" in P-94 as "filed".
+4. **Restoring an unrecorded sent sequence (P-99).** Asked: "(a) If a sequence was sent with no compile and no kept
+   bytes, accept the sponsor's own copy of the package when its SHA-256 matches the one recorded for that send;
+   otherwise it needs a re-filing. This depends on MR-08's open question about admitting .zip files to Vault. (b) A
+   sequence known only from its compiles counts as unrecorded: re-derived from bytes it becomes 'transmit', and a
+   statement restores it only as 'statement'. (c) A kept package that can no longer be read is an integrity incident,
+   never covered by a statement. (d) A signed statement cannot be superseded for now; a correction is a later
+   sequence." Answer: **"Accept all four."**
+
+- **What is not decided.**
+  - MR-08's question about admitting `.zip` files to Vault stays open; 4(a) depends on it.
+  - Raising the 1 GiB limit stays with the founder, when a larger channel is documented.
+  - The coordinating session's rulings on RIM's coordinator questions are coordination, not founder decisions. RIM
+    appends them to its designs.
+- **Owner.** RIM (`011e42…`), under F1 and S5, in the order recorded in COORDINATION.md.

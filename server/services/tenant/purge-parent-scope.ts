@@ -41,6 +41,9 @@ export const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.free
   'document_comments': 'document_id IN (SELECT id FROM documents WHERE organization_id = $1)',
   'document_locks': 'document_id IN (SELECT id FROM documents WHERE organization_id = $1)',
   'document_versions': 'document_id IN (SELECT id FROM documents WHERE organization_id = $1)',
+  // The legacy simple documents' versions, by their document (2026-11-08: reached once
+  // simple_documents joined the purge ahead of the Vault's project folders).
+  'simple_document_versions': 'document_id IN (SELECT id FROM simple_documents WHERE organization_id = $1)',
   // Section patches by their section, and a patch's propagations by their patch.
   'section_patches': 'section_id IN (SELECT section_id FROM sections WHERE organization_id = $1)',
   'section_propagations':

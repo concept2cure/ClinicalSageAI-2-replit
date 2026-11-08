@@ -66,6 +66,12 @@ interface DocRow { id: string; title: string; module: string; status: string; c2
 /** The filing's editing copy, as GET /api/authoring/docs lists it. */
 const FILING_COPY: DocRow = { id: 'D1', title: 'Quality module', module: 'M3', status: 'draft', c2c_document_id: C2C_DOC };
 
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
+
 function wire(opts: { docs?: DocRow[]; create?: CreateReply; sections?: ReturnType<typeof section>[] } = {}) {
   const sections = [...(opts.sections ?? [S1])];
   const docs = opts.docs ?? [FILING_COPY];
@@ -74,10 +80,10 @@ function wire(opts: { docs?: DocRow[]; create?: CreateReply; sections?: ReturnTy
   apiRequest.mockImplementation(async (method: string, url: string) => {
     const pathname = new URL(url, 'http://localhost').pathname;
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) {
-      return ok({
+      return ok(scopedList(url, {
         success: true,
         documents: docs.map(d => ({ product_code: 'ABC', updated_at: '2026-08-01T10:00:00Z', section_count: 1, ...d })),
-      });
+      }));
     }
     const secs = /^\/api\/authoring\/docs\/([^/]+)\/sections$/.exec(pathname);
     if (method === 'GET' && secs) {

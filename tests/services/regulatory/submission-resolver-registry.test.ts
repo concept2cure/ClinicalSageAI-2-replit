@@ -8,8 +8,7 @@ import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-ty
 import { resolveSubmissionPlan } from '../../../server/services/regulatory/submission-resolver';
 
 it.each(['US_505B2', 'US_DE_NOVO', 'US_IND_AMENDMENT', 'EU_VARIATION_IB',
-  'JP_MINOR_CHANGE', 'CA_SANDS', 'AU_CTA', 'AU_CAT2'])
-  ('the shared plan preserves catalog selection %s and its own blueprints', id => {
+  'JP_MINOR_CHANGE', 'CA_SANDS', 'AU_CTA', 'AU_CAT2'])('the shared plan preserves catalog selection %s and its own blueprints', id => {
     const selected = getApplicationType(id);
     assert.ok(selected?.active, `${id} must be an active real registry entry`);
     const row = resolveSubmissionPlan({ filingType: id, regions: [selected.region] }).perRegion[0];
