@@ -2,6 +2,8 @@
 
 Plan: F1. Workstream W1, launch row D2. Inspected base: `f9631c065af8760d8b879232385fb94663d19a24`. This records the current continuation's repairs, remaining contracts and acceptance cases. It is an engineering assessment, not a claim that every biotech workflow or filing is qualified.
 
+**Published:** the repairs are on `concept2cure-v2` in [c88d892390a15f01d258f7a72fb597858aaf4497](https://github.com/concept2cure/ClinicalSageAI-2-replit/commit/c88d892390a15f01d258f7a72fb597858aaf4497), after the complete ordinary pre-push passed. The published tree exactly matches the tested tree. The final qualification record below supersedes the intermediate gate-pending statuses retained for transparency.
+
 ## What already exists
 
 | Existing home | What it already owns | Boundary exposed by this review |
@@ -198,3 +200,29 @@ The new Vault folder index, client folder list and folder-export tests pass **11
 The complete merged production build also passes (`build-merged.log`), including the client, server, audit-chain verifier, qualification verifier and all four controlled runtime assets. The complete ordinary pre-push is run only after this combined tree is committed and quiet.
 
 The final publication manifest must compare against the integrated canonical head `7eb7346c54020ad68ac07fd6bb9c8b4116f6e62b`, preserving its folders, migrations and evidence as the base. The repair's source manifest continues to name only this continuation's 76 changed code/configuration paths.
+
+## Final qualification and publication
+
+The complete ordinary `.husky/pre-push` exited **0** on local commit `51e0d82b3d03f80043cc3ca37f6baa3cc2cb2f47`, tree `a6b2ba7cc6f311ef2a17940e1e686aa0d33a750b`, against integrated canonical head `7eb7346c54020ad68ac07fd6bb9c8b4116f6e62b`. Every preceding repository gate passed. Pushed lint reported zero errors and a net decrease of one warning.
+
+The unchanged full-program TypeScript gate checked **all 15,475 configured source files exactly once**, using **33 completed workers**, and verified the final snapshot unchanged. It reported **zero errors against the unchanged zero baseline**. The existing bounded mode used 500 diagnostic targets per process and a 7,168 MB heap cap, with heavy work serialized. `prepush-merged.log` retains the complete gate output; its SHA-256 is `650e27d708ee52c7833ad716690e294ca72d0653c9a871456bf4060b5e5556dd`. `prepush-merged-resources.log` records the actual head/tree/base, parameters, same-process resource samples and exit 0.
+
+Publication used the connected GitHub integration because ordinary HTTPS Git write authentication was unavailable. GitHub created the exact tested tree, and the candidate commit's tree, parent and message were verified before the non-forced, expected-head branch update. The canonical branch was then read back and fetched normally: [c88d892390a15f01d258f7a72fb597858aaf4497](https://github.com/concept2cure/ClinicalSageAI-2-replit/commit/c88d892390a15f01d258f7a72fb597858aaf4497) has tree `a6b2ba7cc6f311ef2a17940e1e686aa0d33a750b`. A normal local merge preserves the prior local repair commits and the canonical publication; no reset, rebase, new branch or force update was used.
+
+`publication-verification.json` records these anchors in machine-readable form. The published application source remains the exact source that passed the full gate and merged production build. The later synthetic browser-seed repair below is separately qualified. The qualification limits and remaining owner-scoped findings above still apply.
+
+## Post-publication browser-seed follow-up
+
+GitHub's [Tier 5 run at the published source](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42515637802/job/128837908716) failed before server or browser startup: `seed-governed-workflow.cjs` wrote the journey persona `author` into `organization_users.role`, which the current `organization_users_role_known` constraint refuses. The [immediate-parent run](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42509830621/job/128820260153) has the same failure. Both runs passed schema provisioning and Chromium installation. `tier5-ci-seed-failure.log` retains the synthetic-only excerpts and source comparison.
+
+The existing seed now keeps the author's persona key, email and identity while persisting its canonical organization role, `member`. Admin, reviewer and viewer keep their existing membership roles. The existing member-to-authoring grant supplies the intended access; production role policy and the database constraint are unchanged. The existing role-claim and signing-role suites pass **26 cases in two files** (`tier5-role-controls.log`).
+
+The native reproduction in `verify-tier5-seed.cjs` passes (`tier5-native-seed.log`): the original committed seed fails on the actual deployed constraint, the repaired seed succeeds twice, all four memberships and every seeded organization/user/workspace/project/artifact/version identity remain stable, and `users.author` retains its original ID. A rolled-back attempt to store `author` still fails with SQLSTATE `23514`; the constraint remains unchanged and validated. The tracked `seed-data.json` is restored byte for byte. This is a synthetic seed test using its ordinary provisioning connection, separate from the 41 runtime-role native cases above.
+
+Local Chromium was actually launched through Playwright 1.55.0; the environment refused the required socket operation before any browser context or navigation (`tier5-local-browser-attempt.txt`). No local browser-test pass is claimed. GitHub's existing Tier 5 workflow remains the available browser runner, and its result on the seed repair must be distinguished from the earlier seed-blocked run.
+
+## Separate GitHub CI findings
+
+The local ordinary pre-push result is green; GitHub CI is **not fully green**. The separate `ci:lineage-save-gate` exits **1** locally (`tier5-lineage-gate.log`), reproducing the [parent Lint job](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42509830703/job/128820260912): `server/services/chat-thread-helpers.ts` has an `unguarded-writer` finding, and `server/services/c2c/charter-objectives.ts` no longer matches the fingerprint for its `reviewed-structured-intent` classification. Both files and the guard are byte-identical across the parent, published source and current checkout. The [published-source Lint job](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42515637919/job/128837909441) also reports that failed step. These need a separate review of the writers and classification; no fingerprint, waiver or guard was changed here.
+
+The [published-source full-history secret scan](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42515637919/job/128837909704) reports **8 findings over 13,099 commits**; the [immediate-parent scan](https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42509830703/job/128820260859) reports **8 over 13,098 commits**. The available logs omit individual rule/path/finding-commit identities, and the connected tool does not support the annotations endpoint. Equal totals do not prove identical findings or a clean new-commit scan. No sensitive values, history rewrite, scan-policy change or suppression is included in this work.

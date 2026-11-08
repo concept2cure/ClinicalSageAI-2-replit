@@ -47,6 +47,8 @@ const USERS = [
     email: 'e2e-author@trialsage.test',
     password: 'Author123!test',
     role: 'author',
+    // The journey persona stays "author"; its canonical organization role is "member".
+    organizationRole: 'member',
     fullName: 'Author User',
   },
   {
@@ -108,12 +110,12 @@ async function seed() {
         console.log(`Created user: ${u.email} (id=${userIds[u.role]})`);
       }
 
-      // Link user to organization
+      // Persona keys name fixture actors; membership uses the canonical organization role.
       await client.query(
         `INSERT INTO organization_users (user_id, organization_id, role)
          VALUES ($1, $2, $3)
          ON CONFLICT (user_id, organization_id) DO UPDATE SET role = $3`,
-        [userIds[u.role], orgId, u.role]
+        [userIds[u.role], orgId, u.organizationRole ?? u.role]
       );
     }
 

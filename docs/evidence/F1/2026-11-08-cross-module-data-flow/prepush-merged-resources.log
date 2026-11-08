@@ -1,0 +1,1674 @@
+head=51e0d82b3d03f80043cc3ca37f6baa3cc2cb2f47
+tree=a6b2ba7cc6f311ef2a17940e1e686aa0d33a750b
+base=7eb7346c54020ad68ac07fd6bb9c8b4116f6e62b
+TYPECHECK_FILES_PER_PROCESS=500
+TYPECHECK_HEAP_MB=7168
+stop_marker=/workspace/scratch/3002d574f952/stop-prepush-merged
+2026-11-08T18:52:26.942382+00:00
+    PID    PPID   RSS COMMAND
+    558     557 272156 node
+    545      30 72524 npm run ci:sql-
+      1       0 15568 codex
+      5       2  9624 python
+    566       5  2484 ps
+      2       1  1980 bash
+     30       5   824 sh
+    557     545   768 sh
+MemTotal:       10206472 kB
+MemFree:         7648764 kB
+MemAvailable:    8607052 kB
+Buffers:           56076 kB
+2026-11-08T18:52:46.945881+00:00
+    PID    PPID   RSS COMMAND
+   1002    1001 118708 node
+    989      30 72324 npm run audit:r
+      1       0 15568 codex
+      5       2  9632 python
+   1011       5  2484 ps
+      2       1  1980 bash
+     30       5   824 sh
+   1001     989   768 sh
+MemTotal:       10206472 kB
+MemFree:         7745060 kB
+MemAvailable:    8793432 kB
+Buffers:           56212 kB
+2026-11-08T18:53:06.950582+00:00
+    PID    PPID   RSS COMMAND
+   1278    1270 499048 node
+   1246      30 72460 npm run ci:push
+   1270    1259 55824 node
+   1259    1258 55520 node
+      1       0 15568 codex
+      5       2  9632 python
+   1286       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         7378060 kB
+MemAvailable:    8429052 kB
+Buffers:           56536 kB
+2026-11-08T18:53:26.954141+00:00
+    PID    PPID   RSS COMMAND
+   1278    1270 3680876 node
+   1246      30 68868 npm run ci:push
+   1270    1259 55824 node
+   1259    1258 55520 node
+      1       0 15568 codex
+      5       2  9636 python
+   1287       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         4114468 kB
+MemAvailable:    5165460 kB
+Buffers:           56536 kB
+2026-11-08T18:53:46.958182+00:00
+    PID    PPID   RSS COMMAND
+   1278    1270 6107784 node
+   1246      30 68868 npm run ci:push
+   1270    1259 55824 node
+   1259    1258 55520 node
+      1       0 15568 codex
+      5       2  9640 python
+   1288       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1648964 kB
+MemAvailable:    2699988 kB
+Buffers:           56536 kB
+2026-11-08T18:54:06.961936+00:00
+    PID    PPID   RSS COMMAND
+   1289    1270 2516796 node
+   1270    1259 160352 node
+   1246      30 68868 npm run ci:push
+   1259    1258 55520 node
+      1       0 15568 codex
+      5       2  9640 python
+   1297       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         5072220 kB
+MemAvailable:    6129808 kB
+Buffers:           56536 kB
+2026-11-08T18:54:26.965431+00:00
+    PID    PPID   RSS COMMAND
+   1289    1270 5275484 node
+   1270    1259 160352 node
+   1246      30 68868 npm run ci:push
+   1259    1258 55520 node
+      1       0 15568 codex
+      5       2  9640 python
+   1298       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2388888 kB
+MemAvailable:    3446476 kB
+Buffers:           56536 kB
+2026-11-08T18:54:46.969227+00:00
+    PID    PPID   RSS COMMAND
+   1299    1270 975568 node
+   1270    1259 160376 node
+   1246      30 68868 npm run ci:push
+   1259    1258 55520 node
+      1       0 15568 codex
+      5       2  9640 python
+   1307       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         6701268 kB
+MemAvailable:    7759080 kB
+Buffers:           56536 kB
+2026-11-08T18:55:06.972695+00:00
+    PID    PPID   RSS COMMAND
+   1299    1270 4210044 node
+   1270    1259 160376 node
+   1246      30 68868 npm run ci:push
+   1259    1258 55520 node
+      1       0 15568 codex
+      5       2  9640 python
+   1308       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         3444692 kB
+MemAvailable:    4502276 kB
+Buffers:           56536 kB
+2026-11-08T18:55:26.976386+00:00
+    PID    PPID   RSS COMMAND
+   1299    1270 6254484 node
+   1270    1259 160376 node
+   1246      30 68868 npm run ci:push
+   1259    1258 55520 node
+      1       0 15568 codex
+      5       2  9640 python
+   1309       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1388140 kB
+MemAvailable:    2445724 kB
+Buffers:           56536 kB
+2026-11-08T18:55:46.980384+00:00
+    PID    PPID   RSS COMMAND
+   1310    1270 2277776 node
+   1270    1259 160388 node
+   1246      30 68868 npm run ci:push
+   1259    1258 55520 node
+      1       0 15568 codex
+      5       2  9640 python
+   1318       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         5465052 kB
+MemAvailable:    6522640 kB
+Buffers:           56536 kB
+2026-11-08T18:56:06.983593+00:00
+    PID    PPID   RSS COMMAND
+   1310    1270 5254792 node
+   1270    1259 160388 node
+   1246      30 68868 npm run ci:push
+   1259    1258 55520 node
+      1       0 15568 codex
+      5       2  9640 python
+   1319       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2426280 kB
+MemAvailable:    3483888 kB
+Buffers:           56536 kB
+2026-11-08T18:56:26.987298+00:00
+    PID    PPID   RSS COMMAND
+   1310    1270 6340512 node
+   1270    1259 160388 node
+   1246      30 68868 npm run ci:push
+   1259    1258 55520 node
+      1       0 15568 codex
+      5       2  9640 python
+   1320       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1285588 kB
+MemAvailable:    2343196 kB
+Buffers:           56536 kB
+2026-11-08T18:56:46.990711+00:00
+    PID    PPID   RSS COMMAND
+   1321    1270 3344716 node
+   1270    1259 160388 node
+   1246      30 68868 npm run ci:push
+   1259    1258 55520 node
+      1       0 15568 codex
+      5       2  9640 python
+   1329       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         4374112 kB
+MemAvailable:    5431720 kB
+Buffers:           56536 kB
+2026-11-08T18:57:06.994528+00:00
+    PID    PPID   RSS COMMAND
+   1321    1270 5906900 node
+   1270    1259 160388 node
+   1246      30 68868 npm run ci:push
+   1259    1258 55520 node
+      1       0 15568 codex
+      5       2  9640 python
+   1330       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1756440 kB
+MemAvailable:    2814048 kB
+Buffers:           56536 kB
+2026-11-08T18:57:26.998181+00:00
+    PID    PPID   RSS COMMAND
+   1321    1270 6490640 node
+   1270    1259 160388 node
+   1246      30 68868 npm run ci:push
+   1259    1258 55520 node
+      1       0 15568 codex
+      5       2  9640 python
+   1331       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1234368 kB
+MemAvailable:    2197128 kB
+Buffers:           53272 kB
+2026-11-08T18:57:47.001931+00:00
+    PID    PPID   RSS COMMAND
+   1321    1270 7107232 node
+   1270    1259 143664 node
+   1246      30 51956 npm run ci:push
+   1259    1258 38832 node
+      1       0 15568 codex
+      5       2  9640 python
+   1332       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1165596 kB
+MemAvailable:    1488548 kB
+Buffers:           43508 kB
+2026-11-08T18:58:07.007042+00:00
+    PID    PPID   RSS COMMAND
+   1333    1270 1379524 node
+   1270    1259 125140 node
+   1246      30 28472 npm run ci:push
+   1259    1258 20376 node
+      1       0 15568 codex
+      5       2  9640 python
+   1341       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         7041096 kB
+MemAvailable:    7408172 kB
+Buffers:           34652 kB
+2026-11-08T18:58:27.011350+00:00
+    PID    PPID   RSS COMMAND
+   1333    1270 4073276 node
+   1270    1259 125140 node
+   1246      30 28472 npm run ci:push
+   1259    1258 20376 node
+      1       0 15568 codex
+      5       2  9640 python
+   1342       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         4080728 kB
+MemAvailable:    4652576 kB
+Buffers:           35240 kB
+2026-11-08T18:58:47.015361+00:00
+    PID    PPID   RSS COMMAND
+   1333    1270 6235760 node
+   1270    1259 125140 node
+   1246      30 28472 npm run ci:push
+   1259    1258 20376 node
+      1       0 15568 codex
+      5       2  9644 python
+   1343       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1829440 kB
+MemAvailable:    2426724 kB
+Buffers:           35240 kB
+2026-11-08T18:59:07.018637+00:00
+    PID    PPID   RSS COMMAND
+   1344    1270 358768 node
+   1270    1259 125140 node
+   1246      30 28472 npm run ci:push
+   1259    1258 20376 node
+      1       0 15568 codex
+      5       2  9648 python
+   1352       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         7774732 kB
+MemAvailable:    8372300 kB
+Buffers:           35240 kB
+2026-11-08T18:59:27.022506+00:00
+    PID    PPID   RSS COMMAND
+   1344    1270 3576228 node
+   1270    1259 125140 node
+   1246      30 28472 npm run ci:push
+   1259    1258 20376 node
+      1       0 15568 codex
+      5       2  9648 python
+   1353       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         4549224 kB
+MemAvailable:    5147196 kB
+Buffers:           35364 kB
+2026-11-08T18:59:47.026140+00:00
+    PID    PPID   RSS COMMAND
+   1344    1270 6092736 node
+   1270    1259 125140 node
+   1246      30 28472 npm run ci:push
+   1259    1258 20376 node
+      1       0 15568 codex
+      5       2  9648 python
+   1354       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1981532 kB
+MemAvailable:    2579904 kB
+Buffers:           35364 kB
+2026-11-08T19:00:07.030119+00:00
+    PID    PPID   RSS COMMAND
+   1344    1270 6861480 node
+   1270    1259 125140 node
+   1246      30 28088 npm run ci:push
+   1259    1258 20376 node
+      1       0 15568 codex
+      5       2  9648 python
+   1355       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1208660 kB
+MemAvailable:    1800752 kB
+Buffers:           35364 kB
+2026-11-08T19:00:27.034613+00:00
+    PID    PPID   RSS COMMAND
+   1356    1270 1853508 node
+   1270    1259 125200 node
+   1246      30 27868 npm run ci:push
+   1259    1258 20220 node
+      1       0 15568 codex
+      5       2  9648 python
+   1364       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         6424324 kB
+MemAvailable:    6930312 kB
+Buffers:           35848 kB
+2026-11-08T19:00:47.038858+00:00
+    PID    PPID   RSS COMMAND
+   1356    1270 4853528 node
+   1270    1259 125200 node
+   1246      30 27868 npm run ci:push
+   1259    1258 20220 node
+      1       0 15568 codex
+      5       2  9648 python
+   1365       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         3317224 kB
+MemAvailable:    3878532 kB
+Buffers:           35848 kB
+2026-11-08T19:01:07.042393+00:00
+    PID    PPID   RSS COMMAND
+   1356    1270 6465032 node
+   1270    1259 125200 node
+   1246      30 27868 npm run ci:push
+   1259    1258 20220 node
+      1       0 15568 codex
+      5       2  9648 python
+   1366       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1657244 kB
+MemAvailable:    2219872 kB
+Buffers:           35848 kB
+2026-11-08T19:01:27.046537+00:00
+    PID    PPID   RSS COMMAND
+   1367    1270 557328 node
+   1270    1259 112060 node
+   1246      30 27804 npm run ci:push
+   1259    1258 20160 node
+      1       0 15568 codex
+      5       2  9648 python
+   1375       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         7731200 kB
+MemAvailable:    8269588 kB
+Buffers:           33880 kB
+2026-11-08T19:01:47.050755+00:00
+    PID    PPID   RSS COMMAND
+   1367    1270 3841688 node
+   1270    1259 112060 node
+   1246      30 27804 npm run ci:push
+   1259    1258 20160 node
+      1       0 15568 codex
+      5       2  9648 python
+   1376       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         4332828 kB
+MemAvailable:    4898000 kB
+Buffers:           41400 kB
+2026-11-08T19:02:07.054335+00:00
+    PID    PPID   RSS COMMAND
+   1367    1270 6108720 node
+   1270    1259 112060 node
+   1246      30 27804 npm run ci:push
+   1259    1258 20160 node
+      1       0 15568 codex
+      5       2  9648 python
+   1377       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2034916 kB
+MemAvailable:    2600360 kB
+Buffers:           41400 kB
+2026-11-08T19:02:27.057697+00:00
+    PID    PPID   RSS COMMAND
+   1367    1270 6874988 node
+   1270    1259 112060 node
+   1246      30 27804 npm run ci:push
+   1259    1258 20160 node
+      1       0 15568 codex
+      5       2  9648 python
+   1378       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1261888 kB
+MemAvailable:    1827620 kB
+Buffers:           41404 kB
+2026-11-08T19:02:47.061706+00:00
+    PID    PPID   RSS COMMAND
+   1367    1270 7308892 node
+   1270    1259 101500 node
+   1246      30 19700 npm run ci:push
+   1259    1258 15632 node
+      1       0 15568 codex
+      5       2  9648 python
+   1379       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1160696 kB
+MemAvailable:    1311324 kB
+Buffers:           17252 kB
+2026-11-08T19:03:07.074410+00:00
+    PID    PPID   RSS COMMAND
+   1380    1270 2329096 node
+   1270    1259 109544 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9648 python
+   1388       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         6103036 kB
+MemAvailable:    6458564 kB
+Buffers:           23944 kB
+2026-11-08T19:03:27.078452+00:00
+    PID    PPID   RSS COMMAND
+   1380    1270 4943640 node
+   1270    1259 109544 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9652 python
+   1389       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         3206372 kB
+MemAvailable:    3787344 kB
+Buffers:           51160 kB
+2026-11-08T19:03:47.081930+00:00
+    PID    PPID   RSS COMMAND
+   1380    1270 6471280 node
+   1270    1259 109544 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9652 python
+   1390       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1628632 kB
+MemAvailable:    2224096 kB
+Buffers:           51160 kB
+2026-11-08T19:04:07.085551+00:00
+    PID    PPID   RSS COMMAND
+   1380    1270 6995668 node
+   1270    1259 109544 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9652 python
+   1391       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1212868 kB
+MemAvailable:    1691316 kB
+Buffers:           51156 kB
+2026-11-08T19:04:27.089353+00:00
+    PID    PPID   RSS COMMAND
+   1392    1270 2034616 node
+   1270    1259 111036 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9652 python
+   1400       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         6182928 kB
+MemAvailable:    6752968 kB
+Buffers:           50380 kB
+2026-11-08T19:04:47.092946+00:00
+    PID    PPID   RSS COMMAND
+   1392    1270 4812476 node
+   1270    1259 111036 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1401       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         3366856 kB
+MemAvailable:    3936952 kB
+Buffers:           50380 kB
+2026-11-08T19:05:07.097601+00:00
+    PID    PPID   RSS COMMAND
+   1402    1270 514828 node
+   1270    1259 117628 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1410       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         7699128 kB
+MemAvailable:    8269636 kB
+Buffers:           50380 kB
+2026-11-08T19:05:27.102131+00:00
+    PID    PPID   RSS COMMAND
+   1402    1270 3798344 node
+   1270    1259 117628 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1411       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         4397420 kB
+MemAvailable:    4968068 kB
+Buffers:           50380 kB
+2026-11-08T19:05:47.105530+00:00
+    PID    PPID   RSS COMMAND
+   1402    1270 6107832 node
+   1270    1259 117628 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1412       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2031356 kB
+MemAvailable:    2602272 kB
+Buffers:           50380 kB
+2026-11-08T19:06:07.109658+00:00
+    PID    PPID   RSS COMMAND
+   1402    1270 6859560 node
+   1270    1259 117628 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1413       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1247448 kB
+MemAvailable:    1820244 kB
+Buffers:           50384 kB
+2026-11-08T19:06:27.113134+00:00
+    PID    PPID   RSS COMMAND
+   1414    1270 2569928 node
+   1270    1259 117632 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1422       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         5660344 kB
+MemAvailable:    6212428 kB
+Buffers:           56012 kB
+2026-11-08T19:06:47.116634+00:00
+    PID    PPID   RSS COMMAND
+   1414    1270 5305656 node
+   1270    1259 117632 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1423       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2864188 kB
+MemAvailable:    3416464 kB
+Buffers:           56012 kB
+2026-11-08T19:07:07.120169+00:00
+    PID    PPID   RSS COMMAND
+   1414    1270 6524340 node
+   1270    1259 117632 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1424       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1634864 kB
+MemAvailable:    2187252 kB
+Buffers:           56012 kB
+2026-11-08T19:07:27.124024+00:00
+    PID    PPID   RSS COMMAND
+   1270    1259 117684 node
+   1425    1270 43716 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1432       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         8227048 kB
+MemAvailable:    8748024 kB
+Buffers:           36336 kB
+2026-11-08T19:07:47.127603+00:00
+    PID    PPID   RSS COMMAND
+   1425    1270 3160572 node
+   1270    1259 117684 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1434       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         5060540 kB
+MemAvailable:    5612344 kB
+Buffers:           39816 kB
+2026-11-08T19:08:07.131491+00:00
+    PID    PPID   RSS COMMAND
+   1425    1270 5807092 node
+   1270    1259 117684 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1435       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2357284 kB
+MemAvailable:    2915504 kB
+Buffers:           39832 kB
+2026-11-08T19:08:27.135302+00:00
+    PID    PPID   RSS COMMAND
+   1425    1270 6698420 node
+   1270    1259 117684 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1436       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1435068 kB
+MemAvailable:    1999268 kB
+Buffers:           39832 kB
+2026-11-08T19:08:47.139114+00:00
+    PID    PPID   RSS COMMAND
+   1425    1270 6972596 node
+   1270    1259 117632 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1437       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1231932 kB
+MemAvailable:    1713368 kB
+Buffers:           35236 kB
+2026-11-08T19:09:07.142681+00:00
+    PID    PPID   RSS COMMAND
+   1438    1270 1509504 node
+   1270    1259 117700 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1446       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         6861508 kB
+MemAvailable:    7313376 kB
+Buffers:           35252 kB
+2026-11-08T19:09:27.146506+00:00
+    PID    PPID   RSS COMMAND
+   1438    1270 4405696 node
+   1270    1259 117700 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9656 python
+   1447       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         3802064 kB
+MemAvailable:    4357920 kB
+Buffers:           35252 kB
+2026-11-08T19:09:47.150133+00:00
+    PID    PPID   RSS COMMAND
+   1438    1270 6273860 node
+   1270    1259 117700 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9660 python
+   1448       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1898996 kB
+MemAvailable:    2455116 kB
+Buffers:           35252 kB
+2026-11-08T19:10:07.154144+00:00
+    PID    PPID   RSS COMMAND
+   1449    1270 1218144 node
+   1270    1259 117700 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9660 python
+   1457       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         7014720 kB
+MemAvailable:    7571248 kB
+Buffers:           35252 kB
+2026-11-08T19:10:27.157597+00:00
+    PID    PPID   RSS COMMAND
+   1449    1270 4353000 node
+   1270    1259 117700 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9660 python
+   1458       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         3836980 kB
+MemAvailable:    4393796 kB
+Buffers:           35252 kB
+2026-11-08T19:10:47.161155+00:00
+    PID    PPID   RSS COMMAND
+   1449    1270 6277680 node
+   1270    1259 117700 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9664 python
+   1459       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1885024 kB
+MemAvailable:    2442592 kB
+Buffers:           35256 kB
+2026-11-08T19:11:07.164826+00:00
+    PID    PPID   RSS COMMAND
+   1460    1270 1823192 node
+   1270    1259 117816 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9664 python
+   1468       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         6410156 kB
+MemAvailable:    6969012 kB
+Buffers:           35256 kB
+2026-11-08T19:11:27.168860+00:00
+    PID    PPID   RSS COMMAND
+   1460    1270 4793700 node
+   1270    1259 117816 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9664 python
+   1469       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         3391352 kB
+MemAvailable:    3950488 kB
+Buffers:           35256 kB
+2026-11-08T19:11:47.172622+00:00
+    PID    PPID   RSS COMMAND
+   1460    1270 6377588 node
+   1270    1259 117816 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9664 python
+   1470       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1768152 kB
+MemAvailable:    2327392 kB
+Buffers:           35256 kB
+2026-11-08T19:12:07.176685+00:00
+    PID    PPID   RSS COMMAND
+   1460    1270 6976704 node
+   1270    1259 115800 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9664 python
+   1471       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1222236 kB
+MemAvailable:    1715344 kB
+Buffers:           14280 kB
+2026-11-08T19:12:27.180905+00:00
+    PID    PPID   RSS COMMAND
+   1472    1270 1558328 node
+   1270    1259 116412 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9664 python
+   1480       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         6709992 kB
+MemAvailable:    7257728 kB
+Buffers:           35228 kB
+2026-11-08T19:12:47.185074+00:00
+    PID    PPID   RSS COMMAND
+   1472    1270 4689544 node
+   1270    1259 116412 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1481       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         3520496 kB
+MemAvailable:    4068516 kB
+Buffers:           35228 kB
+2026-11-08T19:13:07.192818+00:00
+    PID    PPID   RSS COMMAND
+   1472    1270 6401084 node
+   1270    1259 116412 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1482       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1753480 kB
+MemAvailable:    2316108 kB
+Buffers:           35228 kB
+2026-11-08T19:13:27.196767+00:00
+    PID    PPID   RSS COMMAND
+   1483    1270 378548 node
+   1270    1259 116740 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1491       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         7860660 kB
+MemAvailable:    8425088 kB
+Buffers:           35228 kB
+2026-11-08T19:13:47.200750+00:00
+    PID    PPID   RSS COMMAND
+   1483    1270 3694988 node
+   1270    1259 116740 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1492       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         4504996 kB
+MemAvailable:    5069712 kB
+Buffers:           35228 kB
+2026-11-08T19:14:07.205109+00:00
+    PID    PPID   RSS COMMAND
+   1483    1270 6108900 node
+   1270    1259 116740 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1493       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2008168 kB
+MemAvailable:    2573024 kB
+Buffers:           35228 kB
+2026-11-08T19:14:27.209165+00:00
+    PID    PPID   RSS COMMAND
+   1483    1270 6963608 node
+   1270    1259 116740 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1494       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1224004 kB
+MemAvailable:    1736044 kB
+Buffers:           35224 kB
+2026-11-08T19:14:47.214486+00:00
+    PID    PPID   RSS COMMAND
+   1495    1270 780376 node
+   1270    1259 116356 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1503       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         7536236 kB
+MemAvailable:    8077360 kB
+Buffers:           35668 kB
+2026-11-08T19:15:07.218470+00:00
+    PID    PPID   RSS COMMAND
+   1495    1270 3881216 node
+   1270    1259 116356 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1504       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         4323316 kB
+MemAvailable:    4877520 kB
+Buffers:           35712 kB
+2026-11-08T19:15:27.222425+00:00
+    PID    PPID   RSS COMMAND
+   1495    1270 6171200 node
+   1270    1259 116356 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1505       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1969624 kB
+MemAvailable:    2525652 kB
+Buffers:           35712 kB
+2026-11-08T19:15:47.225873+00:00
+    PID    PPID   RSS COMMAND
+   1495    1270 6911344 node
+   1270    1259 116356 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1506       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1229204 kB
+MemAvailable:    1785512 kB
+Buffers:           35712 kB
+2026-11-08T19:16:07.229394+00:00
+    PID    PPID   RSS COMMAND
+   1495    1270 7197640 node
+   1270    1259 116104 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1507       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1211620 kB
+MemAvailable:    1440936 kB
+Buffers:           35272 kB
+2026-11-08T19:16:27.232856+00:00
+    PID    PPID   RSS COMMAND
+   1508    1270 1248196 node
+   1270    1259 109996 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1516       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         7294872 kB
+MemAvailable:    7550900 kB
+Buffers:           18316 kB
+2026-11-08T19:16:47.236460+00:00
+    PID    PPID   RSS COMMAND
+   1508    1270 4253880 node
+   1270    1259 109996 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1517       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         3946284 kB
+MemAvailable:    4497424 kB
+Buffers:           39328 kB
+2026-11-08T19:17:07.240395+00:00
+    PID    PPID   RSS COMMAND
+   1508    1270 6315688 node
+   1270    1259 109996 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1518       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1789876 kB
+MemAvailable:    2373860 kB
+Buffers:           39776 kB
+2026-11-08T19:17:27.243804+00:00
+    PID    PPID   RSS COMMAND
+   1508    1270 6944756 node
+   1270    1259 109996 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1519       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1218540 kB
+MemAvailable:    1748332 kB
+Buffers:           38248 kB
+2026-11-08T19:17:47.247324+00:00
+    PID    PPID   RSS COMMAND
+   1520    1270 225492 node
+   1270    1259 110048 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1528       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         8299508 kB
+MemAvailable:    8578104 kB
+Buffers:           15676 kB
+2026-11-08T19:18:07.250801+00:00
+    PID    PPID   RSS COMMAND
+   1520    1270 3314060 node
+   1270    1259 110048 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1529       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         4969616 kB
+MemAvailable:    5479196 kB
+Buffers:           35696 kB
+2026-11-08T19:18:27.254184+00:00
+    PID    PPID   RSS COMMAND
+   1520    1270 5903224 node
+   1270    1259 110048 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1530       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2268456 kB
+MemAvailable:    2821324 kB
+Buffers:           35696 kB
+2026-11-08T19:18:47.257686+00:00
+    PID    PPID   RSS COMMAND
+   1520    1270 6725916 node
+   1270    1259 110048 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1531       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1393468 kB
+MemAvailable:    1962032 kB
+Buffers:           35816 kB
+2026-11-08T19:19:07.261654+00:00
+    PID    PPID   RSS COMMAND
+   1532    1270 135000 node
+   1270    1259 109424 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1540       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         8181232 kB
+MemAvailable:    8619288 kB
+Buffers:           35592 kB
+2026-11-08T19:19:27.265381+00:00
+    PID    PPID   RSS COMMAND
+   1532    1270 3315768 node
+   1270    1259 109424 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1541       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         4911724 kB
+MemAvailable:    5465932 kB
+Buffers:           35592 kB
+2026-11-08T19:19:47.269045+00:00
+    PID    PPID   RSS COMMAND
+   1532    1270 5969244 node
+   1270    1259 109424 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1542       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2194872 kB
+MemAvailable:    2753520 kB
+Buffers:           35596 kB
+2026-11-08T19:20:07.273370+00:00
+    PID    PPID   RSS COMMAND
+   1532    1270 6784748 node
+   1270    1259 109424 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1543       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1325832 kB
+MemAvailable:    1898912 kB
+Buffers:           35596 kB
+2026-11-08T19:20:27.277010+00:00
+    PID    PPID   RSS COMMAND
+   1544    1270 1100148 node
+   1270    1259 109424 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1552       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         7189692 kB
+MemAvailable:    7710944 kB
+Buffers:           28248 kB
+2026-11-08T19:20:47.281166+00:00
+    PID    PPID   RSS COMMAND
+   1544    1270 4392848 node
+   1270    1259 109424 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1553       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         3840364 kB
+MemAvailable:    4387948 kB
+Buffers:           40280 kB
+2026-11-08T19:21:07.287803+00:00
+    PID    PPID   RSS COMMAND
+   1544    1270 6325216 node
+   1270    1259 109424 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1554       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1845556 kB
+MemAvailable:    2398836 kB
+Buffers:           40280 kB
+2026-11-08T19:21:27.292613+00:00
+    PID    PPID   RSS COMMAND
+   1544    1270 6959952 node
+   1270    1259 109424 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1555       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1204932 kB
+MemAvailable:    1690000 kB
+Buffers:           40272 kB
+2026-11-08T19:21:47.296505+00:00
+    PID    PPID   RSS COMMAND
+   1556    1270 2189060 node
+   1270    1259 109420 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9668 python
+   1564       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         6055564 kB
+MemAvailable:    6588248 kB
+Buffers:           36556 kB
+2026-11-08T19:22:07.299964+00:00
+    PID    PPID   RSS COMMAND
+   1556    1270 5080828 node
+   1270    1259 109420 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1565       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         3111184 kB
+MemAvailable:    3655552 kB
+Buffers:           36704 kB
+2026-11-08T19:22:27.303367+00:00
+    PID    PPID   RSS COMMAND
+   1556    1270 6454424 node
+   1270    1259 109420 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1566       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1708308 kB
+MemAvailable:    2253088 kB
+Buffers:           36824 kB
+2026-11-08T19:22:47.307942+00:00
+    PID    PPID   RSS COMMAND
+   1556    1270 6958448 node
+   1270    1259 109416 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1567       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1238124 kB
+MemAvailable:    1728748 kB
+Buffers:           35552 kB
+2026-11-08T19:23:07.312014+00:00
+    PID    PPID   RSS COMMAND
+   1568    1270 2811972 node
+   1270    1259 109520 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1576       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         5453792 kB
+MemAvailable:    5987508 kB
+Buffers:           31828 kB
+2026-11-08T19:23:27.318428+00:00
+    PID    PPID   RSS COMMAND
+   1568    1270 5489892 node
+   1270    1259 109520 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1577       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2687972 kB
+MemAvailable:    3239840 kB
+Buffers:           41500 kB
+2026-11-08T19:23:47.322797+00:00
+    PID    PPID   RSS COMMAND
+   1568    1270 6473708 node
+   1270    1259 109520 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1578       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1678304 kB
+MemAvailable:    2230480 kB
+Buffers:           41500 kB
+2026-11-08T19:24:07.326309+00:00
+    PID    PPID   RSS COMMAND
+   1568    1270 6983200 node
+   1270    1259 109444 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1579       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1211752 kB
+MemAvailable:    1687276 kB
+Buffers:           37120 kB
+2026-11-08T19:24:27.330666+00:00
+    PID    PPID   RSS COMMAND
+   1580    1270 3226348 node
+   1270    1259 109496 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1588       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         5037724 kB
+MemAvailable:    5582452 kB
+Buffers:           38904 kB
+2026-11-08T19:24:47.334319+00:00
+    PID    PPID   RSS COMMAND
+   1580    1270 5829512 node
+   1270    1259 109496 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1589       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2367400 kB
+MemAvailable:    2912560 kB
+Buffers:           39056 kB
+2026-11-08T19:25:07.337816+00:00
+    PID    PPID   RSS COMMAND
+   1590    1270 356956 node
+   1270    1259 109496 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1598       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         7905444 kB
+MemAvailable:    8450892 kB
+Buffers:           39056 kB
+2026-11-08T19:25:27.341251+00:00
+    PID    PPID   RSS COMMAND
+   1590    1270 3641352 node
+   1270    1259 109496 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1599       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         4585736 kB
+MemAvailable:    5131468 kB
+Buffers:           39056 kB
+2026-11-08T19:25:47.345731+00:00
+    PID    PPID   RSS COMMAND
+   1590    1270 6107820 node
+   1270    1259 109496 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1600       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2052620 kB
+MemAvailable:    2598740 kB
+Buffers:           39172 kB
+2026-11-08T19:26:07.349587+00:00
+    PID    PPID   RSS COMMAND
+   1590    1270 6850344 node
+   1270    1259 109496 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1601       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1313860 kB
+MemAvailable:    1861040 kB
+Buffers:           39172 kB
+2026-11-08T19:26:27.353955+00:00
+    PID    PPID   RSS COMMAND
+   1602    1270 1286896 node
+   1270    1259 109536 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1610       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         7046156 kB
+MemAvailable:    7531436 kB
+Buffers:           16368 kB
+2026-11-08T19:26:47.357854+00:00
+    PID    PPID   RSS COMMAND
+   1602    1270 4501484 node
+   1270    1259 109536 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1611       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         3687680 kB
+MemAvailable:    4233272 kB
+Buffers:           36660 kB
+2026-11-08T19:27:07.361355+00:00
+    PID    PPID   RSS COMMAND
+   1602    1270 6425668 node
+   1270    1259 109536 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1612       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1728676 kB
+MemAvailable:    2278732 kB
+Buffers:           36660 kB
+2026-11-08T19:27:27.365034+00:00
+    PID    PPID   RSS COMMAND
+   1602    1270 7002612 node
+   1270    1259 109480 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1613       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1232648 kB
+MemAvailable:    1698928 kB
+Buffers:           35732 kB
+2026-11-08T19:27:47.368783+00:00
+    PID    PPID   RSS COMMAND
+   1614    1270 2261420 node
+   1270    1259 109592 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1622       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         6006500 kB
+MemAvailable:    6548500 kB
+Buffers:           37004 kB
+2026-11-08T19:28:07.372653+00:00
+    PID    PPID   RSS COMMAND
+   1614    1270 5127800 node
+   1270    1259 109592 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1623       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         3049964 kB
+MemAvailable:    3604128 kB
+Buffers:           37004 kB
+2026-11-08T19:28:27.376425+00:00
+    PID    PPID   RSS COMMAND
+   1614    1270 6509356 node
+   1270    1259 109592 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1624       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1629328 kB
+MemAvailable:    2197548 kB
+Buffers:           37008 kB
+2026-11-08T19:28:47.379776+00:00
+    PID    PPID   RSS COMMAND
+   1614    1270 7023632 node
+   1270    1259 109456 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1625       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1192416 kB
+MemAvailable:    1614560 kB
+Buffers:           35404 kB
+2026-11-08T19:29:07.384499+00:00
+    PID    PPID   RSS COMMAND
+   1626    1270 3160700 node
+   1270    1259 109928 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1634       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         5099512 kB
+MemAvailable:    5613340 kB
+Buffers:           35416 kB
+2026-11-08T19:29:27.388659+00:00
+    PID    PPID   RSS COMMAND
+   1626    1270 5474644 node
+   1270    1259 109928 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1635       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2680816 kB
+MemAvailable:    3234120 kB
+Buffers:           35416 kB
+2026-11-08T19:29:47.394323+00:00
+    PID    PPID   RSS COMMAND
+   1626    1270 6487732 node
+   1270    1259 109928 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1636       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1624876 kB
+MemAvailable:    2191560 kB
+Buffers:           35416 kB
+2026-11-08T19:30:07.398495+00:00
+    PID    PPID   RSS COMMAND
+   1626    1270 7050984 node
+   1270    1259 109876 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1637       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         1212024 kB
+MemAvailable:    1603324 kB
+Buffers:           39540 kB
+2026-11-08T19:30:27.403948+00:00
+    PID    PPID   RSS COMMAND
+   1638    1270 2939880 node
+   1270    1259 109116 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1646       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         5271964 kB
+MemAvailable:    5839196 kB
+Buffers:           41328 kB
+2026-11-08T19:30:47.407537+00:00
+    PID    PPID   RSS COMMAND
+   1638    1270 5654124 node
+   1270    1259 109116 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1647       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2507752 kB
+MemAvailable:    3075868 kB
+Buffers:           41328 kB
+2026-11-08T19:31:07.411445+00:00
+    PID    PPID   RSS COMMAND
+   1648    1270 721696 node
+   1270    1259 111924 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9672 python
+   1656       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         7498996 kB
+MemAvailable:    8083940 kB
+Buffers:           41452 kB
+2026-11-08T19:31:27.415339+00:00
+    PID    PPID   RSS COMMAND
+   1648    1270 3894732 node
+   1270    1259 111924 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9676 python
+   1657       5  2500 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         4275560 kB
+MemAvailable:    4860768 kB
+Buffers:           41452 kB
+2026-11-08T19:31:47.418956+00:00
+    PID    PPID   RSS COMMAND
+   1648    1270 6115084 node
+   1270    1259 111924 node
+   1246      30 18656 npm run ci:push
+      1       0 15568 codex
+   1259    1258 14588 node
+      5       2  9676 python
+   1658       5  2496 ps
+      2       1  1980 bash
+MemTotal:       10206472 kB
+MemFree:         2007528 kB
+MemAvailable:    2593092 kB
+Buffers:           41572 kB
+exit=0
+completed_child_peak_rss_kib=7360612
