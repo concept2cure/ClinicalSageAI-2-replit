@@ -1306,6 +1306,12 @@ The founder asked this session to take over and finish the project page's work. 
   - Found, not D3's: `projectCreationDoors.contract` (Vault.tsx's Projects index door) and `projectDestination` fail
     on trunk. They follow the Vault session's `adb1c00cba` and `5144702d21`.
 
+**Hand-off** (2026-11-08). This session leaves D3 here and holds no file. The note for whoever continues is
+`docs/evidence/DESIGN/D3/README.md`: what is done, D3-4's exact starting points, the three suite failures that are
+not D3's, and what tripped this session. S12 (work projects), offered to this session by the lead on 2026-11-06, was
+not taken and is unassigned. It runs through the same files, so whoever takes D3-4 or S12 holds `Project*.tsx`
+first.
+
 **Not done in D3-1, for the lead**
 
 - The objective as a composer suggestion (D3.md §4.4 item 5.1). S1's objective already offers "Ask AnA to propose
