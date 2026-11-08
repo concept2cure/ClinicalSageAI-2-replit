@@ -3410,12 +3410,6 @@ registerToolHandler('evaluate_kris_qtls', async (input, ctx) => {
   });
 });
 
-// The route's refusals (mdx-rbm.ts, POST /rbm-monitoring-plans/generate), word for word.
-const RBM_PLAN_REFUSAL: Record<'no_assessment' | 'assessment_not_approved', string> = {
-  no_assessment: 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan',
-  assessment_not_approved: 'This study\'s risk assessment has not been approved. A monitoring plan must derive from a signed RACT — approve the assessment first.',
-};
-
 // Propose the monitoring plan the approved assessment derives. Saves nothing:
 // the proposal is derivePlanFromAssessment, the read half of what
 // POST /api/mdx/rbm-monitoring-plans/generate saves, so the two never differ.
@@ -3426,7 +3420,8 @@ registerToolHandler('generate_rbm_plan', async (input, ctx) => {
     return JSON.stringify({ source: 'AnA RBM', error: 'A valid programId (UUID) and organization context are required.' });
   }
   const { getPool } = await import('../../db.js');
-  const { derivePlanFromAssessment, openDraftPlan } = await import('../rbm/rbm-actuator.js');
+  // The route's refusals (POST /api/mdx/rbm-monitoring-plans/generate) are the actuator's, word for word.
+  const { derivePlanFromAssessment, openDraftPlan, RBM_PLAN_REFUSAL } = await import('../rbm/rbm-actuator.js');
   const exec = ctx?.sqlClient ?? getPool();
   const derivation = await derivePlanFromAssessment(exec, orgId, programId);
   if (!derivation.derived) {
@@ -3438,8 +3433,7 @@ registerToolHandler('generate_rbm_plan', async (input, ctx) => {
       source: 'AnA RBM Plan',
       code: 'overall_risk_unrecorded',
       assessmentId: assessment.id,
-      error: 'The approved risk assessment records no overall risk, so no monitoring strategy can be derived from it. ' +
-        'Record the overall risk in an amendment and approve it, then propose the plan again. Nothing was saved.',
+      error: `${RBM_PLAN_REFUSAL.overall_risk_not_recorded} Nothing was saved.`,
     });
   }
   const openDraft = await openDraftPlan(exec, orgId, programId);

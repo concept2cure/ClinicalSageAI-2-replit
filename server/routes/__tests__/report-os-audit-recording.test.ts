@@ -357,7 +357,7 @@ describe('GET /bundles/:bundleId/export.pdf (DP-50)', () => {
 
   beforeEach(() => {
     h.queued.select.push(
-      [{ title: `bundle:${BUNDLE_ID}`, content: JSON.stringify({ bundleRecord: BUNDLE }), createdAt: new Date() }],
+      [{ id: BUNDLE_ID, record: BUNDLE, createdAt: new Date().toISOString() }], // its row in report_bundles (P-91)
       [{ typeId: TYPE.typeId, family: 'readiness' }, { typeId: 'portfolio.board_pack', family: 'portfolio' }],
     );
     // The statuses at export: 41 has been finalized since it was bundled.

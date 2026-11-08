@@ -160,7 +160,8 @@ program. Their deliverables are mapped to the downstream documents they feed (P-
 
 ## 1d. Anna runtime — extend the existing product (founder decisions P-104, 2026-11-06, and P-105, 2026-11-08)
 
-The founder supplied **Multi-Agent Architecture Spec v0.5, 2026-11-06**, §§1–32, and directed:
+The founder supplied **Multi-Agent Architecture Spec v0.5, 2026-11-06**, §§1–32
+(`docs/design/MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf`, in the repository from 2026-11-08), and directed:
 
 > "Study the attached document, align to the current roadmap, and add the attached plan to the current roadmap,
 > and you own this end to end. This is your assignment to build all of this in a very sophisticated way, not by
@@ -174,17 +175,22 @@ file, service, tool, screen, route, mount, table, dependency or model is approve
 cannot be met by extending the existing objects, record that precise dependency in this epic before implementing
 it. No work silently weakens isolation, signatures, launch scope, model qualification or a fail-closed gate.
 
-**Spec v0.4 and one owner (P-105, 2026-11-08).** The founder then supplied **v0.4, 2026-11-05**, §§1–15, the version
-that came before v0.5. The direction: *"add the attached plan to the main new roadmap and you own all of the
-attached alone."*
+**The current specification and one owner (P-105, 2026-11-08).**
 
-- **Owner.** The epic has one owner: the Claude Code session `session_01KZK3jgtmQBgNepqLjXjS3k`. It replaces the
-  2026-11-06 Anna architecture lead, and no other session takes an epic slice. Other packages' holders keep their
-  file holds for their own work (§4.6). An epic slice asks for a held file in `COORDINATION.md`.
-- **How v0.4 maps.** v0.4 is this epic's base, not a second backlog. Where it differs from v0.5, v0.5 and P-104
-  govern.
+- **The specification.** On 2026-11-08 the founder first supplied v0.4 (2026-11-05, §§1–15), then corrected it:
+  *"there's a newer version … v0.5, from November 6 … supersedes v0.4 … this is the current plan."* The source of
+  record is now in the repository: `docs/design/MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf` (52 pages,
+  sha256 `4564aff5d1da81520ed187abf5d5f20be11f74c7d407244bba33d685229b36c4`). Its change note says §§1–15 are
+  unchanged from v0.4. v0.4 is superseded and is not a second backlog.
+- **The owner.** The founder: *"you own all of the attached alone."*
+  - The epic has one owner: the Claude Code session `session_01KZK3jgtmQBgNepqLjXjS3k`.
+  - It replaces the 2026-11-06 Anna architecture lead, and no other session takes an epic slice.
+  - Other packages' holders keep their file holds for their own work (§4.6). An epic slice asks for a held file in
+    `COORDINATION.md`.
+- **Coverage.** The table below maps every section of v0.5 onto this epic. The owner read the whole PDF to build it,
+  §§16–32 included.
 
-| v0.4 section | Where it lives in this epic |
+| v0.5 section | Where it lives in this epic |
 |---|---|
 | §1 principles (provenance, deterministic/LLM split, drafter ≠ checker, stateless workers, escalation) | RULE 2; the audit below; "Where the code corrects the spec": the workers stay read-only, not writable sandboxes |
 | §§2–3 data model, worker contracts, roster, orchestrator loop | Mapped onto the existing tenant keys, artifact versions, lineage and task records, and onto `sub-agent*.ts` and `agentic-workflow-tools.ts`; no duplicate Project/Atom/Task store |
@@ -199,8 +205,25 @@ attached alone."*
 | §§13.2–13.4 build vs leverage | Suggested vendors only: no new integration without an `approvedAdditions` entry |
 | §§14.1–14.2 options A, B and C | Go/no-go below: A is the target, C the honest fallback, and B the integration surface (the D8 connector) |
 | §14.3 audit, §14.4 spike | The audit below, and check 1 of the expanded spike |
-| §14.5 risks and open questions | Isolation is spike check 4, and the fixture gates are the evaluation harness. **Still open for the founder:** whether Anna is customer-facing first or internal-only; the model cost and latency budget per document type; and whether Anna's internal dispositions need the user-facing approvals' IQ/OQ package, to be scoped with the first design partner |
+| §14.5 risks and open questions | Isolation is spike check 4, and the fixture gates are the evaluation harness. **Decided by P-107 (2026-11-08):** internal first, with customer reach per capability after its phase gate and PQ; cost and latency caps per document type from measured spike runs (2× p95, stop and ask at the cap; until measured, 60 s interactive and 30 min background); internal dispositions inside the validation package by risk (GAMP 5 / CSA) |
 | §15 plan-only hand-off | Superseded by P-104's build instruction |
+| §16 the AnA pattern: vault cards, scoped connectors, approval cards, discretion, decision rights and audit | "Trust (§§16–19)" below |
+| §17 custody with the client: tenant isolation, client-owned authority accounts, credential delegation, exact-content approval, client-visible audit, roles and offboarding, one vault for many authorities | "Account decision reconciled" below; phase 6 (support access, offboarding export) and phase 7 (authority onboarding, exact-byte approval). §17's verify-before-external-use notes on ESG, eSTAR and CDER Direct stand: no authority is enabled by a label |
+| §18 why it wins | Rationale, nothing to build |
+| §19 trust build implications | Spike checks 2 (custody canary), 3 (one-byte approval invalidation) and 4 (tenant-scoped audit) |
+| §20 how AnA learns: typed memory, correction → rule, L1/L2/L3 escalation, alignment synthesis, trust repair | "Continuous evolution (§§20–23)" below |
+| §21 rules at user, tenant and project scope: RuleRecord, precedence, the visible ledger, the digest, isolation, repair as Deviation/CAPA | "Continuous evolution" below; phase 6 |
+| §22 why it wins | Rationale, nothing to build |
+| §23 evolution build implications | Spike check 5; the conflict resolver, digest, correspondence-derived project rules and ledger edit/revoke follow in phase 6 |
+| §24 data locality: tiers T0–T3, lanes A/B/C, the tenant policy ceiling, evaluation-gated routing | "Locality (§§24–26)" below |
+| §25 why it wins | Rationale, nothing to build |
+| §26 locality build implications | Spike checks 6 (tier tagging and routing) and 7 (derivative round-trip) |
+| §27 three kinds of learning: client content never crosses, de-identified patterns cross through a cohort gate, craft compounds globally; the promotion pipeline and its invariant | "Learning boundaries (§§27–29)" below |
+| §28 why it wins | Rationale, nothing to build |
+| §29 learning build implications | Phase 6, after the spike's walls |
+| §30 agency feedback: the corpus, objective vs subjective coding, the clean-file review, the three-scope loop, source discipline | "Agency feedback (§§30–32)" below; phase 7 |
+| §31 why it wins | Rationale, nothing to build |
+| §32 feedback build implications | Phase 7: human-confirmed coding, the clean-file review as a ready-state gate ("insufficient pattern history" when sparse), deficiency and RTF/RTA metrics |
 
 **Account decision reconciled.** `server/services/submission-gateways/gateway-accounts.ts` implements the founder's
 2026-10-01 choice of platform or client accounts, with no row defaulting to platform. The supplied §17.2 now directs
@@ -1469,6 +1492,62 @@ COORDINATION.md, row "Codespace setup".
 4. **No real model output has been seen in a Codespace.** No session had a key. The founder's first run, with both
    keys, is the qualification.
 
+#### D7-D — Reporting & analytics on the work-area pattern, with its F1 repairs (session `session_011HLkYCajohxJ4HxpcfSiU6`, lane L11)
+
+**What already exists.** The surfaces are `client/src/concept2cure/v2/surfaces/Insights.tsx` (`insights`),
+`InsightsCatalogPanel.tsx`, `insightsLibraryShared.tsx` and `ComplianceReports.tsx` (`compliance-reports`), with
+`styles/insights-v2.css`. The digest renderer is `server/services/report-os/render/render.ts`. Nothing new was added:
+no screen, route, service, table or component file.
+
+- **D7-D steps 1–9, as `.design/claude-convergence/D7.md` §D.4 lists them** (2026-11-02):
+  - `f58089a336`: steps 1–2, one column and the page header;
+  - `209a8964bf`: steps 3 and 5, the find row on `.c2c-input` (a plain search field, not the composer's look, P-91)
+    and a quiet result;
+  - `fc9dbb57a7` and `81faf1bda2`: steps 6–7, Preview plan as a `.seg` in the Catalog, and `.tabs`;
+  - `002ab41e13`: steps 4 and 8, starters, the HS-1008-1 facts as the sub's second sentence, packs as `.pj-card`s,
+    and the not-computed list as a disclosure;
+  - `44f574f70e`: step 9, Audit & compliance reports' back link.
+
+  Dated notes in D7.md §D.4 record each place where the build differs from the spec: steps 3, 4, 6 and 10.
+- **Running-app evidence** (`e124af0812`, `a9dbe72512`): `docs/evidence/DESIGN/D7/2026-11-02-reporting/`. It is a
+  git-archive copy of `9bd593c346` on its own port, captured at 1440 and 390, light and dark: 16 captures with
+  probes. §D.6 holds:
+  - one column;
+  - the find field after the header;
+  - one orange fill;
+  - no page overflow and no script errors;
+  - the readiness sentence never says "ready" with a gap open.
+- **What the running app found, fixed:**
+  - `9bd593c346`: an unnamed back link, Find dropping under the field at 390, 19 orange Run buttons in the
+    Catalog, and a basis tag widening Audit & compliance reports by 4px at 390;
+  - `7ce21a6c8f`: Export PDF was a second primary;
+  - `854bceccd5` (F1): packs are offered by the project's filing type, so an IND is no longer offered the BLA pack,
+    and the page says why;
+  - `4f9966c841` (F1): the digest printed a raw `not_ready` and made its own wording. It now speaks through
+    `shared/regulatory/readiness-statement` and shows a "Critical gaps" tile.
+- **ProjectBack convergence** (2026-11-08):
+  - `23238cd9ad` (D0): `ProjectBack` takes the `name` its screen read, rebuilding the coordinator's unpushed
+    `c4fcb90a7`. `dataConnect.tsx` is the coordinator's hold ("change only through D0"), so the change is D0's,
+    as that session designed and approved it, and the release is noted in COORDINATION.md;
+  - `eac4aaff16`: ReportingHead now uses it, with insightsOpenProgram red before and green after.
+
+  This closes Reporting's half of D0-7.
+- **Other repairs:**
+  - `ef94805978` (F1): finalize's signing-authority test;
+  - `66819a2460` (F1): the lineage-trace test's stale argument list;
+  - `66ce445d7b`: D6 evidence corrected, five loose queries and not a regression;
+  - `f49c747814`: P-91 recorded.
+- **Found, and handed on:**
+  - The device readiness scorecard (`server/services/market-specs/device-readiness-scorecard.ts:58`) uses the same
+    five words with no critical-gap rule, and AnA receives its level raw (`AnaToolExecutor.ts:10594`). Routed to
+    the MDX journey session (`01P6GW…`).
+  - CMC's `CmStarters` puts `aria-label` on a role-less `div`.
+- **Next:**
+  - C-3, the report-pack register tables (P-91, `Plan: L1`). They need `scripts/db/migration-set.mjs` and the RULE 1
+    replay and drop-safety work, shown red first. It is not started, because the coordinator's file hold can't be
+    asked for while it is unavailable.
+  - Re-walk Reporting in the running app at the current head. The ProjectBack switch has jsdom evidence only.
+
 #### L1 (rows D7, D6) — prior filings read back as filed state, and archive names checked where they are read (session `session_01Gx2fiwvxaXi6mQgddPqMaG`, 2026-11-01 to 2026-11-02)
 
 **Delivered**
@@ -1577,6 +1656,46 @@ COORDINATION.md, row "Codespace setup".
 9. P-104's client-owned authority accounts for S5.
 
 Several decided designs still have open questions with the founder and the coordinator; each design lists them.
+
+#### D5 / S7 / F1 — CMC and Biostatistics work areas; the figure engines measured (session `session_01GJidg5q1KFNfFT2VZyjcqw`, 2026-11-01 to 2026-11-02)
+
+**What already exists (RULE 3).** `CmcModule.tsx` with its nine tabs and 21 register forms, `Biostatistics.tsx`,
+`BiostatWorkbench.tsx` with 29 deterministic engines, `biostatBridge.tsx`, `biostatEngineResult.tsx`, the §WA
+work-area pattern (D5-0) and the labelled-figure lexicon with its seven consumers. Nothing below is a new screen,
+route, service, table or AnA tool; one file was split and one shared component adopted.
+
+| Slice | Commit / evidence | Verification and limit |
+|---|---|---|
+| D5-0, D5-1, D5-2 | `943b78cb7`, `94f24dba0`, `97c66423f`; `docs/evidence/DESIGN/D5/2026-11-01/` | The work-area pattern in CSS, then CMC onto it: tile groups retired, one state vocabulary (`cmcStateWord`), halves and starters. |
+| D5-3a | `cac363bfb`; `docs/evidence/DESIGN/D5/2026-11-01/` | Biostatistics' frame and the document as an artifact. Measured at 1440: orange fills 4 → 1, uppercase 81 → 0, sideways scroll +8px → 0. |
+| D5-3b | `e0534a80f`; `docs/evidence/DESIGN/D5/2026-11-02-d5-3b/` | The design assessment and the governed documents. Walked against a REAL design seeded through `POST /api/study-design/persist`: 137 subjects, 90% power, "Inadequate", 4 of 10 checks; gates EST-001/PWR-003/PWR-006/MTH-001/MIS-002/POP-001 moved from printed text into each row's `title`, the input record likewise. Both governed writes still open their reason form. |
+| D5-4 | `2505ca402`; `docs/evidence/DESIGN/D5/2026-11-02-d5-4/` | The design calculators as a work area. Filled primaries 4 → 1 (the chosen engine of 29 was one of them); `.pj-card` inside the work area 4 → 0; one input height. Assurance computed 0.771146 live. |
+| D5 shared back link and ask-row name | `428795100` | `ProjectBack` (D0-7) replaces two private copies; `role="group"` on CMC's and Biostatistics' ask rows — an `aria-label` on a role-less div has no accessible name. Each shown red on exactly that mutation. |
+| F1 — the labelled-figure lexicon | `docs/evidence/F1/2026-11-01-labelled-figure-lexicon/` | Recall over 15 PubMed phase-III abstracts, on a committed re-runnable corpus: 20% → 47% of governed sentences. One false positive removed (`\bOR\b` under `/i` read the English "or" as an odds ratio). The table split to `intelligence/labelled-figures.ts`; all seven consumers unmoved. |
+| F1 — two figure engines, measured not converged | `dac3acbbc`; `docs/evidence/F1/2026-11-02-two-figure-engines/` | The arm/event frame the lexicon lacks already exists: `truth-engine/clinical-claims/` (8,476 lines) models study, population, arm, measure, scope, endpoint, effect type, scale, interval. Three callers reach it; `POST /api/submissions/:id/consistency` does not, and reads the narrow lexicon over the same input. Per sentence the lexicon labels 47%, the claims engine frames 0% and SEES 91%; fed whole documents, 3 framed and 428 unframed. **Routing the check at the claims engine today would report LESS, not more** — it refuses without a frame, correctly. Convergence is a RULE 3 decision and was not taken. |
+
+**Found, not fixed.**
+1. **A GxP screen promises a refusal that does not happen.** The Specifications tab says "A limit whose method is
+   not validated cannot be approved" and renders a banner saying the same. `POST /api/cmc/specifications/:id/approve`
+   checks not-found, already-approved, signing authority, re-authentication, reason and the ledger — never method
+   validation; the banner disables nothing. `noMethod` is `!method`, i.e. "no method name was typed", not "the named
+   method is not validated": a specification naming a method whose register row is still `development` passes.
+2. **The spec → method → result chain is joined by free text**, not by reference: `qc_testing.test_method` is text,
+   `qc_testing.specifications` is JSON, `qc_specifications.testParameters[].testMethod` is a string. Hence the
+   capability engine must refuse when criterion *strings* disagree, and a spec revision does not flag the results
+   judged against the old limit.
+3. **No CMC data is read out of a document.** No extraction, LIMS, ELN or instrument integration;
+   `certificate_of_analysis` is a text reference. `source-evidence.ts` records provenance to a Vault version, it does
+   not ingest. Every register row is typed, or committed from AnA's guided interview.
+4. **This container was a week stale**, so 18 CMC suites failed to load on `z.string().guid` (a zod 4 API) against an
+   installed zod 3.25.76 while the lockfile said 4.6.7 (`76adba84d`). `npm ci` fixed it; the repository was never
+   broken. 1,714 server and 374 client CMC/biostat tests pass at `bc5a34030`.
+
+**What is next.** Roadmap phase 4 (CMC / Module 3) acceptance under S7/S12: fixture batch/stability tables matching
+expected cells, OOS flagged explicitly, QOS and Module 3 sharing atoms and method references, with the P-28
+small-molecule US-IND boundary unchanged. Then the D0 refused-read rule in `CmcModule.tsx` (13 sites, the most of any
+screen in `docs/evidence/D0/2026-11-06-refused-read-one-rule/03-adoption-list.txt`), and J5-13 — the biotech demo is a
+monoclonal antibody, so Module 3 build is correctly refused there and the demo cannot show it.
 
 ## 4. How everyone works
 

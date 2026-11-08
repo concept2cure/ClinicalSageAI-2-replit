@@ -1,0 +1,9 @@
+# rbm-actuator.test.ts with HEAD's rbm-actuator.ts (0d2bd8112) swapped in
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > generatePlanFromAssessment — derives the plan from the RACT > refuses an approved RACT that records no overall risk, and writes nothing 18ms
+   → expected true to be false // Object.is equality
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > generatePlanFromAssessment — derives the plan from the RACT > has its own sentence for every reason it refuses with 1ms
+   → Cannot read properties of undefined (reading 'no_assessment')
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected true to be false // Object.is equality
+TypeError: Cannot read properties of undefined (reading 'no_assessment')
+      Tests  2 failed | 55 passed (57)

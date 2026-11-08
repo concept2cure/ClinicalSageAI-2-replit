@@ -1,0 +1,2 @@
+eslint exit 0
+npx eslint --format json client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts → [('d0PhoneWidth.test.ts', errors 0, warnings 0, suppressed 0)]. The file is new, so there is no HEAD version to compare against.

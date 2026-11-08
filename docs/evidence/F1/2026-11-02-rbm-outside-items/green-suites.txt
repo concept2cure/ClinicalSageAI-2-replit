@@ -1,0 +1,918 @@
+# green: all five repairs and the review fix (seed mark kept unless a rating changes) in the working tree, on HEAD b391bfad2. Not committed.
+# npx vitest run server/services/rbm server/services/ana/__tests__/rbm-handlers.test.ts server/services/ana/__tests__/tool-record-scope.test.ts <the 7 RBM route suites> client/src/concept2cure/v2/__tests__/rbm*.ts* client/src/concept2cure/v2/__tests__/anaContextDeclaresItsCaps.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/rbm-assessment-integrity.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/rbm-assessment-integrity.test.ts
+{
+  "timestamp": "2026-11-02T05:11:13.345Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/rbm-assessment-integrity.test.ts
+{
+  "timestamp": "2026-11-02T05:11:13.469Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T05:11:13.470Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/rbm-assessment-integrity.test.ts
+{
+  "timestamp": "2026-11-02T05:11:13.470Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > refuses a title change on the 'active' signed version 48ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > refuses a title change on the 'archived' signed version 15ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > cannot reopen the 'active' signed version with status=draft 12ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > cannot reopen the 'archived' signed version with status=draft 11ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > continues to edit an unsigned draft 14ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses editing a factor linked to the 'active' assessment 15ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses editing a factor linked to the 'archived' assessment 17ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses adding a factor under the 'active' signed assessment 13ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses adding a factor under the 'archived' signed assessment 12ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > continues to edit a factor linked to a draft 12ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses a factor whose assessment is 'omitted', and writes nothing 8ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses a factor whose assessment is 'null', and writes nothing 7ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > continues to add a factor to a draft 10ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a new factor is saved by the actuator's one insert > infers criticality from the band when isCritical is omitted, as addCtqFactor does 12ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a new factor is saved by the actuator's one insert > keeps the status, owner and ref code the RACT form posts 9ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a new factor is saved by the actuator's one insert > calls addCtqFactor once, for the tenant and the named assessment 11ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is kept by an edit of 'the mitigation alone' 11ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is kept by an edit of 'the RACT form, status changed and rat…' 11ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is kept by an edit of 'the RACT form, mitigation changed and…' 11ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is cleared when a person changes the rating: 'the RACT form with a new likelihood' 15ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is cleared when a person changes the rating: 'the RACT form with a new impact' 12ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is cleared when a person changes the rating: 'the impact alone' 12ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the library-default mark on a seeded factor > is carried into an amendment, so the copy does not read as tailored 14ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > the seed route on a study that already has an assessment > answers 409 and writes nothing 25ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > does not disclose another project or tenant child through the public assessment 10ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > does not copy or return a private-project retained child in a public amendment 9ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > records the amendment creator independently of the prior version author 10ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > requires a second person to approve the amendment opened by this actor 16ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > mounted RBM approvals persist their electronic signature > 'assessment' activation and signature commit together 127ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > mounted RBM approvals persist their electronic signature > 'plan' activation and signature commit together 52ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > mounted RBM approvals persist their electronic signature > 'assessment' never escapes the request-pinned client 29ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > mounted RBM approvals persist their electronic signature > 'plan' never escapes the request-pinned client 31ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > mounted RBM approvals persist their electronic signature > records MFA only when returned as verified by the server 29ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > mounted RBM approvals persist their electronic signature > 'assessment' retains honest attribution when the legacy author was never recorded 31ms
+stderr | server/routes/__tests__/rbm-approval-signature.pglite.test.ts > a failed signature rolls back the whole approval > 'assessment' approval, archival and ledger all roll back
+{
+  "timestamp": "2026-11-02T05:11:21.273Z",
+  "level": "error",
+  "message": "[mdx-rbm] approve-assessment failed",
+  "context": {
+    "err": "fixture signature storage unavailable",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/__tests__/rbm-approval-signature.pglite.test.ts > a failed signature rolls back the whole approval > 'plan' approval, archival and ledger all roll back
+{
+  "timestamp": "2026-11-02T05:11:21.313Z",
+  "level": "error",
+  "message": "[mdx-rbm] approve-plan failed",
+  "context": {
+    "err": "fixture signature storage unavailable",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' refuses an unverified non-null author instead of treating it as a legacy record
+{
+  "timestamp": "2026-11-02T05:11:21.342Z",
+  "level": "error",
+  "message": "[mdx-rbm] approve-assessment failed",
+  "context": {
+    "err": "The recorded RBM author identity could not be verified.",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > mounted RBM approvals persist their electronic signature > 'plan' retains honest attribution when the legacy author was never recorded 34ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > a failed signature rolls back the whole approval > 'assessment' approval, archival and ledger all roll back 36ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > a failed signature rolls back the whole approval > 'plan' approval, archival and ledger all roll back 43ms
+stderr | server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' refuses an unverified non-null author instead of treating it as a legacy record
+{
+  "timestamp": "2026-11-02T05:11:21.363Z",
+  "level": "error",
+  "message": "[mdx-rbm] approve-plan failed",
+  "context": {
+    "err": "The recorded RBM author identity could not be verified.",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' refuses an unverified non-null author instead of treating it as a legacy record 22ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' refuses an unverified non-null author instead of treating it as a legacy record 21ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' requires signing authority before checking credentials 18ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' requires signing authority before checking credentials 27ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' refuses failed reauthentication without domain or ledger changes 19ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' refuses failed reauthentication without domain or ledger changes 20ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' refuses the recorded author 18ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' refuses the recorded author 21ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' refuses a private project before credentials 18ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' refuses a private project before credentials 19ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' rejects an explicit conflicting signature meaning 19ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' rejects an explicit conflicting signature meaning 25ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' cannot approve an already activated version again 32ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' cannot approve an already activated version again 31ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > 'assessment' re-derives exactly after activation and later archival 50ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > 'plan' re-derives exactly after activation and later archival 39ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > assessment CtQ content changes its binding 18ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > plan execution changes preserve its binding and plan content changes do not 18ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > 'assessment' version identity is part of its binding 19ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > 'plan' version identity is part of its binding 16ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > 'assessment' refuses re-derivation using an unknown recipe 12ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > 'plan' refuses re-derivation using an unknown recipe 13ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > incoherent monitoring relationships cannot acquire a signature > refuses a same-tenant CtQ linked to a different or absent project (22222222-2222-4222-8222-222222222222) 28ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > incoherent monitoring relationships cannot acquire a signature > refuses a same-tenant CtQ linked to a different or absent project (null) 28ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > incoherent monitoring relationships cannot acquire a signature > does not bind a foreign-tenant CtQ retained under an assessment id 33ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > incoherent monitoring relationships cannot acquire a signature > refuses a plan whose retained assessment belongs to another project 26ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > a plan approved after an editor read stays immutable > updates draft title, strategy and status with the bound retirement flag before field values 28ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > a plan approved after an editor read stays immutable > refuses a stale draft edit when activation wins before the content UPDATE 20ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > a plan approved after an editor read stays immutable > continues to allow status-only retirement of an active plan 25ms
+stdout | server/routes/__tests__/rbm-board-current-project.test.ts
+{
+  "timestamp": "2026-11-02T05:11:23.398Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T05:11:23.399Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/rbm-board-current-project.test.ts
+{
+  "timestamp": "2026-11-02T05:11:23.400Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/rbm-board-current-project.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/rbm-board-current-project.test.ts > RBM canonical project roster > does not return already-read roster rows after current permission revalidation fails
+{
+  "timestamp": "2026-11-02T05:11:26.648Z",
+  "level": "error",
+  "message": "[mdx-rbm-board] rbm-programs failed",
+  "context": {
+    "err": "Changed"
+  }
+}
+
+stderr | server/routes/__tests__/rbm-board-current-project.test.ts > RBM canonical project roster > reports a missing RBM store instead of a successful empty inventory
+{
+  "timestamp": "2026-11-02T05:11:26.661Z",
+  "level": "error",
+  "message": "[mdx-rbm-board] rbm-programs failed",
+  "context": {
+    "err": "relation \"rbm_risk_items\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/rbm-board-current-project.test.ts > RBM canonical project roster > offers an opted-in empty project and legacy monitored project using actual names, excludes private projects and string flags 40ms
+ ✓ server/routes/__tests__/rbm-board-current-project.test.ts > RBM canonical project roster > uses the actual site-score DDL and includes a project whose only legacy monitoring record is its site snapshot 27ms
+ ✓ server/routes/__tests__/rbm-board-current-project.test.ts > RBM canonical project roster > reports inaccessible anchor reconciliation generically without a hidden identity or count 9ms
+ ✓ server/routes/__tests__/rbm-board-current-project.test.ts > RBM canonical project roster > does not return already-read roster rows after current permission revalidation fails 14ms
+stderr | server/routes/__tests__/rbm-board-current-project.test.ts > RBM board project admission > denies a private project before any board sections are read
+{
+  "timestamp": "2026-11-02T05:11:26.672Z",
+  "level": "error",
+  "message": "[mdx-rbm-board] rbm-board failed",
+  "context": {
+    "err": "Private"
+  }
+}
+
+stderr | server/routes/__tests__/rbm-board-current-project.test.ts > RBM board project admission > reports an unavailable board store explicitly without a healthy pendingStore board
+{
+  "timestamp": "2026-11-02T05:11:26.683Z",
+  "level": "error",
+  "message": "[mdx-rbm-board] rbm-board failed",
+  "context": {
+    "err": "Missing store"
+  }
+}
+
+ ✓ server/routes/__tests__/rbm-board-current-project.test.ts > RBM canonical project roster > reports a missing RBM store instead of a successful empty inventory 13ms
+ ✓ server/routes/__tests__/rbm-board-current-project.test.ts > RBM board project admission > denies a private project before any board sections are read 10ms
+ ✓ server/routes/__tests__/rbm-board-current-project.test.ts > RBM board project admission > reports an unavailable board store explicitly without a healthy pendingStore board 10ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > commits a draft and its default factors together, with the actor and no signature 33ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > marks every seeded factor's rating as an untailored library default 17ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rolls back the assessment and already-written factors when a later factor fails 14ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rechecks current write authority inside the transaction before any record is inserted 7ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > leaves a caller-owned transaction open so the caller can roll the seed back 16ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > uses an already-connected client as supplied instead of inferring ownership from its connect method 18ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > uses one explicitly owned pool lease and releases it after its atomic seed 16ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > does not roll back a caller’s earlier work when a caller-owned seed fails 11ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rolls back another RBM write through the shared owned transaction when its work fails 8ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > commits another RBM write on one released pool lease 7ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > the seed refuses a study that already has an assessment > refuses a second seed of the same study inside its transaction, and writes nothing 20ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > the seed refuses a study that already has an assessment > refuses a study that already has an approved version 8ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > the seed refuses a study that already has an assessment > takes the per-study lock, then reads existing versions, after BEGIN and before the INSERT 18ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > appends a KRI reading through the real values endpoint 337ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > creates a KRI against the program, with blank thresholds left null 84ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > writes a QTL breach response onto the QTL 72ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > posts a CtQ factor with the components, letting the engine derive the score 362ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > triages a signal through the signals endpoint 71ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > runs central monitoring server-side and reports the engine counts 45ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > recomputes site risk server-side 26ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > advances a monitoring action through the actions endpoint 36ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > generates the plan from the RACT when the study has none 29ms
+stderr | client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > refuses to edit the CtQ register of an approved assessment
+An update to RbmRact inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > will not offer to raise an action when there is no plan to attach it to 20ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > refuses to edit the CtQ register of an approved assessment 175ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > omits fields it cannot show when editing, instead of blanking them 291ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > shows and mutates only the governing plan's actions 24ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > records an investigation and its follow-up action in one transactional call 123ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > states outright when no source feed is tracked 7ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > marks a stale feed on the overview rather than showing its age neutrally 10ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > surfaces the server error and changes nothing when a write is rejected 83ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — reports what the load actually did > posts the pasted extract with its source and cutoff 96ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — reports what the load actually did > shows the rejected rows and their reasons on a partial load 108ms
+stderr | client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > offers Amend on an approved assessment instead of dead-ending the register
+An update to RbmRact inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — reports what the load actually did > calls out metrics that matched no indicator, even when nothing was rejected 147ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > offers Amend on an approved assessment instead of dead-ending the register 220ms
+stderr | client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > renders the version chain with each version's own signature
+An update to RbmRact inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > does not offer Add CtQ factor when the study has no risk assessment
+An update to RbmRact inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > opens the amendment with a reason, and says the signed version is preserved 309ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > renders the version chain with each version's own signature 27ms
+stderr | client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > does not offer Amend on a draft — a draft is already editable
+An update to RbmRact inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > does not offer Add CtQ factor when the study has no risk assessment 154ms
+stderr | client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM plan — an approved plan is amended, not edited > does not offer Amend on a draft plan
+An update to RbmPlan inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > does not offer Amend on a draft — a draft is already editable 227ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM plan — an approved plan is amended, not edited > offers Amend on an approved plan and posts the reason to /amend 60ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM plan — an approved plan is amended, not edited > does not offer Amend on a draft plan 22ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > Add action posts to the plan in force while the amendment draft is on screen 71ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > a signal follow-up is raised on the plan in force 84ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > an investigation follow-up is raised on the plan in force 155ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > says so when the server saved the notes but did not raise the action 155ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > a scheduled oversight visit is raised on the plan in force 73ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > opening an amendment does not claim to carry actions forward 51ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — a duplicate load is refused, and reprocess needs a reason > holds the 409 as its own state and resubmits only with reprocess + reason 170ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > opens the existing RBM destination beside the other work areas (collapsed=false) 659ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > opens the existing RBM destination beside the other work areas (collapsed=true) 338ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > keeps the same entitled central service for the medtech client view 123ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > keeps the same entitled central service for the cro client view 99ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > explains the real Professional subscription lock without opening RBM 147ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > honors a deployment verdict that still withholds RBM from the release 138ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > opens the selected empty project instead of the first roster row and does not seed data 323ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > requires a choice without a shell project and carries an admitted choice to Vault and Tasks 186ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > does not replace an unavailable explicit project with another project 48ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > withdraws the old project while the next board is pending 136ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > reports a malformed roster read as failure, with no wrong-project board 42ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > reports a unavailable roster read as failure, with no wrong-project board 37ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > keeps relationship reconciliation distinct from a successful empty roster 36ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > retires retained project selection after account replacement and project A to B to A 168ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > retires the old selector and admits a fresh visit after a batched project A to B to A 156ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > blocks retained navigation after raw browser bearer drift or unmount 75ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > preserves the selected project across canonical bearer refresh without extra reads 57ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > keeps admitted project and conversation scope during the normal persisted-record board reload 126ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmPageChrome.test.tsx > risk-based monitoring, as a reader meets it > pads its own page, as every sibling surface does 402ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmPageChrome.test.tsx > risk-based monitoring, as a reader meets it > says nothing about a read model under the picker when no project is chosen 99ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmPageChrome.test.tsx > risk-based monitoring, as a reader meets it > names the screen in AnA’s dock, not the tool behind it 15ms
+stderr | server/routes/__tests__/mdx-rbm-signed-records.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-rbm-signed-records.test.ts
+{
+  "timestamp": "2026-11-02T05:11:45.696Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/mdx-rbm-signed-records.test.ts
+{
+  "timestamp": "2026-11-02T05:11:45.762Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T05:11:45.763Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-rbm-signed-records.test.ts
+{
+  "timestamp": "2026-11-02T05:11:45.763Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > POST cannot create a signed-looking record > a monitoring plan posted with status:active is stored as a draft 39ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > POST cannot create a signed-looking record > a risk assessment posted with status:active is stored as a draft 7ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > POST /rbm-monitoring-actions — actions are logged against the plan in force > accepts an action on the approved (active) plan 7ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > POST /rbm-monitoring-actions — actions are logged against the plan in force > refuses a superseded version with 409 plan_superseded naming the plan in force 5ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > POST /rbm-monitoring-actions — actions are logged against the plan in force > refuses an open amendment draft with 409 amendment_not_in_force 5ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > POST /rbm-monitoring-actions — actions are logged against the plan in force > accepts an action on a study's first plan while it is a draft 4ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > POST /rbm-signals/:id/investigate — the follow-up action goes through the same rule > raises the follow-up on the plan in force, in the same transaction 7ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > POST /rbm-signals/:id/investigate — the follow-up action goes through the same rule > saves the notes but does not raise an action on a superseded version, and says so 5ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > PATCH /rbm-monitoring-plans/:id — an approved plan is read-only > refuses a content edit on an active plan with 409 and writes nothing 7ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > PATCH /rbm-monitoring-plans/:id — an approved plan is read-only > still lets an active plan be archived (status-only) 8ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > PATCH /rbm-monitoring-plans/:id — an approved plan is read-only > POST /:id/amend opens the next version as a draft 5ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > PATCH /rbm-monitoring-plans/:id — an approved plan is read-only > POST /:id/amend without a reason is a 422 4ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > QTL limits > PATCH { threshold: null } clears the limit — status is not_evaluated, not the old band 4ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > QTL limits > PATCH that omits threshold keeps the stored limit 3ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > QTL limits > POST a lower-bound QTL evaluates 40% against >= 90% as breached 3ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > QTL limits > POST a two-sided QTL without its lower bound is a 422 3ms
+ ✓ server/routes/__tests__/mdx-rbm-signed-records.test.ts > QTL limits > PATCH switching to two_sided validates the MERGED limits 3ms
+stdout | server/services/rbm/__tests__/rbm-access.test.ts
+{
+  "timestamp": "2026-11-02T05:11:47.109Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T05:11:47.110Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/rbm/__tests__/rbm-access.test.ts
+{
+  "timestamp": "2026-11-02T05:11:47.111Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/rbm/__tests__/rbm-access.test.ts
+[database] Database connection successful
+
+stderr | server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > cannot bypass private-project access when commercial resolution is unavailable
+{
+  "timestamp": "2026-11-02T05:11:47.219Z",
+  "level": "error",
+  "message": "[rbm-access] RBM commercial entitlement resolution unavailable; retaining canonical mode behavior",
+  "context": {}
+}
+
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > uses the verified actor and current sharing policy for an explicit project 6ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > preserves a private-project refusal without using the read as a write grant 3ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > asks the canonical governed-write policy as well as read access for a write 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > derives an ID-only plan from its recorded program before admission 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > derives an ID-only action from its recorded program before admission 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > refuses a supplied project that differs from the persisted record parent 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > refuses two record IDs with different project parents 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > refuses a 'absent or foreign-tenant' record 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > refuses a 'unanchored' record 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > refuses a project-free list rather than reading the whole organization 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > does not turn an unavailable sharing read into an empty successful admission 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > is inert for a non-RBM tool even when the input names a project 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > refuses an RBM operation without a verified actor 0ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > checks current private-project access even with commercial enforcement off 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > uses the trusted tool SQL client rather than replacing its request scope 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > uses the existing trusted pool when the server supplied no tool SQL client 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > resolves a plan-only monitoring action and checks the linked signal belongs to that project 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > rejects another project’s optional parent on record_kri_reading 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > rejects another project’s optional parent on draft_monitoring_plan 0ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > honors the canonical commercial master-administrator exception without bypassing project sharing 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > honors an explicit commercial denial in enforce mode 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > cannot bypass private-project access when commercial resolution is unavailable 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > keeps report mode observational while still checking project access 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP boundary > does not gate another router stacked under /api/mdx 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP boundary > fails closed when an RBM request has no pinned request SQL client 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > cannot replace a private summary path with an accessible query alias 26ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > refuses a collection read with only a 'query alias the handler ignores' 14ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > refuses a collection read with only a 'body-only project the collection hand…' 5ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > refuses unequal query program spellings before a private collection filter can run 4ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > cannot replace the private query filter with a public GET body field 5ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > decodes a private UUID path before comparing it with the query project 4ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > cannot bypass the persisted record parent with row path %34%32 3ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > cannot bypass the persisted record parent with row path +42 3ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > cannot bypass the persisted record parent with row path 4.2e1 6ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > checks query and body parent IDs instead of letting the body hide the query parent 4ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > still admits the exact program_id collection filter consumed by the handler 3ms
+stderr | server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts
+{
+  "timestamp": "2026-11-02T05:11:48.634Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts
+{
+  "timestamp": "2026-11-02T05:11:48.676Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T05:11:48.676Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts
+{
+  "timestamp": "2026-11-02T05:11:48.677Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts > PATCH /rbm-assessments/:id cannot set status=active > refuses active, and never reaches the database 27ms
+ ✓ server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts > PATCH /rbm-assessments/:id cannot set status=active > still accepts draft 6ms
+ ✓ server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts > PATCH /rbm-assessments/:id cannot set status=active > still accepts archived 4ms
+ ✓ server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts > PATCH /rbm-assessments/:id cannot set status=active > still accepts a non-status edit 4ms
+ ✓ server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts > PATCH /rbm-monitoring-plans/:id cannot set status=active > refuses active, and never reaches the database 7ms
+ ✓ server/routes/__tests__/mdx-rbm-patch-cannot-activate.test.ts > PATCH /rbm-monitoring-plans/:id cannot set status=active > still accepts draft and archived 6ms
+stderr | server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts > POST /rbm-site-risk/recompute > refuses another tenant's program with 404 and never reads Site Intelligence
+{
+  "timestamp": "2026-11-02T05:11:49.979Z",
+  "level": "warn",
+  "message": "[mdx-rbm-data] site-risk recompute did not run",
+  "context": {
+    "reason": "not_in_tenant",
+    "programId": "11111111-2222-3333-4444-555555555555"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts > POST /rbm-site-risk/recompute > reports an unavailable source as 502 with its reason, not as an empty study
+{
+  "timestamp": "2026-11-02T05:11:49.990Z",
+  "level": "warn",
+  "message": "[mdx-rbm-data] site-risk recompute did not run",
+  "context": {
+    "reason": "source_unavailable",
+    "programId": "11111111-2222-3333-4444-555555555555",
+    "detail": "relation does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts > POST /rbm-site-risk/recompute > refuses another tenant's program with 404 and never reads Site Intelligence 29ms
+ ✓ server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts > POST /rbm-site-risk/recompute > reports an unavailable source as 502 with its reason, not as an empty study 5ms
+ ✓ server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts > POST /rbm-site-risk/recompute > returns the snapshots on a successful read 5ms
+ ✓ server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts > POST /rbm-metric-ingest > refuses a duplicate extract with 409 naming the prior run, and commits nothing 5ms
+ ✓ server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts > POST /rbm-metric-ingest > refuses a reprocess with no reason (422) 4ms
+ ✓ server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts > POST /rbm-metric-ingest > maps the concurrent-duplicate unique violation to 409, not 500 6ms
+ ✓ server/routes/__tests__/mdx-rbm-data-honest-outcomes.test.ts > POST /rbm-patient-profiles/score > persists the per-dimension breakdown as metadata.dimensionScores 5ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSitesMapping.test.ts > mapRbmSites — live rbm_site_risk_scores adoption > maps a score row onto the RbmSite display contract 5ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSitesMapping.test.ts > mapRbmSites — live rbm_site_risk_scores adoption > fills sensible defaults for missing optional columns 1ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSitesMapping.test.ts > mapRbmSites — live rbm_site_risk_scores adoption > rejects an empty list 0ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSitesMapping.test.ts > mapRbmSites — live rbm_site_risk_scores adoption > rejects the display fixture shape (has n/composite, not the DB columns) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSitesMapping.test.ts > mapRbmSites — live rbm_site_risk_scores adoption > rejects the whole batch if any row is not a score row 0ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmSitesMapping.test.ts > mapRbmSites — live rbm_site_risk_scores adoption > unwraps the { data } envelope and rejects non-list / nullish payloads 0ms
+stderr | server/routes/__tests__/rbm-current-project-admission.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/rbm-current-project-admission.test.ts
+{
+  "timestamp": "2026-11-02T05:11:52.378Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/rbm-current-project-admission.test.ts
+{
+  "timestamp": "2026-11-02T05:11:52.416Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T05:11:52.417Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/rbm-current-project-admission.test.ts
+{
+  "timestamp": "2026-11-02T05:11:52.417Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/rbm-current-project-admission.test.ts > RBM current project admission > refuses a private same-organization project before creating its assessment 26ms
+ ✓ server/routes/__tests__/rbm-current-project-admission.test.ts > RBM current project admission > refuses an unanchored create whose handler does not consume the admitted context: /rbm-assessments?program_id=11111111-1111-4111-8111-111111111111 5ms
+ ✓ server/routes/__tests__/rbm-current-project-admission.test.ts > RBM current project admission > refuses an unanchored create whose handler does not consume the admitted context: /rbm-assessments 4ms
+ ✓ server/routes/__tests__/rbm-current-project-admission.test.ts > RBM current project admission > refuses an unanchored create whose handler does not consume the admitted context: /rbm-risk-items 3ms
+ ✓ server/routes/__tests__/rbm-current-project-admission.test.ts > RBM current project admission > keeps a valid body programme attached to its actual persisted assessment 6ms
+stdout | server/services/ana/__tests__/rbm-handlers.test.ts
+{
+  "timestamp": "2026-11-02T05:11:54.380Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T05:11:54.381Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/rbm-handlers.test.ts
+{
+  "timestamp": "2026-11-02T05:11:54.382Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/rbm-handlers.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/rbm-handlers.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/rbm-handlers.test.ts
+{
+  "timestamp": "2026-11-02T05:11:54.702Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a1: attaches the factor to the study's one open draft, inside one transaction 15ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a1b: with a signed v1 and an open amendment v2, the factor joins the draft v2 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a2: refuses with the actuator's read-only reason, and writes nothing, when the only version is signed 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a3: refuses a named signed assessment, as the route does (requireDraftAssessment) 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a3b: a named draft is used even when the study has two drafts 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a3c: the snake_case assessment_id the admission checks is the one the factor joins 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a4: refuses likelihood 7, which the route refuses with 422 (SCALE_1_5), and writes nothing 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a4b: refuses a category the route does not accept 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a4c: refuses an unreadable optional input instead of saving the default in its place 3ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a5: refuses when the study has no assessment, pointing to the seed, and writes nothing 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a6: refuses when the study has more than one draft, naming each 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a7: rechecks write authority on the transaction before the insert, and a revoked one writes nothing 2ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a8: leases the canonical pool for the transaction instead of transacting through pool.query 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a9: transacts on a pinned request client as supplied 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b1: refuses with the route's reason when the study has no risk assessment, instead of answering "medium" 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b2: refuses with the route's reason when the only assessment is an unsigned draft 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b3: derives from the approved version and its factors only, not a newer draft amendment 2ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b4: refuses an approved assessment that records no overall risk, instead of "medium" 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b5: the proposal is the route's derivation — an issue per open critical factor, a visit per enhanced site — and nothing is written 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b6: says when a draft plan is already open, since generating would then be refused 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c1 (guard): seed:true writes the canonical library as one unsigned draft, in one transaction 2ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c2 (guard): seed:true does not write when the study already has an assessment, and says so 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c2b: a draft summary says the draft governs nothing; an approved one carries no such note 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c3: the summary reads the factors of the assessment it returns, not every version 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c4: after an amendment it returns the draft v2 as a draft, with each factor once 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c5: the "No RACT yet" hint appears only when the study has no assessment 1ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > parseMetricRows — validation > accepts a well-formed study-scope row 3ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > parseMetricRows — validation > derives a value from numerator and denominator when no value is given 1ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > parseMetricRows — validation > rejects a zero denominator rather than reporting a rate of zero 0ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > parseMetricRows — validation > rejects rather than drops: every unusable row carries a row number and a reason 1ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > parseMetricRows — validation > keeps the good rows when only some are bad 1ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > parseMetricRows — validation > tolerates the header casing and spacing real extracts arrive with 0ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > parseMetricCsv > parses a delimited extract 3ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > parseMetricCsv > reports a malformed file as a reject, not as an empty load 1ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > ingestMetrics — projection onto the engines > lands a study metric as a KRI reading with the engine-computed status 3ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > ingestMetrics — projection onto the engines > reports a study metric that matches no indicator as unmatched 1ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > ingestMetrics — projection onto the engines > merges subject metrics rather than replacing the profile 0ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > ingestMetrics — projection onto the engines > marks a run partial when some rows landed and some were rejected 1ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > ingestMetrics — projection onto the engines > marks a run failed when nothing usable arrived 0ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > freshness > measures staleness from the extract cutoff, not the load time 0ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > freshness > is fresh when the cutoff is recent 0ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > freshness > treats a failed load as stale however recent it was 0ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > freshness > treats a never-loaded source as stale 0ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > freshness > ageInDays returns null for an absent or unparseable timestamp 0ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > ingestMetrics — replay guard > hashes content, not the filename 1ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > ingestMetrics — replay guard > refuses a second load of the same extract, naming the run that holds it 1ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > ingestMetrics — replay guard > only counts a landed, un-superseded run as a duplicate 1ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > ingestMetrics — replay guard > refuses a reprocess with no reason 2ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > ingestMetrics — replay guard > a reprocess supersedes the prior run AND retracts its readings 1ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > ingestMetrics — replay guard > stamps every ingested reading with its run, so it can be retracted later 1ms
+ ✓ server/services/rbm/__tests__/metric-ingestion.test.ts > ingestMetrics — QTL direction comes from the QTL row > bands an attainment parameter against a LOWER bound 1ms
+stdout | server/services/ana/__tests__/tool-record-scope.test.ts
+{
+  "timestamp": "2026-11-02T05:12:05.079Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T05:12:05.081Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-record-scope.test.ts
+{
+  "timestamp": "2026-11-02T05:12:05.081Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/tool-record-scope.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/tool-record-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/tool-record-scope.test.ts
+{
+  "timestamp": "2026-11-02T05:12:06.426Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > lets through a call that names no program, without asking 2ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > lets through the caller's own program 2ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses another tenant's program in program_id, without echoing it 1ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses another tenant's program in programId, without echoing it 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses another tenant's program in device_program_id, without echoing it 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > checks every program a call names 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses without an organization rather than guessing 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignProgramRefusal > refuses when ownership cannot be checked, rather than passing 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > never runs a handler for another tenant's program 3ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > runs it for the caller's own 2ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > does not run it when ownership cannot be checked 1ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > covers the real tools too: a read for another tenant is refused before it reads 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > an RBM read is admitted by RBM first, which wants an identified member before it looks at the program 1ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > asks the ownership query for the named record, with the caller as organization 2ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > refuses another tenant's record 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > checks an assessment through the package that owns it 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > ignores an absent id and a tool with no scopes 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > refuses when the check cannot run 0ms
+ ✓ server/services/ana/__tests__/tool-record-scope.test.ts > foreignRecordRefusal — record ids other than programs > every scoped tool is registered and still declares the field it scopes 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor infers risk score and criticality from the band 3ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor leaves a low-risk item non-critical 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor honors an explicit isCritical override 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses likelihood 7 before any write 2ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses impact 0 before any write 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses likelihood 2.5 before any write 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses detectability 6 before any write 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses category "quality" before any write 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses status "pending" before any write 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor stores the ref code, status and owner it is given 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > defineKri infers amber status from value vs thresholds (higher worse) 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > setQtl infers the 75% secondary limit and approaching status 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > setQtl evaluates a lower-bound limit in its own direction and infers no upper-side secondary 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > setQtl refuses a two-sided limit without both bounds 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > inferSecondaryLimit is null without a threshold 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > recordKriReading resolves by id, computes status, and writes value + KRI update 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > recordKriReading returns unresolved when the KRI is not found 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > raiseSignal defaults source=manual, severity=medium and scopes to tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > triageSignal reports no_fields when nothing changes 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > createAction refuses when the plan is not in-tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > updateAction with no fields is a no-op 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > approveAssessment writes reason + approver and scopes to tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > approveAssessment returns null when not found in tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > archives the version it supersedes, so a program has one governing basis 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > does not archive anything when the assessment has no program 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > records that the two-person rule was enforced 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > records when there was no author to check against 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > refuses to approve an assessment it cannot attribute 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > refuses to approve a monitoring plan it cannot attribute 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > opens the next version as a draft, copying the register forward 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > refuses to amend a draft — a draft is already editable 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > refuses a second concurrent amendment 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > reports not_found for an assessment outside the tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > nextPlanVersion counts past every version on file, including deleted ones 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > generatePlanFromAssessment refuses while a draft version is already open 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > amend opens the next version as an unsigned draft and copies no actions 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > amend refuses a draft plan, and a second concurrent amendment 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > approvePlan archives the version it supersedes in the same executor 2ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > approvePlan moves the superseded version's unfinished actions to the new version, with provenance 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > approvePlan moves nothing when no version was superseded 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction logs an action against the active (approved) plan 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction logs an action on a study's first plan while it is still a draft 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction refuses a superseded (archived) version and names the plan in force 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction refuses an open amendment draft — it governs nothing until approved 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > governingPlanId — the plan new actions are logged against > is the active plan, even while a higher draft amendment is open 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > governingPlanId — the plan new actions are logged against > is the first draft when the study has no approved plan 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > governingPlanId — the plan new actions are logged against > is null when only archived versions remain 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > generatePlanFromAssessment — derives the plan from the RACT > derives strategy from the overall risk and seeds actions from the critical CtQs and enhanced sites 4ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > generatePlanFromAssessment — derives the plan from the RACT > scopes the seeded actions to the governing assessment, not the program 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > generatePlanFromAssessment — derives the plan from the RACT > generates nothing when the study has no risk assessment to derive from 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > generatePlanFromAssessment — derives the plan from the RACT > refuses to derive a plan from an unapproved RACT 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > generatePlanFromAssessment — derives the plan from the RACT > refuses an approved RACT that records no overall risk, and writes nothing 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > generatePlanFromAssessment — derives the plan from the RACT > has its own sentence for every reason it refuses with 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > proposes exactly the actions generatePlanFromAssessment inserts, and writes nothing 2ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > reports an approved assessment that records no overall risk as unrecorded, not "medium" 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > refuses with the actuator's reasons: no assessment, and an unapproved one 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — the plan shell > draftPlan infers strategy from the approved assessment's overall risk, and takes the next version 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — the plan shell > draftPlan reports an open draft rather than opening a second one 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > refuses to infer from an unsigned draft RACT, and writes nothing 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > reads the governing (active-first) version and binds the plan to it 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > refuses when the study has no assessment, and writes nothing 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > refuses an approved RACT that records no overall risk, and writes nothing 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > refuses to bind the plan to an assessment other than the one its strategy came from 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator-plan.test.ts > draftPlan — infers the strategy only from the approved RACT > (guard) with a strategy given, reads no assessment and drafts the shell 0ms
+stdout | server/services/rbm/__tests__/site-risk-engine.test.ts
+{
+  "timestamp": "2026-11-02T05:12:09.202Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T05:12:09.204Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/rbm/__tests__/site-risk-engine.test.ts
+{
+  "timestamp": "2026-11-02T05:12:09.204Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/rbm/__tests__/site-risk-engine.test.ts
+[database] Database connection successful
+
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > snapshotFromSiteRow > inverts high quality scores to low risk → reduced tier 2ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > snapshotFromSiteRow > derives composite from components when absent and flags high-risk drivers 1ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > snapshotFromSiteRow > reads the alternate schema variant (overall_score / compliance_score) 0ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > snapshotFromSiteRow > tolerates missing scores → null risks, reduced tier 0ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > refuses a program that is not a project of the organization 1ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > asks whether the organization OWNS the program, not whether it has RBM records naming it 0ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > reads sites only after ownership is proved 0ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > distinguishes a missing source from a study with no sites 0ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > names a schema mismatch rather than reporting no sites 1ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > reports an ownership check that could not run distinctly from a refusal 1ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > classifies an unexpected database error as source_error, not emptiness 0ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > readProgramSites — tenant isolation > has an operator-facing message for every failure, none of which says "no sites" 0ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > recomputeSiteRisk — one transaction, never error-as-empty > a refused program deletes nothing and writes nothing 1ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > recomputeSiteRisk — one transaction, never error-as-empty > a failed source read leaves the last snapshot untouched 0ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > recomputeSiteRisk — one transaction, never error-as-empty > replaces the snapshot inside BEGIN/COMMIT, delete before insert 1ms
+ ✓ server/services/rbm/__tests__/site-risk-engine.test.ts > recomputeSiteRisk — one transaction, never error-as-empty > a failure mid-write rolls back rather than leaving a partial snapshot 1ms
+ ✓ server/services/rbm/__tests__/central-statistical-monitoring.test.ts > scoreCohort > gives a large robust z to a clear high outlier 2ms
+ ✓ server/services/rbm/__tests__/central-statistical-monitoring.test.ts > scoreCohort > falls back to z-score when MAD is degenerate 1ms
+ ✓ server/services/rbm/__tests__/central-statistical-monitoring.test.ts > scoreCohort > returns zero scores for a flat cohort 0ms
+ ✓ server/services/rbm/__tests__/central-statistical-monitoring.test.ts > severityFromScore > maps |z| to severity, null below 3.5 0ms
+ ✓ server/services/rbm/__tests__/central-statistical-monitoring.test.ts > detectSiteOutliers > flags the high-side outlier site only 1ms
+ ✓ server/services/rbm/__tests__/central-statistical-monitoring.test.ts > detectSiteOutliers > returns nothing below the minimum cohort size 1ms
+ ✓ server/services/rbm/__tests__/central-statistical-monitoring.test.ts > detectSiteOutliers > does not flag low-side (better-than-peers) values 0ms
+ ✓ server/services/rbm/__tests__/central-statistical-monitoring.test.ts > patientStatusFromScore > maps |score| to a patient status 0ms
+ ✓ server/services/rbm/__tests__/central-statistical-monitoring.test.ts > scorePatientCohort > flags the atypical patient and returns one entry per subject 1ms
+ ✓ server/services/rbm/__tests__/central-statistical-monitoring.test.ts > scorePatientCohort > ignores dimensions present in fewer than the minimum cohort 1ms
+ ✓ server/services/rbm/__tests__/central-statistical-monitoring.test.ts > scorePatientCohort > returns the per-dimension breakdown that explains each score 1ms
+ ✓ server/services/rbm/__tests__/central-statistical-monitoring.test.ts > scorePatientCohort > keeps the sign, because the direction is the finding 0ms
+ ✓ server/services/rbm/__tests__/central-statistical-monitoring.test.ts > scorePatientCohort > omits a dimension the cohort was too small to score, rather than zeroing it 0ms
+ ✓ server/services/rbm/__tests__/central-statistical-monitoring.test.ts > scorePatientCohort > gives a subject with no comparable dimension an empty breakdown 0ms
+ ✓ server/services/rbm/__tests__/risk-report.test.ts > buildRiskReview > summarizes status and counts attention items 3ms
+ ✓ server/services/rbm/__tests__/risk-report.test.ts > buildRiskReview > reports data currency, and says so when no feed is tracked 1ms
+ ✓ server/services/rbm/__tests__/risk-report.test.ts > buildRiskReview > reports within-tolerance when clean 1ms
+ ✓ server/services/rbm/__tests__/risk-report.test.ts > buildRiskReview > does not report within-tolerance when indicators were never evaluated 1ms
+ ✓ server/services/rbm/__tests__/risk-report.test.ts > renderRiskReviewMarkdown > renders an inspection-ready document 1ms
+ ✓ server/services/rbm/__tests__/risk-report.test.ts > buildAttentionFeed > prioritizes by severity with critical first 1ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts > existing RBM transport within its admitted endpoints > preserves the exact nested KRI write address, body and returned reading 5ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts > existing RBM transport within its admitted endpoints > preserves a monitoring action update and its receipt metadata 1ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts > existing RBM transport within its admitted endpoints > refuses /risk-items/7 before the shared transport is called 2ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts > existing RBM transport within its admitted endpoints > refuses /rbm-kris-other before the shared transport is called 0ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts > existing RBM transport within its admitted endpoints > refuses /rbm-central-monitoring/unrelated before the shared transport is called 0ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts > existing RBM transport within its admitted endpoints > refuses /rbm-patient-profiles/unrelated before the shared transport is called 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > scoreRisk / bandFromScore > computes likelihood × impact and clamps 1..5 3ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > scoreRisk / bandFromScore > bands by RACT thresholds (>=15 high, >=8 medium, else low) 1ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > overallRiskFromScores > any high score -> high 1ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > overallRiskFromScores > two+ medium -> high; one medium -> medium; none -> low 1ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > kriStatus > higher_worse: red at/above red, amber at/above amber 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > kriStatus > lower_worse inverts the comparison 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > kriStatus > an indicator with no reading is not evaluated — never green 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > kriStatus > an indicator with no threshold to read against is not evaluated 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > kriStatus > one configured threshold is enough to evaluate 1ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlStatus > upper: breached at/above threshold, approaching at/above secondary 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlStatus > upper is the default direction, so an unspecified limit keeps its meaning 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlStatus > lower: breached at/below threshold — an attainment limit is not inverted 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlStatus > two_sided: breached beyond either bound, approaching inside either 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlStatus > a QTL with no value or no limit is not evaluated — never within 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlStatus > two_sided with only one bound configured is not evaluated 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlRangeError > accepts upper/lower limits with a single threshold (or none yet) 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlRangeError > rejects a two-sided limit missing a bound, or inverted 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > monitoringTierFromRisk > maps composite risk to a proportionate tier 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > defaultPlanStrategy > escalates strategy with overall risk 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > seed libraries > ship non-empty, well-formed catalogs 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContextDeclaresItsCaps.test.tsx > the RBM attention context declares its cap > publishes the total and the shown count beside the capped list 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContextDeclaresItsCaps.test.tsx > the RBM attention context declares its cap > states the ordering, so "the most severe" is not an assumption the model makes 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContextDeclaresItsCaps.test.tsx > the RBM attention context declares its cap > names the cap once instead of repeating a literal 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContextDeclaresItsCaps.test.tsx > a governed report renders every section > has no truncating branch left to switch on 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContextDeclaresItsCaps.test.tsx > a governed report renders every section > takes the sections as they are 0ms
+
+ Test Files  25 passed (25)
+      Tests  419 passed (419)
+   Start at  05:11:10
+   Duration  61.49s (transform 11.85s, setup 1.01s, import 31.26s, tests 20.91s, environment 3.97s)
+

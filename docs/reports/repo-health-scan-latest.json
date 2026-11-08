@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-08T19:33:58.364Z",
+  "generatedAt": "2026-11-08T21:22:27.577Z",
   "git": {
-    "sha": "c88d892390a15f01d258f7a72fb597858aaf4497",
+    "sha": "3e4166428cf90eee062cff4fbef3ceb47c1bbb5d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2388,7 +2388,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1200671
+        "bytes": 1200160
       },
       {
         "file": "shared/schema.ts",
@@ -2512,7 +2512,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "bytes": 137173
+        "bytes": 136951
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2614,7 +2614,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22575
+        "lines": 22569
       },
       {
         "file": "shared/schema.ts",
@@ -2769,12 +2769,12 @@
         "lines": 2435
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "lines": 2410
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
         "lines": 2409
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+        "lines": 2408
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -3021,12 +3021,12 @@
         "lines": 1700
       },
       {
-        "file": "server/routes/taskManagement.routes.ts",
-        "lines": 1691
+        "file": "server/routes/mdx-rbm.ts",
+        "lines": 1699
       },
       {
-        "file": "server/routes/mdx-rbm.ts",
-        "lines": 1686
+        "file": "server/routes/taskManagement.routes.ts",
+        "lines": 1691
       },
       {
         "file": "server/services/grdhe/grdheService.ts",

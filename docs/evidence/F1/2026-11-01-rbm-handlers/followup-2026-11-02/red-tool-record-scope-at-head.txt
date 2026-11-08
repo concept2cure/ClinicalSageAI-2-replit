@@ -1,0 +1,6 @@
+# tool-record-scope.test.ts as at HEAD (0d2bd8112)
+ × server/services/ana/__tests__/tool-record-scope.test.ts > the registry wrapper > covers the real tools too: a read for another tenant is refused before it reads 14ms
+   → expected 'RBM_ACTOR_REQUIRED' to be 'PROGRAM_NOT_IN_ORGANIZATION' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'RBM_ACTOR_REQUIRED' to be 'PROGRAM_NOT_IN_ORGANIZATION' // Object.is equality
+      Tests  1 failed | 17 passed (18)

@@ -24,6 +24,9 @@
     },
     "server/routes/integration-test.ts": {
       "reason": "NOT INFERENCE. Fetches https://api.openai.com/v1/models purely as a reachability probe (the code says so: 'don't burn tokens'), and the router is mounted only under testRoutesEnabled, so it is fenced out of production. Baselined rather than path-excluded because it IS egress to a provider host and should stay visible if that mount fence ever moves."
+    },
+    "scripts/ops/codespaces-doctor.mjs": {
+      "reason": "Developer diagnostics run in a Codespace (npm run codespaces:doctor, .devcontainer/post-start.sh), never imported by the server. It tests whether the developer's own provider keys reach the provider, which is the one thing the gateway cannot answer for it. By default it sends no prompt: GET /v1/models for OpenAI and Anthropic (authentication and model discovery only). Only the explicit --probe-openai-usage flag makes one billable call, with the fixed text 'Reply with OK.' and 8 output tokens. No customer, tenant or document content is ever sent. Added 2026-11-08 for fec7e0f94."
     }
   }
 }

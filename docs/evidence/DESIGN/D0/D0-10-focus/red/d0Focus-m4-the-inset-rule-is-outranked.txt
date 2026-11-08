@@ -1,0 +1,58 @@
+# mutant m4-the-inset-rule-is-outranked: [('app-v2.css', '.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab, .seg-b, .ml-seg-btn):focus-visible { outline-offset: -2px; }', '.c2c-v2 :where(.tab, .reg-tab, .sc-ws, .cc-tab, .seg-b, .ml-seg-btn):focus-visible { outline-offset: -2px; }')]
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > reads the items from the tab and segmented primitives: the six the review names, all still in use 2ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .tab:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 12ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .reg-tab:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 11ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .sc-ws:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 7ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .cc-tab:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 5ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .seg-b:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 5ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > .ml-seg-btn:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it 10ms
+ × client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > moves the global ring inward and keeps it: one rule, offset only, outranking the global ring 13ms
+   → outranked by .c2c-v2 button:focus-visible: expected [ Array(1) ] to deeply equal []
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > no other rule, in any v2 stylesheet, sets an outline on these items in focus 24ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 12: the active segment has a ring in dark, as in light > light: --bg-000 with the hairline ring (unchanged) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 12: the active segment has a ring in dark, as in light > dark: --bg-200 with a 1px --border-strong ring, not box-shadow: none 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 12: the active segment has a ring in dark, as in light > dark covers every item and active state light does 0ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 12: the active segment has a ring in dark, as in light > no other rule, in any v2 stylesheet, sets a shadow on an active segment 28ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .c2c-input in focus: the border and halo, and a transparent outline in place of outline: none 18ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .de-input in focus: the border and halo, and a transparent outline in place of outline: none 21ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .de-select in focus: the border and halo, and a transparent outline in place of outline: none 8ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .de-textarea in focus: the border and halo, and a transparent outline in place of outline: none 9ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > no other rule, in any v2 stylesheet, sets these fields’ outline in focus 5ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > a composer in focus: its border, and a transparent outline; no halo 6ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .landing-input keeps no outline of its own in focus, so its composer shows one ring, not two 5ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .pj-composer textarea keeps no outline of its own in focus, so its composer shows one ring, not two 13ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > .ct-composer textarea keeps no outline of its own in focus, so its composer shows one ring, not two 9ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 13: in forced colours a focused field or composer still shows one ring > no other rule, in any v2 stylesheet, sets a composer’s outline 6ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 passed (23)
+   Start at  04:08:57
+   Duration  1.43s (transform 130ms, setup 94ms, import 325ms, tests 242ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Focus.test.ts > fix 7: a focused tab or segment shows its whole ring inside a scrolling row > moves the global ring inward and keeps it: one rule, offset only, outranking the global ring
+AssertionError: outranked by .c2c-v2 button:focus-visible: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   ".c2c-v2 :where(.tab, .reg-tab, .sc-ws, .cc-tab, .seg-b, .ml-seg-btn):focus-visible",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Focus.test.ts:158:51
+    156|     expect(decl(global[global.length - 1]?.body ?? '', 'outline')).toB…
+    157|     const weaker = splitTop(rule.selector).filter((s) => !outranks(spe…
+    158|     expect(weaker, `outranked by ${GLOBAL_RING}`).toEqual([]);
+       |                                                   ^
+    159|   });
+    160|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

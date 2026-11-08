@@ -1,0 +1,2 @@
+[ci:migration-set-order] OK — 464 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+[ci:migration-drop-safety] OK — 464 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 20 dynamic DROP(s) in 20 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).

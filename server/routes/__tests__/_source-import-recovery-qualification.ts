@@ -127,7 +127,7 @@ export function registerSourceImportPlacementCase(fixture: SourceImportPlacement
       expect((await filingRows()).rows).toEqual(before);
       expect(await fs.readFile(source.filePath)).toEqual(source.sourceBytes);
       expect((await db.pglite.query<{ content_hash: string | null }>(
-        'SELECT content_hash FROM vault.documents WHERE id=$1', [source.sourceId])).rows).toEqual([{ content_hash: hash }]);
+        'SELECT content_hash FROM vault.documents WHERE id=$1 AND organization_id=$2', [source.sourceId, ORG])).rows).toEqual([{ content_hash: hash }]);
       // A previously recorded placement is retained on reuse; forceUnbound applies only to creation.
       await db.pool.query('UPDATE authoring_documents SET c2c_document_id=$1 WHERE id=$2 AND tenant_id=$3', [filings[1], copy.doc.id, ORG]);
       const boundReuse = await author(request(app).post('/api/authoring/import/source')).send(source.input);
