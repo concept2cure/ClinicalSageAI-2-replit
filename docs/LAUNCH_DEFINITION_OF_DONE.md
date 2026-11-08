@@ -2036,3 +2036,74 @@ The founder, 2026-11-06, supplied **MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.
 - **Owner.** The lead owns end-to-end integration and acceptance; existing package owners keep their file holds.
   The current roadmap is `docs/design/ONE_DESIGN_PLAN.md` and `docs/design/one-design-plan.json`, not the historical
   CER-only or January vision roadmaps. Progress must name actual commits, checks and remaining dependencies.
+
+### P-105 — Spec v0.4 is recorded as the base of §1d's v0.5, and one session owns the Anna-runtime epic alone
+
+The founder, 2026-11-08, supplied **MULTI-AGENT-ARCHITECTURE-SPEC-20261105.md** (v0.4, §§1–15, "prepared for hand-off
+to Claude Code as the build specification") and directed:
+
+> "Stay perfectly aligned to the new roadmap and rules. But you must add the attached plan to the main new roadmap
+> and you own all of the attached alone."
+
+- **What is decided.**
+  1. v0.4 is on the roadmap as the predecessor of v0.5, which P-104 placed at `docs/design/ONE_DESIGN_PLAN.md` §1d.
+     Each v0.4 section is mapped onto §1d there. Where the two differ, v0.5 and P-104 govern. In particular, v0.4
+     §15's "consider and plan, do not build yet" stays superseded by P-104's build instruction. It is one epic, not
+     a second backlog.
+  2. The Anna-runtime epic (`architectureEpics` `anna-runtime` in `docs/design/one-design-plan.json`) has one owner:
+     the Claude Code session `session_01KZK3jgtmQBgNepqLjXjS3k`.
+     - It replaces the Anna architecture lead (Codex, 2026-11-06) as the epic's lead, for sequencing, integration,
+       acceptance and the epic's progress log.
+     - No other session takes an epic slice.
+- **What is not decided.**
+  - Other packages' scope is unchanged, and so are their holders' file holds for their own work (plan §4.6, one
+    session per file). When an epic slice needs a file someone else holds, the owner asks for it in
+    `.design/claude-convergence/COORDINATION.md`.
+  - v0.4 §14.5's open questions stay open, because P-104 does not decide them:
+    1. Is Anna customer-facing first, or internal-only?
+    2. What is the model cost and latency budget per document type?
+    3. Do Anna's internal dispositions need the same IQ/OQ validation package as user-facing approvals? That is to
+       be scoped with the first design partner.
+  - No new file, screen, route, mount, service, table, tool, dependency, integration or model is approved (RULE 6).
+    v0.4 §13.2's vendors are suggestions, not admissions.
+  - P-104's account target, its gates and its phase order are unchanged.
+- **Owner.** `session_01KZK3jgtmQBgNepqLjXjS3k`.
+
+### P-106 — The ten IND lifecycle routes with no caller are retired; a sequence's verdict is read per project only
+
+The founder, 2026-11-08, confirming in the RIM session (`011e42…`) the decision the coordinating session relayed on
+2026-11-02. Its record commit (`9bb710e98`) never reached origin, and the number it carried was used for P-100. P-105 was taken the same day by the Anna-runtime decision above. The
+question was raised by the RIM session's caller check against the corrected R1 inventory (`d8f559377`). The answer:
+**"Yes, record and retire."**
+
+- **What is decided.** Ten IND lifecycle routes are retired:
+  - `POST /api/ind-lifecycle/sequence/:seqId/dispatch-gate`;
+  - `POST /api/ind-lifecycle/sequence/:seqId/dispatch-gate/snapshot`;
+  - `GET /api/ind-lifecycle/sequence/:seqId/snapshots`;
+  - `GET /api/ind-lifecycle/sequence/:seqId/validate`;
+  - `POST /api/ind-lifecycle/submission/:id/cockpit`;
+  - `POST /api/ind-lifecycle/submission/:id/drift`;
+  - `GET /api/ind-lifecycle/portfolio/drift`;
+  - `GET /api/ind-lifecycle/portfolio/drift/csv`;
+  - `POST /api/ind-lifecycle/submission/:id/dashboard`;
+  - `GET /api/ind-lifecycle/submission/:id/overview`.
+
+  Nothing in the client, AnA, MCP or scripts calls them. Each reads the one assessor (`annotatedGatesForSubmission`)
+  and writes nothing, except the snapshot route, the only writer of `ind_dispatch_snapshots`.
+- **Also decided: no organisation-wide verdict list.** A sequence's verdict is read per project only.
+- **The replacement, named by path in the removing commit:** `GET /api/submissions/sequences/:seqId/dispatch-readiness`,
+  shown in `client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx` (Validation, Dispatch) and in
+  `ProjectMarkets.tsx` / `DispatchReadiness.tsx` (Submit). A Validated stage that no longer holds is shown through
+  `validatedStage`.
+- **Services.** A service only these routes use is deleted with them. A service another caller still reads is kept,
+  each checked by import, not by name.
+- **Superseded.** P-33's sentence "The IND routes keep their paths". Its one-assessor rule stands.
+- **What is not decided.** Nothing is dropped. `ind_dispatch_snapshots` stays (RULE 1). Its migration,
+  `20260610_ind_dispatch_snapshots.sql`, is in the install-fresh baseline only, not in `C2C_MIGRATION_FILES`.
+- **Proof the removing commit carries:**
+  - the dispatch-readiness route is shown still reached;
+  - the R1 inventory is run again, showing the ten are gone and no other route lost its caller;
+  - the history search (`git log --all --diff-filter=D`);
+  - the plain-text segment searches.
+- **Owner.** RIM, under `Plan: R1`, after F1 slice 2, together with P-87's deletion of the IND diff and manifest
+  routes.
