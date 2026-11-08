@@ -57,3 +57,18 @@ Checks run: `vault-folders.test.ts`, `vaultFolders.test.ts` (new); the cabinet, 
 placement suites; all 73 Vault client suites; `ci:one-product`, `ci:undefined-css-classes`,
 `ci:check-shell-css-collisions`, `ci:migration-drop-safety`, `ci:migration-set-order`. `ci:check-css-selector-shadowing`
 fails identically on trunk (`journey-v2.css`, `protocol-dev-editing.css`), not from this change.
+
+## Where this stops, for the next session
+
+Steps 2–4 are open; their design and the files they touch are in `docs/design/ONE_DESIGN_PLAN.md` §3a, "S6 — The
+Vault's folders and filing binders". In short:
+
+- **Step 2** is built (the binder per filing type and region); its walk is not. NDA, MAA, EU MDR and EU IVDR projects
+  are made through `POST /api/c2c/projects` with `clientWorkspaceId`; the app refuses a J-NDA and a Health Canada NDS
+  project, so those binders cannot be shown yet. Restart the app first: the record pane's folder name for a binder or
+  person's folder (`nameLeafFolders`) has not been seen running (`after-4-document-in-folder.png` shows `uf:5`).
+- **Step 3**: `vault.open-folder` takes an exact folder id; "Open in Vault" in the pyramid's task sheet; a binder
+  folder lists the plan tasks bound to it, from `GET /api/v1/pyramids/by-project/:id`.
+- **Step 4**: `place_project_document` files to binder headings and people's folders, and can make a folder through
+  `createProgramFolder` with AnA's provenance; a person still confirms the filing.
+- Stop the app before `git push`: the full typecheck gate runs out of memory beside it on 15 GB.
