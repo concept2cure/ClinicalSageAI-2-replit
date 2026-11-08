@@ -36,9 +36,14 @@ const h = vi.hoisted(() => ({
   methods: [] as Array<{ sourceKey: string; sourcePayload: Record<string, unknown>; isMethod: boolean }>,
 }));
 
-vi.mock('../../../services/part11/signing-authority-gate', () => ({ checkSigningAuthority: async () => null }));
+/** Authority answers null (authorized) unless a case says otherwise. */
+const checkSigningAuthority = vi.fn(async (): Promise<unknown> => null);
+vi.mock('../../../services/part11/signing-authority-gate', () => ({
+  checkSigningAuthority: (...a: unknown[]) => checkSigningAuthority(...(a as [])),
+}));
+const verifyReauth = vi.fn(async () => ({ ok: true }));
 vi.mock('../../../routes/c2c/actions', () => ({
-  verifyReauth: async () => ({ ok: true }),
+  verifyReauth: (...a: unknown[]) => verifyReauth(...(a as [])),
   recordGovernedAction: async () => ({ actionId: 'act-1', auditId: 'aud-1', sha256Chain: 'chain' }),
 }));
 vi.mock('../../../services/part11/signature-persistence', async (orig) => ({
@@ -107,6 +112,9 @@ beforeEach(() => {
   h.writes = [];
   h.spec = null;
   h.methods = [];
+  verifyReauth.mockClear();
+  checkSigningAuthority.mockClear();
+  checkSigningAuthority.mockResolvedValue(null);
 });
 
 describe('POST /specifications/:id/approve — the method gate the screen promised', () => {
@@ -146,14 +154,77 @@ describe('POST /specifications/:id/approve — the method gate the screen promis
     expect(h.writes).toContain('approve');
   });
 
-  it('approves a compendial method the register does not hold, rather than blocking it', async () => {
+  it('refuses, and writes nothing, when the register does not hold the named method', async () => {
+    /* A compendial procedure is not an exception: the register records and
+       verifies one like any other. An approved specification is a filed
+       commitment, so the bar is that the product can SHOW the procedure is
+       fit, not merely that it has not been shown unfit. */
     h.spec = specRow({ method: 'USP <711> Dissolution' });
     h.methods = [methodRow({ methodName: 'SE-HPLC', validationStatus: 'validated' })];
 
     const res = await approve();
 
-    expect(res.status, 'a pharmacopoeial method with no register row blocked a signature').toBe(200);
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('METHOD_NOT_IN_REGISTER');
+    expect(h.writes).toEqual([]);
+  });
+
+  it('approves a procedure shown suitable without full validation', async () => {
+    /* The repository's own ICH Q2 reading (`q2Expectation`) makes suitability
+       sufficient before phase 3; a phase-1 IND's specifications are routinely
+       approved on qualified methods. */
+    h.spec = specRow({ method: 'SE-HPLC' });
+    h.methods = [methodRow({ methodName: 'SE-HPLC', validationStatus: 'qualified' })];
+
+    const res = await approve();
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(h.writes).toContain('approve');
+  });
+
+  it('refuses BEFORE asking the signer to re-authenticate — nobody signs into a refusal', async () => {
+    /* The gate first ran inside the write transaction, which is after the
+       re-auth: a signer typed their password and was then told the act could
+       never complete. The status was right and the ceremony was wrong. This
+       case pins the ORDER, which the status alone cannot: with the
+       precondition back inside the transaction the refusal is still a 409 and
+       only this assertion goes red. */
+    h.spec = specRow({ method: 'SE-HPLC' });
+    h.methods = [methodRow({ methodName: 'SE-HPLC', validationStatus: 'development' })];
+
+    const res = await approve();
+
+    expect(res.status).toBe(409);
+    expect(verifyReauth, 'the signer re-authenticated into a refusal').not.toHaveBeenCalled();
+  });
+
+  it('asks signing authority before the password, and before the method', async () => {
+    /* §11.10(g): identity is not authority. A viewer who cannot sign is turned
+       away without typing a password, and without the register being read on
+       their behalf — the order `ci:sign-ceremony` requires in the handler, and
+       which that gate checks only by presence. Both ceremony calls are in the
+       handler for this reason: a reader can see which comes first. */
+    checkSigningAuthority.mockResolvedValue({
+      status: 403, code: 'ESIGNATURE_NO_AUTHORITY', message: 'no authority',
+    });
+    h.spec = specRow({ method: 'SE-HPLC' });
+    h.methods = [methodRow({ methodName: 'SE-HPLC', validationStatus: 'validated' })];
+
+    const res = await approve();
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('ESIGNATURE_NO_AUTHORITY');
+    expect(verifyReauth, 'a signer with no authority was asked for their password').not.toHaveBeenCalled();
+    expect(h.writes, 'the approval was written for a signer with no authority').toEqual([]);
+  });
+
+  it('still asks for re-authentication when the specification IS approvable', async () => {
+    h.spec = specRow({ method: 'SE-HPLC' });
+    h.methods = [methodRow({ methodName: 'SE-HPLC', validationStatus: 'validated' })];
+
+    await approve();
+
+    expect(verifyReauth, 'the re-auth gate was skipped for an approvable specification').toHaveBeenCalled();
   });
 
   it('reads the method from a bare jsonb string, as the display row does', async () => {
