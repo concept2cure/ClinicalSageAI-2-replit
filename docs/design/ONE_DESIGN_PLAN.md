@@ -1135,6 +1135,53 @@ in the running app where a screen changed. Where either was not possible, its RE
 
 1. Answers to the founder questions above, which decide this lane's next slices.
 
+#### S6 — The Vault's folders and filing binders, like Veeva's (session `session_01QoxbLZMScz1c2iFESBLn9J`, 2026-11-06)
+
+Started by the lead (`011Dpx…`) for the founder's ask of 2026-11-06: *"a Vault user interface, files, folders … just
+like Veeva … templates and folders for the full IND pyramid of potential filing types across all the therapeutic areas
+and regions … Anna needs to have autonomous control over all of this, agentically."* Evidence:
+`docs/evidence/SPINE/S6/2026-11-06/` (README with "What already exists", before/after screenshots, walks, audit rows).
+
+**Delivered: step 1 of 4, plus most of step 2** (S6 `b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
+
+- **Folders a person makes.** `public.document_folders` (it existed, reached only by the uncalled legacy `/api/folders`)
+  gains `program_id` and `parent_key` (`migrations/20261106_document_folders_project_scope.sql`, additive, in the set
+  before the sweep pair). `server/services/vault/vault-folders.ts` holds the project's folder index and the governed
+  writers; POST `/api/c2c/project-vault/:id/folders` and `/:id/folders/:folderId/rename`. Each change writes a chained
+  audit row with who, when and the reason (required). The Vault's header has **New folder** (made in the folder open
+  in the tree) beside **Upload a folder** (the old "Add a folder", which uploads); a person's folder has **Rename**;
+  "Move to…" lists every folder at its depth. Placement, upload-into-a-folder and folder export accept any folder of
+  the index. Walked in the CSR study's Vault: made in 5.3, renamed, `adsl.xpt` moved in, three audit rows.
+- **The cabinet is the filing's binder.** It is the active rule pack of the project's document class (the
+  scaffolder's own resolution, `document-class.ts` + `rule-pack-lookup.ts`): a US IND gets FDA Module 1 and CTD to
+  section; an NDA, MAA (EU Module 1), 510(k) (eSTAR A–G), EU MDR and IVDR (Annex II) each get their own pack.
+  Folder ids: preset (`module-3`), binder heading (`bn:3.2.S.4`, which also records its CTD section), a person's
+  (`uf:12`). A row filed to a module preset shows at its CTD heading. With no pack, the folders stop at module level
+  and the cabinet says why (`note`).
+
+**Not done, for the next session** (holds released in `.design/claude-convergence/COORDINATION.md`):
+
+1. **Step 2's walk.** Projects exist for it on a fresh Codespace only if made again: NDA, MAA, EU MDR and EU IVDR were
+   created through `POST /api/c2c/projects` (`clientWorkspaceId` required when several workspaces exist). The app
+   refuses a J-NDA (PMDA requires eCTD 4.0) and a Health Canada NDS (no outline), so neither binder can be shown in a
+   project yet; the J-NDA pack exists. Shoot each binder; restart the app first (the leaf's folder label fix in
+   `filingCabinet`, `nameLeafFolders`, is not yet seen in the running app; the record pane read `uf:5`).
+2. **Step 3, the pyramid in Vault.** Design settled, not built: extend `vault.open-folder`
+   (`shared/navigation/surface-actions.ts`, handler in `Vault.tsx`) with an exact `folderId` resolved to the nearest
+   binder heading; in `Pyramid.tsx` `PyTaskSheet` add "Open in Vault" beside each Document-binding code (wired in
+   `PyramidProject.tsx` through `applySurfaceAction`, Plan: S11); in the Vault, read
+   `GET /api/v1/pyramids/by-project/:id` once and list under a binder folder the tasks whose `ctd` codes fall in it.
+3. **Step 4, AnA.** Extend `place_project_document` (`server/services/ana/document-catalog-tool-defs.ts`,
+   `document-placement-tools.ts`, Plan: S4) so `folder_id` names a binder heading or a person's folder, and add an
+   input that makes a folder through `createProgramFolder` with AnA's provenance (`anaToolProvenance`); let
+   `list_project_documents` return the folder index. A document AnA places stays a suggestion a person confirms.
+4. **Duplicates to converge:** the legacy `/api/folders` route (`server/routes/folder-management.js`) writes the same
+   table with no project; retire it onto `project-vault.ts` with its contract test
+   (`server/__tests__/security/tenant-isolation-folders.contract.test.ts`).
+5. **Running the gates here:** `ci:typecheck-no-regression` does not complete on a 15 GB machine with the app running;
+   stop the app before `git push`. `ci:check-css-selector-shadowing` is red on trunk (`journey-v2.css`,
+   `protocol-dev-editing.css`), not from this work.
+
 #### L1 (row D2) — CSR drafting with the person in control, and the running-app walk of its screens (session `session_01T2wooCZu46W7msw4TJuuzr`)
 
 Design: `docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md`. **Handed off on 2026-11-08.** The note for whoever
@@ -1273,6 +1320,12 @@ The founder asked this session to take over and finish the project page's work. 
   - Found, not D3's: `projectCreationDoors.contract` (Vault.tsx's Projects index door) and `projectDestination` fail
     on trunk. They follow the Vault session's `adb1c00cba` and `5144702d21`.
 
+**Hand-off** (2026-11-08). This session leaves D3 here and holds no file. The note for whoever continues is
+`docs/evidence/DESIGN/D3/README.md`: what is done, D3-4's exact starting points, the three suite failures that are
+not D3's, and what tripped this session. S12 (work projects), offered to this session by the lead on 2026-11-06, was
+not taken and is unassigned. It runs through the same files, so whoever takes D3-4 or S12 holds `Project*.tsx`
+first.
+
 **Not done in D3-1, for the lead**
 
 - The objective as a composer suggestion (D3.md §4.4 item 5.1). S1's objective already offers "Ask AnA to propose
@@ -1335,6 +1388,72 @@ Evidence and the pre-implementation “What already exists” inventory:
 dependency was added. Quality's register project filter/QP3 and the observed mobile tab overflow remain with the
 current Quality/Project holders in `COORDINATION.md`; their held files were not edited. The same source/task/build/report
 contract is the completion pattern for the existing CMC, RBM and Biostatistics owners; parity is not claimed.
+
+#### L1 (rows D1/D2) — the founder's Codespace sets itself up (session `session_01QoxbLaF89iYd7wC96owa7t`, 2026-11-06 to 2026-11-08)
+
+**What already exists.** `.devcontainer/` (image, `post-create.sh`, `post-start.sh`), `scripts/db/provision.mjs`,
+`scripts/seed-admin.mjs`, `scripts/ops/codespaces-doctor.mjs`, `scripts/demo/launch-demo/`,
+`scripts/cre/fetch-cdisc-pilot-adam.mjs`, the CSR walk in `docs/evidence/DEMO/2026-11-05-csr-lifecycle/`, and the
+Codespaces doc `docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md`. Each was completed, not replaced. Holds:
+COORDINATION.md, row "Codespace setup".
+
+**Delivered**
+
+- **The Codespace installs, provisions and starts itself**, `67ed113e`, `6cbe22d4`, `6c3104c0`, `020af067`.
+  - post-create: `npm ci`; PostgreSQL 16 + pgvector, from the distribution or else PGDG; a UTF8 cluster on localhost;
+    `npm run db:provision`; fictional demo accounts through `seed-admin.mjs`.
+  - post-start:
+    - re-provisions, which applies new migrations;
+    - starts `npm run dev` on 5000 as `app_service` only, behind the unchanged doctor/boot gate;
+    - reports "serving" vs "ready" from `/readyz` itself;
+    - seeds the demo packs;
+    - prepares the CDISC pilot CSR study up to frozen study data, stopping before the build that spends the
+      founder's key.
+  - The owner credential lives only in `~/.concept2cure-codespace/owner.env` (0600, outside the repository). It is
+    read only inside `c2c_with_owner_env`, which `codespaces-startup.test.mjs` pins.
+  - Evidence: `docs/evidence/HUMAN-TEST/CODESPACE/2026-11-06/`, with a clean run, a Chromium walk and screenshots.
+- **The founder's Anthropic key is checked against the approved drafting versions**, `dc47119b`. post-start runs the
+  doctor's no-charge model list and names which of `approved-models.ts`'s drafting versions the key can see. A key
+  that sees none is `ANTHROPIC_DRAFTING_MODELS_NOT_VISIBLE`.
+- **CI runs the Codespace as GitHub builds it**, `0282619e`, `5c7a61e0` in `.github/workflows/ci.yml` (job
+  `codespace`, plus `workflow_dispatch`). The job runs the devcontainer image, post-create and post-start, then checks:
+  - `/readyz`;
+  - the forwarded-origin sign-in;
+  - that no owner credential is in the app;
+  - that every connection is `app_service`;
+  - that a second start keeps the app.
+- **Defects found and fixed** (all in `.devcontainer`):
+  - `4c49406c`: an app started before the key arrived kept running keyless, which is the founder's "model not
+    approved". post-start now compares its keys with the server process's own environment and restarts the app.
+  - `4c49406c`: without `OPENAI_API_KEY`, search (Vault, knowledge base, project memory) is down. The doc asks for
+    both keys.
+  - `daec6680`: after the zod 3→4 lockfile change, an existing Codespace crashed at boot. `npm ci` now re-runs when
+    `package-lock.json` changes.
+  - `daec6680`: seven fictional people instead of three. The demo seed re-runs when `scripts/demo` changes.
+  - `fe3bdced`: the demo organisation's idle sign-out is 120 minutes, set through the governed
+    `PATCH /api/tenant-config/:id/settings`. Real tenants keep their own setting.
+
+**Not done, with the reason**
+
+1. **The image's PostgreSQL install has not run end to end anywhere.** In the image, post-create passed `npm ci` and
+   the 39 tests, then stopped at `deb.debian.org`, which this session's proxy refuses.
+   - Two routes remain. The founder can allow `deb.debian.org`, `security.debian.org`, `apt.postgresql.org` and
+     `www.postgresql.org` for a cloud session from claude.ai on a computer; the mobile app cannot show the request.
+   - Or CI run `42182651894` executes. On 2026-11-06, Actions was about 21 hours behind.
+2. **The second signer is not passed to `--pack all`.** `scripts/demo/launch-demo/packs/biotech-qms.mjs`
+   `settleStatus` approves a draft without first routing it to review. The server refuses that with 409
+   `QMS_INVALID_STATE`; mdx is the same. Once the DATA owner fixes it, add
+   `OQ_SIGNER_EMAIL="$DEMO_REVIEWER_EMAIL" OQ_SIGNER_PASSWORD="$DEMO_SIGNER_PASSWORD"` to the seed line in
+   `post-start.sh`.
+3. **R1's Lumen organisation for the founder** is R1's change in these files, not yet pushed as of this entry. Agreed:
+   - identities only from Codespaces secrets: `C2C_FOUNDER_EMAIL` (required, or the step is skipped),
+     `C2C_FOUNDER_NAME`, `C2C_LUMEN_REVIEWER_NAME` and `C2C_LUMEN_APPROVER_NAME`;
+   - addresses on `@lumen-demo.example`;
+   - the owner credential stays inside `c2c_with_owner_env`.
+
+   When it lands, set the Lumen organisation's idle window too: `c2c_set_idle_window <founder email> 120`.
+4. **No real model output has been seen in a Codespace.** No session had a key. The founder's first run, with both
+   keys, is the qualification.
 
 ## 4. How everyone works
 

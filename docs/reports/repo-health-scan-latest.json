@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-07T10:28:54.335Z",
+  "generatedAt": "2026-11-08T18:20:12.986Z",
   "git": {
-    "sha": "5ef1b892f3b4cae82667989af7b45d57f4c6b74f",
+    "sha": "4927d8517f8f1872f73c1291890baf5f86387c4e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2439,6 +2439,10 @@
         "bytes": 184484
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "bytes": 169063
+      },
+      {
         "file": "server/routes/submission-ops.ts",
         "bytes": 168718
       },
@@ -2447,20 +2451,16 @@
         "bytes": 164253
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "bytes": 162701
+      },
+      {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "bytes": 161965
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 161318
-      },
-      {
         "file": "server/routes/authoring-actions.ts",
         "bytes": 160504
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 160060
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2681,16 +2681,20 @@
         "lines": 3524
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 3327
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
         "lines": 3324
       },
       {
-        "file": "server/services/module3Composer.ts",
-        "lines": 3283
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 3321
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 3282
+        "file": "server/services/module3Composer.ts",
+        "lines": 3283
       },
       {
         "file": "server/routes/report-os.ts",
@@ -2699,10 +2703,6 @@
       {
         "file": "server/src/routes/stability.router.ts",
         "lines": 3197
-      },
-      {
-        "file": "server/routes/c2c/project-vault.ts",
-        "lines": 3191
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
