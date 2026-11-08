@@ -1,8 +1,9 @@
 > **Current roadmap (2026-11-06):** [One design, one plan](design/ONE_DESIGN_PLAN.md), with its
 > [machine-readable ledger](design/one-design-plan.json), is the execution authority. Founder decision P-104 adds
 > the **Anna runtime** epic at §1d: Multi-Agent Architecture Spec v0.5 §§1–32 extends the existing spine, in
-> fixture-gated phases 0–8. Its complete acceptance is pending. The CER roadmap below is historical context;
-> it grants no separate scope or completion claim.
+> fixture-gated phases 0–8. Its complete acceptance is pending. Founder decision P-105 (2026-11-08) records spec
+> v0.4 §§1–15 as v0.5's base, mapped in §1d, and gives the epic one owner. The CER roadmap below is historical
+> context; it grants no separate scope or completion claim.
 
 # CERv2 — Medical Device & Diagnostics Roadmap
 

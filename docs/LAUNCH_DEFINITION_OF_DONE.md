@@ -2036,3 +2036,35 @@ The founder, 2026-11-06, supplied **MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.
 - **Owner.** The lead owns end-to-end integration and acceptance; existing package owners keep their file holds.
   The current roadmap is `docs/design/ONE_DESIGN_PLAN.md` and `docs/design/one-design-plan.json`, not the historical
   CER-only or January vision roadmaps. Progress must name actual commits, checks and remaining dependencies.
+
+### P-105 — Spec v0.4 is recorded as the base of §1d's v0.5, and one session owns the Anna-runtime epic alone
+
+The founder, 2026-11-08, supplied **MULTI-AGENT-ARCHITECTURE-SPEC-20261105.md** (v0.4, §§1–15, "prepared for hand-off
+to Claude Code as the build specification") and directed:
+
+> "Stay perfectly aligned to the new roadmap and rules. But you must add the attached plan to the main new roadmap
+> and you own all of the attached alone."
+
+- **What is decided.**
+  1. v0.4 is on the roadmap as the predecessor of v0.5, which P-104 placed at `docs/design/ONE_DESIGN_PLAN.md` §1d.
+     Each v0.4 section is mapped onto §1d there. Where the two differ, v0.5 and P-104 govern. In particular, v0.4
+     §15's "consider and plan, do not build yet" stays superseded by P-104's build instruction. It is one epic, not
+     a second backlog.
+  2. The Anna-runtime epic (`architectureEpics` `anna-runtime` in `docs/design/one-design-plan.json`) has one owner:
+     the Claude Code session `session_01KZK3jgtmQBgNepqLjXjS3k`.
+     - It replaces the Anna architecture lead (Codex, 2026-11-06) as the epic's lead, for sequencing, integration,
+       acceptance and the epic's progress log.
+     - No other session takes an epic slice.
+- **What is not decided.**
+  - Other packages' scope is unchanged, and so are their holders' file holds for their own work (plan §4.6, one
+    session per file). When an epic slice needs a file someone else holds, the owner asks for it in
+    `.design/claude-convergence/COORDINATION.md`.
+  - v0.4 §14.5's open questions stay open, because P-104 does not decide them:
+    1. Is Anna customer-facing first, or internal-only?
+    2. What is the model cost and latency budget per document type?
+    3. Do Anna's internal dispositions need the same IQ/OQ validation package as user-facing approvals? That is to
+       be scoped with the first design partner.
+  - No new file, screen, route, mount, service, table, tool, dependency, integration or model is approved (RULE 6).
+    v0.4 §13.2's vendors are suggestions, not admissions.
+  - P-104's account target, its gates and its phase order are unchanged.
+- **Owner.** `session_01KZK3jgtmQBgNepqLjXjS3k`.
