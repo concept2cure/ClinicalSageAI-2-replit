@@ -6,7 +6,7 @@ import { databaseUrl } from '../setup.db';
 import { nativeCatalogRunId, seedNativeCatalogProject, withNativeCatalogClient, type NativeCatalogActor } from './catalog-native-fixture';
 import { assertVaultFixtureDatabase, closeVaultFixtureRuntime } from './vault-current-access-fixture';
 import { getPool } from '../../server/db';
-import { saveStatisticalDocumentToAuthoring } from '../../server/services/ana-biostats/workflow-integrator';
+import { saveStatisticalDocumentToAuthoring } from '../../server/services/ana-biostats/statistical-document-save';
 import { anaBiostatsOrchestrator } from '../../server/services/ana-biostats/orchestrator';
 import { documentGenerator } from '../../server/services/ana-biostats/document-generator';
 import { studyDesignToStatisticalInput } from '../../server/services/biostatistics-bridge/design-adapter';
