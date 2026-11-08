@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-depth -- an evidence script: a one-off CSS cascade walk kept beside its result; it ships nothing and is read with that result. */
 // For every element that carries a bare tone class beside some other class (tone_users.mjs), which
 // rule paints its colour and its fill today, and which would once the bare `.c2c-v2 .tone-*` rules
 // in app-v2.css are limited to `.rd-chip`. Static, from the stylesheets' text: each rule's subject
@@ -223,8 +224,8 @@ for (const { base, tone, sites } of els.values()) {
 out.sort((a, b) => a.el.localeCompare(b.el));
 for (const o of out) {
   const flag = o.color.bare && o.background.bare ? 'BARE-WINS-BOTH' : o.color.bare ? 'BARE-WINS-COLOR' : o.background.bare ? 'BARE-WINS-FILL' : 'own';
-  console.log(`${flag}\t${o.el}\t(${o.sites.length} site(s): ${o.sites.slice(0, 3).join(', ')}${o.sites.length > 3 ? ', …' : ''})`);
-  console.log(`\tcolor:      ${o.color.win}`);
-  console.log(`\tbackground: ${o.background.win}`);
-  for (const c of [...new Set([...o.color.ctx, ...o.background.ctx])]) console.log(`\t  in context: ${c}`);
+  console.info(`${flag}\t${o.el}\t(${o.sites.length} site(s): ${o.sites.slice(0, 3).join(', ')}${o.sites.length > 3 ? ', …' : ''})`);
+  console.info(`\tcolor:      ${o.color.win}`);
+  console.info(`\tbackground: ${o.background.win}`);
+  for (const c of [...new Set([...o.color.ctx, ...o.background.ctx])]) console.info(`\t  in context: ${c}`);
 }

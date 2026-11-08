@@ -82,5 +82,5 @@ for (const f of files(SRC)) {
 }
 
 const json = process.argv.includes('--json');
-if (json) console.log(JSON.stringify(rows, null, 1));
-else for (const r of rows) console.log(`${r.kind} ${r.file}:${r.line}\t[${r.base.join(' ')}]\t${r.tones.join(',')}${r.toneTemplate ? ' tone-${…}' : ''}${r.toneRef ? ' (reads a tone name)' : ''}\t${r.src}`);
+if (json) console.info(JSON.stringify(rows, null, 1));
+else for (const r of rows) console.info(`${r.kind} ${r.file}:${r.line}\t[${r.base.join(' ')}]\t${r.tones.join(',')}${r.toneTemplate ? ' tone-${…}' : ''}${r.toneRef ? ' (reads a tone name)' : ''}\t${r.src}`);

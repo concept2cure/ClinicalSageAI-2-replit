@@ -16,5 +16,5 @@ for (const f of files) {
   v(sf);
   if (n) { per[f.replace(process.cwd() + '/', '')] = n; total += n; }
 }
-console.log(`${name}: ${total} uses in ${Object.keys(per).length} files`);
-for (const [f, n] of Object.entries(per).sort()) console.log(`  ${n}\t${f}`);
+console.info(`${name}: ${total} uses in ${Object.keys(per).length} files`);
+for (const [f, n] of Object.entries(per).sort()) console.info(`  ${n}\t${f}`);
