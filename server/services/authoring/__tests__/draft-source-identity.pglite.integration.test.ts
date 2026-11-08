@@ -7,8 +7,8 @@ import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
 import {
-  PREREQ, AUTHORING_ACCESS_DDL, VAULT_DDL, AUTHOR, PROGRAM, OTHER_PROGRAM, ORG,
-  mint, makeApp, asToken,
+  PREREQ, AUTHORING_ACCESS_DDL, REVIEW_ACCESS_DDL, VAULT_DDL, AUTHOR, PROGRAM, OTHER_PROGRAM, ORG,
+  mint, makeApp, asToken, saveSectionsAsAuthor, runIndependentChecks,
 } from '../../../routes/__tests__/_authoring-canvas-fixture';
 
 const seam = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown, sql: [] as string[] }));
@@ -29,7 +29,7 @@ const CONTENT = '<p>The investigator will review this selected evidence.</p>';
 
 beforeAll(async () => {
   fixture = await createJourneyDb({
-    prereqSql: PREREQ + AUTHORING_ACCESS_DDL + VAULT_DDL,
+    prereqSql: PREREQ + AUTHORING_ACCESS_DDL + REVIEW_ACCESS_DDL + VAULT_DDL,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
@@ -52,6 +52,8 @@ beforeAll(async () => {
       'migrations/20260905_document_catalog.sql',
       'migrations/20261008e_document_catalog_attribution.sql',
       'migrations/20261006_document_data_dispositions.sql',
+      // The saved-document checks a released AnA draft carries (sealed) read the review store.
+      'db/migrations/20260730_authoring_subsystem_schema.sql',
     ],
   });
   seam.db = fixture.db;
@@ -62,7 +64,7 @@ beforeAll(async () => {
   seam.pool = { query, connect: async () => ({ query, release: () => undefined }) };
   author = asToken(await mint(AUTHOR));
   const { default: router } = await import('../../../routes/authoring.router');
-  app = makeApp(router);
+  app = makeApp(router, { dbClient: seam.pool as never });
 }, 180_000);
 afterAll(async () => { await fixture?.close(); });
 beforeEach(() => { seam.sql.length = 0; });
@@ -101,22 +103,26 @@ async function changeExtraction(documentId: string, text: string) {
   await fixture.pool.query('UPDATE vault.documents SET extracted_text=$2 WHERE id=$1 AND organization_id=$3', [documentId, text, ORG]);
 }
 
-async function sealed(reference: Awaited<ReturnType<typeof source>>, versioned = true) {
-  const documentId = randomUUID();
-  const provenance = { source: 'ana', projectSourceReferences: [{ sectionCode: '2.5.1',
-    qualification: 'unassessed', verification: 'current_at_save', ...(versioned ? { sourceReferenceVersion: 2 } : {}),
-    sources: [{ ...reference, programId: PROGRAM }] }] };
-  await fixture.pool.query(`INSERT INTO authoring_documents
-    (id,tenant_id,status,title,module,created_by,client_program_id,provenance)
-    VALUES($1,$2,'APPROVED','Synthetic sealed source-linked draft','M2',$3,$4,$5)`,
-  [documentId, ORG, AUTHOR.id, PROGRAM, JSON.stringify(provenance)]);
-  await fixture.pool.query(`INSERT INTO authoring_sections
-    (id,doc_id,tenant_id,code,title,content,order_index)
-    VALUES($1,$2,$3,'2.5.1','Selected evidence',$4,0)`, [randomUUID(), documentId, ORG, CONTENT]);
+/**
+ * A sealed source-linked AnA draft, made the way production makes one. A hand-inserted AnA document has no
+ * retained creation receipt and is rightly refused (WORKFLOW_ORIGIN_UNVERIFIED, bb999f25b6), so the draft is
+ * saved through from-draft, the author replaces its unqualified machine words with CONTENT, the saved checks
+ * run, and only the seal is seeded, as the signing routes store it.
+ */
+async function sealed(reference: Awaited<ReturnType<typeof source>>) {
+  const drafted = await author(request(app).post('/api/authoring/docs/from-draft')).send(body(reference, {
+    title: 'Synthetic sealed source-linked draft',
+    sections: [{ code: '2.5.1', title: 'Selected evidence', content: '<p>AnA drafted a summary of the synthetic evidence.</p>', sourceReferences: [reference] }] }));
+  expect(drafted.status, JSON.stringify(drafted.body)).toBe(201);
+  const documentId: string = drafted.body.data.doc.id;
+  await saveSectionsAsAuthor(app, author, [{ id: drafted.body.data.sections[0].id, content: CONTENT }]);
+  await runIndependentChecks(app, author, documentId);
+  await fixture.pool.query("UPDATE authoring_documents SET status='APPROVED' WHERE id=$1 AND tenant_id=$2", [documentId, ORG]);
   await fixture.pool.query(`INSERT INTO authoring_signatures
     (id,doc_id,tenant_id,signer_email,signer_name,meaning,reason,method,content_hash,pin_verified)
     VALUES($1,$2,$3,$4,'Synthetic reviewer','APPROVER','Synthetic fixture seal','PIN',$5,true)`,
   [randomUUID(), documentId, ORG, AUTHOR.email, sha(`2.5.1:${CONTENT}`)]);
+  seam.sql.length = 0; // the cases below read the export's own statements
   return documentId;
 }
 

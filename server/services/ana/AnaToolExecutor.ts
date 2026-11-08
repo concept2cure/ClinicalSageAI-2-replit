@@ -623,7 +623,12 @@ async function mandatorySkillRefusal(name: string, input: Record<string, unknown
     if ((ctx?.agentDepth ?? 0) >= 1) return { code: 'SUB_AGENT_READ_ONLY', result: JSON.stringify({ success: false, error: 'SUB_AGENT_READ_ONLY', tool: name, message: 'This read requires a person’s approval; a sub-agent cannot request it. Nothing was run.' }) };
     if (authorized === true) return null;
     return { code: 'SKILL_POLICY_APPROVAL_REQUIRED', result: JSON.stringify({ success: false, error: 'SKILL_POLICY_APPROVAL_REQUIRED', tool: name, message: 'An active organization or project rule requires approval of this exact action. Nothing was run.' }) };
-  } catch {
+  } catch (error) {
+    // The gate admits the project before it reads that project's rules. A project the actor cannot use is refused
+    // as that, in the admission's own words, not as rules that could not be verified.
+    if (error instanceof AnaProjectScopeError || error instanceof ProgramReadAccessError) {
+      return { code: error.code, result: projectScopeRefusal(error) };
+    }
     return { code: 'SKILL_POLICY_UNAVAILABLE', result: JSON.stringify({ success: false, error: 'SKILL_POLICY_UNAVAILABLE', tool: name, message: 'Current organization and project rules could not be verified. Nothing was run.' }) };
   }
 }
