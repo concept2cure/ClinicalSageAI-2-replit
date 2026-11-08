@@ -322,9 +322,12 @@ export async function computeInitialRun(
         if (readiness.gaps.length > 0) {
           const criticalGapMessages = readiness.gaps
             .filter(gap => gap.severity === 'critical')
-            .slice(0, 4)
             .map(gap => `${gap.title}: ${gap.message}`);
-          blockers.push(...criticalGapMessages);
+          // The blocker list a reader sees keeps its first four. The critical
+          // list is counted (the canvas lead, the portfolio rollup), so it keeps
+          // every one: cut to four, a project with 23 read "4 critical gaps
+          // outstanding" beside a digest that said 23 (running app, 2026-11-08).
+          blockers.push(...criticalGapMessages.slice(0, 4));
           criticalBlockers.push(...criticalGapMessages);
         }
 

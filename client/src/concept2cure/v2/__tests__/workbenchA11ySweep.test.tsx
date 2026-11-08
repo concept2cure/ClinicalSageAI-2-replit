@@ -52,6 +52,11 @@ import { CanonicalAuthoringFlow, setAuthoringFlowScope, clearAuthoringFlowScope 
 import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 
 const DOCS = {
   success: true,
@@ -78,7 +83,7 @@ beforeEach(() => {
   ledgerAnswer = () => ok({ success: true, intact: true, revisionCount: 2, chainedCount: 2, preLedgerCount: 0, breaks: [] });
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, DOCS));
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return docRead();
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok({ success: true, sections: [SECTION] });
     if (method === 'GET' && url === '/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000001/history/verify') return ledgerAnswer();

@@ -85,6 +85,8 @@ const REASON = 'Ready for medical review before the pre-IND package.';
 const REQUEST_URL = `/api/authoring/documents/${DOC}/request-review`;
 const REVIEWS_URL = `/api/authoring/documents/${DOC}/reviews`;
 const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }, programId = new URLSearchParams(url.split('?')[1]).get('programId')) => programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
 /** RR5: the review due date the request's route takes. */
 const DUE = '2026-11-20';
 
@@ -121,9 +123,7 @@ const recorded = (body: { reviewers: Array<{ id: string; name?: string }> }, doc
 
 /** The workbench's own reads of the document, or null for any other URL. */
 function documentRead(url: string): Response | null {
-  if (url.startsWith('/api/authoring/docs?')) {
-    return ok({ documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
-  }
+  if (url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, { documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] }));
   if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
   if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
     return ok({ sections: [{ id: SEC, doc_id: DOC, code: '2.5.1', title: 'Rationale', content: '<p>The product rationale.</p>', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 0, updated_at: null }] });
@@ -594,7 +594,7 @@ describe('Send for review — never from the author, and the reviewer’s access
   it('the workbench passes the document’s author, so she is not offered there either', async () => {
     const original = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation((method: string, url: string, body?: unknown) => url.startsWith('/api/authoring/docs?')
-      ? Promise.resolve(ok({ documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1, created_by: 9 }] }))
+      ? Promise.resolve(ok(scopedList(url, { documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1, created_by: 9 }] })))
       : original(method, url, body));
     const dlg = await openDialog();
     expect(within(dlg).queryByTestId('sfr-reviewer-9')).toBeNull();

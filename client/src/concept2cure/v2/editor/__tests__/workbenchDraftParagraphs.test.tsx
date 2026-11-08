@@ -34,6 +34,11 @@ const TEXT: Record<string, string> = {
 const served = (qualified: boolean) => [{ provider: 'anthropic', model: 'qualified-test-model', qualified, approvedForHighRisk: qualified, pq: 'pending' }];
 const doc = { id: DOC, title: 'Clinical study report', module: 'M5', status: 'draft', updated_at: AT, section_count: 1 };
 const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 
 for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unknown as Array<Record<string, unknown>>) {
   if (typeof proto.getClientRects !== 'function') proto.getClientRects = () => [];
@@ -49,7 +54,7 @@ function serve(content: string, qualified = true) {
         turnRecord: { status: 'recorded', id: `TURN-${tone}`, sha256: 'b'.repeat(64), servedBy: served(qualified) },
         metadata: { tone, model: 'qualified-test-model', provider: 'anthropic', sourcesRetrieved: 1, attributableSources: 1, retrievalStatus: 'ok' } } });
     }
-    if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
+    if (url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, { documents: [doc] }));
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
     /* The sections read as the server sends it since 8013c9457 (authoring-document-read.ts): every section carries its
        writing-agency projection. This report records no saved template, so the projection is 'not-recorded'. */

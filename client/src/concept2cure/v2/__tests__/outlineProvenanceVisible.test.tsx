@@ -82,10 +82,16 @@ function outlineResponse(provenance: unknown) {
   };
 }
 
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
+
 function wire(provenance: unknown) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(AUTHORING_DOCS);
+    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, AUTHORING_DOCS));
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(AUTHORING_SECTIONS);
     if (method === 'GET' && url.startsWith('/api/c2c/documents?projectId=')) {
       return ok({ documents: [{ id: DOC_ID, doc_type: 'mdr', agency: 'ema', title: 'Technical Documentation', rule_pack_version: 'v1', status: 'draft', readiness: 20 }] });

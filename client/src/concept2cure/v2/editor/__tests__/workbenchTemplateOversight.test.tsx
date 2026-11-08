@@ -43,6 +43,11 @@ const doc = { id: DOC, title: 'Renamed administrative preparation', module: 'M1'
 const section = { id: SEC, doc_id: DOC, code: '1.1.1', title: 'Source and completion checks',
   content: '<p>The sponsor contact is listed in the source record.</p>', order_index: 0, updated_at: AT };
 const ok = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body }) as Response;
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 type Handoff = { prefill: string; sendOnArrival: boolean; origin: AskOrigin };
 const handoff = () => (window as unknown as { C2C_CONVO?: Handoff }).C2C_CONVO;
 for (const prototype of [Range.prototype, Element.prototype, Text.prototype] as unknown as Array<Record<string, unknown>>) {
@@ -55,7 +60,7 @@ beforeEach(() => {
   window.C2C_PROJECT = { id: PID } as typeof window.C2C_PROJECT;
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_method: string, url: string) => {
-    if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
+    if (url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, { documents: [doc] }));
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section] });
     if (url.startsWith('/api/authoring/guidance/')) return ok({ template_guidance: [{ guidance_text: 'Review the source form.', template_source: SOURCE }] });
