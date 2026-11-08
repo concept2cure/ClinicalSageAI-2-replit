@@ -23,6 +23,7 @@
  *
  * @module server/services/cmc/ich-compliance-q2
  */
+import { METHOD_SUITABLE, METHOD_VALIDATED } from './analytical-method-source';
 import { citeSource, getCmcSource } from './knowledge';
 import {
   blockedInputs,
@@ -41,9 +42,12 @@ export function cite(...ids: string[]): string {
   }).join('; ');
 }
 
-const VALIDATED = new Set(['validated', 'verified', 'transferred']);
-/** Statuses that show a procedure is suitable for its use without full validation. */
-const SUITABLE = new Set(['qualified', 'suitable', 'suitability confirmed', 'phase-appropriate', 'phase appropriate', 'fit for purpose']);
+/* The one vocabulary, from the module that owns the record whose field it
+   reads (analytical-method-source). It was declared here; the specification
+   approval gate needs the same reading, and two copies is how two surfaces
+   come to disagree about whether a method is validated. */
+const VALIDATED = METHOD_VALIDATED;
+const SUITABLE = METHOD_SUITABLE;
 
 interface Expectation {
   /** What a method must show at this stage. */
