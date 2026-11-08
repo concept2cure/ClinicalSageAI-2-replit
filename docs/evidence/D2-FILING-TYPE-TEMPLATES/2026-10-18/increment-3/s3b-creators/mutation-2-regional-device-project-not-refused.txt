@@ -1,0 +1,12 @@
+MUTATION 2-regional-device-project-not-refused: replaced [  if (regionalDeviceApplicationClassOf(programType)) {
+    throw new SubmissionError('DEVICE_PREPARATION_ONLY',
+      'No submission is created in this project: it is a regional device preparation project, whose outline does not support canonical submission creation yet. Nothing was created.');
+  }
+  const own = filingDocumentClassOf(programType);] with [  const own = filingDocumentClassOf(programType);], 2026-11-08T22:12:52Z
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > no creator writes a submission into a project that is not an application > the standalone creator refuses a regional device preparation project
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > no creator writes a submission into a project that is not an application > the transactional creator refuses a regional device preparation project
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: promise resolved "{ id: 7, auditTrail: { …(1) } }" instead of rejecting
+AssertionError: promise resolved "undefined" instead of rejecting
+      Tests  2 failed | 2 passed (4)
+restored sha256 46b6dfef1c4d03951465a9a4d961232a65856cfefb61373c62120e3b3d25c64f (expected 46b6dfef1c4d03951465a9a4d961232a65856cfefb61373c62120e3b3d25c64f)
