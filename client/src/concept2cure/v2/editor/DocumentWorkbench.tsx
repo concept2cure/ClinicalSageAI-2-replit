@@ -3604,6 +3604,7 @@ export function DocumentWorkbench({
   const toggleTrackChanges = useCallback(
     async (on: boolean) => {
       if (!activeSection) throw new Error('No section open');
+      const expectedUpdatedAt = activeSection.updated_at;
       /* apiRequest THROWS the server's real refusal (a frozen document), and the
          editor's toggleTrack swallows the rethrow to keep its state truthful —
          so the author got no reason at all. The reason is said here, then the
@@ -3612,6 +3613,7 @@ export function DocumentWorkbench({
       try {
         res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
           track_changes: on,
+          ...(expectedUpdatedAt ? { expectedUpdatedAt } : {}),
         });
       } catch (e) {
         fireToast(
@@ -3632,7 +3634,16 @@ export function DocumentWorkbench({
         );
         throw new Error('track toggle refused');
       }
-      setSections(ss => ss.map(s => (s.id === activeSection.id ? { ...s, track_changes: on } : s)));
+      const updatedAt = (json as { section?: AuthSection } | null)?.section?.updated_at;
+      // The mode changed against the version this editor loaded. Carry its new
+      // token without adopting content, and never regress a newer save that
+      // settled while this response was in flight. An unversioned request
+      // cannot vouch that the returned token still describes our loaded text.
+      setSections(ss => ss.map(s => (s.id === activeSection.id ? {
+        ...s, track_changes: on,
+        ...(expectedUpdatedAt && s.updated_at === expectedUpdatedAt && typeof updatedAt === 'string'
+          ? { updated_at: updatedAt } : {}),
+      } : s)));
       fireToast(
         on
           ? 'Track changes on — edits are captured as attributed suggestions until accepted or rejected.'

@@ -1,0 +1,18 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTrackChangesVersion.test.tsx > Track-changes saves preserve the content version boundary > sends its loaded token and uses the successful metadata version for the next content save 507ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTrackChangesVersion.test.tsx > Track-changes saves preserve the content version boundary > keeps the loaded token and unsaved text when a stale metadata toggle is refused 270ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchTrackChangesVersion.test.tsx > Track-changes saves preserve the content version boundary > does not regress a newer content-save token when an older toggle response arrives late 250ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  08:55:02
+   Duration  4.26s (transform 2.07s, setup 118ms, import 2.63s, tests 1.03s, environment 363ms)
+

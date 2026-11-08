@@ -475,7 +475,7 @@ export async function amendAssessment(
 export interface GeneratePlanResult {
   generated: boolean;
   /** Why nothing was generated, when `generated` is false. */
-  reason?: 'no_assessment' | 'assessment_not_approved' | 'draft_already_open';
+  reason?: 'no_assessment' | 'assessment_not_approved' | 'overall_risk_not_recorded' | 'draft_already_open' | 'actor_required';
   plan?: any;
   actions?: any[];
   derivedFrom?: { assessmentId: number; overallRisk: string; criticalFactors: number; enhancedSites: number };
@@ -620,18 +620,16 @@ export async function derivePlanFromAssessment(
 export async function generatePlanFromAssessment(
   exec: Exec,
   organizationId: number,
-  input: { programId: string; title?: string; createdBy?: number | null },
+  input: { programId: string; title?: string; createdBy: number },
 ): Promise<GeneratePlanResult> {
+  if (!Number.isSafeInteger(input.createdBy) || input.createdBy <= 0) return { generated: false, reason: 'actor_required' };
   const derivation = await derivePlanFromAssessment(exec, organizationId, input.programId);
   if (!derivation.derived) return { generated: false, reason: derivation.reason };
   const { assessment } = derivation;
 
-  // OPEN DEFECT (docs/evidence/F1/2026-11-01-rbm-handlers/README.md, (b)): an
-  // approved assessment that records no overall risk still gets 'medium' here.
-  // Refusing it needs the route (mdx-rbm.ts) to give the new reason a true
-  // message — today it turns every other reason into "No risk assessment
-  // exists". AnA's generate_rbm_plan refuses that case instead of guessing.
-  const overall = derivation.recordedOverallRisk ?? 'medium';
+  // A missing risk basis cannot become a persisted monitoring strategy.
+  if (derivation.recordedOverallRisk === null) return { generated: false, reason: 'overall_risk_not_recorded' };
+  const overall = derivation.recordedOverallRisk;
   const strategy = defaultPlanStrategy(overall);
 
   // Generating lands a new plan VERSION, so it cannot silently sit alongside an
@@ -655,7 +653,7 @@ export async function generatePlanFromAssessment(
         criticalFactors: derivation.criticalFactors,
         enhancedSites: derivation.enhancedSites,
       }),
-      input.createdBy ?? null,
+      input.createdBy,
     ],
   )).rows[0];
 

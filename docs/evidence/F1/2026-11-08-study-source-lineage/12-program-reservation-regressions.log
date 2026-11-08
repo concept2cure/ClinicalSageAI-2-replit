@@ -1,0 +1,113 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:36) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not offer another study’s same-filename source as predecessor 29ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > finds the correct study even when a second study has the same filename 19ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not infer a successor when the incoming study is unmatched 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not equate two unresolved study references 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > binds the complete project scope as well as study identity 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures two studies’ same filename independently, then revises only its own study 129ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > reuses current bytes without changing the original upload, capturer or title 70ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures unmatched scope without retiring the same-named study source 67ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures multiple known scope without retiring the same-named study source 68ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures later unmatched scope without retiring the same-named study source 66ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures no study scope without retiring the same-named study source 65ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > declines two same-study filename candidates without guessing the newest 41ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture retains historical bytes and exact identity > never reactivates superseded bytes or creates a current clone of them 87ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture retains historical bytes and exact identity > cannot revive unresolved retired bytes after a study is registered 20ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture retains historical bytes and exact identity > matches identical bytes only within the explicitly selected study 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > an audit failure rolls back retirement and the new source together 68ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > a failed study lookup refuses capture rather than recording an unrelated source 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > rechecks membership after waiting for the capture reservation 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > requires the recorded original upload and never accepts a guessed byte binding 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > a retained deleted capture cannot be replaced by a fresh current identity for its bytes 52ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > a project use share permits reading but cannot capture a file 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > a lost commit acknowledgement preserves uncertainty and a retry resolves the committed identity 65ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the canonical program reservation remains a required admission > refuses a program that disappears at its row lock before any source insert 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the canonical program reservation remains a required admission > reports an unavailable program row lock separately from a missing program 8ms
+(node:55) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T18:07:58.355Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > source versioning — a citation stops calling itself current > a cited source that is superseded reports SUPERSEDED, not current 57ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > source versioning — a citation stops calling itself current > refuses to fork a lineage: a source can be superseded only once 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > source versioning — a citation stops calling itself current > does not retire a source belonging to another tenant 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > findSupersededCandidate — declines to guess > finds the single current same-name document in the project 13ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > findSupersededCandidate — declines to guess > returns null when TWO documents in the project share the name 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > findSupersededCandidate — declines to guess > returns null with no project scope — a filename alone is not identity 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > findSupersededCandidate — declines to guess > does not offer an already-superseded source as a candidate 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > the version column carries what was observed, and nothing else (L21) > round-trips a declared version into cre_evidence_sources.version 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > the version column carries what was observed, and nothing else (L21) > leaves the column NULL when the caller records no version 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > the version column carries what was observed, and nothing else (L21) > carries the version across a supersession without renumbering it 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > SourceRef.version reports a label it can carry, or none > reports an integer label as that integer 13ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > SourceRef.version reports a label it can carry, or none > reports a dotted label as NOT RECORDED rather than truncating it 51ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > SourceRef.version reports a label it can carry, or none > reports an absent version as absent 37ms
+(node:67) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows the program lead 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows every org manage role regardless of who leads the program 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > normalizes the org role, so SUPER_ADMIN is the same authority as super_admin 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unrelated org member 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a viewer and an actor with no role at all 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a non-manager when the program has no lead — unowned is not everyone-owned 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unauthenticated actor even when the program is unowned 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > denies read-only roles 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows ordinary and elevated roles 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows an unrecognized role rather than locking it out 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > defaults to WARN, unlike the authorization gate 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > honours an explicit enforce 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > falls back to warn on an unrecognized value 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce when PROGRAM_AUTHZ_MODE is unset or empty 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce outside production too 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > honours an explicit mode, case- and whitespace-insensitively 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > falls back to enforce on an unrecognized value rather than opening up 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > asks regulatory_programs for a live program of this organization 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > is false when the query finds nothing 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > admits a deleted program only when the caller opts in by name 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "not-a-uuid" without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "" without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses 42 without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses null without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses undefined without asking the database 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > reads a digit-string organization as that organization, and nothing else as one 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > throws VerificationUnavailableError, not false, when the query cannot run 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > resolves a connection given as a function inside the check, so "no pool" is "could not check" 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership reservation on the actual transaction client > retains an exclusive parent lock with includeDeleted=false 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership reservation on the actual transaction client > retains an exclusive parent lock with includeDeleted=true 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership reservation on the actual transaction client > keeps the exclusive reservation when a composed caller also requests a shared hold 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership reservation on the actual transaction client > keeps ordinary reads free of an exclusive write reservation 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership reservation on the actual transaction client > preserves typed unavailable refusal when the parent reservation fails 0ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > holds the live matching row using the supplied transaction executor and bound identity 3ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > refuses a missing, foreign or deleted row in held live mode 2ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > holds a deleted row only with the explicit retained-record option 2ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > preserves ordinary behavior when holding is absent or explicitly false 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > a held lookup failure remains unavailable rather than false (includeDeleted=false) 1ms
+ ✓ server/services/c2c/__tests__/program-access.test.ts > program ownership with a caller-owned shared row reservation > a held lookup failure remains unavailable rather than false (includeDeleted=true) 0ms
+(node:79) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-checksum-executor.test.ts > findSourceByChecksum supplied executor > uses the caller transaction without changing historical identity or filters 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-checksum-executor.test.ts > findSourceByChecksum supplied executor > retains the existing pool fallback and empty-checksum no-query behavior 1ms
+
+ Test Files  4 passed (4)
+      Tests  78 passed (78)
+   Start at  10:07:53
+   Duration  9.74s (transform 962ms, setup 111ms, import 2.82s, tests 6.20s, environment 0ms)
+

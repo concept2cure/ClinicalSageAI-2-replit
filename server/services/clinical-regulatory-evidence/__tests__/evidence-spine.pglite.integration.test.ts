@@ -138,3 +138,25 @@ describe('governance invariants', () => {
     expect(lesson.minimumEvidenceCount).toBe(2);
   });
 });
+
+describe('bound list limits preserve optional filters', () => {
+  it('keeps source, study and finding filters separate from the clamped limit', async () => {
+    const filter = { indication: 'Bound list fixture', applicationNumber: 'SQL-LIMIT-01', sourceType: 'csr' as const };
+    const first = await svc.createSource(ORG_A, { ...filter, title: 'Bound source one' });
+    await svc.createSource(ORG_A, { ...filter, title: 'Bound source two' });
+    expect(await svc.listSources(ORG_A, { ...filter, limit: 0 })).toHaveLength(1);
+    expect(await svc.listSources(ORG_A, { ...filter, limit: 500 })).toHaveLength(2);
+
+    for (const suffix of ['one', 'two']) {
+      await svc.upsertStudy(ORG_A, { canonicalStudyKey: `bound-list-${suffix}`, indication: filter.indication, phase: '2' });
+      await svc.createFinding(ORG_A, { sourceId: first.id, applicationIdentifier: filter.applicationNumber,
+        findingDomain: 'clinical', findingText: `Bound finding ${suffix}` });
+    }
+    expect(await svc.listStudies(ORG_A, { indication: filter.indication, phase: '2', limit: 1 })).toHaveLength(1);
+    expect(await svc.listStudies(ORG_A, { indication: filter.indication, phase: '2', limit: 500 })).toHaveLength(2);
+    const findingFilter = { sourceId: first.id, applicationIdentifier: filter.applicationNumber, findingDomain: 'clinical' };
+    expect(await svc.listFindings(ORG_A, { ...findingFilter, limit: 0 })).toHaveLength(1);
+    expect(await svc.listFindings(ORG_A, { ...findingFilter, limit: 500 })).toHaveLength(2);
+    expect(await svc.listFindings(ORG_A, { ...findingFilter, findingDomain: 'cmc' })).toHaveLength(0);
+  });
+});

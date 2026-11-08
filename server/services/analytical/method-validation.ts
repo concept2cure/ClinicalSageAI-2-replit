@@ -144,10 +144,22 @@ export function assessMethodValidation(input: MethodValidationInput): MethodVali
     }
     if (input.precision.some((v) => !Number.isFinite(v))) throw new Error('precision results must be finite numbers');
     const m = mean(input.precision);
+    if (!Number.isFinite(m) || m === 0) {
+      throw new Error('precision mean must be finite and non-zero to calculate percent RSD');
+    }
     const sd = Math.sqrt(input.precision.reduce((s, v) => s + (v - m) ** 2, 0) / (input.precision.length - 1));
-    const rsdPercent = m === 0 ? 0 : (sd / Math.abs(m)) * 100;
+    // Differing replicates cannot have zero spread; that indicates arithmetic underflow.
+    if (!Number.isFinite(sd) || (sd === 0 && input.precision.some((v) => v !== input.precision![0]))) {
+      throw new Error('precision standard deviation must be finite and non-zero for differing replicate results');
+    }
+    const rsdPercent = (sd / Math.abs(m)) * 100;
+    if (!Number.isFinite(rsdPercent)) throw new Error('precision percent RSD must be finite');
     const pass = rsdPercent <= rsdMax;
-    result.precision = { n: input.precision.length, mean: round(m), sd: round(sd), rsdPercent: round(rsdPercent, 4), pass };
+    const precision = { n: input.precision.length, mean: round(m), sd: round(sd), rsdPercent: round(rsdPercent, 4), pass };
+    if (![precision.mean, precision.sd, precision.rsdPercent].every(Number.isFinite)) {
+      throw new Error('precision rounded results must be finite for the supplied scale');
+    }
+    result.precision = precision;
     result.assessed.push('precision');
     passes.push(pass);
   }

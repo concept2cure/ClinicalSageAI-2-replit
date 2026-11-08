@@ -1,0 +1,94 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T18:42:35.229Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T18:42:35.230Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T18:42:35.230Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T18:42:35.508Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+   ✓ QMS quality: 9 controlled docs, 0 training acks, 6 changes, 9 links seeded
+
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds the controlled-document register and change-control log 6ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > summary reflects the seeded lifecycle spread 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > counts every change past its target whose implementation is unfinished, whatever its stage 1ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > flags each such change on the register from the server’s date, with the same predicate 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > reads every change’s linked records for the register in one org-scoped query 4ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > links a change to its deviation and validation records 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds no effective document and no training against one: approval is a signature the seed cannot give 1ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > advances proposed → assessed → approved (by a different user) → implemented → verified → closed 14ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > rejects an illegal transition (closed is terminal) 4ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > refuses approval without a signature, for the proposer and anyone else, and changes nothing 5ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > links only a record of this organisation, and keeps a removed link with who removed it and why 19ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > removes only the owned active change through an executor that supplies rows alone 4ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > requires a recorded effectiveness review: undefined 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > requires a recorded effectiveness review: null 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > requires a recorded effectiveness review: "" 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > requires a recorded effectiveness review: "   " 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > does not record anonymous closure 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > holds closure when the verifier loses current role admission 7ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > holds closure when the verifier loses current membership admission 7ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > holds closure when the verifier loses current account admission 7ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > holds closure when the verifier loses current organization admission 9ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > only a required native deviation blocks closure; a descriptive reference does not 19ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not treat a failed CAPA effectiveness check as completed required work 11ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > resolves a CAPA code inside the change programme and refuses an ambiguous organization-only code 16ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not treat a live document status or typed validation reference as exact accepted completion 10ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure refuses stale requirements and later mutation > rechecks native prerequisite state in the same statement that records closure 9ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure refuses stale requirements and later mutation > refuses a stale closure after an interleaved state change 6ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure refuses stale requirements and later mutation > refuses a stale closure after an interleaved content change 5ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure refuses stale requirements and later mutation > refuses a stale closure after an interleaved link change 5ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure refuses stale requirements and later mutation > does not attach or erase a requirement after closure 9ms
+(node:42) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > formats the boundary cases as the SAS convention does 2ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > prints a mean of 60.05 as 60.1, not 60.0 1ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > prints exposure the same way 1ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > preserves the bound of an imported p-value 0.0004 0ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > preserves the bound of an imported p-value 0.9996 0ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > preserves the bound of an imported p-value 0 0ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > preserves the bound of an imported p-value 1 0ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > preserves the bound of an imported p-value 0.001 1ms
+ ✓ server/services/csr/__tests__/csr-table-rounding.test.ts > table figures round half away from zero on the decimal value > preserves the bound of an imported p-value 0.999 0ms
+
+ Test Files  2 passed (2)
+      Tests  39 passed (39)
+   Start at  10:42:33
+   Duration  4.63s (transform 1.21s, setup 78ms, import 2.09s, tests 1.98s, environment 0ms)
+

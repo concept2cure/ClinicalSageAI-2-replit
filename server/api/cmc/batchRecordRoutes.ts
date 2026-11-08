@@ -432,11 +432,13 @@ async function releaseNoLongerHolds(
   orgId: number,
   batch: Record<string, unknown> | undefined,
   fingerprint: string,
+  decision: 'approved' | 'rejected' | 'conditional',
 ): Promise<{ status: number; body: Record<string, unknown> } | null> {
   if (!batch) return { status: 404, body: { success: false, error: 'Batch record not found' } };
   const final = batchReleaseRefusal(batch);
   if (final) return { status: 409, body: { success: false, error: final, code: 'ALREADY_DISPOSITIONED' } };
-  if (evidenceFingerprint(await readRecordedReleaseTests(client, orgId, batch)) !== fingerprint) {
+  const tests = await readRecordedReleaseTests(client, orgId, batch, { forShare: true });
+  if (evidenceFingerprint(tests) !== fingerprint) {
     return {
       status: 409,
       body: {
@@ -445,6 +447,13 @@ async function releaseNoLongerHolds(
         code: 'EVIDENCE_CHANGED',
       },
     };
+  }
+  // Reauthentication may have taken place while a deviation was opened. The
+  // batch lock protects this current embedded record; the decision must still
+  // be supported now, not only before the signer entered credentials.
+  const verdict = evaluateRecordedRelease(decision, tests, String(batch.batch_number ?? batch.id), openDeviationCount(batch.deviations));
+  if ('refusal' in verdict) {
+    return { status: 409, body: { success: false, error: verdict.refusal, code: 'RELEASE_EVIDENCE' } };
   }
   return null;
 }
@@ -508,9 +517,17 @@ router.post('/:id/release', async (req, res) => {
       [id, ...tenantParams(orgId)]
     );
     const batch = existing.rows[0];
+    // Credentials prove identity, not continued signing authority. Reuse the
+    // canonical gate on this transaction so a revoked role, inactive account
+    // or inactive organization cannot sign after the reauthentication wait.
+    const currentAuthority = await checkSigningAuthority(userId, orgId, client);
+    if (currentAuthority) {
+      await client.query('ROLLBACK');
+      return res.status(currentAuthority.status).json({ success: false, error: currentAuthority.code, message: currentAuthority.message });
+    }
     /* Re-checked under the lock: the batch may have been dispositioned, or its
        recorded results changed, while the signer re-authenticated. */
-    const stillHolds = await releaseNoLongerHolds(client, orgId, batch, fingerprint);
+    const stillHolds = await releaseNoLongerHolds(client, orgId, batch, fingerprint, data.decision);
     if (stillHolds) {
       await client.query('ROLLBACK');
       return res.status(stillHolds.status).json(stillHolds.body);

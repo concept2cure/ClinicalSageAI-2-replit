@@ -5,7 +5,8 @@ import { authService } from '@/services/portal/authService';
 import { shellProgramId, useShellProject } from './shellProject';
 import { clearEditorTarget, setEditorTarget } from './editorTarget';
 import { useAuthoringAttemptLedger, type AuthoringAttemptLedger } from './editor/authoringCreationRecovery';
-import type { AuthoringHandoff, AuthoringHandoffResult, HandoffContext } from './authoringHandoff';
+import { statisticalOriginMatches, type AuthoringHandoff, type AuthoringHandoffResult, type HandoffContext } from './authoringHandoff';
+import { stableStringify } from '@shared/canonical-json';
 
 export interface AuthoringHandoffRecoveryState {
   phase: 'pending' | 'unknown' | 'partial' | 'refused' | 'saved' | 'checked';
@@ -48,7 +49,8 @@ const codeKey = (code: string) => code.trim().toUpperCase();
 const accountKey = () => `${authService.getUser()?.organizationId ?? ''}:${authService.getUser()?.id ?? ''}`;
 const held = (entry: Entry | undefined) => !!entry && (['pending', 'unknown', 'partial'].includes(entry.phase) || !!entry.checking || !!entry.continuing);
 const samePayload = (a: AuthoringHandoff, b: AuthoringHandoff) =>
-  a.title === b.title && a.module === b.module && a.code === b.code && a.content === b.content;
+  a.title === b.title && a.module === b.module && a.code === b.code && a.content === b.content
+  && stableStringify(a.statisticalDraft) === stableStringify(b.statisticalDraft);
 const current = (owner: Owner, context: HandoffContext, entry: Entry) =>
   owner.ledger.current() && context.isCurrent() && owner.ledger.owns(lane, entry.attempt);
 
@@ -73,6 +75,8 @@ async function inspectKnown(entry: Entry, context: HandoffContext): Promise<Insp
   const path = `/api/authoring/docs/${encodeURIComponent(entry.docId!)}`;
   const detail = object((await readBody(path, context)).document);
   if (!detail || detail.id !== entry.docId || typeof detail.title !== 'string') throw new Error('The exact document could not be verified.');
+  if (entry.payload.statisticalDraft && !statisticalOriginMatches(object(detail.provenance)?.statisticalSource,
+    entry.payload.statisticalDraft, context.programId!)) throw new Error('The saved statistical basis could not be verified.');
   const rows = (await readBody(`${path}/sections`, context)).sections;
   if (!Array.isArray(rows) || !rows.every(row => {
     const value = object(row); return value && text(value.id) && value.doc_id === entry.docId
@@ -84,9 +88,10 @@ async function inspectKnown(entry: Entry, context: HandoffContext): Promise<Insp
 }
 function inspectionState(entry: Entry, inspection: Inspection): Entry {
   return { ...entry, phase: 'partial', checking: false, continuing: false, inventory: inspection.inventory,
-    inspectionCode: inspection.code, canOpen: true, canContinue: inspection.code === undefined,
+    inspectionCode: inspection.code, canOpen: true, canContinue: inspection.code === undefined && !entry.payload.statisticalDraft,
     message: inspection.code === undefined
-      ? `The confirmed document “${entry.payload.title}” is present and section “${entry.payload.code}” is absent. Review it or explicitly continue saving its original text. No new document was requested.`
+      ? entry.payload.statisticalDraft ? 'The identified statistical document is present but its expected section is absent. Review this record; a section-only continuation cannot preserve its atomic calculation provenance.'
+        : `The confirmed document “${entry.payload.title}” is present and section “${entry.payload.code}” is absent. Review it or explicitly continue saving its original text. No new document was requested.`
       : 'This document already contains the section code. Its current text is preserved; this read does not identify which request created it. Open the document to review it.' };
 }
 function failedCheck(entry: Entry): Entry {

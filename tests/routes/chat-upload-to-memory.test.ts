@@ -39,7 +39,7 @@ vi.mock('../../server/services/concept2cure/governedDocumentContractService.js',
 // source; with the real service on this suite's stub pool the write fails and
 // the upload now, correctly, answers 503 SOURCE_NOT_RECORDED (PF-07).
 vi.mock('../../server/services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({
-  createSource: vi.fn(async () => ({ id: 4242 })),
+  captureClientSource: vi.fn(async () => ({ source: { id: 4242 }, reused: false, supersededId: null })),
   findSourceByChecksum: vi.fn(async () => null),
   findSupersededCandidate: vi.fn(async () => null),
   createSupersedingSource: vi.fn(async () => ({ source: { id: 4242 } })),

@@ -1,0 +1,271 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ × server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not offer another study’s same-filename source as predecessor 15ms
+   → expected { textAvailable: null, …(35) } to be null
+ × server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > finds the correct study even when a second study has the same filename 7ms
+   → expected undefined to be 2 // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not infer a successor when the incoming study is unmatched 4ms
+   → expected { textAvailable: null, …(35) } to be null
+ × server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not equate two unresolved study references 4ms
+   → expected { textAvailable: null, …(35) } to be null
+ × server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > binds the complete project scope as well as study identity 7ms
+   → expected { textAvailable: null, …(35) } to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not offer another study’s same-filename source as predecessor
+AssertionError: expected { textAvailable: null, …(35) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "agency": null,
+  "applicationNumber": null,
+  "applicationType": null,
+  "checksum": "study-a-1",
+  "clientProgramId": "55555555-5555-4555-8555-555555555555",
+  "clientWorkspaceId": null,
+  "createdAt": 2026-11-08T16:52:59.281Z,
+  "dataEligible": true,
+  "disposition": null,
+  "documentDate": null,
+  "extractionStatus": "pending",
+  "id": 1,
+  "indication": null,
+  "ingestionStatus": "pending",
+  "isCurrent": true,
+  "linkedCsrReportId": null,
+  "linkedPrecedentId": null,
+  "metadata": {},
+  "officialUrl": null,
+  "organizationId": 711,
+  "originalFileAvailable": true,
+  "phase": null,
+  "processing": null,
+  "product": null,
+  "provenance": {},
+  "sourceRecordIdentifier": null,
+  "sourceType": "client_document",
+  "sponsor": null,
+  "storedArtifactRef": null,
+  "textAvailable": null,
+  "therapeuticArea": null,
+  "title": "cross-study.pdf",
+  "trialRegistryIdentifier": null,
+  "updatedAt": 2026-11-08T16:52:59.281Z,
+  "version": null,
+  "visibilityClass": "project_private",
+}
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts:71:19
+     69|       title: 'cross-study.pdf', sourceType: 'client_document', program…
+     70|     });
+     71|     expect(found).toBeNull();
+       |                   ^
+     72|   });
+     73|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > finds the correct study even when a second study has the same filename
+AssertionError: expected undefined to be 2 // Object.is equality
+
+- Expected:
+2
+
++ Received:
+undefined
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts:80:23
+     78|       title: 'two-studies.pdf', sourceType: 'client_document', program…
+     79|     });
+     80|     expect(found?.id).toBe(own.id);
+       |                       ^
+     81|   });
+     82|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not infer a successor when the incoming study is unmatched
+AssertionError: expected { textAvailable: null, …(35) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "agency": null,
+  "applicationNumber": null,
+  "applicationType": null,
+  "checksum": "study-a-3",
+  "clientProgramId": "55555555-5555-4555-8555-555555555555",
+  "clientWorkspaceId": null,
+  "createdAt": 2026-11-08T16:52:59.302Z,
+  "dataEligible": true,
+  "disposition": null,
+  "documentDate": null,
+  "extractionStatus": "pending",
+  "id": 4,
+  "indication": null,
+  "ingestionStatus": "pending",
+  "isCurrent": true,
+  "linkedCsrReportId": null,
+  "linkedPrecedentId": null,
+  "metadata": {},
+  "officialUrl": null,
+  "organizationId": 711,
+  "originalFileAvailable": true,
+  "phase": null,
+  "processing": null,
+  "product": null,
+  "provenance": {},
+  "sourceRecordIdentifier": null,
+  "sourceType": "client_document",
+  "sponsor": null,
+  "storedArtifactRef": null,
+  "textAvailable": null,
+  "therapeuticArea": null,
+  "title": "unknown-study.pdf",
+  "trialRegistryIdentifier": null,
+  "updatedAt": 2026-11-08T16:52:59.302Z,
+  "version": null,
+  "visibilityClass": "project_private",
+}
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts:87:9
+     85|     expect(await spine.findSupersededCandidate(ORG, {
+     86|       title: 'unknown-study.pdf', sourceType: 'client_document', progr…
+     87|     })).toBeNull();
+       |         ^
+     88|   });
+     89|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not equate two unresolved study references
+AssertionError: expected { textAvailable: null, …(35) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "agency": null,
+  "applicationNumber": null,
+  "applicationType": null,
+  "checksum": "unknown-1",
+  "clientProgramId": "55555555-5555-4555-8555-555555555555",
+  "clientWorkspaceId": null,
+  "createdAt": 2026-11-08T16:52:59.306Z,
+  "dataEligible": true,
+  "disposition": null,
+  "documentDate": null,
+  "extractionStatus": "pending",
+  "id": 5,
+  "indication": null,
+  "ingestionStatus": "pending",
+  "isCurrent": true,
+  "linkedCsrReportId": null,
+  "linkedPrecedentId": null,
+  "metadata": {},
+  "officialUrl": null,
+  "organizationId": 711,
+  "originalFileAvailable": true,
+  "phase": null,
+  "processing": null,
+  "product": null,
+  "provenance": {},
+  "sourceRecordIdentifier": null,
+  "sourceType": "client_document",
+  "sponsor": null,
+  "storedArtifactRef": null,
+  "textAvailable": null,
+  "therapeuticArea": null,
+  "title": "both-unknown.pdf",
+  "trialRegistryIdentifier": null,
+  "updatedAt": 2026-11-08T16:52:59.306Z,
+  "version": null,
+  "visibilityClass": "project_private",
+}
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts:94:9
+     92|     expect(await spine.findSupersededCandidate(ORG, {
+     93|       title: 'both-unknown.pdf', sourceType: 'client_document', progra…
+     94|     })).toBeNull();
+       |         ^
+     95|   });
+     96|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > binds the complete project scope as well as study identity
+AssertionError: expected { textAvailable: null, …(35) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "agency": null,
+  "applicationNumber": null,
+  "applicationType": null,
+  "checksum": "study-a-4",
+  "clientProgramId": "55555555-5555-4555-8555-555555555555",
+  "clientWorkspaceId": 9,
+  "createdAt": 2026-11-08T16:52:59.310Z,
+  "dataEligible": true,
+  "disposition": null,
+  "documentDate": null,
+  "extractionStatus": "pending",
+  "id": 6,
+  "indication": null,
+  "ingestionStatus": "pending",
+  "isCurrent": true,
+  "linkedCsrReportId": null,
+  "linkedPrecedentId": null,
+  "metadata": {},
+  "officialUrl": null,
+  "organizationId": 711,
+  "originalFileAvailable": true,
+  "phase": null,
+  "processing": null,
+  "product": null,
+  "provenance": {},
+  "sourceRecordIdentifier": null,
+  "sourceType": "client_document",
+  "sponsor": null,
+  "storedArtifactRef": null,
+  "textAvailable": null,
+  "therapeuticArea": null,
+  "title": "different-workspace.pdf",
+  "trialRegistryIdentifier": null,
+  "updatedAt": 2026-11-08T16:52:59.310Z,
+  "version": null,
+  "visibilityClass": "project_private",
+}
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts:102:9
+    100|       title: 'different-workspace.pdf', sourceType: 'client_document',…
+    101|       workspaceId: null, studyRef: studyA,
+    102|     })).toBeNull();
+       |         ^
+    103|   });
+    104| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  08:52:56
+   Duration  3.23s (transform 634ms, setup 60ms, import 1.19s, tests 1.77s, environment 0ms)
+

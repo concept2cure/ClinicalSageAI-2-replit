@@ -58,7 +58,7 @@ describe('figureOccurrences', () => {
   it('never offers markup, or a figure inside a longer number ("12" in "10/12", "190" in "1190", "100" in a style)', () => {
     for (const o of found) {
       const content = sections[0].content!;
-      expect(content.slice(o.start, o.end)).toBe(o.display);
+      expect(content.slice(o.start, o.end)).toBe(['83.3', '36.4'].includes(o.display) ? `${o.display}%` : o.display);
       expect(/[0-9.,%/]/.test(content[o.start - 1] ?? '') && /^[0-9.,%/]/.test(o.display)).toBe(false);
     }
     expect(found.some((o) => o.display === '12' && sections[0].content![o.start - 1] === '/')).toBe(false);
@@ -67,6 +67,70 @@ describe('figureOccurrences', () => {
 
   it('a section with no matching figure offers none', () => {
     expect(figureOccurrences(sections[1], cells)).toEqual([]);
+  });
+});
+
+describe('figureOccurrences preserve the full raw numerical display', () => {
+  const cell = (value: string, header = 'Result'): CellRef => ({ ...claimableCells(runs)[0], value, header });
+  const saved = (content: string): SavedSection => ({ ...sections[0], content });
+
+  it('finds every encoded threshold with its raw entity and spacing intact', () => {
+    const content = '<p>p &lt; 0.001; p &#60;0.001.</p>';
+    const found = figureOccurrences(saved(content), [cell('<0.001', 'p-value')]);
+    expect(found.map(o => content.slice(o.start, o.end))).toEqual(['&lt; 0.001', '&#60;0.001']);
+    expect(found.every(o => o.display === '<0.001')).toBe(true);
+  });
+
+  it.each(['p<0.001', 'p&#60;0.001', 'p&gt;0.001', 'p≤0.001', 'p>=0.001', 'p=-0.001',
+    'p=0.0010', 'p=0.001e3', 'p=0.001%3', 'p=0.001mg', 'p&Lt;0.001', 'p&ne;0.001',
+    'p≈0.001', 'p=0.001&unknownunit;'])('does not offer the scalar 0.001 inside %s', content => {
+    expect(figureOccurrences(saved(`<p>${content}</p>`), [cell('0.001', 'p-value')])).toEqual([]);
+  });
+
+  it('includes an encoded sign and a percentage header’s unit in their raw spans', () => {
+    const content = '<p>Change: &#8722;2.50. Completion: 83.3&#37;.</p>';
+    const found = figureOccurrences(saved(content), [cell('-2.50'), cell('83.3', 'Completed (%)')]);
+    expect(found.map(o => content.slice(o.start, o.end))).toEqual(['&#8722;2.50', '83.3&#37;']);
+  });
+
+  it('does not expose attribute digits after a quoted greater-than sign or hide a second operator', () => {
+    expect(figureOccurrences(saved('<p title="x> 0.001">No result supplied.</p>'), [cell('0.001')])).toEqual([]);
+    expect(figureOccurrences(saved('<p>p&Lt;&lt;0.001.</p>'), [cell('<0.001')])).toEqual([]);
+    expect(figureOccurrences(saved('<p>p&lt;&lt;0.001.</p>'), [cell('<0.001')])).toEqual([]);
+  });
+
+  it.each(['95% CI', '95% confidence interval', 'n (%)', 'Count (%)', 'Number (%)'])('does not borrow a percentage unit from %s', header => {
+    expect(figureOccurrences(saved('<p>Response: 83.3&#37;.</p>'), [cell('83.3', header)])).toEqual([]);
+  });
+
+  it('retains the explicit count and percent display of a combined column', () => {
+    const content = '<p>Response: 12 (10.5&#37;).</p>';
+    const found = figureOccurrences(saved(content), [cell('12 (10.5%)', 'n (%)')]);
+    expect(found.map(o => content.slice(o.start, o.end))).toEqual(['12 (10.5&#37;)']);
+  });
+
+  it.each(['constructor', 'toString'])('refuses unknown entity &%s; without consulting object prototypes', entity => {
+    expect(figureOccurrences(saved(`<p>p &${entity};0.001.</p>`), [cell('0.001')])).toEqual([]);
+  });
+
+  it.each(['<p>p &amp;lt;0.001.</p>', 'p &lt;0.001.'])('does not promote a literal entity spelling into a threshold in %s', content => {
+    expect(figureOccurrences(saved(content), [cell('<0.001', 'p-value')])).toEqual([]);
+  });
+
+  it.each(['ng/mL', 'µg/mL', 'pg/mL', 'copies/mL'])('offers the full %s display without offering its bare count', unit => {
+    const content = `<p>Concentration: 5 ${unit}.</p>`;
+    expect(figureOccurrences(saved(content), [cell('5', 'Count')])).toEqual([]);
+    expect(figureOccurrences(saved(content), [cell('5', `Concentration (${unit})`)])).toEqual([]);
+    const found = figureOccurrences(saved(content), [cell(`5 ${unit}`, 'Concentration')]);
+    expect(found.map(o => content.slice(o.start, o.end))).toEqual([`5 ${unit}`]);
+  });
+
+  it('keeps all exact candidate studies instead of choosing whichever was first', () => {
+    const first = cell('<0.001', 'p-value');
+    const second = { ...first, studyId: 'OTHER-STUDY' };
+    const found = figureOccurrences(saved('<p>p &lt;0.001.</p>'), [first, second]);
+    expect(found).toHaveLength(1);
+    expect(found[0].candidates.map(candidate => candidate.studyId)).toEqual([first.studyId, second.studyId]);
   });
 });
 

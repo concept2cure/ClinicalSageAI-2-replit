@@ -1,0 +1,253 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-11-08T17:22:49.380Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:22:49.381Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-11-08T17:22:49.381Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts
+{
+  "timestamp": "2026-11-08T17:22:49.793Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reconciles a saved CSR whose every stated figure is its claimed retained cell 115ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails the document gate when the synopsis states 15/305 while §11.4 and the table state 16/305 41ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > fails it too when the synopsis carries no receipts at all and states a figure the body contradicts 40ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > names the exact cell when the retained source no longer says what the CSR states 44ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > records an unreadable retained run as blocked, never as agreement, and still completes the review 42ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > reports every number a section states without a claim, blocking only in a results section 41ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > assesses an imported CSR whose title is the study title and whose module is unset, as the real import saves it 35ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks an unclaimed number in a results section that has no table mapping (§10.2) 34ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > blocks when a section the import carried receipts for is no longer in the document 34ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > does not let an uncoded added section carry an unsupported result without a source conflict 34ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a saved CSR gets a number-to-source verdict from its retained run > checks a section with no code too: its numbers are listed and a contradicting n/N blocks 31ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > reconciles an edit that rewords the sentence but keeps every figure, and names the section as edited and re-checked 32ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that changes 16/305 to 18/305, naming the figure and the cell it was meant to be 31ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks an edit that adds an unsourced number in §11 31ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > blocks on a claimed figure an edit removed from a results section, naming the cell 32ms
+ ✓ server/services/ana/__tests__/saved-csr-evidence.pglite.test.ts > a section edited after import is re-checked against its receipts and the retained run > still blocks an edited section whose retained cell has since changed 31ms
+(node:42) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > verifies an unchanged section and keeps its exact source hash and opening 3ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > verifies unchanged narratives over multiple pages without whole-section selection 4ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > preserves the valid zero-subject selection with its exact opening hash 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > does not return a narrative reference for another tenant 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > continues refusing a section corrupted before its first read 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > continues reporting an invalid individual narrative hash 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > continues refusing a changed narrative-store digest 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > never mixes old section metadata with newly replaced section and narrative bytes 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > pins slices to the source hash rather than silently reading a replacement revision 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > refuses an opening edited after the final narrative window was read 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > refuses section text appended after the final store-digest read 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > refuses a landed section deleted during verification instead of certifying a ghost 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > rejects final content corruption even when its stored hash was not updated 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > also rechecks the opening for a zero-subject report 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > rejects streamed text whose reconstructed SHA-256 differs from the pinned section digest 0ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > rejects an opening-only stream with an incorrect pinned hash 1ms
+ ✓ server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts > rejects unhashed body replacement even when the newly supplied subject text is internally valid 0ms
+(node:50) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/csr/__tests__/csr-assembly-review.test.ts
+{
+  "timestamp": "2026-11-08T17:22:55.753Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:22:55.754Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-assembly-review.test.ts
+{
+  "timestamp": "2026-11-08T17:22:55.754Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-assembly-review.test.ts
+[database] Database connection successful
+
+stderr | server/services/csr/__tests__/csr-assembly-review.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/csr/__tests__/csr-assembly-review.test.ts
+{
+  "timestamp": "2026-11-08T17:22:55.798Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the laboratory listing shows only what ADLB records > reads Baseline as not recorded when ADLB has no ABLFL, and an XPT date as a date 287ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > a listing value the PDF fonts cannot draw fails the source check > records the row as drawn, so a "?" in place of a character is a disagreement, and a lossless substitution is not 182ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > a run with no engine table does not claim a Section 14 document > says Section 14 is not supplied, files no tables leaf, and is incomplete 151ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > reads page count and named destinations from the cross-reference table, as a whole read does 37ms
+ ✓ server/services/csr/__tests__/csr-assembly-review.test.ts > the structural check reads a linked leaf without loading it > falls back to a whole read for a leaf laid out otherwise (an xref stream), and still fails a destination it lacks 15ms
+(node:63) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/csr/__tests__/csr-results-claim-provenance.test.ts > CSR clinical outcomes always require retained analysis-cell claims > does not treat planned sample size as evidence of deaths or completions 9ms
+ ✓ server/services/csr/__tests__/csr-results-claim-provenance.test.ts > CSR clinical outcomes always require retained analysis-cell claims > excludes product and protocol IDs without excluding free-standing clinical figures 1ms
+ ✓ server/services/csr/__tests__/csr-results-claim-provenance.test.ts > CSR clinical outcomes always require retained analysis-cell claims > never issues a planned-metadata exemption in a results-section import 1ms
+ ✓ server/services/csr/__tests__/csr-results-claim-provenance.test.ts > CSR clinical outcomes always require retained analysis-cell claims > retains planned-design metadata support outside observed-results headings 1ms
+ ✓ server/services/csr/__tests__/csr-results-claim-provenance.test.ts > CSR clinical outcomes always require retained analysis-cell claims > blocks actual completion figures in a legacy synopsis even when the same number was planned 2ms
+ ✓ server/services/csr/__tests__/csr-results-claim-provenance.test.ts > CSR clinical outcomes always require retained analysis-cell claims > rechecks legacy imports instead of honoring stale metadata exemptions 1ms
+(node:71) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > refuses the build's own placeholder, though the section's figure is correctly mapped 4ms
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > refuses a short placeholder ("[N]") and one split by markup 3ms
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > a section still holding a data placeholder cannot pass the scientific review > accepts a section with no placeholder, a numeric citation, or brackets inside markup only (controls) 5ms
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > one placeholder rule > the build and placement rule (csr-placeholders.ts) and the review's rule agree on plain text 1ms
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > one placeholder rule > the review reads the visible text: brackets inside markup are not a placeholder, and the placeholder it names is the text's 0ms
+ ✓ server/services/authoring/__tests__/csr-scientific-review-placeholder.test.ts > one placeholder rule > a message quotes a long placeholder cut and closed, never as if it ended mid-word 1ms
+(node:79) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceVitals.test.ts > the vital-signs and concomitant-medication tables are reviewable > one list of table keys, the server’s and the review’s 2ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceVitals.test.ts > the vital-signs and concomitant-medication tables are reviewable > the tables hash covers them, and is unchanged for a run with neither 2ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceVitals.test.ts > the vital-signs and concomitant-medication tables are reviewable > the screen offers their cells, and the server accepts a map onto them 8ms
+(node:91) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > is accepted and reaches the §11.4 table, cell for cell as recorded 23ms
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > leaves a table without one byte-identical, so its scientific-review receipts still verify 9ms
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > never rounds a posterior up to certainty or down to impossibility 23ms
+ ✓ server/services/csr/__tests__/csr-bayesian-result.test.ts > a Bayesian result in the CSR source > refuses reversed credible bounds, a probability outside 0–1 and a posterior with no hypothesis 20ms
+(node:107) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > accepts an exactly matching, qualified synthetic TLF receipt 2ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > refuses missing and duplicate source records 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > refuses unreviewed or withdrawn source records 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > detects changed source version or missing page/table locator 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > detects analysis population and endpoint substitution 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > detects denominator, numerator and estimate drift 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > refuses unsupported inference or changed units 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > refuses invalid counts and duplicate claim identifiers 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > never equates no claims with a passed CSR 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > rejects invalid source-side facts even when a claim matches their invalid value 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > rejects a non-finite qualified source estimate 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > detects internally inconsistent observed proportions in qualified source data 0ms
+ ✓ server/services/ana/__tests__/csr-claim-reconciliation.test.ts > CSR evidence-bound claim reconciliation > does not recompute model-based estimates from raw counts 0ms
+(node:115) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/authoring/__tests__/csr-scientific-release-order.test.ts
+{
+  "timestamp": "2026-11-08T17:22:58.875Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:22:58.877Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/csr-scientific-release-order.test.ts
+{
+  "timestamp": "2026-11-08T17:22:58.877Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/csr-scientific-release-order.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/csr-scientific-release-order.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/csr-scientific-release-order.test.ts
+{
+  "timestamp": "2026-11-08T17:22:58.916Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/csr-scientific-release-order.test.ts > assertCsrScientificRelease > releases a document that is not a CSR without framing it, so a row the CSR snapshot refuses cannot fail its release 3ms
+ ✓ server/services/authoring/__tests__/csr-scientific-release-order.test.ts > assertCsrScientificRelease > still fails closed when what the document is cannot be read 1ms
+ ✓ server/services/authoring/__tests__/csr-scientific-release-order.test.ts > assertCsrScientificRelease > still refuses a CSR with no current scientific-review receipt 165ms
+ ✓ server/services/authoring/__tests__/csr-scientific-release-order.test.ts > assertCsrScientificRelease > still refuses a document whose stored history makes it a CSR, whatever its label now says 1ms
+ × server/services/authoring/__tests__/csr-scientific-release-order.test.ts > the release boundary says which refusal it is > an unreadable identity is "could not be checked" (503), never "no receipt covers the saved CSR" 7ms
+   → expected WorkflowImportGovernanceError: Independen… { …(2) } to match object { status: 503, …(1) }
+(1 matching property omitted from actual)
+(node:123) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/csr/__tests__/csr-table-byte-identity.test.ts > a source that uses none of D10–D12 tabulates byte-identically to before > matches every digest pinned before the change 61ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/csr-scientific-release-order.test.ts > the release boundary says which refusal it is > an unreadable identity is "could not be checked" (503), never "no receipt covers the saved CSR"
+AssertionError: expected WorkflowImportGovernanceError: Independen… { …(2) } to match object { status: 503, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "CSR_EVIDENCE_IDENTITY_UNAVAILABLE",
+-   "status": 503,
++ WorkflowImportGovernanceError {
++   "code": "INDEPENDENT_CHECK_REQUIRED",
++   "status": 409,
+  }
+
+ ❯ server/services/authoring/__tests__/csr-scientific-release-order.test.ts:73:25
+     71|       doc: { id: DOC, title: 'Nonclinical overview', module: 'M2', cli…
+     72|       actor: { id: '41', email: 'signer@example.test' } });
+     73|     await expect(refused).rejects.toMatchObject({ status: 503, code: '…
+       |                         ^
+     74|     await expect(refused).rejects.toThrow(/could not be checked/);
+     75|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 9 passed (10)
+      Tests  1 failed | 75 passed (76)
+   Start at  09:22:47
+   Duration  13.17s (transform 3.66s, setup 175ms, import 8.29s, tests 3.44s, environment 1ms)
+

@@ -1343,13 +1343,18 @@ router.post('/rbm-monitoring-plans/generate', async (req, res) => {
   const parsed = generatePlanBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
 
-  const client = await pool.connect();
+  const client = await requestConnectable(req).connect();
   try {
     await client.query('BEGIN');
     await recheckRbmWrite(req, client);
-    const result = await generatePlanFromAssessment(client, orgId, parsed.data);
+    const result = await generatePlanFromAssessment(client, orgId, { ...parsed.data, createdBy: getUserId(req)! });
     if (!result.generated) {
       await client.query('ROLLBACK');
+      if (result.reason === 'actor_required') return clientError(res, 403, 'A verified generating user is required.');
+      if (result.reason === 'overall_risk_not_recorded') {
+        return clientError(res, 409,
+          'The approved risk assessment records no overall risk. Record the overall risk in an amendment and approve it before generating a monitoring plan.');
+      }
       if (result.reason === 'draft_already_open') {
         return clientError(res, 409,
           'A draft monitoring plan version is already open for this study — approve or archive it before generating another.');

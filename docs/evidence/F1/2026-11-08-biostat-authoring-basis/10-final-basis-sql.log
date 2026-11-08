@@ -1,0 +1,105 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:36) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:33:05.127Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:33:06.397Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:33:06.398Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:33:06.398Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > retains the actual study snapshot and full calculation without inventing a saved run
+{
+  "timestamp": "2026-11-08T17:33:11.184Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 331fabfb-8adb-4abd-b1c9-2f9e249d2b2c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > keeps edited calculation inputs separate from the design and its verified saved run
+{
+  "timestamp": "2026-11-08T17:33:11.321Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 97d85324-6b80-431f-b2f4-ed2d9e5e27b3 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > retains the actual study snapshot and full calculation without inventing a saved run 252ms
+stdout | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > labels worked examples in content, title and provenance and asserts no study or run
+{
+  "timestamp": "2026-11-08T17:33:11.436Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f69553c8-dd65-4997-9169-99e27e6d0338 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > keeps edited calculation inputs separate from the design and its verified saved run 128ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > labels worked examples in content, title and provenance and asserts no study or run 115ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > refuses another project before creating any authoring evidence 44ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > refuses an unknown study before creating any authoring evidence 38ms
+stderr | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > rolls the document, section, revision and lineage back when the audit insert fails
+CRITICAL: Failed to create audit trail: Error: injected statistical audit failure
+    at Object.query (/workspace/scratch/3002d574f952/concept2cure-v2/server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts:74:96)
+    at writeAuthoringAuditTrail (/workspace/scratch/3002d574f952/concept2cure-v2/server/services/authoring/authoring-evidence.ts:240:37)
+    at insertSectionSeedTx (/workspace/scratch/3002d574f952/concept2cure-v2/server/services/authoring/authoring-section-seed.ts:32:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at insertDocumentTx (/workspace/scratch/3002d574f952/concept2cure-v2/server/services/authoring/authoring-documents.ts:336:7)
+    at createDocumentFromDraft (/workspace/scratch/3002d574f952/concept2cure-v2/server/services/authoring/authoring-from-draft.ts:589:20)
+    at /workspace/scratch/3002d574f952/concept2cure-v2/server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts:174:5
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > refuses a stale design before creating any authoring evidence 47ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > refuses a mismatched run before creating any authoring evidence 35ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > refuses an altered preview before creating any authoring evidence 3ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > refuses an intact-looking run whose stored output hash does not match its bytes 38ms
+stdout | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > public from-draft provenance cannot manufacture statistical source proof
+{
+  "timestamp": "2026-11-08T17:33:11.805Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 14801b5c-cc54-4224-ae89-105f5d85a844 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > rolls the document, section, revision and lineage back when the audit insert fails 95ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > rechecks membership inside the create transaction 28ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > public from-draft provenance cannot manufacture statistical source proof 37ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  09:33:03
+   Duration  8.43s (transform 3.49s, setup 92ms, import 5.42s, tests 2.68s, environment 0ms)
+
