@@ -2037,21 +2037,28 @@ The founder, 2026-11-06, supplied **MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.
   The current roadmap is `docs/design/ONE_DESIGN_PLAN.md` and `docs/design/one-design-plan.json`, not the historical
   CER-only or January vision roadmaps. Progress must name actual commits, checks and remaining dependencies.
 
-### P-105 — Spec v0.4 is recorded as the base of §1d's v0.5, and one session owns the Anna-runtime epic alone
+### P-105 — Spec v0.5 is the current Anna-runtime specification (v0.4 superseded), and one session owns the epic alone
 
-The founder, 2026-11-08, supplied **MULTI-AGENT-ARCHITECTURE-SPEC-20261105.md** (v0.4, §§1–15, "prepared for hand-off
-to Claude Code as the build specification") and directed:
+The founder, 2026-11-08, first supplied **MULTI-AGENT-ARCHITECTURE-SPEC-20261105.md** (v0.4, §§1–15) and directed:
 
 > "Stay perfectly aligned to the new roadmap and rules. But you must add the attached plan to the main new roadmap
 > and you own all of the attached alone."
 
+Then, the same day, a correction, supplying **MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf**:
+
+> "Correction — there's a newer version than the one I just sent. v0.5, from November 6 (105 KB, 32 sections),
+> supersedes v0.4. … this is the current plan."
+
 - **What is decided.**
-  1. v0.4 is on the roadmap as the predecessor of v0.5, which P-104 placed at `docs/design/ONE_DESIGN_PLAN.md` §1d.
-     Each v0.4 section is mapped onto §1d there. Where the two differ, v0.5 and P-104 govern. In particular, v0.4
-     §15's "consider and plan, do not build yet" stays superseded by P-104's build instruction. It is one epic, not
-     a second backlog.
-  2. The Anna-runtime epic (`architectureEpics` `anna-runtime` in `docs/design/one-design-plan.json`) has one owner:
-     the Claude Code session `session_01KZK3jgtmQBgNepqLjXjS3k`.
+  1. **v0.5 is the current specification, and v0.4 is superseded.**
+     - v0.5 is the version P-104 placed at `docs/design/ONE_DESIGN_PLAN.md` §1d.
+     - Its source of record is now in the repository: `docs/design/MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf`,
+       sha256 `4564aff5d1da81520ed187abf5d5f20be11f74c7d407244bba33d685229b36c4`.
+     - Its change note says §§1–15 are unchanged from v0.4. §1d maps every one of its 32 sections onto the epic.
+     - v0.4 §15's "consider and plan, do not build yet" stays superseded by P-104's build instruction.
+     - It is one epic, not a second backlog.
+  2. **The Anna-runtime epic has one owner:** the Claude Code session `session_01KZK3jgtmQBgNepqLjXjS3k`. The epic is
+     `architectureEpics` `anna-runtime` in `docs/design/one-design-plan.json`.
      - It replaces the Anna architecture lead (Codex, 2026-11-06) as the epic's lead, for sequencing, integration,
        acceptance and the epic's progress log.
      - No other session takes an epic slice.
@@ -2059,12 +2066,13 @@ to Claude Code as the build specification") and directed:
   - Other packages' scope is unchanged, and so are their holders' file holds for their own work (plan §4.6, one
     session per file). When an epic slice needs a file someone else holds, the owner asks for it in
     `.design/claude-convergence/COORDINATION.md`.
-  - v0.4 §14.5's open questions stay open, because P-104 does not decide them:
+  - §14.5's open questions stay open, because P-104 does not decide them:
     1. Is Anna customer-facing first, or internal-only?
     2. What is the model cost and latency budget per document type?
     3. Do Anna's internal dispositions need the same IQ/OQ validation package as user-facing approvals? That is to
        be scoped with the first design partner.
   - No new file, screen, route, mount, service, table, tool, dependency, integration or model is approved (RULE 6).
-    v0.4 §13.2's vendors are suggestions, not admissions.
+    §13.2's vendors are suggestions, not admissions. Committing the specification PDF as the source of record is a
+    document, not a capability.
   - P-104's account target, its gates and its phase order are unchanged.
 - **Owner.** `session_01KZK3jgtmQBgNepqLjXjS3k`.
