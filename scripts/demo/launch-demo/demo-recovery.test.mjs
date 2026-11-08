@@ -77,6 +77,7 @@ export const makePdfBuffer = () => { throw new Error('PDF generation is not part
 export const BIOTECH_CMC = { specs: [], stability: [], batches: [] };
 export const BIOTECH_STUDY_DESIGN = {};
 export const BIOTECH_TASKS = [];
+export const BIOTECH_IR_LETTER = {};
 `);
   await write('scripts/demo/launch-demo/packs/work-areas.mjs', `
 import { state } from '../../../../state.mjs';
@@ -84,6 +85,7 @@ export async function ensureStudyDesign() { state.downstream.push('ensureStudyDe
 export async function ensureCmc() { state.downstream.push('ensureCmc'); }
 export async function ensureTasks() { state.downstream.push('ensureTasks'); }
 export async function ensurePlanDocuments() { state.downstream.push('ensurePlanDocuments'); }
+export async function ensureAgencyLetter() { state.downstream.push('ensureAgencyLetter'); }
 `);
   await write('scripts/demo/launch-demo/packs/biotech-content.mjs', `
 export const INDICATION = 'Fictional test indication', MOLECULE = 'C2C-101', PRODUCT_NAME = 'C2C-101', PROGRAM_NAME = 'C2C-101';
