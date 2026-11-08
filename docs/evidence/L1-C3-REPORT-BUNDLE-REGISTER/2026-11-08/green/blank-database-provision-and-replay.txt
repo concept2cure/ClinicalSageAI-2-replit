@@ -1,0 +1,21 @@
+exit=0
+NOTICE:  database "concept2cure-ri_dbtest" does not exist, skipping
+DROP DATABASE
+CREATE DATABASE
+== install-fresh
+     app_service connection string (set APP_SERVICE_DB_PASSWORD here first so
+     the role is provisioned). Migrations keep using DATABASE_URL (the owner).
+     Production boot fails closed under RLS_ENFORCE=on if it connects as a superuser.
+   • leave SEED_DEMO_USER unset in production (no known-password admin).
+== deploy-migrate
+  ✓ applied: migrations/20261108_report_bundle_register.sql
+✅ Schema migration complete — safe to roll services.
+== deploy-migrate replay
+  ✓ applied: migrations/20261108_report_bundle_register.sql
+✅ Schema migration complete — safe to roll services.
+[exited with code 0]
+
+-- RLS on the new tables, after the set's sweep (blank database, concept2cure-ri_dbtest):
+report_bundle_projects rls=true force=true tenant_isolation_policy=1
+report_bundle_runs rls=true force=true tenant_isolation_policy=1
+report_bundles rls=true force=true tenant_isolation_policy=1

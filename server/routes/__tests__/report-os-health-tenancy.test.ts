@@ -31,12 +31,18 @@ beforeAll(async () => {
     CREATE TABLE report_snapshots(organization_id int);
     CREATE TABLE report_run_dependencies(organization_id int);
     CREATE TABLE project_memory_entries(organization_id int,category text,subcategory text,source_document_type text);
+    CREATE TABLE report_bundles(organization_id int);
     INSERT INTO report_program_groups VALUES(7),(8),(8);
     INSERT INTO report_type_registry VALUES('global1'),('global2'),('global3');
     INSERT INTO report_runs VALUES(7),(8),(8);
     INSERT INTO report_snapshots VALUES(7),(8),(8);
     INSERT INTO report_run_dependencies VALUES(7),(8),(8);
+    -- Packs are counted from the register (P-91), one row each. Organisation 7's
+    -- one pack also left TWO legacy memory copies (one per covered project): a
+    -- count that still read copies would say 2.
+    INSERT INTO report_bundles VALUES(7),(8),(8);
     INSERT INTO project_memory_entries VALUES
+      (7,'regulatory','report_bundle_record','report_os_state'),
       (7,'regulatory','report_bundle_record','report_os_state'),
       (8,'regulatory','report_bundle_record','report_os_state'),
       (8,'regulatory','report_bundle_record','report_os_state'),

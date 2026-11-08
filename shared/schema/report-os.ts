@@ -11,6 +11,8 @@ import {
   foreignKey,
   index,
   uuid,
+  jsonb,
+  primaryKey,
 } from 'drizzle-orm/pg-core';
 import { organizations, clientWorkspaces, projects, users, immutableReportRecords } from '../schema';
 
@@ -191,6 +193,59 @@ export const reportRunDependencies = pgTable(
     runIdx: index('report_run_dependencies_run_idx').on(table.runId),
     providerIdx: index('report_run_dependencies_provider_idx').on(table.provider),
     statusIdx: index('report_run_dependencies_status_idx').on(table.status),
+  })
+);
+
+/**
+ * The report-pack register (P-91, coverage review C-3). Created by
+ * migrations/20261108_report_bundle_register.sql, which carried every legacy
+ * `bundle:<uuid>` project-memory pack across. `record` is the manifest the
+ * route decodes (reportBundleRecordSchema in server/routes/report-os.ts), kept
+ * whole; a CHECK ties its bundleId and organizationId to the row. Runs and
+ * projects carry no foreign key: a pack recorded before a run or project was
+ * removed must still be read, never refused.
+ */
+export const reportBundles = pgTable(
+  'report_bundles',
+  {
+    id: uuid('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    name: text('name').notNull(),
+    createdBy: integer('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+    record: jsonb('record').notNull(),
+    byteLength: integer('byte_length').notNull(),
+    payloadHash: text('payload_hash').notNull(),
+  },
+  table => ({
+    orgCreatedIdx: index('report_bundles_org_created_idx').on(table.organizationId, table.createdAt, table.id),
+  })
+);
+
+export const reportBundleRuns = pgTable(
+  'report_bundle_runs',
+  {
+    bundleId: uuid('bundle_id').notNull().references(() => reportBundles.id),
+    organizationId: integer('organization_id').notNull(),
+    runId: integer('run_id').notNull(),
+    position: integer('position').notNull(),
+  },
+  table => ({
+    pk: primaryKey({ columns: [table.bundleId, table.runId] }),
+    runIdx: index('report_bundle_runs_run_idx').on(table.organizationId, table.runId),
+  })
+);
+
+export const reportBundleProjects = pgTable(
+  'report_bundle_projects',
+  {
+    bundleId: uuid('bundle_id').notNull().references(() => reportBundles.id),
+    organizationId: integer('organization_id').notNull(),
+    projectId: integer('project_id').notNull(),
+  },
+  table => ({
+    pk: primaryKey({ columns: [table.bundleId, table.projectId] }),
+    projectIdx: index('report_bundle_projects_project_idx').on(table.organizationId, table.projectId),
   })
 );
 

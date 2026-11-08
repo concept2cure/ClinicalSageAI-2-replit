@@ -20,15 +20,9 @@ vi.mock('../../csr/project-scope.js', async (orig) => ({
   resolveCsrScope: vi.fn(async (_db: unknown, _org: number, input: { projectId?: number }) => ({ projectId: input.projectId })),
 }));
 vi.mock('../../../db.js', () => ({ db: {}, pool: { query: vi.fn() }, getPool: vi.fn() }));
-// Handler/outline unit: the older project-scope fixture is paired with a current
-// empty-rule policy snapshot. Actual mandatory policy admission is tested by
-// the governed-tool/Skills suites; no production gate is changed here.
-vi.mock('../governed-tool-gate.js', async orig => ({
-  ...await orig<typeof import('../governed-tool-gate.js')>(),
-  loadToolSkillGates: async (scope?: { organizationId?: number; userId?: number; projectId?: number }) => scope?.organizationId
-    ? { organizationId: scope.organizationId, userId: scope.userId ?? null, projectId: scope.projectId ?? null,
-      rules: [], ruleHash: 'e'.repeat(64) } : null,
-}));
+// Not a standing-rule suite: its stub sqlClient has no rule store (see _standing-rule-fixture.ts).
+vi.mock('../governed-tool-gate.js', async orig =>
+  (await import('./_standing-rule-fixture')).withNoStandingRules(await orig()));
 
 import { getToolHandler } from '../AnaToolExecutor.js';
 import { DRAFT_NONCLINICAL_OVERVIEW_M2_4, DRAFT_NONCLINICAL_SUMMARIES_M2_6, LOAD_NONCLINICAL_PROGRAM, GET_NONCLINICAL_TEMPLATE } from '../bla-biologics-tool-defs.js';

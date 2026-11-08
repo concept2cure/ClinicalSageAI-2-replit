@@ -1,0 +1,7 @@
+MUTATION c2-unconfirmed-said-as-not-on-file in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-08T21:58:31.201956Z): replaced [  const named = a.dispatchStatus === 'sent' || a.dispatchStatus === 'acknowledged' || a.dispatchStatus === 'rejected';] with [  const named = Boolean(a.dispatchStatus);]
+ × client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a send to the agency's test environment is not a filing (F1, row D7): the signing dialog and the answer > a production send the agency has not yet confirmed is said to be unconfirmed, never "not on file" 5601ms
+      Tests  1 failed | 28 skipped (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a send to the agency's test environment is not a filing (F1, row D7): the signing dialog and the answer > a production send the agency has not yet confirmed is said to be unconfirmed, never "not on file"
+AssertionError: expected 'SubmissionSubmission CenterPlan, buil…' to contain 'Whether the agency holds sequence 000…'
+restored sha256 346ec3ba86a4b0879aca2791798260b2452ff704f96ac78050d6046f5b5f67c7 (expected 346ec3ba86a4b0879aca2791798260b2452ff704f96ac78050d6046f5b5f67c7)

@@ -21,6 +21,7 @@ import { describe, expect, it } from 'vitest';
 import {
   loadProjectAnalyticalMethods,
   normalizeMethodPayload,
+  specificationMethodVerdict,
   METHOD_SOURCE_TYPE,
 } from '../analytical-method-source';
 
@@ -165,5 +166,117 @@ describe('loadProjectAnalyticalMethods — availability is part of the answer', 
   it('names the source type the write-through actually writes', () => {
     // A drift here reads every project as having no methods.
     expect(METHOD_SOURCE_TYPE).toBe('method');
+  });
+});
+
+/**
+ * The specification approval gate the screen had been promising.
+ *
+ * The Specifications tab said, in its banner and in its tab copy, that "a
+ * limit whose method is not validated cannot be approved (ICH Q2)". The
+ * approve route never looked at the method, and the screen's own check was
+ * `!method` — "no name typed" — which a method still in `development` passes.
+ * These cases pin BOTH halves: the refusals the promise requires, and the
+ * three non-refusals that keep it from blocking legitimate work.
+ */
+describe('specificationMethodVerdict — a limit is approved only on a procedure shown fit', () => {
+  const available = (methods: Array<Record<string, unknown>>) =>
+    ({ available: true as const, methods: methods.map((m) => normalizeMethodPayload(m)) });
+
+  it('refuses a limit that names no method at all', () => {
+    const v = specificationMethodVerdict('', available([]));
+    expect(v.approve).toBe(false);
+    expect(v).toMatchObject({ code: 'METHOD_NOT_NAMED' });
+    expect((v as { message: string }).message).toMatch(/no analytical method/i);
+  });
+
+  it('refuses a limit whose named method is recorded as still in development', () => {
+    const v = specificationMethodVerdict('SE-HPLC', available([
+      { methodName: 'SE-HPLC', validationStatus: 'development' },
+    ]));
+    expect(v.approve, 'a method in development supported an approved limit').toBe(false);
+    expect(v).toMatchObject({ code: 'METHOD_NOT_FIT' });
+    // The refusal names the method and the status, so the signer knows what to fix.
+    expect((v as { message: string }).message).toMatch(/SE-HPLC/);
+    expect((v as { message: string }).message).toMatch(/development/);
+  });
+
+  it('refuses a retired method the same way', () => {
+    const v = specificationMethodVerdict('AM-014', available([{ methodName: 'AM-014', validationStatus: 'retired' }]));
+    expect(v).toMatchObject({ approve: false, code: 'METHOD_NOT_FIT' });
+  });
+
+  it('approves when the named method is validated, and says so', () => {
+    const v = specificationMethodVerdict('SE-HPLC', available([
+      { methodName: 'SE-HPLC', validationStatus: 'validated' },
+    ]));
+    expect(v).toMatchObject({ approve: true });
+    expect((v as { note: string }).note).toMatch(/validated/);
+  });
+
+  it('approves a procedure shown SUITABLE without full validation', () => {
+    /* ICH Q2's own reading, and the one vocabulary: a phase-appropriate
+       procedure is fit for its use. Refusing it would block early-phase work. */
+    for (const status of ['qualified', 'phase-appropriate', 'fit for purpose', 'verified', 'transferred']) {
+      expect(specificationMethodVerdict('M', available([{ methodName: 'M', validationStatus: status }])), status)
+        .toMatchObject({ approve: true });
+    }
+  });
+
+  it('keeps SUITABLE passing on purpose — the repository\u2019s own Q2 reading', () => {
+    /* `q2Expectation` in ich-compliance-q2.ts makes suitability sufficient
+       before phase 3, and a phase-1 IND's specifications are routinely
+       approved on qualified methods. Refusing them would block legitimate
+       early-phase work in the name of a rule ICH does not impose there. This
+       case exists so that tightening the gate to "validated only" is a
+       deliberate act with a red test, not a quiet edit. */
+    expect(specificationMethodVerdict('M', available([{ methodName: 'M', validationStatus: 'qualified' }])))
+      .toMatchObject({ approve: true });
+  });
+
+  it('refuses a method the register does not hold, and says to record it', () => {
+    /* A compendial procedure is NOT an exception: the register records and
+       verifies one like any other, and `verified` / `transferred` are statuses
+       this vocabulary already carries for exactly that. An approved
+       specification is a filed commitment, so the bar is that the product can
+       SHOW the procedure is fit — not merely that it has not been shown unfit. */
+    const v = specificationMethodVerdict('USP <711> Dissolution', available([
+      { methodName: 'SE-HPLC', validationStatus: 'validated' },
+    ]));
+    expect(v).toMatchObject({ approve: false, code: 'METHOD_NOT_IN_REGISTER' });
+    expect((v as { message: string }).message).toMatch(/not recorded in this project/i);
+    expect((v as { message: string }).message, 'the refusal does not say what to do').toMatch(/compendial/i);
+  });
+
+  it('refuses a method whose status was never recorded', () => {
+    const v = specificationMethodVerdict('SE-HPLC', available([{ methodName: 'SE-HPLC' }]));
+    expect(v).toMatchObject({ approve: false, code: 'METHOD_NOT_FIT' });
+    expect((v as { message: string }).message).toMatch(/records no validation status/i);
+  });
+
+  it('refuses when the register could not be read, as an outage rather than a data fault', () => {
+    /* A limit is not approved on a procedure nobody could verify. The words
+       matter: this is not the signer's data being wrong, and the message says
+       so and says to try again. */
+    const v = specificationMethodVerdict('SE-HPLC', { available: false, methods: [], reason: 'connection reset' });
+    expect(v).toMatchObject({ approve: false, code: 'METHOD_NOT_VERIFIABLE' });
+    expect((v as { message: string }).message).toMatch(/could not be read/i);
+    expect((v as { message: string }).message).toMatch(/connection reset/);
+    expect((v as { message: string }).message).toMatch(/try again/i);
+  });
+
+  it('matches the name exactly, never by substring', () => {
+    /* A refusal must name the method the user actually meant. "HPLC" is not
+       "SE-HPLC", so it is refused as absent from the register — never as
+       SE-HPLC's development status, which is a different fact about a
+       different procedure. */
+    const v = specificationMethodVerdict('HPLC', available([{ methodName: 'SE-HPLC', validationStatus: 'development' }]));
+    expect(v).toMatchObject({ approve: false, code: 'METHOD_NOT_IN_REGISTER' });
+    expect((v as { message: string }).message, 'the refusal reported another method’s status').not.toMatch(/development/);
+  });
+
+  it('compares the name and the status case-insensitively and trimmed', () => {
+    const v = specificationMethodVerdict('  se-hplc ', available([{ methodName: 'SE-HPLC', validationStatus: ' Validated ' }]));
+    expect(v).toMatchObject({ approve: true });
   });
 });

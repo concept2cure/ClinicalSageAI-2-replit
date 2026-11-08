@@ -42,6 +42,8 @@ const bundle = (projects: number[]) => ({ bundleId: BUNDLE_ID, organizationId: 7
 const delivery = (over: Record<string, unknown> = {}) => ({ deliveryId: '22222222-2222-4222-8222-222222222222', organizationId: 7, projectId: 11, bundleId: BUNDLE_ID,
   channel: 'external_pdf_export', recipients: ['partner'], subject: 'Restricted review pack', message: 'Private project12 finding', status: 'exported', createdAt: '2026-10-13T12:00:00Z', ...over });
 const memory = (key: string, value: unknown) => ({ content: JSON.stringify({ [key]: value }), createdAt: new Date() });
+/** A pack's row in report_bundles (P-91): one row, the manifest kept whole. Deliveries stay memory records. */
+const packRow = (value: { bundleId: string }) => ({ id: value.bundleId, record: value, createdAt: new Date().toISOString() });
 
 beforeEach(() => {
   resetReportOsHarness(h);
@@ -87,7 +89,7 @@ describe('taxonomy preserves internally unresolved capability reads', () => {
 
 describe('retained delivery scopes', () => {
   it('does not show a multi-project delivery after access to one carried project is lost', async () => {
-    h.queued.select.push([memory('deliveryRecord', delivery())], [memory('bundleRecord', bundle([11,12]))]);
+    h.queued.select.push([memory('deliveryRecord', delivery())], [packRow(bundle([11,12]))]);
     const result = await request(app).get('/api/report-os/deliveries');
     expect(result.status).toBe(200);
     expect(result.body.data).toEqual([]);
@@ -95,7 +97,7 @@ describe('retained delivery scopes', () => {
   });
   it('keeps a delivery visible only when all carried scopes still exist and are permitted', async () => {
     const saved = delivery();
-    h.queued.select.push([memory('deliveryRecord', saved)], [memory('bundleRecord', bundle([11]))],
+    h.queued.select.push([memory('deliveryRecord', saved)], [packRow(bundle([11]))],
       [{ id:41, organizationId:7, scopeType:'project', scopeId:'11', status:'completed', dependencySummary:{} }]);
     const result = await request(app).get('/api/report-os/deliveries');
     expect(result.status).toBe(200);
@@ -193,10 +195,10 @@ describe('complete retained report packet access', () => {
     actorReads = 0; denyActorAfter = Number.POSITIVE_INFINITY;
     access.projects.mockResolvedValue([11, 12]);
     h.gate.mockResolvedValue({ entitled: true, tier: 'enterprise', tierResolved: true });
-    h.queued.select.push([memory('bundleRecord', retained)]); // Current pre-packet route still loads through this facade in red.
+    h.queued.select.push([packRow(retained)]); // Current pre-packet route still loads through this facade in red.
     h.respond.fn = (sql, arrayMode) => {
       const values = h.params.at(-1) ?? [];
-      if (/select .* from "project_memory_entries"/.test(sql)) return [[`bundle:${BUNDLE_ID}`, JSON.stringify({ bundleRecord: retained }), at.toISOString()]];
+      if (/select .* from "report_bundles"/.test(sql)) return [[BUNDLE_ID, retained, at.toISOString()]];
       if (/select "type_id", "family" from "report_type_registry"/.test(sql)) return [[type.typeId, type.family]];
       if (/select .* from "report_type_registry"/.test(sql)) return [driverRow(reportTypeRegistry, type)];
       if (/SELECT ou.role/.test(sql)) return ++actorReads > denyActorAfter ? [] : [{ role: 'manager' }];

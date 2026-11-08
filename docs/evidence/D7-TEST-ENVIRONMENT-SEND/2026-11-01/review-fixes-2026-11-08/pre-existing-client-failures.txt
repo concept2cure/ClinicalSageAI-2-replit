@@ -1,0 +1,75 @@
+# Client files that failed in the wide run, none of which imports or asserts anything slice 2 changed. Run on the FINAL tree, then on CLEAN HEAD b0bb8dccc (slice 2 stashed), same machine, 2026-11-08T21:24:47Z
+## FINAL tree
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > POSTs request-review for the open document with the reviewer’s user id and the reason, and shows the server’s answer
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > sends every chosen reviewer in one request, and gives each a task
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > requires a reviewer and a reason at the server’s floor before anything is sent
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > shows a refusal in the server’s words, creates no task, and lets the person send again
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > the object gate’s refusal is said as what it means for this act, not as “the authoring object”
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > an outcome nobody can confirm is unknown: no task, no second send, and the board is offered to check
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a success that names another document is not a receipt for this one
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a reviewer the answer names no task for is unconfirmed, and the task list is offered, not a retry
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the Tasks rail > the Tasks rail offers Send for review, not a task-only assignment
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > the workbench passes the document’s author, so she is not offered there either
+ × client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > the shell writes /concept2cure/features for apps, and an old /concept2cure/apps link still arrives
+ × client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > retains dirty content when a program switch is cancelled, without reading the new scope
+ × client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > ignores a prior program list that finishes after the new scoped list
+ × client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > a save for an older switch cannot clear a newer pending program decision
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > exactly the places, then the work areas, in order
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the work areas are a named group under their own heading
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > every entry opens a screen in this release
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > says a project screen needs a project when none is open, instead of doing nothing visible
+ × client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > the review task is the server’s, written with the request and linked to the document, and the Tasks rail lists it with its state
+ × client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > Start and Complete go through the tasking path’s own PATCH transition
+ × client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > a 428 ESIGN_REQUIRED completion opens the §11.50 ceremony on the document, not swallowed and not on the Task board
+ × client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > a failed task read is an error, never "no tasks"
+ × client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — Review tasks, an outcome the server could not confirm > a transition whose COMMIT was lost is reported as unknown, never as unchanged, and the list is re-read
+ × client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — Review tasks, an outcome the server could not confirm > a gateway error on a transition is an unknown outcome too
+ × client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > workbench reconciles an unconfirmed review assignment > opens the task list when the answer named no task, and shows the task that actually committed
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > "What AnA remembers" follows Account, opens the drawer, and Escape returns focus to the account button
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > the notice a choice raises is still seen once the drawer closes (it sits beside the rail, not in it)
+ × client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > "Go to" lists the places, in the rail's order
+ × client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the filing outline does not call every part "not started" while the sections read has failed
+ × client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > with no document open, the outline says so — never that sections are being read
+ × client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > while the project’s documents are still being read, the outline says that — not that a document’s sections are
+ × client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > a citation removal the server refuses is reported with the server’s reason, not silently dropped
+ × client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > switching sections never shows the previous section’s sources under the next section’s header
+⎯⎯⎯⎯⎯⎯ Failed Tests 33 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  8 failed (8)
+      Tests  33 failed | 154 passed (187)
+## CLEAN HEAD b0bb8dccc
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > POSTs request-review for the open document with the reviewer’s user id and the reason, and shows the server’s answer
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > sends every chosen reviewer in one request, and gives each a task
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > requires a reviewer and a reason at the server’s floor before anything is sent
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > shows a refusal in the server’s words, creates no task, and lets the person send again
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > the object gate’s refusal is said as what it means for this act, not as “the authoring object”
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > an outcome nobody can confirm is unknown: no task, no second send, and the board is offered to check
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a success that names another document is not a receipt for this one
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a reviewer the answer names no task for is unconfirmed, and the task list is offered, not a retry
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the Tasks rail > the Tasks rail offers Send for review, not a task-only assignment
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — never from the author, and the reviewer’s access is stated > the workbench passes the document’s author, so she is not offered there either
+ × client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > the review task is the server’s, written with the request and linked to the document, and the Tasks rail lists it with its state
+ × client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > Start and Complete go through the tasking path’s own PATCH transition
+ × client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > a 428 ESIGN_REQUIRED completion opens the §11.50 ceremony on the document, not swallowed and not on the Task board
+ × client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — review tasks > a failed task read is an error, never "no tasks"
+ × client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — Review tasks, an outcome the server could not confirm > a transition whose COMMIT was lost is reported as unknown, never as unchanged, and the list is re-read
+ × client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > DocumentWorkbench — Review tasks, an outcome the server could not confirm > a gateway error on a transition is an unknown outcome too
+ × client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx > workbench reconciles an unconfirmed review assignment > opens the task list when the answer named no task, and shows the task that actually committed
+ × client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the filing outline does not call every part "not started" while the sections read has failed
+ × client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > with no document open, the outline says so — never that sections are being read
+ × client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > while the project’s documents are still being read, the outline says that — not that a document’s sections are
+ × client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > a citation removal the server refuses is reported with the server’s reason, not silently dropped
+ × client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > switching sections never shows the previous section’s sources under the next section’s header
+ × client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > retains dirty content when a program switch is cancelled, without reading the new scope
+ × client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > ignores a prior program list that finishes after the new scoped list
+ × client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > a save for an older switch cannot clear a newer pending program decision
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > exactly the places, then the work areas, in order
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the work areas are a named group under their own heading
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > every entry opens a screen in this release
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > says a project screen needs a project when none is open, instead of doing nothing visible
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > "What AnA remembers" follows Account, opens the drawer, and Escape returns focus to the account button
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > the notice a choice raises is still seen once the drawer closes (it sits beside the rail, not in it)
+ × client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > the shell writes /concept2cure/features for apps, and an old /concept2cure/apps link still arrives
+ × client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > "Go to" lists the places, in the rail's order
+⎯⎯⎯⎯⎯⎯ Failed Tests 33 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  8 failed (8)
+      Tests  33 failed | 154 passed (187)

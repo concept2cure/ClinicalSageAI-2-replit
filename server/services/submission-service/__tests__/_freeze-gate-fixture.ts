@@ -31,8 +31,10 @@ export const FREEZE_GATE_SEED_SQL = `
     -- verification_date and updated_at: the real table's, which a void of a refused step's signature sets (P-23).
     CREATE TABLE electronic_signatures (id SERIAL PRIMARY KEY, organization_id INTEGER, signed_target TEXT, signature_manifest TEXT, bound_payload_digest TEXT, binding_basis TEXT, superseded_by INTEGER, is_valid BOOLEAN, verification_status TEXT, verification_date TIMESTAMP, updated_at TIMESTAMP);
     CREATE TABLE IF NOT EXISTS ectd_compilations (id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, compilation_type TEXT, sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW());
-    -- The transmittal row the filed fold reads what a sequence sent from (F1, 2026-11-01);
-    -- no sequence here is sent with that record, so each is read from its compiles.
+    -- The transmittal row the filed fold reads what a sequence sent from (F1, 2026-11-01).
+    -- The freeze-gate cases send no sequence with that record, so each is read from its compiles;
+    -- refused-step-voids-signature.pglite.test.ts's test-environment cases (F1, row D7) write it
+    -- through the real transmit guard, and the fold reads the production send's.
     CREATE TABLE IF NOT EXISTS submission_transmittals (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, region TEXT, metadata JSONB DEFAULT '{}'::jsonb);
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
       (1, 'race', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),

@@ -23,10 +23,11 @@
 > | S5a dose optimization | done | `s5a-dose-optimization/` |
 > | S5a RWE | done | `s5a-rwe/` |
 > | S5c GMP quality systems | done | `s5c-gmp-quality-systems/` |
+> | S5c GCP operations | done | `s5c-gcp-operations/` |
 > | S6b | done; PMA withheld per P-55 R-7 | `s6b-generate-document-records/` |
 > | S6 | done, with its review | `s6-plan-ind-module-authoring-retired/` |
 > | `start_war_game` (found 2026-11-01) | done | `war-game-stored-session/` |
-> | S5b, S5c GCP, S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
+> | S5b, S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 
@@ -503,7 +504,7 @@ This mechanism applies under either F2 option; availability remains undecided.
 - Record-reading/source/structure tools must not receive a stated-input claim. Existing RIM readers use the explicit opt-out; `compare_recorded_dissolution` and `estimate_recorded_shelf_life` keep their separate recorded envelopes. Successful output pins cover both paths.
 - Red: a table-driven test over a sample from each wrapper asserts `basis: 'stated'`; it is absent on trunk.
 
-**S5a–S5d, one commit per definition family.** Each engine audit makes an omitted boolean read as `not_stated`, never true or false (the GCP engine already does this). Red: each family's "omitted means not stated" case.
+**S5a–S5d, one commit per definition family.** Each engine audit makes an omitted boolean read as `not_stated`, never true or false (before S5c the GCP engine did this only for the monitoring risk band, the inspection-readiness areas and the deviation classification; see S5c GCP operations below). Red: each family's "omitted means not stated" case.
 
 **S5a COA/PRO — What already exists (execution audit):** the six functions in
 `clinical-outcome-assessment/coa-knowledge.ts` are already reached by `coaProTools.ts`
@@ -656,6 +657,36 @@ and marks the controls it would add, and an unstated significance leaves the cha
 assessed unless a critical or level-4 step settles it. An unstated heat stability, or the filterability of a
 product that is not heat-stable, leaves the sterilisation approach not assessed. Every required text and
 enum is refused by name. No source reader, app or service was added.
+
+**S5c GCP operations — What already exists (execution audit):** the six functions in
+`gcp-operations/gcp-operations-knowledge.ts` are already reached by `gcpOperationsTools.ts`,
+the executor's `runStatsTool` stated-input wrapper and the clinical GCP and consent skills.
+Before S5c an unstated fact was already left undecided in the monitoring plan's risk band,
+the inspection-readiness areas and the deviation classification (the 2026-10-15 sweep), and
+in the compliance principles (unverified) and the consent's ClinicalTrials.gov statement.
+Elsewhere it was read as an answer (true, false or a milder gap): in the compliance gaps,
+score and status, the other consent elements, the consent method and the placebo
+disclosure, the monitoring critical-to-quality factors, the readiness prior-findings line
+and the device records. No function refused a malformed value. Extend the six and their
+result types; reuse `booleanInputStates`, `statedNumber`, `statedOneOf` and
+`ComputationRefusal`, and the engine's own three-valued `anyOf`, `allOf` and `stated`.
+Other GCP code is not touched: the record-backed deviation, eTMF, inspection and consent
+services; the consent-form QC in `ana/gcp-consent.ts` (`advise_gcp`,
+`review_informed_consent`); `global-ri/inspection-readiness.ts`; and
+`global-ri/gcp-essential-documents.ts`, a second principles and essential-records table
+behind the Global RI `/gcp` routes. The local history is shallow, with no GCP-name deletion
+matches. Evidence: `s5c-gcp-operations/`.
+
+**GCP operations execution result:** each boolean the six functions read reports true,
+false or `not_stated` through `inputStates`, and a malformed boolean, enum, list, count, grade
+level or percentage that they read is refused by field. `assess_gcp_compliance` raises no gap
+or strength from an unstated fact and reads `protocolFollowedWithChangeControl` (stated false
+is a major gap). Its score is `null` while a principle is unverified, and its overall status is
+`not_assessed` unless no answer could change it. `design_informed_consent` names the
+additional elements an unstated feature leaves undecided and says when placebo use was not
+stated, and does not call an unstated consent method paper. `design_monitoring_plan` names a
+critical-to-quality factor an unstated fact leaves out, and `plan_essential_documents` the
+device records. No source reader, app or service was added.
 - **S5d:** `benefitRiskTools`, `biosimilarTools`, `immunogenicityTools`, `postApprovalTools`, `regulatoryStrategyTools`, `bioequivalenceTools`.
   - `assess_orphan_designation`: a prevalence with no stated source gives `fdaEligible: null`.
   - `assess_dissolution_similarity` instruction: "for recorded profiles use `compare_recorded_dissolution`."
