@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-08T18:20:12.986Z",
+  "generatedAt": "2026-11-08T19:33:58.364Z",
   "git": {
-    "sha": "4927d8517f8f1872f73c1291890baf5f86387c4e",
+    "sha": "c88d892390a15f01d258f7a72fb597858aaf4497",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2400,7 +2400,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 436542
+        "bytes": 436121
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2408,7 +2408,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 352178
+        "bytes": 352860
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2622,11 +2622,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8940
+        "lines": 8933
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6774
+        "lines": 6785
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -3026,7 +3026,7 @@
       },
       {
         "file": "server/routes/mdx-rbm.ts",
-        "lines": 1681
+        "lines": 1686
       },
       {
         "file": "server/services/grdhe/grdheService.ts",
