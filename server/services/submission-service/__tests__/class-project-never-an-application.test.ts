@@ -24,7 +24,13 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const h = vi.hoisted(() => ({ query: vi.fn(), insert: vi.fn(), audit: vi.fn(), selects: [] as unknown[][] }));
+const h = vi.hoisted(() => ({
+  query: vi.fn(), insert: vi.fn(), audit: vi.fn(), selects: [] as unknown[][],
+  /** P-97: the sequence of the project that was dispatched, or none. */
+  dispatched: null as null | { id: number; submissionId: number },
+  /** The filed state the fold answers for a submission. */
+  fold: vi.fn(),
+}));
 vi.mock('../../../db', () => {
   const chain = (): Record<string, unknown> => {
     const c: Record<string, unknown> = {};
@@ -35,12 +41,17 @@ vi.mock('../../../db', () => {
   };
   return { db: { insert: h.insert, select: () => chain() }, pool: { query: h.query }, getPool: () => ({ query: h.query }), getDb: () => ({}) };
 });
+vi.mock('../../ectd/prior-sequence-loader', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../ectd/prior-sequence-loader')>()),
+  loadFiledStateBySubmission: h.fold,
+}));
 vi.mock('../../audit/audit-write-outcome', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../audit/audit-write-outcome')>()),
   recordAuditRow: h.audit,
 }));
 
 import { createSubmission, createSubmissionTx } from '../submission-service';
+import ectdCompileRoutes from '../../../routes/ectd-compile';
 
 const ORG = 7;
 const ctx = { organizationId: ORG, userId: 3 };
@@ -54,13 +65,21 @@ const sqlOf = (statement: unknown) => (typeof statement === 'string' ? statement
 const inserted = () => h.query.mock.calls.some(([statement]) => /^\s*insert\b/i.test(sqlOf(statement)));
 
 beforeEach(() => {
-  h.query.mockReset(); h.insert.mockReset(); h.audit.mockReset();
+  h.query.mockReset(); h.insert.mockReset(); h.audit.mockReset(); h.fold.mockReset();
   h.selects.length = 0;
+  h.dispatched = null;
   h.insert.mockReturnValue({ values: () => ({ returning: async () => [{ id: 7 }] }) });
   h.audit.mockResolvedValue({ persisted: true });
   // One project row for any read of regulatory_programs: the ownership check,
   // the project-type check and the eCTD anchor all read it by (id, organization).
   h.query.mockImplementation(async (statement: unknown, params?: unknown[]) => {
+    const text = sqlOf(statement);
+    // P-97: the project's dispatched sequence, and the spine of that sequence.
+    if (/status = 'dispatched'/.test(text)) return { rows: h.dispatched ? [{ id: h.dispatched.id }] : [], rowCount: h.dispatched ? 1 : 0 };
+    if (/FROM ectd_sequences q/.test(text) && h.dispatched) {
+      return { rows: [{ id: h.dispatched.id, sequence_number: '0000', region: 'fda', submission_id: h.dispatched.submissionId, application_type: 'ind', primary_region: 'fda' }], rowCount: 1 };
+    }
+    if (/FROM submission_leaves/.test(text)) return { rows: [{ n: 1 }], rowCount: 1 };
     const id = String(params?.[0] ?? '');
     const type = PROGRAM_TYPE[id];
     if (!type || !sqlOf(statement).includes('FROM regulatory_programs')) return { rows: [], rowCount: 0 };
@@ -95,5 +114,90 @@ describe('no creator writes a submission into a project that is not an applicati
   it('the IND project still takes its IND', async () => {
     await expect(createSubmission(ind(IND), ctx)).resolves.toMatchObject({ id: 7 });
     expect(h.insert).toHaveBeenCalledOnce();
+  });
+});
+
+function handler(path: string, method: 'get' | 'post') {
+  const layer = (ectdCompileRoutes as any).stack.find((l: any) => l.route?.path === path && l.route?.methods?.[method]);
+  if (!layer) throw new Error(`Missing route ${method.toUpperCase()} ${path}`);
+  return layer.route.stack[layer.route.stack.length - 1].handle;
+}
+const requestFor = (projectIdent: string, body: Record<string, unknown> = {}) =>
+  ({ params: { projectIdent }, body, query: {}, headers: {}, tenantId: ORG }) as any;
+function response() {
+  const res: Record<string, ReturnType<typeof vi.fn>> = {};
+  for (const m of ['status', 'json', 'send', 'setHeader', 'end']) res[m] = vi.fn(() => res);
+  return res as any;
+}
+const classes = [
+  { label: 'csr', id: CSR, sentence: /^This project is a clinical study report, authored here and not compiled as an eCTD sequence\. The clinical study report is a harmonised \(ICH\) document filed in an application's sequence\. Author it in that application's project/ },
+  { label: 'pas', id: PAS, sentence: /^This project is a Prior Approval Supplement, authored here and not compiled as an eCTD sequence\. An FDA supplement is not built as a sequence yet/ },
+];
+
+/* (c), under founder decision P-97 (2026-11-02, "Keep filed state regardless"):
+   compile, status and validate refuse a filing document class or regional
+   device project with 422 ECTD_NOT_APPLICABLE; the filed state is refused only
+   to a project with no dispatched sequence. */
+describe('a filing document class project is not compiled as an eCTD sequence', () => {
+  const doors = [
+    { action: 'compile', method: 'post' as const },
+    { action: 'status', method: 'get' as const },
+    { action: 'validate', method: 'post' as const },
+  ];
+
+  it.each(classes.flatMap((c) => doors.map((d) => ({ ...c, ...d }))))('$label/$action is refused with the class sentence after the anchor read alone', async ({ id, sentence, action, method }) => {
+    const res = response();
+    await handler(`/:projectIdent/${action}`, method)(requestFor(id, { region: 'FDA', submissionType: 'initial' }), res);
+    expect(res.status).toHaveBeenCalledWith(422);
+    expect(res.json).toHaveBeenCalledWith({ error: { code: 'ECTD_NOT_APPLICABLE', message: expect.stringMatching(sentence) } });
+    expect(h.query).toHaveBeenCalledTimes(1);
+    expect(sqlOf(h.query.mock.calls[0][0])).toContain('FROM regulatory_programs');
+  });
+
+  it('an imported validator report does not reach a class project either', async () => {
+    const res = response();
+    await handler('/:projectIdent/validate', 'post')(requestFor(CSR, { evalidatorReport: { invented: true } }), res);
+    expect(res.status).toHaveBeenCalledWith(422);
+    expect(res.json.mock.calls[0][0].error.code).toBe('ECTD_NOT_APPLICABLE');
+    expect(h.query).toHaveBeenCalledTimes(1);
+  });
+
+  it('a regional device project keeps its own sentence', async () => {
+    const res = response();
+    await handler('/:projectIdent/status', 'get')(requestFor(SHONIN), res);
+    expect(res.status).toHaveBeenCalledWith(422);
+    expect(res.json.mock.calls[0][0].error.message).toMatch(/^Device preparation projects are not eCTD applications\./);
+  });
+});
+
+describe('a project that already filed keeps its filed state (P-97)', () => {
+  it.each(classes)('$label with no dispatched sequence: the filed state is refused with the class sentence', async ({ id, sentence }) => {
+    const res = response();
+    await handler('/:projectIdent/filed-state', 'get')(requestFor(id), res);
+    expect(res.status).toHaveBeenCalledWith(422);
+    expect(res.json).toHaveBeenCalledWith({ error: { code: 'ECTD_NOT_APPLICABLE', message: expect.stringMatching(sentence) } });
+    expect(h.fold).not.toHaveBeenCalled();
+  });
+
+  it.each([...classes, { label: 'shonin', id: SHONIN }])('$label with a dispatched sequence: what is on file is read, from the submission that holds it', async ({ id }) => {
+    h.dispatched = { id: 501, submissionId: 77 };
+    h.fold.mockResolvedValue({ throughSequence: '0000', sequences: [{ sequenceNumber: '0000', dispatchStatus: 'sent', filed: true, basis: 'transmit' }], leaves: [] });
+    const res = response();
+    await handler('/:projectIdent/filed-state', 'get')(requestFor(id), res);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(h.fold).toHaveBeenCalledWith(expect.anything(), { organizationId: ORG, submissionId: 77 });
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ submissionId: 77, throughSequence: '0000' }));
+  });
+
+  it('a failed read of whether the project filed is a failure, never a refusal or an empty answer', async () => {
+    const base = h.query.getMockImplementation()!;
+    h.query.mockImplementation(async (statement: unknown, params?: unknown[]) => {
+      if (/status = 'dispatched'/.test(sqlOf(statement))) throw new Error('connection reset');
+      return base(statement, params);
+    });
+    const res = response();
+    await handler('/:projectIdent/filed-state', 'get')(requestFor(CSR), res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json.mock.calls[0][0].error.code).toBe('FILED_STATE_UNAVAILABLE');
   });
 });

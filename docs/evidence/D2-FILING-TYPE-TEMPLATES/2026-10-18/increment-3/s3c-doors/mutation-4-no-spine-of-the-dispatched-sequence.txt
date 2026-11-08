@@ -1,0 +1,10 @@
+MUTATION 4-no-spine-of-the-dispatched-sequence in server/routes/ectd-compile.ts (on the final code and tests, 2026-11-08T22:32:17.534153Z): replaced [    const spine = chosen.spine ?? (filedSequenceId !== null ? await resolveSequenceSpine(anchor, orgId, filedSequenceId) : null);] with [    const spine = chosen.spine;]
+ ✓ server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'csr' with no dispatched sequence: the filed state is refused with the class sentence 6ms
+ ✓ server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'pas' with no dispatched sequence: the filed state is refused with the class sentence 1ms
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'csr' with a dispatched sequence: what is on file is read, from the submission that holds it 5ms
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'pas' with a dispatched sequence: what is on file is read, from the submission that holds it 1ms
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'shonin' with a dispatched sequence: what is on file is read, from the submission that holds it 1ms
+ ✓ server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > a failed read of whether the project filed is a failure, never a refusal or an empty answer 1ms
+      Tests  3 failed | 3 passed | 12 skipped (18)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 c9014c2134604cc6775bf3e595ef81262501b8d25da32ea40e32c7f8329ea4b8 (expected c9014c2134604cc6775bf3e595ef81262501b8d25da32ea40e32c7f8329ea4b8)

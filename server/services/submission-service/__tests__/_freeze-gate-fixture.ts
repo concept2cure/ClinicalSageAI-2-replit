@@ -88,8 +88,10 @@ export function freezeGateHelpers(db: () => IndPgliteDb) {
   /** A governed `sign` action bound to the sequence's CURRENT leaf-manifest digest.
    *  `meaning` is the §11.50 meaning the signer chose. Omitted, it is 'approval',
    *  which freeze, dispatch and transmit all accept (2026-10-19: each refuses any
-   *  meaning that is not approval, responsibility or release); `null` records none. */
-  async function sign(seqId: number, intent: string, meaning: string | null = 'approval'): Promise<string> {
+   *  meaning that is not approval, responsibility or release); `null` records none.
+   *  `extra` is the rest of the payload: a transmit signature names its
+   *  `environment` (F1, row D7, 2026-11-08). */
+  async function sign(seqId: number, intent: string, meaning: string | null = 'approval', extra: Record<string, unknown> = {}): Promise<string> {
     const h = db();
     const id = `sig-${++sigN}`;
     const binding = await deriveGovernedTargetBinding(
@@ -99,7 +101,7 @@ export function freezeGateHelpers(db: () => IndPgliteDb) {
     );
     await h.pglite.query(
       `INSERT INTO c2c_ana_actions (id, org_id, command, target, state, proposed_by, payload) VALUES ($1,$2,'sign',$3,'executed',$4,$5)`,
-      [id, ORG, `ectd-sequence:${seqId}`, USER, JSON.stringify(meaning === null ? { intent } : { intent, meaning })],
+      [id, ORG, `ectd-sequence:${seqId}`, USER, JSON.stringify(meaning === null ? { intent, ...extra } : { intent, meaning, ...extra })],
     );
     await h.pglite.query(
       `INSERT INTO electronic_signatures (organization_id, signed_target, signature_manifest, bound_payload_digest, binding_basis, is_valid, verification_status)

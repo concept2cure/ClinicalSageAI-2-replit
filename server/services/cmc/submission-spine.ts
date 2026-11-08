@@ -19,6 +19,9 @@
  */
 import type { PoolClient } from 'pg';
 import { pool } from '../../db';
+import { regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog';
+import { classNotSequencedReason, filingDocumentClassOf, filingTypeInSentence } from '../../../shared/regulatory/filing-document-classes';
+import { FILED_DISPATCH_STATUSES } from '../submission-service/filed-dispatch';
 
 /**
  * Anything that can run a query: the shared pool, or a client already inside a
@@ -265,4 +268,54 @@ export function regionCodeForPrimaryRegion(
     default:
       return null;
   }
+}
+
+/**
+ * Why a project of this program type is not compiled as an eCTD sequence, in
+ * the words its refusal gives (422 ECTD_NOT_APPLICABLE), or null for an
+ * application (3b slice 3 (c), 2026-11-08). A regional device working document
+ * is not an application, and neither is a filing document class (a CSR, a
+ * supplement, a meeting package): it is authored in its project and filed in an
+ * application's sequence, or sent by no sequence this platform builds. The
+ * class sentence is the one the creators and add-project-market.ts already give
+ * (shared/regulatory/filing-document-classes.ts). Read by every eCTD door in
+ * routes/ectd-compile.ts.
+ */
+export function nonApplicationEctdReason(programType: string | null): string | null {
+  if (regionalDeviceApplicationClassOf(programType)) {
+    return 'Device preparation projects are not eCTD applications. No submission package is built or transmitted for this preparation pathway.';
+  }
+  const documentClass = filingDocumentClassOf(programType);
+  if (!documentClass) return null;
+  return `This project is ${filingTypeInSentence(documentClass.docType, true)}, authored here and not compiled as an eCTD sequence. ${classNotSequencedReason(documentClass)}`;
+}
+
+/**
+ * Founder decision P-97 (2026-11-02, "Keep filed state regardless"): a project
+ * that is not an application but already has a dispatched sequence keeps its
+ * filed-state view, read-only. Such a sequence exists only where a submission
+ * was anchored to the project before 5ab138ed3 refused that. This is the latest
+ * dispatched sequence of any submission anchored to the project (a program
+ * anchor by its id, a numeric one by the program its project names), or null
+ * when it has none. It throws when the read fails: that is not "nothing filed".
+ */
+export async function dispatchedSequenceOfProject(
+  anchor: { programId: string | null; numericProjectId: number | null },
+  orgId: number,
+  executor: Queryable = pool,
+): Promise<number | null> {
+  const { rows } = await executor.query(
+    `SELECT s.id
+       FROM ectd_sequences s
+       JOIN submissions sub ON sub.id = s.submission_id AND sub.organization_id = s.organization_id AND sub.deleted_at IS NULL
+      WHERE s.organization_id = $1 AND s.deleted_at IS NULL
+        AND sub.program_id = COALESCE($2::uuid,
+              (SELECT p.regulatory_program_id FROM projects p WHERE p.id = $3 AND p.organization_id = $1))
+        AND (s.status = 'dispatched' OR s.dispatch_status = ANY($4::text[]))
+      ORDER BY s.id DESC
+      LIMIT 1`,
+    [orgId, anchor.programId, anchor.numericProjectId, [...FILED_DISPATCH_STATUSES]],
+  );
+  const id = Number(rows[0]?.id);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
