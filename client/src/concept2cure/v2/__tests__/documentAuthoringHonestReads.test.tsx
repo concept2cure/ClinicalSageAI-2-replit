@@ -56,6 +56,11 @@ import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.te
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload } as Response);
 const fail = (status: number) => ({ ok: false, status, json: async () => ({ error: 'nope' }) } as Response);
 const never = () => new Promise<Response>(() => {});
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 
 const DOCS = {
   success: true,
@@ -80,7 +85,7 @@ function wire(route: Route) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     const r = route(method, String(url ?? ''));
     if (r) return r;
-    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, DOCS));
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
     return ok({ success: true, revisions: [], comments: [], sources: [] });
   });
@@ -262,7 +267,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
         source: { id: 5, title: 'protocol-v2.pdf', checksum: 'sha-1', extractionStatus: 'extracted', mimeType: 'application/pdf' },
       };
       apiRequest.mockImplementation(async (method: string, url: string) => {
-        if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+        if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, DOCS));
         if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok({ ...SECTIONS, sections: [{ ...SECTIONS.sections[0], citation_count: 1 }] });
         if (method === 'GET' && url === '/api/authoring/sections/S1/sources') return ok({ sources: [citation] });
         if (method === 'DELETE') {
