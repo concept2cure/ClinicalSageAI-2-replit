@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-08T19:33:58.364Z",
+  "generatedAt": "2026-11-08T21:01:09.846Z",
   "git": {
-    "sha": "c88d892390a15f01d258f7a72fb597858aaf4497",
+    "sha": "591a412ecdabbd29673fa32121622baaf21dcf43",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2512,7 +2512,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "bytes": 137173
+        "bytes": 136951
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2769,12 +2769,12 @@
         "lines": 2435
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "lines": 2410
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
         "lines": 2409
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+        "lines": 2408
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
