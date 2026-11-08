@@ -1,0 +1,8 @@
+{
+  "probe": "Actual published c2c_app_current helper against the running public /api/version endpoint",
+  "sourceHead": "c50f8782ad8ef622872578ae4fae41e14d18caa1",
+  "exitCode": 0,
+  "acceptedCurrentRunningCommit": true,
+  "authenticatedRequests": 0,
+  "secretValuesReadOrPrinted": false
+}

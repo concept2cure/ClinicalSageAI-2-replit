@@ -1,0 +1,66 @@
+{
+  "runId": 8,
+  "programId": "6c89e2c1-2d76-4356-80cb-001821956b5a",
+  "api": {
+    "saved": 200,
+    "/rendered": 200,
+    "/dependencies": 200,
+    "/export.pdf": 200
+  },
+  "reportStatus": "partial",
+  "snapshotCount": 5,
+  "condition": "Fictional acceptance check: pH < 6 and temperature > 30 C; impurity <LOQ; review remains pending.",
+  "ui": {
+    "desktop": {
+      "reportComparisonExact": true,
+      "preservedTaskDoor": true,
+      "projectRetained": true,
+      "drawerStyle": {
+        "background": "rgb(250, 249, 245)",
+        "opacity": "1"
+      }
+    },
+    "mobile": {
+      "reportComparisonExact": true,
+      "preservedTaskDoor": true,
+      "projectRetained": true,
+      "drawerStyle": {
+        "background": "rgb(250, 249, 245)",
+        "opacity": "1"
+      }
+    }
+  },
+  "pageErrors": [],
+  "modelRequests": [],
+  "checks": [
+    "Current project catalogue read 1 succeeds",
+    "Current project catalogue read 2 succeeds",
+    "Unchanged native facts retain their exact immutable source IDs",
+    "The original retained report remains readable",
+    "The original retained report now displays its exact comparison conditions",
+    "A new current Quality assurance report is created",
+    "Current report saved data succeeds",
+    "Current report /rendered succeeds",
+    "Current report /dependencies succeeds",
+    "Current report /export.pdf succeeds",
+    "Current rendered tables preserve pH, temperature and <LOQ conditions exactly",
+    "The previous comparison deletion is absent",
+    "The sealed native snapshot retains the original comparison text",
+    "Quality assurance remains explicitly partial",
+    "Unassessed completeness remains explicit",
+    "The actual PDF preserves the full comparison conditions",
+    "The actual PDF retains the partial-status watermark",
+    "Report history succeeds with fresh native admission for each report",
+    "desktop report UI preserves the exact comparison conditions",
+    "desktop preserved task retains its native Quality door",
+    "desktop task drawer reaches its opaque resting state",
+    "desktop Quality door retains the project",
+    "mobile report UI preserves the exact comparison conditions",
+    "mobile preserved task retains its native Quality door",
+    "mobile task drawer reaches its opaque resting state",
+    "mobile Quality door retains the project",
+    "No uncaught browser errors",
+    "No model-stream calls were requested"
+  ],
+  "fixture": "Fictional local Quality data; deterministic projection; no approval, effectiveness close, model drafting, filing or external delivery."
+}

@@ -213,10 +213,13 @@ export async function buildCsrNarratives(deps: CsrNarrativeBuildDeps,
 }
 
 /** The per-subject QC list: what each narrative is missing, how it was written, and why any was refused. */
-export async function readCsrNarrativeQc(q: NarrativeQueryable, organizationId: number, jobId: number) {
+export type NarrativeReadAttester = (rows: SavedNarrative[]) => Promise<void>;
+export async function readCsrNarrativeQc(q: NarrativeQueryable, organizationId: number, jobId: number, verify?: NarrativeReadAttester) {
   const { rows } = await q.query(`SELECT subject_id, sequence, status, content, content_hash, facts_digest, qc
     FROM csr_narrative_outputs WHERE organization_id = $1 AND job_id = $2 ORDER BY sequence, subject_id`, [organizationId, jobId]);
-  return rows.map(savedOf).map(({ content: _content, factsDigest: _digest, ...row }) => row);
+  const captured = rows.map(savedOf);
+  await verify?.(captured);
+  return captured.map(({ content: _content, factsDigest: _digest, ...row }) => row);
 }
 
 /**
@@ -226,12 +229,15 @@ export async function readCsrNarrativeQc(q: NarrativeQueryable, organizationId: 
  * text is its recorded SHA-256; a row that fails it is shown as failing, never
  * hidden.
  */
-export async function readCsrNarrativeTextPage(q: NarrativeQueryable, organizationId: number, jobId: number, after: { sequence: number; subjectId: string } | null, limit: number) {
-  const size = Math.max(1, Math.min(50, Math.trunc(limit) || 20));
-  const { rows } = await q.query(`SELECT subject_id, sequence, content, content_hash, qc,
+export async function readCsrNarrativeTextPage(q: NarrativeQueryable, organizationId: number, jobId: number, after: { sequence: number; subjectId: string } | null,
+  limit: number | { size: number; verify?: NarrativeReadAttester }) {
+  const options: { size: number; verify?: NarrativeReadAttester } = typeof limit === 'number' ? { size: limit } : limit;
+  const size = Math.max(1, Math.min(50, Math.trunc(options.size) || 20));
+  const { rows } = await q.query(`SELECT subject_id, sequence, status, content, content_hash, facts_digest, qc,
       content_hash = encode(sha256(convert_to(content, 'UTF8')), 'hex') AS verified
     FROM csr_narrative_outputs WHERE organization_id = $1 AND job_id = $2 AND status = 'composed' AND (sequence, subject_id) > ($3::int, $4::text)
     ORDER BY sequence, subject_id LIMIT $5`, [organizationId, jobId, after?.sequence ?? -1, after?.subjectId ?? '', size + 1]);
+  await options.verify?.(rows.map(savedOf));
   const page = rows.slice(0, size).map(row => {
     const qc = (row.qc ?? {}) as NarrativeQc;
     return { subjectId: String(row.subject_id), sequence: Number(row.sequence), armName: String(qc.armName ?? ''), events: Array.isArray(qc.events) ? qc.events : [],

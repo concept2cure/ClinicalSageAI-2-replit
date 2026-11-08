@@ -1817,6 +1817,7 @@ function catalogSummary(s: ShapeableSource, meta: Record<string, any>) {
     documentDate: s.documentDate ?? null,
     dataCutDate: meta.dataCutDate ?? null,
     product: s.product ?? null,
+    nativeRecord: nativeCatalogFacts(s),
     dataset: profile
       ? {
           format: profile.format ?? null,
@@ -1828,6 +1829,14 @@ function catalogSummary(s: ShapeableSource, meta: Record<string, any>) {
         }
       : null,
   };
+}
+
+/** The canonical native snapshot's identity and lifecycle, alongside file facts. */
+function nativeCatalogFacts(s: ShapeableSource) {
+  if (s.provenance?.origin !== 'native_record_snapshot') return null;
+  const native = (s.provenance as Record<string, any>).recordSnapshot;
+  return { workArea: native?.workArea, sourceScope: native?.sourceScope, kind: native?.native?.kind,
+    id: native?.native?.id, lifecycle: native?.lifecycle, version: s.version ?? null };
 }
 
 /** What kind of file a source is and how it arrived, without a second round trip. */
@@ -1870,7 +1879,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     /* Superseded sources stay in the list unless current=true: the authoring
        canvas and sources rail read this route too, and each carries isCurrent,
        so a reader that counts can count once. */
-    const { total, currentTotal, sources } = await searchDataRoom(orgId, query);
+    const { total, currentTotal, sources } = await searchDataRoom(orgId, query, { userId: resolveUserId(req) ?? undefined });
     const truncated = (query.offset ?? 0) + sources.length < total;
     const unscoped =
       req.query.includeUnscoped === 'true'

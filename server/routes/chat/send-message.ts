@@ -17,6 +17,7 @@ import { currentTenantOrgUuid } from '../../db/currentTenant.js';
 import {
   getOrCreateThread,
   getThreadMessages,
+  threadHasOwnerPrivateBoundary,
   ThreadAccessError,
   saveChatMessage as saveMessage,
 } from '../../services/chat-thread-helpers.js';
@@ -161,6 +162,18 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         });
       }
       throw e;
+    }
+
+    try {
+      if (await threadHasOwnerPrivateBoundary(threadId)) {
+        res.locals.ownerPrivateCapture = true;
+        return res.status(409).json({ code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE',
+          error: 'Continue this private conversation through AnA’s protected conversation.' });
+      }
+    } catch {
+      res.locals.ownerPrivateCapture = true;
+      return res.status(409).json({ code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE',
+        error: 'The conversation’s privacy boundary could not be verified. No model request was sent.' });
     }
 
     // Fix B: Enforce thread ownership — if thread_id was supplied, verify org match

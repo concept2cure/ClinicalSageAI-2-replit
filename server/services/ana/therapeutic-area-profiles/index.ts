@@ -44,6 +44,7 @@ import { vaccinesProfile } from './vaccines.js';
 import { normalizeModality } from '../../../../shared/regulatory/modality.js';
 import { normalizeClinicalPhase } from '../../../../shared/constants/domain/aliases.js';
 import { CLINICAL_PHASES } from '../../../../shared/constants/domain/clinical-phases.js';
+import type { SectionDefinition } from '../../../../shared/regulatory/document-taxonomy.js';
 import { checkGuidanceFreshness, type FreshnessResultItem } from '../../regulatory-currency/guidance-ingestion-service.js';
 import { REGULATORY_FACTS, isVerificationStale, verificationAgeDays } from '../../regulatory-currency/currency-registry.js';
 import type {
@@ -215,6 +216,8 @@ export interface RenderProfileOptions {
   onlyApplicableRules?: boolean;
   /** Disambiguates an E3 heading from a CTD heading; never inferred from therapeutic area. */
   documentKind?: ProfileDocumentKind;
+  /** Exact regional blueprint semantics; other suppresses clinical-kind fallback. */
+  regionalSectionRole?: NonNullable<SectionDefinition['therapeuticContext']> | 'other';
   /** Advisory product facts; recorded labels do not establish qualified evidence. */
   productContext?: ProfileProductContext;
   /** Writing jurisdiction, when known, for the existing dated-registry lookup. */
@@ -319,6 +322,7 @@ function guidanceBlock(refs: GuidanceRef[], cited: string[], options: RenderProf
 /** Clinical arrays belong to scientific clinical documents, not a disease-specific CMC or tox section. */
 function clinicalConsiderationsApply(section: string | null, options: RenderProfileOptions): boolean {
   if (section && /^(?:2\.(?:4|6)|[34])(?:\.|$)/.test(section)) return false;
+  if (options.regionalSectionRole !== undefined) return options.regionalSectionRole === 'protocol' || options.regionalSectionRole === 'protocol-synopsis';
   if (section && /^(?:2\.5|2\.7\.[34]|5\.3\.[45])(?:\.|$)/.test(section)) return true;
   if (options.documentKind === 'protocol') return true;
   if (options.documentKind === 'csr') return !section || /^(?:2|9|10|11|12|13)(?:\.|$)/.test(section);

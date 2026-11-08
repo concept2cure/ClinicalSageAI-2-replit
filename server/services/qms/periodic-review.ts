@@ -195,6 +195,8 @@ function reviewsRelease(act: QmsPeriodicReviewAct, release: QmsDocumentRow): boo
 export interface QmsPeriodicReviewReadOptions {
   /** Only reviews signed before this instant (an as-of report's end of day). */
   signedBefore?: string;
+  /** Native evidence must admit an exact current/retained authored parent before reading its prose. */
+  admitRelease?: import('./in-force-release').QmsReleaseReadOptions['admitRelease'];
 }
 
 /**
@@ -273,7 +275,7 @@ export async function readQmsReviewSchedule(
   rows: readonly QmsDocumentRow[],
   options: QmsPeriodicReviewReadOptions = {},
 ): Promise<QmsReviewSchedule> {
-  const inForce = await readInForceReleases(client, orgId, rows);
+  const inForce = await readInForceReleases(client, orgId, rows, options);
   const reviews = await readQmsPeriodicReviews(client, orgId, inForce, options);
   return {
     inForce,

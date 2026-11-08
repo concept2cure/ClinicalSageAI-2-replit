@@ -52,8 +52,8 @@ interface DocRow { id: string; title: string; module: string; status: string; c2
 const HOME_COPY: DocRow = { id: 'D1', title: 'NDA filing', module: 'M2', status: 'draft', c2c_document_id: HOME };
 const EMA_COPY: DocRow = { id: 'D2', title: 'Vorelinib — EU MAA', module: 'M1', status: 'draft', c2c_document_id: EMA };
 
-const HOME_DOC = { id: HOME, doc_type: 'nda', agency: 'fda', title: 'Vorelinib — NDA', rule_pack_version: 'v1', status: 'draft', readiness: 0 };
-const EMA_DOC = { id: EMA, doc_type: 'maa', agency: 'ema', title: 'Vorelinib — EU MAA', rule_pack_version: 'v1', status: 'draft', readiness: 0 };
+const HOME_DOC = { id: HOME, project_id: PROJECT_ID, doc_type: 'nda', agency: 'fda', title: 'Vorelinib — NDA', rule_pack_version: 'v1', status: 'draft', readiness: 0 };
+const EMA_DOC = { id: EMA, project_id: PROJECT_ID, doc_type: 'maa', agency: 'ema', title: 'Vorelinib — EU MAA', rule_pack_version: 'v1', status: 'draft', readiness: 0 };
 const OUTLINES: Record<string, unknown> = {
   [`/api/c2c/documents/${HOME}/outline`]: {
     document: { ...HOME_DOC, filing_scope: 'home' },
@@ -67,21 +67,30 @@ const OUTLINES: Record<string, unknown> = {
   },
 };
 
-function wire(opts: { docs: DocRow[]; marketsFail?: boolean }) {
+function wire(opts: { docs: DocRow[]; marketsFail?: boolean; marketDocument?: typeof EMA_DOC }) {
   const docs = [...opts.docs];
-  const gets: Array<[(url: string) => boolean, () => Response]> = [
-    [(u) => u.startsWith('/api/authoring/docs?'), () => ok({ success: true, documents: docs.map((d) => ({ product_code: 'ABC', updated_at: '2026-10-15T10:00:00Z', section_count: 0, ...d })) })],
-    [(u) => /^\/api\/authoring\/docs\/[^/]+\/sections$/.test(u), () => ok({ success: true, sections: [] })],
+  const market = opts.marketDocument ?? EMA_DOC;
+  const outlines: Record<string, unknown> = { ...OUTLINES, [`/api/c2c/documents/${EMA}/outline`]: {
+    ...(OUTLINES[`/api/c2c/documents/${EMA}/outline`] as Record<string, unknown>), document: { ...market, filing_scope: 'market' },
+  } };
+  const gets: Array<[(url: string) => boolean, (url: string) => Response]> = [
+    [(u) => u.startsWith('/api/authoring/docs?'), () => ok({ success: true, documents: docs.map((d) => ({ product_code: 'ABC', updated_at: '2026-10-15T10:00:00Z', section_count: 0, ...d, program_id: PROJECT_ID })) })],
+    [(u) => /^\/api\/authoring\/docs\/[^/?]+(?:\?.*)?$/.test(u), (url) => {
+      const id = url.split('?')[0].split('/').pop();
+      const current = docs.find(row => row.id === id);
+      return ok({ success: true, document: current ? { ...current, client_program_id: PROJECT_ID } : null });
+    }],
+    [(u) => /^\/api\/authoring\/docs\/[^/]+\/sections(?:\?.*)?$/.test(u), () => ok({ success: true, sections: [] })],
     [(u) => u.endsWith('&scope=home'), () => ok({ documents: [HOME_DOC] })],
     [(u) => u.endsWith('&scope=market'), () => (opts.marketsFail
       ? ({ ok: false, status: 503, json: async () => ({ error: 'INTERNAL_ERROR' }) } as Response)
-      : ok({ documents: [EMA_DOC] }))],
+      : ok({ documents: [market] }))],
   ];
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: Record<string, unknown>) => {
     if (method === 'GET') {
-      if (url in OUTLINES) return ok(OUTLINES[url]);
-      return (gets.find(([match]) => match(url))?.[1] ?? (() => ok({ success: true })))();
+      if (url in outlines) return ok(outlines[url]);
+      return (gets.find(([match]) => match(url))?.[1] ?? (() => ok({ success: true })))(url);
     }
     if (url === '/api/authoring/docs') {
       docs.push({ ...EMA_COPY, title: String(body?.title) });
@@ -137,5 +146,32 @@ describe("a market's own part of the filing in the editor (F22b)", () => {
     render(<DocumentAuthoring {...props()} />);
     await rowLabel('Clinical overview');
     expect((await screen.findByText(/markets added to this project could not be read/)).getAttribute('role')).toBe('status');
+  });
+});
+
+describe('the actual editor distinguishes EU device authority from its storage key', () => {
+  it.each(['cer', 'mdr', 'ivdr'])('labels the exact %s subtitle, choice and gaps with EU / Notified Body', async doc_type => {
+    wire({ docs: [EMA_COPY, HOME_COPY], marketDocument: { ...EMA_DOC, doc_type } });
+    render(<DocumentAuthoring {...props()} />);
+    await rowLabel('Summary of product characteristics');
+    expect(document.querySelector('.ed-tree-m')?.textContent).toContain(`${doc_type.toUpperCase()} · EU / Notified Body`);
+    const filings = await screen.findByTestId('ed-filings');
+    expect(filings.textContent).toContain(`EU / Notified Body · ${doc_type.toUpperCase()}`);
+    expect(filings.textContent).not.toContain(`EMA · ${doc_type.toUpperCase()}`);
+    const gaps = await screen.findByTestId('ed-filing-gaps');
+    expect(gaps.textContent).toContain('EU / Notified Body requires a section');
+    expect(gaps.textContent).not.toContain('EMA requires');
+  });
+
+  it('preserves the exact governed ID in explicit editing-copy creation', async () => {
+    wire({ docs: [HOME_COPY], marketDocument: { ...EMA_DOC, doc_type: 'ivdr' } });
+    render(<DocumentAuthoring {...props()} />); await rowLabel('Clinical overview');
+    const filings = await screen.findByTestId('ed-filings');
+    fireEvent.click(within(filings).getByRole('button', { name: 'Create editing copy', description: /EU \/ Notified Body · IVDR/ }));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/docs', {
+      title: EMA_DOC.title, module: 'M1', client_program_id: PROJECT_ID, c2c_document_id: EMA,
+    }));
+    await rowLabel('Summary of product characteristics');
+    expect(document.querySelector('.ed-tree-m')?.textContent).toContain('IVDR · EU / Notified Body');
   });
 });

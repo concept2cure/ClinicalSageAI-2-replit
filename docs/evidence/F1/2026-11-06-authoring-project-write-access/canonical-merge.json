@@ -1,0 +1,179 @@
+{
+  "fromHead": "21a21849d7cfb8a35794489a87fad2b849c7011c",
+  "mergedHead": "64473d442eca9917be123da8c24c6b6018254421",
+  "qualifiedBy": [
+    "integrated-regression",
+    "integrated-lineage",
+    "integrated-gates",
+    "integrated-build",
+    "integrated-browser"
+  ],
+  "changedNamedInputs": {
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": {
+      "before": "387cca037c05005da943366d3c551fbe8f142a5fee278c33b629cea5f2f68d23",
+      "after": "ae9989951de3f2effa198dd380cd5178e277bfbb79d88a45b9f82499ea7f8948"
+    },
+    "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx": {
+      "before": "9b1cf0e82a0af562e224c5fe6a4b8f63c49b1fc00c32459c79e6c63dd296f5ce",
+      "after": "63e3d682bb30f549570e891f76c4e52a1d6d9cf97dfc9ee2cd8ac861f0d7343b"
+    },
+    "client/src/concept2cure/v2/fixtures/licensing.ts": {
+      "before": "8ed92856c2763942cae69273ef1765ffe56b9a8ca3d702ad0e0d81ae53c8df4e",
+      "after": "eef9671e2413210c300c405ca0366dcb5516917fdc33767327d23b73fb7d0e28"
+    },
+    "client/src/concept2cure/v2/registryModel.ts": {
+      "before": "d5c0ea15579b3b0b8ae85b6b0d23f64ad71336caccb9728f8ae13cf0a37747bb",
+      "after": "24947d526bf4eb008948055e3c7f8b66d2a0212e673720659186becada30de97"
+    },
+    "client/src/concept2cure/v2/routing.ts": {
+      "before": "0cb87e4603f45168ddcb727adf84ca57ed08e82d1b2c34422c122f9266f2c8f1",
+      "after": "8828d3afe5ab625b7440cfcfbf1a49762bbe2d9bdd45f1175429db6faf3ac439"
+    },
+    "client/src/concept2cure/v2/styles/project-home-v2.css": {
+      "before": "77b0126a809df55db1a5426f180dd8eb6f01299ae4fa9a4c08cb3a2e230f69a1",
+      "after": "1542a22c34ae335c789e95b4cc578e10b63b6aff727e1db6e80051c86684845c"
+    },
+    "client/src/concept2cure/v2/surfaces/ConversationThread.tsx": {
+      "before": "dc307a53798e7600d09e5a37937f1c4558a1e1880001e65022c6de8a46c86253",
+      "after": "8e14bf4f385f87e266f003dcc2c920ce7cfb97cc0084b39865b56af33f174c3a"
+    },
+    "client/src/concept2cure/v2/surfaces/LicensingSurface.tsx": {
+      "before": "2ce4d076ad83cb2b1a4d6d0a7f3c46eaaa60f82100179091aaa2a0b7480411cd",
+      "after": "8b360887b1230f06ac9322a809506d2f225c033d2124fd74e21d7b509b313aaf"
+    },
+    "client/src/concept2cure/v2/surfaces/ProjectCoreWork.tsx": {
+      "before": "25b03f42f25bac139dbc708063c5b3700c10da3c87e6c3502d25e151f6ffa21a",
+      "after": "6c2b03839aefce5b7988b26f95f0b2fb2bb34dc216f676a74968447f0b1b060c"
+    },
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": {
+      "before": "3232a77a8858d4afe16a4500b942c1244c1e052a8d77cf46b5c96918b9fdea4f",
+      "after": "e8c2522a5f96655bfdede46cd7bad1d785c999bc4c6b2b2a3c656ff707acb422"
+    },
+    "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx": {
+      "before": "accc4e7d67962ce971ffa637881ec150aa7f943688114715defd0b6a91ce2c61",
+      "after": "98de2138af119877ab88510f991c190b05b2e2b71a2bad4714bd55027f27df67"
+    },
+    "client/src/concept2cure/v2/surfaces/ProjectRecordedContext.tsx": {
+      "before": "ad60db2ee9e87d567658ac955ec1c4762763d661abce6df6ac05605ef22d83e9",
+      "after": "65e9c2baa3ce0b3644b7cc98afdcf582ff8d5969afb91db3bc5fff5495f3bdb0"
+    },
+    "client/src/concept2cure/v2/surfaces/ProjectRecords.tsx": {
+      "before": "6018dd6ef86367538acd663e4cee452470853bcc414e7f9ed8d533f850a7e3d7",
+      "after": "89a3f59f2e815194ebeb0ae565239fc960fd84ef0058c01d4aeff8ec74ba1a4b"
+    },
+    "client/src/concept2cure/v2/surfaces/ProjectRespond.tsx": {
+      "before": "12f8471595dd4bbc788e94b6ebd82aec5a4052690dc4a0a7421f8a8fa8a47c3e",
+      "after": "10e5112a5fc09016f0a93d0eb50f41fbf218ecc605975c0b9b793112d2e6a453"
+    },
+    "client/src/concept2cure/v2/surfaces/ProjectSide.tsx": {
+      "before": "d395744168cc9fad70c58c529d0d647db9972fe564839f8de6aa2c432b253573",
+      "after": "eeef2c637e45f0c74e29ae46afa2f2f6dd0948a32665407b0b9cf21e9dc84ddf"
+    },
+    "client/src/concept2cure/v2/surfaces/ProjectTeamResponsibilities.tsx": {
+      "before": "df039c410e7d4ac9749240139917cd99ab1dc1d18e5d6892c7a891ebb03f8535",
+      "after": "c7d3509eb4c5ba4d0737212d38a292cb42a82f1ea0f473c65676792df34fca74"
+    },
+    "client/src/concept2cure/v2/surfaces/Vault.tsx": {
+      "before": "84daf5bd8f2cbddb0673002580f1fec6c02d5e11be4c80c86434d23446694a1d",
+      "after": "0cf25811eec68e5e443ef0a3e022829c613c43de6c11381c14454f2a6693e4d5"
+    },
+    "client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx": {
+      "before": "a76db7053fa54c8c6744cae3620d11f0b9eabdbf1bd973d6daf832b157a92a4f",
+      "after": "6a73a2eb82c8cd4e7aba0abafb139bad0013be13592e9afd79c860ffc4c9e52c"
+    },
+    "client/src/concept2cure/v2/useVaultUpload.ts": {
+      "before": "0660e1907cf5b31d91cb5c43a44e6bf85a480375bf98862ddbac37b9bce34295",
+      "after": "de5fa9639ba61bd2a2340fcee5d114877988f22655d265f79d56d1e5c2ab10d8"
+    },
+    "db/migrations/20260520_ana_failure_learning.sql": {
+      "before": "ee6cf4b5d37d1fb51880743486efe0f13c8dd09551a19737d72b1d3a34065489",
+      "after": "88a4d5c98ea1c39cfabf05246c746536f779818bfcee1fa872b2fb884d0a30a7"
+    },
+    "server/services/ai-gateway/gateway.ts": {
+      "before": "9077a80a70f71e1ce68c5646b682dec15736b9831e1931650a79833f72bb98c1",
+      "after": "cf4164da5d3f811bda194d660f996ab154a45a34fcc935a421a072740b50e1aa"
+    },
+    "server/services/ai-gateway/sensitive-placement-policy.ts": {
+      "before": "b7d70d73906308a2f0d922adbcd5ae65fee905b513f817928f3609c45844f1ae",
+      "after": "27f373a4a63bf0431314c42a1fa6ca140de33ec1bb92b35cf0493632d3854285"
+    },
+    "server/services/ai-gateway/types.ts": {
+      "before": "435e835e322defd5a81918578c081f343737376691e8e0d2d7eb7c84b3ea5129",
+      "after": "a7f7d1ac40581cc3246bbcf3e1f1c8d94bb70e8c7503f5102313fcfd559a960b"
+    },
+    "server/services/ana-context-router.ts": {
+      "before": "5f0e6703b917a43286c588ef741898da2e7f0995ecbdad75fa29ba94ea879f13",
+      "after": "edaf2881a6001c21b9a8ac89b3f999f71481bc13604a287b09cbbea478c4d5e3"
+    },
+    "server/services/ana/AnaDocumentDraftingService.ts": {
+      "before": "a3d45c959d8624763842ea7831d595bc25d7a808c821e2ec982a7178d1d28a52",
+      "after": "c08f86c8dc7e6f467d0a59717f741a94608ae051b6913c0a90b8820c0a77d533"
+    },
+    "server/services/ana/agentic-workflow-tools.ts": {
+      "before": "e62917585ca721892e4e5ada61e29635234f7a3b8e67bac271947e68e6884a0d",
+      "after": "a92b26d19798df9280b18269f31f03affe46738267124481f95d6bc8c62b25cd"
+    },
+    "server/services/ana/draft-project-sources.ts": {
+      "before": "36294c40d87b1b4adb417371efb5527e303f9f7211ad6bdd36044d5ae4c0f77e",
+      "after": "ce16314049e479970d15796ae9fb277671fd8d87769dc1826abc475455cd745f"
+    },
+    "server/services/ana/sub-agent-limits.ts": {
+      "before": "55f8d836d4eb056344b671d7474b49b734f7c89cac674b8ff90c4ffb67016dde",
+      "after": "53e65999d8c2110ed2e0d6a850909c01aa8445e6aec63f56a7edaacde00a7383"
+    },
+    "server/services/ana/sub-agent-result.ts": {
+      "before": "5ec45ba1b16235fba826b5c0706204a8ebd5b2f832d84c9ae44e06a74b3f0b2e",
+      "after": "40c9e830c04cbdb9900643033ee73b820747e6ace51009a8fd12a4afa906bc42"
+    },
+    "server/services/ana/sub-agent-shape.ts": {
+      "before": "6e64dd3f35897cfd198b8f034518b0276468cc9b868f45a3a5b5e6fce341311d",
+      "after": "e1b49cca22a703848edbcf83e78cf71e7476cafb3d55a9aae9d656b23339dc52"
+    },
+    "server/services/ana/sub-agent.ts": {
+      "before": "a3c7eb48dba9144651a2b97ede7aedd3f1aa206021f70e30f46f4d6ee8321794",
+      "after": "195ffb78981176252f49786495707b8fb9651772261e9e56df4b1eed7dd89fa9"
+    },
+    "server/services/connectors/box.ts": {
+      "before": "c3cc821754c1d7a2270e0ad2698ef0f01a06c5631fc7e126c2b97e85f9965e23",
+      "after": "3660e3808ed141fde43f0b886443917850e3250488b2672092d95308e7478603"
+    },
+    "server/services/connectors/connector-registry.ts": {
+      "before": "3492f3604ac552db0f3eacb3a07e4aab688018d3c757e530024b9f5417ba7aa8",
+      "after": "088af9fd86d37ecdaf06c4c7cf621b924483ea4195f76bbf462830921bb6946c"
+    },
+    "server/services/connectors/google-drive.ts": {
+      "before": "ca7f53ba35c93012fc45cc51a089643ffd683d4880769f1262ca0e8096d501b9",
+      "after": "aa3dfaae5cf57d3664970d52a9c23aee11b0aa87d88a971f85a8b422b53d862c"
+    },
+    "server/services/connectors/onedrive.ts": {
+      "before": "e972e725f58767abe7101beadeaa3f5d211b43d180429fb7089ebfed6e28c1f6",
+      "after": "f1792c15e26fe52f1e821b4f6584d5028f32038a525c231ba1abaa8717a2d3f5"
+    },
+    "server/services/connectors/sharepoint.ts": {
+      "before": "4bd1ea0dc845493e1aa767e95a203fcd93a5fc75d5ef83f9147a82d0654a692e",
+      "after": "73426361f7e61d73fe20c3c4c4bf28bda70640536d36b8f06342cc356ba2db24"
+    },
+    "server/services/vault/document-catalog-actor-reads.ts": {
+      "before": "a5ee942856aeadb7ce4c68eb62f0cf53fc508234657767a9eada8c0810eab7e1",
+      "after": "c5a917895dab9ecdf5d464c55a585fec0edae92a7cdcb3444672f5b36b4f1be6"
+    },
+    "server/services/vault/document-catalog-document.ts": {
+      "before": "5c55daf3f64b637f1501e7f9d6e3e4f925f0dae5a39e3fde107528ecb2349ca4",
+      "after": "7a88c03a84d22257a52c3e3f184c10272eebb1671f8ed86e0a1289869cca5493"
+    },
+    "server/services/vault/vault-ingest.service.ts": {
+      "before": "8ac268a94197b5de5c602819b841d4b4a5cefbcd5f2f246d8f9345303ea329fc",
+      "after": "ab2c3f49adebd860113e872f45984e780c42cdbad2c58ce0dadad0461e6ec5ee"
+    },
+    "shared/navigation/index.ts": {
+      "before": "8f1104e99a9bab7c77231a88fd4b662077ff511d8fb795f7d00332432e1268e6",
+      "after": "0eda9650284f128e068a635f46645c55e8ff52a0ced8a30d7f90cbbe957573af"
+    }
+  },
+  "runtimeWriterContracts": {
+    "server/services/authoring/csr-import-into-document.ts": "abde00677ee1fc92f24a5aae3a6ecc34312f1efaf334bc79ab65c8e41101a7da",
+    "server/services/c2c/charter-objectives.ts": "e56313e879203aa35a34610faf7e6b8b74c91c9f47a1640d8310951008afbe2a",
+    "server/services/csr/csr-section-review.ts": "36ed66a0ed5cf7b85138e38eb03513ee24bb462932e0408c51ea8b884e25d06c"
+  },
+  "note": "Fresh integrated receipts, not old count overlays, qualify these merged bytes. Only coordination rows conflicted; both were retained. Runtime writer files are unchanged by our source increment."
+}

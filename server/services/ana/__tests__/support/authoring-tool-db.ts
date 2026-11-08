@@ -43,6 +43,8 @@ export const DISPOSITION_IMPACT_PREREQ = `
 
 /** The canonical migrations the authoring tools write through, in apply order. */
 export const AUTHORING_TOOL_MIGRATIONS: readonly string[] = [
+  'migrations/20261022_ana_skills.sql',
+  'migrations/20261022c_ana_project_skills.sql',
   'db/migrations/20260725_authoring_document_loop_tables.sql',
   'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
   'db/migrations/20260725_authoring_audit_trail.sql',

@@ -115,12 +115,15 @@ describe('the editor drafts against the application the project records', () => 
     expect(res.body.draft.metadata.requirementsSource).not.toBe('none');
   });
 
-  it('a UK CTA section asked for as FDA content says the application on record differs, and that its Module 1 has no entry', async () => {
+  it('leaves a legacy CTD number unindexed for UK CTA and states the requested writing-region mismatch', async () => {
     filing = { program_type: 'cta', primary_agency: 'MHRA', metadata: null };
-    await draft('FDA');
+    const res = await draft('FDA');
+    expect(res.status).toBe(200);
     expect(prompt()).toContain('Clinical Trial Authorisation (UK)');
     expect(prompt()).toMatch(/requested writing region FDA differs from the application on record \(MHRA\)/);
-    expect(prompt()).toContain('no UK (MHRA) Module 1 entry for 1.2.1');
+    expect(prompt()).toContain('none are recorded for this section in this application');
+    expect(prompt()).toContain('Do not supply them from memory');
+    expect(res.body.draft.metadata.requirementsSource).toBe('none');
   });
 
   it('a project whose application cannot be resolved is told so, and no jurisdiction is assumed', async () => {
@@ -190,5 +193,46 @@ describe('the editor uses current recorded product context', () => {
     const res = await draft();
     expect(res.status).toBe(409);
     expect(h.park).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('the one editor receives the cited UK preparation outline', () => {
+  it('uses UK protocol preparation and scope from the recorded filing, without a new editor path', async () => {
+    filing = { program_type: 'cta', primary_agency: 'MHRA', metadata: null };
+    code = 'uk_cta_protocol';
+    const res = await draft('MHRA');
+    expect(res.status).toBe(200);
+    expect(res.body.draft.metadata).toMatchObject({ submissionType: 'UK_CTA', requirementsSource: 'blueprint:regional:UK_CTA:uk_cta_protocol' });
+    expect(prompt()).toMatch(/platform convention.*not a regulatory requirement/i);
+    expect(prompt()).toContain('2026-11-06');
+    expect(prompt()).toContain('IRAS');
+    expect(prompt()).toContain('https://www.gov.uk/guidance/clinical-trials-for-medicines-apply-for-approval-in-the-uk');
+    expect(prompt()).toMatch(/initial.{0,30}submission date/i);
+    expect(prompt()).toMatch(/not.{0,20}eCTD|not an eCTD/i);
+    expect(prompt()).not.toContain('no UK (MHRA) Module 1 entry');
+  });
+});
+
+describe('regional clinical guidance reaches the existing editor project-filing path', () => {
+  it.each([
+    ['UK_CTA', 'MHRA', 'uk_cta_protocol'],
+    ['EU_CTA', 'EMA', 'PART_I.PROTOCOL'],
+    ['EU_CTA', 'EMA', 'PART_I.SYNOPSIS'],
+    ['CA_CTA', 'Health Canada', '1.7.1'],
+    ['CA_CTA', 'Health Canada', '1.4.1'],
+    ['CA_CTA_A', 'Health Canada', '1.7.1'],
+  ])('retains the exact %s / %s / %s identity with the generic ctd editor kind', async (id, agency, sectionCode) => {
+    filing = { program_type: 'cta', primary_agency: agency, metadata: { submissionTypeId: id } };
+    code = sectionCode;
+    product = { product_type: 'monoclonal_antibody', indication: 'Recorded indication' };
+    charters = [{ id: 12, version: 3, updated_at: '2026-10-30T00:00:00Z', approval_status: 'draft',
+      therapeutic_area: 'oncology', development_stage: 'phase_2', target_population: 'Adults' }];
+    const res = await draft(agency);
+    expect(res.status).toBe(200);
+    expect(res.body.draft.metadata.requirementsSource).toBe(`blueprint:regional:${id}:${sectionCode}`);
+    expect(prompt()).toContain('### Endpoint Considerations');
+    expect(prompt()).toContain('### Statistical Considerations');
+    expect(prompt()).toContain('not scientific evidence');
   });
 });

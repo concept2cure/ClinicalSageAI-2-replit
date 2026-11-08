@@ -19,8 +19,9 @@ export function sensitivityTierForClassification(classification: unknown): DataS
 }
 
 /** The maximum is computed by code; malformed/missing entries tier up.
- * No derivative bypass is asserted: sanitized derivatives need their own
- * tenant-approved lifecycle before raw confidential inputs can leave. */
+ * This never declassifies raw inputs. routeDerivative constructs a different
+ * exact, human-attested payload through tenant custody; caller provenance or
+ * derivative-shaped metadata cannot grant that capability or lower this wall. */
 export function decideInputTierPlacement(input: {
   tiers: readonly DataSensitivityTier[];
   provider: string;

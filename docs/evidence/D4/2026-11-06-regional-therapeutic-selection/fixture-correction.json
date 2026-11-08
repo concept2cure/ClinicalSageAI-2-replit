@@ -1,0 +1,13 @@
+{
+  "file": "server/services/authoring/__tests__/authoring-draft-template.test.ts",
+  "beforeSha256": "d8fb6833a6f3859b9dc46224987dfddbd98d7709460785fd26d63ade6a8270a4",
+  "afterSha256": "b7b63776985a910dd2343cbd1d41cacc864251532ca018df3ebf8e55e947ad6a",
+  "reason": "One TS2322: UK is outside the existing RecordedTemplateSource region union/parser and builtin region admission. Restore the original factory region contract and remove the newly introduced unsupported UK saved-template fixture.",
+  "sourceBeforeManifest": "source-sha256.before-fixture-correction.json",
+  "currentManifest": "source-sha256.json",
+  "productionFilesChanged": 0,
+  "invalidNewCasesRemoved": 1,
+  "remainingPositiveSavedTemplateCases": 5,
+  "validProjectAndNestedClinicalIdentities": 6,
+  "baselineChange": false
+}

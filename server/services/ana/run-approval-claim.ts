@@ -8,7 +8,34 @@
  *
  * @module server/services/ana/run-approval-claim
  */
-import type { RunControlQuery } from './run-control.js';
+import type { RunControlQuery, PendingToolApproval } from './run-control.js';
+
+/**
+ * What the run is waiting on, if anything — for the person who asked.
+ *
+ * Scoped to the asker in the SQL (`user_id = $3`), not only to the org. Scoped
+ * to the org alone, any member who knew a run's id and toolUseId could read the
+ * held action and then approve or decline it: the same seizure `applyControl`
+ * refuses as NOT_YOURS, through the one door it did not cover. NULL = n is never
+ * true, so a run with no owner (a non-interactive surface) is held for no one.
+ * There is no admin override. A caller that needs to tell "held for someone
+ * else" from "nothing held" asks isRunAwaitingApproval, which returns no payload.
+ */
+export async function readPendingApproval(
+  pool: RunControlQuery,
+  runId: string,
+  organizationId: number,
+  userId: number,
+): Promise<PendingToolApproval | null> {
+  const { rows } = await pool.query(
+    `SELECT pending_approval FROM ana_runs
+     WHERE id = $1 AND organization_id = $2 AND user_id = $3 AND status = 'awaiting_approval'`,
+    [runId, organizationId, userId],
+  );
+  return (rows[0]?.pending_approval as PendingToolApproval) ?? null;
+}
+
+
 
 /**
  * Claim a held approval for execution, atomically, on a run still waiting on

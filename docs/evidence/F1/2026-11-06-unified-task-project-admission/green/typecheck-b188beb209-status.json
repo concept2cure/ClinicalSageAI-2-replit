@@ -1,0 +1,16 @@
+{
+  "exitCode": 0,
+  "processExitCode": 0,
+  "sourcesUnchanged": true,
+  "args": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "--max-old-space-size=12288",
+    "node_modules/typescript/bin/tsc",
+    "--project",
+    "/tmp/c2c-unified-native-types.json",
+    "--pretty",
+    "false",
+    "--listFiles"
+  ],
+  "elapsedSeconds": 56.07
+}

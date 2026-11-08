@@ -19,8 +19,11 @@ import {
   type EffortLevel,
   type ModelConfig,
   type RoutingStrategy,
+  type QualifiedModelPin,
+  type TaskType,
 } from './types';
-import { governedMatch, selectableEntry, type PqStatus } from '../ai-governance/approved-models';
+import { APPROVED_MODELS, governedMatch, selectableEntry, type ApprovedModel, type PqStatus } from '../ai-governance/approved-models';
+import { hasConcreteQualifiedPin, qualifiedPinFor, qualifiedPinRefusal, type QualifiedPinEvidenceReader } from './model-governance.js';
 
 /** The picker's three effort options, in display order. */
 export const EFFORT_LEVELS: readonly EffortLevel[] = ['fast', 'balanced', 'thorough'] as const;
@@ -317,6 +320,23 @@ export function projectModelsForPicker(models: ModelConfig[]): PickerModel[] {
       ];
     })
     .sort((a, b) => b.qualityScore - a.qualityScore);
+}
+
+/** Evidence-verified choices for the existing drafting endpoint, separate from ordinary routing preferences. */
+export function projectQualifiedModelPins(models: ModelConfig[], intendedUse: TaskType = 'document_drafting',
+  entries: readonly ApprovedModel[] = APPROVED_MODELS, reader?: QualifiedPinEvidenceReader) {
+  const qualifiedModelPins: QualifiedModelPin[] = [];
+  const qualificationUnavailable: Array<{ id: string; reason: string; pqStatus: PqStatus['status']; concretePin: boolean }> = [];
+  for (const entry of entries) {
+    const pin = qualifiedPinFor(entry, intendedUse);
+    const row = models.find(model => model.id === pin.id && model.provider === pin.provider && model.model === pin.pinnedVersion);
+    const reason = entry.pq.status !== 'passed' ? 'pq-not-passed'
+      : qualifiedPinRefusal({ taskType: intendedUse, qualifiedModelPin: pin }, entries, reader)
+        ?? (!row?.enabled || !row.capabilities.includes(intendedUse) ? 'unavailable' : null);
+    if (reason) qualificationUnavailable.push({ id: entry.id, reason, pqStatus: entry.pq.status, concretePin: hasConcreteQualifiedPin(entry) });
+    else qualifiedModelPins.push(Object.freeze(pin));
+  }
+  return { qualifiedModelPins, qualificationUnavailable };
 }
 
 /**

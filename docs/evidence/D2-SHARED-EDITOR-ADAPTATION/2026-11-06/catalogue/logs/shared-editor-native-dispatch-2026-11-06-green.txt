@@ -1,0 +1,70 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts
+{
+  "timestamp": "2026-11-06T21:43:56.796Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T21:43:56.797Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts
+{
+  "timestamp": "2026-11-06T21:43:56.798Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts > native Quality context at the stream dispatch seams > ends with a source refusal before initial provider dispatch when the checkpoint rejects
+[AnA RI Stream] Error: Selected project sources changed.
+
+stderr | server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts > native Quality context at the stream dispatch seams > ends with a source refusal before initial provider dispatch when the checkpoint rejects
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts > native Quality context at the stream dispatch seams > rechecks after tool work and refuses stale context before the follow-up provider dispatch
+[AnA RI Stream] Error: Selected project sources changed.
+
+stderr | server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts > native Quality context at the stream dispatch seams > rechecks after tool work and refuses stale context before the follow-up provider dispatch
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts > native Quality context at the stream dispatch seams > passes the same authenticated captured checkpoint to initial and follow-up dispatch 254ms
+ ✓ server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts > native Quality context at the stream dispatch seams > ends with a source refusal before initial provider dispatch when the checkpoint rejects 83ms
+ ✓ server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts > native Quality context at the stream dispatch seams > rechecks after tool work and refuses stale context before the follow-up provider dispatch 19ms
+ ✓ server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts > native Quality context at the stream dispatch seams > preserves legacy retained-only dispatch without a native checkpoint 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > reads exact native text only after current parent admission and rechecks before supply 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > cannot supply native text without a verified current actor 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > does not convert denied or failed native permission checks into successful empty context 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > refuses changed native facts and retained-text tampering before handing context to a model 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > never cuts a supplementary character into a lone UTF-16 surrogate 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > refuses withdrawn native data before text and rechecks withdrawal after the read 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > labels bounded native excerpts truthfully 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > rechecks the same admitted native snapshot on successive dispatches 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > copies the admitted identity and authenticated scope instead of following mutable input 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > keeps zero-native legacy context unguarded and does not reread it 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > guards only the admitted native IDs in a mixed retained/native selection 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > preserves the exact stable bounded excerpt and UTF-8 digest 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > refuses an originally supplied ID that disappears instead of accepting an empty reread 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > does not adopt a newer valid snapshot after an earlier successful dispatch 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > refuses a late access failure rather than treating it as empty success 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > refuses a late current fact failure rather than treating it as empty success 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > refuses a late disposition failure rather than treating it as empty success 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > refuses a late query failure rather than treating it as empty success 0ms
+
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+   Start at  21:43:48
+   Duration  21.44s (transform 14.37s, setup 141ms, import 20.37s, tests 408ms, environment 0ms)
+

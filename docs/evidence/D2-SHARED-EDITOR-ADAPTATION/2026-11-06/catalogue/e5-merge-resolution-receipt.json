@@ -1,0 +1,211 @@
+{
+  "recordedAt": "2026-11-06T22:18:33.740406+00:00",
+  "package": "F1",
+  "scope": "Manual resolution of four conflicting existing gateway/provider/SQL proof owners preserving captured-source and incoming strict run/derivative authority",
+  "priorQualifiedHead": "6cd96537dd5ca7828461844aca6bfd61d64d392c",
+  "incomingCanonical": "e5a1536fa0f94a609f93a9871bd579446854330c",
+  "resolvedMergeHeadObserved": "d6cb7f9a9e10e20fea8daa97408c41c78b3b0942",
+  "conflictFiles": [
+    "server/services/ai-gateway/gateway.ts",
+    "server/services/ai-gateway/providers/clients.ts",
+    "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts",
+    "scripts/ci/lib/approved-sql-predicates.mjs"
+  ],
+  "additionalExistingCompanion": "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts",
+  "stagedOwnedFilesObserved": [
+    "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts"
+  ],
+  "gitMutationBoundary": "Root owns merge/commit. Agent made one authorized five-path resolution staging command before root paused further mutations. Packaging after confirmation is docs-only; no further git/source mutation.",
+  "finalSourcePinsObservedAfterChecks": {
+    "scripts/ci/lib/approved-sql-predicates.mjs": "fda2da0b31426ca07a60e034883cb0d940e81b43140777a84fc0a7a38fa48fe7",
+    "scripts/ci/lib/approved-sql-predicates.test.mjs": "d402e045d7978aa04a2e02cea32a16d0377e8c9dcf4d3f88caf511c8f47abb65",
+    "scripts/ci/sql-interpolation-baseline.json": "b6470cf07a4b6b8de6dc29e7dbdedbd11036d996655f8c6e2d7af32e5795a371",
+    "server/routes/ana-ri/stream.ts": "70f11b2db9a7e6b44cea5d27e5a98fdf65772af9b51d95c0622218370080bcce",
+    "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts": "066e80a0bed82775d5dfc88d3029d1691759f54de53f7a3cea743dd23f8e1f56",
+    "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts": "9c02dcc3ef9b65c1029f7972c460d36e4b8e71ff9d06cf271b27d0297a9a5008",
+    "server/services/ai-gateway/__tests__/model-call-scope.test.ts": "99af9a1d86ed77eba4de6056a1445ab418e795e4096a74ec08be5077a27f4fd3",
+    "server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts": "9075fa844fbbea87829b7614210df834568e16086037ebf67761098041a12928",
+    "server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts": "99ff1673e0750d7564f96f42c5ebca7f893845a797f293902683b194212725cb",
+    "server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts": "287693781af68f7423f19f0e91519d486025d59523acb660b58d9b0288102311",
+    "server/services/ai-gateway/embeddings/embedding-provider.ts": "e6156f6fe27c29bf913b2807dc8e3f73fef01efe8724b9afc7e0aab2da6efca1",
+    "server/services/ai-gateway/gateway.ts": "8f8c5a384f083ff5d955ce26fd7b0525018c9c4bba68608f1615bb7096257109",
+    "server/services/ai-gateway/model-call-scope.ts": "273d85c87022190207a71d91b58f77f2491b19fc58183ed3f84b9b7b1c8e27a2",
+    "server/services/ai-gateway/model-governance.ts": "f7d5ed4903899d690ee2d487684db6b597e4bfa55f3891d85744ac012fbff99f",
+    "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts": "9e69764bf1585023c27db749238225517866b494b18ab59c5949544f0ccb9dc3",
+    "server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts": "00bb148e62de4502591081cdc4bc8c35af188d384226320eac47c8f362bcf4ab",
+    "server/services/ai-gateway/providers/clients.ts": "78cfd28032513f305a662a8391095f1768221abe3ec265eeabea4b39dda8367e",
+    "server/services/ai-gateway/providers/org-placement-writer.ts": "2786fb26d7ada6dde5a3537cde7f33e5504f7c6d567a079e94414559c5ae701d",
+    "server/services/ai-gateway/sensitive-placement-policy.ts": "604af3d04e0b181483dff33a87274fe1d9c78b1e5b36e26006064a0a582d1279",
+    "server/services/ai-gateway/types.ts": "285ecac64f8aa284fdd94c81e664d636ab258d87a2061b620ee176f8fb554ad0",
+    "server/services/ana/AnaDocumentDraftingService.ts": "7fffb92c9dc13067b6f4d65e3600ffada7dc25cc2314aa65b0ddf73bd07d9737",
+    "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts": "d9d68738cea5bfb00887558ca21ff0100eb4cfa43b987ba60c0c58677fce1041",
+    "server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts": "a43ab9a2cb7a823233bb222fe8a58448611bf08f7db37c49bde68d06e581f4c6",
+    "server/services/authoring/__tests__/authoring-draft-region-projection.test.ts": "a18213f0acd3130513b71b6595f7ba98ebb64aa303d4b39688922a72bfc17249",
+    "server/services/authoring/__tests__/authoring-draft-template.test.ts": "b60821293d1522b0ba887f13f51256d740bfafdee805c0a0cd15912baa6633a5",
+    "server/services/authoring/authoring-draft-region-projection.ts": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6",
+    "server/services/authoring/authoring-draft-template.ts": "b16879734790f80c2bef8fec03e08b450ef3c2987210bda579ba81bbaca9a170",
+    "server/services/clinical-regulatory-evidence/retained-source-context.ts": "331beee77add448d370ca847ac1f5f806b6cdef6765743f73702b42a5d53d061"
+  },
+  "pinTiming": "Pins observed after frozen checks and resolution. This receipt does not invent a before/after test-input pin run. Root final full gate supplies whole-source publication verification.",
+  "diagnostic": {
+    "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --no-file-parallelism server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts server/services/ai-gateway/__tests__/gateway-model-governance.test.ts server/services/ai-gateway/__tests__/model-call-scope.test.ts server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts server/services/authoring/__tests__/authoring-draft-template.test.ts server/services/authoring/__tests__/authoring-draft-region-projection.test.ts server/services/ana/__tests__/draft-source-service-checkpoint.test.ts server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts",
+    "exitCode": 1,
+    "suitesPassed": 11,
+    "suitesFailed": 1,
+    "testsPassed": 368,
+    "testsFailed": 8,
+    "durationSeconds": 142.44,
+    "otherPassingSuites": {
+      "server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts": 34,
+      "server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts": 33,
+      "server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts": 19,
+      "server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts": 35,
+      "server/services/authoring/__tests__/authoring-draft-template.test.ts": 51,
+      "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts": 50,
+      "server/services/authoring/__tests__/authoring-draft-region-projection.test.ts": 8,
+      "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts": 21,
+      "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts": 26,
+      "server/services/ai-gateway/__tests__/model-call-scope.test.ts": 16,
+      "server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts": 48
+    },
+    "failureClassification": "Six exact SDK callback-count assertions assumed two stages; incoming adds an actual source check while preparing the SDK body. Two cancellation fixtures held the second callback before reaching their credential barrier. Refusal/cancellation/source behavior was retained; precise stage fixtures needed convergence."
+  },
+  "affectedCheckpointRerun": {
+    "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --no-file-parallelism server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts",
+    "exitCode": 0,
+    "suitesPassed": 1,
+    "testsPassed": 35,
+    "durationSeconds": 4.29
+  },
+  "composition": "11 unchanged passing companion suites /341tests from diagnostic plus affected fullcheckpoint rerun35tests =376 cases. Not a fresh12suite GREEN invocation. Prior250 final-wire evidence remains historical and is not asserted against this new runtime.",
+  "fixtureCorrections": [
+    "Exact tenant revoked-source callback count3 and platform revoked-source count2, reflecting SDK-body source check before credential audit only in tenant path.",
+    "Exact successful current-source callback count3 for both paths.",
+    "Held cancellation source read is selected by observed credential completion, not hardcoded ordinal2.",
+    "Source refusal class/code, sanitized original-vs-replacement callback assertions, SDK0, cancellationpre_call, no retry/fallback/health behavior retained."
+  ],
+  "mergedControls": [
+    "Original captured beforeDispatch is composed with private current-run source authority; unassessed conversation/history remainsT3. No payload JSON can mint or downgrade that authority.",
+    "FinalSourceChecks retains the new combined callback. At each final boundary helper selects that holder OR issued-symbol fallback, without recapturing mutable request fields or double-calling both authorities.",
+    "Factory fifth argument preserves legacy synchronous function plus sourceCheck and recheckBeforeCreate; all async source/custody work stays outside credential/provider sanitizers, followed by synchronous abort, pinned derivative SDK body and qualified-model checks.",
+    "Platform/null lookup retains its final source/custody guard outside credential catch. Five actual SDK invocations retain synchronous concrete-model/PQ/cancellation after their async checks.",
+    "Three nonstream derivative invocations also retain current custody and full SDK payload pin; controlled local reinjection retains resultingContentTier2 and semanticVerified:false. Streaming derivatives remain refused.",
+    "Native selected-source guard remains on both AnAstream route calls inside private run authority.",
+    "Exact approvedSQL proof includes original Authoring artifact helper plus two incoming canonical artifact/captured readers; no broad helper/value allowance or local baseline edit."
+  ],
+  "proofChecks": {
+    "approvedSqlPrimitiveTests": {
+      "exitCode": 0,
+      "passed": 37
+    },
+    "sqlInterpolationGate": {
+      "exitCode": 0,
+      "baselinedInterpolations": 1053,
+      "baselinedFiles": 223,
+      "baselineIdenticalToIncoming": true
+    },
+    "lint": {
+      "HEAD": {
+        "errors": 0,
+        "warnings": 27
+      },
+      "MERGE_HEAD": {
+        "errors": 0,
+        "warnings": 27
+      },
+      "final": {
+        "errors": 0,
+        "warnings": 27
+      }
+    },
+    "warningGrowth": false
+  },
+  "independentReview": "editor_context_security_review and its derivative-controls reviewer inspected resolved runtime ordering read-only; did not claim owner test execution.",
+  "patches": {
+    "previous-qualified": {
+      "path": "e5-resolution-vs-previous-qualified.patch",
+      "baseRevision": "6cd96537dd5ca7828461844aca6bfd61d64d392c",
+      "bytes": 44659,
+      "sha256": "019cf2fcb8f124396e052e944a40d135df8f16bda4ca86c597f6c5ad2d6911b2"
+    },
+    "incoming-canonical": {
+      "path": "e5-resolution-vs-incoming-canonical.patch",
+      "baseRevision": "e5a1536fa0f94a609f93a9871bd579446854330c",
+      "bytes": 25853,
+      "sha256": "8ad87229d7755205864657f15bf86d1956f3533438cc0b225c7ca4d973b72611"
+    }
+  },
+  "logs": {
+    "shared-editor-e5-merge-2026-11-06-first.txt": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-e5-merge-2026-11-06-first.txt",
+      "bytes": 276158,
+      "sha256": "a2b0df41865adb4f947854b914632d69aa6dbfb439a82b3b9d7ffc322ddf15e4",
+      "orderedParts": [
+        "logs/shared-editor-e5-merge-2026-11-06-first.txt.part01",
+        "logs/shared-editor-e5-merge-2026-11-06-first.txt.part02",
+        "logs/shared-editor-e5-merge-2026-11-06-first.txt.part03",
+        "logs/shared-editor-e5-merge-2026-11-06-first.txt.part04"
+      ],
+      "reassemblyCommand": "cat logs/shared-editor-e5-merge-2026-11-06-first.txt.part01 logs/shared-editor-e5-merge-2026-11-06-first.txt.part02 logs/shared-editor-e5-merge-2026-11-06-first.txt.part03 logs/shared-editor-e5-merge-2026-11-06-first.txt.part04 > shared-editor-e5-merge-2026-11-06-first.txt"
+    },
+    "shared-editor-e5-merge-2026-11-06-checkpoint-green.txt": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-e5-merge-2026-11-06-checkpoint-green.txt",
+      "bytes": 10522,
+      "sha256": "698f665c023f7bd9f1d1d080cdf9fd77f4c7ad4811e64fd8e7d8a89120dfede1",
+      "orderedParts": [
+        "logs/shared-editor-e5-merge-2026-11-06-checkpoint-green.txt"
+      ],
+      "reassemblyCommand": "cat logs/shared-editor-e5-merge-2026-11-06-checkpoint-green.txt > shared-editor-e5-merge-2026-11-06-checkpoint-green.txt"
+    },
+    "shared-editor-e5-merge-2026-11-06-sql-proof.txt": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-e5-merge-2026-11-06-sql-proof.txt",
+      "bytes": 8276,
+      "sha256": "9779f56b2a1c22c6edb44dbe141c5e3f1fedca9d739f2ff09164192d408f0815",
+      "orderedParts": [
+        "logs/shared-editor-e5-merge-2026-11-06-sql-proof.txt"
+      ],
+      "reassemblyCommand": "cat logs/shared-editor-e5-merge-2026-11-06-sql-proof.txt > shared-editor-e5-merge-2026-11-06-sql-proof.txt"
+    },
+    "shared-editor-e5-merge-2026-11-06-sql-gate.txt": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-e5-merge-2026-11-06-sql-gate.txt",
+      "bytes": 4667,
+      "sha256": "16b092d153f29dd61c474cd962c3594ee127aae567693f2af7640d9395802497",
+      "orderedParts": [
+        "logs/shared-editor-e5-merge-2026-11-06-sql-gate.txt"
+      ],
+      "reassemblyCommand": "cat logs/shared-editor-e5-merge-2026-11-06-sql-gate.txt > shared-editor-e5-merge-2026-11-06-sql-gate.txt"
+    },
+    "shared-editor-e5-merge-2026-11-06-lint-HEAD.json": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-e5-merge-2026-11-06-lint-HEAD.json",
+      "bytes": 9877,
+      "sha256": "a30e7671ddf3bcefcb8aa03670ffba7b4739f9212e2ef5843ad84b9e956a1587",
+      "orderedParts": [
+        "logs/shared-editor-e5-merge-2026-11-06-lint-HEAD.json"
+      ],
+      "reassemblyCommand": "cat logs/shared-editor-e5-merge-2026-11-06-lint-HEAD.json > shared-editor-e5-merge-2026-11-06-lint-HEAD.json"
+    },
+    "shared-editor-e5-merge-2026-11-06-lint-MERGE_HEAD.json": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-e5-merge-2026-11-06-lint-MERGE_HEAD.json",
+      "bytes": 9877,
+      "sha256": "180355c53df1789e4484b309b85e57991fad7d5a291afd3b66ec33d16d8be76a",
+      "orderedParts": [
+        "logs/shared-editor-e5-merge-2026-11-06-lint-MERGE_HEAD.json"
+      ],
+      "reassemblyCommand": "cat logs/shared-editor-e5-merge-2026-11-06-lint-MERGE_HEAD.json > shared-editor-e5-merge-2026-11-06-lint-MERGE_HEAD.json"
+    },
+    "shared-editor-e5-merge-2026-11-06-lint-final.json": {
+      "originalScratchPath": "/workspace/scratch/shared-editor-e5-merge-2026-11-06-lint-final.json",
+      "bytes": 10052,
+      "sha256": "ad445c92ddaa2cc7ed50b997261b1440e992f3d729ac31caf723786c4e139db1",
+      "orderedParts": [
+        "logs/shared-editor-e5-merge-2026-11-06-lint-final.json"
+      ],
+      "reassemblyCommand": "cat logs/shared-editor-e5-merge-2026-11-06-lint-final.json > shared-editor-e5-merge-2026-11-06-lint-final.json"
+    }
+  },
+  "limits": [
+    "Synthetic SDK/provider calls and PGlite custody with mocked external byte/KMS boundaries; no real credentials or provider call.",
+    "No new service/route/store/dependency/model qualification. No pending model becomes qualified.",
+    "Root owns merge commit, additional staged test commit, whole compiler/build/privacy gates and publication."
+  ]
+}

@@ -74,6 +74,6 @@ describe('the MCP tool call connection and the platform role', () => {
   it('an ordinary role is applied to the call\'s connection', async () => {
     await registered()({}, { authInfo: { extra: { principal: principal('editor') } } });
     const applied = h.sent.find((s) => s.sql.includes('app.current_user_role'));
-    expect(applied?.params).toEqual(['7', 'editor', '73629479-bb69-405d-9ff0-b7b8150eca13']);
+    expect(applied?.params).toEqual(['7', 'editor', '73629479-bb69-405d-9ff0-b7b8150eca13', '5']);
   });
 });

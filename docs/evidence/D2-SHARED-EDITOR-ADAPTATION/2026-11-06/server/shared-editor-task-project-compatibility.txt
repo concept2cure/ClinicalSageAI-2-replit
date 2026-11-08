@@ -1,0 +1,521 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts
+{
+  "timestamp": "2026-11-06T19:08:32.543Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > rolls the create back and answers 500 AUDIT_WRITE_FAILED when the ledger row fails
+{
+  "timestamp": "2026-11-06T19:08:33.963Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "TASK-1793992113962-bce8081a",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > never commits a signed completion whose ledger row did not land
+{
+  "timestamp": "2026-11-06T19:08:33.979Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-1",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > writes the create and its lineage on ONE transaction, then commits 71ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > rolls the create back and answers 500 AUDIT_WRITE_FAILED when the ledger row fails 16ms
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > rolls back a late signature whose ledger row did not land
+{
+  "timestamp": "2026-11-06T19:08:34.017Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-1",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > DELETE /tasks/:id rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-11-06T19:08:34.047Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.delete",
+    "taskId": "TASK-1",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/dependencies rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-11-06T19:08:34.058Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.link",
+    "taskId": "TASK-A",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/auto-assign rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-11-06T19:08:34.069Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.assign",
+    "taskId": "TASK-1",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > never commits a signed completion whose ledger row did not land 16ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a task write and its ledger row commit or roll back together > commits the signed completion with its manifestation in the ledger payload 6ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > a stale double-completion writes nothing and answers 409 CONFLICT_STALE 6ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > a late signature on a completed-but-unapproved task commits WITH its ledger row 8ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > rolls back a late signature whose ledger row did not land 11ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > a progress-only update in the same status is written with its ledger row 9ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — a same-status PATCH is refused as stale or written with its ledger row, never unrecorded > a same-status request that changes nothing is refused as stale, not re-written 12ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > DELETE /tasks/:id rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 11ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/dependencies rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 9ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/auto-assign rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 12ms
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/from-template/:id rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-11-06T19:08:34.157Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "TASK-1793992114151-74f872d7",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/bulk-create rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-11-06T19:08:34.166Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "TASK-1793992114165-11fd9318",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > a notification that was sent but not recorded is reported as a failure, not a success
+[tasking] audit lineage write failed (non-fatal): audit_logs: connection reset
+
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/from-template/:id rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 88ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > POST /tasks/bulk-create rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 7ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > a notification that was sent but not recorded is reported as a failure, not a success 7ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T1 — every other task write rolls back with its ledger row > refuses a write with no attributable actor before anything is written 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks is 403 for a viewer, and nothing is written 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > PATCH /tasks/:id is 403 for a viewer, and nothing is written 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > DELETE /tasks/:id is 403 for a viewer, and nothing is written 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks/dependencies is 403 for a viewer, and nothing is written 10ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks/auto-assign is 403 for a viewer, and nothing is written 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks/from-template/:id is 403 for a viewer, and nothing is written 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /tasks/bulk-create is 403 for a viewer, and nothing is written 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /templates is 403 for a viewer, and nothing is written 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > POST /automation is 403 for a viewer, and nothing is written 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > a member still creates a task 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T2 — an org viewer may read tasks but not write them > a viewer still reads 8ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > refuses no body with 400 and writes nothing 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > refuses no reason with 400 and writes nothing 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > refuses a blank reason with 400 and writes nothing 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > refuses a reason shorter than three characters once trimmed with 400 and writes nothing 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > T4 — archiving demands the reason the UI promises to record > records the trimmed reason on the archive’s ledger row 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > C8 — an archive reason is refused for what is actually wrong with it > a reason over 1000 characters is told the maximum, not the minimum 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > C8 — an archive reason is refused for what is actually wrong with it > a short reason is told the minimum 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes.test.ts > C8 — an archive reason is refused for what is actually wrong with it > exactly 1000 characters is accepted 4ms
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts
+{
+  "timestamp": "2026-11-06T19:08:38.136Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C2 — lock order: every task-row UPDATE precedes the first ledger write > POST /tasks/dependencies blocks the successor before writing either ledger row 79ms
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > answers 500 OUTCOME_UNKNOWN with a sentence that says so, and tells nobody it happened
+Error updating task: Error: Connection terminated unexpectedly
+    at Object.transaction (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:104:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:526:21
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > a failure inside the transaction is still the rolled-back 500, not unknown
+Error updating task: Error: deadlock detected
+    at Object.__vi_import_4__.h.fail (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:124:66)
+    at Object.c.then (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:75:21)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an insert failure after the first task committed reports that task
+Error bulk creating tasks: Error: deadlock detected
+    at Object.__vi_import_4__.h.fail (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:152:70)
+    at Object.c.then (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:75:21)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an assignee lookup that throws after the first commit reports that task
+Error bulk creating tasks: Error: roster read failed
+    at /workspace/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:165:80
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a dependency link that fails after every task committed says the tasks exist and the links do not
+Error bulk creating tasks: Error: fk violation
+    at Object.__vi_import_4__.h.fail (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:176:70)
+    at Object.c.then (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:75:21)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a COMMIT whose outcome is unknown is reported as unknown, never as not created
+Error bulk creating tasks: Error: Connection terminated unexpectedly
+    at Object.transaction (/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:104:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at bulkCreateOne (/workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:678:19)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:740:7
+
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C2 — lock order: every task-row UPDATE precedes the first ledger write > PATCH → completed runs the cascade on its own transaction, before any ledger row, and notifies after COMMIT 25ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > answers 500 OUTCOME_UNKNOWN with a sentence that says so, and tells nobody it happened 24ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > a failure inside the transaction is still the rolled-back 500, not unknown 7ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C10 — PATCH never completes a task archived after it was read > its compare-and-set UPDATE matches only a row that is not archived 11ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an insert failure after the first task committed reports that task 12ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an assignee lookup that throws after the first commit reports that task 6ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a dependency link that fails after every task committed says the tasks exist and the links do not 9ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a COMMIT whose outcome is unknown is reported as unknown, never as not created 12ms
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C4 — a delivered notification whose ledger connection failed is reported as delivered and unrecorded > answers AUDIT_WRITE_FAILED with the delivered sentence, not a generic send failure
+[tasking] audit lineage write failed (non-fatal): connect ETIMEDOUT 10.0.0.5:5432
+
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > auto-assign: a failure after the first assignment committed reports that assignment 17ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C4 — a delivered notification whose ledger connection failed is reported as delivered and unrecorded > answers AUDIT_WRITE_FAILED with the delivered sentence, not a generic send failure 7ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C5 — auto-assign never reassigns an archived task, and never ledgers an assignment that did not happen > reads and updates only rows that are not archived 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C5 — auto-assign never reassigns an archived task, and never ledgers an assignment that did not happen > an UPDATE that matched no row writes no ledger row and is not reported as assigned 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C6 — the actor and organization are the ones requireEditorAccess resolved > refuses a non-integer actor id with 401 before anything is written 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C6 — the actor and organization are the ones requireEditorAccess resolved > writes the task and its ledger row under the organization the gate checked 14ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C7 — every dependency edge a batch creates is ledgered with task.link on its own transaction > bulk-create records each edge with the transaction that inserts it 5ms
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee 0 before task or audit writes
+Error creating task: ZodError: [
+  {
+    "origin": "number",
+    "code": "too_small",
+    "minimum": 0,
+    "inclusive": false,
+    "path": [
+      "assigneeId"
+    ],
+    "message": "Too small: expected number to be >0"
+  }
+]
+    at /workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:259:44
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/workspace/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/workspace/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /workspace/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee -1 before task or audit writes
+Error creating task: ZodError: [
+  {
+    "origin": "number",
+    "code": "too_small",
+    "minimum": 0,
+    "inclusive": false,
+    "path": [
+      "assigneeId"
+    ],
+    "message": "Too small: expected number to be >0"
+  }
+]
+    at /workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:259:44
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/workspace/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/workspace/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /workspace/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee 1.5 before task or audit writes
+Error creating task: ZodError: [
+  {
+    "expected": "int",
+    "format": "safeint",
+    "code": "invalid_type",
+    "path": [
+      "assigneeId"
+    ],
+    "message": "Invalid input: expected int, received number"
+  }
+]
+    at /workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:259:44
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/workspace/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/workspace/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /workspace/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee 9007199254740992 before task or audit writes
+Error creating task: ZodError: [
+  {
+    "code": "too_big",
+    "maximum": 9007199254740991,
+    "note": "Integers must be within the safe integer range.",
+    "origin": "int",
+    "inclusive": true,
+    "path": [
+      "assigneeId"
+    ],
+    "message": "Too big: expected int to be <=9007199254740991"
+  },
+  {
+    "origin": "number",
+    "code": "too_big",
+    "maximum": 9007199254740991,
+    "inclusive": true,
+    "path": [
+      "assigneeId"
+    ],
+    "message": "Too big: expected number to be <=9007199254740991"
+  }
+]
+    at /workspace/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:259:44
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/workspace/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/workspace/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/workspace/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /workspace/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C7 — every dependency edge a batch creates is ledgered with task.link on its own transaction > from-template records every template edge on the workflow’s transaction 66ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > single task creation receipt > reports a lost create COMMIT as unknown and sends no assignment notification 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee 0 before task or audit writes 6ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee -1 before task or audit writes 5ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee 1.5 before task or audit writes 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > review task assignee identity > rejects invalid assignee 9007199254740992 before task or audit writes 5ms
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-11-06T19:08:40.911Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-11-06T19:08:41.541Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T19:08:41.542Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts
+{
+  "timestamp": "2026-11-06T19:08:41.542Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns the exact current scope and only eligible already-admitted accounts with unique labels 125ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > changes only assignment provenance, retains the task and approval facts, and commits canonical lineage before notifying 128ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns no candidate directory to a project reader 38ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 8 without granting access 105ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 9 without granting access 67ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 10 without granting access 89ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 11 without granting access 75ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > denies stale administrator claims, other client scope and mixed status bodies 77ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses same-assignee and stale version or assignee snapshots 107ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects completed tasks 86ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects cancelled tasks 96ms
+stderr | server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > rolls back the row and both lineage rows if the second ledger INSERT fails
+{
+  "timestamp": "2026-11-06T19:08:52.204Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.assign",
+    "taskId": "T1",
+    "err": "new row for relation \"c2c_ana_actions\" violates check constraint \"fail_assignment\""
+  }
+}
+
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > reports roster verification failure instead of an empty success 26ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > rolls back the row and both lineage rows if the second ledger INSERT fails 82ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > returns unknown and evicts after a real COMMIT loses its acknowledgement 93ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > selects only eligible users and preserves optional real reason and old result shape 130ms
+ ✓ server/routes/__tests__/task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > denies a project reader and skips terminal work without inventing a reason 160ms
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-11-06T19:09:02.693Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "project_tasks",
+    "reason": "42P01: relation \"project_tasks\" does not exist"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-11-06T19:09:02.698Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "c2c_project_work_items",
+    "reason": "42P01: relation \"c2c_project_work_items\" does not exist"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-11-06T19:09:02.700Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "estar_submissions",
+    "reason": "42P01: relation \"estar_submissions\" does not exist"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > a task raised on a Vault version’s lifecycle record: its program’s project, in the caller’s organisation only (RR1a) 705ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > a review raised on an authoring document: its program’s project record 5ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > only within the caller’s organisation 4ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > nothing for a document with no program, an unanchored program, another source kind or a malformed id 4ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > is on the applier, before the tenant sweeps, and drops nothing 1ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the walk’s task 19 is recorded on TOLV’s project; nothing else moves 30ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > Rule 1: a second deploy changes nothing 21ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project 50ms
+stdout | server/services/tasking/__tests__/task-project-admission.test.ts
+{
+  "timestamp": "2026-11-06T19:09:04.466Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T19:09:04.470Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-project-admission.test.ts
+{
+  "timestamp": "2026-11-06T19:09:04.471Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/tasking/__tests__/task-project-admission.test.ts
+[database] Database connection successful
+
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses undefined before any database work 5ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses null before any database work 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses "" before any database work 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses "3" before any database work 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses 0 before any database work 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses -1 before any database work 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses 1.5 before any database work 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses null before any database work 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses null before any database work 2ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses 2147483648 before any database work 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > admits the actual positive integer without coercing it 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > retains actor, parent, workspace and visibility, then asks the existing edit policy on the same client 7ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > does not invent a workspace for an actual unscoped project 2ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > rejects mismatched or malformed workspace claim 72 2ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > rejects mismatched or malformed workspace claim "" 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > rejects mismatched or malformed workspace claim "wrong" 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > rejects mismatched or malformed workspace claim 0 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > rejects mismatched or malformed workspace claim "1e3" 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > rejects mismatched or malformed workspace claim "71.0" 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > rejects a claimed client workspace on a project whose actual workspace is null 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > refuses an actual workspace not retained in the same organization 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > uses the fresh role rather than an earlier editor claim 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > refuses missing or foreign parents without asking another project policy 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > retains and refuses a archived parent 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > retains and refuses a deleted parent 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > refuses read-only sharing instead of treating read access as a write grant 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > admission uncertainty stays distinct from permission denial > sanitizes an unavailable current membership read 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > admission uncertainty stays distinct from permission denial > maps a positively revoked membership to a known denial 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > admission uncertainty stays distinct from permission denial > does not turn an unavailable sharing check into permission to write 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > admission uncertainty stays distinct from permission denial > refuses malformed actual workspace 0 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > admission uncertainty stays distinct from permission denial > refuses malformed actual workspace "71" 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > admission uncertainty stays distinct from permission denial > refuses malformed actual workspace 1.5 1ms
+stderr | server/routes/__tests__/task-management-source-project.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/task-management-source-project.test.ts
+{
+  "timestamp": "2026-11-06T19:09:06.043Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/task-management-source-project.test.ts > POST /tasks — a task raised on an authoring document is on that document’s project > when the project cannot be read, nothing is created and the refusal says so
+Task create: the source document's project could not be read: connection reset
+
+ ✓ server/routes/__tests__/task-management-source-project.test.ts > POST /tasks — a task raised on an authoring document is on that document’s project > records the project the document’s program resolves to, read on the request’s RLS client 48ms
+ ✓ server/routes/__tests__/task-management-source-project.test.ts > POST /tasks — a task raised on an authoring document is on that document’s project > a project the caller named is kept, and nothing is looked up 7ms
+ ✓ server/routes/__tests__/task-management-source-project.test.ts > POST /tasks — a task raised on an authoring document is on that document’s project > a document with no project record leaves the task without one 5ms
+ ✓ server/routes/__tests__/task-management-source-project.test.ts > POST /tasks — a task raised on an authoring document is on that document’s project > when the project cannot be read, nothing is created and the refusal says so 13ms
+
+ Test Files  6 passed (6)
+      Tests  117 passed (117)
+   Start at  19:08:16
+   Duration  49.89s (transform 10.77s, setup 581ms, import 28.75s, tests 17.25s, environment 3ms)
+

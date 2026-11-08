@@ -113,7 +113,10 @@ interface TaskItem {
   sourceDocumentId?: string;
   /** A review-route member's task: where the route is acted on (taskBoard.routes.ts
    *  reviewRoute). The board does not move such a task; the route completes it. */
-  reviewRoute?: { kind: 'vault'; documentId: string; programId: string | null } | { kind: 'quality'; qmsDocumentId: string } | { kind: 'unresolved' };
+  reviewRoute?: { kind: 'vault'; documentId: string; programId: string | null } | { kind: 'quality'; qmsDocumentId: string; programId?: string | null } | { kind: 'unresolved' };
+  sourceEntityType?: string | null;
+  sourceEntityId?: string | null;
+  qualitySource?: QualitySource;
   /** Humanised label for display only — never parsed for overdue state. */
   due: string;
   /**
@@ -150,6 +153,15 @@ interface TaskItem {
   /** unified_tasks.description: what the task asks (Assign review stores the
    *  author's instructions to the reviewer here). Null when none was given. */
   description?: string | null;
+}
+
+type QualitySource = { kind: 'quality'; qmsTab: 'sop' | 'capa' | 'deviations' | 'suppliers' | 'audits'; qmsDocumentId?: string; qmsIntent?: 'read'; programId: string | null }
+  | { kind: 'unresolved' };
+function qualitySourceLabel(source: Extract<QualitySource, { kind: 'quality' }>): string {
+  if (source.qmsDocumentId) return source.qmsIntent === 'read' ? 'Read and acknowledge' : 'Open the controlled document';
+  const labels = { sop: 'Open controlled document register', capa: 'Open CAPA register', deviations: 'Open deviation register',
+    suppliers: 'Open supplier register', audits: 'Open internal audit register' };
+  return labels[source.qmsTab];
 }
 
 /** The screen that owns another store's work, as a person reads it. A project's
@@ -1594,7 +1606,19 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
             if (route.kind === 'vault' && !route.programId) return 'This version is in no project. Open it from the Vault.';
             pendingRouteNav.current = route.kind === 'vault'
               ? { surface: 'vault', label: 'Open the version in the Vault', params: { documentId: route.documentId }, programId: route.programId }
-              : { surface: 'quality', label: 'Open the controlled document', params: { qmsDocumentId: route.qmsDocumentId }, programId: null };
+              : { surface: 'quality', label: 'Open the controlled document', params: { qmsDocumentId: route.qmsDocumentId }, programId: route.programId ?? null };
+            setSel(null);
+            return null;
+          }}
+          onOpenQuality={(task) => {
+            const current = tasks.find(item => item.taskId === task.taskId), source = current?.qualitySource;
+            if (!currentTaskActor(taskActorScope(user), isCurrent) || liveTasks.loading || liveTasks.error || boardIncomplete || !source || source.kind !== 'quality') {
+              return 'The Quality record could not be verified. Reopen the task.';
+            }
+            const params: Record<string, string> = { qmsTab: source.qmsTab };
+            if (source.qmsDocumentId) params.qmsDocumentId = source.qmsDocumentId;
+            if (source.qmsIntent === 'read') params.qmsIntent = source.qmsIntent;
+            pendingRouteNav.current = { surface: 'quality', label: qualitySourceLabel(source), params, programId: source.programId };
             setSel(null);
             return null;
           }}
@@ -1638,6 +1662,7 @@ interface TaskDetailProps {
   onOpenDocument?: (documentId: string) => void;
   /** Opens where a review-route task is acted on; returns a refusal to show, or null. */
   onOpenRoute?: (t: TaskItem) => string | null;
+  onOpenQuality?: (t: TaskItem) => string | null;
   onAsk: (text: string) => void;
   onMove: (t: TaskItem, dir: number) => void;
   onAssign: (meta: TaskAssignmentMeta, headers: () => Record<string, string> | null) => Promise<AutomaticAssignmentAnswer>;
@@ -1729,7 +1754,19 @@ function RouteTaskSection({ t, onOpenRoute }: { t: TaskItem; onOpenRoute?: (t: T
   );
 }
 
-function TaskDetail({ t, byId, projLabel, onClose, onOpenDocument, onOpenRoute, onAsk, onMove, onAssign, nameOf, onArchived, canWrite, pendingNotification,
+function QualityTaskSection({ t, onOpen }: { t: TaskItem; onOpen?: (task: TaskItem) => string | null }) {
+  const [error, setError] = useState('');
+  if (!t.qualitySource || t.reviewRoute) return null;
+  const source = t.qualitySource;
+  return <div className="tb-detail-sec">
+    {source.kind === 'quality' && onOpen
+      ? <button type="button" className="btn ghost" onClick={() => setError(onOpen(t) ?? '')}>{qualitySourceLabel(source)}</button>
+      : <div role="status" className="tb-detail-note">The Quality record could not be read. Reopen the task after checking access in Quality.</div>}
+    {error && <div role="alert" className="tb-detail-note">{error}</div>}
+  </div>;
+}
+
+function TaskDetail({ t, byId, projLabel, onClose, onOpenDocument, onOpenRoute, onOpenQuality, onAsk, onMove, onAssign, nameOf, onArchived, canWrite, pendingNotification,
   actorScope, isCurrent, onAssignmentSaved }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const owner = nameOf(t.assignee) || 'Unassigned';
@@ -1833,6 +1870,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onOpenDocument, onOpenRoute, 
           </div>
         )}
         <RouteTaskSection t={t} onOpenRoute={onOpenRoute} />
+        <QualityTaskSection t={t} onOpen={onOpenQuality} />
         {canWrite && <TaskAssignmentControls key={t.taskId} taskId={t.taskId} status={t.status}
           projectId={/^[1-9]\d*$/.test(t.project) ? Number(t.project) : null} actorScope={actorScope} isCurrent={isCurrent}
           disabled={confirmArchive || archiving} onAutomatic={onAssign} onSaved={onAssignmentSaved} onBlockedChange={setAssignmentBlocked} />}

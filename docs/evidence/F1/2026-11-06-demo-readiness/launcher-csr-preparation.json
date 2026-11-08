@@ -1,0 +1,41 @@
+{
+  "outcome": "passed",
+  "finishedAt": "2026-11-06T20:27:57.998Z",
+  "sourceHead": "7d771e124a4dba820fbbd26d8919c7c69cd1a9d4",
+  "boundary": "freeze; no model generation requested",
+  "steps": [
+    {
+      "name": "project: found or created through New project",
+      "outcome": "pass",
+      "ms": 13313
+    },
+    {
+      "name": "Vault: upload the study files and the manifest (POST /api/vault/ingest)",
+      "outcome": "pass",
+      "ms": 2422
+    },
+    {
+      "name": "Vault: send, review-sign and approve each of the seven files (three people)",
+      "outcome": "pass",
+      "ms": 119545
+    },
+    {
+      "name": "Editor: New document \u2192 M5 lists the CSR once (F1)",
+      "outcome": "pass",
+      "ms": 7093
+    },
+    {
+      "name": "Editor: the CSR created from New document shows \"Build from the study\u2019s data\"",
+      "outcome": "pass",
+      "ms": 13502
+    },
+    {
+      "name": "Study data: manifest chosen, tables previewed, frozen in the document",
+      "outcome": "pass",
+      "ms": 22568
+    }
+  ],
+  "tableCount": 11,
+  "pilotDataOutsideGit": true,
+  "rawStudyDataOrScreenshotsCopied": false
+}

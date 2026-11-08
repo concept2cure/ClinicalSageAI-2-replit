@@ -48,11 +48,13 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, waitFor, cleanup, fireEvent } from '@testing-library/react';
+import { render, waitFor, cleanup, fireEvent, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as React from 'react';
 
-import { OrganizationSettingsCards } from '../surfaces/AdminSettings';
+import { OrganizationSettingsCards, AdminSettingsTab, AiPlacementPolicyCard } from '../surfaces/AdminSettings';
+const handoffOwner = vi.hoisted(() => ({ value: { actor: '7:admin', key: 1, sameRevision: (): boolean => true } }));
+vi.mock('../editor/authoringCurrentRead', async importOriginal => ({ ...await importOriginal<typeof import('../editor/authoringCurrentRead')>(), useAuthoringReadSession: () => handoffOwner.value }));
 
 /** The org id in the caller's token claim — every governed URL must use it. */
 const TOKEN_ORG = 7;
@@ -98,6 +100,7 @@ const liveSettings = (translation: Record<string, unknown> = {}) => ({
 });
 
 beforeEach(() => {
+  handoffOwner.value = { actor: '7:admin', key: 1, sameRevision: () => true };
   sent = [];
   profilePatch = { status: 200, body: { success: true, organization: { name: 'Contoso Bio' } } };
   settingsPatch = { status: 200, body: { success: true, message: 'ok' } };
@@ -353,5 +356,113 @@ describe('Admin → Settings claims no control it does not have', () => {
     expect(nameInput(container).disabled).toBe(true);
     expect(nameInput(container).value).toBe('');
     expect(saveButton(container).disabled).toBe(true);
+  });
+});
+
+
+const handoffCandidate = () => ({ derivativeId: '10000000-0000-4000-8000-000000000001', documentId: '20000000-0000-4000-8000-000000000002',
+  organizationId: 7, projectId: 42, policyVersion: 3, version: 2, payloadSha256: 'a'.repeat(64), expiresAt: '2099-11-06T15:00:00.000Z', status: 'attested' });
+const handoffMetadata = () => ({ organizationId: 7, policy: { residency: null, zeroDataRetention: true, allowedProviders: ['openai'], allowedSubstrates: null, publicSourceFrontier: false, publicSourceEgress: false },
+  derivativeCustody: { policy: { enabled: true, kmsKeyArn: 'arn:aws:kms:us-east-1:123456789012:key/50000000-0000-4000-8000-000000000005', maxLifetimeSeconds: 3600, version: 3 }, records: [handoffCandidate()] } });
+function serveHandoff(body = handoffMetadata()) {
+  const original = vi.mocked(globalThis.fetch).getMockImplementation()!;
+  vi.mocked(globalThis.fetch).mockImplementation(async (input, init) => {
+    if (String(input).includes('/api/ai-placement-policy')) { sent.push({ url: String(input), method: String(init?.method ?? 'GET'), body: init?.body }); return json(200, body); }
+    return original(input, init);
+  });
+}
+function renderHandoffTab(onAsk: (text: string) => void) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return render(<QueryClientProvider client={client}><AdminSettingsTab settings={[]} settingsDown={false} onRetry={() => {}} onNav={() => {}} onAsk={onAsk} /></QueryClientProvider>);
+}
+describe('reviewed derivative references reach the existing AnA conversation', () => {
+  it('propagates the Settings tab handoff using only fixed public intent and candidate/project references', async () => {
+    const onAsk = vi.fn(), body = handoffMetadata();
+    Object.assign(body.derivativeCustody.records[0], { title: 'RESTRICTED_TITLE_HANDOFF_CANARY', exactPayload: 'EXPLICIT_REVIEW_UI_CANARY', tokens: [{ token: 'secret', value: 'MAP_HANDOFF_CANARY' }] });
+    serveHandoff(body); renderHandoffTab(onAsk);
+    fireEvent.click(await screen.findByRole('button', { name: 'Draft reviewed candidate…' }));
+    expect(onAsk).toHaveBeenCalledWith(`Use draft_authoring_document with derivativeId ${handoffCandidate().derivativeId} in project 42 to create a reviewed derivative draft in the existing editor. Use only the approved candidate; approval and filing remain separate.`);
+    expect(JSON.stringify(onAsk.mock.calls)).not.toMatch(/RESTRICTED_TITLE|EXPLICIT_REVIEW|MAP_HANDOFF|20000000|payloadSha256|sourceHash/);
+    expect(sent.filter(item => item.method !== 'GET')).toEqual([]);
+  });
+  it.each(['prepared', 'revoked', 'expired', 'policy_changed', 'disabled'])('does not offer an ineligible %s candidate', async failure => {
+    const body = handoffMetadata(), record = body.derivativeCustody.records[0];
+    if (failure === 'prepared' || failure === 'revoked') record.status = failure;
+    if (failure === 'expired') record.expiresAt = '2000-01-01T00:00:00.000Z';
+    if (failure === 'policy_changed') record.policyVersion += 1;
+    if (failure === 'disabled') body.derivativeCustody.policy.enabled = false;
+    serveHandoff(body); render(<AiPlacementPolicyCard onAsk={vi.fn()} />);
+    await screen.findByRole('button', { name: 'Edit AI placement policy…' });
+    expect(screen.queryByRole('button', { name: 'Draft reviewed candidate…' })).toBeNull();
+  });
+  it('requires the conversation callback and blocks a stale session callback without publishing residuals', async () => {
+    serveHandoff(); const view = render(<AiPlacementPolicyCard />);
+    await screen.findByRole('button', { name: 'Edit AI placement policy…' });
+    expect(screen.queryByRole('button', { name: 'Draft reviewed candidate…' })).toBeNull();
+    const onAsk = vi.fn(); view.rerender(<AiPlacementPolicyCard onAsk={onAsk} />);
+    const button = await screen.findByRole('button', { name: 'Draft reviewed candidate…' });
+    handoffOwner.value.sameRevision = () => false;
+    fireEvent.click(button); expect(onAsk).not.toHaveBeenCalled();
+  });
+});
+
+const learningView = () => ({ ...handoffMetadata(), learningContribution: { policy: { enabled: true, version: 3 },
+  classes: [{ key: 'independent_review', label: 'Independent review', count: 2 }],
+  sources: [{ id: '60000000-0000-4000-8000-000000000006', recordedAt: '2026-11-06T12:00:00Z', correctionText: 'PRIVATE_SOURCE_UI_CANARY' }],
+  library: [{ name: 'Reviewed learning: Independent review', donorText: 'PRIVATE_DONOR_UI_CANARY',
+    receipt: { schemaVersion: 1, libraryVersionId: '70000000-0000-4000-8000-000000000007', artifactSha256: 'a'.repeat(64), signatureHash: 'b'.repeat(64) } }] } });
+function serveLearning() {
+  vi.mocked(globalThis.fetch).mockImplementation(async (input, init) => {
+    const method = String(init?.method ?? 'GET');
+    sent.push({ method, url: String(input), body: init?.body ? JSON.parse(String(init.body)) : null });
+    return json(200, method === 'GET' ? learningView() : { organizationId: TOKEN_ORG, audited: true, learningContribution: { id: 12 } });
+  });
+}
+function learningAuth() {
+  fireEvent.change(screen.getByLabelText(/^Reason \(recorded/), { target: { value: 'Current client administration decision' } });
+  fireEvent.change(screen.getByLabelText(/^Your password/), { target: { value: 'DERIVATIVE_REAUTH_UI_CANARY' } });
+}
+describe('reviewed learning shares only typed classes and verified public receipts', () => {
+  it('selects a private correction reference from history without exposing correction prose', async () => {
+    serveLearning(); render(<AiPlacementPolicyCard />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Contribute a pattern class…' }));
+    fireEvent.change(screen.getByLabelText(/^Pattern class/), { target: { value: 'independent_review' } });
+    fireEvent.change(screen.getByLabelText(/^Your recorded correction/), { target: { value: learningView().learningContribution.sources[0].id } });
+    learningAuth(); fireEvent.click(screen.getByRole('button', { name: 'Contribute a pattern class' }));
+    await waitFor(() => expect(sent.some(row => row.method === 'PUT')).toBe(true));
+    expect(sent.find(row => row.method === 'PUT')?.body).toMatchObject({ action: 'learning_contribute', classKey: 'independent_review',
+      sourceAuditEventId: learningView().learningContribution.sources[0].id, reauth: { password: 'DERIVATIVE_REAUTH_UI_CANARY' } });
+    expect(JSON.stringify(sent.find(row => row.method === 'PUT')?.body)).not.toMatch(/PRIVATE_SOURCE|PRIVATE_DONOR/);
+    expect(document.body.innerHTML).not.toMatch(/PRIVATE_SOURCE|PRIVATE_DONOR/);
+  });
+  it('binds an install to the selected current immutable artifact hash and actual reauthentication', async () => {
+    serveLearning(); render(<AiPlacementPolicyCard />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Install reviewed learning…' }));
+    const receipt = learningView().learningContribution.library[0].receipt;
+    fireEvent.change(screen.getByLabelText(/^Reviewed library version/), { target: { value: receipt.libraryVersionId } });
+    learningAuth(); fireEvent.click(screen.getByRole('button', { name: 'Install reviewed learning' }));
+    await waitFor(() => expect(sent.some(row => row.method === 'PUT')).toBe(true));
+    expect(sent.find(row => row.method === 'PUT')?.body).toEqual({ action: 'learning_install', libraryVersionId: receipt.libraryVersionId,
+      expectedArtifactSha256: receipt.artifactSha256, reasonForChange: 'Current client administration decision',
+      reauth: { password: 'DERIVATIVE_REAUTH_UI_CANARY', totp: undefined } });
+    expect(document.body.innerHTML).not.toMatch(/PRIVATE_SOURCE|PRIVATE_DONOR/);
+  });
+  it('binds consent changes to the current policy version', async () => {
+    serveLearning(); render(<AiPlacementPolicyCard />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Change pattern contributions…' }));
+    fireEvent.change(screen.getByLabelText(/^Contribute controlled pattern classes/), { target: { value: 'no' } });
+    learningAuth(); fireEvent.click(screen.getByRole('button', { name: 'Change pattern contributions' }));
+    await waitFor(() => expect(sent.some(row => row.method === 'PUT')).toBe(true));
+    expect(sent.find(row => row.method === 'PUT')?.body).toMatchObject({ action: 'learning_policy', enabled: false, expectedVersion: 3 });
+  });
+  it('clears reauthentication at a session boundary', async () => {
+    serveLearning(); const view = render(<AiPlacementPolicyCard />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Change pattern contributions…' }));
+    learningAuth();
+    handoffOwner.value = { actor: '7:admin', key: handoffOwner.value.key + 1, sameRevision: () => true };
+    view.rerender(<AiPlacementPolicyCard />);
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(sent.filter(row => row.method === 'PUT')).toEqual([]);
+    expect(document.body.innerHTML).not.toContain('DERIVATIVE_REAUTH_UI_CANARY');
   });
 });

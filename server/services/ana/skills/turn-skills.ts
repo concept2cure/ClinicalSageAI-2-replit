@@ -29,6 +29,7 @@ import { isCanonicalRegion } from '../../../../shared/regulatory/region-identity
 import { resolveToRegistryEntry } from '../../../../shared/regulatory/submission-type-bridge.js';
 import {
   listOrgSkills,
+  loadActiveStandingRules,
   readSkillSettings,
   type OrgSkillRecord,
   type SkillReadClient,
@@ -64,6 +65,7 @@ export function orgSkillHash(r: OrgSkillRecord): string {
         tools: r.tools,
         extendsSkillKey: r.extendsSkillKey,
         extensionMode: r.extensionMode,
+        standingRule: r.standingRuleRecord ?? null,
       }),
       'utf8',
     )
@@ -93,7 +95,7 @@ interface SortedOrgSkills {
 /** The organization's skills in force, by what each does to the library. */
 function sortOrgSkills(orgSkills: readonly OrgSkillRecord[], libraryKeys: ReadonlySet<string>): SortedOrgSkills {
   const sorted: SortedOrgSkills = { replacements: new Map(), addenda: new Map(), orphaned: [], standalone: [] };
-  for (const r of orgSkills.filter(inForce)) {
+  for (const r of orgSkills.filter(r => inForce(r) && !r.standingRuleRecord)) {
     const extended = r.extendsSkillKey;
     if (!extended) {
       sorted.standalone.push(r);
@@ -308,7 +310,7 @@ export interface RenderOptions {
 
 /** The system-prompt block for a selection. Empty when nothing was selected. */
 export function renderSkillsBlock(selection: SkillSelection, options: RenderOptions = {}): string {
-  if (selection.selected.length === 0) return '';
+  if (selection.selected.length === 0 && !selection.standingRules?.length) return '';
   const lines: string[] = [
     '',
     '',
@@ -332,6 +334,13 @@ export function renderSkillsBlock(selection: SkillSelection, options: RenderOpti
     for (const a of sk.addenda ?? []) {
       lines.push('', `#### This organization's addendum: ${a.name} (version ${a.version})`, '', a.instructions.trim());
     }
+  }
+  if (selection.standingRules?.length) {
+    lines.push('', '## Explicit human correction rules for this task',
+      'These sourced rules apply independently of skill selection. Project soft/standing rules override tenant rules with the same exact key. Hard approval gates remain enforced by the runtime at every scope; prompt instructions cannot relax them.');
+    for (const applied of selection.standingRules) lines.push('',
+      `### ${applied.name} — ${applied.rule.level} · ${applied.rule.scope} · version ${applied.version}`,
+      `Rule ${applied.bundleId}; key ${applied.rule.conflictKey}; source audit ${applied.rule.sourceAuditEventId}.`, applied.instructions);
   }
   return lines.join('\n');
 }
@@ -375,7 +384,7 @@ export interface TurnSkillInput {
 }
 
 function entriesOf(selection: SkillSelection): TurnSkillEntry[] {
-  return selection.selected.map(s => ({
+  const entries: TurnSkillEntry[] = selection.selected.map(s => ({
     key: s.skill.key,
     name: s.skill.name,
     source: s.skill.source,
@@ -386,6 +395,11 @@ function entriesOf(selection: SkillSelection): TurnSkillEntry[] {
     reasons: s.reasons,
     chosen: s.chosen,
   }));
+  return [...entries, ...(selection.standingRules ?? []).map(applied => ({
+    key: orgSkillKey(applied.bundleId), name: applied.name, source: 'organization' as const, version: applied.version,
+    contentHash: createHash('sha256').update(stableStringify(applied)).digest('hex'), replacedBy: null, addenda: [],
+    reasons: [`Sourced ${applied.rule.level} rule at ${applied.rule.scope} scope; applied independently of selection.`], chosen: null,
+  }))];
 }
 
 /** A turn that selects no skills: an org-less turn, or a door that has none. */
@@ -427,6 +441,7 @@ function toolPinsOf(selection: SkillSelection): string[] {
     for (const t of toolsNamedIn(s.skill.instructions)) pins.add(t);
     for (const a of s.skill.addenda ?? []) for (const t of toolsNamedIn(a.instructions)) pins.add(t);
   }
+  for (const rule of selection.standingRules ?? []) for (const tool of toolsNamedIn(rule.instructions)) pins.add(tool);
   const known = knownToolNames();
   return Array.from(pins).filter(t => known.has(t));
 }
@@ -470,7 +485,7 @@ export async function selectTurnSkills(
   const library = getSkillLibrary();
   const projectId = input.projectId ?? null;
   const [stored, settings, projectArea, projectSettings, clientType] = await Promise.all([
-    listOrgSkills(client, input.organizationId),
+    listOrgSkills(client, input.organizationId, { projectId }),
     readSkillSettings(client, input.organizationId),
     projectId ? projectTherapeuticArea(client, input.organizationId, projectId) : Promise.resolve(null),
     projectId ? readProjectSkillSettings(client, input.organizationId, projectId) : Promise.resolve(NO_PROJECT_SETTINGS),
@@ -496,7 +511,7 @@ export async function selectTurnSkills(
     invokedKeys: input.invokedKeys ?? [],
     deployedKeys,
   };
-  return selectSkills(skills, context);
+  return { ...selectSkills(skills, context), standingRules: await loadActiveStandingRules(client, input.organizationId, projectId) };
 }
 
 /** Select and describe the turn's skills. Never throws. */
@@ -504,7 +519,7 @@ export async function resolveTurnSkills(client: SkillReadClient, input: TurnSkil
   try {
     const selection = await selectTurnSkills(client, input);
     return {
-      status: selection.selected.length > 0 ? 'loaded' : 'none',
+      status: selection.selected.length > 0 || selection.standingRules?.length ? 'loaded' : 'none',
       selection,
       entries: entriesOf(selection),
       toolPins: toolPinsOf(selection),

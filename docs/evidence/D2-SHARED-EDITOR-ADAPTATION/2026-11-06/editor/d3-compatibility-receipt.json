@@ -1,0 +1,54 @@
+{
+  "observedAt": "2026-11-06T19:09:26.267737+00:00",
+  "testedHead": "d971fdda1b0305da1a34e64aa5c62ec36f1cec40",
+  "testedCommittedTree": "73d83088ab8bf72f1afb3860ba275ad5cd6ba20f",
+  "incomingCanonical": "57b13c599df7fa957809a4764963734b02522545",
+  "sourceState": "Read-only compatibility run; no source/test edits. Previously approved test-fixture corrections remain frozen.",
+  "sourceAndTestPins": {
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "e8c2522a5f96655bfdede46cd7bad1d785c999bc4c6b2b2a3c656ff707acb422",
+    "client/src/concept2cure/v2/surfaces/ProjectRespond.tsx": "10e5112a5fc09016f0a93d0eb50f41fbf218ecc605975c0b9b793112d2e6a453",
+    "client/src/concept2cure/v2/surfaces/ProjectTeamResponsibilities.tsx": "c7d3509eb4c5ba4d0737212d38a292cb42a82f1ea0f473c65676792df34fca74",
+    "client/src/concept2cure/v2/surfaces/AgencyInbox.tsx": "a20e5915598149c8fd539fb08a6e6fbbc135dc2b850c8ecb0c5691a700997e32",
+    "client/src/concept2cure/v2/styles/project-home-v2.css": "1542a22c34ae335c789e95b4cc578e10b63b6aff727e1db6e80051c86684845c",
+    "client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx": "554193c2030f367782bad653e7eea84d437f690a5aa6e0d7b28eadc8c8c36460",
+    "client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx": "4da1780427496d292703045f155702bd42bef789ed1daf28f2e27f993de48bcf",
+    "client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx": "cc0537c7a8c748df998dbe650cbb6d1fbe51d00bdb535a8d7ba3bb7e763259a2"
+  },
+  "inputsMatchPinsCapturedDuringRun": true,
+  "restoredRuntimeOwners": {
+    "paths": [
+      "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "client/src/concept2cure/v2/editor/filingSectionTarget.ts",
+      "client/src/concept2cure/v2/editor/FilingMarkets.tsx",
+      "client/src/concept2cure/v2/editor/writingAgencyPresentation.ts",
+      "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts"
+    ],
+    "changedSincePriorCombined74f6": [],
+    "workingSha256": {
+      "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "3e7bae441a5b31728c396dfe98b455d64dca4f6488b268b42de57e06f7f7c007",
+      "client/src/concept2cure/v2/editor/filingSectionTarget.ts": "1522a4ffee3efd492883bb927f348e0fe2fac1097e7f64be7e17be2ddccbe5d8",
+      "client/src/concept2cure/v2/editor/FilingMarkets.tsx": "2d4f0828bca74fec16cc7dc276a58a5e0a0f1bc1a6d96261a826afb5ac132634",
+      "client/src/concept2cure/v2/editor/writingAgencyPresentation.ts": "356cfe02766c57b6c280cad03111e4de33021056600c8fee85a51e08b79024fe",
+      "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts": "7d13ca6860c8b3ec0f66637612dafb2417b4f59b4dbf37227851778dbe318e17"
+    }
+  },
+  "verification": {
+    "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx --maxWorkers=1",
+    "runnerExitCode": 0,
+    "suites": 3,
+    "tests": 33,
+    "passedByFile": {
+      "client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx": 12,
+      "client/src/concept2cure/v2/__tests__/projectRespondStage.test.tsx": 11,
+      "client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx": 10
+    },
+    "durationSeconds": 59.6,
+    "log": "d3-compatibility-green.txt.gz",
+    "uncompressedLogSha256": "858ff32353da5263104332506419cfacc21ebc92d92ca8f66c7960da9c3a497d"
+  },
+  "limits": [
+    "Only the three requested current project Team/Respond/stage UI compatibility suites were run; the119editor cohort was not repeated.",
+    "This run does not independently qualify task-creation backend admission, native PostgreSQL concurrency, production RLS or deployment.",
+    "Root owns final appCSS browser refresh and complete release gates."
+  ]
+}

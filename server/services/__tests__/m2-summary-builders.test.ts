@@ -255,7 +255,9 @@ describe('buildM25ClinicalOverview', () => {
 });
 
 describe('buildM24NonclinicalOverview — the safety conclusion is never drawn automatically', () => {
-  const study = (studyType: any, id: string) => ({ studyId: id, studyType, primaryFinding: 'No finding of concern.', reportSection: '4.2.1.1' });
+  const study = (studyType: any, id: string) => ({ studyId: id, studyType, primaryFinding: 'No finding of concern.',
+    reportSection: '4.2.1.1', species: 'Recorded species', duration: 'Recorded duration', glpStatus: 'non-GLP' as const,
+    ...(studyType === 'toxicology' ? { noael: 'Not established' } : {}) });
 
   it('does not say the safety profile supports the plan while it lists the missing study categories', () => {
     const r = buildM24NonclinicalOverview({ nonclinicalStudies: [study('pharmacology', 'PH-1')], drugSubstanceName: 'BX-115' });
@@ -268,12 +270,71 @@ describe('buildM24NonclinicalOverview — the safety conclusion is never drawn a
   // clinical investigational plan. No nonclinical issues preclude clinical
   // development" once each category had a study — whatever the studies found.
   it('leaves the conclusion to the sponsor when every category the overview requires is present', () => {
-    const all = ['pharmacology', 'safety_pharmacology', 'pharmacokinetics', 'toxicology', 'reproductive_tox', 'genotoxicity', 'carcinogenicity'].map((t, i) => study(t, `S-${i}`));
+    const all = ['pharmacology', 'safety_pharmacology', 'pharmacokinetics', 'toxicology', 'reproductive_tox', 'genotoxicity', 'carcinogenicity']
+      .map((t, i) => ({ ...study(t, `S-${i}`), ...(t === 'toxicology' ? { sourceStudyType: 'repeat_dose_tox' } : {}) }));
     const r = buildM24NonclinicalOverview({ nonclinicalStudies: all, drugSubstanceName: 'BX-115' });
     expect(r.gaps).toEqual(['nonclinical safety conclusion (sponsor toxicology judgment; not drawn automatically)']);
     expect(r.completeness).toBe(100);
     expect(r.narrative).not.toMatch(/No nonclinical issues preclude clinical development/);
     expect(r.narrative).toMatch(/is the sponsor's toxicology judgment and is not drawn automatically/);
+  });
+});
+
+describe('nonclinical composition retains the supplied study scope and evidence gaps', () => {
+  it('preserves an unclassified finding without assigning it toxicology coverage', () => {
+    const r = buildM24NonclinicalOverview({ nonclinicalStudies: [{ studyId: 'UNK-1', studyType: 'unclassified',
+      sourceStudyType: 'novel_assay', primaryFinding: 'Distinct recorded unclassified finding', reportSection: '' }] });
+    const index = r.tables.find(t => t.title === 'Nonclinical Study Index')!;
+    expect(index.rows[0][index.headers.indexOf('Key Finding')]).toBe('Distinct recorded unclassified finding');
+    expect(r.tables.some(t => t.title === 'Toxicology Study Summary')).toBe(false);
+    expect(r.gaps).toContain('repeat-dose toxicology');
+  });
+
+  it('keeps NOEL separate from an absent NOAEL in both overview tables', () => {
+    const r = buildM24NonclinicalOverview({ nonclinicalStudies: [{ studyId: 'NOEL-1', studyType: 'toxicology',
+      sourceStudyType: 'single_dose_tox', noel: '7 mg/kg', primaryFinding: 'Recorded finding', reportSection: '4.2.3.1' }] });
+    for (const table of r.tables) {
+      expect(table.headers).toContain('NOEL');
+      expect(table.rows[0][table.headers.indexOf('NOEL')]).toBe('7 mg/kg');
+      expect(table.rows[0][table.headers.indexOf('NOAEL')]).toBe('—');
+    }
+    expect(r.gaps.some(g => g.includes('NOAEL/NOEL not recorded'))).toBe(false);
+  });
+
+  it.each([undefined, 'single_dose_tox', 'local_tolerance', 'immunotoxicity', 'other'])('does not treat %s as repeat-dose coverage', sourceStudyType => {
+    const entry = { studyId: 'NC-1', studyType: 'toxicology' as const, sourceStudyType,
+      primaryFinding: 'Observed source finding.', reportSection: '4.2.3.1' };
+    const r = buildM24NonclinicalOverview({ nonclinicalStudies: [entry] });
+    expect(r.gaps).toContain('repeat-dose toxicology');
+    expect(r.narrative).not.toContain('Repeat-dose toxicology: 1 study/ies');
+    if (sourceStudyType) expect(JSON.stringify(r.tables)).toContain(sourceStudyType);
+  });
+
+  it('recognizes explicitly identified repeat-dose entries without claiming report availability', () => {
+    const entry = { studyId: 'NC-2', studyType: 'toxicology' as const, sourceStudyType: 'repeat_dose_tox',
+      primaryFinding: 'Recorded repeat-dose result.', reportSection: '4.2.3.2' };
+    const r = buildM24NonclinicalOverview({ nonclinicalStudies: [entry] });
+    expect(r.gaps).not.toContain('repeat-dose toxicology');
+    expect(r.narrative).not.toMatch(/full reports are (?:provided )?in Module 4/i);
+    expect(r.narrative).toMatch(/verif.{0,50}(?:source|report)|(?:source|report).{0,50}verif/i);
+  });
+
+  it('keeps only recorded locations in the source-reference list without dropping studies', () => {
+    const r = buildM24NonclinicalOverview({ nonclinicalStudies: ['', '   ', '4.2.2.1'].map((reportSection, i) => ({
+      studyId: `REF-${i}`, studyType: 'pharmacokinetics' as const, primaryFinding: 'Recorded finding', reportSection })) });
+    expect(r.inputSectionKeys).toEqual(['4.2.2.1']);
+    expect(r.tables[0].rows).toHaveLength(3);
+    expect(r.gaps.some(g => g.includes('REF-1: report section/placement not recorded'))).toBe(true);
+  });
+
+  it('shows missing findings and locations without a pretend report reference', () => {
+    const r = buildM24NonclinicalOverview({ nonclinicalStudies: [{ studyId: 'NC-3', studyType: 'pharmacology',
+      primaryFinding: '', reportSection: '' }] });
+    expect(r.gaps.join(' ')).toMatch(/NC-3.*finding|finding.*NC-3/i);
+    expect(r.gaps.join(' ')).toMatch(/NC-3.*(?:section|placement)|(?:section|placement).*NC-3/i);
+    expect(r.narrative).not.toContain('See Module 4 study report.');
+    expect(r.tables[0].rows[0].at(-1)).not.toBe('4.2.1.1');
+    expect(r.inputSectionKeys).toEqual([]);
   });
 });
 

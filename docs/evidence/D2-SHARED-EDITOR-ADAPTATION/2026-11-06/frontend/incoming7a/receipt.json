@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "package": "F1",
+  "launchRow": "D2",
+  "kind": "incoming7a frontend and demo/harness compatibility",
+  "reviewBase": "e5a1536fa0f94a609f93a9871bd579446854330c",
+  "incomingCommit": "7a23ed73ca342c1dad1e44ab7cc841e3e40e2b2f",
+  "sourceCommit": "e802750f45765e2900f7da8db672f2b8b67ee346",
+  "sourceTree": "5974e8ec5e7a3d28dd1a973302774069ea3e58f2",
+  "headAtPackaging": "e802750f45765e2900f7da8db672f2b8b67ee346",
+  "packagedAtUtc": "2026-11-06T22:45:09.907145+00:00",
+  "workdir": "/workspace/ClinicalSageAI-2-replit",
+  "client": {
+    "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --fileParallelism=false client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx client/src/concept2cure/v2/__tests__/collabTaskOpenProject.test.tsx client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "exitCode": 0,
+    "suitesPassed": 4,
+    "testsPassed": 47,
+    "durationSeconds": 18.64,
+    "caseCounts": {
+      "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx": 15,
+      "client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx": 17,
+      "client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx": 7,
+      "client/src/concept2cure/v2/__tests__/collabTaskOpenProject.test.tsx": 8
+    },
+    "log": {
+      "path": "client-tests.log",
+      "sha256": "24544aa0dfeb07ffbd22c28a02305ccc086e5b3c69796e492250611d4e6ee4e8",
+      "bytes": 9800,
+      "originalSha256": "24544aa0dfeb07ffbd22c28a02305ccc086e5b3c69796e492250611d4e6ee4e8",
+      "originalBytes": 9800,
+      "originalLines": 56,
+      "gzipMtime": null
+    }
+  },
+  "node": {
+    "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH node --test scripts/demo/launch-demo/lumen-rbm-completion.test.mjs tests/validation/lib/api-client-retry.test.mjs",
+    "exitCode": 0,
+    "testFiles": 2,
+    "casesPassed": 11,
+    "casesFailed": 0,
+    "durationMilliseconds": 689.080948,
+    "log": {
+      "path": "node-tests.log",
+      "sha256": "09f76435c8cfe5caebcd44070338ace031847e9e897bbbfa7d348e4e1ddf14f0",
+      "bytes": 2264,
+      "originalSha256": "09f76435c8cfe5caebcd44070338ace031847e9e897bbbfa7d348e4e1ddf14f0",
+      "originalBytes": 2264,
+      "originalLines": 76,
+      "gzipMtime": null
+    }
+  },
+  "selectedInputs": 24,
+  "selectedWorkingInputsMatchCanonicalSource": true,
+  "pinBasis": "Canonical Git objects at the frozen merged source, compared with working files. Initial pre-launch helper used rbmWrites.ts instead of .tsx and emitted no manifest; no timestamped pre-launch filesystem snapshot is claimed.",
+  "inputManifests": [
+    {
+      "path": "canonical-inputs.json",
+      "sha256": "699d0346a2077661b6940a5ac426853759c93f4228a231388d537c8ced7182fd"
+    },
+    {
+      "path": "after.json",
+      "sha256": "c64bb6a218822cea8a24f73cc1917fcde6d1582acd6f91f21299a8b1bee192f9"
+    }
+  ],
+  "browserPinCurrency": {
+    "path": "browser-pin-check.json",
+    "sha256": "4d75b4883c535ad64f2718fcb0d4e5a7a8b4df64b248c7ca4f5c043488068ba5",
+    "componentSelectedPins": 45,
+    "nativeSelectedPins": 30,
+    "incomingIntersections": 0,
+    "currentMismatches": 0,
+    "browserRerun": false,
+    "interpretation": "Historical runtime receipts keep their own checkpoints. This is selected-input currency, not a new browser or deployment result."
+  },
+  "reviewFindings": [
+    "A successful message response is retained independently of its optional task; uncertain outcomes stay locked against duplicate sends while known refusals remain retryable.",
+    "RBM extract FileReader callbacks apply only to the current input choice; paste/replacement/unmount retires older readers, and a saved receipt remains visible until close before parent refresh.",
+    "Existing RBM project/account owner remount and collaboration task project anchoring remain covered by adjacent authority suites.",
+    "Required demo subject intake now fails the actual synthetic seed CLI/manifest on refusal rather than claiming a complete pack, while an already-loaded extract is not submitted again.",
+    "Native FormData serialization is reused safely across bounded HTTP429 retries with unchanged fields, bytes and auth; non429 results remain single-attempt."
+  ],
+  "sourceEdits": false,
+  "testEdits": false,
+  "runnerEdits": false,
+  "gitMutations": false,
+  "realCredentialsUsed": false,
+  "providerRequestsPerformed": false,
+  "liveSeedingPerformed": false,
+  "limits": "Synthetic component/HTTP and temporary-directory fake seed CLI tests only. No real messages, task writes, RBM ingestion or seeding were sent by this work. Selected pins are not an exhaustive transitive dependency inventory. This does not establish backend durable outcomes, live provider/model or IQ/OQ qualification, browser rerun or deployed client acceptance. No broad editor/Vault rerun, compiler or lint run was performed."
+}

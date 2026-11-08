@@ -15,6 +15,7 @@
  */
 
 import { pool } from '../db.js';
+import type { PoolClient } from 'pg';
 import { createScopedLogger } from '../utils/logger';
 import { getPromptInjectionProtection } from '../lib/prompt-injection-protection.js';
 
@@ -118,6 +119,22 @@ function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
 }
 
+/** A canon mutation and its immutable account event commit together. */
+async function withCanonTransaction<T>(work: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await work(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 /**
  * Build a scope-matching WHERE clause fragment.
  * Matches items where the scope array is NULL (applies to all) or overlaps
@@ -179,57 +196,59 @@ export async function assertCanonFact(input: {
   }
   const sanitizedContent = analysis.detected.length > 0 ? analysis.sanitized : input.content;
 
-  const canonId = generateId('canon');
+  return withCanonTransaction(async client => {
+    const canonId = generateId('canon');
 
-  const result = await pool.query(
-    `INSERT INTO account_canon_items
-     (canon_id, organization_id, profile_id, category, subcategory, key, title, content,
-      submission_types, module_types, work_types, regulatory_regions,
-      version, status, source_type, source_document_id, source_description,
-      confidence_score, metadata, created_by_id, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-             1, 'active', $13, $14, $15, $16, $17, $18, NOW(), NOW())
-     RETURNING *`,
-    [
-      canonId,
-      input.organizationId,
-      input.profileId || null,
-      input.category,
-      input.subcategory || null,
-      input.key,
-      input.title,
-      sanitizedContent,
-      input.submissionTypes ? JSON.stringify(input.submissionTypes) : null,
-      input.moduleTypes ? JSON.stringify(input.moduleTypes) : null,
-      input.workTypes ? JSON.stringify(input.workTypes) : null,
-      input.regulatoryRegions ? JSON.stringify(input.regulatoryRegions) : null,
-      input.sourceType || 'manual',
-      input.sourceDocumentId || null,
-      input.sourceDescription || null,
-      // 2026-10-15: an unstated confidence was stored as 0.9. Unstated is null.
-      input.confidenceScore ?? null,
-      input.metadata ? JSON.stringify(input.metadata) : null,
-      input.actorId || null,
-    ]
-  );
+    const result = await client.query(
+      `INSERT INTO account_canon_items
+       (canon_id, organization_id, profile_id, category, subcategory, key, title, content,
+        submission_types, module_types, work_types, regulatory_regions,
+        version, status, source_type, source_document_id, source_description,
+        confidence_score, metadata, created_by_id, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+               1, 'active', $13, $14, $15, $16, $17, $18, NOW(), NOW())
+       RETURNING *`,
+      [
+        canonId,
+        input.organizationId,
+        input.profileId || null,
+        input.category,
+        input.subcategory || null,
+        input.key,
+        input.title,
+        sanitizedContent,
+        input.submissionTypes ? JSON.stringify(input.submissionTypes) : null,
+        input.moduleTypes ? JSON.stringify(input.moduleTypes) : null,
+        input.workTypes ? JSON.stringify(input.workTypes) : null,
+        input.regulatoryRegions ? JSON.stringify(input.regulatoryRegions) : null,
+        input.sourceType || 'manual',
+        input.sourceDocumentId || null,
+        input.sourceDescription || null,
+        // 2026-10-15: an unstated confidence was stored as 0.9. Unstated is null.
+        input.confidenceScore ?? null,
+        input.metadata ? JSON.stringify(input.metadata) : null,
+        input.actorId || null,
+      ]
+    );
 
-  const item = result.rows[0];
+    const item = result.rows[0];
 
-  // Emit event
-  await appendEvent({
-    organizationId: input.organizationId,
-    eventType: 'account_fact_asserted',
-    canonItemId: item.id,
-    targetType: 'canon_item',
-    targetId: canonId,
-    newValue: { category: input.category, key: input.key, title: input.title },
-    description: `Canon fact asserted: ${input.title}`,
-    actorId: input.actorId,
-    actorName: input.actorName,
-    actorEmail: input.actorEmail,
+    // Emit event
+    await appendEvent({
+      organizationId: input.organizationId,
+      eventType: 'account_fact_asserted',
+      canonItemId: item.id,
+      targetType: 'canon_item',
+      targetId: canonId,
+      newValue: { category: input.category, key: input.key, title: input.title },
+      description: `Canon fact asserted: ${input.title}`,
+      actorId: input.actorId,
+      actorName: input.actorName,
+      actorEmail: input.actorEmail,
+    }, client);
+
+    return item;
   });
-
-  return item;
 }
 
 /**
@@ -243,24 +262,26 @@ export async function validateCanonFact(
   actorId: number,
   actorName?: string
 ): Promise<void> {
-  const updated = await pool.query(
-    `UPDATE account_canon_items SET status = $3, updated_at = NOW()
-     WHERE id = $1 AND organization_id = $2`,
-    [canonItemId, organizationId, 'active']
-  );
-  // Nothing matched: no validation happened, so none is recorded.
-  if (!updated.rowCount) {
-    throw Object.assign(new Error(`Canon item ${canonItemId} not found`), { statusCode: 404 });
-  }
+  await withCanonTransaction(async client => {
+    const updated = await client.query(
+      `UPDATE account_canon_items SET status = $3, updated_at = NOW()
+       WHERE id = $1 AND organization_id = $2`,
+      [canonItemId, organizationId, 'active']
+    );
+    // Nothing matched: no validation happened, so none is recorded.
+    if (!updated.rowCount) {
+      throw Object.assign(new Error(`Canon item ${canonItemId} not found`), { statusCode: 404 });
+    }
 
-  await appendEvent({
-    organizationId,
-    eventType: 'account_fact_validated',
-    canonItemId,
-    targetType: 'canon_item',
-    description: `Canon fact validated by ${actorName || 'user'}`,
-    actorId,
-    actorName,
+    await appendEvent({
+      organizationId,
+      eventType: 'account_fact_validated',
+      canonItemId,
+      targetType: 'canon_item',
+      description: `Canon fact validated by ${actorName || 'user'}`,
+      actorId,
+      actorName,
+    }, client);
   });
 }
 
@@ -273,20 +294,25 @@ export async function lockCanonFact(
   actorId: number,
   actorName?: string
 ): Promise<void> {
-  await pool.query(
-    `UPDATE account_canon_items SET status = $4, locked_at = NOW(), locked_by_id = $3, updated_at = NOW()
-     WHERE id = $1 AND organization_id = $2`,
-    [canonItemId, organizationId, actorId, 'locked']
-  );
+  await withCanonTransaction(async client => {
+    const updated = await client.query(
+      `UPDATE account_canon_items SET status = $4, locked_at = NOW(), locked_by_id = $3, updated_at = NOW()
+       WHERE id = $1 AND organization_id = $2`,
+      [canonItemId, organizationId, actorId, 'locked']
+    );
+    if (!updated.rowCount) {
+      throw Object.assign(new Error(`Canon item ${canonItemId} not found`), { statusCode: 404 });
+    }
 
-  await appendEvent({
-    organizationId,
-    eventType: 'account_fact_locked',
-    canonItemId,
-    targetType: 'canon_item',
-    description: `Canon fact locked by ${actorName || 'user'}`,
-    actorId,
-    actorName,
+    await appendEvent({
+      organizationId,
+      eventType: 'account_fact_locked',
+      canonItemId,
+      targetType: 'canon_item',
+      description: `Canon fact locked by ${actorName || 'user'}`,
+      actorId,
+      actorName,
+    }, client);
   });
 }
 
@@ -298,8 +324,7 @@ export async function supersedeCanonFact(
   oldCanonItemId: number,
   newInput: Parameters<typeof assertCanonFact>[0]
 ): Promise<CanonItem> {
-  // Use a dedicated client for transaction isolation — all 4 operations
-  // (read old, insert new, update version, mark superseded) must be atomic.
+  // The predecessor lock, replacement, supersession and event share one transaction.
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -367,9 +392,7 @@ export async function supersedeCanonFact(
       [newItem.id, oldCanonItemId, newInput.organizationId, 'superseded']
     );
 
-    await client.query('COMMIT');
-
-    // Event logging outside transaction — non-critical, should not roll back the supersession
+    // The event is part of the supersession: without its provenance, nothing changes.
     await appendEvent({
       organizationId: newInput.organizationId,
       eventType: 'account_fact_superseded',
@@ -381,11 +404,12 @@ export async function supersedeCanonFact(
       description: `Canon fact superseded: v${oldVersion} → v${oldVersion + 1}`,
       actorId: newInput.actorId,
       actorName: newInput.actorName,
-    });
+    }, client);
 
+    await client.query('COMMIT');
     return newItem;
   } catch (error) {
-    await client.query('ROLLBACK');
+    await client.query('ROLLBACK').catch(() => undefined);
     throw error;
   } finally {
     client.release();

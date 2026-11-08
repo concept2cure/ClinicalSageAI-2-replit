@@ -15,6 +15,7 @@ import { mockPool } from '../../../../tests/setup';
 // instrumented pool too (writing-precision-gate, 8d919b1f8).
 const { ALL_ANA_TOOLS } = await import('../AnaToolDefinitions.js');
 const { getToolHandler } = await import('../AnaToolExecutor.js');
+const { syntheticCurrentPolicyQuery } = await import('./support/source-read-tool-fixture.js');
 
 const names = ALL_ANA_TOOLS.map(t => t.name);
 
@@ -413,12 +414,16 @@ describe('assess_recorded_process_capability', () => {
        recorded" about a register it never opened while the open program's
        batches sat unexamined. The refusal below names the project it actually
        tried to read, which is how this is observable at all. */
+    const programId = '10000000-0000-4000-8000-000000000001';
+    // Current project access and an empty standing-rule set are premises of
+    // this handler-priority test; an invalid placeholder is refused earlier.
+    const sqlClient = { query: syntheticCurrentPolicyQuery };
     const out = JSON.parse(String(await call(
       { project_id: 'BX-701' },
-      { organizationId: 999999, projectRef: 'the-open-program' },
+      { organizationId: 999999, userId: 3, projectRef: programId, sqlClient },
     )));
     expect(out.status).toBe('not_found');
-    expect(out.message).toContain('the-open-program');
+    expect(out.message).toContain(programId);
     expect(out.message).not.toContain('BX-701');
   });
 

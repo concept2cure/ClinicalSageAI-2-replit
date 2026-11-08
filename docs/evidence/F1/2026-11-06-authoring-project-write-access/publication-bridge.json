@@ -1,0 +1,43 @@
+{
+  "finalFreeze": "accepted-inputs.json",
+  "fromMergedHead": "64473d442eca9917be123da8c24c6b6018254421",
+  "toMergedHead": "ecf5f956dab51394fb38c59e42238b9a51d524a7",
+  "changedIntegratedInputs": {
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": {
+      "before": "e8c2522a5f96655bfdede46cd7bad1d785c999bc4c6b2b2a3c656ff707acb422",
+      "after": "c4a3914a434382107777d77d72c4d055e92b3e80d46253710b7a90ddb7c5ed4e"
+    },
+    "client/src/concept2cure/v2/surfaces/ProjectRecords.tsx": {
+      "before": "89a3f59f2e815194ebeb0ae565239fc960fd84ef0058c01d4aeff8ec74ba1a4b",
+      "after": "472ae0edca044c87d3c13258558df11627d6de76131103ae64511b6cf522abeb"
+    },
+    "client/src/concept2cure/v2/surfaces/ProjectSide.tsx": {
+      "before": "eeef2c637e45f0c74e29ae46afa2f2f6dd0948a32665407b0b9cf21e9dc84ddf",
+      "after": "12b7d651bfb4ffc44eab31e69bac98f0e8627b1a5de3772263aa7dabdad67bfb"
+    }
+  },
+  "rerunChecks": [
+    "retry1-client",
+    "retry1-build",
+    "retry1-browser"
+  ],
+  "retainedChecks": [
+    "integrated-regression server suites",
+    "integrated-lineage 119 cases; scanner reads server sources, not project-page UI",
+    "unchanged ReviewThreads reopen 4 cases from integrated-regression"
+  ],
+  "reason": "Remote advanced during the successful cold compiler run. Merge changed only three named project-page inputs; every server, CI and owned production/test input from integrated qualification is byte-identical. Recheck all eight affected client suites plus the two incoming project suites, production build and actual editor browser. Existing evidence helpers permit unique labels and accepted-byte bridge validation; no runtime edit.",
+  "rerunFreeze": "retry1-inputs.json",
+  "addedIntegratedInputs": {
+    "client/src/concept2cure/v2/__tests__/projectActivityReason.test.tsx": "3cd8537acabb72fdac6e318238426b63c66fe5f3152d6b307911286be3223b4d",
+    "client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx": "3fc4098ccf9ff6679a8d77c927a29dd48606f40336e0a4cc749b6dadb6323466",
+    "docs/evidence/F1/2026-11-06-authoring-project-write-access/browser-native.py": "5eb6cc65c9b81d0fdbb0a5e93022d72dd7a16ca56f467e801d3a76538652bfa4",
+    "docs/evidence/F1/2026-11-06-authoring-project-write-access/finalize.py": "ddb2bd95ac008b29ff02cd311b039afae45a338752d8aef89491b4ce733d24a7"
+  },
+  "evidenceHelperChangesAfterRerun": {
+    "docs/evidence/F1/2026-11-06-authoring-project-write-access/finalize.py": {
+      "before": "1efe00ff271c159d60c41aa210ef940bc7d92e5f590c501af3f1764473a8b54f",
+      "after": "ddb2bd95ac008b29ff02cd311b039afae45a338752d8aef89491b4ce733d24a7"
+    }
+  }
+}

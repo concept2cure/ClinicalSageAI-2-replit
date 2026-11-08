@@ -13,6 +13,7 @@
  */
 
 import { pool } from '../../db';
+import { createHash } from 'node:crypto';
 import { sourceProcessingSummary } from './data-room-processing-read.js';
 import type { RequestSqlClient } from '../../db/requestDb';
 import { requireCurrentProgramAccess } from '../c2c/current-program-access';
@@ -154,6 +155,15 @@ export async function createSource(orgId: number, p: CreateSourceParams, exec?: 
   }
 }
 
+function assertNativeSourceText(p: { sourceType: SourceType; extractedText?: string; provenance?: Record<string, unknown> | null; storedArtifactRef?: string | null; checksum?: string | null }) {
+  if (p.extractedText === undefined) return;
+  if (p.sourceType !== 'client_document' || p.provenance?.origin !== 'native_record_snapshot'
+    || p.storedArtifactRef != null || p.provenance?.fileUploadId != null || !p.extractedText.trim()
+    || p.checksum !== createHash('sha256').update(p.extractedText, 'utf8').digest('hex')) {
+    throw new EvidenceSpineError('Native source text requires its exact recorded digest and native parent; it cannot impersonate an uploaded file.');
+  }
+}
+
 async function insertSource(orgId: number, p: {
   sourceType: SourceType; visibilityClass?: VisibilityClass; clientWorkspaceId?: number | null;
   /** regulatory_programs.id (UUID) — the project-management id-space. Set this
@@ -180,12 +190,16 @@ async function insertSource(orgId: number, p: {
   /** Defaults to 'pending'. Set to 'extracted' when text was pulled at ingest;
    *  'failed' when extraction was attempted and produced nothing usable. */
   extractionStatus?: ExtractionStatus;
+  /** Native record facts, already admitted by the record's canonical reader.
+   * No fabricated upload or file-extraction receipt. */
+  extractedText?: string;
 },
 /** Runs on the caller's transaction when one is supplied. createSupersedingSource
  *  needs the insert and the predecessor's retirement to land together. */
 exec: SourceExecutor,
 ): Promise<EvidenceSource> {
   assertOneOf(p.sourceType, SOURCE_TYPES, 'sourceType');
+  assertNativeSourceText(p);
   const visibility = p.visibilityClass ?? 'tenant_private';
   assertOneOf(visibility, VISIBILITY_CLASSES, 'visibilityClass');
   const ingestionStatus = p.ingestionStatus ?? 'pending';
@@ -216,6 +230,12 @@ exec: SourceExecutor,
     '$15', '$16', '$17', '$18', '$19', '$20', `COALESCE($21::jsonb,'{}'::jsonb)`, '$22', '$23',
     `COALESCE($24::jsonb,'{}'::jsonb)`, '$25', '$26',
   ];
+
+  if (p.extractedText !== undefined) {
+    values.push(p.extractedText, p.extractedText.length);
+    columns.push('extracted_text', 'char_count');
+    placeholders.push(`$${values.length - 1}`, `$${values.length}`);
+  }
 
   // `client_program_id` is added by migrations/20260726_cre_source_program_scope.sql,
   // which is separate from the spine that creates this table. Naming the column
@@ -819,7 +839,7 @@ export function adaptSource(r: any): EvidenceSource {
     officialUrl: r.official_url, storedArtifactRef: r.stored_artifact_ref, checksum: r.checksum,
     version: r.version, isCurrent: r.is_current !== false,
     dataEligible: r.data_eligible ?? true,
-    originalFileAvailable: r.original_file_available ?? true,
+    originalFileAvailable: j(r.provenance).origin === 'native_record_snapshot' ? false : r.original_file_available ?? true,
     disposition: r.disposition ?? null,
     provenance: j(r.provenance), ingestionStatus: r.ingestion_status,
     extractionStatus: r.extraction_status, linkedCsrReportId: r.linked_csr_report_id,

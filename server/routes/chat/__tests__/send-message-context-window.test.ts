@@ -15,7 +15,9 @@ const io = vi.hoisted(() => ({
 vi.mock('../../../db.js', () => ({ pool: { query: io.query }, getPool: () => ({ query: io.query }), db: {} }));
 vi.mock('../../../db/currentTenant.js', () => ({ currentTenantOrgUuid: async () => '77777777-2222-4333-8444-555555555555' }));
 vi.mock('../../../services/ana/AnaToolExecutor.js', () => ({ executeAgenticLoop: io.execute }));
-vi.mock('../../../services/chat-thread-helpers.js', () => ({
+vi.mock('../../../services/chat-thread-helpers.js', async importOriginal => ({
+  OwnerPrivateChatError: (await importOriginal<typeof import('../../../services/chat-thread-helpers.js')>()).OwnerPrivateChatError,
+  threadHasOwnerPrivateBoundary: async () => false,
   getOrCreateThread: async () => 'fixture-thread', getThreadMessages: async () => [],
   saveChatMessage: async () => 1, ThreadAccessError: class extends Error {},
 }));

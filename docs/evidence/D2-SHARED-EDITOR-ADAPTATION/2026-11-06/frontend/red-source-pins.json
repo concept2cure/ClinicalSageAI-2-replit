@@ -1,0 +1,50 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+    "bytes": 157817,
+    "sha256": "84daf5bd8f2cbddb0673002580f1fec6c02d5e11be4c80c86434d23446694a1d",
+    "gitBlob": "258a72ab74b6c3b1a5355640013eb43c6bbfed23"
+  },
+  {
+    "path": "client/src/concept2cure/v2/fixtures/vault-data.ts",
+    "bytes": 8026,
+    "sha256": "0d4956247f0904a917ac2e6d3e14bb3e8a54d45fa7cfc9462c448278a47893da",
+    "gitBlob": "2ad5de07e278a44eeeaff3d8540fd3184c006b9a"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/VaultOrganizationArtifacts.tsx",
+    "bytes": 16861,
+    "sha256": "8e9177b39dfc3c7e4be30bebafbe2fb6e5808cf1e94c8d864f7e30e12dd8c667",
+    "gitBlob": "5c84c8968108654515de3e24eb57179d45a54290"
+  },
+  {
+    "path": "client/src/concept2cure/v2/editor/SourceImportDialog.tsx",
+    "bytes": 13259,
+    "sha256": "0fb837df3ee39d1b13165a09af1a2e11714054a2eecb42a1b4e6d3a18910f978",
+    "gitBlob": "d662351f9df2b316f79a40ceab526f78c8c1e68b"
+  },
+  {
+    "path": "client/src/concept2cure/v2/authoringHandoff.ts",
+    "bytes": 36378,
+    "sha256": "76b16c689dd2395d33f6349d2ca6231d441759ce819ad37b8706b457ba736f89",
+    "gitBlob": "6e665d9a2c0ddcf2215eb78b5071a6e3fd52f18f"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx",
+    "bytes": 22091,
+    "sha256": "59de7356d6baf929b6c5be86f6e07306b25ed8c3ab71fa33f4703d32167ec43f",
+    "gitBlob": "e7f9e867bf339ab2b2b79b9c14a50f14478ddb2a"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx",
+    "bytes": 21423,
+    "sha256": "255f2018b2e4bd2e00f8f73de97265975deb83d9f24a23fe191580f1293f1272",
+    "gitBlob": "4be2767e91783110caf0e1bbf96f21d20425ab62"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx",
+    "bytes": 25073,
+    "sha256": "201d33d7ec6d19b7091dd838823d5c129d2d509fd025be43d66464afcd18a1b6",
+    "gitBlob": "64b136527976b4b4b4123ce410f4be9ca7620b64"
+  }
+]

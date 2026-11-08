@@ -1,21 +1,7 @@
-/**
- * AnA's platform wisdom records only what was measured, rates no risk from a
- * figure nobody measured, and says who (or what) wrote its memory.
- *
- * ── What the code used to do (until 2026-10-15) ─────────────────────────────
- * promoteToPlatformWisdom stamped every pattern's confidence_score with
- * min(0.95, 0.5 + 0.05·organizations) (the column was NOT NULL DEFAULT 0.5),
- * and scored effectiveness as if an unrated success had been rated 70, a
- * partial outcome at 0.5 and a failure at 10/(n+10). processUserFeedback
- * turned an unmeasured effectiveness into 0.525 on the first acceptance.
- * detectProjectRisks turned the stamped confidence into the risk's severity
- * ('critical' / 'high' / 'medium' / 'low'), and it and buildWisdomContext ranked
- * platform wisdom by it. Lessons and client patterns, built by string
- * templates and counting, were labelled extracted_by 'ai'.
- *
- * Tables from their drizzle definitions (with their literal column defaults),
- * on PGlite.
- */
+/** Legacy active wisdom cannot be promoted, refreshed or consumed without
+ * reviewed de-identification and exact-artifact QMS approval. Tenant-local
+ * lessons and client patterns keep their measured-only provenance. Uses real
+ * PGlite rows, including poisonous legacy text, with SQL observation. */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
@@ -103,92 +89,73 @@ async function wisdom(key: string, category: string, confidence: number | null, 
     [key, category, `pattern ${key}`, `recommendation ${key}`, confidence, evidence, effectiveness]);
 }
 
-const platformRow = async (key: string) =>
-  (await all('SELECT confidence_score, effectiveness_score FROM ana_platform_wisdom WHERE wisdom_key = $1', [key]))[0];
+const HOLD = 'deidentification_and_human_promotion_required';
+async function withoutSharedQuery<T>(run: () => Promise<T>, noQueries = false): Promise<T> {
+  const observer = vi.spyOn(holder.pg, 'query');
+  try {
+    const result = await run();
+    const queries = observer.mock.calls.map(call => String(call[0])).join('\n');
+    expect(queries).not.toMatch(/ana_platform_wisdom/);
+    if (noQueries) expect(observer).not.toHaveBeenCalled();
+    return result;
+  } finally { observer.mockRestore(); }
+}
 
-describe('promoteToPlatformWisdom states only what was measured', () => {
-  it('stores no confidence for a pattern, however many organizations it spans', async () => {
-    await outcomes(12, 'draft_m27', 'success');
-    expect(await promoteToPlatformWisdom()).toBe(1);
-    const row = await platformRow('draft_m27:FDA:IND:success');
-    expect(row.confidence_score, '0.5 + 0.05·organizations was stored as a confidence').toBeNull();
+describe('unreviewed platform wisdom is held before database access', () => {
+  it.each(['success', 'partial', 'failure'])('a %s cohort cannot publish free-text tenant dimensions', async outcome => {
+    await outcomes(12, 'PRIVATE_CLIENT_DIMENSION_CANARY', outcome);
+    expect(await withoutSharedQuery(promoteToPlatformWisdom, true)).toEqual({ promoted: 0, holdReason: HOLD });
+    expect(await all('SELECT id FROM ana_platform_wisdom')).toEqual([]);
   });
 
-  it('stores no effectiveness for a success nobody rated, and the recorded mean quality for one rated', async () => {
-    await outcomes(12, 'draft_m27', 'success');
-    await outcomes(12, 'scan_m3', 'success', (i) => (i % 2 === 0 ? 80 : 90));
-    await promoteToPlatformWisdom();
-    expect((await platformRow('draft_m27:FDA:IND:success')).effectiveness_score,
-      'an unrated success was scored as if rated 70').toBeNull();
-    expect((await platformRow('scan_m3:FDA:IND:success')).effectiveness_score).toBeCloseTo(0.85, 5);
-  });
-
-  it('stores no effectiveness for a failure or a partial outcome, which nothing measured', async () => {
-    await outcomes(12, 'draft_m27', 'failure');
-    await outcomes(12, 'scan_m3', 'partial');
-    await promoteToPlatformWisdom();
-    expect((await platformRow('draft_m27:FDA:IND:failure')).effectiveness_score, '10/(n+10) was stored').toBeNull();
-    expect((await platformRow('scan_m3:FDA:IND:partial')).effectiveness_score, '0.5 was stored').toBeNull();
-  });
-
-  it('a refreshed pattern carries no stamped confidence', async () => {
-    await wisdom('draft_m27:FDA:IND:success', 'success_pattern', 0.65, 10);
-    await outcomes(12, 'draft_m27', 'success');
-    await promoteToPlatformWisdom();
-    expect((await platformRow('draft_m27:FDA:IND:success')).confidence_score,
-      'the refresh stamped 0.5 + 0.05·organizations').toBeNull();
+  it('does not refresh or reactivate an existing active legacy row', async () => {
+    await wisdom('PRIVATE_LEGACY_CANARY:FDA:IND:success', 'success_pattern', 0.65, 100);
+    await outcomes(12, 'PRIVATE_LEGACY_CANARY', 'success');
+    const before = await all('SELECT * FROM ana_platform_wisdom');
+    await withoutSharedQuery(promoteToPlatformWisdom, true);
+    expect(await all('SELECT * FROM ana_platform_wisdom')).toEqual(before);
   });
 });
 
-describe('processUserFeedback', () => {
-  it('an acceptance adjusts no effectiveness that was never measured', async () => {
+describe('feedback stays inside tenant learning', () => {
+  it.each(['accepted', 'rejected'] as const)('%s feedback does not query or mutate legacy global wisdom', async feedback => {
     await wisdom('draft_m27:FDA:IND:success', 'success_pattern', null, 12, null);
     await outcomes(1, 'draft_m27', 'success');
-    await processUserFeedback(1, 'accepted');
-    const [row] = await all(`SELECT effectiveness_score, evidence_count FROM ana_platform_wisdom`);
-    expect(row.effectiveness_score, 'an unmeasured effectiveness became 0.525').toBeNull();
-    expect(row.evidence_count).toBe(13);
+    const before = await all('SELECT * FROM ana_platform_wisdom');
+    await withoutSharedQuery(() => processUserFeedback(1, feedback));
+    expect(await all('SELECT * FROM ana_platform_wisdom')).toEqual(before);
+    expect((await all('SELECT user_feedback FROM ana_outcome_log'))[0].user_feedback).toBe(feedback);
+  });
+
+  it('retains an edited outcome as one project-local lesson without any shared lookup', async () => {
+    await holder.pg.query(`INSERT INTO ana_outcome_log(organization_id,project_id,capability_key,action_type,outcome)
+      VALUES($1,101,'draft_m27','draft_m27','partial')`, [ORG]);
+    await withoutSharedQuery(() => processUserFeedback(1, 'edited', 'TENANT_LOCAL_EDIT_CANARY'));
+    const local = await all('SELECT organization_id,project_id,content FROM project_memory_entries');
+    expect(local).toHaveLength(1);
+    expect(local[0]).toMatchObject({ organization_id: ORG, project_id: 101 });
+    expect(local[0].content).toContain('TENANT_LOCAL_EDIT_CANARY');
   });
 });
 
-describe('detectProjectRisks rates no risk from a confidence figure', () => {
-  it('a platform risk pattern and a deficiency pattern are unrated', async () => {
-    await wisdom('k1', 'risk_reduction', 0.85, 12);
-    await wisdom('k2', 'deficiency_prevention', 0.85, 12);
-    const risks = await detectProjectRisks(101);
-    expect(risks.map(r => [r.riskId, r.severity]), 'the stored confidence was turned into high / critical').toEqual([
-      ['platform-1', 'unrated'],
-      ['deficiency-2', 'unrated'],
-    ]);
+describe('generation contexts reject active legacy global advice', () => {
+  it('does not read risk or deficiency canaries even with large active evidence counts', async () => {
+    await wisdom('PRIVATE_RISK_CANARY', 'risk_reduction', 0.95, 1000);
+    await wisdom('PRIVATE_DEFICIENCY_CANARY', 'deficiency_prevention', 0.95, 1000);
+    expect(await withoutSharedQuery(() => detectProjectRisks(101))).toEqual([]);
   });
 
-  it('a recorded failure lesson stays high: its recorded importance', async () => {
+  it('still reports an actual project-local failure at its recorded importance', async () => {
     await captureProjectLesson({ projectId: 101, organizationId: ORG, capabilityKey: 'draft_m27', outcome: 'failure' });
-    const risks = await detectProjectRisks(101);
+    const risks = await withoutSharedQuery(() => detectProjectRisks(101));
     expect(risks.map(r => [r.category, r.severity])).toEqual([['learned_failure', 'high']]);
   });
 
-  it('orders platform risks by the evidence recorded, not by a stored confidence', async () => {
-    await wisdom('weak-but-confident', 'risk_reduction', 0.9, 10);
-    await wisdom('well-evidenced', 'risk_reduction', 0.55, 40);
-    const risks = await detectProjectRisks(101);
-    expect(risks.map(r => r.description), 'ranked by the stamped confidence').toEqual([
-      'pattern well-evidenced', 'pattern weak-but-confident']);
-  });
-});
-
-describe('buildWisdomContext', () => {
-  it('shows the platform insight with the most evidence, not the highest stored confidence', async () => {
-    await wisdom('weak-but-confident', 'success_pattern', 0.9, 10);
-    await wisdom('well-evidenced', 'success_pattern', 0.55, 40);
-    const block = await buildWisdomContext(101, ORG);
-    expect(block.platformInsight, 'chosen by the stamped confidence').toBe('pattern well-evidenced');
-  });
-
-  it('says a platform risk is unrated', async () => {
-    await wisdom('k1', 'risk_reduction', 0.85, 12);
-    const block = await buildWisdomContext(101, ORG);
-    expect(block.projectRisks).toEqual([{ description: 'pattern k1', severity: 'unrated' }]);
+  it.each([undefined, { projectOnly: false }, { projectOnly: true }])('never reads legacy platform insight for recall options %j', async options => {
+    await wisdom('PRIVATE_INSIGHT_CANARY', 'success_pattern', 0.99, 1000);
+    const block = await withoutSharedQuery(() => buildWisdomContext(101, ORG, 'FDA', 'IND', options));
+    expect(block).toMatchObject({ platformInsight: null, recommendedNextAction: null, projectRisks: [], sharedLearningHold: HOLD });
+    expect(JSON.stringify(block)).not.toContain('PRIVATE_');
   });
 });
 

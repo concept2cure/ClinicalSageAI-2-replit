@@ -17,8 +17,13 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 
 import { AIGateway, resetGateway, GatewayAbortedError, GatewayPolicyError } from '../gateway';
 import { isTerminalGatewayError } from '../gateway-outcome';
-import { modelCallRefusal, runRefusingModelCalls } from '../model-call-scope';
-import type { GatewayConfig, GatewayRequest, ModelConfig } from '../types';
+import { modelCallRefusal, runRefusingModelCalls, createRunSourceAuthority, runWithSourceAuthority, recordCurrentRunSource,
+  captureCurrentRunSourceGate, SourceRunAuthorityError, type RunSourceAuthority,
+  issueOwnerPrivateModelContext, runWithOwnerPrivateModelContexts, prepareOwnerPrivateModelContexts,
+  captureOwnerPrivateModelGate, bindOwnerPrivateModelChildRequest, OwnerPrivateModelContextError,
+  type OwnerPrivateModelContextCapsule } from '../model-call-scope';
+import { runWithTenantScope } from '../../../db/tenantStore';
+import type { AuditLogEntry, GatewayConfig, GatewayRequest, ModelConfig } from '../types';
 
 const SCOPE = { runId: 'agent_00000000-0000-4000-8000-000000000001', parentRunId: 'run_p', tool: 'search_literature' };
 
@@ -62,6 +67,64 @@ afterEach(() => {
   resetGateway();
   vi.restoreAllMocks();
 });
+
+const SOURCE_ACTOR = { organizationId: 7, userId: 3, projectId: 42, programId: '10000000-0000-4000-8000-000000000001' };
+describe('private per-run source ceilings and current-source checkpoints', () => {
+  it('fills omitted SDK/audit identity only from private authority and refuses a forged actor before any SDK', async () => {
+    const { gw, placement, dispatch } = instrumented();
+    const probe = gw as unknown as { config: { auditEnabled: boolean }; auditLogger: { getRecentEntries(): AuditLogEntry[] } };
+    probe.config.auditEnabled = true;
+    await runWithSourceAuthority(createRunSourceAuthority(SOURCE_ACTOR), async () => {
+      await expect(gw.route({ taskType: 'chat', messages: [{ role: 'user', content: 'Unassessed source context' }],
+        inputSensitivityTiers: [0], payloadProvenance: 'public' })).rejects.toThrow('DENY_INPUT_TIER');
+      expect(placement.mock.calls[0][0]).toMatchObject({ organizationId: 7, userId: 3, projectId: 42, inputSensitivityTiers: [3, 0] });
+      expect(probe.auditLogger.getRecentEntries()[0]).toMatchObject({ organizationId: 7, userId: 3, projectId: 42,
+        error: 'DENY_INPUT_TIER', metadata: { inputTierPlacement: { tierMax: 3, allowed: false } } });
+      await expect(gw.route(request({ organizationId: 8, userId: 4, projectId: 43 })))
+        .rejects.toMatchObject({ code: 'SOURCE_CONTEXT_UNAVAILABLE' });
+      expect(placement).toHaveBeenCalledOnce(); expect(dispatch).not.toHaveBeenCalled();
+    });
+  });
+  it('keeps unknown history T3, preserves actual source tiers and rechecks every use without accepting serialized authority', async () => {
+    const authority = createRunSourceAuthority(SOURCE_ACTOR), verify = vi.fn(async () => {});
+    await runWithSourceAuthority(authority, async () => {
+      recordCurrentRunSource({ ...SOURCE_ACTOR, key: 'real-vault-version:sha', tier: 2, recheck: verify });
+      const gate = captureCurrentRunSourceGate({ ...SOURCE_ACTOR, inputSensitivityTiers: [0], payloadProvenance: 'public' } as SourceRunIdentityForTest)!;
+      expect(gate.tiers).toEqual([3, 2]); await gate.recheck(); await gate.recheck(); expect(verify).toHaveBeenCalledTimes(2);
+      expect(createRunSourceAuthority({ organizationId: 7, userId: 3, projectId: SOURCE_ACTOR.programId })).toBe(authority);
+      expect(() => captureCurrentRunSourceGate({ ...SOURCE_ACTOR, projectId: 43 })).toThrow(SourceRunAuthorityError);
+      expect(() => recordCurrentRunSource({ ...SOURCE_ACTOR, userId: 4, key: 'forged', tier: 0, recheck: verify })).toThrow(SourceRunAuthorityError);
+    });
+    expect(captureCurrentRunSourceGate(SOURCE_ACTOR)).toBeUndefined();
+    expect(() => runWithSourceAuthority(JSON.parse(JSON.stringify(authority)) as RunSourceAuthority, () => undefined)).toThrow(SourceRunAuthorityError);
+  });
+  it('does not let two organizations or actors share a concurrent mutable source ceiling', async () => {
+    const other = { organizationId: 8, userId: 4, projectId: 43, programId: '20000000-0000-4000-8000-000000000002' };
+    const a = createRunSourceAuthority(SOURCE_ACTOR), b = createRunSourceAuthority(other), checks: string[] = [];
+    const run = (authority: RunSourceAuthority, actor: typeof SOURCE_ACTOR, tier: 1 | 2) => runWithSourceAuthority(authority, async () => {
+      recordCurrentRunSource({ ...actor, key: `source-${actor.organizationId}`, tier, recheck: async () => { checks.push(String(actor.organizationId)); } });
+      await Promise.resolve(); const gate = captureCurrentRunSourceGate(actor)!; await gate.recheck(); return gate.tiers;
+    });
+    expect(await Promise.all([run(a, SOURCE_ACTOR, 2), run(b, other, 1)])).toEqual([[3, 2], [3, 1]]);
+    expect(checks.sort()).toEqual(['7', '8']);
+  });
+  it('holds missing identity, rejects alias disagreement and cannot lose a new source while a checkpoint awaits', async () => {
+    await runWithSourceAuthority(createRunSourceAuthority({ organizationId: 7 }), async () => {
+      await expect(captureCurrentRunSourceGate({ organizationId: 7 })!.recheck()).rejects.toThrow(SourceRunAuthorityError);
+    });
+    await runWithSourceAuthority(createRunSourceAuthority(SOURCE_ACTOR), async () => {
+      expect(() => createRunSourceAuthority({ ...SOURCE_ACTOR, programId: '30000000-0000-4000-8000-000000000003' })).toThrow(SourceRunAuthorityError);
+      let finish: () => void = () => {}, started: () => void = () => {};
+      const pending = new Promise<void>(resolve => { finish = resolve; }), entered = new Promise<void>(resolve => { started = resolve; });
+      recordCurrentRunSource({ ...SOURCE_ACTOR, key: 'first', tier: 2, recheck: async () => { started(); await pending; } });
+      const check = captureCurrentRunSourceGate(SOURCE_ACTOR)!.recheck(); await entered;
+      recordCurrentRunSource({ ...SOURCE_ACTOR, key: 'later', tier: 1, recheck: async () => {} }); finish();
+      await expect(check).rejects.toThrow(SourceRunAuthorityError);
+      expect(captureCurrentRunSourceGate(SOURCE_ACTOR)!.tiers).toEqual([3, 2, 1]);
+    });
+  });
+});
+type SourceRunIdentityForTest = Parameters<typeof captureCurrentRunSourceGate>[0];
 
 describe('the scope', () => {
   it('is empty outside, and names the run and tool inside', async () => {
@@ -226,4 +289,104 @@ describe('scoped and unscoped work in flight at the same time', () => {
     const outside = await lazyInit();
     expect([inside, outside]).toEqual(['refused', 'refused']);
   });
+});
+
+
+// These unit callbacks exercise capability integrity; DB issuers and SDK bodies
+// have separate real SQL/AES and transport-boundary fixtures.
+const PRIVATE_SCOPE = { organizationId: 7, userId: 3, projectId: 42, runId: 'run_private', threadId: 'thread_private' };
+const ownerScope = <T>(work: () => T, accountId = 3) => runWithTenantScope({ tenantId: '7', accountId, source: 'test' }, work);
+function privateCapsule(overrides: Partial<Parameters<typeof issueOwnerPrivateModelContext>[0]> = {}) {
+  const calls: string[] = [];
+  const capsule = issueOwnerPrivateModelContext({ scope: PRIVATE_SCOPE, sourceRef: 'a'.repeat(64),
+    activate: async () => { calls.push('activate'); }, expand: async () => { calls.push('expand'); return 'private rule canary'; },
+    recheck: async () => { calls.push('recheck'); }, ...overrides });
+  return { capsule, calls };
+}
+describe('opaque owner-private model capsules', () => {
+  it('serializes no private content and prepares encrypted capture without expansion', async () => ownerScope(async () => {
+    const { capsule, calls } = privateCapsule();
+    expect(JSON.stringify(capsule)).toBe('{}');
+    await prepareOwnerPrivateModelContexts([capsule]);
+    expect(calls).toEqual(['activate', 'recheck']);
+    await runWithOwnerPrivateModelContexts([capsule], async () => {
+      const gate = captureOwnerPrivateModelGate(PRIVATE_SCOPE)!;
+      expect(gate.sourceRefs).toEqual(['a'.repeat(64)]);
+      expect(await gate.expand()).toBe('private rule canary');
+      expect(captureCurrentRunSourceGate(PRIVATE_SCOPE)?.tiers).toEqual([3]);
+    });
+    expect(captureOwnerPrivateModelGate(PRIVATE_SCOPE)).toBeUndefined();
+  }));
+  it('refuses serialized, copied and forged capsules', () => ownerScope(() => {
+    const { capsule } = privateCapsule();
+    for (const forged of [{}, { ...capsule }, JSON.parse(JSON.stringify(capsule))]) {
+      expect(() => runWithOwnerPrivateModelContexts([forged as OwnerPrivateModelContextCapsule], () => null)).toThrow(OwnerPrivateModelContextError);
+    }
+  }));
+  it('requires the verified owner and refuses a changed tenant/account', async () => ownerScope(async () => {
+    const { capsule } = privateCapsule();
+    expect(() => ownerScope(() => runWithOwnerPrivateModelContexts([capsule], () => null), 4)).toThrow(OwnerPrivateModelContextError);
+    expect(() => runWithTenantScope({ tenantId: '8', accountId: 3, source: 'test' },
+      () => runWithOwnerPrivateModelContexts([capsule], () => null))).toThrow(OwnerPrivateModelContextError);
+    await runWithOwnerPrivateModelContexts([capsule], async () => {
+      const gate = captureOwnerPrivateModelGate(PRIVATE_SCOPE)!;
+      await expect(ownerScope(() => gate.recheck(), 4)).rejects.toBeInstanceOf(OwnerPrivateModelContextError);
+    });
+  }));
+  it('requires exact parent run and privately issued child lineage, including after copies', () => ownerScope(() => {
+    const { capsule } = privateCapsule();
+    runWithOwnerPrivateModelContexts([capsule], () => {
+      expect(() => captureOwnerPrivateModelGate({})).toThrow(OwnerPrivateModelContextError);
+      const child = { ...PRIVATE_SCOPE, runId: 'agent_private', parentRunId: PRIVATE_SCOPE.runId };
+      expect(() => captureOwnerPrivateModelGate(child)).toThrow(OwnerPrivateModelContextError);
+      const issued = bindOwnerPrivateModelChildRequest(child);
+      expect(captureOwnerPrivateModelGate({ ...issued })?.scope.runId).toBe(PRIVATE_SCOPE.runId);
+      expect(() => captureOwnerPrivateModelGate(JSON.parse(JSON.stringify(issued)))).toThrow(OwnerPrivateModelContextError);
+      expect(() => captureOwnerPrivateModelGate({ ...issued, runId: 'agent_other' })).toThrow(OwnerPrivateModelContextError);
+      expect(() => captureOwnerPrivateModelGate({ ...PRIVATE_SCOPE, projectId: 43 })).toThrow(OwnerPrivateModelContextError);
+    });
+  }));
+  it('refuses mismatched source scopes, invalid hashes and excess capsules', () => ownerScope(() => {
+    const { capsule } = privateCapsule();
+    const foreign = privateCapsule({ scope: { ...PRIVATE_SCOPE, threadId: 'other' } }).capsule;
+    expect(() => runWithOwnerPrivateModelContexts([capsule, foreign], () => null)).toThrow(OwnerPrivateModelContextError);
+    expect(() => privateCapsule({ sourceRef: 'not-a-sha' })).toThrow(OwnerPrivateModelContextError);
+    const many = Array.from({ length: 9 }, (_, i) => privateCapsule({ sourceRef: String(i).padStart(64, '0') }).capsule);
+    expect(() => runWithOwnerPrivateModelContexts(many, () => null)).toThrow(OwnerPrivateModelContextError);
+  }));
+  it('rechecks a withdrawal both before and after private expansion', async () => ownerScope(async () => {
+    let current = true;
+    const { capsule } = privateCapsule({ recheck: async () => { if (!current) throw new Error('withdrawn'); },
+      expand: async () => { current = false; return 'must never leave the capsule'; } });
+    await runWithOwnerPrivateModelContexts([capsule], async () => {
+      const gate = captureOwnerPrivateModelGate(PRIVATE_SCOPE)!;
+      await expect(gate.expand()).rejects.toThrow('withdrawn');
+      await expect(gate.expand()).rejects.toThrow('withdrawn');
+    });
+  }));
+  it('bounds each expanded context and the total without truncating private instructions', async () => ownerScope(async () => {
+    const huge = privateCapsule({ expand: async () => 'x'.repeat(32769) }).capsule;
+    await expect(runWithOwnerPrivateModelContexts([huge], () => captureOwnerPrivateModelGate(PRIVATE_SCOPE)!.expand()))
+      .rejects.toBeInstanceOf(OwnerPrivateModelContextError);
+    const many = Array.from({ length: 3 }, (_, i) => privateCapsule({ sourceRef: String(i).padStart(64, '0'), expand: async () => 'x'.repeat(24000) }).capsule);
+    await expect(runWithOwnerPrivateModelContexts(many, () => captureOwnerPrivateModelGate(PRIVATE_SCOPE)!.expand()))
+      .rejects.toBeInstanceOf(OwnerPrivateModelContextError);
+  }));
+  it('refreshes an existing source capsule without exhausting the bound on repeated rounds', () => ownerScope(() => {
+    const { capsule } = privateCapsule();
+    runWithOwnerPrivateModelContexts([capsule], () => {
+      const refreshed = Array.from({ length: 8 }, () => privateCapsule().capsule);
+      runWithOwnerPrivateModelContexts(refreshed, () => {
+        expect(captureOwnerPrivateModelGate(PRIVATE_SCOPE)?.sourceRefs).toEqual(['a'.repeat(64)]);
+      });
+    });
+  }));
+  it('supports no-thread runs without inventing a thread and keeps concurrent calls scoped', async () => ownerScope(async () => {
+    const capsule = privateCapsule({ scope: { ...PRIVATE_SCOPE, threadId: null } }).capsule;
+    const [inside, outside] = await Promise.all([
+      runWithOwnerPrivateModelContexts([capsule], async () => { await Promise.resolve(); return captureOwnerPrivateModelGate(PRIVATE_SCOPE)?.scope.threadId; }),
+      Promise.resolve().then(() => captureOwnerPrivateModelGate(PRIVATE_SCOPE)),
+    ]);
+    expect(inside).toBeNull(); expect(outside).toBeUndefined();
+  }));
 });

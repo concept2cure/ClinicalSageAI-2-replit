@@ -348,3 +348,13 @@ export function acceptOptionSet(state: AiDraftReviewState): DraftOptionSet | und
   const of = root.single ? { kind: 'draft' as const } : asAlternative(root);
   return of ? { kind: 'revision', revision: depth, of } : undefined;
 }
+
+/**
+ * How the panel names a section to the person: its outline code ("2.3", "11.4.1", "3.2.S.1") when it has one,
+ * otherwise its title. A section of a document with no outline numbering (an SOP's "qms-purpose") is keyed by an
+ * internal id, which is never shown (plan §2: no ids on screen).
+ */
+export function sectionShownName(code: string, title?: string | null): { code: string | null; name: string } {
+  const outline = /^(?=[^-_\s]*\d)[0-9A-Z][0-9A-Za-z]*(\.[0-9A-Za-z]+)*$/.test(code.trim()) ? code.trim() : null;
+  return { code: outline, name: outline ?? (title?.trim() || 'this section') };
+}

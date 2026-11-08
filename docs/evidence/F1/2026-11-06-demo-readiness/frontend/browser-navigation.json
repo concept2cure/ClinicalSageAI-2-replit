@@ -1,0 +1,51 @@
+{
+  "checkedAt": "2026-11-06T20:39:12.563Z",
+  "csrEditor": {
+    "url": "http://127.0.0.1:5000/concept2cure/document-authoring?program=d8e5065c-c55a-43de-9879-cdaa7c230cde",
+    "editorElements": 1,
+    "titlePresent": true,
+    "studyBuilderVisible": true,
+    "selectedFromDocumentList": true,
+    "observedAt": "2026-11-06T20:39:43Z",
+    "note": "Project Author Open leads to document list; selecting the saved CSR title opens the shared editor. No drafting or save requested."
+  },
+  "navigation": [
+    {
+      "name": "Tasks",
+      "url": "http://127.0.0.1:5000/concept2cure/tasks?program=d8e5065c-c55a-43de-9879-cdaa7c230cde",
+      "mainTextPresent": true
+    },
+    {
+      "name": "Communication",
+      "url": "http://127.0.0.1:5000/concept2cure/communication-center?program=d8e5065c-c55a-43de-9879-cdaa7c230cde",
+      "mainTextPresent": true
+    },
+    {
+      "name": "Vault",
+      "url": "http://127.0.0.1:5000/concept2cure/vault?program=d8e5065c-c55a-43de-9879-cdaa7c230cde",
+      "mainTextPresent": true
+    },
+    {
+      "name": "Submission Center",
+      "url": "http://127.0.0.1:5000/concept2cure/submission-center?program=d8e5065c-c55a-43de-9879-cdaa7c230cde",
+      "mainTextPresent": true
+    },
+    {
+      "name": "Risk-based monitoring",
+      "url": "http://127.0.0.1:5000/concept2cure/rbm?program=d8e5065c-c55a-43de-9879-cdaa7c230cde",
+      "mainTextPresent": true
+    },
+    {
+      "name": "Quality",
+      "url": "http://127.0.0.1:5000/concept2cure/quality?program=d8e5065c-c55a-43de-9879-cdaa7c230cde",
+      "mainTextPresent": true
+    },
+    {
+      "name": "Reporting & analytics",
+      "url": "http://127.0.0.1:5000/concept2cure/insights?program=d8e5065c-c55a-43de-9879-cdaa7c230cde",
+      "mainTextPresent": true
+    }
+  ],
+  "pageErrors": [],
+  "apiServerErrors": []
+}

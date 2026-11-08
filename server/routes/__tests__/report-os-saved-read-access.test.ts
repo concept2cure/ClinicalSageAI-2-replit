@@ -269,7 +269,8 @@ describe('complete retained report packet access', () => {
       expect(org).toBe(7); expect(actor).toEqual({ userId: 5, role: 'manager' }); expect(client).toBe(executor);
     }
     for (const [org, actor, , client, allowed] of access.scope.mock.calls) {
-      expect(org).toBe(7); expect(actor).toEqual({ userId: 5, role: 'manager' }); expect(client).toBe(executor); expect(allowed).toEqual([11, 12]);
+      expect(org).toBe(7); expect(actor).toEqual({ userId: 5, role: 'manager' }); expect(client).toBe(executor);
+      expect(allowed).toMatchObject({ accessibleIds: [11, 12], qualityContext: { kind: 'report-quality-access' } });
     }
     expect(h.statements.filter(sql => sql === '<released>')).toHaveLength(2); // Admission/render client plus durable export audit client.
   });

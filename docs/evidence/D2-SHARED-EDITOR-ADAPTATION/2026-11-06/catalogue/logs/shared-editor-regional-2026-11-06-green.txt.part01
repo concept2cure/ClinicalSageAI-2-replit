@@ -1,0 +1,423 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+{
+  "timestamp": "2026-11-06T21:08:52.384Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T21:08:52.387Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+{
+  "timestamp": "2026-11-06T21:08:52.387Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > uses the recorded Canadian CTA for an omitted or blank filing choice: undefined 210ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > uses the recorded Canadian CTA for an omitted or blank filing choice: "" 58ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > uses the recorded Canadian CTA for an omitted or blank filing choice: "   " 50ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > keeps recorded TA/modality/stage/population above conflicting declarations without calling them scientific evidence 51ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > preserves an explicit filing choice and states its disagreement with the recorded application 52ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > keeps ambiguous charters and declared fallback distinct instead of choosing a charter 54ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > keeps a recorded broad biologic unassessed even when a caller supplies a specific modality 60ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > carries exact ICH_PROTOCOL identity into the shared clinical profile selection 51ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > carries exact ICH_CSR identity into the shared clinical profile selection 43ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > refuses unauthorized project access before dispatch: {"projectId":"11111111-2222-4333-8444-000000000021","userId":7} 16ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > refuses unauthorized project access before dispatch: {"projectId":"11111111-2222-4333-8444-000000000011","userId":8} 26ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > emits successful recorded-project chunks in order after the post-provider check 42ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > emits no chunks when charter changes after provider streaming begins 43ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > emits no chunks when access changes after provider streaming begins 39ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > preserves live streaming for an ordinary request without a project 15ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses a charter changed while the outbound call waits, before model effect 43ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses changed charter after provider response instead of returning draft text 45ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses changed access after provider response instead of returning draft text 60ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses changed filing after provider response instead of returning draft text 45ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded UK CTA uses shared drafting with explicit IRAS boundaries > prepares content for external combined review without inventing IRAS form formatting 43ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > reaches the recorded product guidance at UK_CTA / uk_cta_protocol 48ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > reaches the recorded product guidance at EU_CTA / PART_I.PROTOCOL 41ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > reaches the recorded product guidance at EU_CTA / PART_I.SYNOPSIS 63ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > reaches the recorded product guidance at CA_CTA / 1.7.1 52ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > reaches the recorded product guidance at CA_CTA / 1.4.1 42ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > reaches the recorded product guidance at CA_CTA_A / 1.7.1 41ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of UK_CTA / uk_cta_quality 47ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of UK_CTA / uk_cta_nonclinical 133ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of UK_CTA / uk_cta_application_form 53ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of EU_CTA / PART_I.IMPD_Q 42ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of EU_CTA / FORM.COVER 39ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of EU_CTA / PART_II.CONSENT 56ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of CA_CTA / 2.3 32ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of CA_CTA / 1.2.1 37ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of CA_CTA_A / 1.4.1 47ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > recorded and declared product facts retain independent origins > keeps partial-record fallback visibly declared and out of record-mode applicability facts 13ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > recorded and declared product facts retain independent origins > retains recorded precedence and reports only conflicting field names 4ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > recorded and declared product facts retain independent origins > does not report aliases as therapeutic-area conflicts or sharpen a broad recorded biologic 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > recorded and declared product facts retain independent origins > retains a declaration without TA/modality: {"phase":"phase_1"} 0ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > recorded and declared product facts retain independent origins > retains a declaration without TA/modality: {"population":"Adult volunteers"} 0ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > recorded and declared product facts retain independent origins > retains a declaration without TA/modality: {"indication":"Declared indication"} 0ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > recorded and declared product facts retain independent origins > retains the existing omitted-context and declared-modality contracts 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > canonical document kind reaches existing therapeutic selection > uses known identity for 12.2 Adverse events / record:outline:csr-e3:12.2:exact / undefined 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > canonical document kind reaches existing therapeutic selection > uses known identity for 3 Study design / record:outline:protocol-m11:3:exact / undefined 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > canonical document kind reaches existing therapeutic selection > uses known identity for 12.2 Adverse events / none / csr 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > canonical document kind reaches existing therapeutic selection > uses known identity for ICH_PROTOCOL / none / undefined 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > canonical document kind reaches existing therapeutic selection > does not infer document kind from an arbitrary protocol-like title 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > covers the existing 25 profiles rather than a new therapeutic registry 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'allergy' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'cardiology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'dental' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'dermatology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'endocrinology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'gastroenterology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'gene-cell-therapy' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'other' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'hematology' arrays from its resolver marker 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'immunology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'infectious-disease' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'metabolic' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'musculoskeletal' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'nephrology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'neurology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'obstetrics-gynecology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'oncology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'ophthalmology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'pain' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'psychiatry' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'rare-disease' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'respiratory' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'transplant' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'urology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'UK_CTA'/'uk_cta_protocol' receives 'vaccines' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'allergy' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'cardiology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'dental' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'dermatology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'endocrinology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'gastroenterology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'gene-cell-therapy' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'other' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'hematology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'immunology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'infectious-disease' arrays from its resolver marker 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'metabolic' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'musculoskeletal' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'nephrology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'neurology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'obstetrics-gynecology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'oncology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'ophthalmology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'pain' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'psychiatry' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'rare-disease' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'respiratory' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'transplant' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'urology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.PROTOCOL' receives 'vaccines' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'allergy' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'cardiology' arrays from its resolver marker 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'dental' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'dermatology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'endocrinology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'gastroenterology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'gene-cell-therapy' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'other' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'hematology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'immunology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'infectious-disease' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'metabolic' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'musculoskeletal' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'nephrology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'neurology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'obstetrics-gynecology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'oncology' arrays from its resolver marker 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'ophthalmology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'pain' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'psychiatry' arrays from its resolver marker 19ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'rare-disease' arrays from its resolver marker 7ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'respiratory' arrays from its resolver marker 4ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'transplant' arrays from its resolver marker 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'urology' arrays from its resolver marker 4ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'EU_CTA'/'PART_I.SYNOPSIS' receives 'vaccines' arrays from its resolver marker 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'allergy' arrays from its resolver marker 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'cardiology' arrays from its resolver marker 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'dental' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'dermatology' arrays from its resolver marker 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'endocrinology' arrays from its resolver marker 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'gastroenterology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'gene-cell-therapy' arrays from its resolver marker 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'other' arrays from its resolver marker 4ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'hematology' arrays from its resolver marker 7ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'immunology' arrays from its resolver marker 4ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'infectious-disease' arrays from its resolver marker 3ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'metabolic' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'musculoskeletal' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'nephrology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'neurology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'obstetrics-gynecology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'oncology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'ophthalmology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'pain' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'psychiatry' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'rare-disease' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'respiratory' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'transplant' arrays from its resolver marker 4ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'urology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.7.1' receives 'vaccines' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'allergy' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'cardiology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'dental' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'dermatology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'endocrinology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'gastroenterology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'gene-cell-therapy' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'other' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'hematology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'immunology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'infectious-disease' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'metabolic' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'musculoskeletal' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'nephrology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'neurology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'obstetrics-gynecology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'oncology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'ophthalmology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'pain' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'psychiatry' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'rare-disease' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'respiratory' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'transplant' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'urology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA'/'1.4.1' receives 'vaccines' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'allergy' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'cardiology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'dental' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'dermatology' arrays from its resolver marker 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'endocrinology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'gastroenterology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'gene-cell-therapy' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'other' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'hematology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'immunology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'infectious-disease' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'metabolic' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'musculoskeletal' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'nephrology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'neurology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'obstetrics-gynecology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'oncology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'ophthalmology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'pain' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'psychiatry' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'rare-disease' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'respiratory' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'transplant' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'urology' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > 'CA_CTA_A'/'1.7.1' receives 'vaccines' arrays from its resolver marker 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > UK_CTA/uk_cta_protocol receives the same arrays from a saved-template identity 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > EU_CTA/PART_I.PROTOCOL receives the same arrays from a saved-template identity 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > EU_CTA/PART_I.SYNOPSIS receives the same arrays from a saved-template identity 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > CA_CTA/1.7.1 receives the same arrays from a saved-template identity 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > CA_CTA/1.4.1 receives the same arrays from a saved-template identity 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > CA_CTA_A/1.7.1 receives the same arrays from a saved-template identity 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > uses the canonical row after an exact title resolved without pretending it is a CTD location 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > retains the existing kind while carrying supported saved-template identity 0ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > preserves the nonregional/CSR kind contract for CN_CTA 0ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > preserves the nonregional/CSR kind contract for AU_CTN 0ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > preserves the nonregional/CSR kind contract for JP_CTN 0ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > preserves the nonregional/CSR kind contract for UK_MA 0ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > existing profiles reach exact regional clinical rows through shared provenance > preserves the nonregional/CSR kind contract for undefined 0ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > UK_CTA/uk_cta_quality suppresses even a conflicting protocol kind 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > UK_CTA/uk_cta_nonclinical suppresses even a conflicting protocol kind 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > UK_CTA/uk_cta_application_form suppresses even a conflicting protocol kind 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > EU_CTA/PART_I.IMPD_Q suppresses even a conflicting protocol kind 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > EU_CTA/PART_I.IMPD_SE suppresses even a conflicting protocol kind 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > EU_CTA/PART_II.CONSENT suppresses even a conflicting protocol kind 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > CA_CTA/2.3 suppresses even a conflicting protocol kind 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > CA_CTA/3.2 suppresses even a conflicting protocol kind 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > CA_CTA/1.2.1 suppresses even a conflicting protocol kind 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > CA_CTA/1.7.2 suppresses even a conflicting protocol kind 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > CA_CTA_A/1.4.1 suppresses even a conflicting protocol kind 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > CA_CTA_A/1.2.1 suppresses even a conflicting protocol kind 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > refuses malformed, foreign or noncanonical marker blueprint:regional 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > refuses malformed, foreign or noncanonical marker blueprint:regional:UK_CTA 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > refuses malformed, foreign or noncanonical marker blueprint:regional:UK_CTA: 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > refuses malformed, foreign or noncanonical marker blueprint:regional:UK_MA:uk_cta_protocol 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > refuses malformed, foreign or noncanonical marker blueprint:regional:UK_CTA:unknown 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > refuses malformed, foreign or noncanonical marker blueprint:regional:EU_CTA:uk_cta_protocol 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > refuses malformed, foreign or noncanonical marker blueprint:regional:CA_CTA:1.7.1:extra 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > refuses malformed, foreign or noncanonical marker blueprint:regional:uk_cta:uk_cta_protocol 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > refuses malformed, foreign or noncanonical marker blueprint:regional:UK_CTA:Protocol and synopsis 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > withholds arrays when marker and saved-template identities disagree 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > withholds arrays for unresolved or untagged template identity {"registryId":"UK_CTA","code":null} 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > withholds arrays for unresolved or untagged template identity {"registryId":"UK_CTA","code":"unknown"} 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > withholds arrays for unresolved or untagged template identity {"registryId":"CA_CTA_A","code":"1.4.1"} 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > withholds arrays for unresolved or untagged template identity {"registryId":"EU_CTA","code":"PART_I.IMPD_Q"} 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > does not infer regional identity from uk_cta_protocol and legacy source blueprint 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > does not infer regional identity from PART_I.PROTOCOL and legacy source blueprint 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > does not infer regional identity from 1.7.1 and legacy source blueprint:regional 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > does not infer regional identity from ctn.trial and legacy source blueprint 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > does not infer regional identity from 2 and legacy source blueprint 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > does not infer regional identity from Protocol and synopsis and legacy source none 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > refuses a valid marker attached to unrelated section 3.2.P.2 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > refuses a valid marker attached to unrelated section A proposed protocol 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > refuses a valid marker attached to unrelated section uk_cta_quality 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > refuses a valid marker attached to unrelated section uk_cta_protocol uk_cta_protocol 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > unrelated or unresolved regional identity never grants clinical fallback > retains Canadian quality modality context without adding clinical arrays 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > one product-audit parser preserves only the typed bounded contract > round-trips valid metadata with per-field origins and recorded identity 2ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > one product-audit parser preserves only the typed bounded contract > refuses malformed present audit metadata: {"productContextSource":"approved"} 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > one product-audit parser preserves only the typed bounded contract > refuses malformed present audit metadata: {"productContextSource":["recorded-unqualified"]} 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > one product-audit parser preserves only the typed bounded contract > refuses malformed present audit metadata: {"productContextSnapshot":"wrong-hash"} 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > one product-audit parser preserves only the typed bounded contract > refuses malformed present audit metadata: {"productContextOrigins":{"phase":"qualified"}} 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > one product-audit parser preserves only the typed bounded contract > refuses malformed present audit metadata: {"productContextConflicts":["private-raw-label"]} 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > one product-audit parser preserves only the typed bounded contract > refuses malformed present audit metadata: {"productContextOrigins":{"therapeuticArea":["recorded"],"modality":"recorded","phase":"recorded","population":"recorded","indication":"recorded"}} 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > one product-audit parser preserves only the typed bounded contract > refuses malformed present audit metadata: {"productContextCharter":{"id":-1,"version":1,"updatedAt":null,"approvalStatus":"draft"}} 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > one product-audit parser preserves only the typed bounded contract > refuses malformed present audit metadata: {"productContextCharter":{"id":3,"version":0,"updatedAt":null,"approvalStatus":"draft"}} 1ms
+ ✓ server/services/ana/__tests__/draft-product-advisory-selection.test.ts > one product-audit parser preserves only the typed bounded contract > refuses malformed present audit metadata: {"arbitraryRawPopulation":"Private population"} 1ms
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+{
+  "timestamp": "2026-11-06T21:09:13.511Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+{
+  "timestamp": "2026-11-06T21:09:18.011Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T21:09:18.013Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+{
+  "timestamp": "2026-11-06T21:09:18.013Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-recorded-filing.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a Health Canada CTA section is drafted with its recorded application and requirements
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > leaves a legacy CTD number unindexed for UK CTA and states the requested writing-region mismatch
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a project whose application cannot be resolved is told so, and no jurisdiction is assumed
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a US IND section is drafted for FDA with the US IND record, as before
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > carries the charter and product facts into the actual gateway prompt as unqualified records
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not choose an arbitrary charter when more than one is recorded
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not retain a response after the charter changes during generation
+[turn-record] could not write the turn record: pool.connect is not a function
+
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a Health Canada CTA section is drafted with its recorded application and requirements 1645ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > leaves a legacy CTD number unindexed for UK CTA and states the requested writing-region mismatch 22ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a project whose application cannot be resolved is told so, and no jurisdiction is assumed 9ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor drafts against the application the project records > a US IND section is drafted for FDA with the US IND record, as before 20ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > carries the charter and product facts into the actual gateway prompt as unqualified records 20ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not choose an arbitrary charter when more than one is recorded 10ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not call a provider or park a draft if the recorded facts cannot be read 6ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the editor uses current recorded product context > does not retain a response after the charter changes during generation 11ms
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the one editor receives the cited UK preparation outline > uses UK protocol preparation and scope from the recorded filing, without a new editor path
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > regional clinical guidance reaches the existing editor project-filing path > retains the exact UK_CTA / MHRA / uk_cta_protocol identity with the generic ctd editor kind
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > regional clinical guidance reaches the existing editor project-filing path > retains the exact EU_CTA / EMA / PART_I.PROTOCOL identity with the generic ctd editor kind
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > regional clinical guidance reaches the existing editor project-filing path > retains the exact EU_CTA / EMA / PART_I.SYNOPSIS identity with the generic ctd editor kind
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > regional clinical guidance reaches the existing editor project-filing path > retains the exact CA_CTA / Health Canada / 1.7.1 identity with the generic ctd editor kind
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > regional clinical guidance reaches the existing editor project-filing path > retains the exact CA_CTA / Health Canada / 1.4.1 identity with the generic ctd editor kind
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-recorded-filing.test.ts > regional clinical guidance reaches the existing editor project-filing path > retains the exact CA_CTA_A / Health Canada / 1.7.1 identity with the generic ctd editor kind
+[turn-record] could not write the turn record: pool.connect is not a function
+
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > the one editor receives the cited UK preparation outline > uses UK protocol preparation and scope from the recorded filing, without a new editor path 16ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > regional clinical guidance reaches the existing editor project-filing path > retains the exact UK_CTA / MHRA / uk_cta_protocol identity with the generic ctd editor kind 8ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > regional clinical guidance reaches the existing editor project-filing path > retains the exact EU_CTA / EMA / PART_I.PROTOCOL identity with the generic ctd editor kind 8ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > regional clinical guidance reaches the existing editor project-filing path > retains the exact EU_CTA / EMA / PART_I.SYNOPSIS identity with the generic ctd editor kind 7ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > regional clinical guidance reaches the existing editor project-filing path > retains the exact CA_CTA / Health Canada / 1.7.1 identity with the generic ctd editor kind 10ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > regional clinical guidance reaches the existing editor project-filing path > retains the exact CA_CTA / Health Canada / 1.4.1 identity with the generic ctd editor kind 7ms
+ ✓ server/routes/__tests__/authoring-draft-recorded-filing.test.ts > regional clinical guidance reaches the existing editor project-filing path > retains the exact CA_CTA_A / Health Canada / 1.7.1 identity with the generic ctd editor kind 6ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > includes endpoints and statistics at CTD 2.5 13ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > includes endpoints and statistics at CTD 2.5.6 4ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > includes endpoints and statistics at CTD 2.7.3 3ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > includes endpoints and statistics at CTD 2.7.4 2ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > includes endpoints and statistics at CTD 5.3.5.1 3ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > includes endpoints and statistics at CTD 5.3.5.2 8ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > reaches existing clinical guidance for each static profile without claiming scientific coverage 79ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > includes relevant ICH E3 9 clinical guidance 2ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > includes relevant ICH E3 9.7.1 clinical guidance 2ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > includes relevant ICH E3 11.4.1 clinical guidance 2ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > includes relevant ICH E3 12.2 clinical guidance 2ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > includes relevant ICH E3 13 clinical guidance 3ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > reaches protocol guidance without a CTD section code 2ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > retains clinical guidance when a CSR is identified by its CTD filing location 2ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > excludes clinical arrays at unrelated CTD 2.4 even with a conflicting kind 5ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > excludes clinical arrays at unrelated CTD 2.6.6 even with a conflicting kind 3ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > excludes clinical arrays at unrelated CTD 3.2.P.2 even with a conflicting kind 2ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > excludes clinical arrays at unrelated CTD 4.2.3.2 even with a conflicting kind 2ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > existing therapeutic knowledge reaches clinical sections without entering CMC/nonclinical > does not treat CTD module 1 or a CSR front-matter section as scientific results 3ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > regional clinical roles select arrays without CTD substitution > uses an explicit protocol role with the actual ctd document kind 2ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > regional clinical roles select arrays without CTD substitution > uses an explicit protocol-synopsis role with the actual ctd document kind 2ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > regional clinical roles select arrays without CTD substitution > a regional other role suppresses the generic protocol-kind fallback 2ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > regional clinical roles select arrays without CTD substitution > preserves scientific exclusion at CTD 2.4 despite a conflicting regional role 6ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > regional clinical roles select arrays without CTD substitution > preserves scientific exclusion at CTD 2.6.6 despite a conflicting regional role 6ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > regional clinical roles select arrays without CTD substitution > preserves scientific exclusion at CTD 3.2.P.2 despite a conflicting regional role 4ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > regional clinical roles select arrays without CTD substitution > preserves scientific exclusion at CTD 4.2.3.2 despite a conflicting regional role 3ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > reference selection and product applicability remain advisory and bounded > keeps a reference cited by the selected section rule ahead of earlier general references 1ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > reference selection and product applicability remain advisory and bounded > retains an unknown conditional rule as undetermined, then excludes a known incompatible modality 2ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > reference selection and product applicability remain advisory and bounded > does not turn supplied recorded labels or a structural match into qualified evidence 1ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > reference selection and product applicability remain advisory and bounded > does not infer incompatibility from an unrecognized phase or free-text population label 2ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > reference selection and product applicability remain advisory and bounded > can exclude a known incompatible canonical phase without inventing a population ontology 1ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > reference selection and product applicability remain advisory and bounded > reports references absent from existing dated registries as unresolved 1ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > reference selection and product applicability remain advisory and bounded > preserves supersession and regional not-yet-effective warnings from the existing currency service 1ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > reference selection and product applicability remain advisory and bounded > leaves stale or future source verification unresolved as of 2030-01-01 1ms
+ ✓ server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts > reference selection and product applicability remain advisory and bounded > leaves stale or future source verification unresolved as of 2025-01-01 0ms
+stdout | server/services/ana/__tests__/drafting-regional-context.test.ts
+{
+  "timestamp": "2026-11-06T21:09:23.253Z",
+  "level": "info",
+  "message": "[database] Initi

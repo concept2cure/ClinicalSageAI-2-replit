@@ -54,12 +54,11 @@ export interface TenantScope {
   caller?: string;
 
   /**
-   * The one account a pre-auth scope may act as, once the server has
-   * established it: from a verified token, a server-signed challenge, or the
-   * account found for this sign-in. Mirrors `app.current_account_id`, which the
-   * `public.users` policy admits in place of the whole table (D3, 2026-10-04;
-   * migrations/20260928_users_membership_rls.sql). Set only through
-   * `bindPreAuthAccount` or `runAsAccount`.
+   * Verified account data principal, mirrored to `app.current_account_id`.
+   * Authentication binds only its verified subject; a trusted job may name an
+   * explicit target owner. This is never attribution of a human audit actor.
+   * Missing owner scope admits no private profile, even inside the tenant or
+   * system scope. Pre-auth uses bindPreAuthAccount/runAsAccount.
    */
   accountId?: number | null;
 }
@@ -104,6 +103,7 @@ export function assertScopeRoleAdmissible(
   scope: Pick<TenantScope, 'tenantId' | 'role' | 'orgUuid' | 'accountId'>,
   where: string,
 ): void {
+  if (scope.accountId != null) assertAccountId(scope.accountId, where);
   if (!isPlatformScopeRole(scope.role)) return;
   // String(): a JavaScript caller can hand in the number 0 (withTenantConnection stringifies it first).
   const systemShape =
@@ -205,7 +205,7 @@ function isPreAuthScope(scope: TenantScope | undefined): scope is TenantScope {
 }
 
 function assertAccountId(userId: number, fn: string): void {
-  if (!Number.isInteger(userId) || userId <= 0) {
+  if (!Number.isSafeInteger(userId) || userId <= 0 || userId > 2147483647) {
     throw new Error(`${fn}: a positive integer account id is required (got ${userId})`);
   }
 }

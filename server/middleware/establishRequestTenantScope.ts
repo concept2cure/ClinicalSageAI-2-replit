@@ -146,6 +146,15 @@ function resolveTenantId(req: Request): string | null {
   return Number.isSafeInteger(n) ? str : null;
 }
 
+/** Only the authenticated subject, after membership admission, may own private data. */
+function resolveAccountId(req: Request): number | null {
+  const raw = req.user?.id;
+  if (typeof raw !== 'number' && typeof raw !== 'string') return null;
+  if (!/^[1-9]\d*$/.test(String(raw))) return null;
+  const accountId = Number(raw);
+  return Number.isSafeInteger(accountId) && accountId <= 2147483647 ? accountId : null;
+}
+
 /** Read the org uuid the auth middlewares may have attached, if any. */
 function resolveOrgUuid(req: Request): string | null {
   const fromUser = (req.user as { organizationUuid?: string | null } | undefined)?.organizationUuid;
@@ -180,15 +189,23 @@ function tenantSessionVars(
   tenantId: string,
   role: string | null,
   orgUuid: string | null,
+  accountId: number | null,
 ): (client: PoolClient) => Promise<void> {
   if (isPlatformScopeRole(role)) throw new PlatformScopeRoleRefusedError('tenantSessionVars');
   // With the isolation switches pinned in the same statement (sessionScope.ts).
-  return (client: PoolClient) => applySessionScope(client, { tenantId, role, orgUuid });
+  return (client: PoolClient) => applySessionScope(client, { tenantId, role, orgUuid, accountId });
 }
 
 /** Session-var applier for the cross-tenant system scope (super-admin). */
 function systemSessionVars(): (client: PoolClient) => Promise<void> {
   return (client: PoolClient) => applySessionScope(client, { tenantId: '0', role: PLATFORM_SCOPE_ROLE, orgUuid: '' });
+}
+
+/** A repeated admission cannot exchange the subject of a verified owner scope. */
+function refusedAccountScope(active: TenantScope | undefined, req: Request, res: Response): boolean {
+  if (!isRealTenantScope(active) || active?.accountId == null || active.accountId === resolveAccountId(req)) return false;
+  res.status(403).json({ error: { code: 'ACCOUNT_SCOPE_MISMATCH', message: 'The authenticated account does not match the active session.' } });
+  return true;
 }
 
 /**
@@ -218,6 +235,10 @@ export function establishRequestTenantScope(
     return;
   }
 
+  // Repeated admission may retain a scope, but cannot change its verified
+  // subject. Leave an older ownerless scope ownerless rather than infer one.
+  if (refusedAccountScope(active, req, res)) return;
+
   // Idempotent for the real case: a genuine per-user scope (from the gate or
   // requireTenantContext) or an already-attached request client is authoritative
   // — do not clobber it. A pre-auth PLACEHOLDER scope (tenantId '0', no role) is
@@ -240,6 +261,7 @@ export function establishRequestTenantScope(
   }
 
   const orgUuid = resolveOrgUuid(req);
+  const accountId = resolveAccountId(req);
   const role = req.user?.role != null ? String(req.user.role) : null;
 
   if (refusedPlatformScopeRole(req, res, tenantId, role)) return;
@@ -265,16 +287,16 @@ export function establishRequestTenantScope(
     ...(req.tenantContext ?? {}),
     organizationId: tenantId,
     organizationUuid: orgUuid,
-    userId: req.user?.userId ?? req.user?.id,
+    userId: req.user?.id,
     role,
   };
   req.tenantId = tenantId;
   if (role) req.userRole = role;
 
-  attachLazyClient(req, res, tenantSessionVars(tenantId, role, orgUuid));
+  attachLazyClient(req, res, tenantSessionVars(tenantId, role, orgUuid, accountId));
 
   runWithTenantScope(
-    { tenantId, orgUuid, role, source: 'request', caller: fullPath(req) },
+    { tenantId, orgUuid, role, accountId, source: 'request', caller: fullPath(req) },
     () => next(),
   );
 }

@@ -19,7 +19,8 @@
  */
 import express from 'express';
 import request from 'supertest';
-import { runWithTenantScope } from '../../../../db/tenantStore.js';
+import { vi } from 'vitest';
+import { getTenantScope, runWithTenantScope } from '../../../../db/tenantStore.js';
 import { bindRequestDbClient } from '../../../../db/requestDbLease.js';
 import { RunStopped } from '../../../../services/ana/run-stopped.js';
 
@@ -181,12 +182,26 @@ export type HarnessState = ReturnType<typeof freshState>;
 
 const state: HarnessState = freshState();
 
+function fixtureOwnerRows(sql: string, params: unknown[] | undefined,
+  scope: ReturnType<typeof getTenantScope>, user: HarnessState['user']): Record<string, unknown>[] | null {
+  if (sql === "SELECT current_setting('app.current_tenant_id',true) AS tenant_scope,current_setting('app.current_account_id',true) AS owner_scope") {
+    return [{ tenant_scope: scope?.tenantId ?? '', owner_scope: scope?.accountId == null ? '' : String(scope.accountId) }];
+  }
+  if (/SELECT id,user_id,organization_id,program_id,metadata FROM chat_threads WHERE id=\$1/.test(sql) &&
+      ['thread-1', 'thread-owned'].includes(String(params?.[0]))) {
+    return [{ id: params?.[0], user_id: user.id, organization_id: user.organizationId, program_id: null, metadata: {} }];
+  }
+  return null;
+}
+
 const pool = {
   // Legitimate public-project fixtures for suites testing model/run behavior.
   // Private access suites replace this pool with actual SQL and live sharing.
   query: async (sql: string, params?: unknown[]) => {
     let rows: Record<string, unknown>[] = [];
-    if (/FROM regulatory_programs WHERE id = \$1/.test(sql)) rows = [{ id: params?.[0] }];
+    const ownerRows = fixtureOwnerRows(sql, params, getTenantScope(), state.user);
+    if (ownerRows) rows = ownerRows;
+    else if (/FROM regulatory_programs WHERE id = \$1/.test(sql)) rows = [{ id: params?.[0] }];
     else if (/WHERE regulatory_program_id\s*=\s*\$1/.test(sql)) rows = [{ id: 42, clientWorkspaceId: null }];
     else if (/SELECT id, regulatory_program_id FROM projects/.test(sql)) rows = [{ id: params?.[0], regulatory_program_id: null }];
     else if (/FROM organization_users/.test(sql)) rows = [{ role: 'member', user_id: params?.[0] }];
@@ -329,6 +344,7 @@ function readStatus(): string | null {
 /** The run row, scripted. `real` supplies the pure readers the route uses as they are. */
 function runControl(real: { readMoveId: unknown }) {
   return {
+    ...real,
     readMoveId: real.readMoveId,
     beginRun: async (input: Record<string, unknown>) => {
       state.beginRunInputs.push(input);
@@ -456,6 +472,19 @@ export const mocks = {
   memory: () => ({ buildMemoryContextForChat: async () => ({ memoryBlock: '', atoms: [], diagnostics: null }) }),
   enrichment: () => ({ enrichContextForChat: async () => ({ block: '', sources: [] }) }),
   chatThreads: () => ({
+    // Keep the current private-boundary readers real. The public fixture has
+    // an explicit owned thread row and empty canonical audit/profile replies;
+    // no helper invents a false private-policy result.
+    threadHasOwnerPrivateBoundary: async (...args: Parameters<typeof import('../../../../services/chat-thread-helpers.js')['threadHasOwnerPrivateBoundary']>) => {
+      const real = await vi.importActual<typeof import('../../../../services/chat-thread-helpers.js')>(
+        new URL('../../../../services/chat-thread-helpers.ts', import.meta.url).pathname);
+      return real.threadHasOwnerPrivateBoundary(...args);
+    },
+    markThreadOwnerPrivate: async (...args: Parameters<typeof import('../../../../services/chat-thread-helpers.js')['markThreadOwnerPrivate']>) => {
+      const real = await vi.importActual<typeof import('../../../../services/chat-thread-helpers.js')>(
+        new URL('../../../../services/chat-thread-helpers.ts', import.meta.url).pathname);
+      return real.markThreadOwnerPrivate(...args);
+    },
     getOrCreateThread: async () => 'thread-1',
     getThreadMessages: async () => [],
     recordThreadSkills: async (threadId: string, organizationId: number, keys: string[]) => {
@@ -496,10 +525,15 @@ export function streamApp(
 ): express.Express {
   const app = express();
   app.use(express.json());
-  if (options.tenantScope) {
-    const tenantId = options.tenantScope;
-    app.use((_req, _res, next) => runWithTenantScope({ tenantId, source: 'test', caller: 'stream-harness' }, () => next()));
-  }
+  // The scripted authenticated host binds its fixture's admitted subject;
+  // synthetic SQL derives owner vars from this actual ALS premise, never a
+  // global default owner. Invalid identities stay ownerless and fail closed.
+  app.use((_req, _res, next) => {
+    const tenantId = options.tenantScope ?? String(state.user.organizationId ?? '');
+    const accountId = Number(state.user.id);
+    if (!/^[1-9]\d*$/.test(tenantId) || !Number.isSafeInteger(accountId) || accountId <= 0) return next();
+    return runWithTenantScope({ tenantId, accountId, source: 'test', caller: 'stream-harness' }, next);
+  });
   app.use((req, res, next) => {
     (req as any).tenantId = 7;
     (req as any).user = { ...state.user };

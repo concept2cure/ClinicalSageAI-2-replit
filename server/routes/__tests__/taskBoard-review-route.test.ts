@@ -28,6 +28,7 @@ vi.mock('../../db/requestDb', () => {
           if (state.fail) throw new Error('relation does not exist');
           return { rows: [{ canonical_id: 'CAN-ADSL', vault_id: VAULT, program_id: PROGRAM }] };
         }
+        if (/FROM qms_documents/.test(text)) return { rows: [{ id: 12, organization_id: 7, authoring_document_id: null }] };
         return { rows: [] };
       },
     }),
@@ -48,7 +49,7 @@ const row = (over: Record<string, unknown>) => ({
   approvalHistory: [], comments: [], attachments: [], sourceEntityType: null, sourceEntityId: null,
   dueDate: null, lifecyclePhase: null, estimatedHours: null, blockedBy: null, reviewRouteId: null, ...over,
 });
-const app = () => { const a = express(); a.use('/api/task-management', createTaskBoardRoutes()); return a; };
+const app = () => { const a = express(); a.use((req, _res, next) => { req.userId = '2'; next(); }); a.use('/api/task-management', createTaskBoardRoutes()); return a; };
 const board = async () => {
   const r = await request(app()).get('/api/task-management/board');
   expect(r.status).toBe(200);
@@ -75,7 +76,7 @@ describe('task board: a review-route task says where it is acted on', () => {
   });
 
   it('names the controlled document of a QMS review task', async () => {
-    expect(card(await board(), 'ROUTE-bbbb-2').reviewRoute).toEqual({ kind: 'quality', qmsDocumentId: '12' });
+    expect(card(await board(), 'ROUTE-bbbb-2').reviewRoute).toEqual({ kind: 'quality', qmsDocumentId: '12', programId: null });
   });
 
   it('marks nothing on a task outside a route', async () => {

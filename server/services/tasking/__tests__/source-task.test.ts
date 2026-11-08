@@ -23,7 +23,7 @@ vi.mock('../../unifiedTaskService', () => ({ default: { createUnifiedTask: H.cre
 import { reconcileSourceTasks, replaceSourceTask, type ReplaceSourceTask } from '../source-task';
 
 const base = (over: Partial<ReplaceSourceTask> = {}): ReplaceSourceTask => ({
-  organizationId: 3, sourceEntityType: 'capa_record', sourceEntityId: 'capa:x', closeAs: 'cancelled', actorId: 42,
+  organizationId: 3, sourceEntityType: 'custom_source', sourceEntityId: 'source:x', closeAs: 'cancelled', actorId: 42,
   same: (m) => m.due === '2026-11-30',
   next: { moduleType: 'Quality', title: 'Close CAPA-007', dueDate: new Date('2026-11-30T00:00:00Z'), metadata: { due: '2026-11-30' } },
   ...over,
@@ -44,7 +44,7 @@ describe('replaceSourceTask', () => {
     expect(await replaceSourceTask(base())).toBe('scheduled');
     expect(H.update).toHaveBeenCalledWith('t1', 'cancelled', 42, { organizationId: 3, expectedStatus: 'pending' });
     expect(H.create).toHaveBeenCalledWith(expect.objectContaining({
-      organizationId: 3, sourceEntityType: 'capa_record', sourceEntityId: 'capa:x', createdById: 42, title: 'Close CAPA-007',
+      organizationId: 3, sourceEntityType: 'custom_source', sourceEntityId: 'source:x', createdById: 42, title: 'Close CAPA-007',
     }));
   });
 
@@ -73,7 +73,7 @@ describe('reconcileSourceTasks', () => {
       task('qms-document:1:user:7', { version: '2.0' }),
     ];
     const result = await reconcileSourceTasks({
-      organizationId: 3, sourceEntityType: 'qms_training', match: { prefix: 'qms-document:1:user:' }, actorId: 42,
+      organizationId: 3, sourceEntityType: 'custom_source', match: { prefix: 'qms-document:1:user:' }, actorId: 42,
       desired: new Map([['qms-document:1:user:5', want('five')], ['qms-document:1:user:6', want('six')], ['qms-document:1:user:8', want('eight')]]),
       closeAs: (key) => (key.endsWith(':7') ? 'completed' : 'cancelled'),
     });
@@ -82,13 +82,13 @@ describe('reconcileSourceTasks', () => {
     expect(H.update).toHaveBeenCalledWith('t-qms-document:1:user:6', 'cancelled', 42, { organizationId: 3, expectedStatus: 'pending' });
     expect(H.update).toHaveBeenCalledWith('t-qms-document:1:user:7', 'completed', 42, { organizationId: 3, expectedStatus: 'pending' });
     expect(H.create).toHaveBeenCalledTimes(2);
-    expect(H.create).toHaveBeenCalledWith(expect.objectContaining({ sourceEntityId: 'qms-document:1:user:8', sourceEntityType: 'qms_training', organizationId: 3, title: 'eight' }));
+    expect(H.create).toHaveBeenCalledWith(expect.objectContaining({ sourceEntityId: 'qms-document:1:user:8', sourceEntityType: 'custom_source', organizationId: 3, title: 'eight' }));
   });
 
   it('never treats document 10 as under the prefix of document 1', async () => {
     H.open = [task('qms-document:10:user:5', { version: '1.0' })];
     const result = await reconcileSourceTasks({
-      organizationId: 3, sourceEntityType: 'qms_training', match: { prefix: 'qms-document:1:user:' }, actorId: 42,
+      organizationId: 3, sourceEntityType: 'custom_source', match: { prefix: 'qms-document:1:user:' }, actorId: 42,
       desired: new Map([['qms-document:10:user:6', want('elsewhere')]]), closeAs: () => 'cancelled',
     });
     expect(result).toMatchObject({ kept: 0, closed: 0, written: [] });
@@ -99,7 +99,7 @@ describe('reconcileSourceTasks', () => {
   it('reports a failure part way and never throws', async () => {
     H.fail = true;
     expect(await reconcileSourceTasks({
-      organizationId: 3, sourceEntityType: 'qms_training', match: { exact: 'qms-document:1:user:5' }, actorId: 42,
+      organizationId: 3, sourceEntityType: 'custom_source', match: { exact: 'qms-document:1:user:5' }, actorId: 42,
       desired: new Map(), closeAs: () => 'cancelled',
     })).toMatchObject({ failed: true, written: [] });
   });

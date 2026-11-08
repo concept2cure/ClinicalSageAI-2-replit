@@ -1,0 +1,5 @@
+{
+  "file": "server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts",
+  "change": "Conservative Record<string,unknown> query result annotation",
+  "emittedJavaScriptIdentical": true
+}

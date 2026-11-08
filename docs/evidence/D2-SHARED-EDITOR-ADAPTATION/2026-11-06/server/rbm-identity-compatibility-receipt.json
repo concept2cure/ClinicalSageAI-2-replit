@@ -1,0 +1,58 @@
+{
+  "observedAt": "2026-11-06T21:09:51.078011+00:00",
+  "sourceCommit": "16fe9e08e2ce0ef482c633415090f4a9fa116ec0",
+  "branch": "concept2cure-v2",
+  "scope": "Bounded RBM patient-profile identity model/creator compatibility after regional/RBM canonical integration",
+  "validation": {
+    "suites": 1,
+    "tests": 13,
+    "passed": 13,
+    "failed": 0,
+    "exitCode": 0,
+    "durationSeconds": 9.86
+  },
+  "command": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install vitest run --config vitest.config.ts --maxWorkers=1 --fileParallelism=false tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts --reporter=verbose",
+  "inputsBeforeRun": {
+    "observedAt": "2026-11-06T21:08:35.737885+00:00",
+    "sourceCommit": "16fe9e08e2ce0ef482c633415090f4a9fa116ec0",
+    "files": {
+      "shared/schema.ts": "8c4fcbbc7501c84383f7a32f20163be274355065b350ae1e48aa1c6ef339e42c",
+      "migrations/20260701_rbm_patient_profiles.sql": "dadba8a1c436a414a3080f3e661f60d2ad56cdc0af7dcedb7657ea987f402f47",
+      "tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts": "6710c53cdeced71b2ac4def91d68f850ed03cf71231e00b639870513e3c6c915",
+      "scripts/db/migration-set.mjs": "c7de1b297bcf41c1af7a9cf9c92ca8dd5dfe9e5e6343188ad5097fe8dc0e0d3b",
+      "server/routes/mdx-rbm-data.ts": "0368315508d8e689368632b0e345f893be5989ce6e1a633c22409c59ea228167",
+      "server/services/rbm/metric-ingestion.ts": "502a41905eec331e9a3946d371e4f20942eb401dfd84711ba86bef2cb54a5af5"
+    }
+  },
+  "sourceFingerprintsAfterRun": {
+    "shared/schema.ts": "8c4fcbbc7501c84383f7a32f20163be274355065b350ae1e48aa1c6ef339e42c",
+    "migrations/20260701_rbm_patient_profiles.sql": "dadba8a1c436a414a3080f3e661f60d2ad56cdc0af7dcedb7657ea987f402f47",
+    "tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts": "6710c53cdeced71b2ac4def91d68f850ed03cf71231e00b639870513e3c6c915",
+    "scripts/db/migration-set.mjs": "c7de1b297bcf41c1af7a9cf9c92ca8dd5dfe9e5e6343188ad5097fe8dc0e0d3b",
+    "server/routes/mdx-rbm-data.ts": "0368315508d8e689368632b0e345f893be5989ce6e1a633c22409c59ea228167",
+    "server/services/rbm/metric-ingestion.ts": "502a41905eec331e9a3946d371e4f20942eb401dfd84711ba86bef2cb54a5af5"
+  },
+  "inputsUnchanged": true,
+  "changedPinnedPathsSince7d": [
+    "migrations/20260701_rbm_patient_profiles.sql",
+    "shared/schema.ts",
+    "tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts"
+  ],
+  "log": {
+    "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-rbm-identity-compatibility.txt",
+    "bytes": 3988,
+    "lines": 22,
+    "sha256": "06b18ea51260b104342b77b5f5a31c4ff40b8b91607b42e91801aa7845ea68db"
+  },
+  "proof": [
+    "Model and replay creator agree on the existing organization/program/subject identity.",
+    "Fresh creation and repeated creator execution remain stable; historical bootstrap gains a usable upsert arbiter without erasing prior metrics.",
+    "Original NULL-distinct legacy behavior is retained; duplicate triples are preserved when repair refuses.",
+    "Unrelated/nonunique/partial/expression/deferred/nulls-not-distinct/invalid named indexes refuse reconciliation rather than silently reporting success."
+  ],
+  "limits": [
+    "The new focused contract already executes actual representative upsert/replay SQL, and existing route/ingestion writer source is unchanged; no broader RBM companion or prior65/105 cohort was repeated.",
+    "In-process PGlite/minimal fixture only; no native PostgreSQL schema/migration application, production RLS/concurrency or deployed data reconciliation is qualified.",
+    "No source/test edits, private credentials/provider calls, full typecheck/build, commits or deployment in this scope."
+  ]
+}

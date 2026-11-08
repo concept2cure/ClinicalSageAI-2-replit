@@ -6,6 +6,28 @@ const caller = 'server/services/csr/vault-source-input.ts';
 const prelude = "import { vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';\n";
 const query = expression => 'q.query(`SELECT ${' + expression + '}`);';
 const openings = source => [...source.matchAll(/\$\{/g)].map(match => match.index);
+for (const [path, builder, module, alias] of [
+  ['server/services/ana/AnaToolExecutor.ts', 'artifactDataEligibleSql', '../document-data-disposition/eligibility.js', 'a'],
+  ['server/services/ana/saved-document-critique.ts', 'capturedDataEligibleSql', '../document-data-disposition/eligibility', 's'],
+]) {
+  test(`${builder} current-source proof requires its exact caller, import and literal alias`, () => {
+    const declaration = `import { ${builder} } from '${module}';\n`;
+    const source = declaration + query(`${builder}('${alias}')`);
+    const [proof] = approvedSqlPredicates(path, source, openings(source));
+    assert.deepEqual([proof?.builder, proof?.module, proof?.alias], [builder, module, alias]);
+    assert.deepEqual(approvedSqlPredicates(path + '.unreviewed', source, openings(source)), []);
+    const wrongImport = source.replace(module, './unreviewed');
+    assert.deepEqual(approvedSqlPredicates(path, wrongImport, openings(wrongImport)), []);
+    for (const expression of [`${builder}(req.body.alias)`, `${builder}('wrong')`, `${builder}('${alias}') + req.body.filter`]) {
+      const unsafe = declaration + query(expression);
+      assert.deepEqual(approvedSqlPredicates(path, unsafe, openings(unsafe)), []);
+    }
+    const shadowed = declaration + `function f(${builder}) {` + query(`${builder}('${alias}')`) + '}';
+    assert.deepEqual(approvedSqlPredicates(path, shadowed, openings(shadowed)), []);
+    const mixed = declaration + 'q.query(`SELECT ${' + `${builder}('${alias}')` + '} AND ${req.body.filter}`);';
+    assert.deepEqual(approvedSqlPredicates(path, mixed, openings(mixed)).map(p => p.openingOffset), [openings(mixed)[0]]);
+  });
+}
 const classify = (body, path = caller, offsets) => {
   const source = prelude + body;
   return approvedSqlPredicates(path, source, offsets ?? openings(source));

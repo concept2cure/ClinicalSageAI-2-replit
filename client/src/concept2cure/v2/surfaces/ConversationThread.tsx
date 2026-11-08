@@ -19,10 +19,10 @@ import { apiCall, apiErrorText } from '../apiCall';
 import { downloadBlob, safeFileName } from '../download';
 import { readShellProject, shellProgramName } from '../shellProject';
 import { conversationIdFromLocation, conversationSwitchRefusal, locationForConversation, surfaceIdFromLocation } from '../routing';
-import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
+import { AnaProgressChip, AnaWorkPanel, ProjectTeamPanel } from '../AnaWorkPanel';
 import { TurnSummarySheet, useSummaryTurn } from '../TurnSummary';
 import { RunControlStrip, steerHelpFor } from '../AnaWorkSections';
-import { useAgentActivity } from '../useAgentActivity';
+import { useAgentActivity, useProjectTeam } from '../useAgentActivity';
 import { AnaActivity, activityPropsFor, hasReportableWork, type AnaActivityProps } from '../AnaActivity';
 import { CONTINUE_PROMPT, continueTurnIndex, FOLLOW_LINES, RUN_LIMIT_WORKING_LEAD, workingMarkerLine } from '../anaWorkModel';
 import { useWorkingThreads } from './projectThreads';
@@ -1409,6 +1409,9 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
      the header, and reaches it from an open document ("← Documents"). It is
      re-read when an AnA turn ends. */
   const conversationId = anaChat.threadId ?? (isNew || isCurrent ? null : sel.id);
+  const lastTurn = anaChat.messages[anaChat.messages.length - 1];
+  const teamReceipt = lastTurn?.timeline?.filter(event => event.kind === 'worker').at(-1)?.seq;
+  const team = useProjectTeam(shellProjectId, `${sel.id}:${conversationId ?? ''}`, `${anaChat.isStreaming}:${teamReceipt ?? ''}`);
   const narrowCanvas = useNarrowCanvas();
   /* Read when an act happens, not from the last render. */
   const narrowNow = () => narrowCanvas || (typeof window !== 'undefined' && !!window.matchMedia?.('(max-width: 1100px)').matches);
@@ -2003,11 +2006,18 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
             onToggle={toggleProgress}
             controls={dock.panelId}
           />
+          <button type="button" className="ct-head-open" aria-pressed={team.open} aria-expanded={team.open}
+            aria-controls={team.panelId} onClick={team.toggle}>
+            {I.users} {team.open ? 'Hide team' : 'Show team'}
+          </button>
         </div>
       </div>
 
       <div className="ct-main" data-canvas-open={expandedDocId || listShown ? 'true' : undefined}>
         <div className="ct-conv">
+          <div id={team.panelId} hidden={!team.open} style={team.open ? { maxHeight: '45vh', overflowY: 'auto', padding: '8px 16px' } : { display: 'none' }}>
+            {team.open && <ProjectTeamPanel view={team} onOpenProject={() => onNav?.('project-home')} />}
+          </div>
           <div className="ct-scroll" ref={scrollRef} onScroll={onScroll}>
             <div className="ct-col">
               {loadingHistory && (

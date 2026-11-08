@@ -23,7 +23,7 @@ export function SavedAssemblySourcesNotice({ controller }: { controller: Assembl
       <ul>{recorded.manifest.entries.map(entry => <li key={assemblySourceKey(entry.source)}>
         <strong>{entry.title}</strong> · {entry.source.kind === 'data-room' ? `Data Room source ${entry.source.sourceId}` : `Vault document ${entry.source.documentId}`}
         <p>Version: {entry.version ?? 'not recorded'} · selected UTF-16 excerpt [{entry.span.start}, {entry.span.end}) of {entry.span.totalChars} characters.</p>
-        <p>Original SHA-256: <span className="source-import-hash">{entry.contentHash}</span></p>
+        <p>Source SHA-256: <span className="source-import-hash">{entry.contentHash}</span></p>
       </li>)}</ul>
       <ul>{recorded.manifest.limitations.map((limit, index) => <li key={index}>{limit}</li>)}</ul>
       {controller.savedSourcesReuseDisabledReason && <p role="status">{controller.savedSourcesReuseDisabledReason}</p>}

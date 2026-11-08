@@ -92,6 +92,17 @@ c2c_ana_state() {
 c2c_ana_detail() {
   c2c_readyz | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(String(JSON.parse(s).anaDetail||"").slice(0,300))}catch{console.log("")}})'
 }
+# The existing public build stamp is fixed when the backend starts. A healthy
+# process can otherwise survive a pull while the database/client move ahead.
+c2c_app_current() {
+  local expected
+  expected="$(git rev-parse HEAD 2>/dev/null)" || return 1
+  [[ "$expected" =~ ^[0-9a-f]{40}$ ]] || return 1
+  curl -fsS --max-time 5 "http://127.0.0.1:$C2C_PORT/api/version" 2>/dev/null |
+    C2C_EXPECTED_COMMIT="$expected" node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
+      try{const c=JSON.parse(s).commit;process.exit(typeof c==="string"&&/^[0-9a-f]{40}$/.test(c)&&c===process.env.C2C_EXPECTED_COMMIT?0:1)}
+      catch{process.exit(1)}})'
+}
 c2c_stop_app() {
   pkill -f 'tsx --inspect=0 server/index.ts' 2>/dev/null
   for _ in $(seq 1 30); do
@@ -138,6 +149,10 @@ if c2c_app_up; then
     # later, or a restart from a terminal opened before it). It keeps the
     # environment it started with, so it is restarted to start with the key.
     c2c_log "The running app was started without $C2C_APP_LACKS (AnA: $(c2c_ana_state)); restarting it with this start's keys."
+    c2c_stop_app
+    c2c_start_app
+  elif ! c2c_app_current; then
+    c2c_log "The running app serves an older or unverified code revision; restarting it with the current checkout."
     c2c_stop_app
     c2c_start_app
   else

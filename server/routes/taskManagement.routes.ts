@@ -53,7 +53,7 @@ import { readMyWork } from '../services/tasking/my-work';
 import { routeRemindRefusal } from '../services/review/review-route';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { projectForTaskSource, PROJECT_TELLING_SOURCES, requireTaskProjectId,
-  admitTaskCreationProject, TaskProjectAdmissionError } from '../services/tasking/task-project';
+  admitTaskCreationActor, admitTaskCreationProject, TaskProjectAdmissionError } from '../services/tasking/task-project';
 import { assignTask, assignmentExpectedSchema, assignmentFailure, namedAssignmentSchema, TaskAssignmentUnknown } from '../services/tasking/task-assignment';
 
 const router = Router();
@@ -188,7 +188,7 @@ const createAutomationSchema = z.object({
 });
 
 /**
- * The project a new task is on, or null once a refusal has been sent.
+ * The project a new task is on, resolved before writes on their transaction.
  *
  * A task raised on an authoring document is on that document's program's
  * project (services/tasking/task-project.ts), read on the request's RLS client.
@@ -200,16 +200,15 @@ const createAutomationSchema = z.object({
  * told is not written.
  */
 async function taskProjectOrRefuse(
-  req: Request,
-  res: Response,
+  tx: RequestDb,
   organizationId: number,
   data: { projectId?: number; sourceEntityType?: string; sourceEntityId?: string },
-): Promise<{ projectId: number | undefined } | null> {
+): Promise<{ projectId: number | undefined }> {
   if (data.projectId !== undefined || !PROJECT_TELLING_SOURCES.includes(String(data.sourceEntityType))) {
     return { projectId: data.projectId };
   }
   try {
-    const projectId = await projectForTaskSource(requestDb(req), {
+    const projectId = await projectForTaskSource(tx, {
       orgId: organizationId,
       sourceEntityType: data.sourceEntityType,
       sourceEntityId: data.sourceEntityId,
@@ -217,12 +216,8 @@ async function taskProjectOrRefuse(
     return { projectId: projectId ?? undefined };
   } catch (err) {
     console.error('Task create: the source document\'s project could not be read:', err instanceof Error ? err.message : err);
-    res.status(503).json({
-      success: false,
-      code: 'TASK_PROJECT_UNREADABLE',
-      error: 'The project of the document this task is for could not be read. Nothing was created; try again.',
-    });
-    return null;
+    throw new TaskProjectAdmissionError(503, 'TASK_PROJECT_UNREADABLE',
+      'The project of the document this task is for could not be read. Nothing was created; try again.');
   }
 }
 
@@ -257,6 +252,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
     // A route member is written only by the review route (RR1a, B1/M9).
     refuseRouteColumnsInInput(req.body, 'task.create');
     const validatedData = createTaskSchema.parse(req.body);
+    if (validatedData.projectId !== undefined) requireTaskProjectId(validatedData.projectId);
     const taskId = `TASK-${Date.now()}-${uuidv4().substr(0, 8)}`;
 
     // Auto-assign if not specified
@@ -287,21 +283,27 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
       assignment = { assignedBy: actorUserId, assignedAt: new Date() };
     }
 
-    const project = await taskProjectOrRefuse(req, res, organizationId, validatedData);
-    if (!project) return;
-
-    if (!assigneeId) {
-      const optimalAssignee = await getOptimalAssignee(organizationId, validatedData);
-      if (optimalAssignee) {
-        assigneeId = optimalAssignee.id;
-        assigneeName = optimalAssignee.name;
-      }
-    }
-
     const { startDate, dueDate, ...taskFields } = validatedData;
     // Part 11 lineage — the create is written to the governed ledger on THIS
     // path too (assessment D11), in the create's own transaction.
-    const newTask = await storage.db.transaction(async (tx) => {
+    const newTask = await requestDb(req).transaction(async (tx) => {
+      const project = await taskProjectOrRefuse(tx as unknown as RequestDb, organizationId, validatedData);
+      const q = queryableFromDrizzle(tx);
+      let clientWorkspaceId: number | null = null;
+      if (project.projectId !== undefined) {
+        const admitted = await admitTaskCreationProject(q, { ...ctx, projectId: project.projectId,
+          clientWorkspaceId: req.tenantContext?.clientWorkspaceId });
+        clientWorkspaceId = admitted.clientWorkspaceId;
+      } else {
+        await admitTaskCreationActor(q, ctx);
+      }
+      if (!assigneeId) {
+        const optimalAssignee = await getOptimalAssignee(organizationId, validatedData);
+        if (optimalAssignee) {
+          assigneeId = optimalAssignee.id;
+          assigneeName = optimalAssignee.name;
+        }
+      }
       const row = await createTaskInTx(tx as unknown as TaskInsertRunner, {
         organizationId,
         actorUserId,
@@ -309,6 +311,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
         values: {
           ...taskFields,
           projectId: project.projectId,
+          clientWorkspaceId,
           startDate: startDate ? new Date(startDate) : undefined,
           dueDate: dueDate ? new Date(dueDate) : undefined,
           assigneeId,
@@ -341,9 +344,10 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
       data: newTask,
     });
   } catch (error) {
+    if (commitInFlight) return unconfirmedTaskCreation(req, res);
     if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
+    if (error instanceof TaskProjectAdmissionError) return taskAdmissionRefusal(res, error);
     if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The task');
-    if (commitInFlight) return outcomeUnknown(res);
     console.error('Error creating task:', error);
     res.status(400).json({
       success: false,
@@ -813,16 +817,18 @@ router.post('/tasks/bulk-create', requireEditorAccess, async (req: Request, res:
 
 // Create tasks from template
 type TemplateShape = { templateId: string; name: string; tasks: unknown; dependencies?: unknown };
+async function unconfirmedTaskCreation(req: Request, res: Response) {
+  try { await requestPgClient(req).discard?.(new Error('Task creation COMMIT acknowledgement was not confirmed')); }
+  catch { /* The request owner may already have discarded its ended lease. */ }
+  return outcomeUnknown(res);
+}
+function taskAdmissionRefusal(res: Response, error: TaskProjectAdmissionError) {
+  return res.status(error.status).json({ success: false, code: error.code, error: error.message });
+}
 async function workflowCreateFailure(req: Request, res: Response, error: unknown, committing: boolean) {
-  if (committing) {
-    try { await requestPgClient(req).discard?.(new Error('Workflow COMMIT acknowledgement was not confirmed')); }
-    catch { /* The request owner may already have discarded its ended lease. */ }
-    return outcomeUnknown(res);
-  }
+  if (committing) return unconfirmedTaskCreation(req, res);
   if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
-  if (error instanceof TaskProjectAdmissionError) return res.status(error.status).json({
-    success: false, code: error.code, error: error.message,
-  });
+  if (error instanceof TaskProjectAdmissionError) return taskAdmissionRefusal(res, error);
   if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The workflow');
   console.error('Error creating tasks from template:', error);
   return res.status(500).json({ success: false, error: 'Failed to create tasks from template' });

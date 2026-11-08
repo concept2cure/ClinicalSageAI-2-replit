@@ -21,7 +21,7 @@ import { readAuthoringDocuments, readAuthoringDocument, readAuthoringDocumentSec
 import { authoringReviewInputSchema } from '../../shared/authoring/peer-review';
 import {
   readAuthoringPeerReviews, submitAuthoringPeerReview, requestAuthoringPeerReviews, reassignAuthoringReviewRequest,
-  AuthoringPeerReviewRefused, AuthoringPeerReviewCommitUnconfirmed,
+  AuthoringPeerReviewRefused, AuthoringPeerReviewCommitUnconfirmed, runAuthoringIndependentCheck,
 } from '../services/authoring/peer-review';
 import {
   authoringReviewerPrecheck, authoringRouteSubject, authoringStanding, closeAuthoringReviewerTask, parseAuthoringRoute,
@@ -161,7 +161,7 @@ import {
 } from '../services/authoring/authoring-export';
 import { SavedDraftSourceError, withSavedDraftSourceReservation, savedSourceExcerptsForSigning } from '../services/authoring/draft-source-references';
 import { unverifiedFiguresAtSigning, figureAcknowledgementDigest, figureAcknowledgementVerdict, type UnverifiedFigureAtSigning } from '../services/authoring/draft-figure-check';
-import { assertWorkflowImportRelease, prepareWorkflowImportAdoption, WorkflowImportGovernanceError } from '../services/authoring/workflow-import-governance';
+import { assertWorkflowImportRelease, assertIndependentCheckRelease, prepareWorkflowImportAdoption, WorkflowImportGovernanceError } from '../services/authoring/workflow-import-governance';
 import { admitAnaProjectScope, AnaProjectScopeError } from '../services/ana/project-scope-admission';
 import { savedSectionDraftTemplate, buildSectionDraftPrompt, draftRevisionFor, recordedFilingDraftContext } from '../services/authoring/authoring-draft-template';
 import { draftPassageFor } from '../services/authoring/authoring-draft-passage';
@@ -3261,6 +3261,11 @@ async function closeReviewTasksOnVerdict(
 // POST /api/authoring/documents/:id/review - Record an assigned, saved-content-bound verdict.
 router.post('/documents/:id/review', async (req: Request, res: Response) => {
   try {
+    if (req.body?.action === 'run_independent_checks') {
+      if (Object.keys(req.body).some(key => !['action', 'expectedSnapshotHash'].includes(key))) return res.status(400).json({ success: false, error: { code: 'REVIEW_INPUT_INVALID', message: 'Only the current saved snapshot is accepted for independent checks.' } });
+      return res.json(await runAuthoringIndependentCheck(requestConnectable(req),
+        { ...peerReviewInput(req), expectedSnapshotHash: req.body.expectedSnapshotHash }, peerReviewAudit(req)));
+    }
     const body = authoringReviewInputSchema.safeParse(req.body);
     if (!body.success) return res.status(400).json({ success: false,
       error: { code: 'REVIEW_INPUT_INVALID', message: 'A verdict and the exact saved review context are required.' } });
@@ -5292,10 +5297,12 @@ async function lockedSigningContent(client: Queryable, req: Request, docId: stri
     'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id=$1 AND tenant_id=$2 ORDER BY order_index, created_at, id',
     [docId, tenantId],
   );
-  return { organizationId: tenantId, doc: document.rows[0], sections: sections.rows,
+  const current = { organizationId: tenantId, doc: document.rows[0], sections: sections.rows,
     actor: { id: String(getActorId(req) ?? ''), email: getActorEmail(req) },
     /** Set by figuresRefused when the signer acknowledged unverified figures (P-89); the act's chained row names it. */
     figuresAcknowledged: null as { digest: string; count: number } | null };
+  await assertIndependentCheckRelease(client, current);
+  return current;
 }
 
 async function adoptionForSigning(client: Queryable, req: Request, current: Awaited<ReturnType<typeof lockedSigningContent>>, meaning: string) {

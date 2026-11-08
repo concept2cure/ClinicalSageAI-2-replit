@@ -48,7 +48,8 @@ import React from 'react';
 import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
 import type { AnaChatMessage, AnaRunHold, RunControlStatus } from '../components/ana/useAnaChat';
-import type { AgentActivityView } from './useAgentActivity';
+import { workerEstimate, workerMeasurement, workerState, type AgentActivityView, type ProjectTeamView } from './useAgentActivity';
+import type { ProjectTeamSnapshot, WorkerSnapshot } from '@shared/ana/turn-timeline';
 import { useNow } from './useNow';
 import {
   elapsedFor,
@@ -230,3 +231,75 @@ export const AnaProgressChip = React.forwardRef<
 });
 
 export default AnaWorkPanel;
+
+/** The same project view works before a conversation has its first turn.
+ * The caller owns its explicit presentation toggle; no monitoring is stopped. */
+export function ProjectTeamPanel({ view, onOpenProject }: { view: ProjectTeamView; onOpenProject?: () => void }) {
+  if (view.state === 'idle') return <p className="ana-work-empty">Open a project to view its team.</p>;
+  if (view.state === 'loading') return <p role="status" className="ana-work-empty">Reading recorded team activity…</p>;
+  if (view.state === 'error' || !view.snapshot) return <div className="ana-work-err" role="status">
+    <span>Team activity could not be verified. This is not an empty team.</span>
+    <button type="button" className="ana-work-link" onClick={view.refresh}>Retry team activity</button>
+  </div>;
+  const snapshot = view.snapshot;
+  return <section className="ana-work" aria-label="Project team" style={{ overflowWrap: 'anywhere' }}>
+    <div className="ana-work-hdr"><h2 className="ana-work-title">AnA and the project team</h2></div>
+    <TeamGoal snapshot={snapshot} onOpenProject={onOpenProject} />
+    <TeamAssessment snapshot={snapshot} />
+    {!snapshot.complete && <p className="ana-work-err" role="status">This view is incomplete. It does not establish the whole project’s progress.</p>}
+    {snapshot.workers.length ? <ul className="ana-work-lines" aria-label="Recorded workers">
+      {snapshot.workers.map(worker => <li key={`${worker.parent}:${worker.worker}`}><TeamWorker worker={worker} /></li>)}
+    </ul> : <p className="ana-work-empty">No worker activity is recorded in this view.</p>}
+    <p className="ana-work-asof">Recorded as of {new Date(snapshot.asOf).toLocaleString()}. Hiding this view does not stop work or its audit record.</p>
+  </section>;
+}
+
+function TeamGoal({ snapshot, onOpenProject }: { snapshot: ProjectTeamSnapshot; onOpenProject?: () => void }) {
+  const goal = snapshot.goal;
+  return <Section title="Project objective" meta={goal ? `version ${goal.version}` : undefined}>
+    {goal ? <><p className="ana-work-sum">{goal.summary ?? 'The current objective is recorded. Open the project to read its wording.'}</p>
+      {goal.truncated && <p className="ana-work-asof">Excerpt truncated. Read the full objective in the project.</p>}
+      {goal.source && <p className="ana-work-asof">{goal.source.locked ? 'Locked objective' : 'Draft objective'} · this is separate from document and filing approval.</p>}</>
+      : <p className="ana-work-empty">The current project objective could not be verified.</p>}
+    {onOpenProject && <button type="button" className="ana-work-link" onClick={onOpenProject}>Read the project objective</button>}
+  </Section>;
+}
+
+function TeamAssessment({ snapshot }: { snapshot: ProjectTeamSnapshot }) {
+  const awaiting = snapshot.workers.filter(w => w.phase === 'reported' && w.parentDisposition === 'pending').length;
+  const blocked = snapshot.workers.filter(w => w.phase === 'held' || w.outcome !== null && w.outcome !== 'completed').length;
+  const accepted = snapshot.workers.filter(w => w.parentDisposition === 'accepted_as_proposal').length;
+  const rework = snapshot.workers.filter(w => w.parentDisposition === 'rework').length;
+  const rejected = snapshot.workers.filter(w => w.parentDisposition === 'rejected').length;
+  const monitor = snapshot.projectMonitor;
+  const gate = { not_assessed: 'Not assessed', unavailable: 'Unavailable', blocked: 'Blocked', satisfied: 'Satisfied' };
+  return <Section title="AnA’s assessment">
+    <p className="ana-work-sum">{awaiting} awaiting AnA review · {blocked} blocked or unfinished · {accepted} proposals accepted · {rework} changes requested · {rejected} rejected.</p>
+    <p className="ana-work-asof">A worker report is not acceptance. Accepted proposals do not constitute human approval or filing readiness.</p>
+    {monitor ? <><p className="ana-work-sum">Recorded project work: {monitor.work.completed}/{monitor.work.total} items completed
+      {monitor.state === 'current' && monitor.work.percentage !== null ? ` · ${monitor.work.percentage}% of recorded work` : ' · overall completion is not measured'}.</p>
+      <ul className="ana-work-lines" aria-label="Project gates"><li>Source: {gate[monitor.gates.source]}</li><li>Document: {gate[monitor.gates.document]}</li><li>Filing: {gate[monitor.gates.filing]}</li></ul>
+      {monitor.state !== 'current' && <p role="status" className="ana-work-err">The project assessment is {monitor.state}. Current readiness has not been established.</p>}
+      {monitor.blockers.length > 0 && <p className="ana-work-asof">{monitor.blockers.length} recorded blocker conditions need review in the project.</p>}</>
+      : <p className="ana-work-asof">Overall project completion and release gates have not been measured in this view.</p>}
+    <p className="ana-work-asof">Overall completion estimate unavailable.</p>
+  </Section>;
+}
+
+/** Safe operational fields only. Never render the child brief or its report. */
+export function TeamWorker({ worker }: { worker: WorkerSnapshot }) {
+  const measurement = workerMeasurement(worker);
+  return <details className="ana-work-sec">
+    <summary className="ana-activity-row"><span className="ana-activity-text">
+      <strong>{worker.role === 'verify' ? 'Verification worker' : 'Research worker'}</strong> · {workerState(worker)}
+      <span className="ana-work-asof"> · {measurement.text}{measurement.percentage !== null ? ` · ${measurement.percentage}% of measured checks` : ''}</span>
+      {measurement.percentage !== null && worker.total !== null && worker.completed !== null &&
+        <progress aria-label={`Measured checks for ${worker.parent} ${worker.worker}`} max={worker.total} value={worker.completed}
+          style={{ width: '5rem', height: 4, marginLeft: 8, accentColor: 'var(--accent-200)' }} />}
+    </span></summary>
+    <p className="ana-work-sum">Assignment: {worker.taskCaption ?? (worker.role === 'verify' ? 'Check assigned work' : 'Research assigned work')}.</p>
+    <p className="ana-work-asof">{worker.parent} · {worker.worker} · record revision {worker.revision}{worker.task ? ` · linked task ${worker.task}` : ''}</p>
+    <p className="ana-work-asof">{workerEstimate(worker)}</p>
+    <p className="ana-work-asof">Recorded disposition: {worker.parentDisposition === 'pending' ? 'Awaiting AnA’s recorded decision' : workerState(worker)}.</p>
+  </details>;
+}

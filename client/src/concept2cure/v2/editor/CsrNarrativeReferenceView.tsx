@@ -35,31 +35,35 @@ interface StoredNarrative {
   subjectId: string; sequence: number; armName: string; events: string[]; categories: string[];
   text: string; contentHash: string | null; verified: boolean;
 }
-interface NarrativePage { narratives: StoredNarrative[]; next: { sequence: number; subjectId: string } | null }
-type Cursor = { sequence: number; subjectId: string } | null;
+type Cursor = { sequence: number; subjectId: string; landedOffset: number; proof: string } | null;
+interface NarrativePage { narratives: StoredNarrative[]; next: Cursor; storeDigest?: string; landedSha256?: string }
 
-const pageUrl = (jobId: number, after: Cursor) => `/api/csr/jobs/${jobId}/narratives/text?limit=${PAGE}`
-  + (after ? `&afterSequence=${after.sequence}&afterSubject=${encodeURIComponent(after.subjectId)}` : '');
+const pageUrl = (jobId: number, storeDigest: string, landedSha256: string, after: Cursor, qc = false) =>
+  `/api/csr/jobs/${jobId}/narratives${qc ? '' : '/text'}?limit=${PAGE}&expectedStoreDigest=${storeDigest}&expectedLandedSha256=${landedSha256}`
+  + (after ? `&afterSequence=${after.sequence}&afterSubject=${encodeURIComponent(after.subjectId)}&afterLandedOffset=${after.landedOffset}&afterProof=${encodeURIComponent(after.proof)}` : '');
 
 /** The store's narratives, a page at a time; `cursors` are the starts of the pages already read, so Previous goes back exactly. */
-function useNarrativePages(jobId: number) {
+function useNarrativePages(jobId: number, storeDigest: string, landedSha256: string) {
   const [cursors, setCursors] = useState<Cursor[]>([null]);
-  const [page, setPage] = useState<NarrativePage | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [read, setRead] = useState<{ at: Cursor; page: NarrativePage } | null>(null);
+  const [failure, setFailure] = useState<{ at: Cursor; message: string } | null>(null);
   const at = cursors[cursors.length - 1];
+  const page = read && read.at === at ? read.page : null;
+  const error = failure && failure.at === at ? failure.message : null;
   useEffect(() => {
     let live = true;
-    setPage(null); setError(null);
-    void apiCall<NarrativePage>('GET', pageUrl(jobId, at)).then(result => {
+    setRead(null); setFailure(null);
+    void apiCall<NarrativePage>('GET', pageUrl(jobId, storeDigest, landedSha256, at)).then(result => {
       if (!live) return;
-      if (result.ok && Array.isArray(result.body?.narratives)) setPage(result.body!);
-      else setError(apiErrorText(result, 'The stored narratives could not be read.'));
+      if (result.ok && Array.isArray(result.body?.narratives) && result.body.storeDigest === storeDigest && result.body.landedSha256 === landedSha256) {
+        setRead({ at, page: result.body });
+      } else setFailure({ at, message: apiErrorText(result, 'The imported narrative store version could not be verified. Reimport this section before reading its narratives.') });
     });
     return () => { live = false; };
-  }, [jobId, at]);
+  }, [jobId, storeDigest, landedSha256, at]);
   const next = useCallback(() => { if (page?.next) setCursors(c => [...c, page.next]); }, [page]);
   const previous = useCallback(() => setCursors(c => (c.length > 1 ? c.slice(0, -1) : c)), []);
-  return { page, error, index: cursors.length - 1, next, previous };
+  return { page, error, at, index: cursors.length - 1, next, previous };
 }
 
 function Narrative({ n }: { n: StoredNarrative }) {
@@ -71,26 +75,29 @@ function Narrative({ n }: { n: StoredNarrative }) {
 }
 
 /** The QC list, read when it is opened: a large build has thousands of subjects. */
-function QcList({ jobId }: { jobId: number }) {
+function QcList({ jobId, storeDigest, landedSha256, at }: { jobId: number; storeDigest: string; landedSha256: string; at: Cursor }) {
   const [rows, setRows] = useState<CsrNarrativeQcRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const load = useCallback(async () => {
     if (rows) return;
-    const result = await apiCall<{ subjects?: CsrNarrativeQcRow[] }>('GET', `/api/csr/jobs/${jobId}/narratives`);
-    if (result.ok && Array.isArray(result.body?.subjects)) setRows(result.body!.subjects!);
-    else setError(apiErrorText(result, 'The narrative QC list could not be read.'));
-  }, [jobId, rows]);
+    const result = await apiCall<{ subjects?: CsrNarrativeQcRow[]; storeDigest?: string; landedSha256?: string }>('GET', pageUrl(jobId, storeDigest, landedSha256, at, true));
+    if (result.ok && Array.isArray(result.body?.subjects) && result.body.storeDigest === storeDigest && result.body.landedSha256 === landedSha256) {
+      setRows(result.body.subjects); setError(null);
+    }
+    else setError(apiErrorText(result, 'The imported narrative QC version could not be verified. Reimport this section before reading its QC.'));
+  }, [jobId, storeDigest, landedSha256, at, rows]);
   return <details onToggle={e => { if ((e.currentTarget as { open?: boolean }).open) void load(); }}>
-    <summary>Narrative QC list</summary>
+    <summary>Narrative QC list for this page</summary>
     {error && <p role="alert">{error}</p>}
     {rows && (rows.length ? <NarrativeQcList rows={rows} /> : <p>No narratives have been composed for this build.</p>)}
   </details>;
 }
 
 /** §14.3.3 by reference: what the section is, the stored narratives a page at a time, and the QC list. Nothing here edits. */
-export function CsrNarrativeReferenceView({ reference }: { reference: CsrNarrativeReference }) {
-  const { page, error, index, next, previous } = useNarrativePages(reference.jobId);
+function NarrativeReferenceContent({ reference }: { reference: CsrNarrativeReference }) {
+  const { page, error, at, index, next, previous } = useNarrativePages(reference.jobId, reference.storeDigest, reference.landedSha256);
   const from = index * PAGE + 1;
+  const qcVisit = at ? `${at.sequence}:${at.subjectId}:${at.landedOffset}:${at.proof}` : 'first';
   return <section aria-label="Section 14.3.3 narratives, held by reference" data-testid="csr-narrative-reference" className="ed-provline">
     <p><strong>{reference.narratives} patient narratives</strong> are held in the narrative store of CSR build {reference.jobId}, not copied into this document.
       This section shows the opening only and is read-only here. To change a narrative, run the narratives again on the build board, then import again.</p>
@@ -106,6 +113,12 @@ export function CsrNarrativeReferenceView({ reference }: { reference: CsrNarrati
       <span>Page {index + 1}</span>
       <button type="button" className="btn ghost" disabled={!page?.next} onClick={next}>Next</button>
     </div>
-    <QcList jobId={reference.jobId} />
+    <QcList key={qcVisit} jobId={reference.jobId} storeDigest={reference.storeDigest} landedSha256={reference.landedSha256} at={at} />
   </section>;
+}
+
+/** A replaced import starts a new visit, including its page cursor and lazy QC. */
+export function CsrNarrativeReferenceView({ reference }: { reference: CsrNarrativeReference }) {
+  const identity = `${reference.jobId}:${reference.storeDigest}:${reference.landedSha256}:${reference.openingSha256}:${reference.narratives}`;
+  return <NarrativeReferenceContent key={identity} reference={reference} />;
 }

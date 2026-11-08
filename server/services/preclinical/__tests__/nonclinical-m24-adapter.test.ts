@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { mapStudyTypeToM24, buildEnrichedM24 } from '../nonclinical-m24-adapter';
+import { mapStudyTypeToM24, buildEnrichedM24, toBuilderStudy } from '../nonclinical-m24-adapter';
 
 describe('mapStudyTypeToM24', () => {
   it('maps the ingest enum onto builder categories', () => {
@@ -23,10 +23,60 @@ describe('mapStudyTypeToM24', () => {
     expect(mapStudyTypeToM24('adme')).toBe('pharmacokinetics');
   });
 
-  it('passes through builder values and defaults unknowns to toxicology', () => {
+  it('passes through builder values and retains unknowns as unclassified', () => {
     expect(mapStudyTypeToM24('pharmacology')).toBe('pharmacology');
     expect(mapStudyTypeToM24('reproductive_tox')).toBe('reproductive_tox');
-    expect(mapStudyTypeToM24('something_new')).toBe('toxicology');
+    expect(mapStudyTypeToM24('something_new')).toBe('unclassified');
+    expect(mapStudyTypeToM24('other')).toBe('unclassified');
+    expect(mapStudyTypeToM24('')).toBe('unclassified');
+  });
+
+  it('recognizes the governed ADME/PK and immunotoxicity types', () => {
+    expect(mapStudyTypeToM24('adme_pk')).toBe('pharmacokinetics');
+    expect(mapStudyTypeToM24('immunotoxicity')).toBe('toxicology');
+  });
+});
+
+describe('toBuilderStudy preserves recorded facts', () => {
+  it.each(['repeat_dose_tox', 'single_dose_tox', 'local_tolerance', 'immunotoxicity', 'adme_pk', 'other', 'something_new'])('retains the original %s type separately from the composition category', (studyType) => {
+    expect(toBuilderStudy({ studyId: 'REC-1', studyType }, 0)).toMatchObject({ studyId: 'REC-1', sourceStudyType: studyType });
+  });
+
+  it('does not invent a report placement or a report-reference finding', () => {
+    const row = toBuilderStudy({ studyId: 'REC-1', studyType: 'repeat_dose_tox' }, 0);
+    expect(row.reportSection).toBe('');
+    expect(row.primaryFinding).toBe('');
+    expect(row.glpStatus).toBeUndefined();
+    expect(row.duration).toBeUndefined();
+    expect(row.noael).toBeUndefined();
+    expect(toBuilderStudy({ studyType: 'repeat_dose_tox', studyTitle: 'An unnumbered study title' }, 4).studyId).toBe('');
+  });
+
+  it('preserves explicitly supplied placement, finding, GLP flag and numeric values', () => {
+    expect(toBuilderStudy({ studyId: 'REC-1', studyType: 'single_dose_tox', reportSection: '4.2.3.1', primaryFinding: 'Recorded finding', glpCompliant: false, durationWeeks: 0, noael: '0 mg/kg' }, 0)).toMatchObject({
+      reportSection: '4.2.3.1', primaryFinding: 'Recorded finding', glpStatus: 'non-GLP', duration: '0 weeks', noael: '0 mg/kg',
+    });
+  });
+
+  it('retains an explicit repeat-dose subtype when adapting an already-coarse study again', () => {
+    const first = toBuilderStudy({ studyId: 'REPEAT-1', studyType: 'repeat_dose_tox' }, 0);
+    const second = toBuilderStudy(first, 0);
+    expect(second).toMatchObject({ studyType: 'toxicology', sourceStudyType: 'repeat_dose_tox' });
+  });
+
+  it('retains an unclassified original type through repeated adaptation', () => {
+    const first = toBuilderStudy({ studyId: 'UNKNOWN-1', studyType: 'novel_study_kind' }, 0);
+    expect(toBuilderStudy(first, 0)).toMatchObject({ studyType: 'unclassified', sourceStudyType: 'novel_study_kind' });
+  });
+
+  it('keeps a specific raw type ahead of conflicting subtype metadata', () => {
+    const input = { studyId: 'SINGLE-1', studyType: 'single_dose_tox', sourceStudyType: 'repeat_dose_tox' };
+    expect(toBuilderStudy(input, 0)).toMatchObject({ studyType: 'toxicology', sourceStudyType: 'single_dose_tox' });
+  });
+
+  it('does not retain metadata that conflicts with an already-coarse category', () => {
+    const input = { studyId: 'COARSE-1', studyType: 'toxicology', sourceStudyType: 'adme_pk' };
+    expect(toBuilderStudy(input, 0)).toMatchObject({ studyType: 'toxicology', sourceStudyType: 'toxicology' });
   });
 });
 
@@ -72,5 +122,13 @@ describe('buildEnrichedM24', () => {
   it('returns no tox profile when no findings are supplied', () => {
     const { toxProfile } = buildEnrichedM24({ studies });
     expect(toxProfile).toBeNull();
+  });
+
+  it.each(['single_dose_tox', 'local_tolerance', 'immunotoxicity', 'toxicology', 'other', 'something_new'])('does not claim repeat-dose coverage from %s', (studyType) => {
+    const { summary } = buildEnrichedM24({ studies: [{ studyId: 'NON-REPEAT', studyType, keyFindings: 'Recorded non-repeat finding' }], drugSubstanceName: 'BX-115' });
+    expect(summary.gaps).toContain('repeat-dose toxicology');
+    expect(summary.narrative).not.toContain('Repeat-dose toxicology: 1 study/ies');
+    expect(summary.tables.find(t => t.title === 'Repeat-Dose Toxicology Summary')).toBeUndefined();
+    expect(summary.tables.flatMap(t => t.rows).some(row => row.includes('NON-REPEAT') && row.some(cell => cell.includes(studyType)))).toBe(true);
   });
 });

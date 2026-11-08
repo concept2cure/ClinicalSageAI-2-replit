@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "node",
+    "scripts/cre/fetch-cdisc-pilot-adam.mjs",
+    "/workspace/scratch/demo-cdisc-pilot"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 30.943,
+  "rawOutput": "csr-fetch-cdisc.log.gz",
+  "rawGzipSha256": "cc494b1eecf248d27b0a09f839915c419364b2ba617f34db63ccedd69623a165"
+}

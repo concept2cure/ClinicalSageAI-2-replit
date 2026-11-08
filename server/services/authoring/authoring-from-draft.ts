@@ -25,7 +25,12 @@ import crypto from 'crypto';
 import { AuthoringCreateOutcomeError } from './authoring-create-outcome';
 import { ANA_MACHINE_AUTHOR_ID, WORKFLOW_IMPORT_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
 import { servedModelsForTurnOrRun } from './authoring-record';
-import type { QualifiedServedModel } from '../ai-governance/approved-models';
+import { approvedEntryFor, qualifyServedModels, type QualifiedServedModel } from '../ai-governance/approved-models';
+import { qualifiedPinFor, qualifiedPinRefusal } from '../ai-gateway/model-governance';
+import { isProductionEnv } from '../ai-gateway/pii-screen';
+import { plainTextToHtml } from '../../../shared/authoring/plain-text-html';
+import { verifyIndependentVaultSource } from '../ana/saved-document-critique';
+import type { DerivativeSourceBinding } from '../ai-gateway/providers/org-placement-writer';
 import { isWorkflowImportOrigin, type AuthoringImportOrigin, type WorkflowImportOrigin } from '../../../shared/authoring/source-import';
 import { columnState, type Queryable } from './authoring-evidence';
 import { sanitizeAuthoringSectionHtml, sanitizeMachineDraftSectionHtml } from './authoring-html-sanitizer';
@@ -53,6 +58,9 @@ export const PROVENANCE_SOURCES: readonly ProvenanceSource[] = ['ana', 'seed', '
 
 /** What `authoring_documents.provenance` holds (migrations/20260921_authoring_document_provenance.sql). */
 export interface DocumentProvenance {
+  /** Server-verified nested generation, separate from the parent conversation. */
+  generatedDerivative?: { requestId: string; derivativeId: string; payloadSha256: string; outputSha256: string;
+    storedHtmlSha256: string; provider: string; model: string; resolvedModel: string; sourceBinding: DerivativeSourceBinding };
   /** Admitted filing and immutable company revision; HTTP provenance cannot supply it. */
   companyCorrespondence?: CompanyCorrespondenceOrigin;
   /** Server-verified original for a source pulled into the one editor. HTTP
@@ -135,7 +143,7 @@ export interface DocumentProvenance {
   recordedAt: string;
 }
 
-export type ProvenanceInput = Omit<DocumentProvenance, 'recordedAt' | 'projectSourceReferences' | 'importSource' | 'companyCorrespondence'>;
+export type ProvenanceInput = Omit<DocumentProvenance, 'recordedAt' | 'projectSourceReferences' | 'importSource' | 'companyCorrespondence' | 'generatedDerivative'>;
 
 /* `model` is NOT here, and that is the point of round 15's change at this door:
    a caller cannot name the model that wrote the draft. It is dropped like any
@@ -362,6 +370,11 @@ async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, program
 }
 
 export interface CreateDocumentFromDraftOptions {
+  /** Trusted internal lookup only; the durable gateway row supplies authority. */
+  generatedDerivative?: {
+    receipt: { requestId: string; provider: string; model: string; resolvedModel?: string; contentSha256: string };
+    derivativeId: string; payloadSha256: string; rawContent: string; reserve: (q: Queryable) => Promise<void>;
+  };
   /** Server-only filing receipt, reverified inside the canonical create transaction. */
   companyCorrespondence?: { origin: CompanyCorrespondenceOrigin; reserve: (q: Queryable) => Promise<void> };
   /** Internal verified source receipt; public provenance parsing drops it. */
@@ -369,6 +382,91 @@ export interface CreateDocumentFromDraftOptions {
   /** Internal: the reason a person stated for a governed AnA save (save_document_to_vault).
    *  Recorded as each section's genesis/CREATE reason for change in place of the generic one. */
   changeReason?: string;
+}
+
+/** Resolve actual nested generation from the append-only gateway ledger. A
+ * model/body DTO or the parent turn's model is never content attribution. */
+type GeneratedDerivativeOption = NonNullable<CreateDocumentFromDraftOptions['generatedDerivative']>;
+const derivativeTextSha = (text: string) => crypto.createHash('sha256').update(text, 'utf8').digest('hex');
+function assertDerivativeText(input: CreateDocumentFromDraftInput, stored: string[], generated: GeneratedDerivativeOption): void {
+  const lookup = generated.receipt;
+  if (!UUID_RE.test(lookup.requestId) || !UUID_RE.test(generated.derivativeId) || typeof generated.rawContent !== 'string' ||
+      generated.rawContent.length > 200_000 || typeof generated.reserve !== 'function' || input.sections.length !== 1 ||
+      input.sections[0].content !== plainTextToHtml(generated.rawContent) ||
+      stored[0] !== sanitizeMachineDraftSectionHtml(plainTextToHtml(generated.rawContent)) ||
+      derivativeTextSha(generated.rawContent) !== lookup.contentSha256) throw new DraftSourceVerificationError();
+}
+async function derivativeGenerationRow(q: Queryable, scope: {
+  ctx: Pick<CreateContext, 'tenantId' | 'actor'>; input: Pick<CreateDocumentFromDraftInput, 'programId'>;
+  generated: Pick<GeneratedDerivativeOption, 'receipt' | 'derivativeId' | 'payloadSha256'>; sourceReaderUserId?: number;
+}) {
+  const { ctx, input, generated } = scope, lookup = generated.receipt;
+  const project = await q.query('SELECT id FROM projects WHERE organization_id=$1 AND regulatory_program_id=$2', [ctx.tenantId, input.programId]);
+  if (project.rows.length !== 1) throw new DraftSourceVerificationError();
+  const rows = await q.query(`SELECT provider,model,resolved_model,metadata FROM ai.gateway_audit_log
+    WHERE request_id=$1::uuid AND organization_id=$2::text AND user_id=$3::text AND project_id=$4::text
+      AND success=true AND cached=false AND deterministic=false AND task_type='document_drafting'
+      AND caller_module='approved-derivative'`,
+  [lookup.requestId, String(ctx.tenantId), String(ctx.actor.id), String(project.rows[0].id)]);
+  if (rows.rows.length !== 1) throw new DraftSourceVerificationError();
+  const row = rows.rows[0], proof = row.metadata?.verifiedDerivativeGeneration;
+  if (!proof || typeof row.resolved_model !== 'string' || !row.resolved_model) throw new DraftSourceVerificationError();
+  const pairs = [[proof.requestId, lookup.requestId], [proof.organizationId, ctx.tenantId], [proof.userId, Number(ctx.actor.id)],
+    [proof.projectId, project.rows[0].id], [proof.derivativeId, generated.derivativeId], [proof.payloadSha256, generated.payloadSha256],
+    [proof.outputSha256, lookup.contentSha256], [row.provider, lookup.provider], [row.model, lookup.model],
+    [row.resolved_model, lookup.resolvedModel], [proof.provider, row.provider], [proof.model, row.model], [proof.resolvedModel, row.resolved_model],
+    [proof.resultingContentTier, 2], [proof.semanticVerified, false]];
+  if (!pairs.every(([actual, expected]) => actual === expected)) throw new DraftSourceVerificationError();
+  await verifyIndependentVaultSource(q, { organizationId: ctx.tenantId, userId: scope.sourceReaderUserId ?? Number(ctx.actor.id), binding: proof.sourceBinding });
+  return row;
+}
+function derivativeServingModels(row: Record<string, any>): QualifiedServedModel[] {
+  const entry = approvedEntryFor({ provider: row.provider, model: row.model });
+  const servedBy = qualifyServedModels([{ provider: row.provider, model: row.model }]);
+  if (!entry || entry.pinnedVersion !== row.model || !servedBy[0]?.qualified) throw new DraftSourceVerificationError();
+  const pin = row.metadata.qualifiedModelPin ?? (isProductionEnv() ? qualifiedPinFor(entry, 'document_drafting') : undefined);
+  if (pin && (qualifiedPinRefusal({ qualifiedModelPin: pin, taskType: 'document_drafting' }) ||
+      pin.provider !== row.provider || pin.pinnedVersion !== row.resolved_model)) throw new DraftSourceVerificationError();
+  return servedBy;
+}
+
+/** Release reuses the actual nested gateway receipt, never the parent turn's model or displayed provenance. */
+export async function verifyRetainedDerivativeGeneration(q: Queryable, input: {
+  organizationId: number; creatorUserId: number; currentReaderUserId: number; programId: string;
+  genesisHtml: string; proof: NonNullable<DocumentProvenance['generatedDerivative']>;
+}): Promise<boolean> {
+  try {
+    const { proof } = input;
+    if (!proof || !UUID_RE.test(proof.requestId) || !UUID_RE.test(proof.derivativeId) ||
+        !Number.isSafeInteger(input.creatorUserId) || input.creatorUserId < 1 ||
+        derivativeTextSha(input.genesisHtml) !== proof.storedHtmlSha256) throw new DraftSourceVerificationError();
+    const row = await derivativeGenerationRow(q, {
+      ctx: { tenantId: input.organizationId, actor: { id: String(input.creatorUserId), email: null } },
+      input: { programId: input.programId }, sourceReaderUserId: input.currentReaderUserId,
+      generated: { derivativeId: proof.derivativeId, payloadSha256: proof.payloadSha256,
+        receipt: { requestId: proof.requestId, provider: proof.provider, model: proof.model, resolvedModel: proof.resolvedModel, contentSha256: proof.outputSha256 } },
+    });
+    if (JSON.stringify(row.metadata.verifiedDerivativeGeneration.sourceBinding) !== JSON.stringify(proof.sourceBinding)) throw new DraftSourceVerificationError();
+    derivativeServingModels(row);
+    return true;
+  } catch (error) {
+    if (error instanceof DraftSourceVerificationError) return false;
+    throw error;
+  }
+}
+async function verifiedDerivativeGeneration(q: Queryable, ctx: CreateContext, input: CreateDocumentFromDraftInput,
+  stored: string[], generated: GeneratedDerivativeOption): Promise<Partial<DocumentProvenance>> {
+  try {
+    assertDerivativeText(input, stored, generated);
+    const row = await derivativeGenerationRow(q, { ctx, input, generated });
+    derivativeServingModels(row);
+    await generated.reserve(q);
+    const servedBy = derivativeServingModels(row); // final synchronous PQ admission follows custody awaits
+    return { model: row.resolved_model, servedBy, governedWrite: 'allowed', generatedDerivative: {
+      requestId: generated.receipt.requestId, derivativeId: generated.derivativeId, payloadSha256: generated.payloadSha256,
+      outputSha256: generated.receipt.contentSha256, storedHtmlSha256: derivativeTextSha(stored[0]), provider: row.provider,
+      model: row.model, resolvedModel: row.resolved_model, sourceBinding: globalThis.structuredClone(row.metadata.verifiedDerivativeGeneration.sourceBinding) } };
+  } catch { throw new DraftSourceVerificationError(); }
 }
 
 function workflowOriginFor(options?: CreateDocumentFromDraftOptions): WorkflowImportOrigin | null {
@@ -390,7 +488,8 @@ function draftedSectionSeeds(input: CreateDocumentFromDraftInput, contents: stri
   return input.sections.map((section, i) => ({
     code: section.code, title: section.title, content: contents[i], orderIndex: i,
     changeReason: options?.verifiedImport?.reason ?? options?.changeReason ?? CHANGE_REASON[provenance.source],
-    metadata: { provenance, drafted: true, ...(workflowImport ? { workflowSourceOrigin: workflowImport.sectionOrigins.find(origin => origin.code === section.code) ?? null } : {}) },
+    metadata: { provenance, drafted: true, ...(provenance.source === 'ana' ? { independentCheck: { required: true, version: 1 } } : {}),
+      ...(workflowImport ? { workflowSourceOrigin: workflowImport.sectionOrigins.find(origin => origin.code === section.code) ?? null } : {}) },
     contributors,
     lineage: {
       machineDraft: machine ? { authorId } : null,
@@ -459,7 +558,7 @@ export async function createDocumentFromDraft(
      the draft names — before `insertDocumentTx` opens its transaction, so a
      missing store or a malformed reference cannot abort the write it is being
      checked for. A seed or an import is a person's act and carries no verdict. */
-  if (provenance.source === 'ana') Object.assign(provenance, await governedWriteOf(ctx.pool, ctx.tenantId, provenance.turnId));
+  if (provenance.source === 'ana' && !options?.generatedDerivative) Object.assign(provenance, await governedWriteOf(ctx.pool, ctx.tenantId, provenance.turnId));
   if (workflowImport) Object.assign(provenance, { governedWrite: 'unverified', governedWriteWhy: 'Workflow source authorship and model qualification are retained as recorded; this import is not human adoption.' });
   // A machine draft keeps no image: a model's image is never an uploaded
   // figure (item 18, 2026-10-05). An import or seed keeps its figures.
@@ -494,6 +593,10 @@ export async function createDocumentFromDraft(
           ...options.verifiedImport.origin, warnings: [...options.verifiedImport.warnings],
           reason: options.verifiedImport.reason,
         };
+      }
+      if (options?.generatedDerivative) {
+        if (provenance.source !== 'ana') throw new DraftSourceVerificationError();
+        Object.assign(provenance, await verifiedDerivativeGeneration(client, ctx, input, storedContent, options.generatedDerivative));
       }
     },
   ).catch(err => {
