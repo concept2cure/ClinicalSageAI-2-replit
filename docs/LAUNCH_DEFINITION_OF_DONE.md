@@ -2115,3 +2115,80 @@ question was raised by the RIM session's caller check against the corrected R1 i
   - the plain-text segment searches.
 - **Owner.** RIM, under `Plan: R1`, after F1 slice 2, together with P-87's deletion of the IND diff and manifest
   routes.
+
+### P-107 — Decided under the founder's delegation: the rail, Anna's first audience and budgets, Vault parity, and R1's next area
+
+The founder, 2026-11-08. The coordinating session offered to put open questions to the founder: whether Biostatistics
+belongs on the rail; Anna's three §14.5 questions; Vault parity's questions; R1's next area and its 171 retirement
+candidates; `011Dpx…`'s progress entry; and the unassigned D3-4 and S12. The founder answered: **"No you decide as the
+global sme."** The coordinating session decided as follows, as P-28 was decided under the founder's delegation of
+2026-10-07. The founder may overrule any item by a later decision.
+
+- **What is decided.**
+  1. **Biostatistics stays on the rail.** This confirms `scripts/ci/one-product-baseline.json`
+     `founderDecisions["rail:biostatistics"]`, which `5144702d21` wrote from the founder's words of 2026-11-06 without a
+     decision number. Its basis: those words name biostatistics among the core modules, and the rail as their
+     navigation point. It is a work area over the project's data, not an app. Its documents (the SAP, the TLFs) are
+     written in the one editor (P-101). RULE 4's 2026-10-31 list of Core work workspaces to converge is superseded for
+     Biostatistics' rail entry only.
+  2. **Anna (P-104/P-105 §14.5).**
+     - **Internal first.** Today's AnA serves customers under human signing, unchanged.
+       - Anna's multi-agent dispositions (workers that propose, a lead that disposes) run internally and for a design
+         partner by opt-in.
+       - Each disposition reaches customers one capability at a time, after that capability's §11 phase gate passes and
+         its model is PQ-passed. Today none of the 16 PQ entries has passed.
+       - "Show team" stays off by default.
+     - **Cost and latency are budgeted from measurement, per document type.**
+       - The §14.4 spike measures each type on its fixtures. The cap is twice the measured p95.
+       - At a cap the existing run control stops and asks a person; it never truncates silently, and it never answers
+         with a partial result labelled complete.
+       - Until a type is measured: an interactive answer has 60 seconds, a background build has 30 minutes, and no run
+         starts without a cap.
+       - Budgets are recorded beside the approved-models entry, with their measurement.
+     - **Internal dispositions are inside the validation package, by risk (GAMP 5 / CSA).**
+       - A disposition that can change governed content, a figure, a gate's verdict or a filing gets OQ scripts with
+         fixtures in the D4 package.
+       - A disposition that only orders, routes or summarises for a person is covered by the risk assessment.
+       - Human signing of consequential acts is unchanged.
+  3. **Vault parity (`01KnUG…`'s questions; the Vault plan's FD3; MR-08 Stage 6 step 4).**
+     - **No cross-sponsor library view for a CRO.** With no project open, the Vault first asks which sponsor; every
+       view is inside one sponsor. Search never spans sponsors.
+     - **Device coverage follows the eSTAR mapper's per-device slots**, the filing's own structure. The rule pack's
+       mandatory flags converge onto the mapper, so one rule remains. The D4 and D6 disagreement is a defect,
+       repaired red first.
+     - **A seal says when its version has been superseded** ("superseded by version n on date"), read from the version
+       chain. What was sealed, and whether it is intact, is unchanged.
+     - **Retention is FD3 (c).** No version is destroyed during a tenant's life; retention may only tombstone, and the
+       refusal of VR-07 stands. S3 Object Lock in governance mode and noncurrent-version retention go to the D1 lane
+       with the AWS account. A destruction policy needs a later decision with a written schedule.
+     - **Renditions:** each version gets a PDF rendition through the existing converter (`pdf-converter.ts`), bound to
+       the source version's SHA-256 and shown in the viewer. A rendition is never filed in place of its source.
+     - **Binders** are views over folders and version links. A project's editors may edit them, each edit is audited,
+       and a binder never alters a document.
+  4. **R1's next area is CMC / Module 3, then RBM**, the featured work areas (P-79). CMC's approve route not checking
+     method validation (plan §3a, D5/S7) shows its reach is not proven.
+  5. **The 171 route files with no caller.** A route is retired by the lane that owns it, under R1, when both hold:
+     - it has no caller in any history;
+     - it duplicates a capability that is reachable.
+
+     The rest of the procedure:
+     - The commit names the replacement by path and re-runs the R1 inventory.
+     - Retirements go in batches of up to 20.
+     - Nothing is dropped from the database (RULE 1).
+     - A route whose capability exists nowhere else comes back as a reach proposal, not a retirement.
+  6. **`011Dpx…`'s progress entry** may be committed. Recording a session's own progress is what P-100 is for, and it
+     is not a plan amendment.
+  7. **D3-4 (the step bodies), then S12 (work projects),** go to one project-page session, started by the coordinating
+     session. It holds `Project*.tsx` in COORDINATION first.
+- **What is not decided.** These stay with the founder:
+  - the founder's own actions: rotating the Neon owner passwords and the Hugging Face token; a model key; the Codespace
+    image's Debian and PostgreSQL hosts; the AWS account for D1;
+  - every other open question in the plan, unless named above.
+
+  No new file, route, table, screen, tool or model is approved (RULE 6). Every item above extends existing code.
+- **Owner.** The coordinating session records and routes:
+  - item 1: done here;
+  - item 2: the Anna-runtime owner `01KZK3…`;
+  - item 3: the Vault parity lane `01KnUG…`, or S6's holder;
+  - items 4 and 5: R1's session;
+  - item 7: the new project-page session.
