@@ -77,6 +77,25 @@ type Pool = ReturnType<typeof getPool>;
 export const METHOD_SOURCE_TYPE = 'method';
 
 /**
+ * What a recorded validation status MEANS — the one vocabulary.
+ *
+ * These two sets were declared inside `ich-compliance-q2.ts`, which is a
+ * consumer of this module's `AnalyticalMethodRecord`. The specification
+ * approval gate needs the same reading ("is this procedure fit to measure the
+ * limit against?"), and a second copy of the vocabulary is how two surfaces of
+ * one product come to disagree about whether a method is validated. They live
+ * with the record whose field they interpret; Q2 imports them.
+ */
+export const METHOD_VALIDATED = new Set(['validated', 'verified', 'transferred']);
+/** Statuses that show a procedure is suitable for its use without full validation. */
+export const METHOD_SUITABLE = new Set(['qualified', 'suitable', 'suitability confirmed', 'phase-appropriate', 'phase appropriate', 'fit for purpose']);
+
+/** A recorded status, compared the one way: trimmed and lower-cased. */
+export function methodStatusKey(status: unknown): string {
+  return String(status ?? '').trim().toLowerCase();
+}
+
+/**
  * An analytical method normalized to the field names the ICH / QbD / control
  * strategy rules consume.
  */
@@ -251,4 +270,85 @@ export async function loadProjectAnalyticalMethods(
       reason: `analytical method source read failed: ${detail}`,
     };
   }
+}
+
+/**
+ * May this specification be approved, as far as its analytical method goes?
+ *
+ * ── The defect this closes ───────────────────────────────────────────────────
+ * The Specifications tab told a CMC user, in two places, that "a limit whose
+ * method is not validated cannot be approved (ICH Q2)". Nothing refused it.
+ * `POST /api/cmc/specifications/:id/approve` checked not-found, already-
+ * approved, signing authority, re-authentication, reason and the ledger, and
+ * never looked at the method; the screen's own `noMethod` was `!method` — "no
+ * method name was typed" — so a specification naming a method whose register
+ * row was still `development` passed the warning entirely. A gate that is
+ * stated and not enforced is worse than no gate: it is read as having been
+ * applied.
+ *
+ * ── Why it refuses only what it KNOWS is unfit ───────────────────────────────
+ * This module's own rule for a method record is that an absent validation
+ * status is "not evaluated", never "failed" (see `validationStatus` above).
+ * The gate keeps that rule, because the opposite blocks legitimate work:
+ *
+ *   - no method named at all → REFUSED. A release limit with no procedure to
+ *     measure it cannot be approved by anyone's reading of ICH Q6A.
+ *   - the named method is in the register with a recorded status that is
+ *     neither validated nor shown suitable (`development`, `retired`) →
+ *     REFUSED, naming the method and the status. This is the screen's promise.
+ *   - the named method is not in the register → allowed, and said. A
+ *     pharmacopoeial procedure (USP <711>) legitimately has no register row,
+ *     and refusing there would block an approval the rule never meant to.
+ *   - the register could not be read, or records no status for the method →
+ *     allowed, and said. A signature is not blocked because a read failed, and
+ *     "not evaluated" is not "unvalidated".
+ *
+ * The name is matched exactly, trimmed and lower-cased, and never by
+ * substring: a refusal over the WRONG method would be a false block on a
+ * governed act, and certainty is the right bar for one.
+ */
+export type SpecificationMethodVerdict =
+  | { approve: true; evaluated: boolean; note: string }
+  | { approve: false; code: 'METHOD_NOT_NAMED' | 'METHOD_NOT_FIT'; message: string };
+
+export function specificationMethodVerdict(
+  methodName: string | null | undefined,
+  source: AnalyticalMethodSourceResult,
+): SpecificationMethodVerdict {
+  const named = String(methodName ?? '').trim();
+  if (!named) {
+    return {
+      approve: false,
+      code: 'METHOD_NOT_NAMED',
+      message:
+        'This specification names no analytical method, so there is no procedure its limits are measured by. ' +
+        'Record the method on the specification, then approve it.',
+    };
+  }
+
+  if (!source.available) {
+    return { approve: true, evaluated: false, note: `the analytical method register could not be read (${source.reason}), so "${named}" was not evaluated` };
+  }
+
+  const wanted = named.toLowerCase();
+  const match = source.methods.find((m) => m.methodName.trim().toLowerCase() === wanted);
+  if (!match) {
+    return { approve: true, evaluated: false, note: `"${named}" is not recorded in this project's analytical method register, so it was not evaluated` };
+  }
+  if (!match.validationStatusRecorded) {
+    return { approve: true, evaluated: false, note: `"${named}" records no validation status, so it was not evaluated (ICH Q2 reports that as not evaluated, never as a failure)` };
+  }
+
+  const key = methodStatusKey(match.validationStatus);
+  if (METHOD_VALIDATED.has(key) || METHOD_SUITABLE.has(key)) {
+    return { approve: true, evaluated: true, note: `"${named}" is recorded as ${match.validationStatus}` };
+  }
+  return {
+    approve: false,
+    code: 'METHOD_NOT_FIT',
+    message:
+      `The analytical method "${match.methodName}" is recorded as ${match.validationStatus}, which is neither ` +
+      'validated nor shown suitable, so a limit measured by it cannot be approved (ICH Q2). Validate the method, ' +
+      'or record the status that shows it is suitable for this use.',
+  };
 }

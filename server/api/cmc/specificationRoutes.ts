@@ -21,6 +21,7 @@ import { writeChainedAuditRow } from '../../services/auditService.js';
 import { requireGovernedReason } from '../../routes/governed-reason';
 import { inRefusableTransaction, isRefusal, refuse } from '../../services/vault/vault-refusal.js';
 import { isApprovedSpecification } from '../../services/cmc/signed-record';
+import { loadProjectAnalyticalMethods, specificationMethodVerdict } from '../../services/cmc/analytical-method-source';
 /* The specification register's history, read into the same shape the other
    sixteen registers' history is read into, so the product has one history
    panel (services/cmc/register-history.ts). */
@@ -417,22 +418,89 @@ const LEDGER_BINDING_NOTE =
   'No content digest is registered for a quality specification, so none is claimed: bound_payload_digest is the governed action audit sha256 chain hash (target, payload hash, actor, time), not a content hash.';
 
 /**
- * Why a specification cannot be approved now, or null. Missing is 404. One
- * approval per revision: a second signature over a specification already
+ * Why a specification cannot be approved now, or null. Missing is 404.
+ *
+ * One approval per revision: a second signature over a specification already
  * approved attested nothing new and stacked a second signature on the record;
  * a revision is an edit, which withdraws the approval first.
+ *
+ * And ICH Q2 — a limit is approved only with a procedure fit to measure it.
+ * The Specifications tab has stated this in two places since the tab was
+ * written and nothing enforced it, so any caller that was not the form (an AnA
+ * tool, a script, curl) approved freely; the form's own check was `!method`
+ * ("no name typed"), which a method still in `development` passes.
+ * `specificationMethodVerdict` refuses only what it KNOWS is unfit — its
+ * header says why an unreadable register and an unrecorded status are not
+ * refusals. The method register is read on the POOL rather than the caller's
+ * transaction: it is a precondition on another table, and the specification
+ * row is already locked FOR UPDATE by the time this is asked.
  */
-function approvalTargetRefusal(spec: Record<string, unknown> | undefined): { status: number; body: Record<string, unknown> } | null {
+/**
+ * The analytical method this specification names, from `test_methods`.
+ *
+ * The column is jsonb and this register writes `{ method }`; a caller that is
+ * not the form may have persisted a bare string. Both are read, exactly as the
+ * client's `specRowFromApi` reads them, so the screen and the gate resolve the
+ * same name.
+ */
+function methodNameOf(spec: Record<string, unknown> | undefined): string {
+  const raw = spec?.test_methods;
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    const m = (raw as Record<string, unknown>).method;
+    return typeof m === 'string' ? m : '';
+  }
+  if (typeof raw === 'string') {
+    const t = raw.trim();
+    if (!t) return '';
+    try {
+      const parsed = JSON.parse(t);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        const m = (parsed as Record<string, unknown>).method;
+        return typeof m === 'string' ? m : '';
+      }
+      return typeof parsed === 'string' ? parsed : '';
+    } catch {
+      return t;
+    }
+  }
+  return '';
+}
+
+/**
+ * ICH Q2: a limit is approved only with a procedure fit to measure it.
+ *
+ * The Specifications tab has stated this in two places since the tab was
+ * written and nothing enforced it, so any caller that was not the form — an
+ * AnA tool, a script, curl — approved freely; and the form's own check was
+ * `!method` ("no name typed"), which a method still in `development` passes.
+ *
+ * `specificationMethodVerdict` refuses only what it KNOWS is unfit — its
+ * header says why an unreadable register and an unrecorded status are not
+ * refusals. The method register is read on the POOL rather than the caller's
+ * transaction: it is a precondition on another table, and the specification
+ * row is already locked FOR UPDATE by then.
+ */
+async function approvalTargetRefusal(
+  spec: Record<string, unknown> | undefined,
+  orgId: number,
+): Promise<{ status: number; body: Record<string, unknown> } | null> {
   if (!spec) return { status: 404, body: { success: false, error: 'Specification not found' } };
-  if (!isApprovedSpecification(spec)) return null;
-  return {
-    status: 409,
-    body: {
-      success: false,
-      error: 'ALREADY_APPROVED',
-      message: 'This specification is already approved. To revise it, edit it with a reason; that withdraws the approval, and the revision is approved again.',
-    },
-  };
+  if (isApprovedSpecification(spec)) {
+    return {
+      status: 409,
+      body: {
+        success: false,
+        error: 'ALREADY_APPROVED',
+        message: 'This specification is already approved. To revise it, edit it with a reason; that withdraws the approval, and the revision is approved again.',
+      },
+    };
+  }
+  const verdict = specificationMethodVerdict(
+    methodNameOf(spec),
+    await loadProjectAnalyticalMethods(getPool(), orgId, String(spec.project_id ?? '')),
+  );
+  if (verdict.approve) return null;
+  return { status: 409, body: { success: false, error: verdict.code, message: verdict.message } };
 }
 
 // POST /api/cmc/specifications/:id/approve - Governed e-signature approval
@@ -481,7 +549,7 @@ router.post('/:id/approve', async (req, res) => {
       `SELECT * FROM quality_specifications WHERE id = $1 AND tenant_id = $2 FOR UPDATE`,
       [id, orgId],
     );
-    const notApprovable = approvalTargetRefusal(current.rows[0]);
+    const notApprovable = await approvalTargetRefusal(current.rows[0], orgId);
     if (notApprovable) {
       await client.query('ROLLBACK');
       return res.status(notApprovable.status).json(notApprovable.body);

@@ -29,14 +29,24 @@ const h = vi.hoisted(() => {
   const state = { log: [] as string[], sigFail: null as unknown, qc: [] as unknown[], qcAfter: null as unknown[] | null, qcReads: 0, batchDeviations: null as unknown };
   /* The locked row each ceremony evaluates its precondition on: the Q2 package
      for a method, the report for a process-validation record, the justification
-     for a comparability assessment. Without them those three answer 409 and
-     never reach the signature, which is the point of the preconditions. */
+     for a comparability assessment, and — since the ICH Q2 approval gate — the
+     analytical method a specification's limits are measured by. Without them
+     those ceremonies answer 409 and never reach the signature, which is the
+     point of the preconditions.
+
+     `test_methods` names a method; `project_id` is null here, so the method
+     register is not readable for this row and the gate records the method as
+     not evaluated rather than refusing it (services/cmc/
+     analytical-method-source.ts, `specificationMethodVerdict`). That the gate
+     refuses an UNFIT method, and writes nothing when it does, is
+     specification-approve-method-gate.test.ts. */
   const ROW = {
     id: 9, status: 'draft', approval_status: 'draft', project_id: null, tenant_id: '7',
     organization_id: 7, batch_number: 'B-9', release_status: null,
     ich_q2_parameters: { characteristics: ['Specificity', 'Accuracy'] },
     validation_report: 'PV-RPT-011',
     justification: 'Comparable on every attribute against the pre-change criteria.',
+    test_methods: { method: 'SE-HPLC' },
   };
   const client = {
     query: async (sql: string) => {

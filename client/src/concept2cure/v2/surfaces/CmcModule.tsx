@@ -1358,13 +1358,20 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       fireToast('Couldn’t approve the specification — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   };
+  /* `noMethod` is `!method` — "no method name is recorded on this limit". It
+     was labelled "without a validated method", which is a different and
+     stronger claim the screen could not make: whether the NAMED method is
+     validated is the analytical register's answer, and the approve route is
+     what asks it (ICH Q2, `specificationMethodVerdict`). The banner now says
+     only what this row knows, and the refusal a reader may still meet comes
+     from the server, in the server's words. */
   const noMethodCount = rows.filter((r) => r.noMethod).length;
   return (
     <div className="cm-body">
       <CmHead title="Specifications" meta="Release and shelf-life limits — drug substance and drug product"
         actions={<button className="nda-open" onClick={() => setEdit('new')} disabled={!projectId} title={!projectId ? 'Open a project to record specifications' : ''}>{I.plus} New specification</button>} />
       <CmCorrNotice prefixes={['3.2.S.4', '3.2.P.5']} noun="these specifications" nav={nav} />
-      {noMethodCount > 0 && <div className="pj-con" style={{ marginBottom: 14 }}><span className="ico">{I.alertTriangle}</span><div><div className="pj-con-t">{noMethodCount} specification without a validated method</div><div className="pj-con-d">A specification cannot be approved until its analytical method is validated (ICH Q2). Add the method, or ask AnA to draft the validation justification.</div></div></div>}
+      {noMethodCount > 0 && <div className="pj-con" style={{ marginBottom: 14 }}><span className="ico">{I.alertTriangle}</span><div><div className="pj-con-t">{noMethodCount} specification{noMethodCount === 1 ? '' : 's'} with no analytical method recorded</div><div className="pj-con-d">A limit is approved only with a procedure fit to measure it (ICH Q2), so these cannot be approved until a method is recorded. A method that is recorded but still in development is refused at approval, naming its status.</div></div></div>}
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Specification table</span><span className="s">{rows.length} attributes</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
@@ -1390,7 +1397,7 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
                 <td><span className={'rd-chip tone-' + stTone(r.st)}>{cmcStateWord(r.st)}</span></td>
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <button className="nda-open" onClick={() => setEdit(r)}>{I.penLine} Edit</button>
-                  {r.st !== 'approved' && <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setSign(r)} disabled={r.noMethod} title={r.noMethod ? 'Validate the method before approval' : ''}>{I.lock} Approve</button>}
+                  {r.st !== 'approved' && <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setSign(r)} disabled={r.noMethod} title={r.noMethod ? 'Record the analytical method this limit is measured by, then approve' : ''}>{I.lock} Approve</button>}
                   {/* The limits an inspector asks about first were the one
                       register whose changes could not be read in the product:
                       the route existed and nothing called it. */}

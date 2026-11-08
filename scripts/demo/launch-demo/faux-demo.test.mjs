@@ -93,7 +93,10 @@ function fakeApplication({ organization = identity, otherType = false, missingTe
       assert.equal(body.get('programId'), 'p1');
       const kind = body.get('documentType');
       const code = String(body.get('documentCode'));
-      const expected = code.includes('PROTOCOL') ? 'PROTOCOL' : code.includes('-SAP-') ? 'SAP' : 'OTHER';
+      // The pack's own taxonomy (packs/faux.mjs): protocol, SAP, the two TLFs as
+      // REPORT since 8fb6535a5, and every other source OTHER.
+      const expected = code.includes('PROTOCOL') ? 'PROTOCOL' : code.includes('-SAP-') ? 'SAP'
+        : code.includes('-TL-F-') ? 'REPORT' : 'OTHER';
       assert.equal(kind, expected, 'use the existing Data Room taxonomy for the source type');
       const upload = body.get('file');
       assert.ok(upload && typeof upload.arrayBuffer === 'function');

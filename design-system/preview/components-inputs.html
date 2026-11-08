@@ -13,7 +13,7 @@
 .c2c-v2 .de-textarea { min-height: 80px; padding: 8px 12px; resize: vertical; line-height: 1.5; }
 .c2c-v2 :is(.c2c-input, .de-input, .de-textarea)::placeholder { color: var(--text-300); font-style: italic; }
 .c2c-v2 :is(.c2c-input, .de-input, .de-select, .de-textarea):is(:focus, :focus-visible) {
-  outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-000);
+  outline: 2px solid transparent; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-000);
 }
 .c2c-v2 :is(select.c2c-input, .de-select) {
   appearance: none; padding-right: 32px; background-repeat: no-repeat; background-position: right 10px center;
@@ -35,7 +35,7 @@
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .c2c-v2.dark :is(.landing-composer, .pj-composer, .ct-composer) { box-shadow: 0 1px 2px rgb(0 0 0 / .30), 0 6px 20px -8px rgb(0 0 0 / .45); }
-.c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer):focus-within { border-color: var(--border-focus); }
+.c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer):focus-within { border-color: var(--border-focus); outline: 2px solid transparent; }
 .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea) { font-size: 15px; line-height: 1.5; color: var(--text-100); }
 .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea)::placeholder { color: var(--text-300); }
 .c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send) {
@@ -54,8 +54,8 @@
 
 /* ── specimen only ──
    Focus shown at rest: the declarations are the focus rules above, unchanged. */
-.c2c-v2 .c2c-input.is-focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-000); }
-.c2c-v2 .landing-composer.is-focus { border-color: var(--border-focus); }
+.c2c-v2 .c2c-input.is-focus { outline: 2px solid transparent; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-000); }
+.c2c-v2 .landing-composer.is-focus { border-color: var(--border-focus); outline: 2px solid transparent; }
 .stack { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
 .lbl { margin: 0 0 6px; font-size: var(--fs-caption); font-weight: 500; color: var(--text-300); }
 .landing-tool svg { width: 18px; height: 18px; } /* the icon is 1em of the tool's 18px */

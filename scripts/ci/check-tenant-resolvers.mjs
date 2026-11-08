@@ -61,6 +61,62 @@ const RAW_REQUEST_FIELD_READ =
 /** The shared, JWT-first resolver in server/utils/tenantContext.ts. */
 const DELEGATES_TO_SHARED = /\bgetSecureOrgId\s*\(/;
 
+/**
+ * The code of a window: comments removed, and the text of string and template
+ * literals removed, with a template's \${…} expressions kept, because a read can
+ * sit there. A word in a comment or an error message is not a read of the
+ * request. Until 2026-11-08 the gate matched "request" in a comment and in an
+ * error message, and counted server/services/ai-gateway/providers/clients.ts, whose org id is a
+ * parameter, as a resolver.
+ */
+function codeOnly(text) {
+  let out = '';
+  let i = 0;
+  const n = text.length;
+  while (i < n) {
+    const c = text[i];
+    const next = text[i + 1];
+    if (c === '/' && next === '/') {
+      while (i < n && text[i] !== '\n') i++;
+    } else if (c === '/' && next === '*') {
+      const end = text.indexOf('*/', i + 2);
+      i = end < 0 ? n : end + 2;
+      out += ' ';
+    } else if (c === "'" || c === '"') {
+      i++;
+      while (i < n && text[i] !== c && text[i] !== '\n') i += text[i] === '\\' ? 2 : 1;
+      i++;
+      out += '""';
+    } else if (c === '`') {
+      i++;
+      out += '`';
+      while (i < n && text[i] !== '`') {
+        if (text[i] === '\\') { i += 2; continue; }
+        if (text[i] === '$' && text[i + 1] === '{') {
+          let depth = 1;
+          i += 2;
+          out += '${';
+          while (i < n && depth > 0) {
+            if (text[i] === '{') depth++;
+            else if (text[i] === '}') depth--;
+            if (depth > 0) out += text[i];
+            i++;
+          }
+          out += '}';
+          continue;
+        }
+        i++;
+      }
+      i++;
+      out += '`';
+    } else {
+      out += c;
+      i++;
+    }
+  }
+  return out;
+}
+
 function findLocalResolvers(source) {
   const hits = [];
   const lines = source.split('\n');
@@ -70,7 +126,7 @@ function findLocalResolvers(source) {
       continue;
     }
     // …and whose body reads the raw request fields rather than delegating.
-    const body = lines.slice(i, i + 16).join('\n');
+    const body = codeOnly(lines.slice(i, i + 16).join('\n'));
     if (!(TENANT_FIELDS.test(body) && /\breq\b|\brequest\b/i.test(body))) continue;
 
     // A wrapper that DELEGATES the org answer to the shared resolver and never
