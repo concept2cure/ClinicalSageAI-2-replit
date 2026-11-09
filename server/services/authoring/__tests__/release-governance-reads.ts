@@ -28,6 +28,15 @@
  *    refused. The answer here is: no AnA draft and no independent check, so
  *    none is owed.
  *
+ * 5. Was it reviewed? An APPROVER signature is refused REVIEW_REQUIRED unless
+ *    the document's review route is complete over the text being approved
+ *    (P-95, 2026-11-09; authoring-review-route.ts authoringApprovalReviewRefusal).
+ *    That read is a route and its members' signatures over a digest of whatever
+ *    sections the fake returns, so it is not answered row by row here. A suite
+ *    that approves a document to test something else declares the review
+ *    complete with `withCompletedReview` (below); the check has its own suite,
+ *    authoring-approval-review-required.test.ts.
+ *
  * The CSR case, the independence refusals and the independent check have their
  * own suites (csr-scientific-release-order.test.ts,
  * workflow-import-governance.pglite.test.ts, authoring-approval-independence.test.ts).
@@ -46,4 +55,15 @@ export function releaseGovernanceRead(sql: unknown): Answer | null {
   if (/FROM authoring_audit_trail/.test(s) && /'csrBuildImport'/.test(s)) return { rowCount: 0, rows: [] };
   if (/WITH trails AS \(SELECT \* FROM authoring_audit_trail/.test(s)) return { rowCount: 0, rows: [] };
   return null;
+}
+
+/**
+ * Read 5's answer, as a module mock: the document's review is complete, so P-95
+ * lets the approval through and the suite tests what it is about.
+ *
+ *   vi.mock('../../services/authoring/authoring-review-route', async (orig) =>
+ *     (await import('../../services/authoring/__tests__/release-governance-reads')).withCompletedReview(orig));
+ */
+export async function withCompletedReview<M extends Record<string, unknown>>(importOriginal: () => Promise<M>): Promise<M> {
+  return { ...(await importOriginal()), authoringApprovalReviewRefusal: async () => null };
 }

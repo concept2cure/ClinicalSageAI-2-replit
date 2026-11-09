@@ -4731,6 +4731,8 @@ export function DocumentWorkbench({
                 signerIsAuthor={signedInUserCreated(activeDoc.created_by, user?.id)}
                 workflowOrigin={docProvenance?.importSource && isWorkflowImportOrigin(docProvenance.importSource) ? docProvenance.importSource : undefined}
                 docRevision={`${activeDoc.updated_at ?? ''}:${contentEpoch}:${sections.map(s => s.updated_at ?? '').join('|')}`}
+                /* P-95: an approval refused because review is not complete offers the same Send for review. */
+                onSendForReview={() => { if (activeDocId) setSendForReviewOpen({ context: writerContext, documentId: activeDocId }); }}
               />
             )}
             {/* The authoring → filing seam: place the OPEN document into an

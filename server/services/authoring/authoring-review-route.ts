@@ -165,6 +165,44 @@ export async function routeReviewRequest(
   return { routeId, added: standing.state === 'live', members, timeZone, notices };
 }
 
+// ── P-95: an approval follows a completed review ────────────────────────────
+
+const NOT_REVIEWED = 'This document has not been reviewed. Send it for review; once every reviewer has signed this version, it can be approved.';
+const reviewRequired = (message: string) => new ReviewRouteRefusal(409, 'REVIEW_REQUIRED', `${message} Nothing was signed.`);
+
+/**
+ * P-95 (docs/LAUNCH_DEFINITION_OF_DONE.md, the founder 2026-11-02, clarified
+ * 2026-11-09): why an APPROVER signature may not be taken over `digest` yet, or
+ * null. The review is complete when the latest route names at least one
+ * reviewer and every one of them has signed REVIEWER over this route's content,
+ * and that content is the text being approved. Not reviewed (no route, or a
+ * route withdrawn or returned), still open, or about earlier text: each is
+ * refused with what to do. The reviewer is never an author (the member validator
+ * and separationOfDutiesRefused). Whether the approver may also be a reviewer
+ * (P-95 question 1) and the two-reviewer floor (question 2) are later slices.
+ */
+export function approvalReviewRefusal(standing: RouteStanding, digest: string): ReviewRouteRefusal | null {
+  const reviewers = standing.members.filter((m) => m.role === 'reviewer');
+  if (!standing.route || reviewers.length === 0) return reviewRequired(NOT_REVIEWED);
+  if (standing.state === 'live' && !standing.reviewComplete) {
+    const signed = reviewers.filter((m) => m.outcome === 'signed').length;
+    return reviewRequired(`Its review is not finished: ${signed} of ${reviewers.length} reviewers have signed. Once every reviewer has signed this version, it can be approved.`);
+  }
+  if (!(standing.state === 'complete' || standing.state === 'live') || !standing.reviewComplete) return reviewRequired(NOT_REVIEWED);
+  if (standing.route.contentDigest !== digest) {
+    return reviewRequired('This document changed after it was reviewed, so the review is about earlier text. Send it for review again; once every reviewer has signed this version, it can be approved.');
+  }
+  return null;
+}
+
+/** The P-95 check on the signing transaction: the route read under its lock (after the document's), then the verdict. Throws on a read failure. */
+export async function authoringApprovalReviewRefusal(
+  q: RouteQueryable,
+  p: { tenantId: number; docId: string; digest: string },
+): Promise<ReviewRouteRefusal | null> {
+  return approvalReviewRefusal(await authoringStanding(q, p.tenantId, p.docId, true), p.digest);
+}
+
 // ── The REVIEWER e-sign (§2.8) ──────────────────────────────────────────────
 
 /** A named reviewer's signing on a live route: what the e-sign closes after its signature row. */

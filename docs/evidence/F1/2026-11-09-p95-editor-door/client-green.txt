@@ -1,0 +1,12 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBarReviewRequired.test.tsx > P-95: an approval the server refuses because review is not complete > says why, in the server's words, and offers Send for review, with nothing to answer and nothing signed 306ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBarReviewRequired.test.tsx > P-95: an approval the server refuses because review is not complete > closes without sending anything when the approver closes it 89ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBarReviewRequired.test.tsx > P-95: an approval the server refuses because review is not complete > shows the server's other reasons as they are, such as a review still open 78ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBarReviewRequired.test.tsx > P-95: an approval the server refuses because review is not complete > without a way to send for review, the question still says why and only closes 93ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  02:14:44
+   Duration  1.73s (transform 393ms, setup 139ms, import 469ms, tests 570ms, environment 416ms)
+

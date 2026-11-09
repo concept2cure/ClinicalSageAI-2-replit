@@ -234,6 +234,7 @@ async function submitAndFreezeSummary({ api, run }, doc, reviewer, signer) {
   // (REVIEWER_IS_AUTHOR), so without a second person review and freeze wait.
   if (!signer) return `review and freeze not executed — ${SIGNER_ABSENT}`;
   const requested = await ensureReviewRequested({ api }, doc.id, reviewer);
+  const review = await signReview({ run }, doc, signer);
   let workflow = 'existing';
   if (doc.status === 'DRAFT') {
     must(await api('POST', `/api/authoring/docs/${doc.id}/submit`, { workflow_steps: [{ role: 'QA', approver_email: reviewer.email }] }), [200, 201], 'submit to workflow');
@@ -241,7 +242,24 @@ async function submitAndFreezeSummary({ api, run }, doc, reviewer, signer) {
   }
   const wf = must(await api('GET', `/api/authoring/docs/${doc.id}/workflow`), 200, 'read workflow');
   run.record('authoring.summaryReview', { reviewer: reviewer.email, requestedThisRun: requested, workflow, step: wf.steps?.[0] ? { role: wf.steps[0].role, status: wf.steps[0].status } : null });
-  return `review → ${reviewer.email} (${workflow}); ${await freezeSummary({ api, run }, doc, signer)}`;
+  return `review → ${reviewer.email} (${workflow}, ${review}); ${await freezeSummary({ api, run }, doc, signer)}`;
+}
+
+const REVIEW_INTENT = 'Reviewed: the 510(k) Summary v1.0 matches the dossier documents in the Vault and 21 CFR 807.92.';
+
+/** P-95 (docs/LAUNCH_DEFINITION_OF_DONE.md, clarified 2026-11-09): a document is approved only after its review is
+ *  complete, so the requested reviewer signs the review (REVIEWER) on its route before anyone approves. A freeze
+ *  signed REVIEWER seals the text but does not complete the route; only the review signature does. */
+async function signReview({ run }, doc, signer) {
+  if (doc.status === 'APPROVED') return 'already approved on a previous run';
+  const sigs = must(await signer.api('GET', `/api/authoring/docs/${doc.id}/signatures`), 200, 'list signatures').signatures ?? [];
+  const mine = sigs.find((s) => s.signer_email === signer.email && s.meaning === 'REVIEWER' && s.reason === REVIEW_INTENT);
+  if (mine) return `review already signed by ${signer.email}`;
+  must(await signer.api('POST', `/api/authoring/docs/${doc.id}/e-sign`, {
+    password: signer.password, meaning: 'REVIEWER', intent: REVIEW_INTENT,
+  }), 200, 'sign the review');
+  run.record('authoring.summaryReviewSigned', { executed: true, signer: signer.email, meaning: 'REVIEWER' });
+  return `review signed by ${signer.email}`;
 }
 
 /** A freeze is a signature (DP-35), so the second signer, the QA reviewer, seals v1.0 for approval as REVIEWER. */
