@@ -1701,23 +1701,41 @@ type AssembledPackage = Awaited<ReturnType<typeof import('../ectd/assemble-from-
  * ceiling (P-93, launchSequenceSizeRefusal). One composition for the package
  * gate and transmit's re-check, so the two cannot disagree.
  */
-async function packageBlockers(assembled: AssembledPackage, fda: boolean): Promise<{ gaps: string[]; size: string | null }> {
+async function packageBlockers(
+  assembled: AssembledPackage,
+  fda: boolean,
+  gatewayRegion: GatewayRegion | null,
+): Promise<{ gaps: string[]; size: string | null; ceiling: string | null }> {
   const { assembledTransmitBlockers } = await import('../ectd/assemble-from-core');
-  const size = fda ? launchSequenceSizeRefusal(assembled.bundle.sizeBytes) : null;
-  return { gaps: [...assembledTransmitBlockers(assembled), ...(size ? [size] : [])], size };
+  const sized = await packageSizeRefusal(assembled.bundle.sizeBytes, fda, gatewayRegion);
+  return { gaps: [...assembledTransmitBlockers(assembled), ...(sized.size ? [sized.size] : [])], ...sized };
 }
 
 /**
- * Readiness's judgement (`judge: 'size'`, P-93): the FDA launch ceiling when it
- * applies, otherwise the route's own gateway limit by the guard's rule
- * (checkGatewaySize), never a copy of its figure or sentence.
+ * The size a package may not exceed on its route, and its refusal when it does (P-93): for FDA the launch ceiling;
+ * for a route whose gateway limit is sourced (EU CESP's 600 MiB; the coordinating session's rulings on question 1(a),
+ * 2026-11-08 and 2026-11-09), that limit, by the guard's own rule and words (checkGatewaySize), never a copy. A route
+ * whose figure is unsourced (PMDA) or that has none is not refused on size here.
  */
-async function sizeOnlyBlockers(launch: string | null, sizeBytes: number, gatewayRegion: GatewayRegion | undefined): Promise<{ gaps: string[]; size: string | null }> {
-  if (launch) return { gaps: [launch], size: launch };
-  if (!gatewayRegion) return { gaps: [], size: null };
-  const { checkGatewaySize } = await import('../submission-gateways/pre-transmit-check');
-  const blocker = checkGatewaySize(gatewayRegion, sizeBytes).blocker?.replace(/[.\s]+$/, '') ?? null;
-  return blocker ? { gaps: [blocker], size: blocker } : { gaps: [], size: null };
+async function packageSizeRefusal(
+  sizeBytes: number,
+  fda: boolean,
+  gatewayRegion: GatewayRegion | null,
+): Promise<{ size: string | null; ceiling: string | null }> {
+  if (fda) return { size: launchSequenceSizeRefusal(sizeBytes), ceiling: '1 GiB' };
+  if (!gatewayRegion) return { size: null, ceiling: null };
+  const { checkGatewaySize, gatewaySizeLimitWords } = await import('../submission-gateways/pre-transmit-check');
+  return {
+    size: checkGatewaySize(gatewayRegion, sizeBytes).blocker?.replace(/[.\s]+$/, '') ?? null,
+    ceiling: gatewaySizeLimitWords(gatewayRegion),
+  };
+}
+
+/** The gateway region a sequence would be sent through (transmitRouteFor), or null when it has no route. */
+async function sequenceGatewayRegion(sequence: EctdSequence, ctx: { organizationId: number; userId: number }): Promise<GatewayRegion | null> {
+  const submission = await getSubmission(sequence.submissionId, ctx);
+  const route = transmitRouteFor(sequence.region, submission.clientType, submission.applicationType || sequence.type);
+  return route.ok ? route.gwRegion as GatewayRegion : null;
 }
 
 /**
@@ -1725,12 +1743,19 @@ async function sizeOnlyBlockers(launch: string | null, sizeBytes: number, gatewa
  * launch ceiling's (P-93) depends on whether the leaves can still change, so a
  * person is told to move leaves only while they can.
  */
-function packageGateRefusal(step: GovernedSequenceStep, gaps: string[], size: string | null, status: string): string {
+function packageGateRefusal(
+  step: GovernedSequenceStep,
+  gaps: string[],
+  sized: { size: string | null; ceiling: string | null },
+  status: string,
+): string {
   const head = `Refusing to ${step}: ${gaps.join('; ')}.`;
-  if (size && isSequenceLocked(status)) {
+  if (sized.size && isSequenceLocked(status)) {
     return `${head} The sequence is ${status}, so its leaves can no longer be changed, and it cannot be sent as it is.`;
   }
-  const move = size ? ' Remove some of its leaves and place them in a later sequence, so that each package is 1 GiB or less.' : '';
+  const move = sized.size
+    ? ` Remove some of its leaves and place them in a later sequence, so that each package is ${sized.ceiling ?? 'within that limit'} or less.`
+    : '';
   return `${head}${move} Transmit would refuse this package, and once the sequence is ` +
     `${step === 'freeze' ? 'frozen' : 'dispatched'} its leaves can no longer be changed.`;
 }
@@ -1802,10 +1827,11 @@ async function assertSequencePackageable(
     throw new SubmissionError('DISPATCH_BLOCKED', unassembledRefusal(step, err));
   }
   try {
-    const blocked = await packageBlockers(assembled, fda);
-    const judged = opts.judge === 'size' ? await sizeOnlyBlockers(blocked.size, assembled.bundle.sizeBytes, opts.gatewayRegion) : blocked;
-    if (judged.gaps.length > 0) {
-      throw new SubmissionError('DISPATCH_BLOCKED', packageGateRefusal(step, judged.gaps, judged.size, sequence.status));
+    // FDA's ceiling is the launch one; any other route's limit is its gateway's, so only then is the route read.
+    const blocked = await packageBlockers(assembled, fda, opts.gatewayRegion ?? (fda ? null : await sequenceGatewayRegion(sequence, ctx)));
+    const gaps = opts.judge === 'size' ? (blocked.size ? [blocked.size] : []) : blocked.gaps;
+    if (gaps.length > 0) {
+      throw new SubmissionError('DISPATCH_BLOCKED', packageGateRefusal(step, gaps, blocked, sequence.status));
     }
   } finally {
     await assembled.cleanup();
@@ -3239,7 +3265,7 @@ async function transmitDispatchedSequence(
   // so this is the re-check at the irreversible step; the claim is released
   // because nothing was sent. P-93: an FDA package over the launch ceiling is
   // refused here too, on the exact bytes this attempt would send.
-  const blocked = await packageBlockers(assembled, fda);
+  const blocked = await packageBlockers(assembled, fda, route.gwRegion as GatewayRegion);
   if (blocked.gaps.length > 0) {
     await assembled.cleanup();
     await releaseTransmitSlot(sequenceId, ctx.organizationId, signatureActionId, attemptId);

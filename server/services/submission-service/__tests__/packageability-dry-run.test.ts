@@ -12,10 +12,13 @@ const state = vi.hoisted(() => ({ writes: 0, blockers: [] as string[], cleaned: 
 }));
 
 vi.mock('../../../db', () => {
+  // The package gate reads the sequence's submission to find a non-FDA route's gateway limit (P-93, 2026-11-09).
   const rowsFor = (name: string) =>
     name === 'ectd_sequences'
       ? [{ id: 1, submissionId: 1, region: state.region, sequenceNumber: '0000', status: state.status, type: 'original', organizationId: 7 }]
-      : [];
+      : name === 'submissions'
+        ? [{ id: 1, organizationId: 7, clientType: 'pharma', applicationType: 'EU_GENERIC_DCP', primaryRegion: state.region, title: 'Dry run' }]
+        : [];
   const tableNameOf = (t: any) => t?.[Symbol.for('drizzle:Name')] ?? t?._?.name ?? '';
   const select = () => {
     let name = '';
