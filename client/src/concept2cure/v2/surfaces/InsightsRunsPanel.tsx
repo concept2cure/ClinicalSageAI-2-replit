@@ -37,6 +37,11 @@ import {
 } from './insightsLibraryShared';
 
 /** The filter bar. Every control maps to a parameter the route accepts. */
+/** A run's scope when its record carries no name: what it is, never its database key (Reporting use walk, 2026-11-09). */
+function unnamedScope(scopeType: string): string {
+  return scopeType === 'organization' ? 'Your organization' : `A ${scopeType.replace(/_/g, ' ')} with no recorded name`;
+}
+
 function RunFilters({
   types,
   status,
@@ -136,12 +141,12 @@ function RunRow({
         {run.reportTypeLabel}
         {market ? <div className="rl-cell-sub">{market}</div> : null}
       </td>
-      <td>{run.scopeLabel || `${run.scopeType} — ${run.scopeId}`}<RunScopeNote run={run} /></td>
+      <td>{run.scopeLabel || unnamedScope(run.scopeType)}<RunScopeNote run={run} /></td>
       <td><StatusTag status={run.status} /></td>
       <td>{confidenceText(run.confidence)}</td>
       <td>{whenText(run.completedAt ?? run.createdAt)}</td>
       <td>
-        <button type="button" className="rc-chip" onClick={onOpen}>Open</button>
+        <button type="button" className="rc-chip" onClick={onOpen} aria-label={`Open the ${run.reportTypeLabel} run of ${whenText(run.createdAt)}`}>Open</button>
       </td>
     </tr>
   );
@@ -302,31 +307,33 @@ function RunsBody({
     );
   }
   return (
-    <table className="ro-table rl-table">
-      <caption className="rl-cap">{rows.length} run{rows.length === 1 ? '' : 's'}</caption>
-      <thead>
-        <tr>
-          {canBundle ? <th scope="col" className="rl-pick-h">Bundle</th> : null}
-          <th scope="col">Report</th>
-          <th scope="col">Scope</th>
-          <th scope="col">Status</th>
-          <th scope="col">Confidence</th>
-          <th scope="col">Run</th>
-          <th scope="col" />
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => (
-          <RunRow
-            key={r.id}
-            run={r}
-            pickable={canBundle}
-            picked={picked.includes(r.id)}
-            onToggle={() => onToggle(r.id)}
-            onOpen={() => onOpen(r)}
-          />
-        ))}
-      </tbody>
-    </table>
+    <div className="rl-table-scroll" role="region" aria-label="Run history" tabIndex={0}>
+      <table className="ro-table rl-table">
+        <caption className="rl-cap">{rows.length} run{rows.length === 1 ? '' : 's'}</caption>
+        <thead>
+          <tr>
+            {canBundle ? <th scope="col" className="rl-pick-h">Bundle</th> : null}
+            <th scope="col">Report</th>
+            <th scope="col">Scope</th>
+            <th scope="col">Status</th>
+            <th scope="col">Confidence</th>
+            <th scope="col">Run</th>
+            <th scope="col" />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <RunRow
+              key={r.id}
+              run={r}
+              pickable={canBundle}
+              picked={picked.includes(r.id)}
+              onToggle={() => onToggle(r.id)}
+              onOpen={() => onOpen(r)}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

@@ -224,6 +224,8 @@ describe('drafting turns get an approved model up front', () => {
     'please write section 2.5.4 for me',
     'Prepare a response to the FDA information request',
     'compose the cover letter for the submission',
+    'Start a 510(k) summary document for this project.',
+    'create the device description section',
   ])('detects a governed draft request: %s', (m) => expect(requestsGovernedDraft(m)).toBe(true));
 
   it.each(['take me to CMC', 'what does section 2.5 require?', 'summarise this thread', 'is the submission ready?'])(

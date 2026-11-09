@@ -1,0 +1,7 @@
+ × server/__tests__/migrations/report-os-foundation-deploy-path.pglite.test.ts > migrations/0014_report_os_foundation.sql > is in the deploy set, ahead of the report seed and the tenant installers
+   → the Report OS foundation is on no deploy path: expected -1 to be greater than -1
+ ✓ server/__tests__/migrations/report-os-foundation-deploy-path.pglite.test.ts > migrations/0014_report_os_foundation.sql > gives an earlier database the membership organisation, backfilled from its group, and replays as a no-op
+ ✓ server/__tests__/migrations/report-os-foundation-deploy-path.pglite.test.ts > migrations/0014_report_os_foundation.sql > refuses a membership whose group and project are in different organisations, and rewrites nothing
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: the Report OS foundation is on no deploy path: expected -1 to be greater than -1
+      Tests  1 failed | 2 passed (3)

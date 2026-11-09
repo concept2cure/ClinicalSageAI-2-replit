@@ -197,7 +197,6 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // by AnA. It was the one project surface `navigate_to` could not reach.
   { id: 'communication-center', label: 'Communication', description: 'The agency-communication hub for the project — the FDA loop, the agency inbox, meetings and commitments, and authority profiles.', scope: 'project', group: 'module' },
   { id: 'mission-control', label: 'Mission control', description: 'The portfolio mission-control board — every program and its cross-program status.', scope: 'global', group: 'global' },
-  { id: 'biostat-workbench', label: 'Biostatistics design calculators', description: 'The biostatistics design calculators — reviewer-risk assessment plus the deterministic design engines (assurance, group-sequential, sample size, multiplicity, and more).', scope: 'global', group: 'module' },
   { id: 'filing-strategy', label: 'Filing strategy', description: 'The filing-strategy workspace — filing-sequence optimization, agency divergence, and prediction calibration.', scope: 'project', group: 'module' },
   { id: 'safety-narrative', label: 'Safety narratives', description: 'The safety-narrative workbench — the SAE case worklist with the ICH E3 §16 narrative composer and expedited-reporting clocks.', scope: 'project', group: 'module' },
   { id: 'crl-library', label: 'FDA CRL library', description: 'The FDA Complete-Response-Letter evidence library — deficiency findings by discipline and severity across the corpus.', scope: 'global', group: 'module' },
@@ -246,7 +245,15 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // ── Analysis & authoring tools ──
   { id: 'batch-draft', label: 'Batch draft', description: 'Parallel section drafting over the eCTD Co-Author document spine (running a batch stays a human click).', scope: 'global', group: 'module' },
   {
-    id: 'biostatistics', label: 'Biostatistics designer', description: 'The deterministic biostatistics design engine — sample size, power, and governed statistical documents.', scope: 'global', group: 'module',
+    /* `scope: 'project'` since 2026-11-09. It was 'global' when the rail entry
+       shipped on 2026-11-06, which made this the one rail door that opened a
+       work area with no project behind it — and with none open the surface
+       seeded a pharma-oncology worked example, for a device organisation too.
+       P-107 item 1 calls Biostatistics "a work area over the project's data,
+       not an app", and the founder's words authorising the rail entry end
+       "But again, everything starts with a project". CMC, the sibling work
+       area, has always been project-scoped (:145). */
+    id: 'biostatistics', label: 'Biostatistics designer', description: 'The deterministic biostatistics design engine — sample size, power, and governed statistical documents.', scope: 'project', group: 'module',
     // Consumed by the surface on mount: it loads THAT persisted study design
     // (cdisc_prm_studies.study_id) through the biostatistics bridge and seeds
     // the engine from it — how the protocol workspace and the task board hand a

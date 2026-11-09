@@ -137,7 +137,11 @@ function destinations(scroll: HTMLElement, onNav: ReturnType<typeof vi.fn>): str
 
 // Submission Center is back on the rail: the founder looked for it there in a client demo (2026-10-31).
 const PLACES = ['Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'Submission Center'];
-// Biostatistics is reached from the project (ProjectCoreWork), not the rail: RULE 4, P-79 (2026-11-01).
+// Biostatistics IS on the rail, as this list has it: the founder's words of
+// 2026-11-06 and P-107 item 1, which supersede RULE 4's 2026-10-31 list for
+// this entry. Its door is project-scoped, so it opens on a project
+// (railOpensWithoutProject.test.ts). The comment here said the opposite until
+// 2026-11-09, citing RULE 4 and P-79, while the list below already named it.
 const WORK_AREAS = ['CMC / Module 3', 'Biostatistics', 'Risk-based monitoring', 'Quality', 'Reporting & analytics'];
 
 describe('the rail lists the places, then the work areas', () => {

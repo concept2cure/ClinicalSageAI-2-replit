@@ -1207,13 +1207,16 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Biostatistics workbench ──
+  // ── Biostatistics: the design engines ──
   {
-    id: 'biostat-workbench.select-calculator',
-    surfaceId: 'biostat-workbench',
+    /* Renamed from `biostat-workbench.select-calculator` on 2026-11-09, when
+       that surface was retired into `biostatistics` and the calculators became
+       a section of it. */
+    id: 'biostatistics.select-calculator',
+    surfaceId: 'biostatistics',
     label: 'Open a design engine',
     description:
-      'On the biostatistics workbench, open one of the design engines (assurance, group-sequential, sample size, multiplicity, and the rest) by its name so its inputs show — the same tile click a person makes. Computing a result stays a deliberate act; this only opens the engine. Honest misses.',
+      'On the Biostatistics surface, open one of the design engines (assurance, group-sequential, sample size, multiplicity, and the rest) by its name so its inputs show — the same tile click a person makes. Computing a result stays a deliberate act; this only opens the engine. Honest misses.',
     params: [
       { name: 'calculator', required: true, description: 'The design engine\'s title or a distinctive phrase from it (case-insensitive; partial names resolve when unambiguous).' },
     ],

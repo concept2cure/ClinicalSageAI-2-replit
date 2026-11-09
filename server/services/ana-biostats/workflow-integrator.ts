@@ -258,11 +258,15 @@ export class WorkflowIntegrator {
       const db = await getDb();
       const schema = await getSchema();
       if (!db || !schema) {
+        /* Nothing was stored, so this is not a success, and there is no id to
+           hand out — the same repair the artifact branch above carries. It
+           used to return `success: true` with `Date.now()` as the thread id,
+           which every caller then presented as a stored review thread
+           (CLAUDE.md: fail closed, never fabricate). */
         return {
           action: 'create_review_thread',
-          success: true,
-          reviewThreadId: Date.now(),
-          message: `Review thread prepared (no DB): ${reason}`,
+          success: false,
+          message: `No review thread was created: this deployment has no database. ${reason}`,
         };
       }
 
@@ -403,10 +407,15 @@ export class WorkflowIntegrator {
       const db = await getDb();
       const schema = await getSchema();
       if (!db || !schema) {
+        /* This escalation is raised when statistical review finds CRITICAL
+           risk. Reporting it prepared when no row exists is how a critical
+           finding gets recorded as handled and lives nowhere; "prepared" was
+           also untrue — nothing was. Same repair as the two branches above. */
         return {
           action: 'create_follow_up_task',
-          success: true,
-          message: `Escalation task prepared (no DB): ${document.title}`,
+          success: false,
+          message: `No escalation task was created: this deployment has no database. `
+            + `${judgment.overallRisk} risk on "${document.title}" is unrecorded.`,
         };
       }
 

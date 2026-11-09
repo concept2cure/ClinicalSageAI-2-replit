@@ -288,7 +288,6 @@ const Lifecycle = lazySurface(() => import('./surfaces/BiopharmaSpecialty').then
 const Pharmacovigilance = lazySurface(() => import('./surfaces/BiopharmaSpecialty').then((m) => ({ default: m.Pharmacovigilance })));
 const PvCockpit = lazySurface(() => import('./surfaces/PvCockpit').then((m) => ({ default: m.PvCockpit })));
 const Biostatistics = lazySurface(() => import('./surfaces/Biostatistics').then((m) => ({ default: m.Biostatistics })));
-const BiostatWorkbench = lazySurface(() => import('./surfaces/BiostatWorkbench').then((m) => ({ default: m.BiostatWorkbench })));
 const MissionControl = lazySurface(() => import('./surfaces/MissionControl').then((m) => ({ default: m.MissionControl })));
 const FilingStrategy = lazySurface(() => import('./surfaces/FilingStrategy').then((m) => ({ default: m.FilingStrategy })));
 const ChangeAssessment = lazySurface(() => import('./surfaces/ChangeAssessment').then((m) => ({ default: m.ChangeAssessment })));
@@ -386,7 +385,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'authoring-engine': { component: AuthoringEngine },
   'batch-draft': { component: BatchDraft, full: true },
   biostatistics: { component: Biostatistics },
-  'biostat-workbench': { component: BiostatWorkbench },
   'mission-control': { component: MissionControl },
   'filing-strategy': { component: FilingStrategy },
   'change-assessment': { component: ChangeAssessment },

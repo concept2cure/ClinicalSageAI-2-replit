@@ -201,35 +201,37 @@ function DependencySection({ runId }: { runId: number }) {
     );
   }
   return (
-    <table className="ro-table rl-table" data-testid="rl-deps">
-      <caption className="rl-cap">
-        {rows.length} provider observation{rows.length === 1 ? '' : 's'}, newest first
-      </caption>
-      <thead>
-        <tr>
-          <th scope="col">Source</th>
-          <th scope="col">Outcome</th>
-          <th scope="col">Observed</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((d) => (
-          <tr key={d.id}>
-            <td>{d.provider}</td>
-            <td>
-              {/* `ready` is the providers' healthy state; anything else is not a
-                  pass, and an unknown value stays neutral rather than green. */}
-              <span className="rl-tag" data-status={d.status === 'ready' ? 'final' : d.status === 'missing' ? 'failed' : 'draft'}>
-                {DEPENDENCY_STATUS_LABEL[d.status] ?? d.status}
-              </span>
-              {/* The engine's own blocker sentence, never paraphrased. */}
-              {d.blocker ? <div className="rl-cell-sub">{d.blocker}</div> : null}
-            </td>
-            <td>{whenText(d.observedAt)}</td>
+    <div className="rl-table-scroll" role="region" aria-label="What this run read" tabIndex={0}>
+      <table className="ro-table rl-table" data-testid="rl-deps">
+        <caption className="rl-cap">
+          {rows.length} provider observation{rows.length === 1 ? '' : 's'}, newest first
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Source</th>
+            <th scope="col">Outcome</th>
+            <th scope="col">Observed</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((d) => (
+            <tr key={d.id}>
+              <td>{d.provider}</td>
+              <td>
+                {/* `ready` is the providers' healthy state; anything else is not a
+                    pass, and an unknown value stays neutral rather than green. */}
+                <span className="rl-tag" data-status={d.status === 'ready' ? 'final' : d.status === 'missing' ? 'failed' : 'draft'}>
+                  {DEPENDENCY_STATUS_LABEL[d.status] ?? d.status}
+                </span>
+                {/* The engine's own blocker sentence, never paraphrased. */}
+                {d.blocker ? <div className="rl-cell-sub">{d.blocker}</div> : null}
+              </td>
+              <td>{whenText(d.observedAt)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

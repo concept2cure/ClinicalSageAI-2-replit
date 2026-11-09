@@ -75,6 +75,22 @@ describe('an upload is bounded before it is scanned or read (assertUploadSafe)',
     const { assertUploadSafe } = await import('../../../middleware/uploadSafety');
     await expect(assertUploadSafe(plainDocx, DOCX, 'synopsis.docx')).resolves.toBeUndefined();
   });
+
+  // P-112 (2026-11-09): the Vault admits a .zip as one file. The one bound applies to it.
+  it('refuses a bomb .zip with 422 ARCHIVE_LIMITS_EXCEEDED, as Windows and a Mac declare one', async () => {
+    const { assertUploadSafe } = await import('../../../middleware/uploadSafety');
+    const bomb = await ectdPackage(true);
+    for (const declared of ['application/zip', 'application/x-zip-compressed']) {
+      await expect(assertUploadSafe(bomb, declared, 'sponsor-copy-0003.zip')).rejects.toMatchObject({ status: 422, code: 'ARCHIVE_LIMITS_EXCEEDED' });
+    }
+  });
+
+  it('admits an ordinary .zip, and refuses one named .zip that carries HTML', async () => {
+    const { assertUploadSafe } = await import('../../../middleware/uploadSafety');
+    await expect(assertUploadSafe(await ectdPackage(false), 'application/zip', 'sponsor-copy-0003.zip')).resolves.toBeUndefined();
+    const html = Buffer.from('<!doctype html><script>alert(document.domain)</script>');
+    await expect(assertUploadSafe(html, 'text/html', 'sponsor-copy-0003.zip')).rejects.toMatchObject({ status: 400 });
+  });
 });
 
 describe('template extraction (extractTemplateFromFile)', () => {

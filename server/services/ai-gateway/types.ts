@@ -440,6 +440,11 @@ export interface GatewayRequest {
 
   /** @internal Classification captured before any policy redaction. */
   sensitiveDataClass?: 'none' | 'pii' | 'phi' | 'unknown';
+  /**
+   * @internal The class of the copy that is dispatched, after the PII pass. Read only by the input-tier wall
+   * (founder decision, 2026-11-09); every other gate keeps reading sensitiveDataClass.
+   */
+  dispatchedDataClass?: 'none' | 'pii' | 'phi' | 'unknown';
 
   /** @internal Server-loaded input classifications, never a wire or model field.
    * The highest tier wins; a public/derived provenance label cannot lower it.

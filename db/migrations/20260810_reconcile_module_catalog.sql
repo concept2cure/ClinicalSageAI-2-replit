@@ -1,3 +1,14 @@
+-- AMENDED IN PLACE 2026-11-09 — biostat-workbench retired into biostatistics (CLAUDE.md Rule 1).
+-- The two biostatistics surfaces merged on 2026-11-09, carrying out the decision of
+-- docs/SURFACE_CONSOLIDATION_2026-08.md §5 ("Survivor: `biostatistics`. Fold the workbench in as a tab").
+-- The defensibility assessment and the 29 design calculators are sections of `biostatistics`; the
+-- `biostat-workbench` surface id is gone from the registry, surfaceViews, the navigation targets, the launch
+-- catalog and the one-product baseline. This file still kept and upserted its catalog row, so the Apps catalog
+-- advertised an entitlement toggle for a screen nobody can open (moduleCatalogReconciliation.test.ts).
+-- Removed: the id from step 1's keep-list and step 2's upsert, so a fresh database never holds the row and
+-- step 1 deprecates the existing row on every replay. The row, its metadata, module_subscriptions FKs and
+-- every tenant record stay; no DELETE, no appended DROP. A live grant carries to `biostatistics`, packaged at
+-- the same tier ('professional'). 20260823's packaging row is removed with it.
 -- AMENDED IN PLACE 2026-11-05 — agency-meetings retired into Communication (P-39 step 4; CLAUDE.md Rule 1).
 -- The Agency Meetings surface and store retired on 2026-10-30 (docs/evidence/D2-AGENCY-MEETINGS-RETIRED/
 -- 2026-10-30/); meetings are Communication's Meetings tab and `agency-meetings` is a deep-link alias to
@@ -367,7 +378,6 @@ UPDATE available_modules
    'audit-trail',
    'authoring-engine',
    'batch-draft',
-   'biostat-workbench',
    'biostatistics',
    'change-assessment',
    'clinical-ops',
@@ -504,7 +514,6 @@ INSERT INTO available_modules (module_id, name, description, category, path, ico
   ('maa-cockpit', 'MAA / non-US Module 1', 'Non-US marketing-application administrative module (eCTD Module 1) — region-accurate required-component checklist for EMA/PMDA/MHRA/TGA/HC/NMPA over the global-RI regional-module1-requirements engine.', 'Applications & filing', '/concept2cure/maa-cockpit', 'globe', 740, '{"tiers": [], "industries": []}'::json),
   ('nda-cockpit', 'NDA / BLA filing', 'NDA/BLA filing cockpit: CTD M1–5 readiness, Module 1 admin set (356h), PDUFA review clock, Refuse-to-File risk (shadow review).', 'Applications & filing', '/concept2cure/nda-cockpit', 'beaker', 750, '{"tiers": [], "industries": []}'::json),
   ('pdev', 'Product development (PDEV → IND)', 'See PDEV_IND_DESIGN_BRIEF.md. Activity → AI draft → evidence → confirm flow prototyped in ui_kits/pdev.', 'Applications & filing', '/concept2cure/pdev', 'workflow', 760, '{"tiers": [], "industries": []}'::json),
-  ('biostat-workbench', 'Biostat workbench', 'Real statistical engine: reviewer-risk defensibility assessment + design calculators (assurance), replacing the client-side normal approximation.', 'Science & intelligence', '/concept2cure/biostat-workbench', 'sigma', 770, '{"tiers": [], "industries": []}'::json),
   ('biostatistics', 'Biostatistics', 'SAP authoring, power analysis, TLF shells, adaptive trial plans, IDMC.', 'Science & intelligence', '/concept2cure/biostatistics', 'sigma', 780, '{"tiers": [], "industries": []}'::json),
   ('clinical-ops', 'Clinical operations', 'Clinical-development operations: studies & enrollment, study sites with RBM risk linkage, DSMB / interim reviews, and protocol deviations with CAPA. Structured data entry for sites and deviations.', 'Science & intelligence', '/concept2cure/clinical-ops', 'users', 790, '{"tiers": [], "industries": []}'::json),
   ('pharmacovigilance', 'Pharmacovigilance', 'Safety surveillance: signal detection (PRR/FAERS/EudraVigilance), PSUR/PBRER aggregate-report cycles, expedited 7/15-day submissions across approved products.', 'Science & intelligence', '/concept2cure/pharmacovigilance', 'shieldAlert', 800, '{"tiers": [], "industries": []}'::json),

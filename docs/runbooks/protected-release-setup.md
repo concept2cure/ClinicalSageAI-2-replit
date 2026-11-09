@@ -102,6 +102,12 @@ P-3. Secret scanning with push protection is a separate repository setting.
 This helper neither changes nor claims verification of those controls; their
 administrator evidence is retained separately.
 
+**Pre-deploy step, database.** Before `deploy-migrate` runs against production at `22256c6750` or later, run the
+read-only report-group membership query in
+`docs/evidence/DESIGN/D7/2026-11-09-reporting-use-walk/README.md` ("Pre-deploy step, production"). No rows: deploy. Any
+row: do not deploy, because `migrations/0014_report_os_foundation.sql` stops on it by design.
+
+
 ## Local qualification
 
 ```bash

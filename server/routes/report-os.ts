@@ -2125,7 +2125,11 @@ router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
     if (stored.verdict === 'mismatch') return refuseSealMismatch(res, runId, 'shown');
 
     const { rendered } = buildRenderedFromRun(run, reportType);
-    return res.json({ data: rendered });
+    // Whether a finalize would be admitted, from the evaluation the finalize
+    // route itself makes (a final request), so the screen says why before it
+    // asks for a signature rather than after (Reporting use walk, 2026-11-09).
+    const { truthfulness: asFinal } = buildRenderedFromRun(run, reportType, 'final');
+    return res.json({ data: rendered, finalEligibility: { eligible: asFinal.allowedStatus === 'final', reasons: asFinal.reasons } });
   } catch (error: any) {
     return serverError(res, logger, 'loading rendered', error);
   }
