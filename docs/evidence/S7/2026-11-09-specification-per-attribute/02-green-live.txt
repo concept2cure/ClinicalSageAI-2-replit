@@ -1,0 +1,50 @@
+========================================================================
+SECTION 3.2.S.4 — completeness 75
+
+-- Drug Substance Specification — Acceptance Criteria
+   Quality Attribute | Test Method | Acceptance Criteria | Validation Status
+   C2C-201 — solid form | XRPD identity and polymorph form | Conforms to the Form I reference diffractogram | validation
+   C2C-201 — water content | Karl Fischer water determination | NMT 0.5 % w/w | validation
+   C2C-201 — specified and total impurities | HPLC-UV assay and related substances | Any specified impurity NMT 0.20 %; any unspecified NMT 0.10 %; total NMT 0.5 % | validation
+   C2C-201 — assay | HPLC-UV assay and related substances | 98.0 - 102.0 % on the anhydrous basis | validation
+
+-- Analytical Methods
+   Method | Technique | Validation Status | Validated
+   XRPD identity and polymorph form | X-ray powder diffraction | validation | —
+   Karl Fischer water determination | Coulometric Karl Fischer titration | validation | —
+   Dissolution (USP <711>, apparatus 2) | Dissolution, apparatus 2, 900 mL pH 6.8 phosphate buffer, 50 rpm | validation | —
+   HPLC-UV assay and related substances | Reverse-phase HPLC with UV detection at 254 nm | validation | —
+
+-- Batch Analyses — Drug Substance (§3.2.S.4.4)
+   Sample | Sample Type | Test Method | Acceptance Criteria | Result | Disposition | Reviewed
+   DS-2502-R2 | in-process | HPLC-UV assay and related substances | 98.0 - 102.0 % | 97.4 % — retest requested; investigation INV-2026-014 open | declared pass — the recorded result is OUTSIDE its recorded acceptance criterion | not reviewed
+   DS-2502-R1 | in-process | HPLC-UV assay and related substances | 98.0 - 102.0 % | 99.6 % | pass | not reviewed
+
+-- Process Capability — Drug Substance (§3.2.S.4.4)
+   Test | Batches | Mean | SD | Pp | Ppk | Cpk | Verdict | Note
+   HPLC-UV assay and related substances | 2 | — | — | — | — | — | not assessed | too few batches
+========================================================================
+SECTION 3.2.P.5 — completeness 75
+
+-- Drug Product Specification — Release & Shelf-Life
+   Quality Attribute | Test Method | Release Criteria | Shelf-Life Criteria
+   C2C-201 tablets — dissolution | Dissolution (USP <711>, apparatus 2) | NLT 80 % (Q) released at 30 minutes | NLT 80 % (Q) released at 30 minutes
+   C2C-201 tablets — assay | HPLC-UV assay and related substances | 95.0 - 105.0 % of label claim | 93.0 - 107.0 % of label claim
+
+-- Analytical Methods
+   Method | Technique | Validation Status | Validated
+   XRPD identity and polymorph form | X-ray powder diffraction | validation | —
+   Karl Fischer water determination | Coulometric Karl Fischer titration | validation | —
+   Dissolution (USP <711>, apparatus 2) | Dissolution, apparatus 2, 900 mL pH 6.8 phosphate buffer, 50 rpm | validation | —
+   HPLC-UV assay and related substances | Reverse-phase HPLC with UV detection at 254 nm | validation | —
+
+-- Batch Analyses — Drug Product (§3.2.P.5.4)
+   Sample | Sample Type | Test Method | Acceptance Criteria | Result | Disposition | Reviewed
+   DP-2601-R1 | finished-product | HPLC-UV assay and related substances | 95.0 - 105.0 % | 99.1 % | within criterion (computed) | not reviewed
+   DP-2503-R2 | finished-product | Dissolution (USP <711>, apparatus 2) | NLT 80 % | 93 % at 30 min | pass | not reviewed
+   DP-2503-R1 | finished-product | HPLC-UV assay and related substances | 95.0 - 105.0 % | 100.4 % | pass | not reviewed
+
+-- Process Capability — Drug Product (§3.2.P.5.4)
+   Test | Batches | Mean | SD | Pp | Ppk | Cpk | Verdict | Note
+   HPLC-UV assay and related substances | 2 | — | — | — | — | — | not assessed | too few batches
+   Dissolution (USP <711>, apparatus 2) | 1 | — | — | — | — | — | not assessed | too few batches
