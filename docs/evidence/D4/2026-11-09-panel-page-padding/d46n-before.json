@@ -1,0 +1,70 @@
+[
+ {
+  "case": "pane-1440",
+  "pane": {
+   "l": 711,
+   "r": 1440,
+   "w": 729
+  },
+  "page": {
+   "l": 711,
+   "r": 1440,
+   "w": 729
+  },
+  "ribbon": {
+   "l": 711,
+   "r": 1440,
+   "w": 729
+  },
+  "ribbonScroll": [
+   789,
+   729
+  ],
+  "ribbonOverflowX": "auto",
+  "pagePad": "48px / 48px",
+  "last": {
+   "what": "✻Track changes",
+   "l": 1287,
+   "r": 1496,
+   "w": 209
+  },
+  "pastPanel": [
+   "✻Track changes"
+  ],
+  "docScroll": false
+ },
+ {
+  "case": "pane-1280",
+  "pane": {
+   "l": 684,
+   "r": 1280,
+   "w": 596
+  },
+  "page": {
+   "l": 684,
+   "r": 1280,
+   "w": 596
+  },
+  "ribbon": {
+   "l": 684,
+   "r": 1280,
+   "w": 596
+  },
+  "ribbonScroll": [
+   789,
+   596
+  ],
+  "ribbonOverflowX": "auto",
+  "pagePad": "48px / 48px",
+  "last": {
+   "what": "✻Track changes",
+   "l": 1260,
+   "r": 1469,
+   "w": 209
+  },
+  "pastPanel": [
+   "✻Track changes"
+  ],
+  "docScroll": false
+ }
+]
