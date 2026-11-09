@@ -24,6 +24,7 @@ import { readPredecessorIds, readVersionFamily, type FamilyVersion } from '../va
 import { STEADY_STAGES } from '../vault/vault-lifecycle';
 import { supersededSql } from '../vault/vault-version-family.js';
 import { vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
+import { programOfProject } from '../c2c/program-project-anchor';
 
 export interface ChangedVaultCitation {
   sectionId: string;
@@ -177,4 +178,32 @@ export async function vaultFamilyInProgram(
   const row = (rows as Array<Record<string, unknown>>)[0];
   return row ? { id: String(row.id), version: (row.version as string) ?? null, title: (row.title as string) ?? null,
     documentCode: String(row.document_code) } : null;
+}
+
+/** The assignment's refusal: one status, one code and the same words, whatever the reason. */
+export class VaultFamilyRefusal extends Error {
+  readonly status = 409;
+  readonly code = VAULT_FAMILY_NOT_IN_PROGRAM.code;
+  constructor() { super(VAULT_FAMILY_NOT_IN_PROGRAM.message); this.name = 'VaultFamilyRefusal'; }
+}
+
+/**
+ * Where a task is written with `moduleData.vaultDocumentCode` (a work project assigned to produce a Vault family): the
+ * family must be in the filing program of the task's own admitted project. The program is never taken from the body:
+ * it is the admitted project's root's (programOfProject). A body `programId` that differs is refused the same way, so a
+ * caller cannot name another program and learn whether a code exists there. A task without the field is untouched.
+ */
+export async function requireAssignedVaultFamily(
+  q: Pick<RequestSqlClient, 'query'>, orgId: number, projectId: number | undefined, moduleData: unknown,
+): Promise<VaultFamilyHead | null> {
+  const data = moduleData && typeof moduleData === 'object' && !Array.isArray(moduleData) ? moduleData as Record<string, unknown> : null;
+  if (!data || data.vaultDocumentCode === undefined) return null;
+  if (projectId === undefined) throw new VaultFamilyRefusal();
+  const programId = await programOfProject(q as never, orgId, projectId);
+  if (!programId || (data.programId !== undefined && String(data.programId).toLowerCase() !== programId.toLowerCase())) {
+    throw new VaultFamilyRefusal();
+  }
+  const head = await vaultFamilyInProgram(q, orgId, programId, data.vaultDocumentCode);
+  if (!head) throw new VaultFamilyRefusal();
+  return head;
 }

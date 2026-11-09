@@ -1,0 +1,5 @@
+## Trunk's service (no check)
+ × server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > names the family's current version, not a superseded one 8ms
+ × server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > says the same nothing for an unknown family, another program's, and another organisation's 2ms
+ × server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > says nothing for a family whose versions are all deleted, or whose current version's data was withdrawn 2ms
+ × server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > refuses a malformed program or code without reading 1ms

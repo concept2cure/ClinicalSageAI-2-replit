@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { vaultFamilyInProgram } from '../vault-citation-changes';
+import { requireAssignedVaultFamily, vaultFamilyInProgram, VaultFamilyRefusal } from '../vault-citation-changes';
 
 let pglite: PGlite;
 const q = { query: async (sql: string, params?: unknown[]) => ({ rows: (await pglite.query(sql, params)).rows as Record<string, unknown>[] }) };
@@ -91,5 +91,26 @@ describe('a work project\'s assigned Vault family is in this program (S12 gap 5,
     expect(await vaultFamilyInProgram(q, ORG_A, 'not-a-uuid', 'DS-SPEC')).toBeNull();
     expect(await vaultFamilyInProgram(q, ORG_A, PROGRAM_A, '')).toBeNull();
     expect(await vaultFamilyInProgram(q, ORG_A, PROGRAM_A, 42)).toBeNull();
+  });
+
+  it('where a task assigns the family: the program is the task\'s own work project\'s, never the body\'s (POST /api/tasks/tasks)', async () => {
+    // A work project under program A's anchor (projects.id = the organisation's id in the fixture): no program of its own.
+    await pglite.query(`INSERT INTO projects(id,organization_id,client_workspace_id,name,type,status,owner_id,created_by_id,parent_project_id,depth,settings)
+      VALUES(9511,$1,$1,'Drug substance CMC','regulatory','active',1,1,$1,1,'{}')`, [ORG_A]);
+    const v = await version(ORG_A, PROGRAM_A, 'DS-ASSIGNED', '1.0');
+    const data = (over: Record<string, unknown> = {}) => ({ workProjectId: 9511, vaultDocumentCode: 'DS-ASSIGNED', ...over });
+    expect(await requireAssignedVaultFamily(q, ORG_A, 9511, data())).toMatchObject({ id: v, documentCode: 'DS-ASSIGNED' });
+    expect(await requireAssignedVaultFamily(q, ORG_A, 9511, data({ programId: PROGRAM_A.toUpperCase() }))).toMatchObject({ id: v });
+    // No field, no check: a task that assigns no family is untouched.
+    expect(await requireAssignedVaultFamily(q, ORG_A, 9511, { workProjectId: 9511 })).toBeNull();
+    expect(await requireAssignedVaultFamily(q, ORG_A, undefined, undefined)).toBeNull();
+    // A member of program A names program A2's real family, through the body's program or alone: the same refusal.
+    await version(ORG_A, PROGRAM_A2, 'DP-A2-SPEC', '1.0');
+    for (const refused of [data({ programId: PROGRAM_A2, vaultDocumentCode: 'DP-A2-SPEC' }), data({ vaultDocumentCode: 'DP-A2-SPEC' }),
+      data({ programId: PROGRAM_A2 }), data({ vaultDocumentCode: 'NO-SUCH' })]) {
+      await expect(requireAssignedVaultFamily(q, ORG_A, 9511, refused)).rejects.toBeInstanceOf(VaultFamilyRefusal);
+    }
+    // A family named with no project to read the program from is refused too.
+    await expect(requireAssignedVaultFamily(q, ORG_A, undefined, data())).rejects.toMatchObject({ status: 409, code: 'VAULT_FAMILY_NOT_IN_PROGRAM' });
   });
 });
