@@ -1,0 +1,43 @@
+Signed in as founder@demo.local (user 1, organisation 2) at http://localhost:5200
+Every demo area is open on the enterprise plan.
+
+=== seed: mdx ===
+  • Projects: program NeuroPanel-Dx 510(k) … ok — 40c30ed7-a63b-4539-ab1a-3356d0b90944 (existing)
+  • Vault: read the program data room (folders offered) … ok — standard=ivd; 17 cabinet folders: cab-unfiled, cab-bn:A, cab-bn:B, cab-bn:C, cab-bn:D, cab-bn:E, cab-bn:F, cab-bn:G, cab-k510, cab-pma, cab-cer, cab-eng, cab-udi, cab-pv, cab-qms, cab-corresp, cab-shared
+  • Vault: Device Description and Principles of Operation … ok — 434ce5c8-ca9a-4def-821d-45a6e5679f4f → k510 (existing, already filed, 6346 bytes)
+  • Vault: Software Description and Level of Concern … ok — 872039ee-9723-4e4d-9323-f1ae708c8d0e → eng (existing, already filed, 4654 bytes)
+  • Vault: Analytical Performance Study Report … ok — 81c6b73e-a46b-4640-9331-f0fa08e4fd47 → k510 (existing, already filed, 6247 bytes)
+  • Vault: Clinical Performance Study Report … ok — 2ef89662-c10c-4680-8ddf-7ebc96298523 → cer (existing, already filed, 5659 bytes)
+  • Vault: Risk Management File Summary (ISO 14971) … ok — 56eb3298-eed6-4c53-9cc6-260de8fcc677 → eng (existing, already filed, 4407 bytes)
+  • Vault: Labeling and Instructions for Use (Draft) … ok — 17c24c7a-cd50-498e-8c76-eb87434ca6e3 → udi (existing, already filed, 6254 bytes)
+  • Vault: data room after filing … ok — documentCount=7; cab-bn:A:9 cab-bn:B:3 cab-bn:C:2 cab-bn:D:6 cab-bn:E:8 cab-bn:F:1 cab-bn:G:2 cab-k510:2 cab-cer:1 cab-eng:2 cab-udi:1
+  • Authoring: 510(k) Summary (sections per 21 CFR 807.92) … ok — 3415e1bf-ffcb-42e8-a56d-cfa1beb9fd95 (existing, 9 sections)
+  • Authoring: reviewer comment on the 510(k) Summary, resolved … ok — comment 6952794d-0ec3-48b5-9ebb-b045144af39d resolved
+  • Authoring: request review, submit to workflow, freeze v1.0 … ok — review → oq-signer@validation.local (existing, review already signed by oq-signer@validation.local); frozen v1.0 by oq-signer@validation.local (REVIEWER) (2a04c7167f0c…)
+  • Authoring: e-sign the frozen 510(k) Summary as the second signer (APPROVER) … ok — signed by oq-signer@validation.local as APPROVER over freeze vapproved
+  • Authoring: Substantial Equivalence Discussion (draft with an open comment) … ok — db779d9a-580e-496b-a12e-204781e10f7e draft, open comment 215142b4-3d7c-4722-aced-f35eea85bd22
+  • Authoring: Cybersecurity and Interoperability Summary (review requested) … ok — f774ccb4-473a-4a6c-939f-356944f3a402 (6 sections), review → oq-signer@validation.local
+  • Authoring: does the Review board list the requested reviews? (probe) … ok — queue 4, 2 for the pack
+  • Submission Center: 510(k) submission for the program … ok — 3 (created, 510k/ivd)
+  • Submission Center: original sequence 0000 … ok — 2 status draft (created)
+  • Submission Center: eSTAR section codes on the leaf route (probe) … ok — HTTP 200: the leaf route now takes the eSTAR section code; the CTD placements below stay as well
+  • Submission Center: file the six vault documents as leaves at CTD codes … ok — 7 leaves (6 placed this run)
+  • Submission Center: sequence draft → assembling … ok — draft → assembling
+  • Submission Center: eSTAR 510(k) pathway readiness (deterministic, read-only) … ok — ready=false; present 0; missingRequired 15
+  • Submission Readiness: validation + dispatch-readiness assessment of sequence 0000 … ok — gate.cleared=false validationErrors=0 (0 UNRESOLVED_DOCUMENT) blockers=2
+  • Submission Readiness: dispatch QC (deterministic verdict; narration needs a provider) … ok — clearedToDispatch=false (assess-dispatch-readiness); narrative unavailable: PROVIDER_UNAVAILABLE
+  • Submission Readiness: readiness review orchestration (probe) … ok — HTTP 400
+  • QMS: SOP-101 Design Controls (21 CFR 820.30) … ok — 5 MDX-SOP-101 draft v1.0 (created)
+  • QMS: SOP-102 Corrective and Preventive Action … ok — 6 MDX-SOP-102 draft v1.0 (created)
+  • QMS: SOP-103 Complaint Handling and MDR Reporting … ok — 7 MDX-SOP-103 draft v1.0 (created)
+  • QMS: SOP-104 Software Change Control … ok — 8 MDX-SOP-104 draft v1.0 (created)
+  • QMS: approve MDX-SOP-101 as the second signer (e-signature) … ok — effective; signature 12 (APPROVED) by oq-signer@validation.local
+  • QMS: approve MDX-SOP-102 as the second signer (e-signature) … ok — effective; signature 13 (APPROVED) by oq-signer@validation.local
+  • QMS: SOP-103 into review; SOP-104 stays draft …     (429 on PATCH /api/mdx/qms/documents/7; waiting 44s, retry 1)
+ok — SOP-103 in_review; SOP-104 draft
+  • QMS: inspect personal acknowledgement readiness of SOP-101 … ok — A human must open SOP-101 in Quality, read the released text and choose Acknowledge this revision. Demo setup does not attest for the reader.
+  • QMS: change-control record for the NP-100 software release … ok — 2 MDX-CC-2026-001 under_assessment (created, 3 links)
+  • Tasks: 4 tasks on NeuroPanel-Dx … ok — 4 created, 0 already there (board project 3)
+  • Audit trail: organisation ledger and chain verdict … ok — window 540; 108 entries reference pack records (106 since run start); chain.ok=true; verify-chain ok=true
+manifest → /home/user/ClinicalSageAI-2-replit/docs/evidence/DEMO/mdx/manifest.json
+exit 0

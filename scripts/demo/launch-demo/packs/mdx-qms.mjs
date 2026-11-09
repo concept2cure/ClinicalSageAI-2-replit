@@ -5,7 +5,7 @@
  * review, one draft, personal acknowledgement readiness and a change-control record.
  * Called from mdx.mjs; nothing here runs on its own.
  */
-import { must, fillQmsSections } from '../lib.mjs';
+import { must, fillQmsSections, sendQmsForReview } from '../lib.mjs';
 import { PROVENANCE, MANUFACTURER, today, inDays, SOPS } from './mdx-content.mjs';
 import { PACK, T, SIGNER_ABSENT, CHANGE_NUMBER, finding } from './mdx-shared.mjs';
 
@@ -30,6 +30,11 @@ async function ensureSop({ api, run, programId }, sop) {
 }
 
 async function approveSop({ api, run }, key, doc, signer) {
+  // A draft is approved only once it is under review, routed to its approver (lib.mjs sendQmsForReview).
+  const routed = (await qmsDocs(api)).find((d) => d.id === doc.id) || {};
+  if (routed.status === 'draft' && signer) {
+    await sendQmsForReview(api, doc, signer, { reason: `Demo: send ${doc.docNumber} for approval by the second signer`, approvalDueDate: inDays(14) });
+  }
   const current = (await qmsDocs(api)).find((d) => d.id === doc.id) || {};
   if (current.status === 'effective') {
     run.record(`qms.${key}`, { ...doc, status: 'effective', approverId: current.approver_id, approvedAt: current.approved_at, effectiveDate: current.effective_date });
@@ -107,8 +112,7 @@ export async function seedQms(ctx, signer, vaultDocs) {
       // Review names an approver who is not the author (REVIEW_ROUTE_REQUIRED, two-person rule).
       sops.sop103.status = `draft — review ${SIGNER_ABSENT}`;
     } else if (statusOf(sops.sop103.id) === 'draft') {
-      must(await api('PATCH', `/api/mdx/qms/documents/${sops.sop103.id}`, { status: 'in_review', reason: 'Demo: send SOP-103 for independent review' }), 200, 'SOP-103 → in_review');
-      sops.sop103.status = 'in_review';
+      sops.sop103.status = await sendQmsForReview(api, sops.sop103, signer, { reason: 'Demo: send SOP-103 for independent review', approvalDueDate: inDays(14) });
     } else sops.sop103.status = statusOf(sops.sop103.id);
     sops.sop104.status = statusOf(sops.sop104.id);
     run.record('qms.sop103', sops.sop103);
