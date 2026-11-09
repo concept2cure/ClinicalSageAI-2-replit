@@ -1,0 +1,52 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T03:46:29.652Z",
+  "steps": [
+    {
+      "name": "earlier walk runs' seeded spans retired on the local database",
+      "retired": 10
+    },
+    {
+      "name": "seeded on the local database: v1, v2 superseding it in review, and a span in the section drafted from v1",
+      "section": {
+        "id": "72ef1025-2818-4903-9ad2-ca0d3f2fdbe6",
+        "code": "2.5.3",
+        "title": "[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101"
+      },
+      "org": 2,
+      "documentCode": "S12-WALK-1794195989733",
+      "v1": "155741e9-74c8-4265-a67b-70f344233786",
+      "v2": "d4fb4931-173e-41c6-b4ca-0d7639f05c7b",
+      "canonical": "s12-walk-1794195989733"
+    },
+    {
+      "name": "version 3 approved (seeded at that stage; see the README)",
+      "v3": "becce24e-d5c3-4422-a43d-a59cba9235ae"
+    },
+    {
+      "name": "the Sources rail says the section's Vault source was replaced since cited, and which version is approved",
+      "text": "Drug substance specification· VaultSource has been replaced since citedDrafted from v1.0 · v3.0 is approved Open in Vault"
+    },
+    {
+      "name": "Open in Vault opens the Vault on the approved version: its detail names v3.0, approved, of 3 versions",
+      "url": "/concept2cure/vault?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "file": "ds-spec-1794195989733-v3.pdf"
+    }
+  ],
+  "requests": [],
+  "seed": {
+    "section": {
+      "id": "72ef1025-2818-4903-9ad2-ca0d3f2fdbe6",
+      "code": "2.5.3",
+      "title": "[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101"
+    },
+    "org": 2,
+    "documentCode": "S12-WALK-1794195989733",
+    "v1": "155741e9-74c8-4265-a67b-70f344233786",
+    "v2": "d4fb4931-173e-41c6-b4ca-0d7639f05c7b",
+    "canonical": "s12-walk-1794195989733",
+    "v3": "becce24e-d5c3-4422-a43d-a59cba9235ae"
+  },
+  "finishedAt": "2026-11-09T03:46:42.628Z"
+}
