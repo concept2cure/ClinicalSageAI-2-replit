@@ -1,0 +1,9 @@
+MUTATION 3-binary-limit-in-gb in server/services/submission-gateways/pre-transmit-check.ts (on the final code and tests, 2026-11-09T03:55:34.855249Z): replaced [  const decimal = limitBytes % 1000 ** 3 === 0;] with [  const decimal = true;]
+ × server/services/submission-gateways/__tests__/pre-transmit-size-limit-only-where-one-is-on-file.test.ts > the size sentence never reads the two figures as equal > a package over EU CESP’s 600 MiB is said in MiB against the whole-MiB limit 6ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-size-limit-only-where-one-is-on-file.test.ts > the size sentence never reads the two figures as equal > one byte over 600 MiB is said in bytes, since the MiB figures would read alike 14ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-size-limit-only-where-one-is-on-file.test.ts > the size sentence never reads the two figures as equal > FDA’s decimal 10 GB stays in GB, and one byte over it is said in bytes 1ms
+      Tests  1 failed | 2 passed | 12 skipped (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-gateways/__tests__/pre-transmit-size-limit-only-where-one-is-on-file.test.ts > the size sentence never reads the two figures as equal > a package over EU CESP’s 600 MiB is said in MiB against the whole-MiB limit
+AssertionError: expected 'Package is 0.73 GB, over the EMA gate…' to match /^Package is 700\.0 MiB, over the EMA …/
+restored sha256 34d50f05ea3a409472b6279a522c25e757eace95ad08f5300e9a7261b9923dea (expected 34d50f05ea3a409472b6279a522c25e757eace95ad08f5300e9a7261b9923dea)

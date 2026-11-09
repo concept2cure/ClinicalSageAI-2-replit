@@ -205,6 +205,29 @@ export function gatewaySizeLimitEnforced(region: Region): boolean {
   return getGatewaySizeLimitOnFile(REGION_TO_REGULATORY[region]) !== null && !SIZE_LIMIT_UNSOURCED[region];
 }
 
+/**
+ * A package's size and its gateway's limit in words that cannot read as equal (the coordinating session,
+ * 2026-11-09: "Package is 0.63 GB, over the EMA gateway limit of 0.63 GB" was printed for a package one byte over
+ * 600 MiB). A decimal limit (FDA's 10 GB) is said in GB to two places, as FDA states it (sweep VP-6); a binary one
+ * in MiB, the package to one decimal and the limit whole. Where the two would still read alike, both are bytes.
+ */
+function sizeAgainstLimit(sizeBytes: number, limitBytes: number): { size: string; limit: string } {
+  const decimal = limitBytes % 1000 ** 3 === 0;
+  const unit = decimal ? 1000 ** 3 : 1024 ** 2;
+  const words = (n: number, places: number) => `${(n / unit).toFixed(places)} ${decimal ? 'GB' : 'MiB'}`;
+  const limit = words(limitBytes, decimal || !Number.isInteger(limitBytes / unit) ? 2 : 0);
+  const size = words(sizeBytes, decimal ? 2 : 1);
+  if (parseFloat(size) > parseFloat(limit)) return { size, limit };
+  return { size: `${sizeBytes.toLocaleString('en-US')} bytes`, limit: `${limitBytes.toLocaleString('en-US')} bytes` };
+}
+
+/** This gateway's enforced limit in the words checkGatewaySize says it in, or null when none is enforced. */
+export function gatewaySizeLimitWords(region: Region): string | null {
+  if (!gatewaySizeLimitEnforced(region)) return null;
+  const onFile = getGatewaySizeLimitOnFile(REGION_TO_REGULATORY[region]);
+  return onFile ? sizeAgainstLimit(onFile.bytes + 1024 ** 3, onFile.bytes).limit : null;
+}
+
 export function checkGatewaySize(
   region: Region,
   sizeBytes: number,
@@ -225,15 +248,15 @@ export function checkGatewaySize(
       (unsourced ? ` (not enforced: ${unsourced})` : ''),
   };
   if (sizeOk) return { check };
-  // Decimal GB (10^9 bytes): FDA states its 10 GB in it, and a figure printed in
-  // binary units read "9.31 GB" for that limit (2026-10-08, W5/D7, sweep VP-6).
-  const gb = (n: number) => (n / 1000 ** 3).toFixed(2);
+  // Decimal GB for FDA's 10 GB, as FDA states it (2026-10-08, W5/D7, sweep VP-6);
+  // MiB for a binary limit; bytes where the two would read alike (sizeAgainstLimit).
+  const said = sizeAgainstLimit(sizeBytes, limit);
   return unsourced
-    ? { check, warning: `Package is ${gb(sizeBytes)} GB, over the ${gb(limit)} GB figure recorded for the ${R} gateway. Not enforced: ${unsourced}.` }
+    ? { check, warning: `Package is ${said.size}, over the ${said.limit} figure recorded for the ${R} gateway. Not enforced: ${unsourced}.` }
     : {
         check,
         blocker:
-          `Package is ${gb(sizeBytes)} GB, over the ${R} gateway limit of ${gb(limit)} GB. ` +
+          `Package is ${said.size}, over the ${R} gateway limit of ${said.limit}. ` +
           // FDA's own remedy, the one its regional finding (FDA-ESG-003) gives (sweep VP-6).
           (region === 'fda' ? FDA_OVERSIZE_REMEDY : "Submit via the agency's large-submission channel (e.g. physical media) instead of the gateway."),
       };
