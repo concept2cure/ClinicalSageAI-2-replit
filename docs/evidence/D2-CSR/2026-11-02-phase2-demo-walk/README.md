@@ -227,6 +227,34 @@ they were started from.** A CSR created live freezes new study data, which has n
 on one CSR document beforehand, and the live part opens that document. Nothing below types an identifier the
 study does not have.
 
+### Demo day, 2026-11-09: the founder's Codespace, in order
+
+*Added 2026-11-09 for the client demo at 1:00 pm Pacific.*
+
+**AnA's conversation was refused on every turn on trunk from 2026-11-06.** That came from b8cee0745: every run
+started at tier 3, which only a self-hosted model may serve. The founder chose the fix: d8febe020, on trunk at
+5fa65a602. A run now starts at tier 1. A turn that reads a CONFIDENTIAL source, such as the CDISC files in the
+Vault, is still refused on Anthropic. It was verified in the running app with a dummy key: the turn reached
+Anthropic (ALLOW_INPUT_TIER).
+
+1. **Update the Codespace.** In its terminal:
+   ```
+   git pull --ff-only origin concept2cure-v2
+   bash .devcontainer/post-start.sh
+   ```
+   This restarts the app on the checkout and reinstalls dependencies if the lockfile changed. Its output must show
+   an `ANTHROPIC_API_KEY: …` line. With no key, add the Codespaces secret, then stop and start the Codespace.
+2. **Check the CSR study.** The output must say "CSR study ready". If it says "did not finish", the preparation
+   walk could not load `playwright`, which is not in package.json. Run:
+   ```
+   npm install --no-save playwright@1.56.1 && npx playwright install --with-deps chromium && bash .devcontainer/post-start.sh
+   ```
+   The Codespace's study has no efficacy file, so §11.4 reads "not supplied".
+3. **Check AnA.** Sign in with Demo access, open the CDISCPILOT01 project and ask "What is this project about?".
+   It must answer. "Blocked by AI gateway policy" means the app runs an older commit.
+4. **Build the CSR now**, not live: Author → "CDISCPILOT01 Clinical Study Report" → Build from the study's data →
+   Build CSR draft. It takes tens of minutes. Then do steps 11–13 below.
+
 ### Before the demo: the environment
 
 1. **A model key.** Set `ANTHROPIC_API_KEY` in the demo environment. Without it, nothing is drafted: each heading
@@ -281,6 +309,9 @@ study data. A local server's `ALLOWED_ORIGINS` must name its own URL (for exampl
 ### Live: what to show (each step was used in the running app on 2026-11-02, except where marked)
 
 1. **The Vault.** The project's seven study files at Approved, each with its review and approval sign-offs.
+1a. **AnA.** In the project's composer, ask about the project, its plan or its next step. Do not ask AnA to read
+   the CDISC files in the Vault. They are stored CONFIDENTIAL, and AnA refuses them on Anthropic ("requires local
+   processing"), as the founder chose on 2026-11-09. The CSR build is not affected.
 2. **New document** (optional, show only): More document actions → New document…, to show the CSR is one
    document type in the one editor. Do not continue in it.
 3. **The prepared CSR.** Open it and expand **Build from the study's data**. Study data shows the frozen entry.
@@ -288,11 +319,15 @@ study data. A local server's `ALLOWED_ORIGINS` must name its own URL (for exampl
    the CSR files with their gaps.
 4. **The CSR's imported sections** (needs a real build for drafted text). Show the drafted text beside the tables.
 5. **Review**, as the reviewer: the project's **Review** tab → the CSR → **Record review decision** →
-   **Approve**. In the CSR scientific review, tick "Study data the imported CSR build was drafted from" (fixed
-   today) → **Read the retained tables** → map each figure to its cell → attest → **Record approval**.
-6. **E-sign** as the approver, once the review is recorded (before that, the bar says "Needs its scientific review
-   first"; not walked here: needs a real build). Then **Place into filing** (5.3.5.1, Study id, STF file-tag) or
-   **Place CSR files** from the assembly into sequence 0000.
+   **Approve**. In the CSR scientific review, tick **"Study data frozen for this document"** (since F6, the build
+   writes into this CSR, so its own study data is listed; "…the imported CSR build was drafted from" appears only
+   for a separate working copy) → **Read the retained tables** → map each figure to its cell → attest → **Record
+   approval**. A section that still holds a "[…]" placeholder blocks it (F8).
+6. **Stop at the review.** E-sign and Freeze of a CSR whose sections are imported AI drafts are refused, first with
+   WORKFLOW_MODEL_QUALIFICATION_REQUIRED, then with WORKFLOW_HUMAN_ADOPTION_REQUIRED, until a person replaces that
+   text. No model pin is qualified yet (workflow-import-governance.ts). Show the refusal as the governance control,
+   or end at the recorded review. **Place into filing** and **Place CSR files** follow a signature, and are not
+   reachable today with drafted text.
 
 ### What not to do live
 
@@ -301,6 +336,8 @@ study data. A local server's `ALLOWED_ORIGINS` must name its own URL (for exampl
 - In "CSR build", do not choose a failed or keyless build.
 - Do not create the CSR live and expect the prepared build to appear in it.
 - Do not re-upload a dataset after the manifest is approved.
+- Do not ask AnA to read or summarise the CDISC files in the Vault: it refuses CONFIDENTIAL sources on Anthropic.
+- Do not E-sign or freeze the CSR expecting it to pass: imported AI text is refused at release (live step 6).
 
 ## Reproduce
 
