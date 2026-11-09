@@ -250,6 +250,10 @@ It cannot message, so these are here. Both were measured in the running app, not
    - check the push's own exit status; a pipe through `tail` hides a failure;
    - **after two lost ref races**, ask the coordinating session for a push window: it asks every other session to
      hold its pushes for 15 minutes and says when the window closes (the first, 22:50, landed P-89 and P-90 at 22:52).
+   - **set the typecheck heap to what the host has**: `TYPECHECK_HEAP_MB=12288` on these 15–16 GB containers. The
+     gate's default (24576) is above the host's memory, and the kernel kills tsc (exit 137). 11000 runs out of heap
+     (2026-11-09). 12288 passed for Reporting, RIM and the coordinating session. Run nothing else heavy (vitest, a
+     second tsc) while the hook runs.
 
 ## Anna runtime epic — P-104, 2026-11-06
 
