@@ -50,7 +50,7 @@ export const SCREEN_SIGNAL_PANEL: AnaTool = {
 export const ASSESS_ISO17511_TRACEABILITY: AnaTool = {
   name: 'assess_iso17511_traceability',
   description:
-    'Assess an IVD assay\'s metrological traceability chain against ISO 17511 — returns validity, gaps, and a recommendation. Use when reviewing the calibration/traceability section of an IVD technical file. ' +
+    'Assess an IVD assay\'s metrological traceability chain against ISO 17511 — returns validity, gaps, and a recommendation. Every input is required: a missing or non-boolean fact, or an unknown tier, is refused by name, never read as false. Use when reviewing the calibration/traceability section of an IVD technical file. ' +
     DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
@@ -66,11 +66,11 @@ export const ASSESS_ISO17511_TRACEABILITY: AnaTool = {
         ],
         description: 'The highest reference the chain is anchored to.',
       },
-      certifiedReferenceMaterial: { type: 'boolean' },
-      referenceMeasurementProcedure: { type: 'boolean' },
-      commutabilityDemonstrated: { type: 'boolean' },
-      uncertaintyBudgetDocumented: { type: 'boolean' },
-      unbrokenChain: { type: 'boolean' },
+      certifiedReferenceMaterial: { type: 'boolean', description: 'A certified reference material is identified at the top of the chain. Required, true or false.' },
+      referenceMeasurementProcedure: { type: 'boolean', description: 'A reference measurement procedure is documented. Required, true or false.' },
+      commutabilityDemonstrated: { type: 'boolean', description: 'Commutability with clinical samples is demonstrated. Required, true or false.' },
+      uncertaintyBudgetDocumented: { type: 'boolean', description: 'Uncertainty is propagated to the end-user result. Required, true or false.' },
+      unbrokenChain: { type: 'boolean', description: 'Each step is value-assigned by the step above. Required, true or false.' },
     },
     required: [
       'tier',
@@ -86,14 +86,14 @@ export const ASSESS_ISO17511_TRACEABILITY: AnaTool = {
 export const ASSESS_SCIENTIFIC_VALIDITY: AnaTool = {
   name: 'assess_scientific_validity',
   description:
-    'Assess the scientific validity of an IVD analyte↔clinical-condition association (IVDR Annex XIII) from the supporting evidence — returns a verdict (established / supported / insufficient) and gaps. ' +
+    'Assess the scientific validity of an IVD analyte↔clinical-condition association (IVDR Annex XIII) from the supporting evidence — returns a verdict (established / supported / insufficient) and gaps. Each evidence item needs a listed source and directlyOnTarget true or false; an item missing either, or evidence that is not a list, is refused by field. ' +
     DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
       analyte: { type: 'string' },
       clinicalCondition: { type: 'string' },
-      intendedPurpose: { type: 'string' },
+      intendedPurpose: { type: 'string', description: 'Not read by the engine.' },
       evidence: {
         type: 'array',
         description: 'The body of evidence supporting the association.',
@@ -110,9 +110,9 @@ export const ASSESS_SCIENTIFIC_VALIDITY: AnaTool = {
                 'expert_opinion',
               ],
             },
-            reference: { type: 'string' },
-            subjects: { type: 'integer', minimum: 0 },
-            directlyOnTarget: { type: 'boolean' },
+            reference: { type: 'string', description: 'Not read by the engine.' },
+            subjects: { type: 'integer', minimum: 0, description: 'Not read by the engine.' },
+            directlyOnTarget: { type: 'boolean', description: 'Whether the item directly concerns the claimed analyte–condition link. Required, true or false.' },
           },
           required: ['source', 'reference', 'directlyOnTarget'],
         },
@@ -151,7 +151,7 @@ export const DETERMINE_ASSAY_CUTOFF: AnaTool = {
 export const ASSESS_SHELF_LIFE_STABILITY: AnaTool = {
   name: 'assess_shelf_life_stability',
   description:
-    'Assess real-time stability / shelf-life from measured timepoints — fits the degradation trend and reports the supportable shelf-life against the allowed percent change. ' +
+    'Assess real-time stability / shelf-life from measured timepoints — fits the degradation trend and reports the supportable shelf-life against the allowed percent change. A point whose time is not a number of 0 or more or whose value is not a number, fewer than two distinct times, or a missing or non-positive maxPercentChange is refused by field. ' +
     DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
@@ -168,8 +168,8 @@ export const ASSESS_SHELF_LIFE_STABILITY: AnaTool = {
           required: ['time', 'value'],
         },
       },
-      initialValue: { type: 'number', description: 'Value at t=0. Defaults to the first point.' },
-      maxPercentChange: { type: 'number', exclusiveMinimum: 0, description: 'Allowed percent change from initial before the claim fails.' },
+      initialValue: { type: 'number', description: 'Value at t=0 (non-zero). If omitted, the regression intercept is used, and initialValueSource says so.' },
+      maxPercentChange: { type: 'number', exclusiveMinimum: 0, description: 'Allowed percent change from initial before the claim fails. Required.' },
     },
     required: ['points', 'maxPercentChange'],
   },
@@ -178,7 +178,7 @@ export const ASSESS_SHELF_LIFE_STABILITY: AnaTool = {
 export const ASSESS_ACCELERATED_STABILITY: AnaTool = {
   name: 'assess_accelerated_stability',
   description:
-    'Project shelf-life from accelerated (Arrhenius) stability data — extrapolates rate constants at elevated temperatures to the storage temperature and reports the projected shelf-life against a degradation threshold. ' +
+    'Project shelf-life from accelerated (Arrhenius) stability data — extrapolates rate constants at elevated temperatures to the storage temperature and reports the projected shelf-life against a degradation threshold. A point whose temperature or rate constant is out of range, fewer than two distinct temperatures, or a missing storage temperature or threshold is refused by field. ' +
     DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',

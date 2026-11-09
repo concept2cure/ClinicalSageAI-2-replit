@@ -324,10 +324,12 @@ async function projectDocumentHeads(sql: RequestSqlClient, organizationId: numbe
   return { dossier: { home: dossier.home,rows: dossier.rows },canonical: canonical.rows,authoring: authoring.rows,sections:sections.rows,reviews:reviews.rows,pending };
 }
 
+/** The project's filing heads: its live sequences and their leaves. A removed sequence is not a filing target, so
+ *  neither it nor its leaves are read (F1, 2026-11-09): a project whose only sequence was removed has none. */
 async function projectFilingHeads(sql: RequestSqlClient, organizationId: number, projectId: number, programId: string | null) {
   const rows = await sql.query(`SELECT s.id,to_jsonb(s)->>'validation_status' AS validation_status,to_jsonb(s)->>'status' AS status,
     to_jsonb(s)->>'updated_at' AS updated_at FROM ectd_sequences s JOIN submissions p ON p.id=s.submission_id
-    WHERE s.organization_id=$1 AND p.organization_id=$1
+    WHERE s.organization_id=$1 AND p.organization_id=$1 AND s.deleted_at IS NULL
     AND (to_jsonb(p)->>'program_id'=$2 OR to_jsonb(p)->>'project_id'=$3) ORDER BY s.id LIMIT 1001`,[organizationId,programId,String(projectId)]);
   if (rows.rows.length > 1000) throw new Error('Project filing head limit reached.');
   const leaves = await sql.query(`SELECT l.id,to_jsonb(l)->>'sha256' AS sha256,to_jsonb(l)->>'md5' AS md5,
@@ -335,7 +337,7 @@ async function projectFilingHeads(sql: RequestSqlClient, organizationId: number,
     to_jsonb(l)->>'document_table' AS document_table,to_jsonb(l)->>'document_id' AS document_id,to_jsonb(l)->>'document_uuid' AS document_uuid,
     to_jsonb(l)->>'lifecycle_op' AS lifecycle_op,to_jsonb(l)->>'section_code' AS section_code,to_jsonb(l)->>'title' AS title,
     to_jsonb(l)->>'updated_at' AS updated_at,to_jsonb(l)->>'deleted_at' AS deleted_at
-    FROM submission_leaves l JOIN ectd_sequences s ON s.id=l.sequence_id AND s.organization_id=l.organization_id
+    FROM submission_leaves l JOIN ectd_sequences s ON s.id=l.sequence_id AND s.organization_id=l.organization_id AND s.deleted_at IS NULL
     JOIN submissions p ON p.id=s.submission_id AND p.organization_id=s.organization_id WHERE l.organization_id=$1
     AND (to_jsonb(p)->>'program_id'=$2 OR to_jsonb(p)->>'project_id'=$3) ORDER BY l.id LIMIT 1001`,[organizationId,programId,String(projectId)]);
   if (leaves.rows.length > 1000) throw new Error('Project filing leaf head limit reached.');

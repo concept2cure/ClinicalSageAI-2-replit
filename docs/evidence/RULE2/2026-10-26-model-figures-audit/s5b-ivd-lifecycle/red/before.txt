@@ -1,0 +1,106 @@
+# S5b IVD lifecycle red: the engine test and the QMS route test on d1e158266, in the working tree before the change. The engine test fails 46 of 50 (4 controls pass); the route answers 200 to ['CAPA'] and to {} (the stated-list control passes).
+
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the stated answers are kept > a complete chain is valid, and a stated gap is still a gap 5ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the stated answers are kept > established scientific validity stays established 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the stated answers are kept > a declining series and an ordinary Arrhenius study keep their shelf-lives 2ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the stated answers are kept > QMS readiness and designation eligibility keep their stated answers 1ms
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > certifiedReferenceMaterial omitted or null is refused by name, not a gap 11ms
+   → expected {} to match object { code: 'missing_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > referenceMeasurementProcedure omitted or null is refused by name, not a gap 2ms
+   → expected {} to match object { code: 'missing_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > commutabilityDemonstrated omitted or null is refused by name, not a gap 2ms
+   → expected {} to match object { code: 'missing_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > uncertaintyBudgetDocumented omitted or null is refused by name, not a gap 1ms
+   → expected {} to match object { code: 'missing_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > unbrokenChain omitted or null is refused by name, not a gap 2ms
+   → expected {} to match object { code: 'missing_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > certifiedReferenceMaterial malformed is refused by name 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > referenceMeasurementProcedure malformed is refused by name 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > commutabilityDemonstrated malformed is refused by name 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > uncertaintyBudgetDocumented malformed is refused by name 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > unbrokenChain malformed is refused by name 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > refuses a tier outside the ISO 17511 tiers 1ms
+   → expected {} to match object { Object (code, field) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_scientific_validity scores no item whose source or target is unstated or malformed > refuses 'evidence[0].directlyOnTarget' = { directlyOnTarget: undefined } 1ms
+   → expected {} to match object { code: 'missing_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_scientific_validity scores no item whose source or target is unstated or malformed > refuses 'evidence[0].directlyOnTarget' = { directlyOnTarget: 'false' } 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_scientific_validity scores no item whose source or target is unstated or malformed > refuses 'evidence[0].source' = { source: 'Guidelines' } 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_scientific_validity scores no item whose source or target is unstated or malformed > refuses evidence that is not a list, or an item that is not an object 2ms
+   → expected TypeError: input.evidence.filter is not a… to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'maxPercentChange' ({ maxPercentChange: undefined }) 1ms
+   → expected {} to match object { code: 'missing_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'maxPercentChange' ({ maxPercentChange: '10' }) 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'maxPercentChange' ({ maxPercentChange: NaN }) 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'maxPercentChange' ({ maxPercentChange: +0 }) 1ms
+   → expected Error: maxPercentChange must be positive. to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'initialValue' ({ initialValue: '100' }) 0ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'initialValue' ({ initialValue: +0 }) 1ms
+   → expected Error: Initial value must be non-zero to … to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'points' ({ points: 'abc' }) 1ms
+   → expected TypeError: points.map is not a function to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'points[1].time' ({ Object (points) }) 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'points[1].value' ({ Object (points) }) 1ms
+   → expected {} to match object { code: 'missing_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'points[0].time' ({ Object (points) }) 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'points' ({ Object (points) }) 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > says when the regression intercept stood in for an omitted initial value 1ms
+   → expected undefined to be 'regression_intercept' // Object.is equality
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'degradationThreshold' ({ degradationThreshold: undefined }) 1ms
+   → expected {} to match object { code: 'missing_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'degradationThreshold' ({ degradationThreshold: '0.1' }) 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'degradationThreshold' ({ degradationThreshold: 1 }) 1ms
+   → expected Error: degradationThreshold must be in (0… to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'storageTemperatureC' ({ storageTemperatureC: undefined }) 1ms
+   → expected {} to match object { code: 'missing_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'storageTemperatureC' ({ storageTemperatureC: '4' }) 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'points[0].temperatureC' ({ points: [ { …(2) }, { …(2) } ] }) 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'points[0].temperatureC' ({ points: [ { …(2) }, { …(2) } ] }) 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'points[0].rateConstant' ({ points: [ { …(2) }, { …(2) } ] }) 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'points[0].rateConstant' ({ points: [ { …(2) }, { …(2) } ] }) 1ms
+   → expected Error: Rate constants must be positive. to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'points' ({ points: [ { …(2) }, { …(2) } ] }) 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_qms refuses a clause id it does not know, instead of counting the clause missing > refuses an unknown or non-text id by index 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_pathway_eligibility calls nothing ineligible from an unanswered criterion > leaves eligibility null while a criterion is unanswered and none is false 2ms
+   → expected { designation: 'fda_orphan', …(5) } to match object { eligible: null, …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_pathway_eligibility calls nothing ineligible from an unanswered criterion > refuses an answer that is not true or false, by criterion 1ms
+   → expected {} to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the definitions say what is refused, within the trimmed length > assess_iso17511_traceability says a missing or malformed input is refused 1ms
+   → expected 'Assess an IVD assay\'s metrological t…' to match /refused by (name|field)/
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the definitions say what is refused, within the trimmed length > assess_scientific_validity says a missing or malformed input is refused 1ms
+   → expected 'Assess the scientific validity of an …' to match /refused by (name|field)/
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the definitions say what is refused, within the trimmed length > assess_shelf_life_stability says a missing or malformed input is refused 0ms
+   → expected 'Assess real-time stability / shelf-li…' to match /refused by (name|field)/
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the definitions say what is refused, within the trimmed length > assess_accelerated_stability says a missing or malformed input is refused 0ms
+   → expected 'Project shelf-life from accelerated (…' to match /refused by (name|field)/
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the definitions say what is refused, within the trimmed length > says what an omitted initial value means, and which inputs are not read 1ms
+   → expected 'Value at t=0. Defaults to the first p…' to match /regression intercept/
+ × server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the definitions say what is refused, within the trimmed length > says an unanswered criterion is null and a malformed answer or clause id is refused 1ms
+   → expected 'Check eligibility for an expedited/sp…' to match /null \(undetermined\)/
+ × server/routes/__tests__/device-qms-assess-refuses-an-unknown-or-omitted-clause-list.test.ts > POST /api/submissions/device/qms/assess > refuses an id that is not a clause id with 400, naming it (not 200, and not 500) 36ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/device-qms-assess-refuses-an-unknown-or-omitted-clause-list.test.ts > POST /api/submissions/device/qms/assess > refuses an omitted list with 400, instead of assessing no clause as in place 6ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/device-qms-assess-refuses-an-unknown-or-omitted-clause-list.test.ts > POST /api/submissions/device/qms/assess > assesses a stated list of clause ids, as before 5ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 48 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  48 failed | 5 passed (53)
