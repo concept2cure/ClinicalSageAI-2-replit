@@ -29,7 +29,10 @@ export const FREEZE_GATE_SEED_SQL = `
     ${FREEZE_IDENTITY_SEED_SQL}
     CREATE TABLE c2c_ana_actions (id TEXT PRIMARY KEY, org_id INTEGER, command TEXT, target TEXT, state TEXT, proposed_by INTEGER, payload JSONB);
     -- verification_date and updated_at: the real table's, which a void of a refused step's signature sets (P-23).
-    CREATE TABLE electronic_signatures (id SERIAL PRIMARY KEY, organization_id INTEGER, signed_target TEXT, signature_manifest TEXT, bound_payload_digest TEXT, binding_basis TEXT, superseded_by INTEGER, is_valid BOOLEAN, verification_status TEXT, verification_date TIMESTAMP, updated_at TIMESTAMP);
+    -- signer_id, signature_meaning, signature_type and created_at: the real table's, which the sequence-removal
+    -- guard reads to admit a retirement only on a live 'responsibility' signature by the audit row's actor (P-86).
+    CREATE TABLE electronic_signatures (id SERIAL PRIMARY KEY, organization_id INTEGER, signed_target TEXT, signature_manifest TEXT, bound_payload_digest TEXT, binding_basis TEXT, superseded_by INTEGER, is_valid BOOLEAN, verification_status TEXT, verification_date TIMESTAMP, updated_at TIMESTAMP,
+      signer_id INTEGER, signature_meaning TEXT, signature_type TEXT DEFAULT 'governed-action', created_at TIMESTAMP DEFAULT NOW());
     CREATE TABLE IF NOT EXISTS ectd_compilations (id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, compilation_type TEXT, sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW());
     -- The transmittal row the filed fold reads what a sequence sent from (F1, 2026-11-01).
     -- The freeze-gate cases send no sequence with that record, so each is read from its compiles;
@@ -103,10 +106,11 @@ export function freezeGateHelpers(db: () => IndPgliteDb) {
       `INSERT INTO c2c_ana_actions (id, org_id, command, target, state, proposed_by, payload) VALUES ($1,$2,'sign',$3,'executed',$4,$5)`,
       [id, ORG, `ectd-sequence:${seqId}`, USER, JSON.stringify(meaning === null ? { intent, ...extra } : { intent, meaning, ...extra })],
     );
+    // The signer and the meaning, as the sign route records them (signature-persistence.ts).
     await h.pglite.query(
-      `INSERT INTO electronic_signatures (organization_id, signed_target, signature_manifest, bound_payload_digest, binding_basis, is_valid, verification_status)
-       VALUES ($1,$2,$3,$4,$5,true,'valid')`,
-      [ORG, `ectd-sequence:${seqId}`, JSON.stringify({ actionId: id }), binding.digest, binding.basis],
+      `INSERT INTO electronic_signatures (organization_id, signed_target, signature_manifest, bound_payload_digest, binding_basis, is_valid, verification_status, signer_id, signature_meaning, signature_type)
+       VALUES ($1,$2,$3,$4,$5,true,'valid',$6,$7,'governed-action')`,
+      [ORG, `ectd-sequence:${seqId}`, JSON.stringify({ actionId: id }), binding.digest, binding.basis, USER, meaning],
     );
     return id;
   }
