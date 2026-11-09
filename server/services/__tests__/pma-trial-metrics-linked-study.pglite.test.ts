@@ -70,7 +70,8 @@ beforeAll(async () => {
   await program(DANGLING, { clinicalStudyId: 'aaaaaaaa-0000-4000-8000-0000000000ff' });
   await program(ACROSS, { clinicalStudyId: OTHER_ORGS });
   await program(MALFORMED, { clinicalStudyId: 'CV-PIVOTAL' });
-  const study = (id: string, org: number, name: string, enrolled: number, target: number, updated: string) =>
+  type Study = { id: string; org: number; name: string; enrolled: number; target: number; updated: string };
+  const study = ({ id, org, name, enrolled, target, updated }: Study) =>
     holder.pg.query(
       `INSERT INTO clinical_ops.studies (id, org_id, name, phase, status, indication, therapeutic_area,
          target_enrollment, enrolled, sites, active_sites, updated_at)
@@ -78,9 +79,9 @@ beforeAll(async () => {
       [id, String(org), name, target, enrolled, updated],
     );
   // The most recently updated study naming the product is another product's.
-  await study(ANOTHER_PRODUCTS, ORG, 'Corvant valve II pivotal', 612, 680, '2026-11-01T00:00:00Z');
-  await study(OWN, ORG, 'CV-01 pivotal IDE', 340, 680, '2026-10-01T00:00:00Z');
-  await study(OTHER_ORGS, OTHER_ORG, 'Corvant valve pivotal', 100, 200, '2026-10-01T00:00:00Z');
+  await study({ id: ANOTHER_PRODUCTS, org: ORG, name: 'Corvant valve II pivotal', enrolled: 612, target: 680, updated: '2026-11-01T00:00:00Z' });
+  await study({ id: OWN, org: ORG, name: 'CV-01 pivotal IDE', enrolled: 340, target: 680, updated: '2026-10-01T00:00:00Z' });
+  await study({ id: OTHER_ORGS, org: OTHER_ORG, name: 'Corvant valve pivotal', enrolled: 100, target: 200, updated: '2026-10-01T00:00:00Z' });
   for (const severity of ['serious', 'critical', 'serious', 'minor']) {
     await holder.pg.query(`INSERT INTO clinical_ops.deviations (study_id, severity) VALUES ($1, $2)`, [OWN, severity]);
   }
