@@ -1,0 +1,12 @@
+ × server/services/cmc/__tests__/process-capability.test.ts > the distribution the index presumes > reports the sample skewness it measured 5ms
+   → actual value must be number or bigint, received "undefined"
+ × server/services/cmc/__tests__/process-capability.test.ts > the distribution the index presumes > says the index presumes approximate normality, and that this series is not 2ms
+   → a right-skewed impurity series was reported as if normal: expected undefined to be true // Object.is equality
+ × server/services/cmc/__tests__/process-capability.test.ts > the distribution the index presumes > says nothing of the kind about a symmetric series 1ms
+   → expected undefined to be false // Object.is equality
+ × server/services/cmc/__tests__/process-capability.test.ts > the distribution the index presumes > declines to judge the shape when there are too few batches to tell 1ms
+   → expected undefined to be false // Object.is equality
+ × server/services/cmc/__tests__/process-capability.test.ts > the distribution the index presumes > names the direction for a LOWER limit too, where right-skew is conservative 1ms
+   → expected undefined to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 10 passed (15)
