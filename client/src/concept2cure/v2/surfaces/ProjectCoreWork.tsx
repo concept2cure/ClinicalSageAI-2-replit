@@ -23,6 +23,7 @@ import { I } from '../icons';
 import { C2CForm } from '../C2CForm';
 import { useLiveData, type ShapeGuard } from '../dataConnect';
 import { C2CToast, useToast } from '../toast';
+import { AssignAction, AssignmentLine, PLAN_TASK_MODULE, planAssignments, planTaskKey, usePlanAssignments, type PlanAssignment } from './PlanAssign';
 
 /** What the project's record says about its track. */
 export interface WorkAreaTrack {
@@ -80,8 +81,54 @@ const isWorkProjectsRead: ShapeGuard<WorkProjectsRead> = (value): value is WorkP
 
 /** One work project: a door to its work area on this project when the project offers that area, else its name, kind
  *  and owner, and, for a kind with no work area, that it has none. */
-function WorkProjectItem({ row, openable, onOpen }: {
-  row: WorkProjectRow; openable: (areaId: string) => boolean; onOpen?: (areaId: string) => void;
+/* A work project's owner and due date (P-83, P-109: from the work project and its tasks; no new column or route). It is
+   assigned through the Plan's one assign path (PlanAssign.tsx AssignAction, POST /api/tasks/tasks): a unified_tasks row
+   in the Plan module, keyed '<program uuid>:<work project id>' under its own origin type, scoped to the filing project's
+   verified projects.id so it is in that project's tasks and the assignee's. Read back from the same Plan task read. */
+export const WORK_PROJECT_TASK_ENTITY = 'work_project';
+
+export function buildWorkProjectTaskBody(form: {
+  programId: string; projectId: number; workProject: WorkProjectRow; assignee: string; due: string; note: string;
+}): Record<string, unknown> {
+  const { workProject } = form;
+  return {
+    title: `Deliver: ${workProject.name}`,
+    description: form.note.trim() || undefined,
+    moduleType: PLAN_TASK_MODULE, moduleSource: 'project-work-projects', category: 'work-project', taskType: 'work-project',
+    priority: 'medium',
+    projectId: form.projectId,
+    assigneeId: Number(form.assignee),
+    ...(form.due ? { dueDate: new Date(`${form.due}T17:00:00`).toISOString() } : {}),
+    sourceEntityType: WORK_PROJECT_TASK_ENTITY,
+    sourceEntityId: planTaskKey(form.programId, String(workProject.id)),
+    regulatoryImpact: true,
+    moduleData: { programId: form.programId, workProjectId: workProject.id, workKind: workProject.workKind, raisedFrom: 'project-work-projects' },
+    tags: ['plan', 'work-project'],
+  };
+}
+
+interface Ownership {
+  programId: string; anchorProjectId: number; assignment: PlanAssignment | null; unread: boolean; onAssigned: () => void;
+}
+
+/** "Assigned to Dana, due Nov 30", or that no one is; and Assign, for a person who may change the project. */
+function WorkProjectOwnership({ row, own }: { row: WorkProjectRow; own: Ownership }) {
+  return (
+    <span className="pj-work-project-own" data-testid="pj-work-project-own">
+      {own.unread ? <span className="pj-card-note">Its assignment could not be read.</span>
+        : own.assignment ? <AssignmentLine assignment={own.assignment} />
+          : <span className="pj-card-note">No one is assigned to deliver it yet.</span>}
+      {!own.unread && (
+        <AssignAction deliverable={{ id: String(row.id), title: row.name, group: 'work project' }} programId={own.programId}
+          projectId={own.anchorProjectId} assigned={!!own.assignment} onAssigned={own.onAssigned}
+          buildBody={(form) => buildWorkProjectTaskBody({ programId: own.programId, projectId: own.anchorProjectId, workProject: row, ...form })} />
+      )}
+    </span>
+  );
+}
+
+function WorkProjectItem({ row, openable, onOpen, own }: {
+  row: WorkProjectRow; openable: (areaId: string) => boolean; onOpen?: (areaId: string) => void; own: Ownership;
 }) {
   const kind = row.workKind ? WORK_KIND_LABEL[row.workKind] ?? row.workKind : null;
   const area = row.workKind ? WORK_KIND_AREA[row.workKind] ?? null : null;
@@ -95,12 +142,29 @@ function WorkProjectItem({ row, openable, onOpen }: {
             <span className="pj-card-note">{facts}</span></span>
           {I.right}
         </button>
+        <WorkProjectOwnership row={row} own={own} />
       </li>
     );
   }
   return (
     <li><span className="pj-work-project-n">{row.name}</span>
-      <span className="pj-card-note">{[facts, area ? null : 'No work area for this kind yet'].filter(Boolean).join(' · ')}</span></li>
+      <span className="pj-card-note">{[facts, area ? null : 'No work area for this kind yet'].filter(Boolean).join(' · ')}</span>
+      <WorkProjectOwnership row={row} own={own} /></li>
+  );
+}
+
+/** The listed work projects with their assignments, read (the Plan's task read) only once there are rows to show. */
+function WorkProjectList({ rows, programId, anchorProjectId, version, openable, onOpen, onAssigned }: {
+  rows: WorkProjectRow[]; programId: string; anchorProjectId: number; version: number;
+  openable: (areaId: string) => boolean; onOpen?: (areaId: string) => void; onAssigned: () => void;
+}) {
+  const tasks = usePlanAssignments(programId, version);
+  const assigned = planAssignments(tasks.rows, programId, WORK_PROJECT_TASK_ENTITY);
+  return (
+    <ul className="pj-work-projects-l">
+      {rows.map((row) => <WorkProjectItem key={row.id} row={row} openable={openable} onOpen={onOpen}
+        own={{ programId, anchorProjectId, assignment: assigned.get(String(row.id)) ?? null, unread: !!tasks.error, onAssigned }} />)}
+    </ul>
   );
 }
 
@@ -147,9 +211,8 @@ export function ProjectWorkProjects({ programId, anchorProjectId, canChange, ope
         : read.error || !rows ? <p role="alert" className="pj-card-note">This project's work projects could not be read.</p>
           : rows.length === 0 ? <p className="pj-card-note">None yet. A work project (CMC, a study's biostatistics, its monitoring) holds the work this filing is written from.</p>
             : (
-              <ul className="pj-work-projects-l">
-                {rows.map((row) => <WorkProjectItem key={row.id} row={row} openable={openable} onOpen={onOpen} />)}
-              </ul>
+              <WorkProjectList rows={rows} programId={programId} anchorProjectId={anchorProjectId} version={version}
+                openable={openable} onOpen={onOpen} onAssigned={() => setVersion((n) => n + 1)} />
             )}
       {adding && (
         <C2CForm
