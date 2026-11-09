@@ -2015,6 +2015,9 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
 // GET /:id/source-changes — what in this project was written against superseded
 // content
 //
+// `changes`: data-room citations. `vaultChanges` (S12): sections drafted from a
+// Vault version that a later approved version replaced (vault-citation-changes.ts).
+//
 // Every citation in this project still carrying a checksum its source no longer
 // has. That is a fact recorded at cite time
 // (authoring_citations.payload_sha256), not a comparison invented per render, so
@@ -2040,8 +2043,13 @@ router.get('/:id/source-changes', async (req: Request, res: Response) => {
       '../../services/clinical-regulatory-evidence/source-usage.service.js'
     );
     const changes = await listChangedSourceUsages(pool, orgId, { userId: resolveUserId(req) ?? undefined, programId: String(req.params.id) });
+    /* S12 (P-83, P-109): sections drafted from a Vault version that a later approved version replaced. */
+    const { listChangedVaultCitations } = await import(
+      '../../services/clinical-regulatory-evidence/vault-citation-changes.js'
+    );
+    const vaultChanges = await listChangedVaultCitations(pool, orgId, { userId: resolveUserId(req) ?? undefined, programId: String(req.params.id) });
 
-    return res.json({ projectId: String(req.params.id), changes, count: changes.length });
+    return res.json({ projectId: String(req.params.id), changes, count: changes.length, vaultChanges, vaultCount: vaultChanges.length });
   } catch (err: unknown) {
     if (err instanceof ProgramReadAccessError || err instanceof SourceReadAccessError) return sendProjectAccessFailure(res, new ProgramReadAccessError(err.status, err.code, err.message), true);
     return serverError(res, logger, 'loading the source changes', err, { programId: String(req.params.id) });

@@ -1,0 +1,24 @@
+C2C-201 — composed Module 3, read from the running product
+13 of 21 sections carry recorded data
+
+3.1          100%  draft     
+3.2.A.1       50%  draft     containerDescription
+3.2.A.2      100%  draft     
+3.2.A.3        0%  draft     Origin is recorded for 0 of them; for the remaining 0 it is not recorded, and their origin
+3.2.P.1       75%  draft     formulationCompositionComplete
+3.2.P.2        0%  draft     formulationDevelopment,manufacturingProcessDev,containerClosureStudies
+3.2.P.3       67%  draft     drugProductProcessComplete
+3.2.P.4        0%  draft     excipientSpecifications,excipientAnalyticalProcedures,excipientControlComplete
+3.2.P.5       75%  draft     drugProductImpurityProfileComplete
+3.2.P.6        0%  draft     drugProductReferenceStandard,drugProductReferenceStandardCoA,drugProductReferenceStandardC
+3.2.P.7        0%  draft     drugProductContainerDescription,drugProductClosureDescription,drugProductSuitabilityJustif
+3.2.P.8      100%  draft     
+3.2.R.1.US   100%  draft     
+3.2.S.1      100%  draft     
+3.2.S.2       50%  draft     processControls,manufacturingProcessComplete
+3.2.S.3        0%  draft     structuralElucidation,physicochemicalProperties,biologicalActivity,drugSubstanceImpurityPr
+3.2.S.4       75%  draft     drugSubstanceImpurityProfileComplete
+3.2.S.5        0%  draft     drugSubstanceReferenceStandard,drugSubstanceReferenceStandardCoA,drugSubstanceReferenceSta
+3.2.S.6        0%  draft     drugSubstanceContainerDescription,drugSubstanceClosureDescription,drugSubstanceSuitability
+3.2.S.7      100%  draft     
+3.3          100%  draft     

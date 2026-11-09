@@ -1,0 +1,98 @@
+======================================================================
+SECTION 3.2.S.4 — Control of Drug Substance
+completeness 75 | missing ['drugSubstanceImpurityProfileComplete']
+
+The drug substance specification defines acceptance criteria for quality attributes. Analytical method validation status: validation (XRPD identity and polymorph form); validation (Karl Fischer water determination); validation (Dissolution (USP <711>, apparatus 2)); validation (HPLC-UV assay and related substances). 2 test(s) are defined in the specification. 2 recorded QC result(s) are reported in the batch analyses table. 2 carry both a numeric result and an acceptance criterion and were compared here: 1 within criterion, 1 out of specification. 1 recorded disposition(s) CONTRADICT the recorded result: DS-2502-R2. That disagreement is not resolved by this section. Out-of-specification results are reported as recorded; their investigation and disposition are not asserted by this section. 2 result(s) have not completed second-person review. No impurity is recorded for the drug substance; the impurity profile is not established by this section. Process capability (ICH Q6A specification; ISO 22514 indices over the recorded batch results, Ppk on the overall sd and Cpk on the moving-range sigma): HPLC-UV assay and related substances: capability not assessed — 2 numeric batch result(s) are recorded; a capability index needs at least 6.. 
+
+-- Drug Substance Specification — Acceptance Criteria
+    Quality Attribute | Test Method | Acceptance Criteria | Validation Status
+    shelf | See Analytical Methods table | Conforms to the Form I reference diffractogram | —
+    release | See Analytical Methods table | Conforms to the Form I reference diffractogram | —
+
+-- Analytical Methods
+    Method | Technique | Validation Status | Validated
+    XRPD identity and polymorph form | X-ray powder diffraction | validation | —
+    Karl Fischer water determination | Coulometric Karl Fischer titration | validation | —
+    Dissolution (USP <711>, apparatus 2) | Dissolution, apparatus 2, 900 mL pH 6.8 phosphate buffer, 50 rpm | validation | —
+    HPLC-UV assay and related substances | Reverse-phase HPLC with UV detection at 254 nm | validation | —
+
+-- Batch Analyses — Drug Substance (§3.2.S.4.4)
+    Sample | Sample Type | Test Method | Acceptance Criteria | Result | Disposition | Reviewed
+    DS-2502-R2 | in-process | HPLC-UV assay and related substances | 98.0 - 102.0 % | 97.4 % — retest requested; investigation INV-2026-014 open | declared pass — the recorded result is OUTSIDE its recorded acceptance criterion | not reviewed
+    DS-2502-R1 | in-process | HPLC-UV assay and related substances | 98.0 - 102.0 % | 99.6 % | pass | not reviewed
+
+-- Process Capability — Drug Substance (§3.2.S.4.4)
+    Test | Batches | Mean | SD | Pp | Ppk | Cpk | Verdict | Note
+    HPLC-UV assay and related substances | 2 | — | — | — | — | — | not assessed | too few batches
+======================================================================
+SECTION 3.2.P.5 — Control of Drug Product
+completeness 75 | missing ['drugProductImpurityProfileComplete']
+
+The drug product specification defines release and shelf-life acceptance criteria. 4 analytical methods are registered (see Analytical Methods table). Release criteria: NLT 80 % (Q) released at 30 minutes. Shelf-life criteria: NLT 80 % (Q) released at 30 minutes. 3 recorded QC result(s) are reported in the batch analyses table. 3 carry both a numeric result and an acceptance criterion and were compared here: 3 within criterion, 0 out of specification. 3 result(s) have not completed second-person review. No release specification dissolution profile is recorded. No impurity is recorded for the drug product; the impurity profile is not established by this section. Process capability (ICH Q6A specification; ISO 22514 indices over the recorded batch results, Ppk on the overall sd and Cpk on the moving-range sigma): HPLC-UV assay and related substances: capability not assessed — 2 numeric batch result(s) are recorded; a capability index needs at least 6.. Dissolution (USP <711>, apparatus 2): capability not assessed — 1 numeric batch result(s) are recorded; a capability index needs at least 6.. 
+
+-- Drug Product Specification
+    Property | Value
+    Release Criteria | NLT 80 % (Q) released at 30 minutes
+    Shelf-Life Criteria | NLT 80 % (Q) released at 30 minutes
+    Analytical Method | See Analytical Methods table
+
+-- Analytical Methods
+    Method | Technique | Validation Status | Validated
+    XRPD identity and polymorph form | X-ray powder diffraction | validation | —
+    Karl Fischer water determination | Coulometric Karl Fischer titration | validation | —
+    Dissolution (USP <711>, apparatus 2) | Dissolution, apparatus 2, 900 mL pH 6.8 phosphate buffer, 50 rpm | validation | —
+    HPLC-UV assay and related substances | Reverse-phase HPLC with UV detection at 254 nm | validation | —
+
+-- Batch Analyses — Drug Product (§3.2.P.5.4)
+    Sample | Sample Type | Test Method | Acceptance Criteria | Result | Disposition | Reviewed
+    DP-2601-R1 | finished-product | HPLC-UV assay and related substances | 95.0 - 105.0 % | 99.1 % | within criterion (computed) | not reviewed
+    DP-2503-R2 | finished-product | Dissolution (USP <711>, apparatus 2) | NLT 80 % | 93 % at 30 min | pass | not reviewed
+    DP-2503-R1 | finished-product | HPLC-UV assay and related substances | 95.0 - 105.0 % | 100.4 % | pass | not reviewed
+
+-- Process Capability — Drug Product (§3.2.P.5.4)
+    Test | Batches | Mean | SD | Pp | Ppk | Cpk | Verdict | Note
+    HPLC-UV assay and related substances | 2 | — | — | — | — | — | not assessed | too few batches
+    Dissolution (USP <711>, apparatus 2) | 1 | — | — | — | — | — | not assessed | too few batches
+======================================================================
+SECTION 3.2.P.8 — Stability (Drug Product)
+completeness 100 | missing []
+
+Stability studies for the drug product were conducted under LT, 25°C ± 2°C / 60% ± 5% RH at time points: 0, 3, 6, 9, 12, 18, 24 months. A shelf life of 18 months is proposed, recorded on a study that has not been closed out under signature, subject to review of the 8 recorded result(s) tabulated in the stability results table. 1 of the 8 recorded result(s) compared here fall outside its recorded acceptance criterion (Total impurities at 6 = 0.61 against NMT 0.5 %). The stability conclusion and the proposed storage period are NOT established by this section. Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): Assay (25°C ± 2°C / 60% ± 5% RH + LT): trend not assessed: the study is placed at more than one storage condition (25°C ± 2°C / 60% ± 5% RH + LT) and these results record none, so the points of one condition cannot be separated from the others. Dissolution (25°C ± 2°C / 60% ± 5% RH + LT): trend not assessed: the study is placed at more than one storage condition (25°C ± 2°C / 60% ± 5% RH + LT) and these results record none, so the points of one condition cannot be separated from the others. Total impurities (40°C ± 2°C / 75% ± 5% RH + ACC): trend not assessed: the study is placed at more than one storage condition (40°C ± 2°C / 75% ± 5% RH + ACC) and these results record none, so the points of one condition cannot be separated from the others.
+
+-- Stability Summary — Drug Product
+    Parameter | Value
+    Shelf Life Claim | 18 months
+    Comparability Status | [not specified]
+    Storage Condition | LT, 25°C ± 2°C / 60% ± 5% RH
+    Time Points (months) | 0, 3, 6, 9, 12, 18, 24
+
+-- Stability Results — Drug Product
+    Batch | Condition | Attribute | Time Point (months) | Result | Acceptance Criterion | Compared
+    C2C201-DP-2503 | ACC, 40°C ± 2°C / 75% ± 5% RH | Total impurities | 0 | 0.12 | NMT 0.5 % | within
+    C2C201-DP-2503 | ACC, 40°C ± 2°C / 75% ± 5% RH | Total impurities | 3 | 0.38 | NMT 0.5 % | within
+    C2C201-DP-2503 | ACC, 40°C ± 2°C / 75% ± 5% RH | Total impurities | 6 | 0.61 | NMT 0.5 % | OUTSIDE
+    C2C201-DP-2503 | LT, 25°C ± 2°C / 60% ± 5% RH | Assay | 0 | 100.2 | 95.0 - 105.0 % | within
+    C2C201-DP-2503 | LT, 25°C ± 2°C / 60% ± 5% RH | Assay | 6 | 99.1 | 95.0 - 105.0 % | within
+    C2C201-DP-2503 | LT, 25°C ± 2°C / 60% ± 5% RH | Assay | 9 | 98.6 | 95.0 - 105.0 % | within
+    C2C201-DP-2503 | LT, 25°C ± 2°C / 60% ± 5% RH | Dissolution | 0 | 94 | NLT 80 % | within
+    C2C201-DP-2503 | LT, 25°C ± 2°C / 60% ± 5% RH | Dissolution | 9 | 88 | NLT 80 % | within
+======================================================================
+SECTION 3.2.S.7 — Stability (Drug Substance)
+completeness 100 | missing []
+
+Stability studies for the drug substance were conducted under LT, 25°C ± 2°C / 60% ± 5% RH at time points: 0, 3, 6, 9, 12, 18, 24, 36 months. 1 batch(es) were placed on stability. The 6 recorded result(s) are tabulated in the stability results table. All 6 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug substance under the proposed storage conditions. Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): Assay (25°C ± 2°C / 60% ± 5% RH + LT): trend not assessed: the study is placed at more than one storage condition (25°C ± 2°C / 60% ± 5% RH + LT) and these results record none, so the points of one condition cannot be separated from the others. Total impurities (25°C ± 2°C / 60% ± 5% RH + LT): trend not assessed: the study is placed at more than one storage condition (25°C ± 2°C / 60% ± 5% RH + LT) and these results record none, so the points of one condition cannot be separated from the others.
+
+-- Stability Study Design — Drug Substance
+    Parameter | Value
+    Storage Condition | LT, 25°C ± 2°C / 60% ± 5% RH
+    Time Points (months) | 0, 3, 6, 9, 12, 18, 24, 36
+    Batches Studied | C2C201-DS-2502
+
+-- Stability Results — Drug Substance
+    Batch | Condition | Attribute | Time Point (months) | Result | Acceptance Criterion | Compared
+    C2C201-DS-2502 | LT, 25°C ± 2°C / 60% ± 5% RH | Assay | 0 | 99.8 | 98.0 - 102.0 % | within
+    C2C201-DS-2502 | LT, 25°C ± 2°C / 60% ± 5% RH | Assay | 6 | 99.4 | 98.0 - 102.0 % | within
+    C2C201-DS-2502 | LT, 25°C ± 2°C / 60% ± 5% RH | Assay | 12 | 99.1 | 98.0 - 102.0 % | within
+    C2C201-DS-2502 | LT, 25°C ± 2°C / 60% ± 5% RH | Total impurities | 0 | 0.11 | NMT 0.5 % | within
+    C2C201-DS-2502 | LT, 25°C ± 2°C / 60% ± 5% RH | Total impurities | 6 | 0.18 | NMT 0.5 % | within
+    C2C201-DS-2502 | LT, 25°C ± 2°C / 60% ± 5% RH | Total impurities | 12 | 0.24 | NMT 0.5 % | within
