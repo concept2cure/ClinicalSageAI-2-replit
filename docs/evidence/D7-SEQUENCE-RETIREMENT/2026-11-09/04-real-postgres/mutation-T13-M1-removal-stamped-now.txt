@@ -1,0 +1,6 @@
+MUTATION T13-M1-removal-stamped-now in server/services/submission-service/filed-sequence-baseline.ts (on the final code and tests, 2026-11-09T07:59:26.156616Z): replaced [SET deleted_at = COALESCE($3::timestamptz, NOW()), updated_at] with [SET deleted_at = NOW(), updated_at]
+ ✓ server/services/submission-service/__tests__/sequence-retirement-lock.pg.test.ts > P-86: a retirement on two real PostgreSQL connections (T13) > a creation of 0001 holding the submission first: the retirement of 0000 waits for it, then refuses, naming 0001 102ms
+ × server/services/submission-service/__tests__/sequence-retirement-lock.pg.test.ts > P-86: a retirement on two real PostgreSQL connections (T13) > a retirement that waits 500 ms for its sequence row seals the instant it got the lock; a creation of the freed number waits for it, then takes 0000 597ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 86df67e491682e10197e995495889ffb11def0a6478ce0bc9225f91889e186a5 (expected 86df67e491682e10197e995495889ffb11def0a6478ce0bc9225f91889e186a5)

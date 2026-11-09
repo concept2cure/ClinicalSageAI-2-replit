@@ -1026,3 +1026,48 @@ that the code supports, and the narrowing is stated in the row.
 | 8 | The founder's record has landed, but §0 still worked from the summary; its clause "no settlement by an unsigned action" was not honoured (major) | **Applied.** §0 quotes `docs/LAUNCH_DEFINITION_OF_DONE.md:1828-1843` whole and reconciles it with the summary. Q1 is closed. (a) The runbook's §5.4 status patch and §7 "Manual rollback" are retired on **both** spines in C1. The first draft kept them for the package spine "which production refuses", which is half true: AnA's `k510_workflow.transmit` reaches `executeGovernedTransmit` with a `packageId` in production (`server/services/ana-ri/mdx-command-handlers.ts:725-830`; P-86 design §1.4). Package-spine holds are then owed and put to the coordinator (§7 item 12, §8 Q8), never filled with SQL. (b) A3's upload reach is dropped from C2, and no copy says a send is settled "without a signature". The disclosure says where FDA's signed MDN is recorded. The coordinator is asked to confirm that the verified ingest is outside the clause (§8 Q10). (The finding's "the removed rollback route's effect" is loose: the route wrote `rolled_back`, the runbook writes `rejected`. Both are unsigned settlements, and the conclusion stands.) | §0; §1.2 runbook bullet; §1.8 A3; §2 RULE 5/6; C1 files and deletes; C2 S2, S4, S4b, tests; §7 items 12, 14; §8 Q1, Q8, Q10; R6. |
 | 9 | No file-and-holder table, and C2 adds UI to a D7-spec file under Plan F1 beyond the "copy only" hold, with no coordinator ruling (minor) | **Applied.** §5.0 lists every file, its holder on `ffd2bd772`, its commit and the action, in P-86's format. The record's owner line is quoted. §4 no longer decides "not deferred" on its own argument: it proposes and asks for a recorded ruling, and gives the fallback (C2 under `Plan: L1` after D7-A2, with C1 waiting). The holds asked for are `submissions.ts`, `GatewayTransmittals.tsx` and the widening of the two Submission Center holds. **Noted from the skeptic:** only `fda-esg-production-uat.md` is shared with P-93; COORDINATION's "behaviour, never layout" rule is written for S packages, not F1, so the ask is about holds and timing, not that rule; and the coordinator has already filed P-92 under F1. | §2; §4; §5.0; C2 Needs; §8 Q9; §9 A16. |
 | 10 | The RULE 3 deletion searches ran on a shallow clone, so "0 deletions" is not evidence (minor) | **Applied.** The searches were re-run in a blobless full clone in the scratchpad (17,399 commits, back to 2025-11-20), with `--full-history` and case-insensitive patterns. The shared clone was never unshallowed. They found what the shallow clone hid: `esg_ack_poller.py` and its Python siblings (`87d13d7cd`, 2026-03-25), earlier ESG submitters (`b6e991501`, `e1dca6e3d`, `83fa7f6cf`, `c6d7295a8`, `89c83f58a`), and the old transmittal list (`2895218b8`). Each is recorded with its bearing; none was a signed settlement, so the conclusion holds and is now evidenced. The rollback route's real removing commit is `6ef0ef121` (parent `9246389d6`), not `a811b0d83` (a shallow boundary), and its diff is readable there. The evidence README repeats the commands, the depth and the results. | Header "Trees read"; §1.2 history search; §1.7; C1 evidence and deletes; §9 A4. |
+
+---
+
+## 10. Answers since this design (appended 2026-11-09)
+
+The questions of §8 are answered. The coordinator's answers are coordination, not founder decisions; the founder's are
+recorded in `docs/LAUNCH_DEFINITION_OF_DONE.md` under P-108. Where an answer changes this design, §10.3 says how; the
+re-cut that applies them is recorded there, with the tree it was checked against.
+
+### 10.1 The coordinating session's answers, 2026-11-08
+
+- **Q10 (its C2): confirmed.** FDA's own signed MDN, verified against the pinned certificate and the MIC, is the
+  agency's signed answer. It is outside "no settlement by an unsigned action".
+- **Q5 (C3): yes.** Slice 2's runbook query finds the staging holds, and a person applies slice 2's release rule once.
+- **Q6 (C4): yes, with a condition.** H3's 4xx arm is recorded as a *transport refusal*, never as the agency's
+  rejection, and only when the TLS peer was the configured, pinned endpoint. The status line and the body's digest are
+  kept as evidence, and a resend is allowed. If the peer is not proven, the sequence stays in transit, for P-92's act.
+  F1, after slice 2: a repair of its own, not one of P-92's commits.
+- **Q8 (C5): P-92 is not extended to the package spine.** P-103 (founder, 2026-11-05) retired the
+  `/api/submission-ops/packages/*` path, so the sequence is the one filing path. A package-spine held send goes to the
+  runbook's escalation; the expected count is zero. The deployed count query is added beside P-92's.
+- **Q9 (C6): holds granted** on `server/routes/submissions.ts` and `GatewayTransmittals.tsx` while P-92 is built.
+  **C2's held-send disclosure lands under F1 now, not after D7-A2:** an unannounced held send is an honesty defect. It is
+  one quiet line and a door made of existing components (the AnswerLead or note pattern, no new card). Both files are
+  RIM's, so the order inside them is RIM's.
+- **C9: the order is accepted:** slice 2, (b), A, P-93, P-94, P-86, P-92 with P-99, then P-96. Shared helpers land with
+  the first commit that needs them; P-93's runbook edit comes before P-92's. `AnaToolDefinitions.ts` and the AnA
+  executor sit inside the Anna-runtime epic, which P-105 gives to `01KZK3…` alone: P-92 edits neither (its AnA pin is a
+  test that reads them).
+
+### 10.2 The founder's answers: P-108, 2026-11-08 ("Accept all three" and "Accept all three")
+
+- **1(a), Q2.** Once an Ack3 has arrived, "received" needs the Ack3 to accept. A failed Ack3 after an Ack2 is recorded as
+  a technical rejection, which means completing `filed-sequence-rejection.ts` for the sequence spine, under F1.
+- **1(b), Q3. Amends P-92.** For a send the platform's own record proves never left (no message formed, refused before
+  the wire), a signed release cites that proof, not FDA's written confirmation of non-receipt, since FDA cannot confirm
+  a send it never got.
+- **1(c), Q7.** If FDA's verified answer later contradicts a signed settlement, FDA's answer wins, through a second
+  signed act that re-opens it. Both records are kept, and resends are refused meanwhile.
+- **2(a), Q4.** A production attempt that records nothing reached FDA (released as not received on FDA's written
+  confirmation, or refused before any connection) is not a "bound production send", so the sequence can be retired by
+  P-86's act. P-86 C1 (landed) excludes only an attempt a chained `TRANSMIT_BLOCKED` proves blocked; its note at
+  `boundProductionSend` (`filed-sequence-baseline.ts`) says P-92's release joins that exclusion.
+- **2(c), Q11.** No settlement path is built for a legacy hold older than the per-attempt binding of 2026-10-14. The
+  runbook escalates if one is ever found (expected zero). E1's refusal stands.
