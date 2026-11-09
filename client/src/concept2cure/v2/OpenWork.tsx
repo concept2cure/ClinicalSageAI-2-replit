@@ -11,6 +11,7 @@
  *   GET /api/task-management/my-work      open unified tasks assigned to you
  *   GET /api/concept2cure/reviews/my-queue review threads and tasks for you
  *   GET /api/review/board?scope=mine      authoring approvals at your sign-off
+ *   GET /api/concept2cure/reviews/pending  AnA artifact reviews you were named for (P-95)
  */
 import React from 'react';
 import { I } from './icons';
@@ -209,6 +210,29 @@ function ReviewGroup({ queue, queueError, go }: { queue: MyQueue | null; queueEr
   );
 }
 
+interface PendingArtifactReview { assignmentId: string; artifactTitle: string | null; reviewRound: number; dueDate: string | null }
+
+/** The AnA artifact reviews you were named for (P-95), decided on the Review screen (surfaces/ReviewRequests.tsx).
+ *  `/reviews/my-queue` carries threads and tasks, not these, so a named reviewer saw nothing waiting for them. */
+function NamedReviewGroup({ go }: { go: Go }) {
+  const pending = useLiveData<{ assignments: PendingArtifactReview[] }>('/api/concept2cure/reviews/pending', ['open-work-named-reviews']);
+  const rows = pending.data?.assignments ?? [];
+  if (pending.loading || (!rows.length && !pending.error)) return null;
+  return (
+    <div className="tt-group">
+      <div className="tt-group-head">Reviews you were named for</div>
+      {pending.error && (
+        <div className="tt-empty" role="alert">Couldn&apos;t load the reviews you were named for, so this list may be incomplete — open Review to check.</div>
+      )}
+      {rows.slice(0, 5).map(r => (
+        <WorkRow key={r.assignmentId} tone="warn" title={r.artifactTitle || 'AnA artifact'} onOpen={() => go('review')}
+          sub={`Round ${r.reviewRound} · your decision${r.dueDate ? ` · ${dueLabel(r.dueDate)}` : ''}`} />
+      ))}
+      {rows.length > 5 && <button className="tt-more" onClick={() => go('review')}>+{rows.length - 5} more to review</button>}
+    </div>
+  );
+}
+
 export function OpenWorkGroups({ workLoading, workError, assigned, queue, queueError, approvalRows, approvalsError, go, openTask }: {
   workLoading: boolean;
   workError?: string;
@@ -227,6 +251,7 @@ export function OpenWorkGroups({ workLoading, workError, assigned, queue, queueE
     <>
       <AssignedGroup workLoading={workLoading} workError={workError} assigned={assigned} go={go} openTask={openTask} />
       <ApprovalsGroup assigned={assigned} approvalRows={approvalRows} approvalsError={approvalsError} go={go} openTask={openTask} />
+      <NamedReviewGroup go={go} />
       <ReviewGroup queue={queue} queueError={queueError} go={go} />
     </>
   );

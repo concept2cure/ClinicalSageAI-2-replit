@@ -279,6 +279,8 @@ describe('ConversationThread artifact panel — the artifact review (P-95)', () 
         return { ok: true, status: 200, json: { success: true, data: [
           { userId: 1, name: 'Test Author', email: 'author@test.co', role: 'admin' },
           { userId: 7, name: 'Dana Reviewer', email: 'dana@test.co', role: 'reviewer' },
+          { userId: 8, name: 'Mo Member', email: 'mo@test.co', role: 'member' },
+          { userId: 9, name: 'Vi Viewer', email: 'vi@test.co', role: 'viewer' },
         ] } };
       }
       if (method === 'POST' && path === ASSIGN) {
@@ -311,6 +313,10 @@ describe('ConversationThread artifact panel — the artifact review (P-95)', () 
     await waitFor(() => expect(screen.getByText('Dana Reviewer')).toBeTruthy());
     // The author and eventual approver is not offered.
     expect(screen.queryByRole('checkbox', { name: /Test Author/ })).toBeNull();
+    // Nor is anyone reviews/submit would not let decide (found walking the running app, 2026-11-09):
+    // a member or a viewer named would open a round that could never close.
+    expect(screen.queryByRole('checkbox', { name: /Mo Member/ })).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: /Vi Viewer/ })).toBeNull();
     fireEvent.click(screen.getByRole('checkbox', { name: /Dana Reviewer/ }));
     fireEvent.change(screen.getByLabelText(/Note for the reviewers/), { target: { value: 'Check the ORR against 7.4.' } });
     fireEvent.click(screen.getByRole('button', { name: 'Assign' }));

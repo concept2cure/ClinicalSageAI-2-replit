@@ -1,0 +1,84 @@
+// Running-app walk of the P-95 artifact review step (ConversationArtifactReview.tsx).
+// Real server (port 5055) on a local, fully migrated database; real dev-login sessions.
+// The ONLY substituted piece: the AnA stream response that announces a draft (no model key here).
+// It names an artifact that genuinely exists in the database, so every control after it hits the real server.
+const { chromium } = require('playwright');
+const fs = require('fs');
+const path = require('path');
+
+const BASE = 'http://127.0.0.1:5000';
+const OUT = __dirname;
+const ARTIFACT = 'art_p95_walk_v2';
+const TITLE = 'P-95 walk 2 — 510(k) Summary';
+const log = [];
+const note = (s) => { log.push(s); console.log(s); };
+
+async function session(email) {
+  const dl = await (await fetch(`${BASE}/api/auth/dev-login`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: BASE }, body: JSON.stringify({ email }) })).json();
+  if (!dl.accessToken) throw new Error('dev-login failed for ' + email + ': ' + JSON.stringify(dl).slice(0, 300));
+  const sess = await (await fetch(`${BASE}/api/v1/auth/session`, { headers: { Authorization: `Bearer ${dl.accessToken}`, Origin: BASE } })).json();
+  if (!sess.authenticated) throw new Error('session invalid for ' + email);
+  return { token: dl.accessToken, refresh: dl.refreshToken, user: sess.user };
+}
+
+async function page(browser, s) {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
+  const expiry = new Date(Date.now() + 23 * 3600e3).toISOString();
+  await ctx.addInitScript(([t, r, e, u]) => {
+    for (const st of [window.localStorage, window.sessionStorage]) {
+      st.setItem('trialsage_access_token', t); st.setItem('trialsage_refresh_token', r);
+      st.setItem('trialsage_token_expiry', e); st.setItem('trialsage_user', u);
+    }
+  }, [s.token, s.refresh, expiry, JSON.stringify(s.user)]);
+  const p = await ctx.newPage();
+  p.on('response', async (res) => {
+    const u = res.url();
+    if (/\/api\/concept2cure\/projects\/[^/]+\/(team|artifacts\/[^/]+\/(status|reviewers|reviews\/(status|submit)))/.test(u)) {
+      const h = res.headers();
+      let meta = '';
+      if (res.request().method() !== 'GET') { try { const b = await res.json(); meta = ' meta.auditTrail=' + JSON.stringify(b?.meta?.auditTrail ?? null) + (b?.error ? ' error=' + JSON.stringify(b.error).slice(0, 200) : ''); } catch {} }
+      note(`  HTTP ${res.request().method()} ${u.replace(BASE, '')} -> ${res.status()} audit-persisted=${h['x-audit-row-persisted'] ?? '-'} chained=${h['x-audit-row-chained'] ?? '-'}${meta}`);
+    }
+  });
+  return { ctx, p };
+}
+
+const shot = async (p, name) => { await p.screenshot({ path: path.join(OUT, name), fullPage: false }); note(`  screenshot ${name}`); };
+
+(async () => {
+  const browser = await chromium.launch();
+  try {
+    const reviewer = await session('e2e-reviewer@trialsage.test');
+    const admin = await session('e2e-admin@trialsage.test');
+    note(`reviewer session: user ${reviewer.user.id}`);
+    const r = await page(browser, reviewer);
+    await r.p.goto(`${BASE}/concept2cure`, { waitUntil: 'domcontentloaded' });
+    await r.p.getByText('Reviews you were named for').first().waitFor({ timeout: 120000 });
+    note('reviewer Home: "Reviews you were named for" lists ' + await r.p.locator('.tt-group', { hasText: 'Reviews you were named for' }).locator('.tt-item').count() + ' request(s)');
+    await shot(r.p, '05-reviewer-home.png');
+    await r.p.goto(`${BASE}/concept2cure/projects`, { waitUntil: 'domcontentloaded' });
+    await r.p.getByText('P-95 review walk').first().click();
+    await r.p.waitForTimeout(3000);
+    await r.p.goto(`${BASE}/concept2cure/review`, { waitUntil: 'domcontentloaded' });
+    await r.p.getByText(/Reviews you were named for/).first().waitFor({ timeout: 120000 });
+    note('reviewer Review screen: requests section shown');
+    await r.p.getByText(TITLE).first().click();
+    await r.p.getByText(/SYNTHETIC WALK DATA, second pass/).first().waitFor({ timeout: 30000 });
+    note('reviewer reads the version under review');
+    note('Name reviewers offered to the reviewer: ' + await r.p.getByRole('button', { name: /Name reviewers/ }).count());
+    await shot(r.p, '06-reviewer-request.png');
+    await r.p.getByLabel(/You are a named reviewer/).fill('Predicate comparison is complete.');
+    await r.p.getByRole('button', { name: 'Approve' }).click();
+    await r.p.getByText(/Approved — “Predicate comparison is complete.”/).first().waitFor({ timeout: 30000 });
+    note('reviewer decision shown: Approved');
+    await shot(r.p, '07-reviewer-approved.png');
+    const after = await (await fetch(`${BASE}/api/concept2cure/projects/24/artifacts/${ARTIFACT}/reviews/status`, { headers: { Authorization: `Bearer ${admin.token}`, Origin: BASE } })).json();
+    note('author reads the round: ' + JSON.stringify({ ready: after.data?.readyForApproval, reviewers: after.data?.reviewers?.map(x => [x.reviewerName, x.decision?.decision, x.decision?.comment]) }));
+  } catch (e) {
+    note('WALK ERROR: ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : String(e)));
+  } finally {
+    fs.writeFileSync(path.join(OUT, 'walk-reviewer.log'), log.join('\n') + '\n');
+    await browser.close();
+  }
+})();
