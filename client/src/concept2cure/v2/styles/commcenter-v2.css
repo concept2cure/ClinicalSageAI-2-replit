@@ -1,7 +1,7 @@
 /* Communication Center — kit communication-center.css scoped under .c2c-v2.
    Token indirection: var(--shadow-lg) → var(--v2-shadow-lg). */
 
-.c2c-v2 .cc{ padding:26px 30px 80px; }
+/* The page's frame is `.page-inner`'s, the one page frame (D0.md §8.6); it no longer sets its own. */
 
 /* Tabs: the canonical tabs (app-v2.css, D0 block). */
 

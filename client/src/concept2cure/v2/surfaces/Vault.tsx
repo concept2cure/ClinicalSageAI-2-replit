@@ -3070,7 +3070,7 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
   };
 
   const page = (
-    <div className="page-inner vd vd-wrap" data-work-area="vault">
+    <div className="page-inner vd-wrap" data-work-area="vault">
       {/* Back to the project (D5 §WA.4.2 rule 2); it replaces "Open project". */}
       <ProjectBack onNav={onNav} />
       <header className="ph">

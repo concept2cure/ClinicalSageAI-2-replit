@@ -1277,7 +1277,6 @@
 .c2c-v2 .pj-tool:hover .pj-tool-go,.c2c-v2 .pj-tool:focus-visible .pj-tool-go{opacity:1;}
 
 /* ===== Project Home — Claude-Projects model, grounded in ctdOnboardingProjects/Documents/Gaps ===== */
-.c2c-v2 .pj{max-width:1180px;}
 .c2c-v2 .pj-back{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-small);color:var(--text-300);margin:0 0 12px;}
 .c2c-v2 .pj-back:hover{color:var(--text-100);}
 .c2c-v2 .pj-back .ico{font-size:15px;}
