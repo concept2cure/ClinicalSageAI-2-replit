@@ -159,13 +159,13 @@ beforeAll(async () => {
       ADD COLUMN agentic_mode text,ADD COLUMN proposed_at timestamptz,ADD COLUMN decided_at timestamptz,
       ADD COLUMN decided_by integer,ADD COLUMN decision_reason text,ADD COLUMN executed_at timestamptz,
       ADD COLUMN audit_row_id text,ADD COLUMN idempotency_key text;
-    ALTER TABLE electronic_signatures ADD COLUMN document_id integer,ADD COLUMN version_id integer,
-      ADD COLUMN signature_type text,ADD COLUMN signature_purpose text,ADD COLUMN signature_level text,
-      ADD COLUMN signer_id integer,ADD COLUMN signer_name text,ADD COLUMN signer_title text,ADD COLUMN signer_email text,
-      ADD COLUMN authentication_method text,ADD COLUMN authentication_timestamp timestamptz,
-      ADD COLUMN second_factor_verified boolean,ADD COLUMN signature_hash text,ADD COLUMN signature_meaning text,
-      ADD COLUMN compliance_statement text,ADD COLUMN legal_disclaimer text,ADD COLUMN ip_address text,
-      ADD COLUMN device_info text,ADD COLUMN signed_at timestamptz DEFAULT now();
+    ALTER TABLE electronic_signatures ADD COLUMN IF NOT EXISTS document_id integer,ADD COLUMN IF NOT EXISTS version_id integer,
+      ADD COLUMN IF NOT EXISTS signature_type text,ADD COLUMN IF NOT EXISTS signature_purpose text,ADD COLUMN IF NOT EXISTS signature_level text,
+      ADD COLUMN IF NOT EXISTS signer_id integer,ADD COLUMN IF NOT EXISTS signer_name text,ADD COLUMN IF NOT EXISTS signer_title text,ADD COLUMN IF NOT EXISTS signer_email text,
+      ADD COLUMN IF NOT EXISTS authentication_method text,ADD COLUMN IF NOT EXISTS authentication_timestamp timestamptz,
+      ADD COLUMN IF NOT EXISTS second_factor_verified boolean,ADD COLUMN IF NOT EXISTS signature_hash text,ADD COLUMN IF NOT EXISTS signature_meaning text,
+      ADD COLUMN IF NOT EXISTS compliance_statement text,ADD COLUMN IF NOT EXISTS legal_disclaimer text,ADD COLUMN IF NOT EXISTS ip_address text,
+      ADD COLUMN IF NOT EXISTS device_info text,ADD COLUMN IF NOT EXISTS signed_at timestamptz DEFAULT now();
   `);
   await h.pglite.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`, [ORG, SPONSOR]);
   await h.pglite.query(

@@ -68,6 +68,21 @@ afterEach(() => {
   cleanup(); localStorage.clear(); sessionStorage.clear(); clearEditorTarget();
   publishShellProject({ id: '' }); vi.unstubAllGlobals();
 });
+describe('the build preview (J3 R9)', () => {
+  /* J3 human test R9: the preview said "Preserve existing section and text" whatever the section held, and told every
+     row "AnA can prepare a candidate only if this saved section is empty". It says what the build will do instead. */
+  it('the preview says what the build does to each section, and which ones AnA drafts', async () => {
+    await mounted();
+    await previewBuild(undefined, true);
+    const rows = [...screen.getByTestId('assembly-plan').querySelectorAll('ol > li')].map(li => li.textContent ?? '');
+    expect(rows[0]).toContain('Kept as saved, with its text');
+    expect(rows[0]).toContain('It holds text, so AnA prepares no candidate for it.');
+    expect(rows[1]).toContain('Added empty; scientific content is missing');
+    expect(rows[1]).toContain('AnA prepares a candidate for it, for you to review.');
+    expect(screen.getByTestId('assembly-plan').textContent).not.toMatch(/only if this saved section is empty|existing section and text/);
+  });
+});
+
 describe('assembly is reachable in the one existing editor', () => {
   it('offers a build disclosure for the exact open saved document', async () => {
     await mounted();

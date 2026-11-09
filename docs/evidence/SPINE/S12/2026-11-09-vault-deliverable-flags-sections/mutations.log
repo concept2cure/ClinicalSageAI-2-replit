@@ -1,0 +1,29 @@
+## Any later version counts, approved or not
+ × is listed, naming the cited version and the approved one; a later draft alone does not list it 39ms
+ ✓ names the latest approved version across several, and a section citing it is not listed 30ms
+ ✓ is not listed once its span is retired, nor through a link the family rule refuses 32ms
+ ✓ reads only its own organization's sections and versions 47ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+## A retired span still counts
+ ✓ is listed, naming the cited version and the approved one; a later draft alone does not list it 53ms
+ ✓ names the latest approved version across several, and a section citing it is not listed 31ms
+ × is not listed once its span is retired, nor through a link the family rule refuses 51ms
+ ✓ reads only its own organization's sections and versions 55ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+## The cited version is not held to the section's organization and program
+# Passes: the Vault's own family reader (readVersionFamily, by program and organization) also refuses that version,
+# so no later version is found. This query's guard is a second layer; no case can tell the two apart.
+ ✓ is listed, naming the cited version and the approved one; a later draft alone does not list it 51ms
+ ✓ names the latest approved version across several, and a section citing it is not listed 30ms
+ ✓ is not listed once its span is retired, nor through a link the family rule refuses 38ms
+ ✓ reads only its own organization's sections and versions 51ms
+      Tests  4 passed (4)
+## Earlier versions count as later ones (predecessors not removed)
+ ✓ is listed, naming the cited version and the approved one; a later draft alone does not list it 53ms
+ × names the latest approved version across several, and a section citing it is not listed 35ms
+ ✓ is not listed once its span is retired, nor through a link the family rule refuses 38ms
+ ✓ reads only its own organization's sections and versions 48ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)

@@ -1,0 +1,3 @@
+ok  uploaded version 1
+ok  cited version 1
+expected: the project's changes list the section ({"status":200,"mine":[]})

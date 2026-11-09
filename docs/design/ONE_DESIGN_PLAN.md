@@ -1742,7 +1742,7 @@ no screen, route, service, table or component file.
 
 - **Stage 9's next steps wait on founder decisions:**
   - where an imported prior filing is recorded (a migration);
-  - whether the Vault admits `.zip`;
+  - whether the Vault admits `.zip` (decided 2026-11-09: it does, P-112);
   - whether the ICH and regional DTDs are vendored for validation.
 
   The reader holds no file now.
@@ -1823,6 +1823,9 @@ no screen, route, service, table or component file.
 
 1. F1, in the coordinating session's order of 2026-11-08: P-93, P-94, P-86, P-92 with P-99, then P-96. P-93's four
    open questions went to the coordinating session on 2026-11-09; the build proceeds on its design's defaults.
+   - P-86 is carried under L1, as the founder's record files it (launch row D7). Its C1, the signed retirement and
+     the database's removal guard, landed on 2026-11-09 (`docs/evidence/D7-SEQUENCE-RETIREMENT/2026-11-09/`). C2
+     follows; C3 waits for D7-A2.
 2. P-87 with P-106 (R1).
 3. P-103, the submission-ops package routes.
 4. S10.

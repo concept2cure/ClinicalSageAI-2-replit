@@ -1,0 +1,4 @@
+# Before the fixture is widened, at 785f56d73: every PGlite user of _freeze-gate-fixture.ts
+# npx vitest run server/services/submission-service/__tests__/dispatch-reauthorization.pglite.test.ts server/services/submission-service/__tests__/freeze-gate-binding.pglite.test.ts server/services/submission-service/__tests__/freeze-relies-on-waiver.pglite.test.ts server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts server/services/submission-service/__tests__/regional-shadow-identity-lock.pglite.test.ts
+ Test Files  6 passed (6)
+      Tests  84 passed (84)

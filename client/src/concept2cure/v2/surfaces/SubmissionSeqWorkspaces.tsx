@@ -43,6 +43,7 @@ import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import { PlacementReasonField, placementReasonOk, matchingLeafReceipt, placementAuditWarning, type FilingLeafReceipt } from './filingTarget';
 import { StudyTaggingInputFields, studyTaggingPlacement, type StudyTaggingValues } from './StudyTaggingInputFields';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
+import { FILING_COPY_DOCUMENT_TABLE } from '@shared/types/submission-api';
 import { downloadBlob } from '../download';
 import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
 import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
@@ -748,7 +749,7 @@ async function placeProjectDocument(
   if (!copy) return null;
   if (!copy.ok) return failedPlacement(copy.verdict.text, copy.unconfirmed);
   const expected = { sequenceId: seq.id, sectionCode: form.sectionCode, lifecycleOp: form.op,
-    documentTable: 'coauthor_documents' as const, documentId: copy.snapshotId, ...form.payload };
+    documentTable: FILING_COPY_DOCUMENT_TABLE, documentId: copy.snapshotId, ...form.payload };
   const r = await mutateVerbatim<FilingLeafReceipt>('PUT', `/api/submissions/sequences/${seq.id}/leaves`, {
     sectionCode: form.sectionCode, title: doc.title, lifecycleOp: form.op,
     documentTable: expected.documentTable, documentId: copy.snapshotId, reason: form.reason, ...form.payload,

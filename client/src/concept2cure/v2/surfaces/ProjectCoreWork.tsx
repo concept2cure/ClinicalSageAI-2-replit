@@ -21,7 +21,7 @@ import { apiRequest, assertApiResponseOk } from '@/lib/queryClient';
 import { getSurfaceMeta } from '../registryModel';
 import { I } from '../icons';
 import { C2CForm } from '../C2CForm';
-import { useLiveData, type ShapeGuard } from '../dataConnect';
+import { readRefusalWords, useLiveData, type ShapeGuard } from '../dataConnect';
 import { C2CToast, useToast } from '../toast';
 import { AssignAction, AssignmentLine, PLAN_TASK_MODULE, planAssignments, planTaskKey, usePlanAssignments, type PlanAssignment } from './PlanAssign';
 
@@ -153,6 +153,63 @@ function WorkProjectItem({ row, openable, onOpen, own }: {
   );
 }
 
+/* ── The program's map across its projects, slice 1 (S12 gap 5; the coordinating session's ruling of 2026-11-09) ──
+   Beside the work projects: this filing's sections drafted from Vault versions, each with its standing, read from the
+   project's changes (GET /api/c2c/projects/:id/source-changes, `vaultFeeds`; vault-citation-changes.ts). Recorded
+   facts only: which work project produced a version is not recorded yet, and the list says so, never infers it. */
+export interface VaultFeed {
+  sectionId: string; sectionCode: string | null; documentTitle: string | null; citedVaultId: string;
+  citedVersion: string | null; vaultTitle: string | null; state: 'current' | 'replaced'; approvedVersion: string | null;
+}
+interface VaultFeedsRead { vaultFeeds: VaultFeed[]; vaultFeedCount: number }
+const isVaultFeedsRead: ShapeGuard<VaultFeedsRead> = (value): value is VaultFeedsRead => {
+  const read = value as Partial<VaultFeedsRead> | null;
+  return !!read && Array.isArray(read.vaultFeeds) && read.vaultFeedCount === read.vaultFeeds.length
+    && read.vaultFeeds.every((f) => f && typeof f.sectionId === 'string' && (f.state === 'current' || f.state === 'replaced'));
+};
+
+/** "Module 3 quality · 3.2.S.4.1 — Drug substance specification v1.0 · replaced since cited; v3.0 is approved". */
+export function vaultFeedText(f: VaultFeed): string {
+  const where = `${f.documentTitle || 'Untitled document'}${f.sectionCode ? ` · ${f.sectionCode}` : ''}`;
+  const from = `${f.vaultTitle || 'a Vault document'}${f.citedVersion ? ` v${f.citedVersion}` : ''}`;
+  const standing = f.state === 'replaced'
+    ? `replaced since cited; ${f.approvedVersion ? `v${f.approvedVersion}` : 'a later version'} is approved` : 'current';
+  return `${where} — ${from} · ${standing}`;
+}
+
+function VaultFedSections({ programId }: { programId: string }) {
+  const path = `/api/c2c/projects/${encodeURIComponent(programId)}/source-changes`;
+  const read = useLiveData<VaultFeedsRead>(path, [path], isVaultFeedsRead);
+  if (read.loading) return null;
+  if (read.error || !read.data) {
+    /* A refused read says the refusal (the shared rule); only a failure to answer is "could not be checked". */
+    const refusal = read.error ? readRefusalWords(read, 'the sections drafted from the Vault') : null;
+    return (
+      <p className="pj-card-note" role="status" data-testid="pj-vault-feeds-unread">
+        {refusal ? `${refusal.title}. ${refusal.message}` : 'The sections drafted from the Vault could not be checked.'}
+      </p>
+    );
+  }
+  const feeds = read.data.vaultFeeds;
+  if (feeds.length === 0) return null;
+  const replaced = feeds.filter((f) => f.state === 'replaced').length;
+  return (
+    <div className="pj-vault-feeds" data-testid="pj-vault-feeds">
+      <p className="pj-card-note">
+        {feeds.length} section{feeds.length === 1 ? '' : 's'} of this filing {feeds.length === 1 ? 'was' : 'were'} drafted from Vault versions
+        {replaced ? `; ${replaced} ${replaced === 1 ? 'was' : 'were'} replaced since cited` : ''}. Which work project produced each version is not recorded yet.
+      </p>
+      <ul className="pj-work-projects-l">
+        {feeds.map((f) => (
+          <li key={`${f.sectionId}:${f.citedVaultId}`}>
+            <span className={f.state === 'replaced' ? 'pj-card-note sp-tone-warn' : 'pj-card-note'}>{vaultFeedText(f)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /** The listed work projects with their assignments, read (the Plan's task read) only once there are rows to show. */
 function WorkProjectList({ rows, programId, anchorProjectId, version, openable, onOpen, onAssigned }: {
   rows: WorkProjectRow[]; programId: string; anchorProjectId: number; version: number;
@@ -214,6 +271,7 @@ export function ProjectWorkProjects({ programId, anchorProjectId, canChange, ope
               <WorkProjectList rows={rows} programId={programId} anchorProjectId={anchorProjectId} version={version}
                 openable={openable} onOpen={onOpen} onAssigned={() => setVersion((n) => n + 1)} />
             )}
+      {rows && <VaultFedSections programId={programId} />}
       {adding && (
         <C2CForm
           config={{
