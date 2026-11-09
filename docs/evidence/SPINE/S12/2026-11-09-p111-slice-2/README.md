@@ -116,3 +116,24 @@ role).
   - `ci:sql-interpolation` passes (`sql-gate.log`).
   - The full typecheck reports 0 errors. It runs at `TYPECHECK_HEAP_MB=12000`, because this host has 15 GB and the
     default 24 GB heap is killed for memory.
+
+## Correction (2026-11-09, found by slice 5)
+
+The proof above was incomplete, and slice 2 made trunk red. The suites listed passed, but the suites that exercise the
+task admission's denials were not run.
+- **The cause.** `canWorkOnProjectTasks` (`06a416517`) walked to the filing project after every exact denial.
+- **What broke.**
+  - The no-SQL pin: `unifiedTasks.routes.test.ts` pins that an exact denial runs no SQL beyond `BEGIN`/`ROLLBACK`.
+  - Hand-built harnesses: `_unified-tasks-pglite-harness.ts` and `tests/db/workflow-project-native-fixture.ts` build a
+    `projects` table with no `parent_project_id`, so a 403 there became a 503. That is 1 case in
+    `unifiedTasks-governed.pglite.integration.test.ts` and 11 in `workflow-project-admission.dbtest.ts`.
+- **What this session wrongly said.** In its message to the coordinating session, it called `unifiedTasks-governed`
+  "trunk-red, not mine". That was wrong: with the helper from before slice 2, the suite passes 25/25.
+- **Fixed in slice 5** (`91939f245`). `admitTaskCreationProject` reads `parent_project_id` in its existing locked row
+  read, and runs the filing-project clause only for a row with a parent. An ordinary denial runs exactly the SQL it ran
+  before P-111. The rule is unchanged.
+- **Test-only changes that go with it** (`F1`): the two harnesses gain the real column, and two stand-ins accept the
+  read's added column.
+- **The run now.** All 39 non-db suites that reach task admission pass, 513 cases. Two lock-wait timing cases in
+  `workflow-project-admission` fail identically before slice 2; they are not this change.
+- **Evidence:** `../2026-11-09-p111-slice-5/README.md`, under "A slice 2 regression".
