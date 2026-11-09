@@ -1,0 +1,5 @@
+# RED: repair B's case against assess-dispatch-readiness.ts at HEAD 9f4984fa3, 2026-11-08T23:47:16Z
+ × server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > a removed sequence has no dispatch readiness (F1 repair B) > a complete amendment, once removed, is answered as not found, by its number, never as ready
+   → promise resolved "{ sequenceId: 1, region: 'fda', …(18) }" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 15 skipped (16)
