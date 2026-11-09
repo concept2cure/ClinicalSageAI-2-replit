@@ -2402,7 +2402,10 @@ export function DocumentWorkbench({
     onReviewSection: sectionId => {
       const refusal = linkedTargetRefusal();
       if (refusal) { fireToast(refusal, 'error'); return; }
-      requestLeaveRef.current({ kind: 'section', id: sectionId, mode: 'section', draftReview: true });
+      /* Decision 4 (CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slices 3–4): the person asked to review this section's
+         retained candidate, so a passage view left open on it gives way to the section's draft review. Another
+         section clears it on its own (the passage belongs to its section); the same section did not. */
+      if (requestLeaveRef.current({ kind: 'section', id: sectionId, mode: 'section', draftReview: true })) setDraftPassage(null);
     },
   });
   assemblyLeaveRefusalRef.current = assembly.leaveRefusal;
