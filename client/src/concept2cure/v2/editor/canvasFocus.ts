@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { escapeBelongsToInner } from './DocumentWorkbench';
+import { escapeBelongsToInner, outlineOverlays } from './DocumentWorkbench';
 
 /** The existing section-open nonce serves both a saved arrival and a clicked draft. */
 export function useOriginSectionFocus(sectionId?: string) {
@@ -43,6 +43,21 @@ export function useCanvasRegionFocus({ expanded, cardless, returnFocus, focusOnO
   return toList;
 }
 
+/**
+ * Whether the workbench inside the canvas closes something on this Escape first, so the canvas must not collapse.
+ * 2026-09-28 (GA-4): an open workbench rail other than AnA closes on this Escape first (DocumentWorkbench's own
+ * listener); the canvas collapses on the next one. Both listen on the document, so the order they run in is not
+ * something to rely on: the canvas yields for the Escapes the workbench takes, from inside it or from the body. One
+ * from the canvas's own bar is still the canvas's. D4-4: an outline floating over the page is closed first the same way.
+ */
+function workbenchTakesEscape(region: HTMLElement | null, target: KeyboardEvent['target']): boolean {
+  const within = (el: Element | null | undefined) =>
+    !!el && (target === document.body || (target instanceof Node && el.contains(target)));
+  if (within(region?.querySelector('.ed[data-rail]:not([data-rail="ana"])'))) return true;
+  const ed = region?.querySelector('.ed');
+  return !!ed && outlineOverlays(ed) && within(ed);
+}
+
 /** Keep the existing canvas Escape ownership beside its focus behavior. */
 export function useCanvasEscape({ expanded, expandedRef, rootRef, onExpandedChange }: {
   expanded: boolean; expandedRef: RefObject<HTMLElement | null>; rootRef: RefObject<HTMLElement | null>;
@@ -64,15 +79,7 @@ export function useCanvasEscape({ expanded, expandedRef, rootRef, onExpandedChan
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented) return;
       if (escapeBelongsToInner(e.target)) return;
-      /* 2026-09-28 (GA-4): an open workbench rail other than AnA closes on
-         this Escape first (DocumentWorkbench's own listener); the canvas
-         collapses on the next one. Both listen on the document, so the order
-         they run in is not something to rely on — the canvas yields here,
-         for the Escapes the workbench takes: from inside it, or from the
-         body. One from the canvas's own bar is still the canvas's. */
-      const railOpen = (expandedRef.current ?? rootRef.current)?.querySelector('.ed[data-rail]:not([data-rail="ana"])');
-      const t = e.target;
-      if (railOpen && (t === document.body || (t instanceof Node && railOpen.contains(t)))) return;
+      if (workbenchTakesEscape(expandedRef.current ?? rootRef.current, e.target)) return;
       /* An open modal owns Escape wherever focus happens to be — closing the
          canvas underneath it would leave the dialog over a collapsed card. */
       if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;

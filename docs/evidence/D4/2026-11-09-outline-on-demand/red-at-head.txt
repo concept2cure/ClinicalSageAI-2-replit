@@ -1,0 +1,8 @@
+ × client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline on demand (D4-4) > opens on the page at 1280 px and wider; the toggle hides it, says so, and is remembered 113ms
+ × client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline on demand (D4-4) > is closed by default on a narrower page, and open whenever no document is open 109ms
+ × client/src/concept2cure/v2/__tests__/outlineStartsSection.test.tsx > the outline on demand (D4-4) > marks a required node with a ring and "required" for a screen reader, and no unstarted row is dimmed 126ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected null to be 'open' // Object.is equality
+AssertionError: expected false to be true // Object.is equality
+AssertionError: expected '2.5Clinical overviewrequired' not to match /required/i
+      Tests  3 failed | 9 passed (12)
