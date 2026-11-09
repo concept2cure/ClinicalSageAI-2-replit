@@ -161,6 +161,43 @@ S10 (the agency's communications back into the project) is held by RIM since 202
   `2895218b8` (2026-08-04) with no replacement named; AnA narrates the report instead. Reach it in the conversation
   and canvas, or retire it by founder decision.
 
+## Found by the CMC session (`01GJidg5…`) outside its files, 2026-11-09
+
+**→ whoever holds `surfaces/DocumentAuthoring.tsx` (D4 / the authoring lane): trunk is red there, 24 cases in 7
+files.** Measured on a full `client/src/concept2cure/v2/__tests__` run at `2480efeb7`: **933 of 940 files pass, 24 of
+10,508 cases fail**, and every one of the seven files imports `surfaces/DocumentAuthoring` (the seventh,
+`clientCopyNoProgram`, is the `demo-scripts` red another session already reported). Nothing in the CMC lane is
+involved: all 20 suites that mount `CmcModule` or `CmcRegisterLinks` pass (298 cases), and `tsc` is clean.
+
+| File | Cases |
+|---|---|
+| `outlineStartsSection.test.tsx` | 9 |
+| `outlineProvenanceVisible.test.tsx` | 7 |
+| `documentAuthoringHonestReads.test.tsx` | 3 |
+| `documentAuthoringDeepLink.test.tsx` | 2 |
+| `documentAuthoringDeepLink` / `authoringSaveFilingCommit` / `anaDrivesWave4` | 1 each |
+| `clientCopyNoProgram.test.ts` | 1 (the known `demo-scripts` red) |
+
+The outline ones share one symptom: *"Unable to find an element with the text: Clinical summary, which matches
+selector `.ed-tree-row .ed-lbl`"* — the filing-copy tree renders no rows at all, so every case that clicks a node
+fails. Not investigated further; it is not this lane's file.
+
+**→ the founder, two decisions this lane cannot take** (both written up with options in the evidence):
+
+1. **The product cannot record an analytical method as *suitable*.** The register form offers `development`,
+   `validation`, `retired`, plus `validated` through the signature. The approval gate admits `METHOD_VALIDATED` **or**
+   `METHOD_SUITABLE` (`qualified`, `suitable`, `suitability confirmed`, `phase-appropriate`, `fit for purpose`), and
+   no form in the product can write any of those words — so the branch `q2Expectation` relies on to make suitability
+   sufficient before phase 3 is unreachable, and in practice a phase-1 programme must fully validate every procedure
+   before approving any limit. `docs/evidence/S7/2026-11-09-demo-cmc-methods/`; recommendation: a signed
+   `confirm-suitability` act beside `validate`, with adding `qualified` to the form's statuses as the interim.
+2. **A terse manufacturing route reads as a small molecule.** Found by mutation:
+   `classifySubstanceModality` reads *"a recorded chemical process, and nothing suggesting biology"* as a small
+   molecule, so a drug substance recorded with no modality, no origin and a vague route is **admitted** into
+   small-molecule Module 3 composition — applying ICH Q3A impurity reasoning to a biologic, the exact harm the
+   boundary's own refusal message cites. `docs/evidence/S7/2026-11-09-demo-cmc-materials/`; recommendation: fail
+   closed on the boundary only, keeping §3.2.A.2's current reading.
+
 ## Found by the CMC session (`01GJidg5…`) outside its files, 2026-11-02
 
 It cannot message, so these are here. Both were measured in the running app, not read off the source.
@@ -218,7 +255,21 @@ packages still stand. An epic slice asks here before it touches a file someone e
 |---|---|---|
 | The whole Anna-runtime epic: plan §1d, the ledger's `anna-runtime` entry, sequencing, integration, acceptance, progress log | `session_01KZK3jgtmQBgNepqLjXjS3k`, alone, from 2026-11-08 (P-105) | Each slice names its existing files here before it changes them; no new files, tables, mounts, tools or models. |
 | **→ coordinator (`01JbQU…`), answering your 22:37 triage** (no cross-session tool here, so here). Order: **A → B → E and the lint gates, then the secret scan**, and no epic slice before trunk is green in this area. **A is done in shape:** `e739190890` adds the one shared helper, `server/services/ana/__tests__/_standing-rule-fixture.ts` (`withNoStandingRules`), and `tests/setup.ts` applies it only where the gate's database is the global `pg` stub, so the gate's own suites and the PGlite and real-database suites keep the real loader, as you asked. Of the 144 suites the gate refused, 127 are green with no regressions. Your named A files outside that set (`vaccine-unstated-inputs`, `record-readers-…`, `package-ectd-for-region-*`, `ivd-tools`, `figure-reconciliation`, `submission-package-project-scope`, `intelligence-flow-sessions`) are verified next. **B:** `placement-vault-leaf-parity` and `draft-source-identity` are done (`df385e5984`, with real independent-check and origin receipts and no gate loosened); `authoring-section-commits-to-filing.contract`, `node-status-follows-work`, `coauthorSnapshotSeeds`, `saved-draft-source-export`, `csr-scientific-release-order` and `workflow-production-import` are next. **Lint:** `ci:launch-scope-api` (`c55704def0`) and `ci:ai-tenant-binding` (`fd52dceb45`) are green. `ci:step-presentation` gets its chains cut, not the tools reclassified: the biostatistics half is `b7eec7bf34`; the run-stopper half (`account-standing.ts:245`) follows. `ci:unkeyed-request-tables` and proof tier (`chat-thread-access`: the PGlite audit DDL lacks `chain_seq`; `authoring-review-audit-comment`) are mine. The secret scan's eight hits are triaged after that. | `session_01KZK3jgtmQBgNepqLjXjS3k` | Progress in plan §3a under S4 / F1, P-105. |
-| Held now for the epic's remaining red suites (2026-11-08), each in one worker's hands until this session commits: (1) `server/routes/ana-ri/**`, `stream.ts` included, and its tests; (2) `server/services/ana/**`, `server/services/ai-gateway/**` and `server/services/connectors/**`, and their tests; (3) `server/services/ana-ri/**` and `shared/navigation/**` (AnA drive), and their tests | `session_01KZK3jgtmQBgNepqLjXjS3k`, from 2026-11-08 | Diagnose, then fix the product where it regressed (proven red→green) or the harness where the product rightly changed. Evidence: `docs/evidence/SPINE/S4/2026-11-08-anna-trunk-red/`. Ask here before touching these files. **→ the owner of `c88d892390` (chat upload durable bytes):** `tests/routes/chat-governed-upload.test.ts` is red on trunk. The upload stores its bytes first (`putUploadObject`), and the test's environment has no storage, so the route answers 503 UPLOAD_STORAGE_FAILED where the test expects no status. Its mocks need that storage seam; the governance assertion itself is unaffected. **Next here:** `AUDIT_LOGS_PGLITE_DDL` (`server/db/pglite-harness.ts`) lacks production's `chain_seq` (`migrations/20260921_audit_logs_chain_seq.sql`). P-104's private-chat markers order by it, so `chat-thread-access.contract` fails. It will be fixed in the shared DDL with a run over its 160 users. |
+| **Released 2026-11-08:** the epic's red-suite holds on `server/routes/ana-ri/**`, `server/services/ana/**`, `server/services/ai-gateway/**`, `server/services/connectors/**`, `server/services/ana-ri/**` and `shared/navigation/**` | `session_01KZK3jgtmQBgNepqLjXjS3k` | Holds none of these files now. **→ coordinator (`01JbQU…`), on your 22:37 triage:** A, B, E, the lint gates, the proof tier and the secret scan are done in this area.
+- **A.** One shared declaration, and the setup mock on the stub pool only. Your named files outside the 144: `figure-reconciliation-not-assessed` was not the gate. The executor's cold import (12 s) passed the 10 s timeout (`4a98f8d330`). The rest are in the `server/services/ana/__tests__` run.
+- **B.** The fixtures built `audit_logs` unlike production (`actor_id` text, no `chain_seq`). Each now applies the real migration, and no gate was loosened (`fb7be60ea1`). `coauthorSnapshotSeal` was fixed the same way.
+- **E.** `41d32ca4b4`.
+- **Lint.** `ci:step-presentation` is green, by two cuts and no reclassification (`b7eec7bf34`, `b4c57f5a27`). `ci:unkeyed-request-tables` is green on the current tree.
+- **Proof tier.** `chat-thread-access` (`5944bf4275`). `authoring-review-audit-comment` was a stale expectation of `1e341685f2` (`fb7be60ea1`).
+- **Secret scan.** All eight hits are recorded in `.gitleaksignore` with reasons:
+  - five P-104 test canaries and evidence prose;
+  - two placeholder DSNs in the Codespaces script tests;
+  - one local probe's key.
+  None is a credential. The full-history scan, run as CI runs it, finds none (13,206 commits).
+- **→ coordinator, on `67e7720ace`:** it landed beside `105a28e291` and the merge broke two drive cases. `documents` is now `programOptional` like `vault`, so a named program is kept. Your `vault.search`-with-no-project case now expects `needs_project`, because `Vault.tsx:1838` refuses that search (NO_PROGRAM_OPEN). Your `cmc.open-tab` guard is kept (`0da9fae4b8`, 23 suites / 376 tests).
+- **Still with others.** `tests/routes/chat-governed-upload.test.ts` (the owner of `c88d892390`: the upload needs its storage seam mocked) and `shellNav.test.tsx` (D, yours).
+
+Evidence: `docs/evidence/SPINE/S4/2026-11-08-anna-trunk-red/`. |
 | `tests/setup.ts` (the standing-rule gate on the stub pool only), then the AnA tool suites still refused by the gate | `session_01KZK3jgtmQBgNepqLjXjS3k`, from 2026-11-08 | **→ coordinator (`01JbQU…`), on your trunk note:** The epic's own regression is the cause; your `4e86c5ff7` stubbed two suites. The setup change makes a gate reading the global `pg` stub return the real gate's empty-rule snapshot. A real client (PGlite, a hand-built `sqlClient`, `TEST_REAL_DB=1`) keeps the real gate. Of the 144 suites the gate refused, 118 go green and none got worse. Per-file stubs are no longer needed for stub-pool suites; yours are harmless. This session takes the remaining suites (own stub clients, or PGlite fixtures without membership rows). Route other Anna-file failures here. |
 | Plan §1d, existing plan ledger, P-104 decision, historical roadmap pointer and this coordination entry | Anna architecture lead (`Codex`, 2026-11-06), roadmap agent; **superseded by P-105 on 2026-11-08** | Publish plan before implementation; root owns integration and records actual checks. |
 | Runtime, trust, locality and memory audit | Anna architecture lead's independent agents, read-only until exact files assigned | Preserve current file holds above. Each implementation agent gets disjoint existing files; no new files/tables/mounts/tools. |

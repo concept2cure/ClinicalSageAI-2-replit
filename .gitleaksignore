@@ -417,3 +417,37 @@ f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/telemetry.te
 # status: public by design (reviewed 2026-10-17)
 # reason: Public Firebase browser configuration bundled from Excalidraw; the exact value matches pinned upstream public .env.production. This does not establish provider restrictions or database-rule security.
 f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/lib/diagram-render/dist/diagram-render.html:gcp-api-key:3603
+
+# status: not a secret (reviewed 2026-11-08, Anna epic owner, P-105)
+# reason: A test canary. sensitive-placement-gate.test.ts plants SECRET = 'CANARY_P…' to prove the derivative
+#   round-trip never sends it to a frontier model, ledger or log (b8cee0745c, P-104). A fixture string, never a credential.
+b8cee0745cdef80ef88c06fd265750e2945d2b37:server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts:generic-api-key:50
+
+# status: not a secret (reviewed 2026-11-08, Anna epic owner, P-105)
+# reason: A test canary. The quarantine test writes the literal 'LEGACY_O…' as legacy correction text and proves it never
+#   crosses tenants (3ad2bb0712, P-104). A fixture string, never a credential.
+3ad2bb0712c31bdbbcf86d66463f79431c3d987d:server/routes/__tests__/ri-agency-requirements-unvalidated-visible-only-to-writer-org.pglite.test.ts:generic-api-key:142
+
+# status: not a secret (reviewed 2026-11-08, Anna epic owner, P-105)
+# reason: A PEM-shaped canary whose body is the literal CANARY_FDA_OLD_442211 (and _NEW_775533), used to prove agency
+#   account change reasons and audit rows never carry credential text (1458f32d3e, P-104). Not a key.
+1458f32d3ec8fb9e54f35bf938a8c874ae8e98b9:server/services/submission-gateways/__tests__/gateway-accounts.test.ts:private-key:163
+
+# status: not a secret (reviewed 2026-11-08, Anna epic owner, P-105)
+# reason: Captured editor evidence (JSON). The rule matched a section's `draftingGuidance` prose ("Platform reference
+#   guidance…"), a field name and an English sentence, not a credential assignment.
+00bcdd0c57ea7dd5b062ed8736b7e22768dbface:docs/evidence/DESIGN/R1/2026-11-06-quality-core-workflow/runtime/editor-preview.json:generic-api-key:745
+00bcdd0c57ea7dd5b062ed8736b7e22768dbface:docs/evidence/DESIGN/R1/2026-11-06-quality-core-workflow/runtime/editor-build.json:generic-api-key:748
+
+# status: not a secret (reviewed 2026-11-09, Anna epic owner, P-105)
+# reason: Test fixtures for the Codespaces startup and doctor scripts. The DSNs name placeholder Neon hosts
+#   (ep-diagnostic / ep-example, not endpoint ids) and placeholder passwords ("fake…password", "…secret…"), to prove
+#   startup keeps an injected DSN and the doctor classifies owner and pooler URLs. Never a credential.
+9315a787de52de1a894ac3191886eca32cc80888:scripts/ops/codespaces-startup.test.mjs:c2c-connection-uri-password:20
+18569049ddc71763c8bfb47693337cd7adc107f9:scripts/ops/codespaces-doctor.test.mjs:c2c-connection-uri-password:9
+
+# status: not a secret (reviewed 2026-11-09, Anna epic owner, P-105)
+# reason: Captured evidence. A probe script ran a .mts probe against a throwaway local Postgres (127.0.0.1:55474,
+#   NODE_ENV=test), with a probe-only AUDIT_HMAC_SECRET whose value names itself as a probe secret and appears in no
+#   other file. It keys no deployed audit chain.
+a06ae96c83a203ad17a195453deb6f0d9e020740:docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/probes/run.sh.txt:generic-api-key:8

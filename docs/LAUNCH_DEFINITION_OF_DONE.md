@@ -2263,3 +2263,41 @@ the global sme", P-107). The project-page session (`01FTWcmX…`) asked four que
 - **What is not decided.** Feeds across programs. Whether a work project may outlive or move between filing projects.
   No new file, route, table, screen or tool is approved (RULE 6).
 - **Owner.** The project-page session (`01FTWcmX…`), which holds D3's files for S12.
+
+*Clarification, 2026-11-09 (the coordinating session, under the same delegation).* Item 1's wording, "anchored to the
+same `regulatory_programs` row", would break PF-08: `migrations/20261001b_projects_one_anchor_per_program.sql` allows one
+anchor row per program, and every anchor reader assumes it. The project-page session found this before writing code.
+So:
+- **The work project's row.** It has `regulatory_program_id` NULL and `parent_project_id` set to the filing project's
+  anchor row (depth 2 or 3), with its path from `recomputePaths`.
+- **Its program.** It is the root ancestor's program, read through the existing ancestor query.
+- **What stays under the anchor.** Governed artifacts, exports and the Vault stay filed under the program's one anchor
+  row.
+- **Its kind.** It is `projects.metadata.workKind`, one of `cmc`, `biostatistics`, `rbm`, `data_management`,
+  `clin_pharm` or `nonclinical` (P-83). `projects.type` stays `'regulatory'`, and its domain is not widened.
+- **The create door.** It is one POST on the existing `server/routes/project-hierarchy.ts` router.
+  - It requires the editor role, the same organisation and the program's admission.
+  - The parent must be the anchor or one of its descendants.
+  - It writes through a new writer in `program-project-anchor.ts`, in a transaction with an audit row. That writer never
+    sets `regulatory_program_id`.
+  - It is an endpoint in an existing route file, not a new file or mount.
+
+Items 2 to 4 are unchanged. `citation-ends.ts` compares program UUIDs, so a citation from a work project to its filing
+project is within one program.
+
+*Second clarification, 2026-11-09 (the coordinating session, under the same delegation).* The first clarification put
+the create door on `server/routes/project-hierarchy.ts`. That door, "hierarchy child create", was retired on
+2026-10-26 by A2.9, which left canonical intake as the one HTTP creator of projects
+(`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.9/README.md`; `ci:project-creation-owners`). The coordinating
+session approved it without that history, and the gate refused the slice. Corrected:
+- **The one door.** A work project is created through canonical intake, `POST /api/c2c/projects`, with an optional
+  `{ parentProjectId, workKind }`.
+  - **The work-project branch** checks the editor role, the admission of the parent's program, a parent within that
+    program's anchor tree, and `workKind` from P-83's six. It skips the program, quota, pathway and scaffold steps that
+    do not apply.
+  - **Without those fields,** intake is unchanged.
+- **The one writer.** The child row is written by the anchor file's one existing `projects` writer, extended to take an
+  optional parent (`regulatory_program_id` NULL when it has one). `ci:project-creation-owners` keeps `count: 1`, and no
+  gate is widened.
+- **The retired door stays retired.** The hierarchy `POST` is dropped; the governed children read stays.
+- **S12's ledger paths gain `server/routes/c2c/projects.ts`.**
