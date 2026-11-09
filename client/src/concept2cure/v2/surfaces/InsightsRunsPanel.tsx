@@ -307,31 +307,33 @@ function RunsBody({
     );
   }
   return (
-    <table className="ro-table rl-table">
-      <caption className="rl-cap">{rows.length} run{rows.length === 1 ? '' : 's'}</caption>
-      <thead>
-        <tr>
-          {canBundle ? <th scope="col" className="rl-pick-h">Bundle</th> : null}
-          <th scope="col">Report</th>
-          <th scope="col">Scope</th>
-          <th scope="col">Status</th>
-          <th scope="col">Confidence</th>
-          <th scope="col">Run</th>
-          <th scope="col" />
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => (
-          <RunRow
-            key={r.id}
-            run={r}
-            pickable={canBundle}
-            picked={picked.includes(r.id)}
-            onToggle={() => onToggle(r.id)}
-            onOpen={() => onOpen(r)}
-          />
-        ))}
-      </tbody>
-    </table>
+    <div className="rl-table-scroll" role="region" aria-label="Run history" tabIndex={0}>
+      <table className="ro-table rl-table">
+        <caption className="rl-cap">{rows.length} run{rows.length === 1 ? '' : 's'}</caption>
+        <thead>
+          <tr>
+            {canBundle ? <th scope="col" className="rl-pick-h">Bundle</th> : null}
+            <th scope="col">Report</th>
+            <th scope="col">Scope</th>
+            <th scope="col">Status</th>
+            <th scope="col">Confidence</th>
+            <th scope="col">Run</th>
+            <th scope="col" />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <RunRow
+              key={r.id}
+              run={r}
+              pickable={canBundle}
+              picked={picked.includes(r.id)}
+              onToggle={() => onToggle(r.id)}
+              onOpen={() => onOpen(r)}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

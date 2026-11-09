@@ -492,3 +492,23 @@ describe('every repeated control says what it acts on, and no row shows a databa
     expect(await screen.findByRole('button', { name: 'Pause the Executive Readiness Digest schedule' })).toBeTruthy();
   });
 });
+
+/* Reporting use walk, 2026-11-09: at 390px Run history and Schedules pushed the page sideways (138px and 133px),
+   their tables about 510px wide with nothing to scroll them. Each register now scrolls inside its own focusable,
+   named region. jsdom applies no CSS, so this pins the region; the walk measured the page at 0. */
+describe('a wide register scrolls in its own region, never the page', () => {
+  it.each([[/Run history/, 'Run history'], [/Schedules/, 'Schedules']])('%s', async (tab, name) => {
+    await renderCanvas();
+    await openTab(tab);
+    const table = await waitFor(() => {
+      const t = document.querySelector('[role="tabpanel"] table');
+      if (!t) throw new Error('no table yet');
+      return t as HTMLElement;
+    });
+    const region = table.parentElement as HTMLElement;
+    expect(region.classList.contains('rl-table-scroll')).toBe(true);
+    expect(region.getAttribute('role')).toBe('region');
+    expect(region.getAttribute('aria-label')).toBe(name);
+    expect(region.tabIndex).toBe(0);
+  });
+});

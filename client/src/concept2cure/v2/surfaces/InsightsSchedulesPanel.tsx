@@ -252,44 +252,46 @@ function ScheduleTable({
   held: boolean;
 }) {
   return (
-    <table className="ro-table rl-table">
-      <caption className="rl-cap">{rows.length} schedule{rows.length === 1 ? '' : 's'}</caption>
-      <thead>
-        <tr>
-          <th scope="col">Report</th>
-          <th scope="col">Cadence</th>
-          <th scope="col">Scope</th>
-          <th scope="col">Last recorded run</th>
-          <th scope="col">Next run</th>
-          <th scope="col">State</th>
-          <th scope="col" />
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((s) => (
-          <tr key={s.id}>
-            <td>{names.report(s.reportTypeId)}</td>
-            <td>{scheduleInWords(s.schedule)}</td>
-            <td>{names.scope(s)}</td>
-            <td>{whenText(s.lastRunAt)}</td>
-            <td>{whenText(s.nextRunAt)}{s.enabled && s.nextRunAt && new Date(s.nextRunAt).getTime() < Date.now() && <div className="rl-cell-sub">Awaiting the next successful run</div>}</td>
-            <td>
-              <span className="rl-tag" data-status={s.enabled ? 'final' : 'draft'}>
-                {s.enabled ? 'Enabled' : 'Paused'}
-              </span>
-            </td>
-            <td>
-              {canWrite ? (
-                <button type="button" className="rc-chip" disabled={held || pending(s.id)} onClick={() => onToggle(s)}
-                  aria-label={pending(s.id) ? undefined : `${s.enabled ? 'Pause' : 'Resume'} the ${names.report(s.reportTypeId)} schedule`}>
-                  {pending(s.id) ? 'Saving…' : s.enabled ? <>{I.pause} Pause</> : <>{I.play} Resume</>}
-                </button>
-              ) : null}
-            </td>
+    <div className="rl-table-scroll" role="region" aria-label="Schedules" tabIndex={0}>
+      <table className="ro-table rl-table">
+        <caption className="rl-cap">{rows.length} schedule{rows.length === 1 ? '' : 's'}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Report</th>
+            <th scope="col">Cadence</th>
+            <th scope="col">Scope</th>
+            <th scope="col">Last recorded run</th>
+            <th scope="col">Next run</th>
+            <th scope="col">State</th>
+            <th scope="col" />
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((s) => (
+            <tr key={s.id}>
+              <td>{names.report(s.reportTypeId)}</td>
+              <td>{scheduleInWords(s.schedule)}</td>
+              <td>{names.scope(s)}</td>
+              <td>{whenText(s.lastRunAt)}</td>
+              <td>{whenText(s.nextRunAt)}{s.enabled && s.nextRunAt && new Date(s.nextRunAt).getTime() < Date.now() && <div className="rl-cell-sub">Awaiting the next successful run</div>}</td>
+              <td>
+                <span className="rl-tag" data-status={s.enabled ? 'final' : 'draft'}>
+                  {s.enabled ? 'Enabled' : 'Paused'}
+                </span>
+              </td>
+              <td>
+                {canWrite ? (
+                  <button type="button" className="rc-chip" disabled={held || pending(s.id)} onClick={() => onToggle(s)}
+                    aria-label={pending(s.id) ? undefined : `${s.enabled ? 'Pause' : 'Resume'} the ${names.report(s.reportTypeId)} schedule`}>
+                    {pending(s.id) ? 'Saving…' : s.enabled ? <>{I.pause} Pause</> : <>{I.play} Resume</>}
+                  </button>
+                ) : null}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
