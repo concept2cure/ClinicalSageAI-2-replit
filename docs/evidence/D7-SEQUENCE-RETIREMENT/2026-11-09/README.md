@@ -123,6 +123,7 @@ This is triggers only, and replay-safe (Rule 1).
 | `01-red.txt` | at `785f56d73`, with the tests in place: the rules, the act and the guard do not exist (9 unit cases fail; both PGlite files fail to load) |
 | `02-green.txt` | the submission-service, ectd, submission-gateways, audit, MCP, AnA submission-tool, submissions-route and IND-lifecycle suites, and the filed-elsewhere baseline's route test: 3846 pass in 310 files, none fail |
 | `03-mutations/` | 28 mutations, each red on its own case, each file restored byte for byte |
+| `04-real-postgres/` | added after C1 landed (below): T13 on two real connections, the three dbtests on a database provisioned as CI provisions it, and five mutations red there |
 
 The tests:
 - `sequence-retirement.pglite.test.ts`, 21 cases, the real act with the guard applied:
@@ -165,13 +166,28 @@ All OK. ESLint: no file gained a warning (`submission-service.ts` 7 = 7, `auditS
   is listed in D7's open items under RIM's row.
 - **C2:** the door (`POST /api/submissions/sequences/:seqId/retire`), the precheck's `retirement` answer with the
   statement, MCP's wording, and the verb pin. The retire branch goes in a helper, so `precheckGovernedStep` stays at
-  complexity 15.
+  complexity 15. Built and green locally, and held unpushed by the coordinating session's ruling of 2026-11-09 (no
+  door without its screen): it lands with C3, after D7-A2.
 - **C3:** on screen, on D7-A2's layout. It waits for D7-A2.
-- **Not run here, because this container has no PostgreSQL server:**
-  - T13, the two-connection lock case (`sequence-retirement-lock.pg.test.ts`);
-  - the three dbtest fixes above.
+- **Correction, after C1 landed.** This section said the real-PostgreSQL cases were not run "because this container
+  has no PostgreSQL server". That was wrong twice: a PostgreSQL 16 server was running here, and T13's file had not been
+  written at all. Both are closed in `04-real-postgres/`, in a commit of their own:
+  - **T13** (`sequence-retirement-lock.pg.test.ts`, on `freeze-gate-row-lock.pg.test.ts`'s pattern; skipped without
+    `TEST_DATABASE_URL`, run in CI's sharded job, which sets it). The real `retireSequence` on two connections:
+    - a creation of 0001 holding the submission first: the retirement of 0000 waits, then refuses, naming 0001;
+    - a retirement held 500 ms at its sequence row: `deleted_at` equals the audit row's `occurred_at`, both at least
+      500 ms after the wait was seen; and a creation of the freed 0000 waits for it, then takes the number.
 
-  The CI database job runs `tests/db`.
+    The creation side replays `createSequence`'s transaction, because `createSequence` reads
+    `public.submission_filed_baselines` by its qualified name and the suite works in a schema of its own.
+    `T13-green.txt`; three repeated runs green; no schema left behind. Four mutations, each red on its own case
+    (`mutation-T13-M1` to `M4`): the removal stamped `NOW()`, the audit row on its own clock, no refusal under the
+    lock, and the submission not locked (both cases).
+  - **The three dbtests**, on a throwaway database provisioned as CI's job does (`install-fresh.mjs`, then
+    `deploy-migrate.mjs`, which applied this migration; G1 is deferrable and initially deferred there):
+    `vault-where-used`, `sequence-number-once` and `review-route-guard`, 33 of 33 (`dbtests-green.txt`). With the
+    removed-0000 row laid with triggers on, the guard refuses it at COMMIT with `SEQUENCE_REMOVAL_UNRECORDED`
+    (`mutation-T15-bare-removal-with-triggers-on.txt`): T15's fixture change is what lets those tests lay a removed row.
 - **T12, the baseline's own route test under the guard.** Case (b) is proven at SQL level by the guard test's
   "admits the filed-elsewhere declaration's removal" case. The route test (`submission-filed-baseline.pglite.test.ts`)
   is the baseline lane's file and was not edited.
