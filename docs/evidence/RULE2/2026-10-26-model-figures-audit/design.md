@@ -34,6 +34,8 @@
 > | `start_war_game` (found 2026-11-01) | done | `war-game-stored-session/` |
 > | S5d-0: the three-valued helpers have one home | done | `s5d-0-three-valued-helpers/` |
 > | S5d-0b: the input adapters join them | done | `s5d-0b-input-adapters/` |
+> | S5d benefit-risk | done | `s5d-benefit-risk/` |
+> | S5d post-approval | done | `s5d-post-approval/` |
 > | S5d, S8–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
@@ -807,6 +809,65 @@ device records. No source reader, app or service was added.
 - **S5d:** `benefitRiskTools`, `biosimilarTools`, `immunogenicityTools`, `postApprovalTools`, `regulatoryStrategyTools`, `bioequivalenceTools`.
   - `assess_orphan_designation`: a prevalence with no stated source gives `fdaEligible: null`.
   - `assess_dissolution_similarity` instruction: "for recorded profiles use `compare_recorded_dissolution`."
+
+**S5d benefit-risk — What already exists (execution audit):** the six functions in
+`benefit-risk/benefit-risk-knowledge.ts` are already reached by `benefitRiskTools.ts`, the executor's `runStatsTool`
+stated-input wrapper and the safety and medical-writing skills. S3 (2026-10-26) had already made
+`assess_br_uncertainty` read an omitted level, side or margin as not stated and `plan_br_communication` refuse an
+unstated verdict, and the CER fix had made an empty side of the balance indeterminate; those rules are kept, pinned by
+the engine's three suites. S7 (2026-11-09) retired `assess_benefit_risk` onto `assess_benefit_risk_balance`. Extend the
+six and their result types; import `statedBoolean`, `booleanInputStates`, `statedNumber`, `statedOneOf` and the
+every-answer search's `conclusions` from `immunogenicity-reference.ts` (S5d-0), and reuse `refuseUnlessStated` and
+`ComputationRefusal`. Other benefit-risk code is not touched: the CER generator's `calculateBenefitRiskRatio` and the
+CER benefit-risk interview nodes. The local history is shallow; its only benefit-risk deletion is S7's
+`regulatory/benefit-risk.ts`. Evidence: `s5d-benefit-risk/`.
+
+**S5d benefit-risk execution result:** the six true/false inputs (`unmetMedicalNeed` in the framework and the balance,
+`keyRisks[].manageable`, `risks[].mitigated`, `includeVisualSummary`, `patientExperienceDataAvailable`) report true,
+false or `not_stated` through `inputStates`, and a malformed boolean, enum, weight, rank, number, list or entry is
+refused by field; the balance's benefits and risks, the effects, the criteria and the uncertainty sources are refused
+by name when missing. `assess_benefit_risk_balance` gives a verdict only when every answer to an unstated unmet need or
+mitigation gives the same one, and otherwise names the facts and the verdicts the answers give; the risk weight, net
+balance and an unstated risk's contribution are then null. `structure_benefit_risk_framework` no longer reads an
+omitted unmet need beside an approved option as "effective alternatives exist", overrides a stated false when no list
+is given, or reads an omitted manageability as manageable or an omitted severity as low; a conclusion an unstated fact
+decides is "Not assessed", and an option of unstated status is a deciding fact only while the list is open. The
+patient framing says when patient-experience data were not stated. An omitted magnitude, severity, reversibility,
+uncertainty, endpoint or frequency keeps its middle value and is named in `methodNotes`. The citation registry, the
+ordinal score tables and 24 pure functions move unchanged into the sibling `benefit-risk-reference.ts`, so the engine
+stays under the 100,000-byte ceiling. The six descriptions fit the gateway's 1,024 characters. No source reader, app or
+service was added.
+
+**S5d post-approval — What already exists (execution audit):** the six functions in
+`post-approval/post-approval-knowledge.ts` are already reached by `postApprovalTools.ts` and the executor's
+`runStatsTool` stated-input wrapper. The 2026-10-29 BLA change already took an annual report's licensure from a stated
+`biologicLicense` or, said in the guidance, from the modality; that disclosed default is kept, pinned by the engine's
+one test, `tests/regulatory/us-biotech-filing-identities.test.ts`. No function refused a malformed value or kept an
+omitted fact open. Extend the six; import `statedBoolean`, `statedNumber`, `statedOneOf` and the every-answer search
+(`everyAnswer`, `decidingFacts`) from `immunogenicity-reference.ts` (S5d-0), and reuse `refuseUnlessStated` and
+`ComputationRefusal`. Other post-approval code is not touched, and none imports this engine:
+`global-ri/post-approval-changes.ts`, `cmc/supac-classifier.ts` behind the CMC change-control store,
+`regulatory/change-assessment.ts`, `market-specs/post-submission-changes.ts`, the measured-lot ICH Q5E engine
+`biologics/comparability.ts` and `shared/regulatory/change-control-taxonomy.ts`. The local history is shallow, with no
+post-approval-name deletion matches. Evidence: `s5d-post-approval/`.
+
+**S5d post-approval execution result:** each true/false input the six functions read (the five risk qualifiers
+wherever a `risk` object is taken, `solidOralProduct`, `modifiedRelease`, `biologicLicense`, an element's
+`cqaImpact`, `controlledDownstream` and `withinDesignSpace`, a test's `cqa`, `includeStability`,
+`stabilityProtocolOngoing`, `includePlcmDocument`, `affectsCqa`, `analyticalCoverageComplete` and
+`clinicalDataAvailable`) reports true, false or `not_stated` through `inputStates`, and a malformed value is refused
+by field; an unknown change area or element type is refused by name, no longer classified as PAS or as an EC. The risk
+score and tier, the US category, regulation and EU variation type, the SUPAC applicability and level, an element's EC
+status and reporting category, the category without a PACMP and its feasibility, the comparability extent and bridging
+studies and a planned change's ICH Q12 tool are given only when every answer to the unstated facts gives the same one,
+and are otherwise null with `undecided` naming the facts and the answers. `affectsCqa` and `risk.affectsCqa` are one
+fact, never searched as two. An annual-report change with no asserted category whose facts do not settle it is listed
+in `notDetermined`: that tool takes none of the risk facts. A risk object without a magnitude keeps the stated
+top-level magnitude. An omitted modality, magnitude, development approach, change stage, region list, test panel,
+stability commitment or PLCM document keeps its default, said in the result. The citation library, the change-area
+profiles, the EC base rules and five fixed lookups (the US and EU category texts, the SUPAC level and the default PACMP
+test panels) move unchanged into the sibling `post-approval-reference.ts`, so the engine stays under the 100,000-byte
+ceiling. No source reader, app or service was added.
 
 **Pins:** `submission-center-tools.test.ts`, `ivd-lifecycle-tools.test.ts`, `deepening-tools.test.ts`, and the immunogenicity, bioequivalence and orphan tests where they exist.
 

@@ -6,6 +6,11 @@
  *
  * Each test below fails on the pre-fix code (empty risks → "readily manageable",
  * net 0 → "benefit modestly exceeds risk", benefits-with-no-risks → "favourable").
+ *
+ * 2026-11-09 (Rule 2 S5d): the inputs said endpointType 'clinical', magnitude
+ * 'large' and reversibility 'reversible', none in its vocabulary, which the
+ * engine read as its middle value and now refuses by field. They are 'function',
+ * 'high' and 'fully_reversible'; every assertion is unchanged.
  */
 import { describe, it, expect } from 'vitest';
 import {
@@ -18,7 +23,7 @@ describe('structureBenefitRiskFramework — an uncharacterized dimension is not 
     const r = structureBenefitRiskFramework({
       productName: 'DeviceX',
       indication: 'chronic wound care',
-      keyBenefits: [{ description: 'faster healing', endpointType: 'clinical', magnitude: 'large', uncertainty: 'low' }],
+      keyBenefits: [{ description: 'faster healing', endpointType: 'function', magnitude: 'high', uncertainty: 'low' }],
       // keyRisks intentionally omitted — the safety profile is uncharacterized
     } as any);
     const riskRow = r.rows.find((row: any) => row.dimension === 'Risk and Risk Management');
@@ -41,8 +46,8 @@ describe('structureBenefitRiskFramework — an uncharacterized dimension is not 
     const r = structureBenefitRiskFramework({
       productName: 'DeviceX',
       indication: 'chronic wound care',
-      keyBenefits: [{ description: 'faster healing', endpointType: 'clinical', magnitude: 'large', uncertainty: 'low' }],
-      keyRisks: [{ description: 'mild irritation', severity: 'mild', reversibility: 'reversible', frequency: 'uncommon' }],
+      keyBenefits: [{ description: 'faster healing', endpointType: 'function', magnitude: 'high', uncertainty: 'low' }],
+      keyRisks: [{ description: 'mild irritation', severity: 'mild', reversibility: 'fully_reversible', frequency: 'uncommon' }],
     } as any);
     expect(r.integratedAssessmentNarrative).not.toMatch(/balance cannot be determined/i);
   });
@@ -53,7 +58,7 @@ describe('assessBenefitRiskBalance — empty EITHER side is indeterminate, not f
     const r = assessBenefitRiskBalance({
       productName: 'DeviceX',
       indication: 'chronic wound care',
-      benefits: [{ name: 'healing', magnitude: 'large', uncertainty: 'low' }],
+      benefits: [{ name: 'healing', magnitude: 'high', uncertainty: 'low' }],
       risks: [],
     } as any);
     expect(r.verdict).toBe('indeterminate');
@@ -66,8 +71,8 @@ describe('assessBenefitRiskBalance — empty EITHER side is indeterminate, not f
     const r = assessBenefitRiskBalance({
       productName: 'DeviceX',
       indication: 'chronic wound care',
-      benefits: [{ name: 'healing', magnitude: 'large', uncertainty: 'low' }],
-      risks: [{ name: 'irritation', severity: 'mild', reversibility: 'reversible', frequency: 'rare', mitigated: true }],
+      benefits: [{ name: 'healing', magnitude: 'high', uncertainty: 'low' }],
+      risks: [{ name: 'irritation', severity: 'mild', reversibility: 'fully_reversible', frequency: 'rare', mitigated: true }],
     } as any);
     expect(['favourable', 'favourable_with_conditions']).toContain(r.verdict);
   });
