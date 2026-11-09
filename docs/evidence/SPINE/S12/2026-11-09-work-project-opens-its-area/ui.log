@@ -1,0 +1,6 @@
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > lists them by the project's verified id and program, with their kind in words 33ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > says none, and a failed read is an error, never "none" 15ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > adds one with its kind and name, then lists it 153ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > says a refusal, and offers no add to a person who may not change the project, nor anything before the id is known 54ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > opens a work project on its work area where the project offers it, and says when its kind has none (P-83 (b)) 46ms
+      Tests  5 passed (5)
