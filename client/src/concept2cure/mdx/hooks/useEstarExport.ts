@@ -369,6 +369,19 @@ export interface ProgramRef {
   title?: string | null;
 }
 
+/**
+ * What the server names the package after (`meta.id`: the ZIP, the combined
+ * PDF/DOCX and the official eSTAR PDF): the project's own name. MDX journey M21
+ * (2026-11-09): this sent the kit `code`, which useMdxPrograms derives from
+ * class and type ("Class II · 510k", "pma"), so packages were named
+ * `pma_pma-content-package-draft.zip` and two projects' packages shared a
+ * name. The project id still travels in `meta.ident`, which the server
+ * resolves the project by.
+ */
+export function packageName(program: ProgramRef): string {
+  return program.title?.trim() || program.code?.trim() || program.id;
+}
+
 export interface UseEstarExportResult {
   /** True while either export request is in flight. */
   busy: boolean;
@@ -540,7 +553,7 @@ export function useEstarExport(isContextCurrent?: () => boolean): UseEstarExport
     (program: ProgramRef) =>
       run('/api/510k/estar/build', {
         meta: {
-          id: program.code || program.id,
+          id: packageName(program),
           ident: program.id,
           title: program.title || undefined,
         },
@@ -559,7 +572,7 @@ export function useEstarExport(isContextCurrent?: () => boolean): UseEstarExport
       }
       return run('/api/510k/estar/official', {
         meta: {
-          id: program.code || program.id,
+          id: packageName(program),
           ident: program.id,
           title: program.title || undefined,
         },
