@@ -40,6 +40,8 @@ import {
   type DesignAssessment,
 } from './biostatBridge';
 import { statusWords } from '../editor/CanvasDocumentList';
+import { AdaptiveMonitoringPanel } from './adaptiveMonitoring';
+import { BiostatKnowledgePanel } from './biostatKnowledge';
 
 /* ═══════════════════════════════════════════════════════════════════
    Biostatistics — a document-producing statistical workbench.
@@ -1260,6 +1262,22 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           </div>
         )}
       </section>
+      {/* The two capabilities that RECORD. Everything above sizes, judges and
+          writes: a figure is computed, a document is produced, nothing about
+          the running study is kept. These two keep — an interim look and the
+          Part 11-signed decision taken on it, and the method graph built from
+          this sponsor's own reports.
+
+          They are here because the registry puts them here: `biostatistics` is
+          "SAP authoring, power analysis, TLF shells, adaptive trial plans,
+          IDMC" (ui-surface-registry.ts:874), and this is the surface the rail
+          opens (registryModel.ts:176, kept there by P-107). They were mounted
+          on `biostat-workbench` on 2026-10-13, which left the one act that
+          stops a trial on unblinded data reachable only by first noticing a
+          ghost button labelled "Design calculators". */}
+      <AdaptiveMonitoringPanel />
+      <BiostatKnowledgePanel />
+
       <C2CToast msg={toast} />
     </div>
   );

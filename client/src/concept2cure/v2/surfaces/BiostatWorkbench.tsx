@@ -53,8 +53,6 @@ import { C2CToast, useToast } from '../toast';
 import type { FireToast } from '../toast';
 import { useAuthoringHandoff } from '../authoringHandoff';
 import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
-import { AdaptiveMonitoringPanel } from './adaptiveMonitoring';
-import { BiostatKnowledgePanel } from './biostatKnowledge';
 import { engineResultToHtml, engineResultTableColumns, engineResultCellText, type EngineResultTable } from '../engineResultHtml';
 
 /** A dimension of the engine's judgment (ana-biostats JudgmentDimension). */
@@ -788,13 +786,13 @@ export function BiostatWorkbench(props: SurfaceViewProps) {
         <CalculatorPanel key={active.id} calc={active} fireToast={fireToast} onNav={props.onNav} />
       </section>
 
-      {/* The two stored-state capabilities. Everything above is stateless: a
-          figure is computed and nothing is kept. These two record — an interim
-          look and the decision signed on it, and the method graph built from
-          the sponsor's own CSRs — so they sit below the engines that feed them.
-          Panels of this workbench, not rail destinations (CLAUDE.md RULE 2). */}
-      <AdaptiveMonitoringPanel />
-      <BiostatKnowledgePanel />
+      {/* Adaptive monitoring and method precedent were mounted here on
+          2026-10-13 and moved to `Biostatistics.tsx` on 2026-11-09. The
+          registry divides the two surfaces, and it assigns "adaptive trial
+          plans, IDMC" to `biostatistics` (ui-surface-registry.ts:874) and
+          "defensibility assessment + design calculators" to this one (:890).
+          The rail opens `biostatistics` (P-107), so the signed interim
+          decision was reachable only by clicking through to here. */}
 
       <C2CToast msg={toast} />
     </div>
