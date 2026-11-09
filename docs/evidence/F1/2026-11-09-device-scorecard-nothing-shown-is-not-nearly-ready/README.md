@@ -53,3 +53,16 @@ with no gap. The score is unchanged: it is the share shown.
 |---|---|---|
 | `device-readiness-scorecard.test.ts`, new block "a dimension with nothing shown is never nearly ready" (4 cases) | 3 failed (`red/scorecard-before.txt`) | 4 passed |
 | Every suite naming the scorecard, `build_device_blueprint` or `/device/blueprint` (15 files) | — | 191 passed (`green/scorecard-and-callers-after.txt`) |
+
+## Later the same day: P-114 widens the cap to a partly present required set
+
+The founder delegated the open question above ("you are to be the SME to make those choices"), and P-114 decides it.
+"Nearly ready" is never said while a required item is missing, including one only partly present: FDA's eSTAR
+technical screening holds an incomplete submission, and the evaluator calls the gap critical. So any applicable
+dimension short of ready now caps the level at `in_progress`. Every dimension in the scorecard is required, so it no
+longer says `nearly_ready`. The fourth case above, which pinned `nearly_ready` for a partly present set, now pins
+`in_progress`:
+- red: `red/p114-partial-before.txt`, "expected 'nearly_ready' to be 'in_progress'";
+- green: `green/p114-partial-after.txt`, 15 suites and 191 tests.
+
+The 2026-10-15 cases (`early` at 40, `in_progress` at 70) are unchanged.

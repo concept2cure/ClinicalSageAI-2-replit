@@ -40,6 +40,9 @@ import {
   type DesignAssessment,
 } from './biostatBridge';
 import { statusWords } from '../editor/CanvasDocumentList';
+import { AdaptiveMonitoringPanel } from './adaptiveMonitoring';
+import { BiostatKnowledgePanel } from './biostatKnowledge';
+import { DefensibilitySection, DesignCalculatorsSection, CALCULATOR_TITLES } from './BiostatWorkbench';
 
 /* ═══════════════════════════════════════════════════════════════════
    Biostatistics — a document-producing statistical workbench.
@@ -879,12 +882,18 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         engineSummary: engine.interpretation?.summary ?? null,
         ...govFacts,
         ...designFacts,
+        /* Folded in with the design calculators on 2026-11-09: the retired
+           `biostat-workbench` published these so AnA could name an engine and
+           open it. The handler came with the section; the list belongs here,
+           in the one surface's context block. */
+        availableCalculators: CALCULATOR_TITLES,
       },
       availableActions: [
         'Load one of the project\'s persisted study designs into the engine',
         'Adjust any design input or preset — the engine re-sizes the design and rewrites the document',
         'Pick a different statistical document type to generate',
         'Refine the document with AnA',
+        'Open one of the design calculators by name, or run a reviewer-risk defensibility assessment',
         'Opening in the editor and saving a working document both create a working document in the project (genesis revision + Part 11 audit row); neither files it — filing is "Place into filing" in the editor. AnA proposes them in conversation, never through screen controls.',
       ],
     };
@@ -958,11 +967,6 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           </p>
         </div>
         <div className="ph-acts">
-          {onNav && (
-            <button type="button" className="btn ghost" onClick={() => onNav('biostat-workbench')}>
-              {I.sigma} Design calculators
-            </button>
-          )}
           {/* The page's ONE primary: take the document into the one editor. */}
           <button
             type="button"
@@ -1260,6 +1264,30 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           </div>
         )}
       </section>
+      {/* The reviewer-risk assessment and the 29 deterministic engines. They
+          were a second surface, `biostat-workbench`, reached by a ghost button
+          from this header until 2026-11-09; the merge the 2026-08 consolidation
+          decided ("Survivor: biostatistics. Fold the workbench in as a tab")
+          was carried out then. See BiostatWorkbench.tsx's header. */}
+      <DefensibilitySection fireToast={fireToast} />
+      <DesignCalculatorsSection fireToast={fireToast} onNav={onNav} deviceProject={isDeviceFamily(program?.productType)} />
+
+      {/* The two capabilities that RECORD. Everything above sizes, judges and
+          writes: a figure is computed, a document is produced, nothing about
+          the running study is kept. These two keep — an interim look and the
+          Part 11-signed decision taken on it, and the method graph built from
+          this sponsor's own reports.
+
+          They are here because the registry puts them here: `biostatistics` is
+          "SAP authoring, power analysis, TLF shells, adaptive trial plans,
+          IDMC" (ui-surface-registry.ts:874), and this is the surface the rail
+          opens (registryModel.ts:176, kept there by P-107). They were mounted
+          on `biostat-workbench` on 2026-10-13, which left the one act that
+          stops a trial on unblinded data reachable only by first noticing a
+          ghost button labelled "Design calculators". */}
+      <AdaptiveMonitoringPanel />
+      <BiostatKnowledgePanel />
+
       <C2CToast msg={toast} />
     </div>
   );

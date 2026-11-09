@@ -1,0 +1,22 @@
+{
+ "api": [
+  {
+   "s": 200,
+   "body": {
+    "filingAgreement": {
+     "compared": true,
+     "documentId": "doc_f19dde8247244844a68f9745642f9185",
+     "unfiled": []
+    },
+    "deviceContentSource": "governed_program"
+   }
+  }
+ ],
+ "said": [
+  "Downloaded _Demo_MDX_NeuroPanel-Dx_510_k__content-package-draft.zip · 0 formatting errors, 1 warnings to fix before submitting",
+  "Predicate intelligence is not configured for this workspace. Live K-number candidates and the substantial-equivalence matrix appear here once it is; until then the reduced openFDA clearance lookup below is the only source.",
+  "Reduced openFDA fallback unavailable — openFDA device/510k.json unreachable: fetch failed",
+  "No substantial-equivalence rows yet\nThe SE matrix is built by predicate intelligence, which is not configured for this workspace.\nServes the 510(k) substantial-equivalence discussion",
+  "No tracked filings yet\nSelect a submission type and run a filing-readiness assessment; tracking becomes available once it has one.\nServes the eSTAR submission record (FDA 510(k) / De Novo)"
+ ]
+}

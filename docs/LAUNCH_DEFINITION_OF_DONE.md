@@ -2599,3 +2599,59 @@ S12, and it is what makes the critical path to a filing date answerable.
   spine. Matching the AI-authoring vendors feature for feature: they draft prose into documents, and this module's
   advantage is that Module 3 composes from governed records with lineage, which is the direction FDA's own
   programme is moving.
+
+### P-114 — Decided under the founder's delegation: the device and diagnostics lane's open regulatory questions
+
+The founder, 2026-11-09, answering the MDX journey session's question (whether "nearly ready" may be said while a
+required set is only partly present) and its list of questions waiting on the founder: **"you are to be the SME to make
+those choices."** The MDX journey session (`01P6GW…`) decided as follows, as P-107 was decided under the delegation of
+2026-11-08. The founder may overrule any item by a later decision. The questions are in
+`.design/client-journey/MDX_JOURNEY_2026-11-01.md` ("For the founder", M3, M6(a), M7, M13, M16).
+
+- **What is decided.**
+  1. **"Nearly ready" is never said while a required item is missing.** That covers an item not started, not
+     assessed, or only partly present. Basis:
+     - FDA's technical screening of an eSTAR holds a submission whose required content is absent. A Notified Body's
+       completeness check does the same for EU technical documentation.
+     - The platform's regulatory evaluator (`server/services/regulatory/readinessEvaluator.ts`) answers
+       `nearly_ready` only when no gap is critical, and a missing required item is critical there.
+
+     In the device readiness scorecard (`server/services/market-specs/device-readiness-scorecard.ts`), any applicable
+     dimension short of ready caps the level at `in_progress`. `ready` is 100 with no gap. The score, the share shown,
+     is unchanged. The scorecard has no non-critical gap, so it does not say `nearly_ready`.
+  2. **The design and development file holds design records, not filing paperwork** (M16). Under the QMSR (21 CFR
+     820, in force 2026-02-02, incorporating ISO 13485:2016 §7.3.10), that file holds design inputs and outputs,
+     verification, validation, reviews, transfer, changes and risk records. These are filing content, not design
+     records, and Engineering's design-file list does not tag them as such:
+     - the cover letter;
+     - the FDA forms (3514, 3881, 3654, 3674);
+     - the truthful and accurate statement;
+     - the financial certification;
+     - the 510(k) summary or statement.
+
+     A zero count of open risks with no risk file recorded is said as "no risks recorded", neither red nor green.
+     P-60 stands: the panel reads the project's own sections.
+  3. **EU technical documentation is assembled per project, not per eCTD sequence** (M3). MDR and IVDR Annex II and
+     III documentation is reviewed by a Notified Body; it is not an eCTD sequence. The EU screen's "Assemble technical
+     file" reaches the existing assembler (`pathway-engines/mdr-ivdr/assemble-technical-file-from-core.ts`) for the
+     project's own governed MDR or IVDR document. A project whose only market is the EU is not offered the FDA eSTAR.
+     Any route path the reach needs is checked against `approvedAdditions` before it is built.
+  4. **De Novo gets its doors** (M7): a pathway door, and a Submit assembly door to the De Novo eSTAR the 510(k)
+     screen already produces.
+  5. **An IVD 510(k) gets its own governed outline** (M6(a)), matched section by section to the vendored IVD eSTAR,
+     analytical performance included. It is seeded by migration, `INSERT … ON CONFLICT DO NOTHING` with a row-count
+     assertion (RULE 1), and checked against the vendored template before it serves a project. This admits the
+     outline as content data. It adds no table.
+  6. **No CDRH Portal adapter** (M13; study question 3). The CDRH Portal is a web upload, and FDA publishes no
+     sponsor-side submission API for it. An adapter would drive a website on the sponsor's behalf, which is not a
+     controlled transmission. The platform produces, retains and signs the eSTAR. A person uploads it and records
+     FDA's acknowledgement (number and date) on the filing record. Agency letters enter through Respond.
+  7. **F-10 is superseded** (study question 2). P-103 retired the submission-ops package path. A device filing's
+     official artifact is the eSTAR PDF, and nothing labels an eCTD-style ZIP as an eSTAR.
+- **Order.**
+  - Item 1 lands on 2026-11-09.
+  - Items 2–5 follow under F1 and R1, after the founder's client demo of 2026-11-09, each red first.
+  - Items 6 and 7 need no code.
+- **Not decided here.**
+  - Which design package takes the device screens (study question 1) is a plan matter.
+  - The retirement of unreached device capability (question 4) is R1's.

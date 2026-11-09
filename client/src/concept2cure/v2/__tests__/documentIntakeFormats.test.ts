@@ -48,4 +48,18 @@ describe('project/chat intake admits canonical scientific source formats', () =>
     expect(DOCUMENT_INTAKE_FORMATS.find(format => format.extension === '.webp'))
       .toMatchObject({ chat: true, vault: false, byteCheckSupported: false });
   });
+
+  // P-112 (2026-11-09): the Vault admits a .zip, stored as one file and never opened into
+  // documents (MR-08 Stage 3 step 3). The Data Room still opens one in the browser.
+  it('the Vault takes a .zip as one file; the Data Room still opens it in the browser (P-112)', () => {
+    expect(VAULT_UPLOAD_EXTENSIONS).toContain('.zip');
+    expect(VAULT_UPLOAD_ACCEPT.split(',')).toContain('.zip');
+    expect(CHAT_UPLOAD_ACCEPT.split(',')).toContain('.zip');
+    const zip = DOCUMENT_INTAKE_FORMATS.find(format => format.extension === '.zip');
+    expect(zip).toMatchObject({ chat: true, vault: true, textExtraction: 'archive', byteCheckSupported: true });
+    // One sentence true for both places it is taken, not the Data Room's alone.
+    expect(zip?.limitation).toMatch(/Data Room/);
+    expect(zip?.limitation).toMatch(/Vault/);
+    expect(zip?.limitation).not.toMatch(/^Opened in the browser.*The archive itself is not stored\.$/);
+  });
 });

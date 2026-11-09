@@ -44,6 +44,9 @@ export const UPLOAD_NAME_BINDINGS: ReadonlyMap<string, NameBinding> = new Map<st
   ['.xsl', { canonical: 'application/xslt+xml', declared: ['application/xslt+xml', 'text/xsl', 'text/xml', 'application/xml', 'text/plain'] }],
   // A browser has no type for .ndjson either; octet-stream is checked as NDJSON text.
   ['.ndjson', { canonical: 'application/x-ndjson', declared: ['application/x-ndjson', 'application/json', 'text/plain', 'application/octet-stream'] }],
+  // The Vault admits a .zip as one file (P-112). A Mac declares application/zip, Windows application/x-zip-compressed,
+  // and some browsers octet-stream; each is checked as a zip container.
+  ['.zip', { canonical: 'application/zip', declared: ['application/zip', 'application/x-zip-compressed', 'application/octet-stream'] }],
 ]);
 
 /**

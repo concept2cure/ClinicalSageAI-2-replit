@@ -2050,7 +2050,17 @@ M1–M22. Each repair below extends an existing file; none adds a screen, mount 
     `mdx` pack (NeuroPanel-Dx) on the merged trunk and opening its seven screens. Predicate intelligence "not
     configured" (503, now with a code) and "no GSPR assessment yet" (404 `IVDR_GSPR_NOT_FOUND`) had each read
     "Could not load", with a retry that could not help. Re-walked live, no such panel is left.
-- **Next.** M21 (the draft package named after its project). M3's UI half and M7 wait on the founder.
+- **P-114** (`0875ddf041`), decided under the founder's delegation of 2026-11-09:
+  - item 1 landed: a partly present required set caps the scorecard at `in_progress` (`d3cc97ded2`);
+  - M21 landed: device packages are named after the project (`062f76960f`, with live evidence on the demo's
+    NeuroPanel-Dx).
+- **Found:** the demo's `mdx` pack authors its 510(k) documents unbound to the project's filing, so the seeded export
+  refuses (422) until a section is written into the filing. The live path works (editing copy, then B1, then export:
+  200).
+- **Next**, after the demo:
+  - the `mdx` pack writes into the filing;
+  - P-114's items 2–5: the design file's records (M16), the EU technical file per project (M3), the De Novo doors
+    (M7), and the IVD 510(k) outline (M6(a)).
 
 ## 4. How everyone works
 
