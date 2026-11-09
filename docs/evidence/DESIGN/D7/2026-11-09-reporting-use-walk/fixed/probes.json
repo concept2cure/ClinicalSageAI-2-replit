@@ -1,0 +1,41 @@
+{
+  "390": {
+    "reportActions": "Export PDF Can’t be finalized: 23 critical blocker(s) present.",
+    "finalizeOffered": 0,
+    "historyRows": 27,
+    "historyOpenNames": [
+      "Open the Executive Readiness Digest run of Nov 9, 2026, 06:24 PM",
+      "Open the Executive Readiness Digest run of Nov 9, 2026, 06:24 PM"
+    ],
+    "historyRawKeys": false,
+    "scheduleRow": "Executive Readiness Digest Every week on Monday at 08:00 UTC C2C-101 — Nov 16, 2026, 08:00 AM Enabled Pause",
+    "scheduleButtons": [
+      "Pause the Executive Readiness Digest schedule"
+    ],
+    "overflow": 0,
+    "errors": [],
+    "http": []
+  },
+  "1440": {
+    "reportActions": "Export PDF Can’t be finalized: 23 critical blocker(s) present.",
+    "finalizeOffered": 0,
+    "pdf": {
+      "bytes": 49833,
+      "head": "%PDF-"
+    },
+    "historyRows": 26,
+    "historyOpenNames": [
+      "Open the Executive Readiness Digest run of Nov 9, 2026, 06:24 PM",
+      "Open the Executive Readiness Digest run of Nov 9, 2026, 06:20 PM"
+    ],
+    "historyRawKeys": false,
+    "packCreated": true,
+    "scheduleRow": "Executive Readiness Digest Every week on Monday at 08:00 UTC C2C-101 — Nov 16, 2026, 08:00 AM Enabled Pause",
+    "scheduleButtons": [
+      "Pause the Executive Readiness Digest schedule"
+    ],
+    "overflow": 0,
+    "errors": [],
+    "http": []
+  }
+}

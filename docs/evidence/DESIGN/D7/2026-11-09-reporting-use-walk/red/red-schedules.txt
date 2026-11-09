@@ -1,0 +1,5 @@
+ × client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Schedules — GET/POST/PATCH /api/insights/subscriptions > names the report and the project, never a type id or a database id
+   → expected 'readiness.executive_digestEvery week …' to match /Executive Readiness Digest/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'readiness.executive_digestEvery week …' to match /Executive Readiness Digest/
+      Tests  1 failed | 30 skipped (31)
