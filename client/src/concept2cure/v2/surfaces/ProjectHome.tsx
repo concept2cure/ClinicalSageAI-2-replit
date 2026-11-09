@@ -1703,11 +1703,20 @@ function ProjectReportsDoor({ onNav }: { onNav: (id: string) => void }) {
  *  the market's verdict and the gates under it, scrolled to and focused so a
  *  keyboard or screen-reader user lands where the blockers are read. */
 function openMarketOnSubmit(chooseStage: (stage: string) => void, submissionId: number): void {
-  chooseStage('submit');
+  openStepAt(chooseStage, 'submit', `[data-testid="pj-markets"] [data-market="${submissionId}"] .pj-mkt-verdict`);
+}
+
+/** A Filing card row opens its step at the place it names, as a market's line does: the commitments are under the
+ *  agency's letters on Respond, and the Commitments row opened the letters (sweep D3 (b), 2026-11-09). */
+function openStepAt(chooseStage: (stage: string) => void, stage: string, selector: string): void {
+  chooseStage(stage);
   requestAnimationFrame(() => {
-    const verdict = document.querySelector<HTMLElement>(`[data-testid="pj-markets"] [data-market="${submissionId}"] .pj-mkt-verdict`);
-    verdict?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
-    verdict?.focus({ preventScroll: true });
+    const target = document.querySelector<HTMLElement>(selector);
+    if (!target) return;
+    /* A section's heading is not focusable of itself (Inconsistency.tsx does the same for its rows). */
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    target.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    target.focus({ preventScroll: true });
   });
 }
 
@@ -2127,7 +2136,9 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
   }, [pid, chooseStage]);
 
   /* The filing in words for the byline ("IND", "510(k)"), not the project's code (D3.md §4.2). */
-  const filingWords = filingTypeWords(prog?.program_type) ?? filingDocumentClassOf(prog?.program_type)?.label ?? submissionType;
+  /* filingTypeWords names a class as the project list does ("Clinical study report", "DMF"); the lower-case class
+     label that followed it here was reached only when it had nothing to say either (sweep D3 (c), 2026-11-09). */
+  const filingWords = filingTypeWords(prog?.program_type) ?? submissionType;
   /* Claude's project header (D3-1, D3.md §4.2–4.3): the name in the serif with its settings beside it, one quiet
      byline, the description, then the objective of record (S1). It heads the main column when the project
      reads, and stands above the empty or error state when it does not. */
@@ -2335,7 +2346,7 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
                   {I.right}
                 </button>
                 {commitPath && (
-                  <button type="button" className="pj-k-row" aria-label={`Commitments: ${commitmentsWords(commitments)}`} onClick={() => chooseStage('respond')}>
+                  <button type="button" className="pj-k-row" aria-label={`Commitments: ${commitmentsWords(commitments)}`} onClick={() => openStepAt(chooseStage, 'respond', '#pj-commitments-h')}>
                     <span className="pj-k-row-l">Commitments</span>
                     <span className="pj-k-row-v">{commitmentsWords(commitments)}</span>
                     {I.right}
