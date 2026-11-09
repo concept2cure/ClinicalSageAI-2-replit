@@ -1,0 +1,16 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > finds the harnesses at all — the gate is not vacuous 1ms
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > and the applier itself still declares files that ALTER what it creates 0ms
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > no harness builds a table and then skips an applier file that alters it 18ms
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > lists its migrations as calls or array elements, never as bare strings 595ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts > a section's Sources list with a native source that cannot be verified (S12) > lists the other source normally, and the native one as unverifiable with its reason, its details withheld 114ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts > a section's Sources list with a native source that cannot be verified (S12) > lists both normally when the native source verifies 90ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts > a section's Sources list with a native source that cannot be verified (S12) > a denied native source is still omitted, never disclosed as unverifiable 80ms
+
+ Test Files  2 passed (2)
+      Tests  7 passed (7)
+   Start at  11:38:44
+   Duration  6.01s (transform 1.03s, setup 83ms, import 2.29s, tests 3.37s, environment 0ms)
+

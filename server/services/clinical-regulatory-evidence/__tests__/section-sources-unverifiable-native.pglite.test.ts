@@ -56,6 +56,8 @@ beforeAll(async () => {
   for (const file of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql',
     'migrations/20260726_cre_source_program_scope.sql', 'migrations/20260829_cre_source_versioning.sql',
     'migrations/20261006_document_data_dispositions.sql', 'db/migrations/20260725_authoring_document_loop_tables.sql',
+    // The applier files that alter the loop tables this harness builds (authoring-migration-list-closure contract).
+    'db/migrations/20260817_doc_revisions_immutable_ledger.sql', 'db/migrations/20260730_authoring_comments_router_columns.sql',
     'migrations/20260727_authoring_document_program_scope.sql']) await pg.exec(readFileSync(file, 'utf8'));
   await pg.exec(`ALTER TABLE cre_evidence_sources ADD COLUMN created_by integer, ADD COLUMN extracted_text text,
     ADD COLUMN char_count integer, ADD COLUMN page_count integer, ADD COLUMN study_ref integer;
