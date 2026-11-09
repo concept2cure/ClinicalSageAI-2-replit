@@ -1871,11 +1871,45 @@ route, service, table or AnA tool; one file was split and one shared component a
    read-time check governs rows written before the write-time rule existed, so both are kept; recorded rather than
    presented as a passing mutation.
 
-**What is next.** The D0 refused-read rule in `CmcModule.tsx` (13 sites, the most of any screen in
-`docs/evidence/D0/2026-11-06-refused-read-one-rule/03-adoption-list.txt`); S12, work projects and their deliverables
-mapped downstream with lineage and change flags (P-83); and J5-13 — the biotech demo is a monoclonal antibody, so
-Module 3 build is correctly refused there and the demo cannot show it, which a small-molecule demo project would.
-**Open for the founder:** the free-text spec → method → result chain (found item 2 above), written up with options in
+**Continued 2026-11-09 — the demo seeded and walked, and four defects the running product showed.**
+
+The three demo slices and the D0 adoption were tested against the real engines and not against a running product.
+They then were: `npm run dev` on this container, the real database, the real seed as the signed-in account, and the
+screens opened at 1440 and 390.
+
+| Slice | Commit / evidence | Verification and limit |
+|---|---|---|
+| S7 — the D0 refused-read rule in CMC | `b672bc5b6`; `docs/evidence/D0/2026-11-09-cmc-refused-read/` | Six panels, the export-readiness chip and the Overview meta line (which said "could not be read" above a panel saying "not enabled for your organization"), plus `CmcRegisterLinks.tsx`. Two panels deliberately unchanged: `meta.sectionsUnreadable` / `portfolioUnreadable` arrive on a **200** board, so there is no refused read to classify. 47 cases; 25 red before. **Found, not fixed:** these panels carry no retry CONTROL — a real retry needs a refetch on `DataState`, which is D0's shared primitive. |
+| DATA — the demo records what the sections read | `2480efeb7`, `179dcac46`, `5e5ad0a01`, `67e590b44`; `docs/evidence/S7/2026-11-09-demo-cmc-*` | The analytical procedures its specifications name (without which every demo specification became unapprovable the moment the morning's gate landed), the drug substance and drug product, the release results that ARE §3.2.S.4.4 / §3.2.P.5.4, and C2C-201 — a fictional small molecule, the one demo programme whose Module 3 this product composes. |
+| S7 / F1 — what the live run found | `aa4ba6461`, `67e590b44`, `1f0cca737`; `docs/evidence/S7/2026-11-09-demo-cmc-live-run/`, `…-specification-per-attribute/`, `…-cmc-walk-c2c201/` | Four defects, two mine and two shipped; the two shipped ones are fixed. See below. |
+| J5-13 — closed | `1f0cca737`; `docs/evidence/S7/2026-11-09-cmc-walk-c2c201/` | "21 section(s) composed, 13 with recorded data", then the screens: the build board refusing the export gate in its own words and saying "Not swept yet — no count is claimed"; the Specifications table listing six attributes each with its own procedure; and the morning's approval gate refusing a real §11.50 signature with `409 METHOD_NOT_FIT`, named on screen in the server's words. No console errors, no horizontal scroll at either width. |
+
+**Found by running it, 2026-11-09.**
+7. **A write reported as made, and not made.** The seeder sent `shelfLifeClaim`, the name the COMPOSER reads; the
+   register's column is `shelf_life`. The route parses its body with a Zod schema that strips unknown keys, so it
+   answered 200 having changed nothing, three times. The step now reads its write back and fails if the value is not
+   there. **For the register's owner:** every register body is parsed `.partial().parse()`, so no caller can tell an
+   applied edit from an ignored one.
+8. **§3.2.S.4 filed the drug PRODUCT's limit as the drug substance's** (fixed, `aa4ba6461`'s parent). It read the
+   first specification source carrying a criteria object, whatever material it was for. My own phase 4 acceptance
+   fixture was passing this by source order, so the case asserts both orders.
+9. **The register records one row per ATTRIBUTE; both sections read one criteria object** (fixed, `aa4ba6461`).
+   Six recorded attributes, one filed, labelled `release`/`shelf`. Each row now carries its own procedure and that
+   procedure's recorded status, or says `not in the method register`.
+10. **Completeness is not material-scoped** (NOT fixed). One generic collector over every matched source, so
+    §3.2.S.4 reads `acceptanceCriteria` as available when only a drug-product specification exists. Closing it needs
+    a side-scoped mapper field (which would report every specification already on file as missing it) or a per-type
+    scope on `SectionRule`. Recorded in the test rather than asserted away.
+
+**What is next.** S12 — work projects and their deliverables mapped downstream with lineage and change flags
+(P-83) — is this lane's remaining named package. The D0 adoption and J5-13 are done (above).
+
+**Open for the founder**, three, all written up with options in the evidence: the free-text spec → method → result
+chain (found item 2); that **no form can record a method as suitable**, so the `METHOD_SUITABLE` branch
+`q2Expectation` relies on is unreachable and only a validated method lets a limit be approved
+(`docs/evidence/S7/2026-11-09-demo-cmc-methods/`); and that **a terse manufacturing route reads as a small
+molecule**, so an under-described biologic is admitted into small-molecule composition
+(`docs/evidence/S7/2026-11-09-demo-cmc-materials/`). Also: the free-text spec → method → result chain (found item 2 above), written up with options in
 `docs/evidence/F1/2026-11-08-specification-method-gate/`; the recommendation is to reference the register row by id,
 which is additive and needs no backfill to be correct.
 
