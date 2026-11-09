@@ -62,9 +62,13 @@ import { DEVICE_CLASSES, type DeviceClass } from '../../../shared/regulatory/dev
 import { refuseUnlessStated, type RequiredInputCheck } from '../ana-biostats/computation-engine.js';
 import {
   booleanInputStates,
+  conclusions,
+  decidingFacts,
+  everyAnswer,
   statedBoolean,
   statedNumber,
   statedOneOf,
+  uniqueStrings,
 } from '../immunogenicity/immunogenicity-reference.js';
 import { computeDiagnosticAccuracy, type Interval } from '../stats/clinical-performance.js';
 import {
@@ -279,16 +283,6 @@ function roundInterval(ci: Interval): Interval {
   return { lower: round(ci.lower, 4), upper: round(ci.upper, 4) };
 }
 
-function uniqueStrings(items: string[]): string[] {
-  const out: string[] = [];
-  for (const item of items) {
-    if (!out.includes(item)) {
-      out.push(item);
-    }
-  }
-  return out;
-}
-
 // ── Stated inputs (Rule 2 S5b, 2026-11-08) ──────────────────────────────────
 
 /** A true/false fact as stated, or not_stated when it was left out. */
@@ -317,39 +311,6 @@ function oneOfInput(field: string, value: unknown, allowed: readonly string[]): 
     ok: typeof value === 'string' && allowed.includes(value),
     expected: `one of ${allowed.join(', ')}`,
   };
-}
-
-/** Every answer the unstated facts could take: each stated fact kept, each undefined one both true and false. */
-function everyAnswer<K extends string>(stated: Record<K, boolean | undefined>): Array<Record<K, boolean>> {
-  let answers: Array<Record<K, boolean>> = [{} as Record<K, boolean>];
-  for (const key of Object.keys(stated) as K[]) {
-    const fact = stated[key];
-    const values = fact === undefined ? [true, false] : [fact];
-    answers = answers.flatMap((a: Record<K, boolean>) => values.map((v: boolean) => ({ ...a, [key]: v })));
-  }
-  return answers;
-}
-
-/** The distinct conclusions those answers give, in first-seen order: one means the stated facts decide it. */
-function conclusions<K extends string, T extends string>(
-  stated: Record<K, boolean | undefined>,
-  conclude: (answer: Record<K, boolean>) => T,
-): T[] {
-  return uniqueStrings(everyAnswer(stated).map(conclude)) as T[];
-}
-
-/** The unstated facts whose answer can change the conclusion. */
-function decidingFacts<K extends string, T>(
-  stated: Record<K, boolean | undefined>,
-  conclude: (answer: Record<K, boolean>) => T,
-): K[] {
-  return (Object.keys(stated) as K[]).filter(
-    (key: K): boolean =>
-      stated[key] === undefined &&
-      everyAnswer({ ...stated, [key]: false }).some(
-        (a: Record<K, boolean>): boolean => conclude({ ...a, [key]: true }) !== conclude(a),
-      ),
-  );
 }
 
 /** "a", "a and b", "a, b and c". */
