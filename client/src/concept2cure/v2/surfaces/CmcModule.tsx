@@ -581,6 +581,7 @@ function CmPush({ label, nav, bar }: { label: string; nav?: (id: string) => void
    those two surfaces, so the import would be a cycle — and cmcShared is where
    the CMC surfaces' shared plumbing already lives. */
 import { CmHead, Kpi, cmcStateWord } from './cmcShared';
+import { WorkProjectTasks } from './ProjectWorkTasks';
 
 /**
  * The Overview's one grey line — what the retired answer banner's HEADLINE
@@ -3357,6 +3358,8 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
             <p className="ph-sub">Module 3 for this filing, and the quality records kept while the study runs.</p>
           </div>
         </header>
+        {/* P-111: opened from a CMC work project's door, its tasks above the whole project's records (placed with the CMC session). */}
+        <WorkProjectTasks area="cmc" />
         <CmStarters tab={tab} label={tabLabel} ask={ask} />
         <CmHalves tab={tab} onTab={setTab} />
         <CmcRegisterLinks onRecovered={() => setTab('build')} />
