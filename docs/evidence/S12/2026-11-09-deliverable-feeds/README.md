@@ -77,9 +77,38 @@ real query reads `o.source_hash` through the lineage join as `liveHash`, so the 
 sets `liveHash` on the lineage row. It also used `batch_record`, which is not a `CMC_SOURCE_TYPES` member — the
 canonical type is `batch`. Both were the fixture's errors, not the code's.
 
+## `ci:sql-interpolation` refused the first shape, and the fix was tighter than the baseline
+
+Lifting the lineage query to a `const` and writing `q.query(`${LINEAGE_SQL} ${sectionFilter}`, …)` put **two**
+values into SQL text where the baseline allows one:
+
+```
+• server/services/cmc/section-drift.ts: 2 value(s) interpolated into SQL text, baseline allows 1
+```
+
+The gate is right that a `const` of SQL text is indistinguishable, to it, from a caller's string. So the read is a
+function instead — `lineageSql(sectionFilter: SectionFilter)`, where
+
+```ts
+type SectionFilter = '' | 'AND s.section_key = $3';
+```
+
+is the "fixed allowlist in code" the gate's own message asks for, now enforced by the compiler rather than by a
+reader: before this change `sectionFilter` was an unconstrained `string`. The file went to **0** interpolations at
+a `q.query` site, and the gate then refused the push a second time for the opposite reason:
+
+```
+• server/services/cmc/section-drift.ts: now 0 (baseline 1) — good news; lower the baseline to lock it in
+```
+
+So `scripts/ci/sql-interpolation-baseline.json` drops this file 1 → 0, in its own `Plan: F1` commit because that
+file is outside S12's paths and only F1 may touch it. The gain is locked in: a value interpolated at a `q.query`
+call in this file is now refused outright.
+
 ## Gates
 
-`tsc --noEmit` 0 errors. ESLint: no file gained a warning. The three existing suites that consume this module —
+`tsc --noEmit` 0 errors. ESLint: no file gained a warning (5,760 warnings, baseline 6,090).
+`ci:sql-interpolation` OK at 0 for this file, see above. The three existing suites that consume this module —
 `services/cmc/__tests__/section-signature-binding.pglite.test.ts`,
 `api/cmc/__tests__/module3SectionApproveFourEyes.test.ts` (22 cases together) — pass unchanged, which is the point
 of leaving `describeDrift` alone.

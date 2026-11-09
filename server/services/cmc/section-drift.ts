@@ -53,6 +53,9 @@ interface DriftReason {
   text: string;
 }
 
+/** The only two section filters the lineage read accepts. */
+type SectionFilter = '' | 'AND s.section_key = $3';
+
 /** At most this many reasons are named per section; the rest are counted. */
 const NAMED_REASONS = 5;
 
@@ -115,8 +118,15 @@ function noteNewerSources(bySection: SectionLineage, sources: any[]): void {
 }
 
 /* The two reads both views make. One copy, so the section view and the
-   deliverable view below can never answer from different data. */
-const LINEAGE_SQL = `SELECT s.section_key AS "sectionKey",
+   deliverable view below can never answer from different data.
+
+   The lineage read takes its section filter as an argument rather than being
+   concatenated at each call site, so the file keeps exactly ONE value
+   interpolated into SQL text — `sectionFilter`, which is one of the two fixed
+   literals below, chosen by a boolean, and never a caller's string
+   (ci:sql-interpolation's baseline allows that one). */
+function lineageSql(sectionFilter: SectionFilter): string {
+  return `SELECT s.section_key AS "sectionKey",
               l.source_object_id AS "sourceObjectId", l.source_hash_at_compile AS "hashAtCompile",
               l.created_at AS "compiledAt",
               o.id AS "liveId", o.source_hash AS "liveHash", o.source_type AS "sourceType", o.source_key AS "sourceKey"
@@ -125,7 +135,8 @@ const LINEAGE_SQL = `SELECT s.section_key AS "sectionKey",
            ON l.section_id = s.id AND l.organization_id = s.organization_id
          LEFT JOIN cmc_source_objects o
            ON o.id = l.source_object_id AND o.organization_id = s.organization_id
-        WHERE s.organization_id = $1 AND s.project_id = $2`;
+        WHERE s.organization_id = $1 AND s.project_id = $2 ${sectionFilter}`;
+}
 
 const SOURCES_SQL = `SELECT id, source_type AS "sourceType", source_key AS "sourceKey",
               source_payload AS "sourcePayload", GREATEST(created_at, updated_at) AS "touchedAt"
@@ -138,13 +149,13 @@ export async function findSectionDrift(
   projectId: string,
   opts: { sectionKey?: string } = {}
 ): Promise<SectionDrift[]> {
-  const sectionFilter = opts.sectionKey ? 'AND s.section_key = $3' : '';
+  const sectionFilter: SectionFilter = opts.sectionKey ? 'AND s.section_key = $3' : '';
   const params: unknown[] = opts.sectionKey
     ? [orgId, projectId, opts.sectionKey]
     : [orgId, projectId];
 
   const [lineageRes, sourcesRes] = await Promise.all([
-    q.query(`${LINEAGE_SQL} ${sectionFilter}`, params),
+    q.query(lineageSql(sectionFilter), params),
     q.query(SOURCES_SQL, [orgId, projectId]),
   ]);
 
@@ -234,7 +245,7 @@ export async function projectDeliverableFeeds(
   let sourceRows: any[];
   try {
     const [lineageRes, sourcesRes] = await Promise.all([
-      q.query(LINEAGE_SQL, [orgId, projectId]),
+      q.query(lineageSql(''), [orgId, projectId]),
       q.query(SOURCES_SQL, [orgId, projectId]),
     ]);
     lineageRows = lineageRes.rows;

@@ -88,6 +88,26 @@ describe('rule 0: at depth 1, anything but a read is refused before it is propos
     expect(proposals.built, 'a child produced a confirmation proposal').toEqual([]);
   });
 
+  /*
+   * The acts a child must never reach, by name (spike check 1, §14.4). The general rule already refuses anything but a
+   * read; these name the transmit, the signature, the filing into a sequence and the overwrite of a document version,
+   * so a later exemption for one of them shows up here. No AnA tool locks a record: a lock follows an approval, which
+   * is the person's (approve_qms_document above). Each is refused with rule 0's own answer, not its handler's, and
+   * nothing is proposed, even with a confirmation in the context.
+   */
+  it.each([
+    ['transmit_submission', 'transmit', { submission_id: 1, region: 'us', gateway: 'fda_esg', environment: 'production' }],
+    ['finalize_protocol_document', 'sign', { document_id: 1 }],
+    ['place_into_sequence', 'file', { sequence_id: 1, document_id: 1 }],
+    ['update_vault_document', 'overwrite a version', { document_id: 1, content: 'x' }],
+    ['commit_document_revision', 'move to review', { title: 'x', content: 'y' }],
+    ['check_submission_status', 'write the transmittal status', { transmittal_id: 1 }],
+  ])('%s (%s) → SUB_AGENT_READ_ONLY before its handler, and no proposal is built', async (tool, _act, input) => {
+    expect(await run(tool, input, { ...CTX, agentDepth: 1, humanConfirmed: true })).toEqual(READ_ONLY(tool));
+    expect(proposals.built, 'a child produced a confirmation proposal').toEqual([]);
+    expect(resolveSignerOrgRole, 'the role check ran for a refused child call').not.toHaveBeenCalled();
+  });
+
   it.each(['zz_rule0_self', 'zz_rule0_confirm', 'zz_rule0_command'] as const)(
     '%s: the handler never runs, not even with a confirmation in the context',
     async tool => {
