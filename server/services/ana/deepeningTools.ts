@@ -5,7 +5,6 @@
  *   list_cmc_registers                -> the CMC registers' identity rows (discovery)
  *   estimate_recorded_shelf_life      -> cmc/recorded-stability.estimateRecordedShelfLife
  *   get_submission_readiness_twin     -> innovation/submission-readiness-twin-service.getDashboard
- *   assess_benefit_risk               -> regulatory/benefit-risk.assessBenefitRisk
  *
  * @module server/services/ana/deepeningTools
  */
@@ -105,36 +104,6 @@ export const GET_SUBMISSION_READINESS_TWIN: AnaTool = {
     required: ['program_id'],
   },
 };
-
-// Benefit/risk item shape, inlined into both arrays (the AnA schema type does
-// not support $ref/$defs).
-const BR_ITEM_SCHEMA = {
-  type: 'object',
-  properties: {
-    name: { type: 'string' },
-    weight: { type: 'number', description: 'Importance weight (non-negative; normalized within its category).' },
-    score: { type: 'number', description: 'Magnitude on a 0–100 favorability/severity scale.' },
-    evidenceQuality: { type: 'string', enum: ['high', 'moderate', 'low', 'very_low'], description: 'Context only; not used in the math.' },
-    note: { type: 'string' },
-  },
-  required: ['name', 'weight', 'score'],
-} as const;
-
-export const ASSESS_BENEFIT_RISK: AnaTool = {
-  name: 'assess_benefit_risk',
-  description:
-    'Compute a transparent structured benefit-risk assessment (BRAT / FDA structured-benefit-risk style). You supply benefits and risks, each with an importance weight and a 0–100 magnitude score; the engine normalizes weights within each category, computes the weighted benefit, weighted risk, the net, and a favorability call (favorable/unfavorable/borderline), with EVERY item\'s contribution itemized. DETERMINISTIC. This is a structured DECISION AID, not a regulatory determination — report the disclaimer and the per-item contributions, and never present it as an approval decision. ' + NOTE,
-  input_schema: {
-    type: 'object',
-    properties: {
-      benefits: { type: 'array', description: 'Benefits (≥1).', items: BR_ITEM_SCHEMA },
-      risks: { type: 'array', description: 'Risks (≥1).', items: BR_ITEM_SCHEMA },
-      favorabilityThreshold: { type: 'number', description: 'Net-score band for the call (default 10): net ≥ +threshold favorable, ≤ −threshold unfavorable, else borderline.' },
-    },
-    required: ['benefits', 'risks'],
-  },
-};
-
 
 /* ── Recorded-data tools ────────────────────────────────────────────────────
    The coverage evaluation found ONE of ~9 CMC engines connected to recorded
@@ -252,7 +221,6 @@ export const DEEPENING_TOOLS: AnaTool[] = [
   ESTIMATE_RECORDED_SHELF_LIFE,
   COMPARE_RECORDED_DISSOLUTION,
   GET_SUBMISSION_READINESS_TWIN,
-  ASSESS_BENEFIT_RISK,
   ASSESS_RECORDED_TRENDING,
   ASSESS_RECORDED_CAPABILITY,
 ];

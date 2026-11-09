@@ -18303,24 +18303,6 @@ registerToolHandler('get_submission_readiness_twin', async (input, ctx) => {
   }
 });
 
-// Structured benefit-risk assessment (BRAT-style) — deterministic decision aid.
-registerToolHandler('assess_benefit_risk', async (input: Record<string, unknown>) => {
-  try {
-    const { assessBenefitRisk } = await import('../regulatory/benefit-risk.js');
-    const result = assessBenefitRisk(input as any);
-    return JSON.stringify(statedInputEnvelope({
-      status: 'computed',
-      engine: 'deterministic',
-      result,
-      instruction: 'Report the weighted benefit/risk, net, and favorability with the per-item contributions and the disclaimer. This is a decision aid, NOT a regulatory determination.',
-    }));
-  } catch (err: any) {
-    const m = err?.message || 'unknown error';
-    if (/must be|non-empty|needs a name|cannot all be zero|\[0,100\]|threshold/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
-    return JSON.stringify({ error: `assess_benefit_risk failed: ${m}` });
-  }
-});
-
 // ICH Q1E shelf-life / retest-period estimation by regression — deterministic.
 registerToolHandler('estimate_shelf_life', async (input: Record<string, unknown>) => {
   try {
