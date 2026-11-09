@@ -39,7 +39,8 @@ const pick = (p: SelectDevicePathwayParams) => selectDevicePathway(p);
 const row = (r: ReturnType<typeof gspr>, ref: string) => r.conformityMatrix.find((x) => x.gsprRef === ref);
 
 describe('assessSubstantialEquivalence', () => {
-  const SAME_USE = { predicateIdentified: true, sameIntendedUse: true };
+  // 2026-11-08: SE also needs the predicate's recall status stated (medical-device-unstated-inputs.test.ts).
+  const SAME_USE = { predicateIdentified: true, sameIntendedUse: true, predicateRecalledForSafety: false };
 
   it('does not find SE when nobody said the performance data show equivalence', () => {
     const r = se({ ...SAME_USE, sameTechnologicalCharacteristics: true });
@@ -72,7 +73,8 @@ describe('assessSubstantialEquivalence', () => {
 });
 
 describe('assessEssentialPrinciples', () => {
-  const FILES = { qmsInPlace: true, riskManagementFile: true };
+  // 2026-11-08: the matrix is refused until isIVD is stated (medical-device-unstated-inputs.test.ts).
+  const FILES = { isIVD: false, qmsInPlace: true, riskManagementFile: true };
 
   it('is not "conforming" on a QMS and a risk-management file alone', () => {
     const r = gspr(FILES);
