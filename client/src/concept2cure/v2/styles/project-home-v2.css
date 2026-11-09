@@ -515,6 +515,8 @@
 .c2c-v2 .pj-work-projects-l{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;}
 .c2c-v2 .pj-work-projects-l li{display:flex;flex-direction:column;gap:0;min-width:0;}
 .c2c-v2 .pj-work-project-n{font-size:var(--fs-small);color:var(--text-100);overflow-wrap:anywhere;}
+/* A work project that opens on its work area is a row like the areas above it, its name over its kind and owner. */
+.c2c-v2 .pj-work-project-door .pj-work-area-l{display:flex;flex-direction:column;gap:0;}
 .c2c-v2 :is(.pj-work-area-l, .pj-k-row-l){flex:1;min-width:0;overflow-wrap:anywhere;}
 /* The label keeps its words whole and the value wraps beside it: "Commitments" broke as "Commitme / nts" beside
    "4 open · next due Mar 1, 2027" (walked 2026-11-08, D3-4). */

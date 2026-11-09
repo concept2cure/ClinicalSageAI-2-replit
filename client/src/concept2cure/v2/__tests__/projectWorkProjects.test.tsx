@@ -88,4 +88,21 @@ describe('the project\'s work projects (S12)', () => {
     expect(container.textContent).toBe('');
     expect(apiRequest).not.toHaveBeenCalled();
   });
+
+  it('opens a work project on its work area where the project offers it, and says when its kind has none (P-83 (b))', async () => {
+    rows = [child(101, 'Drug substance CMC', 'cmc'), child(102, 'Study 201 biostatistics', 'biostatistics'),
+      child(103, 'Site monitoring', 'rbm'), child(104, 'Tox package', 'nonclinical')];
+    const onOpen = vi.fn();
+    render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange openable={(id) => id !== 'rbm'} onOpen={onOpen} />);
+    const cmc = await screen.findByRole('button', { name: /Drug substance CMC/ });
+    expect(cmc.getAttribute('title')).toBe('Open CMC / Module 3 on this project');
+    fireEvent.click(cmc);
+    fireEvent.click(screen.getByRole('button', { name: /Study 201 biostatistics/ }));
+    expect(onOpen.mock.calls).toEqual([['cmc'], ['biostatistics']]);
+    // An area this project does not offer is no door; a kind with no work area says so, and is no door either.
+    expect(screen.queryByRole('button', { name: /Site monitoring/ })).toBeNull();
+    expect(screen.getByText('Site monitoring')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Tox package/ })).toBeNull();
+    expect(screen.getByText(/Nonclinical · JM Smith · No work area for this kind yet/)).toBeTruthy();
+  });
 });

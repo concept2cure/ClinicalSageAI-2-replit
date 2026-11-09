@@ -66,6 +66,10 @@ export const WORK_KIND_LABEL: Record<string, string> = {
   clin_pharm: 'Clinical pharmacology', nonclinical: 'Nonclinical',
 };
 
+/** The work area a work project opens on, for the kinds that have one (P-83 (b); S12 inventory gap 2). The other kinds
+ *  (data management, clinical pharmacology, nonclinical) have no work area in the product, and their rows say so. */
+export const WORK_KIND_AREA: Record<string, string> = { cmc: 'cmc', biostatistics: 'biostatistics', rbm: 'rbm' };
+
 export interface WorkProjectRow { id: number; name: string; workKind: string | null; ownerName: string | null }
 interface WorkProjectsRead { children: WorkProjectRow[] }
 /* The read's `{ success, data }` envelope is unwrapped by useLiveData before this guard. */
@@ -74,10 +78,40 @@ const isWorkProjectsRead: ShapeGuard<WorkProjectsRead> = (value): value is WorkP
   return Array.isArray(children) && children.every((c) => c && typeof (c as WorkProjectRow).id === 'number' && typeof (c as WorkProjectRow).name === 'string');
 };
 
+/** One work project: a door to its work area on this project when the project offers that area, else its name, kind
+ *  and owner, and, for a kind with no work area, that it has none. */
+function WorkProjectItem({ row, openable, onOpen }: {
+  row: WorkProjectRow; openable: (areaId: string) => boolean; onOpen?: (areaId: string) => void;
+}) {
+  const kind = row.workKind ? WORK_KIND_LABEL[row.workKind] ?? row.workKind : null;
+  const area = row.workKind ? WORK_KIND_AREA[row.workKind] ?? null : null;
+  const facts = [kind, row.ownerName].filter(Boolean).join(' · ');
+  if (area && onOpen && openable(area)) {
+    return (
+      <li>
+        <button type="button" className="pj-work-area pj-work-project-door" title={`Open ${getSurfaceMeta(area).label} on this project`}
+          onClick={() => onOpen(area)}>
+          <span className="pj-work-area-l"><span className="pj-work-project-n">{row.name}</span>
+            <span className="pj-card-note">{facts}</span></span>
+          {I.right}
+        </button>
+      </li>
+    );
+  }
+  return (
+    <li><span className="pj-work-project-n">{row.name}</span>
+      <span className="pj-card-note">{[facts, area ? null : 'No work area for this kind yet'].filter(Boolean).join(' · ')}</span></li>
+  );
+}
+
 /** The project's work projects and, for a person who may change the project, "Add a work project". Nothing is drawn
  *  until the project's verified integer id is known (the team read's), so no project is guessed. */
-export function ProjectWorkProjects({ programId, anchorProjectId, canChange }: {
+export function ProjectWorkProjects({ programId, anchorProjectId, canChange, openable = () => false, onOpen }: {
   programId: string; anchorProjectId: number | null; canChange: boolean;
+  /** True when this project offers that work area (its track's areas, and the person's access): the row is a door. */
+  openable?: (areaId: string) => boolean;
+  /** Opens a work area on this project, as the area rows above do. */
+  onOpen?: (areaId: string) => void;
 }) {
   const [version, setVersion] = React.useState(0);
   const [adding, setAdding] = React.useState(false);
@@ -114,10 +148,7 @@ export function ProjectWorkProjects({ programId, anchorProjectId, canChange }: {
           : rows.length === 0 ? <p className="pj-card-note">None yet. A work project (CMC, a study's biostatistics, its monitoring) holds the work this filing is written from.</p>
             : (
               <ul className="pj-work-projects-l">
-                {rows.map((row) => (
-                  <li key={row.id}><span className="pj-work-project-n">{row.name}</span>
-                    <span className="pj-card-note">{[row.workKind ? WORK_KIND_LABEL[row.workKind] ?? row.workKind : null, row.ownerName].filter(Boolean).join(' · ')}</span></li>
-                ))}
+                {rows.map((row) => <WorkProjectItem key={row.id} row={row} openable={openable} onOpen={onOpen} />)}
               </ul>
             )}
       {adding && (
