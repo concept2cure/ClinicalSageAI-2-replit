@@ -21,11 +21,14 @@ import type { AnaTool } from '../ai-gateway/types';
 import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
 import { CLASSIFY_DEVICE as CANONICAL_CLASSIFY_DEVICE } from './submission-center-tool-defs.js';
 
+// 2026-11-08: shortened so each description fits the gateway's 1,024 characters; it named a "generic drug
+// submission", which these device tools never make.
 const DETERMINISTIC_NOTE =
-  'Deterministic — identical input always yields identical output. No LLM, no network. ' +
-  'Report the returned numbers and regulatory citations verbatim. Do NOT recompute, ' +
-  'round differently, or substitute your own regulatory interpretation — a fabricated ' +
-  'or misattributed regulatory citation in a generic drug submission is a critical defect.';
+  'Deterministic: report the results and regulatory citations verbatim; do not recompute or reinterpret them. ' +
+  'A malformed value is refused by field: relay the validation error.';
+
+/** What an omitted true/false input means in every engine below. */
+const NOT_STATED = 'Omitted or null stays not_stated (inputStates)';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. classify_medical_device — classify_device under a second name
@@ -51,47 +54,49 @@ export const SELECT_DEVICE_PATHWAY: AnaTool = {
   description:
     'Select the US premarket pathway (510(k) premarket notification, De Novo classification, PMA, ' +
     'Humanitarian Device Exemption (HDE), 510(k)-exempt, IDE-then-PMA, or BLA) and the EU conformity ' +
-    'assessment route (self-certification vs notified-body involvement), with rationale, alternatives, ' +
-    'and an approximate FDA review clock. Implements the decision logic of 21 CFR 807.81 (when a 510(k) is ' +
-    'required), FD&C Act §513(f)(2) and 21 CFR 860 Subpart D (De Novo), 21 CFR 814 (PMA/HDE), and MDR/IVDR ' +
-    'conformity routing by class. Handles HUD/HDE eligibility (not more than 8,000 US patients/year, with an OOPD ' +
-    'HUD designation), predicate availability, 510(k) exemption by product code, novel low/moderate-risk ' +
-    'devices, biologics, and EU Class I sterile/measuring/reusable-instrument special routes. When the inputs ' +
-    'cannot decide the US pathway it returns "undetermined" with a NEEDS-INPUT finding naming what is missing. ' +
-    'Use when the user needs to choose a regulatory filing pathway for a device or IVD. ' + DETERMINISTIC_NOTE,
+    'assessment route (self-certification vs notified-body involvement), with rationale, alternatives and an ' +
+    'approximate FDA review clock, per 21 CFR 807.81, FD&C Act §513(f)(2) and 21 CFR 860 Subpart D (De Novo), ' +
+    '21 CFR 814 (PMA/HDE) and MDR/IVDR routing by class. Reads the predicate, product-code exemption, novelty, ' +
+    'biologics, HUD/HDE eligibility (not more than 8,000 US patients/year, with an OOPD HUD designation) and the ' +
+    'MDR Class I sterile/measuring/reusable routes. A pathway an unstated one of these facts could change is ' +
+    '"undetermined", with NEEDS-INPUT findings. Use when the user needs to choose a regulatory filing pathway ' +
+    'for a device or IVD. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
       usClass: {
         type: 'string',
         enum: ['I', 'II', 'III', 'unclassified'],
-        description: 'US device class (from classify_device or a known product code).',
+        description: 'US device class (from classify_device or a known product code). Required.',
       },
       predicateExists: {
         type: 'boolean',
-        description: 'Whether a legally marketed predicate device of the same type exists (enables 510(k)).',
+        description: 'Whether a legally marketed predicate device of the same type exists (enables 510(k)). Required, true or false.',
       },
       novelLowModerateRisk: {
         type: 'boolean',
-        description: 'Whether the device is a novel low-to-moderate-risk type with no predicate (De Novo candidate).',
+        description: 'Whether the device is a novel low-to-moderate-risk type with no predicate (De Novo candidate). ' + NOT_STATED + '; with no predicate, a pathway it could change is undetermined.',
       },
       humanitarianUseDevice: {
         type: 'boolean',
-        description: 'Whether the device targets a rare condition and may qualify as a Humanitarian Use Device (HDE).',
+        description: 'Whether the device targets a rare condition and may qualify as a Humanitarian Use Device (HDE). ' + NOT_STATED + '; for class III, a pathway it could change is undetermined.',
       },
       estimatedAnnualUSPopulation: {
         type: 'number',
-        description: 'Estimated US patient population per year. Not more than 8,000 supports HUD/HDE eligibility; without it HDE is undetermined.',
+        description: 'Estimated US patient population per year (0 or more). Not more than 8,000 supports HUD/HDE eligibility; without it HDE is undetermined.',
       },
       exempt: {
         type: 'boolean',
-        description: 'Whether the product code\'s classification regulation exempts it from 510(k) with no .9 limitation applying. Without it a class I device is undetermined.',
+        description: 'Whether the product code\'s classification regulation exempts it from 510(k) with no .9 limitation applying. ' + NOT_STATED + ', and a pathway it could change is undetermined.',
       },
       isBiologic: {
         type: 'boolean',
-        description: 'Whether the product incorporates a biologic regulated under a BLA (PHS Act §351).',
+        description: 'Whether the product incorporates a biologic regulated under a BLA (PHS Act §351). ' + NOT_STATED + ', and a pathway it could change is undetermined.',
       },
-      isIVD: { type: 'boolean', description: 'Whether the device is an IVD (selects IVDR conformity routing).' },
+      isIVD: {
+        type: 'boolean',
+        description: 'Whether the device is an IVD (selects IVDR conformity routing). ' + NOT_STATED + ': one stated EU class names its regulation; with both stated the route is undetermined.',
+      },
       euMdrClass: {
         type: 'string',
         enum: ['I', 'Is', 'Im', 'Ir', 'IIa', 'IIb', 'III'],
@@ -104,15 +109,15 @@ export const SELECT_DEVICE_PATHWAY: AnaTool = {
       },
       sterile: {
         type: 'boolean',
-        description: 'Whether the device is supplied sterile (affects the EU Class I/A conformity route). Unstated, an IVDR Class A route is undetermined.',
+        description: 'Whether the device is supplied sterile (affects the MDR Class I and IVDR Class A routes). ' + NOT_STATED + ': an IVDR Class A route is undetermined, and so is an MDR Class I route with no aspect stated true.',
       },
       measuringFunction: {
         type: 'boolean',
-        description: 'Whether the device has a measuring function (affects the EU Class I conformity route).',
+        description: 'Whether the device has a measuring function (affects the MDR Class I route; not read for IVDR). ' + NOT_STATED + ': an MDR Class I route with no aspect stated true is undetermined.',
       },
       reusableSurgicalInstrument: {
         type: 'boolean',
-        description: 'Whether the device is a reusable surgical instrument (affects the EU Class I conformity route).',
+        description: 'Whether the device is a reusable surgical instrument (affects the MDR Class I route). ' + NOT_STATED + ': an MDR Class I route with no aspect stated true is undetermined.',
       },
     },
     required: ['usClass', 'predicateExists'],
@@ -126,43 +131,40 @@ export const SELECT_DEVICE_PATHWAY: AnaTool = {
 export const ASSESS_SUBSTANTIAL_EQUIVALENCE: AnaTool = {
   name: 'assess_substantial_equivalence',
   description:
-    'Perform a 510(k) substantial-equivalence (SE) analysis following the FDA 510(k) Program decision ' +
-    'flowchart (2014 guidance) and 21 CFR 807.100(b): validate the predicate, confirm the same intended use, ' +
-    'compare technological characteristics, decide whether different characteristics raise different questions ' +
-    'of safety/effectiveness, and identify the performance data needed to show the device is as safe and ' +
-    'effective as the predicate. A step the flow reaches with no answer is refused (predicateIdentified, ' +
-    'sameIntendedUse, sameTechnologicalCharacteristics) or left open: with differentQuestionsOfSafetyEffectiveness ' +
-    'or performanceDataDemonstratesEquivalence unstated the determination is indeterminate, never SE. ' +
-    'Returns the SE/NSE/indeterminate determination with a step-by-step decision ' +
-    'path, predicate adequacy, the specific performance data required (bench, biocompatibility, sterilization, ' +
-    'software/cybersecurity, IVD analytical/clinical performance), and the recommended 510(k) submission type ' +
-    '(Traditional/Special/Abbreviated) or a De Novo fallback when no valid predicate exists. Use when the user ' +
-    'is preparing a 510(k) and needs to test substantial equivalence against a predicate. ' + DETERMINISTIC_NOTE,
+    'Perform a 510(k) substantial-equivalence (SE) analysis per the FDA 510(k) Program decision ' +
+    'flowchart and 21 CFR 807.100(b): validate the predicate, confirm the same intended use, ' +
+    'compare technological characteristics, decide whether differences raise different questions of ' +
+    'safety/effectiveness, and list the performance data needed. An unanswered predicate, intended-use or ' +
+    'technology step is refused; an unstated recall, different-questions or performance-data answer never gives ' +
+    'SE (indeterminate unless a stated answer is NSE). Returns the determination, its path, predicate adequacy, ' +
+    'performance data (bench, biocompatibility, sterilization, software, IVD; undetermined while its ' +
+    'property is unstated) and the 510(k) type (Traditional or Abbreviated; null while an unstated answer ' +
+    'decides it) or a De Novo fallback. Use when preparing a 510(k). ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
-      subjectDeviceName: { type: 'string', description: 'Name of the subject (new) device (optional).' },
-      predicateDeviceName: { type: 'string', description: 'Name or 510(k) number of the predicate device (optional).' },
+      subjectDeviceName: { type: 'string', description: 'Name of the subject (new) device (optional; not read by the engine).' },
+      predicateDeviceName: { type: 'string', description: 'Name or 510(k) number of the predicate device (optional; not read by the engine).' },
       predicateIdentified: {
         type: 'boolean',
-        description: 'Whether a legally marketed predicate device has been identified.',
+        description: 'Whether a legally marketed predicate device has been identified. Required, true or false.',
       },
       sameIntendedUse: {
         type: 'boolean',
-        description: 'Whether the subject device has the SAME intended use as the predicate (required for SE).',
+        description: 'Whether the subject device has the SAME intended use as the predicate (required for SE; refused when the flow reaches it unstated).',
       },
       sameTechnologicalCharacteristics: {
         type: 'boolean',
         description:
           'Whether the technological characteristics (materials, design, energy source, principle of operation) ' +
-          'are the SAME as the predicate.',
+          'are the SAME as the predicate. Refused when the flow reaches it unstated.',
       },
       differentQuestionsOfSafetyEffectiveness: {
         type: 'boolean',
         description:
           'If technological characteristics differ, whether those differences raise DIFFERENT questions of ' +
           'safety or effectiveness (which would make the device Not Substantially Equivalent). Unstated, the ' +
-          'determination is indeterminate.',
+          'determination is indeterminate and the 510(k) type null.',
       },
       performanceDataDemonstratesEquivalence: {
         type: 'boolean',
@@ -173,16 +175,16 @@ export const ASSESS_SUBSTANTIAL_EQUIVALENCE: AnaTool = {
       },
       predicateRecalledForSafety: {
         type: 'boolean',
-        description: 'Whether the proposed predicate was removed from the market for design-related safety reasons (invalidates it).',
+        description: 'Whether the proposed predicate was removed from the market for design-related safety reasons (invalidates it). ' + NOT_STATED + ': the determination is never SE and the 510(k) type is null, indeterminate unless a stated answer gives NSE.',
       },
       usesReferenceDevice: {
         type: 'boolean',
-        description: 'Whether a reference device is used to support new technological characteristics (cannot be the predicate).',
+        description: 'Whether a reference device is used to support new technological characteristics (cannot be the predicate). ' + NOT_STATED + '; read only when the technology differs and is not stated to raise different questions, where true adds a reference-device note.',
       },
-      isIVD: { type: 'boolean', description: 'Whether the device is an IVD (drives analytical+clinical performance expectations).' },
-      hasSoftware: { type: 'boolean', description: 'Whether the device contains software (drives software/cybersecurity data).' },
-      patientContacting: { type: 'boolean', description: 'Whether the device is patient-contacting (drives biocompatibility data).' },
-      sterile: { type: 'boolean', description: 'Whether the device is supplied sterile (drives sterilization/packaging data).' },
+      isIVD: { type: 'boolean', description: 'Whether the device is an IVD (drives analytical+clinical performance expectations). ' + NOT_STATED + ': its data is undetermined, and with the same technology the 510(k) type is null unless hasSoftware is true.' },
+      hasSoftware: { type: 'boolean', description: 'Whether the device contains software (drives software/cybersecurity data). ' + NOT_STATED + ': its data is undetermined, and with the same technology the 510(k) type is null unless isIVD is true.' },
+      patientContacting: { type: 'boolean', description: 'Whether the device is patient-contacting (drives biocompatibility data). ' + NOT_STATED + ': that data is undetermined.' },
+      sterile: { type: 'boolean', description: 'Whether the device is supplied sterile (drives sterilization/packaging data). ' + NOT_STATED + ': that data is undetermined.' },
     },
     required: ['predicateIdentified', 'sameIntendedUse', 'sameTechnologicalCharacteristics'],
   },
@@ -195,32 +197,31 @@ export const ASSESS_SUBSTANTIAL_EQUIVALENCE: AnaTool = {
 export const DESIGN_DEVICE_CLINICAL_EVIDENCE: AnaTool = {
   name: 'design_device_clinical_evidence',
   description:
-    'Build a clinical evidence strategy for a medical device or IVD: determine whether clinical data are ' +
-    'required, recommend the study type(s) (no clinical / literature & clinical evaluation / real-world ' +
-    'evidence / feasibility-first-in-human / pivotal / IVD clinical performance), and scope the EU clinical ' +
-    'evaluation (MDR Article 61 & Annex XIV, MEDDEV 2.7/1 rev 4) or IVDR performance evaluation (Annex XIII). ' +
-    'When a fact that decides it was not stated, clinicalDataRequired (or usIDERequired) is null and ' +
-    'missingFacts names what to ask for: say it is not determined; never report clinical data or an IDE as ' +
-    'not required. ' +
-    'Returns whether a US IDE (21 CFR 812) is required for a significant-risk investigation, an evidence ' +
-    'hierarchy, and benefit-risk framing per the FDA 2019 factors guidance. Use when the user must decide ' +
-    'whether and how to generate clinical evidence for a device submission. ' + DETERMINISTIC_NOTE,
+    'Build a clinical evidence strategy for a device or IVD: whether clinical data are required, the ' +
+    'study type(s) (no clinical / literature & clinical evaluation / real-world evidence / ' +
+    'feasibility-first-in-human / pivotal / IVD clinical performance), and the EU clinical evaluation (MDR ' +
+    'Article 61 & Annex XIV, MEDDEV 2.7/1 rev 4) or IVDR performance evaluation (Annex XIII). When a fact that ' +
+    'decides it was not stated, clinicalDataRequired (or usIDERequired) is null and missingFacts names what to ' +
+    'ask for: say it is not determined; never report clinical data or an IDE as not required. A study or EU ' +
+    'evaluation an unstated fact decides is named, not assumed. Also returns the US IDE (21 CFR 812) answer, ' +
+    'an evidence hierarchy and FDA 2019 benefit-risk framing. Use to decide whether and how to generate clinical ' +
+    'evidence for a device submission. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
       usClass: {
         type: 'string',
         enum: ['I', 'II', 'III', 'unclassified'],
-        description: 'US device class (Class III generally requires pivotal clinical evidence). Without it, "not required" is never answered.',
+        description: 'US device class (Class III generally requires pivotal clinical evidence). Without it, "not required" is never answered; another value is refused.',
       },
       usPathway: {
         type: 'string',
         enum: ['510(k)', 'De Novo', 'PMA', 'HDE', 'exempt', 'IDE-then-PMA', 'BLA', 'undetermined'],
-        description: 'Intended US pathway; PMA/HDE/IDE-then-PMA imply clinical data are required.',
+        description: 'Intended US pathway; PMA/HDE/IDE-then-PMA imply clinical data are required. Omitted, it is read as none of those.',
       },
       novelTechnology: {
         type: 'boolean',
-        description: 'Whether the device is first-of-a-kind technology or a new indication (raises clinical questions). State true or false: unstated leaves "not required" undetermined.',
+        description: 'Whether the device is first-of-a-kind technology or a new indication (raises clinical questions). State true or false: unstated leaves "not required" undetermined and, for a device not class III, implanted or life-supporting, a feasibility study not assessed.',
       },
       clinicalDataNeededForSE: {
         type: 'boolean',
@@ -230,21 +231,21 @@ export const DESIGN_DEVICE_CLINICAL_EVIDENCE: AnaTool = {
       lifeSustaining: { type: 'boolean', description: 'Whether the device is life-supporting/life-sustaining. State true or false: unstated leaves "not required" undetermined.' },
       isIVD: {
         type: 'boolean',
-        description: 'Whether the device is an IVD (selects an IVD clinical performance study and IVDR Annex XIII).',
+        description: 'Whether the device is an IVD (selects an IVD clinical performance study and IVDR Annex XIII). ' + NOT_STATED + ': the confirmatory study and the EU evaluation are not assessed.',
       },
       existingLiterature: {
         type: 'boolean',
-        description: 'Whether substantial published literature exists for the device type/indication (enables a literature route).',
+        description: 'Whether substantial published literature exists for the device type/indication (enables a literature route). ' + NOT_STATED + ': that route is not assessed.',
       },
       realWorldDataAvailable: {
         type: 'boolean',
-        description: 'Whether fit-for-purpose real-world data (registries, EHR, claims) are available.',
+        description: 'Whether fit-for-purpose real-world data (registries, EHR, claims) are available. ' + NOT_STATED + ': real-world evidence is not assessed.',
       },
-      euMarket: { type: 'boolean', description: 'Whether the device is also pursuing the EU market (scopes MDR/IVDR evaluation).' },
+      euMarket: { type: 'boolean', description: 'Whether the device is also pursuing the EU market (scopes MDR/IVDR evaluation). ' + NOT_STATED + ': no EU evaluation is scoped, and the plan says so.' },
       euMdrClass: {
         type: 'string',
         enum: ['I', 'Is', 'Im', 'Ir', 'IIa', 'IIb', 'III'],
-        description: 'EU MDR class, when the EU market applies (implantable/Class III usually require clinical investigations).',
+        description: 'EU MDR class, when the EU market applies (implantable/Class III usually require clinical investigations). Unstated, with implantable not true, whether investigations are generally required is not assessed.',
       },
       significantRisk: {
         type: 'boolean',
@@ -262,51 +263,48 @@ export const DESIGN_DEVICE_CLINICAL_EVIDENCE: AnaTool = {
 export const ASSESS_ESSENTIAL_PRINCIPLES: AnaTool = {
   name: 'assess_essential_principles',
   description:
-    'Build a General Safety and Performance Requirements (GSPR) / essential-principles conformity matrix for ' +
-    'an EU MDR (Annex I) medical device or EU IVDR (Annex I) IVD. For each requirement the tool determines ' +
-    'whether it is applicable, the evidence/standard that demonstrates conformity (ISO 14971 risk management, ' +
-    'ISO 13485 QMS, IEC 62304 software, IEC 60601-1 electrical safety, ISO 10993 biocompatibility, ISO 11135/' +
-    '11137/11607 sterility, IEC 62366-1 usability, CLSI EP / ISO 17511 for IVDs), and whether it is addressed ' +
-    'or a gap. A requirement is addressed only by a stated input (a claimed standard, the QMS, the risk file); ' +
-    'one whose device property was not stated is not-assessed (applicable null), never "not applicable". ' +
-    'Returns the full conformity matrix, applicable/gap counts, a prioritized gap list, and an ' +
-    'overall verdict: gaps-present, or insufficient-information when no QMS or risk-management file is in ' +
-    'place or a row is not assessed. Nothing given here evidences lifetime, environment or labeling (GSPR 9, ' +
-    '14, 23), so it does not report "conforming". Use when the user needs a GSPR/essential-principles checklist or ' +
-    'gap analysis for EU technical documentation. ' + DETERMINISTIC_NOTE,
+    'Build a General Safety and Performance Requirements (GSPR) / essential-principles conformity matrix, MDR or ' +
+    'IVDR Annex I (isIVD is required): per requirement, whether it applies, the standard that shows conformity ' +
+    '(ISO 14971, ISO 13485, IEC 62304 software, IEC 60601-1 electrical safety, ISO 10993 biocompatibility, ISO ' +
+    '11135/11137/11607 sterility, IEC 62366-1 usability, CLSI EP / ISO 17511), and whether it is addressed or a ' +
+    'gap. Only a stated input addresses a row (a claimed standard, the QMS, the risk file); a row an unstated ' +
+    'device property, QMS or risk-file fact could change is not-assessed, never "not applicable" or a gap. The verdict ' +
+    'is insufficient-information unless qmsInPlace and riskManagementFile are true, else gaps-present (nothing ' +
+    'here evidences GSPR 9, 14 or 23). Use for a GSPR checklist or EU technical-file gap analysis. ' +
+    DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
-      isIVD: { type: 'boolean', description: 'Whether the device is an IVD (selects IVDR Annex I instead of MDR Annex I).' },
-      active: { type: 'boolean', description: 'Whether the device is electrically powered/active (triggers IEC 60601-1).' },
-      hasSoftware: { type: 'boolean', description: 'Whether the device contains software (triggers IEC 62304).' },
-      patientContacting: { type: 'boolean', description: 'Whether the device is patient-contacting (triggers ISO 10993 biocompatibility).' },
-      sterile: { type: 'boolean', description: 'Whether the device is supplied sterile (triggers sterilization/packaging GSPR).' },
-      measuringFunction: { type: 'boolean', description: 'Whether the device has a measuring function (triggers metrological GSPR).' },
+      isIVD: { type: 'boolean', description: 'Whether the device is an IVD (selects IVDR Annex I instead of MDR Annex I). Required, true or false.' },
+      active: { type: 'boolean', description: 'Whether the device is electrically powered/active (triggers IEC 60601-1). ' + NOT_STATED + ': its row is not-assessed, and so is GSPR 19/20 unless implantable is true.' },
+      hasSoftware: { type: 'boolean', description: 'Whether the device contains software (triggers IEC 62304). ' + NOT_STATED + ': its row is not-assessed.' },
+      patientContacting: { type: 'boolean', description: 'Whether the device is patient-contacting (triggers ISO 10993 biocompatibility). ' + NOT_STATED + ': for a non-IVD its row is not-assessed.' },
+      sterile: { type: 'boolean', description: 'Whether the device is supplied sterile (triggers sterilization/packaging GSPR). ' + NOT_STATED + ': its row is not-assessed.' },
+      measuringFunction: { type: 'boolean', description: 'Whether the device has a measuring function (triggers metrological GSPR). ' + NOT_STATED + ': for a non-IVD its row is not-assessed.' },
       incorporatesMedicinalSubstance: {
         type: 'boolean',
-        description: 'Whether the device incorporates a medicinal substance (triggers the medicinal-substance consultation GSPR).',
+        description: 'Whether the device incorporates a medicinal substance (triggers the medicinal-substance consultation GSPR). ' + NOT_STATED + ': its row is not-assessed.',
       },
-      emitsRadiation: { type: 'boolean', description: 'Whether the device emits ionizing/non-ionizing radiation (triggers radiation-protection GSPR).' },
-      implantable: { type: 'boolean', description: 'Whether the device is implantable.' },
-      layUse: { type: 'boolean', description: 'Whether the device is intended for lay/home use (emphasizes usability/human factors GSPR).' },
+      emitsRadiation: { type: 'boolean', description: 'Whether the device emits ionizing/non-ionizing radiation (triggers radiation-protection GSPR). ' + NOT_STATED + ': its row is not-assessed.' },
+      implantable: { type: 'boolean', description: 'Whether the device is implantable. ' + NOT_STATED + ': GSPR 19/20 is not-assessed unless active is true.' },
+      layUse: { type: 'boolean', description: 'Whether the device is intended for lay/home use. Not read: usability (GSPR 5) is addressed only by a claimed IEC 62366.' },
       qmsInPlace: {
         type: 'boolean',
-        description: 'Whether an ISO 13485-conforming QMS is in place (a precondition for conformity assessment).',
+        description: 'Whether an ISO 13485-conforming QMS is in place (a precondition for conformity assessment). ' + NOT_STATED + ': GSPR 4 is not-assessed, not a gap, unless riskManagementFile is false.',
       },
       riskManagementFile: {
         type: 'boolean',
-        description: 'Whether an ISO 14971 risk-management file exists (required for GSPR Chapter I).',
+        description: 'Whether an ISO 14971 risk-management file exists (required for GSPR Chapter I). ' + NOT_STATED + ': GSPR 1-3 are not-assessed, not gaps, and so is GSPR 4 unless qmsInPlace is false.',
       },
       standardsClaimed: {
         type: 'array',
         items: { type: 'string' },
         description:
           'List of standard IDs the manufacturer claims conformity to (e.g., ["ISO 14971:2019", "IEC 62304", ' +
-          '"ISO 10993-1"]). Used to mark the corresponding GSPR rows as addressed.',
+          '"ISO 10993-1"]). Used to mark the corresponding GSPR rows as addressed; omitted, none is claimed.',
       },
     },
-    required: [],
+    required: ['isIVD'],
   },
 };
 
@@ -321,9 +319,10 @@ export const PLAN_DEVICE_SUBMISSION: AnaTool = {
     '(eSTAR/510(k) sections per 21 CFR 807.87, De Novo content per 21 CFR 860 Subpart D (860.220), PMA modules per 21 CFR ' +
     '814.20, HDE per 21 CFR 814.104, or general-controls file when exempt), the EU technical documentation ' +
     'set (MDR/IVDR Annex II/III: device description, labeling, design & manufacturing, GSPR checklist, ' +
-    'benefit-risk, verification & validation, post-market surveillance), an indicative end-to-end timeline ' +
+    'benefit-risk, verification & validation, post-market surveillance), an indicative timeline ' +
     '(Q-Sub, testing, compilation, FDA review clock, EU notified-body assessment), and a Pre-Submission ' +
-    '(Q-Sub) strategy. Use when the user needs to scope the contents, sequence, and timeline of a device ' +
+    '(Q-Sub) strategy. A section an unstated device fact decides stays on the plan marked undetermined, and an ' +
+    'unstated EU market or Pre-Submission is named. Use to scope the contents, sequence and timeline of a device ' +
     'marketing submission. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
@@ -331,30 +330,30 @@ export const PLAN_DEVICE_SUBMISSION: AnaTool = {
       usPathway: {
         type: 'string',
         enum: ['510(k)', 'De Novo', 'PMA', 'HDE', 'exempt', 'IDE-then-PMA', 'BLA', 'undetermined'],
-        description: 'Target US pathway (from select_device_pathway). Drives the section set and review clock.',
+        description: 'Target US pathway (from select_device_pathway). Drives the section set and review clock. Required.',
       },
-      isIVD: { type: 'boolean', description: 'Whether the device is an IVD (adds analytical/clinical performance sections). Unstated, the section stays on the plan marked undetermined.' },
-      hasSoftware: { type: 'boolean', description: 'Whether the device contains software (adds software/cybersecurity section). Unstated, the section stays on the plan marked undetermined.' },
-      sterile: { type: 'boolean', description: 'Whether the device is sterile (adds sterilization/packaging section). Unstated, the section stays on the plan marked undetermined.' },
-      patientContacting: { type: 'boolean', description: 'Whether the device is patient-contacting (adds biocompatibility section). Unstated, the section stays on the plan marked undetermined.' },
+      isIVD: { type: 'boolean', description: 'Whether the device is an IVD (adds analytical/clinical performance sections). ' + NOT_STATED + ': those sections stay on the plan marked undetermined, and the EU documentation names MDR or IVDR.' },
+      hasSoftware: { type: 'boolean', description: 'Whether the device contains software (adds software/cybersecurity section). ' + NOT_STATED + ': the section stays on the plan marked undetermined.' },
+      sterile: { type: 'boolean', description: 'Whether the device is sterile (adds sterilization/packaging section). ' + NOT_STATED + ': the section stays on the plan marked undetermined.' },
+      patientContacting: { type: 'boolean', description: 'Whether the device is patient-contacting (adds the biocompatibility section of an HDE, BLA or undetermined plan; the eSTAR plans always carry it). ' + NOT_STATED + ': that section stays marked undetermined.' },
       clinicalDataIncluded: {
         type: 'boolean',
-        description: 'Whether clinical data are part of the submission (adds clinical sections; lengthens the timeline). Unstated, the testing phase is not estimated.',
+        description: 'Whether clinical data are part of the submission (adds clinical sections; lengthens the timeline). ' + NOT_STATED + ': the testing phase is not estimated.',
       },
-      euMarket: { type: 'boolean', description: 'Whether the device is also pursuing the EU market (adds EU technical documentation + NB phase).' },
+      euMarket: { type: 'boolean', description: 'Whether the device is also pursuing the EU market (adds EU technical documentation + NB phase). ' + NOT_STATED + ': no EU documentation is planned, and a finding says so.' },
       euMdrClass: {
         type: 'string',
         enum: ['I', 'Is', 'Im', 'Ir', 'IIa', 'IIb', 'III'],
-        description: 'EU MDR class for technical-documentation scoping.',
+        description: 'EU MDR class. Not read by the plan.',
       },
       euIvdrClass: {
         type: 'string',
         enum: [...IVDR_CLASSES],
-        description: 'EU IVDR class for technical-documentation scoping.',
+        description: 'EU IVDR class. Not read by the plan.',
       },
       preSubmissionDone: {
         type: 'boolean',
-        description: 'Whether a Pre-Submission (Q-Sub) has already occurred (changes the timeline and Q-Sub strategy).',
+        description: 'Whether a Pre-Submission (Q-Sub) has already occurred (changes the timeline and Q-Sub strategy). ' + NOT_STATED + ': the Q-Sub strategy, and the Q-Sub phase where there is one, say it was not stated.',
       },
     },
     required: ['usPathway'],
