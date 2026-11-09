@@ -85,3 +85,14 @@ export function heldSendSettlementWords(
     ? `${settled} · FDA's signed receipt, kept ${keptOn}, shows it was received`
     : `${settled} · FDA's signed answer, kept ${keptOn}, refuses it`;
 }
+
+/** FDA's technical rejection recorded on a transmittal (P-92 C4, and the package spine's before it). */
+export interface TechnicalRejectionRecord { sequence?: string | null; recordedAt?: string | null; evidence?: { kind?: string | null } | null }
+/** The rejection in words: a sequence's, recorded on FDA's Ack3 (P-92 C4), or a package's (sweep F19). Never the stored keys. */
+export function technicalRejectionWords(m: { technicalRejection?: TechnicalRejectionRecord | null } | null | undefined, style: 'row' | 'log'): string | null {
+  const r = m?.technicalRejection;
+  if (!r) return null;
+  const day = heldSendDay(r.recordedAt ?? null) ?? 'an unrecorded day';
+  if (r.evidence?.kind === 'ack3') return style === 'row' ? `rejected by FDA on its Ack3, by signature, ${day}` : `rejected by FDA on its Ack3, by signature · ${day}`;
+  return `technical rejection recorded${r.sequence ? ` · sequence ${r.sequence} off file` : ''}`;
+}

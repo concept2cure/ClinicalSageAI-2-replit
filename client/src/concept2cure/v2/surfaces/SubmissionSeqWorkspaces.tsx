@@ -47,7 +47,10 @@ import { normalizeCtdCode } from '@shared/regulatory/section-code';
 import { FILING_COPY_DOCUMENT_TABLE } from '@shared/types/submission-api';
 import { downloadBlob } from '../download';
 import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
-import { gatewayLabel, transmittalStatusTone, heldSendWhen, heldSendSettlementWords, type HeldSendSettlementRecord, type KeptReceipt } from '../gatewayLabels';
+import {
+  gatewayLabel, transmittalStatusTone, heldSendWhen, heldSendSettlementWords, technicalRejectionWords, type HeldSendSettlementRecord, type KeptReceipt,
+  type TechnicalRejectionRecord,
+} from '../gatewayLabels';
 import { dispatchWords } from './CommitmentRow';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 /* The Truth Engine's recorded cross-document checks, which had no screen: the
@@ -1756,7 +1759,8 @@ interface DispatchQcResult {
  *  'shadow-finding-disposition' closes one critical finding (P-35,
  *  ShadowFindingDisposition.tsx); 'retire' takes a sequence never filed out of
  *  use and frees its number (P-86, RetireSequence below). */
-export type GovernedKind = 'freeze' | 'dispatch' | 'transmit' | 'shadow-waiver' | 'shadow-finding-disposition' | 'retire' | 'held-send-settlement';
+export type GovernedKind = 'freeze' | 'dispatch' | 'transmit' | 'shadow-waiver' | 'shadow-finding-disposition' | 'retire' | 'held-send-settlement'
+  | 'technical-rejection';
 
 /** P-92: the two ways a held FDA send is settled, and what each rests on (server: fda-esg-receipts.ts). */
 export type HeldSendOutcome = 'received' | 'not-received';
@@ -1790,6 +1794,34 @@ export function heldSendOf(p: GovernedPrecheck | null | undefined): HeldSendOver
   const o = h?.outcomes as Record<string, unknown> | undefined;
   if (!h || typeof h.sequenceNumber !== 'string' || typeof h.receiptUpload !== 'boolean' || !o) return null;
   return 'received' in o && 'not-received' in o ? h : null;
+}
+/** What a person's signed act recorded on a transmission, in words, each after ' · ': a settlement (P-92 C2) and FDA's
+ *  technical rejection (P-92 C4). */
+const recordedWords = (m: Parameters<typeof heldSendSettlementWords>[0] & Parameters<typeof technicalRejectionWords>[0]): string =>
+  [heldSendSettlementWords(m, 'row'), technicalRejectionWords(m, 'row')].filter(Boolean).map((w) => ` · ${w}`).join('');
+/** P-92 C4: POST governed-precheck {step:'technical-rejection'} → its `rejection`: the send it would answer and who may
+ *  sign. With a chosen Vault document, the statement the signer makes and FDA's Ack3 it cites, both the server's. */
+export interface TechnicalRejectionOverview {
+  sequenceNumber: string;
+  sentAt: string | null;
+  transmittalId: number | null;
+  attemptId: string | null;
+  signerRefusal: string | null;
+  statement?: string;
+  evidence?: Record<string, unknown>;
+}
+/** What a technical rejection needs beyond its signature: FDA's Ack3, by Vault id and in words. */
+export interface RejectionRequest { evidenceDocumentId: string; documentLabel?: string }
+/** A rejection answer the screen can act on, or null: one that does not say who may sign is unreadable. */
+export function rejectionOverviewOf(p: GovernedPrecheck | null | undefined): TechnicalRejectionOverview | null {
+  const r = p?.rejection;
+  return r && typeof r.sequenceNumber === 'string' && (r.signerRefusal === null || typeof r.signerRefusal === 'string') ? r : null;
+}
+/** A rejection answer for a chosen Ack3, with the server's statement and evidence to sign, or null. */
+export function rejectionStatedOf(p: GovernedPrecheck | null | undefined): (TechnicalRejectionOverview & { statement: string; evidence: Record<string, unknown> }) | null {
+  const r = rejectionOverviewOf(p);
+  if (!r || typeof r.statement !== 'string' || !r.statement.trim() || !r.evidence || typeof r.evidence !== 'object') return null;
+  return r as TechnicalRejectionOverview & { statement: string; evidence: Record<string, unknown> };
 }
 /** A held-send answer for a chosen way, with the server's statement and evidence to sign, or null. */
 export function settlementOf(p: GovernedPrecheck | null | undefined): (HeldSendOverview & { statement: string; evidence: Record<string, unknown> }) | null {
@@ -1866,6 +1898,7 @@ export interface GovernedPrecheck {
   transmit?: TransmitReadiness;
   retirement?: RetirementPrecheck;
   heldSend?: HeldSendOverview;
+  rejection?: TechnicalRejectionOverview;
 }
 
 /** A retirement answer the screen can act on, or null (P-86 C3). The statement is the server's and is signed word for
@@ -1983,7 +2016,7 @@ interface DossierTransmittal {
    *  the sequence it is bound to (`dispatchBinding.sequenceId`). */
   metadata?: {
     sequence?: string | null; environment?: string | null; dispatchBinding?: { sequenceId?: number } | null;
-    heldSendSettlement?: HeldSendSettlementRecord | null; as2ReceiptHistory?: KeptReceipt[] | null;
+    heldSendSettlement?: HeldSendSettlementRecord | null; as2ReceiptHistory?: KeptReceipt[] | null; technicalRejection?: TechnicalRejectionRecord | null;
   } | null;
 }
 
@@ -2063,8 +2096,9 @@ function DossierTransmissions({ programId, region, sequenceId, sequenceNumber }:
                     }`
                   : ' (environment not recorded)'}
                 {t.error_message ? ` · ${t.error_message}` : ''}
-                {/* A held send settled by signature, and FDA's verified answer kept against it (P-92 C2, S9). */}
-                {heldSendSettlementWords(t.metadata, 'row') ? ` · ${heldSendSettlementWords(t.metadata, 'row')}` : ''}
+                {/* A held send settled by signature, FDA's verified answer kept against it (P-92 C2, S9), and FDA's
+                    technical rejection recorded on the sequence by signature (P-92 C4). */}
+                {recordedWords(t.metadata)}
               </span>
             </div>
           );
@@ -2092,9 +2126,11 @@ function DossierTransmissions({ programId, region, sequenceId, sequenceNumber }:
  * "not configured" is said here, before a password is typed — never
  * discovered after (QA 2026-10-08, j6, the blocker).
  */
-function TransmitPanel({ seq, programId, onTransmit, onSettle, canSign }: {
-  seq: SeqRow; programId: string | null | undefined; onTransmit: (req: TransmitRequest) => void; onSettle: (req: SettlementRequest) => void; canSign: boolean;
-}) {
+/** What the Dispatch tab hands up for the one signature: a transmit, a held send's settlement (P-92 C2), or FDA's
+ *  technical rejection (P-92 C4). */
+interface DispatchActs { onTransmit: (req: TransmitRequest) => void; onSettle: (req: SettlementRequest) => void; onReject: (req: RejectionRequest) => void }
+function TransmitPanel({ seq, programId, acts, canSign }: { seq: SeqRow; programId: string | null | undefined; acts: DispatchActs; canSign: boolean }) {
+  const { onTransmit, onSettle, onReject } = acts;
   const [ready, setReady] = React.useState<{ phase: 'loading' | 'done' | 'error'; t?: TransmitReadiness; error?: string }>({ phase: 'loading' });
   const [environment, setEnvironment] = React.useState<'staging' | 'production'>('staging');
   const [applicationId, setApplicationId] = React.useState('');
@@ -2165,21 +2201,21 @@ function TransmitPanel({ seq, programId, onTransmit, onSettle, canSign }: {
       ) : null}
       {/* Where the held send is told, the door to settle it (P-92 C2): only while a send is held. */}
       {t.dispatchStatus === 'transmitting' && <HeldSendSettlement seq={seq} programId={programId} onSettle={onSettle} />}
+      {/* Where a send recorded as received by FDA is told, the door to record FDA's failed Ack3 (P-92 C4). */}
+      {t.dispatchStatus === 'sent' && t.route.ok && t.route.region === 'fda' && <TechnicalRejection seq={seq} programId={programId} onReject={onReject} />}
       {t.route.ok && <DossierTransmissions programId={programId} region={t.route.region} sequenceId={seq.id} sequenceNumber={seq.sequenceNumber} />}
     </div>
   );
 }
 
 /** The package and the transmit, for this sequence (QA 2026-10-08, j6, the blocker). */
-function PackageAndTransmit({ sub, seq, onTransmit, onSettle, canSign }: {
-  sub: SubLike; seq: SeqRow; onTransmit: (req: TransmitRequest) => void; onSettle: (req: SettlementRequest) => void; canSign: boolean;
-}) {
+function PackageAndTransmit({ sub, seq, acts, canSign }: { sub: SubLike; seq: SeqRow; acts: DispatchActs; canSign: boolean }) {
   return (
     <div className="sc-mt">
       <div className="pj-sec-h sc-mt"><h3 className="sec-title">Package and transmit</h3></div>
       <PackageDownload sub={sub} seq={seq} />
       {seq.status === 'dispatched' ? (
-        <TransmitPanel seq={seq} programId={sub.programId} onTransmit={onTransmit} onSettle={onSettle} canSign={canSign} />
+        <TransmitPanel seq={seq} programId={sub.programId} acts={acts} canSign={canSign} />
       ) : (
         <div className="scaf-note sc-mt">
           Transmit opens once sequence {seq.sequenceNumber} is dispatched. It sends this package to the region&#39;s agency gateway,
@@ -2462,6 +2498,104 @@ function HeldSendWays({ seq, programId, overview: h, onSettle }: {
   );
 }
 
+/** The server's overview of FDA's technical rejection for this sequence: who may record it, or why it is not offered. */
+type RejectionState =
+  | { phase: 'closed' | 'reading' | 'unreadable' } | { phase: 'blocked'; refusal: string } | { phase: 'offered'; overview: TechnicalRejectionOverview };
+async function askRejection(seq: SeqRow): Promise<RejectionState> {
+  const r = await mutateVerbatim<GovernedPrecheck>('POST', precheckPath(seq.id), { step: 'technical-rejection' });
+  const overview = rejectionOverviewOf(r.data);
+  if (!overview || typeof r.data?.cleared !== 'boolean') return { phase: 'unreadable' };
+  return r.data.refusal ? { phase: 'blocked', refusal: r.data.refusal } : { phase: 'offered', overview };
+}
+/** The server's answer for one Ack3: the statement to sign, or why not. */
+async function askRejectionFor(seqId: number, evidenceDocumentId: string): Promise<ChoiceState> {
+  const r = await mutateVerbatim<GovernedPrecheck>('POST', precheckPath(seqId), { step: 'technical-rejection', evidenceDocumentId });
+  if (r.data?.cleared === true) {
+    const stated = rejectionStatedOf(r.data);
+    return stated ? { phase: 'stated', statement: stated.statement } : { phase: 'unreadable' };
+  }
+  return r.data && typeof r.data.refusal === 'string' && r.data.refusal.trim() ? { phase: 'refused', refusal: r.data.refusal } : { phase: 'unreadable' };
+}
+
+/** FDA's Ack3, chosen in this project's Vault; then the server's statement and the sign button. */
+function TechnicalRejectionChoice({ seq, programId, onReject }: { seq: SeqRow; programId: string | null | undefined; onReject: (req: RejectionRequest) => void }) {
+  const [doc, setDoc] = React.useState<PickedVaultVersion | null>(null);
+  const [judged, setJudged] = React.useState<ChoiceState>({ phase: 'idle' });
+  const asked = React.useRef(0);
+  const docId = doc?.id;
+  const seqId = seq.id;
+  React.useEffect(() => {
+    const id = ++asked.current;
+    if (!docId) { setJudged({ phase: 'idle' }); return; }
+    setJudged({ phase: 'checking' });
+    void askRejectionFor(seqId, docId).then((answer) => { if (asked.current === id) setJudged(answer); });
+  }, [seqId, docId]);
+  if (!programId) return <div role="note">This submission is not in a project, so no project Vault holds FDA&#39;s Ack3.</div>;
+  return (
+    <div className="sc-mt">
+      <VaultVersionPicker programId={programId} label="Find FDA's Ack3 in this project's Vault" disabled={false} onChoose={setDoc} />
+      {doc && <div className="sc-mt">{`Chosen: ${documentLabelOf(doc)}.`}</div>}
+      {judged.phase === 'checking' && <div role="status" className="sc-mt">Checking this document…</div>}
+      {judged.phase === 'refused' && <div role="note" className="sc-mt">{blockerForDisplay(judged.refusal)}</div>}
+      {judged.phase === 'unreadable' && <div role="status" className="sc-mt">Whether this document can be recorded as FDA&#39;s Ack3 could not be checked. Choose again to retry.</div>}
+      {judged.phase === 'stated' && doc && (
+        <>
+          <div className="sc-mt" data-testid="technical-rejection-would-state">
+            <span className="tl-spec-k">By signing, you would state:</span>
+            <div><q>{judged.statement}</q></div>
+          </div>
+          <div className="sc-mt">
+            <button type="button" className="btn ghost small" onClick={() => onReject({ evidenceDocumentId: doc.id, documentLabel: documentLabelOf(doc) })}>
+              {`Sign: record sequence ${seq.sequenceNumber} as rejected by FDA`}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Record FDA's technical rejection (P-92 C4; design §10.5 C): where a send recorded as received by FDA is told, a closed
+ * door. Each open asks the server again and no answer is kept across a close. It offers FDA's Ack3, chosen in this
+ * project's Vault; the statement shown is the server's, and the sign button hands the one signature to Submission
+ * Center, which asks again. Nothing is signed or changed here.
+ */
+function TechnicalRejection({ seq, programId, onReject }: { seq: SeqRow; programId: string | null | undefined; onReject: (req: RejectionRequest) => void }) {
+  const [state, setState] = React.useState<RejectionState>({ phase: 'closed' });
+  const asked = React.useRef(0);
+  const wasOpen = React.useRef(false);
+  const onToggle = (e: React.SyntheticEvent<HTMLElement>) => {
+    const open = (e.currentTarget as { open?: boolean }).open === true;
+    if (open === wasOpen.current) return;
+    wasOpen.current = open;
+    const id = ++asked.current;
+    if (!open) { setState({ phase: 'closed' }); return; }
+    setState({ phase: 'reading' });
+    void askRejection(seq).then((answer) => { if (asked.current === id) setState(answer); });
+  };
+  const o = state.phase === 'offered' ? state.overview : null;
+  const when = o ? heldSendWhen(o.sentAt) : null;
+  return (
+    <details className="pj-more sc-mt" data-testid="technical-rejection" onToggle={onToggle}>
+      <summary>Record FDA&#39;s technical rejection…</summary>
+      {state.phase === 'reading' && <div role="status">Checking whether FDA&#39;s technical rejection can be recorded…</div>}
+      {state.phase === 'unreadable' && (
+        <div role="status">Whether FDA&#39;s technical rejection can be recorded could not be checked. Close this and open it again to retry.</div>
+      )}
+      {state.phase === 'blocked' && <div role="note">{blockerForDisplay(state.refusal)}</div>}
+      {o && (
+        <>
+          <div>{`If FDA's Ack3 for sequence ${o.sequenceNumber}'s send${when ? ` of ${when}` : ''} reports that the center did not accept it, record that here, on FDA's Ack3 added to this project's Vault.`}</div>
+          {o.signerRefusal
+            ? <div role="note" className="sc-mt">{blockerForDisplay(o.signerRefusal)}</div>
+            : <TechnicalRejectionChoice key={asked.current} seq={seq} programId={programId} onReject={onReject} />}
+        </>
+      )}
+    </details>
+  );
+}
+
 /**
  * Settle the held send (P-92 C2; design §5 C2, as re-cut in §10.3 D): where the held send is told, a closed door. Each
  * open asks the server again and no answer is kept across a close. It offers the two ways the server offers, each on
@@ -2508,7 +2642,8 @@ export function DispatchWorkspace({
 }: {
   sub: SubLike;
   seq: SeqRow;
-  onGoverned: (seq: SeqRow, kind: GovernedKind, transmit?: TransmitRequest, waiver?: WaiverRequest, settlement?: SettlementRequest) => void;
+  /** The fifth argument is the settlement (P-92 C2) or FDA's Ack3 for a technical rejection (P-92 C4), by kind. */
+  onGoverned: (seq: SeqRow, kind: GovernedKind, transmit?: TransmitRequest, waiver?: WaiverRequest, settlement?: SettlementRequest | RejectionRequest) => void;
   /** Shell navigation, for the compile screen opened on this sequence (F14). */
   onNav?: (id: string) => void;
 }) {
@@ -2733,8 +2868,11 @@ export function DispatchWorkspace({
               sub={sub}
               seq={seq}
               canSign={!cannotSign}
-              onTransmit={(req) => onGoverned(seq, 'transmit', req)}
-              onSettle={(req) => onGoverned(seq, 'held-send-settlement', undefined, undefined, req)}
+              acts={{
+                onTransmit: (req) => onGoverned(seq, 'transmit', req),
+                onSettle: (req) => onGoverned(seq, 'held-send-settlement', undefined, undefined, req),
+                onReject: (req) => onGoverned(seq, 'technical-rejection', undefined, undefined, req),
+              }}
             />
             {/* A freeze instruction reads the FREEZE verdict. Gated on `gate`,
                 it was hidden for every IND / NDA / BLA / MAA sequence — a third

@@ -154,6 +154,19 @@ describe('Dispatch tab: transmissions and acknowledgements (F13)', () => {
     expect(said).not.toMatch(/not-received|platform-proof|fda-non-receipt|ack2|heldSendSettlement/);
   });
 
+  // P-92 C4: FDA's technical rejection recorded on the sequence is said on its row, in words, with no stored key.
+  it("FDA's technical rejection recorded by signature says so on its row", async () => {
+    const rejected = { ...ROWS[1], id: 45, status: 'validation_failed', error_message: null,
+      metadata: { sequence: '0001', environment: 'production', dispatchBinding: { sequenceId: 21 },
+        technicalRejection: { sequence: '0001', recordedAt: '2026-11-09T18:00:00.000Z', evidence: { kind: 'ack3', vaultDocumentId: 'x', sha256: 'f'.repeat(64) } } } };
+    list = () => json({ data: [rejected], meta: { count: 1 } });
+    render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
+    await waitFor(() => expect(text()).toContain('Transmittal #45'));
+    const said = region().textContent ?? '';
+    expect(said).toContain(" · rejected by FDA on its Ack3, by signature, 9 November 2026");
+    expect(said).not.toMatch(/technicalRejection|ack3\b/);
+  });
+
   it('a failed read is an error, not "none sent"', async () => {
     list = () => json({ error: 'Internal error' }, 500);
     render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);

@@ -1,0 +1,4 @@
+# P-92 C4: the typecheck gate on C4's server and client code, 2026-11-09T18:27:11Z
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+[ci:typecheck-no-regression] OK — error count 0 matches baseline.

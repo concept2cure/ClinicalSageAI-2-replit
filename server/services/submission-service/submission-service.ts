@@ -163,11 +163,15 @@ export type SubmissionErrorCode =
   | 'SHADOW_WAIVER_NOT_ELIGIBLE'
   | 'SHADOW_FINDING_NOT_DISPOSABLE'
   | 'SEQUENCE_NOT_RETIRABLE'
-  | 'HELD_SEND_NOT_SETTLEABLE';
+  | 'HELD_SEND_NOT_SETTLEABLE'
+  | 'TECHNICAL_REJECTION_NOT_RECORDABLE';
 
 /** P-92 (founder 2026-11-02): a held FDA send is settled by a signed act with this intent, and the act is recorded as this. */
 export const HELD_SEND_SETTLEMENT_INTENT = 'held-send-settlement' as const;
 export const ECTD_HELD_SEND_SETTLED_ACTION = 'ECTD_HELD_SEND_SETTLED';
+/** P-92 C4: FDA's failed Ack3 for a sequence recorded as received, recorded by the sequence's own signed act. */
+export const TECHNICAL_REJECTION_INTENT = 'technical-rejection' as const;
+export const ECTD_TECHNICAL_REJECTION_RECORDED_ACTION = 'ECTD_TECHNICAL_REJECTION_RECORDED';
 
 /**
  * Transitions that are irreversible / outward-facing and must go through the
@@ -225,6 +229,7 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   // The held send cannot be settled this way now (P-92): FDA's own answer is
   // kept, it may still be in progress, or the evidence does not fit it.
   HELD_SEND_NOT_SETTLEABLE: 409,
+  TECHNICAL_REJECTION_NOT_RECORDABLE: 409,
 };
 
 // ── Pure lifecycle rules ────────────────────────────────────────────────────
@@ -1006,7 +1011,8 @@ export type SequenceSignatureIntent =
   | typeof SHADOW_WAIVER_INTENT
   | typeof SHADOW_FINDING_DISPOSITION_INTENT
   | typeof SEQUENCE_RETIREMENT_INTENT
-  | typeof HELD_SEND_SETTLEMENT_INTENT;
+  | typeof HELD_SEND_SETTLEMENT_INTENT
+  | typeof TECHNICAL_REJECTION_INTENT;
 
 /** How a sentence names the act a signature was given for. */
 const INTENT_LABEL: Record<SequenceSignatureIntent, string> = {
@@ -1017,6 +1023,7 @@ const INTENT_LABEL: Record<SequenceSignatureIntent, string> = {
   [SHADOW_FINDING_DISPOSITION_INTENT]: 'Shadow Review finding disposition',
   [SEQUENCE_RETIREMENT_INTENT]: 'retirement',
   [HELD_SEND_SETTLEMENT_INTENT]: 'settlement of the held send',
+  [TECHNICAL_REJECTION_INTENT]: 'record of the technical rejection',
 };
 
 /**
@@ -1036,6 +1043,8 @@ const INTENT_MEANING_REFUSAL: Partial<Record<SequenceSignatureIntent, (meaning: 
   [SEQUENCE_RETIREMENT_INTENT]: retirementMeaningRefusal,
   // P-92: the signer answers for a record of what FDA holds; it approves no content and releases nothing to the agency.
   [HELD_SEND_SETTLEMENT_INTENT]: (m) => (m === 'responsibility' ? null : 'settling a held send is signed with the meaning responsibility'),
+  // P-92 C4: as the settlement, a record of what FDA holds, answered for by the signer.
+  [TECHNICAL_REJECTION_INTENT]: (m) => (m === 'responsibility' ? null : 'recording a technical rejection is signed with the meaning responsibility'),
 };
 
 /** Why a signature's payload does not authorize this particular request, or null (P-35: which finding, closed how). */
@@ -1233,7 +1242,7 @@ async function signatureSpentBy(signatureActionId: string, target: string, organ
       AND record_id = ${sequenceId}
       AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED', ${SHADOW_REVIEW_WAIVED_ACTION},
                      ${SHADOW_FINDING_DISPOSITIONED_ACTION}, ${SIGNATURE_VOIDED_ACTION}, 'TRANSMIT_BLOCKED',
-                     ${ECTD_SEQUENCE_RETIRED_ACTION}, ${ECTD_HELD_SEND_SETTLED_ACTION})
+                     ${ECTD_SEQUENCE_RETIRED_ACTION}, ${ECTD_HELD_SEND_SETTLED_ACTION}, ${ECTD_TECHNICAL_REJECTION_RECORDED_ACTION})
       AND (new_values::jsonb ->> 'signatureActionId') = ${signatureActionId}
     LIMIT 1
   `;
@@ -2017,7 +2026,7 @@ async function precheckShadowFindingDisposition(
 export async function precheckGovernedStep(
   id: number,
   /** A retirement (P-86) is not prechecked here yet: its precheck comes with its door (C2). */
-  step: Exclude<SequenceSignatureIntent, typeof SEQUENCE_RETIREMENT_INTENT | typeof HELD_SEND_SETTLEMENT_INTENT>,
+  step: Exclude<SequenceSignatureIntent, typeof SEQUENCE_RETIREMENT_INTENT | typeof HELD_SEND_SETTLEMENT_INTENT | typeof TECHNICAL_REJECTION_INTENT>,
   ctx: { organizationId: number; userId: number },
   opts: GovernedPrecheckOptions = {},
 ): Promise<GovernedStepPrecheck> {
@@ -2892,6 +2901,222 @@ async function applyHeldSendSettlement(
   return {
     settled: true, sequenceId: seq.id, sequenceNumber: n, outcome: input.outcome, evidenceKind: choice.evidenceKind, dispatchStatus: dispatchTo,
     transmittalId: t.id, transmitAttemptId: A, signatureActionId: input.signatureActionId, signatureId: verdict.signatureId, settledAt: occurredAt ?? settledAt,
+  };
+}
+
+// ── P-92 C4: FDA's failed Ack3, recorded on the sequence (design §10.5 C) ───────
+
+type RejectionRules = typeof import('../ectd/filed-sequence-rejection');
+const rejectionRules = (): Promise<RejectionRules> => import('../ectd/filed-sequence-rejection');
+type Ack3Evidence = { kind: 'ack3'; vaultDocumentId: string; sha256: string };
+export interface TechnicalRejectionOverview {
+  sequenceNumber: string; sentAt: string | null; transmittalId: number | null; attemptId: string | null;
+  signerRefusal: string | null; statement?: string; evidence?: Ack3Evidence;
+}
+export interface TechnicalRejectionPrecheck { step: typeof TECHNICAL_REJECTION_INTENT; cleared: boolean; refusal: string | null; rejection: TechnicalRejectionOverview }
+export interface TechnicalRejectionRecord {
+  recorded: true; sequenceId: number; sequenceNumber: string; dispatchStatus: 'rejected'; transmittalId: number;
+  signatureActionId: string; signatureId: number | null; recordedAt: string;
+}
+type JudgedRejection = { refusal: string; statement?: undefined; evidence?: undefined } | { refusal: null; statement: string; evidence: Ack3Evidence };
+interface RejectionScope { rules: RejectionRules; q: SequenceQueryable; seq: ClaimedSequence; organizationId: number; lock?: boolean }
+
+const rejectionSubject = (seq: ClaimedSequence) => ({
+  id: seq.id, submissionId: seq.submissionId, sequenceNumber: seq.sequenceNumber, dispatchStatus: seq.dispatchStatus ?? null,
+  transmitSignatureActionId: seq.transmitSignatureActionId ?? null, transmitAttemptId: seq.transmitAttemptId ? String(seq.transmitAttemptId) : null,
+});
+
+/** The facts R1 to R4 and R7 judge. A read that fails is "could not be checked", never a pass. */
+async function checkedRejection(scope: Omit<RejectionScope, 'lock'>, opts: { lock?: boolean } = {}) {
+  try {
+    return await scope.rules.readSequenceRejectionFacts(scope.q, scope.organizationId, rejectionSubject(scope.seq), opts);
+  } catch (err) {
+    logger.warn('Technical rejection facts unreadable', { sequenceId: scope.seq.id, err: err instanceof Error ? err.message : String(err) });
+    throw new SubmissionError('INVALID_STATE', `Whether FDA's technical rejection of sequence ${scope.seq.sequenceNumber} can be recorded could not be checked, so nothing was changed. Try again.`);
+  }
+}
+
+/** R6, said before anyone signs: the sequence's creator does not sign the record; an unknown creator, nobody. */
+function rejectionSignerRefusal(n: string, state: 'independent' | 'author' | 'unresolved' | 'unverified'): string | null {
+  if (state === 'independent') return null;
+  if (state === 'author') return `You created sequence ${n}, so you cannot sign the record of its technical rejection. Another person with signing authority signs it.`;
+  if (state === 'unresolved') return `Who created sequence ${n} cannot be resolved from its record, so the record of its technical rejection cannot be signed by anyone shown to be independent of its creator.`;
+  return `Whether you created sequence ${n} could not be checked, so the record of its technical rejection cannot be signed now. Try again.`;
+}
+
+/** R5: FDA's Ack3 is a retained document of this project's Vault, recorded after the send, and no other settlement's or rejection's evidence. */
+async function ack3Document(scope: RejectionScope, sentAt: string, documentId: string): Promise<{ refusal: string } | { refusal: null; evidence: Ack3Evidence }> {
+  const { q, seq, organizationId } = scope;
+  const n = seq.sequenceNumber;
+  const absent = `FDA's Ack3 for sequence ${n} must be a document in this project's Vault, recorded after the send. Upload it there and choose it. Nothing was changed.`;
+  const program = ((await q.query(`SELECT program_id::text AS program_id FROM submissions WHERE id = $1 AND organization_id = $2`, [seq.submissionId, organizationId])).rows[0]?.program_id as string | null) ?? null;
+  if (!program) return { refusal: `This submission is not in a project, so no project Vault holds FDA's Ack3. Nothing was changed.` };
+  const { readVaultSource } = await import('../regulatory/lifecycle-signature');
+  const doc = await readVaultSource(q, organizationId, documentId, { lock: scope.lock });
+  const meta = (await q.query(`SELECT program_id::text AS program_id, created_at FROM vault.documents WHERE id = $1::uuid AND organization_id = $2`, [documentId, organizationId])).rows[0];
+  if (!doc || !/^[0-9a-f]{64}$/i.test(doc.contentHash) || meta?.program_id !== program) return { refusal: absent };
+  if (Date.parse(String(meta.created_at)) < Date.parse(sentAt)) {
+    return { refusal: `This document was in the Vault before this send was made, so it cannot be FDA's Ack3 for it. Nothing was changed.` };
+  }
+  const reused = await q.query(`SELECT 1 FROM submission_transmittals WHERE organization_id = $1 AND metadata->'dispatchBinding'->>'sequenceId' = $2::text
+      AND (metadata->'heldSendSettlement'->>'vaultDocumentId' = $3 OR metadata->'heldSendSettlement'->>'sha256' = $4
+        OR metadata->'technicalRejection'->'evidence'->>'vaultDocumentId' = $3 OR metadata->'technicalRejection'->'evidence'->>'sha256' = $4) LIMIT 1`,
+  [organizationId, String(seq.id), doc.id, doc.contentHash]);
+  if (reused.rows.length) return { refusal: `This document already settled or rejected a send of sequence ${n}, so it cannot be FDA's Ack3 for this rejection. Nothing was changed.` };
+  return { refusal: null, evidence: { kind: 'ack3', vaultDocumentId: doc.id, sha256: doc.contentHash } };
+}
+
+/** Judge the rejection on one Ack3: the refusal in words, or the statement and the evidence it binds. */
+async function judgedRejection(scope: RejectionScope, facts: SequenceRejectionFactsOf, documentId: string): Promise<JudgedRejection> {
+  const blocker = scope.rules.sequenceRejectionBlocker(facts);
+  if (blocker) return { refusal: blocker };
+  const t = facts.transmittal as NonNullable<SequenceRejectionFactsOf['transmittal']>;
+  const doc = await ack3Document(scope, t.submittedAt, documentId);
+  if (doc.refusal !== null) return { refusal: doc.refusal };
+  return { refusal: null, statement: scope.rules.sequenceRejectionStatement({ sequenceNumber: scope.seq.sequenceNumber, sentAt: t.submittedAt }), evidence: doc.evidence };
+}
+type SequenceRejectionFactsOf = Awaited<ReturnType<RejectionRules['readSequenceRejectionFacts']>>;
+
+/**
+ * Before anyone signs (P-92 C4): may FDA's failed Ack3 be recorded on this sequence, by this person, and on which
+ * document; with a document, the statement the signature carries. Asked at POST governed-precheck with step
+ * 'technical-rejection'; no AnA tool reaches it.
+ */
+export async function precheckTechnicalRejection(id: number, ctx: { organizationId: number; userId: number }, choice: { evidenceDocumentId?: string } = {}): Promise<TechnicalRejectionPrecheck> {
+  const seq: ClaimedSequence = await getSequence(id, ctx);
+  const scope = { rules: await rejectionRules(), q: asQueryable(pool), seq, organizationId: ctx.organizationId };
+  const facts = await checkedRejection(scope);
+  const t = facts.transmittal;
+  const rejection: TechnicalRejectionOverview = {
+    sequenceNumber: seq.sequenceNumber, sentAt: t?.submittedAt ?? null, transmittalId: t?.id ?? null, attemptId: facts.sequence.transmitAttemptId,
+    signerRefusal: rejectionSignerRefusal(seq.sequenceNumber, await signerIndependenceOf(`ectd-sequence:${seq.id}`, ctx.organizationId, ctx.userId)),
+  };
+  const step = TECHNICAL_REJECTION_INTENT;
+  if (!choice.evidenceDocumentId) {
+    const blocker = scope.rules.sequenceRejectionBlocker(facts);
+    return { step, cleared: blocker === null, refusal: blocker, rejection };
+  }
+  const judged = await judgedRejection(scope, facts, choice.evidenceDocumentId);
+  if (judged.refusal !== null) return { step, cleared: false, refusal: judged.refusal, rejection };
+  return { step, cleared: true, refusal: null, rejection: { ...rejection, statement: judged.statement, evidence: judged.evidence } };
+}
+
+/** Gate 1's payload check: this transmission, this attempt, FDA's Ack3, and a statement. */
+function rejectionPayloadRefusal(seq: ClaimedSequence, facts: SequenceRejectionFactsOf) {
+  const n = seq.sequenceNumber;
+  return (payload: Record<string, unknown> | null): string | null => {
+    if (payload?.transmittalId !== facts.transmittal?.id) return `it names another transmission of sequence ${n}`;
+    if (String(payload?.transmitAttemptId ?? '').toLowerCase() !== String(seq.transmitAttemptId ?? '').toLowerCase()) return `it names another attempt of sequence ${n}`;
+    if ((payload?.evidence as Record<string, unknown> | undefined)?.kind !== 'ack3') return "its evidence is not FDA's Ack3";
+    return typeof payload?.statement === 'string' && payload.statement.trim() ? null : 'it carries no statement';
+  };
+}
+
+/** The signed Ack3 and statement against what the rules judge now: exactly, or the signature records nothing. */
+function signedRejectionMismatch(signed: Record<string, unknown> | null, judged: { statement: string; evidence: Ack3Evidence }, n: string): string | null {
+  const evidence = (signed?.evidence ?? {}) as Record<string, unknown>;
+  if (evidence.vaultDocumentId === judged.evidence.vaultDocumentId && evidence.sha256 !== judged.evidence.sha256) {
+    return `The chosen document changed after it was quoted. Nothing was recorded; look at it again and sign anew.`;
+  }
+  const fields = Object.entries(judged.evidence) as Array<[string, unknown]>;
+  if (fields.some(([key, value]) => evidence[key] !== value) || signed?.statement !== judged.statement) {
+    return `The signature does not record this technical rejection: what it states or cites is not what the record of sequence ${n} shows now. Nothing was changed; sign it again from the Dispatch tab.`;
+  }
+  return null;
+}
+
+/** Judge the signed Ack3, and refuse in words; the same call before the lock and under it. */
+async function recordableRejection(scope: RejectionScope, facts: SequenceRejectionFactsOf, documentId: string, signed: Record<string, unknown> | null) {
+  const judged = await judgedRejection(scope, facts, documentId);
+  if (judged.refusal !== null) throw new SubmissionError('TECHNICAL_REJECTION_NOT_RECORDABLE', judged.refusal);
+  const mismatch = signedRejectionMismatch(signed, judged, scope.seq.sequenceNumber);
+  if (mismatch) throw new SubmissionError('GOVERNED_REQUIRED', mismatch);
+  return judged;
+}
+
+async function verifiedRejectionSignature(input: { signatureActionId: string }, seq: ClaimedSequence, facts: SequenceRejectionFactsOf, ctx: { organizationId: number; userId: number }) {
+  const target = `ectd-sequence:${seq.id}`;
+  let signed: Record<string, unknown> | null = null;
+  const check = rejectionPayloadRefusal(seq, facts);
+  const verdict = await governedSignatureVerdict(input.signatureActionId, target, ctx, TECHNICAL_REJECTION_INTENT, (payload) => { signed = payload; return check(payload); });
+  if (verdict.refusal !== null) {
+    throw new SubmissionError('GOVERNED_REQUIRED', `The signature does not record the technical rejection of sequence ${seq.sequenceNumber}: ${verdict.refusal}. Sign it again from the Dispatch tab.`);
+  }
+  const independence = await independentSignerRefusal(target, ctx, verdict.meaning);
+  if (independence) throw independence;
+  const reason = await dispositionSignatureReason(asQueryable(pool), { organizationId: ctx.organizationId, signatureActionId: input.signatureActionId });
+  if (!reason) throw new SubmissionError('GOVERNED_REQUIRED', `The signature records no reason, so sequence ${seq.sequenceNumber}'s technical rejection was not recorded; sign again with your reason.`);
+  return { verdict, reason, signed: signed as Record<string, unknown> | null };
+}
+
+/**
+ * Record FDA's failed Ack3 on a sequence recorded as received (P-92 C4; P-108 1(a); launch row D7). The person signs the
+ * sequence with intent 'technical-rejection', the meaning responsibility, FDA's Ack3 from the project's Vault and the
+ * statement the precheck gives. The act re-judges everything under the transmittal's and the sequence's locks; the
+ * sequence ('sent' to 'rejected'), the transmittal's set-once record and the chained ECTD_TECHNICAL_REJECTION_RECORDED
+ * row commit together or not at all. A refused act voids its signature (P-23). Its one door is
+ * POST /api/submissions/sequences/:seqId/technical-rejection; no AnA tool.
+ */
+export function recordTechnicalRejection(input: { sequenceId: number; signatureActionId: string }, ctx: { organizationId: number; userId: number }): Promise<TechnicalRejectionRecord> {
+  return voidingSignatureOnRefusal(
+    () => applyTechnicalRejection(input, ctx),
+    { signatureActionId: input.signatureActionId, sequenceId: input.sequenceId, ctx, step: TECHNICAL_REJECTION_INTENT },
+  );
+}
+
+async function applyTechnicalRejection(input: { sequenceId: number; signatureActionId: string }, ctx: { organizationId: number; userId: number }): Promise<TechnicalRejectionRecord> {
+  const seq: ClaimedSequence = await getSequence(input.sequenceId, ctx);
+  const n = seq.sequenceNumber;
+  const rules = await rejectionRules();
+  const scope = { rules, q: asQueryable(pool), seq, organizationId: ctx.organizationId };
+  const facts = await checkedRejection(scope);
+  const { verdict, reason, signed } = await verifiedRejectionSignature(input, seq, facts, ctx);
+  const documentId = String(((signed?.evidence ?? {}) as Record<string, unknown>).vaultDocumentId ?? '');
+  const judged = await recordableRejection(scope, facts, documentId, signed);
+  const t = facts.transmittal as NonNullable<SequenceRejectionFactsOf['transmittal']>;
+  const S = seq.transmitSignatureActionId as string;
+  const A = String(seq.transmitAttemptId);
+  const recordedAt = new Date().toISOString();
+  const transmittalStatus = { previous: t.status, current: rules.rejectedTransmittalStatus(t.status) };
+  const rejection = { sequence: n, recordedAt, recordedBy: ctx.userId, reason, evidence: judged.evidence, transmittalStatus,
+    signatureActionId: input.signatureActionId, signatureId: verdict.signatureId };
+  const details: Record<string, unknown> = {
+    description: `Sequence ${n} recorded as rejected by FDA on FDA's Ack3, by Part 11 e-signature (responsibility)`,
+    signatureActionId: input.signatureActionId, signatureId: verdict.signatureId, meaning: 'responsibility', reason, statement: judged.statement,
+    evidence: judged.evidence, transmittalId: t.id, transmitAttemptId: A, transmitSignatureActionId: S, environment: 'production',
+    dispatchStatus: { from: 'sent', to: 'rejected' }, transmittalStatus, boundDigest: verdict.boundDigest,
+  };
+  const { occurredAt } = await applySequenceChangeWithAudit(
+    {
+      underLock: async (client) => {
+        await setTenantContextTx(client, ctx.organizationId);
+        // The transmittal first, as the receipt path and the settlement take it.
+        await checkedRejection({ ...scope, q: asQueryable(client) }, { lock: true });
+        await recheckUnderSequenceLock(client, {
+          sequenceId: seq.id, submissionId: seq.submissionId, organizationId: ctx.organizationId, boundDigest: verdict.boundDigest, act: 'technical rejection',
+          recheck: async (q) => {
+            const row = (await q.query(`SELECT dispatch_status, transmit_signature_action_id, transmit_attempt_id::text AS transmit_attempt_id FROM ectd_sequences WHERE id = $1 AND organization_id = $2`, [seq.id, ctx.organizationId])).rows[0] ?? {};
+            const now: ClaimedSequence = { ...seq, dispatchStatus: row.dispatch_status ?? null, transmitSignatureActionId: row.transmit_signature_action_id ?? null, transmitAttemptId: row.transmit_attempt_id ?? null };
+            const fresh = await checkedRejection({ rules, q, seq: now, organizationId: ctx.organizationId });
+            await recordableRejection({ rules, q, seq: now, organizationId: ctx.organizationId, lock: true }, fresh, documentId, signed);
+          },
+        });
+      },
+      text: `UPDATE ectd_sequences SET dispatch_status = 'rejected', updated_at = NOW()
+              WHERE id = $1 AND organization_id = $2 AND dispatch_status = 'sent' AND transmit_signature_action_id = $3 AND transmit_attempt_id = $4
+                AND status = 'dispatched' AND deleted_at IS NULL`,
+      params: [seq.id, ctx.organizationId, S, A],
+      noRowsRefusal: `Sequence ${n} changed while its technical rejection was being recorded, so it was not recorded.`,
+      afterUpdate: async (client) => {
+        await rules.markSequenceTechnicalRejection(asQueryable(client), { organizationId: ctx.organizationId, transmittalId: t.id, rejection });
+      },
+    },
+    { organizationId: ctx.organizationId, userId: ctx.userId, action: ECTD_TECHNICAL_REJECTION_RECORDED_ACTION, resourceId: seq.id, reason, details },
+  );
+  logger.info('Technical rejection recorded', { sequenceId: seq.id, organizationId: ctx.organizationId });
+  return {
+    recorded: true, sequenceId: seq.id, sequenceNumber: n, dispatchStatus: 'rejected', transmittalId: t.id,
+    signatureActionId: input.signatureActionId, signatureId: verdict.signatureId, recordedAt: occurredAt ?? recordedAt,
   };
 }
 

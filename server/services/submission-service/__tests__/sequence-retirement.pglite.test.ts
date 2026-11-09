@@ -391,6 +391,19 @@ describe("P-92 with P-86: a release that FDA's verified receipt contradicts keep
   }, 120_000);
 });
 
+// P-92 C4 (§10.5 D): a sequence FDA rejected stays on FDA's record; check 3 already keeps it, and says why in words.
+describe('P-92 C4 with P-86: a sequence FDA rejected is not retired, in words', () => {
+  it('refuses it naming the rejection, and the precheck says the same', async () => {
+    const { id } = await sequenceOf({ dispatchStatus: 'rejected' });
+    await q(`INSERT INTO submission_transmittals (organization_id, region, metadata, created_at) VALUES (${ORG}, 'fda', $1, '2026-11-03T14:05:00Z')`,
+      [JSON.stringify({ environment: 'production', dispatchBinding: { sequenceId: id, signatureActionId: 'sig-x' } })]);
+    const words = "Sequence 0000 was sent to FDA on 2026-11-03 UTC and rejected by FDA, so it is on FDA's record and cannot be retired. " +
+      "A correction is sent again as sequence 0000 or as a new sequence, as FDA's notice says.";
+    expect(await precheckSequenceRetirement(id, ctx)).toMatchObject({ cleared: false, refusal: words });
+    await refusedWith(id, words);
+  }, 120_000);
+});
+
 async function refusedWithSig(id: number, sig: string) {
   const err = await outcome(retireSequence({ sequenceId: id, signatureActionId: sig }, ctx));
   expect(err).toMatchObject({ code: 'SEQUENCE_NOT_RETIRABLE', message: expect.stringContaining("to the agency's production environment is recorded on") });

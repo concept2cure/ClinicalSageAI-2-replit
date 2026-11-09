@@ -324,6 +324,8 @@ interface SendOnRecord { at: string | null; environmentNamed: boolean; receivedA
 interface KeptFacts {
   sequenceNumber: string;
   dispatchStatus: string | null;
+  /** The sequence's region: a rejection is said as FDA's for an FDA sequence (P-92 C4), the agency's otherwise. */
+  region?: string;
   /** Check 3 or 4: a send bound to it, or recorded as transmitted, outside staging, and not proven blocked. */
   productionSend: SendOnRecord | null;
   /** Check 3b: its number sent to production as a package for the same application. */
@@ -412,7 +414,7 @@ async function keptFacts(q: BaselineQueryable, org: number, s: RetirementSequenc
   );
   const r = ind.rows[0] ?? {};
   return {
-    sequenceNumber: s.sequenceNumber, dispatchStatus: s.dispatchStatus, productionSend, packageSend,
+    sequenceNumber: s.sequenceNumber, dispatchStatus: s.dispatchStatus, region: s.region, productionSend, packageSend,
     filedIndRecords: { safetyReports: Number(r.safety ?? 0), amendments: Number(r.amendments ?? 0), annualReports: Number(r.annual ?? 0) },
   };
 }
@@ -462,6 +464,26 @@ const IND_KINDS: Array<[keyof KeptFacts['filedIndRecords'], string, string]> = [
   ['annualReports', 'an annual report', 'annual reports'],
 ];
 
+/** Check 3 or 4's sentence: a contradicted release (P-92 §10.5 B), a sequence the agency rejected (P-92 C4, §10.5 D), or a send on record. */
+function productionSendRefusal(n: string, send: SendOnRecord, f: KeptFacts): { sentence: string; reason: string } {
+  const on = `${day(send.at)} UTC`;
+  if (send.receivedAfterRelease) {
+    return { reason: "FDA's signed receipt shows it received a send of it",
+      sentence: `FDA's signed receipt shows it received sequence ${n}'s send of ${on}, which was released as not received, ` +
+        'so it cannot be retired. Contact FDA before anything else is done with it.' };
+  }
+  if (f.dispatchStatus === 'rejected') {
+    const agency = f.region === 'fda' ? 'FDA' : 'the agency';
+    return { reason: `${agency} rejected it`,
+      sentence: `Sequence ${n} was sent to ${agency} on ${on} and rejected by ${agency}, so it is on ${agency === 'FDA' ? "FDA's" : "the agency's"} record and cannot be retired. ` +
+        `A correction is sent again as sequence ${n} or as a new sequence, as ${agency === 'FDA' ? "FDA's" : "the agency's"} notice says.` };
+  }
+  return { reason: "it was sent to the agency's production environment",
+    sentence: send.environmentNamed
+      ? `A send of sequence ${n} to the agency's production environment is recorded on ${on}, so it cannot be retired. A correction is a new sequence numbered after it.`
+      : `A send of sequence ${n} to the agency is recorded on ${on} with no environment named, so it is treated as a production send and it cannot be retired. A correction is a new sequence numbered after it.` };
+}
+
 /** What keeps a sequence's number (checks 2a, 2b, 3, 3b, 4, 6): the full sentence, and the short reason check 5 names. */
 function keptRefusal(f: KeptFacts): { sentence: string; reason: string } | null {
   const n = f.sequenceNumber;
@@ -475,18 +497,7 @@ function keptRefusal(f: KeptFacts): { sentence: string; reason: string } | null 
     return { reason: 'a send of it is in flight',
       sentence: `A send of sequence ${n} is in flight and not yet settled, so it cannot be retired now. Record the agency's receipt, settle the held send from the Dispatch tab, or wait for the send to settle, then look again.` };
   }
-  if (f.productionSend?.receivedAfterRelease) {
-    return { reason: "FDA's signed receipt shows it received a send of it",
-      sentence: `FDA's signed receipt shows it received sequence ${n}'s send of ${day(f.productionSend.at)} UTC, which was released as not received, ` +
-        'so it cannot be retired. Contact FDA before anything else is done with it.' };
-  }
-  if (f.productionSend) {
-    const on = `${day(f.productionSend.at)} UTC`;
-    return { reason: "it was sent to the agency's production environment",
-      sentence: f.productionSend.environmentNamed
-        ? `A send of sequence ${n} to the agency's production environment is recorded on ${on}, so it cannot be retired. A correction is a new sequence numbered after it.`
-        : `A send of sequence ${n} to the agency is recorded on ${on} with no environment named, so it is treated as a production send and it cannot be retired. A correction is a new sequence numbered after it.` };
-  }
+  if (f.productionSend) return productionSendRefusal(n, f.productionSend, f);
   if (f.packageSend) {
     return { reason: "it was sent to the agency's production gateway in a package",
       sentence: `Sequence ${n} was sent to the agency's production gateway in a package, and nothing records that the agency did not receive it, so it is not retired.` };
