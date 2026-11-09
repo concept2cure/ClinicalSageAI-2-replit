@@ -39,7 +39,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { BIOTECH_CMC } from './packs/biotech-work-content.mjs';
+import { BIOTECH_CMC, BIOTECH_SM_CMC } from './packs/biotech-work-content.mjs';
 import { LMN201_CMC } from './packs/lumen-content.mjs';
 import { DEMO_PROGRAM as PROGRAM, fakeCmcApplication } from './cmc-demo-app.fixture.mjs';
 import { ensureCmc } from './packs/work-areas.mjs';
@@ -79,6 +79,64 @@ for (const [label, cmc, modality] of PACKS) {
     );
   });
 }
+
+/**
+ * Both of these were found by RUNNING the seed against a server and reading the
+ * composed sections — no unit case noticed either, which is why they are cases
+ * now.
+ */
+test('every study that claims a shelf life sends it, so §3.2.P.8 has its subject', async () => {
+  /* `mapStabilityPayload` emits `drugProductShelfLifeClaim` only from a
+     recorded claim, and the seed sent none — so §3.2.P.8 composed at 0%
+     complete, missing `drugProductShelfLifeClaim`, for every demo project. The
+     results table and its OOS row compose from `results` either way, which is
+     why the unit cases were all green. */
+  const app = fakeCmcApplication();
+  await ensureCmc(app.ctx, PROGRAM, BIOTECH_SM_CMC, 'C2C-201');
+  const claimed = BIOTECH_SM_CMC.stability.filter((s) => s.shelfLife);
+  assert.ok(claimed.length > 0, 'the pack records no shelf-life claim at all');
+  assert.equal(
+    app.state.stability.filter((r) => r.shelfLife).length,
+    claimed.length,
+    'a study claiming a shelf life was recorded without it',
+  );
+});
+
+test('a study already on file without its claim is given one', async () => {
+  /* The seeder is idempotent by title, so a field added after a database was
+     seeded would never reach it: §3.2.P.8 stayed at 0% on this container's
+     database until the claim was also set on an EXISTING study. */
+  const app = fakeCmcApplication();
+  await ensureCmc(app.ctx, PROGRAM, BIOTECH_SM_CMC, 'C2C-201');
+  for (const row of app.state.stability) row.shelfLife = null;
+  await ensureCmc(app.ctx, PROGRAM, BIOTECH_SM_CMC, 'C2C-201');
+  const claimed = BIOTECH_SM_CMC.stability.filter((x) => x.shelfLife).length;
+  assert.equal(app.state.stability.filter((r) => r.shelfLife).length, claimed,
+    'a study on file without its shelf-life claim was left without one');
+});
+
+test('the recorded release results reach the register §3.2.S.4.4 and §3.2.P.5.4 read', async () => {
+  /* The seed recorded batch RECORDS and no QC results, so both sections
+     composed missing their batch analyses — the two sections whose entire
+     purpose is to carry quantitative results. */
+  const app = fakeCmcApplication();
+  await ensureCmc(app.ctx, PROGRAM, BIOTECH_SM_CMC, 'C2C-201');
+  assert.equal(app.state.qcResults.length, BIOTECH_SM_CMC.qcResults.length);
+  const sides = new Set(app.state.qcResults.map((r) => r.sampleType));
+  assert.ok(sides.has('in-process'), 'no drug-substance result, so §3.2.S.4.4 has none');
+  assert.ok(sides.has('finished-product'), 'no drug-product result, so §3.2.P.5.4 has none');
+});
+
+test('one recorded result disagrees with its own criterion, on purpose', async () => {
+  /* So the composed section states the contradiction by name rather than
+     printing "pass" — the behaviour phase 4's acceptance fixture pins, shown
+     on data a person clicks through. */
+  const contradicting = BIOTECH_SM_CMC.qcResults.filter(
+    (r) => r.disposition === 'pass' && Number(r.value) < Number(String(r.criterion).split('-')[0]),
+  );
+  assert.equal(contradicting.length, 1, 'the pack records no declared pass over a failing result');
+  assert.match(contradicting[0].observation ?? '', /investigation/i);
+});
 
 test('the seeder records the substance and the product first of all', async () => {
   const app = fakeCmcApplication();

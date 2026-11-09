@@ -107,7 +107,7 @@ export const BIOTECH_CMC = {
     { material: 'Drug product', name: `${DP} — subvisible particles`, release: '≥10 µm: ≤ 6000 per container; ≥25 µm: ≤ 600 per container', method: 'Light obscuration (USP <787>)', ich: 'ICH Q6B' },
   ],
   stability: [
-    { title: 'C2C-101 drug product — long-term, 5°C', product: DP, batch: 'C2C101-DP-2501', dosageForm: 'Solution for injection', strength: '100 mg/mL', scope: 'DP',
+    { title: 'C2C-101 drug product — long-term, 5°C', product: DP, batch: 'C2C101-DP-2501', dosageForm: 'Solution for injection', strength: '100 mg/mL', scope: 'DP', shelfLife: '36 months',
       studyType: 'long-term', storage: ['LT', '5°C ± 3°C'], duration: 36, monthsRunning: 6, timePoints: ['0', '1', '3', '6', '9', '12', '18', '24', '36'],
       parameters: ['Appearance', 'pH', 'SEC monomer', 'Potency'], notes: 'Upright and inverted orientation; primary registration lot.',
       results: [
@@ -219,7 +219,7 @@ export const BIOTECH_SM_CMC = {
     { material: 'Drug product', name: 'C2C-201 tablets — dissolution', release: 'NLT 80 % (Q) released at 30 minutes', method: 'Dissolution (USP <711>, apparatus 2)', ich: 'ICH Q6A', justification: 'Q value set from the biobatch profile.' },
   ],
   stability: [
-    { title: 'C2C-201 drug substance — long-term, 25°C/60% RH', product: 'C2C-201', batch: 'C2C201-DS-2502', dosageForm: 'Powder', strength: 'n/a', scope: 'DS',
+    { title: 'C2C-201 drug substance — long-term, 25°C/60% RH', product: 'C2C-201', batch: 'C2C201-DS-2502', dosageForm: 'Powder', strength: 'n/a', scope: 'DS', shelfLife: '24 months retest',
       studyType: 'long-term', storage: ['LT', '25°C ± 2°C / 60% ± 5% RH'], duration: 36, monthsRunning: 12, timePoints: ['0', '3', '6', '9', '12', '18', '24', '36'],
       parameters: ['Assay', 'Total impurities', 'Water content'], notes: 'Primary registration lot, double polyethylene bag in a fibre drum.',
       results: [
@@ -230,7 +230,7 @@ export const BIOTECH_SM_CMC = {
         { timePoint: '6', parameter: 'Total impurities', result: '0.18', specification: 'NMT 0.5 %' },
         { timePoint: '12', parameter: 'Total impurities', result: '0.24', specification: 'NMT 0.5 %' },
       ] },
-    { title: 'C2C-201 tablets — long-term, 25°C/60% RH', product: 'C2C-201 tablets', batch: 'C2C201-DP-2503', dosageForm: 'Film-coated tablet', strength: '15 mg', scope: 'DP',
+    { title: 'C2C-201 tablets — long-term, 25°C/60% RH', product: 'C2C-201 tablets', batch: 'C2C201-DP-2503', dosageForm: 'Film-coated tablet', strength: '15 mg', scope: 'DP', shelfLife: '18 months',
       studyType: 'long-term', storage: ['LT', '25°C ± 2°C / 60% ± 5% RH'], duration: 24, monthsRunning: 9, timePoints: ['0', '3', '6', '9', '12', '18', '24'],
       parameters: ['Assay', 'Dissolution', 'Total impurities'], notes: 'HDPE bottle, 30 count, with desiccant.',
       results: [
@@ -252,6 +252,23 @@ export const BIOTECH_SM_CMC = {
            fixture pins, shown here on demo data a person can click through. */
         { timePoint: '6', parameter: 'Total impurities', result: '0.61', specification: 'NMT 0.5 %' },
       ] },
+  ],
+  /**
+   * The recorded release results — §3.2.S.4.4 and §3.2.P.5.4's own tables.
+   *
+   * Deliberately includes a result the record DISAGREES with: DS-2502-R2 is
+   * recorded as a pass at 97.4 % against a 98.0 - 102.0 % criterion, so the
+   * composed section states the contradiction by name rather than printing
+   * "pass". That is the behaviour phase 4's acceptance fixture pins
+   * (`docs/evidence/S7/2026-11-08-phase4-acceptance-fixture/`), shown here on
+   * data a person can click through.
+   */
+  qcResults: [
+    { sampleId: 'DS-2502-R1', batch: 'C2C201-DS-2502', sampleType: 'in-process', method: 'HPLC-UV assay and related substances', value: '99.6', unit: '%', criterion: '98.0 - 102.0 %', disposition: 'pass', daysAgo: 210 },
+    { sampleId: 'DS-2502-R2', batch: 'C2C201-DS-2502', sampleType: 'in-process', method: 'HPLC-UV assay and related substances', value: '97.4', unit: '%', observation: 'retest requested; investigation INV-2026-014 open', criterion: '98.0 - 102.0 %', disposition: 'pass', daysAgo: 205 },
+    { sampleId: 'DP-2503-R1', batch: 'C2C201-DP-2503', sampleType: 'finished-product', method: 'HPLC-UV assay and related substances', value: '100.4', unit: '%', criterion: '95.0 - 105.0 %', disposition: 'pass', daysAgo: 150 },
+    { sampleId: 'DP-2503-R2', batch: 'C2C201-DP-2503', sampleType: 'finished-product', method: 'Dissolution (USP <711>, apparatus 2)', value: '93', unit: '% at 30 min', criterion: 'NLT 80 %', disposition: 'pass', daysAgo: 150 },
+    { sampleId: 'DP-2601-R1', batch: 'C2C201-DP-2601', sampleType: 'finished-product', method: 'HPLC-UV assay and related substances', value: '99.1', unit: '%', criterion: '95.0 - 105.0 %', disposition: 'pending', daysAgo: 20 },
   ],
   batches: [
     { number: 'C2C201-DS-2502', product: 'C2C-201', yieldPercent: 78, openDeviations: 0 },
