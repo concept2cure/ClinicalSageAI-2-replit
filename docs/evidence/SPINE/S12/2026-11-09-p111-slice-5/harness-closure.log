@@ -1,0 +1,2150 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T2 — an org viewer is refused every write, and nothing changes > POST /unified: 403, no task, link or ledger row written 53ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T2 — an org viewer is refused every write, and nothing changes > POST /:id/link: 403, no task, link or ledger row written 24ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T2 — an org viewer is refused every write, and nothing changes > POST /sync/:module: 403, no task, link or ledger row written 20ms
+stderr | server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /unified: a failed ledger row takes the task with it — 500 AUDIT_WRITE_FAILED, no row
+{
+  "timestamp": "2026-11-09T12:59:43.218Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "29ad05f6-b736-4aed-9dd3-7f33cb291d53",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T2 — an org viewer is refused every write, and nothing changes > PATCH /:id/status: 403, no task, link or ledger row written 23ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /unified: the task and its task.create row, on one transaction, as the session actor 44ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /unified: a failed ledger row takes the task with it — 500 AUDIT_WRITE_FAILED, no row 33ms
+stderr | server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /:id/link: a failed ledger row leaves no link and both arrays as they were
+{
+  "timestamp": "2026-11-09T12:59:43.293Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.link",
+    "taskId": "TASK-X",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /:id/link: the link, both blocking arrays and the task.link row, on one transaction 41ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /:id/link: a failed ledger row leaves no link and both arrays as they were 32ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /:id/link: another organization’s task cannot be linked (404, nothing written) 26ms
+stderr | server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /sync/:module: one failed ledger row rolls back the whole sync
+{
+  "timestamp": "2026-11-09T12:59:43.404Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "b634d3a1-2da8-47d8-a953-e3f5f059fde2",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /sync/:module: every synced task and its task.create row, on one transaction — this org’s studies only 33ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /sync/:module: another organization’s task for the same source id does not hide this org’s 24ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /sync/:module: one failed ledger row rolls back the whole sync 26ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — each write commits with its ledger row, or neither commits > POST /sync/Vault is refused (501) without reading another tenant’s approvals — nothing written 21ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > unified creation retains actual project and workspace admission > POST /unified stamps the admitted project workspace and preserves existing module defaults and metadata 27ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > unified creation retains actual project and workspace admission > POST /unified preserves a valid workspace-only task 20ms
+ × server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > unified creation retains actual project and workspace admission > POST /unified refuses inaccessible scope {"projectId":302} without task or audit changes 29ms
+   → expected 503 to be 403 // Object.is equality
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > unified creation retains actual project and workspace admission > POST /unified refuses inaccessible scope {"clientWorkspaceId":81} without task or audit changes 20ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > moves B and C, leaves D blocked on X, and records A then B, C, D — all before COMMIT 35ms
+stderr | server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > a failed ledger row for B rolls back A’s completion and every unblocking: 500, nothing changed, nobody notified
+{
+  "timestamp": "2026-11-09T12:59:43.586Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-B",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > a failed ledger row for A itself rolls A back too
+{
+  "timestamp": "2026-11-09T12:59:43.610Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-A",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > a failed ledger row for B rolls back A’s completion and every unblocking: 500, nothing changed, nobody notified 29ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > a failed ledger row for A itself rolls A back too 24ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > addressed by its numeric id, the write and its row are keyed on the business key 20ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows > another organization’s task is 404 and untouched 18ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > the transition write itself: archived rows, and one signature per gate > a task archived after PATCH read it is not moved: nothing written, no ledger row 23ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > the transition write itself: archived rows, and one signature per gate > a late signature on a completed task approves it with its ledger row, and keeps its completion time 22ms
+ ✓ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > the transition write itself: archived rows, and one signature per gate > a second signature on a gate another signer cleared meanwhile does not stack: 409, nothing written 23ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T12:59:47.771Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T12:59:50.600Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T12:59:50.602Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T12:59:50.602Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T12:59:52.261Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "613d9466-6c19-4676-9771-33d2a63cfdba",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T12:59:52.274Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "037b5763-911c-4a4f-bc16-2ca6092aa558",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T12:59:52.300Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 613d9466-6c19-4676-9771-33d2a63cfdba by a***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > before any request: the board is an honest empty queue, not an error
+{
+  "timestamp": "2026-11-09T12:59:52.331Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)
+{
+  "timestamp": "2026-11-09T12:59:52.412Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 613d9466-6c19-4676-9771-33d2a63cfdba by a***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)
+[tasking] notification failed (non-fatal): relation "mdx_notifications" does not exist
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > before any request: the board is an honest empty queue, not an error 23ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)
+{
+  "timestamp": "2026-11-09T12:59:52.445Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)
+{
+  "timestamp": "2026-11-09T12:59:52.467Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)
+{
+  "timestamp": "2026-11-09T12:59:52.498Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)
+{
+  "timestamp": "2026-11-09T12:59:52.523Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > the passage under review is the document’s own first section, and the thread is its comments
+{
+  "timestamp": "2026-11-09T12:59:52.536Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc 613d9466-6c19-4676-9771-33d2a63cfdba by r***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > the passage under review is the document’s own first section, and the thread is its comments
+{
+  "timestamp": "2026-11-09T12:59:52.566Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > another tenant never sees it
+{
+  "timestamp": "2026-11-09T12:59:52.579Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > another tenant never sees it
+{
+  "timestamp": "2026-11-09T12:59:52.591Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > filters by program, and refuses a program id that is not one
+{
+  "timestamp": "2026-11-09T12:59:52.653Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 037b5763-911c-4a4f-bc16-2ca6092aa558 by a***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > filters by program, and refuses a program id that is not one
+[tasking] notification failed (non-fatal): relation "mdx_notifications" does not exist
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested) 192ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > the passage under review is the document’s own first section, and the thread is its comments 42ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > another tenant never sees it 25ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > filters by program, and refuses a program id that is not one
+{
+  "timestamp": "2026-11-09T12:59:52.682Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > filters by program, and refuses a program id that is not one
+{
+  "timestamp": "2026-11-09T12:59:52.700Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > POST /documents/:id/review {changes_requested} → the board row changes state, and the act is in the authoring audit trail
+{
+  "timestamp": "2026-11-09T12:59:52.809Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 613d9466-6c19-4676-9771-33d2a63cfdba by r***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > POST /documents/:id/review {changes_requested} → the board row changes state, and the act is in the authoring audit trail
+[tasking] notification failed (non-fatal): relation "mdx_notifications" does not exist
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > filters by program, and refuses a program id that is not one 111ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > POST /documents/:id/review {changes_requested} → the board row changes state, and the act is in the authoring audit trail
+{
+  "timestamp": "2026-11-09T12:59:52.862Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+{
+  "timestamp": "2026-11-09T12:59:52.937Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 613d9466-6c19-4676-9771-33d2a63cfdba by a***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+[tasking] notification failed (non-fatal): relation "mdx_notifications" does not exist
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+{
+  "timestamp": "2026-11-09T12:59:52.968Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+{
+  "timestamp": "2026-11-09T12:59:52.988Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > POST /documents/:id/review {changes_requested} → the board row changes state, and the act is in the authoring audit trail 171ms
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+{
+  "timestamp": "2026-11-09T12:59:53.038Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 613d9466-6c19-4676-9771-33d2a63cfdba by r***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+{
+  "timestamp": "2026-11-09T12:59:53.073Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+{
+  "timestamp": "2026-11-09T12:59:53.092Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+{
+  "timestamp": "2026-11-09T12:59:53.111Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+{
+  "timestamp": "2026-11-09T12:59:53.121Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SUBMIT on doc 037b5763-911c-4a4f-bc16-2ca6092aa558 by a***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+{
+  "timestamp": "2026-11-09T12:59:53.145Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+{
+  "timestamp": "2026-11-09T12:59:53.163Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+{
+  "timestamp": "2026-11-09T12:59:53.185Z",
+  "level": "warn",
+  "message": "[review-board-routes] vault review queue unavailable",
+  "context": {
+    "err": "relation \"canonical_documents\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > rejects an empty workflow without transitioning the document
+{
+  "timestamp": "2026-11-09T12:59:53.191Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "8cff5b58-985e-476e-8a34-97fe8c9899da",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > refuses a foreign document and malformed workflow inputs
+{
+  "timestamp": "2026-11-09T12:59:53.202Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "4258b35c-bb7f-4c68-a2e7-d25afb7fee98",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off 241ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off 72ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > rejects an empty workflow without transitioning the document 11ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > an audit failure rolls back the workflow steps and document transition together
+{
+  "timestamp": "2026-11-09T12:59:53.220Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "be33c5bf-72ad-43cc-8610-65177834ffe0",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > an audit failure rolls back the workflow steps and document transition together
+CRITICAL: Failed to create audit trail: error: forced submit audit failure
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 147,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function reject_review_submit() line 1 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'be33c5bf-72ad-43cc-8610-65177834ffe0',
+    null,
+    'SUBMIT',
+    'author@f6.example',
+    'MEMBER,REGULATORY-AUTHOR',
+    null,
+    null,
+    null,
+    null,
+    null,
+    {
+      workflowId: '8a910e0f-21f7-4ab3-b6fd-3fc956b00fec',
+      steps: [Array]
+    },
+    '127.0.0.1',
+    'unknown',
+    '6b2a3bbb-c200-425c-a141-e4cae172ec80',
+    1,
+    '11'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > an audit failure rolls back the workflow steps and document transition together
+{
+  "timestamp": "2026-11-09T12:59:53.232Z",
+  "level": "error",
+  "message": "[authoring-router] submitting docs failed",
+  "context": {
+    "err": "forced submit audit failure",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > a second submit of a document in review adds no steps and no submit event
+{
+  "timestamp": "2026-11-09T12:59:53.239Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "5613feed-8c5e-4d7f-bd5b-3456db9da26f",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > a second submit of a document in review adds no steps and no submit event
+{
+  "timestamp": "2026-11-09T12:59:53.246Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SUBMIT on doc 5613feed-8c5e-4d7f-bd5b-3456db9da26f by a***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > refuses foreign and missing documents on read, request and verdict
+{
+  "timestamp": "2026-11-09T12:59:53.262Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "1eeced00-74fd-4a95-aaa0-de9262a6aa60",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > rejects malformed or duplicate reviewers before any request is saved
+{
+  "timestamp": "2026-11-09T12:59:53.315Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "b8c974d1-2c6b-4c4c-97a4-776db80e5ffe",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > refuses a foreign document and malformed workflow inputs 18ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > an audit failure rolls back the workflow steps and document transition together 19ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > formal review submission is atomic and recoverable > a second submit of a document in review adds no steps and no submit event 22ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > refuses foreign and missing documents on read, request and verdict 51ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > rolls back a multi-reviewer request if its second insert fails
+{
+  "timestamp": "2026-11-09T12:59:53.330Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "a29c808f-f754-4393-ba4d-50b32418ae35",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > rolls back a multi-reviewer request if its second insert fails
+{
+  "timestamp": "2026-11-09T12:59:53.348Z",
+  "level": "error",
+  "message": "[authoring-router] Authoring peer review could not be verified",
+  "context": {
+    "error": {
+      "length": 152,
+      "name": "error",
+      "severity": "ERROR",
+      "code": "P0001",
+      "where": "PL/pgSQL function reject_second_reviewer() line 1 at RAISE",
+      "file": "pl_exec.c",
+      "line": "3923",
+      "routine": "exec_stmt_raise",
+      "query": "INSERT INTO authoring_reviews\n    (id, doc_id, reviewer_id, reviewer_name, reviewer_email, review_status, requested_by, tenant_id, created_at)\n    VALUES (gen_random_uuid(), $1, $2, $3, $4, 'pending', $5, $6, NOW())\n    ON CONFLICT (doc_id, reviewer_id, tenant_id) DO UPDATE SET id=EXCLUDED.id, requested_at=clock_timestamp(),\n      requested_by=$5, reviewer_name=$3, reviewer_email=$4, review_status='pending', reviewed_at=NULL,\n      review_comments=NULL, reviewed_snapshot=NULL, reviewed_snapshot_hash=NULL, review_binding_basis=NULL,\n      updated_at=NOW() RETURNING *",
+      "params": [
+        "a29c808f-f754-4393-ba4d-50b32418ae35",
+        "31",
+        "Blake Bystander",
+        "b***@f6.example",
+        "11",
+        1
+      ]
+    }
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > records the request audit with its batch and rolls back when that audit fails
+{
+  "timestamp": "2026-11-09T12:59:53.354Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "245a2014-16f1-48a5-a402-4c9f09ba4d91",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > records the request audit with its batch and rolls back when that audit fails
+CRITICAL: Failed to create audit trail: error: forced peer audit failure
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 142,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function reject_peer_audit() line 1 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '245a2014-16f1-48a5-a402-4c9f09ba4d91',
+    null,
+    'review_requested',
+    'author@f6.example',
+    'member',
+    null,
+    null,
+    null,
+    null,
+    'Ready for medical review before the pre-IND package.',
+    {
+      reviewerIds: [Array],
+      reviewIds: [Array],
+      grants: [Array],
+      route: [Object],
+      beforeReviews: [],
+      afterReviews: [Array],
+      reopenedVerdicts: []
+    },
+    '127.0.0.1',
+    'unknown',
+    '1cb33305-384b-4a46-bfbd-79335eb38bf2',
+    1,
+    '11'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > records the request audit with its batch and rolls back when that audit fails
+{
+  "timestamp": "2026-11-09T12:59:53.415Z",
+  "level": "error",
+  "message": "[authoring-router] Authoring peer review could not be verified",
+  "context": {
+    "error": {
+      "length": 142,
+      "name": "error",
+      "severity": "ERROR",
+      "code": "P0001",
+      "where": "PL/pgSQL function reject_peer_audit() line 1 at RAISE",
+      "file": "pl_exec.c",
+      "line": "3923",
+      "routine": "exec_stmt_raise",
+      "query": "INSERT INTO authoring_audit_trail\n       (doc_id, section_id, operation_type, actor_email, actor_role,\n        before_content, after_content, content_hash_before, content_hash_after,\n        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n       RETURNING id",
+      "params": [
+        "245a2014-16f1-48a5-a402-4c9f09ba4d91",
+        null,
+        "review_requested",
+        "a***@f6.example",
+        "member",
+        null,
+        null,
+        null,
+        null,
+        "Ready for medical review before the pre-IND package.",
+        {
+          "reviewerIds": [
+            "21"
+          ],
+          "reviewIds": [
+            "0e3c0525-f7de-4230-ba8f-988cdea92768"
+          ],
+          "grants": [
+            {
+              "reviewerId": "21",
+              "granted": true,
+              "permissionId": "e9274713-f651-4e28-8d8b-87f1d219cdcd"
+            }
+          ],
+          "route": {
+            "id": "5edb2a4b-7b5d-4fb4-8955-a72b59f9a79d",
+            "added": false,
+            "timeZone": "UTC",
+            "tasks": [
+              {
+                "userId": 21,
+                "taskId": "ROUTE-5edb2a4b-21",
+                "dueDate": "2026-11-12T23:59:59.999Z"
+              }
+            ]
+          },
+          "beforeReviews": [],
+          "afterReviews": [
+            {
+              "id": "0e3c0525-f7de-4230-ba8f-988cdea92768",
+              "doc_id": "245a2014-16f1-48a5-a402-4c9f09ba4d91",
+              "reviewer_id": "21",
+              "tenant_id": 1,
+              "review_status": "pending",
+              "review_comments": null,
+              "reviewed_at": null,
+              "requested_at": "2026-11-09T12:59:53.360Z",
+              "requested_by": "11",
+              "reviewed_snapshot": null,
+              "reviewed_snapshot_hash": null,
+              "review_binding_basis": null,
+              "standing": "pending",
+              "reviewer_name": "Robin Reviewer",
+              "reviewer_email": "r***@f6.example",
+              "created_at": "2026-11-09T12:59:53.360Z",
+              "updated_at": "2026-11-09T12:59:53.360Z"
+            }
+          ],
+          "reopenedVerdicts": []
+        },
+        "127.0.0.xxx",
+        "unknown",
+        "1cb33305-384b-4a46-bfbd-79335eb38bf2",
+        1,
+        "11"
+      ]
+    }
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > records the request audit with its batch and rolls back when that audit fails
+{
+  "timestamp": "2026-11-09T12:59:53.471Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 245a2014-16f1-48a5-a402-4c9f09ba4d91 by a***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > records the request audit with its batch and rolls back when that audit fails
+[tasking] notification failed (non-fatal): relation "mdx_notifications" does not exist
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > rejects malformed or duplicate reviewers before any request is saved 18ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > rolls back a multi-reviewer request if its second insert fails 24ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > an audit failure preserves the pending review instead of saving a verdict
+{
+  "timestamp": "2026-11-09T12:59:53.486Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "d5735c81-bce5-4b81-8b7c-c449201e4bb2",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > an audit failure preserves the pending review instead of saving a verdict
+{
+  "timestamp": "2026-11-09T12:59:53.542Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc d5735c81-bce5-4b81-8b7c-c449201e4bb2 by a***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > an audit failure preserves the pending review instead of saving a verdict
+[tasking] notification failed (non-fatal): relation "mdx_notifications" does not exist
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > an audit failure preserves the pending review instead of saving a verdict
+CRITICAL: Failed to create audit trail: error: forced peer audit failure
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 142,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function reject_peer_audit() line 1 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'd5735c81-bce5-4b81-8b7c-c449201e4bb2',
+    null,
+    'document_reviewed',
+    'reviewer@f6.example',
+    'reviewer',
+    null,
+    null,
+    null,
+    null,
+    'Clarify the IND clinical rationale.',
+    {
+      review_status: 'changes_requested',
+      review_comments: 'Clarify the IND clinical rationale.',
+      request: [Object],
+      beforeReview: [Object],
+      afterReview: [Object],
+      reviewedSnapshot: [Object],
+      snapshotHash: '4ab649526ea88eae98345ff5173222ee44909cea80f41aa77ed5131e13668131',
+      bindingBasis: 'authoring-full-visible-v1'
+    },
+    '127.0.0.1',
+    'unknown',
+    '6cc81d74-0a67-4645-929b-a195777fe12b',
+    1,
+    '21'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > an audit failure preserves the pending review instead of saving a verdict
+{
+  "timestamp": "2026-11-09T12:59:53.596Z",
+  "level": "error",
+  "message": "[authoring-router] Authoring peer review could not be verified",
+  "context": {
+    "error": {
+      "length": 142,
+      "name": "error",
+      "severity": "ERROR",
+      "code": "P0001",
+      "where": "PL/pgSQL function reject_peer_audit() line 1 at RAISE",
+      "file": "pl_exec.c",
+      "line": "3923",
+      "routine": "exec_stmt_raise",
+      "query": "INSERT INTO authoring_audit_trail\n       (doc_id, section_id, operation_type, actor_email, actor_role,\n        before_content, after_content, content_hash_before, content_hash_after,\n        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n       RETURNING id",
+      "params": [
+        "d5735c81-bce5-4b81-8b7c-c449201e4bb2",
+        null,
+        "document_reviewed",
+        "r***@f6.example",
+        "reviewer",
+        null,
+        null,
+        null,
+        null,
+        "Clarify the IND clinical rationale.",
+        {
+          "review_status": "changes_requested",
+          "review_comments": "Clarify the IND clinical rationale.",
+          "request": {
+            "reviewId": "dc3069e4-db6f-4076-ad4b-38e89b882f93",
+            "requestedAt": "2026-11-09T12:59:53.494Z",
+            "snapshotHash": "4ab649526ea88eae98345ff5173222ee44909cea80f41aa77ed5131e13668131",
+            "bindingBasis": "authoring-full-visible-v1"
+          },
+          "beforeReview": {
+            "id": "dc3069e4-db6f-4076-ad4b-38e89b882f93",
+            "doc_id": "d5735c81-bce5-4b81-8b7c-c449201e4bb2",
+            "reviewer_id": "21",
+            "reviewer_name": "Robin Reviewer",
+            "reviewer_email": "r***@f6.example",
+            "review_status": "pending",
+            "review_comments": null,
+            "reviewed_snapshot": null,
+            "reviewed_snapshot_hash": null,
+            "review_binding_basis": null,
+            "reviewed_at": null,
+            "requested_at": "2026-11-09T12:59:53.494Z",
+            "requested_by": "11",
+            "tenant_id": 1,
+            "created_at": "2026-11-09T12:59:53.494Z",
+            "updated_at": "2026-11-09T12:59:53.494Z"
+          },
+          "afterReview": {
+            "id": "dc3069e4-db6f-4076-ad4b-38e89b882f93",
+            "doc_id": "d5735c81-bce5-4b81-8b7c-c449201e4bb2",
+            "reviewer_id": "21",
+            "reviewer_name": "Robin Reviewer",
+            "reviewer_email": "r***@f6.example",
+            "review_status": "changes_requested",
+            "review_comments": "Clarify the IND clinical rationale.",
+            "reviewed_snapshot": {
+              "id": "d5735c81-bce5-4b81-8b7c-c449201e4bb2",
+              "title": "Review handoff regression",
+              "locale": "en-US",
+              "module": "M2",
+              "version": null,
+              "sections": [],
+              "productCode": null
+            },
+            "reviewed_snapshot_hash": "4ab649526ea88eae98345ff5173222ee44909cea80f41aa77ed5131e13668131",
+            "review_binding_basis": "authoring-full-visible-v1",
+            "reviewed_at": "2026-11-09T12:59:53.583Z",
+            "requested_at": "2026-11-09T12:59:53.494Z",
+            "requested_by": "11",
+            "tenant_id": 1,
+            "created_at": "2026-11-09T12:59:53.494Z",
+            "updated_at": "2026-11-09T12:59:53.583Z"
+          },
+          "reviewedSnapshot": {
+            "id": "d5735c81-bce5-4b81-8b7c-c449201e4bb2",
+            "title": "Review handoff regression",
+            "module": "M2",
+            "locale": "en-US",
+            "productCode": null,
+            "version": null,
+            "sections": []
+          },
+          "snapshotHash": "4ab649526ea88eae98345ff5173222ee44909cea80f41aa77ed5131e13668131",
+          "bindingBasis": "authoring-full-visible-v1"
+        },
+        "127.0.0.xxx",
+        "unknown",
+        "6cc81d74-0a67-4645-929b-a195777fe12b",
+        1,
+        "21"
+      ]
+    }
+  }
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > records the request audit with its batch and rolls back when that audit fails 132ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > refuses the document’s author as its reviewer, and writes nothing
+{
+  "timestamp": "2026-11-09T12:59:53.606Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "ffc93289-7acc-43c8-a236-30690b90e4f9",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > grants the requested reviewer REVIEWER on the document, once, with a chained record of the grant
+{
+  "timestamp": "2026-11-09T12:59:53.624Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "18033edf-1801-46e0-9699-1b152f7e97e2",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > grants the requested reviewer REVIEWER on the document, once, with a chained record of the grant
+{
+  "timestamp": "2026-11-09T12:59:53.680Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 18033edf-1801-46e0-9699-1b152f7e97e2 by a***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > grants the requested reviewer REVIEWER on the document, once, with a chained record of the grant
+[tasking] notification failed (non-fatal): relation "mdx_notifications" does not exist
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > an audit failure preserves the pending review instead of saving a verdict 117ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > refuses the document’s author as its reviewer, and writes nothing 22ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > a requester who may not manage the document’s access records the request and is told no grant was made
+{
+  "timestamp": "2026-11-09T12:59:53.718Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "060f4230-bfbd-46c2-9789-618dd87fb193",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > a requester who may not manage the document’s access records the request and is told no grant was made
+{
+  "timestamp": "2026-11-09T12:59:53.770Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 060f4230-bfbd-46c2-9789-618dd87fb193 by b***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > a requester who may not manage the document’s access records the request and is told no grant was made
+[tasking] notification failed (non-fatal): relation "mdx_notifications" does not exist
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > grants the requested reviewer REVIEWER on the document, once, with a chained record of the grant 93ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review request names someone other than the author and gives them the review grant > a requester who may not manage the document’s access records the request and is told no grant was made 71ms
+stdout | server/services/ana-ri/__tests__/ana-task-cascade-ledger.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T12:59:56.469Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T12:59:56.470Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/ana-task-cascade-ledger.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T12:59:56.470Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/ana-task-cascade-ledger.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/ana-task-cascade-ledger.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T12:59:56.620Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/ana-task-cascade-ledger.pglite.integration.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/ana-task-cascade-ledger.pglite.integration.test.ts > AnA completes a task: its dependents move with it, on the ledger > unblocks the dependent and records its move, after the completion’s own row
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/services/ana-ri/__tests__/ana-task-cascade-ledger.pglite.integration.test.ts > AnA completes a task: its dependents move with it, on the ledger > unblocks the dependent and records its move, after the completion’s own row
+[AnA Command] Executed update_task: OK — Task 301 updated.
+
+stderr | server/services/ana-ri/__tests__/ana-task-cascade-ledger.pglite.integration.test.ts > AnA completes a task: its dependents move with it, on the ledger > a cascade that cannot finish takes the completion back with it, and says so
+[ana-ri] unified_tasks mirror update failed (non-fatal): Failed query: select "successor_task_id" from "task_dependencies" where ("task_dependencies"."predecessor_task_id" = $1 and ("task_dependencies"."is_blocking" is null or "task_dependencies"."is_blocking" = $2))
+params: TASK-PT-7-302,true
+
+stdout | server/services/ana-ri/__tests__/ana-task-cascade-ledger.pglite.integration.test.ts > AnA completes a task: its dependents move with it, on the ledger > a cascade that cannot finish takes the completion back with it, and says so
+[AnA Command] Executed update_task: OK — Task 302 updated. The task board still shows the previous state: the board change and its audit record could not be written.
+
+ ✓ server/services/ana-ri/__tests__/ana-task-cascade-ledger.pglite.integration.test.ts > AnA completes a task: its dependents move with it, on the ledger > unblocks the dependent and records its move, after the completion’s own row 61ms
+ ✓ server/services/ana-ri/__tests__/ana-task-cascade-ledger.pglite.integration.test.ts > AnA completes a task: its dependents move with it, on the ledger > a cascade that cannot finish takes the completion back with it, and says so 21ms
+stderr | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T13:00:00.800Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T13:00:01.114Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T13:00:01.115Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T13:00:01.115Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > runs the actual checker and exposes the authoritative receipt, without accepting caller findings or stale bytes
+{
+  "timestamp": "2026-11-09T13:00:04.419Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b153d7cd-18fb-4307-87d0-91cba603a517 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > runs the actual checker and exposes the authoritative receipt, without accepting caller findings or stale bytes
+{
+  "timestamp": "2026-11-09T13:00:04.588Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: INDEPENDENT_CHECK_INIT on doc b153d7cd-18fb-4307-87d0-91cba603a517 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > runs the actual checker and exposes the authoritative receipt, without accepting caller findings or stale bytes
+{
+  "timestamp": "2026-11-09T13:00:04.592Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: INDEPENDENT_CHECK_RECORDED on doc b153d7cd-18fb-4307-87d0-91cba603a517 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > runs the actual checker and exposes the authoritative receipt, without accepting caller findings or stale bytes
+{
+  "timestamp": "2026-11-09T13:00:04.600Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc b153d7cd-18fb-4307-87d0-91cba603a517 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > runs the actual checker and exposes the authoritative receipt, without accepting caller findings or stale bytes
+{
+  "timestamp": "2026-11-09T13:00:04.718Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: INDEPENDENT_CHECK_RECORDED on doc b153d7cd-18fb-4307-87d0-91cba603a517 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > holds /freeze before credential verification or signature writes when the saved proof is stale
+{
+  "timestamp": "2026-11-09T13:00:04.757Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8c55f0f5-ccc1-4f7c-8100-150b42a06158 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > holds /freeze before credential verification or signature writes when the saved proof is stale
+{
+  "timestamp": "2026-11-09T13:00:04.830Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: INDEPENDENT_CHECK_INIT on doc 8c55f0f5-ccc1-4f7c-8100-150b42a06158 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > holds /freeze before credential verification or signature writes when the saved proof is stale
+{
+  "timestamp": "2026-11-09T13:00:04.832Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: INDEPENDENT_CHECK_RECORDED on doc 8c55f0f5-ccc1-4f7c-8100-150b42a06158 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > holds /freeze before credential verification or signature writes when the saved proof is stale
+{
+  "timestamp": "2026-11-09T13:00:04.839Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 8c55f0f5-ccc1-4f7c-8100-150b42a06158 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > runs the actual checker and exposes the authoritative receipt, without accepting caller findings or stale bytes 346ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > holds /e-sign before credential verification or signature writes when the saved proof is stale
+{
+  "timestamp": "2026-11-09T13:00:04.864Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc da701214-58dc-4185-b5ab-4e2ed073d89b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > holds /e-sign before credential verification or signature writes when the saved proof is stale
+{
+  "timestamp": "2026-11-09T13:00:04.931Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: INDEPENDENT_CHECK_INIT on doc da701214-58dc-4185-b5ab-4e2ed073d89b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > holds /e-sign before credential verification or signature writes when the saved proof is stale
+{
+  "timestamp": "2026-11-09T13:00:04.933Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: INDEPENDENT_CHECK_RECORDED on doc da701214-58dc-4185-b5ab-4e2ed073d89b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > holds /e-sign before credential verification or signature writes when the saved proof is stale
+{
+  "timestamp": "2026-11-09T13:00:04.939Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc da701214-58dc-4185-b5ab-4e2ed073d89b by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > holds /freeze before credential verification or signature writes when the saved proof is stale 107ms
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > saved independent checks through the mounted native HTTP workflow > holds /e-sign before credential verification or signature writes when the saved proof is stale 114ms
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > bound human review — old native-route security regressions > refuses an unassigned direct verdict without creating a review or audit 27ms
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > bound human review — old native-route security regressions > refuses an original author deciding their own document directly 26ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > bound human review — old native-route security regressions > resolves reviewer names and emails from actual membership instead of the supplied label
+{
+  "timestamp": "2026-11-09T13:00:05.113Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 1fc14ba7-5eb5-4ac7-8ecb-4ada14bd89b8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > a native heading-only writer remains a protected contributor > refuses the actual secondary title writer at request and verdict gates without changing the original author
+{
+  "timestamp": "2026-11-09T13:00:05.140Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: RENAME on doc 47abc18e-5bc9-49d6-af6e-6afc1cd4dec0 by s***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > bound human review — old native-route security regressions > returns complete bound context and does not count a legacy unbound approval as current 34ms
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > bound human review — old native-route security regressions > resolves reviewer names and emails from actual membership instead of the supplied label 61ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an in-progress review task is completed, with its task.transition row naming the verdict
+{
+  "timestamp": "2026-11-09T13:00:05.286Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 101cf35c-e05e-4b6d-8557-ec01d6c9d311 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > a native heading-only writer remains a protected contributor > refuses the actual secondary title writer at request and verdict gates without changing the original author 92ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an in-progress review task is completed, with its task.transition row naming the verdict
+{
+  "timestamp": "2026-11-09T13:00:05.369Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 101cf35c-e05e-4b6d-8557-ec01d6c9d311 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a pending review task is started, then completed: two legal moves, two ledger rows, the reviewer’s reason on each
+{
+  "timestamp": "2026-11-09T13:00:05.480Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 86b4c96c-69cd-49e7-a23a-9f66ec5bcd5e by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an in-progress review task is completed, with its task.transition row naming the verdict 182ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a pending review task is started, then completed: two legal moves, two ledger rows, the reviewer’s reason on each
+{
+  "timestamp": "2026-11-09T13:00:05.542Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 86b4c96c-69cd-49e7-a23a-9f66ec5bcd5e by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > only this reviewer’s open review task on this document moves
+{
+  "timestamp": "2026-11-09T13:00:05.638Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 1c65ad4e-ed7d-42e1-a6e0-0017548c00c2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > only this reviewer’s open review task on this document moves
+{
+  "timestamp": "2026-11-09T13:00:05.702Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 1c65ad4e-ed7d-42e1-a6e0-0017548c00c2 by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a pending review task is started, then completed: two legal moves, two ledger rows, the reviewer’s reason on each 179ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an approval-gated task is left open: completing it is the reviewer’s signature, which a verdict is not
+{
+  "timestamp": "2026-11-09T13:00:05.794Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 4599165e-3a4b-4134-8421-adba8ff2cb9d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an approval-gated task is left open: completing it is the reviewer’s signature, which a verdict is not
+{
+  "timestamp": "2026-11-09T13:00:05.842Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 4599165e-3a4b-4134-8421-adba8ff2cb9d by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > only this reviewer’s open review task on this document moves 152ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — dependency and atomic rollback guards > a blocked dependent review stays open while its unfinished predecessor is retained
+{
+  "timestamp": "2026-11-09T13:00:05.901Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc f93154cc-6aac-4ac4-8be2-47aaa65d0ff1 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — dependency and atomic rollback guards > a blocked dependent review stays open while its unfinished predecessor is retained
+{
+  "timestamp": "2026-11-09T13:00:05.945Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc f93154cc-6aac-4ac4-8be2-47aaa65d0ff1 by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an approval-gated task is left open: completing it is the reviewer’s signature, which a verdict is not 124ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — dependency and atomic rollback guards > a verdict with no review task is recorded exactly as before
+{
+  "timestamp": "2026-11-09T13:00:06.002Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 91f37d07-a26f-4b40-8a61-3cd505e969c7 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — dependency and atomic rollback guards > a verdict with no review task is recorded exactly as before
+{
+  "timestamp": "2026-11-09T13:00:06.044Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 91f37d07-a26f-4b40-8a61-3cd505e969c7 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — dependency and atomic rollback guards > the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded
+{
+  "timestamp": "2026-11-09T13:00:06.099Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 83e01ac5-c77f-4fb8-bfb6-ebf77e57d27c by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — dependency and atomic rollback guards > a blocked dependent review stays open while its unfinished predecessor is retained 103ms
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — dependency and atomic rollback guards > a verdict with no review task is recorded exactly as before 97ms
+stderr | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — dependency and atomic rollback guards > the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded
+{
+  "timestamp": "2026-11-09T13:00:06.135Z",
+  "level": "error",
+  "message": "[authoring-router] Authoring peer review could not be verified",
+  "context": {
+    "error": {
+      "length": 115,
+      "name": "error",
+      "severity": "ERROR",
+      "code": "42P01",
+      "position": "840",
+      "file": "parse_relation.c",
+      "line": "1469",
+      "routine": "parserOpenTable",
+      "query": "\n  SELECT t.review_route_id::text AS route_id, t.task_id, t.assignee_id, t.assignee_name, t.review_role, t.review_step,\n         t.route_signature_id, t.route_act_id, t.due_date, act.command AS act_command,\n         asig.id::text AS asig_id, asig.doc_id::text AS asig_doc_id, asig.signer_name AS asig_signer_name,\n         asig.meaning AS asig_meaning, asig.content_hash AS asig_content_hash, asig.signed_at AS asig_signed_at,\n         (asig.id IS NOT NULL AND lower(asig.signer_email) = lower(au.email)) AS asig_by_assignee\n    FROM unified_tasks t\n    LEFT JOIN authoring_signatures asig ON asig.id = t.route_authoring_signature_id AND asig.tenant_id = $1\n    LEFT JOIN organization_users aou ON asig.id IS NOT NULL AND aou.organization_id = $1 AND aou.user_id = t.assignee_id\n    LEFT JOIN users au ON au.id = aou.user_id\n    LEFT JOIN c2c_ana_actions act ON act.id = t.route_act_id AND act.org_id = $1\n   WHERE t.organization_id = $1 AND t.review_route_id = ANY($2::uuid[]) AND t.deleted_at IS NULL\n   ORDER BY t.review_step, t.id FOR UPDATE OF t",
+      "params": [
+        1,
+        [
+          "c887bde6-7ac2-4955-8c74-a76563c1665c"
+        ]
+      ]
+    }
+  }
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments
+{
+  "timestamp": "2026-11-09T13:00:06.189Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc b00780dd-0ed0-4d2e-ab73-dcefcaa66d99 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments
+{
+  "timestamp": "2026-11-09T13:00:06.261Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc b00780dd-0ed0-4d2e-ab73-dcefcaa66d99 by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — dependency and atomic rollback guards > the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded 85ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments
+{
+  "timestamp": "2026-11-09T13:00:06.376Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc b00780dd-0ed0-4d2e-ab73-dcefcaa66d99 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it
+{
+  "timestamp": "2026-11-09T13:00:06.475Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc d6429419-29d5-4e11-9a52-355ab67d4430 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it
+{
+  "timestamp": "2026-11-09T13:00:06.528Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc d6429419-29d5-4e11-9a52-355ab67d4430 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it
+{
+  "timestamp": "2026-11-09T13:00:06.619Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc d6429419-29d5-4e11-9a52-355ab67d4430 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments 268ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+{
+  "timestamp": "2026-11-09T13:00:06.690Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 30b43ddb-2922-40f1-9e5a-742a9487cf8c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+{
+  "timestamp": "2026-11-09T13:00:06.760Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 30b43ddb-2922-40f1-9e5a-742a9487cf8c by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it 227ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+{
+  "timestamp": "2026-11-09T13:00:06.849Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 30b43ddb-2922-40f1-9e5a-742a9487cf8c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+{
+  "timestamp": "2026-11-09T13:00:06.906Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 30b43ddb-2922-40f1-9e5a-742a9487cf8c by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > request connection and uncertain commit remain honest at the native boundary > refuses a missing request database client while the shared pool is healthy
+{
+  "timestamp": "2026-11-09T13:00:06.986Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc a9635fb7-f93e-4efc-a0fc-a966cbf06d75 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > request connection and uncertain commit remain honest at the native boundary > refuses a missing request database client while the shared pool is healthy
+{
+  "timestamp": "2026-11-09T13:00:07.017Z",
+  "level": "error",
+  "message": "[authoring-router] Authoring peer review could not be verified",
+  "context": {
+    "error": {
+      "code": "REQUEST_DB_CONTEXT_REQUIRED",
+      "statusCode": 500,
+      "name": "MissingRequestDbContextError"
+    }
+  }
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > request connection and uncertain commit remain honest at the native boundary > reports an uncertain COMMIT safely without notifying, even when that commit reached Postgres
+{
+  "timestamp": "2026-11-09T13:00:07.074Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 231297f8-8590-446a-91ec-07c94ae5c7e0 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second 296ms
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > request connection and uncertain commit remain honest at the native boundary > refuses a missing request database client while the shared pool is healthy 90ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > request connection and uncertain commit remain honest at the native boundary > reports an uncertain COMMIT safely without notifying, even when that commit reached Postgres
+{
+  "timestamp": "2026-11-09T13:00:07.134Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 231297f8-8590-446a-91ec-07c94ae5c7e0 by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > request connection and uncertain commit remain honest at the native boundary > reports an uncertain COMMIT safely without notifying, even when that commit reached Postgres 161ms
+stderr | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+{
+  "timestamp": "2026-11-09T13:00:07.997Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+{
+  "timestamp": "2026-11-09T13:00:08.333Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T13:00:08.333Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+{
+  "timestamp": "2026-11-09T13:00:08.333Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+✅ Template tables initialized
+
+stderr | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+{
+  "timestamp": "2026-11-09T13:00:11.692Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "b809378c-cf31-43fc-9d4e-9b4651b76224",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts
+{
+  "timestamp": "2026-11-09T13:00:11.730Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b809378c-cf31-43fc-9d4e-9b4651b76224 by a***@contract.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > request → list → submit → list, all 200 rather than 42P01
+{
+  "timestamp": "2026-11-09T13:00:11.829Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc b809378c-cf31-43fc-9d4e-9b4651b76224 by a***@contract.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > request → list → submit → list, all 200 rather than 42P01
+{
+  "timestamp": "2026-11-09T13:00:11.942Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc b809378c-cf31-43fc-9d4e-9b4651b76224 by r***@contract.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > re-requesting the same reviewer updates the row instead of duplicating it
+{
+  "timestamp": "2026-11-09T13:00:12.061Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc b809378c-cf31-43fc-9d4e-9b4651b76224 by r***@contract.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > request → list → submit → list, all 200 rather than 42P01 246ms
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > re-requesting the same reviewer updates the row instead of duplicating it
+{
+  "timestamp": "2026-11-09T13:00:12.153Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc b809378c-cf31-43fc-9d4e-9b4651b76224 by a***@contract.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > who requested the review comes from the JWT, not from x-user-name
+{
+  "timestamp": "2026-11-09T13:00:12.232Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc b809378c-cf31-43fc-9d4e-9b4651b76224 by r***@contract.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > who requested the review comes from the JWT, not from x-user-name
+{
+  "timestamp": "2026-11-09T13:00:12.316Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc b809378c-cf31-43fc-9d4e-9b4651b76224 by a***@contract.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > re-requesting the same reviewer updates the row instead of duplicating it 202ms
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > a comment carries its author, so the read path shows a person
+{
+  "timestamp": "2026-11-09T13:00:12.410Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc b809378c-cf31-43fc-9d4e-9b4651b76224 by r***@contract.example",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > a reply threads to its parent
+{
+  "timestamp": "2026-11-09T13:00:12.427Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: reply_added on doc b809378c-cf31-43fc-9d4e-9b4651b76224 by a***@contract.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > who requested the review comes from the JWT, not from x-user-name 143ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > a foreign reviewer cannot be assigned or granted access by supplied labels 52ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > an empty reviewer list is refused rather than silently doing nothing 2ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > document review > another tenant cannot read this document's reviews 7ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > the Part 11 audit read-back returns what the writers write > GET /docs/:docId/audit surfaces the ledger the mutations populate 8ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > the Part 11 audit read-back returns what the writers write > another tenant's audit read returns nothing 3ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > a comment carries its author, so the read path shows a person 15ms
+stdout | tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > resolving a comment returns 200 — it used to 500 after saving the change
+{
+  "timestamp": "2026-11-09T13:00:12.446Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_resolved on doc b809378c-cf31-43fc-9d4e-9b4651b76224 by a***@contract.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > a reply threads to its parent 14ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > the comment lands in the audit trail, not a second activity table 6ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > comments: one write path, attributed, and in the one ledger > resolving a comment returns 200 — it used to 500 after saving the change 18ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > the deleted orphan surfaces stay deleted > no handler is registered for any of them 24ms
+ ✓ tests/schema-contract/authoring-review-audit-comment.contract.test.ts > the deleted orphan surfaces stay deleted > and their tables are named nowhere in the router 27ms
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T13:00:13.325Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T13:00:13.602Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T13:00:13.602Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T13:00:13.602Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T13:00:16.904Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9ffdb43a-380e-4300-b39f-954e38466d66 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T13:00:16.922Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9ffdb43a-380e-4300-b39f-954e38466d66 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T13:00:16.935Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9ffdb43a-380e-4300-b39f-954e38466d66 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > returns the saved project on the document detail used for creation recovery 32ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign 24ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not 26ms
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no document grant cannot read its metadata and still cannot send it for review
+{
+  "timestamp": "2026-11-09T13:00:17.146Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "7",
+    "method": "POST",
+    "path": "/authoring/documents/9ffdb43a-380e-4300-b39f-954e38466d66/request-review",
+    "action": "edit",
+    "docId": "9ffdb43a-380e-4300-b39f-954e38466d66",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a Reviewer grant with a signing role may apply the review signature, and still not the approval 53ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a FROZEN document can still be filed to the vault — the sealed record is what filing is for 26ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > an unavailable read permission store refuses before returning private metadata or ceremony hints 11ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no document grant cannot read its metadata and still cannot send it for review 18ms
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through
+{
+  "timestamp": "2026-11-09T13:00:17.336Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: INDEPENDENT_CHECK_INIT on doc 9ffdb43a-380e-4300-b39f-954e38466d66 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through
+{
+  "timestamp": "2026-11-09T13:00:17.339Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: INDEPENDENT_CHECK_RECORDED on doc 9ffdb43a-380e-4300-b39f-954e38466d66 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through
+{
+  "timestamp": "2026-11-09T13:00:17.348Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 9ffdb43a-380e-4300-b39f-954e38466d66 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through
+[tasking] notification failed (non-fatal): relation "mdx_notifications" does not exist
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > on a FROZEN document even its owner is told why not 29ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through 191ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > current membership composes with editor access > a current viewer with retained OWNER and AUTHOR grants reads the document with editing refused 25ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > current QMS standing composes with document permissions > routes a linked draft signature through Quality and refuses content and assignment once under review 48ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > current QMS standing composes with document permissions > keeps a QMS store read failure visible and refuses the affected acts 22ms
+stderr | server/routes/__tests__/authoring-record-attribution.pglite.test.ts
+{
+  "timestamp": "2026-11-09T13:00:18.222Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts
+{
+  "timestamp": "2026-11-09T13:00:18.486Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T13:00:18.487Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-record-attribution.pglite.test.ts
+{
+  "timestamp": "2026-11-09T13:00:18.487Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 1 — a decision on a document this tenant does not have > the same decision on this tenant’s own document is recorded (the control)
+{
+  "timestamp": "2026-11-09T13:00:21.531Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: tracked_change_decision on doc 3c7858dd-138b-406f-8327-e61e2e372a7c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > a section reorder (on the transaction): actor on the trail row and the chained row; no reason
+{
+  "timestamp": "2026-11-09T13:00:21.552Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REORDER_SECTIONS on doc 4b226181-c4c6-4558-8c8f-d6ebe821a044 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > a review stating why (standalone): the actor on both rows, and the reviewer’s words as the reason
+{
+  "timestamp": "2026-11-09T13:00:21.638Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc daa72e3e-7199-4e09-b5c6-c38a61e443b9 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 1 — a decision on a document this tenant does not have > an id that names no document: 404 for single and bulk, and nothing is written 37ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 1 — a decision on a document this tenant does not have > another tenant’s document: 404 for single and bulk, and nothing is written 19ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 1 — a decision on a document this tenant does not have > the same decision on this tenant’s own document is recorded (the control) 19ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > a section reorder (on the transaction): actor on the trail row and the chained row; no reason 17ms
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > a review stating why (standalone): the actor on both rows, and the reviewer’s words as the reason
+{
+  "timestamp": "2026-11-09T13:00:21.711Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc daa72e3e-7199-4e09-b5c6-c38a61e443b9 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > an approval with no comment: the actor, and no reason at all
+{
+  "timestamp": "2026-11-09T13:00:21.790Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc c1ace8ff-708e-4975-b1d2-31a2f05056fc by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > an approval with no comment: the actor, and no reason at all
+{
+  "timestamp": "2026-11-09T13:00:21.838Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc c1ace8ff-708e-4975-b1d2-31a2f05056fc by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > a review stating why (standalone): the actor on both rows, and the reviewer’s words as the reason 180ms
+stderr | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > the document's owner, and the organization's audit reader, read and export it
+[audited-export] tenant chain walk failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 4 — the session a trail row names is the token's, not a header > records the verified token's sid, and ignores a caller-sent x-session-id
+{
+  "timestamp": "2026-11-09T13:00:21.911Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REORDER_SECTIONS on doc 0463c9c7-d043-4a35-b9e2-fbb414c5eca9 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > an approval with no comment: the actor, and no reason at all 112ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > no row anywhere carries the reason "Legacy audit event" 1ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > a member with no grant on the document: 403 on the read and the export, and nothing is exported 12ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > a VIEWER grant reads the trail but may not export it; a revoked grant reads nothing 14ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > the document's owner, and the organization's audit reader, read and export it 20ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > another organization's document, or an id that is not one: 404 either way 6ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 4 — the session a trail row names is the token's, not a header > records the verified token's sid, and ignores a caller-sent x-session-id 13ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for 0ms
+stderr | server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T13:00:24.620Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > moves B and C, leaves D blocked, and records every dependent whose record changed 61ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > writes every ledger row inside the completion’s transaction, after every task-row UPDATE (lock order) 25ms
+stderr | server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > a cascade that cannot be recorded or completed rolls the completion back > a failed ledger row for B rolls back A’s completion and B’s unblocking: 500, nothing changed, nobody notified
+{
+  "timestamp": "2026-11-09T13:00:24.881Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-B",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > a cascade that cannot be recorded or completed rolls the completion back > a database failure inside the cascade is a rolled-back completion and an honest 500, not a 400 over a committed one
+Error updating task: DrizzleQueryError: Failed query: select "successor_task_id" from "task_dependencies" where ("task_dependencies"."predecessor_task_id" = $1 and ("task_dependencies"."is_blocking" is null or "task_dependencies"."is_blocking" = $2))
+params: TASK-A,true
+    at PglitePreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at PglitePreparedQuery.execute (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pglite/session.js:70:20)
+    at unblockDependents (/home/user/ClinicalSageAI-2-replit/server/services/tasking/task-side-effects.ts:196:26)
+    at cascadeUnblockOnCompletionInTx (/home/user/ClinicalSageAI-2-replit/server/services/tasking/task-side-effects.ts:116:3)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:581:13
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:1740 {
+  query: 'select "successor_task_id" from "task_dependencies" where ("task_dependencies"."predecessor_task_id" = $1 and ("task_dependencies"."is_blocking" is null or "task_dependencies"."is_blocking" = $2))',
+  params: [ 'TASK-A', true ],
+  cause: error: relation "task_dependencies" does not exist
+      at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+      at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+      at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+      at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+      at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+    length: 116,
+    severity: 'ERROR',
+    code: '42P01',
+    detail: undefined,
+    hint: undefined,
+    position: '33',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_relation.c',
+    line: '1469',
+    routine: 'parserOpenTable',
+    query: 'select "successor_task_id" from "task_dependencies" where ("task_dependencies"."predecessor_task_id" = $1 and ("task_dependencies"."is_blocking" is null or "task_dependencies"."is_blocking" = $2))',
+    params: [ 'TASK-A', true ],
+    queryOptions: { rowMode: 'array', parsers: [Object] }
+  }
+}
+
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > lists the completion before the unblocking it caused: A, then B, C, D 22ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > locks every dependent in ONE statement, in task-id order, whichever linkage system names it 24ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > sends the unblock and completion notifications only after COMMIT 19ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > a cascade that cannot be recorded or completed rolls the completion back > a failed ledger row for B rolls back A’s completion and B’s unblocking: 500, nothing changed, nobody notified 24ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > a cascade that cannot be recorded or completed rolls the completion back > a database failure inside the cascade is a rolled-back completion and an honest 500, not a 400 over a committed one 24ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > an archived task is out of the cascade’s reach, and out of PATCH’s > leaves an archived blocked dependent as it was: no move, no ledger row, no notification 19ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > an archived task is out of the cascade’s reach, and out of PATCH’s > a task archived after PATCH read it is not completed: 409 CONFLICT_STALE, nothing written 15ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > the callers with no transaction of their own keep the old behaviour > runs on db, notifies inline, and writes no ledger row 16ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > the callers with no transaction of their own keep the old behaviour > never re-writes an archived dependent there either 12ms
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-11-09T13:00:27.539Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "project_tasks",
+    "reason": "42P01: relation \"project_tasks\" does not exist"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-11-09T13:00:27.541Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "c2c_project_work_items",
+    "reason": "42P01: relation \"c2c_project_work_items\" does not exist"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-11-09T13:00:27.542Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "estar_submissions",
+    "reason": "42P01: relation \"estar_submissions\" does not exist"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > a task raised on a Vault version’s lifecycle record: its program’s project, in the caller’s organisation only (RR1a) 308ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > a review raised on an authoring document: its program’s project record 2ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > only within the caller’s organisation 2ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > nothing for a document with no program, an unanchored program, another source kind or a malformed id 3ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > is on the applier, before the tenant sweeps, and drops nothing 1ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the walk’s task 19 is recorded on TOLV’s project; nothing else moves 16ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > Rule 1: a second deploy changes nothing 20ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project 38ms
+ ✓ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified task writers refuse a review route member (B1) > PATCH /:id/status: 409, unchanged, no ledger row 50ms
+ ✓ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified task writers refuse a review route member (B1) > POST /:id/link from the route member: 409, no link, neither blocking array written 35ms
+ ✓ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified task writers refuse a review route member (B1) > POST /:id/link to the route member: 409, no link, neither blocking array written 28ms
+ ✓ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified create paths refuse route columns (M9) > POST /unified naming reviewRouteId: 400, no task, no ledger row 20ms
+ ✓ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified create paths refuse route columns (M9) > createUnifiedTask, called directly with a route column, refuses and inserts nothing 15ms
+ ✓ server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts > the unified create paths refuse route columns (M9) > a module sync (insert-only) leaves the route member as it was 22ms
+ ✓ server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > the due-date sweep (B11) > does not remind a blocked route member; reminds an open one and an ordinary blocked task 302ms
+ ✓ server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > my work (B11) > reports a blocked route member as waiting, outside the overdue and due-soon triage 8ms
+ ✓ server/jobs/__tests__/taskDueSweep-route.pglite.test.ts > my work (B11) > says which items are route members, so the tray opens them where the route is acted on (RR1b) 7ms
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T13:00:33.565Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T13:00:33.599Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T13:00:33.600Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-09T13:00:33.600Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > each reach the board naming its creator, with a task.create row, in the order raised
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > when the ledger cannot be written, nothing is raised and nothing is answered "created"
+{
+  "timestamp": "2026-11-09T13:00:35.907Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "338fc3fa-c69d-4cb6-872f-d63b18b4ed7c",
+    "err": "Failed query: INSERT INTO c2c_ana_actions\n       (id, org_id, domain, surface, command, target, risk, payload,\n        agentic_mode, state, proposed_at, proposed_by,\n        decided_at, decided_by, decision_reason,\n        executed_at, audit_row_id, idempotency_key)\n     VALUES ($1, $2, $3, $4, $5, $6, $7, $8,\n             $9, $10, $11, $12,\n             $13, $14, $15,\n             $16, $17, $18)\nparams: act_64e52c43da0b48f59d7dd84133f90aab,7,tasking,tasking-api,task.create,task:338fc3fa-c69d-4cb6-872f-d63b18b4ed7c,low,{\"moduleType\":\"Biostatistics\",\"title\":\"Complete the design: effect size\",\"priority\":\"high\",\"status\":\"pending\",\"sourceEntityType\":\"study_design\",\"sourceEntityId\":\"study-bx-204\",\"blueprintKey\":\"design-gap:effectSize\",\"summary\":\"Raised from the biostatistics assessment of \\\"A phase 3 study of Drug X in type 2 diabetes\\\" (Blocking design gap)\"},suggest,executed,2026-11-09T13:00:35.904Z,5,2026-11-09T13:00:35.904Z,5,Raised at the design review.,2026-11-09T13:00:35.904Z,8723352f-694d-423c-9454-a24b4f4997b6,"
+  }
+}
+
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > with no creator to name, nothing is raised
+{
+  "timestamp": "2026-11-09T13:00:35.916Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 7,
+    "hasUserId": false,
+    "taskId": "1719cfe3-329f-42d1-ba1f-20eb4bf6b87c",
+    "command": "task.create"
+  }
+}
+
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > the design proposes at least two tasks (the cases below need a selection of more than one) 5ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > each reach the board naming its creator, with a task.create row, in the order raised 79ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > when the ledger cannot be written, nothing is raised and nothing is answered "created" 14ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > with no creator to name, nothing is raised 8ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > a task that cannot be written takes the ones before it back: all or none 16ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > the reason a raised task records > is null when the request states none; what happened is the summary 49ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > the reason a raised task records > is the stated reason, verbatim and trimmed 51ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > the stored run behind the planned N > is a failed read, not "none", while the run table cannot be read 2ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > the stored run behind the planned N > is the latest run of this organization for the design and the purpose, with the N its stored outputs give 18ms
+stdout | server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts
+   ✓ tasks+approvals: 12 unified tasks seeded
+
+stdout | server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts
+   ⚠ unified_documents not found — skipping
+   ⚠ workflow_templates not found — skipping
+   ⚠ workflow_steps not found — skipping
+   ⚠ document_workflows not found — skipping
+   ⚠ workflow_approvals not found — skipping
+   ⚠ approval workflow seed skipped (unified_workflow tables absent)
+
+stdout | server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts
+   ✓ task-graph: 4 tasks, 7 dependency edges, 2 archived, 16 anchored to project 9
+   ✓ task-graph: ga-demo-utask-007 has TWO blocking predecessors — completing either alone leaves it blocked (cascade reverse-edge read)
+
+stdout | server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > idempotency > re-running both seed modules writes nothing new
+   ✓ tasks+approvals: 12 unified tasks seeded
+
+stdout | server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > idempotency > re-running both seed modules writes nothing new
+   ⚠ unified_documents not found — skipping
+   ⚠ workflow_templates not found — skipping
+   ⚠ workflow_steps not found — skipping
+   ⚠ document_workflows not found — skipping
+   ⚠ workflow_approvals not found — skipping
+   ⚠ approval workflow seed skipped (unified_workflow tables absent)
+
+stdout | server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > idempotency > re-running both seed modules writes nothing new
+   ✓ task-graph: 0 tasks, 0 dependency edges
+   ✓ task-graph: ga-demo-utask-007 has TWO blocking predecessors — completing either alone leaves it blocked (cascade reverse-edge read)
+
+ ✓ server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > seed shape > writes the dependency edges over the tasks module 20 seeded 3ms
+ ✓ server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > seed shape > org-stamps every edge on the column the write path populates 1ms
+ ✓ server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > seed shape > leaves every edge status "active" — the cascade never writes "satisfied" 1ms
+ ✓ server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > seed shape > never pairs a blocking edge with a non-blocked successor 1ms
+ ✓ server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > archive + e-signature examples > archives exactly the superseded rows, and the live read excludes them 2ms
+ ✓ server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > archive + e-signature examples > stores a §11.50 manifestation in the shape task-signoff.ts writes 2ms
+ ✓ server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > archive + e-signature examples > anchors the demo tasks to a project so the critical-path read is not empty 1ms
+ ✓ server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > the real unblock cascade over the seeded fan-in > starts with 007 blocked behind two blocking predecessors 1ms
+ ✓ server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > the real unblock cascade over the seeded fan-in > does NOT wake 007 when only the first predecessor completes 36ms
+ ✓ server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > the real unblock cascade over the seeded fan-in > wakes 007 once the second predecessor completes too 8ms
+ ✓ server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > the real unblock cascade over the seeded fan-in > ignores non-blocking edges — 003 is untouched by its predecessors completing 3ms
+ ✓ server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > idempotency > re-running both seed modules writes nothing new 27ms
+ ✓ server/services/tasking/__tests__/seed-task-graph.pglite.integration.test.ts > idempotency > does not resurrect an archived row on re-run 1ms
+ ✓ server/services/tasking/__tests__/my-work.pglite.test.ts > readMyWork — the caller’s open tasks, each with its project’s name > two tasks with the same title are told apart by their projects 10ms
+ ✓ server/services/tasking/__tests__/my-work.pglite.test.ts > readMyWork — the caller’s open tasks, each with its project’s name > no name for a task with no project, and never another organisation’s 4ms
+ ✓ server/services/tasking/__tests__/my-work.pglite.test.ts > readMyWork — the caller’s open tasks, each with its project’s name > selects only the caller’s open, undeleted tasks in their organisation: due first, then newest assigned 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts > unified creation retains actual project and workspace admission > POST /unified refuses inaccessible scope {"projectId":302} without task or audit changes
+AssertionError: expected 503 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 503
+
+ ❯ server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts:405:24
+    403|     const before = await snapshot();
+    404|     const res = await request(app).post(`${BASE}/unified`).send({ modu…
+    405|     expect(res.status).toBe(403); expect(res.body.code).toBe('TASK_PRO…
+       |                        ^
+    406|     expect(await snapshot()).toEqual(before); expect(h.log).toEqual(['…
+    407|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 13 passed (14)
+      Tests  1 failed | 158 passed (159)
+   Start at  12:59:39
+   Duration  61.35s (transform 8.03s, setup 207ms, import 12.71s, tests 46.94s, environment 1ms)
+
