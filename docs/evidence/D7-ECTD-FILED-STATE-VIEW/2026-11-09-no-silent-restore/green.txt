@@ -1,0 +1,5 @@
+# Green at 92c984c2f + this change, 2026-11-09T05:36:21Z
+# every compile route test, and every test that imports the route:
+# npx vitest run tests/routes/ectd-compile-5xx-containment.test.ts tests/routes/ectd-compile-dtd-evidence.test.ts tests/routes/ectd-compile-evalidator-import.test.ts tests/routes/ectd-compile-ident.test.ts tests/routes/ectd-compile-lifecycle.test.ts tests/routes/ectd-compile-placement.test.ts tests/routes/ectd-compile-recorded-type.test.ts tests/routes/ectd-compile-sent-sequence.test.ts tests/routes/ectd-compile-sequence.test.ts tests/routes/ectd-compile-spine.test.ts tests/routes/ectd-compile-vault-uuid.test.ts  server/services/__tests__/conversion-capacity-compile-http.test.ts server/services/submission-service/__tests__/class-project-never-an-application.test.ts client/src/concept2cure/v2/__tests__/ectdCompileRecordedType.test.tsx client/src/concept2cure/v2/__tests__/ectdCompileCarriesSequence.test.tsx 
+ Test Files  15 passed (15)
+      Tests  198 passed (198)
