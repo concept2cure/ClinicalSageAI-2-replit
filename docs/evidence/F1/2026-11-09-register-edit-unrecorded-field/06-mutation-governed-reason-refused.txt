@@ -1,0 +1,4 @@
+ × server/services/cmc/__tests__/unrecorded-register-fields.test.ts > a field the register has no column for > accepts the governed reason, which the handler reads and the schema does not 9ms
+   → expected [ 'reason' ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 9 passed (10)

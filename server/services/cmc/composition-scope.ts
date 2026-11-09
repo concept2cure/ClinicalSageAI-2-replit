@@ -302,6 +302,39 @@ export function compositionRefusal(
     };
   }
 
+  /* ── P-110 (2026-11-09): the boundary rests on a recorded fact ─────────────
+     Decided by the coordinating session under the founder's delegation of
+     2026-11-08, after mutation 5 of
+     `docs/evidence/S7/2026-11-09-demo-cmc-materials/`: a monoclonal antibody
+     whose route read only "Proprietary process (fictional)." was ADMITTED
+     here. `classifySubstanceModality` treats a recorded process with no
+     biological word in it as chemical, which is defensible for §3.2.A.2 —
+     a false positive there costs a section asking for viral-safety data —
+     and is not defensible for a boundary that decides what a filing may SAY.
+     Composing anyway applies ICH Q3A impurity reasoning to a biologic, the
+     exact harm the refusal above says this boundary exists to prevent.
+
+     So a small molecule is admitted only when the record STATES it.
+     `verdict.explicit` is the classifier's own distinction and is read, not
+     recomputed; §3.2.A.2 keeps its current reading (P-110), and the classifier
+     is unchanged. This NARROWS P-28's boundary and does not widen it.
+     Existing substance rows are not rewritten: each is refused at composition
+     until its modality is recorded. */
+  if (!verdict.explicit) {
+    return {
+      code: 'CMC_MODALITY_NOT_ESTABLISHED',
+      /* What the record ESTABLISHED, for the audit row: nothing. The verdict
+         said small molecule, but it said it by inference. */
+      modality: 'unknown',
+      message:
+        `This project's drug substance is not recorded as a small molecule. What stands in its place is an ` +
+        `inference — ${verdict.basis} — and Module 3 is composed here only for a small-molecule substance. A ` +
+        `boundary that decides what a filing may say does not rest on the absence of certain words in a free-text ` +
+        `field: an under-described biologic would be composed with small-molecule impurity reasoning (ICH Q3A). ` +
+        `Record the substance's modality on the drug substance — small molecule, or biologic — then compile again.`,
+    };
+  }
+
   return applicationRefusal(applicationType);
 }
 
