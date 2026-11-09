@@ -1,0 +1,4 @@
+ × server/services/cmc/__tests__/deliverable-feeds.test.ts > a read that failed is not a project with no deliverables > reports the failure rather than an empty map 4ms
+   → a failed read was rendered as a project with nothing recorded: expected undefined to be truthy
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 7 passed (8)
