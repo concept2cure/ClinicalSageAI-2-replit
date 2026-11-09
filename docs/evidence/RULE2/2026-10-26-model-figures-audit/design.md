@@ -26,10 +26,11 @@
 > | S5c GCP operations | done | `s5c-gcp-operations/` |
 > | S5b biomarkers | done | `s5b-biomarkers/` |
 > | S5b digital health | done | `s5b-digital-health/` |
+> | S5b medical device | done | `s5b-medical-device/` |
 > | S6b | done; PMA withheld per P-55 R-7 | `s6b-generate-document-records/` |
 > | S6 | done, with its review | `s6-plan-ind-module-authoring-retired/` |
 > | `start_war_game` (found 2026-11-01) | done | `war-game-stored-session/` |
-> | S5b medical device and IVD lifecycle (with QMS and pathway eligibility), S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
+> | S5b IVD lifecycle (with QMS and pathway eligibility), S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 
@@ -684,6 +685,38 @@ non-conformant. `design_samd_clinical_validation` names each unstated fact in th
 association pillar's rigor is `not_assessed` while that fact is unstated. `assess_device_cybersecurity`
 lists an unstated sensitive-data fact as a not-stated row at attention, which is not a gap. No source
 reader, app or service was added.
+
+**S5b medical device — What already exists (execution audit):** the five worksheets in
+`medical-device/medical-device-knowledge.ts` are already reached by `medicalDeviceTools.ts`, the
+executor's `runStatsTool` stated-input wrapper and the device, diagnostics, regulatory-strategy and
+submissions skills. `classify_medical_device` is `classify_device` under a second name and runs the
+fail-closed `market-specs/device-classification.ts`, which is not touched. The 2026-10-15 sweep had
+already made the substantial-equivalence steps, the clinical-data answer, the GSPR applicability, the
+IVDR Class A sterility route and the plan's conditional sections three-valued (`seStepAnswer`,
+`unstated`, `notRequiredMissingFacts`, `statedProperty`, `conditionalSection`, pinned by the engine's
+five suites). Extend those; reuse `booleanInputStates`, `statedNumber`, `statedOneOf`,
+`refuseUnlessStated` and the shared `DEVICE_CLASSES`, `MDR_DECLARED_CLASSES` and `IVDR_CLASSES`. The
+engine was over the 100,000-byte ceiling, so its fixed study, performance-data, PMA, non-eSTAR and
+EU-documentation entries move into the existing sibling `medical-device-knowledge-data.ts`. The local
+history is shallow; the 2026-10-15 removal of `classifyDevice` from the engine is its only device-name
+deletion. Evidence: `s5b-medical-device/`.
+
+**S5b medical device execution result:** each of the 47 true/false inputs the five functions read
+reports true, false or `not_stated` through `inputStates`, and a malformed one is refused by field; the
+pathway's US class and predicate answer, the plan's US pathway and the GSPR `isIVD` are refused by name
+when missing or malformed.
+`select_device_pathway` gives a US pathway only when no answer to an unstated biologic, exemption,
+novelty or HUD fact could change it, and otherwise says what each answer would give;
+`clinicalEvidenceLikelyRequired` is null while the pathway is undetermined. An MDR Class I route with no
+aspect stated true and one unstated is undetermined, a single stated EU class names its regulation, and
+an IVDR Class A route reads sterility only. `assess_substantial_equivalence` finds no SE and names no
+510(k) type while the predicate recall or a different-questions answer is unstated, and names the
+performance data and the 510(k) type an unstated device property leaves open; an unstated exemption
+leaves a class III pathway as it is, since no class III device is 510(k)-exempt. `design_device_clinical_evidence` names the studies and the EU evaluation an
+unstated fact decides. `assess_essential_principles` leaves a GSPR 1–4 row not assessed, with no
+"missing" finding, while the QMS or risk-file fact it turns on is unstated. `plan_device_submission` keeps the IVD eSTAR questions,
+marked undetermined, for an unstated IVD, and says when the EU market or a Pre-Submission was not
+stated. No source reader, app or service was added.
 - **S5c (quality):** `gcpOperationsTools`, `gmpQualitySystemsTools`.
 
 **S5c GMP quality systems — What already exists (execution audit):** the six functions in
