@@ -37,6 +37,7 @@
 > | S5d benefit-risk | done | `s5d-benefit-risk/` |
 > | S5d post-approval | done | `s5d-post-approval/` |
 > | S5d regulatory strategy | done | `s5d-regulatory-strategy/` |
+> | S5d immunogenicity | done | `s5d-immunogenicity/` |
 > | S5d, S8–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
@@ -906,6 +907,29 @@ combination product. Four descriptions are condensed to the
 gateway's 1,024 characters. The engine's fixed tables, the Japan rows among them, move unchanged into the sibling
 `regulatory-strategy-reference.ts`, which takes the engine from 149,969 bytes to under the ceiling, and
 `jp-programs.test.ts` guards the sibling too. No source reader, app or service was added.
+
+**S5d immunogenicity — What already exists (execution audit):** the six functions in
+`immunogenicity/immunogenicity-knowledge.ts`, with `assessImmunogenicityComparability` in its sibling
+`immunogenicity-comparability.ts`, are already reached by `immunogenicityTools.ts`, the executor's `runStatsTool`
+stated-input wrapper and the clinical-pharmacology immunogenicity and CMC comparability skills. The 2026-10-15 sweep had
+already left an unstated risk factor, clinical-impact domain, NAb deciding fact, sampling driver or comparability trigger
+in `notAssessed` with its verdict undetermined (pinned by the engine's nine suites), and `immunogenicity-reference.ts`
+holds the shared S5 readers every family uses; it is not touched. No result reported its true/false inputs, and the ADA
+strategy read two of them by truthiness and checked none of its inputs. Extend the six; reuse `booleanInputStates`,
+`statedBoolean`, `statedNumber` and `statedOneOf`. Other immunogenicity code is not touched: the incidence engine
+`biologics/immunogenicity.ts` (`assess_immunogenicity`) and the vaccine engine's immune-response endpoints. The local
+history is shallow, with no immunogenicity-name deletion matches. Evidence: `s5d-immunogenicity/`.
+
+**S5d immunogenicity execution result:** each of the 26 true/false inputs the six functions read reports true, false or
+`not_stated` through `inputStates`, and a malformed one is refused by field. `design_ada_assay_strategy` refuses a
+missing product type by name and a malformed product type, preferred platform or sensitivity target by field; its
+rationale names an unstated soluble-target fact and says when the mAb status was taken from the product type, and its
+sensitivity statement says when the FDA 2019 figure stood in for an unstated target. An unstated life-threatening
+indication adds a monitoring line that names it, and a stated one no longer calls loss of efficacy tolerable while the
+severity is undetermined and could be critical; persistence and titer, which never changed a grade, are only reported.
+`design_nab_assay` says when the receptor fact was taken from the mechanism, and the risk assessment no longer calls an
+unstated counterpart redundant. Fully stated inputs keep their results (2,030,208 compared). No source reader, app or
+service was added.
 
 **Pins:** `submission-center-tools.test.ts`, `ivd-lifecycle-tools.test.ts`, `deepening-tools.test.ts`, and the immunogenicity, bioequivalence and orphan tests where they exist.
 

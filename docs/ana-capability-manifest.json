@@ -2854,7 +2854,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Classify the clinical consequence of an immune response across the four FDA 2014 consequence domains (Section II): pharmacokinetic (altered exposure), efficacy (neutralization / loss of response), safety (hypersensitivity / infusion reactions / anaphylaxis, including IgE-mediated Type I reactions), and cross-reactivity with a non-redundant endogenous protein (deficiency syndromes such as anti-EPO pure red cell aplasia). Pass only what has been observed or assessed and leave an unknown input out (false means assessed and absent): an unstated input leaves its domain ungraded and is listed in notAssessed. Returns an overall severity (none/low/moderate/high/critical, or undetermined while a domain is ungraded), per-domain severity and description, labeling implications by label section, and monitoring recommendations. Use when the user has observed or anticipated ADA effects and needs to grade clinical impact or derive labeling/monitoring consequences. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Classify the clinical consequence of an immune response across the four FDA 2014 consequence domains: pharmacokinetic (altered exposure), efficacy (neutralization / loss of response), safety (hypersensitivity, infusion reactions, IgE-mediated anaphylaxis) and cross-reactivity with a non-redundant endogenous protein (deficiency syndromes such as anti-EPO pure red cell aplasia). Pass only what was observed or assessed: an unstated input leaves its domain ungraded and is listed in notAssessed. Returns an overall severity (none to critical, or undetermined while a domain is ungraded), per-domain severity, labeling implications by label section, monitoring recommendations and inputStates. Use when the user has observed or anticipated ADA effects and needs to grade clinical impact or derive labeling/monitoring consequences. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -2864,7 +2864,7 @@
           "name": "pkImpact",
           "type": "boolean",
           "required": false,
-          "description": "Whether ADA alter drug PK (typically increased clearance / lower trough). Leave out if not known; false means stated absent."
+          "description": "Whether ADA alter drug PK (typically increased clearance / lower trough). Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "exposureReductionFraction",
@@ -2876,49 +2876,49 @@
           "name": "neutralizingEfficacyLoss",
           "type": "boolean",
           "required": false,
-          "description": "Whether neutralizing ADA reduce or abolish pharmacological activity (loss of efficacy). Leave out if not known; false means stated absent."
+          "description": "Whether neutralizing ADA reduce or abolish pharmacological activity (loss of efficacy). Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "hypersensitivity",
           "type": "boolean",
           "required": false,
-          "description": "Whether hypersensitivity / infusion reactions are observed or expected. Leave out if not known; false means stated absent."
+          "description": "Whether hypersensitivity / infusion reactions are observed or expected. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "igeMediated",
           "type": "boolean",
           "required": false,
-          "description": "Whether reactions are IgE-mediated (Type I) — raises anaphylaxis risk (graded critical). If hypersensitivity is present and this is left out, the safety domain is not graded."
+          "description": "Whether reactions are IgE-mediated (Type I) — raises anaphylaxis risk (graded critical). Omitted or null stays not_stated: if hypersensitivity is present, the safety domain is not graded."
         },
         {
           "name": "endogenousCrossReactivity",
           "type": "boolean",
           "required": false,
-          "description": "Whether ADA cross-react with an endogenous counterpart. Leave out if not known; false means stated absent."
+          "description": "Whether ADA cross-react with an endogenous counterpart. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "endogenousLifeSustaining",
           "type": "boolean",
           "required": false,
-          "description": "Whether the endogenous counterpart is life-sustaining (e.g., EPO, TPO). Cross-reactive neutralization is graded critical. If cross-reactivity is present and this is left out, that domain is not graded."
+          "description": "Whether the endogenous counterpart is life-sustaining (e.g., EPO, TPO). Cross-reactive neutralization is graded critical. Omitted or null stays not_stated: if cross-reactivity is present, that domain is not graded."
         },
         {
           "name": "persistentADA",
           "type": "boolean",
           "required": false,
-          "description": "Whether ADA are persistent (vs transient)."
+          "description": "Whether ADA are persistent (vs transient). Omitted or null stays not_stated; reported in inputStates, it does not change a grade."
         },
         {
           "name": "highTiter",
           "type": "boolean",
           "required": false,
-          "description": "Whether the ADA titer is high."
+          "description": "Whether the ADA titer is high. Omitted or null stays not_stated; reported in inputStates, it does not change a grade."
         },
         {
           "name": "lifeThreateningIndication",
           "type": "boolean",
           "required": false,
-          "description": "Whether the indication is life-threatening, which modulates the benefit-risk interpretation."
+          "description": "Whether the indication is life-threatening, which modulates the benefit-risk interpretation. Omitted or null stays not_stated, and a monitoring line says what it would add."
         },
         {
           "name": "drugName",
@@ -5459,7 +5459,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Assess immunogenicity comparability after a manufacturing/formulation change (ICH Q5E) or for a biosimilar (FDA 2015 \"Scientific Considerations in Demonstrating Biosimilarity\" / EMA 2017). Categorizes the change impact (minor/moderate/major) from immunogenicity-relevant triggers (aggregation, glycosylation/PTMs, formulation/container-closure, impurities, analytical comparability status, product risk tier), determines whether a comparative clinical immunogenicity study is warranted, and returns the study recommendation, analytical expectations, bridging-data needs (a single validated ADA assay applied to both products), triggered risk factors, and the decision rationale. Pass only stated facts (false means stated): an omitted input is listed in notAssessed, never assumed; while one could change the verdict, changeImpact is undetermined and clinicalImmunogenicityStudyRequired null. Use when the user has a process/formulation change or a biosimilar and needs to know what immunogenicity comparability data are required. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Assess immunogenicity comparability after a manufacturing/formulation change (ICH Q5E) or for a biosimilar (FDA 2015, EMA 2017). Categorizes the change impact (minor/moderate/major) from the triggers (aggregation, glycosylation/PTMs, formulation/container-closure, impurities, analytical comparability, product risk tier), decides whether a comparative clinical immunogenicity study is warranted, and returns the study recommendation, analytical expectations, bridging data (one validated ADA assay for both products), triggered factors and inputStates. Pass only stated facts: an omitted input is listed in notAssessed; while one could change the verdict, changeImpact is undetermined and clinicalImmunogenicityStudyRequired null. Use for a process/formulation change or a biosimilar, to know what immunogenicity comparability data are needed. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -5475,31 +5475,31 @@
           "name": "analyticalComparable",
           "type": "boolean",
           "required": false,
-          "description": "Whether analytical/structural comparability (primary structure, PTMs, charge/size variants, aggregates) has been demonstrated. If false, the change impact escalates. Leave out if not known; false means stated not demonstrated."
+          "description": "Whether analytical/structural comparability (primary structure, PTMs, charge/size variants, aggregates) has been demonstrated. If false, the change impact escalates. Leave out if not known: omitted or null stays not_stated; false means stat"
         },
         {
           "name": "affectsAggregation",
           "type": "boolean",
           "required": false,
-          "description": "Whether the change could alter aggregate / subvisible-particle levels. Leave out if not known; false means stated absent."
+          "description": "Whether the change could alter aggregate / subvisible-particle levels. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "affectsGlycosylation",
           "type": "boolean",
           "required": false,
-          "description": "Whether the change could alter glycosylation / PTMs. Leave out if not known; false means stated absent."
+          "description": "Whether the change could alter glycosylation / PTMs. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "affectsFormulation",
           "type": "boolean",
           "required": false,
-          "description": "Whether the change affects the formulation or container-closure system (leachables, silicone oil, particle formation). Leave out if not known; false means stated absent."
+          "description": "Whether the change affects the formulation or container-closure system (leachables, silicone oil, particle formation). Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "affectsImpurities",
           "type": "boolean",
           "required": false,
-          "description": "Whether the change introduces new/different process-related impurities. Leave out if not known; false means stated absent."
+          "description": "Whether the change introduces new/different process-related impurities. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "productRiskTier",
@@ -5531,7 +5531,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Classify the immunogenicity risk of a therapeutic protein product against the risk factors named in FDA 2014 \"Immunogenicity Assessment for Therapeutic Protein Products\" (Sections III–IV) and EMA 2017 (EMEA/CHMP/BMWP/14327/2006 Rev 1). The weights, the 0–100 score and the low/moderate/high tier are a platform heuristic, not an FDA/EMA scale; each factor row cites the guidance for the factor, not the weight. Pass only factors the user has stated, never an estimate: an unstated factor is listed in notAssessed, and the tier stays undetermined, with no score, until all are stated. Factors: product (foreignness, aggregation, glycosylation, formulation, impurities, endogenous counterpart) and patient/treatment (route, dose frequency, immune status, concomitant immunosuppression). Returns per-factor weights, category sums, mitigations and required studies. Use when the user asks how immunogenic a biologic is likely to be, which factors dominate, what to do about them, or which studies the program needs. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Classify the immunogenicity risk of a therapeutic protein product against the factors named in FDA 2014 \"Immunogenicity Assessment for Therapeutic Protein Products\" (Sections III–IV) and EMA 2017: product (foreignness, aggregation, glycosylation, formulation, impurities, endogenous counterpart) and patient/treatment (route, dose frequency, immune status, concomitant immunosuppression). The weights, the 0–100 score and the low/moderate/high tier are a platform heuristic, not an FDA/EMA scale. Pass only stated factors: an unstated factor is listed in notAssessed and the tier stays undetermined, with no score. Returns per-factor weights, category sums, mitigations, required studies and inputStates. Use when the user asks how immunogenic a biologic is likely to be, which factors dominate, or which studies the program needs. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "ranked-cards",
@@ -5553,7 +5553,7 @@
           "name": "hasEndogenousCounterpart",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product has a human endogenous counterpart with which ADA could cross-react. Leave out if not known; false means stated absent."
+          "description": "Whether the product has a human endogenous counterpart with which ADA could cross-react. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "endogenousNonRedundant",
@@ -5577,13 +5577,13 @@
           "name": "hasImmunogenicImpurities",
           "type": "boolean",
           "required": false,
-          "description": "Whether process-related impurities (host-cell protein, residual DNA, leachables) are present and may act as adjuvants. Leave out if not known; false means stated absent."
+          "description": "Whether process-related impurities (host-cell protein, residual DNA, leachables) are present and may act as adjuvants. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "formulationRisk",
           "type": "boolean",
           "required": false,
-          "description": "Whether the formulation/container-closure is prone to particle formation or contains adjuvant-like components (e.g., polysorbate degradation, silicone-oil microdroplets). Leave out if not known; false means stated absent."
+          "description": "Whether the formulation/container-closure is prone to particle formation or contains adjuvant-like components (e.g., polysorbate degradation, silicone-oil microdroplets). Leave out if not known: omitted or null stays not_stated; false means"
         },
         {
           "name": "route",
@@ -5607,7 +5607,7 @@
           "name": "concomitantImmunosuppression",
           "type": "boolean",
           "required": false,
-          "description": "Whether the regimen includes concomitant immunosuppression (e.g., methotrexate with a TNF inhibitor), a recognized ADA-mitigation factor. Leave out if not known; false means stated absent."
+          "description": "Whether the regimen includes concomitant immunosuppression (e.g., methotrexate with a TNF inhibitor), a recognized ADA-mitigation factor. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "drugName",
@@ -6341,7 +6341,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Build an ADA/NAb sampling schedule (baseline, on-treatment, end-of-treatment, follow-up) per FDA 2019 / FDA 2014 / EMA 2017. Needs, as stated by the user or a source and never estimated: halfLife_days, riskTier, doseFrequency, endogenousNonRedundant, and treatmentDuration_weeks unless doseFrequency is single. Without them the engine refuses, naming each; nothing is assumed. Without drawVolume_mL the total blood volume is null. Scales the washout/trough basis and follow-up duration to the product half-life (washout ≈ 5 half-lives; follow-up extended to ≥ 8 half-lives for high-risk products and ≥ 12 half-lives for products with a non-redundant endogenous counterpart, with a 28-day minimum; the extensions and the minimum are platform heuristics, and followUpBasis says which rule set the figure), sets on-treatment frequency from dosing frequency and treatment duration, samples at trough to minimize drug interference, and computes nominal draw count and total blood volume. Returns the timepoints with timing relative to dosing, sampling principles, and citations. Use when the user needs an immunogenicity sampling schedule, follow-up duration, or blood-volume estimate. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Build an ADA/NAb sampling schedule (baseline, on-treatment, end-of-treatment, follow-up) per FDA 2019 / FDA 2014 / EMA 2017. Needs, as stated and never estimated: halfLife_days, riskTier, doseFrequency, endogenousNonRedundant, and treatmentDuration_weeks unless doseFrequency is single; without one it refuses, naming each. Washout ≈ 5 half-lives; follow-up extends to ≥ 8 half-lives for high risk and ≥ 12 for a non-redundant endogenous counterpart, with a 28-day minimum (platform heuristics; followUpBasis names the rule). On-treatment draws, at trough, follow dosing frequency and duration. Returns timepoints relative to dosing, the draw count, the total blood volume (null without drawVolume_mL), sampling principles and citations. Use for an immunogenicity sampling schedule, follow-up duration, or blood-volume estimate. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -21626,7 +21626,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Specify a multi-tiered anti-drug antibody (ADA) assay strategy per the FDA 2019 guidance (\"Immunogenicity Testing of Therapeutic Protein Products — Developing and Validating Assays for Anti-Drug Antibody Detection\"): screening → confirmatory → titer, with neutralizing-antibody as a downstream tier. Returns the recommended detection platform (bridging ECL/ELISA, SPR) with rationale and alternatives, the tier-by-tier method and cut-point approach, cut-point statistics (screening ~5% false-positive ≈ mean + 1.645·SD; confirmatory ~1% ≈ mean + 2.33·SD), the drug-tolerance strategy (acid-dissociation, bead extraction, trough sampling), the ≤ 100 ng/mL sensitivity target, validation parameters, and matrix-interference controls (USP <1106>, Shankar 2008). Use when the user needs to design or justify an ADA assay, set cut points, or meet sensitivity/drug-tolerance expectations. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Specify a multi-tiered anti-drug antibody (ADA) assay strategy per FDA 2019 (\"Immunogenicity Testing of Therapeutic Protein Products\"): screening → confirmatory → titer, with neutralizing antibody downstream. Returns the detection platform (bridging ECL/ELISA, SPR) with rationale and alternatives, each tier's method and cut-point approach (screening ~5% false-positive ≈ mean + 1.645·SD; confirmatory ~1% ≈ mean + 2.33·SD), the drug-tolerance strategy, the sensitivity target (the FDA 2019 ≤ 100 ng/mL unless stated), validation parameters, matrix-interference controls (USP <1106>, Shankar 2008) and inputStates. The rationale names an unstated soluble-target fact and a mAb status inferred from productType. Use to design or justify an ADA assay, set cut points, or meet sensitivity/drug-tolerance expectations. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "navigation",
@@ -21648,19 +21648,19 @@
           "name": "highSolubleTarget",
           "type": "boolean",
           "required": false,
-          "description": "Whether a high soluble target / shed receptor is expected in the matrix that could interfere with a bridging assay (requires target-tolerance evaluation and possible acid-dissociation)."
+          "description": "Whether a high soluble target / shed receptor is expected in the matrix that could interfere with a bridging assay (requires target-tolerance evaluation and possible acid-dissociation). Omitted or null stays not_stated, and the rationale sa"
         },
         {
           "name": "isMonoclonalAntibody",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product is a monoclonal antibody. If omitted, inferred from productType. Affects rheumatoid-factor / heterophilic-antibody interference handling."
+          "description": "Whether the product is a monoclonal antibody. Omitted or null stays not_stated; it is then inferred from productType, and the rationale says so. Affects rheumatoid-factor / heterophilic-antibody interference handling."
         },
         {
           "name": "phase",
           "type": "string",
           "required": false,
-          "description": "Development phase (optional). Drives the expected validation rigor."
+          "description": "Development phase (optional). Not read: it does not change the result."
         },
         {
           "name": "preferredPlatform",
@@ -21672,7 +21672,7 @@
           "name": "targetSensitivity_ng_per_mL",
           "type": "number",
           "required": false,
-          "description": "Target assay sensitivity in ng/mL of a positive-control antibody. Default 100 (FDA 2019 recommends ≤ 100 ng/mL)."
+          "description": "Target assay sensitivity in ng/mL of a positive-control antibody (positive). If omitted, the FDA 2019 figure of 100 ng/mL is used and the result says so."
         },
         {
           "name": "drugName",
@@ -22917,7 +22917,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Design a neutralizing-antibody (NAb) assay per FDA 2019 (Section VI) and Shankar 2014. Determines whether a cell-based functional assay is required (preferred when the mechanism is mediated through a cell-surface receptor or when the endogenous counterpart is non-redundant) or whether a competitive ligand-binding (CLB) format is acceptable (soluble-target binding mechanisms, or when a cell-based assay is not technically feasible — with a documented rationale that the format reflects neutralization). Returns the recommended format, a cell-based-required flag, format rationale, fallback/complementary format with justification, validation parameters, drug-tolerance approach, and matrix-interference controls (USP <1106.1>). Pass only stated facts: if the format or the cell-based requirement turns on an omitted input (cellBasedFeasible, endogenousNonRedundant), it is null and that input is listed in notAssessed. Use when the user needs to choose between cell-based and ligand-binding NAb formats or design NAb validation. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Design a neutralizing-antibody (NAb) assay per FDA 2019 and Shankar 2014: whether a cell-based functional assay is required (a mechanism mediated through a cell-surface receptor, or a non-redundant endogenous counterpart) or a competitive ligand-binding (CLB) format is acceptable (soluble-target binding, or a cell-based assay not feasible, if shown to reflect neutralization). Returns the format, a cell-based-required flag, a fallback format, validation parameters, drug-tolerance approach, matrix-interference controls (USP <1106.1>) and inputStates. If the format or the requirement turns on an omitted cellBasedFeasible or endogenousNonRedundant, it is null and listed in notAssessed; a receptor fact inferred from mechanismClass is said. Use to choose between cell-based and ligand-binding NAb formats or design NAb validation. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -22933,7 +22933,7 @@
           "name": "actsThroughCellReceptor",
           "type": "boolean",
           "required": false,
-          "description": "Whether the drug acts via direct cell-surface receptor signaling. If omitted, inferred from mechanismClass. When true, a cell-based functional NAb assay is generally required."
+          "description": "Whether the drug acts via direct cell-surface receptor signaling. Omitted or null stays not_stated; it is then inferred from mechanismClass, and the rationale says so. When true, a cell-based functional NAb assay is generally required."
         },
         {
           "name": "cellBasedFeasible",
@@ -22945,7 +22945,7 @@
           "name": "endogenousNonRedundant",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product has a non-redundant endogenous counterpart (false if it has none, or the counterpart is redundant). Drives the need for a sensitive cell-based NAb assay regardless of feasibility considerations. Leave out if not known; f"
+          "description": "Whether the product has a non-redundant endogenous counterpart (false if it has none, or the counterpart is redundant). Drives the need for a sensitive cell-based NAb assay regardless of feasibility considerations. Leave out if not known: o"
         },
         {
           "name": "expectedCirculatingDrug_ug_per_mL",
