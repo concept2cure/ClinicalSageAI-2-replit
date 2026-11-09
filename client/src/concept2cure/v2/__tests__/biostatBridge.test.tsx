@@ -163,7 +163,7 @@ function writeRoute(path: string, body: any, opts: { applyOk?: boolean }) {
   return null;
 }
 
-function route(opts: { assessment?: Record<string, unknown>; applyOk?: boolean; designDelayMs?: number } = {}) {
+function route(opts: { assessment?: Record<string, unknown>; applyOk?: boolean; designDelayMs?: number; designs?: unknown[] } = {}) {
   posted.length = 0;
   /* A design read slower than the engine's 180 ms debounce: what a real
      network does, and what let the worked example be sized first. */
@@ -171,7 +171,7 @@ function route(opts: { assessment?: Record<string, unknown>; applyOk?: boolean; 
   apiRequest.mockImplementation(async (method: string, path: string, body?: any) => {
     if (method === 'GET' && path.startsWith('/api/biostat-bridge/designs?program_id=')) {
       await slow();
-      return { ok: true, status: 200, json: async () => ({ data: DESIGNS }) };
+      return { ok: true, status: 200, json: async () => ({ data: opts.designs ?? DESIGNS }) };
     }
     if (method === 'GET' && /^\/api\/biostat-bridge\/designs\/STUDY-1\/assessment$/.test(path)) {
       await slow();
@@ -235,6 +235,20 @@ describe('Biostatistics — study design bridge', () => {
     expect(await screen.findByText('526')).toBeTruthy();
     expect(screen.getByText(/c2c-stats 1\.0\.0/)).toBeTruthy();
     expect(screen.getByText(/Files as a/).textContent).toContain('NDA');
+  });
+
+  it('opens on the project\'s first design, never on a record with no design to assess', async () => {
+    /* 2026-11-09, before a client demo: the list also carries study records with no design metadata (the server
+       lists them with no readiness checks, and their assessment answers 404). The newest of them was opened on
+       arrival, so the page led with "Couldn't assess the design". */
+    const record = { studyId: 'REGISTER-1', programId: PROGRAM.id, title: 'Stability study register entry', phase: '', indication: '', status: 'draft', updatedAt: null,
+      readiness: { percent: 0, checks: [], plannedSampleSize: null, power: null, alpha: null, primaryEndpoint: null } };
+    route({ designs: [record, ...DESIGNS] });
+    mount();
+    await waitFor(() => expect(alphaField().value).toBe('0.04'));
+    expect(apiRequest.mock.calls.some((c) => c[1] === '/api/biostat-bridge/designs/STUDY-1/assessment')).toBe(true);
+    expect(apiRequest.mock.calls.some((c) => String(c[1]).includes('/designs/REGISTER-1/assessment'))).toBe(false);
+    expect(screen.queryByText("Couldn't assess the design")).toBeNull();
   });
 
   it('loads the design handed over on the navigation channel', async () => {

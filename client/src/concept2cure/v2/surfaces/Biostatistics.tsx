@@ -559,7 +559,11 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   useEffect(() => {
     if (autoLoaded.current || !program || selectedStudyId || designs.loading || designs.rows.length === 0) return;
     autoLoaded.current = true;
-    setSelectedStudyId(designs.rows[0].studyId);
+    /* The list also carries study records with no design to assess: the server gives them no readiness checks
+       (biostatistics-bridge/bridge-service.ts listBridgeDesigns), and their assessment answers 404. Open on the first
+       real design; with none, nothing is opened and the worked example stays. A person can still choose any row. */
+    const first = designs.rows.find((row) => row.readiness.checks.length > 0);
+    if (first) setSelectedStudyId(first.studyId);
   }, [program, selectedStudyId, designs.loading, designs.rows]);
   useEffect(() => {
     const seed = loadedDesign?.adapter.input;
