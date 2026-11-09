@@ -24,10 +24,11 @@
 > | S5a RWE | done | `s5a-rwe/` |
 > | S5c GMP quality systems | done | `s5c-gmp-quality-systems/` |
 > | S5c GCP operations | done | `s5c-gcp-operations/` |
+> | S5b biomarkers | done | `s5b-biomarkers/` |
 > | S6b | done; PMA withheld per P-55 R-7 | `s6b-generate-document-records/` |
 > | S6 | done, with its review | `s6-plan-ind-module-authoring-retired/` |
 > | `start_war_game` (found 2026-11-01) | done | `war-game-stored-session/` |
-> | S5b, S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
+> | S5b digital health, medical device and IVD lifecycle (with QMS and pathway eligibility), S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 
@@ -629,6 +630,30 @@ clinical-notes or pharmacy capture trait that a stated flag contradicts.
   - `biomarkerTools` and `ivdLifecycleTools`: `assess_iso17511_traceability`, `assess_scientific_validity`, `assess_shelf_life_stability`, `assess_accelerated_stability`;
   - `digitalHealthTools`, `medicalDeviceTools`, `assess_qms`, `assess_pathway_eligibility`.
   - For an IVD program, `assess_biomarker_clinical_validation` and `assess_biomarker_analytical_validation` also take an optional `study_id`. They then read `ivd_clinical_performance` / `ivd_analytical_performance` (P-A, scoped to the organization and program, through a `RECORD_SCOPES` entry), with the I-22 provenance line.
+
+**S5b biomarkers — What already exists (execution audit):** the six functions in
+`biomarkers/biomarker-knowledge.ts` are already reached by `biomarkerTools.ts`, the
+executor's `runStatsTool` stated-input wrapper and the diagnostics and clinical skills. The
+engine had no three-valued helpers of its own: S3 (2026-10-26) had made only the
+clinical-validation cutoff fact three-valued and moved the 2×2 onto `computeDiagnosticAccuracy`.
+Extend the six and their result types; reuse `statedBoolean`, `booleanInputStates`,
+`statedNumber`, `statedOneOf`, `refuseUnlessStated` and the shared `DEVICE_CLASSES`. Other
+biomarker and companion-diagnostic code is not touched: `regulatory/cdx-pairing.ts` and the IVD
+knowledge base's biomarker-validity entries, `global-ri/companion-diagnostics.ts`, and the
+protocol flow that imports only the `EnrichmentDesignOption` type. The local history is shallow,
+with no biomarker-name deletion matches. Evidence: `s5b-biomarkers/`.
+
+**S5b biomarkers execution result:** each of the 25 optional booleans the six functions read
+reports true, false or `not_stated` through `inputStates`; a malformed boolean, enum, count,
+percentage or prevalence is refused by field, and every required text, enum and count by name.
+`assess_biomarker_analytical_validation` now requires `quantitative`. An inferred BEST category,
+the qualification pathway, companion versus complementary, the CTA bridging requirement, a
+predictive marker's enrichment design, clinical validity and, where an unstated stakes level
+decides precision, the analytical readiness are given only when every answer to the unstated
+facts gives the same one; otherwise they are null or `not_assessed`, and the result names the
+deciding facts. With all six distinguishing features stated false the category is prognostic,
+and an intended use that contradicts that is flagged. An omitted COU impact or device risk class
+is still inferred, and a finding now says so. No source reader, app or service was added.
 - **S5c (quality):** `gcpOperationsTools`, `gmpQualitySystemsTools`.
 
 **S5c GMP quality systems — What already exists (execution audit):** the six functions in

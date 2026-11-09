@@ -6,10 +6,20 @@
  * classification, qualification, companion-diagnostic (CDx) co-development,
  * analytical and clinical validation, and trial enrichment strategy.
  *
- * NO LLM. NO network. NO database. One import from another service: the 2x2
+ * NO LLM. NO network. NO database. Its imports from other services: the 2x2
  * engine (stats/clinical-performance), equally pure, so clinical validation
- * computes its metrics there instead of keeping a second copy.
- * Identical input always yields identical output.
+ * computes its metrics there instead of keeping a second copy, and the shared
+ * stated-input readers and their refusal. Identical input always yields
+ * identical output.
+ *
+ * Rule 2 S5b (2026-11-08): an omitted or null boolean reads as not_stated
+ * (inputStates) and is never scored, graded or classified as true or false. A
+ * category, pathway, determination, design or verdict that the answer to an
+ * unstated true/false fact could change is null or not_assessed, and the result
+ * names the fact; so is analytical readiness when unstated stakes decide
+ * precision. An omitted COU impact, device risk class or CV limit is inferred
+ * as before, and the result says so. A required input, or a malformed value a
+ * function reads, is refused by field.
  *
  * ── Authoritative sources grounding the rules below ─────────────────────────
  *  - FDA-NIH Biomarker Working Group, BEST (Biomarkers, EndpointS, and other
@@ -48,8 +58,23 @@
  * @module server/services/biomarkers/biomarker-knowledge
  */
 
-import type { DeviceClass } from '../../../shared/regulatory/device-class.js';
+import { DEVICE_CLASSES, type DeviceClass } from '../../../shared/regulatory/device-class.js';
+import { refuseUnlessStated, type RequiredInputCheck } from '../ana-biostats/computation-engine.js';
+import {
+  booleanInputStates,
+  statedBoolean,
+  statedNumber,
+  statedOneOf,
+} from '../immunogenicity/immunogenicity-reference.js';
 import { computeDiagnosticAccuracy, type Interval } from '../stats/clinical-performance.js';
+import {
+  CATEGORY_TABLE,
+  CITATION_LIBRARY,
+  USE_CATEGORY_TABLE,
+  type CategoryDescriptor,
+  type NamedCitation,
+  type UseToCategory,
+} from './biomarker-reference.js';
 
 // ════════════════════════════════════════════════════════════════════════════
 // SHARED TYPES
@@ -118,239 +143,7 @@ export type DeviceFramework = 'fda' | 'eu_ivdr' | 'pmda' | 'health_canada';
 // REFERENCE TABLES (typed interfaces; NO `as const`)
 // ════════════════════════════════════════════════════════════════════════════
 
-/** Descriptor of one BEST biomarker category. */
-interface CategoryDescriptor {
-  category: BiomarkerCategory;
-  /** Human-readable label. */
-  label: string;
-  /** BEST Resource definition (close paraphrase). */
-  definition: string;
-  /** Clinical question the category answers. */
-  question: string;
-  /** Canonical examples. */
-  examples: string[];
-  /** Regulatory/evidentiary implications of using a marker in this category. */
-  evidentiaryImplications: string;
-  /** Typical regulatory pathway when this category drives a label claim. */
-  regulatoryPathway: string;
-  /** Whether use as a basis for patient management generally implies CDx-level rigor. */
-  highStakesForLabelClaim: boolean;
-}
-
-const CATEGORY_TABLE: CategoryDescriptor[] = [
-  {
-    category: 'diagnostic',
-    label: 'Diagnostic biomarker',
-    definition:
-      'A biomarker used to detect or confirm presence of a disease or condition of interest, ' +
-      'or to identify an individual with a subtype of the disease.',
-    question: 'Does this patient have the disease (or this molecular subtype)?',
-    examples: [
-      'BCR-ABL fusion transcript confirming chronic myeloid leukemia',
-      'Elevated blood glucose / HbA1c confirming diabetes mellitus',
-      'Sweat chloride for cystic fibrosis',
-    ],
-    evidentiaryImplications:
-      'Must demonstrate diagnostic accuracy (clinical sensitivity/specificity, PPV/NPV) against a ' +
-      'reference standard. When the result drives whether a therapy is given, the test is typically ' +
-      'a companion diagnostic and requires analytical + clinical validation co-developed with the drug.',
-    regulatoryPathway:
-      'IVD clearance/approval (510(k) or PMA); CDx via PMA when paired with a specific therapeutic.',
-    highStakesForLabelClaim: true,
-  },
-  {
-    category: 'prognostic',
-    label: 'Prognostic biomarker',
-    definition:
-      'A biomarker used to identify likelihood of a clinical event, disease recurrence, or ' +
-      'progression in patients who have the disease or medical condition of interest.',
-    question: 'How is this patient likely to fare over time, irrespective of treatment?',
-    examples: [
-      'Oncotype DX recurrence score in early breast cancer',
-      'BRCA1/2 germline status for ovarian cancer recurrence risk',
-      'Tumor stage / grade for disease-free survival',
-    ],
-    evidentiaryImplications:
-      'Must show association with outcome independent of (or adjusted for) treatment. A prognostic ' +
-      'marker informs the natural history and can drive PROGNOSTIC ENRICHMENT (selecting patients ' +
-      'more likely to have events to increase absolute event rates and trial power) but does NOT by ' +
-      'itself predict differential treatment benefit.',
-    regulatoryPathway:
-      'Biomarker qualification (DDT) for use across programs, or drug-specific submission within an ' +
-      'IND/NDA/BLA; device clearance if used as a marketed test.',
-    highStakesForLabelClaim: false,
-  },
-  {
-    category: 'predictive',
-    label: 'Predictive biomarker',
-    definition:
-      'A biomarker used to identify individuals who are more likely than similar individuals without ' +
-      'the biomarker to experience a favorable or unfavorable effect from exposure to a medical product ' +
-      'or environmental agent.',
-    question: 'Is this patient more (or less) likely to benefit from THIS treatment?',
-    examples: [
-      'EGFR exon-19/L858R mutations predicting response to EGFR-TKIs in NSCLC',
-      'HER2 amplification predicting response to trastuzumab',
-      'BRAF V600E predicting response to BRAF inhibitors in melanoma',
-    ],
-    evidentiaryImplications:
-      'Requires demonstration of a BIOMARKER-BY-TREATMENT INTERACTION — differential treatment effect ' +
-      'between biomarker-positive and biomarker-negative subgroups (ideally from a randomized trial ' +
-      'with both subgroups, or a marker-stratified design). This is the canonical basis for a ' +
-      'companion diagnostic and PREDICTIVE ENRICHMENT.',
-    regulatoryPathway:
-      'Co-developed companion diagnostic (PMA, usually Class III) cross-labeled with the therapeutic; ' +
-      'drug label restricts indicated population to biomarker-defined subset.',
-    highStakesForLabelClaim: true,
-  },
-  {
-    category: 'pharmacodynamic_response',
-    label: 'Pharmacodynamic / response biomarker',
-    definition:
-      'A biomarker that changes in response to exposure to a medical product or environmental agent, ' +
-      'demonstrating that a biological response has occurred in an individual.',
-    question: 'Is the drug having its intended biological effect (and at what dose)?',
-    examples: [
-      'LDL-cholesterol reduction in response to a statin or PCSK9 inhibitor',
-      'Target receptor occupancy on PET imaging',
-      'Viral load decline in response to antiviral therapy',
-    ],
-    evidentiaryImplications:
-      'Supports proof-of-mechanism, dose selection, and go/no-go decisions. A PD marker is NOT ' +
-      'automatically a surrogate endpoint; surrogacy requires demonstrating that the marker reliably ' +
-      'predicts clinical benefit. Used early to de-risk Phase 1/2 decisions.',
-    regulatoryPathway:
-      'Biomarker qualification for dose-finding / PoM use, or drug-specific use in IND; surrogate ' +
-      'endpoint qualification is a separate, higher bar (accelerated-approval surrogate).',
-    highStakesForLabelClaim: false,
-  },
-  {
-    category: 'monitoring',
-    label: 'Monitoring biomarker',
-    definition:
-      'A biomarker measured serially for assessing status of a disease or medical condition, or for ' +
-      'evidence of exposure to (or effect of) a medical product or environmental agent.',
-    question: 'How is the disease / treatment effect tracking over repeated measurements?',
-    examples: [
-      'INR for warfarin anticoagulation monitoring',
-      'Minimal residual disease (MRD) in leukemia',
-      'HbA1c trended over time in diabetes management',
-    ],
-    evidentiaryImplications:
-      'Requires demonstration of measurement stability/reproducibility over time and a meaningful ' +
-      'relationship between serial changes and disease status. Pre-analytical control and longitudinal ' +
-      'assay drift are central validation concerns.',
-    regulatoryPathway:
-      'IVD clearance for the marketed monitoring test; biomarker qualification when used as a trial ' +
-      'monitoring tool across programs.',
-    highStakesForLabelClaim: false,
-  },
-  {
-    category: 'safety',
-    label: 'Safety biomarker',
-    definition:
-      'A biomarker measured before or after an exposure to a medical product or environmental agent to ' +
-      'indicate the likelihood, presence, or extent of toxicity as an adverse effect.',
-    question: 'Is this product causing (or likely to cause) organ toxicity?',
-    examples: [
-      'ALT/AST and total bilirubin for drug-induced liver injury (Hy’s Law)',
-      'KIM-1, clusterin, and other renal safety biomarkers (PSTC-qualified)',
-      'Troponin for drug-induced cardiotoxicity',
-    ],
-    evidentiaryImplications:
-      'Must link marker change to a defined toxicity with adequate sensitivity for early detection. ' +
-      'Safety biomarkers are frequent targets of cross-program DDT qualification (e.g., the Predictive ' +
-      'Safety Testing Consortium nephrotoxicity panel) because the COU generalizes across compounds.',
-    regulatoryPathway:
-      'Biomarker qualification (DDT) for nonclinical and/or clinical safety monitoring; can also be ' +
-      'used drug-specifically to define stopping rules.',
-    highStakesForLabelClaim: false,
-  },
-  {
-    category: 'susceptibility_risk',
-    label: 'Susceptibility / risk biomarker',
-    definition:
-      'A biomarker that indicates the potential for developing a disease or medical condition in an ' +
-      'individual who does not currently have clinically apparent disease.',
-    question: 'What is this (currently healthy) person’s risk of developing the disease?',
-    examples: [
-      'BRCA1/2 germline mutation and lifetime breast/ovarian cancer risk',
-      'Lp(a) and cardiovascular risk',
-      'APOE ε4 genotype and Alzheimer’s disease risk',
-    ],
-    evidentiaryImplications:
-      'Requires prospective association with disease incidence in currently unaffected individuals; ' +
-      'clinical utility (does acting on the marker improve outcomes?) is distinct from validity and is ' +
-      'often the harder bar. Screening-population PPV is strongly prevalence-dependent.',
-    regulatoryPathway:
-      'IVD clearance for marketed risk tests; risk markers rarely act as CDx but may guide preventive ' +
-      'trial enrichment.',
-    highStakesForLabelClaim: false,
-  },
-];
-
-/** Mapping of intended use to the BEST categories that can support it. */
-interface UseToCategory {
-  use: BiomarkerUse;
-  supportingCategories: BiomarkerCategory[];
-  note: string;
-}
-
-const USE_CATEGORY_TABLE: UseToCategory[] = [
-  {
-    use: 'patient_selection',
-    supportingCategories: ['predictive', 'diagnostic'],
-    note:
-      'Selecting who receives a therapy is a predictive/diagnostic use and is the canonical companion ' +
-      'diagnostic scenario; it carries the highest evidentiary and device burden.',
-  },
-  {
-    use: 'enrichment',
-    supportingCategories: ['predictive', 'prognostic'],
-    note:
-      'Predictive enrichment selects likely responders; prognostic enrichment selects high-event-rate ' +
-      'patients. The category determines which enrichment type is justified.',
-  },
-  {
-    use: 'stratification',
-    supportingCategories: ['prognostic', 'predictive'],
-    note:
-      'Randomization stratified by a prognostic/predictive marker balances arms and enables pre-specified ' +
-      'subgroup analysis without restricting enrollment.',
-  },
-  {
-    use: 'dose_selection',
-    supportingCategories: ['pharmacodynamic_response'],
-    note: 'PD/response markers establish the exposure-response relationship used to select dose.',
-  },
-  {
-    use: 'efficacy_endpoint',
-    supportingCategories: ['pharmacodynamic_response', 'monitoring'],
-    note:
-      'Use as an efficacy endpoint (especially a surrogate) is a separate and higher bar than PD use; ' +
-      'surrogacy must be independently justified.',
-  },
-  {
-    use: 'safety_monitoring',
-    supportingCategories: ['safety', 'monitoring'],
-    note: 'Safety and monitoring categories support stopping rules and toxicity surveillance.',
-  },
-  {
-    use: 'screening',
-    supportingCategories: ['diagnostic', 'susceptibility_risk'],
-    note: 'Screening unaffected populations is strongly prevalence-sensitive (low PPV at low prevalence).',
-  },
-  {
-    use: 'risk_assessment',
-    supportingCategories: ['susceptibility_risk', 'prognostic'],
-    note: 'Risk markers act in unaffected individuals; prognostic markers act in those already diseased.',
-  },
-  {
-    use: 'disease_detection',
-    supportingCategories: ['diagnostic', 'monitoring'],
-    note: 'Detection/confirmation of disease is a diagnostic use; serial detection is monitoring.',
-  },
-];
+// The BEST category descriptors and the intended-use mapping are in biomarker-reference.ts (moved 2026-11-08).
 
 /** COU impact tier and the evidentiary expectation it triggers. */
 interface CouImpactTier {
@@ -451,241 +244,7 @@ const QUALIFICATION_STAGE_TABLE: QualificationStage[] = [
   },
 ];
 
-/** Analytical validation parameter descriptor (CLSI-grounded). */
-interface AnalyticalParameter {
-  key:
-    | 'accuracy_trueness'
-    | 'precision'
-    | 'analytical_sensitivity'
-    | 'analytical_specificity'
-    | 'reportable_range'
-    | 'robustness'
-    | 'preanalytical';
-  label: string;
-  definition: string;
-  clsiReference: string;
-  typicalAcceptance: string;
-}
-
-const ANALYTICAL_PARAM_TABLE: AnalyticalParameter[] = [
-  {
-    key: 'accuracy_trueness',
-    label: 'Accuracy / trueness (bias)',
-    definition:
-      'Closeness of agreement between the measured value and an accepted reference (true) value. For ' +
-      'quantitative assays assessed as bias via method comparison; for qualitative assays as concordance ' +
-      'with a reference method or clinical truth.',
-    clsiReference: 'CLSI EP09 (method comparison & bias); EP12 for qualitative concordance',
-    typicalAcceptance:
-      'Bias within predefined total-allowable-error budget; for qualitative tests, positive/negative ' +
-      'percent agreement (PPA/NPA) meeting prespecified thresholds (commonly ≥ 90% with adequate CI).',
-  },
-  {
-    key: 'precision',
-    label: 'Precision (repeatability & reproducibility)',
-    definition:
-      'Closeness of agreement among independent results under stipulated conditions. Repeatability ' +
-      '(within-run), intermediate precision (between-day/operator/instrument), and reproducibility ' +
-      '(between-site/lot) characterize random error.',
-    clsiReference: 'CLSI EP05 (precision evaluation); multi-site reproducibility',
-    typicalAcceptance:
-      'CV% within prespecified limits across levels spanning the medically relevant range; for ' +
-      'qualitative tests, high agreement near the cutoff (C5–C95 interval characterized).',
-  },
-  {
-    key: 'analytical_sensitivity',
-    label: 'Analytical sensitivity (LoB / LoD / LoQ)',
-    definition:
-      'Smallest amount of analyte reliably detected/quantified. Limit of Blank (LoB), Limit of ' +
-      'Detection (LoD), and Limit of Quantitation (LoQ) define the low-end performance.',
-    clsiReference: 'CLSI EP17 (detection capability)',
-    typicalAcceptance:
-      'LoD established at ≤ the lowest clinically meaningful concentration; LoQ meets prespecified ' +
-      'precision/accuracy at the low end (e.g., for ctDNA, a defined variant allele fraction).',
-  },
-  {
-    key: 'analytical_specificity',
-    label: 'Analytical specificity (interference & cross-reactivity)',
-    definition:
-      'Ability to measure the intended analyte in the presence of potential interferents (hemolysis, ' +
-      'lipemia, icterus, drugs, related molecules) without cross-reactivity to non-target species.',
-    clsiReference: 'CLSI EP07 (interference testing)',
-    typicalAcceptance:
-      'No clinically significant interference at defined interferent concentrations; documented ' +
-      'cross-reactivity profile (e.g., homologous gene regions for NGS panels).',
-  },
-  {
-    key: 'reportable_range',
-    label: 'Reportable range / linearity',
-    definition:
-      'Span of analyte values over which the assay yields valid, linear (for quantitative) results ' +
-      'without dilution/concentration, between LoQ and the upper limit.',
-    clsiReference: 'CLSI EP06 (linearity / measuring interval)',
-    typicalAcceptance:
-      'Linearity demonstrated across the analytical measuring interval; dilution recovery established ' +
-      'for values above the upper limit.',
-  },
-  {
-    key: 'robustness',
-    label: 'Robustness / ruggedness',
-    definition:
-      'Capacity of the assay to remain unaffected by small, deliberate variations in method parameters ' +
-      '(reagent lots, incubation times/temperatures, operators, instruments).',
-    clsiReference: 'CLSI EP05/EP25 (reproducibility & stability under varied conditions)',
-    typicalAcceptance:
-      'Performance maintained within acceptance limits across deliberately varied conditions and ' +
-      'reagent lots; guard-banding of critical parameters documented.',
-  },
-  {
-    key: 'preanalytical',
-    label: 'Pre-analytical factors & specimen stability',
-    definition:
-      'Effects of specimen type, collection, handling, transport, storage, and processing time on the ' +
-      'measured result; defines acceptable specimen conditions.',
-    clsiReference: 'CLSI EP25 (specimen stability); GP-series pre-analytical guidance',
-    typicalAcceptance:
-      'Documented acceptable specimen types, anticoagulants, time-to-fixation/processing, storage ' +
-      'temperature and freeze-thaw limits; out-of-range specimens flagged as invalid.',
-  },
-];
-
-/** Citation library reused across engines. */
-interface NamedCitation {
-  id: string;
-  citation: Citation;
-}
-
-const CITATION_LIBRARY: NamedCitation[] = [
-  {
-    id: 'best',
-    citation: {
-      source: 'FDA-NIH Biomarker Working Group, BEST Resource (2016, updated)',
-      reference: 'BEST Glossary — Biomarker categories',
-      statement:
-        'BEST defines seven biomarker categories: susceptibility/risk, diagnostic, monitoring, ' +
-        'prognostic, predictive, pharmacodynamic/response, and safety.',
-    },
-  },
-  {
-    id: 'cures_act',
-    citation: {
-      source: '21st Century Cures Act (2016), Section 3011',
-      reference: 'FD&C Act Section 507 (Qualification of Drug Development Tools)',
-      statement:
-        'Establishes the statutory framework for FDA qualification of drug development tools, ' +
-        'including biomarkers, for a specified context of use.',
-    },
-  },
-  {
-    id: 'bq_framework',
-    citation: {
-      source: 'FDA Biomarker Qualification: Evidentiary Framework (Guidance, Dec 2018)',
-      reference: 'Sections on Context of Use and evidentiary scaling',
-      statement:
-        'The evidence needed to qualify a biomarker scales with the benefit/risk and consequences of ' +
-        'error implied by the Context of Use; the COU defines the biomarker category and intended use.',
-    },
-  },
-  {
-    id: 'ich_e16',
-    citation: {
-      source: 'ICH E16 (Genomic Biomarkers — Qualification Submissions)',
-      reference: 'ICH E16 Guideline',
-      statement:
-        'Provides a harmonized structure for the data submission supporting genomic biomarker ' +
-        'qualification, including context of use.',
-    },
-  },
-  {
-    id: 'cdx_2014',
-    citation: {
-      source: 'FDA In Vitro Companion Diagnostic Devices (Guidance, Aug 2014)',
-      reference: 'Definition and contemporaneous development principle',
-      statement:
-        'An IVD companion diagnostic provides information essential for the safe and effective use of ' +
-        'a corresponding therapeutic product and should generally be developed and approved or cleared ' +
-        'contemporaneously with the therapeutic.',
-    },
-  },
-  {
-    id: 'cdx_codev_2016',
-    citation: {
-      source: 'FDA Principles for Codevelopment of an IVD CDx with a Therapeutic Product (Draft, Jul 2016)',
-      reference: 'Co-development principles',
-      statement:
-        'Therapeutic and companion diagnostic development should be planned jointly so that an ' +
-        'analytically and clinically validated diagnostic is available at the time of therapeutic approval; ' +
-        'the clinical trial assay used to enroll the pivotal trial must be bridged to the market-ready IVD.',
-    },
-  },
-  {
-    id: 'enrichment_2019',
-    citation: {
-      source: 'FDA Enrichment Strategies for Clinical Trials (Guidance, Mar 2019)',
-      reference: 'Prognostic and predictive enrichment',
-      statement:
-        'Enrichment is the prospective use of patient characteristics to select a study population in ' +
-        'which a drug effect can more readily be detected. Prognostic enrichment selects higher-risk ' +
-        'patients; predictive enrichment selects those more likely to respond to the specific mechanism.',
-    },
-  },
-  {
-    id: 'cfr_80910',
-    citation: {
-      source: '21 CFR 809.10',
-      reference: 'Labeling for in vitro diagnostic products',
-      statement: 'Specifies labeling content requirements for in vitro diagnostic products.',
-    },
-  },
-  {
-    id: 'cfr_814',
-    citation: {
-      source: '21 CFR Part 814',
-      reference: 'Premarket Approval (PMA) of medical devices',
-      statement: 'Governs PMA, the pathway typically used for Class III companion diagnostics.',
-    },
-  },
-  {
-    id: 'cfr_807e',
-    citation: {
-      source: '21 CFR Part 807, Subpart E',
-      reference: 'Premarket notification 510(k)',
-      statement: 'Governs 510(k) premarket notification for devices demonstrating substantial equivalence.',
-    },
-  },
-  {
-    id: 'clsi_ep17',
-    citation: {
-      source: 'CLSI EP17',
-      reference: 'Evaluation of Detection Capability for Clinical Laboratory Measurement Procedures',
-      statement: 'Defines protocols to establish Limit of Blank (LoB), Limit of Detection (LoD), and Limit of Quantitation (LoQ).',
-    },
-  },
-  {
-    id: 'clsi_ep05',
-    citation: {
-      source: 'CLSI EP05',
-      reference: 'Evaluation of Precision of Quantitative Measurement Procedures',
-      statement: 'Defines repeatability and within-laboratory (intermediate) precision study designs.',
-    },
-  },
-  {
-    id: 'clsi_ep09',
-    citation: {
-      source: 'CLSI EP09',
-      reference: 'Measurement Procedure Comparison and Bias Estimation Using Patient Samples',
-      statement: 'Defines method-comparison studies for estimating systematic bias against a comparator.',
-    },
-  },
-  {
-    id: 'clsi_ep12',
-    citation: {
-      source: 'CLSI EP12',
-      reference: 'Evaluation of Qualitative, Binary Output Examination Performance',
-      statement: 'Defines evaluation of qualitative test performance including agreement near the cutoff.',
-    },
-  },
-];
+// The CLSI analytical parameters and the citation library are in biomarker-reference.ts (moved 2026-11-08).
 
 // ════════════════════════════════════════════════════════════════════════════
 // INTERNAL HELPERS (pure)
@@ -720,10 +279,6 @@ function roundInterval(ci: Interval): Interval {
   return { lower: round(ci.lower, 4), upper: round(ci.upper, 4) };
 }
 
-function clamp(value: number, lo: number, hi: number): number {
-  return Math.min(hi, Math.max(lo, value));
-}
-
 function uniqueStrings(items: string[]): string[] {
   const out: string[] = [];
   for (const item of items) {
@@ -734,16 +289,84 @@ function uniqueStrings(items: string[]): string[] {
   return out;
 }
 
+// ── Stated inputs (Rule 2 S5b, 2026-11-08) ──────────────────────────────────
+
+/** A true/false fact as stated, or not_stated when it was left out. */
+type BooleanState = boolean | 'not_stated';
+
+const BIOMARKER_CATEGORIES: readonly BiomarkerCategory[] = CATEGORY_TABLE.map(
+  (c: CategoryDescriptor): BiomarkerCategory => c.category,
+);
+const BIOMARKER_USES: readonly BiomarkerUse[] = USE_CATEGORY_TABLE.map((u: UseToCategory): BiomarkerUse => u.use);
+const ASSAY_MODALITIES: readonly AssayModality[] = [
+  'ihc', 'pcr', 'ngs', 'fish', 'elisa', 'flow_cytometry', 'mass_spectrometry', 'sequencing_panel',
+  'ctdna_liquid_biopsy', 'imaging', 'clinical_chemistry', 'other',
+];
+const STAKES: readonly ('low' | 'moderate' | 'high')[] = ['low', 'moderate', 'high'];
+
+/** A required non-empty text, for refuseUnlessStated. */
+function textInput(field: string, value: unknown): RequiredInputCheck {
+  return { field, value, ok: typeof value === 'string' && value.trim().length > 0, expected: 'non-empty text' };
+}
+
+/** A required value from a fixed vocabulary, for refuseUnlessStated. */
+function oneOfInput(field: string, value: unknown, allowed: readonly string[]): RequiredInputCheck {
+  return {
+    field,
+    value,
+    ok: typeof value === 'string' && allowed.includes(value),
+    expected: `one of ${allowed.join(', ')}`,
+  };
+}
+
+/** Every answer the unstated facts could take: each stated fact kept, each undefined one both true and false. */
+function everyAnswer<K extends string>(stated: Record<K, boolean | undefined>): Array<Record<K, boolean>> {
+  let answers: Array<Record<K, boolean>> = [{} as Record<K, boolean>];
+  for (const key of Object.keys(stated) as K[]) {
+    const fact = stated[key];
+    const values = fact === undefined ? [true, false] : [fact];
+    answers = answers.flatMap((a: Record<K, boolean>) => values.map((v: boolean) => ({ ...a, [key]: v })));
+  }
+  return answers;
+}
+
+/** The distinct conclusions those answers give, in first-seen order: one means the stated facts decide it. */
+function conclusions<K extends string, T extends string>(
+  stated: Record<K, boolean | undefined>,
+  conclude: (answer: Record<K, boolean>) => T,
+): T[] {
+  return uniqueStrings(everyAnswer(stated).map(conclude)) as T[];
+}
+
+/** The unstated facts whose answer can change the conclusion. */
+function decidingFacts<K extends string, T>(
+  stated: Record<K, boolean | undefined>,
+  conclude: (answer: Record<K, boolean>) => T,
+): K[] {
+  return (Object.keys(stated) as K[]).filter(
+    (key: K): boolean =>
+      stated[key] === undefined &&
+      everyAnswer({ ...stated, [key]: false }).some(
+        (a: Record<K, boolean>): boolean => conclude({ ...a, [key]: true }) !== conclude(a),
+      ),
+  );
+}
+
+/** "a", "a and b", "a, b and c". */
+function listed(items: readonly string[]): string {
+  return items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // ENGINE 1 — classifyBiomarker
 // ════════════════════════════════════════════════════════════════════════════
 
 export interface ClassifyBiomarkerParams {
-  /** Free-text or canonical biomarker name. */
+  /** Free-text or canonical biomarker name. Required. */
   biomarkerName: string;
-  /** Optionally assert a category; otherwise inferred from intendedUse + clinicalQuestion. */
+  /** Optionally assert a category; otherwise it is inferred from the six distinguishing features. */
   assertedCategory?: BiomarkerCategory;
-  /** Intended regulatory use of the biomarker in the program. */
+  /** Intended regulatory use of the biomarker in the program. It adds cautions; it does not infer the category. */
   intendedUse?: BiomarkerUse;
   /** Whether the marker measures a treatment-by-marker interaction (predictive signature). */
   predictsDifferentialTreatmentEffect?: boolean;
@@ -757,33 +380,52 @@ export interface ClassifyBiomarkerParams {
   indicatesToxicity?: boolean;
   /** Whether the marker confirms presence/subtype of disease. */
   confirmsDisease?: boolean;
-  /** Disease / therapeutic area context (free text). */
+  /** Disease / therapeutic area context (free text). Not read. */
   diseaseContext?: string;
 }
 
 export interface ClassifyBiomarkerResult {
   biomarkerName: string;
-  category: BiomarkerCategory;
-  categoryLabel: string;
-  definition: string;
-  clinicalQuestion: string;
+  /** null when an answer to an unstated distinguishing feature could change the inferred category. */
+  category: BiomarkerCategory | null;
+  categoryLabel: string | null;
+  definition: string | null;
+  clinicalQuestion: string | null;
   inferred: boolean;
   inferenceBasis: string;
+  /** The categories the unstated features leave open; empty when the category is decided. */
+  candidateCategories: BiomarkerCategory[];
   examples: string[];
-  evidentiaryImplications: string;
-  regulatoryPathway: string;
-  highStakesForLabelClaim: boolean;
+  evidentiaryImplications: string | null;
+  regulatoryPathway: string | null;
+  /** null when the candidate categories disagree. */
+  highStakesForLabelClaim: boolean | null;
   supportedUses: BiomarkerUse[];
-  cdxLikely: boolean;
+  /** null when the candidate categories disagree. */
+  cdxLikely: boolean | null;
   cautions: Finding[];
   citations: Citation[];
+  /** Each distinguishing feature: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
 }
 
+/** The six distinguishing features, in the precedence that decides an inferred category. */
+const FEATURE_FLAGS = [
+  'predictsDifferentialTreatmentEffect',
+  'indicatesToxicity',
+  'measuredInUnaffectedIndividuals',
+  'changesWithExposure',
+  'confirmsDisease',
+  'measuredSerially',
+] as const;
+type FeatureFlag = (typeof FEATURE_FLAGS)[number];
+
+/** The category one complete set of answers gives. */
 function inferCategory(
-  params: ClassifyBiomarkerParams,
+  features: Record<FeatureFlag, boolean>,
 ): { category: BiomarkerCategory; basis: string } {
   // Deterministic precedence reflecting BEST distinctions.
-  if (params.predictsDifferentialTreatmentEffect === true) {
+  if (features.predictsDifferentialTreatmentEffect) {
     return {
       category: 'predictive',
       basis:
@@ -791,13 +433,13 @@ function inferCategory(
         'the defining feature of a predictive biomarker.',
     };
   }
-  if (params.indicatesToxicity === true) {
+  if (features.indicatesToxicity) {
     return {
       category: 'safety',
       basis: 'Marker indicates likelihood/presence/extent of toxicity — a safety biomarker.',
     };
   }
-  if (params.measuredInUnaffectedIndividuals === true) {
+  if (features.measuredInUnaffectedIndividuals) {
     return {
       category: 'susceptibility_risk',
       basis:
@@ -805,46 +447,32 @@ function inferCategory(
         'a susceptibility/risk biomarker.',
     };
   }
-  if (params.changesWithExposure === true) {
+  if (features.changesWithExposure) {
     return {
       category: 'pharmacodynamic_response',
       basis: 'Marker changes in response to product exposure — a pharmacodynamic/response biomarker.',
     };
   }
-  if (params.confirmsDisease === true && params.measuredSerially !== true) {
+  if (features.confirmsDisease && !features.measuredSerially) {
     return {
       category: 'diagnostic',
       basis: 'Marker detects/confirms presence or subtype of disease — a diagnostic biomarker.',
     };
   }
-  if (params.measuredSerially === true) {
+  if (features.measuredSerially) {
     return {
       category: 'monitoring',
       basis: 'Marker measured serially to assess disease/treatment status — a monitoring biomarker.',
     };
   }
-  // Fall back to intended-use mapping.
-  if (params.intendedUse) {
-    const mapping = USE_CATEGORY_TABLE.find(
-      (u: UseToCategory): boolean => u.use === params.intendedUse,
-    );
-    if (mapping && mapping.supportingCategories.length > 0) {
-      return {
-        category: mapping.supportingCategories[0],
-        basis:
-          'Inferred from intended use "' +
-          params.intendedUse +
-          '": ' +
-          mapping.note,
-      };
-    }
-  }
+  // 2026-11-08 (S5b): reached only when all six are false. Before, the intended use's first supporting
+  // category was returned here (enrichment gave predictive with predictsDifferentialTreatmentEffect stated
+  // false), and with no intended use the category was "defaulted to prognostic".
   return {
     category: 'prognostic',
     basis:
-      'Insufficient distinguishing features supplied; defaulted to prognostic. Provide ' +
-      'predictsDifferentialTreatmentEffect / confirmsDisease / changesWithExposure / indicatesToxicity / ' +
-      'measuredInUnaffectedIndividuals / measuredSerially for a precise classification.',
+      'Every distinguishing feature was stated false. Prognostic is the one BEST category these six ' +
+      'features do not test.',
   };
 }
 
@@ -852,41 +480,67 @@ function inferCategory(
  * Classify a biomarker per the FDA-NIH BEST Resource into one of the seven
  * categories and return the regulatory/evidentiary implications of that category.
  *
- * Deterministic: classification follows a fixed precedence over the supplied
- * distinguishing features (or an asserted category), never an LLM.
+ * Deterministic: classification follows a fixed precedence over the stated
+ * distinguishing features (or an asserted category), never an LLM. An inferred
+ * category is given only when every answer to the unstated features gives the
+ * same one; otherwise it is null and candidateCategories lists the possibilities.
  */
 export function classifyBiomarker(
   params: ClassifyBiomarkerParams,
 ): ClassifyBiomarkerResult {
-  let category: BiomarkerCategory;
+  // 2026-11-08 (S5b): each feature was read `=== true`, so an omitted one was a stated false. `{}` was
+  // "defaulted to prognostic", and { confirmsDisease: true } was diagnostic whatever the unstated
+  // predictsDifferentialTreatmentEffect. An asserted 'Predictive' took the diagnostic descriptor, a feature of
+  // 'true' read as false, and a missing biomarkerName was not asked for.
+  refuseUnlessStated('classify_biomarker', [textInput('biomarkerName', params.biomarkerName)], 'classified');
+  const asserted = statedOneOf('assertedCategory', params.assertedCategory, BIOMARKER_CATEGORIES);
+  const intendedUse = statedOneOf('intendedUse', params.intendedUse, BIOMARKER_USES);
+  const inputStates = booleanInputStates(params, FEATURE_FLAGS);
+  const features = Object.fromEntries(
+    FEATURE_FLAGS.map((k: FeatureFlag): [FeatureFlag, boolean | undefined] => [k, statedBoolean(k, params[k])]),
+  ) as Record<FeatureFlag, boolean | undefined>;
+  const predicts = features.predictsDifferentialTreatmentEffect;
+  const usual = USE_CATEGORY_TABLE.find((u: UseToCategory): boolean => u.use === intendedUse);
+
+  let category: BiomarkerCategory | null;
+  let candidateCategories: BiomarkerCategory[] = [];
   let inferred: boolean;
   let basis: string;
 
-  if (params.assertedCategory) {
-    category = params.assertedCategory;
+  if (asserted) {
+    category = asserted;
     inferred = false;
     basis = 'Category asserted by caller; not inferred.';
   } else {
-    const inf = inferCategory(params);
-    category = inf.category;
     inferred = true;
-    basis = inf.basis;
+    const categoryOf = (a: Record<FeatureFlag, boolean>): BiomarkerCategory => inferCategory(a).category;
+    const open = conclusions(features, categoryOf);
+    if (open.length === 1) {
+      category = open[0];
+      basis = inferCategory(everyAnswer(features)[0]).basis;
+    } else {
+      category = null;
+      candidateCategories = BIOMARKER_CATEGORIES.filter((c: BiomarkerCategory): boolean => open.includes(c));
+      const deciding = decidingFacts(features, categoryOf);
+      basis =
+        `Not decided: ${listed(deciding)} ${deciding.length > 1 ? 'are' : 'is'} not stated, and the answers make ` +
+        `it one of ${listed(candidateCategories)}. State ${deciding.length > 1 ? 'them' : 'it'}, or assert the category.` +
+        (usual ? ` Intended use "${usual.use}" is usually served by ${listed(usual.supportingCategories)}.` : '');
+    }
   }
 
-  const desc = categoryDescriptor(category);
+  const desc = category ? categoryDescriptor(category) : null;
 
   // Supported uses: every use whose supporting categories include this category.
-  const supportedUses = (USE_CATEGORY_TABLE.filter((u: UseToCategory): boolean =>
-    u.supportingCategories.includes(category),
-  )).map((u: UseToCategory): BiomarkerUse => u.use);
+  const supportedUses = category
+    ? USE_CATEGORY_TABLE.filter((u: UseToCategory): boolean => u.supportingCategories.includes(category))
+      .map((u: UseToCategory): BiomarkerUse => u.use)
+    : [];
 
   const cautions: Finding[] = [];
 
   // Cross-check asserted category against distinguishing features.
-  if (
-    params.assertedCategory === 'predictive' &&
-    params.predictsDifferentialTreatmentEffect === false
-  ) {
+  if (asserted === 'predictive' && predicts === false) {
     cautions.push({
       severity: 'critical',
       message:
@@ -895,10 +549,15 @@ export function classifyBiomarker(
         'Mislabeling a prognostic marker as predictive can wrongly restrict a label population.',
     });
   }
-  if (
-    params.assertedCategory === 'prognostic' &&
-    params.predictsDifferentialTreatmentEffect === true
-  ) {
+  if (asserted === 'predictive' && predicts === undefined) {
+    cautions.push({
+      severity: 'caution',
+      message:
+        'Asserted PREDICTIVE, but predictsDifferentialTreatmentEffect is not stated. A predictive claim ' +
+        'REQUIRES evidence of a biomarker-by-treatment interaction; state whether there is one.',
+    });
+  }
+  if (asserted === 'prognostic' && predicts === true) {
     cautions.push({
       severity: 'warning',
       message:
@@ -906,7 +565,23 @@ export function classifyBiomarker(
         'Re-examine: a treatment-interaction signal implies a PREDICTIVE classification.',
     });
   }
-  if (category === 'pharmacodynamic_response' && params.intendedUse === 'efficacy_endpoint') {
+  if (asserted === 'prognostic' && predicts === undefined) {
+    cautions.push({
+      severity: 'info',
+      message:
+        'predictsDifferentialTreatmentEffect is not stated. If the marker predicts a differential treatment ' +
+        'effect, the classification is PREDICTIVE, not prognostic.',
+    });
+  }
+  if (category === 'prognostic' && inferred && usual && !usual.supportingCategories.includes('prognostic')) {
+    cautions.push({
+      severity: 'warning',
+      message:
+        `Intended use "${usual.use}" is usually served by ${listed(usual.supportingCategories)}, but the ` +
+        'defining feature of each was stated false. Reconcile the intended use with the stated features.',
+    });
+  }
+  if (category === 'pharmacodynamic_response' && intendedUse === 'efficacy_endpoint') {
     cautions.push({
       severity: 'warning',
       message:
@@ -916,7 +591,7 @@ export function classifyBiomarker(
   }
   if (
     (category === 'diagnostic' || category === 'predictive') &&
-    (params.intendedUse === 'patient_selection' || desc.highStakesForLabelClaim)
+    (intendedUse === 'patient_selection' || desc?.highStakesForLabelClaim)
   ) {
     cautions.push({
       severity: 'caution',
@@ -925,7 +600,7 @@ export function classifyBiomarker(
         'level rigor (analytical + clinical validation co-developed with the therapeutic).',
     });
   }
-  if (category === 'susceptibility_risk' && params.intendedUse === 'screening') {
+  if (category === 'susceptibility_risk' && intendedUse === 'screening') {
     cautions.push({
       severity: 'caution',
       message:
@@ -934,14 +609,20 @@ export function classifyBiomarker(
     });
   }
 
-  const cdxLikely =
-    (category === 'predictive' || category === 'diagnostic') &&
-    (params.intendedUse === 'patient_selection' ||
-      params.predictsDifferentialTreatmentEffect === true ||
-      desc.highStakesForLabelClaim);
+  // Each holds for every candidate category, or it is null.
+  const candidates = category ? [category] : candidateCategories;
+  const agreed = (values: boolean[]): boolean | null => (values.every((v: boolean): boolean => v === values[0]) ? values[0] : null);
+  const cdxLikely = agreed(candidates.map((c: BiomarkerCategory): boolean =>
+    (c === 'predictive' || c === 'diagnostic') &&
+    (intendedUse === 'patient_selection' ||
+      predicts === true ||
+      categoryDescriptor(c).highStakesForLabelClaim)));
+  const highStakesForLabelClaim = agreed(
+    candidates.map((c: BiomarkerCategory): boolean => categoryDescriptor(c).highStakesForLabelClaim),
+  );
 
   const citations: Citation[] = [cite('best')];
-  if (cdxLikely) {
+  if (cdxLikely === true) {
     citations.push(cite('cdx_2014'));
   }
   if (category === 'safety' || category === 'monitoring' || category === 'pharmacodynamic_response') {
@@ -952,19 +633,21 @@ export function classifyBiomarker(
   return {
     biomarkerName: params.biomarkerName,
     category,
-    categoryLabel: desc.label,
-    definition: desc.definition,
-    clinicalQuestion: desc.question,
+    categoryLabel: desc ? desc.label : null,
+    definition: desc ? desc.definition : null,
+    clinicalQuestion: desc ? desc.question : null,
     inferred,
     inferenceBasis: basis,
-    examples: desc.examples.slice(),
-    evidentiaryImplications: desc.evidentiaryImplications,
-    regulatoryPathway: desc.regulatoryPathway,
-    highStakesForLabelClaim: desc.highStakesForLabelClaim,
+    candidateCategories,
+    examples: desc ? desc.examples.slice() : [],
+    evidentiaryImplications: desc ? desc.evidentiaryImplications : null,
+    regulatoryPathway: desc ? desc.regulatoryPathway : null,
+    highStakesForLabelClaim,
     supportedUses,
     cdxLikely,
     cautions,
     citations,
+    inputStates,
   };
 }
 
@@ -977,7 +660,7 @@ export interface PlanBiomarkerQualificationParams {
   category: BiomarkerCategory;
   /** Plain-language statement of how/where the biomarker will be used. */
   proposedContextOfUse: string;
-  /** Consequence/impact tier of the COU (drives evidentiary scaling). */
+  /** Consequence/impact tier of the COU (drives evidentiary scaling); inferred from the category when omitted. */
   couImpact?: 'low' | 'moderate' | 'high';
   /** Whether intended for use across multiple drug-development programs. */
   crossProgramUse?: boolean;
@@ -1004,7 +687,8 @@ export interface PlanBiomarkerQualificationResult {
   couImpactTier: 'low' | 'moderate' | 'high';
   couImpactDescription: string;
   evidentiaryExpectation: string;
-  recommendedPathway: 'ddt_qualification' | 'drug_specific_submission';
+  /** 'not_assessed' while an answer to an unstated scope fact could change it. */
+  recommendedPathway: 'ddt_qualification' | 'drug_specific_submission' | 'not_assessed';
   pathwayRationale: string;
   stages: QualificationStageOutput[];
   evidentiaryCriteria: string[];
@@ -1012,6 +696,19 @@ export interface PlanBiomarkerQualificationResult {
   clinicalEvidenceNeeded: string;
   findings: Finding[];
   citations: Citation[];
+  /** Each boolean input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
+}
+
+const QUALIFICATION_FLAGS = ['crossProgramUse', 'isGenomic', 'consortiumSponsored', 'singleDrugOnly'] as const;
+type ScopeFact = 'singleDrugOnly' | 'crossProgramUse' | 'consortiumSponsored';
+
+/** Pathway: drug-specific for one drug only; DDT qualification for cross-program/consortium use; drug-specific otherwise. */
+function qualificationPathway(
+  scope: Record<ScopeFact, boolean>,
+): 'ddt_qualification' | 'drug_specific_submission' {
+  if (scope.singleDrugOnly) return 'drug_specific_submission';
+  return scope.crossProgramUse || scope.consortiumSponsored ? 'ddt_qualification' : 'drug_specific_submission';
 }
 
 /**
@@ -1019,17 +716,33 @@ export interface PlanBiomarkerQualificationResult {
  * to COU impact, choose qualification (DDT) vs drug-specific submission, and lay
  * out the three-stage process (LOI -> QP -> FQP).
  *
- * Deterministic.
+ * Deterministic. The pathway is given only when every answer to the unstated
+ * scope facts gives the same one.
  */
 export function planBiomarkerQualification(
   params: PlanBiomarkerQualificationParams,
 ): PlanBiomarkerQualificationResult {
-  const desc = categoryDescriptor(params.category);
+  // 2026-11-08 (S5b): with singleDrugOnly, crossProgramUse and consortiumSponsored omitted the pathway was a
+  // drug-specific submission, "Use confined to a single drug program", although a stated cross-program use
+  // gives DDT qualification. An inferred moderate or low COU tier was not disclosed, an omitted isGenomic read
+  // as false, and a category of 'Safety' was inferred as a low tier.
+  refuseUnlessStated('plan_biomarker_qualification', [
+    textInput('biomarkerName', params.biomarkerName),
+    oneOfInput('category', params.category, BIOMARKER_CATEGORIES),
+    textInput('proposedContextOfUse', params.proposedContextOfUse),
+  ], 'planned');
+  const couImpact = statedOneOf('couImpact', params.couImpact, STAKES);
+  const inputStates = booleanInputStates(params, QUALIFICATION_FLAGS);
+  const scope: Record<ScopeFact, boolean | undefined> = {
+    singleDrugOnly: statedBoolean('singleDrugOnly', params.singleDrugOnly),
+    crossProgramUse: statedBoolean('crossProgramUse', params.crossProgramUse),
+    consortiumSponsored: statedBoolean('consortiumSponsored', params.consortiumSponsored),
+  };
 
   // Determine impact tier (explicit, else inferred from category + cross-program).
   let tier: 'low' | 'moderate' | 'high';
-  if (params.couImpact) {
-    tier = params.couImpact;
+  if (couImpact) {
+    tier = couImpact;
   } else if (params.category === 'predictive' || params.category === 'diagnostic') {
     tier = 'high';
   } else if (params.category === 'safety' || params.category === 'monitoring') {
@@ -1042,22 +755,23 @@ export function planBiomarkerQualification(
     (t: CouImpactTier): boolean => t.tier === tier,
   ) ?? COU_IMPACT_TABLE[0];
 
-  // Pathway: DDT qualification for cross-program/consortium use; drug-specific otherwise.
-  const recommendedPathway: 'ddt_qualification' | 'drug_specific_submission' =
-    params.singleDrugOnly === true
-      ? 'drug_specific_submission'
-      : params.crossProgramUse === true || params.consortiumSponsored === true
-        ? 'ddt_qualification'
-        : 'drug_specific_submission';
+  const pathways = conclusions(scope, qualificationPathway);
+  const recommendedPathway: PlanBiomarkerQualificationResult['recommendedPathway'] =
+    pathways.length === 1 ? pathways[0] : 'not_assessed';
+  const deciding = decidingFacts(scope, qualificationPathway);
 
   const pathwayRationale =
     recommendedPathway === 'ddt_qualification'
       ? 'Cross-program / consortium intent favors formal DDT qualification under FD&C Act §507: once ' +
         'qualified for the COU, the biomarker can be relied upon across programs without re-establishing ' +
         'its validity in each submission.'
-      : 'Use confined to a single drug program is most efficiently supported by a drug-specific submission ' +
-        '(IND/NDA/BLA), where the biomarker is justified in the context of that application rather than ' +
-        'formally qualified for general reuse.';
+      : recommendedPathway === 'drug_specific_submission'
+        ? 'Use confined to a single drug program is most efficiently supported by a drug-specific submission ' +
+          '(IND/NDA/BLA), where the biomarker is justified in the context of that application rather than ' +
+          'formally qualified for general reuse.'
+        : `Not assessed: ${listed(deciding)} ${deciding.length > 1 ? 'are' : 'is'} not stated. A biomarker for one ` +
+          'drug program only is supported in that program\'s submission (IND/NDA/BLA); one intended for use ' +
+          'across programs, or sponsored by a consortium, favors formal DDT qualification under FD&C Act §507.';
 
   const stages: QualificationStageOutput[] = QUALIFICATION_STAGE_TABLE.map(
     (s: QualificationStage): QualificationStageOutput => ({
@@ -1105,12 +819,20 @@ export function planBiomarkerQualification(
         'route (designCDxCodevelopment) is the operative pathway.',
     });
   }
-  if (tier === 'high' && params.couImpact === undefined) {
+  if (couImpact === undefined) {
     findings.push({
       severity: 'info',
       message:
-        'COU impact tier inferred as HIGH from category; supply couImpact explicitly to lock the ' +
+        `COU impact tier inferred as ${tier.toUpperCase()} from category; supply couImpact explicitly to lock the ` +
         'evidentiary scaling for the qualification plan.',
+    });
+  }
+  if (inputStates.isGenomic === 'not_stated') {
+    findings.push({
+      severity: 'info',
+      message:
+        'isGenomic is not stated. For a genomic biomarker, ICH E16 sets the structure of the qualification ' +
+        'submission; it is cited when isGenomic is true.',
     });
   }
   if (params.singleDrugOnly === true && params.crossProgramUse === true) {
@@ -1147,6 +869,7 @@ export function planBiomarkerQualification(
           : 'Supportive (possibly observational) clinical association data.',
     findings,
     citations: uniqueCitations([...citations, cite('best')]),
+    inputStates,
   };
 }
 
@@ -1183,7 +906,7 @@ export interface DesignCDxCodevelopmentParams {
   marketAssayDiffersFromCTA?: boolean;
   /** Therapeutic development phase at planning time. */
   therapeuticPhase?: 'preclinical' | 'phase1' | 'phase2' | 'phase3' | 'filed';
-  /** Regulatory framework. */
+  /** Regulatory framework. Not read: the plan follows the FDA pathway. */
   framework?: DeviceFramework;
 }
 
@@ -1197,18 +920,29 @@ export interface CodevelopmentMilestone {
 export interface DesignCDxCodevelopmentResult {
   therapeuticName: string;
   biomarkerName: string;
-  isCompanionDiagnostic: boolean;
-  cdxVsComplementary: 'companion' | 'complementary';
-  devicePathway: 'pma' | '510k' | 'de_novo';
+  /** null while essentialForUse is not stated. */
+  isCompanionDiagnostic: boolean | null;
+  cdxVsComplementary: 'companion' | 'complementary' | 'not_assessed';
+  /** 'not_assessed' when neither deviceRiskClass nor essentialForUse is stated. */
+  devicePathway: 'pma' | '510k' | 'de_novo' | 'not_assessed';
   devicePathwayRationale: string;
-  contemporaneousApprovalRequired: boolean;
+  /** null while essentialForUse is not stated. */
+  contemporaneousApprovalRequired: boolean | null;
   parallelTimeline: CodevelopmentMilestone[];
-  ctaBridgingRequired: boolean;
+  /** null while an unstated CTA fact could change it. */
+  ctaBridgingRequired: boolean | null;
   ctaBridgingPlan: string;
   crossLabelingNote: string;
   findings: Finding[];
   citations: Citation[];
+  /** Each boolean input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
 }
+
+const CDX_FLAGS = ['essentialForUse', 'usedClinicalTrialAssay', 'marketAssayDiffersFromCTA'] as const;
+const THERAPEUTIC_PHASES: readonly NonNullable<DesignCDxCodevelopmentParams['therapeuticPhase']>[] = [
+  'preclinical', 'phase1', 'phase2', 'phase3', 'filed',
+];
 
 function cdxParallelTimeline(): CodevelopmentMilestone[] {
   return [
@@ -1272,16 +1006,36 @@ function cdxParallelTimeline(): CodevelopmentMilestone[] {
 export function designCDxCodevelopment(
   params: DesignCDxCodevelopmentParams,
 ): DesignCDxCodevelopmentResult {
-  const isCompanion = params.essentialForUse !== false; // default to companion unless explicitly complementary
-  const cdxVsComplementary: 'companion' | 'complementary' = isCompanion
-    ? 'companion'
-    : 'complementary';
+  // 2026-11-08 (S5b): essentialForUse was read `!== false` ("Default true"), so an omitted one made the test a
+  // companion diagnostic requiring contemporaneous approval and, with no class stated, Class III and PMA. An
+  // omitted usedClinicalTrialAssay read as false (no bridging); an omitted marketAssayDiffersFromCTA read as true
+  // (bridging required, and a critical finding at filing). 'false' read as true. Each is now not_stated and
+  // decides nothing.
+  refuseUnlessStated('design_cdx_codevelopment', [
+    textInput('therapeuticName', params.therapeuticName),
+    textInput('biomarkerName', params.biomarkerName),
+    oneOfInput('assayModality', params.assayModality, ASSAY_MODALITIES),
+  ], 'designed');
+  const statedClass = statedOneOf('deviceRiskClass', params.deviceRiskClass, DEVICE_CLASSES);
+  const phase = statedOneOf('therapeuticPhase', params.therapeuticPhase, THERAPEUTIC_PHASES);
+  const inputStates = booleanInputStates(params, CDX_FLAGS);
+  const isCompanion = statedBoolean('essentialForUse', params.essentialForUse) ?? null;
+  const usedCTA = statedBoolean('usedClinicalTrialAssay', params.usedClinicalTrialAssay);
+  const differs = statedBoolean('marketAssayDiffersFromCTA', params.marketAssayDiffersFromCTA);
+  const cdxVsComplementary: DesignCDxCodevelopmentResult['cdxVsComplementary'] =
+    isCompanion === null ? 'not_assessed' : isCompanion ? 'companion' : 'complementary';
 
-  // Device pathway: Class III -> PMA; explicit De Novo when novel low/moderate risk; else 510(k).
-  let devicePathway: 'pma' | '510k' | 'de_novo';
+  // Device pathway: Class III -> PMA; explicit De Novo when novel low/moderate risk; else 510(k). With no class
+  // stated, a companion diagnostic is taken as Class III and a complementary one as Class II (a finding says so).
+  let devicePathway: DesignCDxCodevelopmentResult['devicePathway'];
   let devicePathwayRationale: string;
-  const riskClass = params.deviceRiskClass ?? (isCompanion ? 'III' : 'II');
-  if (riskClass === 'III') {
+  const riskClass = statedClass ?? (isCompanion === null ? undefined : isCompanion ? 'III' : 'II');
+  if (riskClass === undefined) {
+    devicePathway = 'not_assessed';
+    devicePathwayRationale =
+      'Not assessed: neither deviceRiskClass nor essentialForUse is stated. A companion diagnostic that gates ' +
+      'use of a therapy is typically Class III (PMA, 21 CFR Part 814); a complementary one is typically Class II.';
+  } else if (riskClass === 'III') {
     devicePathway = 'pma';
     devicePathwayRationale =
       'Most CDx that gate use of a therapy are Class III and follow PMA (21 CFR Part 814): an ' +
@@ -1298,21 +1052,30 @@ export function designCDxCodevelopment(
       'to establish a new device type and special controls.';
   }
 
-  const ctaBridgingRequired =
-    params.usedClinicalTrialAssay === true && params.marketAssayDiffersFromCTA !== false;
+  // Required when a CTA enrolled the pivotal trial and the market IVD differs; not when either is stated false.
+  const ctaBridgingRequired: boolean | null =
+    usedCTA === false || differs === false ? false : usedCTA === true && differs === true ? true : null;
+  const unstatedCta = [
+    ...(usedCTA === undefined ? ['usedClinicalTrialAssay'] : []),
+    ...(differs === undefined ? ['marketAssayDiffersFromCTA'] : []),
+  ];
 
-  const ctaBridgingPlan = ctaBridgingRequired
+  const ctaBridgingPlan = ctaBridgingRequired === true
     ? 'A bridging study is required: the market-ready IVD must be shown concordant with the clinical ' +
       'trial assay (CTA) used to enroll the pivotal trial, using banked pivotal specimens, so the ' +
       'clinical outcomes observed with the CTA can be attributed to the marketed test. Characterize ' +
       'concordance (PPA/NPA), discordant cases, and the effect of any discordance on the demonstrated ' +
       'clinical benefit.'
-    : 'No CTA-to-IVD bridging study indicated (the pivotal trial was enrolled with the market-ready ' +
-      'assay, or no difference between trial and market assays). Confirm assay equivalence and ' +
-      'lock-down status before pivotal start.';
+    : ctaBridgingRequired === false
+      ? 'No CTA-to-IVD bridging study indicated (the pivotal trial was enrolled with the market-ready ' +
+        'assay, or no difference between trial and market assays). Confirm assay equivalence and ' +
+        'lock-down status before pivotal start.'
+      : `Not assessed: ${listed(unstatedCta)} ${unstatedCta.length > 1 ? 'are' : 'is'} not stated. A bridging ` +
+        'study is required when a clinical trial assay (CTA) enrolled the pivotal trial and the market-ready IVD ' +
+        'differs from it: banked pivotal specimens then show the marketed test concordant with the CTA.';
 
   const findings: Finding[] = [];
-  if (isCompanion && params.deviceRiskClass !== undefined && params.deviceRiskClass !== 'III') {
+  if (isCompanion === true && statedClass !== undefined && statedClass !== 'III') {
     findings.push({
       severity: 'caution',
       message:
@@ -1321,16 +1084,30 @@ export function designCDxCodevelopment(
         'confirm the risk classification with FDA early (pre-submission).',
     });
   }
-  if (params.therapeuticPhase === 'phase3' && params.marketAssayDiffersFromCTA === true) {
+  if (statedClass === undefined && riskClass !== undefined) {
+    findings.push({
+      severity: 'info',
+      message:
+        `deviceRiskClass is not stated: Class ${riskClass} is assumed for a ` +
+        `${isCompanion ? 'companion' : 'complementary'} diagnostic. State the class to confirm the device pathway.`,
+    });
+  }
+  if (phase === 'phase3' && differs === true) {
+    // 2026-11-08 (S5b review): with usedClinicalTrialAssay unstated, bridging is not assessed, so the finding says
+    // what it depends on; it called the bridging study mandatory beside ctaBridgingRequired null.
     findings.push({
       severity: 'warning',
       message:
         'Market IVD differs from the CTA at Phase 3. The cutoff and assay enrolling the pivotal trial ' +
-        'should be locked before pivotal start; a robust bridging study is now mandatory and discordance ' +
+        'should be locked before pivotal start; ' +
+        (usedCTA === undefined
+          ? 'if the CTA enrolled the pivotal trial (usedClinicalTrialAssay is not stated), a robust bridging study is ' +
+            'mandatory and discordance '
+          : 'a robust bridging study is now mandatory and discordance ') +
         'risk must be managed against the demonstrated clinical benefit.',
     });
   }
-  if (params.therapeuticPhase === 'filed' && params.usedClinicalTrialAssay === true && params.marketAssayDiffersFromCTA !== false) {
+  if (phase === 'filed' && ctaBridgingRequired === true) {
     findings.push({
       severity: 'critical',
       message:
@@ -1339,13 +1116,21 @@ export function designCDxCodevelopment(
         'Complete and submit the bridging data with, or ahead of, the marketing applications.',
     });
   }
-  if (!isCompanion) {
+  if (isCompanion === false) {
     findings.push({
       severity: 'info',
       message:
         'Treated as a COMPLEMENTARY diagnostic (informs use but is not required for safe/effective use). ' +
         'Complementary tests do not restrict the indicated population and carry a lighter cross-labeling ' +
         'burden than a companion diagnostic.',
+    });
+  }
+  if (isCompanion === null) {
+    findings.push({
+      severity: 'info',
+      message:
+        'essentialForUse is not stated, so whether the test is a companion diagnostic (essential for ' +
+        'safe/effective use, approved contemporaneously) or a complementary one is not assessed.',
     });
   }
 
@@ -1374,6 +1159,7 @@ export function designCDxCodevelopment(
       'consistent between the two marketing applications (21 CFR 809.10; 21 CFR 814.20(b)).',
     findings,
     citations: uniqueCitations(citations),
+    inputStates,
   };
 }
 
@@ -1390,7 +1176,7 @@ export interface AnalyticalValidationInputs {
   limitOfDetection?: number;
   /** Lowest clinically meaningful concentration / level that must be detectable. */
   lowestClinicallyMeaningfulLevel?: number;
-  /** Established limit of quantitation, if claimed. */
+  /** Established limit of quantitation, if claimed. Not read. */
   limitOfQuantitation?: number;
   /** Whether interference/cross-reactivity testing was completed. */
   interferenceTested?: boolean;
@@ -1411,8 +1197,8 @@ export interface AnalyticalValidationInputs {
 export interface AnalyticalValidationParams {
   biomarkerName: string;
   assayModality: AssayModality;
-  /** Whether the assay is quantitative (vs qualitative/binary). */
-  quantitative?: boolean;
+  /** Whether the assay is quantitative (vs qualitative/binary). Required: it decides which parameters apply. */
+  quantitative: boolean;
   /** Stakes of the intended use (high for CDx/patient selection). */
   intendedUseStakes?: 'low' | 'moderate' | 'high';
   inputs: AnalyticalValidationInputs;
@@ -1429,12 +1215,23 @@ export interface AnalyticalValidationResult {
   biomarkerName: string;
   assayModality: AssayModality;
   quantitative: boolean;
-  overallReadiness: 'ready' | 'gaps' | 'not_ready';
+  /** 'not_assessed' when no parameter fails and the unstated stakes decide whether precision does. */
+  overallReadiness: 'ready' | 'gaps' | 'not_ready' | 'not_assessed';
   parameterAssessments: ParameterAssessment[];
   outstandingRequirements: string[];
   findings: Finding[];
   citations: Citation[];
+  /** Each boolean evidence input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
 }
+
+const ANALYTICAL_FLAGS = [
+  'interferenceTested',
+  'reportableRangeEstablished',
+  'robustnessDemonstrated',
+  'preanalyticalDocumented',
+  'multiSiteReproducibility',
+] as const;
 
 /**
  * Assess analytical validation of a biomarker assay against CLSI-grounded
@@ -1446,11 +1243,44 @@ export interface AnalyticalValidationResult {
 export function assessBiomarkerAnalyticalValidation(
   params: AnalyticalValidationParams,
 ): AnalyticalValidationResult {
-  const quantitative = params.quantitative !== false;
+  // 2026-11-08 (S5b): `quantitative` was read `!== false` ("Default true"), so an omitted one assessed a
+  // qualitative assay by bias and linearity; it is now required, as is `inputs`, whose absence crashed. A
+  // malformed number was read ('8' as a CV of 8%), a malformed boolean as not tested, and with neither the limit
+  // nor the stakes stated a CV of 12% passed the 15% default although a high-stakes use's 10% fails it. An
+  // omitted multi-site fact for a high-stakes use read "not demonstrated". An omitted evidence fact's outstanding
+  // requirement read as a stated false's; it now names the fact.
+  refuseUnlessStated('assess_biomarker_analytical_validation', [
+    textInput('biomarkerName', params.biomarkerName),
+    oneOfInput('assayModality', params.assayModality, ASSAY_MODALITIES),
+    { field: 'quantitative', value: params.quantitative, ok: typeof params.quantitative === 'boolean', expected: 'true or false' },
+    {
+      field: 'inputs',
+      value: params.inputs,
+      ok: typeof params.inputs === 'object' && params.inputs !== null && !Array.isArray(params.inputs),
+      expected: 'an object of the stated evidence, {} if none',
+    },
+  ], 'assessed');
+  const quantitative = params.quantitative;
+  const stakes = statedOneOf('intendedUseStakes', params.intendedUseStakes, STAKES);
   const i = params.inputs;
+  const inputStates = booleanInputStates(i, ANALYTICAL_FLAGS);
+  const atLeastZero = (field: string, value: unknown): number | undefined =>
+    statedNumber(field, value, (n: number): boolean => n >= 0, 'a number of at least 0');
+  const percent = (field: string, value: unknown): number | undefined =>
+    statedNumber(field, value, (n: number): boolean => n >= 0 && n <= 100, 'a percentage from 0 to 100');
+  const cv = atLeastZero('precisionCVPercent', i.precisionCVPercent);
+  const maxCVStated = statedNumber('maxAcceptableCVPercent', i.maxAcceptableCVPercent, (n: number): boolean => n > 0, 'a percentage above 0');
+  const lod = atLeastZero('limitOfDetection', i.limitOfDetection);
+  const lowestLevel = atLeastZero('lowestClinicallyMeaningfulLevel', i.lowestClinicallyMeaningfulLevel);
+  const ppa = percent('positivePercentAgreement', i.positivePercentAgreement);
+  const npa = percent('negativePercentAgreement', i.negativePercentAgreement);
+  /** Prefixes guidance and outstanding requirements with the fact left out, so an omitted fact does not read as a stated false. */
+  const unstated = (flag: (typeof ANALYTICAL_FLAGS)[number]): string =>
+    inputStates[flag] === 'not_stated' ? `${flag} not stated. ` : '';
   const assessments: ParameterAssessment[] = [];
   const outstanding: string[] = [];
   const findings: Finding[] = [];
+  let precisionUndecided = false;
 
   // Accuracy / trueness.
   if (quantitative) {
@@ -1464,8 +1294,6 @@ export function assessBiomarkerAnalyticalValidation(
     });
     outstanding.push('Method-comparison/bias study (CLSI EP09) demonstrating trueness within TAE.');
   } else {
-    const ppa = i.positivePercentAgreement;
-    const npa = i.negativePercentAgreement;
     if (ppa !== undefined && npa !== undefined) {
       const pass = ppa >= 90 && npa >= 90;
       assessments.push({
@@ -1494,23 +1322,40 @@ export function assessBiomarkerAnalyticalValidation(
     }
   }
 
-  // Precision.
-  if (quantitative && i.precisionCVPercent !== undefined) {
-    const maxCV = i.maxAcceptableCVPercent ?? (params.intendedUseStakes === 'high' ? 10 : 15);
-    const pass = i.precisionCVPercent <= maxCV;
+  // Precision. With no limit stated, the limit is 10% for a high-stakes use and 15% otherwise; with the stakes
+  // not stated either, the result is given only when both limits give it.
+  if (quantitative && cv !== undefined) {
+    const limits = maxCVStated !== undefined ? [maxCVStated] : stakes !== undefined ? [stakes === 'high' ? 10 : 15] : [10, 15];
+    const passes = limits.map((limit: number): boolean => cv <= limit);
+    const decided = passes.every((p: boolean): boolean => p === passes[0]);
+    const pass = decided && passes[0];
+    const limitText =
+      maxCVStated !== undefined
+        ? '≤ ' + round(maxCVStated, 2) + '%'
+        : stakes !== undefined
+          ? `≤ ${limits[0]}% (the default for ${stakes === 'high' ? 'high-stakes' : 'low- or moderate-stakes'} use; ` +
+            'maxAcceptableCVPercent not stated)'
+          : '≤ 10% for a high-stakes use or ≤ 15% otherwise (the defaults; maxAcceptableCVPercent and ' +
+            'intendedUseStakes not stated)';
     assessments.push({
       parameter: 'Precision (repeatability / reproducibility)',
-      status: pass ? 'pass' : 'fail',
+      status: !decided ? 'not_evaluated' : pass ? 'pass' : 'fail',
       detail:
         'Observed CV=' +
-        round(i.precisionCVPercent, 2) +
-        '% vs acceptance ≤ ' +
-        round(maxCV, 2) +
-        '%. Evaluate across the medically relevant range and multiple conditions.',
+        round(cv, 2) +
+        '% vs acceptance ' +
+        limitText +
+        (decided
+          ? '. Evaluate across the medically relevant range and multiple conditions.'
+          : '. It meets only the 15% limit, so precision is not assessed until the stakes or the limit are stated.'),
       clsiReference: 'CLSI EP05',
     });
-    if (!pass) {
+    if (decided && !pass) {
       outstanding.push('Reduce imprecision to meet the CV acceptance limit (CLSI EP05).');
+    }
+    if (!decided) {
+      precisionUndecided = true;
+      outstanding.push('State intendedUseStakes or maxAcceptableCVPercent to assess precision (CLSI EP05).');
     }
   } else {
     assessments.push({
@@ -1525,16 +1370,16 @@ export function assessBiomarkerAnalyticalValidation(
   }
 
   // Analytical sensitivity (LoD vs clinical need).
-  if (i.limitOfDetection !== undefined && i.lowestClinicallyMeaningfulLevel !== undefined) {
-    const pass = i.limitOfDetection <= i.lowestClinicallyMeaningfulLevel;
+  if (lod !== undefined && lowestLevel !== undefined) {
+    const pass = lod <= lowestLevel;
     assessments.push({
       parameter: 'Analytical sensitivity (LoB/LoD/LoQ)',
       status: pass ? 'pass' : 'fail',
       detail:
         'LoD=' +
-        i.limitOfDetection +
+        lod +
         ' vs lowest clinically meaningful level=' +
-        i.lowestClinicallyMeaningfulLevel +
+        lowestLevel +
         '. LoD must be at or below the lowest level the COU must detect.',
       clsiReference: 'CLSI EP17',
     });
@@ -1560,12 +1405,13 @@ export function assessBiomarkerAnalyticalValidation(
     detail:
       i.interferenceTested === true
         ? 'Interference/cross-reactivity testing reported complete (CLSI EP07).'
-        : 'Test common interferents (hemolysis, lipemia, icterus, concomitant drugs) and cross-reactivity ' +
+        : unstated('interferenceTested') +
+          'Test common interferents (hemolysis, lipemia, icterus, concomitant drugs) and cross-reactivity ' +
           '(e.g., homologous regions for NGS) per CLSI EP07.',
     clsiReference: 'CLSI EP07',
   });
   if (i.interferenceTested !== true) {
-    outstanding.push('Interference / cross-reactivity study (CLSI EP07).');
+    outstanding.push(unstated('interferenceTested') + 'Interference / cross-reactivity study (CLSI EP07).');
   }
 
   // Reportable range / linearity.
@@ -1576,11 +1422,12 @@ export function assessBiomarkerAnalyticalValidation(
       detail:
         i.reportableRangeEstablished === true
           ? 'Linearity / measuring interval established (CLSI EP06).'
-          : 'Establish linearity across the analytical measuring interval and dilution recovery (CLSI EP06).',
+          : unstated('reportableRangeEstablished') +
+            'Establish linearity across the analytical measuring interval and dilution recovery (CLSI EP06).',
       clsiReference: 'CLSI EP06',
     });
     if (i.reportableRangeEstablished !== true) {
-      outstanding.push('Linearity / reportable-range study (CLSI EP06).');
+      outstanding.push(unstated('reportableRangeEstablished') + 'Linearity / reportable-range study (CLSI EP06).');
     }
   }
 
@@ -1591,12 +1438,13 @@ export function assessBiomarkerAnalyticalValidation(
     detail:
       i.robustnessDemonstrated === true
         ? 'Robustness across reagent lots / operators / instruments demonstrated.'
-        : 'Demonstrate performance across reagent lots, operators, instruments, and small deliberate ' +
+        : unstated('robustnessDemonstrated') +
+          'Demonstrate performance across reagent lots, operators, instruments, and small deliberate ' +
           'method variations; guard-band critical parameters.',
     clsiReference: 'CLSI EP05 / EP25',
   });
   if (i.robustnessDemonstrated !== true) {
-    outstanding.push('Robustness/ruggedness study including reagent-lot variability.');
+    outstanding.push(unstated('robustnessDemonstrated') + 'Robustness/ruggedness study including reagent-lot variability.');
   }
 
   // Pre-analytical.
@@ -1606,30 +1454,41 @@ export function assessBiomarkerAnalyticalValidation(
     detail:
       i.preanalyticalDocumented === true
         ? 'Acceptable specimen types and stability conditions documented (CLSI EP25).'
-        : 'Document acceptable specimen types/anticoagulants, time-to-processing/fixation, storage ' +
+        : unstated('preanalyticalDocumented') +
+          'Document acceptable specimen types/anticoagulants, time-to-processing/fixation, storage ' +
           'temperature, and freeze-thaw limits; define specimen-rejection criteria (CLSI EP25).',
     clsiReference: 'CLSI EP25',
   });
   if (i.preanalyticalDocumented !== true) {
-    outstanding.push('Pre-analytical / specimen-stability characterization (CLSI EP25).');
+    outstanding.push(unstated('preanalyticalDocumented') + 'Pre-analytical / specimen-stability characterization (CLSI EP25).');
   }
 
   // Multi-site reproducibility for high-stakes (CDx) use.
-  if (params.intendedUseStakes === 'high') {
+  if (stakes === 'high') {
     if (i.multiSiteReproducibility === true) {
       findings.push({
         severity: 'info',
         message: 'Multi-site reproducibility demonstrated — appropriate for a high-stakes/CDx assay.',
       });
     } else {
-      outstanding.push('Multi-site reproducibility study (required for CDx-level assays).');
+      outstanding.push(unstated('multiSiteReproducibility') + 'Multi-site reproducibility study (required for CDx-level assays).');
       findings.push({
-        severity: 'warning',
+        severity: inputStates.multiSiteReproducibility === 'not_stated' ? 'caution' : 'warning',
         message:
-          'High-stakes (CDx) intended use but multi-site reproducibility not demonstrated. CDx assays ' +
-          'must reproduce across sites, lots, and operators.',
+          inputStates.multiSiteReproducibility === 'not_stated'
+            ? 'High-stakes (CDx) intended use, and whether multi-site reproducibility was demonstrated is not ' +
+              'stated. CDx assays must reproduce across sites, lots, and operators.'
+            : 'High-stakes (CDx) intended use but multi-site reproducibility not demonstrated. CDx assays ' +
+              'must reproduce across sites, lots, and operators.',
       });
     }
+  } else if (stakes === undefined) {
+    findings.push({
+      severity: 'info',
+      message:
+        'intendedUseStakes is not stated. A high-stakes (CDx or patient-selection) use also requires ' +
+        'multi-site reproducibility, and its default precision limit is 10%.',
+    });
   }
 
   // Overall readiness.
@@ -1637,9 +1496,11 @@ export function assessBiomarkerAnalyticalValidation(
   const anyNotEvaluated = assessments.some(
     (a: ParameterAssessment): boolean => a.status === 'not_evaluated',
   );
-  let overallReadiness: 'ready' | 'gaps' | 'not_ready';
+  let overallReadiness: AnalyticalValidationResult['overallReadiness'];
   if (anyFail) {
     overallReadiness = 'not_ready';
+  } else if (precisionUndecided) {
+    overallReadiness = 'not_assessed';
   } else if (anyNotEvaluated || outstanding.length > 0) {
     overallReadiness = 'gaps';
   } else {
@@ -1671,6 +1532,7 @@ export function assessBiomarkerAnalyticalValidation(
     outstandingRequirements: uniqueStrings(outstanding),
     findings,
     citations,
+    inputStates,
   };
 }
 
@@ -1719,12 +1581,18 @@ export interface ClinicalValidationResult {
   ppvAtIntendedPrevalence?: number | null;
   npvAtIntendedPrevalence?: number | null;
   intendedUsePrevalence?: number;
-  validityEstablished: boolean;
+  /** null while an unstated cutoff or independence fact could make it true. */
+  validityEstablished: boolean | null;
   utilityDistinctionNote: string;
   cutoffNote: string;
   findings: Finding[];
   citations: Citation[];
+  /** Each boolean input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
 }
+
+const CLINICAL_FLAGS = ['clinicalUtilityDemonstrated', 'cutoffPrespecified', 'independentValidationSet'] as const;
+const CLINICAL_COUNTS = ['truePositives', 'falseNegatives', 'trueNegatives', 'falsePositives'] as const;
 
 /**
  * Assess clinical validation of a biomarker: clinical sensitivity/specificity,
@@ -1733,17 +1601,46 @@ export interface ClinicalValidationResult {
  *
  * Deterministic — the 2x2 metrics, their exact (Clopper–Pearson) intervals and
  * the Bayes re-projection come from computeDiagnosticAccuracy, the one 2x2
- * engine. It throws on an empty table, a table with no diseased or no
- * non-diseased subjects, a negative or fractional count, or a prevalence
- * outside [0, 1], so none of them becomes a 0% metric or a verdict here. The
- * AnA handler relays the "required" / "must be" refusals as needs_parameters;
- * an all-zero table ("Confusion matrix is empty.") comes back as an error.
+ * engine. It throws on an empty table or a table with no diseased or no
+ * non-diseased subjects, so neither becomes a 0% metric or a verdict here. A
+ * count that is not a non-negative safe integer, or a prevalence outside
+ * [0, 1], is refused before it, by field. The AnA handler relays those
+ * refusals and the "required" one as needs_parameters; an all-zero table
+ * ("Confusion matrix is empty.") comes back as an error.
  */
 export function assessBiomarkerClinicalValidation(
   params: ClinicalValidationParams,
 ): ClinicalValidationResult {
+  // 2026-11-08 (S5b): an omitted independentValidationSet or clinicalUtilityDemonstrated read as a stated false
+  // ("Performance not confirmed on an independent validation set", "Utility is not yet demonstrated"), and
+  // validityEstablished was false while an answer could make it true; it is now null. A count of '45' was
+  // refused under the 2x2 engine's own name (tp), and an intended-use prevalence of '0.1' was read as 0.1.
+  const counts = Object.fromEntries(
+    CLINICAL_COUNTS.map((field: (typeof CLINICAL_COUNTS)[number]): [string, number | undefined] => [
+      field,
+      statedNumber(field, params[field], (n: number): boolean => Number.isSafeInteger(n) && n >= 0, 'a non-negative safe integer'),
+    ]),
+  ) as Record<(typeof CLINICAL_COUNTS)[number], number | undefined>;
+  refuseUnlessStated('assess_biomarker_clinical_validation', [
+    textInput('biomarkerName', params.biomarkerName),
+    ...CLINICAL_COUNTS.map((field: (typeof CLINICAL_COUNTS)[number]): RequiredInputCheck => ({
+      field,
+      value: params[field],
+      ok: counts[field] !== undefined,
+      expected: 'a non-negative safe integer',
+    })),
+  ], 'computed');
   // A null prevalence is not stated, not 0: PPV/NPV stay at the table's own prevalence.
-  const prev = params.intendedUsePrevalence ?? undefined;
+  const prev = statedNumber(
+    'intendedUsePrevalence',
+    params.intendedUsePrevalence,
+    (n: number): boolean => n >= 0 && n <= 1,
+    'in [0, 1]',
+  );
+  const inputStates = booleanInputStates(params, CLINICAL_FLAGS);
+  const cutoffPrespecified = statedBoolean('cutoffPrespecified', params.cutoffPrespecified);
+  const independentValidationSet = statedBoolean('independentValidationSet', params.independentValidationSet);
+  const clinicalUtilityDemonstrated = statedBoolean('clinicalUtilityDemonstrated', params.clinicalUtilityDemonstrated);
   const accuracy = computeDiagnosticAccuracy(
     {
       tp: params.truePositives,
@@ -1774,12 +1671,15 @@ export function assessBiomarkerClinicalValidation(
     }
   }
 
-  // Validity = adequate accuracy on an independent set with a pre-specified cutoff.
+  // Validity = adequate accuracy on an independent set with a pre-specified cutoff. Inadequate accuracy or
+  // either fact stated false settles it as not established; otherwise it is null until both are stated true.
   const accuracyAdequate = sensitivity >= 0.8 && specificity >= 0.8;
-  const validityEstablished =
-    accuracyAdequate &&
-    params.independentValidationSet === true &&
-    params.cutoffPrespecified === true;
+  const validityEstablished: boolean | null =
+    !accuracyAdequate || independentValidationSet === false || cutoffPrespecified === false
+      ? false
+      : independentValidationSet === true && cutoffPrespecified === true
+        ? true
+        : null;
 
   if (!accuracyAdequate) {
     findings.push({
@@ -1792,30 +1692,45 @@ export function assessBiomarkerClinicalValidation(
         '%) are below a typical 80% threshold; clinical validity is not established at this performance.',
     });
   }
-  if (params.cutoffPrespecified !== true) {
+  if (cutoffPrespecified !== true) {
     findings.push({
-      severity: params.cutoffPrespecified === false ? 'critical' : 'warning',
-      message: params.cutoffPrespecified === false
+      severity: cutoffPrespecified === false ? 'critical' : 'warning',
+      message: cutoffPrespecified === false
         ? 'Cutoff was NOT pre-specified. A data-derived cutoff fitted on the same dataset used to report ' +
           'performance overstates accuracy (optimism bias). Lock the cutoff, then validate on independent data.'
         : 'Cutoff prespecification is not stated. Confirm it was locked before analyzing the validation data; clinical validity is not established without that fact.',
     });
   }
-  if (params.independentValidationSet !== true) {
+  if (independentValidationSet === false) {
     findings.push({
       severity: 'warning',
       message:
         'Performance not confirmed on an independent validation set. Apparent metrics may reflect ' +
         'overfitting to the development data.',
     });
+  } else if (independentValidationSet === undefined) {
+    findings.push({
+      severity: 'caution',
+      message:
+        'Whether validation used an independent dataset (not the cutoff-derivation set) is not stated. ' +
+        'Clinical validity is not established without that fact; apparent metrics may reflect overfitting.',
+    });
   }
-  if (params.clinicalUtilityDemonstrated !== true) {
+  if (clinicalUtilityDemonstrated === false) {
     findings.push({
       severity: 'caution',
       message:
         'Clinical VALIDITY (the test measures what it claims and predicts the outcome) is distinct from ' +
         'clinical UTILITY (acting on the result improves patient outcomes). Utility is not yet demonstrated; ' +
         'a valid test can still lack utility if no action changes outcomes.',
+    });
+  } else if (clinicalUtilityDemonstrated === undefined) {
+    findings.push({
+      severity: 'info',
+      message:
+        'Whether clinical utility is demonstrated is not stated. Clinical VALIDITY (the test measures what it ' +
+        'claims and predicts the outcome) is distinct from clinical UTILITY (acting on the result improves ' +
+        'patient outcomes); a valid test can still lack utility if no action changes outcomes.',
     });
   }
 
@@ -1837,13 +1752,14 @@ export function assessBiomarkerClinicalValidation(
       'Clinical utility = using the biomarker leads to improved, measurable patient outcomes (net benefit). ' +
       'Regulators and payers may require utility, not just validity.',
     cutoffNote:
-      params.cutoffPrespecified === false
+      cutoffPrespecified === false
         ? 'Cutoff not pre-specified — re-derive and validate on independent data.'
-        : params.cutoffPrespecified === true
+        : cutoffPrespecified === true
           ? 'Cutoff stated as pre-specified; confirm it was locked before unblinding the validation set.'
           : 'Cutoff prespecification is not stated; confirm it was locked before unblinding the validation set.',
     findings,
     citations: [cite('best'), cite('bq_framework'), cite('clsi_ep12')],
+    inputStates,
   };
 }
 
@@ -1855,7 +1771,7 @@ export interface PlanEnrichmentStrategyParams {
   biomarkerName: string;
   /** BEST category of the enrichment biomarker. */
   category: BiomarkerCategory;
-  /** Prevalence of the biomarker-positive subgroup in the screened population (0-1). */
+  /** Prevalence of the biomarker-positive subgroup in the screened population (above 0, at most 1). */
   biomarkerPositivePrevalence: number;
   /** Whether biomarker-negative patients are expected to derive any benefit. */
   negativesExpectedToBenefit?: boolean;
@@ -1880,7 +1796,8 @@ export interface PlanEnrichmentStrategyResult {
   biomarkerName: string;
   enrichmentType: 'predictive' | 'prognostic' | 'none';
   enrichmentTypeRationale: string;
-  recommendedDesign: EnrichmentDesignOption['design'];
+  /** 'not_assessed' for a predictive marker while an answer to an unstated design fact could change it. */
+  recommendedDesign: EnrichmentDesignOption['design'] | 'not_assessed';
   recommendedDesignRationale: string;
   designOptions: EnrichmentDesignOption[];
   feasibility: {
@@ -1891,6 +1808,52 @@ export interface PlanEnrichmentStrategyResult {
   };
   findings: Finding[];
   citations: Citation[];
+  /** Each boolean input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
+}
+
+const ENRICHMENT_FLAGS = [
+  'negativesExpectedToBenefit',
+  'effectConcentratedInPositives',
+  'characterizeNegatives',
+  'validatedAssayAvailable',
+] as const;
+type DesignFact = 'negativesExpectedToBenefit' | 'characterizeNegatives' | 'effectConcentratedInPositives';
+
+/** The design for a predictive marker from one complete set of answers, with its rationale. */
+function predictiveDesign(
+  facts: Record<DesignFact, boolean>,
+): { design: EnrichmentDesignOption['design']; rationale: string } {
+  if (facts.negativesExpectedToBenefit) {
+    return {
+      design: 'stratified',
+      rationale:
+        'Negatives may benefit, so do not exclude them: enroll all-comers stratified by biomarker to ' +
+        'test the interaction and characterize both subgroups.',
+    };
+  }
+  if (facts.characterizeNegatives) {
+    return {
+      design: 'enrichment_with_negative_cohort',
+      rationale:
+        'Benefit concentrated in positives but evidence on negatives is wanted: enrich for positives while ' +
+        'including a smaller negative cohort to characterize (not power) the negative population.',
+    };
+  }
+  if (facts.effectConcentratedInPositives) {
+    return {
+      design: 'biomarker_positive_only',
+      rationale:
+        'Strong prior that benefit is concentrated in positives and negatives are not expected to benefit: ' +
+        'predictive enrichment via biomarker-positive-only enrollment supports a restricted indication and CDx.',
+    };
+  }
+  return {
+    design: 'stratified',
+    rationale:
+      'Predictive hypothesis not yet firmly established: a marker-stratified all-comers design formally ' +
+      'tests the biomarker-by-treatment interaction before restricting the population.',
+  };
 }
 
 function enrichmentDesignOptions(): EnrichmentDesignOption[] {
@@ -1950,12 +1913,44 @@ function enrichmentDesignOptions(): EnrichmentDesignOption[] {
  * predictive, recommend an all-comers / biomarker-positive-only / stratified /
  * enrichment-with-negative-cohort design, and assess prevalence-driven feasibility.
  *
- * Deterministic.
+ * Deterministic. For a predictive marker the design is given only when every
+ * answer to the unstated design facts gives the same one.
  */
 export function planEnrichmentStrategy(
   params: PlanEnrichmentStrategyParams,
 ): PlanEnrichmentStrategyResult {
-  const prevalence = clamp(params.biomarkerPositivePrevalence, 0, 1);
+  // 2026-11-08 (S5b): a predictive marker with its design facts omitted was "stratified" ("Predictive
+  // hypothesis not yet firmly established") although the answers could make it positive-only or add a negative
+  // cohort, and an omitted validatedAssayAvailable read "No validated assay reported". The prevalence was
+  // clamped: 1.5 read as 1, 'feasible', and 0 reported 0 screens per enrolled positive. A category of
+  // 'Predictive' read as no enrichment.
+  refuseUnlessStated('plan_enrichment_strategy', [
+    textInput('biomarkerName', params.biomarkerName),
+    oneOfInput('category', params.category, BIOMARKER_CATEGORIES),
+    {
+      field: 'biomarkerPositivePrevalence',
+      value: params.biomarkerPositivePrevalence,
+      ok:
+        typeof params.biomarkerPositivePrevalence === 'number' &&
+        params.biomarkerPositivePrevalence > 0 &&
+        params.biomarkerPositivePrevalence <= 1,
+      expected: 'a proportion above 0 and at most 1',
+    },
+  ], 'planned');
+  const prevalence = params.biomarkerPositivePrevalence;
+  const screeningPoolSize = statedNumber(
+    'screeningPoolSize',
+    params.screeningPoolSize,
+    (n: number): boolean => Number.isInteger(n) && n >= 1,
+    'a whole number of at least 1',
+  );
+  const inputStates = booleanInputStates(params, ENRICHMENT_FLAGS);
+  const designFacts: Record<DesignFact, boolean | undefined> = {
+    negativesExpectedToBenefit: statedBoolean('negativesExpectedToBenefit', params.negativesExpectedToBenefit),
+    characterizeNegatives: statedBoolean('characterizeNegatives', params.characterizeNegatives),
+    effectConcentratedInPositives: statedBoolean('effectConcentratedInPositives', params.effectConcentratedInPositives),
+  };
+  const validatedAssay = statedBoolean('validatedAssayAvailable', params.validatedAssayAvailable);
 
   // Enrichment type from category.
   let enrichmentType: 'predictive' | 'prognostic' | 'none';
@@ -1983,29 +1978,37 @@ export function planEnrichmentStrategy(
   }
 
   // Recommended design.
-  let recommendedDesign: EnrichmentDesignOption['design'];
+  let recommendedDesign: PlanEnrichmentStrategyResult['recommendedDesign'];
   let recommendedDesignRationale: string;
   if (enrichmentType === 'predictive') {
-    if (params.negativesExpectedToBenefit === true) {
-      recommendedDesign = 'stratified';
+    const designOf = (facts: Record<DesignFact, boolean>): EnrichmentDesignOption['design'] =>
+      predictiveDesign(facts).design;
+    const designs = conclusions(designFacts, designOf);
+    if (designs.length === 1) {
+      // Every answer gives this design. The rationale is the one the unstated facts answered false give, and it
+      // names them.
+      const chosen = predictiveDesign({
+        negativesExpectedToBenefit: designFacts.negativesExpectedToBenefit ?? false,
+        characterizeNegatives: designFacts.characterizeNegatives ?? false,
+        effectConcentratedInPositives: designFacts.effectConcentratedInPositives ?? false,
+      });
+      const unstatedFacts = (Object.keys(designFacts) as DesignFact[]).filter(
+        (k: DesignFact): boolean => designFacts[k] === undefined,
+      );
+      recommendedDesign = chosen.design;
       recommendedDesignRationale =
-        'Negatives may benefit, so do not exclude them: enroll all-comers stratified by biomarker to ' +
-        'test the interaction and characterize both subgroups.';
-    } else if (params.characterizeNegatives === true) {
-      recommendedDesign = 'enrichment_with_negative_cohort';
-      recommendedDesignRationale =
-        'Benefit concentrated in positives but evidence on negatives is wanted: enrich for positives while ' +
-        'including a smaller negative cohort to characterize (not power) the negative population.';
-    } else if (params.effectConcentratedInPositives === true) {
-      recommendedDesign = 'biomarker_positive_only';
-      recommendedDesignRationale =
-        'Strong prior that benefit is concentrated in positives and negatives are not expected to benefit: ' +
-        'predictive enrichment via biomarker-positive-only enrollment supports a restricted indication and CDx.';
+        chosen.rationale +
+        (unstatedFacts.length > 0
+          ? ` ${listed(unstatedFacts)} ${unstatedFacts.length > 1 ? 'are' : 'is'} not stated; every answer gives this design.`
+          : '');
     } else {
-      recommendedDesign = 'stratified';
+      const deciding = decidingFacts(designFacts, designOf);
+      recommendedDesign = 'not_assessed';
       recommendedDesignRationale =
-        'Predictive hypothesis not yet firmly established: a marker-stratified all-comers design formally ' +
-        'tests the biomarker-by-treatment interaction before restricting the population.';
+        `Not assessed: ${listed(deciding)} ${deciding.length > 1 ? 'are' : 'is'} not stated, and the answers ` +
+        `make the design one of ${listed(designs)}. Negatives who may benefit call for a stratified design, ` +
+        'negatives to be characterized for enrichment with a negative cohort, and an effect concentrated in ' +
+        'positives for biomarker-positive-only enrollment.';
     }
   } else if (enrichmentType === 'prognostic') {
     recommendedDesign = 'all_comers';
@@ -2020,11 +2023,7 @@ export function planEnrichmentStrategy(
   }
 
   // Feasibility.
-  const screensPerEnrolledPositive = prevalence > 0 ? round(1 / prevalence, 2) : Infinity;
-  let estimatedScreensNeeded: number | undefined;
-  if (params.screeningPoolSize !== undefined) {
-    estimatedScreensNeeded = params.screeningPoolSize;
-  }
+  const screensPerEnrolledPositive = round(1 / prevalence, 2);
   let feasibilityFlag: 'feasible' | 'challenging' | 'low_prevalence_warning';
   if (prevalence >= 0.2) {
     feasibilityFlag = 'feasible';
@@ -2035,15 +2034,20 @@ export function planEnrichmentStrategy(
   }
 
   const findings: Finding[] = [];
-  if (
-    recommendedDesign === 'biomarker_positive_only' &&
-    params.validatedAssayAvailable !== true
-  ) {
+  if (recommendedDesign === 'biomarker_positive_only' && validatedAssay === false) {
     findings.push({
       severity: 'warning',
       message:
         'Biomarker-positive-only enrollment requires a validated selection assay at screening. No validated ' +
         'assay reported — operationalizing enrichment (and the eventual CDx) is blocked until one exists.',
+    });
+  } else if (recommendedDesign === 'biomarker_positive_only' && validatedAssay === undefined) {
+    findings.push({
+      severity: 'caution',
+      message:
+        'Biomarker-positive-only enrollment requires a validated selection assay at screening, and whether ' +
+        'one exists (validatedAssayAvailable) is not stated. Enrichment (and the eventual CDx) cannot be ' +
+        'operationalized without one.',
     });
   }
   if (feasibilityFlag === 'low_prevalence_warning') {
@@ -2053,7 +2057,7 @@ export function planEnrichmentStrategy(
         'Low biomarker-positive prevalence (' +
         round(prevalence * 100, 1) +
         '%) means many patients must be screened per enrolled positive (~' +
-        (screensPerEnrolledPositive === Infinity ? '∞' : screensPerEnrolledPositive) +
+        screensPerEnrolledPositive +
         '). Plan screening logistics, central testing, and consider a low-frequency-subset development ' +
         'strategy.',
     });
@@ -2089,12 +2093,12 @@ export function planEnrichmentStrategy(
     designOptions: enrichmentDesignOptions(),
     feasibility: {
       biomarkerPositivePrevalence: round(prevalence, 4),
-      screensPerEnrolledPositive:
-        screensPerEnrolledPositive === Infinity ? 0 : screensPerEnrolledPositive,
-      estimatedScreensNeeded,
+      screensPerEnrolledPositive,
+      estimatedScreensNeeded: screeningPoolSize,
       feasibilityFlag,
     },
     findings,
     citations: uniqueCitations(citations),
+    inputStates,
   };
 }
