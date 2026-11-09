@@ -95,6 +95,7 @@ import { isSameSubmissionType, resolveToRegistryEntry } from '../../../shared/re
 import { cespChannelRefusal } from '../submission-gateways/ema-cesp';
 import { ENVIRONMENT_WORDS } from '../submission-gateways/governed-transmit-checks';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
+import { launchSequenceSizeRefusal } from '../ectd/ectd-regional-rules';
 import {
   packageIdentityRefusal, readSubmissionPackageIdentity, lockSubmissionPackageIdentity, lockRecordedPackageIdentity,
   recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, fdaContactsForPackageIdentity,
@@ -1691,20 +1692,67 @@ async function filingOrderRefusal(
   return null;
 }
 
+type AssembledPackage = Awaited<ReturnType<typeof import('../ectd/assemble-from-core').assembleSequence>>;
+
+/**
+ * What stops this package being transmitted: the region-blind rule transmit
+ * applies (assembledTransmitBlockers), and, for an FDA package, the launch
+ * ceiling (P-93, launchSequenceSizeRefusal). One composition for the package
+ * gate and transmit's re-check, so the two cannot disagree.
+ */
+async function packageBlockers(assembled: AssembledPackage, fda: boolean): Promise<{ gaps: string[]; size: string | null }> {
+  const { assembledTransmitBlockers } = await import('../ectd/assemble-from-core');
+  const size = fda ? launchSequenceSizeRefusal(assembled.bundle.sizeBytes) : null;
+  return { gaps: [...assembledTransmitBlockers(assembled), ...(size ? [size] : [])], size };
+}
+
+/**
+ * The package gate's refusal. The existing tails are worded by step; only the
+ * launch ceiling's (P-93) depends on whether the leaves can still change, so a
+ * person is told to move leaves only while they can.
+ */
+function packageGateRefusal(step: GovernedSequenceStep, gaps: string[], size: string | null, status: string): string {
+  const head = `Refusing to ${step}: ${gaps.join('; ')}.`;
+  if (size && isSequenceLocked(status)) {
+    return `${head} The sequence is ${status}, so its leaves can no longer be changed, and it cannot be sent as it is.`;
+  }
+  const move = size ? ' Remove some of its leaves and place them in a later sequence, so that each package is 1 GiB or less.' : '';
+  return `${head}${move} Transmit would refuse this package, and once the sequence is ` +
+    `${step === 'freeze' ? 'frozen' : 'dispatched'} its leaves can no longer be changed.`;
+}
+
+/** Transmit's own package re-check refusal: the launch ceiling alone says nothing was sent; any other gap names the rule. */
+function transmitPackageRefusal({ gaps, size }: { gaps: string[]; size: string | null }): string {
+  const tail = gaps.length === 1 && size ? 'Nothing was sent.' : 'A transmitted sequence must carry every placed leaf, and only approved documents.';
+  return `Transmit blocked — ${gaps.join('; ')}. ${tail}`;
+}
+
+/** The package gate's refusal for a sequence that did not assemble. Readiness's own (P-93) says why it matters there. */
+function unassembledRefusal(step: GovernedSequenceStep, err: unknown): string {
+  const why = err instanceof Error ? err.message : String(err);
+  return step === 'transmit'
+    ? `Refusing to transmit: the sequence does not assemble into a package (${why}), so its size cannot be measured, and nothing can be sent.`
+    : `Refusing to ${step}: the sequence does not assemble into a package (${why}). Fix it while the leaves can still be changed.`;
+}
+
 /**
  * Refuse a governed step when the package this sequence would transmit is not
- * transmittable — the rule transmitSequence applies (assembledTransmitBlockers),
- * run on the same assembly before the sequence is locked.
+ * transmittable — the rule transmitSequence applies (packageBlockers), run on
+ * the same assembly before the sequence is locked.
  *
  * Returns the leaf-manifest digest the assembly ran against, read BEFORE it
  * started (2026-09-23, W5/D7, round-2 skeptic): the caller compares it with the
  * digest under the sequence row lock, so a leaf placed or removed while the
  * package was assembling is refused instead of frozen unjudged.
+ *
+ * `judge: 'size'` (P-93, readiness's only use): the same assembly, judged on the
+ * launch ceiling alone. The rest of the package gate stays the act's to judge.
  */
 async function assertSequencePackageable(
   id: number,
   ctx: { organizationId: number; userId: number },
   step: GovernedSequenceStep,
+  opts: { judge?: 'size' } = {},
 ): Promise<string | null> {
   const sequence = await getSequence(id, ctx);
   const binding = await deriveGovernedTargetBinding(asQueryable(pool), `ectd-sequence:${id}`, ctx.organizationId);
@@ -1712,15 +1760,15 @@ async function assertSequencePackageable(
   const region = canonicalRegionOf(sequence.region);
   const fda = region === 'US';
   const captured = binding.recordedPackageIdentity;
-  const { assembleSequence, assembledTransmitBlockers } = await import('../ectd/assemble-from-core');
-  let assembled: Awaited<ReturnType<typeof assembleSequence>>;
+  const { assembleSequence } = await import('../ectd/assemble-from-core');
+  let assembled: AssembledPackage;
   try {
     // Judge the recorded facts the signature binds for this actual market.
     // FDA DUNS/contact requirements apply only to US packages; an optional
     // other-agency identifier is never supplied from the FDA registry.
     if (!region) throw new Error('The sequence region is not recognized, so its recorded release identity cannot be established.');
     if (!captured) throw new Error('The signature binding has no recorded application/applicant identity.');
-    const missing = packageIdentityRefusal(captured.identity, 'Nothing can be frozen or dispatched.', { fda });
+    const missing = packageIdentityRefusal(captured.identity, step === 'transmit' ? 'Nothing can be sent.' : 'Nothing can be frozen or dispatched.', { fda });
     if (missing) throw missing;
     assembled = await assembleSequence({
       sequenceId: id,
@@ -1737,20 +1785,13 @@ async function assertSequencePackageable(
     // there is nothing in the leaves to fix: it passes through to the route's
     // fail(), which answers 503 with Retry-After.
     if (isConversionCapacityError(err)) throw err;
-    throw new SubmissionError(
-      'DISPATCH_BLOCKED',
-      `Refusing to ${step}: the sequence does not assemble into a package (${err instanceof Error ? err.message : String(err)}). ` +
-        'Fix it while the leaves can still be changed.',
-    );
+    throw new SubmissionError('DISPATCH_BLOCKED', unassembledRefusal(step, err));
   }
   try {
-    const gaps = assembledTransmitBlockers(assembled);
+    const blocked = await packageBlockers(assembled, fda);
+    const gaps = opts.judge === 'size' ? (blocked.size ? [blocked.size] : []) : blocked.gaps;
     if (gaps.length > 0) {
-      throw new SubmissionError(
-        'DISPATCH_BLOCKED',
-        `Refusing to ${step}: ${gaps.join('; ')}. Transmit would refuse this package, and once the sequence is ` +
-          `${step === 'freeze' ? 'frozen' : 'dispatched'} its leaves can no longer be changed.`,
-      );
+      throw new SubmissionError('DISPATCH_BLOCKED', packageGateRefusal(step, gaps, blocked.size, sequence.status));
     }
   } finally {
     await assembled.cleanup();
@@ -2737,6 +2778,30 @@ export function transmitApplicationNumberRefusal(typed: string, recorded: string
   return null;
 }
 
+/**
+ * Readiness's launch-ceiling check (P-93), after every earlier check cleared:
+ * the package gate's own assembly, judged on the size alone. Only for an FDA
+ * sequence, and only when a send is being asked (an environment is named), so
+ * the Dispatch tab's read stays a read, with no assembly. A package that does
+ * not assemble cannot be measured, so it is refused, never cleared. Anything
+ * else (a busy converter) passes through to the route, which answers 503.
+ */
+async function withLaunchCeiling(
+  before: string | null,
+  seq: EctdSequence,
+  environment: 'staging' | 'production' | undefined,
+  ctx: { organizationId: number; userId: number },
+): Promise<string | null> {
+  if (before !== null || environment === undefined || canonicalRegionOf(seq.region) !== 'US') return before;
+  try {
+    await assertSequencePackageable(seq.id, ctx, 'transmit', { judge: 'size' });
+    return null;
+  } catch (err) {
+    if (err instanceof SubmissionError && err.code === 'DISPATCH_BLOCKED') return err.message;
+    throw err;
+  }
+}
+
 /** transmitApplicationNumberRefusal's sentence for a number the person typed; null when none was typed. */
 function typedApplicationNumberRefusal(typed: string | undefined, recorded: string | null): string | null {
   if (typeof typed !== 'string' || !typed.trim()) return null;
@@ -2745,8 +2810,11 @@ function typedApplicationNumberRefusal(typed: string | undefined, recorded: stri
 
 /**
  * The pre-signature half of transmitSequence, as a read: status, re-send rule,
- * the dispatch gate, the route, and the gateway's credentials. Same functions,
- * same order, minus Gate 1 (the signature that has not been taken yet).
+ * the dispatch gate, the route, and the gateway's credentials, minus Gate 1 (the
+ * signature that has not been taken yet); and, for an FDA sequence when an
+ * environment is named, the launch ceiling transmit applies after assembly
+ * (assertSequencePackageable with judge 'size'; P-93). The rest of transmit's
+ * package re-check is judged at the act.
  *
  * QA 2026-10-08 (j6, the blocker): a dispatched sequence had no path to a
  * package or a transmit, and the copy promised "the governed transmit path"
@@ -2813,13 +2881,14 @@ export async function sequenceTransmitReadiness(
       ? `Whether this sequence's agency gateway is configured for ${envs.join(' or ')} could not be checked, so nothing can be sent until it can.`
       : `This sequence's agency gateway has no ${envs.join(' or ')} credentials configured for this organization, so nothing can be sent. Nothing was signed or transmitted.`;
   };
-  const refusal =
+  const before =
     seq.status !== 'dispatched'
       ? `Sequence must be dispatched before transmit (current: ${seq.status}).`
       : resendRefusal(seq.dispatchStatus) ??
         (!gate.cleared ? `Dispatch gate blocks transmit: ${gate.blockers.join(' ')}` : null) ??
         typedNumberRefusal ??
         gatewayRefusal();
+  const refusal = await withLaunchCeiling(before, seq, environment, ctx);
 
   return {
     sequenceStatus: seq.status,
@@ -3147,16 +3216,13 @@ async function transmitDispatchedSequence(
   // nobody here. See assembledTransmitBlockers. The governed freeze and dispatch
   // now refuse on the same rule before the leaves lock (assertSequencePackageable),
   // so this is the re-check at the irreversible step; the claim is released
-  // because nothing was sent.
-  const { assembledTransmitBlockers } = await import('../ectd/assemble-from-core');
-  const gaps = assembledTransmitBlockers(assembled);
-  if (gaps.length > 0) {
+  // because nothing was sent. P-93: an FDA package over the launch ceiling is
+  // refused here too, on the exact bytes this attempt would send.
+  const blocked = await packageBlockers(assembled, fda);
+  if (blocked.gaps.length > 0) {
     await assembled.cleanup();
     await releaseTransmitSlot(sequenceId, ctx.organizationId, signatureActionId, attemptId);
-    throw new SubmissionError(
-      'DISPATCH_BLOCKED',
-      `Transmit blocked — ${gaps.join('; ')}. A transmitted sequence must carry every placed leaf, and only approved documents.`,
-    );
+    throw new SubmissionError('DISPATCH_BLOCKED', transmitPackageRefusal(blocked));
   }
 
   // Last pre-wire checkpoint. The identity echo proves which captured facts
