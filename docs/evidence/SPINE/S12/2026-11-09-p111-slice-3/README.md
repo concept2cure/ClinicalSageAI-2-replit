@@ -63,3 +63,15 @@ project.
    (`task-listed-1440-light.png`).
 4. After "Show the whole project", the same form starts on the filing project again
    (`task-form-unbound-1440-light.png`).
+
+## Open for the founder (the coordinating session's ruling, 2026-11-09)
+
+**Should a Quality record carry the work project it was raised in?**
+
+- P-111 item 2 is met for what a person does inside a bound CMC or Quality area: those tasks are filed on the work
+  project (this slice).
+- A task the server derives from a Quality record can only follow a work project the record itself carries. These
+  are the CAPA's, the CAPA action's, and the periodic-review and training tasks.
+- No record carries one today: `capa_records`, `capa_actions` and the QMS records hold `program_id` only.
+- Until the founder decides, those producers stay on the program's anchor. `tasking/source-task.ts` is untouched.
+  Carrying a work project would be a column on those tables: a schema addition, RULE 6, the founder's call.

@@ -102,7 +102,11 @@ const isChildren: ShapeGuard<Children> = (value): value is Children => {
   return !!v && typeof v.anchorProjectId === 'number' && Array.isArray(v.children);
 };
 
-export interface WorkItem { id: string; source: string; title: string; status: string; dueAt: string | null; ownerName: string | null }
+export interface WorkItem {
+  id: string; source: string; title: string; status: string; dueAt: string | null; ownerName: string | null;
+  /** P-111 item 4: the parent task's item id, on a subtask; the task's own row id, on a board task. */
+  subtaskOf?: string; rowId?: number;
+}
 interface WorkRead { items: WorkItem[]; summary?: { partial?: boolean } }
 const isWorkRead: ShapeGuard<WorkRead> = (value): value is WorkRead => {
   const items = (value as Partial<WorkRead> | null)?.items;
@@ -122,6 +126,8 @@ export function workTaskText(item: WorkItem): string {
 /** The one task create's body for a task in a work project. */
 export function buildWorkProjectAreaTaskBody(form: {
   areaId: string; programId: string; workProjectId: number; title: string; assignee: string; due: string; note: string;
+  /** A subtask's parent task (its unified_tasks.id), checked by the server (tasking/task-project.ts admitParentTask). */
+  parentTaskId?: number;
 }): Record<string, unknown> {
   return {
     title: form.title.trim(),
@@ -129,6 +135,7 @@ export function buildWorkProjectAreaTaskBody(form: {
     moduleType: AREA_TASK_MODULE[form.areaId] ?? 'Plan', moduleSource: 'work-project-tasks', category: 'work-project', taskType: 'work-project-task',
     priority: 'medium',
     projectId: form.workProjectId,
+    ...(form.parentTaskId ? { parentTaskId: form.parentTaskId } : {}),
     assigneeId: Number(form.assignee),
     ...(form.due ? { dueDate: new Date(`${form.due}T17:00:00`).toISOString() } : {}),
     sourceEntityType: WORK_PROJECT_TASKS_ENTITY,
@@ -140,13 +147,14 @@ export function buildWorkProjectAreaTaskBody(form: {
 
 const TASK_WORDS = { noun: 'task', unmatched: 'The response did not confirm this task. Read the work project’s tasks again before adding it again.' };
 
-function addTaskForm(name: string, roster: Array<{ id: string; name: string; label?: string }>, rosterState: string): C2CFormConfig {
+function addTaskForm(name: string, roster: Array<{ id: string; name: string; label?: string }>, rosterState: string, parentTitle?: string): C2CFormConfig {
   const unread = rosterState === 'error';
   return {
     eyebrow: 'Work project',
-    title: `Add a task to ${name}`,
-    sub: 'Creates a task in this work project for one person, with a due date. It appears in their tasks.',
-    submitLabel: 'Add task',
+    title: parentTitle ? `Add a subtask to ${parentTitle}` : `Add a task to ${name}`,
+    sub: parentTitle ? 'Creates a subtask under this task, in the same work project, for one person, with a due date.'
+      : 'Creates a task in this work project for one person, with a due date. It appears in their tasks.',
+    submitLabel: parentTitle ? 'Add subtask' : 'Add task',
     busy: rosterState === 'loading' ? 'Reading your organisation’s members…' : undefined,
     notice: unread ? 'The member list could not be read, so no one can be chosen. Close this and try again.' : undefined,
     fields: unread ? [] : [
@@ -158,13 +166,17 @@ function addTaskForm(name: string, roster: Array<{ id: string; name: string; lab
   };
 }
 
-function AddTaskDrawer({ name, onCancel, onSubmit }: { name: string; onCancel: () => void; onSubmit: (v: Record<string, string>) => void }) {
+function AddTaskDrawer({ name, parentTitle, onCancel, onSubmit }: {
+  name: string; parentTitle?: string; onCancel: () => void; onSubmit: (v: Record<string, string>) => void;
+}) {
   const { roster, rosterState } = useAssigneeRoster();
-  return <C2CForm config={addTaskForm(name, roster, rosterState)} onCancel={onCancel} onSubmit={onSubmit} />;
+  return <C2CForm config={addTaskForm(name, roster, rosterState, parentTitle)} onCancel={onCancel} onSubmit={onSubmit} />;
 }
 
-function AddTask({ areaId, programId, workProjectId, name, onAdded }: {
+function AddTask({ areaId, programId, workProjectId, name, onAdded, parent }: {
   areaId: string; programId: string; workProjectId: number; name: string; onAdded: () => void;
+  /** Set for "Add a subtask": the task it goes under. */
+  parent?: { rowId: number; title: string };
 }) {
   const { user } = useAuth();
   const [open, setOpen] = React.useState(false);
@@ -179,17 +191,17 @@ function AddTask({ areaId, programId, workProjectId, name, onAdded }: {
     }
     setBusy(true);
     const result = await createAssignedTask(buildWorkProjectAreaTaskBody({ areaId, programId, workProjectId,
-      title: v.title, assignee: v.assignee, due: v.due ?? '', note: v.note ?? '' }), TASK_WORDS);
+      title: v.title, assignee: v.assignee, due: v.due ?? '', note: v.note ?? '', parentTaskId: parent?.rowId }), TASK_WORDS);
     setBusy(false);
     setOutcome(result);
     if (result.ok || result.unconfirmed) onAdded();
   };
   return <>
     <button type="button" className="btn ghost small" disabled={busy} onClick={() => { setOutcome(null); setOpen(true); }}>
-      {I.plus} {busy ? 'Adding…' : 'Add a task'}
+      {I.plus} {busy ? 'Adding…' : parent ? 'Add a subtask' : 'Add a task'}
     </button>
     {outcome && !outcome.ok && <p className="pj-card-note" role="alert" data-testid="work-project-task-error">{outcome.message}</p>}
-    {open && <AddTaskDrawer name={name} onCancel={() => setOpen(false)} onSubmit={(v) => void submit(v)} />}
+    {open && <AddTaskDrawer name={name} parentTitle={parent?.title} onCancel={() => setOpen(false)} onSubmit={(v) => void submit(v)} />}
   </>;
 }
 
@@ -204,15 +216,33 @@ function BindingRefused({ proof, unbind }: { proof: ReturnType<typeof useLiveDat
   );
 }
 
-/** The work project's own tasks: read, failed, none, or listed; never a failed read shown as none. */
-function TaskList({ tasks }: { tasks: ReturnType<typeof useLiveData<WorkRead>> }) {
+/** The work project's own tasks, each with its subtasks under it (one level, P-111 item 4): read, failed, none, or
+ *  listed; never a failed read shown as none. A subtask whose task is not listed stands as a task. */
+function TaskList({ tasks, adding }: {
+  tasks: ReturnType<typeof useLiveData<WorkRead>>;
+  /** "Add a subtask" for a listed task, when the person may write. */
+  adding: (parent: WorkItem) => React.ReactNode;
+}) {
   if (tasks.loading && !tasks.data) return <p className="pj-card-note" role="status">Reading its tasks…</p>;
   if (tasks.error || !tasks.data) return <p className="pj-card-note" role="alert">Its tasks could not be read.</p>;
   const own = tasks.data.items.filter((i) => i.source === 'board');
+  const ids = new Set(own.map((t) => t.id));
+  const top = own.filter((t) => !t.subtaskOf || !ids.has(t.subtaskOf));
+  const under = (t: WorkItem) => own.filter((s) => s.subtaskOf === t.id);
   return <>
     {own.length === 0 ? <p className="pj-card-note">No tasks in this work project yet.</p> : (
       <ul className="pj-work-projects-l" data-testid="work-project-tasks">
-        {own.map((t) => <li key={t.id}><span className="pj-card-note">{workTaskText(t)}</span></li>)}
+        {top.map((t) => (
+          <li key={t.id}>
+            <span className="pj-card-note">{workTaskText(t)}</span>
+            {under(t).length > 0 && (
+              <ul className="pj-work-projects-l pj-work-project-subtasks" data-testid="work-project-subtasks">
+                {under(t).map((sub) => <li key={sub.id}><span className="pj-card-note">{workTaskText(sub)}</span></li>)}
+              </ul>
+            )}
+            {typeof t.rowId === 'number' && adding(t)}
+          </li>
+        ))}
       </ul>
     )}
     {tasks.data.summary?.partial && <p className="pj-card-note sp-tone-warn">Some of its work could not be read, so this list may be incomplete.</p>}
@@ -267,7 +297,10 @@ export function WorkProjectTasks({ area }: { area: 'cmc' | 'quality' }) {
       </div>
       {/* Which records are in view (the CMC session's wording): the area's own name is the page's, not repeated here. */}
       <p className="pj-card-note">Its tasks are listed here. The records below are the whole project’s.</p>
-      <TaskList tasks={tasks} />
+      <TaskList tasks={tasks} adding={(t) => (
+        <AddTask areaId={area} programId={programId} workProjectId={workProjectId} name={name} onAdded={() => setVersion((n) => n + 1)}
+          parent={{ rowId: t.rowId as number, title: t.title }} />
+      )} />
       <AddTask areaId={area} programId={programId} workProjectId={workProjectId} name={name} onAdded={() => setVersion((n) => n + 1)} />
     </section>
   );
