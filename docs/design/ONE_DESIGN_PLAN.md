@@ -1677,7 +1677,7 @@ no screen, route, service, table or component file.
   The reader holds no file now.
 - **Not examined:** duplicate names in a zip directory (`safeZip.ts`, "Not done here").
 
-#### F1 / S10 / S5 — RIM: what the agency holds is what was sent, and the queued filing work (session `session_011e42DEAR2U6W51Mjvgfgbt`, 2026-11-01 to 2026-11-08; updated after slice 2)
+#### F1 / S10 / S5 — RIM: what the agency holds is what was sent, and the queued filing work (session `session_011e42DEAR2U6W51Mjvgfgbt`, 2026-11-01 to 2026-11-09; updated after repairs A to C)
 
 **Delivered**
 
@@ -1708,6 +1708,23 @@ no screen, route, service, table or component file.
   - Four review lenses ran on 2026-11-08. One fail-closed defect was fixed: a void that failed still released the
     claim.
   - No migration and no new non-test file. Evidence: `docs/evidence/D7-TEST-ENVIRONMENT-SEND/2026-11-01/`.
+- **A transmit signature names the environment it was given for** (F1, row D7). `facc62cba`. A signature given for a
+  test send can no longer authorize a filing, and one naming no environment is refused (21 CFR 11.50, 11.70).
+  Evidence: `docs/evidence/D7-TEST-ENVIRONMENT-SEND/2026-11-08-signature-environment/`.
+- **3b slice 3 (b) and (c)** (the filing-types session's edits, applied by RIM). (b) `63e51b02e`: a regional device
+  project is refused at the submission creators. (c) `61ab17676`, with `7429f6391` for the size ceiling: compile,
+  status and validate refuse a project that is not an application with 422 `ECTD_NOT_APPLICABLE`, and a project that
+  filed keeps its filed-state view, read-only (P-97). Evidence: `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/
+  increment-3/s3b-creators/` and `s3c-doors/`.
+- **Repairs A to C** (F1, row D7), each red first with mutations:
+  - A, one live sequence per number. `2c0b4c8fe`, with `8b77f2dd3`. `createSequence` locks the submission in a
+    transaction and refuses a number a live sequence holds, and a removed sequence no longer moves through a
+    transition. Proved on real PostgreSQL under RLS, races included. Evidence: `docs/evidence/D7-SEQUENCE-NUMBER-ONCE/2026-11-08/`.
+  - B, readiness only for a live sequence. `cec19b461`. A removed sequence is answered not found, by its number, never
+    as ready. Evidence: `docs/evidence/D7-READINESS-LIVE-SEQUENCE/2026-11-08/`.
+  - C, the IND routes answer the service's own status. `0f5db6192`. `fail` maps through `SUBMISSION_ERROR_STATUS`;
+    its four-code copy, which answered 16 refusals 500, is deleted. Evidence: `docs/evidence/D7-IND-ROUTE-STATUS/2026-11-09/`.
+  - Every one was pushed with every pre-push gate passing (`3bf14573d..1744ec925`, `1744ec925..0f5db6192`).
 
 **Found**
 
@@ -1723,20 +1740,23 @@ no screen, route, service, table or component file.
   blind reading found four classes for S10 to fix red first.
 - **A void kept only in the tamper-proof log was reported as 'voided'.** Gate 1 reads only the chained row, so such a
   signature stayed in force. This was fixed in slice 2 for every refused step.
-- **A transmit signature is not bound to its environment.** The sign payload carries `{intent, meaning}` only. This
-  is owed as a later F1 repair.
+- **A transmit signature was not bound to its environment.** The sign payload carried `{intent, meaning}` only. Fixed
+  in `facc62cba` (above).
+- **The project monitor counts a removed sequence as a filing head** (`server/services/projects/schedule-of-events/
+  service.ts`, `projectFilingHeads`). After repair B such a project reads 'unavailable' rather than "no filing
+  target". The one-line patch is with the coordinating session.
 - **`gateway-selection.test.ts` has been red on trunk since `5c5b89836`.** Its pool mock refuses `connect()`. This is
   reported to the coordinating session.
 
 **Next, in order** (the coordinating session's order of 2026-11-02, with P-103 and P-106 added; slice 2 is done)
 
-1. The filing-types session's 3b slice 3 (b), then (c) under P-97.
-2. Repairs A to C. Repair A's design assumed `createSequence` already takes the identity lock. It does not, so the
-   live-number check adds the lock in a transaction.
-3. P-87 with P-106 (R1).
-4. P-93, P-94, P-86, P-92 with P-99, and P-96.
-5. P-103, the submission-ops package routes.
-6. S10.
+1. F1, in the coordinating session's order of 2026-11-08: P-93, P-94, P-86, P-92 with P-99, then P-96. P-93's four
+   open questions went to the coordinating session on 2026-11-09; the build proceeds on its design's defaults.
+2. P-87 with P-106 (R1).
+3. P-103, the submission-ops package routes.
+4. S10.
+
+3b slice 3 and repairs A to C are done (above).
 7. S9 with P-88.
 8. P-104's client-owned authority accounts for S5.
 
