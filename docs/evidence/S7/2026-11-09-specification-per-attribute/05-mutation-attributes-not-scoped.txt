@@ -1,0 +1,8 @@
+ × server/services/__tests__/module3Composer.specification-per-attribute.test.ts > §3.2.S.4 files one row per recorded attribute > names every attribute the register holds for the drug substance, and no other 11ms
+   → expected [ 'C2C-201 — assay', …(4) ] to deeply equal [ 'C2C-201 — assay', …(2) ]
+ × server/services/__tests__/module3Composer.specification-per-attribute.test.ts > §3.2.P.5 files one row per recorded attribute too > names every product attribute with its release and shelf-life limits 2ms
+   → expected [ 'C2C-201 — assay', …(4) ] to deeply equal [ 'C2C-201 tablets — assay', …(1) ]
+ × server/services/__tests__/module3Composer.specification-per-attribute.test.ts > §3.2.P.5 files one row per recorded attribute too > keeps the drug substance’s attributes out of it 3ms
+   → expected '[["C2C-201 — assay","HPLC-UV assay","…' not to contain 'water content'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 8 passed (11)

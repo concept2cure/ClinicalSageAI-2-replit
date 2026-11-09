@@ -1,0 +1,13 @@
+Before the change — the same suite, red on the live defect:
+
+ × §3.2.S.4 … names every attribute the register holds for the drug substance, and no other
+   → expected [ 'release', 'shelf' ] to deeply equal [ 'C2C-201 — assay', …(2) ]
+ × §3.2.S.4 … files each attribute’s own limit, not one record’s for all of them
+   → Cannot read properties of undefined (reading '2')
+ × §3.2.S.4 … attributes each row to the procedure that record names, with that procedure’s status
+   → Cannot read properties of undefined (reading 'slice')
+ × §3.2.S.4 … says a named procedure is not in the register rather than inventing a status
+   → expected 'Not specified' to be 'Visual inspection'
+ × §3.2.P.5 … names every product attribute with its release and shelf-life limits
+   → expected [ 'Release Criteria', …(2) ] to deeply equal [ 'C2C-201 tablets — assay', …(1) ]
+      Tests  5 failed | 2 passed (7)

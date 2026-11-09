@@ -1065,6 +1065,123 @@ function dayOf(v: unknown): string {
   return String(v).slice(0, 10);
 }
 
+/**
+ * The specification register's rows for one side, as §3.2.S.4.1 / §3.2.P.5.1
+ * file them: ONE ROW PER QUALITY ATTRIBUTE.
+ *
+ * That is how the register records them — `specCreateBody` writes
+ * `materialName` as the attribute, `acceptanceCriteria` as the
+ * `{release, shelf}` pair and `testMethods.method` as the procedure that
+ * measures it — and both sections expected the opposite: one record carrying
+ * every attribute. §3.2.S.4 printed `Object.entries(acceptanceCriteria)`, so
+ * its "Quality Attribute" column read `release` and `shelf` and only the last
+ * scoped record's limits appeared; §3.2.P.5 built its per-attribute table from
+ * `testParameters`, a column the form never writes. Measured live on a seeded
+ * programme: six recorded attributes, one filed
+ * (`docs/evidence/S7/2026-11-09-demo-cmc-live-run/`).
+ *
+ * A record that names its own procedure can also be attributed to that
+ * procedure's recorded status, which removes two hedges the old shape forced:
+ * "See Analytical Methods table" on every row, and a blank status whenever
+ * more than one method was on file.
+ */
+interface SpecificationAttribute {
+  attribute: string;
+  method: string;
+  release: string;
+  shelf: string;
+}
+
+function specificationAttributes(
+  sources: CanonicalSource[],
+  side: 'drug_substance' | 'drug_product',
+): SpecificationAttribute[] {
+  const text = (v: unknown) => String(v ?? '').trim();
+  return scopedPayloads(sources, 'specification', side, 'both', 'materialType')
+    .map((p) => {
+      const criteria = (p.acceptanceCriteria && typeof p.acceptanceCriteria === 'object' && !Array.isArray(p.acceptanceCriteria)
+        ? p.acceptanceCriteria
+        : {}) as Record<string, unknown>;
+      const methods = (p.testMethods && typeof p.testMethods === 'object' && !Array.isArray(p.testMethods)
+        ? p.testMethods
+        : {}) as Record<string, unknown>;
+      return {
+        attribute: text(p.materialName),
+        method: text(methods.method) || text(p.testMethod),
+        release: text(criteria.release) || text(p.releaseCriteria),
+        shelf: text(criteria.shelf) || text(p.shelfLifeCriteria) || text(criteria.release) || text(p.releaseCriteria),
+      };
+    })
+    /* An attribute with no name, or no limit, is not a specification row this
+       section can state: the register's own create requires both, so such a
+       payload came from somewhere else and is left to the criteria-object path
+       below rather than filed as a blank attribute. */
+    .filter((r) => r.attribute && r.release);
+}
+
+/**
+ * §3.2.P.5.1's specification table: the register's rows where it has them, the
+ * older `testParameters` array where a payload carries one, and the single
+ * property table otherwise. Lifted out of the §3.2.P.5 generator, which it took
+ * over the line limit.
+ */
+function drugProductSpecificationTable(
+  sources: CanonicalSource[],
+  ctx: {
+    releaseTests: any[];
+    shelfLifeTests: any[];
+    method: string;
+    criteria: string;
+    shelfCriteria: string;
+    status: string;
+    methodCount: number;
+  },
+): GeneratedTable {
+  const headers = ['Quality Attribute', 'Test Method', 'Release Criteria', 'Shelf-Life Criteria'];
+  const title = 'Drug Product Specification — Release & Shelf-Life';
+  /* The register's own rows, one per attribute — see `specificationAttributes`.
+     `testParameters` is a column the form never writes; it is kept for a
+     payload that carries it. */
+  const attributes = specificationAttributes(sources, 'drug_product');
+  if (attributes.length > 0) {
+    return { title, headers, rows: attributes.map((a) => [a.attribute, a.method || 'Not specified', a.release, a.shelf || '—']) };
+  }
+  const allTests = ctx.releaseTests.length > 0 ? ctx.releaseTests : ctx.shelfLifeTests;
+  if (allTests.length > 0) {
+    return {
+      title,
+      headers,
+      rows: allTests.map((t: any) => (typeof t === 'object' && t !== null
+        ? [
+          t.attribute || t.test || 'Unknown',
+          t.method || ctx.method || 'Not specified',
+          t.releaseCriteria || t.release || '—',
+          t.shelfLifeCriteria || t.shelfLife || '—',
+        ]
+        : [String(t), ctx.method || '—', ctx.criteria || '—', ctx.shelfCriteria || '—'])),
+    };
+  }
+  return kvTable('Drug Product Specification', {
+    'Release Criteria': ctx.criteria,
+    'Shelf-Life Criteria': ctx.shelfCriteria,
+    'Analytical Method': ctx.method || (ctx.methodCount > 1 ? 'See Analytical Methods table' : ''),
+    'Validation Status': ctx.status,
+  });
+}
+
+/** A named procedure's recorded validation status, or that it is not on file. */
+function methodStatusByName(methodSources: Array<Record<string, any>>, name: string): string {
+  const key = name.trim().toLowerCase();
+  if (!key) return '—';
+  for (const p of methodSources) {
+    const recorded = String(p.methodName || p.methodCode || '').trim().toLowerCase();
+    if (recorded && recorded === key) return String(p.validationStatus || '').trim() || 'status not recorded';
+  }
+  /* Named on the limit and absent from the register — the same fact the
+     approval route refuses on (METHOD_NOT_IN_REGISTER). Stated, never guessed. */
+  return 'not in the method register';
+}
+
 /** The payloads of one source type that are evidence for one side. */
 function scopedPayloads(
   sources: CanonicalSource[],
@@ -2503,7 +2620,22 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         : status;
     const impurityLimits = valObj(m, 'impurityLimits');
     const tables: GeneratedTable[] = [];
-    if (criteria) {
+    /* One row per recorded attribute, which is how the register holds them.
+       The criteria-object path below is kept for a payload that carries one
+       (a caller that is not the form), so nothing on file stops composing. */
+    const attributes = specificationAttributes(m, 'drug_substance');
+    if (attributes.length > 0) {
+      tables.push({
+        title: 'Drug Substance Specification — Acceptance Criteria',
+        headers: ['Quality Attribute', 'Test Method', 'Acceptance Criteria', 'Validation Status'],
+        rows: attributes.map((a) => [
+          a.attribute,
+          a.method || 'Not specified',
+          a.release,
+          a.method ? methodStatusByName(methodSources, a.method) : 'no procedure recorded',
+        ]),
+      });
+    } else if (criteria) {
       tables.push({
         title: 'Drug Substance Specification — Acceptance Criteria',
         headers: ['Quality Attribute', 'Test Method', 'Acceptance Criteria', 'Validation Status'],
@@ -2859,34 +2991,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const impurityLimits = valObj(m, 'impurityLimits');
     const tables: GeneratedTable[] = [];
     // Release/shelf-life specification matrix
-    if (releaseTests.length > 0 || shelfLifeTests.length > 0) {
-      const allTests = releaseTests.length > 0 ? releaseTests : shelfLifeTests;
-      tables.push({
-        title: 'Drug Product Specification — Release & Shelf-Life',
-        headers: ['Quality Attribute', 'Test Method', 'Release Criteria', 'Shelf-Life Criteria'],
-        rows: allTests.map((t: any) => {
-          if (typeof t === 'object' && t !== null) {
-            return [
-              t.attribute || t.test || 'Unknown',
-              t.method || method || 'Not specified',
-              t.releaseCriteria || t.release || '—',
-              t.shelfLifeCriteria || t.shelfLife || '—',
-            ];
-          }
-          return [String(t), method || '—', criteria || '—', shelfCriteria || '—'];
-        }),
-      });
-    } else {
-      tables.push(
-        kvTable('Drug Product Specification', {
-          'Release Criteria': criteria,
-          'Shelf-Life Criteria': shelfCriteria,
-          'Analytical Method':
-            method || (methodSources.length > 1 ? 'See Analytical Methods table' : ''),
-          'Validation Status': status,
-        }),
-      );
-    }
+    tables.push(drugProductSpecificationTable(m, {
+      releaseTests, shelfLifeTests, method, criteria, shelfCriteria, status, methodCount: methodSources.length,
+    }));
     if (methodSources.length > 0) {
       tables.push({
         title: 'Analytical Methods',
