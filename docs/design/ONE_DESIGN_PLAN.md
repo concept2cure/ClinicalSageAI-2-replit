@@ -1746,6 +1746,11 @@ no screen, route, service, table or component file.
     6. The signature's meaning was a stored token on the screen and in the PDF, with a raw ISO time in the PDF.
        `39d5f74d32` (D7) and `0e5706a308` (F1): the dialog's meaning names, and the canonical manifestation time.
     7. A reopened sealed run showed no seal line. `e8e3c63093` (D7): it shows the line when its seal verifies.
+    8. Opening your own Account panel reset Reporting with an "original account" notice. `52f0b562b9` (D7) fixes the
+       words. The same-account reload belongs to the shared session hook and `authService.refreshUser`, and is routed
+       to their holders.
+  - **The pack ZIP's legal chooser, walked with a registered original:** it refuses a letter whose Vault version is not
+    yet approved, and says why. Approving it through Vault and the ZIP with it are not walked.
   - **The production pre-deploy step** for 0014 is written into the evidence and pointed at from
     `docs/runbooks/protected-release-setup.md` (`3964cb4b64`, `f681dfb1a8`).
   - **Held, not pushed:** all of the above, at the coordinating session's request, until its demo freeze lifts after
