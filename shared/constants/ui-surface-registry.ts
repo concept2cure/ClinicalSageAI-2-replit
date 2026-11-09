@@ -345,7 +345,9 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): Review reads its board, queue, threads and tasks.
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
-    apiPrefixes: ['/api/part11', '/api/review', '/api/concept2cure/review-tasks', '/api/concept2cure/review-threads', '/api/concept2cure/reviews/my-queue'],
+    // reviews/pending: the AnA artifact reviews you were named for (P-95), read by ReviewRequests.tsx here and
+    // by Your open work (OpenWork.tsx), which opens this screen.
+    apiPrefixes: ['/api/part11', '/api/review', '/api/concept2cure/review-tasks', '/api/concept2cure/review-threads', '/api/concept2cure/reviews/my-queue', '/api/concept2cure/reviews/pending'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
