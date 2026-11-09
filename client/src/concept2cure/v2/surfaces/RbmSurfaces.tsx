@@ -6,6 +6,7 @@
 import { AnaActionChip } from '../AnaActionChips';
 import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
+import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AnaChatAction, AnaChatMessage, RunControlStatus } from '../../components/ana/useAnaChat';
@@ -46,7 +47,9 @@ export function RbmScore({ v }: { v: number }) {
 
 /* ── RbmFreshness ── */
 export function RbmFreshness({ at }: { at: string }) {
-  return <span className="rbm-fresh">{I.clock}scored {at}</span>;
+  /* A recorded time reads as a time, not as the raw ISO string (demo walk, 2026-11-09); '—' and other words pass. */
+  const when = /^\d{4}-\d\d-\d\dT/.test(at) ? <GovernedTimestamp value={at} layout="inline" /> : at;
+  return <span className="rbm-fresh">{I.clock}scored {when}</span>;
 }
 
 /* ── RiskMatrix ── */
