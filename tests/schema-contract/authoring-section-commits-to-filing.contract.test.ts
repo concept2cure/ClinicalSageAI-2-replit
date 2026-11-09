@@ -143,6 +143,9 @@ const PREREQ = `
 `;
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
+// P-95: this document's review is complete (release-governance-reads.ts, read 5). This suite approves to commit sections to the filing; the review route has its own suites.
+vi.mock('../../server/services/authoring/authoring-review-route', async (orig) =>
+  (await import('../../server/services/authoring/__tests__/release-governance-reads')).withCompletedReview(orig));
 vi.mock('../../server/db', () => ({
   get db() { return h.db; },
   get pool() { return h.pool; },

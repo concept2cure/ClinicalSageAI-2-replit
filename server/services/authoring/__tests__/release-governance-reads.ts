@@ -20,10 +20,26 @@
  *    receipt covering it is refused WORKFLOW_ORIGIN_UNVERIFIED, so a fake that
  *    answers with whatever row it returns for everything is refused. The
  *    answer here is: no build was imported into this document.
+ * 4. Must an independent check clear it? A document AnA drafted, or one
+ *    already checked, carries INDEPENDENT_CHECK_* rows in its trail, and a
+ *    release refuses INDEPENDENT_CHECK_REQUIRED unless the latest receipt is
+ *    current (workflow-import-governance.ts assertIndependentCheckRelease,
+ *    2026-11-06). A fake that answers the ledger read with a row of nothing is
+ *    refused. The answer here is: no AnA draft and no independent check, so
+ *    none is owed.
  *
- * The CSR case and the independence refusals have their own suites
- * (csr-scientific-release-order.test.ts, workflow-import-governance.pglite.test.ts,
- * authoring-approval-independence.test.ts).
+ * 5. Was it reviewed? An APPROVER signature is refused REVIEW_REQUIRED unless
+ *    the document's review route is complete over the text being approved
+ *    (P-95, 2026-11-09; authoring-review-route.ts authoringApprovalReviewRefusal).
+ *    That read is a route and its members' signatures over a digest of whatever
+ *    sections the fake returns, so it is not answered row by row here. A suite
+ *    that approves a document to test something else declares the review
+ *    complete with `withCompletedReview` (below); the check has its own suite,
+ *    authoring-approval-review-required.test.ts.
+ *
+ * The CSR case, the independence refusals and the independent check have their
+ * own suites (csr-scientific-release-order.test.ts,
+ * workflow-import-governance.pglite.test.ts, authoring-approval-independence.test.ts).
  */
 export const DOC_ID = 'd0c0d0c0-0000-4000-8000-0000000000d1';
 export const AUTHOR_ID = '9';
@@ -37,5 +53,17 @@ export function releaseGovernanceRead(sql: unknown): Answer | null {
   if (/SELECT DISTINCT r\.created_by FROM doc_revisions/.test(s)) return { rowCount: 0, rows: [] };
   if (/SELECT actor_id, operation_type, metadata FROM authoring_audit_trail/.test(s)) return { rowCount: 0, rows: [] };
   if (/FROM authoring_audit_trail/.test(s) && /'csrBuildImport'/.test(s)) return { rowCount: 0, rows: [] };
+  if (/WITH trails AS \(SELECT \* FROM authoring_audit_trail/.test(s)) return { rowCount: 0, rows: [] };
   return null;
+}
+
+/**
+ * Read 5's answer, as a module mock: the document's review is complete, so P-95
+ * lets the approval through and the suite tests what it is about.
+ *
+ *   vi.mock('../../services/authoring/authoring-review-route', async (orig) =>
+ *     (await import('../../services/authoring/__tests__/release-governance-reads')).withCompletedReview(orig));
+ */
+export async function withCompletedReview<M extends Record<string, unknown>>(importOriginal: () => Promise<M>): Promise<M> {
+  return { ...(await importOriginal()), authoringApprovalReviewRefusal: async () => null };
 }

@@ -1,0 +1,25 @@
+
+stdout | server/routes/__tests__/authoring-approval-review-required.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is taken once every named reviewer has signed the text being approved
+{
+  "timestamp": "2026-11-09T02:14:43.761Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the document was never sent for review, before the password is checked 69ms
+ ✓ server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused while the review is still open, saying how many reviewers have signed 8ms
+ ✓ server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the text changed after the review was signed 6ms
+ ✓ server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the latest review was withdrawn 6ms
+ ✓ server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the latest review was returned 6ms
+ ✓ server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is taken once every named reviewer has signed the text being approved 15ms
+ ✓ server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the workflow /sign as APPROVER > is refused the same way when the document was never reviewed 5ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  02:14:33
+   Duration  9.91s (transform 6.81s, setup 106ms, import 9.41s, tests 118ms, environment 0ms)
+
