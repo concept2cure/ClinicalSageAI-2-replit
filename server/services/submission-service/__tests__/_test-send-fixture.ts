@@ -78,8 +78,8 @@ export function testSendHelpers(getH: () => IndPgliteDb, ctx: { organizationId: 
     /** The sequence's dispatch status and the attempt its columns bind. */
     claimOf: async (seqId: number) =>
       (await query(
-        `SELECT dispatch_status, transmit_signature_action_id, transmit_attempt_id::text AS transmit_attempt_id FROM ectd_sequences WHERE id = $1`,
-        [seqId],
+        `SELECT dispatch_status, transmit_signature_action_id, transmit_attempt_id::text AS transmit_attempt_id FROM ectd_sequences WHERE organization_id = $1 AND id = $2`,
+        [ctx.organizationId, seqId],
       )).rows[0] as SequenceClaim,
     /** What the filed fold (F1 slice 1) reads as on file for a submission. */
     filedState: (submissionId: number) => loadFiledStateBySubmission({ query }, { organizationId: ctx.organizationId, submissionId }),
@@ -88,8 +88,8 @@ export function testSendHelpers(getH: () => IndPgliteDb, ctx: { organizationId: 
       (await query(
         `SELECT new_values::jsonb ->> 'environment' AS environment, new_values::jsonb ->> 'transmitAttemptId' AS transmit_attempt_id,
                 new_values::jsonb ->> 'testSend' AS test_send
-           FROM audit_logs WHERE action = 'GOVERNED_SIGNATURE_VOIDED' AND (new_values::jsonb ->> 'signatureActionId') = $1`,
-        [actionId],
+           FROM audit_logs WHERE tenant_id = $1 AND action = 'GOVERNED_SIGNATURE_VOIDED' AND (new_values::jsonb ->> 'signatureActionId') = $2`,
+        [ctx.organizationId, actionId],
       )).rows[0] as VoidContext | undefined,
     /** Transmit a sequence to one environment under the application its project records. */
     transmitTo: (sequenceId: number, signatureActionId: string, environment: 'staging' | 'production') =>
