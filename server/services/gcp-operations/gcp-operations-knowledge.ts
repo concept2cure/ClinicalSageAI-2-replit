@@ -57,7 +57,14 @@ import {
   type TrialStage,
 } from './gcp-operations-reference';
 import { ComputationRefusal } from '../ana-biostats/computation-engine';
-import { booleanInputStates, statedNumber, statedOneOf } from '../immunogenicity/immunogenicity-reference';
+import {
+  allOf,
+  anyOf,
+  booleanInputStates,
+  statedNumber,
+  statedOneOf,
+  unstated,
+} from '../immunogenicity/immunogenicity-reference';
 
 export type {
   Common483Finding,
@@ -107,22 +114,6 @@ function uniq(items: string[]): string[] {
 }
 
 /** Whether a fact was left out (undefined or null). Absent and false are different facts. */
-function unstated(value: unknown): boolean {
-  return value === undefined || value === null;
-}
-
-/** Three-valued OR: true if any fact is true, false only when every one is stated, else undefined (not assessed). */
-function anyOf(...facts: Array<boolean | null | undefined>): boolean | undefined {
-  if (facts.some((f) => f === true)) return true;
-  return facts.some(unstated) ? undefined : false;
-}
-
-/** Three-valued AND: false if any stated fact is not true, true only when every one is true, else undefined. */
-function allOf(...facts: Array<boolean | null | undefined>): boolean | undefined {
-  if (facts.some((f) => !unstated(f) && f !== true)) return false;
-  return facts.some(unstated) ? undefined : true;
-}
-
 /** `test` applied to a stated input; undefined (not assessed) when the input was left out. */
 function stated<T>(value: T | null | undefined, test: (v: T) => boolean): boolean | undefined {
   return value === undefined || value === null ? undefined : test(value);
