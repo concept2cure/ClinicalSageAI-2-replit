@@ -319,7 +319,8 @@ export interface RetirementSequence {
   region: string;
   dispatchStatus: string | null;
 }
-interface SendOnRecord { at: string | null; environmentNamed: boolean }
+/** `receivedAfterRelease`: a send P-92 released as not received, which FDA's verified receipt shows it received. */
+interface SendOnRecord { at: string | null; environmentNamed: boolean; receivedAfterRelease?: boolean }
 interface KeptFacts {
   sequenceNumber: string;
   dispatchStatus: string | null;
@@ -346,13 +347,18 @@ const day = (v: unknown): string => (v ? new Date(String(v)).toISOString().slice
 /** Check 3, under P-108 2(a) (the coordinating session, 2026-11-09): a non-staging transmittal bound to the sequence
  *  blocks retirement unless a chained TRANSMIT_BLOCKED with transmitted false names that attempt's signature, or P-92's
  *  signed settlement released it as not received (on FDA's letter or the platform's own proof). A missing environment
- *  counts as production, and a blocked row naming no signature proves nothing. Check 4 excludes the same release. */
+ *  counts as production, and a blocked row naming no signature proves nothing. Check 4 excludes the same release.
+ *  A release stops excusing the send once FDA's verified receipt kept beside it shows it received (P-108 1(c), P-92 §10.5 B):
+ *  the test releasedSendReceivedRefusal makes. Check 3 then finds it, so check 4 is never reached for it. */
 async function boundProductionSend(q: BaselineQueryable, org: number, id: number): Promise<SendOnRecord | null> {
   const { rows } = await q.query(
-    `SELECT t.created_at, t.metadata->>'environment' AS environment FROM submission_transmittals t
+    `SELECT t.created_at, t.metadata->>'environment' AS environment,
+            COALESCE(t.metadata->'heldSendSettlement'->>'outcome', '') = 'not-received' AS released FROM submission_transmittals t
       WHERE t.organization_id = $1 AND t.metadata->'dispatchBinding'->>'sequenceId' = $2::text
         AND COALESCE(t.metadata->>'environment', '') <> 'staging'
-        AND COALESCE(t.metadata->'heldSendSettlement'->>'outcome', '') <> 'not-received'
+        AND (COALESCE(t.metadata->'heldSendSettlement'->>'outcome', '') <> 'not-received'
+             OR EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(t.metadata->'as2ReceiptHistory', '[]'::jsonb)) e
+                         WHERE e->>'contradicts' = 'not-received' AND e->>'verified' = 'true'))
         AND NOT EXISTS (SELECT 1 FROM audit_logs a
               WHERE a.tenant_id = $1 AND a.table_name = 'ectd_sequence' AND a.record_id = $2::text
                 AND a.action = 'TRANSMIT_BLOCKED' AND a.new_values::jsonb->>'transmitted' = 'false'
@@ -361,7 +367,7 @@ async function boundProductionSend(q: BaselineQueryable, org: number, id: number
       ORDER BY t.id LIMIT 1`,
     [org, id],
   );
-  if (rows[0]) return { at: rows[0].created_at as string | null, environmentNamed: rows[0].environment != null };
+  if (rows[0]) return { at: rows[0].created_at as string | null, environmentNamed: rows[0].environment != null, receivedAfterRelease: rows[0].released === true };
   // Check 4: a send recorded as transmitted before sends carried a binding.
   const sent = await q.query(
     `SELECT occurred_at, new_values::jsonb->>'environment' AS environment FROM audit_logs
@@ -468,6 +474,11 @@ function keptRefusal(f: KeptFacts): { sentence: string; reason: string } | null 
   if (f.dispatchStatus === 'transmitting') {
     return { reason: 'a send of it is in flight',
       sentence: `A send of sequence ${n} is in flight and not yet settled, so it cannot be retired now. Record the agency's receipt, settle the held send from the Dispatch tab, or wait for the send to settle, then look again.` };
+  }
+  if (f.productionSend?.receivedAfterRelease) {
+    return { reason: "FDA's signed receipt shows it received a send of it",
+      sentence: `FDA's signed receipt shows it received sequence ${n}'s send of ${day(f.productionSend.at)} UTC, which was released as not received, ` +
+        'so it cannot be retired. Contact FDA before anything else is done with it.' };
   }
   if (f.productionSend) {
     const on = `${day(f.productionSend.at)} UTC`;

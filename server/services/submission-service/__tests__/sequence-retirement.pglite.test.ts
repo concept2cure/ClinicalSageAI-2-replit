@@ -351,6 +351,46 @@ describe('P-86: the precheck asks the retirement rule before anyone signs (C2)',
   }, 120_000);
 });
 
+/** A production send that P-92's settlement released as not received, as markHeldSendSettled and the spend of S leave it;
+ *  with `answer`, FDA's verified receipt kept beside the release as keepContradictingReceipt writes it (fda-esg-receipts.ts). */
+async function released(seq: number, answer?: { verified: boolean }) {
+  const kept = answer ? [{ sha256: '9'.repeat(64), bodyBase64: 'bWRu', verified: answer.verified, status: 'received', source: 'agency-signed-upload', contradicts: 'not-received' }] : [];
+  await q(`INSERT INTO submission_transmittals (organization_id, region, status, metadata, created_at) VALUES (${ORG}, 'fda', 'rejected', $1, '2026-11-03T14:05:00Z')`,
+    [JSON.stringify({ environment: 'production', dispatchBinding: { sequenceId: seq, signatureActionId: 'sig-released' },
+      heldSendSettlement: { outcome: 'not-received', kind: 'fda-non-receipt-confirmation', sequenceNumber: '0000' }, as2ReceiptHistory: kept })]);
+  await q(`INSERT INTO audit_logs (id, tenant_id, action, table_name, record_id, occurred_at, new_values) VALUES (gen_random_uuid(), ${ORG}, 'ECTD_TRANSMITTED', 'ectd_sequence', $1, '2026-11-04T09:00:00Z', $2)`,
+    [String(seq), JSON.stringify({ environment: 'production', source: 'held-send-settlement', status: 'not-received', signatureActionId: 'sig-released' })]);
+}
+
+// P-92 §10.5 B (the coordinating session's ruling 4, 2026-11-09): P-108 1(c) refuses a resend while FDA's verified answer
+// contradicts a release. Retiring the sequence would free the number FDA holds, so the release stops excusing check 3.
+describe("P-92 with P-86: a release that FDA's verified receipt contradicts keeps the sequence", () => {
+  const KEPT = "FDA's signed receipt shows it received sequence 0000's send of 2026-11-03 UTC, which was released as not received, " +
+    'so it cannot be retired. Contact FDA before anything else is done with it.';
+
+  it('the act refuses it in those words, and the precheck says the same before anyone signs', async () => {
+    const { id } = await sequenceOf();
+    await released(id, { verified: true });
+    const answer = await precheckSequenceRetirement(id, ctx);
+    expect(answer).toMatchObject({ step: 'retire', cleared: false, refusal: KEPT });
+    await refusedWith(id, KEPT);
+  }, 120_000);
+
+  it.each([['no receipt kept', undefined], ['a kept entry not verified', { verified: false }]])(
+    'a release with %s is still not a bound production send, so it is retired', async (_label, answer) => {
+      const { id } = await sequenceOf();
+      await released(id, answer);
+      expect((await retireSequence({ sequenceId: id, signatureActionId: await retireSig(id) }, ctx)).retired).toBe(true);
+    }, 120_000);
+
+  it("names the reason when a later sequence is the one FDA's receipt keeps", async () => {
+    const first = await sequenceOf();
+    const later = await sequenceOf({ submissionId: first.submissionId, number: '0001' });
+    await released(later.id, { verified: true });
+    await refusedWith(first.id, "Sequence 0001, numbered after 0000, is kept (FDA's signed receipt shows it received a send of it), so 0000's number cannot be freed.");
+  }, 120_000);
+});
+
 async function refusedWithSig(id: number, sig: string) {
   const err = await outcome(retireSequence({ sequenceId: id, signatureActionId: sig }, ctx));
   expect(err).toMatchObject({ code: 'SEQUENCE_NOT_RETIRABLE', message: expect.stringContaining("to the agency's production environment is recorded on") });
