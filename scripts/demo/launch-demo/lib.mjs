@@ -355,6 +355,26 @@ export function makeMultiPagePdfBuffer({ title, subtitle = '', footer = '', sect
  * `qms-<key>`; `textByKey` maps each key to plain text. Returns how many
  * sections were written.
  */
+/**
+ * Send a QMS draft for review, naming the second signer as its approver
+ * (2026-11-09). The server has refused, since 2026-10-08, to approve a draft:
+ * only a document under review is approved (QMS_INVALID_STATE). It also refuses
+ * to send one with no review route that names its approver (RR4,
+ * REVIEW_ROUTE_REQUIRED). The packs approved straight from draft and sent
+ * without a route, so on a fresh database each stopped at its QMS step. The
+ * author sends; the approver is the signer, never the author (two-person
+ * rule). `approvalDueDate` is the route's due date (YYYY-MM-DD).
+ */
+export async function sendQmsForReview(api, doc, signer, { reason, approvalDueDate }) {
+  if (!signer?.userId) throw new Error(`QMS document ${doc.docNumber ?? doc.id}: the approver (the second signer) has no account id`);
+  const res = must(await api('PATCH', `/api/mdx/qms/documents/${doc.id}`, {
+    status: 'in_review',
+    reason,
+    route: { approvers: [Number(signer.userId)], approvalDueDate },
+  }), 200, `send ${doc.docNumber ?? doc.id} for review`);
+  return res.data?.status ?? 'in_review';
+}
+
 export async function fillQmsSections(api, qmsId, textByKey) {
   const editor = must(await api('GET', `/api/mdx/qms/documents/${qmsId}/editor`), 200, `open the editing copy of QMS document ${qmsId}`);
   const docId = (editor.data ?? editor)?.document?.id;
