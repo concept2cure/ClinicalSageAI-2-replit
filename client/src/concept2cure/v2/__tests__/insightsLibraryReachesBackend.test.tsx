@@ -157,6 +157,22 @@ describe('Schedules — GET/POST/PATCH /api/insights/subscriptions', () => {
     expect(await screen.findByText('Every week on Tuesday at 08:00 UTC')).toBeTruthy();
   });
 
+  /* Reporting use walk, 2026-11-09: a schedule read "readiness.executive_digest"
+     and "project — 1", a type id and a database primary key. The report is
+     named as the catalog names it, and the open project by its name. */
+  it('names the report and the project, never a type id or a database id', async () => {
+    await renderCanvas();
+    await openTab(/Schedules/);
+    const row = (await screen.findByText('Every week on Tuesday at 08:00 UTC')).closest('tr') as HTMLElement;
+    expect(row.textContent).toMatch(/Executive Readiness Digest/);
+    expect(row.textContent).toMatch(/BX204/);
+    expect(row.textContent).not.toMatch(/readiness\.executive_digest|project — 11/);
+    fireEvent.click(screen.getByRole('button', { name: /New schedule/ }));
+    const pane = document.querySelector('.rc-canvas')!;
+    expect(pane.textContent).toMatch(/Runs over BX204\./);
+    expect(pane.textContent).not.toMatch(/project — 11/);
+  });
+
   it('describes persisted platform output and does not promise external email', async () => {
     await renderCanvas();
     await openTab(/Schedules/);

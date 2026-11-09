@@ -57,6 +57,24 @@ interface Draft {
 
 const EMPTY_DRAFT: Draft = { typeId: '', cadence: 'weekly', hour: 8, minute: 0, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', dayOfWeek: 1, dayOfMonth: 1 };
 type ScheduleScope = { scopeType: string; scopeId: string };
+
+/**
+ * A schedule's scope and report in words (Reporting use walk, 2026-11-09: a row read
+ * "readiness.executive_digest" and "project — 1", a type id and a database id). The open
+ * project is named as the page names it, the organization as itself, and any other scope as
+ * what it is, never by its key.
+ */
+interface ScheduleNames { report: (typeId: string) => string; scope: (target: ScheduleScope) => string }
+function scheduleNames(types: LibraryReportType[], open: (ScheduleScope & { label?: string }) | null): ScheduleNames {
+  return {
+    report: (typeId) => types.find((t) => t.typeId === typeId)?.label ?? 'A report type not in this catalog',
+    scope: (target) => {
+      if (target.scopeType === 'organization') return 'Your organization';
+      if (open?.label && target.scopeType === open.scopeType && target.scopeId === open.scopeId) return open.label;
+      return `Another ${target.scopeType.replace(/_/g, ' ')}`;
+    },
+  };
+}
 function targetForType(type: LibraryReportType | undefined, scope: ScheduleScope | null): ScheduleScope | null {
   return type?.runScopeType && type.runScopeId ? { scopeType: type.runScopeType, scopeId: type.runScopeId } : scope;
 }
@@ -119,6 +137,7 @@ function DayField({ draft, setDraft, disabled }: { draft: Draft; setDraft: (d: D
 function ScheduleForm({
   offerable,
   scope,
+  names,
   draft,
   setDraft,
   saving,
@@ -128,6 +147,7 @@ function ScheduleForm({
 }: {
   offerable: LibraryReportType[];
   scope: { scopeType: string; scopeId: string };
+  names: ScheduleNames;
   draft: Draft;
   setDraft: (d: Draft) => void;
   saving: boolean;
@@ -193,7 +213,7 @@ function ScheduleForm({
         <DayField draft={draft} setDraft={setDraft} disabled={locked} />
       </div>
       <p className="rl-sub">
-        Runs over {scope.scopeType} — {scope.scopeId}. Days 29 to 31 are not offered: the server clamps a
+        Runs over {names.scope(scope)}. Days 29 to 31 are not offered: the server clamps a
         monthly schedule to day 28 so it is valid in every month. The named timezone follows local daylight-saving changes.
       </p>
       <div className="rl-head-acts">
@@ -218,12 +238,14 @@ function NothingSchedulable() {
 
 function ScheduleTable({
   rows,
+  names,
   canWrite,
   onToggle,
   pending,
   held,
 }: {
   rows: SubscriptionRow[];
+  names: ScheduleNames;
   canWrite: boolean;
   onToggle: (row: SubscriptionRow) => void;
   pending: (id: number) => boolean;
@@ -246,9 +268,9 @@ function ScheduleTable({
       <tbody>
         {rows.map((s) => (
           <tr key={s.id}>
-            <td>{s.reportTypeId}</td>
+            <td>{names.report(s.reportTypeId)}</td>
             <td>{scheduleInWords(s.schedule)}</td>
-            <td>{s.scopeType} — {s.scopeId}</td>
+            <td>{names.scope(s)}</td>
             <td>{whenText(s.lastRunAt)}</td>
             <td>{whenText(s.nextRunAt)}{s.enabled && s.nextRunAt && new Date(s.nextRunAt).getTime() < Date.now() && <div className="rl-cell-sub">Awaiting the next successful run</div>}</td>
             <td>
@@ -275,6 +297,7 @@ function SchedulesBody({
   loading,
   failure,
   rows,
+  names,
   canWrite,
   onToggle,
   onRetry,
@@ -284,6 +307,7 @@ function SchedulesBody({
   loading: boolean;
   failure: ReadFailure | null;
   rows: SubscriptionRow[];
+  names: ScheduleNames;
   canWrite: boolean;
   onToggle: (row: SubscriptionRow) => void;
   onRetry: () => void;
@@ -311,7 +335,7 @@ function SchedulesBody({
       />
     );
   }
-  return <ScheduleTable rows={rows} canWrite={canWrite} onToggle={onToggle} pending={pending} held={held} />;
+  return <ScheduleTable rows={rows} names={names} canWrite={canWrite} onToggle={onToggle} pending={pending} held={held} />;
 }
 
 function useScheduleDraft(actions: LibraryActions, context: string) {
@@ -336,7 +360,8 @@ export function SchedulesPanel({
   accessCurrent = () => true,
 }: {
   types: LibraryReportType[];
-  scope: { scopeType: string; scopeId: string } | null;
+  /** The open project's scope, with its name as the page shows it. */
+  scope: { scopeType: string; scopeId: string; label?: string } | null;
   canWrite: boolean;
   onSaved: (msg: string) => void;
   canSchedule?: boolean;
@@ -349,6 +374,7 @@ export function SchedulesPanel({
   const mutate = useLibraryMutation(actions, context, accessCurrent);
   const register = useLibraryRegister<SubscriptionRow>('/api/insights/subscriptions', 'your schedules');
   const offerable = useMemo(() => scheduleOffers(types, scope), [types, scope]);
+  const names = useMemo(() => scheduleNames(types, scope), [types, scope]);
 
   const { open, setOpen, draft, setDraft, held, locked, saving } = useScheduleDraft(actions, context);
   const [note, setNote] = useState<string | null>(null);
@@ -405,6 +431,7 @@ export function SchedulesPanel({
         <ScheduleForm
           offerable={offerable}
           scope={formScope}
+          names={names}
           draft={draft}
           setDraft={setDraft}
           saving={saving}
@@ -420,6 +447,7 @@ export function SchedulesPanel({
         loading={register.loading}
         failure={register.failure}
         rows={register.rows}
+        names={names}
         canWrite={canWrite}
         onToggle={(row) => void toggleEnabled(row)}
         onRetry={register.retry}
