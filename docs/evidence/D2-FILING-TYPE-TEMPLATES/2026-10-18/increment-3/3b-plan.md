@@ -3,9 +3,9 @@ I re-derived the plan's claims from the code at HEAD `0c69304aa`. The plan needs
 > **Status 2026-11-01:** Slices 1–2 done. Slice 3 is done: the readiness digest (F1, README §i, `9c05a6ac8`), both
 > creators (RIM, `63e51b02e`, `s3b-creators/`) and the eCTD doors with their client handling (RIM, `61ab17676`,
 > `s3c-doors/`). Slice 4 is done: its server half (F1,
-> README §j, `b0bba18e6`) and the picker's lookup of `reasonByFiling` (the coordinating session, `bfa9c6869`). Slices 5–7 wait on the
-> founder, because P-55 approved them and P-83 makes the writing workstreams sections of the filing project. See
-> `../../2026-11-01-plan-alignment/README.md`.
+> README §j, `b0bba18e6`) and the picker's lookup of `reasonByFiling` (the coordinating session, `bfa9c6869`).
+> **Slices 5–8 are retired, not built (2026-11-09):** asked whether P-55 or P-83 governs, the founder answered P-83, so
+> the Module 2 summaries stay sections of the filing project. See `../../2026-11-01-plan-alignment/README.md`.
 
 
 # Adversarial review of the 3b plan, with the corrected plan
