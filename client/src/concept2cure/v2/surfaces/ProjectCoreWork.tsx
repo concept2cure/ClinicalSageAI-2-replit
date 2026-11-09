@@ -25,6 +25,7 @@ import { readRefusalWords, useLiveData, type ShapeGuard } from '../dataConnect';
 import { C2CToast, useToast } from '../toast';
 import { useAuth } from '@/services/portal/authService';
 import { canGovernedWrite } from '@shared/constants/permissions';
+import { bindWorkProject } from './ProjectWorkTasks';
 import { AssignAction, AssignmentLine, PLAN_TASK_MODULE, planAssignments, planTaskKey, usePlanAssignments, type PlanAssignment } from './PlanAssign';
 
 /** What the project's record says about its track. */
@@ -215,7 +216,7 @@ function WorkProjectItem({ row, openable, onOpen, own }: {
     return (
       <li>
         <button type="button" className="pj-work-area pj-work-project-door" title={`Open ${getSurfaceMeta(area).label} on this project`}
-          onClick={() => onOpen(area)}>
+          onClick={() => { bindWorkProject(area, row.id); onOpen(area); }}>
           <span className="pj-work-area-l"><span className="pj-work-project-n">{row.name}</span>
             <span className="pj-card-note">{facts}</span></span>
           {I.right}
