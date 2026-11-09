@@ -218,6 +218,31 @@ describe('credential use retains current membership through its durable audit', 
     expect((await holder.pg.query("SELECT user_id, action FROM audit_logs WHERE action = 'credential.use'")).rows).toEqual([{ user_id: 11, action: 'credential.use' }]);
     expect((await holder.pg.query('SELECT credentials FROM connector_credentials')).rows).toEqual(before);
   });
+  /* Expanded spike check 2 (§19.1): a credential-use event names the grant, its revision and the purpose,
+     and never the value; a rotation is a new revision on the next use. */
+  it('each use is audited by grant, revision and purpose, never by the value, and a rotation names the new revision', async () => {
+    const ROTATED = 'synthetic-rotated-client-key-20261109';
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+    await changeCard();
+    await assertCredentialUseCurrent((await captureCredentialForUse(ORG, 'llm_openai', 'model_inference', pool))!, 11, true, pool);
+    await changeCard({ ...cardChange('rotate'), credentials: { apiKey: ROTATED } });
+    await assertCredentialUseCurrent((await captureCredentialForUse(ORG, 'llm_openai', 'model_inference', pool))!, 11, true, pool);
+    const uses = (await holder.pg.query("SELECT table_name, record_id, user_id, new_values FROM audit_logs WHERE action = 'credential.use' ORDER BY occurred_at, id")).rows;
+    expect(uses).toHaveLength(2);
+    for (const use of uses) {
+      expect(use).toMatchObject({ table_name: 'connector_credential_grant', record_id: 'llm_openai', user_id: 11 });
+      expect(Object.keys(use.new_values).sort()).toEqual(['accountOwner', 'credentialId', 'grantId', 'purpose', 'revision']);
+      expect(use.new_values).toMatchObject({ credentialId: 'llm_openai', purpose: 'model_inference', accountOwner: 'client' });
+      expect(use.new_values.grantId).toMatch(UUID_RE);
+      expect(use.new_values.revision).toMatch(UUID_RE);
+    }
+    // The same grant, at a new revision (connector-registry.ts writeCredentialCard).
+    expect(uses[1].new_values.grantId).toBe(uses[0].new_values.grantId);
+    expect(uses[1].new_values.revision).not.toBe(uses[0].new_values.revision);
+    const all = JSON.stringify((await holder.pg.query('SELECT * FROM audit_logs')).rows);
+    expect(all).not.toContain(CANARY);
+    expect(all).not.toContain(ROTATED);
+  });
   it('a delegated background use has a SQL NULL actor and still requires the organization to remain active', async () => {
     await changeCard();
     const captured = await captureCredentialForUse(ORG, 'llm_openai', 'model_inference', pool);
