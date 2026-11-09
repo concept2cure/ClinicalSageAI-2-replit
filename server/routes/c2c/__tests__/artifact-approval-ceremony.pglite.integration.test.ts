@@ -141,7 +141,7 @@ import { artifactStatusUpdate, reviewQuorumVerdict } from '../../../services/art
 import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../../../shared/schema';
 import { eq } from 'drizzle-orm';
 import { bridgeCompileToArtifact } from '../../../services/module3-convergence-service';
-import { moveVoidsReviewSql } from '../../../services/artifact-approval-act';
+import { moveArtifactToSection } from '../../../services/artifact-approval-act';
 
 const BASELINE = 'migrations/0000_sweet_joseph.sql';
 const DDL = [
@@ -1356,15 +1356,14 @@ describe('P-95 Q2: moving a reviewed document voids its review, as an edit does'
     await seed('review');
     await placeAt('2.5');
     await reviewedBy([ADA, BEN]);
-    const moveTo = (section: string) => run(
-      `UPDATE concept2cure_artifacts SET ctd_section = $2, version = version + ${moveVoidsReviewSql('$2')} WHERE artifact_id = $1 RETURNING version`,
-      [ARTIFACT, section],
-    );
-    expect((await moveTo('2.7.4')).rows[0]).toMatchObject({ version: 3 });
-    expect((await moveTo('2.7.3')).rows[0], 'decisions on an earlier version are already void').toMatchObject({ version: 3 });
+    const [{ id }] = (await run(`SELECT id FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT])).rows;
+    const moveTo = (section: string) => moveArtifactToSection({ query: (text, params) => run(text, params ?? []) }, id, ORG, section);
+    expect(await moveTo('2.7.4')).toEqual({ ctd_section: '2.7.4', version: 3 });
+    expect(await moveTo('2.7.3'), 'decisions on an earlier version are already void').toEqual({ ctd_section: '2.7.3', version: 3 });
+    expect(await moveArtifactToSection({ query: (text, params) => run(text, params ?? []) }, id, ORG + 1, '2.5'), 'another organization').toBeNull();
 
     await run(`UPDATE concept2cure_artifacts SET status = 'locked', version = 2 WHERE artifact_id = $1`, [ARTIFACT]);
-    expect((await moveTo('2.5')).rows[0]).toMatchObject({ version: 2 });
+    expect(await moveTo('2.5')).toMatchObject({ version: 2 });
   });
 });
 

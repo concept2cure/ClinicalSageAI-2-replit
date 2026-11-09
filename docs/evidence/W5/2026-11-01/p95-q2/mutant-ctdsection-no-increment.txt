@@ -3,7 +3,7 @@
 # -           version: sql`${concept2cureArtifacts.version} + ${moveVoidsReview(ctdSection ?? null)}`,
 # + 
 
- × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > moving it through the ctd-section route voids its review the same way 25ms
- × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > moving an approved document (unplaced, one reviewer) into a filing: the approval no longer covers the version 53ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: moving a reviewed document voids its review, as an edit does > moving it through the ctd-section route voids its review the same way 20ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: moving a reviewed document voids its review, as an edit does > moving an approved document (unplaced, one reviewer) into a filing: the approval no longer covers the version 49ms
  Test Files  1 failed | 2 passed (3)
       Tests  2 failed | 16 passed | 80 skipped (98)

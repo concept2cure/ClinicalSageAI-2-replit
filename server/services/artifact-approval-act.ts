@@ -47,6 +47,8 @@
  */
 
 import { sql, type SQL } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
+import { concept2cureArtifacts } from '../../shared/schema';
 import type { GovernedSignMeaning } from './part11/signature-meanings';
 import { artifactApproval } from './ectd/package-content-fingerprint';
 import { assertSignerIsNotAuthor, resolveTargetAuthors, separationOfDutiesRefusal } from './governance/separation-of-duties';
@@ -308,33 +310,53 @@ export function reviewFloor(artifact: { type: string | null; ctd_section: string
 /**
  * P-95 Q2: moving an artifact voids its review decisions, as an edit does.
  * Every UPDATE of concept2cure_artifacts that may change ctd_section adds this
- * to version, for the new section's bound parameter (e.g. `$3`): 1 when the
- * section changes, the artifact is not locked and a review decision is
- * recorded on its current version, else 0. Decisions on an earlier version
- * are already void, so an edit and a move in one transaction move it once. The version moves on, so every decision is on an
- * earlier version and the quorum refuses it ("Route it for review again"); an
- * approval no longer covers the version, as after an edit. The reviewers
- * judged the text at its place. SET expressions read the row as it was, so
- * ctd_section here is the section it is moving from.
+ * to version: 1 when the section changes, the artifact is not locked and a
+ * review decision is recorded on its current version, else 0. Decisions on an
+ * earlier version are already void, so an edit and a move in one transaction
+ * move it once. The version moves on, so every decision is on an earlier
+ * version and the quorum refuses it ("Route it for review again"); an approval
+ * no longer covers the version, as after an edit. The reviewers judged the
+ * text at its place. SET expressions read the row as it was, so ctd_section
+ * here is the section it is moving from. A drizzle template: the new section
+ * is a bound parameter and the columns are quoted identifiers, so no value
+ * reaches the SQL text (ci:sql-interpolation).
  */
-export function moveVoidsReviewSql(newSectionParam: string): string {
-  return MOVE_VOIDS_REVIEW.replace(NEW_SECTION, newSectionParam);
-}
-
-/** The same increment for a Drizzle `.set()`, with the new section bound as a parameter. */
 export function moveVoidsReview(newSection: string | null): SQL {
-  const [before, after] = MOVE_VOIDS_REVIEW.split(NEW_SECTION);
-  return sql`${sql.raw(before)}${newSection}${sql.raw(after)}`;
+  const a = concept2cureArtifacts;
+  return sql`(CASE WHEN ${a.ctdSection} IS DISTINCT FROM ${newSection}::text
+      AND ${a.status} IS DISTINCT FROM 'locked'
+      AND EXISTS (SELECT 1 FROM concept2cure_review_decisions d
+                   WHERE d.artifact_id = ${a.id}
+                     AND d.organization_id = ${a.organizationId}
+                     AND d.version_reviewed = ${a.version})
+    THEN 1 ELSE 0 END)`;
 }
 
-const NEW_SECTION = '<new section>';
-const MOVE_VOIDS_REVIEW = `(CASE WHEN concept2cure_artifacts.ctd_section IS DISTINCT FROM ${NEW_SECTION}::text
-      AND concept2cure_artifacts.status IS DISTINCT FROM 'locked'
-      AND EXISTS (SELECT 1 FROM concept2cure_review_decisions d
-                   WHERE d.artifact_id = concept2cure_artifacts.id
-                     AND d.organization_id = concept2cure_artifacts.organization_id
-                     AND d.version_reviewed = concept2cure_artifacts.version)
-    THEN 1 ELSE 0 END)`;
+const pgDialect = new PgDialect();
+
+/**
+ * The move for a writer on a pg client (AnA's spine and its signed
+ * place_in_dossier): ctd_section set and the version moved on by
+ * moveVoidsReview, in one statement, rendered to text and bound parameters.
+ * Null when the row is not this organization's.
+ */
+export async function moveArtifactToSection(
+  q: ApprovalActQueryable,
+  artifactPk: number,
+  organizationId: number,
+  section: string
+): Promise<{ ctd_section: string | null; version: number } | null> {
+  const a = concept2cureArtifacts;
+  const query = pgDialect.sqlToQuery(sql`UPDATE ${a}
+       SET ${sql.identifier(a.ctdSection.name)} = ${section},
+           ${sql.identifier(a.version.name)} = ${a.version} + ${moveVoidsReview(section)},
+           ${sql.identifier(a.updatedAt.name)} = now()
+     WHERE ${a.id} = ${artifactPk} AND ${a.organizationId} = ${organizationId}
+     RETURNING ${a.ctdSection}, ${a.version}`);
+  const { rows } = await q.query(query.sql, query.params);
+  const row = rows[0] as { ctd_section: string | null; version: number | string } | undefined;
+  return row ? { ctd_section: row.ctd_section, version: Number(row.version) } : null;
+}
 
 /** The governed approval act — the only writer of approved_version_id. */
 export const GOVERNED_APPROVE_ACTION =

@@ -108,8 +108,12 @@ locked artifact, record the version row and keep the metadata.
 - The signing transaction re-reads it under the row lock, as it does the rest of the quorum.
 
 **A move voids review, as an edit does.**
-- `moveVoidsReviewSql` and `moveVoidsReview` are one SQL increment, in raw and Drizzle form, added to `version` by
-  every writer that changes `ctd_section` without already moving the version on.
+- `moveVoidsReview` is one increment, a Drizzle template that binds the new section and quotes the columns, added to
+  `version` by every writer that changes `ctd_section` without already moving the version on.
+  `moveArtifactToSection` is the same move for the writers on a pg client: one statement, rendered through Drizzle's
+  Postgres dialect to text and bound parameters. The first form spliced a SQL string into the query text, and
+  `ci:sql-interpolation` refused it at push; nothing is spliced now, and that gate passes with its baseline
+  unchanged.
 - It adds 1 only when all three hold:
   - the section changes;
   - the artifact is not locked;
@@ -124,8 +128,8 @@ locked artifact, record the version row and keep the metadata.
 | `server/routes/c2c/artifacts.ts` PUT `…/artifacts/:id` (the editor's save) | The increment when content did not change. An edit already moves the version |
 | `server/routes/c2c/artifacts.ts` PUT `…/placement` | The increment |
 | `server/routes/c2c/artifacts.ts` PUT `…/ctd-section` | The increment |
-| `server/services/ana/document-spine.ts` `setPlacementTx` | The increment |
-| `server/services/ana-ri/command-executor.ts` `placeInDossier` (signed) | The increment, `RETURNING version`. The signature binds the version the artifact has at its new place |
+| `server/services/ana/document-spine.ts` `setPlacementTx` | `moveArtifactToSection` |
+| `server/services/ana-ri/command-executor.ts` `placeInDossier` (signed) | `moveArtifactToSection`, by the row its locked read now names by `id`. The signature binds the version the artifact has at its new place |
 | `server/services/artifact-tagger.ts` | Unchanged: every write already moves the version on |
 
 **Readiness is the quorum's own answer.**
@@ -168,7 +172,7 @@ The Module 3 bridge now merges its metadata (`c3240962e7`), so it no longer dele
 | Run | File | Result |
 |---|---|---|
 | Red first: the Q2 cases against HEAD `6556caae64`'s four sources | `red-first.txt` | **11 red.** Placed with one reviewer; any module; type `section`; review readiness; a move through placement, through the ctd-section route and through the editor's save; an approved document moved; the shared increment; AnA's signed placement; the spine's placement step. **7 pass at HEAD** and pin that the floor does not over-refuse: unplaced; AnA's two "none" markers; a move with no decisions or to the same section; an edit and a move counted once; the bridged section's two-reviewer approval; decisions only on an earlier version |
-| 13 mutants, one per branch | `mutant-*.txt` | each killed (1–7 red) |
+| 13 mutants, one per branch, rerun on the final code | `mutant-*.txt` | each killed (1–7 red) |
 | Green: the seven suites this change touches | — | 925/925 |
 | Downstream: 176 suites that load the router, the review tables, the act or the two AnA writers | `downstream.txt` | 3 failures were this change's: document-spine's fixture had no review tables. It was given them, and is 6/6. The other 60 failures, in 5 files, fail identically at HEAD |
 | Lint | `eslint-changed-files.txt` | 0 errors; warnings unchanged on every file |

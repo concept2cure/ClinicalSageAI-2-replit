@@ -1,8 +1,10 @@
-# Mutant: the spine's placement step does not void review
-# in server/services/ana/document-spine.ts
-# - SET ctd_section = $3, version = version + ${moveVoidsReviewSql('$3')}, updated_at = now()
-# + SET ctd_section = $3, updated_at = now()
+# Mutant: the shared move (spine and place_in_dossier) does not void review
+# in server/services/artifact-approval-act.ts
+# -            ${sql.identifier(a.version.name)} = ${a.version} + ${moveVoidsReview(section)},
+# +            ${sql.identifier(a.version.name)} = ${a.version},
 
- × server/services/ana/__tests__/document-spine.pglite.integration.test.ts > setPlacementTx: a move voids review, as an edit does (P-95 Q2) > a move with a decision on the current version moves the version on 1998ms
- Test Files  1 failed | 2 passed (3)
-      Tests  1 failed | 17 passed | 80 skipped (98)
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: moving a reviewed document voids its review, as an edit does > AnA's placement writers use the same increment: a section change with a decision on the current version moves it on once; a locked document is not moved on 23ms
+ × server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > P-95 Q2: placing a reviewed document voids its review, as an edit does; the signature binds the version at its new place 49ms
+ × server/services/ana/__tests__/document-spine.pglite.integration.test.ts > setPlacementTx: a move voids review, as an edit does (P-95 Q2) > a move with a decision on the current version moves the version on 2195ms
+ Test Files  3 failed (3)
+      Tests  3 failed | 15 passed | 80 skipped (98)

@@ -3,6 +3,6 @@
 # -   if (artifact.type === 'section') return
 # +   if (false) return
 
- × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > type section, not placed: one reviewer is refused 48ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > type section, not placed: one reviewer is refused 46ms
  Test Files  1 failed | 2 passed (3)
       Tests  1 failed | 17 passed | 80 skipped (98)
