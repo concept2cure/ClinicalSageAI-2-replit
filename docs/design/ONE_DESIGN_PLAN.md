@@ -1741,6 +1741,13 @@ no screen, route, service, table or component file.
     3. A schedule showed a type id and a database id. `e710bc3d3f` (D7).
     4. Twenty Catalog buttons were each named "Run", and the same for Open and Pause. `8a1feba597` (D7).
     5. Run history and Schedules overflowed the page at 390. `2135d3f9dd` (D7).
+  - **A finalize that succeeds, walked** (the Research Administration Scorecard, the one report here a finalize admits).
+    It found two more defects:
+    6. The signature's meaning was a stored token on the screen and in the PDF, with a raw ISO time in the PDF.
+       `39d5f74d32` (D7) and `0e5706a308` (F1): the dialog's meaning names, and the canonical manifestation time.
+    7. A reopened sealed run showed no seal line. `e8e3c63093` (D7): it shows the line when its seal verifies.
+  - **The production pre-deploy step** for 0014 is written into the evidence and pointed at from
+    `docs/runbooks/protected-release-setup.md` (`3964cb4b64`, `f681dfb1a8`).
   - **Held, not pushed:** all of the above, at the coordinating session's request, until its demo freeze lifts after
     23:00 UTC. 0014's preflight would stop a Codespace start on a group membership whose group and project disagree.
 
