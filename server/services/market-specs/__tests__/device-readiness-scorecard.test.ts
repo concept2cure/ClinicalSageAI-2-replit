@@ -185,14 +185,18 @@ describe('readiness scorecard — a dimension with nothing shown is never nearly
     expect(sc.level).toBe('in_progress');
   });
 
-  it('every dimension begun and 80 or more shown is still nearly ready, and 100 with no gap is ready', () => {
+  /* P-114 (2026-11-09, decided under the founder's delegation): "nearly ready"
+     is never said while a required item is missing, partly present included.
+     This case pinned 'nearly_ready' until then. */
+  it('a required set only partly present is in progress too, and 100 with no gap is ready', () => {
     const partial = computeDeviceReadinessScorecard({
       classificationKnown: true,
       requirements: { present: 4, total: 5 },
       evidence: [...fiveReady, { id: 'pms', label: 'PMS plan', applicable: true, present: 1, total: 2 }],
     });
     expect(partial.dimensions.every((d) => d.status !== 'not_started' && d.status !== 'not_assessed')).toBe(true);
-    expect(partial.level).toBe('nearly_ready');
+    expect(partial.score).toBeGreaterThanOrEqual(80);
+    expect(partial.level).toBe('in_progress');
     const done = computeDeviceReadinessScorecard({ classificationKnown: true, requirements: { present: 5, total: 5 }, evidence: fiveReady });
     expect(done).toMatchObject({ score: 100, level: 'ready', topGaps: [] });
   });

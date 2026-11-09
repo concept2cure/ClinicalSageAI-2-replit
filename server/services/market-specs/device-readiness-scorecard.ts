@@ -63,23 +63,27 @@ function scoreBand(score: number): ReadinessLevel {
   return 'not_ready';
 }
 
-/** An applicable dimension with nothing shown: not started, or nothing has assessed it. */
-const NOTHING_SHOWN: ReadonlySet<DimensionStatus> = new Set(['not_started', 'not_assessed']);
+/** An applicable dimension that is shown in full, or does not apply. */
+const COMPLETE: ReadonlySet<DimensionStatus> = new Set(['ready', 'n/a']);
 
 /**
- * The level: the score's band, except that an applicable dimension with nothing
- * shown caps it at 'in_progress'. The regulatory evaluator
- * (server/services/regulatory/readinessEvaluator.ts) answers 'nearly_ready'
- * only when no gap is critical, and a required piece that is missing or not
- * assessed is critical there. Until 2026-11-09 the band was the level, so with
- * six applicable modules one not started still scored 90, 'nearly_ready', and
+ * The level: the score's band, except that any applicable dimension short of
+ * ready (not started, not assessed, or only partly present) caps it at
+ * 'in_progress'. P-114 (2026-11-09, decided under the founder's delegation):
+ * "nearly ready" is never said while a required item is missing. FDA's eSTAR
+ * technical screening holds a submission whose required content is absent,
+ * and the regulatory evaluator (server/services/regulatory/readinessEvaluator.ts)
+ * answers 'nearly_ready' only when no gap is critical. Every dimension here is
+ * required, so the scorecard has no non-critical gap and never says
+ * 'nearly_ready'. Until 2026-11-09 the band was the level, so with six
+ * applicable modules one not started still scored 90, 'nearly_ready', and
  * AnA's build_device_blueprint and POST /device/blueprint said so. Below the
  * cap the bands are unchanged: they describe progress, not readiness.
  */
 function levelFor(score: number, dimensions: ReadonlyArray<ScorecardDimension>): ReadinessLevel {
   const band = scoreBand(score);
   const capped = band === 'ready' || band === 'nearly_ready';
-  return capped && dimensions.some((d) => NOTHING_SHOWN.has(d.status)) ? 'in_progress' : band;
+  return capped && dimensions.some((d) => !COMPLETE.has(d.status)) ? 'in_progress' : band;
 }
 
 /** Score one evidence module: ready→100, partial via present/total, else not started. */
