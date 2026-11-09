@@ -1,0 +1,12 @@
+MUTATION 4-in-flight-not-refused in server/routes/ectd-compile.ts (on the final code and tests, 2026-11-09T05:37:46.662999Z): replaced [  const message = status === 'transmitting'] with [  const message = status === 'transmitting-never']
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: a sequence on file is not compiled and recorded again > refuses a compile of the program's latest sequence when it is sent, and records nothing 19ms
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: a sequence on file is not compiled and recorded again > refuses a compile of the program's latest sequence when it is acknowledged, and records nothing 4ms
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: a sequence on file is not compiled and recorded again > refuses a compile of a named sequence that is sent, the same way 4ms
+ × tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: a sequence on file is not compiled and recorded again > refuses a compile while a send of the sequence is unresolved (transmitting) 2832ms
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > compiles and records a sequence whose dispatch status is not recorded 6ms
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > compiles and records a sequence whose dispatch status is pending 6ms
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > compiles and records a sequence whose dispatch status is rejected 4ms
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > a rehearsal of a sent sequence is not refused as on file: it is recorded as a rehearsal, never as what was sent 4ms
+      Tests  1 failed | 7 passed (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 5dab32d91326cbc63d1c395851beda9a894766b153e828e9a6d0ffcc2792c883 (expected 5dab32d91326cbc63d1c395851beda9a894766b153e828e9a6d0ffcc2792c883)
