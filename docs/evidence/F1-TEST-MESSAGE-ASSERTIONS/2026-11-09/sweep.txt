@@ -1,0 +1,17 @@
+# The sweep's count, before and after (run 2026-11-09T05:29:11Z)
+$ grep -rnE "toMatchObject\(\{[^}]*message: /" server client shared  (at 312cdc711, before)
+transmit-refusals.test.ts:24:    ).rejects.toMatchObject({ code: 'VALIDATION', message: /explicit environment/ });
+transmit-refusals.test.ts:36:    ).rejects.toMatchObject({ code: 'VALIDATION', message: /application number/ });
+transmit-refusals.test.ts:42:    ).rejects.toMatchObject({ code: 'VALIDATION', message: /application number/ });
+transmit-refusals.test.ts:56:    ).rejects.toMatchObject({ code: 'VALIDATION', message: /"EMEA\/H\/C\/001234" is not a usable application number/ });
+4 sites, all in server/services/submission-service/__tests__/transmit-refusals.test.ts
+
+$ grep -rnE "toMatchObject\(\{[^}]*message: /" server client shared  (after)
+0
+
+# green after: npx vitest run server/services/submission-service/__tests__/transmit-refusals.test.ts
+      Tests  15 passed (15)
+
+# Multi-line forms, and toEqual / toStrictEqual / objectContaining, after (ripgrep multiline):
+$ rg -U -l '(toMatchObject|objectContaining|toEqual|toStrictEqual)\(\{[^)]*?\bmessage:\s*/' --glob '{server,client,shared,tests}/**/*.{ts,tsx}'
+(no files)

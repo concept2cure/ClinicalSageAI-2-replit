@@ -1,0 +1,7 @@
+# Red at 774cf5790 (before the change): item 5
+# npx vitest run server/routes/__tests__/ctd-upload-route-retired.test.ts
+ × server/routes/__tests__/ctd-upload-route-retired.test.ts > the onboarding upload route is removed (P-108 3(b), item 5) > answers 404 to a complete upload, and writes nothing to the upload store
+   → expected 201 to be 404 // Object.is equality
+ ✓ server/routes/__tests__/ctd-upload-route-retired.test.ts > the onboarding upload route is removed (P-108 3(b), item 5) > keeps the existing project read beside it
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed (2)

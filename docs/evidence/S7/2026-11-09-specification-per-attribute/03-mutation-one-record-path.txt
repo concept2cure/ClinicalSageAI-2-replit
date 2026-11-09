@@ -1,0 +1,8 @@
+ × server/services/__tests__/module3Composer.specification-per-attribute.test.ts > §3.2.S.4 files one row per recorded attribute > names every attribute the register holds for the drug substance, and no other 11ms
+   → expected [ 'release', 'shelf' ] to deeply equal [ 'C2C-201 — assay', …(2) ]
+ × server/services/__tests__/module3Composer.specification-per-attribute.test.ts > §3.2.S.4 files one row per recorded attribute > files each attribute’s own limit, not one record’s for all of them 1ms
+   → Cannot read properties of undefined (reading '2')
+ × server/services/__tests__/module3Composer.specification-per-attribute.test.ts > §3.2.S.4 files one row per recorded attribute > attributes each row to the procedure that record names, with that procedure’s status 1ms
+   → Cannot read properties of undefined (reading 'slice')
+ × server/services/__tests__/module3Composer.specification-per-attribute.test.ts > §3.2.S.4 files one row per recorded attribute > says a named procedure is not in the register rather than inventing a status 2ms
+   → expected 'Not specified' to be 'Visual inspection' // Object.is equality

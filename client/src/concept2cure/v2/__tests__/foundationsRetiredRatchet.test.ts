@@ -100,6 +100,24 @@ const RETIRED: Retired[] = [
   cls('rbm-modal', 3),
   cls('cm-connect', 0),
   cls('pj-stageband', 0), // D3-1 (2026-11-06): the project page's step band is gone; its guidance is the step's suggestion.
+  /* D0 review fix 15: the rest of §4.7's migration table, so no retired name's use rises either.
+     Measured 2026-11-09 at 37f520f3be with this file's rule (docs/evidence/DESIGN/D0/D0-12-readme-claims/). */
+  /* tabs → `.tabs`/`.tab` */
+  cls('rbm-tabs', 1), cls('ml-tab', 1), cls('pd-tab', 1), cls('ra-tab', 1), cls('rl-tab', 0), cls('adm-tab', 1), cls('company-tabs', 1), cls('rpk-tab', 1), cls('cl-tab', 2), cls('qms-tabbar', 1),
+  /* segments → `.seg`/`.seg-b` */
+  cls('qms-seg', 1), cls('pdev-seg', 3), cls('seg-btn', 7),
+  /* cards → `.pj-card` */
+  cls('rbm-card', 7), cls('py-card', 5), cls('dj-card', 4), cls('cv-card', 2), cls('lic-card', 2), cls('ph-card', 1),
+  /* tiles → quiet figures (`.reg-kpis`) or the lead sentence */
+  cls('reg-kpi', 30), cls('metric-card', 40), cls('cv-kpi', 6), cls('ra-kpi', 4), cls('etmf-kpi', 3), cls('ivd-stat', 4), cls('py-stat', 3), cls('rbm-tile', 1),
+  /* chips → `.rd-chip` + tone */
+  cls('status-pill', 49), cls('sp-tag', 17), cls('reg-pill', 10), cls('ml-chip', 10), cls('pg-badge', 8), cls('rc-chip', 3),
+  /* drawers → `.de` */
+  cls('tt-panel', 3), cls('pdev-sheet', 4), cls('py-sheet', 1), cls('de-sheet', 5), cls('ana-sheet', 1), cls('adm-drawer', 4), cls('risk-drawer', 1),
+  /* composers → the composer chrome */
+  cls('ec-composer', 1), cls('rc-composer', 0), cls('rbm-ana-composer', 1),
+  /* header meta → `.ph-sub` */
+  cls('cm-meta', 84),
   /* The phrases' CSS is `.pj-stageband*` and `.cm-connect*`, ratcheted above. */
   { name: 'What to do now', baseline: 0, kind: 'text', css: null },
   { name: 'This work flows into', baseline: 1, kind: 'text', css: null },

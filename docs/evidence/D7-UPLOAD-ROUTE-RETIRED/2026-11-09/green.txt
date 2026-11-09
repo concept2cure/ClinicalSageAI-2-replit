@@ -1,0 +1,11 @@
+# Green at 774cf5790 + this change, 2026-11-09T05:08:04Z
+# every test that imports or mocks ctd-onboarding or ctd-ingestion-service:
+# npx vitest run server/routes/__tests__/ctd-project-creator-retired.test.ts server/routes/__tests__/ctd-upload-route-retired.test.ts server/routes/__tests__/legacy-secondary-project-creators-retired.test.ts server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts 
+ Test Files  4 passed (4)
+      Tests  30 passed (30)
+
+# The tests of the ingestion service's other importers (vault-filing.service.ts uses detectCTDSection; submission-chain.ts names it in a comment):
+⎯⎯⎯⎯⎯⎯ Failed Tests 32 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 14 passed (15)
+      Tests  32 failed | 273 passed (305)
+# The one failing file, server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts, fails the same 32 cases on the unchanged tree at 774cf5790 (stash, run, restore): every case is refused INDEPENDENT_CHECK_REQUIRED by the authoring signing gate. It does not import the onboarding route or the removed writer. It is not this change's.

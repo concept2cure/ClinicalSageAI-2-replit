@@ -1,0 +1,54 @@
+[
+ {
+  "case": "1440-col816",
+  "clientWidth": 816,
+  "scrollWidth": 816,
+  "overflows": false,
+  "offsetHeight": 41,
+  "commentInView": true,
+  "trackInView": true,
+  "moreRowShown": false,
+  "endGroup": true,
+  "pageOverflowX": false
+ },
+ {
+  "case": "1440-col720",
+  "clientWidth": 720,
+  "scrollWidth": 813,
+  "overflows": true,
+  "offsetHeight": 41,
+  "commentInView": true,
+  "trackInView": false,
+  "moreRowShown": false,
+  "endGroup": true,
+  "pageOverflowX": false
+ },
+ {
+  "case": "390",
+  "clientWidth": 358,
+  "scrollWidth": 813,
+  "overflows": true,
+  "offsetHeight": 57,
+  "commentInView": false,
+  "trackInView": false,
+  "moreRowShown": false,
+  "endGroup": true,
+  "pageOverflowX": false
+ },
+ {
+  "case": "1440-col816-dark",
+  "clientWidth": 816,
+  "scrollWidth": 816,
+  "overflows": false,
+  "offsetHeight": 41,
+  "commentInView": true,
+  "trackInView": true,
+  "moreRowShown": false,
+  "endGroup": true,
+  "pageOverflowX": false
+ },
+ {
+  "case": "more-formatting-opened",
+  "rowTwoShownWithSuperscript": true
+ }
+]

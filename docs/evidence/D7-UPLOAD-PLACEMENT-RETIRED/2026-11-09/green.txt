@@ -1,0 +1,96 @@
+# Green at fafd71d6d + this change, 2026-11-09T04:41:00Z
+# npx vitest run server/services/submission-service server/services/ectd server/mcp server/services/ana/__tests__/submission-center-tools.test.ts server/services/ingestion server/services/cmc server/services/pathway-engines server/routes/__tests__/submissions client/src/concept2cure/v2/__tests__/vaultPlace client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > names the vault document by uuid, on the vault_documents table
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > writes NO snapshot — that is the whole point of the uuid column
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > reports the leaf the server actually wrote
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > surfaces the server verdict verbatim and never claims a placement
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > writes nothing for a section code no document can be filed at
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the target picker is the shared one > offers the draft sequence and disables the frozen one, saying why
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files a vault document into an IRB package at an IRB slot
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > refuses a CTD code in an IRB package, naming the IRB vocabulary
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files into a 510(k) at an eSTAR section
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > stays strict for an eCTD submission: an IRB slot is not a CTD section
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > says why, and offers no placement
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > a PDF is filed as before
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the placement carries its reason > keeps Place disabled until a reason meets the floor, and says why
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the placement carries its reason > sends the trimmed reason with the leaf
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (a) pre-fills a confirmed filing's section, says where it came from, and files at it
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (a) stops saying "pre-filled" once the person changes the code
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (b) leaves a suggested section for the person to enter, and says what was suggested
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) no filing leaves the section blank and claims nothing
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) a null filing leaves the section blank and claims nothing
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) a confirmed filing with no section leaves the section blank and claims nothing
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) a confirmed filing with a blank section leaves the section blank and claims nothing
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) an unfiled document leaves the section blank and claims nothing
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (d) a pre-filled code is judged like a typed one: a container keeps Place disabled
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (d) a pre-filled CTD code is judged in the chosen submission's vocabulary
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (e) an in-review version: its stage, and the server's reason it would not be transmitted
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > says it is reading while the read is in flight
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (f) an approved, current version says so and warns of nothing
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (g) an approved stage the server refuses anyway: "superseded by a later version", printed verbatim
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (g) an approved stage the server refuses anyway: "approved for different content than these bytes", printed verbatim
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (h) a Delete leaf ships no content: no approval is checked and nothing is warned of
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (i) an unapproved version can still be placed, and the verdict says it will not be transmitted
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (j) an approved, current version's placement claims nothing about transmission
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (k) a failed read says the stage could not be read, and placement stays open
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (k) a list without this version says the stage could not be read, and placement stays open
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (k) a version the server gave no verdict for says the stage could not be read, and placement stays open
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (l) without a project it reads nothing and says the stage is not shown
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > a file that can never be filed is not read for its stage
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > blocks retry after a lost write reply and offers the existing filing workspace
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > after a confirmed placement, Open in Submission Center opens that sequence in the Builder (break 13)
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt null
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt false
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {}
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"id":0}
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"id":1.5}
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"sequenceId":999}
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"documentUuid":"33333333-3333-4333-8333-333333333333"}
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"documentTable":"coauthor_documents"}
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"sectionCode":"3.2.P.8.1"}
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"lifecycleOp":"replace"}
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > discloses incomplete audit confirmation undefined without denying the placed leaf
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > discloses incomplete audit confirmation null without denying the placed leaf
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > discloses incomplete audit confirmation {"persisted":false} without denying the placed leaf
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > discloses incomplete audit confirmation {"persisted":true,"chained":false} without denying the placed leaf
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > allows retry after a known pre-write refusal
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > ignores a write receipt after switching source document
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > ignores a write receipt after switching the source project
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > locks filing fields while the write is pending
+ ✓ server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): an upload already filed can still be withdrawn > places the withdrawal of the filed upload (lifecycle operation delete)
+ ✓ server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses an upload placed with lifecycle operation (none given), and writes nothing
+ ✓ server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses an upload placed with lifecycle operation new, and writes nothing
+ ✓ server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses an upload placed with lifecycle operation replace, and writes nothing
+ ✓ server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses an upload placed with lifecycle operation append, and writes nothing
+ ✓ server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses re-writing an upload leaf placed before this change, and leaves it as it was
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses another organization’s ctd_onboarding_documents id
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > hmac posture: seal only, no envelope, and an absent envelope is "unsigned"
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: the envelope is written BESIDE the seal and both verify
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: a tampered envelope, or one from another org, fails closed
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a stored envelope with the posture downgraded to hmac is "failed", never accepted
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a malformed posture throws (the boot gate, seen from the seam)
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts ctd_onboarding_documents (lifecycle operation delete) — a table the resolver branches on
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > uses no class that no stylesheet defines
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > uses no invented class when it shows a pre-filled section, a version's stage and the server's transmit verdict
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > renders the shared dialog shell the other dialogs use
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > is labelled by its own title
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > moves focus into the dialog on open
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > returns focus to whatever opened it
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on Escape
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on a click outside, but not on a click inside
+stdout | server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts
+stderr | server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts
+ ✓ server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts > P-108 3(b): each door hands back the one refusal and places nothing > REST PUT /api/submissions/sequences/:seqId/leaves answers 400 with the refusal
+ ✓ server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts > P-108 3(b): each door hands back the one refusal and places nothing > AnA place_into_sequence returns the refusal verbatim
+ ✓ server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts > P-108 3(b): each door hands back the one refusal and places nothing > MCP c2c_file_draft_for_review is refused with the same sentence
+ ✓ server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts > P-108 3(b): AnA keeps the upload store for a withdrawal > places a withdrawal (lifecycle operation delete) of an upload through place_into_sequence
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx > Place into filing from the Vault > opens the existing Submission Center to check a lost placement reply
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx > Place into filing from the Vault > opens with a confirmed filing's section filled in, and reads this version's stage
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx > Place into filing from the Vault > leaves a suggested filing's section for the person to enter
+ ✓ client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx > carries the returned Vault UUID through Open in Vault and the existing vault_documents leaf write
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > says that another document already holds the section, and still allows the placement as a second New leaf
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > says that this document is already placed at that section, and does not offer to place it again
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > when the same document is already placed there under another operation, it says how to change that, and does not offer the placement
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > says nothing about occupancy when the section is free
+ Test Files  316 passed | 2 skipped (318)
+      Tests  4847 passed | 6 skipped (4853)

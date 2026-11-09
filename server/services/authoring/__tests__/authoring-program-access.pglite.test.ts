@@ -114,3 +114,26 @@ describe('authoring applies the existing project edit policy on its actual SQL c
     await refusesProjectWrites(12);
   });
 });
+
+/* A read runs inside a READ ONLY transaction where its route opens one: the editor's Sources rail
+   (GET /api/authoring/sections/:id/sources) admits native Quality sources through this check. A row lock
+   there is refused by Postgres (25006, "cannot execute SELECT FOR SHARE in a read-only transaction"), and
+   the refusal surfaced as 503 PROJECT_ACCESS_UNAVAILABLE for every section of a project with a Quality
+   document bound to an authored one (found by S12 on C2C-101, 2026-11-09). A read takes no locks; a
+   write still holds the membership it decided on. */
+describe('a read admits inside a READ ONLY transaction; a write still locks', () => {
+  async function inReadOnly<T>(run: () => Promise<T>): Promise<T> {
+    await pg.query('BEGIN READ ONLY');
+    try { return await run(); } finally { await pg.query('ROLLBACK'); }
+  }
+
+  it.each([['owner', 5], ['use member', 7], ['pending reviewer', 8]] as const)(
+    'admits the %s to read', async (_label, userId) => {
+      await expect(inReadOnly(() => authorize(userId, false))).resolves.toMatchObject({ projectId: PROJECT, programId: PROGRAM });
+    },
+  );
+
+  it('a write in a READ ONLY transaction still asks for its lock, and is refused rather than admitted unlocked', async () => {
+    await expect(inReadOnly(() => authorize(5, true))).rejects.toMatchObject({ status: 503, code: 'PROJECT_ACCESS_UNAVAILABLE' });
+  });
+});

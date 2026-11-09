@@ -122,6 +122,13 @@ vi.mock('../../../services/intelligence/rim-interceptors.js', () => ({
   interceptArtifactChange: vi.fn(),
   interceptFeedback: vi.fn(),
 }));
+/* The Module 3 compile bridge (below) attributes its text through the span
+   lineage gate, whose tables this suite does not build. No other case here
+   reaches the gate: the suite drives the status route only. */
+vi.mock('../../../services/clinical-regulatory-evidence/lineage-gate', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../services/clinical-regulatory-evidence/lineage-gate')>()),
+  enforceAuthorLineage: vi.fn(async () => ({ clausesInAcceptedText: 0 })),
+}));
 
 import artifactRouter from '../artifacts';
 import { db } from '../../../db';
@@ -133,6 +140,7 @@ import {
 import { artifactStatusUpdate, reviewQuorumVerdict } from '../../../services/artifact-approval-act';
 import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../../../shared/schema';
 import { eq } from 'drizzle-orm';
+import { bridgeCompileToArtifact } from '../../../services/module3-convergence-service';
 
 const BASELINE = 'migrations/0000_sweet_joseph.sql';
 const DDL = [
@@ -149,6 +157,7 @@ const DDL = [
     'db/migrations/20260828_align_written_columns_with_migrations.sql',
     'db/migrations/20260314_phase12_multi_user_review.sql',
   ].map(f => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8')),
+  extractTableDdl('db/migrations/20260401_cmc_convergence_os.sql', ['cmc_provenance_events']),
 ].join('\n');
 
 const ORG = 99;
@@ -1084,3 +1093,87 @@ describe('P-95 Q1: the reviewer is neither the approving signer nor an author', 
     expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
   });
 });
+
+/**
+ * 2026-11-09 (F1, found while designing P-95 Q2): a Module 3 section bridged
+ * from a compile (bridgeCompileToArtifact, module3-convergence-service.ts) is a
+ * governed artifact like any other. It can be approved through the signed act,
+ * it is never written over once released, and every version it writes is
+ * recorded. Until then the bridge:
+ * - stored a compile hash as content_hash, which the signed act refuses;
+ * - overwrote a locked artifact and set it to draft;
+ * - wrote no version row;
+ * - replaced the whole metadata.
+ */
+describe('a Module 3 section bridged from a compile', () => {
+  const SECTION = '3.2.S.4';
+  const compiled = (text: string) => ({
+    narrativeDraft: text, tables: [], completeness: 100, missingInputs: [],
+    lineage: [{ sourceObjectId: 'src-1', sourceHashAtCompile: 'h' }],
+  });
+  const bridge = (text: string) => bridgeCompileToArtifact(ORG, String(PROJECT), SECTION, compiled(text), { createdById: AUTHOR });
+  const bridged = async () =>
+    (await run(
+      `SELECT id, artifact_id, content, content_hash, version, status, metadata FROM concept2cure_artifacts WHERE ctd_section = $1 ORDER BY version DESC LIMIT 1`,
+      [SECTION],
+    )).rows[0] as { id: number; artifact_id: string; content: string; content_hash: string; version: number; status: string; metadata: Record<string, unknown> };
+  const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');
+  const versionRows = async (id: number) =>
+    (await run(`SELECT version, content, content_hash FROM concept2cure_artifact_versions WHERE artifact_id = $1 ORDER BY version`, [id])).rows;
+
+  it('stores sha256 of its text, so the signed act approves it after an independent review', async () => {
+    expect(await bridge('Specifications for the drug substance.')).toMatchObject({ bridged: true, isNew: true });
+    const row = await bridged();
+    expect(row.content_hash).toBe(sha256(row.content));
+    expect(await versionRows(row.id)).toEqual([{ version: 1, content: row.content, content_hash: sha256(row.content) }]);
+
+    // Under the suite's artifact id, in review, with an approving review by Ada.
+    await run(`UPDATE concept2cure_artifacts SET artifact_id = $1, status = 'review' WHERE id = $2`, [ARTIFACT, row.id]);
+    await reviewed(row.version);
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 1 });
+  });
+
+  it('a recompile records the version it writes and keeps the metadata other writers recorded', async () => {
+    await bridge('First compile.');
+    const first = await bridged();
+    await run(`UPDATE concept2cure_artifacts SET metadata = metadata::jsonb || '{"harness":{"documentClass":"module3_output"}}'::jsonb WHERE id = $1`, [first.id]);
+
+    expect(await bridge('Second compile.')).toMatchObject({ bridged: true, isNew: false });
+    const second = await bridged();
+    expect(second).toMatchObject({ id: first.id, version: 2, status: 'draft' });
+    expect(second.content_hash).toBe(sha256(second.content));
+    expect(second.metadata).toMatchObject({ harness: { documentClass: 'module3_output' }, compiledFrom: 'module3-os', sectionKey: SECTION });
+    expect(await versionRows(first.id)).toEqual([
+      { version: 1, content: first.content, content_hash: sha256(first.content) },
+      { version: 2, content: second.content, content_hash: sha256(second.content) },
+    ]);
+  });
+
+  it('a released (locked) section is not written over: the bridge refuses, and the released text and status stay', async () => {
+    await bridge('Released text.');
+    const released = await bridged();
+    await run(
+      `UPDATE concept2cure_artifacts SET status = 'locked', locked_at = NOW(), approved_version_id = version, published_version_id = version WHERE id = $1`,
+      [released.id],
+    );
+
+    const res = await bridge('A later compile.');
+    expect(res).toMatchObject({ bridged: false, reason: 'artifact_locked' });
+    expect(res.bridged === false && res.detail).toMatch(/released by signature.*was not written/);
+    expect(await bridged()).toMatchObject({ id: released.id, status: 'locked', version: 1, content: released.content });
+    expect(await versionRows(released.id)).toHaveLength(1);
+  });
+
+  it('a row that records a lock under a legacy status (published) is not written over either', async () => {
+    await bridge('Published text.');
+    const published = await bridged();
+    await run(`UPDATE concept2cure_artifacts SET status = 'published', locked_at = NOW() WHERE id = $1`, [published.id]);
+
+    expect(await bridge('A later compile.')).toMatchObject({ bridged: false, reason: 'artifact_locked' });
+    expect(await bridged()).toMatchObject({ id: published.id, status: 'published', version: 1, content: published.content });
+  });
+});
+

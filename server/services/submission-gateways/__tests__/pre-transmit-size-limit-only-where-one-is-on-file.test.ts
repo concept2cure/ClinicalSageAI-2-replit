@@ -9,7 +9,7 @@
  * agency publishes, and no size check named the source of the figure it applied.
  */
 import { describe, it, expect } from 'vitest';
-import { evaluatePreTransmit } from '../pre-transmit-check';
+import { checkGatewaySize, evaluatePreTransmit } from '../pre-transmit-check';
 import { getGatewaySizeLimitOnFile } from '../../ectd/ectd-regional-rules';
 import type { Region, SubmissionBundle } from '../types';
 
@@ -64,5 +64,23 @@ describe('pre-transmit gateway size limit', () => {
     expect(sizeCheck(r)?.detail).toContain(`(source: ${onFile.source})`);
     expect(sizeCheck(r)?.detail).toMatch(/not enforced: no PMDA source/);
     expect(r.warnings.some((w) => /PMDA/.test(w) && /Not enforced/.test(w))).toBe(true);
+  });
+});
+
+/* The coordinating session, 2026-11-09: the size sentence rounded both figures to two decimal GB, so a package one
+   byte over EU CESP's 600 MiB read "Package is 0.63 GB, over the EMA gateway limit of 0.63 GB". A binary limit is
+   now said in MiB (the package to one decimal, the limit whole), FDA's decimal 10 GB stays in GB, and where the two
+   would still read alike both are given in bytes. */
+describe('the size sentence never reads the two figures as equal', () => {
+  const MiB = 1024 * 1024;
+  it('a package over EU CESP’s 600 MiB is said in MiB against the whole-MiB limit', () => {
+    expect(checkGatewaySize('ema', 700 * MiB).blocker).toMatch(/^Package is 700\.0 MiB, over the EMA gateway limit of 600 MiB\. /);
+  });
+  it('one byte over 600 MiB is said in bytes, since the MiB figures would read alike', () => {
+    expect(checkGatewaySize('ema', 600 * MiB + 1).blocker).toMatch(/^Package is 629,145,601 bytes, over the EMA gateway limit of 629,145,600 bytes\. /);
+  });
+  it('FDA’s decimal 10 GB stays in GB, and one byte over it is said in bytes', () => {
+    expect(checkGatewaySize('fda', 10.5e9).blocker).toMatch(/^Package is 10\.50 GB, over the FDA gateway limit of 10\.00 GB\. /);
+    expect(checkGatewaySize('fda', 10e9 + 1).blocker).toMatch(/^Package is 10,000,000,001 bytes, over the FDA gateway limit of 10,000,000,000 bytes\. /);
   });
 });

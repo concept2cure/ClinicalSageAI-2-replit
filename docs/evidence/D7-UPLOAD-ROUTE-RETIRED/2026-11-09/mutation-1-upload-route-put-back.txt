@@ -1,0 +1,10 @@
+MUTATION 1-upload-route-put-back in server/routes/ctd-onboarding.ts (on the final code and tests, 2026-11-09T05:07:59.038060Z): replaced [// ============================================================================
+// POST /api/ctd/projects/:id/validate] with [router.post('/projects/:id/upload', (_req: Request, res: Response) => res.status(201).json({ documentId: 1 }));
+
+// ============================================================================
+// POST /api/ctd/projects/:id/validate]
+ × server/routes/__tests__/ctd-upload-route-retired.test.ts > the onboarding upload route is removed (P-108 3(b), item 5) > answers 404 to a complete upload, and writes nothing to the upload store 28ms
+ ✓ server/routes/__tests__/ctd-upload-route-retired.test.ts > the onboarding upload route is removed (P-108 3(b), item 5) > keeps the existing project read beside it 5ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 06398000a98f2987a367a4b2143eebe76f83189d9fc77cca85ffca98a7911b54 (expected 06398000a98f2987a367a4b2143eebe76f83189d9fc77cca85ffca98a7911b54)

@@ -23,17 +23,6 @@ function m1Section(role: DocumentRole, kind: ApplicationKind = 'ind'): string | 
   return soleModule1Placement(role, 'US', kind)?.code ?? null;
 }
 
-export interface CTDDocumentUpload {
-  fileName: string;
-  fileSize: number;
-  mimeType: string;
-  storagePath: string;
-  ctdModule: number;
-  ctdSection: string;
-  sectionTitle: string;
-  documentType: string;
-}
-
 export interface ComplianceGap {
   ctdModule: number;
   ctdSection: string;
@@ -157,52 +146,6 @@ export async function getCTDProjectStatus(ctdProjectId: number, organizationId: 
     documents: docsResult.rows,
     gaps: gapsResult.rows,
   };
-}
-
-// ============================================================================
-// DOCUMENT UPLOAD
-// ============================================================================
-
-export async function uploadCTDDocument(
-  ctdProjectId: number,
-  organizationId: number,
-  doc: CTDDocumentUpload
-) {
-  const projectResult = await pool.query(
-    `SELECT id FROM ctd_onboarding_projects WHERE id = $1 AND organization_id = $2`,
-    [ctdProjectId, organizationId]
-  );
-  if (projectResult.rows.length === 0) {
-    throw new Error('CTD project not found for organization');
-  }
-
-  const result = await pool.query(
-    `INSERT INTO ctd_onboarding_documents (
-      ctd_project_id, organization_id, file_name, file_size, mime_type,
-      storage_path, ctd_module, ctd_section, section_title, document_type,
-      status, created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'uploaded', NOW(), NOW())
-    RETURNING id, uuid`,
-    [
-      ctdProjectId, organizationId, doc.fileName, doc.fileSize, doc.mimeType,
-      doc.storagePath, doc.ctdModule, doc.ctdSection, doc.sectionTitle,
-      doc.documentType,
-    ]
-  );
-
-  // Mark matching compliance gaps as resolved
-  await pool.query(
-    `UPDATE ctd_compliance_gaps
-     SET resolved = TRUE, resolved_at = NOW()
-     WHERE ctd_project_id = $1 AND organization_id = $2
-       AND ctd_section = $3 AND resolved = FALSE`,
-    [ctdProjectId, organizationId, doc.ctdSection]
-  );
-
-  // Recalculate completion percentage
-  await recalculateCompletion(ctdProjectId, organizationId);
-
-  return result.rows[0];
 }
 
 // ============================================================================
