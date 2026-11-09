@@ -43,7 +43,7 @@ export async function setupCoordinationFixture(onReady?: (shared: CoordinationPo
 
 /** Each case starts from an active organization whose author is a current member, in its tenant scope. */
 export async function seedCoordinationMember() {
-  await pool.query('DELETE FROM organization_users WHERE user_id=$1', [Number(AUTHOR.id)]);
+  await pool.query('DELETE FROM organization_users WHERE organization_id=$1 AND user_id=$2', [ORG, Number(AUTHOR.id)]);
   await pool.query("INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,'member')", [ORG, Number(AUTHOR.id)]);
   await pool.query("UPDATE organizations SET settings='{}',status='active'");
   await pool.query("SELECT set_config('app.current_tenant_id',$1,false),set_config('app.current_account_id',$2,false)", [String(ORG), AUTHOR.id]);
