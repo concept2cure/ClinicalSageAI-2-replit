@@ -1,0 +1,43 @@
+# Every suite that imports module3-convergence-service.ts or its callers (list below), with the repair
+
+ Test Files  37 passed (37)
+      Tests  466 passed (466)
+
+## Suites
+client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts
+server/api/cmc/__tests__/buildSectionCanonical.test.ts
+server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts
+server/api/cmc/__tests__/cmc-sign-signature-row.test.ts
+server/api/cmc/__tests__/composition-boundary-module3-os.test.ts
+server/api/cmc/__tests__/contradiction-sweep-scope.test.ts
+server/api/cmc/__tests__/module3-routes-act-as-the-session-user.test.ts
+server/api/cmc/__tests__/module3BuildStateReadiness.test.ts
+server/api/cmc/__tests__/module3BuildStateRoutes.test.ts
+server/api/cmc/__tests__/module3GovernedActs.test.ts
+server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts
+server/api/cmc/__tests__/module3ProjectScope.test.ts
+server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts
+server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts
+server/api/cmc/__tests__/module3SectionApproveSignature.test.ts
+server/routes/__tests__/coauthorPutStatus.test.ts
+server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+server/routes/c2c/__tests__/knowledge-upload-client-track-is-recorded-or-not-stated.test.ts
+server/routes/c2c/__tests__/knowledge-upload-module3-map-uses-only-a-recorded-track.test.ts
+server/routes/c2c/__tests__/module3-auto-map-callers-name-the-actor.test.ts
+server/services/__tests__/module3-convergence-build-status.test.ts
+server/services/__tests__/module3-provenance-names-the-actor.test.ts
+server/services/ana-ri/__tests__/module3-classify-source-uses-the-recorded-track.pglite.test.ts
+server/services/ana-ri/__tests__/module3-commands-name-their-actor.test.ts
+server/services/ana-ri/__tests__/module3-lineage.pglite.integration.test.ts
+server/services/ana-ri/__tests__/module3-readiness-gate.test.ts
+server/services/cmc/__tests__/composition-boundary-callers.contract.test.ts
+server/services/cmc/__tests__/composition-boundary-readers.pglite.test.ts
+server/services/cmc/__tests__/contradiction-registers.pglite.test.ts
+server/services/cmc/__tests__/final-export-gate.test.ts
+server/services/cmc/__tests__/place-module3-into-submission-boundary.test.ts
+server/services/cmc/__tests__/place-module3-into-submission.test.ts
+server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts
+server/services/cmc/__tests__/section-signature-binding.pglite.test.ts
+server/services/ectd/__tests__/module3-leaf-typeset.test.ts
+server/services/ectd/__tests__/section-code-match.test.ts
+tests/artifact-change-invalidates-bundles.contract.test.ts

@@ -9,7 +9,7 @@
  *     governed artifacts, contradictions, and staleness
  *  3. Bridge compile output → governed artifacts (concept2cure_artifacts)
  */
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
 import {
@@ -589,7 +589,12 @@ export type BridgeToArtifactResult =
        * lost its artifacts without anyone seeing it.
        */
       bridged: false;
-      reason: Exclude<ArtifactProjectResolution['state'], 'linked'>;
+      /**
+       * `artifact_locked` (2026-11-09, F1): the section's governed artifact was
+       * released by signature, and a compile does not write over released
+       * text. The compiled text was not written.
+       */
+      reason: Exclude<ArtifactProjectResolution['state'], 'linked'> | 'artifact_locked';
       detail: string;
     };
 
@@ -652,6 +657,14 @@ export async function bridgeCompileToArtifact(
     );
 
     const contentHash = createSourceHash({ narrative: fullContent, sectionKey });
+    /* 2026-11-09 (F1): the artifact's content_hash is sha256 of its text, as
+       every other writer stores it (calculateContentHash) and as the signed act
+       requires (artifact-signed-act.ts: a populated head hash must equal
+       sha256(content)). The compile hash above, of {narrative, sectionKey},
+       stays the provenance event's. Storing it as content_hash made every
+       bridged section unapprovable: each approval read as "the document
+       changed while it was being signed". */
+    const textHash = createHash('sha256').update(fullContent).digest('hex');
     const sourceObjectIds = compiledSection.lineage.map((l) => l.sourceObjectId);
     const compiledAt = new Date().toISOString();
 
@@ -664,19 +677,23 @@ export async function bridgeCompileToArtifact(
       missingInputs: compiledSection.missingInputs,
     };
 
-    // Check if a governed artifact already exists for this section
+    // Check if a governed artifact already exists for this section. Taken
+    // under its row lock (2026-11-09, F1), so a signature on it waits for this
+    // write or this write waits for the signature, never both at once.
     const existing = await client.query(
-      `SELECT id, artifact_id AS "artifactId", version
+      `SELECT id, artifact_id AS "artifactId", version, status, locked_at AS "lockedAt"
        FROM concept2cure_artifacts
        WHERE organization_id = $1 AND project_id = $2 AND ctd_section = $3
        ORDER BY version DESC
-       LIMIT 1`,
+       LIMIT 1
+       FOR UPDATE`,
       [orgId, artifactProjectId, sectionKey],
     );
 
     let artifactId: string;
     let isNew: boolean;
     let artifactPk: number;
+    let writtenVersion: number;
 
     if (existing.rows.length > 0) {
       // Update existing artifact
@@ -684,18 +701,39 @@ export async function bridgeCompileToArtifact(
       artifactId = row.artifactId;
       isNew = false;
 
-      await client.query(
+      /* 2026-11-09 (F1): a released section is not written over. This wrote
+         the compiled text into a locked artifact and set it to draft, undoing
+         a signed release with no signature. The trigger meant to stop it
+         (prevent_locked_artifact_mutation, db/migrations/20260318_ga_
+         immutability_hardening.sql) is on no applier. PUT …/artifacts/:id
+         refuses a locked artifact the same way. */
+      if (row.status === 'locked' || row.lockedAt != null) {
+        await client.query('ROLLBACK');
+        return {
+          bridged: false,
+          reason: 'artifact_locked',
+          detail: `Module 3 section ${sectionKey} was released by signature (${row.artifactId}), and a compile does not write over released text. The compiled text was not written. To change it, return the document to draft first, then compile again.`,
+        };
+      }
+
+      /* 2026-11-09 (F1): the compile's keys are merged into the metadata, not
+         put in its place: the governance harness and anything another writer
+         recorded stay. The column is json (migrations/0000_sweet_joseph.sql),
+         so it is read as jsonb to merge; jsonb → json is an assignment cast. */
+      const updated = await client.query<{ version: number }>(
         `UPDATE concept2cure_artifacts
          SET content      = $1,
              content_hash = $2,
              version      = version + 1,
-             metadata     = $3::jsonb,
+             metadata     = COALESCE(metadata::jsonb, '{}'::jsonb) || $3::jsonb,
              status       = 'draft',
              updated_at   = NOW()
-         WHERE organization_id = $4 AND id = $5`,
-        [fullContent, contentHash, JSON.stringify(metadata), orgId, row.id],
+         WHERE organization_id = $4 AND id = $5
+         RETURNING version`,
+        [fullContent, textHash, JSON.stringify(metadata), orgId, row.id],
       );
       artifactPk = Number(row.id);
+      writtenVersion = Number(updated.rows[0]?.version);
     } else {
       // Create new governed artifact
       artifactId = `m3-${sectionKey}-${randomUUID().slice(0, 8)}`;
@@ -714,14 +752,27 @@ export async function bridgeCompileToArtifact(
           artifactId,
           `Module 3 — ${sectionLabel}`,
           fullContent,
-          contentHash,
+          textHash,
           sectionKey,
           JSON.stringify(metadata),
           opts.createdById ?? null,
         ],
       );
       artifactPk = Number(inserted.rows[0].id);
+      writtenVersion = 1;
     }
+
+    /* 2026-11-09 (F1): the version this compile wrote is recorded, as every
+       content change is (21 CFR Part 11 version history). The version column
+       moved on with no stored row, so a second compile overwrote the first's
+       text unrecorded. A row already at this version means the artifact and its
+       history disagree; the unique key refuses it and the bridge rolls back. */
+    await client.query(
+      `INSERT INTO concept2cure_artifact_versions
+         (organization_id, artifact_id, version, content, content_hash, change_description, created_by_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [orgId, artifactPk, writtenVersion, fullContent, textHash, `Compiled from Module 3 sources (${sectionKey}).`, opts.createdById ?? null],
+    );
 
     /* Lineage in the same transaction as the composed text (ledger L160).
        A composed Module 3 section is prose assembled from recorded facts by a

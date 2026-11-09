@@ -1,0 +1,8 @@
+# Mutant: a locked artifact is written over again
+# in server/services/module3-convergence-service.ts
+# -       if (row.status === 'locked' || row.lockedAt != null) {
+# +       if (false) {
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a Module 3 section bridged from a compile > a released (locked) section is not written over: the bridge refuses, and the released text and status stay 18ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 49 skipped (52)
