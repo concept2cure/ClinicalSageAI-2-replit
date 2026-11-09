@@ -477,7 +477,8 @@ describe('A.1 · /concept2cure/features (section 12)', () => {
     expect(surfaceIdFromLocation(locationForSurface('apps'))).toBe('apps');
     expect(surfaceIdFromLocation(`${UI_V2_BASE}/apps`)).toBe('apps');
     // V2App navigates by writing locationForSurface(id), so every door, menu item and AnA move writes it.
-    expect(readFileSync(path.join(V2, 'V2App.tsx'), 'utf8')).toMatch(/setLocation\(locationForSurface\(/);
+    // A saved conversation may supply its own path first (931e287429); the surface's address is the fallback.
+    expect(readFileSync(path.join(V2, 'V2App.tsx'), 'utf8')).toMatch(/setLocation\((?:[\w?.]+\s*\?\?\s*)?locationForSurface\(/);
   });
 
   it('no address a client can reach has "app" in it', () => {

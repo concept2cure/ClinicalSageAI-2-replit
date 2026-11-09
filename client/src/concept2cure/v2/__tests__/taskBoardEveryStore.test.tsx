@@ -16,6 +16,7 @@
  *   - the board's own cards keep their controls.
  */
 import React from 'react';
+import { consumeNavParams } from '../navParams';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -115,6 +116,8 @@ describe("TaskBoard — every store's work", () => {
     fireEvent.click(within(detail).getByRole('button', { name: 'Open in BX-1 programme' }));
     expect(shell.publishShellProject).toHaveBeenCalledWith(expect.objectContaining({ id: SCHEDULE.home.programId, title: 'BX-1 programme' }));
     expect(onNav).toHaveBeenCalledWith('project-home');
+    // The project page lists its tasks and approvals on Plan (D3-4), so the handoff names Plan and the task.
+    expect(consumeNavParams('project-home')).toMatchObject({ stage: 'plan', workId: SCHEDULE.taskId });
     expect(apiRequest.mock.calls.filter(([m]) => m !== 'GET')).toHaveLength(0);
   });
 
