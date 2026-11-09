@@ -624,6 +624,7 @@
         "server/services/project-rollup-service.ts",
         "server/routes/project-hierarchy.ts",
         "server/services/c2c/program-project-anchor.ts",
+        "server/routes/c2c/projects.ts",
         "server/services/ana/changePropagationTools.ts",
         "server/services/cmc/**",
         "server/api/cmc/**",

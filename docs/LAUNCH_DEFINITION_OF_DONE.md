@@ -2284,3 +2284,20 @@ So:
 
 Items 2 to 4 are unchanged. `citation-ends.ts` compares program UUIDs, so a citation from a work project to its filing
 project is within one program.
+
+*Second clarification, 2026-11-09 (the coordinating session, under the same delegation).* The first clarification put
+the create door on `server/routes/project-hierarchy.ts`. That door, "hierarchy child create", was retired on
+2026-10-26 by A2.9, which left canonical intake as the one HTTP creator of projects
+(`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.9/README.md`; `ci:project-creation-owners`). The coordinating
+session approved it without that history, and the gate refused the slice. Corrected:
+- **The one door.** A work project is created through canonical intake, `POST /api/c2c/projects`, with an optional
+  `{ parentProjectId, workKind }`.
+  - **The work-project branch** checks the editor role, the admission of the parent's program, a parent within that
+    program's anchor tree, and `workKind` from P-83's six. It skips the program, quota, pathway and scaffold steps that
+    do not apply.
+  - **Without those fields,** intake is unchanged.
+- **The one writer.** The child row is written by the anchor file's one existing `projects` writer, extended to take an
+  optional parent (`regulatory_program_id` NULL when it has one). `ci:project-creation-owners` keeps `count: 1`, and no
+  gate is widened.
+- **The retired door stays retired.** The hierarchy `POST` is dropped; the governed children read stays.
+- **S12's ledger paths gain `server/routes/c2c/projects.ts`.**
