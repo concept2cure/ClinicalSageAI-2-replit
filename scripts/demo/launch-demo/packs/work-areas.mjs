@@ -156,6 +156,72 @@ export async function ensureTasks({ api, run, tally }, program, tasks, label) {
 /* ───────────────────────── CMC / Module 3 ───────────────────────── */
 
 /**
+ * The drug substance and the drug product §3.2.S and §3.2.P are written about.
+ *
+ * These two records are what the rest of the dossier is ABOUT, and no pack
+ * recorded either: `compositionRefusal` found no drug substance and answered
+ * `CMC_MODALITY_NOT_ESTABLISHED` — "this project records no drug substance" —
+ * instead of the refusal that is true of the programme, and §3.2.S.1 / §3.2.P.1
+ * composed with no source (J5-13).
+ *
+ * The modality is sent as the pack states it. `classifySubstanceModality` reads
+ * it from the manufacturing route when the record does not state it, and a demo
+ * whose composition scope rests on that heuristic changes meaning the next time
+ * someone rewords a process description.
+ */
+async function ensureMaterials({ api, tally }, program, cmc) {
+  let created = 0;
+  const s = cmc.substance;
+  if (s) {
+    const listed = rowsOf(must(await api('GET', `/api/cmc/drug-substances?projectId=${encodeURIComponent(program.id)}`), 200, 'list drug substances'));
+    const found = listed.find((r) => String(r.substanceName ?? r.substance_name ?? '').trim() === s.name);
+    if (found) tally.found('cmc-drug-substance');
+    else {
+      must(await api('POST', '/api/cmc/drug-substances', {
+        substanceName: s.name,
+        ...(s.inn ? { inn: s.inn } : {}),
+        ...(s.structuralFormula ? { structuralFormula: s.structuralFormula } : {}),
+        manufacturingProcess: { manufacturer: s.manufacturer, route: s.route, ...(s.site ? { site: s.site } : {}) },
+        ...(s.modality ? { modality: s.modality } : {}),
+        ...(s.biologicalOrigin ? { biologicalOrigin: s.biologicalOrigin } : {}),
+        ...(s.cellLine ? { cellLine: s.cellLine } : {}),
+        ...(s.sourceOrganism ? { sourceOrganism: s.sourceOrganism } : {}),
+        ...(s.viralSafetyEvaluation ? { viralSafetyEvaluation: s.viralSafetyEvaluation } : {}),
+        ...(s.tseStatus ? { tseStatus: s.tseStatus } : {}),
+        ...(s.developmentPhase ? { developmentPhase: s.developmentPhase } : {}),
+        status: s.status ?? 'development',
+        projectId: program.id,
+      }), [200, 201], `create drug substance "${s.name}"`);
+      tally.created('cmc-drug-substance');
+      created += 1;
+    }
+  }
+  const p = cmc.product;
+  if (p) {
+    const listed = rowsOf(must(await api('GET', `/api/cmc/drug-products?projectId=${encodeURIComponent(program.id)}`), 200, 'list drug products'));
+    const found = listed.find((r) => String(r.productName ?? r.product_name ?? '').trim() === p.name);
+    if (found) tally.found('cmc-drug-product');
+    else {
+      must(await api('POST', '/api/cmc/drug-products', {
+        productName: p.name,
+        dosageForm: p.dosageForm,
+        strength: p.strength,
+        ...(p.route ? { routeOfAdministration: p.route } : {}),
+        composition: { description: p.composition },
+        batchFormula: { description: p.batchFormula ?? p.composition },
+        manufacturingProcess: { description: p.process, ...(p.site ? { site: p.site } : {}) },
+        packagingMaterials: { containerClosure: p.containerClosure },
+        status: p.status ?? 'development',
+        projectId: program.id,
+      }), [200, 201], `create drug product "${p.name}"`);
+      tally.created('cmc-drug-product');
+      created += 1;
+    }
+  }
+  return created;
+}
+
+/**
  * The analytical procedures the specifications name, in the method register.
  *
  * Why the seed must do this: the approval route resolves a limit's named
@@ -303,8 +369,15 @@ async function ensureBatches({ api, tally }, program, batches) {
 /** cmc: { methods: [...], specs: [...], stability: [...], batches: [...] } */
 export async function ensureCmc(ctx, program, cmc, label) {
   const { run } = ctx;
-  /* The methods first: a specification names one, and the approval route
-     resolves that name against this register. */
+  /* The materials first: §3.2.S and §3.2.P are written about them, and the
+     composition boundary is decided from the drug substance record. */
+  const materials = [cmc.substance, cmc.product].filter(Boolean).length;
+  if (materials > 0) {
+    await run.step(`CMC / Module 3: drug substance and drug product on ${label}`, async () =>
+      `${await ensureMaterials(ctx, program, cmc)} created of ${materials}`);
+  }
+  /* Then the methods: a specification names one, and the approval route
+     resolves that name against the method register. */
   await run.step(`CMC / Module 3: analytical methods on ${label}`, async () => {
     const { created, validated, signerMissing } = await ensureMethods(ctx, program, cmc.methods);
     const total = cmc.methods?.length ?? 0;

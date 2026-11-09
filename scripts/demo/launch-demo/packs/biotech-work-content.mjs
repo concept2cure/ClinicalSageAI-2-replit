@@ -28,6 +28,47 @@ const DP = 'C2C-101 drug product, 100 mg/mL prefilled syringe';
 
 export const BIOTECH_CMC = {
   /**
+   * The drug substance §3.2.S is written about. Without it
+   * `compositionRefusal` answers CMC_MODALITY_NOT_ESTABLISHED — "this project
+   * records no drug substance" — rather than the refusal that is TRUE of
+   * C2C-101, which is that a monoclonal antibody's quality requirements are
+   * ICH Q6B, Q5A(R2) and Q5C and are not composed here (P-28). The modality is
+   * STATED: `classifySubstanceModality` would otherwise read it from the route,
+   * and a demo whose composition scope depends on that heuristic changes
+   * meaning when someone rewords a process description.
+   */
+  substance: {
+    name: 'C2C-101',
+    inn: 'fictional — no INN assigned',
+    manufacturer: 'Concept2Cure Biologics (fictional)',
+    site: 'Building 4, Cambridge MA (fictional)',
+    route: 'CHO-K1 fed-batch cell culture; harvest by depth filtration; Protein A capture, low-pH viral inactivation, cation and anion exchange, viral filtration, UF/DF into formulation buffer.',
+    structuralFormula: 'Humanised IgG1 heavy and light chain sequences — see §3.2.S.3.1 (fictional).',
+    modality: 'biologic',
+    biologicalOrigin: 'CHO-K1 cell culture',
+    cellLine: 'CHO-K1, master cell bank MCB-C2C101-01 (fictional)',
+    sourceOrganism: 'Chinese hamster (Cricetulus griseus) ovary cell line',
+    viralSafetyEvaluation: 'Fictional ICH Q5A(R2) record: low-pH inactivation and 20 nm viral filtration, each with a validated log reduction; MCB and end-of-production cells tested.',
+    tseStatus: 'No animal-derived raw materials in the process or the media (fictional record, EMA EMEA/410/01).',
+    developmentPhase: 'phase_2',
+    status: 'development',
+  },
+
+  /** The finished product §3.2.P.1 – §3.2.P.8 is written about. */
+  product: {
+    name: 'C2C-101 injection',
+    dosageForm: 'Solution for injection',
+    strength: '100 mg/mL',
+    route: 'Subcutaneous',
+    composition: 'C2C-101 100 mg/mL, histidine buffer pH 6.0, sucrose, polysorbate 80, water for injection.',
+    batchFormula: 'Per 2.0 L batch: C2C-101 200 g, L-histidine 3.1 g, L-histidine hydrochloride 4.9 g, sucrose 160 g, polysorbate 80 0.4 g, water for injection to 2.0 L (fictional).',
+    process: 'Thaw and pool drug substance, compound to target with buffer and excipients, 0.22 µm sterile filtration, aseptic fill into vials, visual inspection, label and pack.',
+    site: 'Building 7 aseptic fill suite, Cambridge MA (fictional)',
+    containerClosure: '2 mL Type I borosilicate glass vial, fluoropolymer-laminated bromobutyl stopper, aluminium crimp seal.',
+    status: 'development',
+  },
+
+  /**
    * The analytical procedures the specifications below are measured by, one per
    * distinct `method` string. They are recorded in the method register because
    * the approval route resolves a limit's named procedure against it and

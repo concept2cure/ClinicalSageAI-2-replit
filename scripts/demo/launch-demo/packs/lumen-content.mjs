@@ -66,6 +66,36 @@ const LMN201_DS = 'LMN-201 drug substance (illustrative)';
 const LMN201_DP = 'LMN-201 enteric capsules (illustrative)';
 
 export const LMN201_CMC = {
+  /* The drug substance and drug product §3.2.S / §3.2.P are written about;
+     without the substance the boundary cannot say WHY this project's Module 3
+     is not composed here. Illustrative demo values, not Lumen data; the
+     modality is stated rather than read from the route. */
+  substance: {
+    name: 'LMN-201 protein mixture',
+    manufacturer: 'Lumen Bioscience (demo — not affiliated)',
+    site: 'Illustrative demo site',
+    route: 'Spirulina (Arthrospira platensis) photobioreactor cultivation; harvest, lysis and spray-drying of the biomass carrying the expressed proteins (illustrative).',
+    modality: 'biologic',
+    biologicalOrigin: 'Spirulina photobioreactor cultivation',
+    sourceOrganism: 'Arthrospira platensis',
+    viralSafetyEvaluation: 'Illustrative: no mammalian cell substrate; ICH Q5A(R2) applies to the extent its scope covers a cyanobacterial platform.',
+    tseStatus: 'No animal-derived raw materials in the process or the media (illustrative).',
+    developmentPhase: 'phase_2',
+    status: 'development',
+  },
+  product: {
+    name: 'LMN-201 enteric capsules',
+    dosageForm: 'Capsule',
+    strength: 'Illustrative',
+    route: 'Oral',
+    composition: 'LMN-201 spray-dried biomass, microcrystalline cellulose, in an enteric-coated capsule shell (illustrative).',
+    batchFormula: 'Illustrative per-batch quantity statement; not Lumen data.',
+    process: 'Blend, encapsulate, enteric coat, inspect, pack (illustrative).',
+    site: 'Illustrative demo site',
+    containerClosure: 'HDPE bottle with induction seal and child-resistant closure (illustrative).',
+    status: 'development',
+  },
+
   /* The procedures the specifications below name, recorded in the method
      register so the approval route can resolve them (see biotech-work-content's
      note). Illustrative demo values, not Lumen data. */
