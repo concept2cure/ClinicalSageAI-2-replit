@@ -5729,7 +5729,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Assess the comparability exercise required for a post-approval manufacturing change. Determines whether comparability applies, the framework (ICH Q5E for biologics), and the extent — analytical only, analytical plus nonclinical, or analytical plus clinical — based on modality, change stage (upstream / downstream / formulation / analytical / fill-finish), CQA impact, analytical coverage, and available clinical data. Returns the recommended analytical and functional/biological comparability attributes and whether clinical bridging is needed. Cites ICH Q5E and the FDA comparability guidances. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Assess the comparability exercise required for a post-approval manufacturing change. Determines whether comparability applies, the framework (ICH Q5E for biologics), and the extent — analytical only, analytical plus nonclinical, or analytical plus clinical — based on modality, change stage (upstream / downstream / formulation / analytical / fill-finish), CQA impact, analytical coverage, and available clinical data. Returns the recommended analytical and functional/biological comparability attributes and whether clinical bridging is needed; any of these an unstated fact could change is null, with the facts named. Cites ICH Q5E and the FDA comparability guidances. Deterministic: no LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -5757,31 +5757,31 @@
           "name": "changeStage",
           "type": "string",
           "required": false,
-          "description": "Stage of manufacturing the change affects."
+          "description": "Stage of manufacturing the change affects. Omitted or null: inferred from the change area, said in warnings."
         },
         {
           "name": "affectsCqa",
           "type": "boolean",
           "required": false,
-          "description": "Does the change affect a critical quality attribute?"
+          "description": "Does the change affect a critical quality attribute (the same fact as risk.affectsCqa)? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "analyticalCoverageComplete",
           "type": "boolean",
           "required": false,
-          "description": "Is analytical characterization coverage complete?"
+          "description": "Is analytical characterization coverage complete? Not assumed complete. Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "clinicalDataAvailable",
           "type": "boolean",
           "required": false,
-          "description": "Is clinical data available to support comparability?"
+          "description": "Is clinical data available to support comparability? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "risk",
           "type": "object",
           "required": false,
-          "description": "Optional risk qualifiers that refine the change classification."
+          "description": "Risk qualifiers the change classification turns on. Each one omitted stays not_stated: a risk tier, category or variation type it could change is null, with the facts named in undecided."
         }
       ],
       "requiredInputs": [
@@ -15182,7 +15182,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Apply ICH Q12 established conditions (ECs) to a set of dossier elements: determine which elements are legally binding ECs (changes require a regulatory submission) versus supportive information, and the reporting category for changes to each. Accounts for the development approach (a minimal approach yields broader, parameter-level ECs; an enhanced/QbD approach with design space and robust control strategy yields fewer, performance-based ECs and reduced reporting). Returns a per-element classification with rationale and the EC-reduction benefit of the enhanced approach. Cites ICH Q12 (Sections on ECs) and ICH Q8/Q11. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Apply ICH Q12 established conditions (ECs) to a set of dossier elements: determine which elements are legally binding ECs (changes require a regulatory submission) versus supportive information, and the reporting category for changes to each. Accounts for the development approach (a minimal approach yields broader, parameter-level ECs; an enhanced/QbD approach with design space and robust control strategy yields fewer, performance-based ECs and reduced reporting). Returns a per-element classification with rationale and the EC-reduction benefit of the enhanced approach. Cites ICH Q12 (Sections on ECs) and ICH Q8/Q11. Deterministic: no LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -15192,13 +15192,13 @@
           "name": "developmentApproach",
           "type": "string",
           "required": false,
-          "description": "Development approach — \"enhanced\" = QbD (design space, enhanced control strategy)."
+          "description": "Development approach — \"enhanced\" = QbD (design space, enhanced control strategy). Omitted or null: minimal, said in guidance."
         },
         {
           "name": "modality",
           "type": "string",
           "required": false,
-          "description": "Product modality."
+          "description": "Product modality. Omitted or null: small molecule, said in guidance."
         },
         {
           "name": "elements",
@@ -18856,7 +18856,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Classify a CMC post-approval change into its US reporting category (Prior Approval Supplement / CBE-30 / CBE-0 / Annual Report per 21 CFR 314.70) and its EU variation type (IA / IAIN / IB / II / Extension), with the applicable SUPAC level where relevant and an assessment of change risk to product quality. Returns the reporting category for each region with the governing regulation and distribution rule, whether comparability is likely required, recommended ICH Q12 tools, and citations. Cites 21 CFR 314.70, the FDA \"Changes to an Approved NDA or ANDA\" guidance, SUPAC guidances, and the EU Variations Regulation (EC) No 1234/2008. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Classify a CMC post-approval change into its US reporting category (Prior Approval Supplement / CBE-30 / CBE-0 / Annual Report per 21 CFR 314.70) and its EU variation type (IA / IAIN / IB / II / Extension), with the applicable SUPAC level where relevant and an assessment of change risk to product quality. Returns the reporting category for each region with the governing regulation and distribution rule, whether comparability is likely required, recommended ICH Q12 tools, and citations. Cites 21 CFR 314.70, the FDA \"Changes to an Approved NDA or ANDA\" guidance, SUPAC guidances, and the EU Variations Regulation (EC) No 1234/2008. A result an unstated fact could change is null, the facts named. Deterministic: no LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -18872,43 +18872,43 @@
           "name": "description",
           "type": "string",
           "required": false,
-          "description": "Free-text description of the change (context)."
+          "description": "Free-text description of the change. Not read: it does not change the result."
         },
         {
           "name": "modality",
           "type": "string",
           "required": false,
-          "description": "Product modality — affects the default reporting category."
+          "description": "Product modality — affects the default reporting category. Omitted or null: small molecule, said in warnings."
         },
         {
           "name": "magnitude",
           "type": "string",
           "required": false,
-          "description": "Magnitude qualifier for the change."
+          "description": "Magnitude qualifier for the change. Omitted or null: scored as moderate, said in warnings."
         },
         {
           "name": "solidOralProduct",
           "type": "boolean",
           "required": false,
-          "description": "Whether this is a solid oral dosage form (drives SUPAC applicability)."
+          "description": "Whether this is a solid oral dosage form (drives SUPAC applicability). Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "modifiedRelease",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product is modified-release (SUPAC-MR)."
+          "description": "Whether the product is modified-release (SUPAC-MR). Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "risk",
           "type": "object",
           "required": false,
-          "description": "Optional risk qualifiers that refine the change classification."
+          "description": "Risk qualifiers the change classification turns on. Each one omitted stays not_stated: a risk tier, category or variation type it could change is null, with the facts named in undecided."
         },
         {
           "name": "biologicLicense",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product is licensed under a BLA (affects reporting rules)."
+          "description": "Whether the product is licensed under a BLA (affects reporting rules). Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         }
       ],
       "requiredInputs": [
@@ -23094,7 +23094,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Design a Post-Approval Change Management Protocol (PACMP, ICH Q12) — or the FDA Comparability Protocol equivalent — for a planned manufacturing change. Returns the two-step structure (the protocol describing the planned change, tests/studies, and acceptance criteria, submitted and approved first; then execution and a reduced-category notification), a test plan with attributes / tests / acceptance criteria / CQA flags, a stability commitment where applicable, and the proposed reduced reporting category after successful execution. Cites ICH Q12 (PACMP) and the FDA Comparability Protocols guidance. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Design a Post-Approval Change Management Protocol (PACMP, ICH Q12) — or the FDA Comparability Protocol equivalent — for a planned manufacturing change. Returns the two-step structure (the protocol describing the planned change, tests/studies, and acceptance criteria, submitted and approved first; then execution and a reduced-category notification), a test plan with attributes / tests / acceptance criteria / CQA flags, a stability commitment where applicable, and the proposed reduced reporting category after successful execution. Cites ICH Q12 (PACMP) and the FDA Comparability Protocols guidance. Deterministic: no LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -23122,7 +23122,7 @@
           "name": "currentCategoryIfNoProtocol",
           "type": "string",
           "required": false,
-          "description": "The US reporting category that would apply WITHOUT a protocol."
+          "description": "The US reporting category that would apply WITHOUT a protocol. Omitted or null: classified from the risk facts, or null while they leave it open."
         },
         {
           "name": "proposedReducedCategory",
@@ -23134,19 +23134,19 @@
           "name": "tests",
           "type": "array",
           "required": false,
-          "description": "Planned tests / studies and acceptance criteria."
+          "description": "Planned tests / studies and acceptance criteria. Omitted or null: the engine's default panel for the change area, said in warnings."
         },
         {
           "name": "includeStability",
           "type": "boolean",
           "required": false,
-          "description": "Whether a stability commitment should be included."
+          "description": "Whether a stability commitment should be included. Omitted or null stays not_stated, and none is included unless the change area needs one (said in warnings)."
         },
         {
           "name": "risk",
           "type": "object",
           "required": false,
-          "description": "Optional risk qualifiers that refine the change classification."
+          "description": "Risk qualifiers the change classification turns on. Each one omitted stays not_stated: a risk tier, category or variation type it could change is null, with the facts named in undecided."
         }
       ],
       "requiredInputs": [
@@ -28297,7 +28297,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Plan the CMC content of an annual report and, optionally, the ICH Q12 Product Lifecycle Management (PLCM) document. Classifies a set of implemented changes to determine which are annual-reportable (vs requiring a supplement), lays out the required annual-report sections (including stability protocol/commitment updates), and structures the PLCM document (established conditions, reporting categories, PACMPs, post-approval CMC commitments). Cites 21 CFR 314.70(d) (NDA) or 601.12(d) (BLA) and ICH Q12 (PLCM). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Plan the CMC content of an annual report and, optionally, the ICH Q12 Product Lifecycle Management (PLCM) document. Classifies a set of implemented changes to determine which are annual-reportable (vs requiring a supplement), lays out the required annual-report sections (including stability protocol/commitment updates), and structures the PLCM document (established conditions, reporting categories, PACMPs, post-approval CMC commitments). Cites 21 CFR 314.70(d) (NDA) or 601.12(d) (BLA) and ICH Q12 (PLCM). Deterministic: no LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -28325,7 +28325,7 @@
           "name": "biologicLicense",
           "type": "boolean",
           "required": false,
-          "description": "True when the product is licensed under a BLA (21 CFR 601.12(d) annual report); false for an NDA. Absent, a biologic, vaccine or cell/gene therapy modality is taken as licensed."
+          "description": "True when the product is licensed under a BLA (21 CFR 601.12(d) annual report); false for an NDA. Omitted or null stays not_stated, and a biologic, vaccine or cell/gene therapy modality is taken as licensed (said in guidance)."
         },
         {
           "name": "changes",
@@ -28337,13 +28337,13 @@
           "name": "stabilityProtocolOngoing",
           "type": "boolean",
           "required": false,
-          "description": "Whether a stability protocol/commitment is ongoing."
+          "description": "Whether a stability protocol/commitment is ongoing. Omitted or null stays not_stated, and the stability update gives both answers."
         },
         {
           "name": "includePlcmDocument",
           "type": "boolean",
           "required": false,
-          "description": "Whether to include the ICH Q12 PLCM document structure."
+          "description": "Whether to include the ICH Q12 PLCM document structure. Omitted or null stays not_stated, and it is not included (said in guidance)."
         }
       ],
       "requiredInputs": [],
@@ -28886,7 +28886,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Produce an integrated ICH Q12 lifecycle-management plan for a product: maps planned and historical changes to the appropriate ICH Q12 tool (established conditions, PACMP / comparability protocol, PLCM document, design space, annual-report category, or standard supplement/variation), recommends an established-conditions strategy by development approach, and frames the regulatory relationship across marketed regions (US / EU / global). Returns per-change tool recommendations with default US category and EU variation type. Cites ICH Q12 and ICH Q8-Q11. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Produce an integrated ICH Q12 lifecycle-management plan for a product: maps planned and historical changes to the appropriate ICH Q12 tool (established conditions, PACMP / comparability protocol, PLCM document, design space, annual-report category, or standard supplement/variation), recommends an established-conditions strategy by development approach, and frames the regulatory relationship across marketed regions (US / EU / global). Returns per-change tool recommendations with default US category and EU variation type. Cites ICH Q12 and ICH Q8-Q11. Deterministic: no LLM, no network. Report the returned reporting categories and regulatory citations verbatim — do NOT reinterpret citations, re-grade the change category, or substitute your own regulatory judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -28902,19 +28902,19 @@
           "name": "modality",
           "type": "string",
           "required": false,
-          "description": "Product modality."
+          "description": "Product modality. Omitted or null: small molecule, said in notes."
         },
         {
           "name": "developmentApproach",
           "type": "string",
           "required": false,
-          "description": "Development approach (minimal vs enhanced/QbD)."
+          "description": "Development approach (minimal vs enhanced/QbD). Omitted or null: minimal, said in notes."
         },
         {
           "name": "marketedRegions",
           "type": "array",
           "required": false,
-          "description": "Regions where the product is marketed."
+          "description": "Regions where the product is marketed. Omitted or null: global, said in notes."
         },
         {
           "name": "plannedChanges",

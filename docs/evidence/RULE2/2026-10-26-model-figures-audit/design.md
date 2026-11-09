@@ -35,6 +35,7 @@
 > | S5d-0: the three-valued helpers have one home | done | `s5d-0-three-valued-helpers/` |
 > | S5d-0b: the input adapters join them | done | `s5d-0b-input-adapters/` |
 > | S5d benefit-risk | done | `s5d-benefit-risk/` |
+> | S5d post-approval | done | `s5d-post-approval/` |
 > | S5d, S8–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
@@ -836,6 +837,37 @@ uncertainty, endpoint or frequency keeps its middle value and is named in `metho
 ordinal score tables and 24 pure functions move unchanged into the sibling `benefit-risk-reference.ts`, so the engine
 stays under the 100,000-byte ceiling. The six descriptions fit the gateway's 1,024 characters. No source reader, app or
 service was added.
+
+**S5d post-approval — What already exists (execution audit):** the six functions in
+`post-approval/post-approval-knowledge.ts` are already reached by `postApprovalTools.ts` and the executor's
+`runStatsTool` stated-input wrapper. The 2026-10-29 BLA change already took an annual report's licensure from a stated
+`biologicLicense` or, said in the guidance, from the modality; that disclosed default is kept, pinned by the engine's
+one test, `tests/regulatory/us-biotech-filing-identities.test.ts`. No function refused a malformed value or kept an
+omitted fact open. Extend the six; import `statedBoolean`, `statedNumber`, `statedOneOf` and the every-answer search
+(`everyAnswer`, `decidingFacts`) from `immunogenicity-reference.ts` (S5d-0), and reuse `refuseUnlessStated` and
+`ComputationRefusal`. Other post-approval code is not touched, and none imports this engine:
+`global-ri/post-approval-changes.ts`, `cmc/supac-classifier.ts` behind the CMC change-control store,
+`regulatory/change-assessment.ts`, `market-specs/post-submission-changes.ts`, the measured-lot ICH Q5E engine
+`biologics/comparability.ts` and `shared/regulatory/change-control-taxonomy.ts`. The local history is shallow, with no
+post-approval-name deletion matches. Evidence: `s5d-post-approval/`.
+
+**S5d post-approval execution result:** each true/false input the six functions read (the five risk qualifiers
+wherever a `risk` object is taken, `solidOralProduct`, `modifiedRelease`, `biologicLicense`, an element's
+`cqaImpact`, `controlledDownstream` and `withinDesignSpace`, a test's `cqa`, `includeStability`,
+`stabilityProtocolOngoing`, `includePlcmDocument`, `affectsCqa`, `analyticalCoverageComplete` and
+`clinicalDataAvailable`) reports true, false or `not_stated` through `inputStates`, and a malformed value is refused
+by field; an unknown change area or element type is refused by name, no longer classified as PAS or as an EC. The risk
+score and tier, the US category, regulation and EU variation type, the SUPAC applicability and level, an element's EC
+status and reporting category, the category without a PACMP and its feasibility, the comparability extent and bridging
+studies and a planned change's ICH Q12 tool are given only when every answer to the unstated facts gives the same one,
+and are otherwise null with `undecided` naming the facts and the answers. `affectsCqa` and `risk.affectsCqa` are one
+fact, never searched as two. An annual-report change with no asserted category whose facts do not settle it is listed
+in `notDetermined`: that tool takes none of the risk facts. A risk object without a magnitude keeps the stated
+top-level magnitude. An omitted modality, magnitude, development approach, change stage, region list, test panel,
+stability commitment or PLCM document keeps its default, said in the result. The citation library, the change-area
+profiles, the EC base rules and five fixed lookups (the US and EU category texts, the SUPAC level and the default PACMP
+test panels) move unchanged into the sibling `post-approval-reference.ts`, so the engine stays under the 100,000-byte
+ceiling. No source reader, app or service was added.
 
 **Pins:** `submission-center-tools.test.ts`, `ivd-lifecycle-tools.test.ts`, `deepening-tools.test.ts`, and the immunogenicity, bioequivalence and orphan tests where they exist.
 
