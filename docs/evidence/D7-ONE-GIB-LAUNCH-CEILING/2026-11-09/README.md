@@ -207,9 +207,52 @@ question asked jointly with P-92's Q11.
 1.2 GiB, measured by the dry-run assembly, and a staging account at `esg.example.invalid` so that no byte can reach
 FDA. Until it is recorded here, P-93 is not reported done.
 
+## Commit 3: a route whose gateway limit is sourced is refused over it before signing (question 1(a))
+
+**The ruling.** The coordinating session answered the design's questions on 2026-11-09, citing its C7 of 2026-11-08
+and founder decision P-108 (`3a00e32bdd`):
+- **1(a): yes.** "The size the documented channel takes" reaches every route whose limit is sourced. EU CESP's
+  600 MiB was refused only by the guard, **after** the transmit signature, which is the same defect P-93 fixes for
+  FDA. Readiness refuses it before signing, reusing `checkGatewaySize`'s figure: one figure, not a copy. P-93's two
+  commits stay FDA-only, and this lands as a third commit, under F1, in the same push, red first.
+- **1(b): decided by the founder** (P-108 item 2(b)): "Build at 1 GiB anyway, since that fails closed, and never call
+  1 GiB FDA's limit."
+- **3: holds granted.** `server/services/ana/AnaToolDefinitions.ts` was checked first: no session holds it (the
+  Anna-runtime epic released `server/services/ana/**` on 2026-11-08).
+- **4: keep (a)**, the refusal at freeze, dispatch and dispatch renewal.
+
+**What already exists.**
+- `checkGatewaySize` (`server/services/submission-gateways/pre-transmit-check.ts`) is the guard's one size rule. It
+  reads `getGatewaySizeLimitOnFile` and refuses only where the figure is sourced; PMDA's unsourced 1 GiB only warns.
+  It ran only inside the guard, after the signature.
+
+**The change.**
+- `pre-transmit-check.ts` exports `checkGatewaySize`, unchanged, and adds `gatewaySizeLimitEnforced(region)`: on file
+  and sourced, read from the same two tables the rule reads.
+- `sequenceTransmitReadiness` (`withPackageSizeRefusal`) measures the package when an environment is named and the
+  route is FDA's or has an enforced limit. For a route other than FDA, `sizeOnlyBlockers` judges it by
+  `checkGatewaySize`, the guard's own sentence, framed as readiness frames the launch ceiling.
+- A PMDA route, whose figure is unsourced, is not measured, exactly as before.
+- Freeze and dispatch are unchanged for EU: the ruling names readiness. Whether the package gate should refuse an EU
+  package over 600 MiB before freeze, as it does for FDA, is a question back to the coordinating session.
+
+| File | What it shows |
+|---|---|
+| `red-commit3.txt` | the EU case before the change: an EU national filing (DCP, routed to CESP) over 600 MiB is cleared at readiness; the at-limit control passes |
+| `green-commit3.txt` | every submission-gateways test (pre-transmit-check's included), every test naming a changed function, every submission-service test: 1521 pass, none fail |
+| `mutation-13` | readiness measures FDA only: both EU over-limit cases fail |
+| `mutation-14` | the route's limit is not judged: both EU over-limit cases fail |
+| `mutation-15` | an unsourced limit (PMDA) is treated as enforced: the PMDA case fails (it is measured) |
+
+**Found here, not changed.** The guard's sentence rounds both figures to two decimal GB, so a package one byte over
+600 MiB reads "Package is 0.63 GB, over the EMA gateway limit of 0.63 GB". The launch clause avoids this by giving
+bytes at the boundary. The guard's wording is the guard's, and it is reported rather than changed here.
+
 ## Plan
 
 Commit 1: `Plan: F1`, `Completes: server/services/submission-service/submission-service.ts`, `Completes:
 server/services/ectd/ectd-regional-rules.ts`. Commit 2: `Plan: F1`, with a `Completes:` trailer for each file it
-corrects. Both commits go in one push, so no deployed build carries commit 1 alone. The holds are as `.design/claude-convergence/COORDINATION.md` records
+corrects. Commit 3: `Plan: F1`, `Completes: server/services/submission-gateways/pre-transmit-check.ts`, `Completes:
+server/services/submission-service/submission-service.ts`. All three go in one push, so no deployed build carries
+commit 1 alone. The holds are as `.design/claude-convergence/COORDINATION.md` records
 them.

@@ -78,10 +78,10 @@ let nextId = 9300;
 const q = (text: string, params?: unknown[]) => db.pglite.query(text, params) as Promise<{ rows: any[] }>;
 
 /** A sequence of its own submission (so no filing order applies), with one approved leaf the real assembler packages. */
-async function sequence(status: 'validated' | 'frozen' | 'dispatched', region = 'fda'): Promise<number> {
+async function sequence(status: 'validated' | 'frozen' | 'dispatched', region = 'fda', applicationType = 'ind'): Promise<number> {
   const id = nextId++;
   await q(`INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by, program_id)
-    VALUES ($1, 'Launch ceiling', 'ind', 'biotech', $2, $3, 2, $4)`, [id, region, ORG, FREEZE_PROGRAM_ID]);
+    VALUES ($1, 'Launch ceiling', $5, 'pharma', $2, $3, 2, $4)`, [id, region, ORG, FREEZE_PROGRAM_ID, applicationType]);
   await q(`UPDATE submissions SET application_number = 'MARKET-123456' WHERE id = $1`, [id]);
   await q(`INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status, dispatch_status, frozen_at)
     VALUES ($1, $1, $2, '0000', $3, 2, $4, $5, $6)`,
@@ -143,7 +143,7 @@ describe('P-93: an FDA package over 1 GiB is refused before anyone signs to send
     expect(h.assembled).toBe(before);
   }, 120_000);
 
-  it('a sequence for another region is not measured (FDA only)', async () => {
+  it('a route whose gateway limit is unsourced (PMDA) is not measured', async () => {
     const id = await sequence('dispatched', 'jp');
     h.sizeBytes = GIB + 1;
     const before = h.assembled;
@@ -165,6 +165,37 @@ describe('P-93: an FDA package over 1 GiB is refused before anyone signs to send
     expect(pre.cleared).toBe(false);
     expect(pre.refusal).toBe('Refusing to transmit: the sequence does not assemble into a package (the converter returned ' +
       'no bytes), so its size cannot be measured, and nothing can be sent.');
+  }, 120_000);
+});
+
+/* The coordinating session's ruling on P-93's question 1(a), 2026-11-08 (C7): "the size the documented channel
+   takes" reaches every route whose limit is sourced. EU CESP's 600 MiB was refused only by the guard, after the
+   transmit signature. Readiness now refuses it before signing, on the guard's own rule (checkGatewaySize), so the
+   figure and its sentence are one. A route whose figure is unsourced (PMDA) is not measured. */
+describe('a route whose gateway limit is sourced is refused over it before signing (P-93, question 1(a))', () => {
+  const EU_LIMIT = 600 * 1024 * 1024;
+  it('an EU national filing over CESP’s 600 MiB is refused by the guard’s own sentence, and nothing is signed', async () => {
+    const id = await sequence('dispatched', 'eu', 'EU_GENERIC_DCP');
+    h.sizeBytes = 700 * 1024 * 1024;
+    const pre = await readiness(id, 'production');
+    expect(pre.cleared).toBe(false);
+    expect(pre.refusal).toBe(
+      'Refusing to transmit: Package is 0.73 GB, over the EMA gateway limit of 0.63 GB. Submit via the agency\'s ' +
+      'large-submission channel (e.g. physical media) instead of the gateway. The sequence is dispatched, so its leaves ' +
+      'can no longer be changed, and it cannot be sent as it is.');
+    expect((await q(`SELECT id FROM electronic_signatures WHERE signed_target = $1`, [`ectd-sequence:${id}`])).rows).toEqual([]);
+  }, 120_000);
+
+  it('one byte over CESP’s 600 MiB is refused', async () => {
+    const id = await sequence('dispatched', 'eu', 'EU_GENERIC_DCP');
+    h.sizeBytes = EU_LIMIT + 1;
+    expect((await readiness(id, 'production')).refusal).toMatch(/^Refusing to transmit: Package is .* over the EMA gateway limit/);
+  }, 120_000);
+
+  it('at exactly CESP’s 600 MiB it is not refused on size', async () => {
+    const id = await sequence('dispatched', 'eu', 'EU_GENERIC_DCP');
+    h.sizeBytes = EU_LIMIT;
+    expect(await readiness(id, 'production')).toMatchObject({ cleared: true, refusal: null });
   }, 120_000);
 });
 

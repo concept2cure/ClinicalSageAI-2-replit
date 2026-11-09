@@ -96,6 +96,7 @@ import { cespChannelRefusal } from '../submission-gateways/ema-cesp';
 import { ENVIRONMENT_WORDS } from '../submission-gateways/governed-transmit-checks';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
 import { launchSequenceSizeRefusal } from '../ectd/ectd-regional-rules';
+import type { Region as GatewayRegion } from '../submission-gateways/types';
 import {
   packageIdentityRefusal, readSubmissionPackageIdentity, lockSubmissionPackageIdentity, lockRecordedPackageIdentity,
   recordedPackageIdentitySnapshot, sameRecordedPackageIdentitySnapshot, fdaContactsForPackageIdentity,
@@ -1707,6 +1708,19 @@ async function packageBlockers(assembled: AssembledPackage, fda: boolean): Promi
 }
 
 /**
+ * Readiness's judgement (`judge: 'size'`, P-93): the FDA launch ceiling when it
+ * applies, otherwise the route's own gateway limit by the guard's rule
+ * (checkGatewaySize), never a copy of its figure or sentence.
+ */
+async function sizeOnlyBlockers(launch: string | null, sizeBytes: number, gatewayRegion: GatewayRegion | undefined): Promise<{ gaps: string[]; size: string | null }> {
+  if (launch) return { gaps: [launch], size: launch };
+  if (!gatewayRegion) return { gaps: [], size: null };
+  const { checkGatewaySize } = await import('../submission-gateways/pre-transmit-check');
+  const blocker = checkGatewaySize(gatewayRegion, sizeBytes).blocker?.replace(/[.\s]+$/, '') ?? null;
+  return blocker ? { gaps: [blocker], size: blocker } : { gaps: [], size: null };
+}
+
+/**
  * The package gate's refusal. The existing tails are worded by step; only the
  * launch ceiling's (P-93) depends on whether the leaves can still change, so a
  * person is told to move leaves only while they can.
@@ -1752,7 +1766,7 @@ async function assertSequencePackageable(
   id: number,
   ctx: { organizationId: number; userId: number },
   step: GovernedSequenceStep,
-  opts: { judge?: 'size' } = {},
+  opts: { judge?: 'size'; gatewayRegion?: GatewayRegion } = {},
 ): Promise<string | null> {
   const sequence = await getSequence(id, ctx);
   const binding = await deriveGovernedTargetBinding(asQueryable(pool), `ectd-sequence:${id}`, ctx.organizationId);
@@ -1789,9 +1803,9 @@ async function assertSequencePackageable(
   }
   try {
     const blocked = await packageBlockers(assembled, fda);
-    const gaps = opts.judge === 'size' ? (blocked.size ? [blocked.size] : []) : blocked.gaps;
-    if (gaps.length > 0) {
-      throw new SubmissionError('DISPATCH_BLOCKED', packageGateRefusal(step, gaps, blocked.size, sequence.status));
+    const judged = opts.judge === 'size' ? await sizeOnlyBlockers(blocked.size, assembled.bundle.sizeBytes, opts.gatewayRegion) : blocked;
+    if (judged.gaps.length > 0) {
+      throw new SubmissionError('DISPATCH_BLOCKED', packageGateRefusal(step, judged.gaps, judged.size, sequence.status));
     }
   } finally {
     await assembled.cleanup();
@@ -2779,22 +2793,29 @@ export function transmitApplicationNumberRefusal(typed: string, recorded: string
 }
 
 /**
- * Readiness's launch-ceiling check (P-93), after every earlier check cleared:
- * the package gate's own assembly, judged on the size alone. Only for an FDA
- * sequence, and only when a send is being asked (an environment is named), so
- * the Dispatch tab's read stays a read, with no assembly. A package that does
- * not assemble cannot be measured, so it is refused, never cleared. Anything
- * else (a busy converter) passes through to the route, which answers 503.
+ * Readiness's size check (P-93), after every earlier check cleared: the package
+ * gate's own assembly, judged on the size alone, before anyone signs. For an
+ * FDA sequence, the launch ceiling; for any route whose gateway limit is
+ * sourced (EU CESP's 600 MiB), that limit, by the guard's own rule
+ * (checkGatewaySize; the coordinating session's ruling on question 1(a),
+ * 2026-11-08). Only when a send is being asked (an environment is named), so the
+ * Dispatch tab's read stays a read, with no assembly. A package that does not
+ * assemble cannot be measured, so it is refused, never cleared. Anything else
+ * (a busy converter) passes through to the route, which answers 503.
  */
-async function withLaunchCeiling(
+async function withPackageSizeRefusal(
   before: string | null,
   seq: EctdSequence,
   environment: 'staging' | 'production' | undefined,
+  routed: TransmitRoute,
   ctx: { organizationId: number; userId: number },
 ): Promise<string | null> {
-  if (before !== null || environment === undefined || canonicalRegionOf(seq.region) !== 'US') return before;
+  if (before !== null || environment === undefined || !routed.ok) return before;
+  const gatewayRegion = routed.gwRegion as GatewayRegion;
+  const { gatewaySizeLimitEnforced } = await import('../submission-gateways/pre-transmit-check');
+  if (canonicalRegionOf(seq.region) !== 'US' && !gatewaySizeLimitEnforced(gatewayRegion)) return before;
   try {
-    await assertSequencePackageable(seq.id, ctx, 'transmit', { judge: 'size' });
+    await assertSequencePackageable(seq.id, ctx, 'transmit', { judge: 'size', gatewayRegion });
     return null;
   } catch (err) {
     if (err instanceof SubmissionError && err.code === 'DISPATCH_BLOCKED') return err.message;
@@ -2888,7 +2909,7 @@ export async function sequenceTransmitReadiness(
         (!gate.cleared ? `Dispatch gate blocks transmit: ${gate.blockers.join(' ')}` : null) ??
         typedNumberRefusal ??
         gatewayRefusal();
-  const refusal = await withLaunchCeiling(before, seq, environment, ctx);
+  const refusal = await withPackageSizeRefusal(before, seq, environment, routed, ctx);
 
   return {
     sequenceStatus: seq.status,
