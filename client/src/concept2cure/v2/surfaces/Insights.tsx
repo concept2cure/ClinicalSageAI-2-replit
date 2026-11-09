@@ -10,6 +10,7 @@ import { captureAuthoringSession, useAuthoringReadSession } from '../editor/auth
 import { canFinalizeReport, canGovernedWrite } from '@shared/constants/permissions';
 import { readinessPredicate, readinessQualifier } from '@shared/regulatory/readiness-statement';
 import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_shared/components/EsignModal';
+import { ALL_ESIGN_MEANINGS } from '../../_shared/esignMeanings';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
@@ -1598,8 +1599,8 @@ export interface ReportSeal {
 }
 
 const REPORT_FINALIZE_MEANINGS: ReadonlyArray<EsigMeaning> = ['authorship', 'approval', 'responsibility'];
-/** The signature's meaning (21 CFR 11.50(a)(3)) as the signing dialog names it. */
-const SEAL_MEANING_LABEL: Record<string, string> = { authorship: 'Authorship', approval: 'Approval', responsibility: 'Responsibility' };
+/** The signature's meaning (21 CFR 11.50(a)(3)) in the signing dialog's own word (esignMeanings), never a token. */
+const sealMeaningLabel = (meaning: string): string => ALL_ESIGN_MEANINGS.find((m) => m.id === meaning)?.label ?? meaning;
 
 const textOr = (v: unknown, fallback: string): string => (typeof v === 'string' ? v : fallback);
 
@@ -1685,7 +1686,7 @@ function ROSealLine({ seal }: { seal: ReportSeal }) {
     <div className="ro-truth" role="note" data-testid="ro-seal">
       {I.shieldCheck}
       <span>
-        Final. Signed{seal.signer ? ` by ${seal.signer}` : ''}, meaning {SEAL_MEANING_LABEL[seal.meaning] ?? seal.meaning},{' '}
+        Final. Signed{seal.signer ? ` by ${seal.signer}` : ''}, meaning {sealMeaningLabel(seal.meaning)},{' '}
         <GovernedTimestamp value={seal.signedAt} layout="inline" />. Sealed {seal.algorithm} {seal.hash.slice(0, 12)}… over {seal.atomCount} provenance atoms.
       </span>
     </div>

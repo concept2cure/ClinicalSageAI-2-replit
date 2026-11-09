@@ -34,6 +34,11 @@
 import { apiCall, apiErrorText, type ApiResult } from '../apiCall';
 import { errorCodeOf } from '@/lib/queryClient';
 import { mutationUnconfirmed } from '../mutationOutcome';
+import { ALL_ESIGN_MEANINGS } from '../../_shared/esignMeanings';
+
+/** A recorded signature meaning in the signing dialog's own word (21 CFR 11.50(a)(3)); an unknown one as recorded. */
+const meaningWords = (meaning: string | null | undefined): string | null | undefined =>
+  meaning ? ALL_ESIGN_MEANINGS.find((m) => m.id === meaning)?.label ?? meaning : meaning;
 
 /* ══════════════════════════════════════════════════════════════════
    Runs
@@ -344,7 +349,7 @@ function sealExtraRows(view: RunSealView, sealText: string): SealFactRow[] {
   const sealedAt = view.seal?.sealedAt;
   const rows: SealFactRow[] = [
     { term: 'Reason given', value: fin?.reason ?? '' },
-    { term: 'Chain records the meaning as', value: fin?.meaning ?? '' },
+    { term: 'Chain records the meaning as', value: meaningWords(fin?.meaning) ?? '' },
     { term: 'Status before finalizing', value: fin?.priorStatus ?? '' },
     { term: 'Seal', value: sealText, mono: true },
     { term: 'Sealed at', value: sealedAt ? whenText(sealedAt) : '' },
@@ -388,7 +393,7 @@ export function sealFactRows(view: RunSealView): SealFactRow[] {
   const manifestation: SealFactRow[] = [
     { term: 'Signed by', value: orNotRecorded(sig?.signerName) },
     { term: 'Signed at', value: orNotRecorded(sig?.signedAt && whenText(sig.signedAt)) },
-    { term: 'Meaning', value: orNotRecorded(sig?.meaning) },
+    { term: 'Meaning', value: orNotRecorded(meaningWords(sig?.meaning)) },
   ];
   return [...(view.sealed ? manifestation : []), ...sealExtraRows(view, sealText)];
 }
