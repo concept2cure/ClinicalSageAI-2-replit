@@ -41,16 +41,6 @@ async function signIn(page, dark) {
   }, dark);
 }
 
-async function openCard(page) {
-  await page.goto(`${BASE}/concept2cure/project-home?program=${PROGRAM}`, { waitUntil: 'networkidle' });
-  const card = page.getByTestId('pj-work-projects');
-  await card.waitFor({ timeout: 30000 });
-  await page.waitForFunction(() => !/Reading this project/.test(document.querySelector('[data-testid="pj-work-projects"]')?.textContent ?? ''), null, { timeout: 20000 });
-  await card.scrollIntoViewIfNeeded();
-  return card;
-}
-
-
 const changesRead = (page) => page.evaluate(async (program) => {
   const r = await fetch(`/api/c2c/projects/${program}/source-changes`, { headers: { Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}` } });
   return { status: r.status, body: await r.json() };
