@@ -234,6 +234,18 @@ function useBoundReads(programId: string | null, workProjectId: number | null, v
   return { proof, tasks, row };
 }
 
+/** While the binding is proven, a task made anywhere in the area (its registers' Task and Discuss, the top bar's
+ *  Task) starts on the work project: the shell's task context carries it (CollabLauncher.tsx contextTaskProject).
+ *  Cleared on unbind and when the area closes. */
+function useTaskContextBinding(workProjectId: number | null): void {
+  React.useEffect(() => {
+    const launcher = (window as { C2C?: { setContext?: (patch: Record<string, unknown>) => void } }).C2C;
+    if (workProjectId === null || typeof launcher?.setContext !== 'function') return undefined;
+    launcher.setContext({ workProjectId: String(workProjectId) });
+    return () => { launcher.setContext?.({ workProjectId: null }); };
+  }, [workProjectId]);
+}
+
 /** At the top of a work area opened from a work project's door: the work project's name and its tasks. Nothing
  *  when the area is not bound, or no project is open. */
 export function WorkProjectTasks({ area }: { area: 'cmc' | 'quality' }) {
@@ -241,6 +253,7 @@ export function WorkProjectTasks({ area }: { area: 'cmc' | 'quality' }) {
   const [workProjectId, unbind] = useBoundWorkProject(area);
   const [version, setVersion] = React.useState(0);
   const { proof, tasks, row } = useBoundReads(programId, workProjectId, version);
+  useTaskContextBinding(proof.data && workProjectId !== null ? workProjectId : null);
   if (!programId || workProjectId === null) return null;
   if (proof.loading) return <p className="pj-card-note" role="status" data-testid="work-project-bound">Reading the work project…</p>;
   if (proof.error || !proof.data) return <BindingRefused proof={proof} unbind={unbind} />;

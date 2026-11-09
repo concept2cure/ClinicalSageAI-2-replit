@@ -297,8 +297,11 @@ function NextSequenceControl({ sub, rows, baseline, type, onType, busy, onStart 
         onChange={(e) => onType(e.target.value)}>
         {FOLLOW_UP_SEQ_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
       </select>
-      <button type="button" className="sp-primary sc-btn" disabled={busy} onClick={() => onStart(next)}>
-        {I.sparkles} {busy ? 'Creating…' : `Start sequence ${next}`}
+      {/* Not the view's primary (the header's "New submission" is, D0 §7 check 2), and it asks nothing of AnA, so it
+          carries no spark (D0 §8.1; the coordinating session, 2026-11-09). The hairline secondary, not the bare `.btn`,
+          which has no border and read as text in the running app. */}
+      <button type="button" className="btn ghost" disabled={busy} onClick={() => onStart(next)}>
+        {busy ? 'Creating…' : `Start sequence ${next}`}
       </button>
     </div>
   );
@@ -1963,13 +1966,14 @@ export function SubmissionCenter({
                       hint="Create the first eCTD sequence (0000) to begin assembling this submission."
                     />
                     <div className="cm-pushbar sc-mt">
+                      {/* The hairline secondary, as NextSequenceControl's: not the view's primary, and no spark. */}
                       <button
                         type="button"
-                        className="sp-primary sc-btn"
+                        className="btn ghost"
                         onClick={() => void startSequence(sub, '0000', 'original')}
                         disabled={creatingSeq}
                       >
-                        {I.sparkles} {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
+                        {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
                       </button>
                     </div>
                   </>
