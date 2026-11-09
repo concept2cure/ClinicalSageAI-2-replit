@@ -99,6 +99,34 @@ describe('reporting current session — private canvas reads', () => {
     expect((screen.getByRole('button', { name: /^Run / }) as HTMLButtonElement).disabled).toBe(true);
   });
 
+  /* Reporting use walk, 2026-11-09: opening your own Account panel re-reads the account (refreshUser), Reporting
+     reloads (as above, so a changed role withdraws private results), and the notice said "Reporting was reset for the
+     current account … In the original account, check Run history" — an account switch that never happened. */
+  it('says the account was read again, not switched, when the same reader is refreshed', async () => {
+    renderCanvas(); await run();
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ authenticated: true, user: { ...ACTOR } }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
+    await act(async () => { expect((await authService.refreshUser()).success).toBe(true); });
+    const notice = await screen.findByText(/Reporting reloaded/);
+    expect(notice.textContent).toMatch(/your account was read again/);
+    expect(notice.textContent).not.toMatch(/original account|reset for the current account/);
+  });
+
+  it('still says the account changed when another reader takes the session', async () => {
+    renderCanvas(); await run();
+    await act(async () => replace());
+    const notice = await screen.findByText(/Reporting was reset for the current account/);
+    expect(notice.textContent).toMatch(/In the original account/);
+  });
+
+  it('says the account was read again when the replacement reader is then refreshed', async () => {
+    renderCanvas(); await run();
+    await act(async () => replace());
+    await screen.findByText(/Reporting was reset for the current account/);
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ authenticated: true, user: { ...NEXT } }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
+    await act(async () => { expect((await authService.refreshUser()).success).toBe(true); });
+    expect((await screen.findByText(/Reporting reloaded/)).textContent).toMatch(/your account was read again/);
+  });
+
   it('discards an earlier overview that resolves after a replacement account has started its read', async () => {
     const original = deferred<Response>();
     wire((_method, url) => url.startsWith('/api/insights-canvas/overview')

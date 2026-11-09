@@ -1732,12 +1732,21 @@ const RO_PRESET_SEGMENT: Record<string, string> = {
 export function InsightsCanvas(props: OwnedSurfaceViewProps) {
   const session = useAuthoringReadSession(authService.getUser());
   const changed = session.key > 1;
+  /* Why the canvas reloaded, against the session just before this one: another reader took it, or the same reader's
+     account was read again (opening the Account panel re-reads it; a changed role must withdraw private results, so
+     the canvas still reloads). The notice says which, never an account switch that did not happen (Reporting use
+     walk, 2026-11-09). Updated once per session key, so a re-render does not move it. */
+  const sessions = useRef({ key: session.key, actor: session.actor, before: session.actor });
+  if (sessions.current.key !== session.key) sessions.current = { key: session.key, actor: session.actor, before: sessions.current.actor };
+  const reloaded: ReportingReload = !changed ? false : sessions.current.before === session.actor ? 'reread' : 'account';
   if (changed && !authService.getUser()) return <div className="page-inner rc" data-work-area="insights"><ReportingHead onNav={props.onNav} /><div className="rc-canvas">
     <ReportingRecoveryNotice ended />
     <EmptyState icon={I.lock} title="Sign in to read reporting" hint="Your previous reporting data has been withdrawn. Sign in again to reopen Run history." />
   </div></div>;
-  return <ReportingCanvasForSession key={session.key} {...props} owner={session} reloaded={changed} />;
+  return <ReportingCanvasForSession key={session.key} {...props} owner={session} reloaded={reloaded} />;
 }
+
+type ReportingReload = false | 'account' | 'reread';
 
 /* The work area's back link and page header (D5 §WA.4.2, D7 §D.4 steps 1-2).
    The title is the surface's registry label. Every state of the canvas
@@ -1763,11 +1772,12 @@ function ReportingHead({ onNav, sub, note, acts, name }: { onNav?: (id: string) 
   );
 }
 
-function ReportingRecoveryNotice({ ended = false }: { ended?: boolean }) {
+function ReportingRecoveryNotice({ ended = false, reread = false }: { ended?: boolean; reread?: boolean }) {
+  if (reread) return <div className="ro-dash-note" role="status">Reporting reloaded because your account was read again, so it shows what your current access allows. Requests sent before may have completed: check Run history, Schedules and Bundles for their stored outcomes.</div>;
   return <div className="ro-dash-note" role="status">{ended ? 'Your reporting session ended.' : 'Reporting was reset for the current account.'} Requests sent before the change may have completed. In the original account, check Run history, Schedules and Bundles for their stored outcomes.</div>;
 }
 
-function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSurfaceViewProps & { owner: ReturnType<typeof captureAuthoringSession>; reloaded: boolean }) {
+function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSurfaceViewProps & { owner: ReturnType<typeof captureAuthoringSession>; reloaded: ReportingReload }) {
   const search = useSearch();
   const tabsId = React.useId();
 
@@ -2177,7 +2187,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     if (displayedReportCurrent()) onSealed(sealed);
   };
   const planNotice = !tierResolved && <div className="ro-dash-note" role="status" data-testid="rc-tier-unresolved">{I.alertTriangle} {REPORT_PLAN_UNVERIFIED} This is not a statement about your plan — try again in a moment, and contact your administrator if it persists.</div>;
-  const recoveryNotice = reloaded && <ReportingRecoveryNotice />;
+  const recoveryNotice = reloaded && <ReportingRecoveryNotice reread={reloaded === 'reread'} />;
   /* The device section (fold F4): the device projects the reader can open, as
      the overview computed them, on the Report tab's landing canvas, with or
      without a project open. It shows nothing for a reader with no device project. */
