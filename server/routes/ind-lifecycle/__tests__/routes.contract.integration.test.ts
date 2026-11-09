@@ -734,8 +734,9 @@ describe('persisted cross-references (eCTD m1.4)', () => {
 
     const filed = await request(app)
       .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references/${id}/file-loa`)
-      .send({ sequenceNumber: '0007', holderName: 'Excipient Co.', authorizedPartyName: 'Acme', signatoryName: 'Dana Holder' });
-    expect(filed.status).toBe(201);
+      // Its own number: 0007 and 0009 are safety reports' above, and a sequence number is used once (F1 repair A).
+      .send({ sequenceNumber: '0020', holderName: 'Excipient Co.', authorizedPartyName: 'Acme', signatoryName: 'Dana Holder' });
+    expect(filed.status, JSON.stringify(filed.body)).toBe(201);
     expect(filed.body.sequence.type).toBe('amendment');
     const loaLeaf = filed.body.leaves.find((l: any) => l.sectionCode === 'm1.4.1');
     expect(loaLeaf).toBeTruthy();
