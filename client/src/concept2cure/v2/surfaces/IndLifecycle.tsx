@@ -1280,6 +1280,8 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               // A question to AnA, said as one: no route clears a blocker; the
               // section is approved, or the form completed, where it lives.
               : 'Ask AnA how to clear the top blocker',
+          // The spark only when it asks AnA; assembling the sequence is a step, not a question (D0.md §8.1).
+          icon: R.assessed && R.ready ? undefined : I.sparkles,
           onClick: () => {
             if (!R.assessed) {
               ask(

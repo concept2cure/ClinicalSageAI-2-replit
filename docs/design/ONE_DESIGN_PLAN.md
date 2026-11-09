@@ -829,7 +829,13 @@ Evidence: `docs/evidence/SPINE/S4/2026-11-09-spike-joined-run/README.md`, with `
 - **Added**, each shown failing first:
   - check 4: the rules and memory stores isolate tenants as the runtime role (`ec177edd06`);
   - check 1: rework and rejection are rebuilt from the decision audit (`d4b82abc94`);
-  - check 2: a credential use is audited by grant, revision and purpose, never its value (`64e3346363`).
+  - check 2: a credential use is audited by grant, revision and purpose, never its value (`64e3346363`);
+  - check 2: the tenant's export carries a vault-captured card but neither its key nor the stored ciphertext
+    (`4d99bddc52`);
+  - check 1: a child's transmit, signature, filing and version overwrite are refused by name (`ce1451297c`).
+  - check 2: one canary makes one real model request through the tenant's own client, and is only in that request's
+    Authorization header: not its body, the result, a refused key's error, the log, the audit or the export
+    (`2c54da8f34`).
 - **Verdict: acceptance pending.** Every check has named open items in the evidence. Some are test-only, for S4. One
   is RIM's (check 3, reapproval after the one-byte change). Some are product decisions for the founder:
   - a "never again" trigger;
@@ -839,7 +845,8 @@ Evidence: `docs/evidence/SPINE/S4/2026-11-09-spike-joined-run/README.md`, with `
   - qualified local weights.
 
   No check is marked passed in full.
-- **Next.** The S4 test-only items for checks 1 and 2, then the founder's decisions on the product items.
+- **Next.** Two S4 test-only items remain: a joined child → parent merge → lock case, and the canary in a whole turn (the
+  assembled prompt bundle and the turn record). Then the founder's decisions on the product items.
 
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
@@ -1677,6 +1684,16 @@ no screen, route, service, table or component file.
     - Nothing open in D7-D's steps.
     - A ZIP export with a legal original selected is not walked: this database has no legal original to select.
       `tests/db/report-pack-export.dbtest.ts` covers the export on real PostgreSQL.
+  - **S11 step 6b, the global schedule in Reporting & analytics** (`Plan: S11`: `c0729896d7`, `3707064475`; evidence
+    `docs/evidence/SPINE/S11/2026-11-09-global-schedule/`).
+    - One row per project the reader can open, on one shared axis, sorted by target date: the work, the filing, the
+      agency's clock dashed to its goal, the next phase, and today.
+    - It is read from the portfolio line's batch read, which now also carries the filing, start and clock. Nothing is
+      computed in Reporting.
+    - It is reached by "When does each project file?" and the find field, on every plan.
+    - Red first: the route test 2 of 28, and the new client test 9 of 9. Green: 62 files, 633 tests. Type check 0.
+    - Walked at 1440 and 390, light and dark, over five projects (four created through the API). It **found** the
+      review clock painted solid, in the Plan step too, and fixed it in `3707064475`.
 
 #### L1 (rows D7, D6) — prior filings read back as filed state, and archive names checked where they are read (session `session_01Gx2fiwvxaXi6mQgddPqMaG`, 2026-11-01 to 2026-11-02)
 

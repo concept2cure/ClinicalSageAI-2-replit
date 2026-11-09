@@ -24,7 +24,7 @@
 import type { Request, Response, RequestHandler } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { ok, clientError, notFoundInTenant, serverError } from '../lib/api-response';
-import { pool } from '../db';
+import { requestConnectable, requestPgClient } from '../db/requestDb';
 import type { RequestDbClient } from '../middleware/lazyRequestDbClient';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { recordGovernedAction } from './c2c/actions';
@@ -311,11 +311,14 @@ const TRANSLATION_WITHDRAWAL: Withdrawal = {
 async function withdrawApproval(req: Request, res: Response, w: Withdrawal, move: { id: number; orgId: number; status: string }) {
   const userId = resolveUserId(req);
   if (userId === null) return clientError(res, 401, 'User context required');
-  const client = await pool.connect();
+  // The request's own tenant-scoped connection, as signGovernedAct uses for a signed act
+  // (ci:requestdb-coverage, 2026-11-09), not a second connection from the shared pool.
+  const client = await requestConnectable(req).connect();
+  let discard: Error | undefined;
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, move.orgId);
-    const { rows } = await client.query<{ status: string; approved_by: number | null }>(w.lockSql, [move.id, move.orgId]);
+    const { rows } = await client.query(w.lockSql, [move.id, move.orgId]) as { rows: Array<{ status: string; approved_by: number | null }> };
     const current = rows[0];
     if (!current || !w.carriesApproval(current.status)) {
       await client.query('ROLLBACK');
@@ -342,10 +345,13 @@ async function withdrawApproval(req: Request, res: Response, w: Withdrawal, move
     await client.query('COMMIT');
     return ok(res, updated.rows[0], { auditTrail: { persisted: true, chained: true }, actionId: gov.actionId });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
+    // A rollback that fails leaves the transaction's outcome unknown: the request's owner discards the connection.
+    await client.query('ROLLBACK').catch((rollbackError: unknown) => {
+      discard = rollbackError instanceof Error ? rollbackError : new Error(String(rollbackError));
+    });
     return serverError(res, log, 'withdraw-approval', err);
   } finally {
-    client.release();
+    client.release(discard);
   }
 }
 
@@ -356,7 +362,7 @@ async function withdrawApproval(req: Request, res: Response, w: Withdrawal, move
  */
 export async function moveDocumentStatus(req: Request, res: Response, id: number, orgId: number, status: string) {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await requestPgClient(req).query(
       `UPDATE labeling_documents SET status = $1, updated_at = NOW()
         WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL
           AND status NOT IN ('approved', 'effective', 'superseded')
@@ -376,11 +382,11 @@ export async function moveDocumentStatus(req: Request, res: Response, id: number
  * signature does not bind is a move out of a signed status, made on its own,
  * with a reason; and a document that is not signed changed while it was saved.
  */
-export async function refuseControlledDocumentEdit(res: Response, id: number, orgId: number, locked: string[]) {
-  const { rows } = await pool.query<{ status: string }>(
+export async function refuseControlledDocumentEdit(req: Request, res: Response, id: number, orgId: number, locked: string[]) {
+  const { rows } = await requestPgClient(req).query(
     `SELECT status FROM labeling_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
     [id, orgId],
-  );
+  ) as { rows: Array<{ status: string }> };
   if (!rows[0]) return notFoundInTenant(res, 'Labeling document');
   const { status } = rows[0];
   if (!DOC_SIGNED_STATUS.has(status)) {
@@ -503,7 +509,7 @@ export async function approveTranslationSigned(
  */
 export async function moveTranslationStatus(req: Request, res: Response, transId: number, orgId: number, status: string) {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await requestPgClient(req).query(
       `UPDATE labeling_translations
           SET status = $1, approved_by = NULL, approved_at = NULL, updated_at = NOW()
         WHERE id = $2 AND organization_id = $3 AND status <> 'approved'
@@ -520,11 +526,11 @@ export async function moveTranslationStatus(req: Request, res: Response, transId
  * is approved, and then the one refusal of signed content (P-63). Every field a
  * translation's PATCH can set is one its approval binds (`locked`).
  */
-export async function refuseApprovedTranslationEdit(res: Response, transId: number, orgId: number, locked: string[]) {
-  const { rows } = await pool.query<{ status: string }>(
+export async function refuseApprovedTranslationEdit(req: Request, res: Response, transId: number, orgId: number, locked: string[]) {
+  const { rows } = await requestPgClient(req).query(
     `SELECT status FROM labeling_translations WHERE id = $1 AND organization_id = $2`,
     [transId, orgId],
-  );
+  ) as { rows: Array<{ status: string }> };
   if (rows[0]?.status !== 'approved') return notFoundInTenant(res, 'Translation');
   const refusal = signedContentRefusal('labeling-translation', 'approved', { fields: locked });
   return clientError(res, refusal.status, refusal.message, refusal.details);
