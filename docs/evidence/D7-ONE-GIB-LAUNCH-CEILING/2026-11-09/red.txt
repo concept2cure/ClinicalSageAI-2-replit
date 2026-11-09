@@ -1,0 +1,21 @@
+# RED: P-93 commit 1's readiness and package-gate cases, before the change, at HEAD a842e9603, 2026-11-09T00:46:03Z
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > a dispatched FDA sequence of 1 GiB and one byte is refused by name, and nothing is signed, claimed or recorded 26ms
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > says the size in GiB to two places when it does not round to the ceiling 8ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > a package of exactly 1 GiB is sent 9ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > the Dispatch tab’s read, which names no environment, does not assemble 7ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > a sequence for another region is not measured (FDA only) 10ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > readiness judges only the size: another package blocker stays the act’s to refuse (scope pin) 7ms
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > a package whose size cannot be measured is refused, never cleared 9ms
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a validated FDA sequence over 1 GiB is refused at freeze while its leaves can still change, with what to do 254ms
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a frozen FDA sequence over 1 GiB is refused at dispatch, saying its leaves are locked 144ms
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a dispatched FDA sequence over 1 GiB is refused at dispatch, saying its leaves are locked 126ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a sequence for another region over 1 GiB is not refused on size at freeze 127ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > at exactly 1 GiB freeze is not refused on size 120ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected true to be false // Object.is equality
+TypeError: .toMatch() expects to receive a string, but got object
+AssertionError: expected true to be false // Object.is equality
+AssertionError: expected true to be false // Object.is equality
+AssertionError: expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  6 failed | 6 passed (12)

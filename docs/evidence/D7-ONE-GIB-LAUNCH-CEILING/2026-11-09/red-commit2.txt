@@ -1,0 +1,8 @@
+# RED (commit 2): the SFTP branch deleted from fda-esg.ts, before its tests and the gate are changed, 2026-11-09T01:05:06Z
+ × server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > every `new CredentialError(` in server/ is at an audited pre-request site 264ms
+ × server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts > FdaEsgGateway SFTP transmit — no fabricated ACK > reports in_transit (not received) and a null ack after a bare SFTP upload 29ms
+ × server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts > FdaEsgGateway SFTP transmit — no fabricated ACK > does not stamp an ack_received_at on the transmittal row at upload time 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { …(11) } to deeply equal { …(11) }
+ Test Files  2 failed | 1 passed (3)
+      Tests  3 failed | 53 passed (56)

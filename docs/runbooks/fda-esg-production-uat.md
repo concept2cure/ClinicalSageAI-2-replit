@@ -1,7 +1,7 @@
 # FDA ESG — Production UAT Runbook
 
 **Status:** Pre-UAT. The transport code is real (`server/services/submission-gateways/fda-esg.ts`,
-492 LOC, RFC-4130 AS2 + SFTP fallback) but has never been exercised against the live FDA ESG
+492 LOC, RFC-4130 AS2) but has never been exercised against the live FDA ESG
 staging endpoint with sponsor WebTrader / AS2 credentials.
 
 **Scope:** Path-to-GA §C.6 — end-to-end UAT of the FDA Electronic Submissions Gateway against
@@ -26,7 +26,8 @@ In scope:
   line said the gateway sent `Receipt-Delivery-Option: sync`; it does not.*
 - ack1 (gateway receipt), ack2 (virus + structure check), ack3 (center acceptance) capture
   via the FDA ESG WebTrader portal. ack2 / ack3 are async, hours–days.
-- SFTP fallback path exercised once (≥1 GB bundle, `fda-esg.ts:346`).
+- A package over 1 GiB is refused before anyone signs, by name (§8). There is no SFTP path to
+  exercise: it was retired on 2026-11-09 (founder decision P-93).
 
 Out of scope (defer to follow-on tasks):
 
@@ -55,7 +56,6 @@ Out of scope (defer to follow-on tasks):
 | Sponsor application number | Regulatory Ops | E.g. `IND123456`. Passed in `metadata.applicationId` (`fda-esg.ts:355–357`). |
 | Test eCTD bundle | QA | A non-production package; SHA-256 must match the descriptor (`bundle-integrity.ts`). |
 | FDA ESG ops contact | Regulatory Ops | Help-desk channel for ack troubleshooting during the backup window. |
-| SFTP credentials (for the SFTP test only) | Platform | SSH key registered with FDA against the same sponsor account. |
 
 ---
 
@@ -76,13 +76,9 @@ FDA_ESG_STAGING_KEY_PATH         # absolute path to mTLS private key PEM  — fd
 FDA_ESG_STAGING_FDA_CERT_PATH    # absolute path to FDA's AS2 public cert — fda-esg.ts:80
 ```
 
-Required for the SFTP fallback exercise (presence checked at `fda-esg.ts:271–276`):
-
-```text
-FDA_ESG_STAGING_SFTP_HOST        # e.g. esg-sftp-test.fda.gov             — fda-esg.ts:115
-FDA_ESG_STAGING_SFTP_USER        # sponsor SFTP username                  — fda-esg.ts:116
-FDA_ESG_STAGING_SFTP_KEY_PATH    # absolute path to SSH private key PEM   — fda-esg.ts:117
-```
+No `FDA_ESG*_SFTP_*` variable is read since 2026-11-09 (P-93). If a deployment set
+`FDA_ESG_SFTP_HOST`, `_SFTP_USER`, `_SFTP_KEY_PATH` or their `STAGING_` forms, remove them,
+and the key they point to, from the secrets store.
 
 Production cutover later swaps the prefix to `FDA_ESG_` (no `STAGING_`). Same variable names
 otherwise (`fda-esg.ts:66`). Do not invent `ESG_PROD_*` or any other prefix — the resolver
@@ -164,8 +160,7 @@ change, not a configuration change. **Flagged as engineering follow-up.**
 
 ### 4.4 Bundle integrity
 
-The transmit path calls `readVerifiedBundle` (`fda-esg.ts:386`, also `fda-esg.ts:361` on the
-SFTP path) which re-hashes the on-disk file and compares to the descriptor's `sha256`. Run
+The transmit path calls `readVerifiedBundle` (`fda-esg.ts`, AS2 transmit), which re-hashes the on-disk file and compares to the descriptor's `sha256`. Run
 this once before UAT day:
 
 ```bash
@@ -324,8 +319,8 @@ called out in §1.)
 
 ## 7. Rollback procedure
 
-**You cannot un-transmit.** Once the AS2 POST returns a 2xx (`fda-esg.ts:412`) or the
-SFTP PUT lands in `/incoming/` (`fda-esg.ts:307`), the bytes are with FDA. The rollback is
+**You cannot un-transmit.** Once the AS2 POST returns a 2xx (`fda-esg.ts:412`), the bytes
+are with FDA. The rollback is
 in our own state, not theirs.
 
 If the transmit completed but is wrong (wrong bundle, wrong application number, wrong
@@ -364,33 +359,59 @@ ticketing FDA for an explanation.
 
 ---
 
-## 8. SFTP fallback verification
+## 8. A sequence over 1 GiB is refused before signing (P-93)
 
-The gateway selects SFTP when `bundle.sizeBytes > 1_073_741_824` (1 GB; `fda-esg.ts:346`).
-This is the **only** trigger today — there is no operator flag, no per-org override, and no
-manual selection. **Flagged as engineering follow-up** if Regulatory Ops wants SFTP-by-policy
-for specific submission types.
+Founder decision P-93 (`docs/LAUNCH_DEFINITION_OF_DONE.md`, 2026-11-02): FDA sequences over
+1 GiB are out of scope for launch. The SFTP branch that took them was retired on 2026-11-09:
+no FDA source on file documents an SFTP channel, and its module was never installed, so every
+such send was refused after the signature.
 
-Run the SFTP exercise exactly once during UAT, with an explicitly oversized synthetic bundle:
+**1 GiB is Concept2Cure's launch scope, not FDA's limit.** FDA's only limit on file is 10 GB
+(Form 5640 v2.0, `FDA_GATEWAY_LIMIT_BYTES`). Between 1 GiB and 10 GB FDA still takes the
+sequence through the ESG, so never point a person to physical media or "another channel".
 
-1. Build a synthetic test eCTD bundle ≥ 1.0 GiB. The bundle-integrity gate requires the
-   on-disk SHA-256 to match the descriptor (`fda-esg.ts:361`).
-2. Confirm the SFTP env vars are set (§3) — otherwise `transmitViaSftp` throws
-   `CredentialError` at `fda-esg.ts:271–276`.
-3. Confirm `ssh2-sftp-client` is installed: `node -e "require('ssh2-sftp-client')"`. The
-   package is loaded by dynamic import at `fda-esg.ts:283–291`; if missing, the gateway
-   throws `TransportError` with a specific install hint.
-4. Transmit. Expect `GatewayTransmitResult.transport === 'sftp'` and
-   `result.transmissionId` of the form `sftp-<applicationId>-<sequence>-<epoch-ms>`
-   (`fda-esg.ts:305`). The remote path is `/incoming/<applicationId>/<sequence>/<id>.zip`
-   (`fda-esg.ts:306`).
-5. **The post-upload status is `in_transit` with `ackReceivedAt = null`** — not `received`.
-   This is the regression-locked contract from `__tests__/fda-esg-sftp-ack.test.ts`. An
-   SFTP PUT only deposits the bundle in FDA's `/incoming/`; FDA picks it up async and emits
-   ack1/2/3 over `/outgoing/` (`fda-esg.ts:365–369`).
-6. Verify the file landed via the FDA ESG WebTrader portal's "outbound queue" view. Today
-   we have no `/outgoing/` reader (`fda-esg.ts:467–471`), so post-upload ack verification is
-   manual exactly like §5.4.
+What a person reads, verbatim (the size is measured on the assembled package):
+- **Transmit, on the click** (the e-signature never opens): "Transmit of sequence 0003 not
+  started — Refusing to transmit: the package is 1.27 GiB, and at launch Concept2Cure sends
+  packages of up to 1 GiB to FDA. The sequence is dispatched, so its leaves can no longer be
+  changed, and it cannot be sent as it is. Nothing was signed."
+- **Freeze**, while the leaves can change: "Refusing to freeze: the package is 1.27 GiB, and
+  at launch Concept2Cure sends packages of up to 1 GiB to FDA. Remove some of its leaves and
+  place them in a later sequence, so that each package is 1 GiB or less. Transmit would refuse
+  this package, and once the sequence is frozen its leaves can no longer be changed."
+- **Any other caller of the FDA ESG gateway** (the package spine, AnA's 510(k) transmit, the
+  smoke script): "Refusing to transmit to FDA: the package is 1.27 GiB, and at launch
+  Concept2Cure sends packages of up to 1 GiB to FDA. Nothing was sent." No transmittal row is
+  written.
+
+Where it lives: `LAUNCH_SEQUENCE_MAX_BYTES` and `launchSequenceSizeRefusal`
+(`server/services/ectd/ectd-regional-rules.ts`), applied by `sequenceTransmitReadiness`,
+`assertSequencePackageable` and `transmitDispatchedSequence`
+(`server/services/submission-service/submission-service.ts`) and by `FdaEsgGateway.transmit`
+(`fda-esg.ts`). Evidence: `docs/evidence/D7-ONE-GIB-LAUNCH-CEILING/2026-11-09/`.
+
+**Rows the retired branch left (read-only; run as the database owner, RLS would scope it).**
+A person decides what each means; nothing is patched by hand.
+
+```sql
+-- Transmittals the SFTP branch recorded. Since 2026-10-17 each is bound to a
+-- sequence's attempt; every one was refused before any connection.
+SELECT organization_id, id, status, transmission_id, created_at,
+       metadata->'dispatchBinding'->>'sequenceId' AS sequence_id,
+       metadata->>'environment' AS environment
+  FROM submission_transmittals
+ WHERE region = 'fda' AND gateway = 'esg' AND transport = 'sftp'
+ ORDER BY organization_id, created_at;
+
+-- Sequences still held 'transmitting'. One with no attempt or signature bound
+-- predates the per-attempt binding (2026-10-17); it is escalated, never reset by
+-- hand (the P-92 / P-93 joint question to the founder).
+SELECT organization_id, id, sequence_number, dispatch_status,
+       transmit_attempt_id IS NULL OR transmit_signature_action_id IS NULL AS legacy_unbound
+  FROM ectd_sequences
+ WHERE dispatch_status = 'transmitting' AND deleted_at IS NULL
+ ORDER BY organization_id, id;
+```
 
 ---
 
@@ -419,17 +440,11 @@ UAT passes only when **every** item below is true.
 - [ ] ack3 observed in WebTrader from the correct center (CDER for IND); transmittal
       manually patched to `ack3_received`.
 
-### SFTP path (exercise once)
+### A sequence over 1 GiB (P-93)
 
-- [ ] `POST /transmit` with a >1 GB bundle returns:
-  - `transport === 'sftp'`
-  - `status === 'in_transit'` (NOT `received`)
-  - `ackReceivedAt === null`
-  - `transmissionId` matches `/^sftp-<appId>-<seq>-\d+$/`
-- [ ] No `ack_received_at` written on the transmittal row at upload time (the regression
-      lock in `__tests__/fda-esg-sftp-ack.test.ts`).
-- [ ] The file is visible in WebTrader's outbound queue with the expected remote path.
-- [ ] ack1/2/3 observed in WebTrader; transmittal manually patched.
+- [ ] The transmit click on an FDA sequence whose package is over 1 GiB shows the §8 refusal,
+      and no e-signature opens.
+- [ ] No `submission_transmittals` row and no signature are written for it.
 
 ---
 
@@ -445,8 +460,7 @@ UAT passes only when **every** item below is true.
 | `GatewayError: FDA ESG AS2 returned HTTP 401/403` | `fda-esg.ts:402–411` | Sponsor cert not registered against the `AS2_FROM` identity at FDA. | Open FDA ESG help-desk ticket with sponsor ID + cert fingerprint. |
 | `GatewayError: FDA ESG AS2 returned HTTP 4xx` (body indicates envelope) | `fda-esg.ts:402–411` | AS2-To wrong, AS2 version mismatch, or sync-MDN not supported for your sponsor profile. | Re-read §4.3; if FDA needs async MDN, raise as engineering follow-up — `buildAs2Headers` is hard-coded. |
 | MDN message-id missing in response headers | `fda-esg.ts:399–400` | FDA returned 2xx but no `Message-ID` header. Gateway falls back to the request's own `messageId`. | The transmit row records the fallback id; reconcile manually against WebTrader. |
-| `TransportError: ssh2-sftp-client` not installed | `fda-esg.ts:283–291` | Optional dependency missing on the running host. | `npm install ssh2-sftp-client` on the target environment. |
-| `CredentialError` on SFTP path even though AS2 vars set | `fda-esg.ts:271–276` | `FDA_ESG_STAGING_SFTP_*` not set, but bundle exceeded 1 GB so the gateway selected SFTP. | Either reduce bundle size or set the SFTP env vars; SFTP selection is size-only. |
+| "Refusing to transmit: the package is … at launch Concept2Cure sends packages of up to 1 GiB to FDA" | `launchSequenceSizeRefusal` (`ectd-regional-rules.ts`) | The assembled package is over 1 GiB (P-93). | Before freeze, move leaves to a later sequence. After freeze the leaves are locked; see §8. |
 | AS2 transmit succeeds but ack2 never arrives | n/a — our side is done | Submission failed FDA's structure check. | Pull the ack2 from WebTrader; the body explains the failure. |
 | Orchestrator says `gatewayReady: false`; transmit refused | `submission-package-orchestrator.ts:1184–1258` and `mdx-submission-gateway.ts` 412 from `CredentialError` | Hardened validator found errors — must fix and re-assemble. | Inspect the `findings` payload returned by the validate-hardened route. |
 | `ValidationError` (HTTP 422) from `/transmit` | `mdx-submission-gateway.ts:362–364`; raised by `readVerifiedBundle` (`fda-esg.ts:386`, `:361`) | On-disk bundle bytes don't match the recorded SHA-256. | Re-run §4.4; rebuild the bundle if hashes differ. |
@@ -467,13 +481,12 @@ GA-2 follow-on tickets.
   from DB state. A real MDN audit trail needs the raw response stored against the
   transmittal row.
 - **Async ack polling.** `checkStatus` returns DB state (`fda-esg.ts:442–464`); ack2 / ack3
-  must be patched manually today. A `/outgoing/` poller (SFTP) and / or async-MDN webhook
-  (AS2) is the production path.
+  must be patched manually today. An async-MDN webhook (AS2) is the production path.
 - **Hard-coded AS2 headers.** `buildAs2Headers` (`fda-esg.ts:142–156`) pins AS2-Version,
   filename, sync MDN, and content-type. Any sponsor profile that needs different values is
   a code change, not a config change.
-- **SFTP selection trigger.** The 1 GB threshold (`fda-esg.ts:346`) is the sole switch.
-  No operator-driven SFTP-by-policy.
+- **Sequences over 1 GiB.** Out of scope for launch (P-93, §8). The only FDA limit on file is
+  10 GB; carrying more than 1 GiB is a founder decision.
 - **Rollback governed-action shape.** `recordGovernedAction` (`mdx-submission-gateway.ts:326`)
   has no companion "rollback" / "void" command. UAT rollbacks are recorded manually.
 - **Per-package transmit lock.** Nothing today prevents a second `transmit` against the
@@ -488,7 +501,7 @@ GA-2 follow-on tickets.
 ## 12. References
 
 - Code: `/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/fda-esg.ts`
-- Regression test: `/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts`
+- Regression tests: `server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts` (the 1 GiB refusal), `server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts`
 - Route layer: `/home/user/ClinicalSageAI-2-replit/server/routes/mdx-submission-gateway.ts`
 - Smoke script: `/home/user/ClinicalSageAI-2-replit/scripts/fda-esg-uat-smoke.ts`
 - Path-to-GA §C.6: `/home/user/ClinicalSageAI-2-replit/docs/reports/PATH_TO_GA_2026-06-29.md`

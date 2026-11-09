@@ -674,7 +674,7 @@ export async function preflightModule(
  * whose `transmitToESG` threw `not-implemented` in production and returned a
  * `SIMULATED-NOT-SENT-*` record everywhere else. The platform's genuine AS2 /
  * RFC-4130 implementation — envelope framing, Message-ID, signed MDN with a
- * SHA-256 MIC, mTLS, SFTP fallback, the ack1/ack2/ack3 ladder — lives in
+ * SHA-256 MIC, mTLS, the ack1/ack2/ack3 ladder — lives in
  * `server/services/submission-gateways/fda-esg.ts` and was reachable only from
  * the HTTP transmit route. So the product's device transmit affordance was
  * wired to the one path that could never reach an agency, while the path that
