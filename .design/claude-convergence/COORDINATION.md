@@ -45,7 +45,7 @@ session (`943b78cb7`, `94f24dba0`). Wave 0 is done: S1 (`505449d7a`), S11 (`805a
 
 | Files | Held by | For | Until |
 |---|---|---|---|
-| `styles/app-v2.css` | **one holder at a time, and nobody holds it now** (2026-11-08: the coordinating session released its standing hold after a week away). To take a turn, write your row here first: the selectors or block, the step, and the commit that releases it. Keep the change a small CSS-only commit. The project page session took turns for the `.pj` block (D3-1, `a9819177d`; D3-4, 2026-11-08, `01FTWcmX…`, released with D3-4's commit). | BUILD_ORDER §2.1 | each step's commit |
+| `styles/app-v2.css` | **Nobody holds it now.** The project page session took a turn for D2-2b's `.rpk-*` block (2026-11-09, handed D2-2b by the coordinating session) and released it with D2-2b's commit. One holder at a time (2026-11-08: the coordinating session released its standing hold after a week away). To take a turn, write your row here first: the selectors or block, the step, and the commit that releases it. Keep the change a small CSS-only commit. The project page session took turns for the `.pj` block (D3-1, `a9819177d`; D3-4, 2026-11-08, `01FTWcmX…`, released with D3-4's commit). | BUILD_ORDER §2.1 | each step's commit |
 | `client/src/concept2cure/v2/AnswerLead.tsx`, `icons.tsx`, `C2CForm.tsx`, `dataConnect.tsx` | not held. The coordinating session reviews changes (D0) | D0's shared primitives. Change them in a small commit that says which D0 rule it keeps, and tell `01JbQU…`. Example: Reporting's `23238cd9ad` (ProjectBack `name`, the coordinator's design) is accepted as is. | D0 closes |
 
 Note on `dataConnect.tsx`, 2026-11-08, from the reporting session (`session_011HLkYC…`, L11). `ProjectBack` takes the
