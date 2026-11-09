@@ -47,6 +47,7 @@ import { assertSignerIsNotAuthor } from '../../services/governance/separation-of
 import { readDocumentOutline } from '../../services/c2c/document-outline.js';
 import { checkFilingWritable } from '../../services/authoring/document-lock.js';
 import { readFilingLock } from '../../services/c2c/filing-lock.js';
+import { isFiledDispatchStatus } from '../../services/submission-service/filed-dispatch.js';
 import {
   normalizeRulePackProvenance,
   rulePackProvenanceSelectSql,
@@ -886,8 +887,13 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
 // into audit_logs) beside the actor and the reason:
 //
 //   sequenceId     — an ectd_sequences row in the caller's organization that
-//                    has been dispatched (status 'dispatched', or dispatch_status
-//                    'sent' / 'acknowledged'). submission_leaves cannot tie a
+//                    the agency has received: its dispatch_status is filed by
+//                    the one rule (isFiledDispatchStatus, filed-dispatch.ts:
+//                    'sent', 'acknowledged'). Its status alone ('dispatched')
+//                    is not enough: a sequence frozen and dispatched whose send
+//                    is pending, in flight, rejected or never made is not a
+//                    filing (F1, the coordinating session, 2026-11-02).
+//                    submission_leaves cannot tie a
 //                    sequence to a c2c document in the current schema — its
 //                    document_id is an INTEGER polymorphic key and
 //                    c2c_documents.id is TEXT — and c2c_documents has no
@@ -900,8 +906,6 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
 //                    to them — not the platform's.
 //
 // Snapshot to concept2cure_artifacts is Moat #5 scope — not wired here.
-
-const DISPATCHED_DISPATCH_STATUSES = new Set(['sent', 'acknowledged']);
 
 router.post('/:id/submit', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
@@ -978,12 +982,13 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
       const row = seq.rows[0] as {
         status: string; dispatch_status: string | null; sequence_number: string; region: string;
       };
-      const dispatched =
-        row.status === 'dispatched' ||
-        (row.dispatch_status != null && DISPATCHED_DISPATCH_STATUSES.has(row.dispatch_status));
-      if (!dispatched) {
+      if (!isFiledDispatchStatus(row.dispatch_status)) {
         return res.status(409).json({
-          error: 'SEQUENCE_NOT_DISPATCHED',
+          error: 'SEQUENCE_NOT_FILED',
+          message:
+            `Sequence ${row.sequence_number} has not been received by the agency (its send is ` +
+            `${row.dispatch_status ?? 'not recorded'}), so it is not evidence of a filing. A sequence is filed once ` +
+            'its send is sent or acknowledged. Nothing was submitted.',
           sequenceStatus: row.status,
           dispatchStatus: row.dispatch_status,
         });
