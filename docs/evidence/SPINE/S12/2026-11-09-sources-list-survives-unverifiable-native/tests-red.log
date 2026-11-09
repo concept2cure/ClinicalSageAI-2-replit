@@ -1,0 +1,6 @@
+ × lists the other source normally, and the native one as unverifiable with its reason, its details withheld 84ms
+   → Current Quality evidence could not be verified. No native source was supplied.
+ ✓ lists both normally when the native source verifies 85ms
+ ✓ a denied native source is still omitted, never disclosed as unverifiable 83ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)

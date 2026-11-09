@@ -28,14 +28,15 @@ let rows: unknown[] = [];
 let planTasks: unknown[] | 'fail' = [];
 /** The project's changes (GET /api/c2c/projects/:id/source-changes): its Vault-fed sections, or a reply without them. */
 let changesReply: Record<string, unknown> | null = null;
+let changesStatus = 200;
 const PLAN_READ = '/api/tasks/tasks/by-module/Plan';
 
 /** The project's changes, when a case sets them. */
 const changesRoute = (method: string, url: string) =>
-  method === 'GET' && url === `/api/c2c/projects/${PID}/source-changes` && changesReply ? ok(changesReply) : null;
+  method === 'GET' && url === `/api/c2c/projects/${PID}/source-changes` && changesReply ? ok(changesReply, changesStatus) : null;
 
 beforeEach(() => {
-  rows = []; planTasks = []; auth.user = null; changesReply = null;
+  rows = []; planTasks = []; auth.user = null; changesReply = null; changesStatus = 200;
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: { name: string; workKind: string }) => {
     if (method === 'GET' && url === READ) return ok({ success: true, data: { parentId: 11, programId: PID, anchorProjectId: 11, children: rows, total: rows.length } });
@@ -162,6 +163,7 @@ describe('the program map beside the work projects (S12 gap 5)', () => {
     render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
     const map = await screen.findByTestId('pj-vault-feeds');
     expect(map.textContent).toContain('2 sections of this filing were drafted from Vault versions; 1 was replaced since cited.');
+    expect(map.querySelector('h4')).toBeNull();
     expect(map.textContent).toContain('Which work project produced each version is not recorded yet.');
     expect(within(map).getByText('Module 3 quality · 3.2.S.4.1 — Drug substance specification v1.0 · replaced since cited; v3.0 is approved')).toBeTruthy();
     expect(within(map).getByText('Module 3 quality · 3.2.S.4.2 — Drug substance specification v3.0 · current')).toBeTruthy();
@@ -170,5 +172,12 @@ describe('the program map beside the work projects (S12 gap 5)', () => {
     render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
     expect(await screen.findByText('The sections drafted from the Vault could not be checked.')).toBeTruthy();
     expect(screen.queryByTestId('pj-vault-feeds')).toBeNull();
+    cleanup();
+    // A refused read says the refusal (the shared readRefusalWords rule), never "could not be checked".
+    changesReply = { error: 'PROJECT_PERMISSION_DENIED', message: 'Denied.' }; changesStatus = 403;
+    render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
+    const refused = await screen.findByTestId('pj-vault-feeds-unread');
+    expect(refused.textContent).not.toContain('could not be checked');
+    expect(refused.textContent).toMatch(/the sections drafted from the Vault/);
   });
 });

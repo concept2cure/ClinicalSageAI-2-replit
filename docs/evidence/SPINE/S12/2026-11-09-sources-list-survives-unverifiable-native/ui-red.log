@@ -1,0 +1,17 @@
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > lists what the section is drafted from 557ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > reports a changed source without rewriting anything 353ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > asks AnA what changed in the canonical conversation without redrafting on the spot 619ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > makes no claim about a citation with no recorded checksum 216ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > says a source is gone instead of dropping the citation 263ms
+ × client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > lists a native source that could not be verified, with its reason, beside the sources that could (S12) 5229ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > distinguishes a failed read from a section that cites nothing 238ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — the Sources rail > renders an honest empty state for a section with no recorded sources 222ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > offers the project data room, and refuses an unreadable document 198ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > posts the chosen source id and reloads the rail 204ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > says so when there is no project data room to pick from 138ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > says the data room could not be read, rather than that it is empty (GE-H-1, 2026-09-28) 282ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — recording a source > surfaces the server’s refusal instead of reporting success 258ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — re-reading a source > asks the server to re-resolve, and reports what it says 273ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx > DocumentAuthoring — re-reading a source > reports a refusal from the server verbatim 221ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 14 passed (15)

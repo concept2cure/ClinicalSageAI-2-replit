@@ -21,7 +21,7 @@ import { apiRequest, assertApiResponseOk } from '@/lib/queryClient';
 import { getSurfaceMeta } from '../registryModel';
 import { I } from '../icons';
 import { C2CForm } from '../C2CForm';
-import { useLiveData, type ShapeGuard } from '../dataConnect';
+import { readRefusalWords, useLiveData, type ShapeGuard } from '../dataConnect';
 import { C2CToast, useToast } from '../toast';
 import { AssignAction, AssignmentLine, PLAN_TASK_MODULE, planAssignments, planTaskKey, usePlanAssignments, type PlanAssignment } from './PlanAssign';
 
@@ -182,14 +182,19 @@ function VaultFedSections({ programId }: { programId: string }) {
   const read = useLiveData<VaultFeedsRead>(path, [path], isVaultFeedsRead);
   if (read.loading) return null;
   if (read.error || !read.data) {
-    return <p className="pj-card-note" role="status" data-testid="pj-vault-feeds-unread">The sections drafted from the Vault could not be checked.</p>;
+    /* A refused read says the refusal (the shared rule); only a failure to answer is "could not be checked". */
+    const refusal = read.error ? readRefusalWords(read, 'the sections drafted from the Vault') : null;
+    return (
+      <p className="pj-card-note" role="status" data-testid="pj-vault-feeds-unread">
+        {refusal ? `${refusal.title}. ${refusal.message}` : 'The sections drafted from the Vault could not be checked.'}
+      </p>
+    );
   }
   const feeds = read.data.vaultFeeds;
   if (feeds.length === 0) return null;
   const replaced = feeds.filter((f) => f.state === 'replaced').length;
   return (
     <div className="pj-vault-feeds" data-testid="pj-vault-feeds">
-      <h4>Drafted from the Vault</h4>
       <p className="pj-card-note">
         {feeds.length} section{feeds.length === 1 ? '' : 's'} of this filing {feeds.length === 1 ? 'was' : 'were'} drafted from Vault versions
         {replaced ? `; ${replaced} ${replaced === 1 ? 'was' : 'were'} replaced since cited` : ''}. Which work project produced each version is not recorded yet.

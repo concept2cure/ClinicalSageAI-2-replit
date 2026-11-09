@@ -1,0 +1,2 @@
+ok  seeded on the local database: v1, v2 superseding it in review, and a span in the section drafted from v1
+expected: not listed while v2 is in review ({"status":200,"body":{"projectId":"6065271c-d4b0-4936-aad1-02855423a738","changes":[{"citationId":"f1d5a003-23e0-408a-a04e-b02802006419","sectionId":"98a9d347-d5b7-4d1b-a0d1-b91a0411ab23","sectionCode":"2.3","sectionTitle":"Quality Overall Summary (QOS)","documentId":"eb436c7d-b9c3-478e-a0dd-1227368)
