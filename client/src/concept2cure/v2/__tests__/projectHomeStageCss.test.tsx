@@ -50,8 +50,9 @@ describe('the filing spine’s project-page classes', () => {
     /* Classes the block defines that other sheets only place inside their own scope, never redefine globally:
        a section header's action row (`.pj-sec-acts`) is laid out by the work-area pattern
        (app-v2.css, `[data-work-area] .pj-sec-h > .pj-sec-acts`) and by Biostatistics' assessment
-       (coverage-v2.css, `.bs-assess-b > .pj-sec-acts`). */
-    const placedElsewhere = new Set(['pj-sec-acts']);
+       (coverage-v2.css, `.bs-assess-b > .pj-sec-acts`). A market row (`.pj-mkt`) is placed by Dispatch's work area
+       (coverage-v2.css, `[data-work-area="dispatch-readiness"] .pj-mkt .btn`, D7-A2b). */
+    const placedElsewhere = new Set(['pj-sec-acts', 'pj-mkt']);
     const mine = [...definedClasses(own.slice(at))].filter((c) => !scopes.has(c) && !placedElsewhere.has(c));
     const clashes: string[] = [];
     for (const f of readdirSync(STYLES).filter((n) => n.endsWith('.css') && !SKIP.has(n))) {
