@@ -561,3 +561,94 @@ default export.
 - IND sections → `getAllINDSections` and `getRequiredSections` (kept).
 
 **Gates:** typecheck: 0 errors. The 22 test files that name these modules: 383 pass.
+
+## R1 batch 1 — six retirements the founder approved (2026-11-09)
+
+**Decision:** on 2026-11-09 the founder chose "list first" for this lane's R1 retirements. The lane then brought the
+exact list, verified on HEAD (`1398b4168`): 26 items, 6 ready, 13 for a decision, 5 blocked and 2 changed. The
+founder approved all six ready items: S05b, S10, S12, S13, S19 and S29. The 13 decision items go to the founder one
+at a time. S10 waits for RIM's C3 commit to `server/routes/submissions.ts`, at the coordinating session's direction.
+This section records the five that landed here.
+
+**The rule (R1, COORDINATION.md, P-107 row):** code nothing calls is retired only when three conditions hold:
+- nothing called it in any history;
+- what it did is reachable somewhere else, named by path;
+- no table or column is dropped.
+
+The coordinating session added a fourth: the replacement must be shown to work.
+
+### What already exists (RULE 3)
+
+- **The verified list:** each item was re-checked on HEAD for its files, mounts and callers today. Its history callers
+  were searched in a full-history copy of the repository: 19,286 commits back to the first import on 2025-11-20. The
+  working clone is shallow (five weeks), so that copy was needed. For the six, no screen ever called any of their
+  routes, including through runtime-built paths.
+- **The replacements,** each named in its slice below. Each was opened and used in the running app before its
+  deletion (`r1-batch-1/app-walk.txt` and screenshots), on a local database migrated by `deploy-migrate` (466 files)
+  with the biotech demo pack seeded.
+- **History searched:**
+  - `git log --all --diff-filter=D` on every deleted path, in the full-history copy. None of these files was deleted
+    and rebuilt before.
+  - `git log -S` over `client/` and `shared/` for every retired route path. No client commit ever named one.
+
+### Proof for the batch (all five applied together)
+
+- **The server boots and loses exactly these routes.** The R1 inventory's own trace
+  (`docs/evidence/DESIGN/R1/2026-11-01-inventory/method/trace.cjs`, `compose.py`) was preloaded into the running
+  server, on trunk `51c52751e` and again with all five slices applied. Both booted with no "Failed to mount" line.
+  The live route table went from 3,993 handlers to 3,979 and lost exactly the 14 retired routes. Nothing else changed
+  and nothing was added (`r1-batch-1/route-trace-before-after.txt`).
+- **The R1 inventory, re-run:** `resolve.cjs` and `match.py` over both tables. The 14 retired handlers all read
+  `caller=none`. The count with a client caller is 1,384 before and after, and every other handler keeps its
+  classification (`r1-batch-1/r1-inventory-rerun.txt`).
+- **The patched server, probed:** the replacements answer 200 and each retired route answers 404
+  (`r1-batch-1/patched-server-probe.txt`).
+- **Not used, and why:** `prove-module-unused.mjs` scores only the modules nothing imports (73 candidates). Every
+  file deleted here was mounted, so the live trace and the history search are its proof instead.
+
+### S05b — delete migration 038, the GCC eCTD seeder, replaced by the record and the project scaffold
+
+**Deleted:** `db/migrations/038_gcc_ectd_seeder_service.sql`. It created the `ectd` schema:
+- `ectd.module_structure`;
+- `ectd.project_folders`;
+- three functions;
+- two views.
+
+**What already exists:**
+- **Readers:** nothing in `server/`, `shared/` or `client/src` reads any of these objects. The last two readers were
+  `ECTDScaffoldingService.ts`, deleted in `7a7428755` (2026-10-15), and `server/api/ectd/routes.ts`, deleted in
+  `3c394edb3` (2026-10-25).
+- **Screen:** the one screen that used its endpoints, `components/gcc/ECTDModuleBrowser.tsx`, was deleted in
+  `7a144fd1e` (2026-05-01).
+- **Appliers:** only `install-fresh` step 6 and the CI psql loops applied it, through their `*_gcc_*` glob. It was
+  never in `C2C_MIGRATION_FILES`.
+- **Replacement:** a project's filing documents are scaffolded from the record when the project is created, by
+  `scaffoldProjectDocuments` (`server/services/c2c/scaffold-project-documents.ts`). It is called by
+  `POST /api/c2c/projects` (`server/routes/c2c/projects.ts`) and sent by project intake.
+
+**RULE 1:** no DROP is appended. Deployed databases keep the objects, and a fresh install no longer creates them.
+
+**Changed:**
+- `migrations_manifest.json` drops 038 from the "regulatory" group and from the execution order. It was re-synced with
+  `npm run db:sync-manifest` (291 files), and `db:sync-manifest:check` passes.
+- `scripts/db/deploy-migrate.mjs`: the stale "43 files" now reads the measured count, 39 files and 175 tables.
+
+**Left, as the plan says:**
+- The `ectd.project_folders` row in `20260813_child_table_parent_scoped_rls.sql`, which is `to_regclass`-guarded.
+- `tests/db/child-table-parent-scoped-rls.cases.ts`, which asserts only when the table exists.
+- `_legacy/015`.
+
+**CI's own loop, run:** `r1-batch-1/s05b-gcc-migration-loop.txt`. CI's "Apply GCC migrations" step (`psql -v
+ON_ERROR_STOP=1` over `db/migrations/*_gcc_*.sql`) was run on a scratch database twice. With 038 all 40 apply. Without
+it all 39 apply, and no `ectd` schema is created. 052 and 053 use `ectd_v4`, a different schema.
+
+**Red:** `s05b-red.txt`. `gcc-ectd-seeder-migration-retired.test.ts` fails 2 of 5 on trunk, both on assertions: the
+file exists, and the manifest lists it. The 3 controls pass on trunk:
+- it was never on the deploy applier;
+- nothing reads the schema;
+- the replacement is reached.
+
+**Gates:** all exit 0:
+- `ci:migration-drop-safety` and `ci:migration-set-order`;
+- `check-duplicate-table-ddl`, `check-migration-reachability` and `check-journey-migration-reachability`;
+- `ci:unkeyed-request-tables` and `db:sync-manifest:check`.

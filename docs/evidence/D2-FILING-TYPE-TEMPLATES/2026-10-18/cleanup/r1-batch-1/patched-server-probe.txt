@@ -1,0 +1,16 @@
+Patched server (trunk 51c52751e + S05b, S12, S13, S19, S29), local dev database migrated by deploy-migrate (466 files), biotech demo pack seeded. Signed in by dev-login.
+
+200  GET  /api/c2c/documents/doc_c17db7f1cbee40adaf332fce429926e5/outline                             {"document":{"id":"doc_c17db7f1cbee40adaf332fce429926e5","title":"C2C-101 (anti-IL-23p19 m
+200  GET  /api/authoring/templates                                                                    {"success":true,"templates":[{"id":"b2bd9a39-9f79-4378-a93f-1399761422e8","name":"2.5 Clin
+200  GET  /api/submission-orchestrator/runs?programId=f2bd11f8-8dc5-4942-90d0-8a10ac74ebba            {"runs":[]}
+200  GET  /api/gcc/health                                                                             {"status":"partial","platform":"GCC Enterprise","services":{"signing":"not_implemented","s
+404  GET  /api/biopharma/ctd/structure                                                                {"error":"API endpoint not found","path":"/api/biopharma/ctd/structure","method":"GET","me
+404  GET  /api/biopharma/ctd/build-state/f2bd11f8-8dc5-4942-90d0-8a10ac74ebba                         {"error":"API endpoint not found","path":"/api/biopharma/ctd/build-state/f2bd11f8-8dc5-494
+404  GET  /api/gcc/drafting/stats                                                                     {"error":"API endpoint not found","path":"/api/gcc/drafting/stats","method":"GET","message
+404  GET  /api/gcc/ectd/modules                                                                       {"error":"API endpoint not found","path":"/api/gcc/ectd/modules","method":"GET","message":
+404  POST  /api/gcc/drafting/generate                                                                  {"error":"API endpoint not found","path":"/api/gcc/drafting/generate","method":"POST","mes
+404  POST  /api/submission-orchestrator/m2/nonclinical                                                 {"error":"API endpoint not found","path":"/api/submission-orchestrator/m2/nonclinical","me
+404  POST  /api/submission-orchestrator/m2/clinical                                                    {"error":"API endpoint not found","path":"/api/submission-orchestrator/m2/clinical","metho
+404  POST  /api/submission-orchestrator/m2/clinical-overview                                           {"error":"API endpoint not found","path":"/api/submission-orchestrator/m2/clinical-overvie
+404  POST  /api/submission-orchestrator/csr/tabulate                                                   {"error":"API endpoint not found","path":"/api/submission-orchestrator/csr/tabulate","meth
+404  POST  /api/submission-orchestrator/validate/hardened                                              {"error":"API endpoint not found","path":"/api/submission-orchestrator/validate/hardened",
