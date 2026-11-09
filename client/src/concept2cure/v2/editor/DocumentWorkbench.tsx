@@ -87,7 +87,7 @@ import { scopedProposalResult, type EditorProposalReceipt } from './editorPropos
 import { readSavedTemplateContext, savedTemplateFacts, sourceMetadataUnavailable } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { MenuButton, MenuItem, WORKING_COPY_NOTE, downloadWorkingCopy } from './DownloadMenu';
-import { StatusPill } from './CanvasDocumentList';
+import { StatusPill, ToDocumentsButton } from './CanvasDocumentList';
 import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
 import { StudyDataBuild } from './StudyDataBuild';
 import { isCsrTemplateId } from '@shared/authoring/csr-scientific-review';
@@ -1270,16 +1270,21 @@ export interface DocumentWorkbenchProps {
   /** Pin the workbench to one document (the canvas). The tree lists only it
    *  and no document switch is offered. */
   pinnedDocId?: string | null;
-  /** Mounted inside a conversation: draws "Back to conversation" and uses
-   *  that host's composer for every AnA request.
-   *  `hostShowsBack` when the host's own chrome already carries the way back —
-   *  the document canvas's bar does — so this component does not draw a
-   *  second one into its crumb trail. `onBack` is still the one callback the
-   *  way back runs, whoever draws the control. */
+  /** Mounted inside a conversation or a work area: the bar draws the way back and uses that host's composer for
+   *  every AnA request. Since D4-5 the bar is the only one: the document canvas no longer draws its own above it. */
   embedded?: {
     onBack: () => void;
     backLabel?: string;
-    hostShowsBack?: boolean;
+    /** The host only hides this workbench when it closes and keeps it mounted (the document canvas), so nothing is
+     *  lost and the close needs no leave guard. It is "Back to conversation", and Escape does the same. */
+    collapses?: boolean;
+    /** The conversation's documents, "← Documents (n)", drawn after the outline toggle. */
+    onShowList?: () => void;
+    listCount?: number | null;
+    /** "Open full width": the same document, full width, in the editor's page placement. */
+    onExpand?: () => void;
+    /** The close button, for the host's focus contract (canvasFocus.ts `useCanvasRegionFocus`). */
+    closeRef?: React.Ref<HTMLButtonElement>;
     /** The host is told which section is open and given its suggestion door,
      *  or null with no section open. A sealed document is reported as not editable. */
     onEditorBridge?: (bridge: EditorBridge | null) => void;
@@ -2244,6 +2249,7 @@ export function DocumentWorkbench({
          own control — the canvas's Back bar — is the host's. */
       const t = event.target;
       if (t instanceof Node && t !== document.body && !rootRef.current?.contains(t)) return;
+      if (t instanceof Element && t.closest('[data-host-close]')) return;
       event.preventDefault();
       closeRail();
     };
@@ -2260,6 +2266,7 @@ export function DocumentWorkbench({
       if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
       const t = event.target;
       if (t instanceof Node && t !== document.body && !rootRef.current?.contains(t)) return;
+      if (t instanceof Element && t.closest('[data-host-close]')) return;
       if (!outlineOverlays(rootRef.current)) return;
       event.preventDefault();
       setOutline(false);
@@ -4698,6 +4705,7 @@ export function DocumentWorkbench({
             data-testid="ed-outline-toggle">
             {I.panelLeft}
           </button>
+          {embedded?.onShowList && <ToDocumentsButton count={embedded.listCount ?? null} onClick={embedded.onShowList} />}
           <div className="ed-bar-id">
             {/* Focusable by script only: after a market's editing copy is created and opened, focus lands on the
                 opened document's name (accessibility review, 2026-10-15; FilingMarkets.tsx). It was the outline's
@@ -4710,8 +4718,7 @@ export function DocumentWorkbench({
               {activeDoc && (
                 <button type="button" className="ed-status" title="Review and sign"
                   onClick={e => openRail('tasks', e.currentTarget)} data-testid="ed-status">
-                  {/* No `dc-status` test id until D4-5 retires the canvas's own bar, which carries it. */}
-                  <StatusPill status={activeDoc.status ?? null} />
+                  <StatusPill status={activeDoc.status ?? null} testId="dc-status" />
                 </button>
               )}
               {activeSection && (
@@ -4995,13 +5002,28 @@ export function DocumentWorkbench({
                 );
               }}
             </MenuButton>
-            {!embedded && (
+            {/* D4-5 (§D4.A step 5): beside the conversation, the same document full width; on the page, the
+                conversation beside it. */}
+            {embedded?.onExpand ? (
+              <button type="button" className="btn ed-ico" onClick={embedded.onExpand}
+                aria-label="Open full width" title="Open full width" data-testid="dc-edit-in-authoring">
+                {I.maximize}
+              </button>
+            ) : !embedded && (
               <button type="button" className="btn ed-ico" onClick={() => requestLeave({ kind: 'conversation', prompt: '' })}
                 aria-label="Show the conversation" title="Show the conversation" data-testid="ed-show-conversation">
                 {I.minimize}
               </button>
             )}
-            {((embedded && !embedded.hostShowsBack) || (!embedded && returnTo)) && (
+            {/* The canvas's close (§D4.A step 6): it only hides the editor, so it needs no leave guard, and Escape
+                does the same. `data-host-close`: an Escape from it is the host's, not an open rail's. */}
+            {embedded?.collapses ? (
+              <button ref={embedded.closeRef} type="button" className="btn ed-ico" onClick={embedded.onBack}
+                aria-label="Back to conversation" aria-keyshortcuts="Escape" title="Back to conversation (Esc)"
+                data-host-close="" data-testid="dc-back">
+                {I.close}
+              </button>
+            ) : (embedded || returnTo) && (
               <button
                 type="button"
                 className="btn ed-ico"

@@ -1,0 +1,75 @@
+# B1 (a): ssh2-sftp-client in any package manifest or lockfile, across the deployed branch's full history and every tag
+# run 2026-11-09T12:51:26Z on origin/concept2cure-v2 8b33ef8151, shallow=false, commits=19239, tags=v1.0.0 
+
+$ git log --oneline -S'ssh2-sftp-client' origin/concept2cure-v2 --tags -- ':(glob)**/package.json' ':(glob)**/package-lock.json' ':(glob)**/npm-shrinkwrap.json' ':(glob)**/yarn.lock' ':(glob)**/pnpm-lock.yaml'
+(exit 0; no lines above means no commit ever added or removed it in any manifest or lockfile)
+
+$ git log --oneline -S'ssh2-sftp' origin/concept2cure-v2 --tags -- (same manifests)   # the bare package name, in case of an alias
+(exit 0)
+
+$ git log --oneline -S'"ssh2"' origin/concept2cure-v2 --tags -- (same manifests)   # its transport dependency
+(exit 0)
+
+# Positive control: the same search finds a dependency that is in the lockfile
+$ git log --oneline -S'"node_modules/express"' origin/concept2cure-v2 -- package-lock.json | tail -3
+6ae924aa62 fix: merge PRs #277 + #268, harden conversation-os context resolution and remove hardcoded IDs
+4f769a0b01 Cherry-pick needed work from PRs #83 and #103 into concept2cure-v2
+447277f1a8 Fix CI failures - add missing package-lock.json
+
+# No Dockerfile, CI or deploy script ever installed it some other way
+$ git log --oneline -S'ssh2' origin/concept2cure-v2 --tags -- ':(glob)**/Dockerfile*' ':(glob)**/*.Dockerfile' '.github/**' 'scripts/deploy*' ':(glob)**/*.sh'
+(exit 0)
+
+# The deploy path: deploy-aws.yml (tags v*, rc-*, or dispatch) builds Dockerfile.optimized
+396:          docker build -f Dockerfile.optimized --target production \
+20:RUN npm ci --legacy-peer-deps
+159:RUN npm ci --legacy-peer-deps --omit=dev && npm cache clean --force
+179:# to drizzle-kit, a devDependency pruned by `npm ci --omit=dev`; from-scratch
+247:# The runtime user, set before `npm ci` above; restated so the final user is
+
+# How the retired SFTP branch failed without the module (before edd225c02, fda-esg.ts)
+25: * the optional ssh2-sftp-client dependency and its own account credentials.
+243:  try { createRequire(import.meta.url).resolve('ssh2-sftp-client'); sftpAvailable = true; } catch { /* Optional large-bundle fallback is absent. */ }
+246:    missingDependencies: [...(!cmsAvailable ? ['openssl'] : []), ...(!sftpAvailable ? ['ssh2-sftp-client (large-bundle SFTP fallback)'] : [])],
+640:  /* SFTP transport uses `ssh2-sftp-client` — kept as a dynamic import so
+647:    const moduleName = 'ssh2-sftp-client';
+648:    sftpModule = await import(/* @vite-ignore */ moduleName) as { default: new () => unknown };
+654:    // The connect()/put() failure below must NOT carry it: a partial upload is
+657:      "FDA ESG SFTP transport requires 'ssh2-sftp-client' package; nothing was sent. " +
+      'fda', 'esg', environment,
+      [envVarName(environment, 'SFTP_HOST'), envVarName(environment, 'SFTP_USER'), envVarName(environment, 'SFTP_KEY_PATH')],
+    );
+  }
+  /* SFTP transport uses `ssh2-sftp-client` — kept as a dynamic import so
+     the package is optional (orgs that only use AS2 don't pay the
+     install). Throws TransportError when the package is missing. The
+     module name is built at runtime so TS doesn't try to resolve type
+     defs that may not be installed in this environment. */
+  let sftpModule: { default: new () => unknown };
+  try {
+    const moduleName = 'ssh2-sftp-client';
+    sftpModule = await import(/* @vite-ignore */ moduleName) as { default: new () => unknown };
+  } catch {
+    // 2026-09-23 (W5/D7, MDN close; the round-3 skeptic's deferred change):
+    // refused before any connection is opened, so it carries the typed
+    // transmitted:false proof and refusedBeforeWire releases the caller's
+    // claim; recordTransmitFailure still records the row rejected/transport.
+    // The connect()/put() failure below must NOT carry it: a partial upload is
+    // possible there.
+    throw new TransportError(
+      "FDA ESG SFTP transport requires 'ssh2-sftp-client' package; nothing was sent. " +
+      "Install it (npm install ssh2-sftp-client) and retry.",
+      undefined,
+      NOTHING_TRANSMITTED,
+    );
+  }
+  const Client = sftpModule.default as new () => {
+    connect: (opts: Record<string, unknown>) => Promise<void>;
+    put: (src: string, dest: string) => Promise<void>;
+    end: () => Promise<void>;
+  };
+  const client = new Client();
+  try {
+    await client.connect({
+      host:       creds.sftpHost,
+      port:       22,

@@ -277,3 +277,11 @@ describe("the editor's source panels at phone width (B5)", () => {
     expect(value(AUTH, ".c2c-v2 .ed-source-detail [style*='display: grid'] > *", 'min-width')).toBe('0');
   });
 });
+
+/* D4-5 (D4.md §D4.A, D0 layout grid): beside an open document the conversation keeps 420 to 560 px. It was
+   clamp(340px, 34%, 520px), 400 px at 1440 and 345 px at 1280 (docs/evidence/D4/2026-11-09-composer-beside-canvas/). */
+describe('the conversation beside an open document (D4-5)', () => {
+  it('keeps a 420 to 560 px column', () => {
+    expect(value(AUTH, '.c2c-v2 .ct-main[data-canvas-open] > .ct-conv', 'flex')).toBe('0 0 clamp(420px, 38%, 560px)');
+  });
+});

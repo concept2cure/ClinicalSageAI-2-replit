@@ -182,10 +182,12 @@ describe('DocumentCanvas — collapsed', () => {
     expect(screen.getByTestId('dc-no-program').textContent).toContain('Not filed under a project');
   });
 
-  it('"Edit in Authoring" carries the document identity and the return route on the editor channel', async () => {
+  it('"Open full width" carries the document identity and the return route on the editor channel', async () => {
     render(<Host />);
     await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
-    fireEvent.click(screen.getByTestId('dc-edit-in-authoring'));
+    // D4-5: the card's "Edit in the editor" became the open document's "Open full width".
+    fireEvent.click(screen.getByTestId('dc-open-editor'));
+    fireEvent.click(await screen.findByTestId('dc-edit-in-authoring'));
     const target = peekEditorTarget();
     expect(target).not.toBeNull();
     expect(target!.docId).toBe(DOC);
@@ -305,5 +307,36 @@ describe('DocumentCanvas — a failed program read says so (GE-H-2, 2026-09-28)'
     render(<Host />);
     await waitFor(() => expect(screen.getByText(/Project details could not be read/)).toBeTruthy());
     expect(screen.queryByText(/Reading the project…/)).toBeNull();
+  });
+});
+
+/* D4-5 (D4.md §D4.A): the document in the conversation has one bar, the editor's. The canvas drew its own above it,
+   "Back to conversation", the title, the project and an Esc chip, and the editor's bar sat under it. The way back,
+   "Open full width" and the status are now in the editor's one bar; Escape still closes. */
+describe('one bar for the document in the conversation (D4-5)', () => {
+  it('the expanded document has one bar, which carries the way back, the status and "Open full width"', async () => {
+    render(<Host />);
+    await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
+    fireEvent.click(screen.getByTestId('dc-open-editor'));
+    const expanded = await screen.findByTestId('dc-expanded');
+    await waitFor(() => expect(expanded.querySelector('.ed')).not.toBeNull());
+    expect(expanded.getAttribute('data-placement')).toBe('inline');
+    expect(expanded.querySelectorAll('.dcv-bar')).toHaveLength(1);
+    expect(expanded.querySelector('.dcv-bar-hint')).toBeNull();
+    const bar = within(expanded).getByTestId('ed-bar');
+    const back = within(bar).getByTestId('dc-back');
+    expect(back.getAttribute('aria-label')).toBe('Back to conversation');
+    expect(back.getAttribute('aria-keyshortcuts')).toBe('Escape');
+    expect(within(bar).getByTestId('dc-status')).toBeTruthy();
+    fireEvent.click(within(bar).getByRole('button', { name: 'Open full width' }));
+    expect(peekEditorTarget()?.returnTo).toEqual({ surface: 'conversation-thread', conversationId: 'thread-1' });
+    expect(nav).toHaveBeenCalledWith('document-authoring');
+  });
+
+  it('the card no longer carries "Edit in the editor": "Open full width" is in the open document', async () => {
+    render(<Host />);
+    await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
+    expect(screen.queryByText(/Edit in the editor/)).toBeNull();
+    expect(screen.queryByTestId('dc-edit-in-authoring')).toBeNull();
   });
 });
