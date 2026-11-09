@@ -24,7 +24,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { RegistryPicker, __resetFilingOfferReads } from '../surfaces/AnaVerbs';
 import { GLOBAL_REGISTRY, REG_SEGMENTS } from '../surfaces/RegistryBridge';
-import { programTypeFor } from '../surfaces/Projects';
+import { programTypeFor } from '@shared/constants/domain/filing-application-type';
 import { marketSupport, type ActiveRulePacks } from '../../../../../server/services/regulatory/market-support';
 import { REGION_IDENTITY } from '@shared/regulatory/region-identity';
 import { FILING_CLASS_PACKS } from '../../../../../server/services/c2c/filing-class-packs';
