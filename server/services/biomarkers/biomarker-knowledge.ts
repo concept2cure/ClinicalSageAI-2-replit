@@ -65,9 +65,12 @@ import {
   conclusions,
   decidingFacts,
   everyAnswer,
+  listed,
+  oneOfInput,
   statedBoolean,
   statedNumber,
   statedOneOf,
+  textInput,
   uniqueStrings,
 } from '../immunogenicity/immunogenicity-reference.js';
 import { computeDiagnosticAccuracy, type Interval } from '../stats/clinical-performance.js';
@@ -297,26 +300,6 @@ const ASSAY_MODALITIES: readonly AssayModality[] = [
   'ctdna_liquid_biopsy', 'imaging', 'clinical_chemistry', 'other',
 ];
 const STAKES: readonly ('low' | 'moderate' | 'high')[] = ['low', 'moderate', 'high'];
-
-/** A required non-empty text, for refuseUnlessStated. */
-function textInput(field: string, value: unknown): RequiredInputCheck {
-  return { field, value, ok: typeof value === 'string' && value.trim().length > 0, expected: 'non-empty text' };
-}
-
-/** A required value from a fixed vocabulary, for refuseUnlessStated. */
-function oneOfInput(field: string, value: unknown, allowed: readonly string[]): RequiredInputCheck {
-  return {
-    field,
-    value,
-    ok: typeof value === 'string' && allowed.includes(value),
-    expected: `one of ${allowed.join(', ')}`,
-  };
-}
-
-/** "a", "a and b", "a, b and c". */
-function listed(items: readonly string[]): string {
-  return items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
-}
 
 // ════════════════════════════════════════════════════════════════════════════
 // ENGINE 1 — classifyBiomarker
