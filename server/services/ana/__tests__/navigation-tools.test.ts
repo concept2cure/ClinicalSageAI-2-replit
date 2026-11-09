@@ -132,14 +132,16 @@ describe('act_on_screen', () => {
     );
     expect(none.status).toBe('needs_project');
     expect(none).not.toHaveProperty('directive');
-    // The Vault itself no longer needs one.
+    // The Vault opens with none (its organization view), but its search is still one program's: Vault.tsx
+    // refuses vault.search with no project open (NO_PROGRAM_OPEN), so AnA asks first (105a28e291).
     const vaultNone = JSON.parse(
       await getToolHandler('act_on_screen')!(
         { action: 'vault.search', params: { query: 'stability' } },
         { organizationId: null, userId: null, projectId: null, liveDrive: true },
       ),
     );
-    expect(vaultNone.status).toBe('action_ready');
+    expect(vaultNone.status).toBe('needs_project');
+    expect(vaultNone).not.toHaveProperty('directive');
 
     // The chat route sends the open program as projectId only — that counts.
     const chatRoute = JSON.parse(
