@@ -43,7 +43,8 @@ describe('The Projects list reads at 1440 and at 390', () => {
 describe("Project home's section actions stay on a phone's screen", () => {
   // At 390, before this, buttons on Author, Review and Submit ended at 398–456px (walk.cjs measures every step).
   it('the head and its actions wrap at ≤640px', () => {
-    const phone = sheet('project-home-v2.css').filter((r) => r.media?.includes('max-width: 640px'));
+    // In app-v2.css's .pj block since 2026-11-08: project-home-v2.css may not name that sheet's classes.
+    const phone = sheet('app-v2.css').filter((r) => r.media?.includes('max-width: 640px'));
     expect(phone.some((r) => r.selector === '.c2c-v2 .pj .pj-sec-h' && decl(r.body, 'flex-wrap') === 'wrap')).toBe(true);
     const acts = phone.find((r) => r.selector === '.c2c-v2 .pj .pj-sec-acts');
     expect(acts && decl(acts.body, 'flex-wrap')).toBe('wrap');
@@ -54,7 +55,7 @@ describe("Project home's section actions stay on a phone's screen", () => {
 describe("New project's filing tabs reach every client type on a phone", () => {
   // At 390 the tab row was 661px wide and clipped: "Diagnostics & IVD" and "Cross-Cutting Documents" could not be reached.
   it('the wizard scrolls its filing tabs sideways and does not shrink them', () => {
-    const css = sheet('project-home-v2.css');
+    const css = sheet('app-v2.css'); // `.rpk-tabs` is app-v2.css's; the rule moved there 2026-11-08
     const row = css.find((r) => r.selector === '.c2c-v2 .npw .rpk-tabs');
     expect(row && decl(row.body, 'overflow-x')).toBe('auto');
     const tab = css.find((r) => r.selector === '.c2c-v2 .npw .rpk-tabs > *');

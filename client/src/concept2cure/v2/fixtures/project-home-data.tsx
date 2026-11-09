@@ -341,16 +341,6 @@ export const PJ_LIFECYCLE: LifecycleStage[] = [
   },
 ];
 
-/** The same steps as a device or diagnostic filing words them: its own blurbs for Author and Submit, its "now" lines
- *  and its suggestions. Moved here from ProjectHome.tsx (D3-1, 2026-11-06), so the page selects between the two
- *  wordings instead of rewriting one inline. */
-export const PJ_LIFECYCLE_DEVICE: LifecycleStage[] = PJ_LIFECYCLE.map((item) => {
-  const device = { ...item, now: item.nowDevice ?? item.now, starter: item.starterDevice ?? item.starter };
-  if (item.id === 'author') return { ...device, blurb: 'Author filing documents from the project’s device or diagnostic evidence' };
-  if (item.id === 'submit') return { ...device, blurb: 'Assemble eSTAR or the applicable technical documentation' };
-  return device;
-});
-
 /* PJ_STAGE_TOOLS (each stage's tool cards) was deleted 2026-10-15: its one
    entry, Respond's "Response authoring", opened the editor with no letter, and
    ProjectRespond.tsx (FILING_SPINE F15) replaces it. */
