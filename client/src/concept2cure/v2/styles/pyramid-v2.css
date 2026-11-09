@@ -273,7 +273,10 @@
 .c2c-v2 .py-line-base,.c2c-v2 .py-line-crit,.c2c-v2 .py-line-clock{position:absolute;top:13px;height:2px;border-radius:1px;}
 .c2c-v2 .py-line-base{background:var(--border);}
 .c2c-v2 .py-line-crit{background:var(--text-300);height:3px;top:12.5px;}
-.c2c-v2 .py-line-clock{border-top:2px dashed var(--border-strong);height:0;}
+/* Dashes drawn, not a dashed border: a 2px dashed border-top with a radius was painted solid in Chromium, so the
+   clock read as more of the work (found walking the global schedule, 2026-11-09). --text-400 so the dashes show on
+   both themes. */
+.c2c-v2 .py-line-clock{background:repeating-linear-gradient(90deg,var(--text-400) 0 5px,transparent 5px 9px);border-radius:0;}
 .c2c-v2 .py-line-dot{position:absolute;top:9px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:var(--bg-000);border:2px solid var(--text-300);cursor:default;}
 .c2c-v2 .py-line-dot[data-kind="submission"]{width:12px;height:12px;margin-left:-6px;top:8px;background:var(--text-100);border-color:var(--text-100);}
 .c2c-v2 .py-line-dot[data-kind="clock"]{width:8px;height:8px;margin-left:-4px;top:10px;border-color:var(--border-strong);}
@@ -294,9 +297,9 @@
    row per project on one shared axis: its name, filing and agency, and where its plan stands, beside the Plan step's
    line. At a phone's width the line goes under its words. */
 .c2c-v2 .py-gs{margin:12px 0 0;}
-.c2c-v2 .py-gs-rows{list-style:none;margin:0;padding:0;}
-.c2c-v2 .py-gs-row{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:4px 16px;align-items:center;padding:10px 0;border-top:1px solid var(--border);}
-.c2c-v2 .py-gs-row:last-child{border-bottom:1px solid var(--border);}
+.c2c-v2 .py-gs-rows{list-style:none;margin:0;padding:0;border-bottom:1px solid var(--border);}
+.c2c-v2 .py-gs-row{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:4px 16px;align-items:center;padding:10px 0;}
+.c2c-v2 .py-gs-row+.py-gs-row{border-top:1px solid var(--border);}
 .c2c-v2 .py-gs-head{display:flex;flex-direction:column;gap:2px;min-width:0;}
 .c2c-v2 .py-gs-name{font-weight:500;color:var(--text-100);overflow-wrap:anywhere;}
 .c2c-v2 .py-gs-open{align-self:flex-start;padding:0;border:0;background:none;font:inherit;font-weight:500;text-align:left;color:var(--text-100);cursor:pointer;}
