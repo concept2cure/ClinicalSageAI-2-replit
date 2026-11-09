@@ -44,7 +44,8 @@ describe('required deliverables — native coverage and scope', () => {
     expect(within(screen.getByText('Optional unplaced material').closest('tr')!).getByText('Optional absent')).toBeTruthy();
     expect(within(screen.getByText('Known excluded requirement').closest('tr')!).getByText('Not applicable')).toBeTruthy();
     expect(screen.getByText(/does not approve.*clear.*dispatch/i)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /freeze|dispatch|transmit/i })).toBeNull();
+    // No governed act here. AnA's starters ("What blocks dispatch?") are questions, not acts, so they are left out.
+    expect(screen.queryAllByRole('button', { name: /freeze|dispatch|transmit/i }).filter((b) => !b.closest('[aria-label="Ask AnA"]'))).toEqual([]);
     expect(document.body.textContent).not.toMatch(/full CTD complete|100%|filing ready/i);
   });
 
