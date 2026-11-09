@@ -32,6 +32,7 @@ async function signIn(page, dark) {
 }
 
 /** The picker's computed look: the chosen tab, the chosen card, any chosen filter chip, and any accent in use. */
+/* global getComputedStyle */
 function measure() {
   const cs = (el) => (el ? getComputedStyle(el) : null);
   const probe = document.createElement('span');
