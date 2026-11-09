@@ -133,19 +133,24 @@
 .ed .rse-root:focus-within .rse-ribbon { border-bottom-color: var(--border-focus); }
 
 /* The ribbon: one quiet row that scrolls inside itself. Each control keeps its own width, so a labelled
-   one ("Ask for a source", "Track changes") never shrinks and wraps inside itself. The scrollbar stays
-   (thin) while the row holds more than the page is wide: until D4-6 moves the second group under "More
-   formatting" and the AnA actions become icons, the end of the row is past the edge at 1440 px, and a
-   pointer must be able to see that and reach it. Every control is also in the Tab order. */
-.ed .rse-ribbon { position: sticky; top: 0; z-index: 3; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; gap: 2px; padding: 6px 8px; background: var(--bg-000); border-bottom: 1px solid var(--border); transition: border-color var(--dur) var(--ease); }
+   one ("Ask for a source", "Track changes") never shrinks and wraps inside itself. D4-6 (D4.md §D4.D,
+   J3 R1, 2026-11-09) moved the second group under "More formatting" and made the AnA actions icons, so the
+   whole row fits at 1440 px. The scrollbar stays (thin) for narrower panels, where the row still scrolls
+   inside itself and a pointer must see that and reach the end. Every control is also in the Tab order. */
+.ed .rse-ribbon { position: sticky; top: 0; z-index: 3; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; gap: 2px; padding: 6px 4px; background: var(--bg-000); border-bottom: 1px solid var(--border); transition: border-color var(--dur) var(--ease); }
 .ed .rse-ribbon > * { flex-shrink: 0; }
+/* Row 2, "More formatting", shows only when asked (the base .rse-ribbon is display:flex, which would beat
+   the hidden attribute). The AnA actions, the suggestions chip and Track changes close row 1, pushed right. */
+.rse-ribbon-more[hidden] { display: none; }
+.rse-ribbon-end { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; padding-left: 4px; flex-shrink: 0; }
+.ed .rse-ribbon-more { position: static; z-index: auto; border-bottom: 1px solid var(--border-subtle); }
 .ed .rse-rb { min-width: 28px; height: 28px; padding: 0 6px; border: 0; border-radius: 6px; font-size: var(--fs-small, 13px); color: var(--text-300); transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease); }
 .ed .rse-rb:hover { background: var(--bg-100); color: var(--text-100); }
 .ed .rse-rb[data-active] { background: var(--bg-200); color: var(--text-100); }
 .ed .rse-sel { height: 28px; border: 0; border-radius: 6px; background: transparent; font-size: var(--fs-small, 13px); color: var(--text-200); }
 .ed .rse-sel:hover { background: var(--bg-100); }
 .ed .rse-sep { height: 16px; background: var(--border); }
-.ed .rse-track { gap: 6px; margin-left: 4px; font-size: var(--fs-small, 13px); color: var(--text-300); white-space: nowrap; }
+.ed .rse-track { gap: 6px; margin-left: 2px; font-size: var(--fs-small, 13px); color: var(--text-300); white-space: nowrap; }
 .ed .rse-track input[type='checkbox'] { width: 16px; height: 16px; accent-color: var(--text-100); }
 .ed .rse-link { font-size: var(--fs-small, 13px); color: var(--text-300); }
 .ed .rse-link:hover:not(:disabled) { color: var(--text-100); text-decoration: underline; }
