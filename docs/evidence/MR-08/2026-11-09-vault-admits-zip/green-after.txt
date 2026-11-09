@@ -1,0 +1,13 @@
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > refuses a bomb .zip with 422 ARCHIVE_LIMITS_EXCEEDED, as Windows and a Mac 
+ ✓ server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > admits an ordinary .zip, and refuses one named .zip that carries HTML 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault stages a .zip as one file (P-112) > offers a .zip for upload, and still says why it skips what it does not take 0ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes sponsor-copy-0003.zip to canonical governed ingestion with caller/program i
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes sponsor-copy-0003.zip to canonical governed ingestion with caller/program i
+ ✓ server/utils/__tests__/fileSignature.test.ts > verifyFileSignature — ZIP-based (.docx, .xlsx, .pptx, .epub) > accepts plain application/zip 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > a .zip name binds a zip container (P-112) > refuses a .zip declared text/html, naming the types a .zip may be declared as 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > a .zip name binds a zip container (P-112) > refuses a .zip whose bytes are not a zip container, whatever zip type was declared 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > a .zip name binds a zip container (P-112) > accepts a zip container under each type a browser sends one as, and checks it as a zip 0ms
+ ✓ server/utils/__tests__/fileSignature.test.ts > a .zip name binds a zip container (P-112) > admits octet-stream as a zip for a .zip name only 0ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > the Vault takes a .zip as one file; the Data Room still opens it in the browser (
+ Test Files  5 passed (5)
+      Tests  109 passed (109)
