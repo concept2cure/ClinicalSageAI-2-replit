@@ -116,9 +116,13 @@ const PREREQ = `
   CREATE TABLE concept2cure_artifacts (id INTEGER PRIMARY KEY, organization_id INTEGER, project_id INTEGER);
   CREATE TABLE concept2cure_review_assignments (id SERIAL PRIMARY KEY, artifact_id INTEGER, organization_id INTEGER, reviewer_id INTEGER, status TEXT);
   CREATE TABLE qms_documents (id SERIAL PRIMARY KEY, organization_id INTEGER, authoring_document_id UUID, status TEXT, metadata JSONB DEFAULT '{}');
+  -- actor_id is integer, as production has it (20260527_mutation_primitives.sql,
+  -- C-5). Typed text, a chained row read back hashes "42" where its writer
+  -- hashed 42, so no link re-derives, and since b8cee0745c the release gate
+  -- reads every chained row of the document (INDEPENDENT_CHECK_REQUIRED).
   CREATE TABLE audit_logs (
     id text PRIMARY KEY, tenant_id integer, user_id integer, action text,
-    table_name text, record_id text, actor_id text, target text,
+    table_name text, record_id text, actor_id integer, target text,
     target_type text, target_id text, reason text, payload_hash text,
     ana_action_id text, sha256_chain text,
     occurred_at timestamptz DEFAULT now(), hmac_seal text,

@@ -174,6 +174,9 @@ describe('the generation capture', () => {
 
   it('the stream captures every tool handler it runs', () => {
     const src = fs.readFileSync(path.resolve(__dirname, '../../../routes/ana-ri/stream.ts'), 'utf8');
-    expect(src).toMatch(/runCapturingGenerations\(generated, \(\) =>\s*runWithRunScope\(\{ runId \}, \(\) =>\s*handler\(toolUse\.input, \{/);
+    // Since a2f9264a the turn's model context sits between the capture and the
+    // run scope, and the handler takes a named context; it is still inside both.
+    expect(src).toMatch(/runCapturingGenerations\(generated, \(\) =>\s*withTurnModelContext\(\(\) => runWithRunScope\(\{ runId \}, async \(\) => \{[\s\S]*?return handler\(toolUse\.input, toolContext\);\s*\}\)\),\s*\);/);
+    expect(src.match(/handler\(toolUse\.input\b/g)).toHaveLength(1);
   });
 });

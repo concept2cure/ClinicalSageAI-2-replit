@@ -73,8 +73,9 @@ describe('stream.ts asks the override gate the gateway’s question', () => {
     // taskType and riskTier are the routing plan's — the inputs the gateway's
     // own high-risk check reads (gateway.ts approvedForTask / selectModel).
     const spreads = src.match(/\.\.\.\(resolvedOverride\b/g) ?? [];
+    // Since a2f9264a each call first names its owner-private capture hook.
     const routed = src.match(
-      /gw\.route\(\{\s*taskType:\s*routingPlan\.taskType,[\s\S]{0,1200}?riskTier:\s*routingPlan\.riskTier,[\s\S]{0,1500}?\.\.\.\(resolvedOverride\b/g,
+      /gw\.route\(\{\s*(?:onOwnerPrivateCapture,\s*)?taskType:\s*routingPlan\.taskType,[\s\S]{0,1200}?riskTier:\s*routingPlan\.riskTier,[\s\S]{0,1500}?\.\.\.\(resolvedOverride\b/g,
     ) ?? [];
     expect(spreads.length).toBeGreaterThan(0);
     expect(routed.length).toBe(spreads.length);
@@ -95,7 +96,8 @@ describe('a refused pin is said, once, and only when one was asked for', () => {
     // A literal of string properties only; evaluating it is reading it.
     const frame = new Function(`return (${lit![1]});`)();
     expect(frame).toEqual(REFUSED_FRAME);
-    expect(src.slice(at - 400, at)).toMatch(/res\.write\(\s*`data: \$\{JSON\.stringify\(\{[^{}]*$/);
+    // Frames go through the turn's owner-private stream buffer since a2f9264a (writeFrame).
+    expect(src.slice(at - 400, at)).toMatch(/(?:res\.write|writeFrame)\(\s*`data: \$\{JSON\.stringify\(\{[^{}]*$/);
   });
 
   it('is written after the pin is resolved and before the model is first called', () => {
@@ -108,7 +110,7 @@ describe('a refused pin is said, once, and only when one was asked for', () => {
 
   it('is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelled', () => {
     const m = src.match(
-      /if\s*\(([^{]{1,300}?)\)\s*\{\s*res\.write\(\s*`data: \$\{JSON\.stringify\(\{[^{}]*'MODEL_OVERRIDE_REFUSED'/,
+      /if\s*\(([^{]{1,300}?)\)\s*\{\s*(?:res\.write|writeFrame)\(\s*`data: \$\{JSON\.stringify\(\{[^{}]*'MODEL_OVERRIDE_REFUSED'/,
     );
     expect(m, 'the frame is not written directly under an if').not.toBeNull();
     const cond = m![1];

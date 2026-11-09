@@ -5,7 +5,7 @@ import { createJourneyDb, extractTableDdl, type JourneyDb } from '../../../../te
 import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, ORG, PROGRAM, PROGRAM_B } from '../../../routes/__tests__/_authoring-canvas-fixture';
 import { anaBiostatsOrchestrator } from '../orchestrator';
 import { documentGenerator } from '../document-generator';
-import { saveStatisticalDocumentToAuthoring } from '../workflow-integrator';
+import { saveStatisticalDocumentToAuthoring } from '../statistical-document-save';
 import { hashInputs } from '../../stats/computation-provenance';
 import { recordComputationRun, SAMPLE_SIZE_METHOD } from '../../stats/computation-runs';
 import { studyDesignToStatisticalInput } from '../../biostatistics-bridge/design-adapter';

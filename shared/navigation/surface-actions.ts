@@ -35,6 +35,7 @@
 import { REGULATORY_PATHWAYS } from '../constants/mdx';
 import {
   findNavigationTarget,
+  programNeedOf,
   type NavigationParamSpec,
 } from './index';
 
@@ -52,6 +53,14 @@ export interface SurfaceActionTarget {
   description: string;
   /** Params the action accepts; required ones are enforced by the resolver. */
   params?: SurfaceActionParamSpec[];
+  /**
+   * On a screen that shows one program only when one is open (a
+   * programOptional navigation target, the Vault), the action also works on
+   * the screen's view with none open. Without it, an action there needs a
+   * program open, as every action on a project screen does — the fail-closed
+   * default (see surfaceActionNeedsProgram).
+   */
+  withoutProgram?: boolean;
 }
 
 /** The validated directive emitted to the client (fail-closed on both ends). */
@@ -287,6 +296,10 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     id: 'vault.focus-document',
     surfaceId: 'vault',
     label: 'Select a vault document',
+    // Focuses the organization view's row with no project open (Vault.tsx,
+    // focusOrganizationArtifact). vault.search and vault.open-folder do not:
+    // the screen refuses both with no project open.
+    withoutProgram: true,
     description:
       'On the Vault, select a document so its detail is shown. With a project open: a document of its tree (an authored section, an uploaded file or a governed artifact), opening its folder. With no project open: a governed artifact in the list of the projects the user can open. Resolved by title, by section code when given exactly, or by a governed artifact\'s id; an unknown or ambiguous name is an honest miss, never a guess. Give a document or an artifactId. It only selects: downloading, filing and signing stay a person\'s acts.',
     params: [
@@ -1640,6 +1653,19 @@ const ACTIONS_BY_ID: ReadonlyMap<string, SurfaceActionTarget> = new Map(
 /** Look up a surface action by id. */
 export function findSurfaceAction(id: string): SurfaceActionTarget | undefined {
   return ACTIONS_BY_ID.get(id);
+}
+
+/**
+ * Whether the action works on the one program its screen shows, so with none
+ * open AnA asks which instead of sending it: every action on a project
+ * screen, and those on a programOptional screen not marked withoutProgram.
+ * The Vault went global on 2026-11-06, and its search went out with no
+ * program open again: the screen refused it while AnA was told it was being
+ * performed (navigation-tools.test.ts, act_on_screen).
+ */
+export function surfaceActionNeedsProgram(action: SurfaceActionTarget): boolean {
+  const need = programNeedOf(action.surfaceId);
+  return need === 'required' || (need === 'optional' && action.withoutProgram !== true);
 }
 
 /** All action ids (for prompt/catalog injection and validation). */

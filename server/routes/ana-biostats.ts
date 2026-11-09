@@ -221,7 +221,7 @@ router.post('/validate', authenticateToken, async (req: Request, res: Response) 
 async function saveStatisticalWorkbenchDocument(req: Request, res: Response, document: GovernedStatisticalDocument,
   context: { orgId: number; userId: number }) {
   const [{ pool }, { saveStatisticalDocumentToAuthoring }] = await Promise.all([
-    import('../db'), import('../services/ana-biostats/workflow-integrator'),
+    import('../db'), import('../services/ana-biostats/statistical-document-save'),
   ]);
   const { orgId, userId } = context;
   const actorId = String(userId), email = typeof req.user?.email === 'string' ? req.user.email.toLowerCase() : null;
