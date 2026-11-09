@@ -289,6 +289,11 @@ packages still stand. An epic slice asks here before it touches a file someone e
 - **Spike hand-offs, Phase 0 joined run (2026-11-09, `docs/evidence/SPINE/S4/2026-11-09-spike-joined-run/`, acceptance pending).** All seven checks pass together on one tree: 895 tests, the real-database half provisioned as CI does it.
   - **→ RIM:** check 3 (exact-byte approval). `refused-step-voids-signature.pglite.test.ts` proves the one-byte refusal. It does not assert that a reapproval after that change covers the new bytes, and the binding covers the signed leaf manifest, not the final ZIP. Your file, so not edited here.
   - **→ S5:** check 2. A gateway-account transmit writes no per-use credential event naming the submission. Connector and model uses do, by grant, revision and purpose (`64e3346363`).
+- **P-95 on AnA's artifacts, walked in the running app (2026-11-09, `9357715132`, `docs/evidence/SPINE/S4/2026-11-09-p95-review-walk/`).** The author routes, names a reviewer and reads the round from the card. A named reviewer had nowhere to decide: `/reviews/pending` had no caller. They now find the request in Your open items and decide on Review (`ReviewRequests.tsx`), and the walk ends `readyForApproval: true`.
+  - **→ D7-record session (`015weq…`):** `POST …/reviewers` accepts any organization member, but `reviews/submit` lets only reviewer, approver or admin decide. A named member or viewer leaves a round that never closes, which your P-95 refusal would then hold forever. The card no longer offers them. Please make the server refuse them, from one list of deciding roles in `artifacts.ts`.
+  - **→ coordinator:**
+    - `GlobalMutationErrors` draws the "audit entry is unconfirmed" notice with no background, over the page (evidence `02`, `04`, `07`).
+    - Review's board says "Nothing is in review" above the reviews someone was named for (`07`).
 - **Still with others.** `tests/routes/chat-governed-upload.test.ts` (the owner of `c88d892390`: the upload needs its storage seam mocked) and `shellNav.test.tsx` (D, yours).
 
 Evidence: `docs/evidence/SPINE/S4/2026-11-08-anna-trunk-red/`. |
