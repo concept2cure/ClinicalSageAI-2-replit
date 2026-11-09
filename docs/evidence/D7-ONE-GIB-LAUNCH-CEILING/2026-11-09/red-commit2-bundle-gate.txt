@@ -1,0 +1,13 @@
+# RED (commit 2): the bundle gate, the server bundle rebuilt from fda-esg.ts without the SFTP branch, RUNTIME_EXCEPTIONS not yet changed, 2026-11-09T01:06:21Z
+$ node scripts/build-server.mjs && npm run ci:server-bundle-prod-imports
+[server-bundle-prod-imports] FAIL
+dist/index.js imports packages the production image (npm ci --omit=dev) does not ship:
+  RUNTIME_EXCEPTIONS lists ssh2-sftp-client, which the bundle no longer imports. Remove the entry.
+exit=1
+
+# CONTROL: the same gate on a bundle built from HEAD's fda-esg.ts (the SFTP branch present): it passes, so the red above is this change's
+[server-bundle-prod-imports] ok — dist/index.js: all 64 packages imported at load time are shipped by npm ci --omit=dev; 21 imported at run time, 2 of them not shipped, each by written exception:
+  ssh2-sftp-client — ssh2-sftp-client (dynamic-import): server/services/submission-gateways/fda-esg.ts SFTP transport. Not in package.json at all, so the image cannot send over SFTP: absence is refused before any connection, with a TransportError carrying NOTHING_TRANSMITTED. Whether production ships it is the ESG lane's decision (D7); this entry records that it does not today.
+  citation-js — citation-js (dynamic-import): server/integrations/citationjs/client.ts — optional citation normalization. Absence logs "Citation.js normalization unavailable" and returns no normalization, never a made-up one.
+exit=0
+restored sha256 50d52c47390093341e524c0345516b12a3d82e310fe7ac88c4bbd10fc2f575e8 (expected 50d52c47390093341e524c0345516b12a3d82e310fe7ac88c4bbd10fc2f575e8)

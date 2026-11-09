@@ -1400,7 +1400,7 @@ export const TRANSMIT_SUBMISSION: AnaTool = {
 export const CHECK_SUBMISSION_STATUS: AnaTool = {
   name: 'check_submission_status',
   description:
-    "Poll the latest status for a transmitted submission. For FDA ESG, fetches the AS2 MDN / SFTP ack chain. For EMA CESP, polls /baskets/{id}. For EUDAMED, returns the most recent stored state. For PMDA Gateway, polls /receipts/{id}. Status transitions surface from the gateway's domain language (received → ack1 → ack2 → ack3 → validation_passed → review_started etc.).",
+    "Poll the latest status for a transmitted submission. For FDA ESG, returns the transmittal's stored status and its verified AS2 receipt. For EMA CESP, polls /baskets/{id}. For EUDAMED, returns the most recent stored state. For PMDA Gateway, polls /receipts/{id}. Status transitions surface from the gateway's domain language (received → ack1 → ack2 → ack3 → validation_passed → review_started etc.).",
   input_schema: {
     type: 'object',
     properties: { transmittal_id: { type: 'number' } },

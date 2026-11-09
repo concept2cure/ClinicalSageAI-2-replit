@@ -70,7 +70,7 @@ Domains:
 
 ## 1.8 Transmission (gateways)
 - **Gateway transmit** — `server/routes/mdx-submission-gateway.ts`, `server/services/submission-gateways/index.ts` · ✅ · Wire to agency gateways · ops: `GET /api/mdx/gateways`, `POST /api/mdx/gateways/:region/:gateway/transmit` (bundle{path,sha256,sizeBytes,format}, reason≥8, reauth), `GET /api/mdx/gateways/transmittals[/:id/status|/ack]` · UI: gateway selector + config status, transmit modal (bundle integrity, reason, re-auth), transmittal table, ACK viewer.
-- **FDA ESG** — `submission-gateways/fda-esg.ts` · ✅ (AS2) / 🟡 (SFTP) · AS2 over HTTPS mTLS + SFTP fallback; ack1/ack2/ack3 · data: env `FDA_ESG_*` · UI: transmission log, MDN status, ack progress.
+- **FDA ESG** — `submission-gateways/fda-esg.ts` · ✅ (AS2) · AS2 over HTTPS mTLS; ack1/ack2/ack3; a package over 1 GiB is refused before signing (launch scope, P-93; the SFTP branch was retired 2026-11-09) · data: env `FDA_ESG_*` · UI: transmission log, MDN status, ack progress.
 - **EMA CESP / EUDAMED** — `submission-gateways/ema-cesp.ts` · ✅ (CESP) / 🟡 (EUDAMED) · OAuth2 multipart upload + basket polling; EUDAMED device/cert/vigilance/CAPA · UI: basket status; EUDAMED registration panels.
 - **PMDA gateway** — `submission-gateways/pmda-gateway.ts` · ✅ · mTLS + HMAC, eCTD-JP multi-byte (UTF-8 BOM), receipt/pre-check/review-accepted · UI: ack-type badges.
 - **ICSR/E2B(R3)** — `server/services/ind-lifecycle/icsr-gateway-transport.ts` · 🟡 · Adverse-event report transmission · UI: ICSR transmission panel.

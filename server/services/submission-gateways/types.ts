@@ -47,7 +47,7 @@ export type Region =
   | 'sg';   // Singapore — HSA / PRISM
 
 export type GatewayName =
-  | 'esg'                   // FDA Electronic Submissions Gateway (AS2 + SFTP)
+  | 'esg'                   // FDA Electronic Submissions Gateway (AS2)
   | 'cesp'                  // EMA Common European Submission Portal
   | 'eudamed'               // EU EUDAMED (device registration + vigilance)
   | 'pmda_gateway'          // PMDA Gateway secure file transfer

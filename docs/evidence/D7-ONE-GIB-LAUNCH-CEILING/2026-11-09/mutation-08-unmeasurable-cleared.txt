@@ -1,0 +1,13 @@
+MUTATION 08-unmeasurable-cleared in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T00:57:08.603014Z): replaced [    if (isConversionCapacityError(err)) throw err;
+    throw new SubmissionError('DISPATCH_BLOCKED', unassembledRefusal(step, err));] with [    if (isConversionCapacityError(err)) throw err;
+    if (opts.judge === 'size') return assembledAgainst;
+    throw new SubmissionError('DISPATCH_BLOCKED', unassembledRefusal(step, err));]
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > a dispatched FDA sequence of 1 GiB and one byte is refused by name, and nothing is signed, claimed or recorded 270ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > says the size in GiB to two places when it does not round to the ceiling 119ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > a package of exactly 1 GiB is sent 123ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > the Dispatch tab’s read, which names no environment, does not assemble 7ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > a sequence for another region is not measured (FDA only) 9ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > readiness judges only the size: another package blocker stays the act’s to refuse (scope pin) 118ms
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > a package whose size cannot be measured is refused, never cleared 21ms
+      Tests  1 failed | 6 passed | 5 skipped (12)
+restored sha256 8f1f470284cfed176a7af9e49c6fad25e5f0bf8e07ad7e10075377ac0a19638b (expected 8f1f470284cfed176a7af9e49c6fad25e5f0bf8e07ad7e10075377ac0a19638b)
