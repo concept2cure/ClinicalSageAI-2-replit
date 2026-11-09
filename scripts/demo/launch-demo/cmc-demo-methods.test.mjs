@@ -39,10 +39,10 @@ import { test } from 'node:test';
 
 import { BIOTECH_CMC } from './packs/biotech-work-content.mjs';
 import { LMN201_CMC } from './packs/lumen-content.mjs';
+import { DEMO_PROGRAM as PROGRAM, fakeCmcApplication, methodKey as key } from './cmc-demo-app.fixture.mjs';
 import { ensureCmc } from './packs/work-areas.mjs';
 
-/** The gate's own comparison (analytical-method-source.ts `methodStatusKey`). */
-const key = (s) => String(s ?? '').trim().toLowerCase();
+
 
 const PACKS = [
   ['biotech (C2C-101)', BIOTECH_CMC],
@@ -83,49 +83,8 @@ for (const [label, cmc] of PACKS) {
   });
 }
 
-/** A recording fake of the product's HTTP boundary, as faux-demo.test.mjs does. */
-function fakeApplication() {
-  const calls = [];
-  const state = { specs: [], methods: [], stability: [], batches: [], validated: [] };
-  const ok = (json, status = 200) => ({ status, json });
-  const api = async (method, url, body) => {
-    calls.push({ method, url, body });
-    if (method === 'GET' && url.startsWith('/api/cmc/specifications/')) return ok({ success: true, data: state.specs });
-    if (method === 'GET' && url.startsWith('/api/cmc/analytical-methods')) return ok({ success: true, data: state.methods });
-    if (method === 'GET' && url.startsWith('/api/cmc/stability-studies')) return ok({ success: true, data: state.stability });
-    if (method === 'GET' && url.startsWith('/api/cmc/batch-records/')) return ok({ success: true, data: state.batches });
-    if (method === 'POST' && url === '/api/cmc/analytical-methods') {
-      assert.notEqual(String(body.status ?? '').toLowerCase(), 'validated',
-        'the create declared the method validated, which the route refuses with a 409');
-      const row = { id: state.methods.length + 1, ...body };
-      state.methods.push(row);
-      return ok({ success: true, data: row }, 201);
-    }
-    if (method === 'POST' && /\/api\/cmc\/analytical-methods\/\d+\/validate$/.test(url)) {
-      assert.ok(body.reason && body.meaning && body.reauth?.password, `the validation ceremony was incomplete: ${JSON.stringify(body)}`);
-      state.validated.push(url);
-      return ok({ success: true, data: { id: Number(url.split('/')[4]), status: 'validated' } });
-    }
-    if (method === 'POST' && url === '/api/cmc/specifications') { state.specs.push({ materialName: body.materialName, ...body }); return ok({ success: true, data: body }, 201); }
-    if (method === 'POST' && url === '/api/cmc/stability-studies') { const row = { id: state.stability.length + 1, studyTitle: body.studyTitle, stabilityData: null }; state.stability.push(row); return ok({ success: true, data: row }, 201); }
-    if (method === 'PUT' && /\/api\/cmc\/stability-studies\/\d+$/.test(url)) return ok({ success: true, data: {} });
-    if (method === 'POST' && url === '/api/cmc/batch-records') { state.batches.push({ batchNumber: body.batchNumber }); return ok({ success: true, data: body }, 201); }
-    throw new Error(`Unexpected demo request: ${method} ${url}`);
-  };
-  const run = { records: {}, steps: [], notes: [],
-    record(k, v) { this.records[k] = v; },
-    note(m) { this.notes.push(m); },
-    async step(label, execute) { this.steps.push(label); return execute(); } };
-  const tally = { created: {}, found: {},
-    created(k) { this.created[k] = (this.created[k] ?? 0) + 1; },
-    found(k) { this.found[k] = (this.found[k] ?? 0) + 1; } };
-  return { api, state, run, tally, calls };
-}
-
-const PROGRAM = { id: 'c0ffee00-0000-4000-8000-000000000001' };
-
 test('the seeder records each method before the specification that cites it', async () => {
-  const app = fakeApplication();
+  const app = fakeCmcApplication();
   await ensureCmc({ api: app.api, run: app.run, tally: app.tally }, PROGRAM, BIOTECH_CMC, 'C2C-101');
 
   const posted = app.calls.filter((c) => c.method === 'POST');
@@ -142,7 +101,7 @@ test('the seeder records each method before the specification that cites it', as
 });
 
 test('the seeder carries the Q2 parameters, and does not sign without a signer', async () => {
-  const app = fakeApplication();
+  const app = fakeCmcApplication();
   await ensureCmc({ api: app.api, run: app.run, tally: app.tally }, PROGRAM, BIOTECH_CMC, 'C2C-101');
 
   for (const m of app.state.methods) {
@@ -158,7 +117,7 @@ test('the seeder carries the Q2 parameters, and does not sign without a signer',
 });
 
 test('with a signer, each method is validated through the governed route', async () => {
-  const app = fakeApplication();
+  const app = fakeCmcApplication();
   const signer = { email: 'signer@example.test', password: 'pw', api: app.api };
   await ensureCmc({ api: app.api, run: app.run, tally: app.tally, signer }, PROGRAM, BIOTECH_CMC, 'C2C-101');
 
@@ -168,7 +127,7 @@ test('with a signer, each method is validated through the governed route', async
 });
 
 test('a second run records nothing twice', async () => {
-  const app = fakeApplication();
+  const app = fakeCmcApplication();
   const ctx = { api: app.api, run: app.run, tally: app.tally };
   await ensureCmc(ctx, PROGRAM, BIOTECH_CMC, 'C2C-101');
   const after = app.state.methods.length;
