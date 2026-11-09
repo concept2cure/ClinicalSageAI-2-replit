@@ -52,6 +52,21 @@ describe('computeInitialRun — one readiness verdict', () => {
     expect(q.results).toHaveLength(0);
   });
 
+  /* Seen in the running app, 2026-11-08 (docs/evidence/DESIGN/D7/2026-11-08-reporting-rewalk/): C2C-101's
+     page said "4 critical gaps outstanding" while its Executive Readiness Digest said 23. The critical
+     gap messages were cut to four (`.slice(0, 4)`) BEFORE they were pushed to criticalBlockers, and the
+     canvas lead and the portfolio rollup count criticalBlockers.length, so any project with more than
+     four read as four. The visible blocker list keeps its first four; the count keeps every one. */
+  it('counts every critical gap, while the blocker list a reader sees keeps the first four', async () => {
+    q.results.push([], [{ metadata: { registryId: 'US_IND' } }], [], []);
+    const run = await computeInitialRun(1, 'project', '1');
+    const gaps = (run.summary.regulatory as { gaps: Array<{ severity: string }> }).gaps;
+    const critical = gaps.filter((gap) => gap.severity === 'critical').length;
+    expect(critical, 'the case needs more than four critical gaps').toBeGreaterThan(4);
+    expect(run.criticalBlockers).toHaveLength(critical);
+    expect(run.blockers.filter((b) => run.criticalBlockers.includes(b)).length).toBeLessThanOrEqual(4);
+  });
+
   it('never calls one approved artifact a compliance assurance check', async () => {
     q.results.push([{ status: 'approved', count: 1 }], [{ metadata: {} }]);
     const run = await computeInitialRun(1, 'project', '1');

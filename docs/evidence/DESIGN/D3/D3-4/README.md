@@ -123,3 +123,29 @@ node docs/evidence/DESIGN/D3/D3-4/interact.cjs http://127.0.0.1:5000 <C2C-101 pr
 ```
 
 Do not edit `client/` while a walk runs: Vite reloads the page, and the walk fails with a null `.pj-main`.
+
+## Follow-up, the same day: the coordinating session's CI triage (run 42517353828)
+
+The triage covered the project-page group. Each item was found red, then fixed:
+
+- **`ci:launch-scope`** flagged `ProjectHome.tsx` importing `PJ_LIFECYCLE_DEVICE` from `fixtures/` with no allowlist
+  reason. A lifecycle definition the product uses is not a fixture, so it moved to `surfaces/ProjectStages.tsx` beside
+  the steps. `lifecycleFor(deviceFiling)` selects between the two wordings by key. A ternary to the fixtures import
+  tripped `ci:fixture-fallback`, which is why it selects by key. `ci:launch-scope`, its selftest and
+  `ci:fixture-fallback` now pass.
+- **`projectHomeStageCss`** ("defines no class another v2 stylesheet already defines") was red on trunk. Two J1 rules in
+  `project-home-v2.css` named `app-v2.css`'s classes: the phone wrap of `.pj-sec-h` and `.pj-sec-acts`, and the
+  wizard's sideways-scrolling `.npw .rpk-tabs`. Both moved into `app-v2.css` (a coordination turn on `.pj` and
+  `.npw .rpk-tabs`, released with the commit). The phone rule merged with D3-4's, and `j1PageLayout` reads them from
+  there. The suite is green, and `ci:check-css-selector-shadowing` now passes as well.
+- **`newProjectWizardLook`**: the review's "Team section" was looked for on Plan. Since D3-3 it is the Team card on
+  every step, whose "Manage" opens the drawer with the sharing controls; the test opens the drawer.
+- `projectBiotechPlan` and `projectCreationDoors.contract` were fixed earlier the same day (above).
+- **Not D3's.** `clientNamesSlice1` fails on `V2App.tsx`, which no longer contains `setLocation(locationForSurface(`
+  (the shell's routing). The rail-count suites (`projectDestination`, `cmdkPlaces`) are the coordinator's.
+  `accountOnboardingSettings` passes here.
+- **In the running app** (`css-move-check.cjs`, `css-move-check.log`, `screenshots/css-move-390-*.png`), at 390 with
+  touch: Submit has no sideways scroll and its head wraps; New project's filing tabs scroll inside their row
+  (`overflow-x: auto`, scrollWidth > clientWidth, tabs `flex-shrink: 0`).
+- **Tests:** 86 suites (the project suites, plus `j1PageLayout`, `vaultWorkArea`, `newProjectWizardLook` and
+  `accountOnboardingSettings`): 979 of 979 pass.

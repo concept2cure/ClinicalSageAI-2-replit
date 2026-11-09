@@ -100,8 +100,7 @@ it.each([
   assert.equal(plan.perRegion[0].sectionBlueprint, `${id}_sections`);
   assert.equal(plan.perRegion[0].validationProfile, `${id}_validation`);
 });
-it.each(['denovo', ' DE_NOVO ', 'ind-amend', 'type ib', '505(b)(2)'])
-  ('uses the existing bridge for alias %s rather than its own fuzzy selection', alias => {
+it.each(['denovo', ' DE_NOVO ', 'ind-amend', 'type ib', '505(b)(2)'])('uses the existing bridge for alias %s rather than its own fuzzy selection', alias => {
     const id = h.aliases[alias.trim().toUpperCase()];
     const candidate = h.entries.find(e => e.id === id)!;
     assert.equal(resolveSubmissionPlan({ filingType: alias, regions: [candidate.region] }).perRegion[0].filing?.id, id);

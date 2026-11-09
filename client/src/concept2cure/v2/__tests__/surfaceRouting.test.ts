@@ -69,6 +69,16 @@ describe('locationForSurface (the path the shell writes)', () => {
   });
 });
 
+describe('an alias lands where its destination does', () => {
+  // 5144702d21 (2026-11-06) opened the Vault with no project open; `documents` is an alias of
+  // `vault` (registryModel DEEP_LINK_ALIASES) but kept the old project scope, so a visit with no
+  // project went to Projects while `vault` opened the Vault (found by the D3 walk, 2026-11-08).
+  it('`documents` with no project opens the Vault, as `vault` does', () => {
+    expect(destinationFor('vault', false)).toEqual({ surfaceId: 'vault' });
+    expect(destinationFor('documents', false)).toEqual(destinationFor('vault', false));
+  });
+});
+
 describe('the retired kit paths still land somewhere real', () => {
   // `/concept2cure/mdx` and `/concept2cure/pdev` were top-level routes when the
   // kits were separate applications. Links and bookmarks still point at them.

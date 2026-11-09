@@ -473,20 +473,6 @@
 .c2c-v2 .pj-mkt-verdict-ic{display:inline-flex;}
 .c2c-v2 .pj-mkt-verdict-ic svg{width:14px;height:14px;}
 .c2c-v2 .pj-mkt-btn{font-size:12px;padding:4px 12px;}
-/* New project's filing tabs (Pharma & Biotech, Medical Devices, Diagnostics & IVD, Cross-Cutting Documents) are 661px
-   wide; at 390 the last two were cut off, unreachable, so a diagnostics company could not open its own tab on a phone
-   (human test J1, 2026-11-06). The row scrolls sideways in place. `.rpk-tabs` is app-v2.css's; scoped here to the
-   wizard, whose sheet this is. */
-.c2c-v2 .npw .rpk-tabs { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
-.c2c-v2 .npw .rpk-tabs > * { flex-shrink: 0; }
-
-/* At 390 a section's actions ran past the page's edge ("See every sequence in Submission Center" on the Submit step,
-   human test J1, 2026-11-06). On a phone the head wraps and its actions wrap under the heading. */
-@media (max-width: 640px) {
-  .c2c-v2 .pj .pj-sec-h { flex-wrap: wrap; }
-  .c2c-v2 .pj .pj-sec-acts { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; max-width: 100%; }
-  .c2c-v2 .pj .pj-sec-acts > .btn { white-space: normal; max-width: 100%; }
-}
 .c2c-v2 .pj-mkt-note{margin:4px 0 0;font-size:11.5px;line-height:1.5;color:var(--text-300);}
 .c2c-v2 .pj-mkt-blockers{margin:4px 0 2px;padding-left:18px;font-size:11.5px;line-height:1.5;color:var(--text-200);}
 .c2c-v2 .pj-mkt-acts{display:flex;justify-content:flex-end;margin-top:6px;}
