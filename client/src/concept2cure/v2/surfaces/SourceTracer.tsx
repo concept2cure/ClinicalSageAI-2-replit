@@ -275,7 +275,7 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
           : <>Recorded lineage only — nothing here is a similarity guess.</>}
         action={{
           label: changed.length ? 'Review sections on changed sources' : 'Analyze for unrecorded claims',
-          icon: I.shieldCheck,
+          icon: I.sparkles,
           onClick: () => ask(changed.length
             ? 'List every section whose recorded source changed after it was cited, and for each, what in the section may no longer match. Do not rewrite anything yet.'
             : 'Analyze ' + sec.doc + ' for claims with no recorded source citation and flag each one.'),
