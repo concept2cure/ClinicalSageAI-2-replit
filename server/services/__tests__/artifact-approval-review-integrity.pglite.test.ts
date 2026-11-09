@@ -240,3 +240,29 @@ describe('P-18: an author cannot approve or release their own artifact', () => {
     expect(reads.some(sql => sql.includes('concept2cure_review_assignments'))).toBe(false);
   });
 });
+
+/* 2026-11-09 (F1, P-95 Q1, under the founder's delegation): what counts as a
+   review. The reviewer is neither the approving signer nor an author (read as
+   P-18 reads authors), so an approver who reviewed in the latest round cannot
+   sign that version's approval. Asked by the preflight both doors share. */
+describe('P-95 Q1: the approval is signed by someone who did not review it', () => {
+  const reviewed = async (reviewerId: number) => {
+    await pg.query(`INSERT INTO concept2cure_review_assignments (id, artifact_id, organization_id, reviewer_id, review_round, status)
+      VALUES (1, 4242, 99, $1, 1, 'completed')`, [reviewerId]);
+    await pg.query(`INSERT INTO concept2cure_review_decisions (id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
+      VALUES (11, 1, 4242, 99, $1, 1, 'approve', 3)`, [reviewerId]);
+  };
+
+  it('the signer reviewed this version: refused', async () => {
+    await reviewed(SIGNER);
+    const refusal = await refuseSignedArtifactAct(signedInput(queryable()));
+    expect(refusal).toMatchObject({ httpStatus: 400 });
+    expect(refusal?.message).toMatch(/you reviewed this version in review round 1/);
+  });
+
+  it('another reviewer approved this version: the signer may approve', async () => {
+    await reviewed(701);
+    expect(await refuseSignedArtifactAct(signedInput(queryable()))).toBeNull();
+  });
+});
+

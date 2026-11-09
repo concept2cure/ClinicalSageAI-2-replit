@@ -13,6 +13,15 @@ The work is split two ways:
 **Update 2026-11-02.** P-95 is now recorded in `docs/LAUNCH_DEFINITION_OF_DONE.md`. The round repair
 landed (`0f7706e637`). The no-reviewer refusal waits for D4's reach.
 
+**Update 2026-11-09.** The coordinating session relayed answers to the three open questions below, under
+P-107:
+- **Q1** is landed on the artifact door (`../p95-q1/`): the reviewer is neither the approving signer
+  nor an author.
+- **Q2**, two reviewers for `regulated_dual_review`, is a later slice.
+- **Q3:** every fileable door applies P-95 with its own record's review. The authoring-document door is
+  the coordinating session's.
+- The no-reviewer refusal (changes 1 to 6) stays held until the artifact panel's reach is on origin.
+
 **Not built yet (as first written).** At the time of writing, P-95 is not on `origin/concept2cure-v2`
 (`docs/LAUNCH_DEFINITION_OF_DONE.md` ends at P-91; the commit that records it, `1c48581ae`, is
 unpushed). This lane builds nothing on a decision it cannot read in the repository. It also should
@@ -82,7 +91,7 @@ first.**
 
 ## Open questions (P-95 does not settle them)
 
-1. **What counts as a review?** Must the reviewer differ from the approver (the signer) and from every
+1. *(Answered 2026-11-09, landed in `../p95-q1/`.)* **What counts as a review?** Must the reviewer differ from the approver (the signer) and from every
    author, version writers included, as P-18 reads authors? Today the assignment and submit routes
    refuse only the creator, and nothing compares the reviewer with the signer. An approver could assign
    themselves, review and then approve.

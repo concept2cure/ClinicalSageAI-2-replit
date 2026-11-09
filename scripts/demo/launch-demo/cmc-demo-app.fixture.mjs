@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 
 export function fakeCmcApplication() {
   const calls = [];
-  const state = { substances: [], products: [], methods: [], specs: [], stability: [], batches: [], validated: [] };
+  const state = { substances: [], products: [], methods: [], specs: [], stability: [], batches: [], qcResults: [], validated: [] };
   const ok = (json, status = 200) => ({ status, json });
 
   const api = async (method, url, body) => {
@@ -27,6 +27,7 @@ export function fakeCmcApplication() {
     if (method === 'GET' && url.startsWith('/api/cmc/specifications/')) return ok({ success: true, data: state.specs });
     if (method === 'GET' && url.startsWith('/api/cmc/stability-studies')) return ok({ success: true, data: state.stability });
     if (method === 'GET' && url.startsWith('/api/cmc/batch-records/')) return ok({ success: true, data: state.batches });
+    if (method === 'GET' && url.startsWith('/api/cmc/qc-testing')) return ok({ success: true, data: state.qcResults });
 
     if (method === 'POST' && url === '/api/cmc/drug-substances') {
       const row = { id: state.substances.length + 1, ...body };
@@ -59,14 +60,40 @@ export function fakeCmcApplication() {
       return ok({ success: true, data: body }, 201);
     }
     if (method === 'POST' && url === '/api/cmc/stability-studies') {
-      const row = { id: state.stability.length + 1, studyTitle: body.studyTitle, stabilityData: null };
+      const row = { id: state.stability.length + 1, studyTitle: body.studyTitle, shelfLife: body.shelfLife ?? null, stabilityData: null };
       state.stability.push(row);
       return ok({ success: true, data: row }, 201);
     }
-    if (method === 'PUT' && /\/api\/cmc\/stability-studies\/\d+$/.test(url)) return ok({ success: true, data: {} });
+    if (method === 'PUT' && /\/api\/cmc\/stability-studies\/\d+$/.test(url)) {
+      /* The register's edit needs a governed reason; a fake that accepted one
+         without it would let the seeder ship a PUT the route refuses. */
+      assert.ok(body?.reason, `the stability edit carried no reason: ${JSON.stringify(body)}`);
+      const row = state.stability.find((r) => r.id === Number(url.split('/').pop()));
+      /* The real route parses its body with a Zod schema that STRIPS unknown
+         keys, so only the register's own field names are stored — a fake that
+         accepted any key would have hidden exactly the bug this fixture now
+         reproduces: `shelfLifeClaim` returned 200 and stored nothing, because
+         the column is `shelf_life`. */
+      if (row && body.shelfLife) row.shelfLife = body.shelfLife;
+      if (row && body.stabilityData) row.stabilityData = body.stabilityData;
+      return ok({ success: true, data: row ?? {} });
+    }
     if (method === 'POST' && url === '/api/cmc/batch-records') {
       state.batches.push({ batchNumber: body.batchNumber });
       return ok({ success: true, data: body }, 201);
+    }
+    if (method === 'POST' && url === '/api/cmc/qc-testing') {
+      /* The register's closed vocabulary decides which material the result is
+         evidence for; a value outside it is attributed to neither, and the
+         real route refuses it. */
+      assert.ok(['raw-material', 'in-process', 'finished-product', 'stability', 'reference-standard', 'cleaning-verification'].includes(body.sampleType),
+        `"${body.sampleType}" is not a sample type the register knows`);
+      /* A seed that recorded its own second-person review would be one person
+         recording both halves of a two-person rule. */
+      assert.ok(!('reviewedBy' in body), 'the seed recorded its own second-person review');
+      const row = { id: state.qcResults.length + 1, sampleId: body.sampleId, ...body };
+      state.qcResults.push(row);
+      return ok({ success: true, data: row }, 201);
     }
     throw new Error(`Unexpected demo request: ${method} ${url}`);
   };
