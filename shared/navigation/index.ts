@@ -245,15 +245,23 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // ── Analysis & authoring tools ──
   { id: 'batch-draft', label: 'Batch draft', description: 'Parallel section drafting over the eCTD Co-Author document spine (running a batch stays a human click).', scope: 'global', group: 'module' },
   {
-    /* `scope: 'project'` since 2026-11-09. It was 'global' when the rail entry
-       shipped on 2026-11-06, which made this the one rail door that opened a
-       work area with no project behind it — and with none open the surface
-       seeded a pharma-oncology worked example, for a device organisation too.
-       P-107 item 1 calls Biostatistics "a work area over the project's data,
-       not an app", and the founder's words authorising the rail entry end
-       "But again, everything starts with a project". CMC, the sibling work
-       area, has always been project-scoped (:145). */
-    id: 'biostatistics', label: 'Biostatistics designer', description: 'The deterministic biostatistics design engine — sample size, power, and governed statistical documents.', scope: 'project', group: 'module',
+    /* `scope: 'global'`, and it stays global. I set it to 'project' on
+       2026-11-09 so a project-less visit could not seed a pharma-oncology
+       preset for a device organisation, and REVERTED it the same day after
+       driving the rail in a real browser: a project-scoped target with nothing
+       open resolves to Projects (routing.ts destinationFor), and
+       reopenLastProject only helps an account that has opened a project
+       before. In a fresh session — a demo — clicking Biostatistics landed on
+       Projects and the work area never opened. The founder found it that way.
+
+       The founder's words authorising the rail entry are "the left rail should
+       be a navigation point for all of those entry points", and a navigation
+       point that opens Projects is not one. "Everything starts with a project"
+       is served by what the screen does with no project — it reads the
+       organisation's own client type for its preset and says what it is
+       looking at — not by refusing to open. The preset defect is fixed where it
+       lives, in defaultPresetFor (surfaces/Biostatistics.tsx). */
+    id: 'biostatistics', label: 'Biostatistics designer', description: 'The deterministic biostatistics design engine — sample size, power, and governed statistical documents.', scope: 'global', group: 'module',
     // Consumed by the surface on mount: it loads THAT persisted study design
     // (cdisc_prm_studies.study_id) through the biostatistics bridge and seeds
     // the engine from it — how the protocol workspace and the task board hand a

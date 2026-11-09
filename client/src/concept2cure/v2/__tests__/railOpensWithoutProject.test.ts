@@ -26,26 +26,33 @@ describe('the rail with no project open', () => {
   });
 
   /**
-   * The two work areas the rail carries over a project's own data are project
-   * screens, so neither opens on nothing.
+   * Biostatistics opens from the rail with no project open. CMC does not.
    *
-   * CMC is the precedent and has always been `scope: 'project'`
-   * (shared/navigation/index.ts). Biostatistics was `scope: 'global'` when its
-   * rail entry shipped on 2026-11-06, so it was the one rail door that opened a
-   * work area with no project behind it — and the founder's words authorising
-   * that entry end "But again, everything starts with a project"
-   * (scripts/ci/one-product-baseline.json, `rail:biostatistics`). P-107 item 1
-   * calls it "a work area over the project's data, not an app".
+   * This asymmetry is deliberate and was paid for. On 2026-11-09 I made the
+   * biostatistics target `scope: 'project'` so a project-less visit could not
+   * seed a pharma-oncology preset for a device organisation, and asserted here
+   * that it lands on Projects. Driving the rail in a real browser showed what
+   * that meant: a fresh session clicked Biostatistics and got the Projects
+   * page. `reopenLastProject` only helps an account that has opened a project
+   * before, which a demo has not. The founder found the screen missing.
    *
-   * With no project open the shell reopens the last project this account had
-   * open (the case below); Projects is where it lands when there is none.
+   * The founder's words authorising the entry are "the left rail should be a
+   * navigation point for all of those entry points", and a navigation point
+   * that opens Projects is not one. So it is global, and the preset defect is
+   * fixed where it lives rather than by closing the door.
+   *
+   * CMC stays project-scoped: it has been since long before, nothing reported
+   * it as missing, and widening it is its lane's call, not this one's.
    */
-  it('does not open a work area without a project: CMC and Biostatistics alike', () => {
-    expect(destinationFor('cmc', false).surfaceId).toBe('projects');
-    expect(destinationFor('biostatistics', false).surfaceId).toBe('projects');
+  it('Biostatistics opens from the rail with no project open', () => {
+    expect(destinationFor('biostatistics', false).surfaceId).toBe('biostatistics');
   });
 
-  it('opens both work areas when a project IS open', () => {
+  it('CMC still asks for a project, as it always has', () => {
+    expect(destinationFor('cmc', false).surfaceId).toBe('projects');
+  });
+
+  it('both open on themselves when a project IS open', () => {
     expect(destinationFor('cmc', true).surfaceId).toBe('cmc');
     expect(destinationFor('biostatistics', true).surfaceId).toBe('biostatistics');
   });

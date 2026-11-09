@@ -172,24 +172,28 @@ describe('a work area opens from the rail', () => {
    * never opened a project still lands on Projects, which is the one case where
    * that is the right answer.
    */
-  it('reopens the last project so the work area actually opens', async () => {
+  /* A PROJECT-SCOPED work area reopens the last project this account had open,
+     instead of dropping the person on Projects. CMC is the subject because it
+     is project-scoped; Biostatistics is global and opens directly, which
+     railOpensWithoutProject.test.ts records and a browser run proved. */
+  it('CMC reopens the last project so the work area actually opens', async () => {
     rememberLastProject();
     expect(readShellProject(), 'the case must start with no project open').toBeNull();
     const { scroll } = await mountRail();
-    const entry = Array.from(scroll.querySelectorAll('button')).find((b) => (b.textContent ?? '').includes('Biostatistics'));
-    expect(entry, 'no Biostatistics entry on the rail').toBeTruthy();
+    const entry = Array.from(scroll.querySelectorAll('button')).find((b) => (b.textContent ?? '').includes('CMC'));
+    expect(entry, 'no CMC entry on the rail').toBeTruthy();
     fireEvent.click(entry!);
     expect(readShellProject(), 'the rail did not reopen the last project, so the entry lands on Projects').toMatchObject({
       id: '65f7b785-9abe-4b9d-a5c7-3ddc477074e4',
     });
   });
 
-  it('CMC opens the same way — every work area, not just this one', async () => {
-    rememberLastProject();
-    const { scroll } = await mountRail();
-    const entry = Array.from(scroll.querySelectorAll('button')).find((b) => (b.textContent ?? '').includes('CMC'));
+  it('Biostatistics needs no project to open, so it reopens none', async () => {
+    const { scroll, onNav } = await mountRail();
+    const entry = Array.from(scroll.querySelectorAll('button')).find((b) => (b.textContent ?? '').includes('Biostatistics'));
+    expect(entry, 'no Biostatistics entry on the rail').toBeTruthy();
     fireEvent.click(entry!);
-    expect(readShellProject()).toMatchObject({ id: '65f7b785-9abe-4b9d-a5c7-3ddc477074e4' });
+    expect(onNav.mock.calls.map((c) => c[0])).toContain('biostatistics');
   });
 });
 
