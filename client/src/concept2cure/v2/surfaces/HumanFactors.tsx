@@ -588,7 +588,7 @@ export function HumanFactors({ onAsk, onNav }: SurfaceViewProps) {
           ? { label: 'Mitigate ' + firstUnmit.task, onClick: () => setMitigating(firstUnmit) }
           : gateUnassessed
             ? { label: 'Record a hazard-related use scenario', onClick: () => setForm(true) }
-            : { label: 'Draft the HFE/UE report', onClick: () => ask('Assemble the HFE/UE report from the completed elements') }}
+            : { label: 'Draft the HFE/UE report', icon: I.sparkles, onClick: () => ask('Assemble the HFE/UE report from the completed elements') }}
         secondary={gateUnassessed
           ? 'Identify the hazard-related use scenarios first — the risk analysis and the HFE/UE report are built from them.'
           : 'Or work the use-related risk table and HFE checklist below.'}
