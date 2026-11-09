@@ -1,0 +1,143 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "email": "dana.signer@concept2cure.pro",
+  "program": "95249590-7d36-442f-a317-211d243c52e1",
+  "browser": "141.0.7390.37",
+  "screens": {
+    "start-0000-empty-1440-light": {
+      "file": "start-0000-empty-1440-light.png",
+      "start": {
+        "text": "Start sequence 0000",
+        "className": "btn ghost",
+        "spark": false,
+        "hit": "hit"
+      },
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "start-0000-empty-1440-dark": {
+      "file": "start-0000-empty-1440-dark.png",
+      "start": {
+        "text": "Start sequence 0000",
+        "className": "btn ghost",
+        "spark": false,
+        "hit": "hit"
+      },
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "start-0000-empty-390-light": {
+      "file": "start-0000-empty-390-light.png",
+      "start": {
+        "text": "Start sequence 0000",
+        "className": "btn ghost",
+        "spark": false,
+        "hit": "hit"
+      },
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "start-0000-empty-390-dark": {
+      "file": "start-0000-empty-390-dark.png",
+      "start": {
+        "text": "Start sequence 0000",
+        "className": "btn ghost",
+        "spark": false,
+        "hit": "hit"
+      },
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "start-0000-clicked-1440-light": {
+      "file": "start-0000-clicked-1440-light.png",
+      "start": {
+        "text": "Start sequence 0001",
+        "className": "btn ghost",
+        "spark": false,
+        "hit": "hit"
+      },
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "start-next-1440-light": {
+      "file": "start-next-1440-light.png",
+      "start": {
+        "text": "Start sequence 0001",
+        "className": "btn ghost",
+        "spark": false,
+        "hit": "hit"
+      },
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "start-next-1440-dark": {
+      "file": "start-next-1440-dark.png",
+      "start": {
+        "text": "Start sequence 0001",
+        "className": "btn ghost",
+        "spark": false,
+        "hit": "hit"
+      },
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "start-next-390-light": {
+      "file": "start-next-390-light.png",
+      "start": {
+        "text": "Start sequence 0001",
+        "className": "btn ghost",
+        "spark": false,
+        "hit": "hit"
+      },
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "start-next-390-dark": {
+      "file": "start-next-390-dark.png",
+      "start": {
+        "text": "Start sequence 0001",
+        "className": "btn ghost",
+        "spark": false,
+        "hit": "hit"
+      },
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    }
+  }
+}
