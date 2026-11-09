@@ -1,0 +1,9 @@
+# Mutant: an all-withdrawn round is refused without REVIEW_REQUIRED
+# in server/services/artifact-approval-act.ts
+# -       code: 'REVIEW_REQUIRED',
+      message: `Cannot approve: every reviewer
+# +       message: `Cannot approve: every reviewer
+
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > shared signed-approval preflight: every reviewer withdrawn is 409 REVIEW_REQUIRED 12ms
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 190 passed (191)

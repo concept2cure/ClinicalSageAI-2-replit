@@ -64,16 +64,25 @@ export interface ApprovalActQueryable {
   query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 }
 
-export type ReviewQuorumVerdict = { met: true } | { met: false; message: string };
+/**
+ * A refusal that carries `REVIEW_REQUIRED` holds no review at all (P-95): no
+ * reviewer was named, or every one was withdrawn. The doors answer it 409, as
+ * the editor's door answers its own (authoring.router.ts, 2026-11-09).
+ */
+export type ReviewQuorumVerdict = { met: true } | { met: false; message: string; code?: 'REVIEW_REQUIRED' };
+
+/** Where a reviewer is named: the Review step of the artifact's card (ConversationArtifactReview.tsx). */
+const NAME_A_REVIEWER = "Name a reviewer in the artifact's Review section; once every named reviewer has approved this version, it can be approved.";
 
 /**
  * P12 review quorum: when reviewers are assigned, every active reviewer of the
  * latest round must have completed and have exactly one decision attributed
  * to that assignment's reviewer, approving the current version. Withdrawn
- * assignments and their decisions are excluded; no assignments at all has no
- * quorum to enforce. A latest round whose assignments were all withdrawn is
- * refused (2026-11-02, F1, P-95: it holds no review). This policy is not
- * scientific source qualification or evidence of source review.
+ * assignments and their decisions are excluded. No assignment at all, and a
+ * latest round whose assignments were all withdrawn, hold no review and are
+ * refused REVIEW_REQUIRED (P-95: review is mandatory before a regulated
+ * document is approved, and every artifact counts as regulated). This policy
+ * is not scientific source qualification or evidence of source review.
  *
  * `artifactPk` is concept2cure_artifacts.id (the serial key the review tables
  * reference), not artifact_id. A read error propagates: the caller must not
@@ -109,7 +118,16 @@ export async function reviewQuorumVerdict(
       [artifactPk, organizationId]
     )
   ).rows as Array<{ id: number; reviewer_id: number; review_round: number; status: string }>;
-  if (assignments.length === 0) return { met: true };
+  // 2026-11-09 (F1, P-95): review is mandatory before a regulated document is
+  // approved, and an artifact counts as regulated: no catalog class has a
+  // zero-review path and none is resolvable from the row, and P-95 reads an
+  // unknown as regulated (docs/evidence/W5/2026-11-01/p95/README.md). The
+  // artifact card's Review step reaches the reviewer routes (2b092fd1d9).
+  // Until 2026-11-09 no assignment at all met the quorum. Nothing is
+  // retroactive: an approval already recorded stays approved.
+  if (assignments.length === 0) {
+    return { met: false, code: 'REVIEW_REQUIRED', message: `Cannot approve: no one has reviewed this document, and it is approved only after its review. ${NAME_A_REVIEWER}` };
+  }
 
   const latestRound = Number(assignments[0].review_round);
   if (!validId(latestRound)) {
@@ -122,13 +140,13 @@ export async function reviewQuorumVerdict(
   // reviewer was withdrawn holds no review, so it does not meet the quorum.
   // Once a closed round opens the next one, assigning a reviewer and then
   // withdrawing them would otherwise approve over an earlier round's request
-  // for changes with no approval on record. No assignment at all (above)
-  // still meets it until the editor's Review panel reaches the reviewer route
-  // (docs/evidence/W5/2026-11-01/p95/README.md, the sequencing hazard).
+  // for changes with no approval on record. Like no assignment at all
+  // (above), it is REVIEW_REQUIRED.
   if (active.length === 0) {
     return {
       met: false,
-      message: 'Cannot approve: every reviewer in the latest review round was withdrawn. Assign a reviewer; once they approve this version, it can be approved.',
+      code: 'REVIEW_REQUIRED',
+      message: `Cannot approve: every reviewer in the latest review round was withdrawn. ${NAME_A_REVIEWER}`,
     };
   }
 
@@ -415,9 +433,14 @@ export async function refuseSignedArtifactAct(input: {
 
   if (previousStatus === 'review' && status === 'approved') {
     const quorum = await reviewQuorumVerdict(input.q, artifact.id, organizationId, artifact.version, input.signerId);
-    if (!quorum.met) return { httpStatus: 400, message: quorum.message };
+    if (!quorum.met) return quorumRefusal(quorum);
   }
   return null;
+}
+
+/** No review at all is 409 REVIEW_REQUIRED (P-95), as the editor's door answers it; every other quorum refusal stays 400. */
+function quorumRefusal(quorum: { message: string; code?: 'REVIEW_REQUIRED' }): ArtifactActRefusal {
+  return quorum.code ? { httpStatus: 409, code: quorum.code, message: quorum.message } : { httpStatus: 400, message: quorum.message };
 }
 
 /** The P-18 refusal, in the one separation-of-duties mapping's status, code and words; null when independent. */

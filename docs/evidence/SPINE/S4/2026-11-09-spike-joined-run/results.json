@@ -1,0 +1,305 @@
+{
+ "commit": "64e3346363",
+ "runs": {
+  "ordinary": {
+   "files": 32,
+   "tests": 798,
+   "passed": 768,
+   "failed": 0,
+   "skipped": 30,
+   "suites": [
+    {
+     "file": "client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx",
+     "tests": 39,
+     "passed": 39,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "client/src/concept2cure/v2/__tests__/adminSkills.test.tsx",
+     "tests": 23,
+     "passed": 23,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "client/src/concept2cure/v2/__tests__/whatAnaRemembers.test.tsx",
+     "tests": 27,
+     "passed": 27,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/__tests__/security/telemetry-redaction.test.ts",
+     "tests": 18,
+     "passed": 18,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/db/__tests__/poolInstrumentation.integration.test.ts",
+     "tests": 30,
+     "passed": 0,
+     "failed": 0,
+     "skipped": 30
+    },
+    {
+     "file": "server/routes/__tests__/ana-skills-routes.test.ts",
+     "tests": 65,
+     "passed": 65,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts",
+     "tests": 17,
+     "passed": 17,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts",
+     "tests": 7,
+     "passed": 7,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/__tests__/ana-context-router-objectives-stay-in-their-project.test.ts",
+     "tests": 6,
+     "passed": 6,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts",
+     "tests": 33,
+     "passed": 33,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts",
+     "tests": 48,
+     "passed": 48,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts",
+     "tests": 22,
+     "passed": 22,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts",
+     "tests": 26,
+     "passed": 26,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts",
+     "tests": 19,
+     "passed": 19,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/ana/__tests__/ana-cannot-sign.test.ts",
+     "tests": 33,
+     "passed": 33,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/ana/__tests__/draft-project-sources.test.ts",
+     "tests": 44,
+     "passed": 44,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/ana/__tests__/run-coordination-dispositions.test.ts",
+     "tests": 1,
+     "passed": 1,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/ana/__tests__/sub-agent-verifiers.test.ts",
+     "tests": 49,
+     "passed": 49,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/ana/__tests__/sub-agent.test.ts",
+     "tests": 43,
+     "passed": 43,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+     "tests": 20,
+     "passed": 20,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/ana/__tests__/turn-plan-and-context.test.ts",
+     "tests": 34,
+     "passed": 34,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/authoring/__tests__/authoring-create-outcome.test.ts",
+     "tests": 31,
+     "passed": 31,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/connectors/__tests__/connector-credentials-stored-unvalidated.pglite.test.ts",
+     "tests": 39,
+     "passed": 39,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/connectors/__tests__/connector-tenant-isolation.test.ts",
+     "tests": 13,
+     "passed": 13,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/submission-gateways/__tests__/gateway-accounts.test.ts",
+     "tests": 21,
+     "passed": 21,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/submission-gateways/__tests__/governed-transmit-unapproved.test.ts",
+     "tests": 1,
+     "passed": 1,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts",
+     "tests": 16,
+     "passed": 16,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts",
+     "tests": 10,
+     "passed": 10,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "server/services/vault/__tests__/vault-ingest-storage.test.ts",
+     "tests": 34,
+     "passed": 34,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "tests/artifact-status-lock-covers-approval.test.ts",
+     "tests": 15,
+     "passed": 15,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "tests/schema-contract/rls-two-tenant-full-schema.contract.test.ts",
+     "tests": 10,
+     "passed": 10,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "tests/submission-gateway-bundle-integrity.test.ts",
+     "tests": 4,
+     "passed": 4,
+     "failed": 0,
+     "skipped": 0
+    }
+   ]
+  },
+  "realDatabase": {
+   "files": 6,
+   "tests": 97,
+   "passed": 97,
+   "failed": 0,
+   "skipped": 0,
+   "suites": [
+    {
+     "file": "server/services/ana/__tests__/run-control-cross-instance.dbtest.ts",
+     "tests": 12,
+     "passed": 12,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "tests/db/atom-search-tenant-key.dbtest.ts",
+     "tests": 7,
+     "passed": 7,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "tests/db/report-state-memory-isolation.dbtest.ts",
+     "tests": 10,
+     "passed": 10,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "tests/db/rules-memory-tenant-isolation.dbtest.ts",
+     "tests": 17,
+     "passed": 17,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "tests/db/two-tenant-application-rls.dbtest.ts",
+     "tests": 30,
+     "passed": 30,
+     "failed": 0,
+     "skipped": 0
+    },
+    {
+     "file": "tests/db/workflow-import-governance.dbtest.ts",
+     "tests": 21,
+     "passed": 21,
+     "failed": 0,
+     "skipped": 0
+    }
+   ]
+  },
+  "poolIntegration": {
+   "files": 1,
+   "tests": 30,
+   "passed": 30,
+   "failed": 0,
+   "skipped": 0,
+   "suites": [
+    {
+     "file": "server/db/__tests__/poolInstrumentation.integration.test.ts",
+     "tests": 30,
+     "passed": 30,
+     "failed": 0,
+     "skipped": 0
+    }
+   ]
+  }
+ }
+}
