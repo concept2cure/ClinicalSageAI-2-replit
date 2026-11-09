@@ -393,6 +393,7 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
                 : undefined}
             action={{
               label: drafts.length ? 'Draft the extrapolation rationale' : 'Check upcoming milestones',
+              icon: I.sparkles,
               onClick: () => ask(drafts.length && topDraft
                 ? ('Draft the age-range extrapolation rationale for the ' + topDraft.kind + ' for ' + topDraft.product)
                 : ('Surface every PREA/PIP milestone due in the next 90 days')),
@@ -632,6 +633,7 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
                 : undefined}
             action={{
               label: topPending ? 'Draft the designation narrative' : 'Review the incentive value',
+              icon: I.sparkles,
               onClick: () => ask(topPending
                 ? ('Draft the ' + topPending.agency + ' orphan designation application for ' + topPending.product + ' — prevalence + scientific rationale for ' + topPending.indication)
                 : 'Compare exclusivity and incentive benefits across our orphan designations'),
@@ -917,6 +919,7 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
                 : undefined}
             action={{
               label: highChg.length ? 'Classify the change against ICH Q12' : (nextRen ? 'Prepare the next renewal' : 'Review the portfolio'),
+              icon: I.sparkles,
               onClick: () => ask(highChg.length && topChg
                 ? ('Assess ' + topChg.title + ' against ICH Q12 — PACMP eligible or prior-approval supplement?')
                 : (nextRen
@@ -1212,6 +1215,7 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
                 : undefined}
             action={{
               label: highPrr ? 'Adjudicate this signal now' : (agg ? 'Continue the aggregate report' : 'Review the signal log'),
+              icon: I.sparkles,
               onClick: () => ask(highPrr && top
                 ? ('Adjudicate the ' + topTerm + ' signal on ' + top.product + ' — pull every case narrative, run causality assessment, and advise whether a label update is warranted')
                 : (agg

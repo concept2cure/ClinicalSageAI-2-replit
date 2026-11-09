@@ -1,0 +1,3 @@
+ ✓ client/src/concept2cure/v2/__tests__/answerLeadSpark.test.tsx > D0.md §8.1: the spark marks an AnA action, and only that > AnswerLead draws no icon on its action unless given one 37ms
+ ✓ client/src/concept2cure/v2/__tests__/answerLeadSpark.test.tsx > D0.md §8.1: the spark marks an AnA action, and only that > every literal lead action carries the spark exactly when it asks AnA 358ms
+      Tests  2 passed (2)
