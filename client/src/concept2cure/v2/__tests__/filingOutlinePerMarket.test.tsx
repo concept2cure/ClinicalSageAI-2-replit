@@ -121,8 +121,10 @@ describe("a market's own part of the filing in the editor (F22b)", () => {
     // Opened: the outline is now the EU document's.
     expect(await rowLabel('Summary of product characteristics')).toBeTruthy();
     // Focus is on the opened document's name, not lost with the button
-    // (accessibility review, 2026-10-15).
-    await waitFor(() => expect(document.activeElement?.classList.contains('ed-tree-t')).toBe(true));
+    // (accessibility review, 2026-10-15). Since D4-4 that name is the bar's
+    // title: the outline can be closed, so focus cannot depend on it.
+    await waitFor(() => expect(document.activeElement?.classList.contains('dcv-bar-t')).toBe(true));
+    expect(document.activeElement?.textContent).toBe('Vorelinib — EU MAA');
   });
 
   it('in the EU copy: its Module 1 and 3.2.R, the gaps named, a Module 1 node starts here', async () => {

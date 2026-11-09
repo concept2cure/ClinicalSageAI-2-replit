@@ -124,6 +124,7 @@ beforeEach(() => {
   nav.mockReset();
   clearEditorTarget();
 });
+afterEach(() => { try { localStorage.removeItem('c2c.editor.outline'); } catch { /* none */ } });
 afterEach(() => {
   cleanup();
   clearEditorTarget();
@@ -206,6 +207,10 @@ describe('DocumentCanvas — converts into the full editor in place', () => {
     expect(expanded.hasAttribute('hidden')).toBe(false);
     // The workbench, pinned: its tree names THIS document and its editor holds THIS section.
     await waitFor(() => expect(document.querySelector('.ed')).not.toBeNull());
+    // Beside the conversation the outline opens closed (D4-4); its toggle in the bar shows it.
+    const outline = within(expanded).getByTestId('ed-outline-toggle');
+    expect(outline.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(outline);
     expect(await screen.findByRole('button', { name: /^2\.5\.1\s*Product Development Rationale/ })).toBeTruthy();
     await waitFor(() => expect((document.querySelector('.rse-body .tiptap')?.textContent ?? '')).toContain('humanized IgG1'));
     // No navigation happened.

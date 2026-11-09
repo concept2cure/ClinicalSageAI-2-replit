@@ -22,18 +22,25 @@
   /* ── Editor (full-bleed 3-pane) ── */
   .ed {
     display: grid;
-    grid-template-columns: 220px minmax(420px, 1fr);
+    grid-template-columns: 260px minmax(420px, 1fr);
     height: 100%;
     min-height: 0;
     min-width: 0;
   }
   .ed[data-comments='true'] {
-    grid-template-columns: 220px minmax(420px, 1fr) clamp(300px, 24vw, 460px);
+    grid-template-columns: 260px minmax(420px, 1fr) clamp(300px, 24vw, 460px);
   }
-  /* Those three tracks have a hard floor: 220 + 420 + 300 = 940px. The editor
+  /* D4-4: with the outline closed, the page takes its column (the outline is 260px, §D4.K). */
+  .ed[data-outline='closed'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ed[data-outline='closed'][data-comments='true'] {
+    grid-template-columns: minmax(420px, 1fr) clamp(300px, 24vw, 460px);
+  }
+  /* Those three tracks have a hard floor: 260 + 420 + 300 = 980px. The editor
      pane is the window minus the rail (`.shell[data-editor='true']` is
      `var(--rail) 1fr 0`, and --rail is 264px expanded), so the pane drops under
-     940 as soon as the window is narrower than 1204 — and the page then
+     980 as soon as the window is narrower than 1244 — and the page then
      scrolled SIDEWAYS rather than anything scrolling inside itself, because
      .ed is `overflow: visible`. visual-qa:overflow measured it at 940 > 796.
      Below that width the comments pane floats over the document column instead
@@ -41,10 +48,13 @@
      and the document keeps the 420px measure it needs to be edited in — the
      alternative, letting the middle column shrink, leaves 276px for the
      document, which is not an editor. */
-  @media (max-width: 1204px) {
+  @media (max-width: 1244px) {
     .ed[data-comments='true'] {
       position: relative;
-      grid-template-columns: 220px minmax(0, 1fr);
+      grid-template-columns: 260px minmax(0, 1fr);
+    }
+    .ed[data-outline='closed'][data-comments='true'] {
+      grid-template-columns: minmax(0, 1fr);
     }
     .ed[data-comments='true'] > .ed-comments {
       position: absolute;
@@ -75,6 +85,10 @@
     min-height: 0;
     overflow-y: auto;
     background: var(--bg-000);
+  }
+  /* `display: flex` above would otherwise outrank the attribute (D4-4, the outline on demand). */
+  .ed-tree[hidden] {
+    display: none;
   }
   .ed-tree-h {
     padding: 14px 16px;
@@ -125,11 +139,28 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 5px;
   }
+  /* The project's filings band (FilingMarkets.tsx) is the same band with a heading row. */
   .ed-basis-h {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 4px 6px;
+  }
+  /* D4-4: the outline basis is a disclosure, "{headline} · About this outline", its paragraph one click away. A
+     block, not a grid: not every browser lays out a <details> as a grid. */
+  details.ed-basis {
+    display: block;
+  }
+  .ed-basis > summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 6px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .ed-basis > summary::-webkit-details-marker {
+    display: none;
   }
   /* The tone is the word's colour, not a pill: "Harmonised standard ·
      outline basis", quiet. */
@@ -164,7 +195,7 @@
   }
   /* 12px, the floor (D0 §3): this paragraph was 10.5px. */
   .ed-basis-d {
-    margin: 0;
+    margin: 6px 0 0;
     font-size: var(--fs-caption, 12px);
     line-height: 1.5;
     color: var(--text-300);
@@ -213,6 +244,10 @@
   .ed-tree-row[data-blocker='true'] .ed-num {
     color: var(--error);
   }
+  /* An unstarted node reads quieter by colour at full opacity; it was dimmed to .62 (D4-4). */
+  .ed-tree-row[data-unstarted] .ed-lbl {
+    color: var(--text-300);
+  }
   /* 12px, the floor: the code was 10px. */
   .ed-num {
     font-family: var(--font-mono);
@@ -226,6 +261,37 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .ed-lbl[data-depth='0'] {
+    font-weight: 600;
+  }
+  /* A required node not yet started: a ring, with "required" for a screen reader; it was a REQUIRED pill (D4-4). */
+  .ed-req {
+    width: 7px;
+    height: 7px;
+    flex-shrink: 0;
+    margin-left: auto;
+    border-radius: 50%;
+    border: 1.5px solid var(--text-400);
+  }
+  .ed-tree-n {
+    margin-left: auto;
+    font-size: var(--fs-caption, 12px);
+    color: var(--text-300);
+    font-variant-numeric: tabular-nums;
+  }
+  .ed-tree-key {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 16px 12px;
+    font-size: var(--fs-caption, 12px);
+    color: var(--text-300);
+  }
+  .ed-tree-key .ed-req,
+  .ed-tree-key .ed-dot {
+    margin-left: 0;
   }
   /* A drafted node's dot is `data-s="ok"` (DocumentWorkbench's outline), and
      no rule coloured it, so it was invisible. Any other state is the quiet
@@ -2204,11 +2270,44 @@
       padding: 0;
     }
   }
+  /* The panel is a size container (D4.md §D4.K, `artifact`): what fits beside the page depends on the panel's
+     width, not the window's. */
   .dcv-workbench {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    container: artifact / inline-size;
+  }
+  /* D4-4: in a panel under 900px the outline floats over the page instead of taking a column of it, and Escape
+     closes it first (DocumentWorkbench `outlineOverlays`). An open rail floats too, so the page keeps the width. */
+  @container artifact (max-width: 899px) {
+    .dcv-workbench > .ed,
+    .dcv-workbench > .ed[data-comments='true'] {
+      position: relative;
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .dcv-workbench > .ed > .ed-tree {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 6;
+      width: min(280px, 100%);
+      max-height: none;
+      border-bottom: 0;
+      border-right: 1px solid var(--border);
+      box-shadow: var(--v2-shadow-lg);
+    }
+    .dcv-workbench > .ed[data-comments='true'] > .ed-comments {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: min(380px, 100%);
+      z-index: 5;
+      box-shadow: -8px 0 24px color-mix(in oklab, var(--black) 10%, transparent);
+    }
   }
   .dcv-workbench > .ed {
     flex: 1;
@@ -2221,7 +2320,10 @@
   @media (max-width: 1500px) {
     .dcv-workbench > .ed[data-comments='true'] {
       position: relative;
-      grid-template-columns: 220px minmax(0, 1fr);
+      grid-template-columns: 260px minmax(0, 1fr);
+    }
+    .dcv-workbench > .ed[data-outline='closed'][data-comments='true'] {
+      grid-template-columns: minmax(0, 1fr);
     }
     .dcv-workbench > .ed[data-comments='true'] > .ed-comments {
       position: absolute;
@@ -2356,6 +2458,12 @@
     .ed[data-no-comments] {
       grid-template-columns: minmax(0, 1fr);
       grid-template-rows: auto minmax(0, 1fr);
+    }
+    /* With the outline closed there is no first row: the page takes the height (D4-4). */
+    .ed[data-outline='closed'],
+    .ed[data-outline='closed'][data-comments='true'] {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr);
     }
     /* The outline scrolls as one box here (RR5 phone acceptance, 2026-10-30).
        Capped at 180px with no overflow of its own, its header (the program,
