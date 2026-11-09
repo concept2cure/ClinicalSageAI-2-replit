@@ -42,7 +42,7 @@ import {
   CHILD_WRAP_UP_MS,
 } from '@shared/ana/run-control-limits';
 import { getTenantScope } from '../../db/tenantStore.js';
-import { runRefusingModelCalls, bindOwnerPrivateModelChildRequest } from '../ai-gateway/model-call-scope.js';
+import { runRefusingModelCalls, bindOwnerPrivateModelChildRequest, CONVERSATION_DEFAULT_TIER } from '../ai-gateway/model-call-scope.js';
 import type { CoordinationModel, RunCoordinationHost } from './run-events.js';
 import { startAgentCoordination, queueAgentProgress, flushAgentProgress, agentModelContext, recordAgentReport, beginAgentRun, type AgentRun } from './sub-agent-stream.js';
 import type { AnyAnaTool, GatewayRequest } from '../ai-gateway/types.js';
@@ -490,9 +490,10 @@ async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: Chec
     parentRunId: h.parentRunId,
     callerModule: 'ana-sub-agent',
     onOwnerPrivateCapture: h.onOwnerPrivateCapture,
-    // The self-contained brief has no independently issued classification.
-    // Loaded sources can raise its floor; neither fields nor model prose lower it.
-    inputSensitivityTiers: Object.freeze([3, ...(source?.tiers ?? [])]),
+    // The brief is written from the conversation, so it carries the conversation's
+    // default tier (model-call-scope.ts); loaded sources raise its floor, and
+    // neither fields nor model prose lower it.
+    inputSensitivityTiers: Object.freeze([CONVERSATION_DEFAULT_TIER, ...(source?.tiers ?? [])]),
     ...(source ? { beforeDispatch: source.assertCurrent } : {}),
   });
   const { executeAgenticLoop, servedModelOf } = await import('./AnaToolExecutor.js');
