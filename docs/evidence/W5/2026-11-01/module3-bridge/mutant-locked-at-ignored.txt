@@ -1,0 +1,8 @@
+# Mutant: only status is read, not locked_at
+# in server/services/module3-convergence-service.ts
+# -       if (row.status === 'locked' || row.lockedAt != null) {
+# +       if (row.status === 'locked') {
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a Module 3 section bridged from a compile > a row that records a lock under a legacy status (published) is not written over either 18ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed | 49 skipped (53)
