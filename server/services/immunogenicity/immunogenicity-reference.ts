@@ -8,9 +8,10 @@
  * It is also the one home of the stated-input helpers that EVERY Rule 2 S5
  * engine uses, not only immunogenicity's: the readers (statedBoolean,
  * booleanInputStates, statedNumber, statedOneOf) and, since S5d-0
- * (2026-11-09), the three-valued helpers (unstated, anyOf, allOf) and the
- * every-answer search (everyAnswer, conclusions, decidingFacts). Import them
- * from here; do not copy them into an engine or move them back.
+ * (2026-11-09), the three-valued helpers (unstated, anyOf, allOf), the
+ * every-answer search (everyAnswer, conclusions, decidingFacts) and the input
+ * adapters (oneOfInput, textInput, listed; S5d-0b). Import them from here;
+ * do not copy them into an engine or move them back.
  * s5-three-valued-helpers-have-one-home.test.ts fails if an engine does.
  * Split out of immunogenicity-knowledge.ts on 2026-10-15 when that file
  * crossed the repository size ceiling; it re-exports the public names, so
@@ -19,7 +20,7 @@
  * @module server/services/immunogenicity/immunogenicity-reference
  */
 
-import { ComputationRefusal } from '../ana-biostats/computation-engine';
+import { ComputationRefusal, type RequiredInputCheck } from '../ana-biostats/computation-engine';
 
 /* ════════════════════════════════════════════════════════════════════════
  * SECTION 0 — SHARED TYPES, ENUMS, AND REFERENCE TABLES
@@ -191,6 +192,31 @@ export function decidingFacts<K extends string, T>(
         (a: Record<K, boolean>): boolean => conclude({ ...a, [key]: true }) !== conclude(a),
       ),
   );
+}
+
+/* ── Input adapters (S5d-0b, 2026-11-09) ──────────────────────────────────────
+   The refuseUnlessStated checks and the prose list every S5 engine uses:
+   moved here verbatim from biomarker-knowledge.ts, whose oneOfInput the
+   digital-health engine also carried byte for byte. */
+
+/** A required non-empty text, for refuseUnlessStated. */
+export function textInput(field: string, value: unknown): RequiredInputCheck {
+  return { field, value, ok: typeof value === 'string' && value.trim().length > 0, expected: 'non-empty text' };
+}
+
+/** A required value from a fixed vocabulary, for refuseUnlessStated. */
+export function oneOfInput(field: string, value: unknown, allowed: readonly string[]): RequiredInputCheck {
+  return {
+    field,
+    value,
+    ok: typeof value === 'string' && allowed.includes(value),
+    expected: `one of ${allowed.join(', ')}`,
+  };
+}
+
+/** "a", "a and b", "a, b and c". */
+export function listed(items: readonly string[]): string {
+  return items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 }
 
 /** Canonical citations reused across the engine. */

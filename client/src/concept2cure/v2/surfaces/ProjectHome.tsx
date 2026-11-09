@@ -53,7 +53,7 @@ import { biotechPlanEntry } from './ProjectBiotechPlan';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { filingLifecycleReferenceFor } from '@shared/regulatory/filing-lifecycle-reference';
 import { ProjectSettings, type ProjectSettingsRequest } from './ProjectSettings';
-import { ProjectCoreWork, ProjectWorkProjects, workAreasFor } from './ProjectCoreWork';
+import { ProjectCoreWork, ProjectWorkProjects, workAreasFor, workProjectOpenable } from './ProjectCoreWork';
 import { actionWords, enumWords, filingTypeWords } from './projectWords';
 import { WS_LABEL } from './ProjectPortfolioFilters';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
@@ -1749,13 +1749,14 @@ function ProjectHeaderDoors({ pid, prog, deviceFiling, cmcComposes, available, o
   /* The Reports row is passed only when it will show, so a card with nothing to open is not drawn. */
   const reports = Boolean(shellProgramId(useShellProject())) && available('insights');
   const track = read ? { deviceFiling, riskBasedMonitoring: read.riskBasedMonitoring === true, cmcComposes } : null;
-  /* A work project opens on its area only where this project's track offers that area (S12). */
+  /* A work project opens on its area where this project's track offers that area, or on the organisation's Quality
+     area (S12; P-111 item 5): workProjectOpenable. */
   const areaIds = new Set(track ? workAreasFor(track).map((area) => area.id) : []);
   return (
     <ProjectCoreWork programId={pid} available={available} onNav={onNav}
       track={track}
       workProjects={read && pid ? <ProjectWorkProjects programId={pid} anchorProjectId={anchorProjectId} canChange={read.canChange !== false}
-        openable={(id) => areaIds.has(id) && available(id)} onOpen={onNav} /> : null}>
+        openable={workProjectOpenable(areaIds, available)} onOpen={onNav} /> : null}>
       {reports && <ProjectReportsDoor onNav={onNav} />}
     </ProjectCoreWork>
   );

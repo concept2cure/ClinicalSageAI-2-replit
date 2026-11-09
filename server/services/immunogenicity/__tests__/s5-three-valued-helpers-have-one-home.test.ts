@@ -6,6 +6,10 @@
  * in `biomarker-knowledge.ts`, and the three-valued `unstated` / `anyOf` / `allOf` were copied, identical, into the
  * GCP and GMP engines, with `unstated` a fourth time in the medical-device engine. The S5d plans would have copied
  * the search into more engines. Each engine now imports them.
+ *
+ * S5d-0b (2026-11-09) adds the small input adapters: `listed` ("a, b and c"), `oneOfInput` and `textInput` (the
+ * `refuseUnlessStated` checks for a vocabulary and for non-empty text), which the biomarker and digital-health
+ * engines carried byte for byte.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,13 +21,27 @@ import {
   conclusions,
   decidingFacts,
   everyAnswer,
+  listed,
+  oneOfInput,
+  textInput,
   uniqueStrings,
   unstated,
 } from '../immunogenicity-reference';
 
 const SERVICES = fileURLToPath(new URL('../../', import.meta.url));
 const HOME = 'immunogenicity/immunogenicity-reference.ts';
-const NAMES = ['unstated', 'anyOf', 'allOf', 'uniqueStrings', 'everyAnswer', 'conclusions', 'decidingFacts'] as const;
+const NAMES = [
+  'unstated',
+  'anyOf',
+  'allOf',
+  'uniqueStrings',
+  'everyAnswer',
+  'conclusions',
+  'decidingFacts',
+  'listed',
+  'oneOfInput',
+  'textInput',
+] as const;
 
 /**
  * Module-level helpers that share a name but are not these, each with its reason. A stale entry fails the test, so
@@ -33,6 +51,7 @@ const NOT_THESE: Record<string, { names: readonly string[]; reason: string }> = 
   'research-compliance/compliance-checklist.ts': { names: ['anyOf', 'allOf'], reason: 'combine its own Condition type, not booleans' },
   'study-design/external-control-plan.ts': { names: ['unstated'], reason: "lists a plan's unstated elements as text" },
   'study-design/master-protocol.ts': { names: ['unstated'], reason: 'builds a not-stated protocol element' },
+  'ana/saved-section-writing-review.ts': { names: ['listed'], reason: 'truncates a list of items for a payload, not prose' },
 };
 
 /** Every non-test .ts file under server/services, relative to it. */
@@ -71,7 +90,7 @@ describe('the S5 three-valued helpers have one home', () => {
     expect(stale).toEqual([]);
   });
 
-  it('the home defines all seven', () => {
+  it('the home defines all ten', () => {
     expect(defines(fs.readFileSync(path.join(SERVICES, HOME), 'utf8'))).toEqual([...NAMES]);
   });
 
@@ -111,6 +130,17 @@ describe('the S5 three-valued helpers have one home', () => {
     expect(everyAnswer({ a: true, b: undefined })).toEqual([{ a: true, b: true }, { a: true, b: false }]);
     expect(everyAnswer({ a: false })).toEqual([{ a: false }]);
     expect(everyAnswer({ a: undefined, b: undefined })).toHaveLength(4);
+  });
+
+  it('listed joins prose as "a", "a and b", "a, b and c"', () => {
+    expect([[], ['a'], ['a', 'b'], ['a', 'b', 'c']].map((items) => listed(items))).toEqual(['', 'a', 'a and b', 'a, b and c']);
+  });
+
+  it('oneOfInput and textInput are refuseUnlessStated checks for a vocabulary and for non-empty text', () => {
+    expect(oneOfInput('kind', 'b', ['a', 'b'])).toEqual({ field: 'kind', value: 'b', ok: true, expected: 'one of a, b' });
+    expect([undefined, 'B', 1].map((v) => oneOfInput('kind', v, ['a', 'b']).ok)).toEqual([F, F, F]);
+    expect(textInput('name', 'X')).toEqual({ field: 'name', value: 'X', ok: true, expected: 'non-empty text' });
+    expect([undefined, '', '  ', 5].map((v) => textInput('name', v).ok)).toEqual([F, F, F, F]);
   });
 
   it('conclusions lists the distinct conclusions, and decidingFacts the unstated facts that change one', () => {

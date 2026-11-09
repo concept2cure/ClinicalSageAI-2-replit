@@ -52,7 +52,7 @@
 
 import type { DeviceClass as UsDeviceClass } from '../../../shared/regulatory/device-class.js';
 import { refuseUnlessStated, type RequiredInputCheck } from '../ana-biostats/computation-engine.js';
-import { booleanInputStates, statedBoolean, statedOneOf } from '../immunogenicity/immunogenicity-reference.js';
+import { booleanInputStates, oneOfInput, statedBoolean, statedOneOf } from '../immunogenicity/immunogenicity-reference.js';
 import {
   CATEGORY_META,
   CITATIONS,
@@ -191,16 +191,6 @@ const PCCP_SCOPE_IF_TRUE: Record<(typeof PCCP_FLAGS)[number], string> = {
   addsNewInputModality: 'a new input modality needs its validation pre-specified in the Modification Protocol',
   continuousLearningProposed: 'fully automated in-field learning is difficult to bound within a PCCP',
 };
-
-/** A required value from a fixed vocabulary, for refuseUnlessStated. */
-function oneOfInput(field: string, value: unknown, allowed: readonly string[]): RequiredInputCheck {
-  return {
-    field,
-    value,
-    ok: typeof value === 'string' && allowed.includes(value),
-    expected: `one of ${allowed.join(', ')}`,
-  };
-}
 
 /** deviceName (design_pccp, assess_device_cybersecurity): text, or left out. */
 const deviceNameInput = (value: unknown): RequiredInputCheck =>

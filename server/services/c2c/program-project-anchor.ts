@@ -488,7 +488,8 @@ export async function strictProjectRowForRef(
  * `metadata.workKind`; `type` stays 'regulatory', the documented domain this module already writes. */
 
 /** P-83's work kinds. */
-export const WORK_KINDS = ['cmc', 'biostatistics', 'rbm', 'data_management', 'clin_pharm', 'nonclinical'] as const;
+/* 'quality' joins by founder decision P-111 (2026-11-09): a Quality work project opens the Quality area bound to it. */
+export const WORK_KINDS = ['cmc', 'biostatistics', 'rbm', 'data_management', 'clin_pharm', 'nonclinical', 'quality'] as const;
 export type WorkKind = typeof WORK_KINDS[number];
 export const isWorkKind = (value: unknown): value is WorkKind => typeof value === 'string' && (WORK_KINDS as readonly string[]).includes(value);
 /** The hierarchy's deepest level (project-hierarchy.ts: 0 Program … 3 Sub-project). */
