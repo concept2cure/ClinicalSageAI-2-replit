@@ -285,3 +285,37 @@ describe('the conversation beside an open document (D4-5)', () => {
     expect(value(AUTH, '.c2c-v2 .ct-main[data-canvas-open] > .ct-conv', 'flex')).toBe('0 0 clamp(420px, 38%, 560px)');
   });
 });
+
+/* §D4.K "Page": inside the panel, the page's side padding follows the panel's width, not the window's. At 729 px
+   beside the conversation the page kept the full-width 48 px sides, so the text column was 633 px of a 729 px panel;
+   the phone rule (16 px) only ever applied to the window. The variable moves with the padding, because the ribbon
+   spans the padding through it (rich-section-editor.css). */
+describe('the page inside a narrow panel (§D4.K artifact container)', () => {
+  const root = postcss.parse(readFileSync(resolve(STYLES, AUTH), 'utf8'));
+  const inContainer = (params: RegExp, selector: string): Map<string, string> | null => {
+    let found: Map<string, string> | null = null;
+    root.walkAtRules('container', (at) => {
+      if (!params.test(at.params)) return;
+      at.walkRules((rule) => {
+        if (!splitTopLevel(rule.selector).some((s) => norm(s) === norm(selector))) return;
+        const decls = new Map<string, string>();
+        rule.walkDecls((d) => { decls.set(d.prop, d.value.trim()); });
+        found = decls;
+      });
+    });
+    return found;
+  };
+
+  it('gives the page 28 px sides in a panel under 900 px', () => {
+    const d = inContainer(/^artifact \(max-width: 899px\)$/, '.ed-doc-inner');
+    expect(d?.get('--ed-page-pad-x')).toBe('28px');
+    expect(d?.get('padding')).toBe('24px var(--ed-page-pad-x) 96px');
+  });
+
+  it('gives the page 16 px sides, and a 22 px title, in a panel under 560 px', () => {
+    const d = inContainer(/^artifact \(max-width: 560px\)$/, '.ed-doc-inner');
+    expect(d?.get('--ed-page-pad-x')).toBe('16px');
+    expect(d?.get('padding')).toBe('20px var(--ed-page-pad-x) 80px');
+    expect(inContainer(/^artifact \(max-width: 560px\)$/, '.ed-mast-t')?.get('font-size')).toBe('22px');
+  });
+});

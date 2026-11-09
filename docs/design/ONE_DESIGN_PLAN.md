@@ -1975,6 +1975,48 @@ molecule**, so an under-described biologic is admitted into small-molecule compo
 `docs/evidence/F1/2026-11-08-specification-method-gate/`; the recommendation is to reference the register row by id,
 which is additive and needs no backfill to be correct.
 
+#### F1 / L1 — the MDX journey: the device and diagnostics client's path (session `session_01P6GWSvLLKKNQMXXpyki7Yq`, 2026-11-01 to 2026-11-09)
+
+**What already exists.** The study and its order of work are in `.design/client-journey/MDX_JOURNEY_2026-11-01.md`
+(`68bbca15c4`), which lists every existing device screen, route, engine and outline by path, and records defects
+M1–M22. Each repair below extends an existing file; none adds a screen, mount or table.
+
+- **Delivered**, all on `concept2cure-v2`, evidence under `docs/evidence/MDX-JOURNEY/`:
+  - **The device screens keep their promises.** M1 and M2 (`4bef8ac4f5`), M5 (`be46895c97`), M6(c) (`8d4aef6de5`)
+    and M10 (`f96370ece4`). M11 (`9d4e87c70d`), which also found M12 not to be a defect. M8 (`67e23b8cd1`) and M17
+    (`1322eddcee`).
+  - **Every eSTAR and EU exit asks whether the filing holds the document's text (P-29.3).** Slice 3 (`8c30fa2c97`)
+    covers `/build`, the official eSTAR's attachments, and the readiness and assembly verdicts. M3's server half
+    (`e05eb3d4ac`) covers the EU technical file.
+  - **A new project's home filing can get its editing copy again**, found walking the journey (`bda1d5aed1`). Since
+    `31a5453861` no screen could create it, for any client type.
+  - **The journey walked in the running app.** The 510(k) journey (`afd222802e`) and the PMA and EU IVDR journeys
+    (`2e53a15c9f`): from New project to a section written into each filing, and the package exported with the filing
+    compared.
+  - **M18** (`d2d2750ca5`, `71417d75ac`). The PMA screen's modules are the project's own PMA document, scored by the
+    PMA mapper. They had been the organization's legacy 510(k) sections, so a project with no PMA document showed
+    every module "complete".
+  - **M19** (`2a84c3d268`). The PMA mapper places a lettered leaf by its 814.20 key, never by its title. An approved
+    SSED had counted modules 2, 4 and 5 present with C, F and G empty, in every verdict that reads the mapper.
+  - **M20** (`ae5483338b`, `f06b6de374`, `2b4e32d9bd`). The PMA trial cards read only the project's linked study. They
+    had bound another product's study by name. The card that counted protocol deviations as "AE rate" is now
+    "Serious deviations".
+- **Re-walked on the merged trunk**, 2026-11-09. 510(k): New project (201), the doors, the editing copy, B1 saved into
+  the filing, and the export (200, `filingAgreement.compared: true`). The device lane's suites, 107 files and 1,099
+  tests, pass (`docs/evidence/MDX-JOURNEY/2026-11-02-m20-pma-trial-cards-linked-study/green/device-lane-on-trunk.txt`).
+- **Found, and left where it belongs.**
+  - M3's UI half: the IVDR door's screen asks AnA to assemble, and offers only an FDA 510(k) eSTAR. It needs a
+    sequence a device project does not have (R1, founder question 1).
+  - M7 (De Novo has no door) and M13 (the CDRH Portal) are founder questions.
+  - M14, M15 and M22 are the editor's and the project home's.
+  - The 390 px clipping is the coordinator's.
+  - M16 is P-60's question.
+  - M21: the draft package is named after its class and type, not its project.
+  - Without `REVIEW_ADMIN_TOKEN`, the 510(k) screen's predicate and SE panels read "Could not load", because
+    predicate intelligence answers 503 "not configured".
+- **Next.** The device readiness scorecard: a required module `not_started` reads `nearly_ready`. This is the
+  coordinator's F1 item of 2026-11-02, held in COORDINATION.md. After it, M21.
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for

@@ -2171,6 +2171,25 @@
       box-shadow: -8px 0 24px color-mix(in oklab, var(--black) 10%, transparent);
     }
   }
+  /* §D4.K "Page": in the panel, the page's sides follow the panel's width, not the window's. Beside the conversation
+     (729 px at 1440) the page kept its full-width 48 px sides. The variable moves with the padding, because the
+     ribbon spans the padding through it (rich-section-editor.css). The phone media rule below still serves the
+     editor outside a panel. */
+  @container artifact (max-width: 899px) {
+    .ed-doc-inner {
+      --ed-page-pad-x: 28px;
+      padding: 24px var(--ed-page-pad-x) 96px;
+    }
+  }
+  @container artifact (max-width: 560px) {
+    .ed-doc-inner {
+      --ed-page-pad-x: 16px;
+      padding: 20px var(--ed-page-pad-x) 80px;
+    }
+    .ed-mast-t {
+      font-size: 22px;
+    }
+  }
   .dcv-workbench > .ed {
     flex: 1;
     min-height: 0;
@@ -2319,9 +2338,9 @@
       width: 100%;
     }
     /* The page keeps a 16px gutter, and the title steps down as the page
-       titles do (D4-1). §D4.K writes these as `@container artifact` queries;
-       the container is D4-5's panel shell, and until it exists this is the
-       width that needs them. */
+       titles do (D4-1). Inside the panel the `@container artifact` rules
+       above do this by the panel's width; this rule is the editor outside a
+       panel, at the window's. */
     .ed-doc-inner {
       --ed-page-pad-x: 16px;
       padding: 20px var(--ed-page-pad-x) 80px;
