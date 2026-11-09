@@ -94,6 +94,17 @@ async function seed(c: QuorumCase) {
     [row.id, row.assignment_id, row.artifact_id, row.organization_id, row.reviewer_id, row.review_round, row.decision, row.version_reviewed]);
   }
 }
+/**
+ * A completed round-1 review approving version 3 by `reviewerId`. P-95
+ * (2026-11-09): an approval follows a completed review, so the cases that
+ * approve to test something else seed one by 701, neither signer nor author.
+ */
+async function reviewed(reviewerId = 701) {
+  await pg.query(`INSERT INTO concept2cure_review_assignments (id, artifact_id, organization_id, reviewer_id, review_round, status)
+    VALUES (1, 4242, 99, $1, 1, 'completed')`, [reviewerId]);
+  await pg.query(`INSERT INTO concept2cure_review_decisions (id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
+    VALUES (11, 1, 4242, 99, $1, 1, 'approve', 3)`, [reviewerId]);
+}
 async function snapshot() {
   return [
     (await pg.query('SELECT * FROM concept2cure_review_assignments ORDER BY id')).rows,
@@ -163,19 +174,37 @@ for (const status of ['approved', 'locked'] as const) {
       const result = await refuseSignedArtifactAct(signedInput(queryable(), status));
       expect(result).toMatchObject({ httpStatus: 409, details: { blockingFindings: [{ id: 7 }] } });
     });
-    it('preserves the explicit-clear/no-review policy', async () => {
+    it('an explicit clearance passes, with the completed review P-95 requires', async () => {
+      await reviewed();
       expect(await refuseSignedArtifactAct(signedInput(queryable(), status))).toBeNull();
     });
     it('does not elevate warnings into blocking findings', async () => {
+      await reviewed();
       boundary.check.mockResolvedValue({ ...clear, warningFindings: [{ ...finding, authorityState: 'warning' }] });
       expect(await refuseSignedArtifactAct(signedInput(queryable(), status))).toBeNull();
     });
   });
 }
 
+/* P-95 (2026-11-09): no review at all is 409 REVIEW_REQUIRED, saying where a
+   reviewer is named; every other quorum refusal stays 400 with no code. */
+it('shared signed-approval preflight: no reviewer named is 409 REVIEW_REQUIRED', async () => {
+  const refusal = await refuseSignedArtifactAct(signedInput(queryable()));
+  expect(refusal).toMatchObject({ httpStatus: 409, code: 'REVIEW_REQUIRED' });
+  expect(refusal?.message).toMatch(/no one has reviewed this document.*Review section/);
+});
+it('shared signed-approval preflight: every reviewer withdrawn is 409 REVIEW_REQUIRED', async () => {
+  await seed({ name: 'withdrawn', assignments: [{ id: 1, artifact_id: 4242, organization_id: 99, reviewer_id: 701, review_round: 1, status: 'withdrawn' }], decisions: [], met: false });
+  expect(await refuseSignedArtifactAct(signedInput(queryable()))).toMatchObject({ httpStatus: 409, code: 'REVIEW_REQUIRED' });
+});
+it('shared signed-approval preflight: a release reads no review', async () => {
+  expect(await refuseSignedArtifactAct(signedInput(queryable(), 'locked'))).toBeNull();
+});
 it('shared signed-approval preflight refuses missing decisions', async () => {
   await seed({ name: 'missing', assignments: [{ id: 1, artifact_id: 4242, organization_id: 99, reviewer_id: 701, review_round: 2, status: 'completed' }], decisions: [], met: false });
-  expect(await refuseSignedArtifactAct(signedInput(queryable()))).toMatchObject({ httpStatus: 400 });
+  const refusal = await refuseSignedArtifactAct(signedInput(queryable()));
+  expect(refusal).toMatchObject({ httpStatus: 400 });
+  expect(refusal?.code).toBeUndefined();
 });
 it('an uncovered lock remains refused before contradiction lookup', async () => {
   boundary.approval.mockReturnValue({ filable: false, problem: 'not approved', remedy: 'review again', reason: 'no-approved-version' });
@@ -210,10 +239,12 @@ describe('P-18: an author cannot approve or release their own artifact', () => {
   });
   it('a version written in another organization is not read as authorship of this one', async () => {
     await pg.exec(`INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, created_by_id) VALUES (4242, 98, 2, ${SIGNER})`);
+    await reviewed();
     expect(await refuseSignedArtifactAct(signedInput(queryable()))).toBeNull();
   });
   for (const status of ['approved', 'locked'] as const) {
-    it(`${status}: a different user signing, no reviewer assigned, still passes`, async () => {
+    it(`${status}: a different user signing, after another user's completed review, passes`, async () => {
+      await reviewed();
       expect(await refuseSignedArtifactAct(signedInput(queryable(), status))).toBeNull();
     });
   }
@@ -246,13 +277,6 @@ describe('P-18: an author cannot approve or release their own artifact', () => {
    P-18 reads authors), so an approver who reviewed in the latest round cannot
    sign that version's approval. Asked by the preflight both doors share. */
 describe('P-95 Q1: the approval is signed by someone who did not review it', () => {
-  const reviewed = async (reviewerId: number) => {
-    await pg.query(`INSERT INTO concept2cure_review_assignments (id, artifact_id, organization_id, reviewer_id, review_round, status)
-      VALUES (1, 4242, 99, $1, 1, 'completed')`, [reviewerId]);
-    await pg.query(`INSERT INTO concept2cure_review_decisions (id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
-      VALUES (11, 1, 4242, 99, $1, 1, 'approve', 3)`, [reviewerId]);
-  };
-
   it('the signer reviewed this version: refused', async () => {
     await reviewed(SIGNER);
     const refusal = await refuseSignedArtifactAct(signedInput(queryable()));
