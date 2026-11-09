@@ -143,6 +143,14 @@ describe('a work project under its filing project (S12)', () => {
     expect(await children()).toHaveLength(1); expect(await auditRows()).toHaveLength(1);
   });
 
+  it('adds a Quality work project (P-111 item 5): quality is a work kind', async () => {
+    const quality = await add(11, { name: 'Drug product QA', workKind: 'quality' });
+    expect(quality.status, JSON.stringify(quality.body)).toBe(201);
+    expect(quality.body.data).toMatchObject({ created: true, parentId: 11, depth: 1, workKind: 'quality' });
+    expect((await owner.query('SELECT metadata FROM projects WHERE id=$1', [quality.body.data.projectId])).rows[0].metadata)
+      .toMatchObject({ workKind: 'quality' });
+  });
+
   it('nests under one of the program\'s work projects, and refuses a fourth level by name', async () => {
     const study = await add(11, { name: 'Study 201 biostatistics', workKind: 'biostatistics' });
     const sub = await add(study.body.data.projectId, { name: 'Study 201 data management', workKind: 'data_management' });

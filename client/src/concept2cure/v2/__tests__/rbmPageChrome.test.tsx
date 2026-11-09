@@ -3,8 +3,8 @@
  * Risk-based monitoring as a reader meets it (UI walk, 2026-10-31):
  *
  * - The page had no padding of its own. Its title sat against the rail and
- *   its project picker ran off the right edge; every sibling surface brings
- *   its own (`.reg-wrap`, `.cc`, `.page-inner`).
+ *   its project picker ran off the right edge. It takes the one page frame,
+ *   `.page-inner`, as its siblings do (D0.md §8.6, 2026-11-09).
  * - With no project chosen, the picker's caption read "Live RBM read-model".
  * - AnA's dock named the tool behind the screen ("Overview — tool
  *   get_rbm_attention"), a developer's word on a monitor's screen.
@@ -45,10 +45,11 @@ beforeEach(() => {
 afterEach(() => { cleanup(); endCompanySession(); clearShellProject(); });
 
 describe('risk-based monitoring, as a reader meets it', () => {
-  it('pads its own page, as every sibling surface does', async () => {
+  // The page takes the one page frame, as its sibling work areas do (D0.md §8.6): no frame of its own.
+  it('takes the one page frame, as every sibling surface does', async () => {
     const { container } = render(<Rbm surface={rbmSurface} segment="biopharma" onNav={vi.fn()} />);
     await screen.findByRole('heading', { name: 'Risk-based monitoring' });
-    expect((container.firstElementChild as HTMLElement).classList.contains('rbm-page')).toBe(true);
+    expect((container.firstElementChild as HTMLElement).classList.contains('page-inner')).toBe(true);
   });
 
   it('says nothing about a read model under the picker when no project is chosen', async () => {

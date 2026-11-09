@@ -12,6 +12,8 @@ import {
   referenceStandardForm,
   referenceStandardBody,
   referenceStandardPatch,
+  METHOD_VALIDATION_OUTCOMES,
+  SIGNED_ACTS,
   qualifyForm,
   qualifyBody,
   parseRowLines,
@@ -1035,5 +1037,68 @@ describe('formulation register — the development rationale is carried, and cle
     expect(formulationRecordBody({ ...base, formulationDevelopment: 'QTPP-driven choice of IR tablet' }, 'p1').formulationDevelopment).toBe('QTPP-driven choice of IR tablet');
     expect(formulationRecordBody(base, 'p1')).not.toHaveProperty('formulationDevelopment');
     expect(formulationRecordPatch({ ...base, formulationDevelopment: '' }).formulationDevelopment).toBeNull();
+  });
+});
+
+/* ── P-110 item 1 (2026-11-09): the act records WHICH outcome ───────────────
+   The analytical-method register's one signed act records full ICH Q2(R2)
+   validation, or suitability for a stated phase. The words must match the
+   server's `SIGNED_REGISTERS.analyticalMethods.signedOutcomes` exactly: the
+   server refuses an outcome it does not list, so a label sent as a value
+   would make every suitability signature fail with a refusal about a word the
+   person never typed. */
+describe('the method validation outcomes', () => {
+  it('sends the server\u2019s own words, not the labels a person reads', () => {
+    expect(METHOD_VALIDATION_OUTCOMES.map((o) => o.value)).toEqual(['validated', 'phase-appropriate']);
+    for (const o of METHOD_VALIDATION_OUTCOMES) {
+      expect(o.label, o.value).not.toBe(o.value);
+    }
+  });
+
+  it('defaults to full validation, so a signature with no choice made is the stricter one', () => {
+    const form = qualifyForm('analytical method', 'AM-001 — Assay', SIGNED_ACTS.validate, METHOD_VALIDATION_OUTCOMES);
+    const outcome = form.fields.find((f) => f.key === 'outcome')!;
+    expect(outcome.default).toBe('validated');
+    expect(outcome.required).toBe(true);
+  });
+
+  it('offers the phase, and says when it is needed', () => {
+    const form = qualifyForm('analytical method', 'AM-001 — Assay', SIGNED_ACTS.validate, METHOD_VALIDATION_OUTCOMES);
+    const phase = form.fields.find((f) => f.key === 'phase')!;
+    expect(phase).toBeTruthy();
+    /* NOT required: it belongs to one outcome, this form has no conditional
+       field, and the server refuses a suitability signature with no phase in
+       its own sentence. A required field here would block full validation. */
+    expect(phase.required).toBeFalsy();
+    expect(phase.desc).toMatch(/suitability for a phase/i);
+  });
+
+  it('keeps every other register\u2019s signature dialog exactly as it was', () => {
+    const closure = qualifyForm('container closure system', 'Vial system');
+    expect(closure.fields.map((f) => f.key)).toEqual(['meaning', 'reason', 'password', 'totp']);
+  });
+
+  it('sends the outcome and the phase only when the dialog offered them', () => {
+    const withOutcome = qualifyBody({
+      outcome: 'phase-appropriate', phase: 'Phase 1',
+      reason: 'The Q2 package supports use at phase 1.', meaning: 'approval', password: 'pw', totp: '',
+    });
+    expect(withOutcome).toMatchObject({ outcome: 'phase-appropriate', phase: 'Phase 1' });
+
+    /* A register that records one outcome must send none: the server refuses a
+       named outcome there, so a body that always carried one would break every
+       other register's signature. */
+    const plain = qualifyBody({ reason: 'Qualification report QR-014 accepted.', meaning: 'approval', password: 'pw', totp: '' });
+    expect(plain).not.toHaveProperty('outcome');
+    expect(plain).not.toHaveProperty('phase');
+  });
+
+  it('drops a phase left blank rather than sending whitespace as an attestation', () => {
+    const body = qualifyBody({
+      outcome: 'validated', phase: '   ',
+      reason: 'Full ICH Q2(R2) validation is complete.', meaning: 'approval', password: 'pw', totp: '',
+    });
+    expect(body).toMatchObject({ outcome: 'validated' });
+    expect(body).not.toHaveProperty('phase');
   });
 });

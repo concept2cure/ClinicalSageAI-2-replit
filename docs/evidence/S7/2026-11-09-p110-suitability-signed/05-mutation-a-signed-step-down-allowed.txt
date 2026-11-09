@@ -1,0 +1,4 @@
+ × server/services/cmc/__tests__/signed-outcome.test.ts > a signed step down is refused > refuses recording suitability over full validation 8ms
+   → expected { value: 'phase-appropriate', …(2) } to match object { refusal: StringContaining{…} }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 53 passed (54)

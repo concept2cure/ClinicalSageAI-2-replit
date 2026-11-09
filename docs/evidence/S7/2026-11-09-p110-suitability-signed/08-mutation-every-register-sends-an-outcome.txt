@@ -1,0 +1,6 @@
+ × client/src/concept2cure/v2/__tests__/cmcRegisterForms.test.ts > neither register offers qualification as a status > the qualification form collects a reason and a re-authentication 15ms
+   → expected { …(4) } to deeply equal { …(3) }
+ × client/src/concept2cure/v2/__tests__/cmcRegisterForms.test.ts > the method validation outcomes > sends the outcome and the phase only when the dialog offered them 1ms
+   → expected { …(4) } to not have property "outcome"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 87 passed (89)

@@ -352,14 +352,14 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
 
   if (loading) {
     return (
-      <div className="pj">
+      <div className="page-inner pj">
         <div role="status" className="scaf-note" style={{ padding: '40px 16px', textAlign: 'center' }}>Loading project journey…</div>
       </div>
     );
   }
   if (error) {
     return (
-      <div className="pj">
+      <div className="page-inner pj">
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
@@ -371,7 +371,7 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
   }
   if (empty) {
     return (
-      <div className="pj">
+      <div className="page-inner pj">
         <EmptyState
           icon={I.gitBranch}
           title="No project journey data yet"
@@ -405,7 +405,7 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
   const doneCount = stages.filter((s) => s.st === 'done').length;
 
   return (
-    <div className="pj">
+    <div className="page-inner pj">
       <div className="pj-head">
         <div>
           <div className="pj-eyebrow">{seg === 'pharma' ? 'Pharma' : 'Biotech'} {I.dot} project lifecycle</div>

@@ -214,24 +214,15 @@ describe('specificationMethodVerdict — a limit is approved only on a procedure
     expect((v as { note: string }).note).toMatch(/validated/);
   });
 
-  it('approves a procedure shown SUITABLE without full validation', () => {
-    /* ICH Q2's own reading, and the one vocabulary: a phase-appropriate
-       procedure is fit for its use. Refusing it would block early-phase work. */
-    for (const status of ['qualified', 'phase-appropriate', 'fit for purpose', 'verified', 'transferred']) {
+  it('approves a VALIDATED vocabulary word with no further ceremony on the record', () => {
+    /* `verified` and `transferred` are METHOD_VALIDATED, not suitability: a
+       compendial procedure verified for this product, or one transferred from
+       another site, is validated. These are reachable only through the signed
+       Validate act, as `validated` is, so the gate reads the word. */
+    for (const status of ['validated', 'verified', 'transferred']) {
       expect(specificationMethodVerdict('M', available([{ methodName: 'M', validationStatus: status }])), status)
         .toMatchObject({ approve: true });
     }
-  });
-
-  it('keeps SUITABLE passing on purpose — the repository\u2019s own Q2 reading', () => {
-    /* `q2Expectation` in ich-compliance-q2.ts makes suitability sufficient
-       before phase 3, and a phase-1 IND's specifications are routinely
-       approved on qualified methods. Refusing them would block legitimate
-       early-phase work in the name of a rule ICH does not impose there. This
-       case exists so that tightening the gate to "validated only" is a
-       deliberate act with a red test, not a quiet edit. */
-    expect(specificationMethodVerdict('M', available([{ methodName: 'M', validationStatus: 'qualified' }])))
-      .toMatchObject({ approve: true });
   });
 
   it('refuses a method the register does not hold, and says to record it', () => {
@@ -278,5 +269,76 @@ describe('specificationMethodVerdict — a limit is approved only on a procedure
   it('compares the name and the status case-insensitively and trimmed', () => {
     const v = specificationMethodVerdict('  se-hplc ', available([{ methodName: 'SE-HPLC', validationStatus: ' Validated ' }]));
     expect(v).toMatchObject({ approve: true });
+  });
+});
+
+/* ── P-110 item 1: suitability is a signed act (2026-11-09) ─────────────────
+   Its own describe because the one above crossed the 100-line cap. */
+describe('specificationMethodVerdict — suitability is read from the signature', () => {
+  const available = (methods: Array<Record<string, unknown>>) =>
+    ({ available: true as const, methods: methods.map((m) => normalizeMethodPayload(m)) });
+
+  /* ── P-110 item 1 (2026-11-09) ─────────────────────────────────────────────
+     The case below used to read "keeps SUITABLE passing on purpose", and said:
+     "This case exists so that tightening the gate to validated only is a
+     deliberate act with a red test, not a quiet edit." P-110 is that
+     deliberate act, decided by the coordinating session under the founder's
+     delegation of 2026-11-08, on this lane's own finding that the gate
+     honoured a suitable status no form could record.
+
+     The decision does not tighten to validated-only. It makes suitability a
+     SIGNED outcome and refuses the unsigned word, including as an interim. */
+  it('refuses a SUITABLE status that carries no signature — the unsigned word', () => {
+    for (const status of ['qualified', 'suitable', 'phase-appropriate', 'fit for purpose']) {
+      const v = specificationMethodVerdict('M', available([{ methodName: 'M', validationStatus: status }]));
+      expect(v.approve, `an unsigned "${status}" supported an approved limit`).toBe(false);
+      expect(v, status).toMatchObject({ code: 'METHOD_NOT_FIT' });
+      /* The refusal says what is missing — who attested it, and when — not
+         that the status is wrong. The status may well be right. */
+      expect((v as { message: string }).message, status).toMatch(/not a signed act/i);
+      expect((v as { message: string }).message, status).toMatch(/who attested/i);
+    }
+  });
+
+  it('approves the same SUITABLE status once the register carries the signature', () => {
+    const v = specificationMethodVerdict('M', available([
+      { methodName: 'M', validationStatus: 'phase-appropriate', validatedBy: 7, validationDate: '2026-11-09T10:00:00Z' },
+    ]));
+    expect(v, 'a signed suitability was refused, which blocks legitimate early-phase work').toMatchObject({
+      approve: true,
+    });
+    expect((v as { note: string }).note).toMatch(/under signature/);
+  });
+
+  it('needs BOTH halves of the signature, because one alone is not a signed act', () => {
+    const signerOnly = specificationMethodVerdict('M', available([
+      { methodName: 'M', validationStatus: 'qualified', validatedBy: 7 },
+    ]));
+    const dateOnly = specificationMethodVerdict('M', available([
+      { methodName: 'M', validationStatus: 'qualified', validationDate: '2026-11-09T10:00:00Z' },
+    ]));
+    expect(signerOnly).toMatchObject({ approve: false, code: 'METHOD_NOT_FIT' });
+    expect(dateOnly).toMatchObject({ approve: false, code: 'METHOD_NOT_FIT' });
+  });
+
+  it('reads the signature in both payload dialects', () => {
+    /* The write-through stores camelCase; a caller may have supplied the
+       snake_case column names verbatim. normalizeMethodPayload accepts both
+       everywhere else, and must here too, or a signed method reads unsigned. */
+    expect(
+      specificationMethodVerdict('M', available([
+        { methodName: 'M', validation_status: 'qualified', validated_by: 7, validation_date: '2026-11-09T10:00:00Z' },
+      ])),
+    ).toMatchObject({ approve: true });
+  });
+
+  it('still refuses a status outside the vocabulary, signed or not', () => {
+    /* A signature does not make `development` fit. The signature answers
+       "was this attested?", not "what was attested?". */
+    const v = specificationMethodVerdict('M', available([
+      { methodName: 'M', validationStatus: 'development', validatedBy: 7, validationDate: '2026-11-09T10:00:00Z' },
+    ]));
+    expect(v).toMatchObject({ approve: false, code: 'METHOD_NOT_FIT' });
+    expect((v as { message: string }).message).toMatch(/neither validated nor shown suitable/i);
   });
 });
