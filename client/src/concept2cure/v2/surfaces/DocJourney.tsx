@@ -4,6 +4,7 @@ import { useLiveRows, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { openReviewDocument } from './Review';
 import '../styles/project-home-v2.css';
 
 /* ── Render-contract types (the shape GET /api/doc-journey returns) ── */
@@ -256,6 +257,9 @@ function DJSnapshot({ snap, doc }: { snap: DjSnap; doc?: DjDocIdentity | null })
    fabricated, and a milestone the store never recorded yields no stage. */
 /** The document's own identity, sent on every stage row by the assembler. */
 interface DjDocIdentity {
+  /** The document's id and its project (null: filed under none), so "Open in editor" opens this document. */
+  id?: string | null;
+  programId?: string | null;
   title: string | null;
   module: string | null;
   productCode: string | null;
@@ -265,9 +269,6 @@ interface DjDocIdentity {
 type DjJourneyRow = DjStage & { snap?: DjSnap | null; doc?: DjDocIdentity | null };
 
 export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
-  const openEditor = () =>
-    onNav ? onNav('document-authoring') : onAsk && onAsk('Open this document in the editor');
-
   /* Real, org-scoped document journey — no fixture fallback. The surface renders
      the live stages, an honest empty state (the org has authored nothing yet), or
      an honest error state (the read failed) — never a fabricated stand-in. */
@@ -284,6 +285,14 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
     '';
   const stage = stages.find((s) => s.id === activeId) || stages[0];
   const snap = stage?.snap ?? null;
+  /* Open THIS document, in its project, through the editor door the Review board uses. It went to the editor's
+     document list before: no row named the document (2026-11-09). A row from an older server without the id still
+     reaches the editor, where the person picks the document. */
+  const docRef = stage?.doc?.id ? { id: stage.doc.id, programId: stage.doc.programId ?? null } : null;
+  const openEditor = () => {
+    if (docRef && onNav) return openReviewDocument({ id: docRef.id, programId: docRef.programId, prog: null }, onNav);
+    return onNav ? onNav('document-authoring') : onAsk && onAsk('Open this document in the editor');
+  };
 
   // KPIs derived entirely from the real stages — no hardcoded program claims.
   const total = stages.length;
@@ -350,7 +359,7 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
       availableActions: [
         'Select a stage on the rail to view its recorded snapshot',
         'This surface is a read-only reconstruction of the audit trail — nothing on it edits the document',
-        '‘Open in editor’ exists as navigation to Document Authoring, where changes are made',
+        '‘Open in editor’ opens this document in the editor, where changes are made',
       ],
     };
   }, [live.loading, live.error, live.empty, total, doneCount, currentVer, currentStage, headWhen, stage]);
