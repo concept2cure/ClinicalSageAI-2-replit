@@ -11,14 +11,27 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { query } = vi.hoisted(() => ({ query: vi.fn() }));
+const { query, PROGRAM } = vi.hoisted(() => ({ query: vi.fn(), PROGRAM: '11111111-1111-1111-1111-111111111111' }));
 vi.mock('../../../db', () => ({ getPool: () => ({ query }) }));
 vi.mock('../../../db.js', () => ({ getPool: () => ({ query }) }));
+// Since F1-C (02ae6487) the tool reads only documents of the projects the person can open. That scope is
+// tested against the real sharing policy in ana-vault-tools-project-scope.pglite.test.ts; here it is the
+// one program the fixture's documents belong to, for the identified member, so this suite tests the outline check.
+vi.mock('../project-scope-admission.js', async (orig) => {
+  const actual = await orig<typeof import('../project-scope-admission.js')>();
+  return {
+    ...actual,
+    programReadScope: async (name: string, ctx: Parameters<typeof actual.programReadScope>[1]) =>
+      ctx.userId === 3
+        ? { organizationId: Number(ctx.organizationId), userId: 3, projectIds: [1], programIds: [PROGRAM], anchorProjectIds: [1] }
+        : actual.programReadScope(name, ctx),
+  };
+});
 
 import { getToolHandler } from '../AnaToolExecutor.js';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
-const DOC = { id: 'doc_a', project_id: '11111111-1111-1111-1111-111111111111' as string | null, title: 'Module 2.5 Clinical Overview' };
+const DOC = { id: 'doc_a', project_id: PROGRAM as string | null, title: 'Module 2.5 Clinical Overview' };
 type Row = { document_id: string; title: string; section_key: string; status: string; project_id: string | null; doc_status: string };
 const SECTIONS: Row[] = [
   { document_id: 'doc_a', title: DOC.title, section_key: 'm2.5.4', status: 'drafted', project_id: DOC.project_id, doc_status: 'draft' },
@@ -30,8 +43,9 @@ const SECTIONS: Row[] = [
 /** The two statements, with the outline query's WHERE applied to the rows as PostgreSQL would. */
 function wire({ doc = DOC as typeof DOC | null, sections = SECTIONS } = {}) {
   query.mockImplementation(async (sql: string, params: unknown[]) => {
-    if (/FROM c2c_documents\s+WHERE org_id = \$1 AND id = \$2/.test(sql)) {
-      return { rows: doc && params[0] === 7 && params[1] === doc.id ? [doc] : [] };
+    if (/FROM c2c_documents\s+WHERE org_id = \$1 AND id = \$2 AND project_id = ANY\(\$3::uuid\[\]\)/.test(sql)) {
+      const programs = params[2] as string[];
+      return { rows: doc && params[0] === 7 && params[1] === doc.id && doc.project_id !== null && programs.includes(doc.project_id) ? [doc] : [] };
     }
     if (/FROM c2c_document_sections s\s+JOIN c2c_documents d/.test(sql)) {
       expect(sql).toMatch(/d\.id = \$3/);
@@ -47,7 +61,7 @@ function wire({ doc = DOC as typeof DOC | null, sections = SECTIONS } = {}) {
   });
 }
 
-const run = async (input: Record<string, unknown>, ctx: Record<string, unknown> = { organizationId: 7 }) =>
+const run = async (input: Record<string, unknown>, ctx: Record<string, unknown> = { organizationId: 7, userId: 3 }) =>
   JSON.parse(await getToolHandler('validate_cross_references')!(input, ctx as any));
 
 beforeEach(() => {
@@ -80,7 +94,7 @@ describe('validate_cross_references', () => {
 
   it('refuses a document outside the organization, and says the same as for one that does not exist', async () => {
     wire();
-    const other = await run({ document_id: 'doc_a', section_references: ['2.5.4'] }, { organizationId: 8 });
+    const other = await run({ document_id: 'doc_a', section_references: ['2.5.4'] }, { organizationId: 8, userId: 3 });
     const missing = await run({ document_id: 'doc_zzz', section_references: ['2.5.4'] });
     expect(other.error).toMatch(/No document 'doc_a' in this organization/);
     expect(missing.error).toMatch(/No document 'doc_zzz' in this organization/);
@@ -100,11 +114,21 @@ describe('validate_cross_references', () => {
     expect(out.results[0].status).toBe('not_found');
   });
 
-  it('reads its own outline when the document belongs to no project', async () => {
+  // Until F1-C (02ae6487) it read such a document's own outline. A document in no project is in no project the
+  // person can open, so it is now answered as a missing one (AnaToolExecutor.ts, validate_cross_references).
+  it('answers a document that belongs to no project as missing, and reads no outline', async () => {
     wire({ doc: { ...DOC, project_id: null }, sections: SECTIONS.map((r) => (r.document_id === 'doc_a' ? { ...r, project_id: null } : r)) });
     const out = await run({ document_id: 'doc_a', section_references: ['Section 2.5.4', 'Section 3.2.P.5.1'] });
-    expect(out.results[0].status).toBe('found_in_document');
-    expect(out.results[1].status).toBe('not_found');
+    expect(out.error).toMatch(/No document 'doc_a' in this organization/);
+    expect(out.results).toBeUndefined();
+    expect(query.mock.calls.some(([sql]) => /c2c_document_sections/.test(String(sql)))).toBe(false);
+  });
+
+  it('refuses without an identified member, and reads nothing', async () => {
+    wire();
+    const out = await run({ document_id: 'doc_a', section_references: ['2.5.4'] }, { organizationId: 7 });
+    expect(out.code).toBe('PROJECT_ACTOR_REQUIRED');
+    expect(query).not.toHaveBeenCalled();
   });
 
   it('does not count an archived document of the project', async () => {

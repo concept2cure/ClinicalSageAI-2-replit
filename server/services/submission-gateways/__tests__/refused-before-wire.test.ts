@@ -268,7 +268,9 @@ describe('refusedBeforeWire — CredentialError and the proof-carrying Transport
       // clientAccountRefusal: the organisation chose its own account and it
       // cannot send (gateway not supported yet / credentials missing). Thrown
       // inside the guard's pre-wire try in index.ts, before impl.transmit.
-      'server/services/submission-gateways/gateway-accounts.ts': 2,
+      // resolveGatewayAccountForUse (026c0e96ff, 2026-11-06): the account recheck after
+      // archiveSentPackage, also inside that try and before impl.transmit (audited 2026-11-08).
+      'server/services/submission-gateways/gateway-accounts.ts': 3,
       // health-canada-gateway.ts left this set on 2026-10-08 (F19b): it reads no
       // credentials and refuses before the wire (UnverifiedTransportError).
       'server/services/submission-gateways/hsa-prism-gateway.ts': 1,

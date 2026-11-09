@@ -1,0 +1,3 @@
+$ same plant, gate as at HEAD 3409684c85 (before this change)
+[ci:project-creation-owners] OK — one canonical program writer and three explicit, bounded PM writers (4 sites).
+exit 0

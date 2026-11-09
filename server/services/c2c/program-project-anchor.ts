@@ -194,16 +194,38 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
   // (projects.metadata.registryId / submissionType, report-os orchestrator).
   // Intake wrote none, so no program's readiness could ever be computed there
   // (QA 2026-10-08, j8). NULL when the program names no registry entry.
+  const projectId = await insertProjectRow(client, { orgId, workspaceId, name, code, priority, userId,
+    programId, parentId: null, depth: 0, metadata: metadata ?? null });
+  return { projectId, created: true, clientWorkspaceId: workspaceId,
+    ...(workspaceName ? { clientWorkspaceName: workspaceName } : {}) };
+}
+
+interface ProjectRowValues {
+  orgId: number; workspaceId: number; name: string; code: string | null; priority: string; userId: number | null;
+  /** The program this row anchors, or null for a work project (S12), which reads its program through its root. */
+  programId: string | null;
+  /** The work project's parent (the anchor or one of its descendants), or null for a program's anchor. */
+  parentId: number | null;
+  /** 0 for an anchor (the column's default), the parent's depth + 1 for a work project. */
+  depth: number;
+  metadata: Record<string, unknown> | null;
+}
+
+/** THE one `projects` writer (scripts/ci/check-project-creation-owners.mjs: one INSERT in this file). A program's
+ *  anchor and a work project under it (S12; ruling of 2026-11-09: one door, one writer) are both written here, on the
+ *  caller's transaction. A row has a program or a parent, never both: PF-08 keeps one anchor row per program. */
+async function insertProjectRow(client: Pick<PoolClient, 'query'>, row: ProjectRowValues): Promise<number> {
+  if ((row.programId === null) === (row.parentId === null)) throw new Error('A project row has a program or a parent, never both or neither');
   const inserted = await client.query<{ id: number | string }>(
     `INSERT INTO projects
        (organization_id, client_workspace_id, name, code, type, status, priority,
-        created_by_id, owner_id, regulatory_program_id, metadata)
-     VALUES ($1, $2, $3, $4, 'regulatory', 'active', $5, $6, $6, $7, $8::json)
+        created_by_id, owner_id, regulatory_program_id, parent_project_id, depth, metadata)
+     VALUES ($1, $2, $3, $4, 'regulatory', 'active', $5, $6, $6, $7, $8, $9, $10::json)
      RETURNING id`,
-    [orgId, workspaceId, name, code, priority, userId, programId, metadata ? JSON.stringify(metadata) : null],
+    [row.orgId, row.workspaceId, row.name, row.code, row.priority, row.userId, row.programId, row.parentId, row.depth,
+      row.metadata ? JSON.stringify(row.metadata) : null],
   );
-  return { projectId: Number(inserted.rows[0].id), created: true, clientWorkspaceId: workspaceId,
-    ...(workspaceName ? { clientWorkspaceName: workspaceName } : {}) };
+  return Number(inserted.rows[0].id);
 }
 
 interface SelectedWorkspace { id: number; name?: string }
@@ -456,4 +478,101 @@ export async function strictProjectRowForRef(
     context: params.context,
     strict: true,
   });
+}
+
+/* ── Work projects under a program's anchor (S12; founder decisions P-83, P-109, clarified 2026-11-09) ──────────────
+ * A work project (CMC, a study's biostatistics, its risk-based monitoring…) is a child of its filing project's
+ * anchor row: `parent_project_id` is the anchor or one of its descendants, and `regulatory_program_id` stays NULL.
+ * PF-08's `projects_one_anchor_per_program` keeps one anchor row per program, so governed artifacts, exports and
+ * the Vault stay filed under that row; the child reads its program through its root ancestor. Its kind is
+ * `metadata.workKind`; `type` stays 'regulatory', the documented domain this module already writes. */
+
+/** P-83's work kinds. */
+export const WORK_KINDS = ['cmc', 'biostatistics', 'rbm', 'data_management', 'clin_pharm', 'nonclinical'] as const;
+export type WorkKind = typeof WORK_KINDS[number];
+export const isWorkKind = (value: unknown): value is WorkKind => typeof value === 'string' && (WORK_KINDS as readonly string[]).includes(value);
+/** The hierarchy's deepest level (project-hierarchy.ts: 0 Program … 3 Sub-project). */
+export const MAX_PROJECT_DEPTH = 3;
+
+export class WorkProjectRefusal extends Error {
+  constructor(readonly status: 400 | 404 | 409, readonly code: string, message: string) {
+    super(message); this.name = 'WorkProjectRefusal';
+  }
+}
+
+export interface EnsureWorkProjectInput {
+  /** Caller-owned transaction, with the program already admitted on it (requireCurrentProgramAccess). */
+  client: { query(text: string, params?: unknown[]): Promise<{ rows: Array<Record<string, unknown>> }> };
+  orgId: number;
+  userId: number;
+  /** The admitted program's one anchor row (CurrentProgramAccess.projectId). */
+  anchorProjectId: number;
+  /** The anchor, or one of its descendants. */
+  parentId: number;
+  name: string;
+  workKind: WorkKind;
+}
+
+/** True when `projectId` is the program's anchor row or one of its descendants: walked up from the project to its
+ *  root, inside the organization (and so, under row-level security, inside what the request may read). */
+export async function isWithinProgramAnchor(client: EnsureWorkProjectInput['client'], orgId: number, anchorProjectId: number,
+  projectId: number): Promise<boolean> {
+  const found = await client.query(
+    `WITH RECURSIVE up(id, parent_project_id, hops) AS (
+       SELECT id, parent_project_id, 0 FROM projects WHERE id = $1 AND organization_id = $2
+       UNION ALL SELECT p.id, p.parent_project_id, up.hops + 1 FROM projects p JOIN up ON p.id = up.parent_project_id
+        WHERE p.organization_id = $2 AND up.hops < 10)
+     SELECT 1 FROM up WHERE id = $3 LIMIT 1`, [projectId, orgId, anchorProjectId]);
+  return found.rows.length === 1;
+}
+
+/** The program a project belongs to: its root ancestor's `regulatory_program_id` (a work project carries none of its
+ *  own), walked inside the organization. Null when the project is not visible or its root anchors no program. */
+export async function programOfProject(client: EnsureWorkProjectInput['client'], orgId: number, projectId: number): Promise<string | null> {
+  const found = await client.query(
+    `WITH RECURSIVE up(id, parent_project_id, regulatory_program_id, hops) AS (
+       SELECT id, parent_project_id, regulatory_program_id, 0 FROM projects WHERE id = $1 AND organization_id = $2
+       UNION ALL SELECT p.id, p.parent_project_id, p.regulatory_program_id, up.hops + 1 FROM projects p
+         JOIN up ON p.id = up.parent_project_id WHERE p.organization_id = $2 AND up.hops < 10)
+     SELECT regulatory_program_id::text AS program_id FROM up WHERE parent_project_id IS NULL LIMIT 1`, [projectId, orgId]);
+  const programId = found.rows[0]?.program_id;
+  return typeof programId === 'string' && programId ? programId : null;
+}
+
+export interface WorkProjectResult { projectId: number; created: boolean; parentId: number; depth: number; path: string }
+
+/** Ensure a work project under a program's anchor: the existing child of that parent with that name and kind, or a
+ *  new one. Never writes `regulatory_program_id`. Refuses, by name, a parent outside the program, a level below
+ *  the hierarchy's last, an unknown kind and an empty name. */
+export async function ensureWorkProjectUnderAnchor(input: EnsureWorkProjectInput): Promise<WorkProjectResult> {
+  const { client, orgId, userId, anchorProjectId, parentId, workKind } = input;
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  if (!name || name.length > 200) throw new WorkProjectRefusal(400, 'WORK_PROJECT_NAME_REQUIRED', 'A work project needs a name of 1 to 200 characters.');
+  if (!isWorkKind(workKind)) throw new WorkProjectRefusal(400, 'WORK_KIND_UNKNOWN', `A work project is one of: ${WORK_KINDS.join(', ')}.`);
+  const parent = (await client.query(
+    `SELECT id, depth, path, client_workspace_id, priority FROM projects
+      WHERE id = $1 AND organization_id = $2 FOR UPDATE`, [parentId, orgId])).rows[0] as
+    { id: number | string; depth: number | string | null; path: string | null; client_workspace_id: number | string; priority: string | null } | undefined;
+  // The parent must be the program's anchor or below it.
+  if (!parent || !(await isWithinProgramAnchor(client, orgId, anchorProjectId, parentId))) {
+    throw new WorkProjectRefusal(404, 'PARENT_NOT_IN_PROGRAM', 'The parent is not this program\'s project or one of its work projects.');
+  }
+  const depth = Number(parent.depth ?? 0) + 1;
+  if (depth > MAX_PROJECT_DEPTH) {
+    throw new WorkProjectRefusal(409, 'WORK_PROJECT_TOO_DEEP', `A work project can sit at most ${MAX_PROJECT_DEPTH} levels below its program's project.`);
+  }
+  const parentPath = parent.path || String(parent.id);
+  const existing = (await client.query(
+    `SELECT id, path FROM projects WHERE parent_project_id = $1 AND organization_id = $2
+        AND lower(name) = lower($3) AND metadata->>'workKind' = $4 ORDER BY id LIMIT 1`, [parentId, orgId, name, workKind])).rows[0] as
+    { id: number | string; path: string | null } | undefined;
+  if (existing) {
+    return { projectId: Number(existing.id), created: false, parentId, depth, path: existing.path ?? `${parentPath}/${existing.id}` };
+  }
+  const projectId = await insertProjectRow(client as Pick<PoolClient, 'query'>, { orgId,
+    workspaceId: Number(parent.client_workspace_id), name, code: null, priority: parent.priority ?? 'medium', userId,
+    programId: null, parentId, depth, metadata: { workKind } });
+  const path = `${parentPath}/${projectId}`;
+  await client.query('UPDATE projects SET path = $1 WHERE id = $2 AND organization_id = $3', [path, projectId, orgId]);
+  return { projectId, created: true, parentId, depth, path };
 }

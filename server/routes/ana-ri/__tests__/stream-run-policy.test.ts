@@ -316,7 +316,12 @@ describe('(5) Manual that cannot hold stops where she would have asked', () => {
     h.state.user = { organizationId: 7 };
     const events = await turn('manual');
     expect(h.state.holdForPersonCalls).toBe(0);
-    expectFailedClosed(events);
+    // Since a2f9264a (P-104) a turn with no verified person is refused before its conversation
+    // (OWNER_PRIVATE_ACTOR_REQUIRED, said as a held private output): it closes before the first step.
+    expect(one(events, 'error')).toMatchObject({ type: 'error', code: 'OWNER_PRIVATE_OUTPUT_HELD' });
+    expect(h.state.gatewayCalls, 'a model call ran with nobody to resume it').toBe(0);
+    expect(h.state.handlerCalls, 'a step ran with nobody to resume it').toEqual({});
+    expect(ofType(events, 'done')).toEqual([]);
   });
 
   it('Auto without a run row runs on, as today', async () => {

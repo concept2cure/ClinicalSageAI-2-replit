@@ -229,7 +229,8 @@ describe('the server sends the id the client pairs on — carriage', () => {
   it("the round's tool_result carries toolUseId", () => {
     // `shown`: the result as the client reads it — for run_agent, without the
     // record-only trace; for every other tool it is resultStr itself (row 74, S5c).
-    const m = stream.match(/type:\s*'tool_result',\s*\n\s*round,\s*\n\s*name:\s*toolUse\.name,[\s\S]{0,2000}?result:\s*(?:resultStr|shown)/);
+    // Since a2f9264a5d run_agent's wire result is runAgentResultForWire(resultStr), other tools' still `shown`.
+    const m = stream.match(/type:\s*'tool_result',\s*\n\s*round,\s*\n\s*name:\s*toolUse\.name,[\s\S]{0,2000}?result:\s*(?:isAgent\s*\?\s*runAgentResultForWire\(resultStr\)\s*:\s*)?(?:resultStr|shown)/);
     expect(m, 'concurrent-path tool_result emit not found').not.toBeNull();
     expect(m![0]).toMatch(/toolUseId:\s*toolUse\.id/);
   });

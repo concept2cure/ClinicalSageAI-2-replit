@@ -67,7 +67,9 @@ vi.mock('../changeHooks', async () => {
   const { CHANGE_SUMMARY } = await import('./changeRows');
   return { useChangeSummary: () => ({ summary: CHANGE_SUMMARY, loading: false, error: null }) };
 });
-vi.mock('@/services/portal/authService', () => ({
+// a2f9264a5d: ChangeControl's ReviewedLearningPreparation keys its read to the session (authService), so keep the real module.
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuthUser: () => ({ id: 9, organizationId: 3, name: 'Q. Author', role: 'editor' }),
 }));
 vi.mock('@/lib/queryClient', () => ({

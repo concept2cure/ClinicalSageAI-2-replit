@@ -17,8 +17,12 @@ import { z } from 'zod';
 import { db, getPool } from '../db';
 import { projects } from '@shared/schema';
 import { and, eq, isNull, asc } from 'drizzle-orm';
-import { getTenantContext, getRequestActor } from '../utils/tenantContext';
+import { getTenantContext, getRequestActor, getSecureOrgId } from '../utils/tenantContext';
 import { ProjectRollupService } from '../services/project-rollup-service';
+import { requestPgClient } from '../db/requestDb';
+import { requireCurrentProgramAccess, ProgramReadAccessError } from '../services/c2c/current-program-access';
+import { requireProjectAdmission, ProjectAdmissionRefusal } from './c2c/project-access';
+import { WorkProjectRefusal, isWithinProgramAnchor } from '../services/c2c/program-project-anchor';
 
 // People are named through public.actor_name, not a join on users: since users
 // took row-level security (D3, 2026-09-28) a tenant scope reads only current
@@ -140,37 +144,62 @@ router.get('/:projectId/ancestors', async (req: Request, res: Response) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/project-hierarchy/:projectId/children
-// Direct children of a project
+// GET /api/project-hierarchy/:projectId/children?programId=<uuid>
+// A program's project's direct children: its work projects (S12). Admitted as the project page is: the program's
+// admission and the project's read admission, then the project proven to be the program's anchor or below it, on
+// the request's tenant-scoped connection. It read any project's children in the organization on the shared pool,
+// with no project admission and no caller (S12 inventory, 2026-11-08); the project page is its first caller.
 // ─────────────────────────────────────────────────────────────────────────────
 
+type Failure = { status: number; code: string; message: string };
+
+/** The refusals the work-project read says as themselves; anything else is said once, without detail. */
+function workProjectFailure(error: unknown): Failure {
+  const e = error as { status?: unknown; code?: unknown; message?: unknown };
+  const known = error instanceof WorkProjectRefusal || error instanceof ProgramReadAccessError || error instanceof ProjectAdmissionRefusal;
+  if (known && typeof e.status === 'number' && typeof e.code === 'string') return { status: e.status, code: e.code, message: String(e.message) };
+  console.error('[HierarchyRoutes] Work projects not read:', error instanceof Error ? error.message : String(error));
+  return { status: 500, code: 'WORK_PROJECTS_NOT_READ', message: 'The work projects could not be read.' };
+}
+
+const fail = (res: Response, f: Failure) => res.status(f.status).json({ success: false, error: { code: f.code, message: f.message } });
+
+const childrenQuery = z.object({ programId: z.string().uuid() });
+
 router.get('/:projectId/children', async (req: Request, res: Response) => {
+  const projectId = Number(req.params.projectId);
+  const query = childrenQuery.safeParse(req.query ?? {});
+  if (!Number.isSafeInteger(projectId) || projectId <= 0 || !query.success) {
+    return fail(res, { status: 400, code: 'INVALID_CHILDREN_READ', message: 'Name the project and its program.' });
+  }
+  const organizationId = Number(getSecureOrgId(req));
+  const rawUserId = (req as Request & { user?: { id?: unknown } }).user?.id;
+  const userId = typeof rawUserId === 'string' && /^\d+$/.test(rawUserId) ? Number(rawUserId) : Number(rawUserId);
+  if (!Number.isSafeInteger(organizationId) || organizationId <= 0 || !Number.isSafeInteger(userId) || userId <= 0) {
+    return fail(res, { status: 401, code: 'ACTOR_REQUIRED', message: 'A signed-in member of the organization is required.' });
+  }
+  const { programId } = query.data;
   try {
-    const projectId = parseInt(String(req.params.projectId), 10);
-    if (Number.isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
-
-    const tenantContext = getTenantContext(req);
-    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-    const { organizationId } = tenantContext;
-
-    const children = await pool.query(
-      `SELECT p.*, u.name as owner_name,
-              (SELECT COUNT(*)::int FROM projects c WHERE c.parent_project_id = p.id) as child_count
-       FROM projects p
-       LEFT JOIN LATERAL public.actor_name(p.owner_id) u ON TRUE
-       WHERE p.parent_project_id = $1 AND p.organization_id = $2
-       ORDER BY p.priority DESC, p.name ASC`,
-      [projectId, organizationId]
-    );
-
-    res.json({
-      parentId: projectId,
-      children: children.rows,
-      total: children.rows.length,
-    });
+    const client = requestPgClient(req);
+    const access = await requireCurrentProgramAccess(client, { organizationId, userId, programId });
+    await requireProjectAdmission(req, String(access.projectId), false, { executor: client, programId });
+    if (!(await isWithinProgramAnchor(client, organizationId, access.projectId, projectId))) {
+      throw new WorkProjectRefusal(404, 'PARENT_NOT_IN_PROGRAM', 'The project is not this program\'s project or one of its work projects.');
+    }
+    const rows = (await client.query(
+      `SELECT p.id, p.name, p.status, p.depth, p.path, p.metadata->>'workKind' AS work_kind, p.created_at,
+              u.name AS owner_name,
+              (SELECT COUNT(*)::int FROM projects c WHERE c.parent_project_id = p.id AND c.organization_id = p.organization_id) AS child_count
+         FROM projects p
+         LEFT JOIN LATERAL public.actor_name(p.owner_id) u ON TRUE
+        WHERE p.parent_project_id = $1 AND p.organization_id = $2
+        ORDER BY p.name ASC, p.id ASC`, [projectId, organizationId])).rows;
+    const children = rows.map((r) => ({ id: Number(r.id), name: String(r.name), status: r.status ?? null,
+      depth: Number(r.depth), path: r.path ?? null, workKind: r.work_kind ?? null, ownerName: r.owner_name ?? null,
+      childCount: Number(r.child_count) || 0, createdAt: r.created_at ? new Date(r.created_at as string).toISOString() : null }));
+    return res.json({ success: true, data: { parentId: projectId, programId, anchorProjectId: access.projectId, children, total: children.length } });
   } catch (error) {
-    console.error('[HierarchyRoutes] Error fetching children:', error);
-    res.status(500).json({ error: 'Failed to fetch child projects' });
+    return fail(res, workProjectFailure(error));
   }
 });
 
