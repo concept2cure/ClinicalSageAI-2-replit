@@ -249,9 +249,20 @@ Anthropic (ALLOW_INPUT_TIER).
    ```
    npm install --no-save playwright@1.56.1 && npx playwright install --with-deps chromium && bash .devcontainer/post-start.sh
    ```
-   The Codespace's study has no efficacy file, so §11.4 reads "not supplied".
+   The Codespace's study has no efficacy file, so §11.4 reads "not supplied". After the next pull,
+   post-start installs playwright by itself when it is missing; the command above is only for an older checkout.
 3. **Check AnA.** Sign in with Demo access, open the CDISCPILOT01 project and ask "What is this project about?".
    It must answer. "Blocked by AI gateway policy" means the app runs an older commit.
+**What AnA can answer with the keys in.** A turn starts at tier 1. Each source AnA opens raises it, and the
+gateway admits tier 2 or above only to a self-hosted model.
+- **Answers:** questions about the project, its plan, its next step, what is due and who has it, and drafting help
+  that opens no stored document.
+- **Refused partway** ("blocked by AI gateway policy"): any question that makes AnA open a Vault document, a
+  conversation artifact or a source picked in the composer. Every Vault document is stored CONFIDENTIAL, including
+  the demo packs' fictional ones, because the seed declares no classification. Do not ask AnA to read, summarise
+  or compare documents in the demo.
+- **The CSR build and the editor's drafting are not affected**: they pass no tiers.
+
 4. **Build the CSR now**, not live: Author → "CDISCPILOT01 Clinical Study Report" → Build from the study's data →
    Build CSR draft. It takes tens of minutes. Then do steps 11–13 below.
 
