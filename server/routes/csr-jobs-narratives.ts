@@ -21,7 +21,7 @@
 import { Router, type Request, type Response } from 'express';
 import { createScopedLogger } from '../utils/logger.js';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
-import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import { CsrScopeError, requireCsrJobAccess } from '../services/csr/project-scope';
 import { CsrNarrativeBuildError, readCsrNarrativeQc, readCsrNarrativeTextPage } from '../services/csr/csr-narrative-store.js';
 import { CsrNarrativeRunError, enqueueNarrativeRun, readLatestNarrativeRun, startNarrativeRun } from '../services/csr/csr-narrative-run.js';
@@ -38,11 +38,9 @@ export interface CsrNarrativeRouteHelpers {
   start?: typeof startNarrativeRun;
 }
 
-function requireDb(): NonNullable<typeof db> {
-  if (!db) throw new Error('[csr-jobs-narratives] Drizzle db is not initialized');
-  return db;
-}
-const q = () => queryableFromDrizzle(requireDb());
+/** The request's own tenant-scoped connection (requireTenantContext), never the shared pool: a request without one
+ *  is refused by requestDb's typed error (ci:requestdb-coverage; red from 2026-10-29 until 2026-11-09). */
+const q = (req: Request) => queryableFromDrizzle(requestDb(req));
 
 /** Imported references name an exact store; ordinary build reads remain current. */
 async function readImportedNarratives<T extends object>(sql: ReturnType<typeof q>,
@@ -135,7 +133,7 @@ export function csrNarrativeRouter(h: CsrNarrativeRouteHelpers): Router {
     const organizationId = h.resolveOrganizationId(req);
     const userId = h.resolveUserId(req);
     if (organizationId == null || userId == null) { res.status(401).json({ error: 'A signed-in user is required' }); return null; }
-    const allowed = write ? await h.requireWriteAccess(organizationId, jobId, userId) : await requireCsrJobAccess(requireDb(), organizationId, jobId, userId);
+    const allowed = write ? await h.requireWriteAccess(organizationId, jobId, userId) : await requireCsrJobAccess(requestDb(req), organizationId, jobId, userId);
     if (!allowed) { res.status(404).json({ error: 'Job not found' }); return null; }
     return { organizationId, userId, jobId };
   };
@@ -144,7 +142,7 @@ export function csrNarrativeRouter(h: CsrNarrativeRouteHelpers): Router {
     try {
       const s = await scope(req, res, true);
       if (!s) return;
-      const queued = await enqueueNarrativeRun(q(), s);
+      const queued = await enqueueNarrativeRun(q(req), s);
       (h.start ?? startNarrativeRun)(queued.runId, s.organizationId);
       return res.status(202).json(queued);
     } catch (err) { return sendError(res, err, 'queue the narrative build', { jobId: req.params.jobId }); }
@@ -154,7 +152,7 @@ export function csrNarrativeRouter(h: CsrNarrativeRouteHelpers): Router {
     try {
       const s = await scope(req, res, false);
       if (!s) return;
-      return res.json({ run: await readLatestNarrativeRun(q(), s.organizationId, s.jobId) });
+      return res.json({ run: await readLatestNarrativeRun(q(req), s.organizationId, s.jobId) });
     } catch (err) { return sendError(res, err, 'read the narrative build', { jobId: req.params.jobId }); }
   });
 
@@ -162,7 +160,7 @@ export function csrNarrativeRouter(h: CsrNarrativeRouteHelpers): Router {
     try {
       const s = await scope(req, res, false);
       if (!s) return;
-      const sql = q();
+      const sql = q(req);
       return res.json(await readNarrativeResponse(sql, s, req.query, true));
     } catch (err) { return sendError(res, err, 'read the narrative QC list', { jobId: req.params.jobId }); }
   });
@@ -171,7 +169,7 @@ export function csrNarrativeRouter(h: CsrNarrativeRouteHelpers): Router {
     try {
       const s = await scope(req, res, false);
       if (!s) return;
-      const sql = q();
+      const sql = q(req);
       return res.json(await readNarrativeResponse(sql, s, req.query, false));
     } catch (err) { return sendError(res, err, 'read the narratives', { jobId: req.params.jobId }); }
   });
