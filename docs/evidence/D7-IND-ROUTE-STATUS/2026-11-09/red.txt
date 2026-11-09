@@ -1,0 +1,53 @@
+# RED: repair C's cases against server/routes/ind-lifecycle/shared.ts at HEAD 1744ec925, 2026-11-09T00:36:49Z
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > a governed step refused for want of a signature answers 403, with its code and words 28ms
+   → expected 500 to be 403 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > a step the dispatch gate blocks answers 422, with its code and words 6ms
+   → expected 500 to be 422 // Object.is equality
+ ✓ server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: NOT_FOUND → 404 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: INVALID_STATE → 409 5ms
+ ✓ server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: VALIDATION → 400 4ms
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: GOVERNED_REQUIRED → 403 4ms
+   → expected 500 to be 403 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: DISPATCH_BLOCKED → 422 4ms
+   → expected 500 to be 422 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: AUDIT_UNCONFIRMED → 503 4ms
+   → expected 500 to be 503 // Object.is equality
+ ✓ server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: FORBIDDEN → 403 4ms
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: CROSS_PROJECT → 409 4ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: ALREADY_PLACED → 409 4ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: STALE_LEAF → 409 4ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: VALIDATION_FAILED → 422 3ms
+   → expected 500 to be 422 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: DEVICE_PREPARATION_ONLY → 422 3ms
+   → expected 500 to be 422 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: NOT_AN_APPLICATION → 422 2ms
+   → expected 500 to be 422 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: UNANCHORED_SUBMISSION → 409 3ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: APPLICATION_NUMBER_MISMATCH → 409 3ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: APPLICATION_TYPE_MISMATCH → 409 3ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: PACKAGE_IDENTITY_MISSING → 409 3ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: SHADOW_WAIVER_NOT_ELIGIBLE → 409 7ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: SHADOW_FINDING_NOT_DISPOSABLE → 409 2ms
+   → expected 500 to be 409 // Object.is equality
+ ✓ server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > an error with no code answers 500 and says nothing of what failed inside 2ms
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > a code the service does not name, even one spelled like an object property, answers 500 7ms
+   → constructor: expected undefined to deeply equal { code: 'INTERNAL', …(1) }
+ ✓ server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > what fail already answered is unchanged: a CODE: refusal is 400, an unrecorded export is 503 4ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 500 to be 403 // Object.is equality
+AssertionError: expected 500 to be 422 // Object.is equality
+AssertionError: expected 500 to be 403 // Object.is equality
+AssertionError: expected 500 to be 422 // Object.is equality
+AssertionError: expected 500 to be 503 // Object.is equality
+AssertionError: expected 500 to be 409 // Object.is equality
+AssertionError: constructor: expected undefined to deeply equal { code: 'INTERNAL', …(1) }
+ Test Files  1 failed (1)
+      Tests  18 failed | 6 passed (24)
