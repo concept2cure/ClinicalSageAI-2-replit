@@ -26,7 +26,7 @@ import { SchedulesPanel } from './InsightsSchedulesPanel';
 import { RunEvidence } from './InsightsRunEvidence';
 import { InsightsDevicePortfolio, type DevicePortfolioView } from './InsightsDevicePortfolio';
 import { LIBRARY_VIEWS, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
-import type { BundlePdfContent, ReportRunRow } from './insightsLibraryModel';
+import { sealLineFrom, type BundlePdfContent, type ReportRunRow, type RunSealView } from './insightsLibraryModel';
 import { getSurfaceMeta } from '../registryModel';
 import { GlobalSchedule, type ScheduleProject } from './PyramidProject';
 import { getApplicationType } from '@shared/regulatory/global-document-registry';
@@ -1588,6 +1588,17 @@ async function fetchRenderedRunRow(
   return { report: { ...reportFromRenderedRow(rendered, row, catalog.find((t) => t.typeId === row.reportTypeId)), finalEligibility: finalEligibilityOf(body) } };
 }
 
+/** A reopened sealed run's seal line, from its verified read-back (GET /runs/:id/seal); null when it does not verify. */
+async function readSealLine(runId: number): Promise<ReportSeal | null> {
+  try {
+    const res = await apiRequest('GET', `/api/report-os/runs/${runId}/seal`);
+    const body = await res.json().catch(() => null);
+    return res.ok ? sealLineFrom((body?.data ?? null) as RunSealView | null) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** A finalized run's signature and seal, as the server returned them. */
 export interface ReportSeal {
   signer: string | null;
@@ -2063,6 +2074,11 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     setReportRunId(row.id);
     setPaneView('report');
     pushCanvasTop();
+    // A sealed run reads the same reopened as just signed: its line, when its seal verifies.
+    if (result.report.status === 'final') {
+      const line = await readSealLine(row.id);
+      if (line && reportAccessCurrent() && request === requestSequence.current) setSeal(line);
+    }
   };
 
   const exportBundle = async (bundleId: string, name: string, content: BundlePdfContent) => {

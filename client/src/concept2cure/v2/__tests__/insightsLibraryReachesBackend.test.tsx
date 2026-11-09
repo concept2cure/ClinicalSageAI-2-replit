@@ -512,3 +512,41 @@ describe('a wide register scrolls in its own region, never the page', () => {
     expect(region.tabIndex).toBe(0);
   });
 });
+
+/* Use walk, 2026-11-09: right after signing, a report shows its seal line under it; reopened from Run history the
+   same sealed run showed it only inside the closed "Seal, signature and sources" section. A sealed record reads the
+   same however it is opened, and only when its seal verifies (GET /runs/:id/seal). */
+describe('a sealed run reopened from Run history shows its seal line', () => {
+  const rendered = { data: { reportTypeId: 'readiness.executive_digest', scopeType: 'project', scopeId: '11', scopeLabel: 'BX204',
+    status: 'final', generatedAt: '2026-10-02T09:00:12.000Z', sections: [{ id: 's1', title: 'Readiness', blocks: [] }] }, sealed: true };
+  const sealView = (verdict: string) => ({ data: { runId: 41, sealed: true,
+    seal: { algorithm: 'sha256', contentHash: 'f5c8f7187b555b75d5857d87a8da2f28', atomCount: 100, sealedAt: '2026-10-02T09:05:01.000Z' },
+    finalizedAt: '2026-10-02T09:05:01.000Z',
+    signature: { signerName: 'R. Mehta', signedAt: '2026-10-02T09:05:00.000Z', meaning: 'approval' },
+    finalization: { reason: 'Filed', meaning: 'approval', priorStatus: 'partial' },
+    verification: { verdict, checks: [] } } });
+  const openSealed = async (verdict: string) => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/report-os/runs/41/rendered') return ok(rendered);
+      if (url === '/api/report-os/runs/41/seal') return ok(sealView(verdict));
+      return route(url);
+    });
+    await renderCanvas();
+    await openTab(/Run history/);
+    fireEvent.click(await screen.findByRole('button', { name: /^Open the Executive Readiness Digest run of / }));
+    await screen.findByText(/Export PDF/);
+  };
+
+  it('shows the line when the seal verifies', async () => {
+    await openSealed('intact');
+    const line = await screen.findByTestId('ro-seal');
+    expect(line.textContent).toMatch(/Final\. Signed by R\. Mehta, meaning Approval,/);
+    expect(line.textContent).toMatch(/Sealed sha256 f5c8f7187b55… over 100 provenance atoms/);
+  });
+
+  it('shows no line over a seal that does not verify', async () => {
+    await openSealed('mismatch');
+    await waitFor(() => expect(calls('GET', '/api/report-os/runs/41/seal').length).toBeGreaterThan(0));
+    expect(screen.queryByTestId('ro-seal')).toBeNull();
+  });
+});
