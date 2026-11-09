@@ -2350,7 +2350,8 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
             <ProjectHeaderDoors pid={pid} prog={prog} deviceFiling={deviceFiling} cmcComposes={cmcComposes} available={available} onNav={onNav}
               anchorProjectId={sharingProjectId} />
             {/* What AnA knows, the skills it follows here, and the project's records: on every step (D3-2a). */}
-            <ProjectSide pid={pid} onAsk={onAsk} records={records} activity={<ProjectActivity activityState={activityState} />} />
+            <ProjectSide pid={pid} onAsk={onAsk} records={records} activity={<ProjectActivity activityState={activityState} />}
+              projectWorkspaceId={progState.loading && !progState.data ? 'reading' : progState.data?.client_workspace_id ?? null} />
           </aside>
           {teamOpen && pid && (
             <ProjectTeamDrawer programId={pid} state={teamState} onRetry={reloadTeam} onClose={() => setTeamOpen(false)}

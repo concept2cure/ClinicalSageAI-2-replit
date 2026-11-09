@@ -1,6 +1,6 @@
 import React from 'react';
 import { ProjectSkills } from '../ProjectSkills';
-import { ProjectRecordedContext } from './ProjectRecordedContext';
+import { ProjectRecordedContext, type ProjectWorkspace } from './ProjectRecordedContext';
 import { ProjectRecords, type ProjectRecordsRead } from './ProjectRecords';
 import type { DataState } from '../dataConnect';
 
@@ -10,12 +10,14 @@ import type { DataState } from '../dataConnect';
 
    They were Author-only until 2026-11-06. The dossier's readiness card left this column then: its figure is the
    Filing card's first row, and its detail is on the Author step beside Module completion. */
-export function ProjectSide({ pid, onAsk, records, activity }: {
+export function ProjectSide({ pid, onAsk, records, activity, projectWorkspaceId }: {
   pid: string | null; onAsk?: (text: string) => void; records: DataState<ProjectRecordsRead>; activity?: React.ReactNode;
+  /** The open project's recorded client workspace, from the page's own read: the profile read claims it. */
+  projectWorkspaceId?: ProjectWorkspace;
 }) {
   return (
     <>
-      <ProjectRecordedContext programId={pid} />
+      <ProjectRecordedContext programId={pid} projectWorkspaceId={projectWorkspaceId} />
       {pid && <ProjectSkills projectRef={pid} onAsk={onAsk} />}
       {pid && <ProjectRecords state={records} activity={activity} />}
     </>
