@@ -24,11 +24,11 @@ import { hasKeys, useLiveData } from './dataConnect';
 import { isOrgAdminRole } from './orgAdmin';
 import { canAdministerBilling } from '@shared/constants/permissions';
 import { TaskTray } from './TaskTray';
-import { readShellProject, shellProgramName, updateShellProject, useShellProject, type ShellProject, reopenLastProject } from './shellProject';
+import { readShellProject, shellProgramName, updateShellProject, useShellProject, type ShellProject, reopenLastProject, noteRecentProject } from './shellProject';
 import { destinationFor } from './routing';
 import { OPEN_PROGRAM_SURFACE } from './programAction';
 import { isMdxProjectFeature } from '@shared/constants/mdx-project-features';
-import { openPaletteProject, paletteProjectResults, usePaletteProjects, type PaletteProject, type PaletteProjectsRead } from './paletteProjects';
+import { openPaletteProject, paletteProjectResults, shellProjectOfPalette, usePaletteProjects, type PaletteProject, type PaletteProjectsRead } from './paletteProjects';
 
 import {
   AI_ACTIONS,
@@ -185,6 +185,7 @@ export function Rail({
 }) {
   const { user, logout } = useAuth();
   const { canLeave, notify, leaveNotice } = useShellLeaveGuard();
+  const recentProjects = useRailRecentProjects();
   /* The organisation's name, or none (P-25): the account's second line, as
      Claude's sidebar shows the organisation under the person (D1.md §D1.A step 2). */
   const org: string | null = useTenant()?.currentOrganization?.name?.trim() || null;
@@ -387,6 +388,7 @@ export function Rail({
           </div>
         )}
         {!collapsed && <RailRecents
+          projects={recentProjects}
           onOpen={(id) => {
             if (!canLeave()) return;
             closeOnPhone();
@@ -572,14 +574,27 @@ function useRecentThreads(limit: number, enabled = true): RecentThreadsRead {
  * the list route Home and the palette read; a failed project read shows no
  * project rows and never blocks the conversations (D1.md §D1.A step 4).
  */
-function RailRecents({ onOpen, onOpenProject }: { onOpen: (id: string) => void; onOpenProject: (p: PaletteProject) => void }) {
+/**
+ * The account's most recent projects, newest-updated first, from the list route
+ * Home and the palette read; none when the read fails. Read by the rail itself,
+ * collapsed or not, because a project screen chosen with no project open
+ * reopens the first of them when this account never opened one here
+ * (shellProject.ts noteRecentProject).
+ */
+function useRailRecentProjects(): PaletteProject[] {
+  const { data, error } = useLiveData<unknown[]>(RAIL_PROJECTS_URL, [], isRows);
+  const projects = React.useMemo(() => (error || !Array.isArray(data)
+    ? []
+    : data.map(railProjectOf).filter((p): p is PaletteProject => p !== null).slice(0, RAIL_RECENT_PROJECTS)), [data, error]);
+  const first = projects[0] ?? null;
+  React.useEffect(() => { noteRecentProject(first ? shellProjectOfPalette(first) : null); }, [first]);
+  return projects;
+}
+
+function RailRecents({ projects, onOpen, onOpenProject }: { projects: PaletteProject[]; onOpen: (id: string) => void; onOpenProject: (p: PaletteProject) => void }) {
   const headId = React.useId();
   const read = useRecentThreads(RAIL_RECENTS);
   const { threads } = read;
-  const projectsRead = useLiveData<unknown[]>(RAIL_PROJECTS_URL, [], isRows);
-  const projects = projectsRead.error || !Array.isArray(projectsRead.data)
-    ? []
-    : projectsRead.data.map(railProjectOf).filter((p): p is PaletteProject => p !== null).slice(0, RAIL_RECENT_PROJECTS);
   return (
     <div className="rail-nav rail-group rail-recents" role="group" aria-labelledby={headId} data-testid="rail-recents">
       <div className="rail-group-h" id={headId}>Recents</div>

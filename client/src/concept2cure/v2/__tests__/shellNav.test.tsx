@@ -33,7 +33,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { isLaunchSurface } from '@shared/constants/launch-scope';
-import { publishShellProject, readShellProject } from '../shellProject';
+import { noteRecentProject, publishShellProject, readShellProject } from '../shellProject';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 const authRoles = vi.hoisted(() => ({ current: ['admin'], permissions: ['governed:write', 'billing:admin'] as string[] }));
@@ -152,6 +152,7 @@ describe('a work area opens from the rail', () => {
     localStorage.clear();
     sessionStorage.clear();
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = undefined;
+    noteRecentProject(null);
   });
 
   /**
@@ -194,6 +195,22 @@ describe('a work area opens from the rail', () => {
     expect(entry, 'no Biostatistics entry on the rail').toBeTruthy();
     fireEvent.click(entry!);
     expect(onNav.mock.calls.map((c) => c[0])).toContain('biostatistics');
+  });
+
+  /* A fresh browser has nothing remembered: the founder's demo, 2026-11-09, where CMC opened Projects.
+     The rail's Recents read already names this account's most recent project, so CMC opens on it. */
+  it('with no project ever opened, CMC opens on the most recent project the rail lists', async () => {
+    sessionStorage.setItem('trialsage_user', JSON.stringify({ id: '7', email: '7@example.com' }));
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (m: string, url: string, ...rest: unknown[]) => (url.startsWith('/api/c2c/projects')
+      ? ok([{ id: 'c2ed888d-2958-4332-b186-e81482f2ceec', title: 'C2C-101 — IND', code: 'C2C-101' }, { id: 'e00d4d40-5378-41dc-b85e-e49662afe6a6', title: 'LMN-201 — IND' }])
+      : base(m, url, ...rest)));
+    const { scroll, onNav } = await mountRail();
+    expect(readShellProject(), 'the rail must not open a project just by listing it').toBeNull();
+    fireEvent.click(within(scroll).getByRole('button', { name: /CMC/ }));
+    expect(onNav).toHaveBeenCalledWith('cmc');
+    expect(readShellProject(), 'CMC landed on Projects: nothing was reopened').toMatchObject({ id: 'c2ed888d-2958-4332-b186-e81482f2ceec', title: 'C2C-101 — IND' });
+    expect(screen.queryByText(/Open a project to see/)).toBeNull();
   });
 });
 

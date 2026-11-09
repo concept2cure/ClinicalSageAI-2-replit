@@ -8,7 +8,7 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { destinationFor } from '../routing';
-import { publishShellProject, readShellProject, reopenLastProject } from '../shellProject';
+import { clearShellProject, noteRecentProject, publishShellProject, readShellProject, reopenLastProject } from '../shellProject';
 
 const signIn = (id: string) => sessionStorage.setItem('trialsage_user', JSON.stringify({ id, email: `${id}@example.com` }));
 const closeProject = () => {
@@ -16,7 +16,7 @@ const closeProject = () => {
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = undefined;
 };
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); closeProject(); });
+beforeEach(() => { localStorage.clear(); sessionStorage.clear(); closeProject(); noteRecentProject(null); });
 
 describe('the rail with no project open', () => {
   it('opens Tasks and Quality without a project: both are organisation-wide', () => {
@@ -76,5 +76,40 @@ describe('the rail with no project open', () => {
     localStorage.clear();
     signIn('7');
     expect(reopenLastProject()).toBe(false);
+  });
+
+  /**
+   * An account that has never opened a project: a fresh browser, a demo. Found
+   * on 2026-11-09 in the founder's demo: CMC on the rail opened Projects, because
+   * nothing was remembered to reopen. The rail's Recents already lists this
+   * account's most recent project (`/api/c2c/projects`, newest-updated first),
+   * so the work area opens on that one instead.
+   */
+  it('with nothing remembered, reopens the most recent project the rail lists', () => {
+    signIn('7');
+    noteRecentProject({ id: 'c2ed888d-2958-4332-b186-e81482f2ceec', title: 'C2C-101 — IND', code: 'C2C-101' });
+    expect(readShellProject(), 'noting a recent project must not open it').toBeNull();
+    expect(reopenLastProject()).toBe(true);
+    expect(readShellProject()).toMatchObject({ id: 'c2ed888d-2958-4332-b186-e81482f2ceec', title: 'C2C-101 — IND' });
+  });
+
+  it('prefers the project this account last opened over the most recent one', () => {
+    signIn('7');
+    publishShellProject({ id: '65f7b785-9abe-4b9d-a5c7-3ddc477074e4', title: 'LMN-101 — IND (demo)' });
+    closeProject();
+    noteRecentProject({ id: 'c2ed888d-2958-4332-b186-e81482f2ceec', title: 'C2C-101 — IND' });
+    expect(reopenLastProject()).toBe(true);
+    expect(readShellProject()).toMatchObject({ id: '65f7b785-9abe-4b9d-a5c7-3ddc477074e4' });
+  });
+
+  it("never reopens a recent project noted for another account, or after a tenant switch", () => {
+    signIn('7');
+    noteRecentProject({ id: 'c2ed888d-2958-4332-b186-e81482f2ceec', title: 'C2C-101 — IND' });
+    signIn('8');
+    expect(reopenLastProject()).toBe(false);
+    signIn('7');
+    clearShellProject();
+    expect(reopenLastProject(), 'a tenant switch must forget the noted project').toBe(false);
+    expect(readShellProject()).toBeNull();
   });
 });
