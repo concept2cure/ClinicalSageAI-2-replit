@@ -2,6 +2,25 @@
 
 **Session:** `session_01FTWcmXm7At3ZXBE5VWn6oS`. **Asked by:** the founder, 2026-11-09 ("Get everything to work … across all possible biotech use cases"). **Run:** workflow `wf_018748cb-92f`, 8 journeys walked with Playwright against the dev server on this container's local database, then one independent verifier per journey reproduced each reported defect and traced it to file:line and its owning package. **Nothing here is fixed yet**; this is the verified list, routed to the coordinating session. Machine-readable: `defects.json`.
 
+## For the founder: one client's quality records appear in another client's project
+
+Found after the sweep, on a fresh database provisioned and seeded the way the Codespace does
+(`docs/evidence/DEMO/clean-db-proof/`). The first read of a project's data-room sources
+(GET `/api/c2c/projects/:id/sources`, first page) runs the product's Quality evidence capture
+(`syncQualityProjectSources`), which attaches what `server/services/qms/project-evidence-queries.ts` admits:
+
+- suppliers, internal audits and management reviews **organization-wide** (no client-workspace predicate);
+- change controls with no program;
+- deviations and quality plans with no client workspace.
+
+On that clean database it attached **15 of Lumen's records** (5 suppliers, 4 internal audits, 2 management reviews,
+4 GMP deviations) to **C2C-101's data room**, although C2C-101 is in Concept2Cure Therapeutics' client workspace (2) and
+Lumen is in its own (4). For an organization that serves several sponsors (a CRO), one sponsor's suppliers, audits and
+deviations then appear in another sponsor's project. This is an **isolation question for the founder and the product
+owner, with S6/D6**: whether suppliers, audits and management reviews can belong to a client, and how the capture
+should scope them. Related sweep item: the "Letter in the data room" picker lists other projects' and clients' records
+(D6/S10, in the table above). Not fixed here; routed by the coordinating session.
+
 ## Coverage
 
 | Journey | Steps that worked | Not reached | Defects reported |
