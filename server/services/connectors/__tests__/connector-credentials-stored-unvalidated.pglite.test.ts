@@ -141,6 +141,24 @@ describe('client-owned credential grants enforce current custody and delegation'
     expect(audit[0]).toMatchObject({ action: 'credential.capture', new_values: { accountOwner: 'client', reauthenticated: true } });
     expect(JSON.stringify([saved, audit, await listCredentialCards(ORG, false, pool)])).not.toContain(CANARY);
   });
+  /* Expanded spike check 2 (§19.1): the canary captured through the real vault write never leaves in the
+     tenant's own data return. tenant-full-export.withheld seeds gateway accounts by hand; this exports the
+     card the vault actually stored, so the stored ciphertext is tested as well as the plaintext. */
+  it("the tenant's export returns the card but neither its key nor the ciphertext the vault stored", async () => {
+    // The organization columns the export reads (deployed organizations has both).
+    await holder.pg.exec("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS slug TEXT, ADD COLUMN IF NOT EXISTS settings JSONB DEFAULT '{}'");
+    await changeCard();
+    const stored = String((await holder.pg.query<{ credentials: string }>('SELECT credentials FROM connector_credentials')).rows[0].credentials);
+    const { exportTenantFull, EXPORT_WITHHELD_COLUMNS } = await import('../../tenant-export/tenant-full-export.service');
+    const exported = await exportTenantFull({ query: (sql: string, params?: unknown[]) => holder.pg.query(sql, params) } as never, ORG);
+    const cards = exported.tables.find(t => t.table === 'connector_credentials');
+    expect(cards?.withheldColumns).toEqual(['credentials']);
+    expect(cards?.rows).toEqual([expect.objectContaining({ organization_id: ORG, connector_id: 'llm_openai',
+      credentials: `[withheld: ${EXPORT_WITHHELD_COLUMNS.connector_credentials.credentials}]` })]);
+    const text = JSON.stringify(exported);
+    expect(text).not.toContain(CANARY);
+    expect(text).not.toContain(stored);
+  });
   it.each(['member', 'inactive_user', 'inactive_org', 'other_org'])('rejects capture with stale or insufficient %s authority', async state => {
     if (state === 'member') await holder.pg.exec("UPDATE organization_users SET role='member' WHERE user_id=11");
     if (state === 'inactive_user') await holder.pg.exec("UPDATE users SET status='inactive' WHERE id=11");
