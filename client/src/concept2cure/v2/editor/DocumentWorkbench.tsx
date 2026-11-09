@@ -43,6 +43,7 @@
 
  */
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { SectionVaultReplacements } from './SectionVaultReplacements';
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState, useDataReadVisit, type DataReadOwner, type DataReadVisit } from '../dataConnect';
@@ -70,6 +71,7 @@ import { useAuthoringRefileSavedText } from './AuthoringRefileSavedText';
 import { refileControlRefusal, refileSavedSource } from './authoringRefileSavedTextState';
 import { hasUnsavedSessionWork } from '@/lib/sessionChangeGuard';
 import { SendForReviewDialog } from './SendForReviewDialog';
+import { ReturnedReviewNote } from './AuthoringReviewRound';
 import { useProgramRead, programHeadline, programName, offersIndLibrary } from './programSummary';
 import { askAnaToDraftPrompt, openConversationWithPrompt, originWithSavedVersion, prefillConversation, type AskOrigin, type SavedSectionVersion } from './askAnaToDraft';
 import { describeClaimsCheck, describeFigureCheck, describeProvenance } from './provenance';
@@ -4977,6 +4979,10 @@ export function DocumentWorkbench({
         {currentMetadata?.refused && <div className="scaf-note" role="alert" style={{ padding: '8px 16px' }}>
           This document could not be read with your current access. Re-open it to read the current record.
         </div>}
+        {/* J3 R2: a review returned for changes is said where the document opens, not only under Review tasks. */}
+        {activeDocId && !currentMetadata?.refused && (
+          <ReturnedReviewNote docId={activeDocId} refreshKey={tasksEpoch} onOpenTasks={from => openRail('tasks', from)} />
+        )}
 
         {/* ── The deep-link's honest miss ──
             A workbench click named a section this canvas could not open. The
@@ -6256,6 +6262,8 @@ export function DocumentWorkbench({
               )}
             </>
           )}
+          {/* S12: an independent read, so a failed citations read above does not hide it. */}
+          {activeSection && <SectionVaultReplacements programId={programId} sectionId={activeSection.id} onNav={onNav} />}
         </aside>
       )}
 
