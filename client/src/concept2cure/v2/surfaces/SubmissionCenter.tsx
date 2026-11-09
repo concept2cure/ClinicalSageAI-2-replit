@@ -45,9 +45,8 @@ import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import { I } from '../icons';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
-import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor } from '../assessmentState';
-import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveMutateOrNull, EmptyState } from '../dataConnect';
+import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveMutateOrNull, EmptyState, ProjectBack } from '../dataConnect';
 import { EsignModal } from '../../_shared/components/EsignModal';
 import { FiledBaselineSlot, nextAfterFiled, numberingKnown, useFiledBaseline, type FiledBaselineView } from './FiledElsewhereBaseline';
 import { useShellProject, shellProgramId, type ShellProject } from '../shellProject';
@@ -378,45 +377,27 @@ function openProgramme(
   return { id, title: row?.title || shell?.title || '', code: row?.code || shell?.code || '' };
 }
 
-/** Whose submissions are listed, in one line, with the way to the others.
- *  `notOffered` is the server's count of the organization's submissions the
- *  project scope left out (meta.notOffered); null when it did not say, and the
- *  line then says nothing about them rather than guessing. `name` is null when
- *  neither the shell nor the projects list names the project; the line then
- *  says "the open project" once, not twice.
+/** The context row's scope toggle (D7 §A.4 step 3). The sentence it replaced ("Submissions of X, the open project")
+ *  is said by the page's back link and this label. `notOffered` is the server's count of the organization's
+ *  submissions the project scope left out (meta.notOffered); the label carries it when the server sent it, and says
+ *  nothing about them when it did not, rather than guessing. Scoped with no other submission, "show all" would list
+ *  the same rows, so it is not offered.
  *
- *  One <p>, one <span> of words and the toggle <button> at the same place in
- *  both states, so the button is the same element after a toggle and keyboard
- *  focus stays on it (WCAG 2.4.3). It used to sit at a different child index
- *  in each state, so React replaced it and focus fell to <body>. */
-function ProjectScopeLine({ name, scoped, notOffered, onToggle }: {
-  name: string | null;
+ *  It is one <button> in both states, relabelled, so it is the same element after a toggle and keyboard focus stays
+ *  on it (WCAG 2.4.3). */
+function ProjectScopeToggle({ scoped, notOffered, onToggle }: {
   scoped: boolean;
   notOffered: number | null;
   onToggle: () => void;
 }) {
-  const others =
-    notOffered == null
-      ? ''
-      : notOffered === 0
-        ? ' Your organization has no other submissions.'
-        : ` ${plural(notOffered, 'other submission', 'other submissions')} in your organization ${notOffered === 1 ? 'is' : 'are'} not shown.`;
-  const words = !scoped
-    ? 'Every submission in your organization.'
-    : name
-      ? <>Submissions of <b>{name}</b>, the open project.{others}</>
-      : <>Submissions of the open project.{others}</>;
-  // Scoped with no other submission, "show all" would list the same rows.
-  const showToggle = !scoped || notOffered !== 0;
+  if (scoped && notOffered === 0) return null;
+  const label = scoped
+    ? `Show the organization's submissions${notOffered ? ` (${notOffered} more)` : ''}`
+    : "Show this project's submissions";
   return (
-    <p className="sp-state sc-mb" data-testid="sc-scope">
-      <span>{words}</span>{' '}
-      {showToggle && (
-        <button type="button" className="pj-card-h-go" onClick={onToggle}>
-          {scoped ? "Show all of the organization's submissions" : `Show only ${name ? `${name}'s` : "the open project's"} submissions`}
-        </button>
-      )}
-    </p>
+    <button type="button" className="btn ghost small" data-testid="sc-scope" onClick={onToggle}>
+      {label}
+    </button>
   );
 }
 
@@ -431,7 +412,7 @@ function scopedMissReason(wanted: string, projectName: string | null, notOffered
     notOffered != null
       ? `${plural(notOffered, 'other submission', 'other submissions')} of the organization ${notOffered === 1 ? 'is' : 'are'}`
       : "The organization's other submissions are";
-  return `${head}. ${others} not listed here; the person can list them with "Show all of the organization's submissions" under the title.`;
+  return `${head}. ${others} not listed here; the person can list them with "Show the organization's submissions" beside the submission picker.`;
 }
 
 /* ── Device filings follow the open project (B4, demo walk 2026-11-05) ──────
@@ -1296,115 +1277,108 @@ export function SubmissionCenter({
   ]);
   usePublishSurfaceContext('submission-center', anaContext);
 
+  /* The page's one-sentence state (D7 §A.4 step 2): what the deleted AnswerLead's headline said, as a plain
+     sentence. While the sequences are in flight or unreadable it says so and never counts them (seqState). */
+  const latestSeq = seqs.rows.reduce<(typeof seqs.rows)[number] | null>(
+    (a, r) => (!a || r.sequenceNumber > a.sequenceNumber ? r : a), null);
+  const headSub = !sub
+    ? "Plan, build, validate and dispatch each market's eCTD sequences."
+    : `${appL(sub.applicationType)} · ${regL(sub.primaryRegion)}, ${sub.lifecycleStage}. ` + (
+      seqState === 'loading' ? 'Loading its sequences…'
+        : seqState === 'unreadable' ? 'Its sequences could not be read.'
+          : !latestSeq ? 'No sequence yet.'
+            : `${plural(seqs.rows.length, 'sequence', 'sequences')}: ${latestSeq.sequenceNumber}, ` +
+              `${(SC_SEQ_STATUS[latestSeq.status]?.l ?? latestSeq.status).toLowerCase()}.`);
+
   return (
-    <div className="sp sc-page">
-      <div className="sp-head">
+    <div className="sp sc-page" data-work-area="submission-center">
+      <ProjectBack onNav={onNav} />
+      <header className="ph">
         <div>
-          <div className="sp-eyebrow">Submission</div>
-          <h1 className="sp-title">{getSurfaceMeta('submission-center').label}</h1>
-          <p className="sp-state">
-            Plan, build, validate and dispatch each market&apos;s eCTD v3.2.2 sequences.
-          </p>
+          <h1 className="ph-title">{getSurfaceMeta('submission-center').label}</h1>
+          <p className="ph-sub" data-testid="sc-state">{headSub}</p>
         </div>
-        {list.length > 0 && (
-          <select
-            className="sc-subpick"
-            aria-label="Submission to work on"
-            value={sub?.id ?? ''}
-            onChange={(e) => setSelSub(Number(e.target.value))}
-          >
-            {list.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.title} · {appL(s.applicationType)} · {regL(s.primaryRegion)}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
-
-      {openProjectName && (
-        <ProjectScopeLine
-          name={openProjectKnownName}
-          scoped={Boolean(scopedTo)}
-          notOffered={notOffered}
-          onToggle={() => setOrgWide((w) => !w)}
-        />
-      )}
-
-      {sub && (
-        <AnswerLead
-          tone="calm"
-          eyebrow={`Where ${sub.title} stands`}
-          headline={
-            <>
-              {sub.title}
-              {/* No article: "a FDA", "a EU" read wrong, and an initialism's
-                  article depends on how it is said (design review 2026-10-08). */}
-              {sub.productName ? ` (${sub.productName})` : ''} — {appL(sub.applicationType)} · {regL(sub.primaryRegion)}, at
-              the <b>{sub.lifecycleStage}</b> stage.
-            </>
-          }
-          body={
-            seqs.loading ? (
-              <>Loading this submission&#39;s sequences…</>
-            ) : seqs.error ? (
-              <>
-                This submission&#39;s sequences couldn&#39;t be loaded right now — open the Sequences
-                workspace to retry.
-              </>
-            ) : (
-              <>
-                <b>{seqs.rows.length}</b> eCTD {seqs.rows.length === 1 ? 'sequence' : 'sequences'}{' '}
-                tracked{seqs.rows.length ? '' : ' yet'}. Plan, assemble, validate and dispatch it
-                across the workspaces below; validation findings load per sequence once it is
-                assembled.
-              </>
-            )
-          }
-          reassure="I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you."
-          /* ── The lead's action used to branch on `seqs.rows.length` alone ────
-             It read `seqs.rows.length ? 'Open the sequences' : 'Plan the
-             submission'`, with the same expression choosing the destination —
-             and `rows` is empty in flight, on a failed read, and on a genuine
-             zero-sequence submission alike. So the reader could see the body
-             copy two props above say "Loading this submission's sequences…" or
-             "couldn't be loaded" while the button directly below offered to plan
-             the submission from zero, and clicking it opened the Planner: the
-             right destination only when zero is the KNOWN count, not the unknown
-             one. The Planner is now offered from 'not-assessed' only — a settled
-             read with no sequences recorded. While the count is unknown the
-             button names the workspace it opens and claims nothing about what is
-             in it; that workspace reports the loading or failed read itself. ── */
-          action={
-            seqState === 'not-assessed'
-              ? { label: 'Plan the submission', onClick: () => setWs('planner') }
-              : seqState === 'assessed-with-findings'
-                ? { label: 'Open the sequences', onClick: () => setWs('sequences') }
-                : { label: 'Open the Sequences workspace', onClick: () => setWs('sequences') }
-          }
-          secondary="Or move through the workspaces below — plan, build, validate, dispatch."
-        />
-      )}
-      {/* P-32: the IND forms and letters are a feature of this app, reached
-          from the US IND they are filed in (audit 2026-10-17: nothing opened
-          them). The IND screen reads { submissionId } once on mount and opens
-          that submission's checklist, or says it has none. */}
-      {sub && onNav && isUsInd(sub) && available('ind-checklist') && (
-        <div className="scaf-note sc-mb" role="note">
-          Form FDA 1571, the cover letter and the Letter of Authorization for this IND are built on the IND screen, opened on
-          this submission.{' '}
+        <div className="ph-acts">
+          {/* P-32: the IND forms and letters are a feature of this app, reached from the US IND they are filed in.
+              The IND screen reads { submissionId } once on mount and opens that submission's checklist. */}
+          {sub && onNav && isUsInd(sub) && available('ind-checklist') && (
+            <button
+              type="button"
+              className="btn ghost"
+              title="Form FDA 1571, the cover letter and the Letter of Authorization for this IND, on the IND screen"
+              onClick={() => {
+                stashNavParamsForTarget('ind-checklist', { submissionId: String(sub.id) });
+                onNav('ind-checklist');
+              }}
+            >
+              Forms and letters
+            </button>
+          )}
+          {/* The compile screen, opened on the working sequence (FILING_SPINE.md F14). */}
+          {seq && onNav && available('ectd-compile') && (
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => { stashNavParamsForTarget('ectd-compile', { sequenceId: String(seq.id) }); onNav('ectd-compile'); }}
+            >
+              Compile &amp; export
+            </button>
+          )}
           <button
             type="button"
-            className="sc-trans-b"
-            onClick={() => {
-              stashNavParamsForTarget('ind-checklist', { submissionId: String(sub.id) });
-              onNav('ind-checklist');
-            }}
+            className="btn primary"
+            onClick={() => setNewOpen(true)}
+            disabled={creating || (!openProgramId && programmes.rows.length === 0)}
+            title={
+              !openProgramId && programmes.rows.length === 0
+                ? 'A submission belongs to a project, and this organization has none yet. Create one in Projects first.'
+                : undefined
+            }
           >
-            {I.right} Forms and letters (1571, cover letter, LOA)
+            {I.plus} New submission
           </button>
         </div>
+      </header>
+
+      {sub && (
+        <div className="sp-starters" data-layout="row" role="group" aria-label="Ask AnA">
+          {[
+            { label: 'Where does this submission stand?', prompt: `Where does ${sub.title} stand, sequence by sequence, and what is next?` },
+            { label: 'What blocks dispatch?', prompt: 'What blocks dispatch of the working sequence, and what clears each blocker?' },
+            { label: 'Plan the next sequence', prompt: 'Plan the next sequence for this submission from its region profile.' },
+          ].map((st) => (
+            <button key={st.label} type="button" className="sp-starter" onClick={() => onAsk(st.prompt)}>
+              <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{st.label}</span>
+            </button>
+          ))}
+        </div>
       )}
+
+      {(list.length > 0 || openProjectName) && (
+        <div className="sc-context">
+          {list.length > 0 && (
+            <label className="sc-context-f">
+              <span>Submission</span>
+              <select
+                className="c2c-input"
+                aria-label="Submission to work on"
+                value={sub?.id ?? ''}
+                onChange={(e) => setSelSub(Number(e.target.value))}
+              >
+                {list.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.title} · {appL(s.applicationType)} · {regL(s.primaryRegion)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {openProjectName && (
+            <ProjectScopeToggle scoped={Boolean(scopedTo)} notOffered={notOffered} onToggle={() => setOrgWide((w) => !w)} />
+          )}
+        </div>
+      )}
+
       {/* P-14's remedy: a submission the server records with no project is
           anchored here (POST /api/submissions/:id/program-anchor). */}
       {sub && sub.programId === null && (
@@ -1417,14 +1391,14 @@ export function SubmissionCenter({
         />
       )}
 
-      <div className="sc-wsbar" role="tablist">
+      <div className="tabs" role="tablist" aria-label="Workspaces">
         {SUBMISSION_WORKSPACES.map((w) => (
           <button
             key={w.id}
             type="button"
             role="tab"
             aria-selected={ws === w.id}
-            className={`sc-ws${ws === w.id ? ' on' : ''}`}
+            className="tab"
             onClick={() => setWs(w.id)}
           >
             {w.label}
@@ -1463,24 +1437,12 @@ export function SubmissionCenter({
 
       {ws === 'portfolio' && (
         <>
-        <div className="pj-card">
-          <div className="pj-card-h">
-            <span className="t">Submissions</span>
-            <button
-              type="button"
-              className="pj-card-h-go"
-              onClick={() => setNewOpen(true)}
-              disabled={creating || (!openProgramId && programmes.rows.length === 0)}
-              title={
-                !openProgramId && programmes.rows.length === 0
-                  ? 'A submission belongs to a project, and this organization has none yet. Create one in Projects first.'
-                  : undefined
-              }
-            >
-              + New submission
-            </button>
+        <section className="pj-sec" aria-labelledby="sc-subs-h">
+          <div className="pj-sec-h">
+            <h2 id="sc-subs-h">Submissions</h2>
+            {!subs.loading && !subs.error && <span className="sec-sub">{list.length}</span>}
           </div>
-          <div className="pj-card-b pj-card-b-flush">
+          <div className="sc-tbl">
             {subs.loading ? (
               <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
                 Loading submissions…
@@ -1516,7 +1478,6 @@ export function SubmissionCenter({
                     <th>Region</th>
                     <th>Type</th>
                     <th>Client</th>
-                    <th>Stage</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -1540,18 +1501,23 @@ export function SubmissionCenter({
                         <button type="button" className="sc-subrow-open" aria-label={`Open ${s.title}`}>
                           <b>{s.title}</b>
                         </button>
-                        {[s.productName ? `Product ${s.productName}` : null, programOf(s)]
+                        {/* The project is said by the back link when the list is the open project's. */}
+                        {[s.productName ? `Product ${s.productName}` : null, scopedTo ? null : programOf(s)]
                           .filter(Boolean)
                           .map((part) => <span key={part} className="sp-row-s"> · {part}</span>)}
                       </td>
                       <td>{regL(s.primaryRegion)}</td>
                       <td>{appL(s.applicationType)}</td>
                       <td className="sc-cap">{s.clientType}</td>
-                      <td className="sc-cap">{s.lifecycleStage}</td>
                       <td>
+                        {/* Status and stage are two fields that start equal ("planning"): the stage is said only
+                            when it differs, so one column carries both without repeating either. */}
                         <span className={`rd-chip tone-${SUB_STATUS_TONE[s.status] ?? 'idle'}`}>
                           {SUB_STATUS_LABEL[s.status] ?? s.status}
                         </span>
+                        {s.lifecycleStage && s.lifecycleStage.toLowerCase() !== String(s.status).toLowerCase() && (
+                          <span className="sp-row-s sc-cap"> · {s.lifecycleStage}</span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -1559,7 +1525,7 @@ export function SubmissionCenter({
               </table>
             )}
           </div>
-        </div>
+        </section>
 
         {showDeviceFilings && <DeviceFilingsCard
           res={deviceRes}

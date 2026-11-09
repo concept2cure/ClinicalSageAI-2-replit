@@ -234,3 +234,157 @@ describe('a project\'s work projects, read by the project page (S12)', () => {
   });
 });
 
+
+/* P-111 slice 2, the coordinating session's ruling (b) of 2026-11-09: a filing project's writers are admitted on its work
+   projects' tasks, in one direction only, through the one task admission (tasking/task-project.ts). Each case calls
+   admitTaskCreationProject on a request's own tenant-scoped connection, inside its transaction, as POST /tasks does. */
+describe('a work project\'s tasks admit its filing project\'s writers, one direction only (P-111)', () => {
+  function admitApp(actor: number, organizationId = 9) {
+    const a = express(); a.use(express.json());
+    a.use((req, _res, next) => { Object.assign(req, { userId: actor, user: { id: actor, organizationId, role: 'member' }, organizationId }); next(); });
+    a.use((req, res, next) => scope.establishRequestTenantScope(req, res, next));
+    a.post('/admit', async (req, res) => {
+      const { requestPgClient } = await import('../../server/db/requestDb');
+      const { admitTaskCreationProject } = await import('../../server/services/tasking/task-project');
+      const q = requestPgClient(req);
+      await q.query('BEGIN');
+      try {
+        const admitted = await admitTaskCreationProject(q, { organizationId, actorUserId: actor, projectId: Number(req.body.projectId) });
+        await q.query('ROLLBACK');
+        res.json({ admitted: admitted.projectId });
+      } catch (error) {
+        await q.query('ROLLBACK');
+        const e = error as { status?: number; code?: string };
+        res.status(e.status ?? 500).json({ code: e.code ?? 'UNKNOWN' });
+      }
+    });
+    return a;
+  }
+  const admit = (actor: number, projectId: number, organizationId = 9) => request(admitApp(actor, organizationId)).post('/admit').send({ projectId });
+
+  /** Two work projects under project 11, created by the lead (7); a parent writer (12, an edit member of 11 only); a
+   *  child-only member (13, an edit member of the first work project only). */
+  async function family() {
+    const cmcChild = (await add(11, cmc)).body.data.projectId as number;
+    const sibling = (await add(11, { name: 'Drug product QA', workKind: 'quality' })).body.data.projectId as number;
+    await owner.query(`INSERT INTO users(id,name,email,password_hash,status) VALUES(13,'Child member','child@example.test','x','active');
+      INSERT INTO organization_users(organization_id,user_id,role) VALUES(9,13,'member');
+      INSERT INTO project_members(project_id,organization_id,user_id,role,status) VALUES(11,9,12,'edit','active'),($1,9,13,'edit','active')`
+      .replace('$1', String(cmcChild)));
+    return { cmcChild, sibling };
+  }
+
+  it('admits a writer on the filing project to add on its work project', async () => {
+    const { cmcChild } = await family();
+    expect((await admit(12, 11)).body).toEqual({ admitted: 11 });
+    const res = await admit(12, cmcChild);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body).toEqual({ admitted: cmcChild });
+  });
+
+  it('gives a work project\'s own member nothing on its filing project or on a sibling', async () => {
+    const { cmcChild, sibling } = await family();
+    expect((await admit(13, cmcChild)).body).toEqual({ admitted: cmcChild });
+    for (const elsewhere of [11, sibling]) expect((await admit(13, elsewhere)).status).toBe(403);
+  });
+
+  it('gives another organisation nothing on a work project', async () => {
+    const { cmcChild } = await family();
+    const foreign = await admit(9, cmcChild, 10);
+    expect([403, 404]).toContain(foreign.status);
+    expect(foreign.body).not.toHaveProperty('admitted');
+  });
+
+  it('respects a work project\'s own private visibility: the filing project\'s writer is refused there', async () => {
+    const { cmcChild } = await family();
+    await owner.query(`INSERT INTO project_visibility_settings(project_id,organization_id,visibility) VALUES($1,9,'private')`, [cmcChild]);
+    expect((await admit(12, cmcChild)).status).toBe(403);
+    // Its own member is still admitted.
+    expect((await admit(13, cmcChild)).body).toEqual({ admitted: cmcChild });
+  });
+});
+
+/* P-111 item 3, the coordinating session's A1 of 2026-11-09: a filing project's work view rolls up its work projects'
+   tasks for the reader the route admitted, decided for all work projects at once by the same rule as the task
+   admission. Each case runs loadUnifiedWork on a request's own tenant-scoped connection under row-level security. */
+describe('a filing project\'s work rolls up its work projects\' tasks for the admitted reader (P-111 item 3)', () => {
+  beforeAll(async () => {
+    await owner.query(await tableDdl('migrations/0000_sweet_joseph.sql', ['unified_tasks']));
+    for (const file of ['db/migrations/20260727_unified_tasks_mdx_metadata.sql', 'db/migrations/20260807_unified_tasks_soft_delete.sql',
+      'migrations/20261023_review_routes.sql']) await owner.query(await readFile(file, 'utf8'));
+    await owner.query(`ALTER TABLE unified_tasks ENABLE ROW LEVEL SECURITY; ALTER TABLE unified_tasks FORCE ROW LEVEL SECURITY;
+      ${tenantIsolationPolicySql('unified_tasks', 'organization_id')};
+      GRANT SELECT, INSERT, UPDATE, DELETE ON unified_tasks TO ${runtimeRole}; GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO ${runtimeRole}`);
+  }, 60_000);
+  beforeEach(async () => { await owner.query('TRUNCATE unified_tasks RESTART IDENTITY'); });
+
+  function workApp(actor: number, organizationId = 9) {
+    const a = express();
+    a.use((req, _res, next) => { Object.assign(req, { userId: actor, user: { id: actor, organizationId, role: 'member' }, organizationId }); next(); });
+    a.use((req, res, next) => scope.establishRequestTenantScope(req, res, next));
+    a.get('/work/:projectId', async (req, res) => {
+      const { requestDb, requestPgClient } = await import('../../server/db/requestDb');
+      const { loadUnifiedWork } = await import('../../server/services/unified-work/unified-work-view');
+      const view = await loadUnifiedWork({ organizationId, projectId: Number(req.params.projectId),
+        rollUpFor: { userId: actor, role: 'member', executor: requestPgClient(req) } }, requestDb(req));
+      res.json(view);
+    });
+    return a;
+  }
+  const work = async (actor: number, projectId: number, organizationId = 9) => {
+    const res = await request(workApp(actor, organizationId)).get(`/work/${projectId}`);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    return (res.body.items as Array<{ title: string; projectId: number; workProject?: { id: number; name: string } }>)
+      .map((i) => [i.title, i.projectId, i.workProject?.name ?? null]);
+  };
+  const task = (projectId: number, title: string, organizationId = 9) => owner.query(
+    `INSERT INTO unified_tasks(task_id,organization_id,title,module_type,status,project_id) VALUES($1,$2,$3,'CMC','pending',$4)`,
+    [`t-${projectId}-${title.length}-${Math.random().toString(36).slice(2, 8)}`, organizationId, title, projectId]);
+
+  /** The filing project 11 with its own task; two work projects with one task each; a parent writer (12, edit on 11
+   *  only) and a child-only member (13, edit on the CMC work project only). */
+  async function family() {
+    const cmcChild = (await add(11, cmc)).body.data.projectId as number;
+    const sibling = (await add(11, { name: 'Drug product QA', workKind: 'quality' })).body.data.projectId as number;
+    await owner.query(`INSERT INTO users(id,name,email,password_hash,status) VALUES(13,'Child member','child@example.test','x','active');
+      INSERT INTO organization_users(organization_id,user_id,role) VALUES(9,13,'member');
+      INSERT INTO project_members(project_id,organization_id,user_id,role,status) VALUES(11,9,12,'edit','active'),(${cmcChild},9,13,'edit','active')`);
+    await task(11, 'Assemble Module 3'); await task(cmcChild, 'Confirm the specification'); await task(sibling, 'Close the CAPA');
+    return { cmcChild, sibling };
+  }
+
+  it('shows a parent writer each work project\'s tasks, marked with where it lives; the filing project\'s own are unchanged', async () => {
+    const { cmcChild, sibling } = await family();
+    expect((await work(12, 11)).sort()).toEqual([
+      ['Assemble Module 3', 11, null], ['Close the CAPA', sibling, 'Drug product QA'], ['Confirm the specification', cmcChild, 'Drug substance CMC'],
+    ].sort());
+  });
+
+  it('leaves a private work project\'s tasks out for the parent writer', async () => {
+    const { cmcChild, sibling } = await family();
+    await owner.query(`INSERT INTO project_visibility_settings(project_id,organization_id,visibility) VALUES($1,9,'private')`, [cmcChild]);
+    expect((await work(12, 11)).sort()).toEqual([['Assemble Module 3', 11, null], ['Close the CAPA', sibling, 'Drug product QA']].sort());
+  });
+
+  it('gives a reader who is not a writer exactly what the exact rule gives: a non-private work project, never a private one', async () => {
+    const { cmcChild, sibling } = await family();
+    await owner.query(`INSERT INTO users(id,name,email,password_hash,status) VALUES(14,'Reader','reader@example.test','x','active');
+      INSERT INTO organization_users(organization_id,user_id,role) VALUES(9,14,'member');
+      INSERT INTO project_members(project_id,organization_id,user_id,role,status) VALUES(11,9,14,'use','active')`);
+    // A work project with no private setting is readable by the organisation's members by its own access.
+    expect((await work(14, 11)).sort()).toEqual([['Assemble Module 3', 11, null], ['Close the CAPA', sibling, 'Drug product QA'],
+      ['Confirm the specification', cmcChild, 'Drug substance CMC']].sort());
+    await owner.query(`INSERT INTO project_visibility_settings(project_id,organization_id,visibility) VALUES($1,9,'private')`, [cmcChild]);
+    expect((await work(14, 11)).sort()).toEqual([['Assemble Module 3', 11, null], ['Close the CAPA', sibling, 'Drug product QA']].sort());
+  });
+
+  it('gives a work project\'s own member its tasks directly, and nothing of its siblings', async () => {
+    const { cmcChild } = await family();
+    expect(await work(13, cmcChild)).toEqual([['Confirm the specification', cmcChild, null]]);
+  });
+
+  it('gives another organisation nothing', async () => {
+    await family();
+    expect(await work(9, 11, 10)).toEqual([]);
+  });
+});

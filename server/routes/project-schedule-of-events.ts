@@ -86,6 +86,8 @@ interface OwnedScheduleProject {
   projectId: number;
   projectType: string | null;
   execution: ScheduleExecutionContext;
+  /** The admitted actor's current organisation role, from the same read that admitted it (P-111 roll-up). */
+  actorRole: string | null;
 }
 
 function accessUnavailable(): ProgramReadAccessError {
@@ -109,7 +111,7 @@ async function admittedProgramProject(executor: RequestSqlClient, orgId: number,
   return admitted.projectId;
 }
 
-async function admitRouteProject(executor: RequestSqlClient, orgId: number, actorUserId: number, numericId: number | null, programId: string | null): Promise<number> {
+async function admitRouteProject(executor: RequestSqlClient, orgId: number, actorUserId: number, numericId: number | null, programId: string | null): Promise<{ projectId: number; role: string | null }> {
   try {
     const actor = await readCurrentProgramActor(executor, { organizationId: orgId, userId: actorUserId });
     if (actor.userId !== actorUserId) throw new ProgramReadAccessError(403, 'PROJECT_ACTOR_REQUIRED', 'The current project actor could not be verified.');
@@ -117,7 +119,7 @@ async function admitRouteProject(executor: RequestSqlClient, orgId: number, acto
     if (projectId === null || !await canAccessReportProject(orgId, actor, projectId, executor)) {
       throw new ProgramReadAccessError(403, 'PROJECT_PERMISSION_DENIED', 'Current project access does not permit this operation.');
     }
-    return projectId;
+    return { projectId, role: actor.role ?? null };
   } catch (error) {
     if (error instanceof ProgramReadAccessError) throw error;
     throw accessUnavailable();
@@ -142,14 +144,14 @@ async function requireOwnedProject(req: Request, res: Response): Promise<OwnedSc
   }
   const actorUserId = requireActorId(req);
   const executor = requestPgClient(req);
-  const projectId = await admitRouteProject(executor, orgId, actorUserId, numericId, programId);
+  const { projectId, role: actorRole } = await admitRouteProject(executor, orgId, actorUserId, numericId, programId);
   const { rows } = await executor.query('SELECT type, metadata FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1', [projectId, orgId]);
   const row = rows[0];
   if (!row) {
     res.status(404).json({ error: 'Project not found' });
     return null;
   }
-  return { orgId, projectId, projectType: projectTypeFromRow(row), execution: { actorUserId, executor } };
+  return { orgId, projectId, projectType: projectTypeFromRow(row), execution: { actorUserId, executor }, actorRole };
 }
 
 function scheduleRouteError(res: Response, operation: string, error: unknown) {
@@ -179,7 +181,9 @@ router.get('/projects/:id/unified-work', async (req: Request, res: Response) => 
     const owned = await requireOwnedProject(req, res);
     if (!owned) return;
     const { orgId, projectId, execution } = owned;
-    const view = await loadUnifiedWork({ organizationId: orgId, projectId }, requestDb(req));
+    /* P-111 item 3 (A1): the work projects' tasks roll up for the reader this route has just admitted, and no one else. */
+    const view = await loadUnifiedWork({ organizationId: orgId, projectId,
+      rollUpFor: { userId: execution.actorUserId, role: owned.actorRole, executor: execution.executor } }, requestDb(req));
     // This composed read has several source queries. Do not release earlier
     // private results after an observed revocation or changed program anchor.
     const current = await requireOwnedProject(req, res);

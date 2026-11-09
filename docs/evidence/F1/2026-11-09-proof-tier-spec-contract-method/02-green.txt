@@ -1,0 +1,8 @@
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+
+# the whole test:proof-tier gate — the two remaining failures are other lanes'
+ Test Files  2 failed | 141 passed (143)
+      Tests  2 failed | 1789 passed (1791)
+ × tests/schema-contract/c2c-document-submit-requires-filing.contract.test.ts > POST /:id/submit — a submitted status needs a filing behind it > a sequence that is still draft is not a filing 2031ms
+ × tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > no harness builds a table and then skips an applier file that alters it 29ms

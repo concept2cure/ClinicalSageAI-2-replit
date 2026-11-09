@@ -217,7 +217,7 @@
 /* D0.md §8.5: on a touch screen the tabs, segmented items, the composer's send and a drawer's close reach
    44px too. A fine pointer keeps 36, 28, 32 and 32, which pass WCAG 2.5.8 AA (24px). */
 @media (pointer: coarse) {
-  .c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab, .seg-b, .ml-seg-btn) { min-height: 44px; }
+  .c2c-v2 :is(.tab, .reg-tab, .cc-tab, .seg-b, .ml-seg-btn) { min-height: 44px; }
   .c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send, .de-x) { min-width: 44px; min-height: 44px; }
 }
 
@@ -364,24 +364,24 @@
 .c2c-v2.dark .adm-access .seg-btn:is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]) { background: var(--bg-200); box-shadow: 0 0 0 1px var(--border-strong); }
 
 /* Tabs: one scrollable row; the active tab is an ink underline, not orange. */
-.c2c-v2 :is(.tabs, .reg-tabs, .sc-wsbar, .cc-tabs) {
+.c2c-v2 :is(.tabs, .reg-tabs, .cc-tabs) {
   display: flex; flex-wrap: nowrap; gap: 4px; margin: 0 0 20px; padding: 0; overflow-x: auto; scrollbar-width: none;
   border-bottom: 1px solid var(--border);
 }
-.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab) {
+.c2c-v2 :is(.tab, .reg-tab, .cc-tab) {
   display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px; margin-bottom: -1px;
   border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none;
   font-size: var(--fs-body); font-weight: 500; color: var(--text-300); white-space: nowrap;
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab) svg { width: 16px; height: 16px; }
-.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab):hover { color: var(--text-100); }
-.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab):is(.on, [data-on], [aria-selected="true"], [aria-current="page"]) {
+.c2c-v2 :is(.tab, .reg-tab, .cc-tab) svg { width: 16px; height: 16px; }
+.c2c-v2 :is(.tab, .reg-tab, .cc-tab):hover { color: var(--text-100); }
+.c2c-v2 :is(.tab, .reg-tab, .cc-tab):is(.on, [data-on], [aria-selected="true"], [aria-current="page"]) {
   color: var(--text-100); border-bottom-color: var(--text-100);
 }
 /* Focus inside the edge: the tab row and the segmented track scroll, and a scroller clips the global
    ring drawn 2px outside a button (D0 review fix 7; the inset form .crumb-proj uses). */
-.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab, .seg-b, .ml-seg-btn):focus-visible, .c2c-v2 .adm-access .seg-btn:focus-visible { outline-offset: -2px; }
+.c2c-v2 :is(.tab, .reg-tab, .cc-tab, .seg-b, .ml-seg-btn):focus-visible, .c2c-v2 .adm-access .seg-btn:focus-visible { outline-offset: -2px; }
 .c2c-v2 .tab-body { padding: 20px 0 0; }
 
 /* Chips: 12px, sentence case; tone only where it means something. */
