@@ -25,10 +25,11 @@
 > | S5c GMP quality systems | done | `s5c-gmp-quality-systems/` |
 > | S5c GCP operations | done | `s5c-gcp-operations/` |
 > | S5b biomarkers | done | `s5b-biomarkers/` |
+> | S5b digital health | done | `s5b-digital-health/` |
 > | S6b | done; PMA withheld per P-55 R-7 | `s6b-generate-document-records/` |
 > | S6 | done, with its review | `s6-plan-ind-module-authoring-retired/` |
 > | `start_war_game` (found 2026-11-01) | done | `war-game-stored-session/` |
-> | S5b digital health, medical device and IVD lifecycle (with QMS and pathway eligibility), S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
+> | S5b medical device and IVD lifecycle (with QMS and pathway eligibility), S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 
@@ -654,6 +655,35 @@ facts gives the same one; otherwise they are null or `not_assessed`, and the res
 deciding facts. With all six distinguishing features stated false the category is prognostic,
 and an intended use that contradicts that is flagged. An omitted COU impact or device risk class
 is still inferred, and a finding now says so. No source reader, app or service was added.
+
+**S5b digital health — What already exists (execution audit):** the six functions in
+`digital-health/digital-health-knowledge.ts` are already reached by `digitalHealthTools.ts`, the
+executor's `runStatsTool` stated-input wrapper and the device skill's software and cybersecurity
+methods. S3 (2026-10-26, with its review `dd60c6e12`) had already made the cybersecurity worksheet
+three-valued: an unstated criterion leaves the cyber-device status and 524B undetermined, an unstated
+artifact is `not_stated` and counts as a gap (critical for the mandatory 524B artifacts until 524B is
+ruled out), and `statedBoolean` refuses a non-boolean. That rule is kept. Extend the other five
+functions, and the cybersecurity worksheet's `inputStates` and sensitive-data row; reuse
+`statedBoolean`, `booleanInputStates`, `statedOneOf` and `refuseUnlessStated`. Other digital-health
+code is not touched: the record-backed PCCP service (`ai-ml-pccp/`, behind `routes/pccp.ts`), the
+524B and device-software routes (`routes/cybersecurity-524b.ts`, `routes/mdx-software.ts`) and
+`routes/device-classification.ts`, which reaches `regulatory/samd-classification.ts`, a second IMDRF N12
+matrix (its nine cells agree with the engine's); none imports the engine. The local history is shallow, with no
+digital-health deletion matches. Evidence: `s5b-digital-health/`.
+
+**S5b digital health execution result:** each of the 25 optional booleans the six functions read
+reports true, false or `not_stated` through `inputStates`; a malformed boolean, enum, modification or
+principle entry is refused by field, and every required enum and list by name. `classify_samd` no
+longer reads an omitted SaMD-definition or platform fact as true: `isSaMD` is null and a consideration
+names it. `assess_ai_ml_device` reports an omitted transparency, representativeness, external-validation
+or monitoring fact as not stated instead of passing it, leaves a locked model's PCCP recommendation null
+while planned modifications are unstated, and names an unstated generative component or, for an
+autonomous function, SaMD category. `design_pccp` names the unstated scope facts. While a principle is
+not assessed, `assess_gmlp`'s score is null and its verdict `not_assessed`, unless a principle is
+non-conformant. `design_samd_clinical_validation` names each unstated fact in the plan, and the
+association pillar's rigor is `not_assessed` while that fact is unstated. `assess_device_cybersecurity`
+lists an unstated sensitive-data fact as a not-stated row at attention, which is not a gap. No source
+reader, app or service was added.
 - **S5c (quality):** `gcpOperationsTools`, `gmpQualitySystemsTools`.
 
 **S5c GMP quality systems — What already exists (execution audit):** the six functions in
