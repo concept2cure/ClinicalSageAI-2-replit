@@ -245,7 +245,8 @@ describe('sequence selector drives the per-sequence workspaces', () => {
     expect(await screen.findByText('Summary of Clinical Efficacy')).toBeTruthy();
     expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/sequences/21/leaves?submissionId=7');
     expect(document.body.textContent).toContain('2.7.3');
-    expect(document.body.textContent).toContain('Authored document #88');
+    // The source cell names the store, with its key on hover (D7-A2 step 9).
+    expect(document.querySelector('[title="Authored document #88"]')?.textContent).toBe('Authored document');
     // The leaf table names its source store, never the relation behind it.
     expect(document.body.textContent).not.toContain('coauthor_documents');
 

@@ -230,20 +230,17 @@ function mutationCode(body: unknown): string | undefined {
   return typeof code === 'string' ? code : undefined;
 }
 
-/* ── Sequence picker — the selector the per-sequence workspaces feed from ──── */
+/* ── Sequence picker — what stands in for the working sequence while it cannot be chosen (loading, unread, none);
+   the choosing itself is SeqSelect, in the context row ──── */
 
 export function SeqPicker({
   loading,
   error,
   rows,
-  selId,
-  onSel,
 }: {
   loading: boolean;
   error?: string;
   rows: SeqRow[];
-  selId: number | null;
-  onSel: (id: number) => void;
 }) {
   if (loading) {
     return <div role="status" className="scaf-note sc-mb">Loading this submission&#39;s sequences…</div>;
@@ -264,15 +261,22 @@ export function SeqPicker({
       </div>
     );
   }
+  // D7-A2 step 8: the select itself is the context row's (SeqSelect); this keeps only what stands in its place.
+  return null;
+}
+
+/** The working sequence, in Submission Center's context row (D7-A2 step 8): one control, read by every per-sequence
+ *  workspace and the header's Compile & export. Its options carry each sequence's stage, so no chip repeats it. */
+export function SeqSelect({ rows, selId, onSel }: { rows: SeqRow[]; selId: number | null; onSel: (id: number) => void }) {
+  if (rows.length === 0) return null;
   const sel = rows.find((s) => s.id === selId) ?? rows[0];
   return (
-    <div className="cm-pushbar sc-seqbar sc-mb">
-      <label className="sp-q-s" htmlFor="sc-seq-picker">
-        Working sequence
-      </label>
+    <label className="sc-context-f" htmlFor="sc-seq-picker">
+      <span>Sequence</span>
       <select
         id="sc-seq-picker"
-        className="sc-subpick"
+        className="c2c-input"
+        aria-label="Working sequence"
         value={sel.id}
         onChange={(e) => onSel(Number(e.target.value))}
       >
@@ -282,8 +286,7 @@ export function SeqPicker({
           </option>
         ))}
       </select>
-      <Chip map={SC_SEQ_STATUS} k={sel.status} />
-    </div>
+    </label>
   );
 }
 
@@ -446,7 +449,7 @@ function StudyTaggingControl({ seq, leaf, leavesPath, session, context, isCurren
     setNotice({ tone: 'warn', text: 'Current study tagging was reread. Your entered values are retained. Review the current values below before saving; this read does not confirm the earlier write or its audit.' });
   }, [readAttempt, reread, current, leaf, seq.id]);
 
-  if (!open) return <button type="button" className="sc-trans-b"
+  if (!open) return <button type="button" className="btn ghost small"
     aria-label={`Edit study tagging for leaf ${leaf.sectionCode} ${leaf.title}`}
     onClick={() => { if (current()) setOpen(true); }}>Edit study tagging</button>;
 
@@ -554,12 +557,13 @@ function pinVerdict(r: LeafSourceResolution): { chip: string; tone: string; titl
 function LeafSourceCell({ leaf }: { leaf: LeafRow }) {
   const key = leaf.documentUuid ?? (leaf.documentId != null ? String(leaf.documentId) : null);
   if (!leaf.documentTable || key == null) return <>unlinked</>;
-  const isUuid = leaf.documentUuid != null;
   /* The source row, named rather than related. The key stays — it is how an
      auditor ties this leaf to its source — but it is qualified by a store name
      a reader can act on instead of by a relation name (documentSourceLabel).
      A uuid is shown short with the full value on hover. */
-  const label = documentSourceLabel(leaf.documentTable, isUuid ? `${key.slice(0, 8)}…` : key);
+  /* D7-A2 step 9: the cell names the store; the key it used to print ("Vault document #0b4878b0…") is on hover,
+     where an auditor still finds it, and the leaf's title is in its own column. */
+  const label = documentSourceLabel(leaf.documentTable);
   const r = leaf.sourceDocument ?? null;
   /* "source verified" said only that the content pin matched. On a Vault
      version nobody had reviewed it read as approval (QA 2026-10-08, j6): the
@@ -569,8 +573,11 @@ function LeafSourceCell({ leaf }: { leaf: LeafRow }) {
   const verdict = r ? sourceVerdict(r) : null;
   return (
     <>
-      <span className="sc-mono" title={isUuid ? key : undefined}>{label}</span>
-      {verdict && (
+      <span title={`${documentSourceLabel(leaf.documentTable, key)}`}>{label}</span>
+      {/* Not yet determined is said once above the table, with its count, and quietly here: a chip on every leaf
+          read as a finding on every leaf (D7-A2 step 9). A determined verdict keeps its chip. */}
+      {r?.status === 'undetermined' && <span className="sp-row-s" title={r.reason ?? undefined}> · not yet determined</span>}
+      {verdict && r?.status !== 'undetermined' && (
         <>
           {' '}
           <span className={`rd-chip ${verdict.tone}`} title={verdict.title}>{verdict.chip}</span>
@@ -897,7 +904,7 @@ function RemoveLeafControl({
   const [busy, setBusy] = React.useState(false);
   if (!open) {
     return (
-      <button type="button" className="sc-trans-b" aria-label={`Remove leaf ${leaf.sectionCode} ${leaf.title}`} onClick={() => setOpen(true)}>
+      <button type="button" className="btn ghost small" aria-label={`Remove leaf ${leaf.sectionCode} ${leaf.title}`} onClick={() => setOpen(true)}>
         Remove
       </button>
     );
@@ -950,26 +957,27 @@ function RemoveLeafControl({
 function BuilderSources({ onNav }: { onNav?: (id: string) => void }) {
   const available = useSurfaceAvailable();
   return (
-    <div className="scaf-note sc-mt" data-testid="sc-builder-sources">
-      Documents reach this sequence from where they are kept: an authored
-      document&apos;s Place into filing, in the editor, or a file&apos;s Place into
-      submission, in the Vault. Copying a leaf from another market&apos;s sequence
-      comes later.
+    <details className="pj-more sc-mt" data-testid="sc-builder-sources">
+      <summary>How documents reach this sequence</summary>
+      <p>
+        From where they are kept: an authored document&apos;s Place into filing, in the editor, or a file&apos;s Place
+        into submission, in the Vault.
+      </p>
       {onNav && (available('document-authoring') || available('vault')) && (
         <div className="cm-pushbar sc-mt">
           {available('document-authoring') && (
-            <button type="button" className="sc-trans-b" onClick={() => onNav('document-authoring')}>
+            <button type="button" className="btn ghost small" onClick={() => onNav('document-authoring')}>
               Open documents
             </button>
           )}
           {available('vault') && (
-            <button type="button" className="sc-trans-b" onClick={() => onNav('vault')}>
+            <button type="button" className="btn ghost small" onClick={() => onNav('vault')}>
               Open the Vault
             </button>
           )}
         </div>
       )}
-    </div>
+    </details>
   );
 }
 
@@ -1048,12 +1056,12 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
   };
 
   return (
-    <div className="pj-card">
-      <div className="pj-card-h">
-        <span className="t">Builder · eCTD leaves · sequence {seq.sequenceNumber}</span>
-        <span className="s">governed leaves</span>
+    <div className="pj-sec">
+      <div className="pj-sec-h">
+        <h2>Leaves</h2>
+        <span className="sec-sub">sequence {seq.sequenceNumber}</span>
       </div>
-      <div className="pj-card-b">
+      <div>
         <VerdictNote notice={notice} />
         {arrival.lineAt === 'top' && arrival.line}
         {leaves.loading ? (
@@ -1074,6 +1082,15 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
             hint="Each leaf carries a lifecycle operator (new / replace / append / delete) and traces to its source document. Place the first one below."
           />
         ) : (
+          <>
+          {(() => {
+            const undetermined = leaves.rows.filter((l) => l.sourceDocument?.status === 'undetermined').length;
+            return undetermined > 0 ? (
+              <p className="sec-sub" data-testid="sc-source-undetermined">
+                Source evidence not yet determined for {undetermined} {undetermined === 1 ? 'leaf' : 'leaves'}.
+              </p>
+            ) : null;
+          })()}
           <table className="ub-inv">
             <LeafTableHead locked={locked} />
             <tbody>
@@ -1106,6 +1123,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
               ))}
             </tbody>
           </table>
+          </>
         )}
         {arrival.lineAt === 'form' && arrival.line}
         {locked ? (
@@ -1287,12 +1305,12 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
 
   return (
     <>
-      <div className="pj-card">
-      <div className="pj-card-h">
-        <span className="t">Validation · sequence {seq.sequenceNumber}</span>
-        <span className="s">dispatch readiness · validation</span>
+      <div className="pj-sec">
+      <div className="pj-sec-h">
+        <h2>Validation</h2>
+        <span className="sec-sub">sequence {seq.sequenceNumber}</span>
       </div>
-      <div className="pj-card-b">
+      <div>
         {live.loading ? (
           <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Running the deterministic validation checks…
@@ -1550,12 +1568,12 @@ export function ShadowReviewWorkspace({
   };
 
   return (
-    <div className="pj-card">
-      <div className="pj-card-h">
-        <span className="t">Shadow review · sequence {seq.sequenceNumber}</span>
-        <span className="s">shadow review · findings</span>
+    <div className="pj-sec">
+      <div className="pj-sec-h">
+        <h2>Shadow review</h2>
+        <span className="sec-sub">sequence {seq.sequenceNumber}</span>
       </div>
-      <div className="pj-card-b">
+      <div>
         <div className="cm-pushbar sc-mb">
           <label className="sp-q-s" htmlFor="sc-shadow-lens">
             Review lens
@@ -2152,12 +2170,12 @@ export function DispatchWorkspace({
   };
 
   return (
-    <div className="pj-card">
-      <div className="pj-card-h">
-        <span className="t">Dispatch · sequence {seq.sequenceNumber}</span>
-        <span className="s">dispatch readiness · QC</span>
+    <div className="pj-sec">
+      <div className="pj-sec-h">
+        <h2>Dispatch</h2>
+        <span className="sec-sub">sequence {seq.sequenceNumber}</span>
       </div>
-      <div className="pj-card-b">
+      <div>
         <div className="scaf-note sc-mb">
           Dispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and
           clear the deterministic dispatch gate before it can be dispatched. The gate below is

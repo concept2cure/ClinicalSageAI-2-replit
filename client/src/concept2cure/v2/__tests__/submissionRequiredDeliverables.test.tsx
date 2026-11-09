@@ -207,7 +207,8 @@ describe('required deliverables — admitted optional display labels', () => {
 
 describe('Builder source evidence — current admitted pointer outcomes', () => {
   it.each([
-    ['undetermined', 'Source evidence undetermined'],
+    // D7-A2 step 9: undetermined is said quietly on the leaf and counted once above the table, not chipped.
+    ['undetermined', /not yet determined$/],
     ['missing', 'not found in this organization'],
     ['content_changed', 'content changed since filing'],
   ] as const)('displays the actual %s result without converting it into another source verdict', async (status, label) => {
@@ -218,6 +219,11 @@ describe('Builder source evidence — current admitted pointer outcomes', () => 
     fireEvent.click(screen.getByRole('tab', { name: 'Builder' }));
     expect(await screen.findByText(label)).toBeTruthy();
     expect(document.body.textContent).not.toContain('source verified');
+    if (status === 'undetermined') {
+      expect(screen.getByTestId('sc-source-undetermined').textContent).toBe('Source evidence not yet determined for 1 leaf.');
+    } else {
+      expect(screen.queryByTestId('sc-source-undetermined')).toBeNull();
+    }
   });
 });
 

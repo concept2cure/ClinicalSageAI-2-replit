@@ -66,6 +66,7 @@ import {
   Chip,
   DispatchWorkspace,
   SeqPicker,
+  SeqSelect,
   ShadowReviewWorkspace,
   ValidationWorkspace,
   VerdictNote,
@@ -1355,7 +1356,7 @@ export function SubmissionCenter({
       )}
 
       {(list.length > 0 || openProjectName) && (
-        <div className="sc-context">
+        <div className="sc-context" data-testid="sc-context">
           {list.length > 0 && (
             <label className="sc-context-f">
               <span>Submission</span>
@@ -1373,6 +1374,8 @@ export function SubmissionCenter({
               </select>
             </label>
           )}
+          {/* The working sequence (D7-A2 step 8), once this submission's sequences are read. */}
+          {sub && !seqs.loading && !seqs.error && <SeqSelect rows={seqs.rows} selId={seq?.id ?? null} onSel={setSelSeq} />}
           {openProjectName && (
             <ProjectScopeToggle scoped={Boolean(scopedTo)} notOffered={notOffered} onToggle={() => setOrgWide((w) => !w)} />
           )}
@@ -1762,13 +1765,7 @@ export function SubmissionCenter({
       )}
       {PER_SEQ_WS.has(ws) && sub && (
         <>
-          <SeqPicker
-            loading={seqs.loading}
-            error={seqs.error}
-            rows={seqs.rows}
-            selId={seq?.id ?? null}
-            onSel={setSelSeq}
-          />
+          <SeqPicker loading={seqs.loading} error={seqs.error} rows={seqs.rows} />
           {!seqs.loading && !seqs.error && seq && (
             <>
               {ws === 'builder' && (
