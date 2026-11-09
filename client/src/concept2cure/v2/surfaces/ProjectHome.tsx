@@ -53,7 +53,7 @@ import { biotechPlanEntry } from './ProjectBiotechPlan';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { filingLifecycleReferenceFor } from '@shared/regulatory/filing-lifecycle-reference';
 import { ProjectSettings, type ProjectSettingsRequest } from './ProjectSettings';
-import { ProjectCoreWork } from './ProjectCoreWork';
+import { ProjectCoreWork, ProjectWorkProjects, workAreasFor } from './ProjectCoreWork';
 import { actionWords, enumWords, filingTypeWords } from './projectWords';
 import { WS_LABEL } from './ProjectPortfolioFilters';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
@@ -1702,16 +1702,23 @@ function ProjectTags({ tags }: { tags: BylineTags }) {
 /** In the About card, beside every step: the project's work areas (Study & protocol,
  *  Biostatistics, CMC / Module 3, Risk-based monitoring, as its track has them),
  *  then its reports. The work areas wait for the project's read, which says its track. */
-function ProjectHeaderDoors({ pid, prog, deviceFiling, cmcComposes, available, onNav }: {
+function ProjectHeaderDoors({ pid, prog, deviceFiling, cmcComposes, available, onNav, anchorProjectId }: {
   pid: string | null; prog: ProgramRow | null; deviceFiling: boolean; cmcComposes: boolean;
   available: (id: string) => boolean; onNav: (id: string) => void;
+  /** The project's verified integer id (the team read's), under which its work projects hang (S12). */
+  anchorProjectId: number | null;
 }) {
   const read = pid && prog?.id === pid ? prog : null;
   /* The Reports row is passed only when it will show, so a card with nothing to open is not drawn. */
   const reports = Boolean(shellProgramId(useShellProject())) && available('insights');
+  const track = read ? { deviceFiling, riskBasedMonitoring: read.riskBasedMonitoring === true, cmcComposes } : null;
+  /* A work project opens on its area only where this project's track offers that area (S12). */
+  const areaIds = new Set(track ? workAreasFor(track).map((area) => area.id) : []);
   return (
     <ProjectCoreWork programId={pid} available={available} onNav={onNav}
-      track={read ? { deviceFiling, riskBasedMonitoring: read.riskBasedMonitoring === true, cmcComposes } : null}>
+      track={track}
+      workProjects={read && pid ? <ProjectWorkProjects programId={pid} anchorProjectId={anchorProjectId} canChange={read.canChange !== false}
+        openable={(id) => areaIds.has(id) && available(id)} onOpen={onNav} /> : null}>
       {reports && <ProjectReportsDoor onNav={onNav} />}
     </ProjectCoreWork>
   );
@@ -2302,7 +2309,8 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
             {pid && <ProjectTeamCard programId={pid} state={teamState} onRetry={reloadTeam} onManage={() => setTeamOpen(true)}
               {...teamWork(work, teamState.data?.team ?? null, () => chooseStage('plan'))} />}
             <C2CToast msg={inboxToast} />
-            <ProjectHeaderDoors pid={pid} prog={prog} deviceFiling={deviceFiling} cmcComposes={cmcComposes} available={available} onNav={onNav} />
+            <ProjectHeaderDoors pid={pid} prog={prog} deviceFiling={deviceFiling} cmcComposes={cmcComposes} available={available} onNav={onNav}
+              anchorProjectId={sharingProjectId} />
             {/* What AnA knows, the skills it follows here, and the project's records: on every step (D3-2a). */}
             <ProjectSide pid={pid} onAsk={onAsk} records={records} activity={<ProjectActivity activityState={activityState} />} />
           </aside>

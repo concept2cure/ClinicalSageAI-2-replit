@@ -1639,6 +1639,18 @@ no screen, route, service, table or component file.
   - **Next:**
     - Nothing open in D7-D's steps.
     - The Bundles screen's "Choose legal companions for ZIP" is reached but was not walked to an export.
+- **Update, 2026-11-09:**
+  - **The Bundles actions, walked in the running app** (`docs/evidence/DESIGN/D7/2026-11-09-bundles-zip-walk/`).
+    - It **found** five buttons that `9bd593c346` had left unstyled: the two Export PDFs, the legal-companion
+      chooser and the two stationery buttons. They are fixed in `f4c27a3495` (D7, red first), each now
+      `btn ghost rl-card-run`.
+    - At 390 the open chooser pushed the page sideways by 10px. Its one-line primary ZIP button was the cause. Fixed
+      in `61498ef0bf` (D7): the chooser's fieldset may shrink, and a button in it may wrap. The walk at that commit
+      measures 0 at 1440 and 390, with no script errors.
+  - **Next:**
+    - Nothing open in D7-D's steps.
+    - A ZIP export with a legal original selected is not walked: this database has no legal original to select.
+      `tests/db/report-pack-export.dbtest.ts` covers the export on real PostgreSQL.
 
 #### L1 (rows D7, D6) — prior filings read back as filed state, and archive names checked where they are read (session `session_01Gx2fiwvxaXi6mQgddPqMaG`, 2026-11-01 to 2026-11-02)
 

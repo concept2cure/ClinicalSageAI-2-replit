@@ -56,10 +56,10 @@ function BundleCard({ bundle, exporting, onExport }: {
       </ul>
       <div className="rl-card-meta">Status shown is the status at bundling; the manifest prints it beside the status at export.</div>
       <div className="rl-head-acts" aria-busy={exporting}>
-        <button type="button" className="rl-card-run" disabled={exporting} onClick={() => onExport('manifest')}>
+        <button type="button" className="btn ghost rl-card-run" disabled={exporting} onClick={() => onExport('manifest')}>
           {I.download} Export manifest PDF
         </button>
-        <button type="button" className="rl-card-run" disabled={exporting} onClick={() => onExport('reports')}>
+        <button type="button" className="btn ghost rl-card-run" disabled={exporting} onClick={() => onExport('reports')}>
           {I.download} Export reports PDF
         </button>
       </div>

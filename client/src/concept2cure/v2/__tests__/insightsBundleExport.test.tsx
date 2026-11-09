@@ -75,6 +75,21 @@ describe('retained bundle PDF downloads — server-byte exports', () => {
   });
 });
 
+/* `.rl-card-run` is placement only since 9bd593c346 (the Catalog's Run became D0's
+   `btn ghost`). Five other buttons used it as their whole style: the two exports, the
+   legal-companion chooser and the two stationery buttons. They rendered as bare text with
+   the icon stacked above it (the Reporting re-walk, 2026-11-09). jsdom applies no CSS, so
+   this pins the class: every button in the Bundles view is a D0 button. */
+describe('every action on a saved pack is a D0 button', () => {
+  it('leaves no button in the Bundles view without the .btn class', async () => {
+    await openBundles();
+    const panel = document.querySelector('[role="tabpanel"]') as HTMLElement;
+    expect(panel.querySelector('button')).not.toBeNull();
+    const bare = [...panel.querySelectorAll('button')].filter((b) => !b.classList.contains('btn')).map((b) => b.textContent?.trim());
+    expect(bare).toEqual([]);
+  });
+});
+
 describe('retained bundle PDF downloads — pending requests', () => {
   it.each(['reports', 'manifest'] as const)('disables both controls during a pending %s export and suppresses duplicate dispatch', async (content) => {
     let release!: (response: Response) => void;

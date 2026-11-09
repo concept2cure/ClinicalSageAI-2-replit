@@ -32,7 +32,10 @@ import { SELECT_DEVICE_PATHWAY, PLAN_DEVICE_SUBMISSION } from '../../ana/medical
 import { REGULATORY_FACTS } from '../../regulatory-currency/currency-registry';
 import { getCatalogEntry } from '../../pathway-engines/estar/estar-catalog';
 
-const pick = (p: SelectDevicePathwayParams) => selectDevicePathway(p);
+// 2026-11-08: an unstated biologic, exemption, novelty or HUD fact leaves the pathway undetermined
+// (medical-device-unstated-inputs.test.ts), so each decision here states them: false unless the case sets one.
+const STATED = { isBiologic: false, exempt: false, novelLowModerateRisk: false, humanitarianUseDevice: false };
+const pick = (p: SelectDevicePathwayParams) => selectDevicePathway({ ...STATED, ...p });
 const fact = (id: string) => REGULATORY_FACTS.find((f) => f.id === id)!;
 
 describe('selectDevicePathway — decisions FDA would accept', () => {
@@ -51,7 +54,7 @@ describe('selectDevicePathway — decisions FDA would accept', () => {
 
   it('class I is exempt only when the product code says so', () => {
     for (const predicateExists of [false, true]) {
-      const r = pick({ usClass: 'I', predicateExists });
+      const r = pick({ usClass: 'I', predicateExists, exempt: undefined });
       expect(r.usPathway, `predicateExists=${predicateExists}`).toBe('undetermined');
       const f = r.findings.find((x) => x.id === 'NEEDS-INPUT-EXEMPTION');
       expect(f, 'needs-input finding').toBeDefined();
