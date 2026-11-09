@@ -38,6 +38,7 @@
 > | S5d post-approval | done | `s5d-post-approval/` |
 > | S5d regulatory strategy | done | `s5d-regulatory-strategy/` |
 > | S5d immunogenicity | done | `s5d-immunogenicity/` |
+> | S5d biosimilar | done | `s5d-biosimilar/` |
 > | S5d, S8–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
@@ -930,6 +931,31 @@ severity is undetermined and could be critical; persistence and titer, which nev
 `design_nab_assay` says when the receptor fact was taken from the mechanism, and the risk assessment no longer calls an
 unstated counterpart redundant. Fully stated inputs keep their results (2,030,208 compared). No source reader, app or
 service was added.
+
+**S5d biosimilar — What already exists (execution audit):** the six functions in
+`biosimilar/biosimilar-knowledge.ts` are already reached by `biosimilarTools.ts`, the executor's `runStatsTool`
+stated-input wrapper and the CMC biologics and regulatory-strategy skills. No function checked an input or had a
+three-valued reader, the engine has no tests of its own, and it was already over the 100,000-byte ceiling (136,488).
+Extend the six; reuse `refuseUnlessStated`, `booleanInputStates`, `statedBoolean`, `allOf`, `conclusions`,
+`oneOfInput`, `textInput` and `listed`. Other biosimilar code is not
+touched: the tiered comparison on the program's data (`biologics/analytical-similarity.ts`,
+`assess_analytical_similarity`), `biologics/comparability.ts`, `assess_immunogenicity_comparability` and the Global RI
+pathway and exclusivity engines. The local history is shallow, with no biosimilar-name deletion matches. Evidence:
+`s5d-biosimilar/`.
+
+**S5d biosimilar execution result:** every required text, enum, list and map is refused by name when missing and by
+field when malformed, so an unknown product type no longer gets the mAb panel and an unknown market is no longer read as
+both. `assess_interchangeability` reports both requirements as true, false or `not_stated`; `overallEligible` is null
+while one is unstated and none is false, and the requirements name what was not stated. `assess_indication_extrapolation`
+compares mechanisms and targets only where both indications state them: an indication whose mechanism or target is not
+stated is `not_assessed`, with the facts and the possible feasibilities named, where two unstated values used to
+compare equal. An indication's entry is found by its exact key, else by the one key equal to it ignoring case, as the
+studied indication is skipped; a lower-case studied indication used to be compared as 'unknown'. A requested attribute or
+method list that matched nothing says so in `selectionNotes`, and inputs no function reads say so and are no longer
+required. Fully stated inputs keep their results (1,350 compared) except those 60 extrapolations. The CQA registry with
+its categories, the clinical precedents, the endpoint guidance and the expression-system registry move unchanged into the
+sibling `biosimilar-reference.ts`, which takes the engine from over the 100,000-byte ceiling (136,488) to under it. No
+source reader, app or service was added.
 
 **Pins:** `submission-center-tools.test.ts`, `ivd-lifecycle-tools.test.ts`, `deepening-tools.test.ts`, and the immunogenicity, bioequivalence and orphan tests where they exist.
 
