@@ -19,6 +19,10 @@ import {
   SEQUENCE_FILING_TYPES,
   type SequenceFilingType,
 } from '../../services/ind-lifecycle/ind-sequence-validation';
+import {
+  SUBMISSION_ERROR_STATUS,
+  type SubmissionErrorCode,
+} from '../../services/submission-service/submission-service';
 
 const logger = createScopedLogger('ind-lifecycle-routes');
 
@@ -50,19 +54,25 @@ export function body(req: Request): any {
   return req.body && typeof req.body === 'object' ? req.body : {};
 }
 
-// submission-service error codes → HTTP status (for the /file persistence routes).
-const SUBMISSION_CODE_STATUS: Record<string, number> = {
-  NOT_FOUND: 404,
-  INVALID_STATE: 409,
-  FORBIDDEN: 403,
-  VALIDATION: 400,
-};
+/**
+ * The status a submission-service refusal carries: the service's own map
+ * (SUBMISSION_ERROR_STATUS), reused and never copied. A copy here once named
+ * four codes, so GOVERNED_REQUIRED, DISPATCH_BLOCKED and every other refusal
+ * answered 500 (F1 repair C, 2026-11-09). A code the service does not name,
+ * including one spelled like an object property, is not one of its refusals.
+ */
+function submissionStatusOf(code: unknown): number | null {
+  return typeof code === 'string' && Object.hasOwn(SUBMISSION_ERROR_STATUS, code)
+    ? SUBMISSION_ERROR_STATUS[code as SubmissionErrorCode]
+    : null;
+}
 
 /** Map a service error to a stable HTTP response. */
 export function fail(res: Response, err: unknown): void {
-  const code = (err as { code?: string } | null)?.code;
-  if (code && SUBMISSION_CODE_STATUS[code]) {
-    return void res.status(SUBMISSION_CODE_STATUS[code]).json({
+  const code = (err as { code?: unknown } | null)?.code;
+  const status = submissionStatusOf(code);
+  if (status !== null) {
+    return void res.status(status).json({
       error: { code, message: err instanceof Error ? err.message : 'Request failed.' },
     });
   }
