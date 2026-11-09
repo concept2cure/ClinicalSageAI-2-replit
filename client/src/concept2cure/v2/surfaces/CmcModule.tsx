@@ -8,7 +8,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
-import { EmptyState, ProjectBack, liveGetOrNull, useLiveData, useLiveRows } from '../dataConnect';
+import { EmptyState, ProjectBack, liveGetOrNull, readRefusalWords, useLiveData, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import {
   specRowsFromApi,
@@ -592,8 +592,17 @@ function overviewMeta(
   submissions: number | null,
   avgRpi: number | null,
   weakest?: { sub: string; rpi: number },
+  /* D0: when the board's read was REFUSED, this line says the refusal rather
+     than "could not be read". The panel below says the same thing; a reader who
+     saw one and not the other would be told the gate failed and the feature is
+     not licensed in the same breath. */
+  refusal?: { message: string } | null,
 ): string {
-  if (state === 'unreadable') return 'The Module 3 board could not be read — nothing below is established.';
+  if (state === 'unreadable') {
+    return refusal
+      ? `${refusal.message} Nothing below is established.`
+      : 'The Module 3 board could not be read — nothing below is established.';
+  }
   if (state === 'loading') return 'Reading the Module 3 portfolio…';
   if (submissions == null) return '— submissions';
   if (submissions === 0) return 'No CMC submissions are in scope yet.';
@@ -787,6 +796,11 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
     totalSections: number; approvedSections: number; staleSections: number; openCriticalContradictions: number;
     sectionsWithoutProvenance: number; incompleteApprovedSections: string[]; governedStateEvaluated: boolean; exportReady: boolean;
   }>(ctxProjectId ? '/api/cmc/module3-os/readiness/' + encodeURIComponent(ctxProjectId) : null);
+  /* The refusal's own words, or null when the read failed to answer and the
+     chip's own sentence stands (D0, `readRefusalWords`). */
+  const readinessRefusal = readiness.error || (!readiness.loading && !readiness.data)
+    ? readRefusalWords(readiness, 'the export gate’s verdict')
+    : null;
   const readinessReasons = (() => {
     const r = readiness.data;
     if (!r || r.exportReady) return [];
@@ -933,6 +947,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           portfolioUnreadable ? null : port.length,
           avgRpi,
           lowSub ?? undefined,
+          board.error ? readRefusalWords(board, 'the Module 3 board') : null,
         )}
       />
       {board.loading ? (
@@ -943,6 +958,12 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           icon={I.alertTriangle}
           title="Couldn't load the Module 3 board"
           hint="The org-scoped CMC board didn't respond. It aggregates your regulatory submissions, preparedness index, and governed §3.2 sections — sign in and retry, or check the service is reachable."
+          /* D0: a refused read says what it is — a plan without the module, a
+             part outside this release, a role, a project in another
+             organization, an expired session — and offers no retry that
+             cannot change it. A failure to answer keeps the words above. */
+          read={board}
+          readWhat="the Module 3 board"
         />
       ) : (
         <>
@@ -1147,7 +1168,13 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                   {readiness.loading ? (
                     <span className="rd-chip tone-dim" role="status">Evaluating export readiness…</span>
                   ) : readiness.error || !readiness.data ? (
-                    <span className="rd-chip tone-err" role="alert" title={readiness.error || 'no readiness verdict was returned'}>Export readiness could not be read</span>
+                    /* D0, through `readRefusalWords` rather than a panel: a chip
+                       cannot render ErrorState, and "could not be read" over a
+                       403 says the gate failed when the truth is that the
+                       feature is not licensed for this organization. */
+                    <span className="rd-chip tone-err" role="alert" title={readinessRefusal?.message || readiness.error || 'no readiness verdict was returned'}>
+                      {readinessRefusal ? readinessRefusal.title : 'Export readiness could not be read'}
+                    </span>
                   ) : readiness.data.exportReady ? (
                     <span className="rd-chip tone-ok">Export ready</span>
                   ) : (
@@ -1160,7 +1187,9 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                     ? <> — export blocked: {readinessReasons.join('; ')}</>
                     : null}
                   {!readiness.loading && (readiness.error || !readiness.data)
-                    ? <> — the export gate's verdict could not be read, so readiness is not established; this is a failed read, not a pass.</>
+                    ? readinessRefusal
+                      ? <> — {readinessRefusal.message} Readiness is not established; this is not a pass.</>
+                      : <> — the export gate's verdict could not be read, so readiness is not established; this is a failed read, not a pass.</>
                     : null}
                 </div>
               </div>
@@ -1382,7 +1411,7 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
               ) : live.loading ? (
                 <EmptyState icon={I.clipboardList} title="Loading specifications…" busy />
               ) : live.error ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load specifications" hint="The governed specifications file didn’t respond. Sign in to your tenant and retry." />
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load specifications" hint="The governed specifications file didn’t respond. Sign in to your tenant and retry." read={live} readWhat="this project’s specifications" />
               ) : (
                 <EmptyState icon={I.clipboardList} title="No specifications yet" hint="Release and shelf-life limits for your drug substance and drug product appear here. Use New specification to record the first one — it is persisted to the governed specifications file." />
               )}
@@ -2031,7 +2060,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
               {live.loading ? (
                 <EmptyState icon={I.barChart} title="Loading stability studies…" busy />
               ) : live.error ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load stability studies" hint="The org-scoped stability register didn’t respond. Sign in to your tenant and retry." />
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load stability studies" hint="The org-scoped stability register didn’t respond. Sign in to your tenant and retry." read={live} readWhat="the stability register" />
               ) : (
                 <EmptyState icon={I.barChart} title="No stability studies yet" hint="Register a study with the batch it is run on, the ICH condition it is placed at and its pull schedule. Each pull-point result you then record against it is the evidence §3.2.S.7 / §3.2.P.8 is written from." />
               )}
@@ -2563,7 +2592,7 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
               ) : live.loading ? (
                 <EmptyState icon={I.grid} title="Loading batch records…" busy />
               ) : live.error ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load batch records" hint="The governed batch file didn’t respond. Sign in to your tenant and retry." />
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load batch records" hint="The governed batch file didn’t respond. Sign in to your tenant and retry." read={live} readWhat="this project’s batch records" />
               ) : (
                 <EmptyState icon={I.grid} title="No batch records yet" hint="Manufactured batches with their yield, deviations, and disposition appear here. Use Log batch to record the first one — it is persisted to the governed batch file." />
               )}
@@ -2810,6 +2839,8 @@ function CmProcessCapability({ projectId }: { projectId?: string }) {
               title="Process capability was not assessed"
               hint={`The assessment could not be read (${read.status ?? 'no status'}). Nothing is being claimed about this process’s capability.`}
               testId="cmc-capability-error"
+              read={read}
+              readWhat="the capability assessment"
             />
           </div>
         ) : !data?.assessed ? (
@@ -3111,7 +3142,7 @@ function CmPathway({ nav }: { ask: (text: string) => void; nav?: (id: string) =>
                   {contradictions.loading ? (
                     <EmptyState icon={I.shieldAlert} title="Loading contradiction history…" busy />
                   ) : contradictions.error ? (
-                    <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load contradiction history" hint={contradictions.error} />
+                    <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load contradiction history" hint={contradictions.error} read={contradictions} readWhat="the contradiction history" />
                   ) : (
                     <EmptyState icon={I.shieldCheck} title="No contradictions recorded" hint="Run the sweep from the Module 3 build tab; every finding and its resolution is kept here." />
                   )}

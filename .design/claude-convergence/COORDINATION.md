@@ -161,6 +161,43 @@ S10 (the agency's communications back into the project) is held by RIM since 202
   `2895218b8` (2026-08-04) with no replacement named; AnA narrates the report instead. Reach it in the conversation
   and canvas, or retire it by founder decision.
 
+## Found by the CMC session (`01GJidg5…`) outside its files, 2026-11-09
+
+**→ whoever holds `surfaces/DocumentAuthoring.tsx` (D4 / the authoring lane): trunk is red there, 24 cases in 7
+files.** Measured on a full `client/src/concept2cure/v2/__tests__` run at `2480efeb7`: **933 of 940 files pass, 24 of
+10,508 cases fail**, and every one of the seven files imports `surfaces/DocumentAuthoring` (the seventh,
+`clientCopyNoProgram`, is the `demo-scripts` red another session already reported). Nothing in the CMC lane is
+involved: all 20 suites that mount `CmcModule` or `CmcRegisterLinks` pass (298 cases), and `tsc` is clean.
+
+| File | Cases |
+|---|---|
+| `outlineStartsSection.test.tsx` | 9 |
+| `outlineProvenanceVisible.test.tsx` | 7 |
+| `documentAuthoringHonestReads.test.tsx` | 3 |
+| `documentAuthoringDeepLink.test.tsx` | 2 |
+| `documentAuthoringDeepLink` / `authoringSaveFilingCommit` / `anaDrivesWave4` | 1 each |
+| `clientCopyNoProgram.test.ts` | 1 (the known `demo-scripts` red) |
+
+The outline ones share one symptom: *"Unable to find an element with the text: Clinical summary, which matches
+selector `.ed-tree-row .ed-lbl`"* — the filing-copy tree renders no rows at all, so every case that clicks a node
+fails. Not investigated further; it is not this lane's file.
+
+**→ the founder, two decisions this lane cannot take** (both written up with options in the evidence):
+
+1. **The product cannot record an analytical method as *suitable*.** The register form offers `development`,
+   `validation`, `retired`, plus `validated` through the signature. The approval gate admits `METHOD_VALIDATED` **or**
+   `METHOD_SUITABLE` (`qualified`, `suitable`, `suitability confirmed`, `phase-appropriate`, `fit for purpose`), and
+   no form in the product can write any of those words — so the branch `q2Expectation` relies on to make suitability
+   sufficient before phase 3 is unreachable, and in practice a phase-1 programme must fully validate every procedure
+   before approving any limit. `docs/evidence/S7/2026-11-09-demo-cmc-methods/`; recommendation: a signed
+   `confirm-suitability` act beside `validate`, with adding `qualified` to the form's statuses as the interim.
+2. **A terse manufacturing route reads as a small molecule.** Found by mutation:
+   `classifySubstanceModality` reads *"a recorded chemical process, and nothing suggesting biology"* as a small
+   molecule, so a drug substance recorded with no modality, no origin and a vague route is **admitted** into
+   small-molecule Module 3 composition — applying ICH Q3A impurity reasoning to a biologic, the exact harm the
+   boundary's own refusal message cites. `docs/evidence/S7/2026-11-09-demo-cmc-materials/`; recommendation: fail
+   closed on the boundary only, keeping §3.2.A.2's current reading.
+
 ## Found by the CMC session (`01GJidg5…`) outside its files, 2026-11-02
 
 It cannot message, so these are here. Both were measured in the running app, not read off the source.

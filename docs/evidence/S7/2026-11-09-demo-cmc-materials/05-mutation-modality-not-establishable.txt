@@ -1,0 +1,6 @@
+ × server/services/cmc/__tests__/demo-packs-composition-boundary.test.ts > the demo packs against the shipped composition boundary > biotech (C2C-101) is refused for what it is, naming the guideline that applies instead 6ms
+   → biotech (C2C-101): the boundary admitted a biologic: expected null not to be null
+ × server/services/cmc/__tests__/demo-packs-composition-boundary.test.ts > the demo packs against the shipped composition boundary > biotech (C2C-101) states its modality rather than leaving it to the route heuristic 2ms
+   → expected undefined to be 'biologic' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 3 passed (5)

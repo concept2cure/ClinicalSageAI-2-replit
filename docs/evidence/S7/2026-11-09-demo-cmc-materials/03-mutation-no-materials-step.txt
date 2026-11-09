@@ -1,0 +1,6 @@
+not ok 7 - the seeder records the substance and the product first of all
+not ok 8 - the substance carries the modality the boundary reads, as stated
+not ok 9 - a second run records neither material twice
+# tests 9
+# pass 6
+# fail 3
