@@ -1,0 +1,93 @@
+# S5d biosimilar red: server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts in the working tree before the change (trunk's biosimilar engine). 38 of 50 fail, all on assertions; the 12 controls pass.
+
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six biosimilar tools keep their stated results > 'assess_analytical_similarity_biosimil…' reaches its engine with a stated basis 6ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six biosimilar tools keep their stated results > 'design_biosimilar_clinical' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six biosimilar tools keep their stated results > 'assess_indication_extrapolation' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six biosimilar tools keep their stated results > 'assess_interchangeability' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six biosimilar tools keep their stated results > 'plan_biosimilar_ip_strategy' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six biosimilar tools keep their stated results > 'assess_biosimilar_cmc' reaches its engine with a stated basis 1ms
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > assess_interchangeability keeps each boolean answer as stated > biosimilarityEstablished reads not_stated when omitted or null, and is refused when malformed 10ms
+   → expected { …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > assess_interchangeability keeps each boolean answer as stated > switchingStudyDataAvailable reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_analytical_similarity_biosimil…' refuses 'productType' (case 1) 2ms
+   → assess_analytical_similarity_biosimilar productType: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_analytical_similarity_biosimil…' refuses 'criticalQualityAttributes' (case 2) 2ms
+   → assess_analytical_similarity_biosimilar criticalQualityAttributes: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_analytical_similarity_biosimil…' refuses 'analyticalMethodsUsed' (case 3) 2ms
+   → assess_analytical_similarity_biosimilar analyticalMethodsUsed: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'design_biosimilar_clinical' refuses 'productType' (case 4) 1ms
+   → design_biosimilar_clinical productType: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'design_biosimilar_clinical' refuses 'referenceProduct' (case 5) 1ms
+   → design_biosimilar_clinical referenceProduct: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'design_biosimilar_clinical' refuses 'pkComplexity' (case 6) 1ms
+   → design_biosimilar_clinical pkComplexity: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'design_biosimilar_clinical' refuses 'immunogenicityRisk' (case 7) 2ms
+   → design_biosimilar_clinical immunogenicityRisk: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_indication_extrapolation' refuses 'referenceProductIndications' (case 8) 2ms
+   → assess_indication_extrapolation referenceProductIndications: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_indication_extrapolation' refuses 'mechanismOfActionPerIndication' (case 9) 1ms
+   → assess_indication_extrapolation mechanismOfActionPerIndication: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_indication_extrapolation' refuses 'mechanismOfActionPerIndication' (case 10) 1ms
+   → assess_indication_extrapolation mechanismOfActionPerIndication: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_indication_extrapolation' refuses 'targetReceptorPerIndication' (case 11) 1ms
+   → assess_indication_extrapolation targetReceptorPerIndication: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_indication_extrapolation' refuses 'clinicalStudyIndication' (case 12) 1ms
+   → assess_indication_extrapolation clinicalStudyIndication: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_interchangeability' refuses 'dosingFrequency' (case 13) 1ms
+   → assess_interchangeability dosingFrequency: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'plan_biosimilar_ip_strategy' refuses 'market' (case 14) 1ms
+   → plan_biosimilar_ip_strategy market: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'plan_biosimilar_ip_strategy' refuses 'referenceProductName' (case 15) 1ms
+   → plan_biosimilar_ip_strategy referenceProductName: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_biosimilar_cmc' refuses 'expressionSystem' (case 16) 1ms
+   → assess_biosimilar_cmc expressionSystem: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_biosimilar_cmc' refuses 'productionScale' (case 17) 1ms
+   → assess_biosimilar_cmc productionScale: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_biosimilar_cmc' refuses 'analyticalCapability' (case 18) 1ms
+   → assess_biosimilar_cmc analyticalCapability: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_analytical_similarity_biosimil…' asks for 'productType' (case 1) 1ms
+   → assess_analytical_similarity_biosimilar productType: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'design_biosimilar_clinical' asks for 'referenceProduct' (case 2) 1ms
+   → design_biosimilar_clinical referenceProduct: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_indication_extrapolation' asks for 'clinicalStudyIndication' (case 3) 1ms
+   → assess_indication_extrapolation clinicalStudyIndication: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_interchangeability' asks for 'dosingFrequency' (case 4) 1ms
+   → assess_interchangeability dosingFrequency: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'plan_biosimilar_ip_strategy' asks for 'referenceProductName' (case 5) 1ms
+   → plan_biosimilar_ip_strategy referenceProductName: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_biosimilar_cmc' asks for 'expressionSystem' (case 6) 1ms
+   → assess_biosimilar_cmc expressionSystem: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > assess_indication_extrapolation compares only what was stated for both indications > leaves an indication with nothing stated not assessed, and names the facts 1ms
+   → expected [ { indication: 'psoriasis', …(5) } ] to match object [ { indication: 'psoriasis', …(2) } ]
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > assess_indication_extrapolation compares only what was stated for both indications > does not read an omitted target as the same target 1ms
+   → expected [ Array(2) ] to deeply equal [ 'not_assessed', 'not_assessed' ]
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > assess_interchangeability calls nothing met or unmet that was not stated > leaves eligibility null while a requirement is unstated and none is false 1ms
+   → expected { …(5) } to match object { Object (biosimilarityEstablished, switchingSafetyDemonstrated, ...) }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > assess_interchangeability calls nothing met or unmet that was not stated > is false once a requirement is stated false, and says where the clinical-result answer comes from 5ms
+   → expected undefined to be false // Object.is equality
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > assess_analytical_similarity_biosimilar says when it falls back to a full list > names an unmatched attribute or method list 3ms
+   → expected { productType: 'insulin', …(7) } to match object { selectionNotes: [ …(1) ] }
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_analytical_similarity_biosimil…' 0ms
+   → expected 1229 to be less than or equal to 1024
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'design_biosimilar_clinical' 0ms
+   → expected 1264 to be less than or equal to 1024
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_indication_extrapolation' 0ms
+   → expected 1153 to be less than or equal to 1024
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_interchangeability' 0ms
+   → expected 1119 to be less than or equal to 1024
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'plan_biosimilar_ip_strategy' 1ms
+   → expected 'Analyze the biosimilar IP landscape a…' to match /relay the validation error/
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_biosimilar_cmc' 0ms
+   → expected 1331 to be less than or equal to 1024
+ × server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps the interchangeability requirements optional and three-valued, and names the inputs no function reads 1ms
+   → expected [ 'biosimilarityEstablished', …(3) ] to not include 'biosimilarityEstablished'
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps assess_analytical_similarity_biosimilar among the tools selected for "Assign CQA tiers for our adalimumab biosimilar analytical similarity" 7ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps design_biosimilar_clinical among the tools selected for "Design the clinical program for our trastuzumab biosimilar" 3ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps assess_indication_extrapolation among the tools selected for "Justify extrapolation of indications for our infliximab biosimilar" 3ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps assess_interchangeability among the tools selected for "Do we need a switching study for interchangeability?" 3ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps plan_biosimilar_ip_strategy among the tools selected for "Walk me through the BPCIA patent dance for our Humira biosimilar" 3ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps assess_biosimilar_cmc among the tools selected for "Plan the CMC development strategy for a biosimilar of Herceptin" 7ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 38 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  38 failed | 12 passed (50)
