@@ -329,6 +329,18 @@ async function ensureStability({ api, tally }, program, studies) {
         startDate: start.toISOString(),
         plannedEndDate: end.toISOString(),
         notes: s.notes,
+        /* §3.2.P.8.1's whole subject. `mapStabilityPayload` emits
+           `drugProductShelfLifeClaim` only from a recorded claim, and the seed
+           sent none — so §3.2.P.8 composed at 0% complete, missing
+           `drugProductShelfLifeClaim`, for every demo project. Found by running
+           the seed against a server; no unit case noticed, because the results
+           table and its OOS row compose from `results` either way.
+
+           The field is `shelfLife` — the register's own column. Sending
+           `shelfLifeClaim` (the name the COMPOSER reads) returned 200 and
+           changed nothing, because the route parses the body with a Zod schema
+           that strips unknown keys. See the read-back below. */
+        ...(s.shelfLife ? { shelfLife: s.shelfLife } : {}),
         projectId: program.id,
       }), [200, 201], `create stability study "${s.title}"`).data;
       tally.created('cmc-stability');
@@ -342,6 +354,74 @@ async function ensureStability({ api, tally }, program, studies) {
       }), 200, `record results for "${s.title}"`);
       tally.created('cmc-stability-results');
     }
+    /* The shelf-life claim, on a study that is already on file without one.
+       Same rule as the results above, and for the same reason: a seeder that
+       can only set a field at CREATE leaves every database seeded before the
+       field existed permanently incomplete — §3.2.P.8 at 0%, missing the one
+       input the section is about. Measured on this container's database after
+       the field was added. */
+    const claim = row?.shelfLife ?? row?.shelf_life ?? null;
+    if (s.shelfLife && !String(claim ?? '').trim()) {
+      const saved = must(await api('PUT', `/api/cmc/stability-studies/${row.id}`, {
+        shelfLife: s.shelfLife,
+        reason: 'Demo seed: record the shelf life this study supports, which §3.2.P.8.1 states.',
+      }), 200, `record the shelf-life claim for "${s.title}"`);
+      /* READ THE WRITE BACK. The register's PUT parses its body with a Zod
+         schema that STRIPS unknown keys, so a field named wrongly returns 200
+         having changed nothing — which is exactly what happened here: three
+         studies were reported updated and none was. A seed that reports a
+         write it did not make is worse than one that fails. */
+      const stored = saved?.data ?? saved;
+      const after = stored?.shelfLife ?? stored?.shelf_life ?? null;
+      if (!String(after ?? '').trim()) {
+        throw new Error(
+          `the shelf-life claim for "${s.title}" was accepted (200) and not stored — ` +
+          'the register ignored the field. Check the column name against shared/schema.ts.',
+        );
+      }
+      tally.created('cmc-stability-shelf-life');
+    }
+  }
+  return created;
+}
+
+/**
+ * The recorded release results — which ARE the batch analyses of §3.2.S.4.4 and
+ * §3.2.P.5.4.
+ *
+ * The seed recorded batch RECORDS (the manufacture) and no QC results (the
+ * testing), so both sections composed missing `drugSubstanceBatchAnalyses` /
+ * `drugProductBatchAnalyses`: the two sections whose entire purpose is to carry
+ * quantitative results had none, in the demo of a product whose phase 4
+ * acceptance is about exactly those tables. Found by running the seed against a
+ * server and reading the composed sections, not by a unit case.
+ *
+ * `sampleType` is the register's closed vocabulary (`shared/cmc/qc-sample-types`):
+ * it decides which material the result is evidence for, and a value outside it
+ * is attributed to neither. `reviewed` is left to the register's own
+ * second-person review route — a result this seed marked reviewed would be one
+ * person recording both halves of a two-person rule.
+ */
+async function ensureQcResults({ api, tally }, program, results) {
+  if (!results?.length) return 0;
+  const list = rowsOf(must(await api('GET', `/api/cmc/qc-testing?projectId=${encodeURIComponent(program.id)}`), 200, 'list QC results'));
+  const have = new Set(list.map((r) => String(r.sampleId ?? r.sample_id ?? '').trim()));
+  let created = 0;
+  for (const r of results) {
+    if (have.has(r.sampleId)) { tally.found('cmc-qc-result'); continue; }
+    must(await api('POST', '/api/cmc/qc-testing', {
+      sampleId: r.sampleId,
+      batchNumber: r.batch,
+      sampleType: r.sampleType,
+      testMethod: r.method,
+      testResults: { value: r.value, unit: r.unit, ...(r.observation ? { observation: r.observation } : {}) },
+      specifications: { acceptanceCriteria: r.criterion },
+      passFailStatus: r.disposition,
+      testDate: new Date(Date.now() - (r.daysAgo ?? 30) * DAY).toISOString(),
+      projectId: program.id,
+    }), [200, 201], `create QC result "${r.sampleId}"`);
+    tally.created('cmc-qc-result');
+    created += 1;
   }
   return created;
 }
@@ -388,6 +468,11 @@ export async function ensureCmc(ctx, program, cmc, label) {
   await run.step(`CMC / Module 3: specifications on ${label}`, async () => `${await ensureSpecs(ctx, program, cmc.specs)} created of ${cmc.specs.length}`);
   await run.step(`CMC / Module 3: stability programme on ${label}`, async () => `${await ensureStability(ctx, program, cmc.stability)} created of ${cmc.stability.length}`);
   await run.step(`CMC / Module 3: batch records on ${label}`, async () => `${await ensureBatches(ctx, program, cmc.batches)} created of ${cmc.batches.length}`);
+  if (cmc.qcResults?.length) {
+    await run.step(`CMC / Module 3: recorded release results on ${label}`, async () =>
+      `${await ensureQcResults(ctx, program, cmc.qcResults)} created of ${cmc.qcResults.length}` +
+      ' — second-person review is left to the register, so these compose as not reviewed');
+  }
 }
 
 /* ───────────────────────── Biostatistics ───────────────────────── */

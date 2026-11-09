@@ -246,6 +246,15 @@ function valObj(sources: CanonicalSource[], field: string): Record<string, any> 
   return null;
 }
 
+/** The first object value of `field` among already-selected payloads. */
+function firstObject(payloads: Array<Record<string, any>>, field: string): Record<string, any> | null {
+  for (const p of payloads) {
+    const v = p?.[field];
+    if (v && typeof v === 'object' && !Array.isArray(v)) return v;
+  }
+  return null;
+}
+
 function valArr(sources: CanonicalSource[], field: string): any[] {
   for (const s of sources) {
     const v = s.sourcePayload?.[field];
@@ -2445,7 +2454,31 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
   },
 
   '3.2.S.4': (m) => {
-    const criteria = valObj(m, 'acceptanceCriteria');
+    /* The DRUG SUBSTANCE's acceptance criteria, scoped by the specification's
+       own recorded material.
+
+       This read `valObj(m, 'acceptanceCriteria')` — the first specification
+       source carrying a criteria object, whatever material it was for. A
+       programme that records both a substance and a product specification (so,
+       every real programme) rendered whichever came first. Measured in the
+       running product on 2026-11-09: §3.2.S.4's table for a seeded demo
+       programme read `release` and `shelf` as its quality attributes, carrying
+       the drug PRODUCT's dissolution limit, under the drug substance's
+       specification. A filed section asserting a limit for the wrong material
+       is a false statement about what was tested.
+
+       §3.2.P.5 was never exposed to it: it reads `releaseCriteria`, which the
+       mapper emits only for a drug-product spec. The substance side had no such
+       guard, so it gets the rule the stability sections already use — the
+       material a record states, with an UNRECORDED material covering both,
+       because a row written before the register had the field is ambiguous
+       rather than drug-product, and the narrative says so rather than
+       pretending to know. */
+    const substanceSpecs = scopedPayloads(m, 'specification', 'drug_substance', 'both', 'materialType');
+    const criteria = firstObject(substanceSpecs, 'acceptanceCriteria');
+    const unscopedSpecs = m
+      .filter((s) => s.sourceType === 'specification')
+      .filter((s) => !String((s.sourcePayload as Record<string, unknown> | undefined)?.materialType ?? '').trim()).length;
     /* Methods, PLURAL. A first-match val() read stamped ONE method's name and
        lifecycle status onto every acceptance-criteria row — with two methods
        in different states, whichever source was updated last claimed every
@@ -2518,6 +2551,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     tables.push(...dsImpurities.tables);
     return {
       narrative: `The drug substance specification defines acceptance criteria for quality attributes. ` +
+        (unscopedSpecs > 0
+          ? `${unscopedSpecs} specification record(s) state no material, so whether they are the drug substance's is not recorded; they are reported here and under the drug product. `
+          : '') +
         (statusSummary
           ? methodSources.length > 1
             ? `Analytical method validation status: ${statusSummary}. `

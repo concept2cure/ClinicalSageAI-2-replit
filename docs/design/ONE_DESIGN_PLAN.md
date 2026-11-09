@@ -815,6 +815,32 @@ Evidence: `docs/evidence/SPINE/S4/2026-11-08-anna-trunk-red/README.md`.
     `.gitleaksignore` with its reason (`887c4d9402`). The full-history scan, run as CI runs it, finds none.
 - **Next.** The expanded §14.4 spike (Phase 0).
 
+#### S4 — Anna runtime Phase 0: the expanded spike, joined run (2026-11-09, P-105 owner `session_01KZK3jgtmQBgNepqLjXjS3k`)
+
+Evidence: `docs/evidence/SPINE/S4/2026-11-09-spike-joined-run/README.md`, with `results.json`.
+
+- **Run.** All seven checks were run together on `64e3346363`, and nothing failed.
+  - Ordinary config: 32 files, 768 tests.
+  - Real database: 6 files, 97 tests.
+  - `poolInstrumentation` on the real database: 30 tests.
+
+  The real database was built as CI builds it: a blank database, then `install-fresh` and `deploy-migrate`, then
+  `app_service` as the runtime role.
+- **Added**, each shown failing first:
+  - check 4: the rules and memory stores isolate tenants as the runtime role (`ec177edd06`);
+  - check 1: rework and rejection are rebuilt from the decision audit (`d4b82abc94`);
+  - check 2: a credential use is audited by grant, revision and purpose, never its value (`64e3346363`).
+- **Verdict: acceptance pending.** Every check has named open items in the evidence. Some are test-only, for S4. One
+  is RIM's (check 3, reapproval after the one-byte change). Some are product decisions for the founder:
+  - a "never again" trigger;
+  - a version for the placement policy;
+  - content-aware classification;
+  - automatic de-identification;
+  - qualified local weights.
+
+  No check is marked passed in full.
+- **Next.** The S4 test-only items for checks 1 and 2, then the founder's decisions on the product items.
+
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
 **Delivered**
