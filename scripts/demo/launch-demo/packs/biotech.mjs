@@ -52,13 +52,18 @@ import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, 
  * `productType` is stated because an IND alone cannot determine the product
  * class in the canonical intake.
  */
-const PROGRAMS = {
+export const PROGRAMS = {
   mab: { name: PROGRAM_NAME, productName: PRODUCT_NAME, productType: 'biologic', indication: INDICATION, label: 'C2C-101' },
   smallMolecule: { name: BIOTECH_SM.programName, productName: BIOTECH_SM.productName, productType: 'drug', indication: BIOTECH_SM.indication, label: BIOTECH_SM.molecule },
 };
 
-async function createProgram({ api, run, tally, clientWorkspaceId }, spec) {
-  const j = must(await api('POST', '/api/c2c/projects', {
+/** The canonical intake's body for one of the pack's programmes. */
+export function programIntakeBody(spec, explicitWorkspaceId) {
+  /* An explicit --client-workspace-id wins; otherwise the programme's own creation workspace (C2C-201 is created
+     where C2C-101 lives, the same fictional sponsor: with several workspaces and none marked default, intake refuses
+     a creation that names none, 409 AMBIGUOUS_CLIENT_WORKSPACE); with neither, intake alone decides. */
+  const clientWorkspaceId = explicitWorkspaceId ?? spec.createInWorkspaceId;
+  return {
     name: T(spec.name),
     productName: spec.productName,
     programType: 'ind',
@@ -71,7 +76,11 @@ async function createProgram({ api, run, tally, clientWorkspaceId }, spec) {
     priority: 'high',
     targetSubmissionDate: inDays(180),
     teamMembers: [],
-  }), 201, 'create program');
+  };
+}
+
+async function createProgram({ api, run, tally, clientWorkspaceId }, spec) {
+  const j = must(await api('POST', '/api/c2c/projects', programIntakeBody(spec, clientWorkspaceId)), 201, 'create program');
   run.record(`program.intakeMeta.${spec.label}`, j.meta ?? null);
   run.note(`Program creation uses the canonical project intake, explicitly identifies the fictional ${spec.productType === 'biologic' ? 'biologic' : 'small molecule'}, and passes the selected client workspace when supplied. With no selection, intake alone decides whether a unique workspace is available. Sponsor and phase are not fabricated by the seed.`);
   tally.created('program');
@@ -122,7 +131,8 @@ async function ensureProgram(ctx, spec = PROGRAMS.mab, recordAs = 'program') {
     if (ctx.clientWorkspaceId !== undefined && Number(recorded.client_workspace_id) !== ctx.clientWorkspaceId) {
       throw new Error('The demo project is not in the selected client workspace. Existing records were not moved.');
     }
-    Object.assign(program, describeProgram(recorded, row), { spineSubmissionId, created });
+    Object.assign(program, describeProgram(recorded, row), { spineSubmissionId, created,
+      clientWorkspaceId: recorded.client_workspace_id == null ? null : Number(recorded.client_workspace_id) });
     return `${created ? 'created' : 'found'} ${row.id} (${program.code ?? '?'})`;
   });
   return program;
@@ -308,7 +318,7 @@ export async function seed(ctx) {
      here so the demo's §3.2 board has content a person can read; C2C-101's
      build is refused by the boundary, which is correct and is the other half
      of what the demo shows. */
-  const smallMolecule = await ensureProgram(c, PROGRAMS.smallMolecule, 'programSmallMolecule');
+  const smallMolecule = await ensureProgram(c, { ...PROGRAMS.smallMolecule, createInWorkspaceId: program.clientWorkspaceId ?? undefined }, 'programSmallMolecule');
   await ensureCmc(c, smallMolecule, BIOTECH_SM_CMC, BIOTECH_SM.molecule);
   await ensureModule3Build(c, smallMolecule, BIOTECH_SM.molecule);
   await ensureTasks(c, program, BIOTECH_TASKS, 'C2C-101');

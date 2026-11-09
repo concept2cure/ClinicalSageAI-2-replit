@@ -11,16 +11,27 @@
 import { must } from '../lib.mjs';
 import { asArray, previousManifest } from './biotech-shared.mjs';
 
+/** The program's submission, by the server's spine rule (server/services/cmc/submission-spine.ts
+ *  findProgramSubmission): the submission anchored to this program first; otherwise an UNANCHORED one whose
+ *  product_name or title equals the program's product_name / name / code. A submission anchored to another
+ *  program is never chosen, whatever its name: a product name shared across projects picked another program's
+ *  submission and placing a leaf answered 409 CROSS_PROJECT (2026-11-09). */
+export function canonicalSubmissionFor(list, program) {
+  const anchoredTo = (s) => s.programId ?? s.program_id ?? null;
+  const own = list.find((s) => anchoredTo(s) != null && String(anchoredTo(s)) === String(program.id));
+  if (own) return own;
+  const keys = [program.productName, program.title, program.code].filter(Boolean).map((s) => s.toLowerCase());
+  return list.find((s) => anchoredTo(s) == null
+    && (keys.includes(String(s.productName ?? '').toLowerCase()) || keys.includes(String(s.title ?? '').toLowerCase()))) || null;
+}
+
 async function ensureCanonicalSubmission({ api, run, tally }, program, rec) {
   let sub;
   if (program.spineSubmissionId != null) {
     sub = must(await api('GET', `/api/submissions/${program.spineSubmissionId}`), 200, 'read spine submission');
   } else {
-    // The program ↔ submission identity convention (server/services/cmc/submission-spine.ts):
-    // the submission's product_name or title equals the program's product_name / name / code.
     const list = asArray(must(await api('GET', '/api/submissions'), 200, 'list submissions'), 'data');
-    const keys = [program.productName, program.title, program.code].filter(Boolean).map((s) => s.toLowerCase());
-    sub = list.find((s) => keys.includes(String(s.productName ?? '').toLowerCase()) || keys.includes(String(s.title ?? '').toLowerCase())) || null;
+    sub = canonicalSubmissionFor(list, program);
   }
   if (!sub) throw new Error('no canonical submission for the program: intake reported none and no submission matches the program identity');
   tally.found('submission');
