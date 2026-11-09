@@ -1730,6 +1730,19 @@ no screen, route, service, table or component file.
     - Red first: the route test 2 of 28, and the new client test 9 of 9. Green: 62 files, 633 tests. Type check 0.
     - Walked at 1440 and 390, light and dark, over five projects (four created through the API). It **found** the
       review clock painted solid, in the Plan step too, and fixed it in `3707064475`.
+  - **Reporting used in the running app** (`docs/evidence/DESIGN/D7/2026-11-09-reporting-use-walk/`). The walk ran a
+    report from the Catalog, exported, finalized, opened Run history, bundled a pack and scheduled. It found five defects,
+    each fixed red first:
+    1. Finalize was offered on a run the gate always refuses, and refused only after the password. `b2d51f911c` (F1):
+       the rendered read returns `finalEligibility`, and the reason stands in Finalize's place.
+    2. Run history answered 500 on a database installed before 2026-10-13: `0014_report_os_foundation.sql` was on no
+       deploy path. `22256c6750` and `76c6f63c3a` (L1) put it in the set. It was proved on the earlier-installed
+       database and on a blank one, each replayed.
+    3. A schedule showed a type id and a database id. `e710bc3d3f` (D7).
+    4. Twenty Catalog buttons were each named "Run", and the same for Open and Pause. `8a1feba597` (D7).
+    5. Run history and Schedules overflowed the page at 390. `2135d3f9dd` (D7).
+  - **Held, not pushed:** all of the above, at the coordinating session's request, until its demo freeze lifts after
+    23:00 UTC. 0014's preflight would stop a Codespace start on a group membership whose group and project disagree.
 
 #### L1 (rows D7, D6) — prior filings read back as filed state, and archive names checked where they are read (session `session_01Gx2fiwvxaXi6mQgddPqMaG`, 2026-11-01 to 2026-11-02)
 
