@@ -91,3 +91,14 @@ padding-computed frame because its scroller spans the row.
   and the Communication, Biopharma journey, IND lifecycle, eTMF, Vault and Projects suites. 171 files, 1,724 tests,
   all pass.
 - **ESLint:** warning counts on the touched files are equal to HEAD's.
+
+## The probe, linted and re-run (2026-11-09, before the push)
+
+The pre-push ESLint ratchet refused the first `frame-probe.cjs` with 7 new warnings (complexity, nesting depth,
+`console.log`, an undeclared global). It is now written as small functions and measures the same things. It was re-run
+on the same stack (`walk-1109`, the server started again from the same copy and stopped the same way), and
+`frame-after.json` is now that run's output.
+
+- **Compared with the first run:** every screen's title x is identical. The 390 "past the viewport" hits are the same
+  SVG paths inside rows that scroll by themselves.
+- **ESLint:** clean on the probe.
