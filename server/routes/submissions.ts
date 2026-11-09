@@ -61,6 +61,7 @@ import {
   getShadowReviewFindings,
 } from '../services/shadow-review/shadow-review-service';
 import { SHADOW_FINDING_DISPOSITIONS, withShadowFindingDispositions } from '../services/ectd/shadow-finding-disposition';
+import { HELD_SEND_OUTCOMES, HELD_SEND_EVIDENCE_KINDS } from '../services/submission-gateways/fda-esg-receipts';
 import { generateSection, AuthoringError } from '../services/authoring/section-generation-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireGovernedReason } from './governed-reason';
@@ -1535,6 +1536,33 @@ router.post('/sequences/:seqId/retire', limiter, requireRole(AUTHOR), async (req
   }
 });
 
+// ── Settling a held FDA send (P-92, decided 2026-11-02; P-108 1(b)) ──────────
+// A production send to FDA that was handed to the gateway and never answered
+// holds its sequence. Ask POST governed-precheck { step: 'held-send-settlement',
+// outcome, evidenceKind, evidenceDocumentId } for the statement; sign
+// ectd-sequence:<seqId> with intent 'held-send-settlement', the meaning
+// responsibility, the outcome, the transmittal, the attempt, the evidence and
+// the statement, with the reason; then pass its actionId here. Recorded as
+// received on FDA's Ack2 or Ack3, or released on FDA's written confirmation of
+// non-receipt or the platform's own proof that nothing left. 409
+// HELD_SEND_NOT_SETTLEABLE with what keeps it; 403 GOVERNED_REQUIRED or
+// FORBIDDEN; a refused settlement voids its signature. No AnA tool reaches it.
+const settleHeldSendSchema = z.object({ signatureActionId: z.string().min(1).max(128), outcome: z.enum(HELD_SEND_OUTCOMES) });
+router.post('/sequences/:seqId/held-send/settle', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = settleHeldSendSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { settleHeldSend } = await import('../services/submission-service/submission-service');
+    res.json(await settleHeldSend({ sequenceId: seqId, signatureActionId: parsed.data.signatureActionId, outcome: parsed.data.outcome }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 // ── Closing a critical Shadow Review finding (P-35, decided 2026-10-15) ─────
 // Each open critical finding is closed on its own: 'accepted' (risk accepted)
 // or 'fixed' (offered only when a completed Shadow Review ran after the
@@ -2095,7 +2123,10 @@ const governedPrecheckSchema = z
     // closed that way now, before anyone signs.
     // 'retire' (P-86): whether the sequence may be retired, by this person,
     // and the statement the signature carries; its own rule answers it.
-    step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver', 'shadow-finding-disposition', 'retire']),
+    // 'held-send-settlement' (P-92): whether a held FDA send may be settled,
+    // which way, on which evidence, and the statement the signature carries;
+    // its own rule answers it too.
+    step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver', 'shadow-finding-disposition', 'retire', 'held-send-settlement']),
     environment: z.enum(['staging', 'production']).optional(),
     // Transmit: the number the person typed, judged against the program record
     // before anyone signs (P-23), by the rule transmit itself applies.
@@ -2103,10 +2134,22 @@ const governedPrecheckSchema = z
     // Finding disposition: the finding and how it is to be closed.
     findingId: z.number().int().positive().optional(),
     disposition: z.enum(SHADOW_FINDING_DISPOSITIONS).optional(),
+    // Held-send settlement: which way, on what (FDA's document in the project's Vault, or the platform's own proof).
+    outcome: z.enum(HELD_SEND_OUTCOMES).optional(),
+    evidenceKind: z.enum(HELD_SEND_EVIDENCE_KINDS).optional(),
+    evidenceDocumentId: z.string().uuid().optional(),
   })
   .refine((b) => b.step !== 'shadow-finding-disposition' || (b.findingId !== undefined && b.disposition !== undefined), {
     message: "A 'shadow-finding-disposition' precheck names the finding (findingId) and the disposition (accepted or fixed).",
     path: ['findingId'],
+  })
+  .refine((b) => (b.evidenceDocumentId === undefined && b.evidenceKind === undefined) || b.outcome !== undefined, {
+    message: 'A document or a kind of evidence is asked about only with an outcome.',
+    path: ['outcome'],
+  })
+  .refine((b) => b.outcome === undefined || b.evidenceKind !== undefined, {
+    message: 'An outcome is asked about with the kind of evidence it rests on.',
+    path: ['evidenceKind'],
   });
 router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
@@ -2116,8 +2159,14 @@ router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR),
   const parsed = governedPrecheckSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    const { precheckGovernedStep, precheckSequenceRetirement } = await import('../services/submission-service/submission-service');
+    const { precheckGovernedStep, precheckSequenceRetirement, precheckHeldSendSettlement } = await import('../services/submission-service/submission-service');
     if (parsed.data.step === 'retire') return res.json(await precheckSequenceRetirement(seqId, ctx));
+    if (parsed.data.step === 'held-send-settlement') {
+      const { outcome, evidenceKind, evidenceDocumentId } = parsed.data;
+      return res.json(await precheckHeldSendSettlement(seqId, ctx, {
+        ...(outcome ? { outcome } : {}), ...(evidenceKind ? { evidenceKind } : {}), ...(evidenceDocumentId ? { evidenceDocumentId } : {}),
+      }));
+    }
     res.json(
       await precheckGovernedStep(seqId, parsed.data.step, ctx, {
         environment: parsed.data.environment,

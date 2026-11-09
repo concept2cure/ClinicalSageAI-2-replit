@@ -155,9 +155,10 @@ describe('P-86: a sequence never filed is retired by its signed act, and its num
 });
 
 describe('P-86: what keeps a sequence (the agency may hold it, or its number)', () => {
-  it.each([['sent'], ['acknowledged']])('refuses a sequence that is %s, the agency holds it', async (status) => {
+  // In words, never the stored status (P-92 C1; the coordinating session, 2026-11-09).
+  it.each([['sent', ''], ['acknowledged', ', which acknowledged it']])('refuses a sequence that is %s, the agency holds it', async (status, acknowledged) => {
     const { id } = await sequenceOf({ dispatchStatus: status });
-    await refusedWith(id, `Sequence 0000 is on file with the agency (dispatch status '${status}'), so it cannot be retired.`);
+    await refusedWith(id, `Sequence 0000 is on file with the agency${acknowledged}, so it cannot be retired. A correction is a new sequence numbered after it.`);
   }, 120_000);
 
   it('refuses a sequence whose send is in flight', async () => {

@@ -374,6 +374,59 @@ over the page, and `hasMore` says the page is shorter than `total`; the log scre
 active status (`pending`, `in_transit`, `received`, the duplicate-send lock's set) with no
 acknowledgement. A rejected, rolled-back or completed row is not counted.
 
+### 3a. A held send (P-92)
+
+A production send to FDA that was handed to the gateway, with no verified answer back, holds its sequence as
+`'transmitting'`. It is not sent again (`resendRefusal`), it is not retired (P-86 check 2b), and it is not filed until it
+is settled. The ways out, in order:
+
+1. **FDA's signed MDN.** "Record agency MDN" on Gateway transmittals (`ingestFdaAs2Receipt`) checks FDA's signature and
+   records the send by FDA's own answer. That includes an MDN the platform already keeps: download it from the send's
+   row and record it.
+2. **The signed settlement**, from the sequence's Dispatch tab (`settleHeldSend`,
+   `POST /api/submissions/sequences/:seqId/held-send/settle`).
+   - It is signed by someone other than the sequence's creator, with the meaning responsibility and a reason.
+   - **Recorded as received** on FDA's Ack2 or Ack3, kept in the project's Vault.
+   - **Released as not received** on FDA's written confirmation, or on the platform's own proof that nothing left
+     (P-108 1(b)). That proof is either:
+     - a bound AS2 send with no AS2 message identity (the identity is written before any byte); or
+     - a bound legacy SFTP send with nothing that came back (no image ever shipped the SFTP client;
+       `docs/evidence/RIM/2026-11-08-designs/p92-settle-held-fda-send.b1-sftp-search-2026-11-09.txt`).
+
+     A release states the duplicate-filing risk before the signer signs.
+   - A released send no longer keeps its sequence from being retired (P-108 2(a)).
+
+A send is not settled while it may still be in progress. It needs a finishing write, or 24 hours of quiet.
+
+If FDA's verified answer later contradicts a settlement, the answer is kept beside it. While FDA's receipt contradicts a
+release, the sequence is not sent again. Re-opening it is a second signed act (P-108 1(c), design C3).
+
+Read-only queries (each scoped to one organization; none changes anything):
+
+```sql
+-- Held sends on the sequence spine, with what the settlement will read.
+SELECT s.id, s.sequence_number, t.id AS transmittal_id, t.transport, t.status, t.metadata->>'environment' AS environment,
+       t.metadata->'as2'->>'messageId' AS as2_message_id, t.error_message, t.updated_at
+  FROM ectd_sequences s
+  LEFT JOIN submission_transmittals t ON t.organization_id = s.organization_id
+       AND t.metadata->'dispatchBinding'->>'sequenceId' = s.id::text
+       AND lower(t.metadata->'dispatchBinding'->>'attemptId') = lower(s.transmit_attempt_id::text)
+ WHERE s.organization_id = $1 AND s.dispatch_status = 'transmitting' AND s.deleted_at IS NULL;
+-- Legacy holds with no binding (expected zero; escalate, P-108 2(c)).
+SELECT id, sequence_number FROM ectd_sequences
+ WHERE organization_id = $1 AND dispatch_status = 'transmitting' AND deleted_at IS NULL
+   AND (transmit_signature_action_id IS NULL OR transmit_attempt_id IS NULL);
+-- Package-spine production sends with no verified answer (expected zero; escalate).
+SELECT count(*) FROM submission_transmittals
+ WHERE organization_id = $1 AND package_id IS NOT NULL AND COALESCE(metadata->>'environment', '') <> 'staging'
+   AND status IN ('pending', 'in_transit');
+-- Releases that FDA's verified receipt contradicts (the sequence is held from a resend).
+SELECT id, metadata->'heldSendSettlement' AS settlement FROM submission_transmittals
+ WHERE organization_id = $1 AND metadata->'heldSendSettlement'->>'outcome' = 'not-received'
+   AND EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(metadata->'as2ReceiptHistory', '[]'::jsonb)) e
+                WHERE e->>'contradicts' = 'not-received');
+```
+
 ## What the platform does not claim
 
 - **Module 1 conformance is proven for FDA only.** The FDA backbone groups leaves under

@@ -1,0 +1,7 @@
+MUTATION M19-2a-check3-keeps-release in server/services/submission-service/filed-sequence-baseline.ts (on the final code and tests, 2026-11-09T13:43:24.150030Z): replaced [        AND COALESCE(t.metadata->'heldSendSettlement'->>'outcome', '') <> 'not-received'
+] with []
+ × server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts > P-92 with P-86 (P-108 2(a)): a released send is not a bound production send > a sequence whose held send was released on FDA's letter can be retired 417ms
+ × server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts > P-92 with P-86 (P-108 2(a)): a released send is not a bound production send > a sequence whose held send was released on the platform's own proof can be retired 75ms
+      Tests  2 failed | 29 skipped (31)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 9d9b9646e91ce7005f7f6f757c4112940919fff441eb97b5e64941aa87d89155 (expected 9d9b9646e91ce7005f7f6f757c4112940919fff441eb97b5e64941aa87d89155)

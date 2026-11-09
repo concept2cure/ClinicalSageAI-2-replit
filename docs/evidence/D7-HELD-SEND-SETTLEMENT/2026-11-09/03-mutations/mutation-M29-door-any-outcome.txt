@@ -1,0 +1,5 @@
+MUTATION M29-door-any-outcome in server/routes/submissions.ts (on the final code and tests, 2026-11-09T13:45:07.932736Z): replaced [outcome: z.enum(HELD_SEND_OUTCOMES) });] with [outcome: z.string() });]
+ × server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement door > refuses a body without the signature or with an outcome it does not know, and settles nothing 56ms
+      Tests  1 failed | 12 skipped (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 ddda88c8bda5fb8adec2d24f7e00bc68989a2d0395e45ed998cb042a71ead517 (expected ddda88c8bda5fb8adec2d24f7e00bc68989a2d0395e45ed998cb042a71ead517)

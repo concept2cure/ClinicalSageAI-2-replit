@@ -53,6 +53,7 @@ import {
 } from '../part11/signature-persistence';
 import { releaseActMeaningRefusal } from '../part11/signature-meanings';
 import { createScopedLogger } from '../../utils/logger';
+import type { HeldSendOutcome, HeldSendEvidenceKind, PlatformProof, HeldSendSequence, HeldSendFacts, HeldSendTransmittal } from '../submission-gateways/fda-esg-receipts';
 import { isFiledDispatchStatus } from './filed-dispatch';
 import { canMutateProgram, programInOrganization } from '../c2c/program-access';
 import {
@@ -161,7 +162,12 @@ export type SubmissionErrorCode =
   | 'PACKAGE_IDENTITY_MISSING'
   | 'SHADOW_WAIVER_NOT_ELIGIBLE'
   | 'SHADOW_FINDING_NOT_DISPOSABLE'
-  | 'SEQUENCE_NOT_RETIRABLE';
+  | 'SEQUENCE_NOT_RETIRABLE'
+  | 'HELD_SEND_NOT_SETTLEABLE';
+
+/** P-92 (founder 2026-11-02): a held FDA send is settled by a signed act with this intent, and the act is recorded as this. */
+export const HELD_SEND_SETTLEMENT_INTENT = 'held-send-settlement' as const;
+export const ECTD_HELD_SEND_SETTLED_ACTION = 'ECTD_HELD_SEND_SETTLED';
 
 /**
  * Transitions that are irreversible / outward-facing and must go through the
@@ -216,6 +222,9 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   // The sequence is kept (P-86): the agency may hold it, a later sequence holds
   // its place, or its record is read from compiles another filing shares.
   SEQUENCE_NOT_RETIRABLE: 409,
+  // The held send cannot be settled this way now (P-92): FDA's own answer is
+  // kept, it may still be in progress, or the evidence does not fit it.
+  HELD_SEND_NOT_SETTLEABLE: 409,
 };
 
 // ── Pure lifecycle rules ────────────────────────────────────────────────────
@@ -996,7 +1005,8 @@ export type SequenceSignatureIntent =
   | GovernedSequenceStep
   | typeof SHADOW_WAIVER_INTENT
   | typeof SHADOW_FINDING_DISPOSITION_INTENT
-  | typeof SEQUENCE_RETIREMENT_INTENT;
+  | typeof SEQUENCE_RETIREMENT_INTENT
+  | typeof HELD_SEND_SETTLEMENT_INTENT;
 
 /** How a sentence names the act a signature was given for. */
 const INTENT_LABEL: Record<SequenceSignatureIntent, string> = {
@@ -1006,6 +1016,7 @@ const INTENT_LABEL: Record<SequenceSignatureIntent, string> = {
   [SHADOW_WAIVER_INTENT]: 'Shadow Review waiver',
   [SHADOW_FINDING_DISPOSITION_INTENT]: 'Shadow Review finding disposition',
   [SEQUENCE_RETIREMENT_INTENT]: 'retirement',
+  [HELD_SEND_SETTLEMENT_INTENT]: 'settlement of the held send',
 };
 
 /**
@@ -1023,6 +1034,8 @@ const INTENT_MEANING_REFUSAL: Partial<Record<SequenceSignatureIntent, (meaning: 
   [SHADOW_WAIVER_INTENT]: shadowWaiverMeaningRefusal,
   [SHADOW_FINDING_DISPOSITION_INTENT]: shadowFindingDispositionMeaningRefusal,
   [SEQUENCE_RETIREMENT_INTENT]: retirementMeaningRefusal,
+  // P-92: the signer answers for a record of what FDA holds; it approves no content and releases nothing to the agency.
+  [HELD_SEND_SETTLEMENT_INTENT]: (m) => (m === 'responsibility' ? null : 'settling a held send is signed with the meaning responsibility'),
 };
 
 /** Why a signature's payload does not authorize this particular request, or null (P-35: which finding, closed how). */
@@ -1220,7 +1233,7 @@ async function signatureSpentBy(signatureActionId: string, target: string, organ
       AND record_id = ${sequenceId}
       AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED', ${SHADOW_REVIEW_WAIVED_ACTION},
                      ${SHADOW_FINDING_DISPOSITIONED_ACTION}, ${SIGNATURE_VOIDED_ACTION}, 'TRANSMIT_BLOCKED',
-                     ${ECTD_SEQUENCE_RETIRED_ACTION})
+                     ${ECTD_SEQUENCE_RETIRED_ACTION}, ${ECTD_HELD_SEND_SETTLED_ACTION})
       AND (new_values::jsonb ->> 'signatureActionId') = ${signatureActionId}
     LIMIT 1
   `;
@@ -1485,6 +1498,12 @@ async function applySequenceChangeWithAudit(
      * (2026-09-23, W5/D7, round-2 skeptic). A throw rolls everything back.
      */
     underLock?: (client: PoolClient) => Promise<void>;
+    /**
+     * Runs on the same client after the UPDATE affected a row and before the
+     * chained row (P-92): the act's other writes, which commit with it or not
+     * at all. Every other caller passes none and is unchanged.
+     */
+    afterUpdate?: (client: PoolClient) => Promise<void>;
   },
   audit: { organizationId: number; userId: number; action: string; resourceId: number; details: Record<string, unknown>; reason?: string },
 ): Promise<{ occurredAt: string | null }> {
@@ -1500,6 +1519,7 @@ async function applySequenceChangeWithAudit(
         ? new SubmissionError('INVALID_STATE', update.noRowsRefusal)
         : new SubmissionError('NOT_FOUND', 'Sequence not found for this organization.');
     }
+    if (update.afterUpdate) await update.afterUpdate(client);
     await writeChainedAuditRow(client, {
       organizationId: audit.organizationId,
       userId: audit.userId,
@@ -1997,7 +2017,7 @@ async function precheckShadowFindingDisposition(
 export async function precheckGovernedStep(
   id: number,
   /** A retirement (P-86) is not prechecked here yet: its precheck comes with its door (C2). */
-  step: Exclude<SequenceSignatureIntent, typeof SEQUENCE_RETIREMENT_INTENT>,
+  step: Exclude<SequenceSignatureIntent, typeof SEQUENCE_RETIREMENT_INTENT | typeof HELD_SEND_SETTLEMENT_INTENT>,
   ctx: { organizationId: number; userId: number },
   opts: GovernedPrecheckOptions = {},
 ): Promise<GovernedStepPrecheck> {
@@ -2596,6 +2616,303 @@ async function applySequenceRetirement(
   };
 }
 
+// ── P-92: settle a held FDA send by a signed act (founder 2026-11-02, "Allow both"; P-108 1(b); launch row D7) ──────
+
+type HeldSendRules = typeof import('../submission-gateways/fda-esg-receipts');
+const heldSendRules = (): Promise<HeldSendRules> => import('../submission-gateways/fda-esg-receipts');
+export interface HeldSendChoice { outcome?: HeldSendOutcome; evidenceKind?: HeldSendEvidenceKind; evidenceDocumentId?: string }
+export type HeldSendEvidence =
+  | { kind: 'ack2' | 'ack3' | 'fda-non-receipt-confirmation'; vaultDocumentId: string; sha256: string }
+  | { kind: 'platform-proof'; proof: PlatformProof; transmittalId: number };
+export interface HeldSendOverview {
+  sequenceNumber: string; sentAt: string | null; as2MessageId: string | null; transmittalId: number | null; attemptId: string | null;
+  transport: string | null;
+  /** FDA's signed MDN for this message can be recorded on Gateway transmittals (also when one is already kept, E4). */
+  receiptUpload: boolean;
+  /** null: offered; a sentence: why not. */
+  outcomes: { received: string | null; 'not-received': string | null };
+  /** The platform's own proof that nothing left, when the record holds it (E9, E9′). */
+  platformProof: PlatformProof | null;
+  signerRefusal: string | null;
+  statement?: string;
+  evidence?: HeldSendEvidence;
+}
+export interface HeldSendPrecheck { step: typeof HELD_SEND_SETTLEMENT_INTENT; cleared: boolean; refusal: string | null; heldSend: HeldSendOverview }
+export interface HeldSendSettlementRecord {
+  settled: true; sequenceId: number; sequenceNumber: string; outcome: HeldSendOutcome; evidenceKind: HeldSendEvidenceKind;
+  dispatchStatus: string; transmittalId: number; transmitAttemptId: string; signatureActionId: string; signatureId: number | null; settledAt: string | null;
+}
+type JudgedChoice = { refusal: string; statement?: undefined; evidence?: undefined } | { refusal: null; statement: string; evidence: HeldSendEvidence };
+/** getSequence's row carries the transmit claim's columns (shared/schema/submissions.ts); the hand-kept EctdSequence does not name them. */
+type ClaimedSequence = EctdSequence & { transmitSignatureActionId?: string | null; transmitAttemptId?: string | null };
+/** What every settlement helper reads with: the rules, the queryable, the sequence, the organization, and whether under the lock. */
+interface HeldSendScope { rules: HeldSendRules; q: SequenceQueryable; seq: ClaimedSequence; organizationId: number; lock?: boolean }
+type SettlementChoice = Required<Pick<HeldSendChoice, 'outcome'>> & HeldSendChoice;
+
+const heldSendSubject = (seq: Pick<ClaimedSequence, 'id' | 'sequenceNumber' | 'dispatchStatus' | 'transmitSignatureActionId' | 'transmitAttemptId'>): HeldSendSequence => ({
+  id: seq.id, sequenceNumber: seq.sequenceNumber, dispatchStatus: seq.dispatchStatus ?? null,
+  transmitSignatureActionId: seq.transmitSignatureActionId ?? null, transmitAttemptId: seq.transmitAttemptId ? String(seq.transmitAttemptId) : null,
+});
+
+/** The facts the rules judge. A read that fails is "could not be checked", never a pass. */
+async function checkedHeldSend(rules: HeldSendRules, q: SequenceQueryable, seq: HeldSendSequence, organizationId: number, opts: { lock?: boolean } = {}) {
+  try {
+    return await rules.readHeldSend(q, organizationId, seq, opts);
+  } catch (err) {
+    logger.warn('Held send unreadable', { sequenceId: seq.id, err: err instanceof Error ? err.message : String(err) });
+    throw new SubmissionError('INVALID_STATE', `Whether sequence ${seq.sequenceNumber}'s held send can be settled could not be checked, so nothing was changed. Try again.`);
+  }
+}
+
+/** E8, said before anyone signs: the sequence's creator cannot settle its send; an unknown creator, nobody. */
+function heldSendSignerRefusal(n: string, state: 'independent' | 'author' | 'unresolved' | 'unverified'): string | null {
+  if (state === 'independent') return null;
+  if (state === 'author') return `You created sequence ${n}, so you cannot sign the settlement of its held send. Another person with signing authority signs it.`;
+  if (state === 'unresolved') {
+    return `Who created sequence ${n} cannot be resolved from its record, so no one can be shown to be independent of its creator, and the settlement of its held send cannot be signed.`;
+  }
+  return `Whether you created sequence ${n} could not be checked, so the settlement of its held send cannot be signed now. Try again.`;
+}
+
+function heldSendOverview(rules: HeldSendRules, facts: HeldSendFacts, signerRefusal: string | null): HeldSendOverview {
+  const t = facts.transmittal;
+  const blocker = rules.heldSendBlocker(facts);
+  return {
+    sequenceNumber: facts.sequence.sequenceNumber, sentAt: t?.submittedAt ?? null, as2MessageId: t?.as2MessageId ?? null,
+    transmittalId: t?.id ?? null, attemptId: facts.sequence.transmitAttemptId, transport: t?.transport ?? null,
+    receiptUpload: Boolean(t && t.transport === 'as2' && t.as2MessageId),
+    outcomes: { received: blocker ?? (t ? rules.receivedRefusal(t) : null), 'not-received': blocker },
+    platformProof: !blocker && t ? rules.platformProofOf(t) : null,
+    signerRefusal,
+  };
+}
+
+/** E6: FDA's document is a retained Vault version of this project, recorded after the send, and settles no other send of the sequence. */
+async function heldSendDocument(scope: HeldSendScope, t: HeldSendTransmittal, documentId: string): Promise<{ refusal: string | null; vaultDocumentId?: string; sha256?: string }> {
+  const { q, seq, organizationId } = scope;
+  const nothing = 'Nothing was changed.';
+  const program = ((await q.query(`SELECT program_id::text AS program_id FROM submissions WHERE id = $1 AND organization_id = $2`, [seq.submissionId, organizationId])).rows[0]?.program_id as string | null) ?? null;
+  if (!program) return { refusal: `This submission is not in a project, so no project Vault holds FDA's document. ${nothing}` };
+  const { readVaultSource } = await import('../regulatory/lifecycle-signature');
+  const doc = await readVaultSource(q, organizationId, documentId, { lock: scope.lock });
+  const meta = (await q.query(`SELECT program_id::text AS program_id, created_at FROM vault.documents WHERE id = $1::uuid AND organization_id = $2`, [documentId, organizationId])).rows[0];
+  if (!doc || !/^[0-9a-f]{64}$/i.test(doc.contentHash) || meta?.program_id !== program) {
+    return { refusal: `The FDA document is not a retained document in this project's Vault, or it changed after it was signed. Add FDA's document to the project's Vault and choose it. ${nothing}` };
+  }
+  const reused = await q.query(`SELECT 1 FROM submission_transmittals WHERE organization_id = $1 AND metadata->'dispatchBinding'->>'sequenceId' = $2::text AND id <> $3
+      AND (metadata->'heldSendSettlement'->>'vaultDocumentId' = $4 OR metadata->'heldSendSettlement'->>'sha256' = $5) LIMIT 1`,
+  [organizationId, String(seq.id), t.id, doc.id, doc.contentHash]);
+  if (Date.parse(String(meta.created_at)) < Date.parse(t.submittedAt) || reused.rows.length) {
+    return { refusal: `This document was in the Vault before this send was made, or it already settled another send of sequence ${seq.sequenceNumber}, so it cannot be FDA's answer to this one. ${nothing}` };
+  }
+  return { refusal: null, vaultDocumentId: doc.id, sha256: doc.contentHash };
+}
+
+/** Judge one choice (an outcome, on one kind of evidence): the refusal in words, or the statement and the evidence it binds. */
+async function judgedHeldSendChoice(scope: HeldSendScope, facts: HeldSendFacts, choice: SettlementChoice): Promise<JudgedChoice> {
+  const { rules, seq } = scope;
+  const kindRefusal = rules.evidenceKindRefusal(choice.outcome, choice.evidenceKind);
+  if (kindRefusal) throw new SubmissionError('VALIDATION', kindRefusal);
+  const blocker = rules.heldSendBlocker(facts);
+  if (blocker) return { refusal: blocker };
+  const t = facts.transmittal as HeldSendTransmittal;
+  const received = choice.outcome === 'received' ? rules.receivedRefusal(t) : null;
+  if (received) return { refusal: received };
+  const base = {
+    outcome: choice.outcome, kind: choice.evidenceKind as HeldSendEvidenceKind, sequenceNumber: seq.sequenceNumber, sentAt: t.submittedAt, as2MessageId: t.as2MessageId,
+    bundleSizeBytes: t.bundleSizeBytes,
+  };
+  if (choice.evidenceKind === 'platform-proof') {
+    const proof = rules.platformProofOf(t);
+    if (!proof) return { refusal: rules.platformProofRefusal(t) };
+    return { refusal: null, statement: rules.heldSendStatement({ ...base, proof }), evidence: { kind: 'platform-proof', proof, transmittalId: t.id } };
+  }
+  if (!choice.evidenceDocumentId) return { refusal: "Choose FDA's document from this project's Vault. Nothing was changed." };
+  const doc = await heldSendDocument(scope, t, choice.evidenceDocumentId);
+  if (doc.refusal) return { refusal: doc.refusal };
+  return {
+    refusal: null, statement: rules.heldSendStatement({ ...base, proof: null }),
+    evidence: { kind: choice.evidenceKind as 'ack2' | 'ack3' | 'fda-non-receipt-confirmation', vaultDocumentId: doc.vaultDocumentId as string, sha256: doc.sha256 as string },
+  };
+}
+
+/**
+ * Ask the settlement's rule before anyone signs (P-92 §3.7): with no outcome, which ways are offered and why not; with
+ * an outcome, its evidence and (for FDA's document) the document, whether it would be accepted, and the statement the
+ * signature carries, word for word. It changes nothing and authorizes nothing. Reached by POST governed-precheck with
+ * step 'held-send-settlement'; no AnA tool reaches it.
+ */
+export async function precheckHeldSendSettlement(id: number, ctx: { organizationId: number; userId: number }, choice: HeldSendChoice = {}): Promise<HeldSendPrecheck> {
+  const seq = await getSequence(id, ctx);
+  const rules = await heldSendRules();
+  const facts = await checkedHeldSend(rules, asQueryable(pool), heldSendSubject(seq), ctx.organizationId);
+  const signerRefusal = heldSendSignerRefusal(seq.sequenceNumber, await signerIndependenceOf(`ectd-sequence:${seq.id}`, ctx.organizationId, ctx.userId));
+  const heldSend = heldSendOverview(rules, facts, signerRefusal);
+  const step = HELD_SEND_SETTLEMENT_INTENT;
+  if (!choice.outcome) {
+    const offered = heldSend.outcomes.received === null || heldSend.outcomes['not-received'] === null;
+    return { step, cleared: offered, refusal: rules.heldSendBlocker(facts), heldSend };
+  }
+  const judged = await judgedHeldSendChoice({ rules, q: asQueryable(pool), seq, organizationId: ctx.organizationId }, facts, { ...choice, outcome: choice.outcome });
+  if (judged.refusal !== null) return { step, cleared: false, refusal: judged.refusal, heldSend };
+  return { step, cleared: true, refusal: null, heldSend: { ...heldSend, statement: judged.statement, evidence: judged.evidence } };
+}
+
+/** Gate 1's payload check (§3.6): this outcome, this transmission, this attempt, a kind that fits, and a statement. */
+function heldSendPayloadRefusal(rules: HeldSendRules, outcome: HeldSendOutcome, seq: HeldSendSequence, facts: HeldSendFacts) {
+  const n = seq.sequenceNumber;
+  return (payload: Record<string, unknown> | null): string | null => {
+    if (payload?.outcome !== outcome) return 'it settles the held send the other way';
+    if (payload.transmittalId !== facts.transmittal?.id) return `it names another transmission of sequence ${n}`;
+    if (String(payload.transmitAttemptId ?? '').toLowerCase() !== String(seq.transmitAttemptId ?? '').toLowerCase()) return `it names another attempt of sequence ${n}`;
+    const kind = (payload.evidence as Record<string, unknown> | undefined)?.kind;
+    if (rules.evidenceKindRefusal(outcome, kind)) return 'its evidence does not fit the way it settles the send';
+    return typeof payload.statement === 'string' && payload.statement.trim() ? null : 'it carries no statement';
+  };
+}
+
+/** The signed evidence and statement against what the rules judge now (§3.6): exactly, or the signature does not settle it. */
+function signedHeldSendMismatch(signed: Record<string, unknown> | null, judged: { statement: string; evidence: HeldSendEvidence }, n: string): string | null {
+  const evidence = (signed?.evidence ?? {}) as Record<string, unknown>;
+  const fields = Object.entries(judged.evidence) as Array<[string, unknown]>;
+  if (fields.some(([key, value]) => evidence[key] !== value) || signed?.statement !== judged.statement) {
+    return `The signature does not settle this held send: what it states or cites is not what the record of sequence ${n} shows now. Nothing was changed; sign the settlement again from the Dispatch tab.`;
+  }
+  return null;
+}
+
+/**
+ * Settle a held FDA send by a signed act (P-92, founder 2026-11-02; amended by P-108 1(b); launch row D7): recorded as
+ * received on FDA's Ack2 or Ack3, kept in the project's Vault; or released as not received, on FDA's written
+ * confirmation or on the platform's own proof that nothing left. The person signs the sequence with intent
+ * 'held-send-settlement', the meaning responsibility, and the statement the precheck gives. The act re-judges
+ * everything under the transmittal's and the sequence's locks; the sequence, the transmittal's record, the spend of the
+ * transmit signature and the chained ECTD_HELD_SEND_SETTLED row commit together or not at all. A refused settlement
+ * voids its signature (P-23). Its one door is POST /api/submissions/sequences/:seqId/held-send/settle; no AnA tool.
+ */
+export function settleHeldSend(
+  input: { sequenceId: number; signatureActionId: string; outcome: HeldSendOutcome },
+  ctx: { organizationId: number; userId: number },
+): Promise<HeldSendSettlementRecord> {
+  return voidingSignatureOnRefusal(
+    () => applyHeldSendSettlement(input, ctx),
+    { signatureActionId: input.signatureActionId, sequenceId: input.sequenceId, ctx, step: HELD_SEND_SETTLEMENT_INTENT },
+  );
+}
+
+async function verifiedHeldSendSignature(rules: HeldSendRules, input: { signatureActionId: string; outcome: HeldSendOutcome }, seq: EctdSequence,
+  facts: HeldSendFacts, ctx: { organizationId: number; userId: number }) {
+  const target = `ectd-sequence:${seq.id}`;
+  let signed: Record<string, unknown> | null = null;
+  const check = heldSendPayloadRefusal(rules, input.outcome, heldSendSubject(seq), facts);
+  const verdict = await governedSignatureVerdict(input.signatureActionId, target, ctx, HELD_SEND_SETTLEMENT_INTENT, (payload) => { signed = payload; return check(payload); });
+  if (verdict.refusal !== null) {
+    throw new SubmissionError('GOVERNED_REQUIRED', `The signature does not settle this held send of sequence ${seq.sequenceNumber}: ${verdict.refusal}. Sign the settlement again from the Dispatch tab.`);
+  }
+  const independence = await independentSignerRefusal(target, ctx, verdict.meaning);
+  if (independence) throw independence;
+  const reason = await dispositionSignatureReason(asQueryable(pool), { organizationId: ctx.organizationId, signatureActionId: input.signatureActionId });
+  if (!reason) throw new SubmissionError('GOVERNED_REQUIRED', `The signature records no reason, so sequence ${seq.sequenceNumber}'s held send was not settled; sign again with your reason.`);
+  return { verdict, reason, signed: signed as Record<string, unknown> | null };
+}
+
+/** Judge the signed choice, and refuse in words; the same call before the lock and under it. */
+async function settleableChoice(scope: HeldSendScope, facts: HeldSendFacts, choice: SettlementChoice, signed: Record<string, unknown> | null) {
+  const judged = await judgedHeldSendChoice(scope, facts, choice);
+  if (judged.refusal !== null) throw new SubmissionError('HELD_SEND_NOT_SETTLEABLE', judged.refusal);
+  const mismatch = signedHeldSendMismatch(signed, judged, scope.seq.sequenceNumber);
+  if (mismatch) throw new SubmissionError('GOVERNED_REQUIRED', mismatch);
+  return judged;
+}
+
+async function applyHeldSendSettlement(
+  input: { sequenceId: number; signatureActionId: string; outcome: HeldSendOutcome },
+  ctx: { organizationId: number; userId: number },
+): Promise<HeldSendSettlementRecord> {
+  const seq: ClaimedSequence = await getSequence(input.sequenceId, ctx);
+  const n = seq.sequenceNumber;
+  const rules = await heldSendRules();
+  const facts = await checkedHeldSend(rules, asQueryable(pool), heldSendSubject(seq), ctx.organizationId);
+  const { verdict, reason, signed } = await verifiedHeldSendSignature(rules, input, seq, facts, ctx);
+  const signedEvidence = (signed?.evidence ?? {}) as Record<string, unknown>;
+  const choice = { outcome: input.outcome, evidenceKind: signedEvidence.kind as HeldSendEvidenceKind,
+    ...(typeof signedEvidence.vaultDocumentId === 'string' ? { evidenceDocumentId: signedEvidence.vaultDocumentId } : {}) };
+  const judged = await settleableChoice({ rules, q: asQueryable(pool), seq, organizationId: ctx.organizationId }, facts, choice, signed);
+  const t = facts.transmittal as HeldSendTransmittal;
+  const S = seq.transmitSignatureActionId as string;
+  const A = String(seq.transmitAttemptId);
+  const toStatus = input.outcome === 'not-received' ? 'rejected' : choice.evidenceKind === 'ack3' ? 'ack3_received' : 'ack2_received';
+  const dispatchTo = input.outcome === 'not-received' ? 'pending' : toDispatchStatus(toStatus, 'production');
+  const settledAt = new Date().toISOString();
+  // The evidence carries its kind, which the judge checked against the signed choice.
+  const settlement = { outcome: input.outcome, ...judged.evidence, verified: false, settledAt, settledBy: ctx.userId,
+    signatureActionId: input.signatureActionId, sequenceNumber: n, sentAt: t.submittedAt };
+  const details: Record<string, unknown> = {
+    description: `Sequence ${n}'s held send to FDA ${input.outcome === 'received' ? 'recorded as received' : 'released as not received'} by Part 11 e-signature (responsibility)`,
+    outcome: input.outcome, signatureActionId: input.signatureActionId, signatureId: verdict.signatureId, meaning: 'responsibility', reason,
+    statement: judged.statement, evidence: { ...judged.evidence, verified: false }, transmittalId: t.id, transmitAttemptId: A, transmitSignatureActionId: S,
+    environment: 'production', dispatchStatus: { from: TRANSMITTING_STATUS, to: dispatchTo }, transmittalStatus: { from: t.status, to: toStatus },
+    boundDigest: verdict.boundDigest,
+  };
+  const { occurredAt } = await applySequenceChangeWithAudit(
+    {
+      underLock: async (client) => {
+        await setTenantContextTx(client, ctx.organizationId);
+        // The transmittal first, as the receipt path takes it, so a receipt upload and a settlement cannot deadlock.
+        await checkedHeldSend(rules, asQueryable(client), heldSendSubject(seq), ctx.organizationId, { lock: true });
+        await recheckUnderSequenceLock(client, {
+          sequenceId: seq.id, submissionId: seq.submissionId, organizationId: ctx.organizationId, boundDigest: verdict.boundDigest, act: 'settlement',
+          recheck: async (q) => {
+            const row = (await q.query(`SELECT dispatch_status, transmit_signature_action_id, transmit_attempt_id::text AS transmit_attempt_id FROM ectd_sequences WHERE id = $1 AND organization_id = $2`, [seq.id, ctx.organizationId])).rows[0] ?? {};
+            const now = { ...seq, dispatchStatus: row.dispatch_status ?? null, transmitSignatureActionId: row.transmit_signature_action_id ?? null, transmitAttemptId: row.transmit_attempt_id ?? null };
+            const fresh = await checkedHeldSend(rules, q, heldSendSubject(now), ctx.organizationId);
+            await settleableChoice({ rules, q, seq: now, organizationId: ctx.organizationId, lock: true }, fresh, choice, signed);
+          },
+        });
+      },
+      text: input.outcome === 'not-received' ? RELEASE_TRANSMIT_CLAIM_SQL
+        : `UPDATE ectd_sequences SET dispatch_status = $6, updated_at = NOW()
+            WHERE id = $1 AND organization_id = $2 AND dispatch_status = $3 AND transmit_signature_action_id = $4 AND transmit_attempt_id = $5
+              AND status = 'dispatched' AND deleted_at IS NULL`,
+      params: [seq.id, ctx.organizationId, TRANSMITTING_STATUS, S, A, ...(input.outcome === 'not-received' ? [] : [dispatchTo])],
+      noRowsRefusal: `Sequence ${n}'s held send changed while its settlement was being recorded, so it was not settled.`,
+      afterUpdate: async (client) => {
+        await rules.markHeldSendSettled(asQueryable(client), { organizationId: ctx.organizationId, transmittalId: t.id, fromStatus: t.status, toStatus, settlement });
+        // The attempt reached the gateway: without this row, S would authorize a second send. Spent, not voided (§3.3).
+        await rules.spendTransmitSignature(asQueryable(client), {
+          organizationId: ctx.organizationId, userId: ctx.userId, sequenceId: seq.id, signatureActionId: S,
+          details: { transmitAttemptId: A, transmittalId: t.id, status: input.outcome === 'not-received' ? 'not-received' : toStatus, environment: 'production',
+            region: 'fda', gateway: 'esg', source: 'held-send-settlement', settlementSignatureActionId: input.signatureActionId },
+        });
+      },
+    },
+    { organizationId: ctx.organizationId, userId: ctx.userId, action: ECTD_HELD_SEND_SETTLED_ACTION, resourceId: seq.id, reason, details },
+  );
+  logger.info('Held send settled', { sequenceId: seq.id, outcome: input.outcome, organizationId: ctx.organizationId });
+  return {
+    settled: true, sequenceId: seq.id, sequenceNumber: n, outcome: input.outcome, evidenceKind: choice.evidenceKind, dispatchStatus: dispatchTo,
+    transmittalId: t.id, transmitAttemptId: A, signatureActionId: input.signatureActionId, signatureId: verdict.signatureId, settledAt: occurredAt ?? settledAt,
+  };
+}
+
+/** Why a dispatched sequence is not sent again, said before anyone signs: a send already made (resendRefusal), or FDA's
+ *  verified receipt contradicting a release of it (P-92 §3.3). */
+async function resendOrReleasedHold(seq: EctdSequence, organizationId: number): Promise<string | null> {
+  if (seq.status !== 'dispatched') return null;
+  return resendRefusal(seq.dispatchStatus) ?? (await releasedSendHold(asQueryable(pool), organizationId, seq.id, seq.sequenceNumber));
+}
+
+/** P-92 §3.3: while FDA's verified receipt contradicts a release, the sequence is not sent again. A read that fails refuses. */
+async function releasedSendHold(q: SequenceQueryable, organizationId: number, sequenceId: number, sequenceNumber: string | null): Promise<string | null> {
+  try {
+    const { releasedSendReceivedRefusal } = await heldSendRules();
+    return await releasedSendReceivedRefusal(q, organizationId, sequenceId);
+  } catch (err) {
+    logger.warn('Released-send hold unreadable', { sequenceId, err: err instanceof Error ? err.message : String(err) });
+    return `Whether ${sequenceNumber ? `sequence ${sequenceNumber}` : 'this sequence'} may be sent again could not be checked, so nothing was sent.`;
+  }
+}
+
 // ── Closing a critical Shadow Review finding (P-35) ──────────────────────────
 
 /**
@@ -2807,11 +3124,13 @@ export function selectGateway(
 export const TRANSMITTING_STATUS = 'transmitting';
 
 export function resendRefusal(dispatchStatus: string | null | undefined): string | null {
+  // In words, never the stored status: the Dispatch tab shows these sentences as they are (P-92 C2, design S0 and S8).
   if (dispatchStatus === TRANSMITTING_STATUS) {
-    return `A transmit of this sequence is already in flight (dispatch status '${dispatchStatus}'). It is not sent again while that attempt is unresolved — confirm at the agency whether the package arrived before retrying.`;
+    return 'A transmit of this sequence is already in flight and not yet confirmed. It is not sent again while that attempt is unresolved: confirm at the agency whether the package arrived before retrying.';
   }
   if (dispatchStatus === 'sent' || dispatchStatus === 'acknowledged') {
-    return `Sequence was already transmitted (dispatch status '${dispatchStatus}'); it is not sent again. A correction is a new sequence.`;
+    const acknowledged = dispatchStatus === 'acknowledged' ? ' and the agency acknowledged it' : '';
+    return `Sequence was already transmitted${acknowledged}; it is not sent again. A correction is a new sequence.`;
   }
   return null;
 }
@@ -2960,6 +3279,9 @@ async function claimTransmitSlot(
     if (await signatureSpentBy(signatureActionId, `ectd-sequence:${sequenceId}`, organizationId, client)) {
       throw new SubmissionError('GOVERNED_REQUIRED', 'The transmit signature was already used or voided. Sign a new transmit attempt. Nothing was transmitted.');
     }
+    // P-92 §3.3: FDA's verified receipt contradicts a release of this sequence, so it is not sent again; read under the lock.
+    const releasedHold = await releasedSendHold(q, organizationId, sequenceId, null);
+    if (releasedHold) throw new SubmissionError('DISPATCH_BLOCKED', releasedHold);
     await lockRecordedPackageIdentity(q, organizationId, parent.programId);
     const binding = await deriveGovernedTargetBinding(q, `ectd-sequence:${sequenceId}`, organizationId);
     const captured = binding.recordedPackageIdentity;
@@ -3000,12 +3322,13 @@ async function claimTransmitSlot(
  * which files nothing whatever reached it, released once its signature is void
  * (releasedTestSend, F1, row D7, 2026-11-01).
  */
+/** The one statement that releases a transmit claim: a send released before the wire, a released test send, and a
+ *  held send released by its signed settlement (P-92) all run it. */
+const RELEASE_TRANSMIT_CLAIM_SQL =
+  `UPDATE ectd_sequences SET dispatch_status = 'pending', transmit_signature_action_id = NULL, transmit_attempt_id = NULL, updated_at = NOW()
+    WHERE id = $1 AND organization_id = $2 AND dispatch_status = $3 AND transmit_signature_action_id = $4 AND transmit_attempt_id = $5`;
 async function releaseTransmitSlot(sequenceId: number, organizationId: number, signatureActionId: string, attemptId: string): Promise<boolean> {
-  const released = await pool.query(
-    `UPDATE ectd_sequences SET dispatch_status = 'pending', transmit_signature_action_id = NULL, transmit_attempt_id = NULL, updated_at = NOW()
-      WHERE id = $1 AND organization_id = $2 AND dispatch_status = $3 AND transmit_signature_action_id = $4 AND transmit_attempt_id = $5`,
-    [sequenceId, organizationId, TRANSMITTING_STATUS, signatureActionId, attemptId],
-  );
+  const released = await pool.query(RELEASE_TRANSMIT_CLAIM_SQL, [sequenceId, organizationId, TRANSMITTING_STATUS, signatureActionId, attemptId]);
   // Whether this call released the claim: false when it no longer named this attempt.
   return (released.rowCount ?? 0) === 1;
 }
@@ -3176,10 +3499,11 @@ export async function sequenceTransmitReadiness(
       ? `Whether this sequence's agency gateway is configured for ${envs.join(' or ')} could not be checked, so nothing can be sent until it can.`
       : `This sequence's agency gateway has no ${envs.join(' or ')} credentials configured for this organization, so nothing can be sent. Nothing was signed or transmitted.`;
   };
+  const resend = await resendOrReleasedHold(seq, ctx.organizationId);
   const before =
     seq.status !== 'dispatched'
       ? `Sequence must be dispatched before transmit (current: ${seq.status}).`
-      : resendRefusal(seq.dispatchStatus) ??
+      : resend ??
         (!gate.cleared ? `Dispatch gate blocks transmit: ${gate.blockers.join(' ')}` : null) ??
         typedNumberRefusal ??
         gatewayRefusal();

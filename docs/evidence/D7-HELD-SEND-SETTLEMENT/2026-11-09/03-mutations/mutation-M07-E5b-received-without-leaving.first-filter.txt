@@ -1,0 +1,4 @@
+MUTATION M07-E5b-received-without-leaving in server/services/submission-gateways/fda-esg-receipts.ts (on the final code and tests, 2026-11-09T13:41:04.474028Z): replaced [  if (t.transport !== 'as2' || !t.as2MessageId || t.status === 'pending') {] with [  if (false) {]
+ ✓ server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts > P-92 T4: what keeps a held send from being settled, in words, with nothing changed > E5b: received needs a send that left; FDA's endpoint refusing it at the time (4xx) is not received 412ms
+      Tests  1 passed | 30 skipped (31)
+restored sha256 039d6b13181040d8b556c095a5ec7b8e27fc02fbfdd9bf72293c2ba6ed1f5a93 (expected 039d6b13181040d8b556c095a5ec7b8e27fc02fbfdd9bf72293c2ba6ed1f5a93)
