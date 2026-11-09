@@ -1,4 +1,4 @@
-# P-111 slice 2, part 1: a work project's tasks panel, bound by its door (not yet mounted)
+# P-111 slice 2: a work project's tasks panel, its admission, and its roll-up (panel not yet mounted)
 
 **Package:** S12 (founder decision P-111, items 1 and 2). **Session:** `session_01FTWcmXm7At3ZXBE5VWn6oS`. The
 inventory and the coordinating session's rulings are in `../2026-11-09-p111-what-already-exists/README.md`.
@@ -7,12 +7,6 @@ inventory and the coordinating session's rulings are in `../2026-11-09-p111-what
 - **Not mounted.** The panel is in no area yet. Mounting it in `CmcModule.tsx` waits on the CMC session's answer to
   the lines sent to it. Mounting it in `QualityModule.tsx` follows the coordinating session's take-over ruling. So it
   is not yet reachable in the running app, and no walk is filed.
-- **The admission clause is held.** A filing project's writer, one direction only (ruling (b)). It lives in
-  `tasking/task-project.ts`, with native-PG cases under RLS, and waits on RIM's answer on its tasking file.
-- **Reading through the filing project is held.** The coordinating session chose roll-up in `unified-work-view.ts`.
-  The route is untouched, and `project-schedule-admission.test.ts`'s "no SQL after an exact denial" pin stays. How the
-  reader reaches the roll-up is with the coordinating session. Until then the panel reads the work project directly,
-  by the exact rule.
 - **Contradictions stay on the program's anchor** (`services/cmc/contradiction-tasks.ts`). They are computed per
   program and carry no work-project context, so do not move them onto a work project.
 
@@ -60,3 +54,65 @@ There is no new route, table, store or screen. `ProjectWorkTasks.tsx` is split f
   - tasks read before the proof;
   - every work item listed, not only the task rows;
   - every area bound.
+
+## Part 2: the admission and the roll-up (the coordinating session's rulings (b) and A1, 2026-11-09)
+
+**What already exists.**
+- `tasking/task-project.ts` `admitTaskCreationProject` admits on the exact `projects.id` only, through
+  `canAccessReportProject` (report-os, which also governs reports and is untouched).
+- `unified-work/unified-work-view.ts` `loadUnifiedWork` reads one project exactly and rolls up nothing.
+- GET `…/projects/:id/unified-work` (`project-schedule-of-events.ts`) admits through `admitRouteProject`, which guards
+  all six schedule routes.
+
+**What changed.**
+- **`task-project.ts` (S12, tasking cleared by RIM).**
+  - `canWorkOnProjectTasks`: the exact project's access decides first, with exactly today's call. Then one clause:
+    a writer on the work project's filing project, unless the work project has its own private visibility row.
+    `admitTaskCreationProject` uses it.
+  - `workProjectsReadableBy` applies the same rule to all of a filing project's work projects at once, in three
+    reads whatever their number.
+- **`unified-work-view.ts` (S12).** An opt-in `rollUpFor` rolls up the readable work projects' open tasks in one
+  more select. Each is marked `workProject: { id, name }`. The filing project's own items are unchanged.
+  - A roll-up that cannot be decided or read is said as an unread `unified_tasks` source (`summary.partial`), never
+    as no work.
+  - Callers that pass nothing get exactly what they got before: the task board, submission-ops, the cross-object
+    resolver.
+- **`project-schedule-of-events.ts` (S9, held for one commit and released with it).**
+  - Only the unified-work handler passes `rollUpFor`: the actor the route has just admitted (its user id and the role
+    from the same read) and the request's own connection.
+  - `admitRouteProject` and the six routes' admission are otherwise unchanged. The "no SQL after an exact denial"
+    pin is untouched and passes.
+  - Four exact call-shape pins gain `rollUpFor` and stay exact (`project-schedule-admission.test.ts`, three;
+    `project-schedule-of-events.test.ts`, one).
+
+**Red first, on native PostgreSQL under row-level security** (`tests/db/work-projects.dbtest.ts`, as a restricted
+role).
+
+- **On trunk** 4 cases fail and 17 pass (`db-red.log`). With the change all 21 pass (`db.log`). The P-111 cases:
+  - **The admission:**
+    - a filing project's writer adds on its work project;
+    - a work project's own member gets nothing on the filing project or on a sibling;
+    - another organisation gets nothing;
+    - a private work project refuses the filing project's writer.
+  - **The roll-up:**
+    - a filing project's writer sees each work project's tasks, marked with where each one lives;
+    - a private work project's tasks are left out for that writer;
+    - a reader who is not a writer gets exactly what the exact rule gives;
+    - a work project's own member reads it directly and gets nothing from its siblings;
+    - another organisation gets nothing.
+- **Mutations** (`rollup-mutations.log`):
+  - Ignoring the private flag fails its case.
+  - Dropping the exact rule fails three.
+  - A third mutation, "any reader of the filing project, not only its writers", survives, and must: a work project
+    with no private row is readable by the organisation's members under the exact rule anyway. The reader case
+    states that, and that a private one stays hidden.
+- **Opt-in** (`unified-work-rollup-opt-in.test.ts`, `rollup-opt-in.log`):
+  - with no reader, no decision is asked for and the four selects are unchanged;
+  - with a reader, it decides once and makes one more select;
+  - an undecidable roll-up is said as partial.
+- **The existing suites pass:** the schedule route, the admission and the unified-work view, 203 cases
+  (`route-suites.log`).
+- **Gates:**
+  - `ci:sql-interpolation` passes (`sql-gate.log`).
+  - The full typecheck reports 0 errors. It runs at `TYPECHECK_HEAP_MB=12000`, because this host has 15 GB and the
+    default 24 GB heap is killed for memory.

@@ -1,0 +1,196 @@
+
+> concept2cure-riai@1.0.0 test:db
+> vitest run --config vitest.db.config.ts tests/db/work-projects.dbtest.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-09T09:55:07.263Z","pid":25995,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-09T09:55:07.264Z","pid":25995,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T09:55:07.264Z","pid":25995,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > adds the child under the anchor with no program id of its own, its kind, and its audit row in one transaction 80ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > is idempotent: the same name and kind under the same parent is the existing child, with no second audit row 73ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > adds a Quality work project (P-111 item 5): quality is a work kind 66ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > nests under one of the program's work projects, and refuses a fourth level by name 108ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > refuses, by name, a parent that is not the program's project or below it, and writes nothing 73ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > under row-level security, refuses a child of another organisation's anchor and reads none of it 77ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > refuses a viewer, an unknown kind and an empty name 81ms
+stderr | tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > rolls the child back if its chained audit row cannot be written
+{
+  "timestamp": "2026-11-09T09:55:11.434Z",
+  "level": "error",
+  "message": "[c2c-projects] Work project not added",
+  "context": {
+    "err": {
+      "length": 219,
+      "name": "error",
+      "severity": "ERROR",
+      "code": "23514",
+      "schema": "public",
+      "table": "audit_logs",
+      "constraint": "synthetic_work_project_audit_failure",
+      "file": "execMain.c",
+      "line": "2109",
+      "routine": "ExecConstraints"
+    }
+  }
+}
+
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > has one door: the project hierarchy no longer creates a project 72ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > rolls the child back if its chained audit row cannot be written 88ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > lists the anchor's work projects with their kind, admitted as the project page is 108ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > refuses a project outside the program, another organisation's member, and a member not on a private project 96ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > needs the program named 74ms
+ × tests/db/work-projects.dbtest.ts > a work project's tasks admit its filing project's writers, one direction only (P-111) > admits a writer on the filing project to add on its work project 113ms
+   → {"code":"TASK_PROJECT_ACCESS_DENIED"}: expected 403 to be 200 // Object.is equality
+ ✓ tests/db/work-projects.dbtest.ts > a work project's tasks admit its filing project's writers, one direction only (P-111) > gives a work project's own member nothing on its filing project or on a sibling 102ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project's tasks admit its filing project's writers, one direction only (P-111) > gives another organisation nothing on a work project 87ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project's tasks admit its filing project's writers, one direction only (P-111) > respects a work project's own private visibility: the filing project's writer is refused there 119ms
+{"level":50,"time":"2026-11-09T09:55:12.326Z","pid":25995,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T09:55:12.327Z","pid":25995,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T09:55:12.328Z","pid":25995,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+ × tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > shows a parent writer each work project's tasks, marked with where it lives; the filing project's own are unchanged 158ms
+   → expected [ [ 'Assemble Module 3', 11, null ] ] to deeply equal [ …(3) ]
+{"level":50,"time":"2026-11-09T09:55:12.458Z","pid":25995,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T09:55:12.458Z","pid":25995,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T09:55:12.459Z","pid":25995,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T09:55:12.582Z","pid":25995,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T09:55:12.583Z","pid":25995,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T09:55:12.583Z","pid":25995,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+ × tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > leaves a private work project's tasks out for the parent writer 129ms
+   → expected [ [ 'Assemble Module 3', 11, null ] ] to deeply equal [ …(2) ]
+{"level":50,"time":"2026-11-09T09:55:12.713Z","pid":25995,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T09:55:12.714Z","pid":25995,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T09:55:12.715Z","pid":25995,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+ × tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > gives a reader who is not a writer exactly what the exact rule gives: a non-private work project, never a private one 124ms
+   → expected [ [ 'Assemble Module 3', 11, null ] ] to deeply equal [ …(3) ]
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > gives a work project's own member its tasks directly, and nothing of its siblings 129ms
+{"level":50,"time":"2026-11-09T09:55:12.824Z","pid":25995,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T09:55:12.824Z","pid":25995,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T09:55:12.825Z","pid":25995,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > gives another organisation nothing 110ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/work-projects.dbtest.ts > a work project's tasks admit its filing project's writers, one direction only (P-111) > admits a writer on the filing project to add on its work project
+AssertionError: {"code":"TASK_PROJECT_ACCESS_DENIED"}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ tests/db/work-projects.dbtest.ts:281:50
+    279|     expect((await admit(12, 11)).body).toEqual({ admitted: 11 });
+    280|     const res = await admit(12, cmcChild);
+    281|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    282|     expect(res.body).toEqual({ admitted: cmcChild });
+    283|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > shows a parent writer each work project's tasks, marked with where it lives; the filing project's own are unchanged
+AssertionError: expected [ [ 'Assemble Module 3', 11, null ] ] to deeply equal [ …(3) ]
+
+- Expected
++ Received
+
+@@ -2,16 +2,6 @@
+    [
+      "Assemble Module 3",
+      11,
+      null,
+    ],
+-   [
+-     "Close the CAPA",
+-     102,
+-     "Drug product QA",
+-   ],
+-   [
+-     "Confirm the specification",
+-     101,
+-     "Drug substance CMC",
+-   ],
+  ]
+
+ ❯ tests/db/work-projects.dbtest.ts:358:41
+    356|   it('shows a parent writer each work project\'s tasks, marked with wh…
+    357|     const { cmcChild, sibling } = await family();
+    358|     expect((await work(12, 11)).sort()).toEqual([
+       |                                         ^
+    359|       ['Assemble Module 3', 11, null], ['Close the CAPA', sibling, 'Dr…
+    360|     ].sort());
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > leaves a private work project's tasks out for the parent writer
+AssertionError: expected [ [ 'Assemble Module 3', 11, null ] ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+@@ -2,11 +2,6 @@
+    [
+      "Assemble Module 3",
+      11,
+      null,
+    ],
+-   [
+-     "Close the CAPA",
+-     102,
+-     "Drug product QA",
+-   ],
+  ]
+
+ ❯ tests/db/work-projects.dbtest.ts:366:41
+    364|     const { cmcChild, sibling } = await family();
+    365|     await owner.query(`INSERT INTO project_visibility_settings(project…
+    366|     expect((await work(12, 11)).sort()).toEqual([['Assemble Module 3',…
+       |                                         ^
+    367|   });
+    368|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > gives a reader who is not a writer exactly what the exact rule gives: a non-private work project, never a private one
+AssertionError: expected [ [ 'Assemble Module 3', 11, null ] ] to deeply equal [ …(3) ]
+
+- Expected
++ Received
+
+@@ -2,16 +2,6 @@
+    [
+      "Assemble Module 3",
+      11,
+      null,
+    ],
+-   [
+-     "Close the CAPA",
+-     102,
+-     "Drug product QA",
+-   ],
+-   [
+-     "Confirm the specification",
+-     101,
+-     "Drug substance CMC",
+-   ],
+  ]
+
+ ❯ tests/db/work-projects.dbtest.ts:375:41
+    373|       INSERT INTO project_members(project_id,organization_id,user_id,r…
+    374|     // A work project with no private setting is readable by the organ…
+    375|     expect((await work(14, 11)).sort()).toEqual([['Assemble Module 3',…
+       |                                         ^
+    376|       ['Confirm the specification', cmcChild, 'Drug substance CMC']].s…
+    377|     await owner.query(`INSERT INTO project_visibility_settings(project…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 17 passed (21)
+   Start at  09:55:05
+   Duration  7.52s (transform 3.03s, setup 59ms, import 179ms, tests 7.09s, environment 0ms)
+
