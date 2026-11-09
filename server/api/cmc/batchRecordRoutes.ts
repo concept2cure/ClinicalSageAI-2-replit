@@ -411,7 +411,12 @@ router.put('/:id', async (req, res) => {
           WHERE id = $1 AND (tenant_id = $2 OR organization_id = $3) FOR UPDATE`,
         [id, ...tenantParams(orgId)],
       )).rows[0],
-      async (client) => (await client.query(updateQuery, values)).rows[0],
+      /* `RegisterClient.query` is typed `Record<string, unknown>[]`, which does
+         not narrow to the `{ id }` the door returns; the row's id is the
+         table's own serial/uuid primary key. `undefined` for no match is the
+         door's fail-closed arm, which the 404 below answers. */
+      async (client) =>
+        (await client.query(updateQuery, values)).rows[0] as { id: string | number } | undefined,
     );
 
     // Fail closed on an UPDATE that matched nothing: the row was re-tenanted or
