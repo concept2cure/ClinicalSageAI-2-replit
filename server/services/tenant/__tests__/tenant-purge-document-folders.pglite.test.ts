@@ -1,6 +1,9 @@
 /**
  * A tenant purge erases the project's Vault folders, and is not stopped by them
- * (CI run 42523947924, ci:purge-coverage, 2026-11-08).
+ * (CI run 42523947924, ci:purge-coverage, 2026-11-08). The fix is the
+ * coordinating session's 360d4de53 (docs/evidence/F1/2026-11-08-purge-coverage/),
+ * proved there on an installer-built PostgreSQL; this case pins it in the unit
+ * suite, on the real DDL, and was red without it.
  *
  * migrations/20261106_document_folders_project_scope.sql (S6, b3abbe5b6) gave
  * public.document_folders a program_id REFERENCES regulatory_programs(id) with
