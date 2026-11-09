@@ -291,7 +291,6 @@
    "assess_api_gmp",
    "assess_atmp_comparability",
    "assess_batch_poolability",
-   "assess_benefit_risk",
    "assess_benefit_risk_balance",
    "assess_biomarker_analytical_validation",
    "assess_biomarker_clinical_validation",

@@ -1,0 +1,6 @@
+== mutation 1: no chain_seq
+      Tests  32 failed (32)
+== mutation 2: AnA-drafted seed again
+      1       Tests  30 failed | 2 passed (32)
+      4    → {"outcome":{"kind":"refused","status":409,"code":"WORKFLOW_ORIGIN_UNVERIFIED","error":"The machine draft has no retained creation receipt. Nothing was released."},"originalDigest":"5d7ab58da30a3d175e1941d2508b52e5e253630391921440f65bf6950fdd5f5c","history":[],"audit":[],"status":"draft"}: expected { kind: 'refused', status: 409, …(2) } to match object { kind: 'refused', status: 409, …(1) }
+      8 +   "code": "WORKFLOW_ORIGIN_UNVERIFIED",

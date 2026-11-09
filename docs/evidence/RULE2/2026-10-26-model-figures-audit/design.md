@@ -28,10 +28,11 @@
 > | S5b digital health | done | `s5b-digital-health/` |
 > | S5b medical device | done | `s5b-medical-device/` |
 > | S5b IVD lifecycle, QMS and pathway eligibility | done | `s5b-ivd-lifecycle/` |
+> | S7 | done; `assess_benefit_risk` retired onto `assess_benefit_risk_balance` | `s7-benefit-risk-retired/` |
 > | S6b | done; PMA withheld per P-55 R-7 | `s6b-generate-document-records/` |
 > | S6 | done, with its review | `s6-plan-ind-module-authoring-retired/` |
 > | `start_war_game` (found 2026-11-01) | done | `war-game-stored-session/` |
-> | S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
+> | S5d, S8–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 
@@ -866,6 +867,14 @@ device records. No source reader, app or service was added.
 - the inventory and register entries.
 
 Move the `deepening-tools.test.ts` cases. Red: a retirement test.
+
+**S7 execution result (2026-11-09):** done as designed, with I-20's test file deleted beside its module. The
+retirement test (`assess-benefit-risk-retired-onto-the-balance.test.ts`) pins that the tool, its handler, its
+register and launch-scope entries and `regulatory/benefit-risk.ts` are gone, that the balance tool computes, and that
+four benefit-risk requests still offer it. The CSR builder's retired `POST /analyze-benefit-risk` note now names the
+balance as its deterministic engine. The old tool took raw 0–100 scores with caller weights, and the balance takes
+ordinal magnitudes and severities with optional explicit weights; the difference is recorded in
+`s7-benefit-risk-retired/`. No source reader, app or service was added.
 
 ### S8. `build_effects_table` from the approved CSR Vault source (P-A)
 
