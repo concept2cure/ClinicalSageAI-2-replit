@@ -62,3 +62,19 @@ Both were extracted unchanged first, so the red is behavioural, then fixed:
 - **Not changed, said here:** a change control that already exists without a program (any database seeded before this)
   keeps none. PATCH `/api/mdx/qms/changes/:id` has no `programId` field, and the pack finds the record by its number
   and does not re-create it.
+
+## Follow-up (the coordinating session's ruling (b), for after 23:00 UTC): the MDX program is created in its fictional sponsor's workspace
+
+- **What already exists.** The MDX pack created the NeuroPanel-Dx 510(k) program with no client workspace
+  (`packs/mdx.mjs` `seedProgram`), the same latent failure as C2C-201: once the Lumen pack's workspace exists, any run
+  that must create the program is refused `AMBIGUOUS_CLIENT_WORKSPACE`. The Lumen pack's `ensureClient` (GET/POST
+  `/api/clients`, by slug) is the pattern reused.
+- **What changed (creation-only).** The program is looked up first and, when found, used wherever it is — never moved
+  or refused. Only when it must be created does the pack ensure `MDX_CLIENT` ("Concept2Cure Diagnostics (fictional
+  demo)") and create the program there (`mdxProgramBody(clientWorkspaceId)`). A database where the program exists gets
+  no new workspace.
+- **Red first.** `mdx-program-workspace.test.mjs`: on the extracted body 1 of 2 fails (`mdx-workspace-red.log`); with the
+  fix 2 of 2; all pack tests 144 of 144 (`tests.log`).
+- **In the running app.** `mdx-run.log`: `--pack mdx` exits 0; the program is found where it was (existing), no
+  workspace created. `mdx-create-live.log`: the creation path — the sponsor workspace is created and a program created
+  with the new body answers 201, recorded in that workspace.
