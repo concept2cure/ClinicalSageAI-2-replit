@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { requireAssignedVaultFamily, vaultFamilyInProgram, VaultFamilyRefusal } from '../vault-citation-changes';
+import { listVaultFamilies, requireAssignedVaultFamily, vaultFamilyInProgram, VaultFamilyRefusal } from '../vault-citation-changes';
 
 let pglite: PGlite;
 const q = { query: async (sql: string, params?: unknown[]) => ({ rows: (await pglite.query(sql, params)).rows as Record<string, unknown>[] }) };
@@ -113,4 +113,33 @@ describe('a work project\'s assigned Vault family is in this program (S12 gap 5,
     // A family named with no project to read the program from is refused too.
     await expect(requireAssignedVaultFamily(q, ORG_A, undefined, data())).rejects.toMatchObject({ status: 409, code: 'VAULT_FAMILY_NOT_IN_PROGRAM' });
   });
+
+  it('lists the program\'s families by their current live version, the same rule, and says when the list was cut', async () => {
+    const { families, truncated } = await listVaultFamilies(q, ORG_A, PROGRAM_A);
+    const codes = families.map((f) => f.documentCode);
+    expect(truncated).toBe(false);
+    expect(codes).toContain('DS-SPEC');
+    expect(families.find((f) => f.documentCode === 'DS-SPEC')?.version).toBe('2.0');
+    for (const absent of ['DS-GONE', 'DS-WITHDRAWN', 'DP-SPEC', 'DX-SPEC', 'DP-A2-SPEC']) expect(codes).not.toContain(absent);
+    expect(new Set(codes).size).toBe(codes.length);
+    const cut = await listVaultFamilies(q, ORG_A, PROGRAM_A, 1);
+    expect(cut).toMatchObject({ truncated: true });
+    expect(cut.families).toHaveLength(1);
+  });
+
+  it('offers exactly what the check admits: each listed family passes it at the same version, and a deleted, withdrawn or superseded one is in neither', async () => {
+    const { families } = await listVaultFamilies(q, ORG_A, PROGRAM_A);
+    expect(families.length).toBeGreaterThan(0);
+    for (const f of families) expect(await vaultFamilyInProgram(q, ORG_A, PROGRAM_A, f.documentCode)).toEqual(f);
+    const codes = families.map((f) => f.documentCode);
+    for (const absent of ['DS-GONE', 'DS-WITHDRAWN']) {
+      expect(codes).not.toContain(absent);
+      expect(await vaultFamilyInProgram(q, ORG_A, PROGRAM_A, absent)).toBeNull();
+    }
+    // The superseded version of a listed family is neither listed nor what the check names.
+    const spec = families.find((f) => f.documentCode === 'DS-SPEC')!;
+    expect(spec.version).toBe('2.0');
+    expect((await vaultFamilyInProgram(q, ORG_A, PROGRAM_A, 'DS-SPEC'))?.version).toBe('2.0');
+  });
 });
+

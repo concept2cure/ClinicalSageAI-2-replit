@@ -1,0 +1,72 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts
+{
+  "timestamp": "2026-11-09T07:27:48.972Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T07:27:48.974Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts
+{
+  "timestamp": "2026-11-09T07:27:48.974Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > names the family's current version, not a superseded one 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > says the same nothing for an unknown family, another program's, and another organisation's 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > says nothing for a family whose versions are all deleted, or whose current version's data was withdrawn 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > refuses a malformed program or code without reading 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > where a task assigns the family: the program is the task's own work project's, never the body's (POST /api/tasks/tasks) 18ms
+ × server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > lists the program's families by their current live version, the same rule, and says when the list was cut 3ms
+   → listVaultFamilies is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > offers exactly what the check admits: each listed family passes it at the same version, and a deleted, withdrawn or superseded one is in neither 1ms
+   → listVaultFamilies is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > lists the program's families by their current live version, the same rule, and says when the list was cut
+TypeError: listVaultFamilies is not a function
+ ❯ server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts:118:43
+    116|
+    117|   it('lists the program\'s families by their current live version, the…
+    118|     const { families, truncated } = await listVaultFamilies(q, ORG_A, …
+       |                                           ^
+    119|     const codes = families.map((f) => f.documentCode);
+    120|     expect(truncated).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > offers exactly what the check admits: each listed family passes it at the same version, and a deleted, withdrawn or superseded one is in neither
+TypeError: listVaultFamilies is not a function
+ ❯ server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts:131:32
+    129|
+    130|   it('offers exactly what the check admits: each listed family passes …
+    131|     const { families } = await listVaultFamilies(q, ORG_A, PROGRAM_A);
+       |                                ^
+    132|     expect(families.length).toBeGreaterThan(0);
+    133|     for (const f of families) expect(await vaultFamilyInProgram(q, ORG…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  07:27:47
+   Duration  4.14s (transform 1.14s, setup 63ms, import 1.88s, tests 1.99s, environment 0ms)
+
