@@ -994,3 +994,37 @@ The draft was attacked through two lenses. Each finding that held up was folded 
    callers' keys. But `submission_transmittals.metadata` still has no record guard, and the chained copies are archived
    after 24 months. A later writer that replaced the key instead of merging it would change what is on file without a
    trace in the fold. S5's owed guard is what closes it.
+
+---
+
+## Answers since this design (appended 2026-11-09)
+
+The coordinator's answers are coordination, not founder decisions; the founder's are recorded in
+`docs/LAUNCH_DEFINITION_OF_DONE.md` under P-108, item 4. Where an answer changes this design, the re-cut that applies it
+says so, with the tree it was checked against.
+
+### The coordinating session's answers, 2026-11-08
+
+- **C1 (restoredBinding): not the forbidden "inferred binding"**, if three conditions hold:
+  - exactly one `ECTD_TRANSMITTED` audit row names both that transmittal row and that sequence; zero, or more than one,
+    is refused by name;
+  - the signed act cites that audit row's id, and a person signs it;
+  - it is written only as `metadata.restoredBinding` on the act, never into the attempt-binding columns.
+
+  This reads `audit_logs`, which the design said neither path does. The read happens at act time, within the audit
+  retention window; after archival the statement path is the only one left. (The window's length is stated, with its
+  source, in the re-cut.)
+- **C2: yes.** Pre-slice-2 staging-"sent" sequences stay with slice 2's runbook rule.
+- **C3: as P-92's C6.** A quiet disclosure on today's Dispatch tab, under F1.
+- **C4: holds granted when P-99 starts,** recorded in `COORDINATION.md` then. `ectd-compile.ts` was not held, so C1
+  (refuse compiling a sequence already on file, 409) landed first, alone, after slice 2.
+
+### The founder's answers: P-108 item 4, 2026-11-08 ("Accept all four")
+
+- **(a)** If a sequence was sent with no compile and no kept bytes, the sponsor's own copy of the package is accepted
+  when its SHA-256 matches the one recorded for that send; otherwise it needs a re-filing. This depends on MR-08's open
+  question about admitting `.zip` files to Vault, which stays open.
+- **(b)** A sequence known only from its compiles counts as unrecorded: re-derived from bytes it becomes `transmit`, and a
+  statement restores it only as `statement`.
+- **(c)** A kept package that can no longer be read is an integrity incident, never covered by a statement.
+- **(d)** A signed statement cannot be superseded for now; a correction is a later sequence.
