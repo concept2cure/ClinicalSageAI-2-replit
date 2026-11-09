@@ -1,0 +1,13 @@
+# This change's tests against HEAD 3c0d02039b's three sources (artifact-approval-act.ts, artifact-signed-act.ts, routes/c2c/artifacts.ts)
+# npx vitest run <ceremony> <quorum integrity> <AnA signed act>
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q1: the reviewer is neither the approving signer nor an author > the signer reviewed and approved this version: their approval is refused before the password is verified, nothing written 49ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q1: the reviewer is neither the approving signer nor an author > the signer reviewed this version in a closed round, and a colleague in a new one: still refused 48ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q1: the reviewer is neither the approving signer nor an author > the signer becomes a reviewer of the round while signing: refused on the signing transaction, nothing written 44ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q1: the reviewer is neither the approving signer nor an author > a reviewer who wrote a version is not assigned (400), and cannot decide once they have written one (403) 12ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q1: the reviewer is neither the approving signer nor an author > a decision by someone who is now an author does not meet the quorum 27ms
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the review quorum decides on the version that would be approved > the signer reviewed this version (P-95 Q1): refused on AnA as on the status route, nothing written 32ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'an author\'s review does not count (P…' 10ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-95 Q1: the approval is signed by someone who did not review it > the signer reviewed this version: refused 7ms
+ Test Files  3 failed (3)
+      Tests  8 failed | 159 passed (167)

@@ -1,0 +1,8 @@
+# eslint on the changed files: warnings at HEAD 3c0d02039b -> with this change
+server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts errors 0 warnings 1 -> 1
+server/routes/c2c/artifacts.ts errors 0 warnings 23 -> 23
+server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts errors 0 warnings 0 -> 0
+server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts errors 0 warnings 0 -> 0
+server/services/artifact-approval-act.ts errors 0 warnings 0 -> 0
+server/services/artifact-signed-act.ts errors 0 warnings 1 -> 1
+TOTAL errors 0 warnings 25 -> 25
