@@ -666,6 +666,22 @@ interface RenderedReport {
   status: string;
   truthfulness: { allowedStatus: string; downgradedFrom?: string; reasons: string[] };
   sections: ROSection[];
+  /** Whether a finalize would be admitted, from the finalize route's own evaluation (GET /runs/:id/rendered).
+   *  Absent on a server that predates it; then Finalize is offered and the server decides, as before. */
+  finalEligibility?: { eligible: boolean; reasons: string[] };
+}
+
+/** The rendered read's finalize eligibility, or nothing when it is absent or malformed. */
+function finalEligibilityOf(body: unknown): RenderedReport['finalEligibility'] {
+  const f = (body as { finalEligibility?: { eligible?: unknown; reasons?: unknown } } | null)?.finalEligibility;
+  if (!f || typeof f.eligible !== 'boolean') return undefined;
+  return { eligible: f.eligible, reasons: Array.isArray(f.reasons) ? f.reasons.filter((r): r is string => typeof r === 'string') : [] };
+}
+
+/** Why a finalize would be refused, in a sentence: the gate's reasons without its "Cannot mark final:" lead. */
+export function finalizeHeldText(reasons: string[]): string {
+  const said = reasons.map((r) => r.replace(/^Cannot mark final:\s*/, '').replace(/\.$/, '')).filter(Boolean);
+  return `Can’t be finalized: ${said.length ? said.join('; ') : 'the report’s gate holds it below final'}.`;
 }
 
 /**
@@ -1086,11 +1102,13 @@ function reportHeading(report: RenderedReport): { fam: { label?: string; region?
 /** The run is headed by a project (or program, or submission) while its engine
  *  counted the organization's records: the run's own carried `computedScope`,
  *  never the type id. An account run is already headed as the organization. */
-function ROReport({ report, onExport, onFinalize, seal, runId, exporting = false }: {
+function ROReport({ report, onExport, onFinalize, finalizeHeld, seal, runId, exporting = false }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
-  /** Offered only to a role that may finalize, on a run that is not final. */
+  /** Offered only to a role that may finalize, on a run that is not final and that a finalize would admit. */
   onFinalize?: () => void;
+  /** In Finalize's place, for a role that may finalize: why the server would refuse it. */
+  finalizeHeld?: string[];
   seal?: ReportSeal | null;
   /** The governed run behind the report, when there is one. It unlocks the
    *  evidence disclosure: GET /runs/:id/seal re-verifies the sealing act and
@@ -1136,7 +1154,7 @@ function ROReport({ report, onExport, onFinalize, seal, runId, exporting = false
           <div className="ro-sec-body">{sec.blocks.map((b, i) => <ROBlock key={i} block={b} />)}</div>
         </section>
       ))}
-      <ROReportActions report={report} onExport={onExport} onFinalize={onFinalize} exporting={exporting} />
+      <ROReportActions report={report} onExport={onExport} onFinalize={onFinalize} finalizeHeld={finalizeHeld} exporting={exporting} />
       {runId != null && <RunEvidence runId={runId} />}
     </div>
   );
@@ -1417,9 +1435,11 @@ async function fetchRenderedRun(runId: number, type: ReportType, program: Progra
   if (!target) return null;
   try {
     const res = await apiRequest('GET', `/api/report-os/runs/${runId}/rendered`);
-    const rendered = (await res.json().catch(() => null))?.data;
+    const body = await res.json().catch(() => null);
+    const rendered = body?.data;
     if (!res.ok || !rendered || !Array.isArray(rendered.sections) || typeof rendered.generatedAt !== 'string') return null;
-    return reportFromRenderedRow(rendered, { id: runId, runUuid: '', reportTypeId: type.typeId, reportTypeLabel: type.label, scopeType: target.scope, scopeId: target.scopeId, scopeLabel: target.label, status: 'partial', confidence: null, createdAt: rendered.generatedAt }, type);
+    const report = reportFromRenderedRow(rendered, { id: runId, runUuid: '', reportTypeId: type.typeId, reportTypeLabel: type.label, scopeType: target.scope, scopeId: target.scopeId, scopeLabel: target.label, status: 'partial', confidence: null, createdAt: rendered.generatedAt }, type);
+    return { ...report, finalEligibility: finalEligibilityOf(body) };
   } catch {
     return null;
   }
@@ -1564,7 +1584,7 @@ async function fetchRenderedRunRow(
   if (!rendered || !Array.isArray(rendered.sections)) {
     return { note: `"${row.reportTypeLabel}" returned no document, so nothing is shown in its place.` };
   }
-  return { report: reportFromRenderedRow(rendered, row, catalog.find((t) => t.typeId === row.reportTypeId)) };
+  return { report: { ...reportFromRenderedRow(rendered, row, catalog.find((t) => t.typeId === row.reportTypeId)), finalEligibility: finalEligibilityOf(body) } };
 }
 
 /** A finalized run's signature and seal, as the server returned them. */
@@ -1673,16 +1693,19 @@ function ROSealLine({ seal }: { seal: ReportSeal }) {
 
 /** Export reads; Finalize, when offered, signs. Both are quiet: the page's one
     primary is the header's (D7 §D.6), and an open report made Export a second. */
-function ROReportActions({ report, onExport, onFinalize, exporting = false }: {
+function ROReportActions({ report, onExport, onFinalize, finalizeHeld, exporting = false }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
   onFinalize?: () => void;
+  /** The gate's reasons a finalize would be refused, said in Finalize's place (never a signature asked for in vain). */
+  finalizeHeld?: string[];
   exporting?: boolean;
 }) {
   return (
     <div className="ro-rep-actions">
       <button type="button" className="btn ghost" disabled={exporting} aria-busy={exporting} onClick={() => onExport(report)}>{I.download || I.fileText} {exporting ? 'Preparing PDF…' : 'Export PDF'}</button>
       {onFinalize && <button type="button" className="btn ghost" onClick={onFinalize}>{I.shieldCheck} Finalize…</button>}
+      {finalizeHeld && <span className="ro-rep-held" role="note" data-testid="ro-finalize-held">{finalizeHeldText(finalizeHeld)}</span>}
     </div>
   );
 }
@@ -2124,7 +2147,12 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     : paneView === 'runs' ? <RunsPanel types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId, label: program.code } : null} onOpen={row => void openRunFromHistory(row)} onBundle={ids => { if (!reportAccessCurrent() || libraryActions.get(contextKey, 'bundle:create')) return; setBundlePicks(ids); setPaneView('bundles'); pushCanvasTop(); }} canBundle={canWrite && !libraryActions.get(contextKey, 'bundle:create')} />
     : paneView === 'schedules' ? <SchedulesPanel key={contextKey} types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId } : null} canWrite={canWrite} canSchedule={tierResolved && ['professional', 'enterprise'].includes(realTier)} actions={libraryActions} context={contextKey} accessCurrent={reportAccessCurrent} onSaved={msg => { if (reportAccessCurrent()) fireToast(msg); }} />
     : paneView === 'bundles' ? <BundlesPanel key={contextKey} pendingRunIds={bundlePicks} canWrite={canWrite} pendingExports={pendingBundleExports} onExport={(id, name, content) => void exportBundle(id, name, content)} actions={libraryActions} context={contextKey} accessCurrent={reportAccessCurrent} onSaved={msg => { if (reportAccessCurrent()) fireToast(msg); }} onClearPending={() => { if (reportAccessCurrent()) setBundlePicks(now => now === bundlePicks ? [] : now); }} /> : null;
-  const reportPane = report ? <ROReport report={report} onExport={exportRep} onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => { if (reportAccessCurrent()) setSigning(true); } : undefined} seal={seal} runId={reportRunId} exporting={reportRunId != null && pendingReportExports.has(reportRunId)} /> : null;
+  /* Finalize is offered where a finalize would be admitted; where the server's
+     own evaluation says it would not, its reasons stand in Finalize's place
+     (Reporting use walk, 2026-11-09). */
+  const mayFinalizeHere = canFinalize && reportRunId != null && report != null && report.status !== 'final';
+  const finalizeHeld = mayFinalizeHere && report?.finalEligibility?.eligible === false ? report.finalEligibility.reasons : undefined;
+  const reportPane = report ? <ROReport report={report} onExport={exportRep} onFinalize={mayFinalizeHere && !finalizeHeld ? () => { if (reportAccessCurrent()) setSigning(true); } : undefined} finalizeHeld={finalizeHeld} seal={seal} runId={reportRunId} exporting={reportRunId != null && pendingReportExports.has(reportRunId)} /> : null;
   const visibleGeneration = requestSequence.current;
   const displayedReportCurrent = () => reportAccessCurrent() && displayedRun.current === reportRunId && requestSequence.current === visibleGeneration;
   const sealForDisplayedRun = (sealed: ReportSeal) => {

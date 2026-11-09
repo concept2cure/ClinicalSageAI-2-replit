@@ -147,6 +147,7 @@
 .ro-disc-s{ font-size:11.5px; color:var(--text-400); }
 .ro-disc-n{ font-size:11.5px; color:var(--text-400); margin-top:4px; font-style:italic; }
 .ro-rep-actions{ display:flex; gap:9px; flex-wrap:wrap; margin-top:8px; padding-top:16px; border-top:1px solid var(--border); }
+.ro-rep-held{ align-self:center; font-size:var(--fs-caption); color:var(--text-300); }
 
 /* ── Dashboard / portfolio / compare ── */
 .ro-dash{ max-width:900px; }
