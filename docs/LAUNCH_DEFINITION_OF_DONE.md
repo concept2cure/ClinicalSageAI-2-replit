@@ -2452,3 +2452,62 @@ lives, the founder chose **inside each work area**, not a separate screen, and a
   - Module 3 remains a document type that converges into the project's document start and the one editor (RULE 4).
     This decision is about the work area's tasks, not the Module 3 document.
   - The CMC composition boundary (P-28, P-110) is unchanged.
+
+### P-112 — The Vault admits a .zip; making zips, compressing PDFs and combining PDFs are the Vault's
+
+Decided 2026-11-09 by the founder, in the market-readiness session (`01Gx2fiw…`), answering MR-08's open question
+(`docs/work-orders/MR-08-vault-upload-safety-and-document-control.md`, "NEW: Vault admission limits": "Also decide
+whether `.zip` is admitted. The recommendation is no for the pilot"). P-108 4(a) and MR-10 stage 9 waited on it. The
+answer, verbatim: "Yes vaul accepts zips and also generates zips and also can compress PDF’s and combine PDF’s".
+
+1. **The Vault admits a `.zip`.** This reverses MR-08's recommendation.
+   - **Today it is refused.** `.zip` is `vault: false` in `shared/constants/document-intake-formats.ts`. The Vault's
+     list (`VAULT_UPLOAD_EXTENSIONS`), its ingest route (`server/routes/vault-ingest.ts`, 400 `FILE_TYPE_NOT_ALLOWED`),
+     its picker and `VaultUploadStaging.tsx` all follow that flag. No test pins the Vault's refusal.
+   - **MR-08's rules for an admitted archive stand; the answer does not change them.** The archive is one Vault
+     version, stored and hashed as it came, and never expanded into Vault documents (MR-08 Stage 3 step 3). Before it is
+     stored it is bounded by the one archive helper, `server/services/archive/safeZip.ts`, through `assertUploadSafe`.
+   - **The Data Room is unchanged.** It still opens a zip in the browser and uploads each file inside on its own
+     (`client/src/concept2cure/hooks/archive-intake.ts`).
+   - **It unblocks:**
+     - P-108 4(a): a sponsor's own copy of a sent package, accepted when its SHA-256 matches the send;
+     - MR-10 stage 9's entry point: a prior filing's archive held in the Vault and read by
+       `server/services/legacy-importer/filed-sequence-reader.ts`.
+2. **Making zips exists and is reachable.**
+   - `server/services/vault/vault-archive-builder.ts` writes the originals, `manifest.json`, `INDEX.txt` and
+     `SHA256SUMS`, checking each file against its recorded hash. It serves two downloads:
+     - a folder's export (`GET /api/c2c/project-vault/:id/folders/:folderId/export`, `VaultFolderExport.tsx`);
+     - a seal's closing archive (`GET …/seals/:sealId/archive`, `VaultSeals.tsx`).
+   - **Missing:** an export of documents a person picks (MR-08 Stage 6 step 3). It uses the same builder.
+3. **Compressing PDFs exists, but the Vault cannot reach it.**
+   - `server/services/pdf-compression-service.ts` runs Ghostscript `pdfwrite` with settings from `/screen` to
+     `/prepress`. It is reached through:
+     - `/api/pdf-tasks/compress*` (`server/routes/pdf-task-routes.ts`), which no client calls;
+     - five assistant tools in `server/services/tools/index.ts`.
+   - It reads files on the server's disk under `PDF_COMPRESSION_ALLOWED_ROOTS`, not Vault versions. The work is to reach
+     it from a Vault document, not to write a second compressor.
+4. **Combining PDFs does not exist anywhere.**
+   - **What was searched.** `copyPages`, `embedPdf`, `embedPage`, `pdfunite`, merge, combine and concat (PDF), and
+     Python's `PdfMerger` and `PdfFileMerger`, across the server, client, shared and scripts, and in the Vault's code.
+   - **What looks like it but is not.**
+     - `renderCombinedPdf` (`server/export/renderers.ts`) renders one PDF from structured content.
+     - CSR assembly writes separate eCTD leaves.
+   - **What can be used.** `pdf-lib`, already a dependency, can do it.
+   - **How it is built.** The answer names combining as a Vault capability. Under RULE 6 it is built inside existing
+     files. A new route file, service, table or screen for it needs an `approvedAdditions` entry from the founder.
+- **What is not decided.**
+  - The largest file the Vault admits (MR-08 recommends 500 MB) stays open.
+  - For a compressed or combined PDF:
+    - whether the result is a new version of the same document or a new document;
+    - who may make one;
+    - whether it needs a signature.
+
+    The Vault's owner proposes; the founder decides. A Vault version's bytes are never rewritten either way: the Vault
+    is an immutable catalog (RULE 5).
+  - MR-10 stage 9's other two questions stay open:
+    - where an imported prior filing is recorded;
+    - whether the ICH and regional DTDs are vendored.
+- **Owner.**
+  - **Admission:** the market-readiness session, which needs it for stage 9, with a hold row before its first edit.
+  - **The picked-document export, compression and combining:** the Vault parity lane (S6), in the order the
+    coordinating session sets in `.design/claude-convergence/COORDINATION.md`.
