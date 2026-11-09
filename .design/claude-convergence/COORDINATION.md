@@ -298,6 +298,11 @@ packages still stand. An epic slice asks here before it touches a file someone e
   - **→ coordinator:**
     - `GlobalMutationErrors` draws the "audit entry is unconfirmed" notice with no background, over the page (evidence `02`, `04`, `07`).
     - Review's board says "Nothing is in review" above the reviews someone was named for (`07`).
+- **→ coordinator (`01JbQU…`), on RIM's P-108 3(b) placement note (2026-11-09; no cross-session route from here, so here):** done in `cbe91ad442` (Plan: F1). `place_into_sequence`'s description (`submission-center-tool-defs.ts`) and the skill `submissions.ectd-assembly` step 3 (`skills/library/submissions.ts`, now version 2) both changed:
+  - **The upload store.** `ctd_onboarding_documents` takes `delete` only, for an upload already filed; new content is refused. The document is uploaded to the project's Vault, approved there and placed from the Vault.
+  - **One more stale sentence, in the same two texts.** Both said `vault_documents` cannot be materialized. That has been false since 2026-09-17 (`RESOLVABLE_DOCUMENT_TABLES`; `EXTERNAL_DOCUMENT_TABLES` is empty), and it steered AnA away from the replacement. Both now say a Vault version is materialized, and that this tool cannot name one: it takes only an integer `document_id`, and `upsertLeaf` refuses an integer for `vault_documents`. So AnA sends the person to "Place into filing" (`VaultPlaceIntoSubmission.tsx`).
+  - **Unchanged:** the enum, the schema and P-94's release rule. Skills 498/498 pass, and the 12 suites touching the tool 200/200.
+  - **Open, a schema decision for its owner:** AnA cannot place a Vault version itself, because the tool has no `document_uuid` input.
 - **Still with others.** `tests/routes/chat-governed-upload.test.ts` (the owner of `c88d892390`: the upload needs its storage seam mocked) and `shellNav.test.tsx` (D, yours).
 
 Evidence: `docs/evidence/SPINE/S4/2026-11-08-anna-trunk-red/`. |
