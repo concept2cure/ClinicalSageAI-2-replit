@@ -5542,16 +5542,9 @@ export function DocumentWorkbench({
                   />
                 )}
                 {narrativeReference && <CsrNarrativeReferenceView reference={narrativeReference} />}
-                <div
-                  style={{
-                    minHeight: 460,
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-lg)',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                >
+                {/* The page (D4.md §D4.D item 3): no border, no minimum height, no overflow clip. The bordered,
+                    clipping box it replaces hid the ribbon's ends once the ribbon spans the page (walk 2026-11-09). */}
+                <div className="ed-page">
                   <RichSectionEditor
                     /* contentEpoch remounts the canvas when the server
                        replaces content out from under it (revert). */

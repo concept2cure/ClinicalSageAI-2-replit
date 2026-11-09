@@ -484,9 +484,15 @@
      most 720px, the reading measure, set once here for section and document
      view. It was the full 1440px. */
   .ed-doc-inner {
+    /* The page's side padding, named once: the ribbon spans it (rich-section-editor.css). */
+    --ed-page-pad-x: 48px;
     max-width: 816px;
     margin: 0 auto;
-    padding: 32px 48px 120px;
+    padding: 32px var(--ed-page-pad-x) 120px;
+  }
+  /* The section's page (§D4.K): borderless and unclipped; it replaced DocumentWorkbench's inline bordered box. */
+  .ed-page {
+    margin-top: 8px;
   }
   /* ── Whole-document view ─────────────────────────────────────────────
      Section view edits one section in a box; this is the document that box
@@ -2374,7 +2380,8 @@
        the container is D4-5's panel shell, and until it exists this is the
        width that needs them. */
     .ed-doc-inner {
-      padding: 20px 16px 80px;
+      --ed-page-pad-x: 16px;
+      padding: 20px var(--ed-page-pad-x) 80px;
     }
     .ed-mast-t {
       font-size: 22px;

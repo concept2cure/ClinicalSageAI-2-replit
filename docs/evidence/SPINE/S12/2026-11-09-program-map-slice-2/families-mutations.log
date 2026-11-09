@@ -1,0 +1,10 @@
+## MUTATION: the list skips the withdrawn-data predicate (vaultDataEligibleSql) that the check keeps
+✓ names the family's current version, not a superseded one 8ms
+✓ says the same nothing for an unknown family, another program's, and another organisation's 6ms
+✓ says nothing for a family whose versions are all deleted, or whose current version's data was withdrawn 10ms
+✓ refuses a malformed program or code without reading 0ms
+✓ where a task assigns the family: the program is the task's own work project's, never the body's (POST /api/tasks/tasks) 12ms
+× lists the program's families by their current live version, the same rule, and says when the list was cut 5ms
+× offers exactly what the check admits: each listed family passes it at the same version, and a deleted, withdrawn or superseded one is in neither 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+Tests  2 failed | 5 passed (7)

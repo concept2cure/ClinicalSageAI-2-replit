@@ -268,7 +268,9 @@ export function setEditorTarget(
 ): void {
   if (typeof window === 'undefined') return;
   const sourceContext = target.assemblySources !== undefined || target.sourceDocumentStart !== undefined;
-  if (sourceContext && !sourceContextAvailable(sourceContextCurrent)) { clearEditorTarget(); return; }
+  // A sender that is already retired publishes nothing and changes nothing: it must not clear a valid target another,
+  // current sender set (sourceAssemblyOwnership.test.tsx; 3d9879dfc7 had made this clear, and the case stayed red).
+  if (sourceContext && !sourceContextAvailable(sourceContextCurrent)) return;
   const filingDocumentId = readFilingDocumentIntent(target);
   if (filingDocumentId === null) { clearEditorTarget(); return; }
   const sourceDocumentStart = readDocumentStart(target);

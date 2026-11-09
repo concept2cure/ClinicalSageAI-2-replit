@@ -171,6 +171,10 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
     migrations: [
+      // audit_logs' chain position (column, sequence and the trigger that assigns it), as production has it: the
+      // independent-check ledger read orders and verifies chained rows by chain_seq (workflow-import-governance.ts).
+      // Without it every review and submit here was refused INDEPENDENT_CHECK_REQUIRED (11 red, 2026-11-09).
+      'migrations/20260921_audit_logs_chain_seq.sql',
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       // The program binding the board filters and labels by (client_program_id).
       'migrations/20260727_authoring_document_program_scope.sql',
@@ -276,7 +280,9 @@ describe('a review requested in Authoring reaches the Review board', () => {
     expect(r.body.data.meta.threadItemId).toBe(docA);
     const thread = r.body.data.thread as Array<Record<string, any>>;
     expect(thread).toHaveLength(1);
-    expect(thread[0]).toMatchObject({ body: 'Please cite the stability data here.', state: 'open', sectionId: sectionA, author: REVIEWER.email });
+    // The board names the commenter by name, falling back to the email (authoring-review-board.ts), and the comment now
+    // records the name.
+    expect(thread[0]).toMatchObject({ body: 'Please cite the stability data here.', state: 'open', sectionId: sectionA, author: REVIEWER.name });
   }, T);
 
   it('another tenant never sees it', async () => {

@@ -1,0 +1,4 @@
+ × client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > published assembly source intent retains its original sender > does not replace an unrelated valid target when its sender is already retired 6ms
+   → expected null to match object { …(2) }
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx > retained chooser controls do not borrow a replacement scope > does not revive retained actions after source A→B→A 55ms
+      Tests  1 failed | 45 passed (46)

@@ -1,0 +1,62 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T07:29:45.327Z",
+  "steps": [
+    {
+      "name": "Drug substance CMC 2026-11-09T07:29:48",
+      "id": 18
+    },
+    {
+      "name": "a code not in the program's Vault is refused, nothing assigned",
+      "status": 409,
+      "message": "That Vault document is not in this project’s Vault. Nothing was assigned."
+    },
+    {
+      "name": "the picker lists the program's current families by title, code and version",
+      "count": 18,
+      "chosen": {
+        "value": "S12-WALK-1794192292154",
+        "label": "Drug substance specification · S12-WALK-1794192292154 · v2.0"
+      }
+    },
+    {
+      "name": "Assign posts the Plan's task with the chosen family",
+      "status": 200,
+      "vaultDocumentCode": "S12-WALK-1794192292154"
+    },
+    {
+      "name": "the row says who delivers it, when, and what it was assigned to produce, read back",
+      "line": "Assigned to JM Smith, due Nov 30, 2026",
+      "words": "Assigned to produce Drug substance specification (current v2.0)"
+    },
+    {
+      "name": "the same at 390 dark, the picker starting from the assigned family",
+      "hScroll": 0,
+      "kept": "S12-WALK-1794192292154"
+    }
+  ],
+  "requests": [
+    {
+      "post": "/api/tasks/tasks (foreign code)",
+      "status": 409,
+      "body": {
+        "success": false,
+        "code": "VAULT_FAMILY_NOT_IN_PROGRAM",
+        "error": "That Vault document is not in this project’s Vault. Nothing was assigned."
+      }
+    },
+    {
+      "post": "/api/tasks/tasks",
+      "status": 200,
+      "moduleData": {
+        "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+        "workProjectId": 18,
+        "workKind": "cmc",
+        "raisedFrom": "project-work-projects",
+        "vaultDocumentCode": "S12-WALK-1794192292154"
+      }
+    }
+  ],
+  "finishedAt": "2026-11-09T07:30:01.005Z"
+}

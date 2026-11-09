@@ -1,0 +1,4745 @@
+{
+ "screens": {
+  "home-1440-light": {
+   "url": "/concept2cure",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [
+    {
+     "cls": "landing-composer",
+     "borderTopColor": "rgb(127, 125, 117)",
+     "borderTopWidth": "1px",
+     "fill": "rgb(255, 255, 255)",
+     "surround": {
+      "bg": "rgb(250, 249, 245)",
+      "from": "main"
+     },
+     "radius": "20px"
+    }
+   ],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [
+     {
+      "sel": ".landing-send, .pj-comp-send, .ct-comp-send",
+      "cls": "landing-send",
+      "w": 32,
+      "h": 32,
+      "text": ""
+     }
+    ],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Good morning, JM",
+    "titleLeft": 718,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure"
+  },
+  "projects-1440-light": {
+   "url": "/concept2cure/projects",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 1,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.on",
+      "w": 50.2,
+      "h": 28,
+      "text": "Grid"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 46.1,
+      "h": 28,
+      "text": "List"
+     }
+    ],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Projects",
+    "titleLeft": 304,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/projects"
+  },
+  "project-1440-light": {
+   "url": "/concept2cure/project-home?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [
+    {
+     "cls": "pj-composer",
+     "borderTopColor": "rgb(127, 125, 117)",
+     "borderTopWidth": "1px",
+     "fill": "rgb(255, 255, 255)",
+     "surround": {
+      "bg": "rgb(250, 249, 245)",
+      "from": "main"
+     },
+     "radius": "20px"
+    }
+   ],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 72.8,
+      "h": 28,
+      "text": "Plan"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 103.2,
+      "h": 28,
+      "text": "Evidence"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 88.2,
+      "h": 28,
+      "text": "Author"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 90.6,
+      "h": 28,
+      "text": "Review"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 89.5,
+      "h": 28,
+      "text": "Submit"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 100.6,
+      "h": 28,
+      "text": "Respond"
+     }
+    ],
+    "sends": [
+     {
+      "sel": ".landing-send, .pj-comp-send, .ct-comp-send",
+      "cls": "pj-comp-send",
+      "w": 32,
+      "h": 32,
+      "text": ""
+     }
+    ],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasi",
+    "titleLeft": 294,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 264,
+      "width": 1176,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1240px"
+     },
+     {
+      "sel": ".pj",
+      "left": 264,
+      "width": 1176,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1240px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/project-home?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "conversation-1440-light": {
+   "url": "/concept2cure/conversation-thread?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [
+    {
+     "cls": "ct-composer",
+     "borderTopColor": "rgb(127, 125, 117)",
+     "borderTopWidth": "1px",
+     "fill": "rgb(255, 255, 255)",
+     "surround": {
+      "bg": "rgb(250, 249, 245)",
+      "from": "ct-composer-wrap"
+     },
+     "radius": "20px"
+    }
+   ],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [
+     {
+      "sel": ".landing-send, .pj-comp-send, .ct-comp-send",
+      "cls": "ct-comp-send",
+      "w": 32,
+      "h": 32,
+      "text": ""
+     }
+    ],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Talk to AnA",
+    "titleLeft": 610,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/conversation-thread?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "submission-center-1440-light": {
+   "url": "/concept2cure/submission-center?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) (C2C-101 (anti-IL-23p1",
+     "action": {
+      "text": "Open the sequences",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws.on",
+      "w": 105.1,
+      "h": 36,
+      "text": "Submissions"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 71,
+      "h": 36,
+      "text": "Planner"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 67,
+      "h": 36,
+      "text": "Builder"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 164.7,
+      "h": 36,
+      "text": "Required deliverables"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 94.8,
+      "h": 36,
+      "text": "Sequences"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 86,
+      "h": 36,
+      "text": "Validation"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 121.9,
+      "h": 36,
+      "text": "Shadow review"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 79,
+      "h": 36,
+      "text": "Dispatch"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Submission Center",
+    "titleLeft": 322,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/submission-center?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "tasks-1440-light": {
+   "url": "/concept2cure/tasks?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 1,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "No task on this board is marked critical-path, so there is no path to report on yet.",
+     "action": {
+      "text": "Triage the overdue work",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [],
+    "seg": [
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.on",
+      "w": 60.7,
+      "h": 28,
+      "text": "Board"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 99.3,
+      "h": 28,
+      "text": "Critical path"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 81.7,
+      "h": 28,
+      "text": "Analytics"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 57.9,
+      "h": 28,
+      "text": "Table"
+     }
+    ],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Tasks",
+    "titleLeft": 332,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 292,
+      "width": 1120,
+      "padL": "40px",
+      "padT": "32px",
+      "maxW": "1120px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/tasks?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "communication-1440-light": {
+   "url": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "No open agency communications need a response right now.",
+     "action": {
+      "text": "Review the inbox",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 80.6,
+      "h": 36,
+      "text": "FDA loop"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab.on",
+      "w": 132,
+      "h": 36,
+      "text": "Agency inbox · 0"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 189.7,
+      "h": 36,
+      "text": "Meetings & commitments"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 136.4,
+      "h": 36,
+      "text": "Authority profiles"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Communication",
+    "titleLeft": 294,
+    "frames": [
+     {
+      "sel": ".cc",
+      "left": 264,
+      "width": 1176,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1200px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "rbm-1440-light": {
+   "url": "/concept2cure/rbm?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab.on",
+      "w": 83.5,
+      "h": 36,
+      "text": "Overview"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 140.6,
+      "h": 36,
+      "text": "Risk review report"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 183.8,
+      "h": 36,
+      "text": "Risk assessment (RACT)"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 143.4,
+      "h": 36,
+      "text": "Key risk indicators"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 172.8,
+      "h": 36,
+      "text": "Quality tolerance limits"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 144.4,
+      "h": 36,
+      "text": "Central monitoring"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 120.7,
+      "h": 36,
+      "text": "Patient profiles"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 73.7,
+      "h": 36,
+      "text": "Site risk"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 111.7,
+      "h": 36,
+      "text": "Site oversight"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 124.8,
+      "h": 36,
+      "text": "Monitoring plan"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Risk-based monitoring",
+    "titleLeft": 294,
+    "frames": [
+     {
+      "sel": ".rbm-page",
+      "left": 264,
+      "width": 1176,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "none"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/rbm?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "review-1440-light": {
+   "url": "/concept2cure/review?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "The review board",
+    "titleLeft": 332,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 292,
+      "width": 1120,
+      "padL": "40px",
+      "padT": "32px",
+      "maxW": "1120px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/review?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "ind-lifecycle-1440-light": {
+   "url": "/concept2cure/ind-checklist?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 3,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "The C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) IND is 0% ready. 51 things stan",
+     "action": {
+      "text": "Ask AnA how to clear the top blocker",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-sparkles"
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) — Ini",
+    "titleLeft": 304,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 264,
+      "width": 1176,
+      "padL": "40px",
+      "padT": "32px",
+      "maxW": "1280px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/ind-checklist?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "safety-narrative-1440-light": {
+   "url": "/concept2cure/safety-narrative?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Safety narrative / PV: not in this release",
+    "titleLeft": 654,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/safety-narrative?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "source-tracer-1440-light": {
+   "url": "/concept2cure/source-tracer?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Source Tracer: not in this release",
+    "titleLeft": 654,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/source-tracer?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "crl-library-1440-light": {
+   "url": "/concept2cure/crl-library?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "FDA CRL library: not in this release",
+    "titleLeft": 654,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/crl-library?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "log-communication-1440-light": {
+   "url": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "No open agency communications need a response right now.",
+     "action": {
+      "text": "Review the inbox",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 80.6,
+      "h": 36,
+      "text": "FDA loop"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab.on",
+      "w": 132,
+      "h": 36,
+      "text": "Agency inbox · 0"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 189.7,
+      "h": 36,
+      "text": "Meetings & commitments"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 136.4,
+      "h": 36,
+      "text": "Authority profiles"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": [
+     {
+      "sel": ".de-x",
+      "cls": "de-x",
+      "w": 32,
+      "h": 32,
+      "text": ""
+     }
+    ]
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Communication",
+    "titleLeft": 294,
+    "frames": [
+     {
+      "sel": ".cc",
+      "left": 264,
+      "width": 1176,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1200px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "new-project-1440-light": {
+   "url": "/concept2cure/projects?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [
+    {
+     "cls": "btn primary",
+     "text": "Continue",
+     "bg": "rgb(232, 230, 220)",
+     "color": "rgb(117, 115, 109)",
+     "opacity": "1",
+     "border": "rgba(0, 0, 0, 0)"
+    }
+   ],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "New project",
+    "titleLeft": 304,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/projects?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "home-1440-dark": {
+   "url": "/concept2cure",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [
+    {
+     "cls": "landing-composer",
+     "borderTopColor": "rgb(138, 138, 130)",
+     "borderTopWidth": "1px",
+     "fill": "rgb(48, 48, 46)",
+     "surround": {
+      "bg": "rgb(38, 38, 36)",
+      "from": "main"
+     },
+     "radius": "20px"
+    }
+   ],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [
+     {
+      "sel": ".landing-send, .pj-comp-send, .ct-comp-send",
+      "cls": "landing-send",
+      "w": 32,
+      "h": 32,
+      "text": ""
+     }
+    ],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Good morning, JM",
+    "titleLeft": 718,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure"
+  },
+  "projects-1440-dark": {
+   "url": "/concept2cure/projects",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 1,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.on",
+      "w": 50.2,
+      "h": 28,
+      "text": "Grid"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 46.1,
+      "h": 28,
+      "text": "List"
+     }
+    ],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Projects",
+    "titleLeft": 304,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/projects"
+  },
+  "project-1440-dark": {
+   "url": "/concept2cure/project-home?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [
+    {
+     "cls": "pj-composer",
+     "borderTopColor": "rgb(138, 138, 130)",
+     "borderTopWidth": "1px",
+     "fill": "rgb(48, 48, 46)",
+     "surround": {
+      "bg": "rgb(38, 38, 36)",
+      "from": "main"
+     },
+     "radius": "20px"
+    }
+   ],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 72.8,
+      "h": 28,
+      "text": "Plan"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 103.2,
+      "h": 28,
+      "text": "Evidence"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 88.2,
+      "h": 28,
+      "text": "Author"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 90.6,
+      "h": 28,
+      "text": "Review"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 89.5,
+      "h": 28,
+      "text": "Submit"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 100.6,
+      "h": 28,
+      "text": "Respond"
+     }
+    ],
+    "sends": [
+     {
+      "sel": ".landing-send, .pj-comp-send, .ct-comp-send",
+      "cls": "pj-comp-send",
+      "w": 32,
+      "h": 32,
+      "text": ""
+     }
+    ],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasi",
+    "titleLeft": 294,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 264,
+      "width": 1176,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1240px"
+     },
+     {
+      "sel": ".pj",
+      "left": 264,
+      "width": 1176,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1240px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/project-home?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "conversation-1440-dark": {
+   "url": "/concept2cure/conversation-thread?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [
+    {
+     "cls": "ct-composer",
+     "borderTopColor": "rgb(138, 138, 130)",
+     "borderTopWidth": "1px",
+     "fill": "rgb(48, 48, 46)",
+     "surround": {
+      "bg": "rgb(38, 38, 36)",
+      "from": "ct-composer-wrap"
+     },
+     "radius": "20px"
+    }
+   ],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [
+     {
+      "sel": ".landing-send, .pj-comp-send, .ct-comp-send",
+      "cls": "ct-comp-send",
+      "w": 32,
+      "h": 32,
+      "text": ""
+     }
+    ],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Talk to AnA",
+    "titleLeft": 610,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/conversation-thread?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "submission-center-1440-dark": {
+   "url": "/concept2cure/submission-center?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) (C2C-101 (anti-IL-23p1",
+     "action": {
+      "text": "Open the sequences",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws.on",
+      "w": 105.1,
+      "h": 36,
+      "text": "Submissions"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 71,
+      "h": 36,
+      "text": "Planner"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 67,
+      "h": 36,
+      "text": "Builder"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 164.7,
+      "h": 36,
+      "text": "Required deliverables"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 94.8,
+      "h": 36,
+      "text": "Sequences"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 86,
+      "h": 36,
+      "text": "Validation"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 121.9,
+      "h": 36,
+      "text": "Shadow review"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 79,
+      "h": 36,
+      "text": "Dispatch"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Submission Center",
+    "titleLeft": 322,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/submission-center?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "tasks-1440-dark": {
+   "url": "/concept2cure/tasks?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 1,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "No task on this board is marked critical-path, so there is no path to report on yet.",
+     "action": {
+      "text": "Triage the overdue work",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [],
+    "seg": [
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.on",
+      "w": 60.7,
+      "h": 28,
+      "text": "Board"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 99.3,
+      "h": 28,
+      "text": "Critical path"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 81.7,
+      "h": 28,
+      "text": "Analytics"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 57.9,
+      "h": 28,
+      "text": "Table"
+     }
+    ],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Tasks",
+    "titleLeft": 332,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 292,
+      "width": 1120,
+      "padL": "40px",
+      "padT": "32px",
+      "maxW": "1120px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/tasks?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "communication-1440-dark": {
+   "url": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "No open agency communications need a response right now.",
+     "action": {
+      "text": "Review the inbox",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 80.6,
+      "h": 36,
+      "text": "FDA loop"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab.on",
+      "w": 132,
+      "h": 36,
+      "text": "Agency inbox · 0"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 189.7,
+      "h": 36,
+      "text": "Meetings & commitments"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 136.4,
+      "h": 36,
+      "text": "Authority profiles"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Communication",
+    "titleLeft": 294,
+    "frames": [
+     {
+      "sel": ".cc",
+      "left": 264,
+      "width": 1176,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1200px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "rbm-1440-dark": {
+   "url": "/concept2cure/rbm?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab.on",
+      "w": 83.5,
+      "h": 36,
+      "text": "Overview"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 140.6,
+      "h": 36,
+      "text": "Risk review report"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 183.8,
+      "h": 36,
+      "text": "Risk assessment (RACT)"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 143.4,
+      "h": 36,
+      "text": "Key risk indicators"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 172.8,
+      "h": 36,
+      "text": "Quality tolerance limits"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 144.4,
+      "h": 36,
+      "text": "Central monitoring"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 120.7,
+      "h": 36,
+      "text": "Patient profiles"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 73.7,
+      "h": 36,
+      "text": "Site risk"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 111.7,
+      "h": 36,
+      "text": "Site oversight"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 124.8,
+      "h": 36,
+      "text": "Monitoring plan"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Risk-based monitoring",
+    "titleLeft": 294,
+    "frames": [
+     {
+      "sel": ".rbm-page",
+      "left": 264,
+      "width": 1176,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "none"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/rbm?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "review-1440-dark": {
+   "url": "/concept2cure/review?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "The review board",
+    "titleLeft": 332,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 292,
+      "width": 1120,
+      "padL": "40px",
+      "padT": "32px",
+      "maxW": "1120px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/review?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "ind-lifecycle-1440-dark": {
+   "url": "/concept2cure/ind-checklist?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 3,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "The C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) IND is 0% ready. 51 things stan",
+     "action": {
+      "text": "Ask AnA how to clear the top blocker",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-sparkles"
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) — Ini",
+    "titleLeft": 304,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 264,
+      "width": 1176,
+      "padL": "40px",
+      "padT": "32px",
+      "maxW": "1280px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/ind-checklist?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "safety-narrative-1440-dark": {
+   "url": "/concept2cure/safety-narrative?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Safety narrative / PV: not in this release",
+    "titleLeft": 654,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/safety-narrative?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "source-tracer-1440-dark": {
+   "url": "/concept2cure/source-tracer?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Source Tracer: not in this release",
+    "titleLeft": 654,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/source-tracer?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "crl-library-1440-dark": {
+   "url": "/concept2cure/crl-library?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "FDA CRL library: not in this release",
+    "titleLeft": 654,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/crl-library?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "log-communication-1440-dark": {
+   "url": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "No open agency communications need a response right now.",
+     "action": {
+      "text": "Review the inbox",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 80.6,
+      "h": 36,
+      "text": "FDA loop"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab.on",
+      "w": 132,
+      "h": 36,
+      "text": "Agency inbox · 0"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 189.7,
+      "h": 36,
+      "text": "Meetings & commitments"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 136.4,
+      "h": 36,
+      "text": "Authority profiles"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": [
+     {
+      "sel": ".de-x",
+      "cls": "de-x",
+      "w": 32,
+      "h": 32,
+      "text": ""
+     }
+    ]
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "Communication",
+    "titleLeft": 294,
+    "frames": [
+     {
+      "sel": ".cc",
+      "left": 264,
+      "width": 1176,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1200px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "new-project-1440-dark": {
+   "url": "/concept2cure/projects?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    1440,
+    900
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": false,
+   "composer": [],
+   "disabledPrimary": [
+    {
+     "cls": "btn primary",
+     "text": "Continue",
+     "bg": "rgb(61, 61, 58)",
+     "color": "rgb(142, 140, 132)",
+     "opacity": "1",
+     "border": "rgba(0, 0, 0, 0)"
+    }
+   ],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 264,
+    "titleText": "New project",
+    "titleLeft": 304,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 1176,
+    "clientWidth": 1176
+   },
+   "finalUrl": "/concept2cure/projects?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "home-390-light": {
+   "url": "/concept2cure",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [
+    {
+     "cls": "landing-composer",
+     "borderTopColor": "rgb(127, 125, 117)",
+     "borderTopWidth": "1px",
+     "fill": "rgb(255, 255, 255)",
+     "surround": {
+      "bg": "rgb(250, 249, 245)",
+      "from": "main"
+     },
+     "radius": "20px"
+    }
+   ],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [
+     {
+      "sel": ".landing-send, .pj-comp-send, .ct-comp-send",
+      "cls": "landing-send",
+      "w": 44,
+      "h": 44,
+      "text": ""
+     }
+    ],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Good morning, JM",
+    "titleLeft": 81,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure"
+  },
+  "projects-390-light": {
+   "url": "/concept2cure/projects",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 1,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.on",
+      "w": 50.2,
+      "h": 44,
+      "text": "Grid"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 46.1,
+      "h": 44,
+      "text": "List"
+     }
+    ],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Projects",
+    "titleLeft": 16,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/projects"
+  },
+  "project-390-light": {
+   "url": "/concept2cure/project-home?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [
+    {
+     "cls": "pj-composer",
+     "borderTopColor": "rgb(127, 125, 117)",
+     "borderTopWidth": "1px",
+     "fill": "rgb(255, 255, 255)",
+     "surround": {
+      "bg": "rgb(250, 249, 245)",
+      "from": "main"
+     },
+     "radius": "20px"
+    }
+   ],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 72.8,
+      "h": 44,
+      "text": "Plan"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 103.2,
+      "h": 44,
+      "text": "Evidence"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 88.2,
+      "h": 44,
+      "text": "Author"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 90.6,
+      "h": 44,
+      "text": "Review"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 89.5,
+      "h": 44,
+      "text": "Submit"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 100.6,
+      "h": 44,
+      "text": "Respond"
+     }
+    ],
+    "sends": [
+     {
+      "sel": ".landing-send, .pj-comp-send, .ct-comp-send",
+      "cls": "pj-comp-send",
+      "w": 44,
+      "h": 44,
+      "text": ""
+     }
+    ],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasi",
+    "titleLeft": 30,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 0,
+      "width": 390,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1240px"
+     },
+     {
+      "sel": ".pj",
+      "left": 0,
+      "width": 390,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1240px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/project-home?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "conversation-390-light": {
+   "url": "/concept2cure/conversation-thread?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [
+    {
+     "cls": "ct-composer",
+     "borderTopColor": "rgb(127, 125, 117)",
+     "borderTopWidth": "1px",
+     "fill": "rgb(255, 255, 255)",
+     "surround": {
+      "bg": "rgb(250, 249, 245)",
+      "from": "ct-composer-wrap"
+     },
+     "radius": "20px"
+    }
+   ],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [
+     {
+      "sel": ".landing-send, .pj-comp-send, .ct-comp-send",
+      "cls": "ct-comp-send",
+      "w": 44,
+      "h": 44,
+      "text": ""
+     }
+    ],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Talk to AnA",
+    "titleLeft": 145,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/conversation-thread?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "submission-center-390-light": {
+   "url": "/concept2cure/submission-center?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) (C2C-101 (anti-IL-23p1",
+     "action": {
+      "text": "Open the sequences",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws.on",
+      "w": 105.1,
+      "h": 44,
+      "text": "Submissions"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 71,
+      "h": 44,
+      "text": "Planner"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 67,
+      "h": 44,
+      "text": "Builder"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 164.7,
+      "h": 44,
+      "text": "Required deliverables"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 94.8,
+      "h": 44,
+      "text": "Sequences"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 86,
+      "h": 44,
+      "text": "Validation"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 121.9,
+      "h": 44,
+      "text": "Shadow review"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 79,
+      "h": 44,
+      "text": "Dispatch"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Submission Center",
+    "titleLeft": 16,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/submission-center?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "tasks-390-light": {
+   "url": "/concept2cure/tasks?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 1,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "No task on this board is marked critical-path, so there is no path to report on yet.",
+     "action": {
+      "text": "Triage the overdue work",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [],
+    "seg": [
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.on",
+      "w": 60.7,
+      "h": 44,
+      "text": "Board"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 99.3,
+      "h": 44,
+      "text": "Critical path"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 81.7,
+      "h": 44,
+      "text": "Analytics"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 57.9,
+      "h": 44,
+      "text": "Table"
+     }
+    ],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Tasks",
+    "titleLeft": 16,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 0,
+      "width": 390,
+      "padL": "16px",
+      "padT": "20px",
+      "maxW": "1120px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/tasks?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "communication-390-light": {
+   "url": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "No open agency communications need a response right now.",
+     "action": {
+      "text": "Review the inbox",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 80.6,
+      "h": 44,
+      "text": "FDA loop"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab.on",
+      "w": 132,
+      "h": 44,
+      "text": "Agency inbox · 0"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 189.7,
+      "h": 44,
+      "text": "Meetings & commitments"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 136.4,
+      "h": 44,
+      "text": "Authority profiles"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Communication",
+    "titleLeft": 30,
+    "frames": [
+     {
+      "sel": ".cc",
+      "left": 0,
+      "width": 390,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1200px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "rbm-390-light": {
+   "url": "/concept2cure/rbm?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab.on",
+      "w": 83.5,
+      "h": 44,
+      "text": "Overview"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 140.6,
+      "h": 44,
+      "text": "Risk review report"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 183.8,
+      "h": 44,
+      "text": "Risk assessment (RACT)"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 143.4,
+      "h": 44,
+      "text": "Key risk indicators"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 172.8,
+      "h": 44,
+      "text": "Quality tolerance limits"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 144.4,
+      "h": 44,
+      "text": "Central monitoring"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 120.7,
+      "h": 44,
+      "text": "Patient profiles"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 73.7,
+      "h": 44,
+      "text": "Site risk"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 111.7,
+      "h": 44,
+      "text": "Site oversight"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 124.8,
+      "h": 44,
+      "text": "Monitoring plan"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Risk-based monitoring",
+    "titleLeft": 30,
+    "frames": [
+     {
+      "sel": ".rbm-page",
+      "left": 0,
+      "width": 390,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "none"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/rbm?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "review-390-light": {
+   "url": "/concept2cure/review?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "The review board",
+    "titleLeft": 16,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 0,
+      "width": 390,
+      "padL": "16px",
+      "padT": "20px",
+      "maxW": "1120px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/review?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "ind-lifecycle-390-light": {
+   "url": "/concept2cure/ind-checklist?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 3,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "The C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) IND is 0% ready. 51 things stan",
+     "action": {
+      "text": "Ask AnA how to clear the top blocker",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-sparkles"
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) — Ini",
+    "titleLeft": 16,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 0,
+      "width": 390,
+      "padL": "16px",
+      "padT": "20px",
+      "maxW": "1280px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/ind-checklist?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "safety-narrative-390-light": {
+   "url": "/concept2cure/safety-narrative?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Safety narrative / PV: not in this release",
+    "titleLeft": 32,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/safety-narrative?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "source-tracer-390-light": {
+   "url": "/concept2cure/source-tracer?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Source Tracer: not in this release",
+    "titleLeft": 32,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/source-tracer?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "crl-library-390-light": {
+   "url": "/concept2cure/crl-library?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "FDA CRL library: not in this release",
+    "titleLeft": 32,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/crl-library?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "log-communication-390-light": {
+   "url": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "No open agency communications need a response right now.",
+     "action": {
+      "text": "Review the inbox",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 80.6,
+      "h": 44,
+      "text": "FDA loop"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab.on",
+      "w": 132,
+      "h": 44,
+      "text": "Agency inbox · 0"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 189.7,
+      "h": 44,
+      "text": "Meetings & commitments"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 136.4,
+      "h": 44,
+      "text": "Authority profiles"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": [
+     {
+      "sel": ".de-x",
+      "cls": "de-x",
+      "w": 44,
+      "h": 44,
+      "text": ""
+     }
+    ]
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Communication",
+    "titleLeft": 30,
+    "frames": [
+     {
+      "sel": ".cc",
+      "left": 0,
+      "width": 390,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1200px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "new-project-390-light": {
+   "url": "/concept2cure/projects?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "light",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(127, 125, 117)",
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "rgb(250, 249, 245)",
+    "--bg-100": "rgb(240, 238, 230)",
+    "--bg-200": "rgb(232, 230, 220)",
+    "--text-400": "rgb(117, 115, 109)",
+    "--canvas-elevated": "rgb(255, 255, 255)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [
+    {
+     "cls": "btn primary",
+     "text": "Continue",
+     "bg": "rgb(232, 230, 220)",
+     "color": "rgb(117, 115, 109)",
+     "opacity": "1",
+     "border": "rgba(0, 0, 0, 0)"
+    }
+   ],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "New project",
+    "titleLeft": 16,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/projects?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "home-390-dark": {
+   "url": "/concept2cure",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [
+    {
+     "cls": "landing-composer",
+     "borderTopColor": "rgb(138, 138, 130)",
+     "borderTopWidth": "1px",
+     "fill": "rgb(48, 48, 46)",
+     "surround": {
+      "bg": "rgb(38, 38, 36)",
+      "from": "main"
+     },
+     "radius": "20px"
+    }
+   ],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [
+     {
+      "sel": ".landing-send, .pj-comp-send, .ct-comp-send",
+      "cls": "landing-send",
+      "w": 44,
+      "h": 44,
+      "text": ""
+     }
+    ],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Good morning, JM",
+    "titleLeft": 81,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure"
+  },
+  "projects-390-dark": {
+   "url": "/concept2cure/projects",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 1,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.on",
+      "w": 50.2,
+      "h": 44,
+      "text": "Grid"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 46.1,
+      "h": 44,
+      "text": "List"
+     }
+    ],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Projects",
+    "titleLeft": 16,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/projects"
+  },
+  "project-390-dark": {
+   "url": "/concept2cure/project-home?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [
+    {
+     "cls": "pj-composer",
+     "borderTopColor": "rgb(138, 138, 130)",
+     "borderTopWidth": "1px",
+     "fill": "rgb(48, 48, 46)",
+     "surround": {
+      "bg": "rgb(38, 38, 36)",
+      "from": "main"
+     },
+     "radius": "20px"
+    }
+   ],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 72.8,
+      "h": 44,
+      "text": "Plan"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 103.2,
+      "h": 44,
+      "text": "Evidence"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 88.2,
+      "h": 44,
+      "text": "Author"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 90.6,
+      "h": 44,
+      "text": "Review"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 89.5,
+      "h": 44,
+      "text": "Submit"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.pj-lc-stage",
+      "w": 100.6,
+      "h": 44,
+      "text": "Respond"
+     }
+    ],
+    "sends": [
+     {
+      "sel": ".landing-send, .pj-comp-send, .ct-comp-send",
+      "cls": "pj-comp-send",
+      "w": 44,
+      "h": 44,
+      "text": ""
+     }
+    ],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasi",
+    "titleLeft": 30,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 0,
+      "width": 390,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1240px"
+     },
+     {
+      "sel": ".pj",
+      "left": 0,
+      "width": 390,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1240px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/project-home?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "conversation-390-dark": {
+   "url": "/concept2cure/conversation-thread?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [
+    {
+     "cls": "ct-composer",
+     "borderTopColor": "rgb(138, 138, 130)",
+     "borderTopWidth": "1px",
+     "fill": "rgb(48, 48, 46)",
+     "surround": {
+      "bg": "rgb(38, 38, 36)",
+      "from": "ct-composer-wrap"
+     },
+     "radius": "20px"
+    }
+   ],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [
+     {
+      "sel": ".landing-send, .pj-comp-send, .ct-comp-send",
+      "cls": "ct-comp-send",
+      "w": 44,
+      "h": 44,
+      "text": ""
+     }
+    ],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Talk to AnA",
+    "titleLeft": 145,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/conversation-thread?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "submission-center-390-dark": {
+   "url": "/concept2cure/submission-center?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) (C2C-101 (anti-IL-23p1",
+     "action": {
+      "text": "Open the sequences",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws.on",
+      "w": 105.1,
+      "h": 44,
+      "text": "Submissions"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 71,
+      "h": 44,
+      "text": "Planner"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 67,
+      "h": 44,
+      "text": "Builder"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 164.7,
+      "h": 44,
+      "text": "Required deliverables"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 94.8,
+      "h": 44,
+      "text": "Sequences"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 86,
+      "h": 44,
+      "text": "Validation"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 121.9,
+      "h": 44,
+      "text": "Shadow review"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "sc-ws",
+      "w": 79,
+      "h": 44,
+      "text": "Dispatch"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Submission Center",
+    "titleLeft": 16,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/submission-center?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "tasks-390-dark": {
+   "url": "/concept2cure/tasks?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 1,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "No task on this board is marked critical-path, so there is no path to report on yet.",
+     "action": {
+      "text": "Triage the overdue work",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [],
+    "seg": [
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b.on",
+      "w": 60.7,
+      "h": 44,
+      "text": "Board"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 99.3,
+      "h": 44,
+      "text": "Critical path"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 81.7,
+      "h": 44,
+      "text": "Analytics"
+     },
+     {
+      "sel": ".seg-b, .ml-seg-btn",
+      "cls": "seg-b",
+      "w": 57.9,
+      "h": 44,
+      "text": "Table"
+     }
+    ],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Tasks",
+    "titleLeft": 16,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 0,
+      "width": 390,
+      "padL": "16px",
+      "padT": "20px",
+      "maxW": "1120px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/tasks?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "communication-390-dark": {
+   "url": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "No open agency communications need a response right now.",
+     "action": {
+      "text": "Review the inbox",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 80.6,
+      "h": 44,
+      "text": "FDA loop"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab.on",
+      "w": 132,
+      "h": 44,
+      "text": "Agency inbox · 0"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 189.7,
+      "h": 44,
+      "text": "Meetings & commitments"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 136.4,
+      "h": 44,
+      "text": "Authority profiles"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Communication",
+    "titleLeft": 30,
+    "frames": [
+     {
+      "sel": ".cc",
+      "left": 0,
+      "width": 390,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1200px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "rbm-390-dark": {
+   "url": "/concept2cure/rbm?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab.on",
+      "w": 83.5,
+      "h": 44,
+      "text": "Overview"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 140.6,
+      "h": 44,
+      "text": "Risk review report"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 183.8,
+      "h": 44,
+      "text": "Risk assessment (RACT)"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 143.4,
+      "h": 44,
+      "text": "Key risk indicators"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 172.8,
+      "h": 44,
+      "text": "Quality tolerance limits"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 144.4,
+      "h": 44,
+      "text": "Central monitoring"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 120.7,
+      "h": 44,
+      "text": "Patient profiles"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 73.7,
+      "h": 44,
+      "text": "Site risk"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 111.7,
+      "h": 44,
+      "text": "Site oversight"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "reg-tab",
+      "w": 124.8,
+      "h": 44,
+      "text": "Monitoring plan"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Risk-based monitoring",
+    "titleLeft": 30,
+    "frames": [
+     {
+      "sel": ".rbm-page",
+      "left": 0,
+      "width": 390,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "none"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/rbm?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "review-390-dark": {
+   "url": "/concept2cure/review?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "The review board",
+    "titleLeft": 16,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 0,
+      "width": 390,
+      "padL": "16px",
+      "padT": "20px",
+      "maxW": "1120px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/review?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "ind-lifecycle-390-dark": {
+   "url": "/concept2cure/ind-checklist?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 3,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "The C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) IND is 0% ready. 51 things stan",
+     "action": {
+      "text": "Ask AnA how to clear the top blocker",
+      "hasSvg": true,
+      "svgClass": "lucide lucide-sparkles"
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) — Ini",
+    "titleLeft": 16,
+    "frames": [
+     {
+      "sel": ".page-inner",
+      "left": 0,
+      "width": 390,
+      "padL": "16px",
+      "padT": "20px",
+      "maxW": "1280px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/ind-checklist?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "safety-narrative-390-dark": {
+   "url": "/concept2cure/safety-narrative?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Safety narrative / PV: not in this release",
+    "titleLeft": 32,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/safety-narrative?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "source-tracer-390-dark": {
+   "url": "/concept2cure/source-tracer?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Source Tracer: not in this release",
+    "titleLeft": 32,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/source-tracer?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "crl-library-390-dark": {
+   "url": "/concept2cure/crl-library?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "FDA CRL library: not in this release",
+    "titleLeft": 32,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/crl-library?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "log-communication-390-dark": {
+   "url": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [],
+   "enabledPrimaryCount": 0,
+   "answerLead": [
+    {
+     "marginTop": "24px",
+     "marginBottom": "24px",
+     "hWeight": "500",
+     "hText": "No open agency communications need a response right now.",
+     "action": {
+      "text": "Review the inbox",
+      "hasSvg": false,
+      "svgClass": null
+     }
+    }
+   ],
+   "targets": {
+    "tabs": [
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 80.6,
+      "h": 44,
+      "text": "FDA loop"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab.on",
+      "w": 132,
+      "h": 44,
+      "text": "Agency inbox · 0"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 189.7,
+      "h": 44,
+      "text": "Meetings & commitments"
+     },
+     {
+      "sel": ".tab, .reg-tab, .sc-ws, .cc-tab",
+      "cls": "cc-tab",
+      "w": 136.4,
+      "h": 44,
+      "text": "Authority profiles"
+     }
+    ],
+    "seg": [],
+    "sends": [],
+    "close": [
+     {
+      "sel": ".de-x",
+      "cls": "de-x",
+      "w": 44,
+      "h": 44,
+      "text": ""
+     }
+    ]
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "Communication",
+    "titleLeft": 30,
+    "frames": [
+     {
+      "sel": ".cc",
+      "left": 0,
+      "width": 390,
+      "padL": "30px",
+      "padT": "26px",
+      "maxW": "1200px"
+     }
+    ]
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/communication-center?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  },
+  "new-project-390-dark": {
+   "url": "/concept2cure/projects?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "theme": "dark",
+   "viewport": [
+    390,
+    844
+   ],
+   "tokens": {
+    "--border-control": "rgb(138, 138, 130)",
+    "--border": "oklch(0.3618 0.0101 106.893)",
+    "--bg-000": "rgb(38, 38, 36)",
+    "--bg-100": "rgb(48, 48, 46)",
+    "--bg-200": "rgb(61, 61, 58)",
+    "--text-400": "rgb(142, 140, 132)",
+    "--canvas-elevated": "rgb(48, 48, 46)"
+   },
+   "coarse": true,
+   "composer": [],
+   "disabledPrimary": [
+    {
+     "cls": "btn primary",
+     "text": "Continue",
+     "bg": "rgb(61, 61, 58)",
+     "color": "rgb(142, 140, 132)",
+     "opacity": "1",
+     "border": "rgba(0, 0, 0, 0)"
+    }
+   ],
+   "enabledPrimaryCount": 0,
+   "answerLead": [],
+   "targets": {
+    "tabs": [],
+    "seg": [],
+    "sends": [],
+    "close": []
+   },
+   "frame": {
+    "pageLeft": 0,
+    "titleText": "New project",
+    "titleLeft": 16,
+    "frames": []
+   },
+   "noSideScroll": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+   },
+   "finalUrl": "/concept2cure/projects?program=c2ed888d-2958-4332-b186-e81482f2ceec"
+  }
+ },
+ "failures": [],
+ "editor": {
+  "url": "/concept2cure/document-authoring?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+  "ribbon": {
+   "rows": [
+    {
+     "cls": "rse-ribbon",
+     "hidden": false,
+     "offsetWidth": 718,
+     "scrollWidth": 813,
+     "clientWidth": 718,
+     "offsetHeight": 41,
+     "left": 603,
+     "right": 1321
+    },
+    {
+     "cls": "rse-ribbon rse-ribbon-more",
+     "hidden": true,
+     "offsetWidth": 0,
+     "scrollWidth": 0,
+     "clientWidth": 0,
+     "offsetHeight": 0,
+     "left": 0,
+     "right": 0
+    }
+   ],
+   "docInnerWidth": 816,
+   "comment": {
+    "left": 1267,
+    "right": 1295,
+    "rowRight": 1321,
+    "visible": true,
+    "label": "Comment on the selection"
+   },
+   "trackChanges": null,
+   "moreFormatting": {
+    "left": 1173,
+    "right": 1201,
+    "rowRight": 1321,
+    "visible": true,
+    "label": "More formatting"
+   },
+   "superscriptVisible": false
+  },
+  "afterMore": {
+   "row2": {
+    "hidden": false,
+    "display": "flex",
+    "height": 41
+   },
+   "superscriptVisible": true
+  },
+  "ribbonItems": {
+   "rowLeft": 603,
+   "rowRight": 1321,
+   "items": [
+    {
+     "tag": "SELECT",
+     "label": "Paragraph style",
+     "left": 607,
+     "right": 703,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Bold (⌘B)",
+     "left": 714,
+     "right": 742,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Italic (⌘I)",
+     "left": 744,
+     "right": 772,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Underline (⌘U)",
+     "left": 774,
+     "right": 802,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Bullet list (⌘⇧8)",
+     "left": 813,
+     "right": 841,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Numbered list (⌘⇧7)",
+     "left": 843,
+     "right": 871,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Insert a link",
+     "left": 882,
+     "right": 910,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Cite a source — inserts a numbered citat",
+     "left": 912,
+     "right": 948,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Insert a cross-reference to another sect",
+     "left": 950,
+     "right": 994,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Insert table (3 columns × 3 rows, header",
+     "left": 1005,
+     "right": 1063,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Undo (⌘Z)",
+     "left": 1074,
+     "right": 1102,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Redo (⌘⇧Z)",
+     "left": 1104,
+     "right": 1132,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Find & replace (Ctrl/⌘-F)",
+     "left": 1143,
+     "right": 1171,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "More formatting",
+     "left": 1173,
+     "right": 1201,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Ask AnA to suggest a source for the sele",
+     "left": 1207,
+     "right": 1235,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Offer alternatives for the selected pass",
+     "left": 1237,
+     "right": 1265,
+     "past": false
+    },
+    {
+     "tag": "BUTTON",
+     "label": "Comment on the selection",
+     "left": 1267,
+     "right": 1295,
+     "past": false
+    },
+    {
+     "tag": "LABEL",
+     "label": "Suggest text edits instead of applying t",
+     "left": 1299,
+     "right": 1412,
+     "past": true
+    }
+   ]
+  },
+  "ribbonContainer": {
+   "light": {
+    "docInner": {
+     "box": [
+      554,
+      1370
+     ],
+     "padL": "48px",
+     "padR": "48px"
+    },
+    "rseRoot": {
+     "box": [
+      603,
+      1321
+     ],
+     "marginL": "0px"
+    },
+    "row": {
+     "box": [
+      603,
+      1321
+     ],
+     "padL": "4px",
+     "padR": "4px",
+     "scrollWidth": 813,
+     "clientWidth": 718,
+     "overflowX": "auto"
+    },
+    "trackChanges": {
+     "box": [
+      1299,
+      1412
+     ],
+     "overBy": 91
+    },
+    "dark": false
+   },
+   "dark": {
+    "docInner": {
+     "box": [
+      554,
+      1370
+     ],
+     "padL": "48px",
+     "padR": "48px"
+    },
+    "rseRoot": {
+     "box": [
+      603,
+      1321
+     ],
+     "marginL": "0px"
+    },
+    "row": {
+     "box": [
+      603,
+      1321
+     ],
+     "padL": "4px",
+     "padR": "4px",
+     "scrollWidth": 813,
+     "clientWidth": 718,
+     "overflowX": "auto"
+    },
+    "trackChanges": {
+     "box": [
+      1299,
+      1412
+     ],
+     "overBy": 91
+    },
+    "dark": true
+   }
+  },
+  "buildPreview": {
+   "m2Worksheet": {
+    "doc": "Quality Overall Summary (QOS)",
+    "picked": "M2 · Module 2: CTD Summaries — preparation worksheet",
+    "ana": true,
+    "reason": "Walk 2026-11-09: preview only.",
+    "previewDisabled": false,
+    "plan": {
+     "head": "M2 · Module 2: CTD Summaries — preparation worksheet · 133 selected sections",
+     "rows": [
+      "2 Common Technical Document Summaries · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.1 Common Technical Document Table of Contents (Modules 2–5) · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.2 Introduction · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3 Quality Overall Summary (QOS) · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.S Quality Overall Summary — Drug Substance · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.S.1 General Information · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.S.2 Manufacture · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.S.3 Characterisation · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.S.4 Control of Drug Substance · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.S.5 Reference Standards or Materials · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.S.6 Container Closure System · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.S.7 Stability · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.P Quality Overall Summary — Drug Product · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.P.1 Description and Composition of the Drug Product · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.P.2 Pharmaceutical Development · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.P.3 Manufacture · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.P.4 Control of Excipients · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.P.5 Control of Drug Product · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.P.6 Reference Standards or Materials · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.P.7 Container Closure System · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.P.8 Stability · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.A Quality Overall Summary — Appendices · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.A.1 Facilities and Equipment · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.A.2 Adventitious Agents Safety Evaluation · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.A.3 Excipients · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.3.R Quality Overall Summary — Regional Information · Kept as saved; it has no text yet AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.4 Nonclinical Overview · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.4.1 Overview of the Nonclinical Testing Strategy · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.4.2 Pharmacology · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.4.3 Pharmacokinetics · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.4.4 Toxicology · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.4.5 Integrated Overview and Conclusions · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.4.6 List of Literature References · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5 Clinical Overview · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5.1 Product Development Rationale · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5.2 Overview of Biopharmaceutics · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5.3 Overview of Clinical Pharmacology · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5.4 Overview of Efficacy · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5.5 Overview of Safety · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5.6 Benefits and Risks Conclusions · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5.6.1 Therapeutic Context · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5.6.1.1 Disease or Condition · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5.6.1.2 Current Therapies · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5.6.2 Benefits · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5.6.3 Risks · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5.6.4 Benefit-Risk Assessment · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5.6.5 Appendix · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.5.7 Literature References · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6 Nonclinical Written and Tabulated Summaries · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.1 Introduction (Nonclinical Written and Tabulated Summaries) · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.2 Pharmacology Written Summary · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.2.1 Brief Summary · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.2.2 Primary Pharmacodynamics · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.2.3 Secondary Pharmacodynamics · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.2.4 Safety Pharmacology · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.2.5 Pharmacodynamic Drug Interactions · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.2.6 Discussion and Conclusions · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.2.7 Tables and Figures · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.3 Pharmacology Tabulated Summary · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.4 Pharmacokinetics Written Summary · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.4.1 Brief Summary · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.4.2 Methods of Analysis · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.4.3 Absorption · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.4.4 Distribution · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.4.5 Metabolism (Interspecies Comparison) · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.4.6 Excretion · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.4.7 Pharmacokinetic Drug Interactions · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.4.8 Other Pharmacokinetic Studies · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.4.9 Discussion and Conclusions · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.4.10 Tables and Figures · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.5 Pharmacokinetics Tabulated Summary · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.6 Toxicology Written Summary · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.6.1 Brief Summary · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.6.2 Single-Dose Toxicity · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.6.3 Repeat-Dose Toxicity · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.6.4 Genotoxicity · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.6.5 Carcinogenicity · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.6.6 Reproductive and Developmental Toxicity · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.6.7 Local Tolerance · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.6.8 Other Toxicity Studies · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.6.9 Discussion and Conclusions · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.6.10 Tables and Figures · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.6.7 Toxicology Tabulated Summary · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7 Clinical Summary · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.1 Summary of Biopharmaceutic Studies and Associated Analytical Methods · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.1.1 Background and Overview · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.1.2 Summary of Results of Individual Studies · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.1.3 Comparison and Analyses of Results Across Studies · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.1.4 Appendix · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.2 Summary of Clinical Pharmacology Studies · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.2.1 Background and Overview · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.2.2 Summary of Results of Individual Studies · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.2.3 Comparison and Analyses of Results Across Studies · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.2.4 Special Studies · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.2.5 Appendix · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.3 Summary of Clinical Efficacy · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.3.1 Background and Overview of Clinical Efficacy · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.3.2 Summary of Results of Individual Studies · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.3.3 Comparison and Analyses of Results Across Studies · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.3.3.1 Study Populations · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.3.3.2 Comparison of Efficacy Results of All Studies · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.3.3.3 Comparison of Results in Sub-populations · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.3.4 Analysis of Clinical Information Relevant to Dosing Recommendations · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.3.5 Persistence of Efficacy and/or Tolerance Effects · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.3.6 Appendix · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4 Summary of Clinical Safety · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.1 Exposure to the Drug · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.1.1 Overall Safety Evaluation Plan and Narratives of Safety Studies · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.1.2 Overall Extent of Exposure · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.1.3 Demographic and Other Characteristics of Study Population · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.2 Adverse Events · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.2.1 Analysis of Adverse Events · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.2.1.1 Common Adverse Events · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.2.1.2 Deaths · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.2.1.3 Other Serious Adverse Events · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.2.1.4 Other Significant Adverse Events · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.2.1.5 Analysis of Adverse Events by Organ System or Syndrome · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.2.2 Narratives · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.3 Clinical Laboratory Evaluations · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.4 Vital Signs, Physical Findings, and Other Observations Related to Safety · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section",
+      "2.7.4.5 Safety in Special Groups and Situations · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.5.1 Intrinsic Factors · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.5.2 Extrinsic Factors · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.5.3 Drug Interactions · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.5.4 Use in Pregnancy and Lactation · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.5.5 Overdose · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.5.6 Drug Abuse · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.5.7 Withdrawal and Rebound · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.5.8 Effects on Ability to Drive or Operate Machinery or Impairment of Mental Ability · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for th",
+      "2.7.4.6 Post-marketing Data · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.4.7 Appendix · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.5 Literature References · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section.",
+      "2.7.6 Synopses of Individual Studies · Added empty; scientific content is missing AnA drafting is unavailable: This is a preparation template: AnA does not draft it. Retain its originals and complete it manually. No authored text is stored for this section."
+     ]
+    },
+    "messages": [
+     "469 of 469 templates",
+     "Preview only. Existing sections and text will be preserved."
+    ],
+    "buildButton": false,
+    "nonGetRequests": [
+     "POST /api/realtime-collab/rooms",
+     "DELETE /api/realtime-collab/rooms/675fbcf6-130f-4326-b2a1-a36742e4b44b/users/me",
+     "POST /api/realtime-collab/rooms",
+     "DELETE /api/realtime-collab/rooms/675fbcf6-130f-4326-b2a1-a36742e4b44b/users/me",
+     "POST /api/realtime-collab/rooms",
+     "PUT /api/realtime-collab/rooms/675fbcf6-130f-4326-b2a1-a36742e4b44b/awareness",
+     "POST /api/authoring/docs/675fbcf6-130f-4326-b2a1-a36742e4b44b/assembly/preview",
+     "POST /api/authoring/docs/675fbcf6-130f-4326-b2a1-a36742e4b44b/assembly/preview"
+    ],
+    "apiFailures": []
+   },
+   "qos23": {
+    "doc": "Quality Overall Summary (QOS)",
+    "picked": "2.3 · Quality Overall Summary",
+    "ana": true,
+    "reason": "Walk 2026-11-09: preview only.",
+    "previewDisabled": false,
+    "plan": {
+     "head": "2.3 · Quality Overall Summary · 23 selected sections",
+     "rows": [
+      "2.3 Quality Overall Summary (QOS) · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.S Quality Overall Summary — Drug Substance · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.S.1 General Information · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.S.2 Manufacture · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.S.3 Characterisation · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.S.4 Control of Drug Substance · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.S.5 Reference Standards or Materials · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.S.6 Container Closure System · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.S.7 Stability · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.P Quality Overall Summary — Drug Product · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.P.1 Description and Composition of the Drug Product · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.P.2 Pharmaceutical Development · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.P.3 Manufacture · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.P.4 Control of Excipients · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.P.5 Control of Drug Product · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.P.6 Reference Standards or Materials · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.P.7 Container Closure System · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.P.8 Stability · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.A Quality Overall Summary — Appendices · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.A.1 Facilities and Equipment · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.A.2 Adventitious Agents Safety Evaluation · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.A.3 Excipients · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section.",
+      "2.3.R Quality Overall Summary — Regional Information · Kept as saved; it has no text yet AnA prepares a candidate for it, for you to review. No authored text is stored for this section."
+     ]
+    },
+    "messages": [
+     "469 of 469 templates",
+     "Preview only. Existing sections and text will be preserved."
+    ],
+    "buildButton": false,
+    "nonGetRequests": [
+     "POST /api/realtime-collab/rooms",
+     "DELETE /api/realtime-collab/rooms/675fbcf6-130f-4326-b2a1-a36742e4b44b/users/me",
+     "POST /api/realtime-collab/rooms",
+     "PUT /api/realtime-collab/rooms/675fbcf6-130f-4326-b2a1-a36742e4b44b/awareness",
+     "DELETE /api/realtime-collab/rooms/675fbcf6-130f-4326-b2a1-a36742e4b44b/users/me",
+     "POST /api/realtime-collab/rooms",
+     "PUT /api/realtime-collab/rooms/675fbcf6-130f-4326-b2a1-a36742e4b44b/awareness",
+     "POST /api/authoring/docs/675fbcf6-130f-4326-b2a1-a36742e4b44b/assembly/preview",
+     "POST /api/authoring/docs/675fbcf6-130f-4326-b2a1-a36742e4b44b/assembly/preview"
+    ],
+    "apiFailures": []
+   }
+  }
+ },
+ "what": "walk-1109: running-app acceptance of D0-13 (§8.2-§8.5), D0-14 (§8.1), D4-6 (ribbon), J3 R9 (build preview), and the §8.6 frame measurement",
+ "commit": "aba641b533083a117f9e745cfcd8dbb48e51ce41",
+ "failuresWatcherSelfCheck": "planted fetch /api/__walk_probe_404 (401) and console.error were both caught by the same listeners"
+}

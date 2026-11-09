@@ -225,7 +225,11 @@ export const UI_SURFACES: UiSurface[] = [
     // (useProjectObjective, S1); nothing claimed it, so production refused it as unmapped. '/api/v1/pyramids/by-project':
     // the program plan in the Plan step (PyramidProject.tsx, S11); longest prefix wins over the out-of-catalog
     // 'pyramid' surface's '/api/v1/pyramids'.
-    apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review', '/api/charters/by-project', '/api/v1/pyramids/by-project'],
+    // 2026-11-09 (S12, P-83/P-109): '/api/project-hierarchy': the project's work projects (ProjectCoreWork.tsx
+    // ProjectWorkProjects, GET /:anchor/children?programId=), program-checked and project-admitted before anything is
+    // read; project home is the only client caller of the namespace.
+    apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review', '/api/charters/by-project', '/api/v1/pyramids/by-project',
+      '/api/project-hierarchy'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

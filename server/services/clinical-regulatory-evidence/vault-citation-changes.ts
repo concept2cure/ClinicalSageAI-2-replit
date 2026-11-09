@@ -161,23 +161,48 @@ export interface VaultFamilyHead { id: string; version: string | null; title: st
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** The one read of a program's family heads, each family's current live version: the picker's list and the
+ *  assignment's check both go through it, so what the list offers is exactly what the check admits (the coordinating
+ *  session's condition 1, 2026-11-09). `code` narrows it to one family. */
+async function readFamilyHeads(
+  q: Pick<RequestSqlClient, 'query'>, orgId: number, programId: string, code: string | null, limit: number,
+): Promise<VaultFamilyHead[]> {
+  const { rows } = await q.query(
+    `SELECT d.id::text AS id, d.version, d.document_title AS title, d.document_code
+       FROM vault.documents d
+      WHERE d.organization_id = $1 AND d.program_id = $2::uuid AND d.document_code IS NOT NULL AND d.deleted_at IS NULL
+        AND ($3::text IS NULL OR d.document_code = $3::text)
+        AND ${vaultDataEligibleSql('d')} AND NOT ${supersededSql('d')}
+      ORDER BY d.document_title NULLS LAST, d.document_code, d.created_at DESC, d.id
+      LIMIT $4`,
+    [orgId, programId, code, limit],
+  );
+  return (rows as Array<Record<string, unknown>>).map((row) => ({ id: String(row.id), version: (row.version as string) ?? null,
+    title: (row.title as string) ?? null, documentCode: String(row.document_code) }));
+}
+
+const validScope = (orgId: number, programId: string) => UUID.test(programId) && Number.isSafeInteger(orgId) && orgId > 0;
+
 /** The family's current live version in this organisation's program, or null when it has none there. */
 export async function vaultFamilyInProgram(
   q: Pick<RequestSqlClient, 'query'>, orgId: number, programId: string, documentCode: unknown,
 ): Promise<VaultFamilyHead | null> {
   const code = typeof documentCode === 'string' ? documentCode.trim() : '';
-  if (!code || code.length > 200 || !UUID.test(programId) || !Number.isSafeInteger(orgId) || orgId <= 0) return null;
-  const { rows } = await q.query(
-    `SELECT d.id::text AS id, d.version, d.document_title AS title, d.document_code
-       FROM vault.documents d
-      WHERE d.organization_id = $1 AND d.program_id = $2::uuid AND d.document_code = $3 AND d.deleted_at IS NULL
-        AND ${vaultDataEligibleSql('d')} AND NOT ${supersededSql('d')}
-      ORDER BY d.created_at DESC, d.id LIMIT 1`,
-    [orgId, programId, code],
-  );
-  const row = (rows as Array<Record<string, unknown>>)[0];
-  return row ? { id: String(row.id), version: (row.version as string) ?? null, title: (row.title as string) ?? null,
-    documentCode: String(row.document_code) } : null;
+  if (!code || code.length > 200 || !validScope(orgId, programId)) return null;
+  return (await readFamilyHeads(q, orgId, programId, code, 1))[0] ?? null;
+}
+
+/** A program's Vault families, each by its current live version, for the work project's family picker and the
+ *  read-side re-check of an assignment (S12 gap 5, slice 2). Capped: `truncated` says so, and a code absent from a
+ *  truncated list is unknown, never "not in the program". */
+export async function listVaultFamilies(
+  q: Pick<RequestSqlClient, 'query'>, orgId: number, programId: string, cap = 300,
+): Promise<{ families: VaultFamilyHead[]; truncated: boolean }> {
+  if (!validScope(orgId, programId)) return { families: [], truncated: false };
+  const rows = await readFamilyHeads(q, orgId, programId, null, cap + 1);
+  const seen = new Set<string>();
+  const families = rows.filter((f) => !seen.has(f.documentCode) && !!seen.add(f.documentCode));
+  return { families: families.slice(0, cap), truncated: rows.length > cap };
 }
 
 /** The assignment's refusal: one status, one code and the same words, whatever the reason. */
