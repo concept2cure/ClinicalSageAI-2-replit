@@ -126,6 +126,7 @@ import {
   formulationRecordBody,
   manufacturingProcessBody,
   materialSpecBody,
+  clearableDate,
   optionalDate,
   projectOnEdit,
   refuseUnrecordedFields,
@@ -320,8 +321,9 @@ const changeControlBody = withoutTenantKey(insertCmcChangeControlSchema).extend(
   implementationDate: optionalDate,
 });
 const referenceStandardBody = withoutTenantKey(insertCmcReferenceStandardSchema).extend({
-  expiryDate: optionalDate,
-  retestDate: optionalDate,
+  /* Clearable: referenceStandardPatch sends null to empty either one. */
+  expiryDate: clearableDate,
+  retestDate: clearableDate,
   qualificationDate: optionalDate,
 });
 const impurityProfileBody = withoutTenantKey(insertCmcImpurityProfileSchema).extend({
@@ -958,6 +960,24 @@ router.get('/drug-substances', async (req, res) => {
         inn: drugSubstances.inn,
         structuralFormula: drugSubstances.structuralFormula,
         manufacturingProcess: drugSubstances.manufacturingProcess,
+        /* §3.2.A.2's inputs (ICH Q5A(R2), EMA EMEA/410/01), and `modality`,
+           which settles the small-molecule / biologic question P-110 refuses a
+           composition over ("Record the substance's modality"). The drawer
+           collects all six and seeds each from `row.<field>`; left out of this
+           projection every one of them opened blank on a record that holds a
+           value, so a recorded modality looked unrecorded and — a blank field
+           being omitted from the body, which the PUT parses `.partial()` — a
+           WRONG one could never be corrected or cleared through the product.
+           The register held `biologic` on C2C-101 and the drawer showed
+           nothing. Exactly the batchFormula case two routes down, which this
+           file already documents: a field the product can capture and cannot
+           read back is a field it loses. */
+        modality: drugSubstances.modality,
+        biologicalOrigin: drugSubstances.biologicalOrigin,
+        sourceOrganism: drugSubstances.sourceOrganism,
+        cellLine: drugSubstances.cellLine,
+        viralSafetyEvaluation: drugSubstances.viralSafetyEvaluation,
+        tseStatus: drugSubstances.tseStatus,
         status: drugSubstances.status,
         developmentPhase: drugSubstances.developmentPhase,
         organizationId: drugSubstances.organizationId,

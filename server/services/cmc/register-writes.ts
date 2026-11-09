@@ -70,6 +70,35 @@ export const optionalDate = z.preprocess(
   z.coerce.date().optional(),
 );
 
+/**
+ * A date a drawer may CLEAR, as distinct from one it may leave unset.
+ *
+ * `optionalDate` folds an explicit `null` into `undefined`, and every register
+ * PUT parses its body `.partial()`, where `undefined` means "this key was not
+ * sent" and the column is left alone. So a patch builder that sends
+ * `retestDate: isoDate(v.retestDate) ?? null` to clear a date — which is what
+ * the *Patch builders do for every other nullable field, and why they exist —
+ * cleared nothing, answered 200, and showed the old date again on reload. A
+ * silent write failure on a GxP register.
+ *
+ * This keeps `''` and absent as "not sent" and passes an explicit `null`
+ * through, so the patch writes NULL. `.nullable()` is checked before the
+ * coercion, so `null` does not become `new Date(null)` (the epoch).
+ *
+ * It is used only where the column is nullable AND a drawer can clear it:
+ * `cmc_reference_standards.retest_date` / `.expiry_date` and
+ * `cmc_characterization_studies.performed_date`. `optionalDate` stays
+ * everywhere else, including on `qc_testing.test_date`, which is NOT NULL —
+ * widening that one would turn a clean 400 into a 500 from the database. A
+ * signature's own date (`qualification_date`, `validation_date`,
+ * `approval_date`, `approved_at`, `shelf_life_signed_at`) is never clearable:
+ * `withoutSignatureFields` strips it from every ordinary edit.
+ */
+export const clearableDate = z.preprocess(
+  v => (v === '' || v === undefined ? undefined : v),
+  z.coerce.date().nullable().optional(),
+);
+
 /** The tenant key is taken from the authenticated context, never the body.
  *  The canonical pair lives in server/utils/authedOrgId.ts; re-exported here
  *  for the CMC routers that import it from this module. */
@@ -85,7 +114,8 @@ export const containerClosureBody = withoutTenantKey(insertCmcContainerClosureSc
 export const materialSpecBody = withoutTenantKey(insertCmcMaterialSpecSchema);
 export const formulationRecordBody = withoutTenantKey(insertCmcFormulationRecordSchema);
 export const characterizationStudyBody = withoutTenantKey(insertCmcCharacterizationStudySchema).extend({
-  performedDate: optionalDate,
+  /* Clearable: the drawer's own patch builder sends null to empty it. */
+  performedDate: clearableDate,
   qualificationDate: optionalDate,
 });
 /* Its projectId is a uuid column, so the body takes it as a uuid string;
