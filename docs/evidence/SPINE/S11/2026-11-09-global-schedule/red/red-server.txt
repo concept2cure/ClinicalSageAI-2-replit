@@ -1,0 +1,138 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/pyramid-project-progress.test.ts
+{
+  "timestamp": "2026-11-09T05:28:46.955Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T05:28:46.956Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/pyramid-project-progress.test.ts
+{
+  "timestamp": "2026-11-09T05:28:46.956Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/pyramid-project-progress.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/pyramid-project-progress.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/pyramid-project-progress.test.ts
+{
+  "timestamp": "2026-11-09T05:28:47.090Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > gives the project's own pyramid, from its recorded filing, with its own statuses 28ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > reads the recorded filing where intake keeps it: metadata.submissionTypeId, else program_type 10ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > says a filing has no work breakdown rather than giving it another type 9ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > says the progress store is not provisioned when its table is absent, even through the ORM's wrapper 26ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > reads nothing for a project the person is not admitted to 7ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > 404s an unknown project 6ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > records the status under the project's key, admitted for write 7ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > updates the project's existing row, and 'todo' clears the task 7ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > refuses a task that is not in the project pyramid, and an unknown status, writing nothing 8ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > writes nothing when the person may not change the project 5ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > refuses a filing with no pyramid 6ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > back-schedules every task from the recorded target date 8ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > reads the target as a calendar date, in the tenant-scoped project query 5ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > gives no dates when no target date is recorded, rather than assuming one 5ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > gives no schedule to a person not admitted to the project 4ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > gives no schedule for another organisation's project: it is not found in this one 4ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > the plan's workstream milestones and review clock > gives each phase its completing task, the workstream's milestone 4ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > the plan's workstream milestones and review clock > gives an IND the 30-day review from its own pyramid, dated from the target 7ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > the plan's workstream milestones and review clock > gives a 510(k) the published MDUFA goal and its interim milestones, from regulatory-timelines 4ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > the plan's workstream milestones and review clock > gives no clock without a target date 4ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > gives each admitted project its plan in a few figures, from the engine's summary 12ms
+ × server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > carries what the global schedule draws: the filing, the work's start and the agency's clock (THE_PROGRAM §5) 10ms
+   → expected undefined to be 'us_ind' // Object.is equality
+ × server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > gives an unscheduled project no start and no clock 7ms
+   → expected { type: 'IND', target: null, …(1) } to match object { start: null, reviewClock: null }
+(10 matching properties omitted from actual)
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > admits each project on its own: a refused one says only that it is unavailable 4ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > says a project of another organisation is unavailable, resolved in the session's organisation only 4ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > says a filing with no work breakdown has none, and an unscheduled project is unscheduled 4ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > refuses an empty or oversized batch 5ms
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > is never read as a submission type ('by-project' is not a pyramid) 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > carries what the global schedule draws: the filing, the work's start and the agency's clock (THE_PROGRAM §5)
+AssertionError: expected undefined to be 'us_ind' // Object.is equality
+
+- Expected:
+"us_ind"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/pyramid-project-progress.test.ts:254:25
+    252|     programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind…
+    253|     const line = (await lines(PROGRAM)).body.data.lines[PROGRAM];
+    254|     expect(line.filing).toBe('us_ind');
+       |                         ^
+    255|     expect(line.start).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    256|     expect(line.start < '2027-06-04').toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > gives an unscheduled project no start and no clock
+AssertionError: expected { type: 'IND', target: null, …(1) } to match object { start: null, reviewClock: null }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "reviewClock": null,
+-   "start": null,
++   "summary": {
++     "blocked": 0,
++     "done": 0,
++     "lateToStart": 0,
++     "next": {
++       "due": null,
++       "phaseId": "phase1",
++       "phaseName": "Planning",
++       "taskId": "phase1.complete",
++     },
++     "overdue": 0,
++     "status": "unscheduled",
++     "total": 58,
++   },
++   "target": null,
++   "type": "IND",
+  }
+
+ ❯ server/routes/__tests__/pyramid-project-progress.test.ts:267:18
+    265|     programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind…
+    266|     const line = (await lines(PROGRAM)).body.data.lines[PROGRAM];
+    267|     expect(line).toMatchObject({ start: null, reviewClock: null });
+       |                  ^
+    268|   });
+    269|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 26 passed (28)
+   Start at  05:28:45
+   Duration  3.09s (transform 1.18s, setup 89ms, import 2.58s, tests 222ms, environment 0ms)
+
