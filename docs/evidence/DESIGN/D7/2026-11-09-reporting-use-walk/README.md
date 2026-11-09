@@ -31,6 +31,8 @@ was made through the API, and no walk had used the actions:
 | 4 | **Twenty Catalog buttons were each named "Run"**, and every Run history row "Open" and every schedule "Pause". A screen reader could not tell them apart. A run with no recorded scope name read "project — 11". | `8a1feba597` (D7) | `red/red-names.txt` (3 cases) |
 | 5 | Found on the re-walk at 390: **Run history and Schedules pushed the page sideways** by 138px and 133px. Their tables are about 510px wide. | `2135d3f9dd` (D7): each register scrolls in its own focusable, named region. | 2 cases, recorded in the commit |
 | 6 | Found walking a finalize that succeeds: **the signature's meaning was a stored token, and the PDF's time was raw.** The seal line said "Signed by JM Smith as authorship", the seal section "Meaning authorship", and the PDF "Final. Signed by JM Smith as authorship, 2026-11-09T18:53:45.935Z (UTC)." (`found/seal-line-as-authorship-1440.png`, `found/pdf-signed-line-before.txt`). | `39d5f74d32` (D7) and `0e5706a308` (F1). The meaning now comes from the signing dialog's own list, and the time from the canonical manifestation formatter. | The PDF suites failed 4 of 20 on the new words; the seal-section case failed too |
+| 7 | Found walking a finalize that succeeds: **a reopened sealed run showed no seal line.** Its signature appeared only inside the closed "Seal, signature and sources" section, while right after signing the line sat under the report. | `e8e3c63093` (D7): reopening reads the seal back and shows the same line when the seal verifies. | 2 cases |
+| 8 | Found while registering a legal original: **opening your own Account panel reset Reporting** and dropped the open report, saying "Reporting was reset for the current account … In the original account, check Run history" (`found/account-panel-reset-notice-1440.png`, `scripts/account-panel-reset.cjs`). The account had not changed. | `52f0b562b9` (D7): the notice says which reload happened, either another reader or the same account read again. The reload itself (a role change must withdraw private results) belongs to the shared session hook and `authService.refreshUser`. It is routed to their holders, not changed here. | 2 of 3 cases |
 
 ## Proof
 
@@ -91,6 +93,30 @@ section, while right after signing the line sat under the report. Since `e8e3c63
 back and shows the same line when the seal verifies, and shows no line when it does not. Re-walked at `e8e3c63093` on
 run 82: the reopened line is identical to the one shown at signing (`finalize-ok/finalize-ok-reopened-1440.png`,
 `finalize-ok-probes.json`).
+
+## The pack ZIP with a legal original (`legal-zip/`)
+
+Set-up, through the product:
+- **Upload:** a one-page letter of authorization (SHA-256 `7035e188…`) into C2C-101's Vault, through `POST
+  /api/vault/ingest` (`scripts/legal-upload.mjs`). The Vault records the same hash.
+- **Register:** through Account → Company documents → "Register a legal document from Vault"
+  (`scripts/legal-register.cjs`, `legal-zip/register-form-1440.png`). "Search your accessible Vaults" found the letter,
+  and "Select document" filled the project and version for the person. The library answered "Legal document library
+  updated. Source files and their approval records are unchanged."
+
+**The chooser** (`scripts/legal-zip.cjs`, `legal-zip/zip-chooser-disabled-1440.png`):
+- Bundles → "Re-walk pack" → "Choose legal companions for ZIP" lists "Letter of Authorization (US agent) · v1.0 · en ·
+  review needed before filing — not reviewed".
+- Its checkbox is disabled. A legal original goes with a filing only once its Vault version has reached an approved
+  lifecycle stage (`server/services/vault/vault-lifecycle.ts`: "not reviewed" until it has a stage).
+- That is the intended fail-closed behaviour, and the chooser says why in words.
+
+**Not walked:** approving the letter through Vault's signed review, which likely needs a second reviewer, and so
+downloading a ZIP with it. The export with a legal original is covered by `report-os-report-pack-export.test.ts`.
+
+**Environment note:** this local database (installed before pgvector) has no `project_memory_entries`. So Company
+documents' legacy-adoption read answers 500 here and its banner says "Company documents could not be read or saved". A
+blank install has the table, and registration worked regardless. Routed to the coordinating session.
 
 ## Pre-deploy step, production: required before `deploy-migrate` runs at `22256c6750` or later
 
