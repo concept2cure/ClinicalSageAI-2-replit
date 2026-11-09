@@ -220,6 +220,24 @@ const statusWrite = (status: string) => st.sets.find((v) => v && v.status === st
 const authorRows = (text: string) =>
   /created_by_id/.test(text) && /concept2cure_artifact/.test(text) ? [{ created_by_id: 778 }] : [];
 
+/**
+ * P-95 (2026-11-09): an artifact is approved only after its review. The pool
+ * answers a completed review approving `version` by user 701, who is neither
+ * the signer (777) nor the author (778): the signer's own-decision read (P-95
+ * Q1, `AND reviewer_id = $3`) finds nothing, and the artifact read that resolves
+ * its authors finds the artifact.
+ */
+const reviewedAt = (version: number) =>
+  (pool.query as any).mockImplementation(async (text: string) => ({
+    rows: /FROM concept2cure_review_assignments/.test(text)
+      ? [{ id: 1, reviewer_id: 701, review_round: 1, status: 'completed' }]
+      : /FROM concept2cure_review_decisions/.test(text)
+        ? (/AND reviewer_id = \$3/.test(text) ? [] : [{ assignment_id: 1, reviewer_id: 701, decision: 'approve', version_reviewed: version }])
+        : /SELECT artifact_id FROM concept2cure_artifacts/.test(text)
+          ? [{ artifact_id: 'artifact_abc' }]
+          : authorRows(text),
+  }));
+
 beforeEach(() => {
   st.queue = [];
   st.sets = [];
@@ -259,6 +277,7 @@ describe('PUT …/status: a lock must cover the approval', () => {
 
   it('review v3 → approved records approved_version_id = 3; an edit to v4 afterwards is not filable', async () => {
     const reviewed = { ...ARTIFACT, status: 'review', version: 3, approvedVersionId: 2 };
+    reviewedAt(3);
     st.queue = [[reviewed], [{ ...VERSION_ROW, version: 3 }], [reviewed], [{ ...VERSION_ROW, version: 3 }], [{ ...reviewed, status: 'approved' }], [{ ...SIG_ROW, signatureType: 'approval' }]];
     await putStatus('approved', { attestation: ATTEST('approved') });
     const write = statusWrite('approved');
@@ -289,6 +308,15 @@ describe('PUT …/status review → approved applies the canonical P12 review qu
           ? decisions
           : authorRows(text),
     }));
+
+  it('no reviewer named refuses the approval 409 REVIEW_REQUIRED (P-95) and records no approved version', async () => {
+    quorumRows([]);
+    st.queue = [[{ ...ARTIFACT, status: 'review', version: 3, approvedVersionId: 2 }]];
+    const res = await putStatus('approved', { attestation: ATTEST('approved') });
+    expect(res.status).toBe(409);
+    expect(JSON.stringify(res.body)).toContain('REVIEW_REQUIRED');
+    expect(statusWrite('approved')).toBeUndefined();
+  });
 
   it('a reviewer still pending refuses the approval (400) and records no approved version', async () => {
     quorumRows([
@@ -396,6 +424,7 @@ describe('PUT …/status: signing authority before the password', () => {
   ])('%s by a %s on the membership row is refused 403 ESIGNATURE_NO_AUTHORITY, no password compared, nothing written', async (status, role) => {
     const { verifyReauth } = await import('../server/routes/c2c/actions');
     signerRole.mockResolvedValue(role);
+    reviewedAt(3);
     const current = status === 'locked' ? ARTIFACT : { ...ARTIFACT, status: 'review', version: 3 };
     st.queue = [[current], [VERSION_ROW]];
     const res = await putStatus(status);

@@ -55,6 +55,8 @@ beforeEach(() => {
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section] });
     if (url === `/api/authoring/sections/${SEC}/sources`) return ok({ sources: [{ citationId: 'cite-1', source: { id: 17, title: 'Stability report' } }] });
     if (url.startsWith('/api/c2c/documents/')) return ok({ success: false }, 404);
+    // The workbench reads the document's review route on open (J3 R2); this document was never sent for review.
+    if (url === `/api/authoring/documents/${DOC}/review-route`) return ok({ success: true, round: null });
     return ok({ success: true });
   });
 });

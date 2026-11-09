@@ -170,8 +170,8 @@ export interface LeafDocumentResolution {
   /**
    * Why the document may not be transmitted, in the words the assembler's
    * refusal prints ('not reviewed', 'draft', 'frozen, not approved', …), or
-   * null when it may. Absent for a store with no approval state (rendered
-   * files, uploads) and on resolutions built before this field existed.
+   * null when it may. Absent on resolutions built before this field existed:
+   * every store the resolver reads gives a verdict (uploads since P-94).
    * The assembler applies the same rule (materializeLeafSources →
    * assembledTransmitBlockers), and the governed freeze, dispatch and transmit
    * refuse on it; carried here so the verdict the client reads BEFORE an

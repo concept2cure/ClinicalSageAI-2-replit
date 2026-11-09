@@ -1,0 +1,9 @@
+# Mutant: the signing transaction does not act on the quorum it re-reads
+# in server/services/artifact-signed-act.ts
+# -     if (!quorum.met) throw new ArtifactActConflictError
+# +     if (false && !quorum.met) throw new ArtifactActConflictError
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95: an artifact is approved only after its review > the review is gone by the time it is signed: refused on the signing transaction, nothing written 30ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q1: the reviewer is neither the approving signer nor an author > the signer becomes a reviewer of the round while signing: refused on the signing transaction, nothing written 45ms
+ Test Files  1 failed | 3 passed (4)
+      Tests  2 failed | 189 passed (191)

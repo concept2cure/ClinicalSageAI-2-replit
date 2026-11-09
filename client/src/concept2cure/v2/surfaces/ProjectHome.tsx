@@ -290,14 +290,34 @@ interface ChangedUsageRow {
   citedAt: string | null;
 }
 
-interface ChangedUsageRead { changes: ChangedUsageRow[]; count: number }
+/** A section drafted from a Vault version that a later approved version replaced (S12, P-83, P-109). */
+interface ChangedVaultRow {
+  sectionId: string;
+  sectionCode: string | null;
+  documentTitle: string | null;
+  citedVaultId: string;
+  citedVersion: string | null;
+  vaultTitle: string | null;
+  approvedVersion: string | null;
+}
+
+interface ChangedUsageRead { changes: ChangedUsageRow[]; count: number; vaultChanges: ChangedVaultRow[]; vaultCount: number }
 
 const isChangedUsageRead: ShapeGuard<ChangedUsageRead> = (value): value is ChangedUsageRead => {
   if (!value || typeof value !== 'object') return false;
   const read = value as Partial<ChangedUsageRead>;
   return Array.isArray(read.changes) && read.count === read.changes.length &&
-    read.changes.every(row => row && typeof row.citationId === 'string' && typeof row.sectionId === 'string' && typeof row.sourceId === 'number');
+    read.changes.every(row => row && typeof row.citationId === 'string' && typeof row.sectionId === 'string' && typeof row.sourceId === 'number') &&
+    Array.isArray(read.vaultChanges) && read.vaultCount === read.vaultChanges.length &&
+    read.vaultChanges.every(row => row && typeof row.sectionId === 'string' && typeof row.citedVaultId === 'string');
 };
+
+/** "Module 3 quality · 3.2.S.4.1 — drafted from Drug substance specification v1.0; v2.0 is approved". */
+export function vaultChangeText(c: ChangedVaultRow): string {
+  const at = (v: string | null) => (v ? ` v${v}` : '');
+  return `${c.documentTitle || 'Untitled document'}${c.sectionCode ? ` · ${c.sectionCode}` : ''} — drafted from `
+    + `${c.vaultTitle || 'a Vault document'}${at(c.citedVersion)}; ${c.approvedVersion ? `v${c.approvedVersion}` : 'a later version'} is approved`;
+}
 
 /**
  * "Used in" — the back-reference, from recorded citations only.
@@ -447,6 +467,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
     isChangedUsageRead,
   );
   const changes = !changed.loading && !changed.error ? changed.data?.changes ?? [] : [];
+  const vaultChanges = !changed.loading && !changed.error ? changed.data?.vaultChanges ?? [] : [];
 
   // Same upload path as AnA's composer — one file, one identity.
   const { attachments, addFiles, uploading, statusMessage } = useChatUpload({ projectId: pid });
@@ -552,6 +573,22 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         <p className="sec-sub" role="status">
           Source-change citations could not be verified for your current access. No affected-citation count is confirmed.
         </p>
+      )}
+      {vaultChanges.length > 0 && (
+        <div className="sp-tone-warn" role="status" data-testid="data-room-vault-changes"
+          style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '10px 12px', marginBottom: 12, fontSize: 12.5 }}>
+          <b>
+            {vaultChanges.length} section{vaultChanges.length === 1 ? ' was' : 's were'} drafted from a Vault version
+            that a later approved version has replaced.
+          </b>
+          <div style={{ marginTop: 6, display: 'grid', gap: 3 }}>
+            {vaultChanges.slice(0, 6).map((c) => <span key={`${c.sectionId}:${c.citedVaultId}`}>{vaultChangeText(c)}</span>)}
+            {vaultChanges.length > 6 && <span>…and {vaultChanges.length - 6} more.</span>}
+          </div>
+          <div style={{ marginTop: 6, opacity: 0.85 }}>
+            Nothing has been rewritten. Open each section to decide whether the approved version changes what it says.
+          </div>
+        </div>
       )}
       {changes.length > 0 && (
         <div

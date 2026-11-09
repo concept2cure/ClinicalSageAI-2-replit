@@ -1,0 +1,6 @@
+ ✓ client/src/concept2cure/v2/__tests__/authoringReturnedReviewOnOpen.test.tsx > a returned review, where the document opens (J3 R2) > says who returned it and why, in the route's words, with the way to Review tasks 67
+ ✓ client/src/concept2cure/v2/__tests__/authoringReturnedReviewOnOpen.test.tsx > a returned review, where the document opens (J3 R2) > adds nothing for a route that is open 152ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringReturnedReviewOnOpen.test.tsx > a returned review, where the document opens (J3 R2) > adds nothing for a route that is complete 151ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringReturnedReviewOnOpen.test.tsx > a returned review, where the document opens (J3 R2) > adds nothing for a document never sent for review 129ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringReturnedReviewOnOpen.test.tsx > a returned review, where the document opens (J3 R2) > a route that could not be read says so, never that nothing was returned 129ms
+      Tests  5 passed (5)

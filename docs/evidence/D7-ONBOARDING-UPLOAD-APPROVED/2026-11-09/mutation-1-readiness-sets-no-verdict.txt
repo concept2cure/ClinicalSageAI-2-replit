@@ -1,0 +1,10 @@
+MUTATION 1-readiness-sets-no-verdict in server/services/ectd/leaf-document-resolver.ts (on the final code and tests, 2026-11-09T03:16:06.547592Z): replaced [      notTransmittable: (await onboardingUploadNotTransmittable(queryableFromDrizzle(db), organizationId, documentId, storedSha256)) ?? undefined,] with [      notTransmittable: undefined,]
+ × server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > an onboarding upload is released only when the same bytes are approved in the project's Vault (P-94, P-108 3(a)) > an upload with no approved copy in the project's Vault is a DOCUMENT_NOT_APPROVED warning that blocks every release verdict 45ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > an onboarding upload is released only when the same bytes are approved in the project's Vault (P-94, P-108 3(a)) > the same bytes approved in the project's Vault clear the upload, with no new act 27ms
+ × server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > an onboarding upload is released only when the same bytes are approved in the project's Vault (P-94, P-108 3(a)) > the same bytes in the Vault but not approved do not clear it 17ms
+ × server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > an onboarding upload is released only when the same bytes are approved in the project's Vault (P-94, P-108 3(a)) > the same bytes approved in another project's Vault do not clear it 17ms
+      Tests  3 failed | 1 passed | 10 skipped (14)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > an onboarding upload is released only when the same bytes are approved in the project's Vault (P-94, P-108 3(a)) > an upload with no approved copy in the project's Vault is a DOCUMENT_NOT_APPROVED warning that blocks every release verdict
+AssertionError: expected [] to have a length of 1 but got +0
+restored sha256 9e70428dcde2f710ff76b601cb495bce2b5c3ebec8300f31e9079ae3c7e8d3f1 (expected 9e70428dcde2f710ff76b601cb495bce2b5c3ebec8300f31e9079ae3c7e8d3f1)
