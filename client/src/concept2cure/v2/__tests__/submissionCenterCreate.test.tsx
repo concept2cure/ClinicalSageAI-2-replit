@@ -149,7 +149,7 @@ describe('SubmissionCenter — the next sequence', () => {
   it('starts the next sequence in the submission\'s region, numbered after the last, of the type chosen', async () => {
     const seqPosts = serve([seq(9, '0000')]);
     render(<SubmissionCenter {...props()} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Open the sequences' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Sequences' }));
 
     const start = await screen.findByRole('button', { name: 'Start sequence 0001' });
     fireEvent.change(screen.getByLabelText('Type of sequence 0001'), { target: { value: 'response' } });
@@ -162,7 +162,7 @@ describe('SubmissionCenter — the next sequence', () => {
   it('numbers after the highest sequence in the submission\'s own region — numbering restarts per region', async () => {
     serve([seq(9, '0000'), seq(10, '0001'), seq(11, '0004', 'ema')]);
     render(<SubmissionCenter {...props()} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Open the sequences' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Sequences' }));
     expect(await screen.findByRole('button', { name: 'Start sequence 0002' })).toBeTruthy();
     // An original is sequence 0000; a follow-up is never offered as one.
     const types = Array.from((screen.getByLabelText('Type of sequence 0002') as HTMLSelectElement).options).map((o) => o.value);

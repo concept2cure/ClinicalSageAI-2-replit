@@ -116,14 +116,14 @@ describe('SubmissionCenter — real rows render (no fixture)', () => {
     expectNoFixtureArtifacts();
   });
 
-  it('derives the AnswerLead sequence count from the REAL sequences array', async () => {
+  it("derives the header's sequence count from the REAL sequences array", async () => {
     render(<SubmissionCenter {...props()} />);
 
-    // One real sequence → the singular "1 eCTD sequence tracked". The kit
-    // fixture shipped two sequences, so this positively proves derivation from
-    // the live GET rather than a constant.
+    // One real sequence → the singular "1 sequence: …" in the page's state sentence (D7-A1 moved the count there
+    // from the AnswerLead). The kit fixture shipped two sequences, so this positively proves derivation from the
+    // live GET rather than a constant.
     await waitFor(() =>
-      expect(document.body.textContent).toContain('1 eCTD sequence tracked'),
+      expect(screen.getByTestId('sc-state').textContent).toMatch(/ 1 sequence: /),
     );
 
     expect(apiRequest).toHaveBeenCalledWith('GET', SUB_SEQ_URL);

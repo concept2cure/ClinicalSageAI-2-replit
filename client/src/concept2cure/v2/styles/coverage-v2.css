@@ -1628,3 +1628,8 @@
   .c2c-v2 .ct-row[data-fresh] { animation: none; }
   .c2c-v2 .bd-dots i { animation: none; opacity: .6; }
 }
+/* D7-A1: the context row under the starters — the submission (and, with D7-A2, the sequence) and the scope toggle,
+   one line that wraps at a phone's width. */
+.c2c-v2 .sc-context{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; margin:0 0 16px; font-size:var(--fs-small); color:var(--text-300); }
+.c2c-v2 .sc-context-f{ display:inline-flex; align-items:center; gap:8px; min-width:0; max-width:100%; }
+.c2c-v2 .sc-context-f > select{ width:auto; max-width:100%; min-width:0; }

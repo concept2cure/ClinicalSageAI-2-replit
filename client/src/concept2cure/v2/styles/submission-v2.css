@@ -16,6 +16,8 @@
 .c2c-v2 .sc-subrow .sp-row-b { min-width: 140px; }
 /* A table wider than its card (the submissions list at 390 px) scrolls inside the card, not the page. */
 .c2c-v2 .sc-page .pj-card-b-flush { overflow-x: auto; }
+/* D7-A1: the Submissions list is a typographic section now, not a card; its table scrolls inside the page the same way. */
+.c2c-v2 .sc-page .sc-tbl { overflow-x: auto; }
 .c2c-v2 .sc-subpick { max-width: 100%; text-overflow: ellipsis; }
 .c2c-v2 .sc-subrow-open { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .c2c-v2 .ub-r { text-align: right; }
