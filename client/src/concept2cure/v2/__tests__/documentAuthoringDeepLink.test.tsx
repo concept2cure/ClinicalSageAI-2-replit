@@ -75,6 +75,20 @@ function props() {
   return { surface: { id: 'document-authoring', label: 'Authoring' } as any, onNav: vi.fn(), segment: 'medtech' };
 }
 
+/** A refused family target read no filing and searched no document (the pre-3d9879dfc7 path read D2's sections). */
+function expectNoFilingSearch() {
+  expect(apiRequest.mock.calls.filter(([, url]) => String(url).startsWith('/api/c2c'))).toEqual([]);
+  expect(apiRequest.mock.calls.some(([, url]) => String(url).split('?')[0] === '/api/authoring/docs/D2/sections')).toBe(false);
+}
+
+/** GET /api/c2c/documents as server/routes/c2c/documents.ts answers it: each row's project_id, filtered by `docType` and `scope`. */
+function c2cDocuments(url: string, home: Array<{ doc_type: string }>, market: Array<{ doc_type: string }> = []) {
+  const query = new URLSearchParams(url.split('?')[1]);
+  const scoped = query.get('scope') === 'market' ? market : query.get('scope') === 'home' ? home : [...home, ...market];
+  const docType = query.get('docType');
+  return { documents: scoped.filter(row => docType === null || row.doc_type === docType).map(row => ({ ...row, project_id: query.get('projectId') })) };
+}
+
 beforeEach(() => {
   clearEditorTarget();
   clearNavParams();
@@ -116,7 +130,11 @@ describe('DocumentAuthoring — editor deep-link target', () => {
     act(()=>setEditorTarget({docType:null,docId:'D1',code:'3.2.S.1'}));
     await waitFor(()=>expect(canvasText()).toBe('Default document content.'));
   });
-  it('consumes the target, clears the channel, and opens the named document + section', async () => {
+  /* A named family (docType) resolves against the open project's exact filing
+     (3d9879dfc7, filingSectionTarget.ts), never by searching the documents in
+     scope. With no project open there is no filing to resolve: the target is
+     consumed and refused with the reason, and the default view stays. */
+  it('consumes a 510(k) section target with no project open and refuses it with the reason, reading no filing', async () => {
     setEditorTarget({
       docType: 'k510',
       code: 11,
@@ -128,17 +146,9 @@ describe('DocumentAuthoring — editor deep-link target', () => {
     // The channel is one-shot: cleared on mount, hit or miss.
     await waitFor(() => expect(window.C2C_EDITOR_TARGET).toBeUndefined());
 
-    // The named section — in D2, NOT the default document — is open in the
-    // canvas with its real content.
-    await waitFor(() => {
-      expect(canvasText()).toBe('SE discussion body.');
-    });
-    // …and the masthead shows the section identity the click named.
-    expect(screen.getByRole('heading', { name: 'Substantial Equivalence Discussion' })).toBeTruthy();
-    // The hand-off is stated, naming the workspace family it came from.
-    expect(await screen.findByText(/from the 510\(k\) workspace/i)).toBeTruthy();
-    // No honest-miss notice — the target resolved.
-    expect(screen.queryByText(/Couldn’t find/)).toBeNull();
+    expect(await screen.findByText('Couldn’t open “Substantial Equivalence Discussion” (section 11) — Open the target project before opening its filing.')).toBeTruthy();
+    await waitFor(() => expect(canvasText()).toBe('Default document content.'));
+    expectNoFilingSearch();
   });
 
   it('a docId target opens the EXACT document — no search, not the default', async () => {
@@ -170,7 +180,7 @@ describe('DocumentAuthoring — editor deep-link target', () => {
     });
   });
 
-  it('shows the honest miss notice and falls back to the default view when nothing matches', async () => {
+  it('refuses an unmatched 510(k) section target with no project open the same way, over the default view', async () => {
     setEditorTarget({
       docType: 'k510',
       code: 'ZZ',
@@ -180,13 +190,13 @@ describe('DocumentAuthoring — editor deep-link target', () => {
     render(<DocumentAuthoring {...props()} />);
     await waitFor(() => expect(window.C2C_EDITOR_TARGET).toBeUndefined());
 
-    // The miss is said out loud, naming what could not be found…
-    const notice = await screen.findByText(/Couldn’t find “No Such Section” \(section ZZ\)/);
-    expect(notice.textContent).toMatch(/default view/i);
+    // The refusal names what was asked for and why; nothing was searched for it…
+    expect(await screen.findByText('Couldn’t open “No Such Section” (section ZZ) — Open the target project before opening its filing.')).toBeTruthy();
     // …over the DEFAULT view, which still works (D1's first section).
     await waitFor(() => {
       expect(canvasText()).toBe('Default document content.');
     });
+    expectNoFilingSearch();
   });
 
   it('refuses a target scoped to a different program — fail closed, with the reason', async () => {
@@ -216,6 +226,37 @@ describe('DocumentAuthoring — editor deep-link target', () => {
       expect(canvasText()).toBe('Default document content.');
     });
     expect(screen.queryByText(/Couldn’t (find|open)/)).toBeNull();
+  });
+});
+
+describe('a family target resolves against the open project’s exact filing (3d9879dfc7)', () => {
+  it('with its project open, a 510(k) section target opens that section in the filing’s working copy', async () => {
+    const project = '44444444-4444-4444-8444-444444444510';
+    const filing = { id: 'K510-FILING', doc_type: 'k510', agency: 'fda', title: '510(k) notification', rule_pack_version: 'v1', status: 'draft', readiness: 0 };
+    // As authoring-document-read.ts states them: D1 an unbound draft, D2 the filing's editing copy.
+    const copies = [{ ...DOCS.documents[0], c2c_document_id: null }, { ...DOCS.documents[1], c2c_document_id: filing.id }];
+    const node = { key: '11', parent_key: null, label: 'Substantial Equivalence Discussion', mandatory: true, path_order: 1, status: 'todo', draft_source: null, has_content: true, version: 1 };
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: project };
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      const path = url.split('?')[0];
+      const copy = copies.find(d => path === `/api/authoring/docs/${d.id}`);
+      if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: copies.map(d => ({ ...d, program_id: project })) });
+      if (copy) return ok({ success: true, document: { ...copy, client_program_id: project } });
+      if (path === '/api/authoring/docs/D1/sections') return ok(D1_SECTIONS);
+      if (path === '/api/authoring/docs/D2/sections') return ok(D2_SECTIONS);
+      if (path === '/api/c2c/documents') return ok(c2cDocuments(url, [filing]));
+      if (path === `/api/c2c/documents/${filing.id}/outline`) return ok({ document: filing, outline: [node] });
+      return ok({ success: true });
+    });
+    setEditorTarget({ docType: 'k510', code: 11, label: 'Substantial Equivalence Discussion' });
+
+    render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(window.C2C_EDITOR_TARGET).toBeUndefined());
+
+    expect(await screen.findByText('Opened 11 · Substantial Equivalence Discussion — 510(k) filing.')).toBeTruthy();
+    await waitFor(() => expect(canvasText()).toBe('SE discussion body.'));
+    expect(apiRequest.mock.calls.some(([, url]) => url === `/api/c2c/documents?projectId=${project}&docType=k510`)).toBe(true);
+    expect(screen.queryByText(/Couldn’t/)).toBeNull();
   });
 });
 

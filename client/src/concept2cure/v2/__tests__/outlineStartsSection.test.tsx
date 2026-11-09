@@ -12,13 +12,14 @@
  *
  * Only in the right document. The outline is the project's governed filing,
  * and a project holds many authoring documents of which one is the filing's
- * editing copy (`c2c_document_id`). A click in an AnA draft or any other
- * working document, or in a document whose binding the list did not state,
- * posts nothing and names the document that holds the filing.
+ * editing copy (`c2c_document_id`). Since 3d9879dfc7 an AnA draft or any other
+ * unbound working copy is shown as its saved draft, with no filing outline to
+ * start from, and a document whose binding is not stated fails closed: the
+ * outline is said to be unread and nothing is offered or posted.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -71,6 +72,20 @@ const scopedList = (url: string, body: { success?: boolean; documents: object[] 
   const programId = new URLSearchParams(url.split('?')[1]).get('programId');
   return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
 };
+/** GET /api/c2c/documents as server/routes/c2c/documents.ts answers it: each row's project_id, and `scope` lists only that part. */
+const c2cDocuments = (url: string, home: object[], market: object[] = []) => {
+  const query = new URLSearchParams(url.split('?')[1]);
+  const rows = query.get('scope') === 'market' ? market : query.get('scope') === 'home' ? home : [...home, ...market];
+  return { documents: rows.map(row => ({ ...row, project_id: query.get('projectId') })) };
+};
+/** A listed document's header (authoring-document-read.ts readAuthoringDocument: the row and its client_program_id), and the project's filings. */
+function governedRead(url: string, pathname: string, docs: readonly DocRow[]): Response | null {
+  const header = /^\/api\/authoring\/docs\/([^/]+)$/.exec(pathname);
+  const listed = header && docs.find(d => d.id === header[1]);
+  if (listed) return ok({ success: true, document: { ...listed, client_program_id: PROJECT_ID } });
+  if (!url.startsWith('/api/c2c/documents?projectId=')) return null;
+  return ok(c2cDocuments(url, [{ id: C2C_DOC, doc_type: 'bla', agency: 'fda', title: 'BLA 125000', rule_pack_version: 'v1', status: 'draft', readiness: 20 }]));
+}
 
 function wire(opts: { docs?: DocRow[]; create?: CreateReply; sections?: ReturnType<typeof section>[] } = {}) {
   const sections = [...(opts.sections ?? [S1])];
@@ -89,9 +104,8 @@ function wire(opts: { docs?: DocRow[]; create?: CreateReply; sections?: ReturnTy
     if (method === 'GET' && secs) {
       return ok({ success: true, sections: sections.map(s => ({ ...s, doc_id: secs[1] })) });
     }
-    if (method === 'GET' && url.startsWith('/api/c2c/documents?projectId=')) {
-      return ok({ documents: [{ id: C2C_DOC, doc_type: 'bla', agency: 'fda', title: 'BLA 125000', rule_pack_version: 'v1', status: 'draft', readiness: 20 }] });
-    }
+    const read = method === 'GET' && governedRead(url, pathname, docs);
+    if (read) return read;
     if (method === 'GET' && url === `/api/c2c/documents/${C2C_DOC}/outline`) {
       const node = (key: string, label: string, order: number) => ({
         key, parent_key: null, label, mandatory: true, path_order: order, status: 'todo', draft_source: null, has_content: false, version: 1,
@@ -136,6 +150,33 @@ async function unstartedRow(label = 'Clinical summary'): Promise<HTMLButtonEleme
   const row = el.closest('button') as HTMLButtonElement;
   await waitFor(() => expect(row.getAttribute('title') ?? '').toMatch(/not started in this document/));
   return row;
+}
+
+const UNBOUND_NOTE = 'Unbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.';
+const OUTLINE_UNREAD = 'The governed filing outline could not be read — what is listed below is the document list, not the filing outline.';
+const outlineReads = () => apiRequest.mock.calls.filter(([m, u]) => m === 'GET' && /^\/api\/c2c\/documents\/[^/?]+\/outline/.test(String(u)));
+
+/** The project's filings (home and market) are read and the open section is on the canvas: where a bound copy reads its outline. */
+async function settled(): Promise<void> {
+  await waitFor(() => expect(['&scope=home', '&scope=market'].every(s => apiRequest.mock.calls.some(([, u]) => String(u).endsWith(s)))).toBe(true));
+  await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('The drug substance is a small molecule.'));
+  await act(async () => { await new Promise(r => setTimeout(r, 50)); });
+}
+
+/** The tree pane of a known unbound copy (DocumentWorkbench: unboundDraft), once settled. */
+async function expectUnbound(title: string): Promise<void> {
+  await waitFor(() => expect(document.querySelector('.ed-tree-m')?.textContent).toBe('Saved draft sections · unbound'));
+  expect(document.querySelector('.ed-tree-t')?.textContent).toBe(title);
+  expect(screen.getByText(UNBOUND_NOTE)).toBeTruthy();
+  await settled();
+}
+
+/** No filing outline: no outline read, no outline-only node, no start (startOutlineSection.ts) and nothing posted. */
+function expectNoOutlineOffered(): void {
+  expect(outlineReads()).toHaveLength(0);
+  for (const label of ['Clinical overview', 'General information', 'Clinical summary']) expect(screen.queryByText(label)).toBeNull();
+  expect(document.querySelector('[title*="not started in this document"], [aria-label*="Start this section"]')).toBeNull();
+  expect(creates()).toHaveLength(0);
 }
 
 beforeEach(() => {
@@ -212,52 +253,42 @@ describe('the outline offers a start only where the section can be started (F4)'
     expect(creates()).toHaveLength(0);
   });
 
-  it('with an AnA draft open (not the filing’s copy), a click posts nothing and names the document that holds the filing', async () => {
-    wire({
-      docs: [
-        { id: 'DRAFT', title: 'Clinical overview draft', module: 'M2', status: 'draft', c2c_document_id: null },
-        FILING_COPY,
-      ],
-    });
+  /* A section of the filing is never started into a copy that is not the filing's. An AnA draft
+     (c2c_document_id null) is a known unbound copy: since 3d9879dfc7 it borrows no filing outline,
+     so there is no outline node to click, no outline read and nothing to post. The filing's own
+     copy stays listed, to be opened instead. */
+  it('with an AnA draft open (not the filing’s copy), no filing outline is offered: the tree says unbound and nothing can be started', async () => {
+    wire({ docs: [{ id: 'DRAFT', title: 'Clinical overview draft', module: 'M2', status: 'draft', c2c_document_id: null }, FILING_COPY] });
     render(<DocumentAuthoring {...props()} />);
-    const row = await unstartedRow();
-
-    fireEvent.click(row);
-
-    // Whatever the click did, it answered; it must not have created anything.
-    await screen.findByText(/3\.5 (Clinical summary )?was not started|Section started/);
-    expect(creates()).toHaveLength(0);
-    await screen.findByText(/3\.5 Clinical summary was not started\. This outline belongs to BLA 125000/);
-    expect(row.getAttribute('title')).toMatch(/This outline belongs to BLA 125000, and this document is not its editing copy/);
-    expect(row.getAttribute('title')).toMatch(/Open “Quality module” to start it\./);
-    expect(row.getAttribute('aria-disabled')).toBe('true');
+    await expectUnbound('Clinical overview draft');
+    expect(screen.getByRole('button', { name: /Quality module/ })).toBeTruthy();
+    expectNoOutlineOffered();
   });
 
-  it('a module-3 working document that is not the filing’s copy does not take a module-2 node', async () => {
+  /* The same for a module-3 working document that is not the filing's copy: it takes no module-2
+     node. The project's filing is reached only through its explicit start (create its editing copy). */
+  it('a module-3 working document that is not the filing’s copy takes no module-2 node: only the filing’s explicit start is offered', async () => {
     wire({ docs: [{ id: 'D3', title: 'Quality notes', module: 'M3', status: 'draft', c2c_document_id: null }] });
     render(<DocumentAuthoring {...props()} />);
-    const row = await unstartedRow('Clinical overview');
-
-    fireEvent.click(row);
-
-    await screen.findByText(/2\.5 (Clinical overview )?was not started|Section started/);
-    expect(creates()).toHaveLength(0);
-    await screen.findByText(/2\.5 Clinical overview was not started\. This outline belongs to BLA 125000/);
-    expect(screen.getByText(/Open the document that holds BLA 125000 to start it\./)).toBeTruthy();
+    await expectUnbound('Quality notes');
+    const filings = screen.getByTestId('ed-filings');
+    expect(filings.textContent).toContain('FDA · BLA — home filing');
+    expect(within(filings).getByRole('button', { name: 'Create editing copy' })).toBeTruthy();
+    expectNoOutlineOffered();
   });
 
-  it('when the document list does not say what a document is bound to, nothing is offered', async () => {
+  /* Neither the list nor the header states the binding (known: false). The editor fails closed:
+     it says the governed outline could not be read, offers no outline node and starts nothing. */
+  it('when neither the document list nor its header says what a document is bound to, the outline fails closed and nothing is offered', async () => {
     const unsaid: DocRow = { ...FILING_COPY };
     delete unsaid.c2c_document_id;
     wire({ docs: [unsaid] });
     render(<DocumentAuthoring {...props()} />);
-    const row = await unstartedRow();
-    expect(row.getAttribute('title')).toMatch(/Whether this document is the editing copy of BLA 125000 is not known/);
-
-    fireEvent.click(row);
-
-    await screen.findByText(/3\.5 Clinical summary was not started\. Whether this document/);
-    expect(creates()).toHaveLength(0);
+    expect((await screen.findByText(OUTLINE_UNREAD)).getAttribute('role')).toBe('alert');
+    expect(document.querySelector('.ed-tree-m')?.textContent).toBe('1 document · all');
+    expect(screen.queryByText(UNBOUND_NOTE)).toBeNull();
+    await settled();
+    expectNoOutlineOffered();
   });
 
   it('a section whose code differs only in case is said, not posted into a 409', async () => {

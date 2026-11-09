@@ -793,11 +793,27 @@ Evidence: `docs/evidence/SPINE/S4/2026-11-08-anna-trunk-red/README.md`.
     check.
 - **Result.** Of the 144 gate-refused suites, 127 pass on the merged tree. No suite moved from passing to failing, and
   the gate's own suites pass unchanged.
-- **Next.**
-  - `ci:step-presentation`: two import cuts, with no RULE 2 defect behind them.
-  - About 40 AnA suites red for other causes, being diagnosed in three disjoint file sets: the stream route, the
-    executor and tools, and AnA drive.
-  - Then the expanded §14.4 spike.
+- **Delivered later the same day.**
+  - `ci:step-presentation` is green. Two import cuts were made and no tool was reclassified: `b7eec7bf34` (the
+    statistical document save) and `b4c57f5a27` (the run stopper). `run-control.ts` then went over the size ceiling,
+    and its session-end half was split, inside `ana/`, into `run-session-end.ts` (`0525fb31ae`).
+  - Two product regressions, each proven red then green: AnA drive kept the Vault's program and stopped searching a
+    Vault with none open (`105a28e291`); a missing embedding key is now reported as such (`271838332f`).
+  - Harnesses the product had left behind, each update keeping the suite's intent:
+    - the executor and tools, 17 suites (`0d6e906a3a`);
+    - the stream route, 16 suites (`e1e672f400`);
+    - group E, 6 suites (`41d32ca4b4`);
+    - figure reconciliation (`4a98f8d330`);
+    - upload tenancy (`bae9a11ef2`).
+  - The release-gate fixtures (group B) now build `audit_logs` as production does, and no gate was loosened
+    (`fb7be60ea1`).
+  - Proof tier: `chat-thread-access` (`5944bf4275`) and `authoring-review-audit-comment` (`fb7be60ea1`).
+  - A parallel merge broke two drive cases, and they were reconciled with the product (`0da9fae4b8`). `documents`, now
+    global, keeps a named program as `vault` does, and a Vault search with none open still asks first, because
+    `Vault.tsx` refuses it.
+  - Secret scan: all eight hits are test canaries, placeholder DSNs or a local probe's key, each recorded in
+    `.gitleaksignore` with its reason (`887c4d9402`). The full-history scan, run as CI runs it, finds none.
+- **Next.** The expanded §14.4 spike (Phase 0).
 
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 

@@ -1,0 +1,4 @@
+[ci:project-creation-owners:selftest] OK { planted: 25, readsAndComments: 5, owners: 4 }
+exit 0
+[ci:project-creation-owners] OK — one canonical program writer and three explicit, bounded PM writers (4 sites).
+exit 0
