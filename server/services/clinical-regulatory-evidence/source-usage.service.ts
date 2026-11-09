@@ -168,8 +168,9 @@ export interface ChangedSourceUsage {
   documentTitle: string | null;
   sourceId: number;
   sourceTitle: string | null;
-  citedChecksum: string;
-  currentChecksum: string;
+  /** Cited: null when the citation recorded none (a superseded version is still a change). Current: the current
+   *  version's (a superseded source's chain head), or null. */
+  citedChecksum: string | null; currentChecksum: string | null;
   citedAt: string | null;
   sourceUpdatedAt: string | null;
 }
@@ -443,11 +444,8 @@ export async function summarizeSourceUsage(
     `SELECT src.id AS source_id,
             COUNT(DISTINCT c.section_id)                        AS sections,
             COUNT(DISTINCT sec.doc_id)                          AS documents,
-            COUNT(DISTINCT CASE
-              WHEN c.payload_sha256 IS NOT NULL
-               AND src.checksum IS NOT NULL
-               AND src.checksum <> c.payload_sha256
-              THEN c.section_id END)                            AS changed_sections
+            COUNT(DISTINCT CASE WHEN src.is_current IS FALSE OR (c.payload_sha256 IS NOT NULL
+              AND src.checksum IS NOT NULL AND src.checksum <> c.payload_sha256) THEN c.section_id END) AS changed_sections
        FROM cre_evidence_sources src
        JOIN authoring_citations c
               ON c.reference_id = src.id::text
@@ -521,7 +519,7 @@ export async function listChangedSourceUsages(
     `SELECT c.id, c.section_id, c.payload_sha256, c.created_at,
             sec.code AS section_code, sec.title AS section_title, sec.doc_id,
             doc.title AS document_title,
-            src.id AS source_id, src.title AS source_title, src.checksum,
+            src.id AS source_id, src.title AS source_title, COALESCE(head.checksum, src.checksum) AS checksum,
             src.updated_at AS source_updated_at
        FROM authoring_citations c
        JOIN cre_evidence_sources src
@@ -532,12 +530,17 @@ export async function listChangedSourceUsages(
               ON sec.id = c.section_id AND sec.tenant_id = c.tenant_id
        JOIN authoring_documents doc
               ON doc.id = sec.doc_id AND doc.tenant_id = c.tenant_id
+       /* A superseded source's current version: its chain followed forward by previous_version_id (20260829). */
+       LEFT JOIN LATERAL (WITH RECURSIVE chain(id, checksum, is_current, depth) AS (SELECT n.id, n.checksum, n.is_current, 1
+           FROM cre_evidence_sources n WHERE n.previous_version_id = src.id AND n.organization_id IS NOT DISTINCT FROM src.organization_id
+           AND n.deleted_at IS NULL UNION ALL SELECT n.id, n.checksum, n.is_current, chain.depth + 1 FROM cre_evidence_sources n JOIN chain
+           ON n.previous_version_id = chain.id WHERE n.organization_id IS NOT DISTINCT FROM src.organization_id AND n.deleted_at IS NULL
+           AND chain.depth < 100) SELECT checksum FROM chain WHERE is_current ORDER BY depth DESC LIMIT 1) head ON src.is_current IS FALSE
       WHERE c.tenant_id = $1
         AND c.source = $2
         AND sec.id=ANY($3::uuid[]) AND src.id=ANY($4::int[])
-        AND c.payload_sha256 IS NOT NULL
-        AND src.checksum IS NOT NULL
-        AND src.checksum <> c.payload_sha256
+        -- Changed: the cited version was superseded (a capture is immutable), or its content moved (S12, P-83).
+        AND (src.is_current IS FALSE OR (c.payload_sha256 IS NOT NULL AND src.checksum IS NOT NULL AND src.checksum <> c.payload_sha256))
         ${scope}
       ORDER BY src.updated_at DESC NULLS LAST, c.created_at ASC
       LIMIT $${args.length}`,
@@ -555,8 +558,7 @@ export async function listChangedSourceUsages(
     documentTitle: (r.document_title as string) ?? null,
     sourceId: Number(r.source_id),
     sourceTitle: (r.source_title as string) ?? null,
-    citedChecksum: String(r.payload_sha256),
-    currentChecksum: String(r.checksum),
+    citedChecksum: r.payload_sha256 == null ? null : String(r.payload_sha256), currentChecksum: r.checksum == null ? null : String(r.checksum),
     citedAt: r.created_at ? new Date(r.created_at as string).toISOString() : null,
     sourceUpdatedAt: r.source_updated_at ? new Date(r.source_updated_at as string).toISOString() : null,
   }));
