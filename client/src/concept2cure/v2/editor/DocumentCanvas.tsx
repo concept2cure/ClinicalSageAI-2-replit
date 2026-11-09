@@ -64,10 +64,10 @@ import {
 import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
 import { FileToVaultDialog } from './FileToVaultDialog';
 import { SendForReviewDialog } from './SendForReviewDialog';
-import { useProgramRead, programHeadline, programLineFor } from './programSummary';
+import { useProgramRead, programLineFor } from './programSummary';
 import { describeProvenance, moduleWasAssumed, type DocumentProvenance } from './provenance';
-import { OpenedDocumentPending, StatusPill, ToDocumentsButton } from './CanvasDocumentList';
-import { useCanvasEscape, useCanvasRegionFocus, useOriginSectionFocus } from './canvasFocus';
+import { OpenedDocumentPending, ToDocumentsButton } from './CanvasDocumentList';
+import { useCanvasEscape, useCanvasRegionFocus, useCloseFocusHandoff, useOriginSectionFocus } from './canvasFocus';
 import type { AskOrigin } from './askAnaToDraft';
 import { originForSavedSection } from './authoringConversationOrigin';
 import { sourceMetadataUnavailable } from './savedTemplateContext';
@@ -230,6 +230,7 @@ export function DocumentCanvas({
   const expandedRef = useRef<HTMLDivElement>(null);
   const expandBtnRef = useRef<HTMLButtonElement>(null);
   const backBtnRef = useRef<HTMLButtonElement>(null);
+  const closeHandoff = useCloseFocusHandoff(keepWorkbench, backBtnRef);
   const titleId = useId();
   /* The expanded region's id, so the control that opens it can say what it
      controls (`aria-controls`) rather than only that it is expanded. */
@@ -325,7 +326,6 @@ export function DocumentCanvas({
 
   const title = doc?.title ?? (state !== 'error' && draftOwner.programId === programId && draftOwner.docId === docId &&
     draftOwner.session.sameRevision() ? draftTitle : null) ?? 'Document';
-  const programLine = programHeadline(program);
   const sectionCount = partialRead ? sections.length : sections.length || Number(doc?.section_count ?? 0) || 0;
   const draftedCount = sections.filter(x => isDrafted(x.content)).length;
   const first = sections[0] ?? null;
@@ -567,9 +567,6 @@ export function DocumentCanvas({
               fireToast={fireToast}
             />
           )}
-          <button type="button" className="nda-open dcv-open-surface" onClick={openInAuthoring} title="Open this document in the editor" data-testid="dc-edit-in-authoring">
-            {I.penLine} Edit in the editor
-          </button>
         </div>
       </div>
       )}
@@ -581,25 +578,12 @@ export function DocumentCanvas({
           survives the editor arriving. */}
       {(keepWorkbench || (cardless && expanded)) && (() => {
         const region = (
-        <div ref={expandedRef} className="dcv-expanded" id={expandedId} hidden={!expanded} data-testid="dc-expanded" data-beside={beside || undefined}>
-          <div className="dcv-bar">
-            {onShowList && <ToDocumentsButton count={listCount} onClick={showList} />}
-            <button ref={backBtnRef} type="button" className="ed-back" onClick={() => onExpandedChange(false)} data-testid="dc-back">
-              {onShowList ? I.close : I.left} Back to conversation
-            </button>
-            <span className="dcv-bar-t" title={title}>{title}</span>
-            {/* Always in view while the document is open (§4.1, §4.8): with no
-                card, or with the card hidden at narrow widths, nothing else says it is a draft. */}
-            {doc && <StatusPill status={doc.status} testId="dc-status" />}
-            {programLine && <span className="dcv-bar-p">{programLine}</span>}
-            <span className="dcv-bar-hint" aria-hidden="true">Esc</span>
-          </div>
+        <div ref={expandedRef} className="dcv-expanded" id={expandedId} hidden={!expanded} data-testid="dc-expanded"
+          data-beside={beside || undefined} data-placement={beside ? 'pane' : 'inline'}>
           {keepWorkbench ? (
           <div className="dcv-workbench">
-            {/* `hostShowsBack`: the bar above already carries "Back to
-                conversation" and the Esc hint, so the workbench must not draw
-                a second one into its crumb trail — it did, 75px below this
-                one and overprinting the crumbs beside it. */}
+            {/* One bar (D4-5, §D4.A): the workbench's. It draws Documents, the title and its state, "Open full
+                width" and the close; this region drew a second bar above it. The project is in the title's tooltip. */}
             <DocumentWorkbench
               onNav={onNav}
               liveDrive={liveDrive}
@@ -611,13 +595,30 @@ export function DocumentCanvas({
               refreshCreationContext={refreshCreationContext}
               programId={programId}
               pinnedDocId={docId}
-              embedded={{ onBack: () => onExpandedChange(false), hostShowsBack: true, onEditorBridge: setBridge, focusSection, savedRefreshKey }}
+              embedded={{
+                onBack: () => onExpandedChange(false), collapses: true, closeRef: backBtnRef, onExpand: openInAuthoring,
+                onShowList: onShowList ? showList : undefined, listCount, onEditorBridge: setBridge, focusSection, savedRefreshKey,
+              }}
               surfaceActionId={null}
               consumeDeepLinks={false}
               onAsk={onAsk}
             />
           </div>
-          ) : <OpenedDocumentPending failed={state === 'error'} message={error} onRetry={() => void load()} />}
+          ) : (<>
+            {/* Before the record is read there is no workbench to draw the bar, so the region keeps the way back and
+                the list, and focus has its close to land on. */}
+            <div className="dcv-bar">
+              {onShowList && <ToDocumentsButton count={listCount} onClick={showList} />}
+              <span className="dcv-bar-t" title={title}>{title}</span>
+              <button ref={backBtnRef} type="button" className="btn ed-ico" onClick={() => onExpandedChange(false)}
+                {...closeHandoff}
+                aria-label="Back to conversation" aria-keyshortcuts="Escape" title="Back to conversation (Esc)"
+                data-host-close="" data-testid="dc-back">
+                {I.close}
+              </button>
+            </div>
+            <OpenedDocumentPending failed={state === 'error'} message={error} onRetry={() => void load()} />
+          </>)}
         </div>
         );
         return beside && paneEl ? createPortal(region, paneEl) : region;

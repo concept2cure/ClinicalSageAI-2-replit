@@ -1728,9 +1728,6 @@
   .dcv-actions .btn {
     min-height: 32px;
   }
-  .dcv-open-surface {
-    margin-left: auto;
-  }
 
   /* ── The card, expanded into the editor ── */
   .dcv-expanded {
@@ -1798,16 +1795,6 @@
   .dcv-bar .btn.ed-ico {
     width: 32px;
     padding: 0;
-  }
-  .dcv-bar-hint {
-    margin-left: auto;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--text-300);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 1px 5px;
-    flex-shrink: 0;
   }
   /* ── The outline and the refresh line (2026-10-01) ──
      Every section, drafted or not, so the card says how far along the
@@ -1888,8 +1875,10 @@
      keeps a reading column with its answers and composer, and the document
      takes the rest. Too narrow for two columns, the document takes the screen
      and "Back to conversation" is the way out, as before. */
+  /* D4-5 (§D4.A): the conversation keeps a reading column of 420 to 560 px beside the document; the outline
+     opens closed there (D4-4), so the page keeps its measure. */
   .ct-main[data-canvas-open] > .ct-conv {
-    flex: 0 0 clamp(340px, 34%, 520px);
+    flex: 0 0 clamp(420px, 38%, 560px);
     border-right: 1px solid var(--border);
   }
   /* The panel fills the pane edge to edge. No border-left: `.ct-conv` already
@@ -2411,9 +2400,7 @@
     .dcv-prov,
     .dcv-sec-num,
     .dcv-bar-p,
-    .dcv-bar-hint,
-    .dcv-showall,
-    .dcv-open-surface {
+    .dcv-showall {
       font-size: 12px;
     }
     /* 44×44 (WCAG 2.2 Target Size). The `.btn` actions were 30px tall by an
@@ -2432,10 +2419,6 @@
     .dcv-actions .nda-open {
       flex: 1 1 auto;
     }
-    /* Left-aligned, `margin-left:auto` sends it to its own row on a phone. */
-    .dcv-open-surface {
-      margin-left: 0;
-    }
 
     /* ── The editor, expanded ── */
     .dcv-expanded {
@@ -2444,10 +2427,6 @@
     .dcv-bar {
       flex-wrap: wrap;
       row-gap: 4px;
-    }
-    .dcv-bar-hint {
-      /* The keyboard hint is for a keyboard. There is not one here. */
-      display: none;
     }
     /* One column at phone width, wherever the editor is mounted. Scoped to
        the canvas only, the Authoring surface kept its 220px outline beside
