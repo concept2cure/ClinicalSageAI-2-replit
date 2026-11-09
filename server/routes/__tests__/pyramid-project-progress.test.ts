@@ -248,6 +248,25 @@ describe('GET /pyramids/by-project?refs= — the portfolio line', () => {
     expect(admission.mock.calls[0][2]).toBe(false);
   });
 
+  it("carries what the global schedule draws: the filing, the work's start and the agency's clock (THE_PROGRAM §5)", async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind', target: '2027-06-04' }]);
+    const line = (await lines(PROGRAM)).body.data.lines[PROGRAM];
+    expect(line.filing).toBe('us_ind');
+    expect(line.start).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(line.start < '2027-06-04').toBe(true);
+    // The same clock the single read gives: the IND's 30 days (21 CFR 312.40).
+    const single = (await request(app()).get(PATH)).body.data;
+    expect(line.start).toBe(single.schedule.start);
+    expect(line.reviewClock).toEqual(single.reviewClock);
+    expect(line.reviewClock).toMatchObject({ days: 30, ends: '2027-07-04', basis: '21 CFR 312.40' });
+  });
+
+  it('gives an unscheduled project no start and no clock', async () => {
+    programRow.mockReturnValue([{ program_id: PROGRAM, filing: 'us_ind', target: null }]);
+    const line = (await lines(PROGRAM)).body.data.lines[PROGRAM];
+    expect(line).toMatchObject({ start: null, reviewClock: null });
+  });
+
   it('admits each project on its own: a refused one says only that it is unavailable', async () => {
     admission.mockImplementation(async (_req: unknown, projectId: string) => {
       if (projectId === '52') throw new ProjectAdmissionRefusal(403, 'PROJECT_ACCESS_DENIED', 'You do not have access to this project.');

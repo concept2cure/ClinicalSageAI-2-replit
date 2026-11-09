@@ -578,7 +578,8 @@ export function reviewClock(type: SubmissionType, target: string | null) {
 }
 
 /**
- * GET /pyramids/by-project?refs=<ref>,<ref>… → { asOf, lines: { [ref]: line } }: the portfolio line on Projects
+ * GET /pyramids/by-project?refs=<ref>,<ref>… → { asOf, lines: { [ref]: line } }: the portfolio line on Projects and
+ * the global schedule in Reporting & analytics
  * (THE_PROGRAM §5, §9 step 6), one read for a page of cards. Each ref is admitted as the single read admits it; a
  * project the person may not read, or that is not in their organisation, answers { unavailable: true } and nothing
  * else, so the batch tells no more than the single read would.
@@ -600,7 +601,11 @@ async function portfolioLine(req: Request, ref: string, asOf: string) {
     if (!scope.type) return { type: null, filing: scope.filing };
     const { statuses, pendingStore } = await projectStatuses(scope as ProjectPyramidScope & { type: SubmissionType });
     const { schedule } = projectSchedule(scope.type, scope.target);
-    return { type: scope.type, target: scope.target, summary: scheduleSummary(getPyramidForProject(scope.type), schedule, statuses, asOf),
+    // The global schedule in Reporting draws each project from this line (THE_PROGRAM §5): its filing, the work's
+    // start and the agency's clock, the same as the single read gives.
+    return { type: scope.type, filing: scope.filing, target: scope.target, start: schedule?.start ?? null,
+      reviewClock: reviewClock(scope.type, scope.target),
+      summary: scheduleSummary(getPyramidForProject(scope.type), schedule, statuses, asOf),
       ...(pendingStore ? { pendingStore: true } : {}) };
   } catch (err) {
     if (err instanceof ProjectAdmissionRefusal) return { unavailable: true };
