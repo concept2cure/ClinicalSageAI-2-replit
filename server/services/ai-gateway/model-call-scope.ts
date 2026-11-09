@@ -150,7 +150,10 @@ export function createRunSourceAuthority(raw: SourceRunIdentity): RunSourceAutho
     return inherited;
   }
   const authority = Object.freeze({}) as RunSourceAuthority;
-  sourceAuthorities.set(authority, { identity, tiers: new Set([3]), grants: new Map(), revision: 0 });
+  // A run starts at tier 1 (internal); each classified source it reads raises it (recordCurrentRunSource), so a
+  // CONFIDENTIAL or RESTRICTED read is still refused on a frontier provider. It started at tier 3 (b8cee0745), which
+  // refused every AnA conversation turn on Anthropic; the founder chose this start on 2026-11-09.
+  sourceAuthorities.set(authority, { identity, tiers: new Set([1]), grants: new Map(), revision: 0 });
   return authority;
 }
 export function runWithSourceAuthority<T>(authority: RunSourceAuthority, fn: () => T): T {
