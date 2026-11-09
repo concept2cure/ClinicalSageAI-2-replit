@@ -1,0 +1,147 @@
+# S5d regulatory strategy red: server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts (with the coordinating session's correction) in the working tree before the change (trunk's engine). 65 of 77 fail, all on assertions; the 12 controls pass.
+
+ ✓ server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the six regulatory-strategy tools compute from stated facts > 'assess_expedited_program' reaches its engine with a stated basis 4ms
+ ✓ server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the six regulatory-strategy tools compute from stated facts > 'plan_fda_meeting' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the six regulatory-strategy tools compute from stated facts > 'assess_orphan_designation' reaches its engine with a stated basis 7ms
+ ✓ server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the six regulatory-strategy tools compute from stated facts > 'select_505_pathway' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the six regulatory-strategy tools compute from stated facts > 'assess_rolling_submission' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the six regulatory-strategy tools compute from stated facts > 'compare_global_pathways' reaches its engine with a stated basis 1ms
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_orphan_designation' 'isSerious' reads not_stated when omitted or null, and is refused when malformed 11ms
+   → expected { fdaAssessment: { …(6) }, …(6) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_orphan_designation' 'isLifeThreatening' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { fdaAssessment: { …(6) }, …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_orphan_designation' 'isDebilitating' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { fdaAssessment: { …(6) }, …(6) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > each true/false input is kept as stated > 'select_505_pathway' 'dosageFormChange' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { recommendedPathway: { …(9) }, …(5) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > each true/false input is kept as stated > 'select_505_pathway' 'routeChange' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { recommendedPathway: { …(9) }, …(5) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > each true/false input is kept as stated > 'select_505_pathway' 'indicationChange' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { recommendedPathway: { …(9) }, …(5) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > each true/false input is kept as stated > 'select_505_pathway' 'newCombination' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { recommendedPathway: { …(9) }, …(5) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > each true/false input is kept as stated > 'select_505_pathway' 'formulationInnovation' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { recommendedPathway: { …(9) }, …(5) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > each true/false input is kept as stated > 'select_505_pathway' 'availableRLD' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { recommendedPathway: { …(9) }, …(5) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_rolling_submission' 'expeditedDesignationStatus.fastTrack' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { eligible: false, …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_rolling_submission' 'expeditedDesignationStatus.breakthrou…' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { eligible: true, …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_rolling_submission' 'expeditedDesignationStatus.rmat' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { eligible: true, …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_orphan_designation > a US prevalence with no stated source gives fdaEligible null (design S5d) 1ms
+   → expected true to be null
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_orphan_designation > an EU prevalence with no stated source is not used either 1ms
+   → expected true to be null
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_orphan_designation > an unknown prevalence is not ineligible 1ms
+   → expected { …(6) } to match object { eligible: null, …(1) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_orphan_designation > a prevalence of 200,000 or more leaves FDA eligibility to the cost-recovery prong, not false 1ms
+   → expected false to be null
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_orphan_designation > omitted seriousness facts leave EMA eligibility null and named, not undefined or false 1ms
+   → expected undefined to be null
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_orphan_designation > a clinical rationale is not a finding of significant benefit 0ms
+   → expected true to be null
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_orphan_designation > 5 in 10,000 does not exceed "not more than 5 in 10,000" 1ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_orphan_designation > an omitted clinical rationale is not a crash 2ms
+   → expected { status: 'needs_parameters', …(1) } to match object { status: 'computed' }
+ ✓ server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_orphan_designation > control: keeps the stated answer 0ms
+ ✓ server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_orphan_designation > control: a condition stated not serious, not life-threatening and not debilitating meets neither EU limb 0ms
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_orphan_designation > a serious condition alone does not meet the prevalence limb, which needs a life-threatening or chronically debilitating one 5ms
+   → expected true to be null
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_orphan_designation > a vaccine is counted by persons dosed per year, not by the disease prevalence 1ms
+   → expected true to be null
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_orphan_designation > a diagnostic is counted by persons dosed per year, not by the disease prevalence 0ms
+   → expected true to be null
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > select_505_pathway > chooses no pathway while an unstated fact could change it, and names both answers 1ms
+   → expected { pathway: '505b1', …(8) } to be null
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > select_505_pathway > keeps a pathway every answer gives 1ms
+   → expected 'Active ingredient is a known molecule…' to match /formulationInnovation was not stated:…/
+ ✓ server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > select_505_pathway > control: keeps the stated answer 0ms
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_rolling_submission > with no designation stated, eligibility is null, not "not eligible" 0ms
+   → expected undefined to be null
+ ✓ server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_rolling_submission > control: one designation stated true is enough 0ms
+ ✓ server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_rolling_submission > control: keeps the stated answer 0ms
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_expedited_program > calls no program eligible on a criterion no input states 1ms
+   → breakthrough_therapy: expected true to be null
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_expedited_program > early clinical evidence is not "not eligible" for Breakthrough Therapy; preclinical evidence is 0ms
+   → expected false to be null
+ ✓ server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_expedited_program > control: keeps a stated failure (no clinical evidence rules out Breakthrough Therapy) 0ms
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_expedited_program > a stated adequate therapy leaves Fast Track and Accelerated Approval not assessed, naming the finding 0ms
+   → expected false to be null
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_expedited_program > a biosimilar is not eligible for Fast Track, Breakthrough Therapy, Accelerated Approval or Priority Review 0ms
+   → fast_track: expected true to be false // Object.is equality
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_expedited_program > a stated adequate therapy leaves the unmet need RMAT asks for not assessed 0ms
+   → expected true to be null
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > assess_expedited_program > a combination product is not "not regenerative": whether it uses a regenerative therapy is not stated 0ms
+   → expected false to be null
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > assess_expedited_program availableTherapyLandscape undefined 1ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > assess_expedited_program evidenceLevel undefined 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > assess_expedited_program indication "Serious" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > assess_expedited_program productType "mAb" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > plan_fda_meeting purpose "EOP2" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > plan_fda_meeting developmentPhase undefined 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > assess_orphan_designation diseasePrevalenceUS "30000" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > assess_orphan_designation diseasePrevalenceEU -1 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > assess_orphan_designation existingApprovedTherapies 1.5 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > assess_orphan_designation diseasePrevalenceUSSource 42 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > assess_orphan_designation productType undefined 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > assess_orphan_designation productType "mAb" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > select_505_pathway activeIngredient undefined 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > select_505_pathway activeIngredient "NME" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > assess_rolling_submission expeditedDesignationStatus "fast track" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > compare_global_pathways targetMarkets undefined 1ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > compare_global_pathways targetMarkets [] 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > a missing or malformed value is refused by name or field, never read as another value or crashed on > compare_global_pathways targetMarkets[0] "USA" 1ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_orphan_designation' 'isSerious' says what an omission leaves and is not schema-required 1ms
+   → expected 'Is the disease serious?' to match /Omitted or null/
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_orphan_designation' 'isLifeThreatening' says what an omission leaves and is not schema-required 0ms
+   → expected 'Is the disease life-threatening?' to match /Omitted or null/
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_orphan_designation' 'isDebilitating' says what an omission leaves and is not schema-required 0ms
+   → expected 'Is the disease seriously debilitating?' to match /Omitted or null/
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'select_505_pathway' 'dosageFormChange' says what an omission leaves and is not schema-required 0ms
+   → expected 'Does the product involve a change in …' to match /Omitted or null/
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'select_505_pathway' 'routeChange' says what an omission leaves and is not schema-required 0ms
+   → expected 'Does the product involve a change in …' to match /Omitted or null/
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'select_505_pathway' 'indicationChange' says what an omission leaves and is not schema-required 0ms
+   → expected 'Does the product seek a new indicatio…' to match /Omitted or null/
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'select_505_pathway' 'newCombination' says what an omission leaves and is not schema-required 0ms
+   → expected 'Is the product a new fixed-dose combi…' to match /Omitted or null/
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'select_505_pathway' 'formulationInnovation' says what an omission leaves and is not schema-required 0ms
+   → expected 'Does the product involve a formulatio…' to match /Omitted or null/
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'select_505_pathway' 'availableRLD' says what an omission leaves and is not schema-required 0ms
+   → expected 'Is a reference listed drug (RLD) avai…' to match /Omitted or null/
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_rolling_submission' 'expeditedDesignationStatus.fastTrack' says what an omission leaves and is not schema-required 0ms
+   → expected 'Does the product have Fast Track desi…' to match /Omitted or null/
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_rolling_submission' 'expeditedDesignationStatus.breakthrou…' says what an omission leaves and is not schema-required 0ms
+   → expected 'Does the product have Breakthrough Th…' to match /Omitted or null/
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_rolling_submission' 'expeditedDesignationStatus.rmat' says what an omission leaves and is not schema-required 0ms
+   → expected 'Does the product have RMAT designatio…' to match /Omitted or null/
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > orphan takes the prevalence sources 2ms
+   → expected { diseasePrevalenceUS: { …(2) }, …(7) } to have property "diseasePrevalenceUSSource.description" with value StringMatching{…}
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > orphan asks whether the disease is chronically debilitating, the EU prevalence limb's wording 0ms
+   → expected 'Is the disease seriously debilitating?' to match /chronically debilitating/
+ × server/services/ana/__tests__/regulatory-strategy-unstated-inputs.test.ts > the definitions say what an omitted fact means > each description fits the gateway limit 1ms
+   → assess_expedited_program: expected 1044 to be less than or equal to 1024
+⎯⎯⎯⎯⎯⎯ Failed Tests 65 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  65 failed | 12 passed (77)

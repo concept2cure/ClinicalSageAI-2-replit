@@ -36,6 +36,7 @@
 > | S5d-0b: the input adapters join them | done | `s5d-0b-input-adapters/` |
 > | S5d benefit-risk | done | `s5d-benefit-risk/` |
 > | S5d post-approval | done | `s5d-post-approval/` |
+> | S5d regulatory strategy | done | `s5d-regulatory-strategy/` |
 > | S5d, S8–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
@@ -868,6 +869,43 @@ stability commitment or PLCM document keeps its default, said in the result. The
 profiles, the EC base rules and five fixed lookups (the US and EU category texts, the SUPAC level and the default PACMP
 test panels) move unchanged into the sibling `post-approval-reference.ts`, so the engine stays under the 100,000-byte
 ceiling. No source reader, app or service was added.
+
+**S5d regulatory strategy — What already exists (execution audit):** the six functions in
+`regulatory-strategy/regulatory-strategy-knowledge.ts` are already reached by `regulatoryStrategyTools.ts`, the
+executor's `runStatsTool` stated-input wrapper and the regulatory-strategy, medical-writing and markets skills; Japan's
+rows are read from `ind/ctd/jp-programs.ts`. No function refused a missing or malformed value, and none had a
+not-stated state. The pins `expedited-programs-unstated-facts-not-assessed`,
+`special-designations-orphan-unassessed-criteria-not-ineligible`, `special-designations-eu-orphan-says-chronically-debilitating`
+and the `regulatory-strategy-brief*` tests cover other engines (`global-ri/expedited-programs.ts`,
+`global-ri/special-designations.ts`, `global-ri/regulatory-strategy-brief.ts`). Their decided rules, that an unstated
+fact or an unassessed prong or limb is not assessed and never ineligible, that a criterion is unmet only when a stated
+fact fails it, and that the EU prevalence limb is "life-threatening or chronically debilitating", are followed here;
+those engines are not touched, nor are `ana/special-designations.ts`, `ana/regulatory-pathway.ts`,
+`market-specs/pathway-eligibility.ts`, `global-ri/ha-meetings.ts` or `global-ri/regulatory-pathway-advisor.ts`. Import
+`statedBoolean`, `statedNumber`, `anyOf`, `allOf` and the every-answer search from `immunogenicity-reference.ts`
+(S5d-0), and reuse `refuseUnlessStated` and `ComputationRefusal`. The local history is shallow, with no matching
+deletions. Evidence: `s5d-regulatory-strategy/`.
+
+**S5d regulatory strategy execution result:** the twelve true/false inputs (the three orphan seriousness facts, the
+six 505 facts and the three designations) report true, false or `not_stated` through `inputStates` and are no longer
+schema-required; a malformed one is refused by field, and the required enums, the unmet-need description and the
+market list by name. `assess_orphan_designation` takes `diseasePrevalenceUSSource` and `diseasePrevalenceEUSource`: a
+prevalence with no stated source gives `eligible: null` (the S5d sub-item above, for both agencies), as do a missing
+prevalence, a US prevalence of 200,000 or more (the cost-recovery prong), a vaccine or diagnostic (whose FDA count is
+persons dosed per year), an unmet EU prevalence limb (the insufficient-return limb), unstated seriousness and existing
+therapies (significant benefit), each named in `missing` or `notAssessedCriteria`. The EU prevalence limb needs a
+condition stated life-threatening or chronically debilitating, and 5 in 10,000 meets "not more than 5"; a condition
+stated not serious, not life-threatening and not debilitating fails both limbs and stays ineligible.
+`select_505_pathway` recommends a pathway only when every answer to the unstated facts gives it. Rolling review is
+eligible when a designation is stated true, ineligible when all three are stated false, and null otherwise.
+`assess_expedited_program` leaves Breakthrough Therapy, Accelerated Approval and Priority Review null and names the
+criterion no input states, keeps a program false where a stated fact fails it (preclinical evidence, a biosimilar),
+leaves Fast Track, Accelerated Approval and RMAT null beside an available therapy stated adequate (an unmet need or a
+meaningful advantage can remain beside it: the coordinating session's correction), and leaves RMAT null for a
+combination product. Four descriptions are condensed to the
+gateway's 1,024 characters. The engine's fixed tables, the Japan rows among them, move unchanged into the sibling
+`regulatory-strategy-reference.ts`, which takes the engine from 149,969 bytes to under the ceiling, and
+`jp-programs.test.ts` guards the sibling too. No source reader, app or service was added.
 
 **Pins:** `submission-center-tools.test.ts`, `ivd-lifecycle-tools.test.ts`, `deepening-tools.test.ts`, and the immunogenicity, bioequivalence and orphan tests where they exist.
 

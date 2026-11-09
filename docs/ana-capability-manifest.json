@@ -15218,7 +15218,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess FDA expedited program eligibility for a drug or biologic product. Evaluates all five FDA expedited programs: Fast Track Designation (FD&C Act §506(b), FDASIA 2012), Breakthrough Therapy Designation (FD&C Act §506(a), FDASIA 2012), Accelerated Approval (FD&C Act §506(c), FDORA 2022), Priority Review (PDUFA VII), and RMAT Designation (FD&C Act §506(g), 21st Century Cures Act 2016). Returns per-program eligibility assessment with criteria, rationale, benefits, application timing, and caveats; a comparison matrix across all programs on 10 dimensions (statutory basis, condition requirement, evidence standard, product scope, key benefit, timing, FDA response timeline, rolling review, approval standard, historical approval rate); and strategic recommendations for program selection and sequencing. Also flags FDORA 2022 updates to Accelerated Approval post-marketing requirements. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned values verbatim. Do NOT recompute or soften them.",
+      "description": "Assess FDA expedited program eligibility for a drug or biologic product. Evaluates all five FDA expedited programs: Fast Track Designation (FD&C Act §506(b), FDASIA 2012), Breakthrough Therapy Designation (FD&C Act §506(a), FDASIA 2012), Accelerated Approval (FD&C Act §506(c), FDORA 2022), Priority Review (PDUFA VII), and RMAT Designation (FD&C Act §506(g), 21st Century Cures Act 2016). Returns per-program eligibility with criteria, rationale, benefits, application timing and caveats (null, the criterion named, where one no input states decides it); a comparison matrix across all programs on 10 dimensions (statutory basis, condition requirement, evidence standard, product scope, key benefit, timing, FDA response timeline, rolling review, approval standard, historical approval rate); and strategic recommendations for selection and sequencing, with FDORA 2022 Accelerated Approval updates. Deterministic: no LLM, no network. Report the returned values verbatim; do not recompute or soften them.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -15252,7 +15252,7 @@
           "name": "productType",
           "type": "string",
           "required": true,
-          "description": "Product type. Affects RMAT eligibility (limited to regenerative medicine therapies: cell_therapy, gene_therapy, tissue_engineered)."
+          "description": "Product type. Affects RMAT eligibility (limited to regenerative medicine therapies: cell_therapy, gene_therapy, tissue_engineered; a combination_product is null, since whether it uses one is not an input). A biosimilar is not eligible for F"
         }
       ],
       "requiredInputs": [
@@ -15952,7 +15952,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess FDA and EMA orphan drug designation eligibility based on disease prevalence, clinical rationale, and existing therapy landscape. Returns: (1) FDA eligibility assessment (Orphan Drug Act, 21 CFR 316; <200,000 US prevalence threshold); (2) EMA eligibility assessment (Regulation (EC) No 141/2000; <5 per 10,000 EU prevalence + serious/debilitating/life-threatening + no satisfactory treatment OR significant benefit); (3) benefits comparison across 7 dimensions (market exclusivity, tax credits, fee waivers, protocol assistance, regulatory pathway, grants, pediatric requirements); (4) common pitfalls in orphan designation applications; (5) success factors; (6) prevalence calculation methodology including FDA orphan subset doctrine and acceptable data sources. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned values verbatim. Do NOT recompute or soften them.",
+      "description": "Assess FDA and EMA orphan drug designation eligibility based on disease prevalence, clinical rationale, and existing therapy landscape. Returns: (1) FDA eligibility assessment (Orphan Drug Act, 21 CFR 316; <200,000 US prevalence threshold); (2) EMA eligibility assessment (Regulation (EC) No 141/2000; not more than 5 per 10,000 EU prevalence + life-threatening or chronically debilitating + no satisfactory treatment OR significant benefit); (3) benefits comparison across 7 dimensions (market exclusivity, tax credits, fee waivers, protocol assistance, regulatory pathway, grants, pediatric requirements); (4) common pitfalls in orphan designation applications; (5) success factors; (6) prevalence calculation methodology including FDA orphan subset doctrine and acceptable data sources. A prevalence with no stated source, or a criterion no input states, leaves eligibility null. Deterministic: no LLM, no network. Report the returned values verbatim; do not recompute or soften them.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -15968,60 +15968,67 @@
           "description": "Number of persons affected by the disease in the United States. Must be <200,000 for FDA orphan eligibility. Null if unknown."
         },
         {
+          "name": "diseasePrevalenceUSSource",
+          "type": "string",
+          "required": false,
+          "description": "Where the US prevalence comes from, as the user stated it (a publication, registry or database). Without it the prevalence is not used and FDA eligibility is null. Do not supply one the user did not give."
+        },
+        {
           "name": "diseasePrevalenceEU",
           "type": [
             "number",
             "null"
           ],
           "required": true,
-          "description": "Disease prevalence in the EU expressed as number per 10,000 persons. Must be <5 per 10,000 for EMA orphan eligibility. Null if unknown."
+          "description": "Disease prevalence in the EU expressed as number per 10,000 persons. Must not exceed 5 per 10,000 for EMA orphan eligibility. Null if unknown."
+        },
+        {
+          "name": "diseasePrevalenceEUSource",
+          "type": "string",
+          "required": false,
+          "description": "Where the EU prevalence comes from, as the user stated it. Without it the prevalence is not used and EMA eligibility is null. Do not supply one the user did not give."
         },
         {
           "name": "clinicalRationale",
           "type": "string",
-          "required": true,
-          "description": "Clinical rationale for the product. For EMA: if existing treatments are available, explain the \"significant benefit\" the product would provide over existing therapy."
+          "required": false,
+          "description": "Clinical rationale for the product. For EMA: if existing treatments are available, explain the \"significant benefit\" the product would provide over existing therapy. Reported, not read as a finding of significant benefit."
         },
         {
           "name": "productType",
           "type": "string",
           "required": true,
-          "description": "Product type."
+          "description": "Product type. For a vaccine or diagnostic the FDA count is persons dosed per year, which no input carries, so FDA eligibility is null."
         },
         {
           "name": "existingApprovedTherapies",
           "type": "number",
-          "required": true,
-          "description": "Number of existing approved therapies for the target indication. Affects EMA \"significant benefit\" requirement."
+          "required": false,
+          "description": "Number of existing approved therapies for the target indication, a whole number. Affects EMA \"significant benefit\" requirement. Omitted or null: EMA eligibility is null."
         },
         {
           "name": "isSerious",
           "type": "boolean",
-          "required": true,
-          "description": "Is the disease serious?"
+          "required": false,
+          "description": "Is the disease serious? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "isLifeThreatening",
           "type": "boolean",
-          "required": true,
-          "description": "Is the disease life-threatening?"
+          "required": false,
+          "description": "Is the disease life-threatening? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "isDebilitating",
           "type": "boolean",
-          "required": true,
-          "description": "Is the disease seriously debilitating?"
+          "required": false,
+          "description": "Is the disease chronically debilitating (the EU prevalence limb: life-threatening or chronically debilitating)? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         }
       ],
       "requiredInputs": [
         "diseasePrevalenceUS",
         "diseasePrevalenceEU",
-        "clinicalRationale",
-        "productType",
-        "existingApprovedTherapies",
-        "isSerious",
-        "isLifeThreatening",
-        "isDebilitating"
+        "productType"
       ],
       "derived": true
     },
@@ -19226,7 +19233,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Compare regulatory pathways across target markets for a drug or biologic product. Supports 8 markets: US (FDA), EU (EMA), Japan (PMDA), China (NMPA), Canada (Health Canada), Australia (TGA), Brazil (ANVISA), and South Korea (MFDS). Returns per-market: (1) regulatory authority and division; (2) application type (NDA/BLA/MAA/J-NDA/IDLA/NDS); (3) standard and expedited review timelines; (4) expedited pathway equivalents with cross-mapping (e.g., FDA Breakthrough ↔ EMA PRIME ↔ PMDA SAKIGAKE ↔ NMPA Breakthrough); (5) orphan designation program with prevalence threshold and exclusivity period; (6) conditional/provisional approval mechanisms with post-approval requirements; (7) data requirement differences including ethnic bridging per ICH E5 for Japan/China/Korea; (8) GMP inspection requirements and PIC/S status; (9) HTA and reference pricing considerations. Also provides harmonization notes (ICH, PIC/S, Project Orbis, ACCESS Consortium), simultaneous submission strategy, and 6-dimension comparison matrix across selected markets. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned values verbatim. Do NOT recompute or soften them.",
+      "description": "Compare regulatory pathways across target markets for a drug or biologic product. 8 markets: US (FDA), EU (EMA), Japan (PMDA), China (NMPA), Canada (Health Canada), Australia (TGA), Brazil (ANVISA), and South Korea (MFDS). Returns per market: (1) authority and division; (2) application type (NDA/BLA/MAA/J-NDA/IDLA/NDS); (3) standard and expedited review timelines; (4) expedited pathway equivalents with cross-mapping (e.g., FDA Breakthrough ↔ EMA PRIME ↔ PMDA SAKIGAKE ↔ NMPA Breakthrough); (5) orphan designation, threshold and exclusivity; (6) conditional/provisional approval and post-approval requirements; (7) data requirement differences, including ethnic bridging per ICH E5 for Japan/China/Korea; (8) GMP inspection and PIC/S status; (9) HTA and reference pricing. Also harmonization notes (ICH, PIC/S, Project Orbis, ACCESS), simultaneous submission strategy and a 6-dimension comparison matrix. Deterministic: no LLM, no network. Report the returned values verbatim; do not recompute or soften them.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -19235,14 +19242,14 @@
         {
           "name": "productType",
           "type": "string",
-          "required": true,
-          "description": "Product type."
+          "required": false,
+          "description": "Product type. Not read: it does not change the result."
         },
         {
           "name": "indication",
           "type": "string",
-          "required": true,
-          "description": "Target therapeutic indication (e.g., \"non-small cell lung cancer\", \"type 2 diabetes\", \"spinal muscular atrophy\")."
+          "required": false,
+          "description": "Target therapeutic indication (e.g., \"non-small cell lung cancer\", \"type 2 diabetes\", \"spinal muscular atrophy\"). Not read: it does not change the result."
         },
         {
           "name": "targetMarkets",
@@ -19252,8 +19259,6 @@
         }
       ],
       "requiredInputs": [
-        "productType",
-        "indication",
         "targetMarkets"
       ],
       "derived": true
@@ -28841,7 +28846,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Plan an FDA meeting by selecting the correct meeting type, preparing the meeting request package, and structuring the briefing document. Classifies the meeting as Type A (immediately necessary — 30-day response), Type B (pre-IND, EOP1, EOP2, pre-NDA/BLA — 75-day response), Type C (other — 75-day response), Type D (formal dispute resolution), or Pre-Submission (505(b)(2)/ANDA-specific). Returns: (1) meeting type classification with description, timeline, and regulatory basis; (2) meeting request package components, submission timing, and format requirements; (3) briefing document structure with 9 sections (objectives, product background, disease background, nonclinical summary, clinical summary, CMC summary, regulatory strategy, questions, appendices); (4) timing recommendations specific to the meeting purpose and development phase; (5) question framing tips for effective FDA engagement; (6) PDUFA VII performance goals; (7) practical advice for meeting conduct. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned values verbatim. Do NOT recompute or soften them.",
+      "description": "Plan an FDA meeting by selecting the correct meeting type, preparing the meeting request package, and structuring the briefing document. Classifies the meeting as Type A (immediately necessary — 30-day response), Type B (pre-IND, EOP1, EOP2, pre-NDA/BLA — 75-day response), Type C (other — 75-day response), Type D (formal dispute resolution), or Pre-Submission (505(b)(2)/ANDA-specific). Returns: (1) meeting type with description, timeline and regulatory basis; (2) request package components, submission timing and format requirements; (3) briefing document structure with 9 sections (objectives, product background, disease background, nonclinical summary, clinical summary, CMC summary, regulatory strategy, questions, appendices); (4) timing recommendations for the meeting purpose and development phase; (5) question framing tips; (6) PDUFA VII performance goals; (7) practical advice for meeting conduct. Deterministic: no LLM, no network. Report the returned values verbatim; do not recompute or soften them.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -28868,15 +28873,14 @@
         {
           "name": "questionsToDiscuss",
           "type": "array",
-          "required": true,
-          "description": "List of key questions or topics the sponsor intends to discuss at the meeting. Used to provide tailored advice on question framing and briefing document focus areas."
+          "required": false,
+          "description": "List of key questions or topics the sponsor intends to discuss at the meeting. Not read: it does not change the result."
         }
       ],
       "requiredInputs": [
         "developmentPhase",
         "purpose",
-        "productType",
-        "questionsToDiscuss"
+        "productType"
       ],
       "derived": true
     },
@@ -32783,7 +32787,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Select the optimal FDA regulatory pathway under FD&C Act Section 505: 505(b)(1) Full NDA, 505(b)(2) NDA with reliance on prior findings, 505(j) ANDA (generic), or Suitability Petition (21 CFR 314.93). Applies a decision tree based on active ingredient novelty (NME vs. known), dosage form changes, route changes, indication changes, new combinations, formulation innovations, and availability of a reference listed drug (RLD). Returns: (1) recommended pathway with legal basis, required studies, advantages, disadvantages, and typical timeline; (2) alternative pathways with rationale; (3) decision tree rationale explaining the recommendation; (4) patent and exclusivity considerations (NCE 5-year, new clinical investigation 3-year, OTC 3-year, pediatric 6-month add-on, orphan 7-year, 180-day generic, patent term extension); (5) Paragraph I-IV certification types and implications. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned values verbatim. Do NOT recompute or soften them.",
+      "description": "Select the optimal FDA regulatory pathway under FD&C Act Section 505: 505(b)(1) Full NDA, 505(b)(2) NDA with reliance on prior findings, 505(j) ANDA (generic), or Suitability Petition (21 CFR 314.93). Applies a decision tree based on active ingredient novelty (NME vs. known), dosage form changes, route changes, indication changes, new combinations, formulation innovations, and availability of a reference listed drug (RLD); while an unstated fact could change the pathway, it is null and the facts are named. Returns: (1) recommended pathway with legal basis, required studies, advantages, disadvantages and typical timeline; (2) alternative pathways; (3) decision tree rationale; (4) patent and exclusivity considerations (NCE 5-year, new clinical investigation 3-year, OTC 3-year, pediatric 6-month add-on, orphan 7-year, 180-day generic, patent term extension); (5) Paragraph I-IV certification types. Deterministic: no LLM, no network. Report the returned values verbatim; do not recompute or soften them.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -32798,48 +32802,42 @@
         {
           "name": "dosageFormChange",
           "type": "boolean",
-          "required": true,
-          "description": "Does the product involve a change in dosage form compared to the RLD (e.g., tablet to capsule, oral to injectable)?"
+          "required": false,
+          "description": "Does the product involve a change in dosage form compared to the RLD (e.g., tablet to capsule, oral to injectable)? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "routeChange",
           "type": "boolean",
-          "required": true,
-          "description": "Does the product involve a change in route of administration compared to the RLD?"
+          "required": false,
+          "description": "Does the product involve a change in route of administration compared to the RLD? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "indicationChange",
           "type": "boolean",
-          "required": true,
-          "description": "Does the product seek a new indication not covered by the RLD labeling?"
+          "required": false,
+          "description": "Does the product seek a new indication not covered by the RLD labeling? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "newCombination",
           "type": "boolean",
-          "required": true,
-          "description": "Is the product a new fixed-dose combination of known active ingredients?"
+          "required": false,
+          "description": "Is the product a new fixed-dose combination of known active ingredients? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "formulationInnovation",
           "type": "boolean",
-          "required": true,
-          "description": "Does the product involve a formulation innovation (e.g., extended-release, novel delivery system, abuse-deterrent formulation)?"
+          "required": false,
+          "description": "Does the product involve a formulation innovation (e.g., extended-release, novel delivery system, abuse-deterrent formulation)? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "availableRLD",
           "type": "boolean",
-          "required": true,
-          "description": "Is a reference listed drug (RLD) available in the FDA Orange Book for the active ingredient?"
+          "required": false,
+          "description": "Is a reference listed drug (RLD) available in the FDA Orange Book for the active ingredient? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         }
       ],
       "requiredInputs": [
-        "activeIngredient",
-        "dosageFormChange",
-        "routeChange",
-        "indicationChange",
-        "newCombination",
-        "formulationInnovation",
-        "availableRLD"
+        "activeIngredient"
       ],
       "derived": true
     },
@@ -36438,7 +36436,7 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "Assess rolling submission eligibility and plan the submission schedule for an NDA/BLA application. Rolling review is available only to products with Fast Track, Breakthrough Therapy, or RMAT designation (FD&C Act §506(b)(2)). Returns: (1) eligibility assessment with rationale; (2) submission schedule template organized in 5 phases (nonclinical → CMC → clinical pharmacology → pivotal clinical → regional/administrative); (3) recommended CTD module submission order; (4) pre-submission checklist (12 items including eCTD preparation, FDA coordination, and pre-NDA/BLA meeting planning); (5) filing review clock considerations (PDUFA date calculation, refuse-to-file risk); (6) manufacturing site readiness requirements for pre-approval inspection; (7) practical tips for managing a rolling submission. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned values verbatim. Do NOT recompute or soften them.",
+      "description": "Assess rolling submission eligibility and plan the submission schedule for an NDA/BLA application. Rolling review is available only to products with Fast Track, Breakthrough Therapy, or RMAT designation (FD&C Act §506(b)(2)). Returns: (1) eligibility assessment with rationale; (2) submission schedule template organized in 5 phases (nonclinical → CMC → clinical pharmacology → pivotal clinical → regional/administrative); (3) recommended CTD module submission order; (4) pre-submission checklist (12 items including eCTD preparation, FDA coordination, and pre-NDA/BLA meeting planning); (5) filing review clock considerations (PDUFA date calculation, refuse-to-file risk); (6) manufacturing site readiness requirements for pre-approval inspection; (7) practical tips for managing a rolling submission. Deterministic: no LLM, no network. Report the returned values verbatim; do not recompute or soften them.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -36448,25 +36446,23 @@
           "name": "expeditedDesignationStatus",
           "type": "object",
           "required": true,
-          "description": "Current expedited designation status of the product."
+          "description": "Current expedited designation status of the product. Eligible when one is true; null while none is true and one is not stated."
         },
         {
           "name": "productType",
           "type": "string",
-          "required": true,
-          "description": "Product type."
+          "required": false,
+          "description": "Product type. Not read: it does not change the result."
         },
         {
           "name": "estimatedModuleCompletionDates",
           "type": "object",
-          "required": true,
-          "description": "Estimated completion dates for each CTD module (ISO 8601 format preferred). All fields optional."
+          "required": false,
+          "description": "Estimated completion dates for each CTD module (ISO 8601 format preferred). All fields optional. Not read: it does not change the result."
         }
       ],
       "requiredInputs": [
-        "expeditedDesignationStatus",
-        "productType",
-        "estimatedModuleCompletionDates"
+        "expeditedDesignationStatus"
       ],
       "derived": true
     },
