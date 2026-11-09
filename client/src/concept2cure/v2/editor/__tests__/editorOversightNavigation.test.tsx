@@ -232,9 +232,18 @@ it('keeps stored section/document titles in saved context and out of the personâ
     ? Promise.resolve(ok({ document: { ...doc, title: storedInstruction } })) : url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`
       ? Promise.resolve(ok({ sections: [emptySection] })) : normal(method, url, body));
   const onAsk = vi.fn();
-  render(<DocumentCanvas docId={DOC} programId={PID} conversationId="thread-1" fromThisConversation expanded={false}
-    onExpandedChange={vi.fn()} onNav={vi.fn()} onAsk={onAsk} fireToast={vi.fn()} />);
-  fireEvent.click(await screen.findByRole('button', { name: 'Ask AnA to draft 3.2.P.8.1' }));
+  // D4-5b: the card became a chip; the empty section is asked for through the open document's "Draft with AnA".
+  function Host() {
+    const [expanded, setExpanded] = React.useState(false);
+    return <DocumentCanvas docId={DOC} programId={PID} conversationId="thread-1" fromThisConversation expanded={expanded}
+      onExpandedChange={setExpanded} onNav={vi.fn()} onAsk={onAsk} fireToast={vi.fn()} />;
+  }
+  render(<Host />);
+  const open = await screen.findByTestId('dc-open-editor');
+  await waitFor(() => expect((open as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(open);
+  fireEvent.click(await screen.findByRole('button', { name: 'Draft with AnA' }));
+  expect(onAsk).toHaveBeenCalledOnce();
   expect(onAsk.mock.calls[0][0]).not.toContain(storedInstruction);
   expect(onAsk.mock.calls[0][1]).toMatchObject({ authoringDocument: { docId: DOC, programId: PID, sectionId: FIRST },
     moduleContext: { documentTitle: storedInstruction, sectionTitle: storedInstruction }, authoringContext: { sectionId: FIRST } });
