@@ -18,6 +18,7 @@ const holder = vi.hoisted(() => ({ db: null as any }));
 vi.mock('../../../db', () => ({ get db() { return holder.db; } }));
 
 import { materializeLeafSources, leafSourceKey } from '../leaf-source-resolver';
+import * as leafSources from '../leaf-source-resolver';
 
 let harness: IndPgliteDb;
 const ORG = 1;
@@ -86,6 +87,17 @@ beforeAll(async () => {
     -- 53: mime PDF but the file is missing on disk → unresolved (fail closed).
     INSERT INTO ctd_onboarding_documents (id, organization_id, file_name, mime_type, storage_path)
     VALUES (53, ${ORG}, 'gone.pdf', 'application/pdf', '${uploadPaths.missing.replace(/'/g, "''")}');
+  `);
+  // P-94 / P-108 3(a): an upload is judged against its project's Vault. The tables that judgement reads (the
+  // onboarding project, the project and its program, the Vault version and its approval record).
+  await harness.pglite.exec(`
+    ALTER TABLE ctd_onboarding_documents ADD COLUMN IF NOT EXISTS ctd_project_id INTEGER;
+    CREATE TABLE IF NOT EXISTS projects (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, name TEXT NOT NULL DEFAULT '', regulatory_program_id UUID, deleted_at TIMESTAMPTZ);
+    CREATE TABLE IF NOT EXISTS ctd_onboarding_projects (id INTEGER PRIMARY KEY, organization_id INTEGER NOT NULL, project_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'active');
+    CREATE SCHEMA IF NOT EXISTS vault;
+    CREATE TABLE IF NOT EXISTS vault.documents (id UUID PRIMARY KEY, program_id UUID NOT NULL, organization_id INTEGER, document_code TEXT,
+      supersedes_id UUID, storage_version_id TEXT, content_hash TEXT, file_name TEXT, mime_type TEXT, deleted_at TIMESTAMPTZ);
+    CREATE TABLE IF NOT EXISTS company_legal_registry (organization_id integer NOT NULL, id text NOT NULL, document jsonb NOT NULL, PRIMARY KEY (organization_id, id));
   `);
   // PGlite bootstrap can exceed the global 10s hookTimeout when the full
   // suite runs under load; give it explicit headroom.
@@ -243,6 +255,34 @@ describe('materializeLeafSources', () => {
     const original = await fs.readFile(uploadPaths.pdf);
     expect(staged.equals(original)).toBe(true);
     expect(resolved.md5).toBe(createHash('md5').update(original).digest('hex'));
+    // P-94: staged is not approved. No Vault version of this project holds these bytes approved, so the assembler
+    // counts it, in the readiness resolver's words, and freeze, dispatch and transmit refuse it.
+    expect(res.unfinalized).toBe(1);
+    expect(res.unfinalizedSections).toEqual([{ sectionCode: 'Signed Form 1571.pdf', status: leafSources.ONBOARDING_UPLOAD_NOT_APPROVED }]);
+  });
+
+  it('an upload whose same bytes are approved in its project\'s Vault is not counted unapproved (P-108 3(a))', async () => {
+    const program = '99999999-9999-4999-8999-999999999999';
+    const vaultId = '99999999-0000-4000-8000-000000000001';
+    const hash = createHash('sha256').update(await fs.readFile(uploadPaths.pdf)).digest('hex');
+    await harness.pglite.exec(`
+      INSERT INTO projects (id, organization_id, name, regulatory_program_id) VALUES (7001, ${ORG}, 'Upload project', '${program}');
+      INSERT INTO ctd_onboarding_projects (id, organization_id, project_id) VALUES (7001, ${ORG}, 7001);
+      INSERT INTO ctd_onboarding_documents (id, organization_id, file_name, mime_type, storage_path, ctd_project_id)
+      VALUES (54, ${ORG}, 'Signed Form 1571 (approved copy).pdf', 'application/pdf', '${uploadPaths.pdf.replace(/'/g, "''")}', 7001);
+      INSERT INTO vault.documents (id, program_id, organization_id, document_code, storage_version_id, content_hash, file_name)
+      VALUES ('${vaultId}', '${program}', ${ORG}, 'form-1571', 'ver-1', '${hash}', 'Signed Form 1571.pdf');
+      INSERT INTO canonical_documents (canonical_id, organization_id, project_id, title, document_type, stage, has_content, content_hash, source_refs)
+      VALUES ('cd-p94', ${ORG}, '${program}', 'Signed Form 1571.pdf', 'OTHER', 'approved', true, '${hash}',
+        jsonb_build_object('vault_documents', jsonb_build_object('nativeId', '${vaultId}', 'role', 'artifact')));
+    `);
+    const res = await materializeLeafSources({
+      leaves: [{ documentTable: 'ctd_onboarding_documents', documentId: 54 }],
+      organizationId: ORG,
+      stageDir: await stage(),
+    });
+    expect(res.materialized).toBe(1);
+    expect(res.unfinalized).toBe(0);
   });
 
   it('leaves a NON-PDF upload unresolved (no binary→PDF conversion)', async () => {
@@ -253,6 +293,7 @@ describe('materializeLeafSources', () => {
       stageDir,
     });
     expect(res.materialized).toBe(0);
+    expect(res.unfinalized).toBe(0);
     expect(res.unresolved).toHaveLength(1);
     expect(res.unresolved[0].reason).toMatch(/not application\/pdf/i);
   });
@@ -265,6 +306,7 @@ describe('materializeLeafSources', () => {
       stageDir,
     });
     expect(res.materialized).toBe(0);
+    expect(res.unfinalized).toBe(0);
     expect(res.unresolved).toHaveLength(1);
     expect(res.unresolved[0].reason).toMatch(/%PDF-|not a valid PDF/i);
   });
@@ -277,6 +319,7 @@ describe('materializeLeafSources', () => {
       stageDir,
     });
     expect(res.materialized).toBe(0);
+    expect(res.unfinalized).toBe(0);
     expect(res.unresolved).toHaveLength(1);
     expect(res.unresolved[0].reason).toMatch(/not readable|missing/i);
   });
@@ -289,6 +332,7 @@ describe('materializeLeafSources', () => {
       stageDir,
     });
     expect(res.materialized).toBe(0);
+    expect(res.unfinalized).toBe(0);
     expect(res.unresolved).toHaveLength(1);
     expect(res.unresolved[0].reason).toMatch(/not found in this organization/i);
   });
