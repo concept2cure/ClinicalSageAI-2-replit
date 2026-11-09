@@ -89,6 +89,25 @@ describe('Sequences filed before this platform', () => {
     expect(screen.getByText(/cannot be after the last one filed/)).toBeTruthy();
   });
 
+  /* The coordinating session's ruling of 2026-11-09 (P-92 C2): the control that opens the declaration is the hairline
+     secondary, "btn ghost". A bare "sc-btn" read as a line of text in the running app (D7 2026-11-09, "Seen, not changed
+     here"). It asks nothing of AnA, so it carries no spark, and it is not the view's orange action. */
+  it('opens from a hairline secondary button, not a line of text, with no spark and no orange', () => {
+    withClient(<FiledBaselineSlot read={{ state: 'ready', baseline: null }} submissionId={12} onDeclared={vi.fn()} />);
+    const open = screen.getByRole('button', { name: 'Declare sequences filed before this platform' });
+    expect(open.className).toBe('btn ghost');
+    expect(open.querySelector('svg')).toBeNull();
+  });
+
+  /* The coordinating session's ruling of 2026-11-09 (P-92 C2): while the form is open, signing it is the person's task
+     and its one primary (D0's .btn.primary, not the legacy sp-primary); Cancel is the hairline secondary. */
+  it('the open form signs with the one primary, and cancels with the hairline secondary', () => {
+    withClient(<FiledBaselineSlot read={{ state: 'ready', baseline: null }} submissionId={12} onDeclared={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Declare sequences filed before this platform' }));
+    expect(screen.getByRole('button', { name: 'Sign declaration' }).className).toBe('btn primary');
+    expect(screen.getByRole('button', { name: 'Cancel' }).className).toBe('btn ghost');
+  });
+
   it('shows the declaration in force, with who declared it', () => {
     render(<FiledBaselineSlot read={{ state: 'ready', baseline: DECLARED }} submissionId={12} onDeclared={vi.fn()} />);
     expect(screen.getByTestId('filed-baseline-note').textContent).toBe(

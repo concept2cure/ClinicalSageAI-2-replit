@@ -1,0 +1,5 @@
+MUTATION C2M3-record-key-in-target-line in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-09T14:23:41.300643Z): replaced [; nothing is sent to FDA`,] with [; nothing is sent to FDA · ectd-sequence:${flow.seq.id}`,]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > signs the server's statement, asks again, then settles; no record key and no signature id on screen 460ms
+      Tests  1 failed | 27 skipped (28)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 aa9da32b57f3e6c981d6febb6d7a91d29febc1d6723f4db4005f6e16f87313f0 (expected aa9da32b57f3e6c981d6febb6d7a91d29febc1d6723f4db4005f6e16f87313f0)

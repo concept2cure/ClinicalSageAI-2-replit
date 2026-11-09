@@ -1,0 +1,45 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "startedAt": "2026-11-09T14:13:11.364Z",
+  "steps": [
+    {
+      "name": "the objective field is labelled optional, with the server's limit"
+    },
+    {
+      "name": "the project is created with its objective, in one write, and its objective of record is it",
+      "programId": "55ae370d-8f15-44c1-969f-b54b1fda45f2",
+      "read": 200
+    },
+    {
+      "name": "an over-long objective is refused by the server in its own words",
+      "status": 400
+    },
+    {
+      "name": "the field at 390 dark",
+      "hScroll": 0
+    }
+  ],
+  "requests": [
+    {
+      "post": "/api/c2c/projects",
+      "status": 201,
+      "sentObjective": "Open the IND for D2 walk 141311: show the product is safe at the proposed first-in-human doses.",
+      "recorded": {
+        "charterId": 4,
+        "sectionId": 4,
+        "version": 1
+      }
+    },
+    {
+      "get": "objectives",
+      "status": 200,
+      "version": null
+    },
+    {
+      "post": "/api/c2c/projects (4,001 characters)",
+      "status": 400,
+      "message": "The objective must be at most 4,000 characters, with at most 20 sources. Each source needs a kind and a title; an address, if given, must be http or https."
+    }
+  ],
+  "finishedAt": "2026-11-09T14:13:22.036Z"
+}

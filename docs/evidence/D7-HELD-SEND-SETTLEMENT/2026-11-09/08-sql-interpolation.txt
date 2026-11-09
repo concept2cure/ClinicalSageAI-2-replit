@@ -1,0 +1,23 @@
+# P-92 C1: ci:sql-interpolation before the fix, 2026-11-09T15:20:50Z, at db546430a0 (C1+C2 merged with origin 0829c4ed57); found by the pre-push hook
+[ci:sql-interpolation] 37 fixed canonical predicate(s) proved separately; no value allowance added:
+[ci:sql-interpolation] ❌ 1 problem(s):
+
+  • server/services/submission-gateways/fda-esg-receipts.ts: 1 value(s) interpolated into SQL text — not in the baseline
+
+  A value in SQL TEXT is an injection waiting for an input. Pass it as a bind
+  parameter ($1, or drizzle sql`…${x}…`, which parameterizes). For a genuine
+  identifier (a table or column name), take it from a fixed allowlist in code,
+  and raise this file's count in scripts/ci/sql-interpolation-baseline.json in
+  the same change, with the reason in the commit. RLS does not contain injected
+  SQL here (docs/security/C2C_TENANT_ISOLATION_PROOF.md §0).
+
+EXIT 1
+
+# P-92 C1: ci:sql-interpolation after the fix (readHeldSend's two literal statements), 2026-11-09T15:21:46Z
+[ci:sql-interpolation] 37 fixed canonical predicate(s) proved separately; no value allowance added:
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1050 baselined interpolation(s) in 222 file(s); the baseline may only shrink.
+EXIT 0
+
+# the nine C1 suites of 02-green.txt after the fix
+ Test Files  9 passed (9)
+      Tests  140 passed (140)

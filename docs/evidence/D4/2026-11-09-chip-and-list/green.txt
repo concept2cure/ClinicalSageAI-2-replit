@@ -1,0 +1,13 @@
+The 17 files of the migration:
+ Test Files  17 passed (17)
+      Tests  275 passed (275)
+
+Every suite that renders the editor, the canvas or the thread, or reads its stylesheet (144 files listed, 142 with tests), first run:
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 141 passed (142)
+      Tests  1 failed | 1634 passed (1635)
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > every caller of the Place into filing dialog says what the document is > passes docStatus and sectionCodes wherever the dialog is rendered 28ms
+
+That one case asserted the Place into filing dialog had at least two callers; the card's copy is gone by design, so it now requires the open document's bar to be the caller. Rerun:
+ Test Files  1 passed (1)
+      Tests  16 passed (16)

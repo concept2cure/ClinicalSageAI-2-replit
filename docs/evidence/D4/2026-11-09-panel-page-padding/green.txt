@@ -1,0 +1,206 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's page type (D4-1, .design/claude-convergence/D4.md §D4.K) > parses nesting and :is() lists 2ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's page type (D4-1, .design/claude-convergence/D4.md §D4.K) > reads the section in the serif at the prose size, and its paragraphs inherit it (defect 1) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's page type (D4-1, .design/claude-convergence/D4.md §D4.K) > reads document view the same way, wherever a section body is drawn 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's page type (D4-1, .design/claude-convergence/D4.md §D4.K) > scopes the page type to `.ed`, so RichSectionEditor's other hosts keep theirs 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > colours a drafted section's dot in the outline (defect 2) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > marks the current item with a soft fill, not orange (defect 3) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > contains the outline in its own scroll, so the page does not scroll (defect 4) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > sets the page on a centred reading measure 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > keeps the ribbon on one row that scrolls inside itself, each control at its own width (defect 5) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > keeps notes and links quiet in the editor (defect 5) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > holds the outline's and the page's own text at the 12px floor or above (D0 §3) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the editor's source panels at phone width (B5) > sizes the one column to the panel, so no item can set it wider 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the editor's source panels at phone width (B5) > keeps a select inside the panel 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the editor's source panels at phone width (B5) > lets the items of the panel's inline grids be as narrow as the panel 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the conversation beside an open document (D4-5) > keeps a 420 to 560 px column 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the page inside a narrow panel (§D4.K artifact container) > gives the page 28 px sides in a panel under 900 px 2ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the page inside a narrow panel (§D4.K artifact container) > gives the page 16 px sides, and a 22 px title, in a panel under 560 px 1ms
+stderr | client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — asks arrive in the canonical conversation > Draft with AnA prefills the visible composer and sends saved section context only after Enter
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — asks arrive in the canonical conversation > Draft with AnA prefills the visible composer and sends saved section context only after Enter 1067ms
+stderr | client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — asks arrive in the canonical conversation > an empty section keeps both draft controls, and the toolbar asks for the exact section
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — asks arrive in the canonical conversation > an empty section keeps both draft controls, and the toolbar asks for the exact section 548ms
+stderr | client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — asks arrive in the canonical conversation > the canonical composer sends the person’s edited question in the same saved document context
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — asks arrive in the canonical conversation > the canonical composer sends the person’s edited question in the same saved document context 445ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — asks arrive in the canonical conversation > shows real work, evidence and follow-up actions in the canonical conversation 764ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — asks arrive in the canonical conversation > keeps initial writing focus and a prefilled handoff starts no pretend conversation 372ms
+stderr | client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — asks arrive in the canonical conversation > holds the handoff behind unsaved-work disposition and sends only the saved record after leaving
+[useAnaChat] stream failed: Stream request failed: 503
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — asks arrive in the canonical conversation > holds the handoff behind unsaved-work disposition and sends only the saved record after leaving 642ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the answer is on screen after a turn > shows the start of the newest canonical answer without moving the whole page 536ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx > DocumentAuthoring — the governed acts are never scrolled out of the header > Save is in the bar, and no rule makes the bar scroll sideways 133ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > rejects an old same-URL deferred body after the canonical session is replaced 85ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > withdraws cached rows after a known current-access 401 refusal 11ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > withdraws cached rows after a known current-access 403 refusal 9ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > withdraws cached rows after a known current-access 404 refusal 8ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > withdraws cached rows after a known current-access 503 refusal 7ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > retains explicitly stale rows on an ordinary transient refresh failure 6ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > withdraws prior rows when authority verification returns AUTHORING_READ_ACCESS_UNAVAILABLE 7ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > withdraws prior rows when authority verification returns PROJECT_ACCESS_UNAVAILABLE 7ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > the saved conversation list belongs to the current session and read > preserves partial readScope without inheriting whole-source conversation or origin fields 2ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > reopened with no card in the transcript, the right column lists them, read by conversation id 111ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > Open puts the document in the one editor, beside the conversation 480ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > a document whose card is in the transcript opens through that card: no second editor 264ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > an open document reaches the list from its bar, "← Documents (2)", and focus lands on the list 299ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > closing a document the list opened hands focus back to its row 282ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > "This project" lists what AnA built in the open project 100ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > a row offers "Download working copy", with working copies only, marked as uncontrolled 110ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > a failed read is an error with a retry, never an empty list 49ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > a document the list opened whose record does not read says so beside the conversation, with a retry 124ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > empty is said in words, and the column stays closed until asked 27ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > at 1100px and narrower it never takes the screen by itself; the header opens it 33ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > closed by the person, it stays closed, and focus returns to the header control 68ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > is read again when an AnA turn ends 44ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > "Back to conversation" shows the conversation, and focus goes to the header's Documents 213ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > Escape does the same 209ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > an ask from the editor lands in the composer, on screen, not behind the list 276ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > beside the conversation (wider than 1100px), closing it still hands focus back to its row in the list 176ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > a draft that is not an authoring document keeps the side column on screen; the header still opens the list 43ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > a turn still running keeps AnA's progress on screen; the list shows by itself once it ends 49ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > with the side column closed by the person, the list shows by itself even beside a type-B draft 31ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The count beside "Documents" is of the list it opens > after "This project", an open document's "← Documents" counts the project's list 242ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > A document the list opened says its status > a draft opened with no card in the transcript shows "Draft" in the editor's bar 183ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > draws one bar with the title and its state, and no crumbs or "Save and sign" group 472ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > makes Save the one primary and opens the reason strip only while there is something to save 152ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > holds every panel and act in More, by name and test id, with arrows, Escape and focus return 348ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > opens a panel chosen from More, and its close returns focus to More 262ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the editor has one bar > opens Review tasks from the status word and the versions from "v{n}" 339ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > puts Draft with AnA, Draft from sources and Review with AnA in the ✻ menu, and an ask lands in the conversation 193ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > opens the existing New document and New section drawers from More 522ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > keeps Download in the bar as an icon, the same menu 132ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > keeps Freeze, E-sign and Place into filing in the bar until D4-3 moves their mounts 161ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: AnA, create and download from the bar > shows the conversation from the page placement where the AnA button stood 109ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > MenuButton is a menu button that skips items it does not show 39ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > DownloadMenu compact draws the icon only, named Download 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > AuthoringOversightActions as a menu: the four asks as items, the same note, each ask closes the menu 19ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > AuthoringCreateExport with triggers="download" draws Download only and opens its drawers on request 43ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the one menu-button pattern > AuthoringCreateExport says a refused request in a toast and opens no drawer 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the bar and menu CSS (§D4.K) > a focused menu item keeps a visible ring, not outline: none alone 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the bar and menu CSS (§D4.K) > retires the header rules no surface draws any more, and the editor draws none of the old header 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the bar and menu CSS (§D4.K) > wraps rather than clips at every width, and wins over D0’s later `.dcv-bar` shell 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchBar.test.tsx > D4-2: the bar and menu CSS (§D4.K) > hides at phone width only what More holds whole, so nothing goes out of reach 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the class namespace is its own > shares no class name with the Design Controls surface, whose stylesheet also owns a “.dc” family 43ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > names what the expand control does and what it controls, and moves focus into the region it opens 243ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > Escape collapses from anywhere in the expanded region — including with focus left on the body — and returns focus to the header control 154ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > Escape with a workbench rail open closes the rail first, then the canvas 402ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > offers exactly one way back while expanded 235ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — keyboard > does not trap: every control in the collapsed card is reachable, and the card does not hold focus 14ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > File to vault: labelled, modal, focus trapped while open, focus restored on close 266ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — the dialogs it opens are real dialogs > Send for review: labelled, modal, focus trapped while open, focus restored on close 267ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas stylesheet — motion > every transition and animation is at most 200ms and eases out — no spring, no bounce, no overshoot 3ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas stylesheet — motion > every animation and transition it declares is removed under prefers-reduced-motion 2ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas — microcopy > never exclaims and never cheers 3ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > the canvas — microcopy > never hedges in a user-facing string 3ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — acts the server will refuse > disables File to vault and Send for review with the reason as described text 222ms
+ ✓ client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx > DocumentCanvas — acts the server will refuse > leaves them enabled when the document read returns no access 182ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft offers both working copies, each marked as an uncontrolled copy
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft offers both working copies, each marked as an uncontrolled copy 221ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > choosing Working copy (Word) on a draft posts the working-copy route and downloads what the server sent 58ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft shows the controlled export disabled, with its reason visible and read with each item
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > Working copy (PDF) asks for a PDF 45ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a refusal is said in the server’s words, beside the control and in a toast, and nothing downloads 49ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft shows the controlled export disabled, with its reason visible and read with each item 40ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > names what it opens, and says whether it is open
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a FROZEN document offers the controlled export, through the export route 34ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a APPROVED document offers the controlled export, through the export route 32ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a approved document offers the controlled export, through the export route 33ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > names what it opens, and says whether it is open 27ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > opens on ArrowDown with focus on the first item; the arrows move; Escape closes and returns focus 38ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > choosing an item closes the menu and returns focus to the button 40ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > What the control says belongs to one document > a refusal for one document is not shown beside the next one the control is handed 40ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > where the browser has a top layer, the menu opens in it as a manual popover, placed from its button
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The toolbar that scrolls holds what it scrolls > the live region is an absolutely placed box inside the menu’s own wrapper
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > What the control says belongs to one document > an answer that arrives after the person moved on is told, but not shown beside the other document, and does not hold its control 67ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > where the browser has a top layer, the menu opens in it as a manual popover, placed from its button 40ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > near the top of the screen it opens below its button, right edges aligned, in fixed coordinates 1ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > with room above it opens above; aligned left where right-aligned would run off the screen 1ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > taller than the room below, it scrolls inside itself rather than running off the screen 1ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The toolbar that scrolls holds what it scrolls > the live region is an absolutely placed box inside the menu’s own wrapper 9ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The toolbar that scrolls holds what it scrolls > where the bar’s acts sit at phone width they are the containing block, and never a sideways scroller 2ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The toolbar that scrolls holds what it scrolls > the menu itself stays fixed, so the toolbar does not cut it off 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > stacks the list above the detail 4ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > wraps what does not fit in the detail, which cuts off what overflows it 9ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > makes every control a reviewer taps there a 44px target 4ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > marks the controls those rules name, and sets no inline height a rule cannot override 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Tasks tray at 390px > makes Close and each notice’s Mark read 44px square 22ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Tasks tray at 390px > makes Triage, Show more, Open the task board and every button in the tray 44px tall 18ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The review decision dialog at 390px > makes the decision, the reason and each button a 44px target 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > the shell resets every button’s padding and background 0ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-btn-primary its box outranks that reset 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-btn-secondary its box outranks that reset 0ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-close its box outranks that reset 0ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-meaning-opt its box outranks that reset 0ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > at 390px Sign and commit, Cancel, Done and each meaning are 44px tall, and the close control 44px square 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > reduced motion still stops their transitions, at the same rank 0ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > no second copy of the meaning pills’ rules works around the reset elsewhere 4ms
+
+ Test Files  7 passed (7)
+      Tests  124 passed (124)
+   Start at  15:20:05
+   Duration  25.51s (transform 3.96s, setup 496ms, import 7.52s, tests 13.80s, environment 2.76s)
+

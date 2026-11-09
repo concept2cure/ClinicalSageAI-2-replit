@@ -63,6 +63,12 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
+const setEditorTarget = vi.hoisted(() => vi.fn());
+vi.mock('../editorTarget', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../editorTarget')>()),
+  setEditorTarget,
+}));
+
 import { DocJourney } from '../surfaces/DocJourney';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -84,7 +90,7 @@ const JOURNEY = [
     active: true,
     sub: 'Signed off by the reviewer',
     kind: 'doc',
-    doc: { title: 'Clinical Overview', module: '2.5', productCode: 'BX-204', version: '3.0' },
+    doc: { id: '3f2c1a10-0000-4000-8000-000000000055', programId: '6f1c2a10-0000-4000-8000-000000000001', title: 'Clinical Overview', module: '2.5', productCode: 'BX-204', version: '3.0' },
     snap: {
       mode: 'doc',
       heading: 'Clinical Overview',
@@ -241,5 +247,64 @@ describe('DocJourney preview offers no control it cannot honour', () => {
       findings,
       findings.length ? `app-v2.css still styles the deleted toolbar:\n  · ${findings.join('\n  · ')}` : '',
     ).toEqual([]);
+  });
+});
+
+/* "Open in editor" went to the editor's document list (`onNav('document-authoring')` and nothing else), so the person
+   had to find the document again. The rows now name it (the assembler's identity carries its id and project), and the
+   button opens that document, in its project, through the one editor door the Review board uses. */
+describe('The journey opens its own document in the editor', () => {
+  it('opens this document, in its project, not the editor list', async () => {
+    const onNav = vi.fn();
+    setEditorTarget.mockClear();
+    render(
+      <DocJourney
+        surface={{ id: 'doc-journey', label: 'Document journey', navTier: 'global' } as any}
+        onAsk={() => {}}
+        onNav={onNav}
+        segment="biotech"
+      />,
+    );
+    (await screen.findByRole('button', { name: /Open in editor/ })).click();
+    expect(setEditorTarget).toHaveBeenCalledWith(expect.objectContaining({
+      docType: null,
+      docId: '3f2c1a10-0000-4000-8000-000000000055',
+      programId: '6f1c2a10-0000-4000-8000-000000000001',
+    }));
+    expect(onNav).toHaveBeenCalledWith('document-authoring');
+  });
+});
+
+/* D4-7 (§D4.J): the journey on D0's one work-area page pattern. The context eyebrow goes; the header is `.ph` with one
+   primary, "Open in editor", once on the page; "Continue with AnA" is quiet; the four figures stay D0's quiet figures;
+   and the preview's prose takes the editor's type. */
+describe('The journey on the work-area page pattern (D4-7)', () => {
+  it('has the page header with no eyebrow, one primary that opens the document, and a quiet AnA action', async () => {
+    const { container } = await renderPreview();
+    expect(container.querySelector('.reg-eyebrow, .ph-eyebrow')).toBeNull();
+    expect(container.textContent).not.toMatch(/Workspace · authoring/i);
+    const head = container.querySelector('.ph')!;
+    expect(head.querySelector('h1.ph-title')?.textContent).toBe('Document journey');
+    const acts = head.querySelector('.ph-acts')!;
+    const primaries = acts.querySelectorAll('.btn.primary');
+    expect(primaries.length).toBe(1);
+    expect(primaries[0].textContent).toMatch(/Open in editor/);
+    expect(acts.querySelector('.btn.ghost')?.textContent).toMatch(/Continue with AnA/);
+    expect(container.querySelector('.reg-cta, .reg-mini')).toBeNull();
+    expect(screen.getAllByRole('button', { name: /Open in editor/ })).toHaveLength(1);
+  });
+
+  it('keeps the four facts as quiet figures', async () => {
+    const { container } = await renderPreview();
+    const labels = [...container.querySelectorAll('.reg-kpis > .reg-kpi .reg-kpi-l')].map((n) => n.textContent);
+    expect(labels).toEqual(['Stages recorded', 'Current version', 'Current stage', 'Last update']);
+  });
+
+  it('sets the preview prose in the editor\'s type', () => {
+    const css = readFileSync(CSS_PATH, 'utf8');
+    const rule = /\.c2c-v2 \.dj-stagepane \.dj-page \.dj-page-p\s*\{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(rule).toMatch(/font-family:\s*var\(--font-serif\)/);
+    expect(rule).toMatch(/font-size:\s*var\(--fs-prose, 16px\)/);
+    expect(rule).toMatch(/line-height:\s*1\.7/);
   });
 });

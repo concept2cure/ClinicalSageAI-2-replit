@@ -1,0 +1,120 @@
+[
+ {
+  "case": "journey-1440-light",
+  "page": {
+   "eyebrow": false,
+   "title": "Document journey",
+   "primaries": [
+    "Open in editor"
+   ],
+   "uppercase": [],
+   "sideScroll": false
+  },
+  "journey": {
+   "kpis": [
+    {
+     "l": "Stages recorded",
+     "v": "0/1",
+     "border": "0px none",
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+     "l": "Current version",
+     "v": "—",
+     "border": "0px none",
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+     "l": "Current stage",
+     "v": "Created",
+     "border": "0px none",
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+     "l": "Last update",
+     "v": "Nov 9",
+     "border": "0px none",
+     "bg": "rgba(0, 0, 0, 0)"
+    }
+   ],
+   "docTitle": null,
+   "prose": null,
+   "ask": "Continue with AnA"
+  },
+  "afterOpen": {
+   "url": "/concept2cure/document-authoring?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+   "barTitle": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5DraftSaved 3 h ago",
+   "placement": "page"
+  }
+ },
+ {
+  "case": "journey-1440-dark",
+  "page": {
+   "eyebrow": false,
+   "title": "Document journey",
+   "primaries": [
+    "Open in editor"
+   ],
+   "uppercase": [],
+   "sideScroll": false
+  },
+  "journey": {
+   "kpis": [
+    {
+     "l": "Stages recorded",
+     "v": "0/1",
+     "border": "0px none",
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+     "l": "Current version",
+     "v": "—",
+     "border": "0px none",
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+     "l": "Current stage",
+     "v": "Created",
+     "border": "0px none",
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+     "l": "Last update",
+     "v": "Nov 9",
+     "border": "0px none",
+     "bg": "rgba(0, 0, 0, 0)"
+    }
+   ],
+   "docTitle": null,
+   "prose": null,
+   "ask": "Continue with AnA"
+  }
+ },
+ {
+  "case": "engine-1440-light",
+  "page": {
+   "eyebrow": false,
+   "title": "AnA authoring engine",
+   "primaries": [
+    "Open the document editor"
+   ],
+   "uppercase": [],
+   "sideScroll": false
+  },
+  "engine": {
+   "badge": {
+    "border": "0px solid",
+    "radius": "0px",
+    "size": "13px",
+    "bg": "rgba(0, 0, 0, 0)"
+   },
+   "headerActions": [
+    {
+     "t": "Draft with AnA",
+     "cls": "btn ghost",
+     "bg": "rgba(0, 0, 0, 0)"
+    }
+   ]
+  }
+ }
+]

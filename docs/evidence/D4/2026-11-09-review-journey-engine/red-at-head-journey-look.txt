@@ -1,0 +1,67 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > the stylesheet gate measures what it claims > flags the orphaned rules and the hover highlights it exists to catch
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > the stylesheet gate measures what it claims > does not flag a class the surface genuinely renders
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > states that it is read-only and names where the document is edited
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > carries none of the nine formatting controls
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > leaves no inert control anywhere in the preview
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > does not present the page as editable
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > the stylesheet matches — no orphaned toolbar rule, no hover highlight
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > The journey opens its own document in the editor > opens this document, in its project, not the editor list
+ × client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > The journey on the work-area page pattern (D4-7) > has the page header with no eyebrow, one primary that opens the document, and a quiet AnA action 95ms
+   → expected <div class="reg-eyebrow"></div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > The journey on the work-area page pattern (D4-7) > keeps the four facts as quiet figures 30ms
+ × client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > The journey on the work-area page pattern (D4-7) > sets the preview prose in the editor's type 4ms
+   → expected '' to match /font-family:\s*var\(--font-serif\)/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > The journey on the work-area page pattern (D4-7) > has the page header with no eyebrow, one primary that opens the document, and a quiet AnA action
+AssertionError: expected <div class="reg-eyebrow"></div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="reg-eyebrow"
+>
+  Workspace · authoring
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx:284:66
+    282|   it('has the page header with no eyebrow, one primary that opens the …
+    283|     const { container } = await renderPreview();
+    284|     expect(container.querySelector('.reg-eyebrow, .ph-eyebrow')).toBeN…
+       |                                                                  ^
+    285|     expect(container.textContent).not.toMatch(/Workspace · authoring/i…
+    286|     const head = container.querySelector('.ph')!;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > The journey on the work-area page pattern (D4-7) > sets the preview prose in the editor's type
+AssertionError: expected '' to match /font-family:\s*var\(--font-serif\)/
+
+- Expected:
+/font-family:\s*var\(--font-serif\)/
+
++ Received:
+""
+
+ ❯ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx:306:18
+    304|     const css = readFileSync(CSS_PATH, 'utf8');
+    305|     const rule = /\.c2c-v2 \.dj-stagepane \.dj-page \.dj-page-p\s*\{([…
+    306|     expect(rule).toMatch(/font-family:\s*var\(--font-serif\)/);
+       |                  ^
+    307|     expect(rule).toMatch(/font-size:\s*var\(--fs-prose, 16px\)/);
+    308|     expect(rule).toMatch(/line-height:\s*1\.7/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 8 skipped (11)
+   Start at  14:53:56
+   Duration  2.14s (transform 1.07s, setup 151ms, import 1.35s, tests 134ms, environment 374ms)
+

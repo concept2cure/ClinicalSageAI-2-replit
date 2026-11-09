@@ -63,6 +63,7 @@ vi.mock('../../components/ana/useAnaChat', () => ({
 }));
 
 import { ConversationThread, conversationArtifacts, authoringDocOf } from '../surfaces/ConversationThread';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
 const OWNED_PROPS: OwnedSurfaceViewProps = {
@@ -126,20 +127,20 @@ afterEach(() => {
 });
 
 describe('ConversationThread — the document canvas', () => {
+  // D4-5b: the card became a chip; the record's count drafted is on it, and its section and acts are in the open document.
   it('mounts DocumentCanvas beneath a turn whose draft carries authoringDocId, read from the store', async () => {
     chatMessages.current = [USER, DRAFTED];
     render(<ConversationThread {...OWNED_PROPS} />);
     const canvas = await screen.findByTestId('document-canvas');
     expect(canvas.getAttribute('data-doc-id')).toBe(DOC);
-    // The record, not the stream: the section came from GET /sections.
-    expect(await within(canvas).findByText('From the record.')).toBeTruthy();
-    expect(within(canvas).getByText('Product Development Rationale')).toBeTruthy();
+    // The record, not the stream: the count drafted came from GET /sections (the stream's draft has no content).
+    expect((await within(canvas).findByTestId('dc-progress')).textContent).toBe('1 of 1 section drafted');
     expect(screen.getByTestId('dc-provenance').textContent).toBe('Drafted by AnA in this conversation · model claude-fable-5-1');
     expect(apiRequest).toHaveBeenCalledWith('GET', `/api/authoring/docs/${DOC}?programId=${PID}`);
-    // The canvas's actions are reachable in the thread.
-    expect(screen.getByTestId('dc-open-editor')).toBeTruthy();
-    expect(screen.getByTestId('dc-file-to-vault')).toBeTruthy();
-    expect(screen.getByTestId('dc-assign-review')).toBeTruthy();
+    // The canvas's actions are reachable in the thread: Open on the chip (ready with the read), the rest in the open document.
+    screen.getByTestId('dc-open-editor').click();
+    await vi.waitFor(() => expect(document.querySelector('.ct-canvas-pane .tiptap')?.textContent).toContain('From the record.'));
+    for (const act of ['File to vault…', 'Send for review…']) expect(openEditorControl(act)).toBeTruthy();
   });
 
   it('puts what was checked directly under the answer, above the canvas whose drafted figures it does not check', async () => {
@@ -206,7 +207,8 @@ describe('ConversationThread — the editor opens beside the conversation (2026-
      client while it builds, as Claude does. Inline, the expanded editor filled
      the thread's width at viewport height, so AnA's replies scrolled away above
      it and the person edited with the conversation out of sight. Beside it,
-     the conversation keeps its column, its answers and its composer. */
+     the conversation keeps its column, its answers and its composer.
+     D4-5b: the card became a chip; open beside, it is marked and its control reads Close. */
   it('mounts the workbench in a pane beside the conversation, and the conversation stays', async () => {
     chatMessages.current = [USER, DRAFTED];
     render(<ConversationThread {...OWNED_PROPS} />);
@@ -229,10 +231,10 @@ describe('ConversationThread — the editor opens beside the conversation (2026-
     expect(card.hidden).toBe(false);
     expect(within(card).getByTestId('dc-open-editor').getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByLabelText('Reply to AnA')).toBeTruthy();
-    /* The card collapses to its head while the document is open beside it:
-       the outline and the section preview are in the editor next to it, and
-       repeating them pushed AnA's later answers down the column. */
-    expect((card.querySelector('.dcv-body') as HTMLElement).hidden).toBe(true);
+    /* The chip says which document is open beside it, and closes it: the
+       outline and the section are in the editor next to it, never repeated
+       in the column above AnA's later answers. */
+    expect([card.hasAttribute('data-open-beside'), within(card).getByTestId('dc-open-editor').textContent]).toEqual([true, 'Close']);
     expect(card.querySelector('.dcv-title')?.textContent).toBe('Module 2.5 Clinical Overview — C2C-101');
 
     // Back closes the pane; the workbench stays mounted in it, hidden.
@@ -240,8 +242,8 @@ describe('ConversationThread — the editor opens beside the conversation (2026-
     await vi.waitFor(() => expect(document.querySelector('.ct-main')?.getAttribute('data-canvas-open')).toBeNull());
     expect(pane!.hidden).toBe(true);
     expect(pane!.querySelector('.dcv-workbench .ed')).not.toBeNull();
-    // Closed, the card is whole again.
-    expect((card.querySelector('.dcv-body') as HTMLElement).hidden).toBe(false);
+    // Closed, the chip is unmarked and offers Open again.
+    expect([card.hasAttribute('data-open-beside'), within(card).getByTestId('dc-open-editor').textContent]).toEqual([false, 'Open']);
   });
 });
 
@@ -388,6 +390,7 @@ describe('ConversationThread — AnA knows the document open beside the conversa
     fireEvent.keyDown(box, { key: 'Enter' });
   };
 
+  // D4-5b: the card became a chip; while the editor is open beside the conversation its control reads Close.
   it('sends the open document and section with the turn, and nothing once the editor closes', async () => {
     chatSend.mockReset();
     chatMessages.current = [USER, DRAFTED];
@@ -396,7 +399,7 @@ describe('ConversationThread — AnA knows the document open beside the conversa
     await vi.waitFor(() => expect((open as HTMLButtonElement).disabled).toBe(false));
     open.click();
     await screen.findByTestId('dc-expanded');
-    await vi.waitFor(() => expect(screen.getByRole('button', { name: /Close the editor/ })).toBeTruthy());
+    await vi.waitFor(() => expect(screen.getByTestId('dc-open-editor').textContent).toBe('Close'));
 
     await vi.waitFor(async () => {
       chatSend.mockClear();
@@ -455,7 +458,8 @@ describe('ConversationThread — a section not yet drafted is one ask away (2026
   /* The outline said "Not drafted" and stopped there. From a section's empty
      state the person now asks AnA to draft it: the editor opens beside the
      conversation AT that section, the ask is in the composer, and the turn
-     and the insert both name that section. */
+     and the insert both name that section.
+     D4-5b: the card became a chip; the ask is the open document's empty-section "Draft with AnA". */
   it('opens the editor at the section, puts the ask in the composer, and the turn and the insert name that section', async () => {
     chatSend.mockReset();
     const [firstSection, requestedSection] = [SECTION, 'cccccccc-0000-4000-8000-000000000002'];
@@ -470,13 +474,14 @@ describe('ConversationThread — a section not yet drafted is one ask away (2026
     chatMessages.current = [USER, DRAFTED, RECORDED_EXPOSURE_FOLLOWUP];
     render(<ConversationThread {...OWNED_PROPS} />);
 
-    (await screen.findByRole('button', { name: /2\.5\.2\s*Overview of Biopharmaceutics/ })).click();
-    (await screen.findByRole('button', { name: 'Ask AnA to draft 2.5.2' })).click();
+    await screen.findByTestId('dc-progress'); // the record is read: Open is enabled
+    screen.getByTestId('dc-open-editor').click();
+    (await screen.findByTestId('ed-outline-toggle')).click(); // the outline opens closed beside the conversation
+    (await screen.findByRole('button', { name: /^2\.5\.2\s*Overview of Biopharmaceutics/ })).click();
+    (await screen.findByRole('button', { name: 'Draft with AnA' })).click();
 
     const box = screen.getByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
-    await vi.waitFor(() =>
-      expect(box.value).toBe('Draft the text for the saved section attached to this question here in the conversation, so I can insert it into the existing document.'),
-    );
+    await vi.waitFor(() => expect(box.value).toBe('Draft this section from the linked section evidence.'));
     await vi.waitFor(() => expect(document.querySelector('.ct-canvas-pane [data-testid="dc-expanded"]')).toBeTruthy());
     await screen.findByRole('button', { name: 'Insert into 2.5.2 as tracked suggestion' }, { timeout: 4000 });
 

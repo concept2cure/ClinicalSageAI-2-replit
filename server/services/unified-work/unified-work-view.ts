@@ -64,6 +64,10 @@ export interface UnifiedWorkItem {
   projectId: number | null;
   /** Set only on a task rolled up from one of the filing project's work projects (P-111): where it lives. */
   workProject?: { id: number; name: string };
+  /** Set only on a subtask whose parent is in the same view (P-111 item 4): the parent's `id`. */
+  subtaskOf?: string;
+  /** A board task's own unified_tasks.id, when read (P-111 item 4): what a new subtask names as its parent. */
+  rowId?: number;
   title: string;
   status: UnifiedWorkStatus;
   priority: UnifiedWorkPriority | null;
@@ -271,6 +275,9 @@ export interface UnifiedTaskRowLike {
   moduleType?: string | null;
   criticalPath?: boolean | null;
   blockedBy?: string[] | null;
+  /** The row's own id and its parent's (P-111 item 4), to say which task a subtask belongs to. */
+  id?: number | null;
+  parentTaskId?: number | null;
 }
 
 /** unified_tasks: pending|in-progress|review|completed|blocked|cancelled → unified. */
@@ -288,6 +295,7 @@ export function unifiedTaskToUnified(r: UnifiedTaskRowLike): UnifiedWorkItem {
   return {
     id: `board:${r.taskId}`,
     source: 'board',
+    ...(typeof r.id === 'number' ? { rowId: r.id } : {}),
     nativeId: String(r.taskId),
     projectId: r.projectId ?? null,
     title: r.title ?? 'Untitled task',
@@ -428,15 +436,15 @@ async function readSource<T>(
 async function rollUpWorkProjectTasks(
   database: Pick<RequestDb, 'select'>, organizationId: number, filingProjectId: number, statuses: string[],
   reader: NonNullable<LoadUnifiedWorkInput['rollUpFor']>,
-): Promise<{ items: UnifiedWorkItem[]; read: UnifiedWorkSourceRead | null }> {
+): Promise<{ items: UnifiedWorkItem[]; rows: UnifiedTaskRowLike[]; read: UnifiedWorkSourceRead | null }> {
   let children: Array<{ id: number; name: string }>;
   try {
     children = await workProjectsReadableBy(reader.executor, organizationId, { userId: reader.userId, role: reader.role }, filingProjectId);
   } catch (err) {
     logger.error('work projects for the roll-up could not be decided', { reason: driverReason(err) });
-    return { items: [], read: { ran: false, reason: SOURCE_UNREAD_REASON } };
+    return { items: [], rows: [], read: { ran: false, reason: SOURCE_UNREAD_REASON } };
   }
-  if (!children.length) return { items: [], read: null };
+  if (!children.length) return { items: [], rows: [], read: null };
   const names = new Map(children.map((c) => [c.id, c.name]));
   const rows = await readSource<UnifiedTaskRowLike>('unified_tasks', database.select().from(unifiedTasks).where(and(
     eq(unifiedTasks.organizationId, organizationId),
@@ -450,7 +458,24 @@ async function rollUpWorkProjectTasks(
     const id = item.projectId ?? 0;
     return names.has(id) ? { ...item, workProject: { id, name: names.get(id)! } } : item;
   });
-  return { items, read: rows.read };
+  return { items, rows: rows.rows, read: rows.read };
+}
+
+/** Marks each subtask with its parent's item id, when the parent is in the same view (P-111 item 4). A subtask whose
+ *  parent is not in view (closed and not read, or another project's) is left as a task in its own right. */
+export function markSubtasks(items: UnifiedWorkItem[], rows: UnifiedTaskRowLike[]): UnifiedWorkItem[] {
+  const taskIdOfRow = new Map<number, string>();
+  const parentOfTask = new Map<string, number>();
+  for (const r of rows) {
+    if (typeof r.id === 'number') taskIdOfRow.set(r.id, String(r.taskId));
+    if (typeof r.parentTaskId === 'number') parentOfTask.set(String(r.taskId), r.parentTaskId);
+  }
+  return items.map((item) => {
+    if (item.source !== 'board') return item;
+    const parentRow = parentOfTask.get(item.nativeId);
+    const parentTaskId = parentRow === undefined ? undefined : taskIdOfRow.get(parentRow);
+    return parentTaskId === undefined ? item : { ...item, subtaskOf: `board:${parentTaskId}` };
+  });
 }
 
 /**
@@ -532,7 +557,7 @@ export async function loadUnifiedWork(input: LoadUnifiedWorkInput, database: Pic
 
   const rolled = projectId !== undefined && input.rollUpFor
     ? await rollUpWorkProjectTasks(database, organizationId, projectId, boardStatuses, input.rollUpFor)
-    : { items: [], read: null };
+    : { items: [], rows: [] as UnifiedTaskRowLike[], read: null };
   const sources: UnifiedWorkSources = {
     project_tasks: tasks.read,
     c2c_project_work_items: workItems.read,
@@ -540,12 +565,12 @@ export async function loadUnifiedWork(input: LoadUnifiedWorkInput, database: Pic
     // A roll-up that could not be read makes the board's contribution partial, never an empty answer.
     unified_tasks: rolled.read && !rolled.read.ran ? rolled.read : boardTasks.read,
   };
-  const items = [...mergeUnifiedWork({
+  const items = markSubtasks([...mergeUnifiedWork({
     tasks: tasks.rows,
     workItems: workItems.rows,
     filings: filings.rows,
     boardTasks: boardTasks.rows,
-  }), ...rolled.items].sort(compareUnifiedWork);
+  }), ...rolled.items], [...boardTasks.rows, ...rolled.rows]).sort(compareUnifiedWork);
   return { items, summary: summarizeUnifiedWork(items, sources), sources };
 }
 

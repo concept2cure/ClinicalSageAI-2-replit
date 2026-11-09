@@ -1,0 +1,9 @@
+MUTATION C2M10-proof-asks-for-a-document in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-09T14:24:42.588469Z): replaced [outcome === 'received' ? null : proof ? 'platform-proof' : 'fda-non-receipt-confirmation');] with [outcome === 'received' ? null : 'fda-non-receipt-confirmation');]
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1b — a way chosen: FDA's document, or the platform's own proof, then the statement > S2a, received: FDA's document from this project's Vault and which acknowledgement it is, then the statement and the sign button 417ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1b — a way chosen: FDA's document, or the platform's own proof, then the statement > S2a, a chosen document the server refuses: its sentence, and no sign button 76ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1b — a way chosen: FDA's document, or the platform's own proof, then the statement > the platform's own proof: no Vault document, the server's sentence, and the release offered on it 57ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1b — a way chosen: FDA's document, or the platform's own proof, then the statement > the transmit refusal line never shows a record key 18ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1b — a way chosen: FDA's document, or the platform's own proof, then the statement > S10: a resend FDA has contradicted shows the server sentence through the readiness line, with no door 41ms
+      Tests  1 failed | 4 passed | 23 skipped (28)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 cc8e6fd2277a9e2819e99cfadfa66fb29e15668bf829b5053fd5739969b26acc (expected cc8e6fd2277a9e2819e99cfadfa66fb29e15668bf829b5053fd5739969b26acc)

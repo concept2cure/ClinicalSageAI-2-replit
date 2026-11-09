@@ -1,11 +1,11 @@
 {
   "base": "http://127.0.0.1:5000",
   "program": "6065271c-d4b0-4936-aad1-02855423a738",
-  "startedAt": "2026-11-09T07:29:45.327Z",
+  "startedAt": "2026-11-09T13:55:09.170Z",
   "steps": [
     {
-      "name": "Drug substance CMC 2026-11-09T07:29:48",
-      "id": 18
+      "name": "Drug substance CMC 2026-11-09T13:55:11",
+      "id": 197798
     },
     {
       "name": "a code not in the program's Vault is refused, nothing assigned",
@@ -51,12 +51,12 @@
       "status": 200,
       "moduleData": {
         "programId": "6065271c-d4b0-4936-aad1-02855423a738",
-        "workProjectId": 18,
+        "workProjectId": 197798,
         "workKind": "cmc",
         "raisedFrom": "project-work-projects",
         "vaultDocumentCode": "S12-WALK-1794192292154"
       }
     }
   ],
-  "finishedAt": "2026-11-09T07:30:01.005Z"
+  "finishedAt": "2026-11-09T13:55:24.782Z"
 }

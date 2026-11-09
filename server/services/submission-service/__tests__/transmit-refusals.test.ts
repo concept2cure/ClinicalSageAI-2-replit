@@ -107,6 +107,17 @@ describe('transmit claim — in-flight is not re-sendable', () => {
     expect(resendRefusal('sent')).toMatch(/already transmitted/);
     expect(resendRefusal('acknowledged')).toMatch(/already transmitted/);
   });
+
+  /* P-92 C2 shows these sentences on the Dispatch tab (design S0 and S8): in words, never the stored status. */
+  it('says each refusal in words, without the stored status', () => {
+    for (const status of [TRANSMITTING_STATUS, 'sent', 'acknowledged']) {
+      expect(resendRefusal(status), status).not.toMatch(/dispatch status|'transmitting'|'sent'|'acknowledged'/);
+    }
+    expect(resendRefusal(TRANSMITTING_STATUS)).toBe('A transmit of this sequence is already in flight and not yet confirmed. ' +
+      'It is not sent again while that attempt is unresolved: confirm at the agency whether the package arrived before retrying.');
+    expect(resendRefusal('sent')).toBe('Sequence was already transmitted; it is not sent again. A correction is a new sequence.');
+    expect(resendRefusal('acknowledged')).toBe('Sequence was already transmitted and the agency acknowledged it; it is not sent again. A correction is a new sequence.');
+  });
 });
 
 describe('transmit claim — source contract', () => {

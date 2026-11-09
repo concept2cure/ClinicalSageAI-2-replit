@@ -1,0 +1,6 @@
+# P-92 C2 red for the open declaration form's two buttons (the coordinating session, 2026-11-09), before the change
+ × client/src/concept2cure/v2/__tests__/filedElsewhereBaseline.test.tsx > Sequences filed before this platform > the open form signs with the one primary, and cancels with the hairline secondary 189ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Expected: "btn primary"
+Received: "sp-primary sc-btn"
+      Tests  1 failed | 7 skipped (8)

@@ -45,3 +45,20 @@ describe('D0.md §8, in the stylesheet', () => {
     expect(targets && decl(targets.body, 'min-height')).toBe('44px');
   });
 });
+
+/* D0-5 review (docs/evidence/DESIGN/D0/D0-5/README.md, "Found in review, for D0"): `.mono` is 0.8125em in the
+   design-system sheet and the v2 rule set only the face, so a regulatory code at the 14px root read at 11.4px, under
+   the 12px floor (D0 §3); five rules set mono at 10 to 11px outright. */
+describe('mono never reads below the 12px floor (D0 §3)', () => {
+  it('the base mono rule floors at 12px and keeps its proportion above it', () => {
+    expect(last(flat, ['.c2c-v2 .mono'], 'font-size')).toBe('max(12px, 0.8125em)');
+  });
+
+  it('no v2 mono rule sets a size under 12px', () => {
+    const small = flat.filter((r) => /\.mono\b/.test(r.selector))
+      .map((r) => ({ selector: r.selector, size: decl(r.body, 'font-size') }))
+      .filter((r) => r.size !== null && /^\d+(\.\d+)?px$/.test(r.size) && parseFloat(r.size) < 12);
+    expect(small).toEqual([]);
+  });
+});
+

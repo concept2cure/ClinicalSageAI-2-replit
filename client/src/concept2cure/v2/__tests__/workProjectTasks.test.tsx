@@ -52,7 +52,7 @@ function post(url: string, body?: Record<string, unknown>): Response {
 beforeEach(() => {
   proofStatus = 200; workStatus = 200; auth.user = null; shell.program = PID;
   items = [
-    { id: 'board:t1', source: 'board', title: 'Confirm the drug substance specification', status: 'open', dueAt: '2026-11-30T17:00:00.000Z', ownerName: 'Dana Ruiz' },
+    { id: 'board:t1', source: 'board', title: 'Confirm the drug substance specification', status: 'open', dueAt: '2026-11-30T17:00:00.000Z', ownerName: 'Dana Ruiz', rowId: 501 },
     { id: 'schedule:4', source: 'schedule', title: 'A schedule milestone', status: 'open', dueAt: null, ownerName: null },
   ];
   window.history.replaceState(null, '', '/concept2cure/cmc?program=' + PID);
@@ -75,7 +75,7 @@ describe('a work area bound to a work project (P-111 slice 2)', () => {
     expect(screen.getByText('Its tasks are listed here. The records below are the whole project’s.')).toBeTruthy();
     expect(new URLSearchParams(window.location.search).get('workProject')).toBe('101');
     const list = await screen.findByTestId('work-project-tasks');
-    expect(list.textContent).toBe('Confirm the drug substance specification · Dana Ruiz · due Nov 30, 2026 · Open');
+    expect(list.querySelector('li > .pj-card-note')?.textContent).toBe('Confirm the drug substance specification · Dana Ruiz · due Nov 30, 2026 · Open');
     // The binding is proven with the open program before its tasks are read.
     const urls = apiRequest.mock.calls.map(([, u]) => u);
     expect(urls.indexOf(`/api/project-hierarchy/101/children?programId=${PID}`)).toBeLessThan(urls.indexOf('/api/concept2cure/projects/101/unified-work'));
@@ -145,6 +145,9 @@ describe('a work area bound to a work project (P-111 slice 2)', () => {
       .toMatchObject({ title: 'X', moduleType: 'CMC', projectId: 101 });
   });
 
+});
+
+describe('a bound work area\'s task context and subtasks (P-111 slices 3 and 5)', () => {
   it('puts a proven binding in the task context, and only a proven one, and clears it on unbind (P-111 slice 3)', async () => {
     const setContext = vi.fn();
     Object.assign(window, { C2C: { setContext } });
@@ -161,6 +164,26 @@ describe('a work area bound to a work project (P-111 slice 2)', () => {
     await screen.findByTestId('work-project-bound');
     expect(setContext).not.toHaveBeenCalledWith({ workProjectId: '101' });
     Reflect.deleteProperty(window, 'C2C');
+  });
+
+  it('lists a subtask under its task, and adds one under it on the same work project (P-111 item 4)', async () => {
+    items = [...items, { id: 'board:t3', source: 'board', title: 'Check the impurity limits', status: 'open', dueAt: null, ownerName: 'Dana Ruiz', subtaskOf: 'board:t1', rowId: 503 }];
+    window.history.replaceState(null, '', `/concept2cure/cmc?program=${PID}&workProject=101`);
+    render(<WorkProjectTasks area="cmc" />);
+    const subs = await screen.findByTestId('work-project-subtasks');
+    expect(subs.textContent).toBe('Check the impurity limits · Dana Ruiz · Open');
+    // The subtask is under its task, not beside it.
+    expect(subs.closest('li')?.textContent).toContain('Confirm the drug substance specification');
+    expect(screen.getAllByRole('button', { name: /Add a subtask/ })).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: /Add a subtask/ }));
+    expect(await screen.findByText('Add a subtask to Confirm the drug substance specification')).toBeTruthy();
+    fireEvent.change(await screen.findByLabelText(/^Task/), { target: { value: 'Re-run the residual solvents' } });
+    fireEvent.change(await screen.findByLabelText(/^Person/), { target: { value: '12' } });
+    fireEvent.change(screen.getByLabelText(/^Due date/), { target: { value: '2026-12-04' } });
+    fireEvent.click(document.querySelector('.de-btn.primary') as HTMLElement);
+    await waitFor(() => expect(apiRequest.mock.calls.some(([m, u]) => m === 'POST' && u === '/api/tasks/tasks')).toBe(true));
+    const [, , task] = apiRequest.mock.calls.find(([m, u]) => m === 'POST' && u === '/api/tasks/tasks')!;
+    expect(task).toMatchObject({ title: 'Re-run the residual solvents', projectId: 101, parentTaskId: 501 });
   });
 });
 

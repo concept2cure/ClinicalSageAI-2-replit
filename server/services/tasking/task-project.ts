@@ -120,12 +120,15 @@ export async function admitTaskCreationActor(q: RequestSqlClient, input: {
  * has its own private visibility setting. One direction: a work project's members gain nothing on its parent or its
  * siblings, and the walk never leaves the organisation. */
 export async function canWorkOnProjectTasks(q: RequestSqlClient, organizationId: number,
-  actor: { userId: number; role: string | null | undefined }, projectId: number, options: { forWrite?: boolean } = {}): Promise<boolean> {
+  actor: { userId: number; role: string | null | undefined }, projectId: number,
+  options: { forWrite?: boolean; /** The caller already read the row: no parent means no filing-project clause, and
+     *  no further read (an ordinary project's denial runs exactly the SQL it ran before P-111). */ hasParent?: boolean } = {}): Promise<boolean> {
   /* Exactly today's call, arguments included, so the exact-row decision is unchanged. */
   const exact = options.forWrite === true
     ? await canAccessReportProject(organizationId, actor, projectId, q, { forWrite: true })
     : await canAccessReportProject(organizationId, actor, projectId, q);
   if (exact) return true;
+  if (options.hasParent === false) return false;
   const { rows } = await q.query(`WITH RECURSIVE up AS (
         SELECT id, parent_project_id, 0 AS hops FROM projects WHERE id = $1 AND organization_id = $2
         UNION ALL
@@ -165,6 +168,25 @@ export async function workProjectsReadableBy(q: RequestSqlClient, organizationId
     .map((r) => ({ id: Number(r.id), name: String(r.name) }));
 }
 
+/** P-111 item 4: a subtask's parent, decided in the writer's own transaction. The parent must be a task of the same
+ * organisation and the same project, live (not deleted), and not itself a subtask: one level only. Every reason gives
+ * the same refusal, so a parent id cannot be used to learn about another project's tasks. The parent row is read
+ * under a share lock, so it cannot become a subtask or move while this task is written. */
+export async function admitParentTask(q: RequestSqlClient, input: {
+  organizationId: number; projectId: number | undefined; parentTaskId: unknown;
+}): Promise<number> {
+  const refused = () => new TaskProjectAdmissionError(409, 'PARENT_TASK_REFUSED',
+    'A subtask goes under a task of the same project that is not itself a subtask. Nothing was created.');
+  const parentTaskId = input.parentTaskId;
+  if (typeof parentTaskId !== 'number' || !Number.isSafeInteger(parentTaskId) || parentTaskId <= 0 || parentTaskId > 2_147_483_647) throw refused();
+  if (input.projectId === undefined) throw refused();
+  const { rows } = await q.query(`SELECT project_id, parent_task_id FROM unified_tasks
+    WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR SHARE`, [parentTaskId, input.organizationId]);
+  const parent = rows[0] as { project_id?: unknown; parent_task_id?: unknown } | undefined;
+  if (!parent || Number(parent.project_id) !== input.projectId || parent.parent_task_id != null) throw refused();
+  return parentTaskId;
+}
+
 /** Extend the existing task/project boundary on the writer's own transaction.
  * Locks retain the current actor, parent, visibility and edit membership through
  * the task/edge/audit commit; a read/review share never becomes write authority. */
@@ -174,7 +196,7 @@ export async function admitTaskCreationProject(q: RequestSqlClient, input: {
   const projectId = requireTaskProjectId(input.projectId);
   try {
     const actor = await admitTaskCreationActor(q, input);
-    const { rows } = await q.query(`SELECT id,client_workspace_id,status FROM projects
+    const { rows } = await q.query(`SELECT id,client_workspace_id,status,parent_project_id FROM projects
       WHERE id=$1 AND organization_id=$2 FOR SHARE`, [projectId, input.organizationId]);
     if (!rows.length) throw new TaskProjectAdmissionError(404, 'TASK_PROJECT_NOT_FOUND',
       'Project not found for this organization. Nothing was created.');
@@ -183,7 +205,9 @@ export async function admitTaskCreationProject(q: RequestSqlClient, input: {
     await retainTaskWorkspace(q, input.organizationId, clientWorkspaceId, input.clientWorkspaceId);
     await q.query(`SELECT project_id FROM project_visibility_settings
       WHERE project_id=$1 AND organization_id=$2 FOR SHARE`, [projectId, input.organizationId]);
-    if (!await canWorkOnProjectTasks(q, input.organizationId, actor, projectId, { forWrite: true })) throw projectDenied();
+    /* P-111 (b): the filing project's writer is considered only for a work project, read from the same locked row. */
+    const hasParent = rows[0].parent_project_id !== null && rows[0].parent_project_id !== undefined;
+    if (!await canWorkOnProjectTasks(q, input.organizationId, actor, projectId, { forWrite: true, hasParent })) throw projectDenied();
     return { projectId, clientWorkspaceId };
   } catch (error) {
     if (error instanceof TaskProjectAdmissionError) throw error;
