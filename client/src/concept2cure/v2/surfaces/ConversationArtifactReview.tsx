@@ -156,6 +156,13 @@ function ReviewDecision({ base, title, fireToast, onDone }: WriteProps) {
   );
 }
 
+/**
+ * The organization roles that may decide an artifact review: POST …/reviews/submit refuses every other
+ * role (server/routes/c2c/artifacts.ts, "Only reviewer, approver, or admin can submit review decisions").
+ * Naming anyone else would open a round they can never decide, so the round could never close.
+ */
+const DECIDING_ROLES: ReadonlySet<string> = new Set(['reviewer', 'approver', 'admin']);
+
 function ReviewerPicker({ base, title, fireToast, onDone, team, exclude, onCancel }: WriteProps & {
   team: TeamMember[]; exclude: ReadonlySet<number>; onCancel: () => void;
 }) {
@@ -163,7 +170,7 @@ function ReviewerPicker({ base, title, fireToast, onDone, team, exclude, onCance
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const noteId = useId();
-  const candidates = team.filter(m => !exclude.has(m.userId));
+  const candidates = team.filter(m => !exclude.has(m.userId) && DECIDING_ROLES.has(String(m.role ?? '').toLowerCase()));
   const assign = async () => {
     if (busy || chosen.length === 0) return;
     setBusy(true);
@@ -187,7 +194,9 @@ function ReviewerPicker({ base, title, fireToast, onDone, team, exclude, onCance
   return (
     <fieldset style={{ border: 0, margin: 0, padding: 0 }}>
       <legend className="ct-art-note">Who should review {title}?</legend>
-      {candidates.length === 0 && <div className="ct-art-note">No one else in this project&apos;s team can be named.</div>}
+      {candidates.length === 0 && (
+        <div className="ct-art-note">No one else in this project&apos;s team holds a reviewer, approver or admin role, so no one can be named.</div>
+      )}
       <div className="ct-art-rows">
         {candidates.map(m => (
           <label key={m.userId} className="ct-art-row">
@@ -219,9 +228,13 @@ function reviewFacts(data: ReviewStatus | null, myId: number | null) {
   };
 }
 
-interface Props { projectId: string | number; artifactId: string; title: string; fireToast: FireToast }
+interface Props {
+  projectId: string | number; artifactId: string; title: string; fireToast: FireToast;
+  /** False where the person is a reviewer deciding, not the author routing it (ReviewRequests.tsx). */
+  canName?: boolean;
+}
 
-export function ConversationArtifactReview({ projectId, artifactId, title, fireToast }: Props) {
+export function ConversationArtifactReview({ projectId, artifactId, title, fireToast, canName = true }: Props) {
   const me = useAuthUser();
   const myId = me?.id != null ? Number(me.id) : null;
   const project = `/api/concept2cure/projects/${encodeURIComponent(String(projectId))}`;
@@ -245,7 +258,7 @@ export function ConversationArtifactReview({ projectId, artifactId, title, fireT
       <div className="ct-art-prov-l">Review</div>
       <div aria-live="polite"><ReviewRound review={review} onRetry={() => void read()} /></div>
       {mine && <ReviewDecision {...write} onDone={() => void read()} />}
-      {data && team === null && (
+      {canName && data && team === null && (
         <div className="ct-art-actions">
           <button className="ct-art-edit" aria-label={'Name reviewers for ' + title} onClick={() => void openPicker()}>
             Name reviewers
