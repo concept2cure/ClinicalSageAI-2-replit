@@ -1,0 +1,11 @@
+MUTATION 6-judged-before-staging in server/services/ectd/leaf-source-resolver.ts (on the final code and tests, 2026-11-09T03:16:59.673017Z): replaced [      if (!looksLikePdf(buf)) {] with [      noteUnfinalized('x', 'y');
+      if (!looksLikePdf(buf)) {]
+ × server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > materializes a PDF ctd_onboarding_documents upload AS the leaf (real bytes, real md5) 32ms
+ × server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > an upload whose same bytes are approved in its project's Vault is not counted unapproved (P-108 3(a)) 26ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a NON-PDF upload unresolved (no binary→PDF conversion) 3ms
+ × server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF-mime-but-not-PDF-bytes upload unresolved (magic-byte guard) 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF upload whose file is missing unresolved (fail closed) 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a cross-tenant ctd_onboarding upload unresolved (org-scoped lookup) 3ms
+      Tests  3 failed | 3 passed | 10 skipped (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 32e088f73613144281be773820bdc9a5c461c39db4c2d09db42bbc4be9c2487f (expected 32e088f73613144281be773820bdc9a5c461c39db4c2d09db42bbc4be9c2487f)
