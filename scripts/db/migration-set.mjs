@@ -2911,6 +2911,19 @@ export const C2C_MIGRATION_FILES = [
   // by design (install-fresh's surface list, tenantColumn: null). Above the
   // final pair because ci:migration-set-order pins those last.
   // Evidence docs/evidence/D2-REPORTING-LAUNCH-APP/2026-09-30/report-os/.
+  //
+  // The Report OS foundation, ahead of the seed and of both tenant installers
+  // (its header: "the canonical child-parent and integer tenant policy installers
+  // run after this foundation"). Amended in place 2026-10-13 (0e4ccf46f4) so a
+  // program group's membership records its organisation, and Run history,
+  // project access and scope ownership read `gp.organization_id` since. But it was
+  // on no deploy path: install-fresh reads `migrations/`, deploy-migrate does
+  // not. So a database installed before 2026-10-13 never got the column, and Run
+  // history answered 500 (Reporting use walk, 2026-11-09). Every statement is
+  // IF NOT EXISTS or guarded; its preflight refuses a membership whose group and
+  // project disagree and rewrites nothing; it drops nothing. Its prerequisites are
+  // drizzle base tables. Evidence docs/evidence/DESIGN/D7/2026-11-09-reporting-use-walk/.
+  'migrations/0014_report_os_foundation.sql',
   'migrations/20260930_report_type_registry_seed.sql',
   'migrations/20261001_organization_retention_settings.sql', // P1-22-org (ADR-0014 §6): one public org-keyed table, no DROP; above the pair so the sweep gives it RLS
   'migrations/20261001_domain_history_append_only.sql', // P1-24 (DP-15/16): append-only triggers on workflow_history, document_audit_logs, regulatory_audit_logs, c2c_ana_actions, authoring_signatures; after every creator; no table, no DROP

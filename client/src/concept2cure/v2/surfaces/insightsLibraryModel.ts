@@ -34,6 +34,11 @@
 import { apiCall, apiErrorText, type ApiResult } from '../apiCall';
 import { errorCodeOf } from '@/lib/queryClient';
 import { mutationUnconfirmed } from '../mutationOutcome';
+import { ALL_ESIGN_MEANINGS } from '../../_shared/esignMeanings';
+
+/** A recorded signature meaning in the signing dialog's own word (21 CFR 11.50(a)(3)); an unknown one as recorded. */
+const meaningWords = (meaning: string | null | undefined): string | null | undefined =>
+  meaning ? ALL_ESIGN_MEANINGS.find((m) => m.id === meaning)?.label ?? meaning : meaning;
 
 /* ══════════════════════════════════════════════════════════════════
    Runs
@@ -279,6 +284,18 @@ export interface RunSealView {
   verification: { verdict: 'intact' | 'mismatch' | 'not-verifiable'; checks: SealCheck[] };
 }
 
+/**
+ * The seal line's facts from a sealed run's read-back, or null. Only a seal that verifies, with every fact of the
+ * manifestation recorded, yields a line: a mismatch or a gap is the seal section's to say, never a "Final. Signed…"
+ * line above it (Reporting use walk, 2026-11-09: a reopened sealed run showed no line at all).
+ */
+export function sealLineFrom(view: RunSealView | null | undefined): { signer: string | null; signedAt: string; meaning: string; algorithm: string; hash: string; atomCount: number } | null {
+  if (!view?.sealed || view.verification?.verdict !== 'intact') return null;
+  const sig = view.signature; const seal = view.seal;
+  if (!sig?.signedAt || !sig.meaning || !seal?.algorithm || !seal.contentHash || seal.atomCount == null) return null;
+  return { signer: sig.signerName, signedAt: sig.signedAt, meaning: sig.meaning, algorithm: seal.algorithm, hash: seal.contentHash, atomCount: seal.atomCount };
+}
+
 /** One row of `GET /api/report-os/runs/:id/dependencies`. */
 export interface RunDependencyRow {
   id: number;
@@ -344,7 +361,7 @@ function sealExtraRows(view: RunSealView, sealText: string): SealFactRow[] {
   const sealedAt = view.seal?.sealedAt;
   const rows: SealFactRow[] = [
     { term: 'Reason given', value: fin?.reason ?? '' },
-    { term: 'Chain records the meaning as', value: fin?.meaning ?? '' },
+    { term: 'Chain records the meaning as', value: meaningWords(fin?.meaning) ?? '' },
     { term: 'Status before finalizing', value: fin?.priorStatus ?? '' },
     { term: 'Seal', value: sealText, mono: true },
     { term: 'Sealed at', value: sealedAt ? whenText(sealedAt) : '' },
@@ -388,7 +405,7 @@ export function sealFactRows(view: RunSealView): SealFactRow[] {
   const manifestation: SealFactRow[] = [
     { term: 'Signed by', value: orNotRecorded(sig?.signerName) },
     { term: 'Signed at', value: orNotRecorded(sig?.signedAt && whenText(sig.signedAt)) },
-    { term: 'Meaning', value: orNotRecorded(sig?.meaning) },
+    { term: 'Meaning', value: orNotRecorded(meaningWords(sig?.meaning)) },
   ];
   return [...(view.sealed ? manifestation : []), ...sealExtraRows(view, sealText)];
 }

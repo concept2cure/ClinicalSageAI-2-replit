@@ -65,7 +65,7 @@ describe('saved reporting role personalises the existing report catalog', () => 
     expect(screen.getByText('Shared report')).toBeTruthy();
     expect(screen.queryByText('Regulatory report')).toBeNull();
     expect(mocks.request).toHaveBeenCalledWith('GET', PATH, undefined, { Authorization: 'Bearer signed-in-access-token', 'x-organization-id': '1' });
-    for (const button of screen.getAllByRole('button', { name: 'Run' })) expect(button).toHaveProperty('disabled', true);
+    for (const button of screen.getAllByRole('button', { name: /^Run / })) expect(button).toHaveProperty('disabled', true);
   });
 
   it('preserves a person’s explicit All filter when a slow profile read finishes', async () => {

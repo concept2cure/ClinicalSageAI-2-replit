@@ -310,6 +310,37 @@ describe('a run computed with no blocker', () => {
 });
 
 /*
+ * Finalize was offered on every run below final. On a run the gate holds below
+ * final, the person chose a meaning, wrote a reason and typed a password, and
+ * only then read "Cannot mark final: 23 critical blocker(s) present" (Reporting
+ * use walk, 2026-11-09). The rendered read now says whether the run can be
+ * finalized, from the same evaluation the finalize route makes
+ * (buildRenderedFromRun with a final request), so the screen can say why before
+ * asking for a signature.
+ */
+describe('the rendered read says whether the run can be finalized', () => {
+  it('a run with critical blockers cannot, and says why in the finalize route\'s own words', async () => {
+    const held = { ...RUN, status: 'partial', blockers: ['Form FDA 1572 missing', 'Cover letter missing'],
+      dependencySummary: { providers: [], summary: {}, criticalBlockers: ['Form FDA 1572 missing', 'Cover letter missing'] } };
+    h.queued.select.push([held], [{ label: 'Executive Readiness Digest', truthfulnessRules: { allowPartial: true, forbidFinalIfMissingCritical: true } }]);
+    h.respond.fn = (sql) => (/FROM report_runs/.test(sql) ? [{ status: 'partial' }] : []);
+    const res = await request(app).get(`/api/report-os/runs/${RUN.id}/rendered`);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.finalEligibility).toEqual({ eligible: false, reasons: ['Cannot mark final: 2 critical blocker(s) present.'] });
+    // The report itself still reads as the partial it is.
+    expect(res.body.data.status).toBe('partial');
+  });
+
+  it('a run with nothing holding it can', async () => {
+    const completed = { ...RUN, reportTypeId: SEND.typeId, status: 'completed', blockers: [] as string[] };
+    h.queued.select.push([completed], [{ label: SEND.label, truthfulnessRules: { allowPartial: true, requireBlockers: true } }]);
+    h.respond.fn = (sql) => (/FROM report_runs/.test(sql) ? [{ status: 'completed' }] : []);
+    const res = await request(app).get(`/api/report-os/runs/${RUN.id}/rendered`);
+    expect(res.body.finalEligibility).toEqual({ eligible: true, reasons: [] });
+  });
+});
+
+/*
  * P-26 (docs/LAUNCH_DEFINITION_OF_DONE.md): "Confidence is a measured figure or
  * nothing." The evidence & provenance trace requires one, and it is the lineage
  * engine's measured provenance completeness — the share of the document's text
