@@ -53,7 +53,7 @@ import { biotechPlanEntry } from './ProjectBiotechPlan';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { filingLifecycleReferenceFor } from '@shared/regulatory/filing-lifecycle-reference';
 import { ProjectSettings, type ProjectSettingsRequest } from './ProjectSettings';
-import { ProjectCoreWork, ProjectWorkProjects } from './ProjectCoreWork';
+import { ProjectCoreWork, ProjectWorkProjects, workAreasFor } from './ProjectCoreWork';
 import { actionWords, enumWords, filingTypeWords } from './projectWords';
 import { WS_LABEL } from './ProjectPortfolioFilters';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
@@ -1711,10 +1711,14 @@ function ProjectHeaderDoors({ pid, prog, deviceFiling, cmcComposes, available, o
   const read = pid && prog?.id === pid ? prog : null;
   /* The Reports row is passed only when it will show, so a card with nothing to open is not drawn. */
   const reports = Boolean(shellProgramId(useShellProject())) && available('insights');
+  const track = read ? { deviceFiling, riskBasedMonitoring: read.riskBasedMonitoring === true, cmcComposes } : null;
+  /* A work project opens on its area only where this project's track offers that area (S12). */
+  const areaIds = new Set(track ? workAreasFor(track).map((area) => area.id) : []);
   return (
     <ProjectCoreWork programId={pid} available={available} onNav={onNav}
-      track={read ? { deviceFiling, riskBasedMonitoring: read.riskBasedMonitoring === true, cmcComposes } : null}
-      workProjects={read && pid ? <ProjectWorkProjects programId={pid} anchorProjectId={anchorProjectId} canChange={read.canChange !== false} /> : null}>
+      track={track}
+      workProjects={read && pid ? <ProjectWorkProjects programId={pid} anchorProjectId={anchorProjectId} canChange={read.canChange !== false}
+        openable={(id) => areaIds.has(id) && available(id)} onOpen={onNav} /> : null}>
       {reports && <ProjectReportsDoor onNav={onNav} />}
     </ProjectCoreWork>
   );
