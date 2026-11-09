@@ -93,12 +93,15 @@ export const BIOTECH_CMC = { specs: [], stability: [], batches: [] };
 export const BIOTECH_SM = { molecule: 'C2C-201', programName: 'C2C-201', productName: 'C2C-201', indication: 'Fictional test indication' };
 export const BIOTECH_SM_CMC = { specs: [], stability: [], batches: [] };
 export const BIOTECH_STUDY_DESIGN = {};
+export const BIOTECH_ADAPTIVE_PLAN = { title: 'stub', designType: 'group_sequential', adaptations: [], interimLooks: [], stoppingRules: [], snapshots: [] };
 export const BIOTECH_TASKS = [];
 export const BIOTECH_IR_LETTER = {};
 `);
   await write('scripts/demo/launch-demo/packs/work-areas.mjs', `
 import { state } from '../../../../state.mjs';
 export async function ensureStudyDesign() { state.downstream.push('ensureStudyDesign'); }
+export async function ensureAdaptivePlan() { state.downstream.push('ensureAdaptivePlan'); }
+export async function ensureDesignTasks() { state.downstream.push('ensureDesignTasks'); }
 export async function ensureCmc() { state.downstream.push('ensureCmc'); }
 export async function ensureTasks() { state.downstream.push('ensureTasks'); }
 export async function ensurePlanDocuments() { state.downstream.push('ensurePlanDocuments'); }

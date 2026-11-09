@@ -512,6 +512,85 @@ export async function ensureStudyDesign({ api, run, tally }, program, protocolDo
   });
 }
 
+/**
+ * The adaptive plan, its interim looks and the tasks the design assessment
+ * proposes — the rest of what the Biostatistics work area shows.
+ *
+ * 2026-11-09: the same emptiness this file was written to end was still true of
+ * three of the area's panels. A seeded project listed its study design and
+ * sized it, and then: "No interim look is recorded on this plan yet", no
+ * statistical document, and an empty task board for the work. The design alone
+ * is the input to the area, not the area.
+ *
+ * The signed interim DECISION is deliberately not seeded. It is a Part 11
+ * ceremony — meaning, reason, and the signer's password and authenticator code
+ * re-entered and re-verified inside the writing transaction
+ * (services/adaptive-decision-signature.ts). A seed cannot hold a password and
+ * must not fake a signature, so the demo signs it live, which is the better
+ * thing to show anyway: the plan and its looks are here, and the decision is
+ * taken on stage.
+ */
+export async function ensureAdaptivePlan({ api, run, tally }, plan) {
+  await run.step(`Biostatistics: adaptive plan "${plan.title}"`, async () => {
+    /* `interimLooks` must state an informationFraction per look and they must
+       strictly increase; `stoppingRules` needs at least one with a type. The
+       service refuses anything else rather than assuming a timing
+       (adaptive-trial-operations-service.ts lookFraction). */
+    const created = must(await api('POST', '/api/biostat/adaptive/plan', {
+      title: plan.title,
+      designType: plan.designType,
+      adaptations: plan.adaptations,
+      interimLooks: plan.interimLooks,
+      stoppingRules: plan.stoppingRules,
+      spendingFunction: plan.spendingFunction,
+      maxSampleSize: plan.maxSampleSize,
+    }), [200, 201], 'create the adaptive plan');
+    const planId = created.data?.plan?.id ?? created.data?.id ?? created.plan?.id ?? created.id;
+    if (!planId) throw new Error(`the adaptive plan answered no id: ${JSON.stringify(created).slice(0, 300)}`);
+
+    /* Read the plan back before ingesting: a re-run must not stack a second
+       copy of every look on the same plan. */
+    const read = must(await api('GET', `/api/biostat/adaptive/${planId}`), 200, 'read the adaptive plan');
+    const have = new Set((read.data?.snapshots ?? []).map((x) => Number(x.lookNumber)));
+    let ingested = 0;
+    for (const look of plan.snapshots) {
+      if (have.has(Number(look.lookNumber))) continue;
+      must(await api('POST', `/api/biostat/adaptive/${planId}/interim-snapshot`, look), [200, 201], `ingest look ${look.lookNumber}`);
+      ingested += 1;
+    }
+    if (ingested === 0) { tally.found('adaptive-plan'); return `plan ${planId}, ${have.size} look(s) already recorded`; }
+    tally.created('adaptive-plan');
+    return `plan ${planId}, ${ingested} interim look(s) ingested`;
+  });
+}
+
+/**
+ * Raise the tasks the design assessment proposes, which is how biostatistics
+ * work reaches the task board a person actually works from. The assessment
+ * names them; this presses the button the Biostatistics screen presses
+ * (POST /api/biostat-bridge/designs/:studyId/tasks), so the rows are the
+ * product's own, with its ledger entry.
+ */
+export async function ensureDesignTasks({ api, run, tally }, designTitle) {
+  await run.step(`Biostatistics: raise the design's proposed tasks`, async () => {
+    const listed = rowsOf(must(await api('GET', '/api/biostat-bridge/designs'), 200, 'list study designs'));
+    const design = listed.find((d) => d.title === designTitle);
+    if (!design) throw new Error(`no study design titled "${designTitle}"; run the study-design step first`);
+    const assessment = must(await api('GET', `/api/biostat-bridge/designs/${encodeURIComponent(design.studyId)}/assessment`), 200, 'read the design assessment');
+    const proposed = (assessment.data?.proposedTasks ?? assessment.proposedTasks ?? []).map((t) => t.key).filter(Boolean);
+    if (proposed.length === 0) { tally.found('design-tasks'); return 'the assessment proposed no tasks'; }
+    const raised = must(await api('POST', `/api/biostat-bridge/designs/${encodeURIComponent(design.studyId)}/tasks`, {
+      keys: proposed,
+      reason: 'Demo seed: raise the statistical deliverables the design assessment names.',
+    }), [200, 201], 'raise the proposed tasks');
+    const created = (raised.data?.created ?? raised.created ?? []).length;
+    const skipped = (raised.data?.skipped ?? raised.skipped ?? []).length;
+    if (created === 0) { tally.found('design-tasks'); return `all ${skipped} already raised`; }
+    tally.created('design-tasks');
+    return `${created} raised, ${skipped} already present`;
+  });
+}
+
 /* ───────────────────────── Plan ───────────────────────── */
 
 /** Every deliverable of the IND plan of work that names a template, by its title. */

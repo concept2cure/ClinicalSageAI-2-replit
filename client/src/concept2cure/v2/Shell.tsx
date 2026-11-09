@@ -24,7 +24,7 @@ import { hasKeys, useLiveData } from './dataConnect';
 import { isOrgAdminRole } from './orgAdmin';
 import { canAdministerBilling } from '@shared/constants/permissions';
 import { TaskTray } from './TaskTray';
-import { readShellProject, shellProgramName, updateShellProject, useShellProject, type ShellProject } from './shellProject';
+import { readShellProject, shellProgramName, updateShellProject, useShellProject, type ShellProject, reopenLastProject } from './shellProject';
 import { destinationFor } from './routing';
 import { OPEN_PROGRAM_SURFACE } from './programAction';
 import { isMdxProjectFeature } from '@shared/constants/mdx-project-features';
@@ -250,11 +250,24 @@ export function Rail({
        other way there (/tasks, not the action's nav-target alias). */
     if (res?.ok) applySurfaceAction(res.directive, () => onNav(target));
     else onNav(target);
-    /* A project screen with no project open lands on Projects, by the router's own rule
-       (routing.ts destinationFor). Said, so the click is not silent: from Projects it looked dead
-       (found in the running app, 2026-10-31). */
+    /* A project screen needs a project. Reopen the one this account last had
+       open before deciding anything, which is the rule shellProject states and
+       nothing called: "a project screen reopens the last project the signed-in
+       account opened, and never another account's"
+       (railOpensWithoutProject.test.ts). Without this the entry is a dead end —
+       the router sends a project-scoped target with nothing open to Projects
+       (routing.ts destinationFor), so the work area never opens and reads as
+       missing. Found on 2026-11-09, on Biostatistics, by the founder: its
+       target became project-scoped that day and the door closed with it. It was
+       true of CMC and every other work area before that.
+
+       Only then the notice, and only when there is genuinely no project to
+       reopen — the one case where Projects is the right answer. Said rather
+       than silent: from Projects the click looked dead (2026-10-31). */
     if (target !== OPEN_PROGRAM_SURFACE && destinationFor(target, Boolean(readShellProject())).surfaceId === OPEN_PROGRAM_SURFACE) {
-      notify(`Open a project to see its ${s.label}. Choose one in Projects.`, 'ok');
+      if (!reopenLastProject()) {
+        notify(`Open a project to see its ${s.label}. Choose one in Projects.`, 'ok');
+      }
     }
   };
   const navItem = (s: RailEntry) => {

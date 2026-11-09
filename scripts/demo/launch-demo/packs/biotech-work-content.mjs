@@ -286,6 +286,53 @@ export const BIOTECH_SM_CMC = {
  * (55 % vs 8 %). 2026-10-31: the seeded design had two arms and no estimand,
  * analysis or populations, and contradicted the protocol beside it.
  */
+/**
+ * The adaptive plan for the SAME study the design above states, so the
+ * Biostatistics area does not show two different trials side by side.
+ *
+ * C2C-101-201 is a group-sequential dose-ranging study with a BINARY primary
+ * (PASI 75 at Week 16), so the interim looks carry response proportions, not
+ * means — the engine reads prop1/prop2 with n1/n2 and computes Z from the
+ * pooled standard error (adaptive-trial-operations-service.ts
+ * computeTestStatistic). The proportions track the design's own conservative
+ * comparison, 100 mg versus placebo.
+ *
+ * Two looks, at half and three-quarters information, strictly increasing
+ * because the service refuses anything else rather than assuming a timing.
+ * O'Brien-Fleming spending, which is what the protocol's statistical section
+ * states.
+ *
+ * No signed decision is seeded: that is a Part 11 ceremony needing the
+ * signer's password and authenticator code, and a seed must not fake a
+ * signature. The demo takes the decision live on the recorded looks.
+ */
+export const BIOTECH_ADAPTIVE_PLAN = {
+  title: T('C2C-101-201 — group-sequential monitoring plan'),
+  designType: 'group_sequential',
+  spendingFunction: 'obrien-fleming',
+  maxSampleSize: 240,
+  adaptations: [
+    { type: 'sample_size_reestimation', trigger: 'Blinded nuisance-parameter review at the first look', description: 'Re-estimate N from the observed pooled response rate if it departs materially from the planning assumption.' },
+    { type: 'arm_dropping', trigger: 'Futility on one dose at the second look', description: 'Drop a dose arm that crosses its futility boundary; placebo and the remaining dose continue.' },
+  ],
+  interimLooks: [
+    { lookNumber: 1, informationFraction: 0.5, plannedDate: 'Week 10 of enrolment' },
+    { lookNumber: 2, informationFraction: 0.75, plannedDate: 'Week 14 of enrolment' },
+  ],
+  stoppingRules: [
+    { type: 'efficacy', alpha: 0.025, description: 'Stop for efficacy if the test statistic crosses the O\'Brien-Fleming efficacy boundary.' },
+    { type: 'futility', description: 'Stop a dose for futility if its conditional power falls below 0.20.' },
+  ],
+  /* The looks as the IDMC would receive them. PASI 75 response proportions on
+     the 100 mg arm against placebo, with the participants analysed at each
+     look. Blinded at the first look, unblinded at the second — which is what
+     the panel's "blinded / unblinded / not recorded" column is there to say. */
+  snapshots: [
+    { lookNumber: 1, informationFraction: 0.5, enrolledCount: 120, isBlinded: true, summaryStatistics: { prop1: 0.42, prop2: 0.10, n1: 60, n2: 60 } },
+    { lookNumber: 2, informationFraction: 0.75, enrolledCount: 180, isBlinded: false, summaryStatistics: { prop1: 0.51, prop2: 0.09, n1: 90, n2: 90 } },
+  ],
+};
+
 export const BIOTECH_STUDY_DESIGN = {
   title: T('C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasis'),
   acronym: 'C2C-201',
