@@ -430,7 +430,7 @@ integration, package owners retain their current file holds, and independent rev
 | **1 — Evidence and atom verification** (§§2–3) | **S2/S4/S6**: `clinical-regulatory-evidence/`, `data-room-retrieval.ts`, `ana/drafting-source-lineage.ts`, Vault and citation services. | Provenance survives ingest/retrieval/draft; seeded incorrect citation fails exact document/page/span check. Deterministic outputs pin code/data hashes and can be recomputed. No unverified atom is presented as verified. |
 | **2 — Canvas and one CSR, full gate flow** (§§4,8) | **D4/S4/S6**, existing editor, CSR and governed artifact lifecycle. | Locked protocol contract and effective template precede drafting; unverified claims/open blocker prevent lock. Human accept/reject hunks, version hashes, review/signature segregation and provenance cards work in the existing editor. |
 | **3 — Deterministic biostatistics** (§5) | **S3/S4**, `biostatistics-bridge/`, `ana-biostats/`, `csr/`, `cdisc/`; P-101 keeps SAP in the one editor. | Synthetic ADaM + SAP reproduces TLF cell-for-cell; independently programmed QC catches a seeded cell change; protocol/SAP estimand mismatch raises a Finding. Narrative uses only verified computed values. |
-| **4 — CMC / Module 3** (§6) | **S7/S12**, existing `cmc/` and downstream provenance. | Fixture batch/stability tables match expected cells; OOS is explicitly flagged; QOS and Module 3 share atoms and method references. Existing US small-molecule IND composition boundary stays enforced until separately changed. |
+| **4 — CMC / Module 3** (§6) | **S7/S12**, existing `cmc/` and downstream provenance. | Fixture batch/stability tables match expected cells; OOS is explicitly flagged; QOS and Module 3 share atoms and method references. Existing US small-molecule IND composition boundary stays enforced until separately changed. **Phase 4's acceptance was met 2026-11-08 (`6e7ed6073`, `05adc9e78`); the module's remaining CMC scope is §6a below, under P-113.** |
 | **5 — Lab/QNS and RBM** (§7) | **S8/S3/S9**, existing lab/study data and `rbm/`, tasking. | Immutable feed/versioned LOINC/UCUM normalization; QNS recollection/SLA/escalation; seeded deteriorating site crosses QNS/query-aging thresholds in the correct periods. Repeated reports reproduce identical numbers. |
 | **6 — QMS, inspection and governed learning** (§§9,17,20–23,27–29) | **S6/S4/S9**, existing Vault controlled documents, audit, QMS and tenant export/purge paths. | Ineffective template and untrained approver refused; inspection pack exports audit/training/deviation/CAPA/provenance. Support access is approved/logged; offboarding exports open-format client content without secrets and revokes grants under the contractual retention schedule. Rule conflict/edit/revoke/promotion and alignment digest are auditable. Cohort/promotion checks below precede shared learning. |
 | **7 — Publishing, client-account transmission, correspondence and clean-file review** (§§10,17,30–32) | **S5/S10/S9**, existing eCTD/sequence, gateways, agency responses and task clocks. | Clean sequence passes external validation seam; broken link blocks. Exact-byte approval and client-owned scoped grant required to transmit; missing ACK3 creates a Watch task. Full-letter classification extracts all items/dates with spans; humans confirm clocks/subjective coding. Clean-file report is required before ready; confirmed objective deficiencies block, sparse subjective history says “insufficient pattern history”. Track deficiencies/submission, RTF/RTA and review rounds per tenant. |
@@ -439,6 +439,42 @@ integration, package owners retain their current file holds, and independent rev
 The later-phase QMS work prepares cohort controls before phase 7 feedback intelligence; it does not allow letters or
 reviewer identities into a shared pool. Existing launch rows D1–D10 remain the deployment criteria. Vendor onboarding,
 agency test accounts, customer IQ/OQ and model PQ remain explicit dependencies; this epic claims no certification.
+
+### 6a. All of CMC in the CMC module (founder decision P-113, 2026-11-09)
+
+The founder, in the CMC session: *"All possible CMC data and tests and studies and needs and more across all of
+chemical, manufacturing and controls; must be part of this special module. Using all types of AI and machine learn
+and testing … study what all advanced current market offerings are doing in this exact space and add that to their
+roadmap for cmc. And I think there should be a sub-project management feature dedicated just for cmc but connected
+to the parent project management module."*
+
+**The study is `docs/evidence/S7/2026-11-09-cmc-scope-market-and-roadmap/`**: the inventory by path of what exists
+(57 CMC services, 19 canonical record kinds, 9 signed registers, 15 composed sections), the external study of
+QbDVision, Weave Bio, DDi, Veeva Vault RIM, the CPV platforms, the Rockwell-led Digital CMC Consortium and the
+published ML work, with its sources and the caution that almost all vendor material is marketing. **P-113** in
+`docs/LAUNCH_DEFINITION_OF_DONE.md` is the decision. Nothing below is a new screen, rail entry, card or editor
+(RULES 4 and 5); each item names the existing file it completes (RULE 6).
+
+**What already exists, so the roadmap is not read as new.** On specification control, stability with ICH Q1E and
+poolability, batch analyses, process capability (Cpk/Ppk), change classification, cross-register contradictions,
+Module 3 composition with lineage-derived drift, the 2.3 sharing Module 3's atoms, and a §11.50 signed-act layer
+with outcomes, this module is at or ahead of what the vendor material describes. The roadmap is what it does
+**not** hold.
+
+| Tier | Work | Completes |
+|---|---|---|
+| **A** — extends an existing register; no addition | Nitrosamine risk assessment; ICH Q3D elemental impurities; ICH Q3C residual solvents; photostability (Q1B); in-use and reconstitution stability; post-approval stability commitments; method transfer and co-validation; extractables and leachables as studies; cleaning and shipping validation as validation kinds; supplier qualification; batch genealogy; the OOS/OOT investigation lifecycle | `cmc/impurity-assessment.ts`, `cmc/stability-source.ts`, `cmc/analytical-method-source.ts`, `cmc/contradiction-lifecycle.ts`, the material-spec, container-closure, batch and process-validation registers |
+| **B** — compose what is already judged | **3.2.A.1** facilities and equipment; **3.2.A.2** adventitious agents (from `substance-modality.ts`); **3.2.A.3** novel excipients (from `materialSpec.novelExcipient`); **3.2.R** US regional (from `us-ind-regional.ts`) | `module3Composer.ts` — the judgements exist and no section composes from them |
+| **C** — three new records, each needing its own `approvedAdditions` entry and design | 1. **Manufacturing sites and equipment** — today a free-text `manufacturingSite`, named in every 3.2.S.2.1 and 3.2.P.3.1. 2. **QTPP, CQA and CPP as records** — `qbd-analyzer.ts` derives them at read time and QTPP exists nowhere, so the control strategy has no governed object at its centre. 3. **Established conditions and the PACMP (ICH Q12)** — nothing records what was filed as an established condition | the register family; `cmc/qbd-analyzer.ts` reads records and keeps deriving where none is recorded; `cmc/supac-classifier.ts` and `cmc-change-control-service.ts` |
+| **AI/ML** — inside RULE 2, which is unchanged | 1. **Document and instrument intake** (a CoA, an executed batch record, a stability table, a validation report) as *proposed* records a person confirms — the founder's "data entry points", and the largest practical win. 2. **"What a reviewer will ask"** — a ranking layer over the deterministic contradiction sweep, showing its basis and corpus, never a verdict. 3. **Early degradation signal** beside `stability-trending.ts`, which stays the sole authority on shelf life. 4. **Specification-setting proposals** from batch history, with `process-capability.ts` keeping the arithmetic. 5. **Narrative drafting** — exists | the existing extraction path, `cmc-impact-contradiction-engine.ts`, `cmc/stability-trending.ts`, `cmc/process-capability.ts`, `cmc/module3-narrative-builder.ts` |
+| **Strategic** | **FDA PQ/CMC alignment.** Its Phase 1 domains — drug product, drug substance, quality specification, batch analysis, stability — are this module's five strongest registers, which already hold that data as records with lineage. The work is a mapping to the HL7 FHIR Implementation Guide, not a data project. Not an operational requirement yet, so it is an export beside the existing composition | `cmc/module3-compile.ts` and the register readers |
+| **Designed for, not built against** | **ICH M4Q(R2)** — a January 2026 FDA draft, Level 1, not for implementation, 2027 adoption reported and disputed. Two consequences: a Description–Manufacture–Control–Storage projection beside the composer's section-per-CTD-node shape, and QTPP/CQA-as-records becoming a filing requirement rather than an improvement | — |
+| **S12** | The CMC work project's **own plan**: a deliverable's owner, due date and dependencies, which have nowhere to live today because a CMC deliverable is the set of records of one source type in one project (`docs/evidence/S12/2026-11-09-deliverable-feeds/`). This is what makes the critical path to a filing date answerable. The task list itself is **P-111**, already decided and routed to S12, with this lane holding the CMC area's screens | `cmc/section-drift.ts` `projectDeliverableFeeds`, `ProjectCoreWork.tsx`, `unified_tasks` |
+
+**Not approved** (P-113): formulation or molecular ML (ZoomLab, Schrödinger, digital twins), outside P-28 and the
+spine; and matching the AI-authoring vendors feature for feature, because they draft prose into documents while
+this module composes Module 3 from governed records with lineage — which is the direction FDA's own programme is
+moving, and the wrong advantage to spend.
 
 ### Expanded spike — executable acceptance contract
 

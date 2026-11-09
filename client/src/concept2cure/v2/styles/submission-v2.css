@@ -2,7 +2,6 @@
    top of the shared surface framework (journey-v2.css + coverage-v2.css, both
    loaded globally by V2App). The kit expressed these as inline style
    attributes; classes keep the TSX clean and CSP-lean. */
-.c2c-v2 .sc-page { max-width: 1140px; }
 .c2c-v2 .sc-mt { margin-top: 12px; }
 .c2c-v2 .sc-mb { margin-bottom: 10px; }
 .c2c-v2 .sc-mono { font-family: var(--font-mono); }

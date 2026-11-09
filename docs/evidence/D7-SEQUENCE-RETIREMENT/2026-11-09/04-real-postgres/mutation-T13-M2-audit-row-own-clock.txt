@@ -1,0 +1,6 @@
+MUTATION T13-M2-audit-row-own-clock in server/services/auditService.ts (on the final code and tests, 2026-11-09T07:59:35.868733Z): replaced [const occurredAt = sealedInstant(entry.occurredAt);] with [const occurredAt = sealedInstant(undefined);]
+ ✓ server/services/submission-service/__tests__/sequence-retirement-lock.pg.test.ts > P-86: a retirement on two real PostgreSQL connections (T13) > a creation of 0001 holding the submission first: the retirement of 0000 waits for it, then refuses, naming 0001 76ms
+ × server/services/submission-service/__tests__/sequence-retirement-lock.pg.test.ts > P-86: a retirement on two real PostgreSQL connections (T13) > a retirement that waits 500 ms for its sequence row seals the instant it got the lock; a creation of the freed number waits for it, then takes 0000 627ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 7862f5daf128a71a405c2b7b9153a09a36358897b573a47e2df5744440e4a9f6 (expected 7862f5daf128a71a405c2b7b9153a09a36358897b573a47e2df5744440e4a9f6)

@@ -115,6 +115,18 @@ export interface AnalyticalMethodRecord {
   validationStatus: string;
   /** False when no validation status is recorded for this method at all. */
   validationStatusRecorded: boolean;
+  /**
+   * Who signed the validation act and when, as the register recorded them —
+   * '' when the payload carries neither.
+   *
+   * P-110 (2026-11-09) reads these: a status in `METHOD_SUITABLE` is honoured
+   * only when they are present, because suitability is a signed act. Nothing
+   * but the ceremony writes these two columns — `withoutSignatureFields`
+   * strips them from every create and edit body — so their presence is what
+   * distinguishes a signed outcome from a word typed into a register.
+   */
+  validationSignedBy: string;
+  validationSignedAt: string;
   specificityData: unknown;
   linearityData: unknown;
   accuracyData: unknown;
@@ -177,6 +189,8 @@ export function normalizeMethodPayload(
     purpose: pickText(payload, ['purpose']),
     validationStatus,
     validationStatusRecorded: validationStatus !== '',
+    validationSignedBy: pickText(payload, ['validatedBy', 'validated_by']),
+    validationSignedAt: pickText(payload, ['validationDate', 'validation_date']),
     specificityData: pickValue(payload, ['specificity_data', 'specificityData']),
     linearityData: pickValue(payload, ['linearity_data', 'linearityData']),
     accuracyData: pickValue(payload, ['accuracy_data', 'accuracyData']),
@@ -377,8 +391,41 @@ export function specificationMethodVerdict(
   }
 
   const key = methodStatusKey(match.validationStatus);
-  if (METHOD_VALIDATED.has(key) || METHOD_SUITABLE.has(key)) {
+  if (METHOD_VALIDATED.has(key)) {
     return { approve: true, note: `"${named}" is recorded as ${match.validationStatus}` };
+  }
+  /* ── P-110 item 1 (2026-11-09): suitability is a signed act ────────────────
+     Decided by the coordinating session under the founder's delegation of
+     2026-11-08, on this lane's own finding: the gate honoured a suitable
+     status, and no form could record one, so in practice every limit needed a
+     fully validated method. The decision opens suitability through the
+     existing signed act and REFUSES the unsigned word — "a word typed into a
+     GxP register must not unlock an approval that validation reaches only by
+     signature" — including as an interim.
+
+     So the words are read from the signature, not from the string. The two
+     signature columns are written by `qualifyRegisterRecord` and by nothing
+     else, which is what makes their presence the test.
+
+     `METHOD_VALIDATED` above is unchanged: `validated` was already reachable
+     only through that act, and the decision speaks to suitability's words. */
+  if (METHOD_SUITABLE.has(key)) {
+    if (match.validationSignedBy && match.validationSignedAt) {
+      return {
+        approve: true,
+        note: `"${named}" is recorded as ${match.validationStatus} under signature`,
+      };
+    }
+    return {
+      approve: false,
+      code: 'METHOD_NOT_FIT',
+      message:
+        `The analytical method "${match.methodName}" is recorded as ${match.validationStatus}, but that is a word ` +
+        'in the register and not a signed act: nothing on this record says who attested the procedure is fit, or ' +
+        'when. Suitability is recorded by the method register\u2019s Validate action, which signs for either full ' +
+        'validation or suitability for the phase (ICH Q2(R2), Q14; 21 CFR 312.23(a)(7)). Sign it there, then ' +
+        'approve the limit.',
+    };
   }
   return {
     approve: false,

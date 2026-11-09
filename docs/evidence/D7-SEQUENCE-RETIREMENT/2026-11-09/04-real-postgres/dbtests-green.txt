@@ -1,0 +1,40 @@
+The three dbtests at 3a4dc407d (C1 on trunk, plus T13), on PostgreSQL 16.15: a throwaway database provisioned as CI provisions it (scripts/db/install-fresh.mjs, then scripts/db/deploy-migrate.mjs, which applied migrations/20261109_ectd_sequence_removal_guard.sql), named to the vault fixture's declared pattern. 2026-11-09T08:14:50Z
+Command: CI=true NODE_ENV=test RLS_ENFORCE=on C2C_VAULT_LEGACY_FIXTURE_DATABASE=platform_ci_vault_fixture_p86 DATABASE_URL=TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:5432/platform_ci_vault_fixture_p86 APP_DATABASE_URL=<app_service on the same database> npx vitest run --config vitest.db.config.ts tests/db/vault-where-used.dbtest.ts tests/db/sequence-number-once.dbtest.ts tests/db/review-route-guard.dbtest.ts
+Guard triggers on that database (tgname | deferrable | initially deferred):
+ectd_sequences_removal_guard|f|f
+ectd_sequences_removal_recorded|t|t
+ ✓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each version says why it would not be transmitted, in the refusal's own words 170ms
+ ✓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each placement carries its sequence's dispatch status 133ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it 120ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement 73ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing 119ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security 21ms
+ ✓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > lists each export whose record names the version, from either store 125ms
+ ✓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > a record that names no source is not inferred, and another organisation's is not listed 28ms
+ ✓ tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > a second live 0000 is refused, by name 5083ms
+ ✓ tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > two creates of 0000 in flight together: the one that waits for the submission sees the other and is refused 412ms
+ ✓ tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > a removed 0000 does not hold its number 66ms
+ ✓ tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > a sequence removed while its transition is in flight does not move 444ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a raw UPDATE of a route row’s status 8ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a raw UPDATE of a route row’s assignee 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a raw UPDATE of a route row’s archive 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a raw UPDATE of a route row’s blockers 2ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a raw UPDATE of a route row’s due date 11ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a raw UPDATE of a route row’s dependencies 3ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a raw UPDATE of a route row’s route columns 2ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > a DELETE of a route row 2ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > an INSERT naming a route column 2ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > an INSERT into task_dependencies naming a route member 2ms
+ ✓ tests/db/review-route-guard.dbtest.ts > unified_tasks_route_rows_guard refuses the runtime role outside the route writer’s doors > an INSERT into cross_module_task_links naming a route member 2ms
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > a metadata-only UPDATE (the due-date sweep’s marker) 2ms
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > every write to a task that is not a route member 2ms
+ ✓ tests/db/review-route-guard.dbtest.ts > what the guard admits > a door’s own transition: members enlisted, a step opened when its turn has come and not before 14ms
+ ✓ tests/db/review-route-guard.dbtest.ts > the route writer is a role, never a setting (P-59) > the setting the guard used to read is still settable by the runtime role, and admits nothing 7ms
+ ✓ tests/db/review-route-guard.dbtest.ts > the route writer is a role, never a setting (P-59) > the runtime role cannot become the route writer 2ms
+ ✓ tests/db/review-route-guard.dbtest.ts > the route writer is a role, never a setting (P-59) > each door is a definer function owned by the route writer, with a pinned search_path, that PUBLIC cannot run 4ms
+ ✓ tests/db/review-route-guard.dbtest.ts > the route writer is a role, never a setting (P-59) > a door refuses another tenant’s scope, and a task that is not the route writer’s own 8ms
+ ✓ tests/db/review-route-guard.dbtest.ts > the route writer is a role, never a setting (P-59) > a signature closes a member’s task only when it is the member’s own, with the role’s meaning, over the route’s content 20ms
+ ✓ tests/db/review-route-guard.dbtest.ts > review_routes is a policed tenant table > carries the tenant policy and FORCE RLS 2ms
+ ✓ tests/db/review-route-guard.dbtest.ts > review_routes is a policed tenant table > another tenant cannot see the route, nor name it from a task 7ms
+ Test Files  3 passed (3)
+      Tests  33 passed (33)

@@ -33,6 +33,9 @@ import type { PoolClient } from 'pg';
 import { writeChainedAuditRow } from '../auditService.js';
 import { requireGovernedReason } from '../../routes/governed-reason';
 import { type Refusal, refuse, inRefusableTransaction } from '../vault/vault-refusal.js';
+/* The one validation vocabulary, which lives with the record whose field it
+   interprets (services/cmc/analytical-method-source.ts). */
+import { METHOD_SUITABLE, METHOD_VALIDATED } from './analytical-method-source.js';
 
 /**
  * The action a signed record's retirement records on the chain. Exported so the
@@ -101,6 +104,56 @@ export interface SignedRegister {
   /** What the audit row and the messages call the record. */
   noun: string;
   idKind: 'integer' | 'uuid';
+  /**
+   * The outcomes this register's signed act may record, where it records more
+   * than one. Absent means one: `signedValue`.
+   *
+   * Only the analytical-method register has two (P-110 item 1, 2026-11-09).
+   * FDA asks at phase 1 for procedures that are scientifically sound and fit
+   * for their use, with full validation by the pivotal phase (21 CFR
+   * 312.23(a)(7); ICH Q2(R2) and Q14) — so the act records WHICH of the two
+   * the signer is attesting, through the same ceremony, audit and route. There
+   * is no second endpoint.
+   */
+  signedOutcomes?: readonly SignedOutcome[];
+  /**
+   * Status words this register's act alone may write, beyond the outcomes'
+   * own values — so an ordinary edit cannot type one in.
+   *
+   * The analytical-method register needs this because the specification
+   * approval gate honours a vocabulary wider than the words the act writes
+   * (`METHOD_VALIDATED` and `METHOD_SUITABLE`,
+   * `services/cmc/analytical-method-source.ts`). P-110: "a word typed into a
+   * GxP register must not unlock an approval that validation reaches only by
+   * signature", including as an interim. Every word the gate would honour is
+   * therefore refused on an edit.
+   */
+  governedValues?: readonly string[];
+}
+
+/**
+ * One outcome a register's signed act may record.
+ *
+ * `value` is what the status column holds afterwards; it is NOT narrowed to
+ * `signedValue`'s union, because an outcome's word is the register's own
+ * vocabulary rather than the one default word every register has.
+ */
+export interface SignedOutcome {
+  /** The word the request names, matched trimmed and lower-cased. */
+  outcome: string;
+  /** The status the register's column holds once the act commits. */
+  value: string;
+  /** What the §11.50 compliance statement says was attested. */
+  attests: string;
+  /** True when the signer must also state the phase the record is fit for. */
+  requiresPhase?: boolean;
+  /**
+   * How much the outcome attests, for refusing a signed step DOWN. A method
+   * validated in full is not returned to "suitable for the phase" by a second
+   * signature: that would leave the register claiming less than someone has
+   * already attested, with no record of the retraction.
+   */
+  rank: number;
 }
 
 /**
@@ -115,6 +168,92 @@ export interface SignedRegister {
  * eight more offered their signed word on a plain dropdown
  * (docs/evidence/CMC-M3-GA/2026-10-18/05-ungoverned-signed-states/).
  */
+/**
+ * Which outcome a signing request records, or why it is refused.
+ *
+ * Pure, and in this module because the answer is the descriptor's own: the
+ * ceremony in `server/api/cmc/routes.ts` asks, it does not decide. Keeping it
+ * here also keeps that handler under its complexity cap.
+ *
+ * A request that names no outcome gets the register's first — `validated` for
+ * the analytical-method register, which is what every caller sent before
+ * P-110, so nothing that worked stops working.
+ */
+/** The answer for a register whose act records exactly one outcome. */
+function soleOutcome(
+  register: SignedRegister,
+  asked: string,
+  sent: unknown,
+): { value: string; attests: string; phase: null } | { refusal: string } {
+  if (asked && asked !== register.signedValue.toLowerCase()) {
+    return {
+      refusal:
+        `${register.verb} records one outcome, ${register.signedValue}, so "${String(sent)}" is not an ` +
+        'outcome it can sign for. Omit the outcome.',
+    };
+  }
+  return { value: register.signedValue, attests: register.verb, phase: null };
+}
+
+/**
+ * Why a signed step DOWN is refused, or null.
+ *
+ * The register would end up claiming less than someone has already attested,
+ * with the earlier signature overwritten rather than retracted. A status that
+ * is not one of the outcomes (`development`, `retired`) holds no rank, so
+ * neither side of the comparison fires.
+ */
+function stepDownRefusal(
+  register: SignedRegister,
+  outcomes: readonly SignedOutcome[],
+  chosen: SignedOutcome,
+  storedStatus: unknown,
+): string | null {
+  const stored = String(storedStatus ?? '').trim().toLowerCase();
+  const held = outcomes.find((o) => o.value.toLowerCase() === stored);
+  if (!held || held.rank <= chosen.rank) return null;
+  return (
+    `This ${register.noun} is already recorded as ${held.value}, which attests ${held.attests}. Signing ` +
+    `"${chosen.outcome}" would record less than that under a second signature, overwriting the first rather ` +
+    'than retracting it. Record a new assessment instead.'
+  );
+}
+
+export function resolveSignedOutcome(
+  register: SignedRegister,
+  body: { outcome?: unknown; phase?: unknown },
+  storedStatus: unknown,
+): { value: string; attests: string; phase: string | null } | { refusal: string } {
+  const asked = String(body.outcome ?? '').trim().toLowerCase();
+  const outcomes = register.signedOutcomes;
+  if (!outcomes || outcomes.length === 0) return soleOutcome(register, asked, body.outcome);
+
+  const chosen = asked
+    ? outcomes.find((o) => o.outcome.toLowerCase() === asked)
+    : outcomes[0];
+  if (!chosen) {
+    return {
+      refusal:
+        `"${String(body.outcome)}" is not an outcome ${register.verb} can sign for. It records ` +
+        `${outcomes.map((o) => `"${o.outcome}"`).join(' or ')}.`,
+    };
+  }
+
+  const phase = String(body.phase ?? '').trim();
+  if (chosen.requiresPhase && !phase) {
+    return {
+      refusal:
+        `Signing "${chosen.outcome}" attests ${chosen.attests}, so it is recorded against a phase: a procedure is ` +
+        'suitable FOR something. State the phase this attestation covers.',
+    };
+  }
+
+  const down = stepDownRefusal(register, outcomes, chosen, storedStatus);
+  if (down) return { refusal: down };
+
+  return { value: chosen.value, attests: chosen.attests, phase: chosen.requiresPhase ? phase : (phase || null) };
+}
+
 export const SIGNED_REGISTERS = {
   containerClosures: {
     table: 'cmc_container_closures', statusColumn: 'status', statusField: 'status',
@@ -163,6 +302,22 @@ export const SIGNED_REGISTERS = {
     signedByField: 'validatedBy', signedAtField: 'validationDate',
     registerPath: 'analytical-methods', signPath: 'validate', verb: 'Method validation (ICH Q2)',
     noun: 'analytical method', idKind: 'integer',
+    /* P-110 item 1. `validated` is first, so a caller that names no outcome
+       gets today's behaviour unchanged. */
+    signedOutcomes: [
+      { outcome: 'validated', value: 'validated', attests: 'full validation to ICH Q2(R2)', rank: 2 },
+      {
+        outcome: 'phase-appropriate',
+        value: 'phase-appropriate',
+        attests: 'suitability for the stated development phase, short of full validation',
+        requiresPhase: true,
+        rank: 1,
+      },
+    ],
+    /* Every word the specification approval gate honours. Imported rather than
+       restated: a second copy is how two surfaces of one product come to
+       disagree about whether a method is validated. */
+    governedValues: [...METHOD_VALIDATED, ...METHOD_SUITABLE],
   },
   processValidation: {
     table: 'process_validation', statusColumn: 'status', statusField: 'status',
@@ -229,7 +384,29 @@ export function withoutSignatureFields<T extends Record<string, unknown>>(
 
 /** Whether the stored status is the register's signed state. */
 export function isSigned(register: SignedRegister, storedStatus: unknown): boolean {
-  return String(storedStatus ?? '').trim().toLowerCase() === register.signedValue.toLowerCase();
+  return signedStateOf(register, storedStatus) !== null;
+}
+
+/**
+ * The signed word the record holds, or null when it holds none.
+ *
+ * Every word the register's ACT writes counts, not only `signedValue`
+ * (P-110 item 1, 2026-11-09). The analytical-method act records two outcomes,
+ * and a record signed as `phase-appropriate` is as signed as one recorded
+ * `validated`: a signature over a procedure's suitability sits on the same
+ * content and is stranded by the same edit. Comparing only against
+ * `signedValue` would have introduced a second signed state and left it
+ * unprotected — which is the hole this decision exists to close, one level
+ * down.
+ */
+export function signedStateOf(register: SignedRegister, storedStatus: unknown): string | null {
+  const stored = String(storedStatus ?? '').trim().toLowerCase();
+  if (!stored) return null;
+  if (stored === register.signedValue.toLowerCase()) return register.signedValue;
+  for (const o of register.signedOutcomes ?? []) {
+    if (stored === o.value.toLowerCase()) return o.value;
+  }
+  return null;
 }
 
 /** Whether a patch asks only to retire the record (with or without a reason). */
@@ -249,10 +426,11 @@ export function signedRegisterEditRefusal(
   storedStatus: unknown,
   patch: Record<string, unknown>,
 ): string | null {
-  if (!isSigned(register, storedStatus)) return null;
+  const signed = signedStateOf(register, storedStatus);
+  if (!signed) return null;
   if (isRetirement(register, patch)) return null;
   return (
-    `This ${register.noun} is ${register.signedValue} under a recorded signature, so its content cannot be ` +
+    `This ${register.noun} is ${signed} under a recorded signature, so its content cannot be ` +
     `changed by an ordinary edit: the signature would stay on values nobody signed. ` +
     `Retire it with a reason, then record and sign a new one.`
   );

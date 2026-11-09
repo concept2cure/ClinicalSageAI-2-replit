@@ -103,7 +103,7 @@ import {
   type MdrDeclaredClass,
 } from '../../../shared/regulatory/device-class.js';
 import { ComputationRefusal, refuseUnlessStated } from '../ana-biostats/computation-engine';
-import { booleanInputStates, statedNumber, statedOneOf } from '../immunogenicity/immunogenicity-reference';
+import { booleanInputStates, statedNumber, statedOneOf, unstated } from '../immunogenicity/immunogenicity-reference';
 
 export type { Citation, ClinicalStudyRecommendation, Finding, SubmissionSection } from './medical-device-knowledge-data.js';
 
@@ -955,8 +955,6 @@ export interface DesignDeviceClinicalEvidenceResult {
   citations: Citation[];
   inputStates: Record<string, boolean | 'not_stated'>;
 }
-
-const unstated = (v: unknown): boolean => v === undefined || v === null;
 
 /** The yes/no inputs, reported as stated or not_stated. */
 const CLINICAL_FLAGS = ['novelTechnology', 'clinicalDataNeededForSE', 'implantable', 'lifeSustaining', 'isIVD', 'existingLiterature', 'realWorldDataAvailable', 'euMarket', 'significantRisk'] as const;

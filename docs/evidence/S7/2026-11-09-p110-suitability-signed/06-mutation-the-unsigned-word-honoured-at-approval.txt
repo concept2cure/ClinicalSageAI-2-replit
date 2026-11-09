@@ -1,0 +1,8 @@
+ × server/api/cmc/__tests__/specification-approve-method-gate.test.ts > POST /specifications/:id/approve — the method gate the screen promised > refuses a suitable status that carries no signature, and writes nothing 8ms
+   → {"success":true,"data":{"id":"11111111-2222-4333-8444-555555555555","tenant_id":101,"project_id":"99999999-8888-4777-8666-555555555555","material_name":"Aggregation","approval_status":"approved","test_methods":{"method":"SE-HPLC"}},"governance":{"actionId":"act-1","sha256Chain":"chain"},"timestamp":"2026-11-09T07:58:45.381Z","linked":true}: expected 200 to be 409 // Object.is equality
+ × server/services/cmc/__tests__/analytical-method-source.test.ts > specificationMethodVerdict — a limit is approved only on a procedure shown fit > refuses a SUITABLE status that carries no signature — the unsigned word 4ms
+   → an unsigned "qualified" supported an approved limit: expected true to be false // Object.is equality
+ × server/services/cmc/__tests__/analytical-method-source.test.ts > specificationMethodVerdict — a limit is approved only on a procedure shown fit > needs BOTH halves of the signature, because one alone is not a signed act 3ms
+   → expected { approve: true, …(1) } to match object { approve: false, …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 51 passed (54)

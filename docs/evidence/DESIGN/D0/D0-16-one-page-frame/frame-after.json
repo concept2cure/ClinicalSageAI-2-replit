@@ -1,0 +1,506 @@
+{
+ "projects-1440": {
+  "title": {
+   "text": "Projects",
+   "left": 332
+  },
+  "root": {
+   "cls": "pj-index",
+   "left": 264,
+   "width": 1176,
+   "padL": "68px",
+   "maxW": "none"
+  },
+  "page": {
+   "scrollWidth": 1176,
+   "clientWidth": 1176,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ },
+ "project-1440": {
+  "title": {
+   "text": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaqu",
+   "left": 332
+  },
+  "root": {
+   "cls": "page-inner pj",
+   "left": 292,
+   "width": 1120,
+   "padL": "40px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 1176,
+   "clientWidth": 1176,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ },
+ "submission-center-1440": {
+  "title": {
+   "text": "Submission Center",
+   "left": 332
+  },
+  "root": {
+   "cls": "sp sc-page",
+   "left": 292,
+   "width": 1120,
+   "padL": "40px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 1176,
+   "clientWidth": 1176,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ },
+ "tasks-1440": {
+  "title": {
+   "text": "Tasks",
+   "left": 332
+  },
+  "root": {
+   "cls": "page-inner tb",
+   "left": 292,
+   "width": 1120,
+   "padL": "40px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 1176,
+   "clientWidth": 1176,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ },
+ "review-1440": {
+  "title": {
+   "text": "The review board",
+   "left": 332
+  },
+  "root": {
+   "cls": "page-inner",
+   "left": 292,
+   "width": 1120,
+   "padL": "40px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 1176,
+   "clientWidth": 1176,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ },
+ "communication-1440": {
+  "title": {
+   "text": "Communication",
+   "left": 332
+  },
+  "root": {
+   "cls": "page-inner",
+   "left": 292,
+   "width": 1120,
+   "padL": "40px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 1176,
+   "clientWidth": 1176,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ },
+ "rbm-1440": {
+  "title": {
+   "text": "Risk-based monitoring",
+   "left": 332
+  },
+  "root": {
+   "cls": "page-inner",
+   "left": 292,
+   "width": 1120,
+   "padL": "40px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 1176,
+   "clientWidth": 1176,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": {
+   "contentWidth": 672,
+   "anaOpen": true,
+   "anaWidth": 352
+  }
+ },
+ "ind-lifecycle-1440": {
+  "title": {
+   "text": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictio",
+   "left": 332
+  },
+  "root": {
+   "cls": "page-inner",
+   "left": 292,
+   "width": 1120,
+   "padL": "40px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 1176,
+   "clientWidth": 1176,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ },
+ "vault-1440": {
+  "title": {
+   "text": "Vault",
+   "left": 332
+  },
+  "root": {
+   "cls": "page-inner vd-wrap",
+   "left": 292,
+   "width": 1120,
+   "padL": "40px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 1176,
+   "clientWidth": 1176,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ },
+ "etmf-1440": {
+  "title": {
+   "text": "Inspection readiness: not in this release",
+   "left": 654
+  },
+  "root": null,
+  "page": {
+   "scrollWidth": 1176,
+   "clientWidth": 1176,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ },
+ "projects-390": {
+  "title": {
+   "text": "Projects",
+   "left": 16
+  },
+  "root": {
+   "cls": "pj-index",
+   "left": 0,
+   "width": 390,
+   "padL": "16px",
+   "maxW": "none"
+  },
+  "page": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ },
+ "project-390": {
+  "title": {
+   "text": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaqu",
+   "left": 16
+  },
+  "root": {
+   "cls": "page-inner pj",
+   "left": 0,
+   "width": 390,
+   "padL": "16px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [
+   {
+    "tag": "path",
+    "cls": "[object SVGAnimatedString]",
+    "right": 398
+   },
+   {
+    "tag": "path",
+    "cls": "[object SVGAnimatedString]",
+    "right": 407
+   },
+   {
+    "tag": "path",
+    "cls": "[object SVGAnimatedString]",
+    "right": 400
+   },
+   {
+    "tag": "path",
+    "cls": "[object SVGAnimatedString]",
+    "right": 404
+   },
+   {
+    "tag": "path",
+    "cls": "[object SVGAnimatedString]",
+    "right": 498
+   }
+  ],
+  "pastCard": [],
+  "rbm": null
+ },
+ "submission-center-390": {
+  "title": {
+   "text": "Submission Center",
+   "left": 16
+  },
+  "root": {
+   "cls": "sp sc-page",
+   "left": 0,
+   "width": 390,
+   "padL": "16px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ },
+ "tasks-390": {
+  "title": {
+   "text": "Tasks",
+   "left": 16
+  },
+  "root": {
+   "cls": "page-inner tb",
+   "left": 0,
+   "width": 390,
+   "padL": "16px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ },
+ "review-390": {
+  "title": {
+   "text": "The review board",
+   "left": 16
+  },
+  "root": {
+   "cls": "page-inner",
+   "left": 0,
+   "width": 390,
+   "padL": "16px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ },
+ "communication-390": {
+  "title": {
+   "text": "Communication",
+   "left": 16
+  },
+  "root": {
+   "cls": "page-inner",
+   "left": 0,
+   "width": 390,
+   "padL": "16px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ },
+ "rbm-390": {
+  "title": {
+   "text": "Risk-based monitoring",
+   "left": 16
+  },
+  "root": {
+   "cls": "page-inner",
+   "left": 0,
+   "width": 390,
+   "padL": "16px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": {
+   "contentWidth": 358,
+   "anaOpen": true,
+   "anaWidth": 358
+  }
+ },
+ "ind-lifecycle-390": {
+  "title": {
+   "text": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictio",
+   "left": 16
+  },
+  "root": {
+   "cls": "page-inner",
+   "left": 0,
+   "width": 390,
+   "padL": "16px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [
+   {
+    "tag": "path",
+    "cls": "[object SVGAnimatedString]",
+    "right": 480
+   },
+   {
+    "tag": "polyline",
+    "cls": "[object SVGAnimatedString]",
+    "right": 478
+   },
+   {
+    "tag": "ellipse",
+    "cls": "[object SVGAnimatedString]",
+    "right": 410
+   },
+   {
+    "tag": "path",
+    "cls": "[object SVGAnimatedString]",
+    "right": 410
+   },
+   {
+    "tag": "path",
+    "cls": "[object SVGAnimatedString]",
+    "right": 410
+   }
+  ],
+  "pastCard": [],
+  "rbm": null
+ },
+ "vault-390": {
+  "title": {
+   "text": "Vault",
+   "left": 16
+  },
+  "root": {
+   "cls": "page-inner vd-wrap",
+   "left": 0,
+   "width": 390,
+   "padL": "16px",
+   "maxW": "1120px"
+  },
+  "page": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [
+   {
+    "tag": "path",
+    "cls": "[object SVGAnimatedString]",
+    "right": 588
+   },
+   {
+    "tag": "path",
+    "cls": "[object SVGAnimatedString]",
+    "right": 588
+   },
+   {
+    "tag": "path",
+    "cls": "[object SVGAnimatedString]",
+    "right": 578
+   }
+  ],
+  "pastCard": [],
+  "rbm": null
+ },
+ "etmf-390": {
+  "title": {
+   "text": "Inspection readiness: not in this release",
+   "left": 32
+  },
+  "root": null,
+  "page": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "sideways": false
+  },
+  "docSideways": false,
+  "pastViewport": [],
+  "pastCard": [],
+  "rbm": null
+ }
+}
