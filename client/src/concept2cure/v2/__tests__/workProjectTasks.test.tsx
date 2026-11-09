@@ -144,4 +144,23 @@ describe('a work area bound to a work project (P-111 slice 2)', () => {
     expect(buildWorkProjectAreaTaskBody({ areaId: 'cmc', programId: PID, workProjectId: 101, title: ' X ', assignee: '12', due: '', note: '' }))
       .toMatchObject({ title: 'X', moduleType: 'CMC', projectId: 101 });
   });
+
+  it('puts a proven binding in the task context, and only a proven one, and clears it on unbind (P-111 slice 3)', async () => {
+    const setContext = vi.fn();
+    Object.assign(window, { C2C: { setContext } });
+    window.history.replaceState(null, '', `/concept2cure/cmc?program=${PID}&workProject=101`);
+    render(<WorkProjectTasks area="cmc" />);
+    await screen.findByTestId('work-project-tasks');
+    expect(setContext).toHaveBeenCalledWith({ workProjectId: '101' });
+    fireEvent.click(screen.getByRole('button', { name: 'Show the whole project' }));
+    await waitFor(() => expect(setContext).toHaveBeenLastCalledWith({ workProjectId: null }));
+    cleanup(); setContext.mockClear();
+    proofStatus = 404;
+    window.history.replaceState(null, '', `/concept2cure/cmc?program=${PID}&workProject=101`);
+    render(<WorkProjectTasks area="cmc" />);
+    await screen.findByTestId('work-project-bound');
+    expect(setContext).not.toHaveBeenCalledWith({ workProjectId: '101' });
+    Reflect.deleteProperty(window, 'C2C');
+  });
 });
+
