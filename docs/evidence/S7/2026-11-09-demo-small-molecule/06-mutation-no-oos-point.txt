@@ -1,0 +1,4 @@
+ × server/services/cmc/__tests__/demo-small-molecule-composes.test.ts > its recorded data composes a Module 3 with real cells > §3.2.P.8 reports the accelerated point that fails its limit, and withholds the conclusion 6ms
+   → the 6-month accelerated total impurities (0.61 against NMT 0.5 %) was not reported as outside: expected [] to have a length of 1 but got +0
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 7 passed (8)
