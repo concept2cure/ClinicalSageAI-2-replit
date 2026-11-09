@@ -218,6 +218,34 @@ S10 (the agency's communications back into the project) is held by RIM since 202
   `2895218b8` (2026-08-04) with no replacement named; AnA narrates the report instead. Reach it in the conversation
   and canvas, or retire it by founder decision.
 
+## Found by the demo walk (D7-record `015weq…`) in files other lanes hold, 2026-11-09
+
+The deep demo walk (`docs/evidence/DEMO/2026-11-09-rehearsal/deep-walk/`) confirmed 36 high findings on a freshly
+seeded database. This lane is fixing the ones in free files under F1, holding each file only while its fix is applied.
+Two of the findings are in files another lane holds. Each comes with the independent verifier's minimal fix.
+
+**→ the project-page lane (`01FTWcmXm7At3ZXBE5VWn6oS`, D3's `surfaces/Project*.tsx`), two copy fixes (findings 0.2 and
+0.6):**
+
+1. **Dossier readiness reads "0 in review · 0 drafted" and "No editing copy of this filing yet" six to eight times**,
+   directly under a list of drafts, a document in review and frozen or approved documents. The counts cover only
+   sections bound to the filing's editing copy, and the seeded documents are not bound to it. In `ProjectDossier.tsx`:
+   - `:241`: say that no document is the filing's editing copy yet, so the documents above are not counted;
+   - `:280`: say it once, in the lead, not on every home module row;
+   - `:194`: "Of these sections: N in review · N drafted", so it cannot be read against the Filing card's "2 documents
+     in review";
+   - `:122`: add `['todo', 'Not started']` to `SECTION_STATUS_LABELS`. Today the raw value "todo" prints.
+   - Tests that pin the old strings: `projectDossierDetails.test.tsx:60, :89`; `projectHomeDocuments.test.tsx:206,
+     :222, :334`; `tests/e2e/project-dossier-details.e2e.ts:127`.
+2. **C2C-201 says "No documents in this project yet" and "0 drafted"**, while CMC / Module 3 holds its 21 drafted
+   sections. Those sections appear only inside the closed "Artifact section status" disclosure.
+   - `ProjectHome.tsx`: pass the existing `cmcComposes` on to `ProjectDocumentsBody` (`:1600`, prop at `:1516`). When it
+     is set, the empty state (`:1532`, `:1548`) says Module 3 is composed in CMC / Module 3, and names where its drafted
+     sections are listed.
+   - `ProjectArtifactReadiness.tsx:82`: open the disclosure when the rollup has sections.
+   - The lasting fix is a decision for the CMC lane: either the CMC section lifecycle writes the filing's Module 3
+     `c2c_document_sections` rows, or `dossier-read.ts` counts `cmc_module3_sections` for the Module 3 row.
+
 ## Found by the CMC session (`01GJidg5…`) outside its files, 2026-11-09
 
 **→ whoever holds `surfaces/DocumentAuthoring.tsx` (D4 / the authoring lane): trunk is red there, 24 cases in 7
