@@ -52,6 +52,8 @@ function app() {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { id: 5, organizationId: ORG, role: h.state.role };
+    // The request's pinned connection: a labeling status move runs on it (mdx-labeling-approvals.ts).
+    (req as unknown as { dbClient: unknown }).dbClient = { query: (sql: string) => h.query(sql) };
     next();
   });
   a.use('/api/mdx', udiRouter);
