@@ -246,7 +246,15 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // ── Analysis & authoring tools ──
   { id: 'batch-draft', label: 'Batch draft', description: 'Parallel section drafting over the eCTD Co-Author document spine (running a batch stays a human click).', scope: 'global', group: 'module' },
   {
-    id: 'biostatistics', label: 'Biostatistics designer', description: 'The deterministic biostatistics design engine — sample size, power, and governed statistical documents.', scope: 'global', group: 'module',
+    /* `scope: 'project'` since 2026-11-09. It was 'global' when the rail entry
+       shipped on 2026-11-06, which made this the one rail door that opened a
+       work area with no project behind it — and with none open the surface
+       seeded a pharma-oncology worked example, for a device organisation too.
+       P-107 item 1 calls Biostatistics "a work area over the project's data,
+       not an app", and the founder's words authorising the rail entry end
+       "But again, everything starts with a project". CMC, the sibling work
+       area, has always been project-scoped (:145). */
+    id: 'biostatistics', label: 'Biostatistics designer', description: 'The deterministic biostatistics design engine — sample size, power, and governed statistical documents.', scope: 'project', group: 'module',
     // Consumed by the surface on mount: it loads THAT persisted study design
     // (cdisc_prm_studies.study_id) through the biostatistics bridge and seeds
     // the engine from it — how the protocol workspace and the task board hand a

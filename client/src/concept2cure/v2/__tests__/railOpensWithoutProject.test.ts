@@ -25,6 +25,31 @@ describe('the rail with no project open', () => {
     expect(destinationFor('communication-center', false).surfaceId).toBe('projects');
   });
 
+  /**
+   * The two work areas the rail carries over a project's own data are project
+   * screens, so neither opens on nothing.
+   *
+   * CMC is the precedent and has always been `scope: 'project'`
+   * (shared/navigation/index.ts). Biostatistics was `scope: 'global'` when its
+   * rail entry shipped on 2026-11-06, so it was the one rail door that opened a
+   * work area with no project behind it — and the founder's words authorising
+   * that entry end "But again, everything starts with a project"
+   * (scripts/ci/one-product-baseline.json, `rail:biostatistics`). P-107 item 1
+   * calls it "a work area over the project's data, not an app".
+   *
+   * With no project open the shell reopens the last project this account had
+   * open (the case below); Projects is where it lands when there is none.
+   */
+  it('does not open a work area without a project: CMC and Biostatistics alike', () => {
+    expect(destinationFor('cmc', false).surfaceId).toBe('projects');
+    expect(destinationFor('biostatistics', false).surfaceId).toBe('projects');
+  });
+
+  it('opens both work areas when a project IS open', () => {
+    expect(destinationFor('cmc', true).surfaceId).toBe('cmc');
+    expect(destinationFor('biostatistics', true).surfaceId).toBe('biostatistics');
+  });
+
   it('reopens the last project this account opened', () => {
     signIn('7');
     publishShellProject({ id: '65f7b785-9abe-4b9d-a5c7-3ddc477074e4', title: 'LMN-101 — IND (demo)' });

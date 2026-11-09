@@ -235,10 +235,22 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     label: 'Biostatistics',
     // Founder, 2026-10-31 (P-77): "My cmc, biostatistics, tasking, projects is
     // all gone" — the screens existed and nothing reached them. They are in the
-    // catalog and reached from the project's "Start work in this project"
-    // (ProjectCoreWork.tsx) and ⌘K, not from a rail entry: RULE 4 refuses a new
-    // rail entry, and the founder's product spine (P-79, 2026-11-01) puts
-    // biostatistics inside the project's evidence. Surfaces only, as for
+    // catalog, reached from the project's "Start work in this project"
+    // (ProjectCoreWork.tsx), ⌘K, and — since 2026-11-06 — the rail.
+    //
+    // This comment said until 2026-11-09 that they are reached "not from a rail
+    // entry: RULE 4 refuses a new rail entry". That was superseded before it was
+    // corrected. The founder, 2026-11-06: "Our core modules are, project
+    // management, Vault, CMC, biostatistics, RBM, submission center, tasking,
+    // and collaboration, and reporting. … And the left rail should be a
+    // navigation point for all of those entry points. But again, everything
+    // starts with a project." P-107 item 1 confirms it and records that "RULE
+    // 4's 2026-10-31 list of Core work workspaces to converge is superseded for
+    // Biostatistics' rail entry only"; the entry is in RAIL_CORE
+    // (registryModel.ts) and in the rail baseline
+    // (scripts/ci/one-product-baseline.json, `rail:biostatistics`). The rail
+    // door is project-scoped (shared/navigation/index.ts), which is the "starts
+    // with a project" half. Surfaces only, as for
     // risk-based monitoring (P-76): professional-tier and explicit grants keep
     // deciding who holds it, and no module is granted to a new organisation.
     surfaces: ['biostatistics', 'biostat-workbench'],
