@@ -1,0 +1,160 @@
+# S5d bioequivalence green: the red test, biowaiver-fail-closed, dissolution-comparison, bioequivalence-requirements and the one-home guard, after the change.
+
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five bioequivalence tools keep their stated results > 'classify_bcs' reaches its engine with a stated basis 6ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five bioequivalence tools keep their stated results > 'design_be_study' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five bioequivalence tools keep their stated results > 'assess_dissolution_similarity' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five bioequivalence tools keep their stated results > 'assess_biowaiver' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five bioequivalence tools keep their stated results > 'guidance_for_anda' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'design_be_study' keeps each boolean answer as stated > isNTI reads not_stated when omitted or null, and is refused when malformed 3ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'design_be_study' keeps each boolean answer as stated > fedStudyRequired reads not_stated when omitted or null, and is refused when malformed 2ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'assess_biowaiver' keeps each boolean answer as stated > isNTI reads not_stated when omitted or null, and is refused when malformed 2ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'assess_biowaiver' keeps each boolean answer as stated > isWeakAcid reads not_stated when omitted or null, and is refused when malformed 2ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'assess_biowaiver' keeps each boolean answer as stated > veryRapidlyDissolving reads not_stated when omitted or null, and is refused when malformed 2ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'assess_biowaiver' keeps each boolean answer as stated > rapidlyDissolving reads not_stated when omitted or null, and is refused when malformed 2ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'assess_biowaiver' keeps each boolean answer as stated > referenceVeryRapidlyDissolving reads not_stated when omitted or null, and is refused when malformed 2ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'assess_biowaiver' keeps each boolean answer as stated > excipientsQualitativelySame reads not_stated when omitted or null, and is refused when malformed 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'assess_biowaiver' keeps each boolean answer as stated > excipientsQuantitativelySimilar reads not_stated when omitted or null, and is refused when malformed 2ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'guidance_for_anda' keeps each boolean answer as stated > sameDosageFormAsRLD reads not_stated when omitted or null, and is refused when malformed 2ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'guidance_for_anda' keeps each boolean answer as stated > sameRouteAsRLD reads not_stated when omitted or null, and is refused when malformed 2ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'guidance_for_anda' keeps each boolean answer as stated > sameStrengthAsRLD reads not_stated when omitted or null, and is refused when malformed 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'guidance_for_anda' keeps each boolean answer as stated > isCombinationProduct reads not_stated when omitted or null, and is refused when malformed 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'guidance_for_anda' keeps each boolean answer as stated > isNTI reads not_stated when omitted or null, and is refused when malformed 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'classify_bcs' refuses 'fractionAbsorbed' (case 1) 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'classify_bcs' refuses 'fractionAbsorbed' (case 2) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'classify_bcs' refuses 'highestDoseStrength_mg' (case 3) 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'classify_bcs' refuses 'solubility_mg_per_mL' (case 4) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'classify_bcs' refuses 'drugName' (case 5) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'classify_bcs' refuses 'dosageForm' (case 6) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'design_be_study' refuses 'withinSubjectCV' (case 7) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'design_be_study' refuses 'halfLife_hours' (case 8) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'design_be_study' refuses 'expectedGMR' (case 9) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'design_be_study' refuses 'targetPower' (case 10) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'design_be_study' refuses 'formulationsToCompare' (case 11) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'design_be_study' refuses 'formulationsToCompare' (case 12) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'design_be_study' refuses 'drugName' (case 13) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_dissolution_similarity' refuses 'reference' (case 14) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_dissolution_similarity' refuses 'reference.meanDissolved' (case 15) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_dissolution_similarity' refuses 'test.timePoints_min' (case 16) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_dissolution_similarity' refuses 'reference.rsdPercent' (case 17) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_dissolution_similarity' refuses 'unitsPerProduct' (case 18) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_biowaiver' refuses 'bcsClass' (case 19) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_biowaiver' refuses 'framework' (case 20) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_biowaiver' refuses 'f2' (case 21) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_biowaiver' refuses 'f2' (case 22) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_biowaiver' refuses 'doseSolubilityRatioAtPH6_8_mL' (case 23) 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_biowaiver' refuses 'dosageForm' (case 24) 4ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'guidance_for_anda' refuses 'bcsClass' (case 25) 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'guidance_for_anda' refuses 'strengths' (case 26) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'guidance_for_anda' refuses 'strengths' (case 27) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'classify_bcs' asks for 'highestDoseStrength_mg' (case 1) 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'design_be_study' asks for 'withinSubjectCV' (case 2) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_dissolution_similarity' asks for 'reference' (case 3) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_biowaiver' asks for 'bcsClass' (case 4) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_biowaiver' asks for 'dosageForm' (case 5) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'guidance_for_anda' asks for 'activeIngredient' (case 6) 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > classify_bcs decides no eligibility an unstated drug name or dosage form could change > leaves eligibility and NTI status null without a drug name or form, and says so 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > classify_bcs decides no eligibility an unstated drug name or dosage form could change > keeps an ineligible class ineligible, and says where an NTI answer came from 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > classify_bcs decides no eligibility an unstated drug name or dosage form could change > does not read a modified-release form as immediate release 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > design_be_study sizes nothing from an unstated NTI status, and says what it defaulted > leaves the criteria and the sample size null with no isNTI and no drug name 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > design_be_study sizes nothing from an unstated NTI status, and says what it defaulted > takes NTI status from the list only when isNTI is not stated, and names a stated false for a listed drug as a conflict 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > design_be_study sizes nothing from an unstated NTI status, and says what it defaulted > sizes the stated power, and computes no sample size for a GMR outside the limits 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > design_be_study sizes nothing from an unstated NTI status, and says what it defaulted > treats a delayed-release, enteric-coated or ER form as modified release 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > assess_dissolution_similarity reports no pass or fail when f2 is not computed > is null, not false, without a unit count 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > assess_biowaiver decides only what every answer to the unstated facts gives > denies Class II under every framework: ICH M9 has no weak-acid exception 2ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > assess_biowaiver decides only what every answer to the unstated facts gives > does not grant Class III to a product that is only rapidly dissolving, whatever its f2 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > assess_biowaiver decides only what every answer to the unstated facts gives > does not grant with no NTI answer and no drug name, and names it 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > assess_biowaiver decides only what every answer to the unstated facts gives > denies a modified-release form, and names a stated NTI false for a listed drug as a conflict 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > assess_biowaiver decides only what every answer to the unstated facts gives > keeps a decision the stated facts settle, with an omitted f2 outstanding 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > guidance_for_anda chooses no pathway an unstated sameness fact could change > leaves the pathway not assessed and names the facts 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > guidance_for_anda chooses no pathway an unstated sameness fact could change > keeps a pathway the stated facts settle 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > guidance_for_anda chooses no pathway an unstated sameness fact could change > names an unstated BCS class and combination fact, and takes NTI status from the active ingredient as the other worksheets do 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'classify_bcs' 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'design_be_study' 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'assess_dissolution_similarity' 0ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'assess_biowaiver' 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'guidance_for_anda' 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > points recorded profiles to compare_recorded_dissolution, and names the input no function reads 1ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > keeps classify_bcs among the tools selected for "Classify this drug substance under the Biopharmaceutics Classification System" 8ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > keeps design_be_study among the tools selected for "Design a bioequivalence study for a highly variable drug with CV 45%" 4ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > keeps assess_dissolution_similarity among the tools selected for "Compute f2 for these test and reference dissolution profiles" 5ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > keeps assess_biowaiver among the tools selected for "Can we get a biowaiver for our BCS Class III tablet?" 4ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > keeps guidance_for_anda among the tools selected for "Should we file an ANDA or a 505(b)(2) for our generic?" 7ms
+ ✓ server/services/cmc/__tests__/dissolution-comparison.test.ts > compareDissolutionProfiles — the statistic > computes f2 and f1 over the included timepoints 2ms
+ ✓ server/services/cmc/__tests__/dissolution-comparison.test.ts > compareDissolutionProfiles — the statistic > compares the UNROUNDED f2 against the cut-off 1ms
+ ✓ server/services/cmc/__tests__/dissolution-comparison.test.ts > compareDissolutionProfiles — the refusals > refuses profiles sampled at different times, however similar the means 1ms
+ ✓ server/services/cmc/__tests__/dissolution-comparison.test.ts > compareDissolutionProfiles — the refusals > refuses when the unit count is not recorded, rather than assuming twelve 1ms
+ ✓ server/services/cmc/__tests__/dissolution-comparison.test.ts > compareDissolutionProfiles — the refusals > refuses when variability is not recorded, because the CV limits cannot be evaluated 0ms
+ ✓ server/services/cmc/__tests__/dissolution-comparison.test.ts > compareDissolutionProfiles — the refusals > refuses when variability exceeds the limit at an early or a later timepoint 0ms
+ ✓ server/services/cmc/__tests__/dissolution-comparison.test.ts > compareDissolutionProfiles — the refusals > refuses rather than grading f2 on fewer than three comparable points 0ms
+ ✓ server/services/cmc/__tests__/dissolution-comparison.test.ts > compareDissolutionProfiles — the refusals > answers "no f2 needed" for two very rapidly dissolving profiles instead of a contradictory verdict 0ms
+ ✓ server/services/cmc/__tests__/dissolution-comparison.test.ts > compareDissolutionProfiles — what it reports about itself > excludes t = 0 and says it did 1ms
+ ✓ server/services/cmc/__tests__/dissolution-comparison.test.ts > compareDissolutionProfiles — what it reports about itself > includes at most one point at or above 85% and lists what it discarded 1ms
+ ✓ server/services/cmc/__tests__/dissolution-comparison.test.ts > compareDissolutionProfiles — what it reports about itself > reports only conditions it actually evaluated, with the observed value 1ms
+ ✓ server/services/cmc/__tests__/dissolution-comparison.test.ts > pointsFromRecordedProfile — the register row shape > reads the columns the register form writes 1ms
+ ✓ server/services/cmc/__tests__/dissolution-comparison.test.ts > pointsFromRecordedProfile — the register row shape > leaves a blank cell absent rather than turning it into a zero 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > no other module under server/services defines one of them by name 1342ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > the home defines all twelve 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > unstated is true only for an omitted or null value 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, false) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, undefined) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, null) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, false) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, false) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, true) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, undefined) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, null) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, true) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, true) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf of nothing is false and allOf of nothing is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > uniqueStrings keeps first-seen order 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > everyAnswer keeps each stated fact and tries both answers for each unstated one 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > listed joins prose as "a", "a and b", "a, b and c" 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > oneOfInput and textInput are refuseUnlessStated checks for a vocabulary and for non-empty text 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > statedText keeps a stated value, leaves an omitted or null one unstated, and refuses anything else by field 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > statedList keeps a stated value, leaves an omitted or null one unstated, and refuses anything else by field 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > conclusions lists the distinct conclusions, and decidingFacts the unstated facts that change one 0ms
+ ✓ server/services/bioequivalence/__tests__/biowaiver-fail-closed.test.ts > assessBiowaiver — BCS Class III excipient criteria must be established > does NOT grant when excipient comparison was never supplied 3ms
+ ✓ server/services/bioequivalence/__tests__/biowaiver-fail-closed.test.ts > assessBiowaiver — BCS Class III excipient criteria must be established > names BOTH unprovided excipient comparisons as outstanding 1ms
+ ✓ server/services/bioequivalence/__tests__/biowaiver-fail-closed.test.ts > assessBiowaiver — BCS Class III excipient criteria must be established > still grants when excipient similarity IS affirmatively established 1ms
+ ✓ server/services/bioequivalence/__tests__/biowaiver-fail-closed.test.ts > assessBiowaiver — BCS Class III excipient criteria must be established > still refuses when excipients are explicitly dissimilar (unchanged path) 0ms
+ ✓ server/services/bioequivalence/__tests__/biowaiver-fail-closed.test.ts > assessBiowaiver — BCS Class I must evaluate the reference product > does NOT grant on the test product alone when the RLD is stated NOT very rapidly dissolving 0ms
+ ✓ server/services/bioequivalence/__tests__/biowaiver-fail-closed.test.ts > assessBiowaiver — BCS Class I must evaluate the reference product > does NOT grant when the RLD was never characterised at all 1ms
+ ✓ server/services/bioequivalence/__tests__/biowaiver-fail-closed.test.ts > assessBiowaiver — BCS Class I must evaluate the reference product > grants when BOTH products are very rapidly dissolving 0ms
+ ✓ server/services/bioequivalence/__tests__/biowaiver-fail-closed.test.ts > assessBiowaiver — BCS Class I must evaluate the reference product > grants on an f2 >= 50 comparison against the RLD even if the RLD is not very rapidly dissolving 0ms
+ ✓ server/services/bioequivalence/__tests__/biowaiver-fail-closed.test.ts > assessBiowaiver — BCS Class I must evaluate the reference product > leaves the rapidly-dissolving + f2 path unchanged 1ms
+ ✓ server/services/global-ri/__tests__/bioequivalence-requirements.test.ts > getBioequivalenceCriteria > models every region with sound acceptance criteria 2ms
+ ✓ server/services/global-ri/__tests__/bioequivalence-requirements.test.ts > getBioequivalenceCriteria > FDA references the ANDA BE guidance / 21 CFR 320 and uses RSABE for HVDs 1ms
+ ✓ server/services/global-ri/__tests__/bioequivalence-requirements.test.ts > getBioequivalenceCriteria > EMA references the BE guideline and uses ABEL for HVDs 0ms
+ ✓ server/services/global-ri/__tests__/bioequivalence-requirements.test.ts > getBioequivalenceCriteria > throws for an unmodeled region 1ms
+ ✓ server/services/global-ri/__tests__/bioequivalence-requirements.test.ts > getBioequivalenceCriteria > is deterministic 0ms
+ ✓ server/services/global-ri/__tests__/bioequivalence-requirements.test.ts > getBcsBiowaiverEligibility > models every BCS class with a citation 0ms
+ ✓ server/services/global-ri/__tests__/bioequivalence-requirements.test.ts > getBcsBiowaiverEligibility > Class I is biowaiver eligible (high solubility, high permeability) 0ms
+ ✓ server/services/global-ri/__tests__/bioequivalence-requirements.test.ts > getBcsBiowaiverEligibility > Class III is biowaiver eligible with a very-rapid-dissolution condition 0ms
+ ✓ server/services/global-ri/__tests__/bioequivalence-requirements.test.ts > getBcsBiowaiverEligibility > Class II is NOT biowaiver eligible 0ms
+ ✓ server/services/global-ri/__tests__/bioequivalence-requirements.test.ts > getBcsBiowaiverEligibility > Class IV is NOT biowaiver eligible 0ms
+ ✓ server/services/global-ri/__tests__/bioequivalence-requirements.test.ts > getBcsBiowaiverEligibility > throws for an unmodeled BCS class 0ms
+ ✓ server/services/global-ri/__tests__/bioequivalence-requirements.test.ts > getBcsBiowaiverEligibility > is deterministic 0ms
+ Test Files  5 passed (5)
+      Tests  156 passed (156)
