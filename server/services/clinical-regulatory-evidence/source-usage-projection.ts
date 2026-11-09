@@ -59,3 +59,11 @@ export function adaptUsageRow(r: Record<string, unknown>): SectionSourceUsage {
     source: adaptUsageSource(r),
   };
 }
+
+/** A section's citation as listed, `unverifiable` with its reason when its native source was reported by the read
+ *  scope's report mode instead of admitted (S12, 2026-11-09). Its source details stay withheld. */
+export function adaptSectionUsage(r: Record<string, unknown>, unverified: ReadonlyMap<string, string>): SectionSourceUsage {
+  const usage = adaptUsageRow(r);
+  const code = r.source_id == null ? unverified.get(String(r.reference_id)) : undefined;
+  return code ? { ...usage, state: 'unverifiable', reasonCode: code } : usage;
+}
