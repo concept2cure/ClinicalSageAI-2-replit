@@ -1,0 +1,111 @@
+[
+ {
+  "step": "row controls",
+  "controls": [
+   {
+    "tag": "BUTTON",
+    "text": "Edit",
+    "title": null,
+    "disabled": false,
+    "cls": "nda-open"
+   },
+   {
+    "tag": "BUTTON",
+    "text": "Approve",
+    "title": "",
+    "disabled": false,
+    "cls": "nda-open"
+   },
+   {
+    "tag": "BUTTON",
+    "text": "History",
+    "title": "Every recorded change to this specification, with both values",
+    "disabled": false,
+    "cls": "nda-open"
+   },
+   {
+    "tag": "BUTTON",
+    "text": "Edit",
+    "title": null,
+    "disabled": false,
+    "cls": "nda-open"
+   },
+   {
+    "tag": "BUTTON",
+    "text": "Approve",
+    "title": "",
+    "disabled": false,
+    "cls": "nda-open"
+   },
+   {
+    "tag": "BUTTON",
+    "text": "History",
+    "title": "Every recorded change to this specification, with both values",
+    "disabled": false,
+    "cls": "nda-open"
+   },
+   {
+    "tag": "BUTTON",
+    "text": "Edit",
+    "title": null,
+    "disabled": false,
+    "cls": "nda-open"
+   },
+   {
+    "tag": "BUTTON",
+    "text": "Approve",
+    "title": "",
+    "disabled": false,
+    "cls": "nda-open"
+   },
+   {
+    "tag": "BUTTON",
+    "text": "History",
+    "title": "Every recorded change to this specification, with both values",
+    "disabled": false,
+    "cls": "nda-open"
+   },
+   {
+    "tag": "BUTTON",
+    "text": "Edit",
+    "title": null,
+    "disabled": false,
+    "cls": "nda-open"
+   },
+   {
+    "tag": "BUTTON",
+    "text": "Approve",
+    "title": "",
+    "disabled": false,
+    "cls": "nda-open"
+   },
+   {
+    "tag": "BUTTON",
+    "text": "History",
+    "title": "Every recorded change to this specification, with both values",
+    "disabled": false,
+    "cls": "nda-open"
+   }
+  ]
+ },
+ {
+  "step": "approve control",
+  "count": 6,
+  "disabled": false,
+  "title": ""
+ },
+ {
+  "step": "form opened",
+  "head": "Approve HistoryC2C-201 tablets — assayDrug productHPLC-UV assay and related substances95.0 - 105.0 % of label claim93.0 - 107.0 % of label claimICH Q6ADraft Edit Approve HistoryC2C-201 — solid formDrug substanceXRPD identity and pol"
+ },
+ {
+  "step": "after submit",
+  "responses": [
+   {
+    "status": 409,
+    "body": "{\"success\":false,\"error\":\"METHOD_NOT_FIT\",\"message\":\"The analytical method \\\"Dissolution (USP <711>, apparatus 2)\\\" is recorded as validation, which is neither validated nor shown suitable, so a limit measured by it cannot be approved (ICH Q2). Validate the method, or record the status that shows it is suitable for this use.\"}"
+   }
+  ],
+  "shown": "\n    Skip to contentConcept2Cure.RINew conversationSearchHomeProjectsTasksCommunicationVaultSubmission CenterWork areasCMC / Module 3BiostatisticsRisk-based monitoringQualityReporting & analyticsRecents[Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND)[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)CS-401 INDYour conversations appear here.JSJM SmithConcept2C"
+ }
+]
