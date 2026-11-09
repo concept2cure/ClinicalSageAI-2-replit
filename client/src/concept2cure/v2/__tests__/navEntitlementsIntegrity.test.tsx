@@ -97,19 +97,16 @@ it('retains independently resolved administration/release facts on a valid unres
   assert.equal(value.resolved, false); assert.equal(value.platformAdmin, true);
   assert.equal(value.launchScopeEnforced, true); assert.equal(value.verdictFor('cmc'), null);
 });
-it.each(['biotech', 'pharma', 'medtech', 'diagnostics', 'cro', 'negotiated-workspace'])
-  ('uses the same verified navigation contract for %s without an industry fork', industryMode => {
+it.each(['biotech', 'pharma', 'medtech', 'diagnostics', 'cro', 'negotiated-workspace'])('uses the same verified navigation contract for %s without an industry fork', industryMode => {
     const value = current(payload([row()], { industryMode, tier: 'negotiated-plan' }));
     assert.equal(value.resolved, true); assert.equal(value.tier, 'negotiated-plan');
     assert.equal(value.verdictFor('cmc')?.source, 'included');
   });
-it.each(['projects', 'vault', 'authoring', 'submission-center', 'rbm', 'cmc', 'biostatistics'])
-  ('validates %s in the common provider rather than per-module rules', id => {
+it.each(['projects', 'vault', 'authoring', 'submission-center', 'rbm', 'cmc', 'biostatistics'])('validates %s in the common provider rather than per-module rules', id => {
     const value = current(payload([{ ...row(), id }]));
     assert.equal(value.verdictFor(id)?.entitled, true);
   });
-it.each([[null], [[]], ['<html>Sign in</html>'], [{ data: [] }], [{ resolved: 'true', surfaces: [] }]])
-  ('does not fabricate licensing from malformed top-level data (%j)', raw => unknown(raw));
+it.each([[null], [[]], ['<html>Sign in</html>'], [{ data: [] }], [{ resolved: 'true', surfaces: [] }]])('does not fabricate licensing from malformed top-level data (%j)', raw => unknown(raw));
 it.each([
   ['missing organization', { organizationId: undefined }],
   ['zero organization', { organizationId: 0 }],
@@ -133,10 +130,8 @@ it.each([
   ['missing reason', { ...row(), source: undefined }],
   ['invalid required tier', { ...row(), requiredTier: {} }],
 ] as const)('rejects malformed verdicts without a fabricated upsell: %s', (_name, invalid) => unknown(payload([invalid])));
-it.each(['included', 'subscribed', 'master_admin'] as const)
-  ('rejects a false grant with source %s', source => unknown(payload([row(source, false)], { masterAdmin: source === 'master_admin' })));
-it.each(['disabled', 'tier', 'industry', 'launch-scope'] as const)
-  ('rejects an unlocked verdict with lock source %s', source => unknown(payload([row(source, true)])));
+it.each(['included', 'subscribed', 'master_admin'] as const)('rejects a false grant with source %s', source => unknown(payload([row(source, false)], { masterAdmin: source === 'master_admin' })));
+it.each(['disabled', 'tier', 'industry', 'launch-scope'] as const)('rejects an unlocked verdict with lock source %s', source => unknown(payload([row(source, true)])));
 it('refuses an owner-only verdict without the independently reported owner fact', () => unknown(payload([row('master_admin')])));
 it('refuses a release lock contradicted by a disabled release flag', () => {
   unknown(payload([row('launch-scope', false)], { launchScope: { enforced: false } }));
