@@ -1879,6 +1879,49 @@ Raised by the D7-record session ("For the founder" 5; `artifact-approval-act.ts`
   catalog's existing classification; where the catalog does not say, the document is treated as regulated (fail
   closed).
 
+*Clarification, 2026-11-09 (the coordinating session, `01JbQU…`, under the founder's delegation of 2026-11-08, P-107).*
+The record assumed the one editor could reach the artifact reviewer routes. It cannot, because the editor and the
+approval act work on two different records:
+- **The editor's document.** The editor opens an authoring document. Its approval is the APPROVER e-signature,
+  `POST /api/authoring/docs/:docId/e-sign` in `server/routes/authoring.router.ts`.
+- **The conversation artifact.** The approval act and its reviewer routes govern AnA's conversation artifact:
+  `server/services/artifact-approval-act.ts`, and `POST …/artifacts/:artifactId/reviewers` in
+  `server/routes/c2c/artifacts.ts`.
+- **No link.** No editor document holds an artifact id. The projection between the two records was retired on
+  2026-10-17 (`server/services/ana/authoring-canonical-bridge.ts`) and stays retired.
+
+Both records file: `server/services/ectd/leaf-source-resolver.ts` admits an approved authoring document and an approved
+or locked artifact. So:
+- **Every door that makes a document fileable applies P-95, each with its own record's review.** This answers open
+  question 3 of `docs/evidence/W5/2026-11-01/p95/README.md`. Neither record is bound to the other to borrow its review.
+- **The editor's document.** The APPROVER e-signature is refused with `REVIEW_REQUIRED`, before the credential, unless
+  the document's review route is complete over the content being approved. Complete means every named reviewer has
+  signed as REVIEWER on the current sections digest (`authoringStanding`,
+  `server/services/authoring/authoring-review-route.ts`, RR5).
+  - **What does not count:** a review requested before RR5 (`legacy`), a withdrawn or returned route, and a complete
+    route over older content. The remedy for each is to send the document for review again.
+  - **The reach already exists:** "Send for review" in the editor's Review tasks rail and on the canvas card
+    (`editor/SendForReviewDialog.tsx`). D4 makes the refusal and its remedy legible where Approve is offered.
+  - **Owner:** the coordinating session, the server refusal under F1 and the reach under D4.
+- **The conversation artifact.** The planned refusal (changes 1 to 6 of the evidence) stays held until the artifact's
+  own reach exists. Today AnA's signed `update_artifact_status` is the artifact's only approval in the product, so the
+  refusal alone would refuse every artifact.
+  - **Its reach is the conversation's artifact panel** (`client/src/concept2cure/v2/surfaces/ConversationThread.tsx`),
+    which already sends an artifact to review. That send names the reviewers through `POST …/reviewers`, and a named
+    reviewer decides there through `POST …/reviews/submit`. It is the canvas beside the conversation
+    (`docs/design/ONE_ANA_ONE_CANVAS.md`), not a new screen.
+  - **Owners:** the reach, S4's holder of that file (the Anna runtime epic, `01KZK3…`); the refusal, the D7-record
+    session as before, landing after the reach.
+- **What counts as a review (open question 1).** The reviewer is neither the approving signer nor an author, read as
+  P-18 reads authors. An approver who signed as a reviewer on the same route or round cannot approve that version.
+  This applies on both doors.
+- **How many reviewers (open question 2).** Where the document's contract names `regulated_dual_review`
+  (`shared/types/document-contract.ts`), at least two named reviewers must complete review. That is the type raising
+  the floor through data, as NEW-4 allows (`docs/design/REVIEW_ROUTING_2026-10-23.md` §4). It lands as its own slice
+  after the one-reviewer refusal.
+- **Unchanged:** nothing is retroactive, an approval before P-95 stays approved, and no file, route, table, screen or
+  tool is added (RULE 6).
+
 ### P-96 — An acknowledgement recorded as FDA's before DP-81 is marked in the product
 
 The founder, 2026-11-02, answering "Before the DP-81 fix, some acknowledgement downloads were recorded as coming from
