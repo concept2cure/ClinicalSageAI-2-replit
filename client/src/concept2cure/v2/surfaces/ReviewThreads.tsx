@@ -7,6 +7,7 @@ import { apiRequest, serverMessage, ApiRequestError } from '@/lib/queryClient';
 import { downloadBlob, safeFileName } from '../download';
 import type { FireToast } from '../toast';
 import { ANA_REVIEW_COMMENT_ROLE } from '@shared/constants/review-comment';
+import { ReviewRequests } from './ReviewRequests';
 
 /**
  * Who a comment's words are from. A comment AnA wrote for a person carries
@@ -368,6 +369,9 @@ export function ReviewThreadsPane({
   };
 
   return (
+    <>
+    {/* The artifact reviews this person was named for (P-95), above their threads (ReviewRequests.tsx). */}
+    <ReviewRequests onNotice={onNotice} />
     <section aria-label="Review threads assigned to you" style={{ marginTop: 20 }}>
       <div className="dr-seclbl" style={{ padding: '0 0 8px', display: 'flex', justifyContent: 'space-between' }}>
         <span>Threads &amp; change requests — assigned to you{program ? ` · ${program.title}` : ''}</span>
@@ -494,5 +498,6 @@ export function ReviewThreadsPane({
         </div>
       )}
     </section>
+    </>
   );
 }
