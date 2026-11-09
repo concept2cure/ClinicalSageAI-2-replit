@@ -27,10 +27,11 @@
 > | S5b biomarkers | done | `s5b-biomarkers/` |
 > | S5b digital health | done | `s5b-digital-health/` |
 > | S5b medical device | done | `s5b-medical-device/` |
+> | S5b IVD lifecycle, QMS and pathway eligibility | done | `s5b-ivd-lifecycle/` |
 > | S6b | done; PMA withheld per P-55 R-7 | `s6b-generate-document-records/` |
 > | S6 | done, with its review | `s6-plan-ind-module-authoring-retired/` |
 > | `start_war_game` (found 2026-11-01) | done | `war-game-stored-session/` |
-> | S5b IVD lifecycle (with QMS and pathway eligibility), S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
+> | S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 
@@ -717,6 +718,31 @@ unstated fact decides. `assess_essential_principles` leaves a GSPR 1–4 row not
 "missing" finding, while the QMS or risk-file fact it turns on is unstated. `plan_device_submission` keeps the IVD eSTAR questions,
 marked undetermined, for an unstated IVD, and says when the EU market or a Pre-Submission was not
 stated. No source reader, app or service was added.
+
+**S5b IVD lifecycle, QMS and pathway eligibility — What already exists (execution audit):**
+`regulatory/iso-17511-traceability.ts`, `regulatory/scientific-validity.ts` and the two stability
+functions of `stats/analytical-performance-extensions.ts` are reached by `ivdLifecycleTools.ts` through
+the executor's `ivdComputed` and `ivdError`, not `runStatsTool`: a refusal reaches AnA as
+`needs_parameters` with the engine's message but without `code` or `field`, and the `/api/ivd-lifecycle`
+calculator routes answer it 422. `market-specs/quality-system.ts` and `market-specs/pathway-eligibility.ts`
+are reached by `assess_qms` and `assess_pathway_eligibility` (`submission-center-tool-defs.ts`), whose
+handlers return a refusal as their `{ error }`, and by Submission Center routes. Eligibility already
+listed an unanswered criterion; none of the five refused a malformed value. Extend them; reuse
+`refuseUnlessStated`, `ComputationRefusal`, `statedBoolean` and `statedNumber`. The global-RI
+special-designations engine and the study-design eligibility model are other code and are not touched.
+The local history is shallow; its one deleted-name match, `innovation/auto-traceability-service.ts`, is
+requirements traceability, not calibrator traceability. Evidence: `s5b-ivd-lifecycle/`.
+
+**S5b IVD lifecycle execution result:** the traceability tier and its five facts, each
+scientific-validity item's source and `directlyOnTarget`, the stability points, `maxPercentChange`,
+storage temperature and degradation threshold are required and refused by field when missing or
+malformed, as are a malformed initial value, clause id or eligibility answer, and a series with fewer
+than two distinct times or temperatures. The real-time result says when the regression intercept stood
+in for an omitted initial value. A designation with an unanswered criterion and none answered false is
+`eligible: null`, no longer false. Fully stated inputs keep their results. `POST /api/submissions/device/qms/assess`
+(cleared by the coordinating session, in the same change) answers an unknown clause id's refusal 400 `VALIDATION`
+with its field, where `fail()` would have answered 500, and refuses an omitted clause list instead of reading it as
+empty. No source reader, app or service was added.
 - **S5c (quality):** `gcpOperationsTools`, `gmpQualitySystemsTools`.
 
 **S5c GMP quality systems — What already exists (execution audit):** the six functions in
