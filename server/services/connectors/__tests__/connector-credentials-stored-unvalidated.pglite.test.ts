@@ -367,3 +367,73 @@ describe('secure cards preserve all eight previously connected account capabilit
     expect((await holder.pg.query('SELECT * FROM connector_credentials')).rows).toEqual([]);
   });
 });
+
+/* Expanded spike check 2 (§19.1), joined: one canary, captured through the real vault write, makes one real model
+   request through the tenant's own client (ai-gateway/providers/clients.ts and the real OpenAI SDK; only the network
+   is captured). The use succeeds, and the key is in that request's Authorization header and nowhere else: not in the
+   body the model reads, the result the caller gets back, the error a refused key produces, the ordinary log, the
+   audit or the tenant's export. A turn record (ana_turn_records) is not in this fixture. */
+describe('one canary, one scoped use (spike check 2)', () => {
+  type Sent = { url: string; auth: string | null; body: string };
+  const completion = { id: 'chatcmpl-fixture', object: 'chat.completion', created: 0, model: 'gpt-fixture',
+    choices: [{ index: 0, finish_reason: 'stop', logprobs: null, message: { role: 'assistant', content: 'Fixture answer.' } }] };
+  function captureNetwork(refuseKey: () => boolean) {
+    const sent: Sent[] = [];
+    globalThis.fetch = vi.fn(async (input: string | URL | Request, init?: Parameters<typeof fetch>[1]) => {
+      const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
+      sent.push({ url: input instanceof Request ? input.url : String(input), auth: headers.get('authorization'), body: String(init?.body ?? '') });
+      // A provider that echoes the key it refused, as a real 401 does.
+      return refuseKey()
+        ? new Response(JSON.stringify({ error: { message: `Incorrect API key provided: ${CANARY}` } }), { status: 401, headers: { 'content-type': 'application/json' } })
+        : json(completion);
+    }) as typeof fetch;
+    return sent;
+  }
+  function captureLogs() {
+    const lines: string[] = [];
+    const keep = (...args: unknown[]) => { lines.push(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')); };
+    for (const level of ['info', 'warn', 'error', 'debug'] as const) vi.spyOn(logger, level).mockImplementation(keep as never);
+    for (const level of ['log', 'info', 'warn', 'error', 'debug'] as const) vi.spyOn(console, level).mockImplementation(keep);
+    return lines;
+  }
+  afterEach(() => vi.restoreAllMocks());
+
+  it('the key authorizes the request, and no body, result, error, log, audit row or export carries it', async () => {
+    await holder.pg.exec("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS slug TEXT, ADD COLUMN IF NOT EXISTS settings JSONB DEFAULT '{}'");
+    await changeCard();
+    let refuse = false;
+    const sent = captureNetwork(() => refuse);
+    const logged = captureLogs();
+    const { createTenantProviderClient } = await import('../../ai-gateway/providers/clients');
+    const client = await createTenantProviderClient('openai', ORG, 11);
+    const request = { model: 'gpt-fixture', messages: [{ role: 'user' as const, content: 'Summarize the protocol synopsis.' }] };
+    const result = await client.chat.completions.create(request);
+    refuse = true;
+    const failure = await client.chat.completions.create(request).then(() => null, (error: unknown) => error as Error);
+
+    // The scoped use succeeded, and the key went where it is meant to: the provider's Authorization header.
+    expect(result.choices[0].message.content).toBe('Fixture answer.');
+    expect(sent).toHaveLength(2);
+    for (const call of sent) {
+      expect(call.url).toBe('https://api.openai.com/v1/chat/completions');
+      expect(call.auth).toBe(`Bearer ${CANARY}`);
+      expect(call.body).toContain('Summarize the protocol synopsis.');
+      expect(call.body).not.toContain(CANARY);
+    }
+    // A refused key is reported by status, and the provider's echo of it is not passed on.
+    expect(failure).toMatchObject({ message: 'The customer-owned model request failed (HTTP 401).', status: 401 });
+    // Each use is audited by grant, never by value.
+    const audit = (await holder.pg.query("SELECT action, new_values, reason FROM audit_logs WHERE action = 'credential.use'")).rows;
+    expect(audit).toHaveLength(2);
+    const { exportTenantFull } = await import('../../tenant-export/tenant-full-export.service');
+    const exported = await exportTenantFull({ query: (sql: string, params?: unknown[]) => holder.pg.query(sql, params) } as never, ORG);
+
+    const everywhereButTheHeader = {
+      bodies: sent.map(call => call.body), result, failure: failure && { message: failure.message, stack: failure.stack, cause: String(failure.cause ?? '') },
+      logged, audit: (await holder.pg.query('SELECT * FROM audit_logs')).rows, exported,
+    };
+    for (const [where, value] of Object.entries(everywhereButTheHeader)) {
+      expect(JSON.stringify(value), `the key reached ${where}`).not.toContain(CANARY);
+    }
+  });
+});
