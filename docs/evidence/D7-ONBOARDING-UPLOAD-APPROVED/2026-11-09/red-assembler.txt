@@ -1,0 +1,11 @@
+# RED: P-94's assembler cases at HEAD 4a6546508, 2026-11-09T02:55:59Z
+ × server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > materializes a PDF ctd_onboarding_documents upload AS the leaf (real bytes, real md5) 18ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > an upload whose same bytes are approved in its project's Vault is not counted unapproved (P-108 3(a)) 8ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a NON-PDF upload unresolved (no binary→PDF conversion) 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF-mime-but-not-PDF-bytes upload unresolved (magic-byte guard) 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF upload whose file is missing unresolved (fail closed) 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a cross-tenant ctd_onboarding upload unresolved (org-scoped lookup) 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected +0 to be 1 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed | 10 skipped (16)

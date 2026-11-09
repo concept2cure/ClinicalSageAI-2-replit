@@ -125,7 +125,10 @@ Part (a) was fixed in the packager itself (`c60cdcac25`), so every caller is cov
    sponsors who filed one need a notice?
 4. **An uploaded PDF leaf (`ctd_onboarding_documents`)** carries no approval state, so it is released
    without one. Must an onboarding upload be approved before it can be filed?
-5. **Concept2Cure artifacts can be approved with no reviewer assigned**, by design
+5. *(Answered: P-95, 2026-11-02, clarified under P-107 on 2026-11-09. Landed on the artifact door: the review round
+   advances, `0f7706e637`; Q1, the reviewer is neither signer nor author, `64e7ea1824`; no review is refused
+   409 REVIEW_REQUIRED, `72232bdbc0`. Evidence `p95/`, `p95-q1/`, `review-round/`.)*
+   **Concept2Cure artifacts can be approved with no reviewer assigned**, by design
    (`artifact-approval-act.ts`), and no screen assigns reviewers. Should review be mandatory?
    Reaching the existing reviewer-assignment route from the editor is a D4 or R1 choice.
 
@@ -134,5 +137,8 @@ Part (a) was fixed in the packager itself (`c60cdcac25`), so every caller is cov
 1. ~~Land the three repairs in progress.~~ *Landed 2026-11-02: `fda2509d8d` device titles, `7b7b043fda`
    author is not the approver, `d3be2ca7b7` the stale role table. Each was red first and reviewed by
    two adversarial lenses; the lane's holds are released in `COORDINATION.md`.*
-2. Nothing in another session's held files. What remains on D7 is RIM's (above), the filing-types
+2. ~~P-95 on the artifact door.~~ *Landed 2026-11-09 (above). Next on that door: Q2, two completed reviewers
+   where the artifact's contract names `regulated_dual_review`. It is designed first, because the contract is
+   resolved per request today and must be read from the artifact's own record.*
+3. Nothing in another session's held files. What remains on D7 is RIM's (above), the filing-types
    session's (above), the founder's five questions, and the licensed artefacts and credentials.
