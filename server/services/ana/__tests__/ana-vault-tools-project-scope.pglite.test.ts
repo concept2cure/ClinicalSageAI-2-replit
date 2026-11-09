@@ -227,7 +227,7 @@ describe('actual artifact reads issue private current-source routing checkpoints
     await runWithSourceAuthority(createRunSourceAuthority(actor), async () => {
       expect(await run('read_vault_document', { artifact_id: 'a-a2', max_chars: 1 }, INSIDE_A)).toMatchObject({ ok: true });
       const checkpoint = captureCurrentRunSourceGate(actor)!;
-      expect(checkpoint.tiers).toEqual([3]); await checkpoint.recheck();
+      expect(checkpoint.tiers).toEqual([1, 3]); await checkpoint.recheck();
       try {
         // The legacy stored content_hash/version are deliberately unchanged.
         await h.pg.query("UPDATE concept2cure_artifacts SET content=$1 WHERE artifact_id='a-a2'", [original.rows[0].content + ' changed outside the excerpt']);

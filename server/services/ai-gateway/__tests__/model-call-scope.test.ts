@@ -75,22 +75,24 @@ describe('private per-run source ceilings and current-source checkpoints', () =>
     const probe = gw as unknown as { config: { auditEnabled: boolean }; auditLogger: { getRecentEntries(): AuditLogEntry[] } };
     probe.config.auditEnabled = true;
     await runWithSourceAuthority(createRunSourceAuthority(SOURCE_ACTOR), async () => {
+      // The run read a CONFIDENTIAL source, so a forged public tier cannot lower it (a run starts at tier 1, 2026-11-09).
+      recordCurrentRunSource({ ...SOURCE_ACTOR, key: 'confidential-source', tier: 2, recheck: async () => {} });
       await expect(gw.route({ taskType: 'chat', messages: [{ role: 'user', content: 'Unassessed source context' }],
         inputSensitivityTiers: [0], payloadProvenance: 'public' })).rejects.toThrow('DENY_INPUT_TIER');
-      expect(placement.mock.calls[0][0]).toMatchObject({ organizationId: 7, userId: 3, projectId: 42, inputSensitivityTiers: [3, 0] });
+      expect(placement.mock.calls[0][0]).toMatchObject({ organizationId: 7, userId: 3, projectId: 42, inputSensitivityTiers: [1, 2, 0] });
       expect(probe.auditLogger.getRecentEntries()[0]).toMatchObject({ organizationId: 7, userId: 3, projectId: 42,
-        error: 'DENY_INPUT_TIER', metadata: { inputTierPlacement: { tierMax: 3, allowed: false } } });
+        error: 'DENY_INPUT_TIER', metadata: { inputTierPlacement: { tierMax: 2, allowed: false } } });
       await expect(gw.route(request({ organizationId: 8, userId: 4, projectId: 43 })))
         .rejects.toMatchObject({ code: 'SOURCE_CONTEXT_UNAVAILABLE' });
       expect(placement).toHaveBeenCalledOnce(); expect(dispatch).not.toHaveBeenCalled();
     });
   });
-  it('keeps unknown history T3, preserves actual source tiers and rechecks every use without accepting serialized authority', async () => {
+  it('starts a run at T1 (founder, 2026-11-09), preserves actual source tiers and rechecks every use without accepting serialized authority', async () => {
     const authority = createRunSourceAuthority(SOURCE_ACTOR), verify = vi.fn(async () => {});
     await runWithSourceAuthority(authority, async () => {
       recordCurrentRunSource({ ...SOURCE_ACTOR, key: 'real-vault-version:sha', tier: 2, recheck: verify });
       const gate = captureCurrentRunSourceGate({ ...SOURCE_ACTOR, inputSensitivityTiers: [0], payloadProvenance: 'public' } as SourceRunIdentityForTest)!;
-      expect(gate.tiers).toEqual([3, 2]); await gate.recheck(); await gate.recheck(); expect(verify).toHaveBeenCalledTimes(2);
+      expect(gate.tiers).toEqual([1, 2]); await gate.recheck(); await gate.recheck(); expect(verify).toHaveBeenCalledTimes(2);
       expect(createRunSourceAuthority({ organizationId: 7, userId: 3, projectId: SOURCE_ACTOR.programId })).toBe(authority);
       expect(() => captureCurrentRunSourceGate({ ...SOURCE_ACTOR, projectId: 43 })).toThrow(SourceRunAuthorityError);
       expect(() => recordCurrentRunSource({ ...SOURCE_ACTOR, userId: 4, key: 'forged', tier: 0, recheck: verify })).toThrow(SourceRunAuthorityError);
@@ -105,7 +107,7 @@ describe('private per-run source ceilings and current-source checkpoints', () =>
       recordCurrentRunSource({ ...actor, key: `source-${actor.organizationId}`, tier, recheck: async () => { checks.push(String(actor.organizationId)); } });
       await Promise.resolve(); const gate = captureCurrentRunSourceGate(actor)!; await gate.recheck(); return gate.tiers;
     });
-    expect(await Promise.all([run(a, SOURCE_ACTOR, 2), run(b, other, 1)])).toEqual([[3, 2], [3, 1]]);
+    expect(await Promise.all([run(a, SOURCE_ACTOR, 2), run(b, other, 1)])).toEqual([[1, 2], [1]]);
     expect(checks.sort()).toEqual(['7', '8']);
   });
   it('holds missing identity, rejects alias disagreement and cannot lose a new source while a checkpoint awaits', async () => {
@@ -120,7 +122,7 @@ describe('private per-run source ceilings and current-source checkpoints', () =>
       const check = captureCurrentRunSourceGate(SOURCE_ACTOR)!.recheck(); await entered;
       recordCurrentRunSource({ ...SOURCE_ACTOR, key: 'later', tier: 1, recheck: async () => {} }); finish();
       await expect(check).rejects.toThrow(SourceRunAuthorityError);
-      expect(captureCurrentRunSourceGate(SOURCE_ACTOR)!.tiers).toEqual([3, 2, 1]);
+      expect(captureCurrentRunSourceGate(SOURCE_ACTOR)!.tiers).toEqual([1, 2]);
     });
   });
 });
@@ -313,7 +315,7 @@ describe('opaque owner-private model capsules', () => {
       const gate = captureOwnerPrivateModelGate(PRIVATE_SCOPE)!;
       expect(gate.sourceRefs).toEqual(['a'.repeat(64)]);
       expect(await gate.expand()).toBe('private rule canary');
-      expect(captureCurrentRunSourceGate(PRIVATE_SCOPE)?.tiers).toEqual([3]);
+      expect(captureCurrentRunSourceGate(PRIVATE_SCOPE)?.tiers).toEqual([1, 3]);
     });
     expect(captureOwnerPrivateModelGate(PRIVATE_SCOPE)).toBeUndefined();
   }));
@@ -389,4 +391,32 @@ describe('opaque owner-private model capsules', () => {
     ]);
     expect(inside).toBeNull(); expect(outside).toBeUndefined();
   }));
+});
+
+/**
+ * Founder, 2026-11-09, before a demo to a paying client: every AnA conversation turn was refused on Anthropic
+ * ("blocked by AI gateway policy", DENY_INPUT_TIER) because each run started at tier 3, and no self-hosted model
+ * serves the demo. A run now starts at tier 1 (internal). A turn that actually reads a classified source still
+ * raises its tier, so a CONFIDENTIAL or RESTRICTED read is refused on a frontier provider, as before.
+ */
+describe('a run starts at tier 1; what it reads raises it (founder, 2026-11-09)', () => {
+  it('a turn that has read no classified source may reach a frontier provider', async () => {
+    const { decideInputTierPlacement } = await import('../sensitive-placement-policy');
+    await runWithSourceAuthority(createRunSourceAuthority(SOURCE_ACTOR), async () => {
+      const gate = captureCurrentRunSourceGate(SOURCE_ACTOR)!;
+      expect(gate.tiers).toEqual([1]);
+      expect(decideInputTierPlacement({ tiers: gate.tiers, provider: 'anthropic' })).toMatchObject({ allowed: true, tierMax: 1 });
+    });
+  });
+  it('a turn that read a CONFIDENTIAL or RESTRICTED source is still refused on a frontier provider', async () => {
+    const { decideInputTierPlacement } = await import('../sensitive-placement-policy');
+    for (const tier of [2, 3] as const) {
+      await runWithSourceAuthority(createRunSourceAuthority(SOURCE_ACTOR), async () => {
+        recordCurrentRunSource({ ...SOURCE_ACTOR, key: `vault-version-${tier}`, tier, recheck: async () => {} });
+        const gate = captureCurrentRunSourceGate(SOURCE_ACTOR)!;
+        expect(gate.tiers).toEqual([1, tier]);
+        expect(decideInputTierPlacement({ tiers: gate.tiers, provider: 'anthropic' })).toMatchObject({ allowed: false, reasonCode: 'DENY_INPUT_TIER' });
+      });
+    }
+  });
 });

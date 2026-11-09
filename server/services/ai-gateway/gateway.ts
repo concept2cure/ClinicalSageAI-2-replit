@@ -89,7 +89,7 @@ import {
 import { governServerTools, webToolsForModel } from './server-tool-policy';
 import { isTerminalGatewayError } from './gateway-outcome';
 import { assertDeterministicServingAllowed, isDeterministicModeRequested } from './deterministic-mode';
-import { captureCurrentRunSourceGate, captureOwnerPrivateModelGate, modelCallRefusal, type ModelCallRefusalScope, type OwnerPrivateModelGate } from './model-call-scope.js';
+import { captureCurrentRunSourceGate, captureOwnerPrivateModelGate, modelCallRefusal, recordCurrentRunSource, type ModelCallRefusalScope, type OwnerPrivateModelGate } from './model-call-scope.js';
 import {
   decideSensitivePlacement,
   decideInputTierPlacement,
@@ -1613,6 +1613,10 @@ export class AIGateway {
     try {
       if (response.cached !== false || response.deterministic !== false || !response.content) throw derivativeRefusal();
       const merged = await reinjectAndVerifyDerivative(authority.pool, authority.input, authority.issued, response.content);
+      // The restored text is CONFIDENTIAL (tier 2). Inside a run it raises the run's tier, so it is not sent on to a
+      // frontier provider: a run starts at tier 1 since 2026-11-09 (model-call-scope.ts), no longer at tier 3.
+      recordCurrentRunSource({ organizationId: authority.input.organizationId, userId: authority.input.userId,
+        projectId: authority.input.projectId, programId: null, key: `derivative:${authority.input.derivativeId}`, tier: 2, recheck: async () => {} });
       return { content: merged.content, provider: response.provider, model: response.model, resolvedModel: response.resolvedModel,
         usage: response.usage, latencyMs: response.latencyMs, requestId: response.requestId, cached: false,
         deterministic: false, finishReason: response.finishReason, effectiveSeed: response.effectiveSeed,
