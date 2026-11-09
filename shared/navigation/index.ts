@@ -125,7 +125,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'regulatory-workspace', label: 'Regulatory Workspace', description: 'The canonical project workspace (AnA + canvas).', scope: 'project', group: 'project' },
   // An alias of `vault` (registryModel DEEP_LINK_ALIASES), so it takes the Vault's program rule too (programOptional,
   // below): "open BX-301's documents" opens BX-301's, where global alone dropped the program named.
-  { id: 'documents', label: 'Documents', description: 'The Vault\'s document list, which `documents` opens: the open project\'s, or, with no project open, the governed documents across your projects. Pass `program` to open one program\'s documents.', scope: 'global', group: 'project', programOptional: true },
+  { id: 'documents', label: 'Documents', description: 'The Vault\'s document list, which `documents` opens: the open project\'s, or, with no project open, the governed documents across your projects. Name a project to open that project\'s documents.', scope: 'global', group: 'project', programOptional: true },
   { id: 'review', label: 'Review', description: 'The review / readiness surface for the project.', scope: 'project', group: 'project' },
   { id: 'submissions', label: 'Submissions', description: 'The project submissions surface.', scope: 'project', group: 'project' },
   // Global since 2026-11-06, by the founder: "Vault … should be accessible all the time, not just from within the
@@ -133,7 +133,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // governed documents across the projects the person can open (Vault.tsx, the organization view).
   // programOptional: "take me to BX-301's Vault" still opens BX-301's. Global alone dropped the program named, and AnA
   // said she had opened it over the organization view (self-drive-regressions.test.ts, 4b).
-  { id: 'vault', label: 'Vault', description: 'The document vault: the open project\'s, or, with no project open, the governed documents across your projects. Pass `program` to open one program\'s vault.', scope: 'global', group: 'project', programOptional: true },
+  { id: 'vault', label: 'Vault', description: 'The document vault: the open project\'s, or, with no project open, the governed documents across your projects. Name a project to open that project\'s vault.', scope: 'global', group: 'project', programOptional: true },
   { id: 'section-workspace', label: 'Section Workspace', description: 'The CTD section authoring workspace.', scope: 'project', group: 'project', params: [{ name: 'sectionCode', required: false, description: 'CTD section code to open, e.g. "3.2.P.8".' }] },
   { id: 'csr-workflow', label: 'CSR Workflow', description: 'The clinical study report workflow.', scope: 'project', group: 'project' },
   { id: 'ind-checklist', label: 'IND forms', description: 'The IND checklist and Forms 1571, 1572 and 3674.', scope: 'project', group: 'project' },
