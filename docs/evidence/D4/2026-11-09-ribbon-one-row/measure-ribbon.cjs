@@ -1,4 +1,5 @@
 // Measures row 1 of the real ribbon at a column width and a viewport, and saves a screenshot.
+/* global getComputedStyle -- read inside page.evaluate, in the browser */
 const { chromium } = require('playwright');
 const [, , label, outDir] = process.argv;
 (async () => {
@@ -47,5 +48,5 @@ const [, , label, outDir] = process.argv;
     out.push({ case: 'more-formatting-opened', rowTwoShownWithSuperscript: shown });
   }
   await browser.close();
-  console.log(JSON.stringify(out, null, 1));
+  console.info(JSON.stringify(out, null, 1));
 })().catch((e) => { console.error(e); process.exit(1); });
