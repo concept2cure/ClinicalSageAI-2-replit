@@ -1,0 +1,43 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T03:47:02.983Z",
+  "steps": [
+    {
+      "name": "earlier walk runs' seeded spans retired on the local database",
+      "retired": 1
+    },
+    {
+      "name": "seeded on the local database: v1, v2 superseding it in review, and a span in the section drafted from v1",
+      "section": {
+        "id": "72ef1025-2818-4903-9ad2-ca0d3f2fdbe6",
+        "code": "2.5.3",
+        "title": "[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101"
+      },
+      "org": 2,
+      "documentCode": "S12-WALK-1794196023056",
+      "v1": "f30647c0-94e7-4ef1-9d7d-9d14ddeeb20d",
+      "v2": "ec548d37-cca8-4faf-a397-cc82cebe6c5e",
+      "canonical": "s12-walk-1794196023056"
+    },
+    {
+      "name": "version 3 approved (seeded at that stage; see the README)",
+      "v3": "5dc97106-b8c6-4fd4-9cfe-4267f0b40789"
+    }
+  ],
+  "requests": [],
+  "seed": {
+    "section": {
+      "id": "72ef1025-2818-4903-9ad2-ca0d3f2fdbe6",
+      "code": "2.5.3",
+      "title": "[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101"
+    },
+    "org": 2,
+    "documentCode": "S12-WALK-1794196023056",
+    "v1": "f30647c0-94e7-4ef1-9d7d-9d14ddeeb20d",
+    "v2": "ec548d37-cca8-4faf-a397-cc82cebe6c5e",
+    "canonical": "s12-walk-1794196023056",
+    "v3": "5dc97106-b8c6-4fd4-9cfe-4267f0b40789"
+  },
+  "finishedAt": "2026-11-09T03:47:41.184Z"
+}
