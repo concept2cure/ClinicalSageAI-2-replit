@@ -160,8 +160,9 @@ describe('the run row: policy at insert, the verified conversation, the refusals
     h.state.script = ['Done.'];
     await turn({ run_policy: 'manual', thread_id: 'client-sent-id' });
     expect(h.state.beginRunInputs[0]).toMatchObject({ runPolicy: 'manual', threadId: 'client-sent-id' });
-    // getOrCreateThread (harness) resolved the conversation to 'thread-1'.
-    expect(h.state.stamps).toEqual([{ threadId: 'thread-1', userMessageId: null }]);
+    // getOrCreateThread (harness) resolved the conversation to 'thread-1'. Since a2f9264a the
+    // run is stamped with it before its private context is prepared, then with the saved question.
+    expect(h.state.stamps).toEqual([{ threadId: 'thread-1', userMessageId: null }, { threadId: 'thread-1', userMessageId: null }]);
   });
 
   for (const [code, words, runId] of [

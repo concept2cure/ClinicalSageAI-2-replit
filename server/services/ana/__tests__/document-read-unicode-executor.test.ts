@@ -41,6 +41,9 @@ vi.mock('../../../db/tenantStore.js', async original => ({
   getTenantScope: () => ({ tenantId: '42', role: 'member', source: 'request' }),
 }));
 
+// Not a standing-rule suite: its stub sqlClient has no rule store (see _standing-rule-fixture.ts).
+vi.mock('../governed-tool-gate.js', async orig =>
+  (await import('./_standing-rule-fixture')).withNoStandingRules(await orig()));
 import { executeAgenticLoop } from '../AnaToolExecutor';
 import { RESULT_BUDGET } from '../agentic-loop.js';
 import { addDocument, receiptsFor, resetVault, resultsSentIn } from './support/read-delivery-vault.js';

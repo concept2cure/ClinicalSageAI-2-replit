@@ -272,7 +272,10 @@ class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
       await gateway.recheckEmbeddingAuthorization(authorization);
       res = await client.embeddings.create(params);
     } catch (error: any) {
-      if (error instanceof GatewayPolicyError) {
+      // A policy refusal and this provider's own missing-key refusal (thrown before any request) keep their
+      // words: neither is provider text, and calling it a failed request would tell the ledger and /readyz a
+      // request was sent that never was.
+      if (error instanceof GatewayPolicyError || error instanceof EmbeddingConfigurationError) {
         await gateway.recordEmbeddingCall(authorization, { provider: this.kind, model, error: error.message });
         throw error;
       }

@@ -18613,7 +18613,7 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
           'Do not say you are taking them there. Tell them plainly it is not available here and why, and offer what you can do instead.',
       });
     }
-    const { resolveNavigation } = await import('../../../shared/navigation/index.js');
+    const { resolveNavigation, programNeedOf } = await import('../../../shared/navigation/index.js');
     const res = resolveNavigation(target, params);
     if (!res.ok) {
       return JSON.stringify({
@@ -18623,9 +18623,12 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
       });
     }
     const directive: Record<string, unknown> = { ...res.directive };
-    // A project screen shows ONE program. Resolve the one named, or refuse to
-    // move onto an empty "open a program" state when none is open.
-    if (res.directive.scope === 'project') {
+    // A project screen shows ONE program, and so does the Vault (global, by
+    // the founder, 2026-11-06) when one is open or named. Resolve the one
+    // named, or refuse to move onto an empty "open a program" state when a
+    // project screen has none open; the Vault's has its own view instead.
+    const programNeed = programNeedOf(res.directive.targetId);
+    if (programNeed !== 'none') {
       const drive = await import('../ana-ri/drive-context.js');
       if (programRef) {
         const found = await drive.resolveProgramRef(ctx?.organizationId ?? null, programRef);
@@ -18639,7 +18642,7 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
         const opened = await openedBefore;
         if (opened) directive.program = opened;
       }
-      if (!directive.program && !hasOpenProgram(ctx)) {
+      if (programNeed === 'required' && !directive.program && !hasOpenProgram(ctx)) {
         const listed = await drive.listProgramCandidates(ctx?.organizationId ?? null, 25);
         return JSON.stringify({
           status: 'needs_project',
@@ -18734,7 +18737,7 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
     // Likewise read before the first await: a program opened earlier in this
     // turn, or earlier in this round, is the one a project screen will show.
     const openedBefore = action === 'projects.open-program' ? null : programOpenedBefore(ctx);
-    const { resolveSurfaceAction, findSurfaceAction } = await import('../../../shared/navigation/surface-actions.js');
+    const { resolveSurfaceAction, findSurfaceAction, surfaceActionNeedsProgram } = await import('../../../shared/navigation/surface-actions.js');
     const known = findSurfaceAction(action);
     const lockedReason = known ? ctx?.lockedScreens?.get(known.surfaceId) : undefined;
     if (known && lockedReason) {
@@ -18776,10 +18779,10 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
        the Vault drew "Open a project to see its vault", the search went
        nowhere, and AnA — told the operation was being performed — said she
        had searched. Ask first, with their programs, as navigate_to does. */
-    if (res.ok && openedBefore && !hasOpenProgram(ctx)) {
+    if (res.ok && known && openedBefore && !hasOpenProgram(ctx)) {
       const { findNavigationTarget } = await import('../../../shared/navigation/index.js');
       const screen = findNavigationTarget(res.directive.surfaceId);
-      if (screen?.scope === 'project' && !(await openedBefore)) {
+      if (screen && surfaceActionNeedsProgram(known) && !(await openedBefore)) {
         const drive = await import('../ana-ri/drive-context.js');
         const listed = await drive.listProgramCandidates(ctx?.organizationId ?? null, 25);
         return JSON.stringify({

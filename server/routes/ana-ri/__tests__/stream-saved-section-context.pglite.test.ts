@@ -50,6 +50,7 @@ vi.mock('../../../services/anthropic-files.js', async () => (await harnessModule
 
 import { mountStreamRoute } from '../stream.js';
 import { harness as h, resetHarness, streamApp } from './support/stream-route-harness.js';
+import { OWNER_CONVERSATION_STORE_DDL, ownerScopedClient } from '../../../services/ana/__tests__/support/request-owner';
 
 
 vi.mock('../../../services/intelligence/learning-loop-service.js', () => ({ getFeedbackSummary: async () => ({ totalFeedback: 0 }) }));
@@ -99,6 +100,7 @@ beforeAll(async () => {
     CREATE SCHEMA intelligence;
     CREATE TABLE intelligence.document_templates(id uuid PRIMARY KEY,status text);
     CREATE TABLE intelligence.template_sections(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),template_id uuid,section_code text,section_title text,ordering int,content_guidance text,required_elements jsonb,source_reference text);
+    ${OWNER_CONVERSATION_STORE_DDL}
     INSERT INTO organizations VALUES(7,'active','biotech');
     INSERT INTO users VALUES(3,'active','reviewer@example.test'),(5,'active','other@example.test');
     INSERT INTO organization_users VALUES(7,3,'member'),(7,5,'member');
@@ -110,7 +112,9 @@ beforeAll(async () => {
 afterAll(async () => { await database.close(); });
 beforeEach(async () => {
   resetHarness();
-  const executeSql = async (sql: string, params?: unknown[]) => { statements.push(sql); return database.query<Record<string, unknown>>(sql, params); };
+  // The request's connection carries its verified owner, as the conversation step reads it (P-104).
+  const ownerSql = ownerScopedClient((sql, params) => database.query<Record<string, unknown>>(sql, params));
+  const executeSql = async (sql: string, params?: unknown[]) => { statements.push(sql); return ownerSql.query(sql, params); };
   io.query.mockReset().mockImplementation(executeSql);
   io.requestQuery.mockReset().mockImplementation(executeSql);
   io.resolve.mockReset().mockResolvedValue(42);

@@ -330,7 +330,15 @@ describe('AnA turns: the kernel decides risk, the gateway enforces it', () => {
       const src = readFileSync(path.join(root, file), 'utf8');
       const openers = [...src.matchAll(/gw\.route\(\{|const baseRequest = \{/g)];
       for (const m of openers) {
-        const body = src.slice(m.index, (m.index ?? 0) + 700);
+        // The request object itself, to its closing brace: a fixed 700-character
+        // window stopped short of riskTier once a2f9264a added a field above it.
+        const open = src.indexOf('{', m.index);
+        let end = open;
+        for (let depth = 0; end < src.length; end++) {
+          if (src[end] === '{') depth++;
+          else if (src[end] === '}' && --depth === 0) break;
+        }
+        const body = src.slice(m.index, end + 1);
         if (!body.includes('taskType: routingPlan.taskType')) continue;
         checked += 1;
         expect(body, `${file}: gateway request near offset ${m.index} drops riskTier`).toContain('riskTier: routingPlan.riskTier');
