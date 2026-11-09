@@ -39,7 +39,8 @@
 > | S5d regulatory strategy | done | `s5d-regulatory-strategy/` |
 > | S5d immunogenicity | done | `s5d-immunogenicity/` |
 > | S5d biosimilar | done | `s5d-biosimilar/` |
-> | S5d, S8–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
+> | S5d bioequivalence | done | `s5d-bioequivalence/` |
+> | S8–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 
@@ -956,6 +957,35 @@ required. Fully stated inputs keep their results (1,350 compared) except those 6
 its categories, the clinical precedents, the endpoint guidance and the expression-system registry move unchanged into the
 sibling `biosimilar-reference.ts`, which takes the engine from over the 100,000-byte ceiling (136,488) to under it. No
 source reader, app or service was added.
+
+**S5d bioequivalence — What already exists (execution audit):** the five functions in
+`bioequivalence/bioequivalence-knowledge.ts` are already reached by `bioequivalenceTools.ts`, the executor's
+`runStatsTool` stated-input wrapper and the clinical-pharmacology bioequivalence skill. The f2 statistic and its
+eligibility conditions are `cmc/dissolution-comparison.ts`, shared with the recorded twin `compare_recorded_dissolution`;
+it is not touched. Two biowaiver rules were already fail-closed (`biowaiver-fail-closed.test.ts`). Extend the five; reuse
+`refuseUnlessStated`, `booleanInputStates`, `statedBoolean`, `statedNumber`, `statedOneOf`, `textInput`, `listed`, the answer search and `stats/normal.ts`. The
+Global RI BE criteria and ICH M9 eligibility tools (`global-ri/bioequivalence-requirements.ts`) are other code and are
+not touched. The local history is shallow, with no bioequivalence-name deletion matches. Evidence:
+`s5d-bioequivalence/`.
+
+**S5d bioequivalence execution result:** each of the 14 true/false inputs reports true, false or `not_stated` through
+`inputStates`, and every required or malformed number, enum, list and text is refused by field. NTI status is stated, or
+taken from the drug name (the active ingredient for `guidance_for_anda`) on the platform's NTI list, which `ntiBasis` says
+is not exhaustive. A stated false for a listed drug is a conflict of inputs: it is neither read as stated nor overwritten
+by the list, so NTI status is not assessed and the conflict is named, as the device engine treats a class III device
+stated 510(k)-exempt. `assess_biowaiver` gives a decision only when every answer to the unstated or conflicting facts gives
+it, and otherwise `BIOWAIVER_NOT_ASSESSED` with `eligible: null`, the facts named and no rationale line or citation that
+speaks for one answer. It no longer grants two waivers ICH M9 does not contain: a Class II weak acid ("Class IIa", under
+`ich_m9` and `ema`) and a Class III product that is only rapidly dissolving with f2 >= 50; the Class II and III reference
+text says so. `classify_bcs` leaves eligibility null without a drug name or dosage form; `design_be_study` leaves the
+acceptance criteria and sample size null while NTI status is not assessed, says which numeric defaults it used, sizes the
+stated power and no longer reports 9,999 subjects for a GMR outside the limits; `guidance_for_anda` leaves the pathway
+`not_assessed` while a sameness fact could change it, and no longer requires `routeOfAdministration`, which it does not
+read. One helper names a modified-release form (the words, enteric coating, ER/XR/XL/SR/CR/DR/MR), which is never
+immediate release. `assess_dissolution_similarity` reports no pass or fail when f2 is not computed, and its instruction
+says "for recorded profiles use `compare_recorded_dissolution`". The BE study design registry moves unchanged into
+`bioequivalence-reference.ts`. Fully stated inputs change only for the reasons the evidence counts. No source reader, app
+or service was added.
 
 **Pins:** `submission-center-tools.test.ts`, `ivd-lifecycle-tools.test.ts`, `deepening-tools.test.ts`, and the immunogenicity, bioequivalence and orphan tests where they exist.
 
