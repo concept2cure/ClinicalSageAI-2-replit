@@ -1991,7 +1991,8 @@ async function precheckShadowFindingDisposition(
  */
 export async function precheckGovernedStep(
   id: number,
-  step: SequenceSignatureIntent,
+  /** A retirement (P-86) is not prechecked here yet: its precheck comes with its door (C2). */
+  step: Exclude<SequenceSignatureIntent, typeof SEQUENCE_RETIREMENT_INTENT>,
   ctx: { organizationId: number; userId: number },
   opts: GovernedPrecheckOptions = {},
 ): Promise<GovernedStepPrecheck> {
@@ -2486,7 +2487,7 @@ async function applySequenceRetirement(
     reason, signatureActionId: input.signatureActionId, signatureId: verdict.signatureId, meaning: 'responsibility',
     notFiledElsewhere: true, statement: retirementStatement(n),
     submissionId: seq.submissionId, sequenceNumber: n, region: seq.region, type: seq.type, status: seq.status,
-    transmitAttemptId: seq.transmitAttemptId ?? null, boundDigest: verdict.boundDigest,
+    boundDigest: verdict.boundDigest,
   };
   const { occurredAt } = await applySequenceChangeWithAudit(
     {
@@ -2494,9 +2495,10 @@ async function applySequenceRetirement(
         sequenceId: seq.id, submissionId: seq.submissionId, organizationId: ctx.organizationId,
         boundDigest: verdict.boundDigest, act: 'retirement',
         recheck: async (q) => {
-          const row = await q.query(`SELECT dispatch_status FROM ectd_sequences WHERE id = $1 AND organization_id = $2`, [seq.id, ctx.organizationId]);
+          const row = await q.query(`SELECT dispatch_status, transmit_attempt_id FROM ectd_sequences WHERE id = $1 AND organization_id = $2`, [seq.id, ctx.organizationId]);
           const judged = await retirableFacts(q, { ...subject, dispatchStatus: (row.rows[0]?.dispatch_status as string | null) ?? null }, ctx.organizationId);
-          Object.assign(details, { dispatchStatus: judged.dispatchStatus, stagingTransmittalIds: judged.stagingTransmittalIds, numberFreed: judged.numberFreed });
+          Object.assign(details, { dispatchStatus: judged.dispatchStatus, transmitAttemptId: row.rows[0]?.transmit_attempt_id ?? null,
+            stagingTransmittalIds: judged.stagingTransmittalIds, numberFreed: judged.numberFreed });
         },
       }),
       text: liveSetRemoval(ctx.organizationId, [seq.id]).text,
