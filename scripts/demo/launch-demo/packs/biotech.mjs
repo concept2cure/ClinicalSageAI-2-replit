@@ -34,8 +34,8 @@ import { ensureProtocol } from './biotech-protocol.mjs';
 import { ensureQms } from './biotech-qms.mjs';
 import { NOT_EXECUTED_NO_SIGNER, asArray, makeTally } from './biotech-shared.mjs';
 import { ensureSubmission } from './biotech-submission.mjs';
-import { BIOTECH_CMC, BIOTECH_IR_LETTER, BIOTECH_SM, BIOTECH_SM_CMC, BIOTECH_STUDY_DESIGN, BIOTECH_TASKS } from './biotech-work-content.mjs';
-import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
+import { BIOTECH_ADAPTIVE_PLAN, BIOTECH_CMC, BIOTECH_IR_LETTER, BIOTECH_SM, BIOTECH_SM_CMC, BIOTECH_STUDY_DESIGN, BIOTECH_TASKS } from './biotech-work-content.mjs';
+import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks, ensureAdaptivePlan, ensureDesignTasks } from './work-areas.mjs';
 
 /* ───────────────────────── 1. Projects ───────────────────────── */
 
@@ -300,6 +300,12 @@ export async function seed(ctx) {
   await ensureAuthoring(c, program);
   const protocol = await ensureProtocol(c, program);
   await ensureStudyDesign(c, program, protocol.id, BIOTECH_STUDY_DESIGN);
+  /* The rest of the Biostatistics work area: the plan its interim looks sit on,
+     and the statistical deliverables the design assessment proposes raised onto
+     the task board. Without these the area listed a design and nothing else
+     (2026-11-09). */
+  await ensureAdaptivePlan(c, BIOTECH_ADAPTIVE_PLAN);
+  await ensureDesignTasks(c, BIOTECH_STUDY_DESIGN.title);
   await ensureSubmission(c, program, vaultDocs);
   await ensureQms(c, program);
   await ensureCmc(c, program, BIOTECH_CMC, 'C2C-101');
