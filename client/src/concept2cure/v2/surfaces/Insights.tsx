@@ -10,6 +10,7 @@ import { captureAuthoringSession, useAuthoringReadSession } from '../editor/auth
 import { canFinalizeReport, canGovernedWrite } from '@shared/constants/permissions';
 import { readinessPredicate, readinessQualifier } from '@shared/regulatory/readiness-statement';
 import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_shared/components/EsignModal';
+import { ALL_ESIGN_MEANINGS } from '../../_shared/esignMeanings';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
@@ -25,7 +26,7 @@ import { SchedulesPanel } from './InsightsSchedulesPanel';
 import { RunEvidence } from './InsightsRunEvidence';
 import { InsightsDevicePortfolio, type DevicePortfolioView } from './InsightsDevicePortfolio';
 import { LIBRARY_VIEWS, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
-import type { BundlePdfContent, ReportRunRow } from './insightsLibraryModel';
+import { sealLineFrom, type BundlePdfContent, type ReportRunRow, type RunSealView } from './insightsLibraryModel';
 import { getSurfaceMeta } from '../registryModel';
 import { GlobalSchedule, type ScheduleProject } from './PyramidProject';
 import { getApplicationType } from '@shared/regulatory/global-document-registry';
@@ -666,6 +667,22 @@ interface RenderedReport {
   status: string;
   truthfulness: { allowedStatus: string; downgradedFrom?: string; reasons: string[] };
   sections: ROSection[];
+  /** Whether a finalize would be admitted, from the finalize route's own evaluation (GET /runs/:id/rendered).
+   *  Absent on a server that predates it; then Finalize is offered and the server decides, as before. */
+  finalEligibility?: { eligible: boolean; reasons: string[] };
+}
+
+/** The rendered read's finalize eligibility, or nothing when it is absent or malformed. */
+function finalEligibilityOf(body: unknown): RenderedReport['finalEligibility'] {
+  const f = (body as { finalEligibility?: { eligible?: unknown; reasons?: unknown } } | null)?.finalEligibility;
+  if (!f || typeof f.eligible !== 'boolean') return undefined;
+  return { eligible: f.eligible, reasons: Array.isArray(f.reasons) ? f.reasons.filter((r): r is string => typeof r === 'string') : [] };
+}
+
+/** Why a finalize would be refused, in a sentence: the gate's reasons without its "Cannot mark final:" lead. */
+export function finalizeHeldText(reasons: string[]): string {
+  const said = reasons.map((r) => r.replace(/^Cannot mark final:\s*/, '').replace(/\.$/, '')).filter(Boolean);
+  return `Can’t be finalized: ${said.length ? said.join('; ') : 'the report’s gate holds it below final'}.`;
 }
 
 /**
@@ -1086,11 +1103,13 @@ function reportHeading(report: RenderedReport): { fam: { label?: string; region?
 /** The run is headed by a project (or program, or submission) while its engine
  *  counted the organization's records: the run's own carried `computedScope`,
  *  never the type id. An account run is already headed as the organization. */
-function ROReport({ report, onExport, onFinalize, seal, runId, exporting = false }: {
+function ROReport({ report, onExport, onFinalize, finalizeHeld, seal, runId, exporting = false }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
-  /** Offered only to a role that may finalize, on a run that is not final. */
+  /** Offered only to a role that may finalize, on a run that is not final and that a finalize would admit. */
   onFinalize?: () => void;
+  /** In Finalize's place, for a role that may finalize: why the server would refuse it. */
+  finalizeHeld?: string[];
   seal?: ReportSeal | null;
   /** The governed run behind the report, when there is one. It unlocks the
    *  evidence disclosure: GET /runs/:id/seal re-verifies the sealing act and
@@ -1136,7 +1155,7 @@ function ROReport({ report, onExport, onFinalize, seal, runId, exporting = false
           <div className="ro-sec-body">{sec.blocks.map((b, i) => <ROBlock key={i} block={b} />)}</div>
         </section>
       ))}
-      <ROReportActions report={report} onExport={onExport} onFinalize={onFinalize} exporting={exporting} />
+      <ROReportActions report={report} onExport={onExport} onFinalize={onFinalize} finalizeHeld={finalizeHeld} exporting={exporting} />
       {runId != null && <RunEvidence runId={runId} />}
     </div>
   );
@@ -1417,9 +1436,11 @@ async function fetchRenderedRun(runId: number, type: ReportType, program: Progra
   if (!target) return null;
   try {
     const res = await apiRequest('GET', `/api/report-os/runs/${runId}/rendered`);
-    const rendered = (await res.json().catch(() => null))?.data;
+    const body = await res.json().catch(() => null);
+    const rendered = body?.data;
     if (!res.ok || !rendered || !Array.isArray(rendered.sections) || typeof rendered.generatedAt !== 'string') return null;
-    return reportFromRenderedRow(rendered, { id: runId, runUuid: '', reportTypeId: type.typeId, reportTypeLabel: type.label, scopeType: target.scope, scopeId: target.scopeId, scopeLabel: target.label, status: 'partial', confidence: null, createdAt: rendered.generatedAt }, type);
+    const report = reportFromRenderedRow(rendered, { id: runId, runUuid: '', reportTypeId: type.typeId, reportTypeLabel: type.label, scopeType: target.scope, scopeId: target.scopeId, scopeLabel: target.label, status: 'partial', confidence: null, createdAt: rendered.generatedAt }, type);
+    return { ...report, finalEligibility: finalEligibilityOf(body) };
   } catch {
     return null;
   }
@@ -1564,7 +1585,18 @@ async function fetchRenderedRunRow(
   if (!rendered || !Array.isArray(rendered.sections)) {
     return { note: `"${row.reportTypeLabel}" returned no document, so nothing is shown in its place.` };
   }
-  return { report: reportFromRenderedRow(rendered, row, catalog.find((t) => t.typeId === row.reportTypeId)) };
+  return { report: { ...reportFromRenderedRow(rendered, row, catalog.find((t) => t.typeId === row.reportTypeId)), finalEligibility: finalEligibilityOf(body) } };
+}
+
+/** A reopened sealed run's seal line, from its verified read-back (GET /runs/:id/seal); null when it does not verify. */
+async function readSealLine(runId: number): Promise<ReportSeal | null> {
+  try {
+    const res = await apiRequest('GET', `/api/report-os/runs/${runId}/seal`);
+    const body = await res.json().catch(() => null);
+    return res.ok ? sealLineFrom((body?.data ?? null) as RunSealView | null) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** A finalized run's signature and seal, as the server returned them. */
@@ -1578,7 +1610,8 @@ export interface ReportSeal {
 }
 
 const REPORT_FINALIZE_MEANINGS: ReadonlyArray<EsigMeaning> = ['authorship', 'approval', 'responsibility'];
-const SEAL_MEANING_LABEL: Record<string, string> = { authorship: 'authorship', approval: 'approval', responsibility: 'responsibility' };
+/** The signature's meaning (21 CFR 11.50(a)(3)) in the signing dialog's own word (esignMeanings), never a token. */
+const sealMeaningLabel = (meaning: string): string => ALL_ESIGN_MEANINGS.find((m) => m.id === meaning)?.label ?? meaning;
 
 const textOr = (v: unknown, fallback: string): string => (typeof v === 'string' ? v : fallback);
 
@@ -1664,7 +1697,7 @@ function ROSealLine({ seal }: { seal: ReportSeal }) {
     <div className="ro-truth" role="note" data-testid="ro-seal">
       {I.shieldCheck}
       <span>
-        Final. Signed{seal.signer ? ` by ${seal.signer}` : ''} as {SEAL_MEANING_LABEL[seal.meaning] ?? seal.meaning},{' '}
+        Final. Signed{seal.signer ? ` by ${seal.signer}` : ''}, meaning {sealMeaningLabel(seal.meaning)},{' '}
         <GovernedTimestamp value={seal.signedAt} layout="inline" />. Sealed {seal.algorithm} {seal.hash.slice(0, 12)}… over {seal.atomCount} provenance atoms.
       </span>
     </div>
@@ -1673,16 +1706,19 @@ function ROSealLine({ seal }: { seal: ReportSeal }) {
 
 /** Export reads; Finalize, when offered, signs. Both are quiet: the page's one
     primary is the header's (D7 §D.6), and an open report made Export a second. */
-function ROReportActions({ report, onExport, onFinalize, exporting = false }: {
+function ROReportActions({ report, onExport, onFinalize, finalizeHeld, exporting = false }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
   onFinalize?: () => void;
+  /** The gate's reasons a finalize would be refused, said in Finalize's place (never a signature asked for in vain). */
+  finalizeHeld?: string[];
   exporting?: boolean;
 }) {
   return (
     <div className="ro-rep-actions">
       <button type="button" className="btn ghost" disabled={exporting} aria-busy={exporting} onClick={() => onExport(report)}>{I.download || I.fileText} {exporting ? 'Preparing PDF…' : 'Export PDF'}</button>
       {onFinalize && <button type="button" className="btn ghost" onClick={onFinalize}>{I.shieldCheck} Finalize…</button>}
+      {finalizeHeld && <span className="ro-rep-held" role="note" data-testid="ro-finalize-held">{finalizeHeldText(finalizeHeld)}</span>}
     </div>
   );
 }
@@ -1696,12 +1732,21 @@ const RO_PRESET_SEGMENT: Record<string, string> = {
 export function InsightsCanvas(props: OwnedSurfaceViewProps) {
   const session = useAuthoringReadSession(authService.getUser());
   const changed = session.key > 1;
+  /* Why the canvas reloaded, against the session just before this one: another reader took it, or the same reader's
+     account was read again (opening the Account panel re-reads it; a changed role must withdraw private results, so
+     the canvas still reloads). The notice says which, never an account switch that did not happen (Reporting use
+     walk, 2026-11-09). Updated once per session key, so a re-render does not move it. */
+  const sessions = useRef({ key: session.key, actor: session.actor, before: session.actor });
+  if (sessions.current.key !== session.key) sessions.current = { key: session.key, actor: session.actor, before: sessions.current.actor };
+  const reloaded: ReportingReload = !changed ? false : sessions.current.before === session.actor ? 'reread' : 'account';
   if (changed && !authService.getUser()) return <div className="page-inner rc" data-work-area="insights"><ReportingHead onNav={props.onNav} /><div className="rc-canvas">
     <ReportingRecoveryNotice ended />
     <EmptyState icon={I.lock} title="Sign in to read reporting" hint="Your previous reporting data has been withdrawn. Sign in again to reopen Run history." />
   </div></div>;
-  return <ReportingCanvasForSession key={session.key} {...props} owner={session} reloaded={changed} />;
+  return <ReportingCanvasForSession key={session.key} {...props} owner={session} reloaded={reloaded} />;
 }
+
+type ReportingReload = false | 'account' | 'reread';
 
 /* The work area's back link and page header (D5 §WA.4.2, D7 §D.4 steps 1-2).
    The title is the surface's registry label. Every state of the canvas
@@ -1727,11 +1772,12 @@ function ReportingHead({ onNav, sub, note, acts, name }: { onNav?: (id: string) 
   );
 }
 
-function ReportingRecoveryNotice({ ended = false }: { ended?: boolean }) {
+function ReportingRecoveryNotice({ ended = false, reread = false }: { ended?: boolean; reread?: boolean }) {
+  if (reread) return <div className="ro-dash-note" role="status">Reporting reloaded because your account was read again, so it shows what your current access allows. Requests sent before may have completed: check Run history, Schedules and Bundles for their stored outcomes.</div>;
   return <div className="ro-dash-note" role="status">{ended ? 'Your reporting session ended.' : 'Reporting was reset for the current account.'} Requests sent before the change may have completed. In the original account, check Run history, Schedules and Bundles for their stored outcomes.</div>;
 }
 
-function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSurfaceViewProps & { owner: ReturnType<typeof captureAuthoringSession>; reloaded: boolean }) {
+function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSurfaceViewProps & { owner: ReturnType<typeof captureAuthoringSession>; reloaded: ReportingReload }) {
   const search = useSearch();
   const tabsId = React.useId();
 
@@ -2038,6 +2084,11 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     setReportRunId(row.id);
     setPaneView('report');
     pushCanvasTop();
+    // A sealed run reads the same reopened as just signed: its line, when its seal verifies.
+    if (result.report.status === 'final') {
+      const line = await readSealLine(row.id);
+      if (line && reportAccessCurrent() && request === requestSequence.current) setSeal(line);
+    }
   };
 
   const exportBundle = async (bundleId: string, name: string, content: BundlePdfContent) => {
@@ -2122,16 +2173,21 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
   );
   const libraryPane = paneView === 'catalog' ? <CatalogPanel key={contextKey} planControl={planControl} types={libraryCatalog} onRun={runFromCatalog} canRun={canExecute} runUnavailableReason={unavailableRunReason} busy={busy} programLabel={program?.code ?? null} projectId={data?.leadProgram?.projectId} />
     : paneView === 'runs' ? <RunsPanel types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId, label: program.code } : null} onOpen={row => void openRunFromHistory(row)} onBundle={ids => { if (!reportAccessCurrent() || libraryActions.get(contextKey, 'bundle:create')) return; setBundlePicks(ids); setPaneView('bundles'); pushCanvasTop(); }} canBundle={canWrite && !libraryActions.get(contextKey, 'bundle:create')} />
-    : paneView === 'schedules' ? <SchedulesPanel key={contextKey} types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId } : null} canWrite={canWrite} canSchedule={tierResolved && ['professional', 'enterprise'].includes(realTier)} actions={libraryActions} context={contextKey} accessCurrent={reportAccessCurrent} onSaved={msg => { if (reportAccessCurrent()) fireToast(msg); }} />
+    : paneView === 'schedules' ? <SchedulesPanel key={contextKey} types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId, label: program.code } : null} canWrite={canWrite} canSchedule={tierResolved && ['professional', 'enterprise'].includes(realTier)} actions={libraryActions} context={contextKey} accessCurrent={reportAccessCurrent} onSaved={msg => { if (reportAccessCurrent()) fireToast(msg); }} />
     : paneView === 'bundles' ? <BundlesPanel key={contextKey} pendingRunIds={bundlePicks} canWrite={canWrite} pendingExports={pendingBundleExports} onExport={(id, name, content) => void exportBundle(id, name, content)} actions={libraryActions} context={contextKey} accessCurrent={reportAccessCurrent} onSaved={msg => { if (reportAccessCurrent()) fireToast(msg); }} onClearPending={() => { if (reportAccessCurrent()) setBundlePicks(now => now === bundlePicks ? [] : now); }} /> : null;
-  const reportPane = report ? <ROReport report={report} onExport={exportRep} onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => { if (reportAccessCurrent()) setSigning(true); } : undefined} seal={seal} runId={reportRunId} exporting={reportRunId != null && pendingReportExports.has(reportRunId)} /> : null;
+  /* Finalize is offered where a finalize would be admitted; where the server's
+     own evaluation says it would not, its reasons stand in Finalize's place
+     (Reporting use walk, 2026-11-09). */
+  const mayFinalizeHere = canFinalize && reportRunId != null && report != null && report.status !== 'final';
+  const finalizeHeld = mayFinalizeHere && report?.finalEligibility?.eligible === false ? report.finalEligibility.reasons : undefined;
+  const reportPane = report ? <ROReport report={report} onExport={exportRep} onFinalize={mayFinalizeHere && !finalizeHeld ? () => { if (reportAccessCurrent()) setSigning(true); } : undefined} finalizeHeld={finalizeHeld} seal={seal} runId={reportRunId} exporting={reportRunId != null && pendingReportExports.has(reportRunId)} /> : null;
   const visibleGeneration = requestSequence.current;
   const displayedReportCurrent = () => reportAccessCurrent() && displayedRun.current === reportRunId && requestSequence.current === visibleGeneration;
   const sealForDisplayedRun = (sealed: ReportSeal) => {
     if (displayedReportCurrent()) onSealed(sealed);
   };
   const planNotice = !tierResolved && <div className="ro-dash-note" role="status" data-testid="rc-tier-unresolved">{I.alertTriangle} {REPORT_PLAN_UNVERIFIED} This is not a statement about your plan — try again in a moment, and contact your administrator if it persists.</div>;
-  const recoveryNotice = reloaded && <ReportingRecoveryNotice />;
+  const recoveryNotice = reloaded && <ReportingRecoveryNotice reread={reloaded === 'reread'} />;
   /* The device section (fold F4): the device projects the reader can open, as
      the overview computed them, on the Report tab's landing canvas, with or
      without a project open. It shows nothing for a reader with no device project. */

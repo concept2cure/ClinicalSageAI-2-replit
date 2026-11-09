@@ -183,7 +183,7 @@ describe('Insights — unverified plan read and compatibility controls', () => {
     resolved = false;
     await renderCanvas();
     await openLibrary(/Run history/);
-    fireEvent.click(await screen.findByRole('button', { name: 'Open' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Open the / }));
     await waitFor(() => expect(document.querySelector('.ro-report')).not.toBeNull());
     expect(apiRequest.mock.calls.some(([method, url]) => method === 'GET' && url === '/api/report-os/runs/41/rendered')).toBe(true);
     expect(runCalls()).toHaveLength(0);

@@ -35,7 +35,7 @@ describe('reporting context integrity', () => {
     render(<InsightsCanvas {...props} />);
     fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     expect(await screen.findByText('Organization-wide records')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /^Run$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Run / }));
     await screen.findByText('Organization saved evidence');
     expect(apiRequest.mock.calls.find(([method, url]) => method === 'POST' && url === '/api/report-os/runs')?.[2]).toMatchObject({ scopeType: 'account', scopeId: '1' });
     fireEvent.click(screen.getByRole('tab', { name: 'Run history' }));
@@ -53,7 +53,7 @@ describe('reporting context integrity', () => {
     publishShellProject({ id: A, code: 'A-101' });
     render(<InsightsCanvas {...props} />);
     fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Run / }));
     await waitFor(() => expect(finish).toBeDefined());
     act(() => publishShellProject({ id: B, code: 'B-202' }));
     await waitFor(() => expect(document.body.textContent).toContain('B-202'));
@@ -70,7 +70,7 @@ describe('reporting context integrity', () => {
     });
     render(<InsightsCanvas {...props} />);
     fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Run / }));
     expect(await screen.findByText(/no measured forecast series is recorded/)).toBeTruthy();
     expect(document.querySelector('.ro-svgwrap polyline')).toBeNull();
   });

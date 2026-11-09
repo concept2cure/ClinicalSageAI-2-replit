@@ -1730,6 +1730,31 @@ no screen, route, service, table or component file.
     - Red first: the route test 2 of 28, and the new client test 9 of 9. Green: 62 files, 633 tests. Type check 0.
     - Walked at 1440 and 390, light and dark, over five projects (four created through the API). It **found** the
       review clock painted solid, in the Plan step too, and fixed it in `3707064475`.
+  - **Reporting used in the running app** (`docs/evidence/DESIGN/D7/2026-11-09-reporting-use-walk/`). The walk ran a
+    report from the Catalog, exported, finalized, opened Run history, bundled a pack and scheduled. It found five defects,
+    each fixed red first:
+    1. Finalize was offered on a run the gate always refuses, and refused only after the password. `b2d51f911c` (F1):
+       the rendered read returns `finalEligibility`, and the reason stands in Finalize's place.
+    2. Run history answered 500 on a database installed before 2026-10-13: `0014_report_os_foundation.sql` was on no
+       deploy path. `22256c6750` and `76c6f63c3a` (L1) put it in the set. It was proved on the earlier-installed
+       database and on a blank one, each replayed.
+    3. A schedule showed a type id and a database id. `e710bc3d3f` (D7).
+    4. Twenty Catalog buttons were each named "Run", and the same for Open and Pause. `8a1feba597` (D7).
+    5. Run history and Schedules overflowed the page at 390. `2135d3f9dd` (D7).
+  - **A finalize that succeeds, walked** (the Research Administration Scorecard, the one report here a finalize admits).
+    It found two more defects:
+    6. The signature's meaning was a stored token on the screen and in the PDF, with a raw ISO time in the PDF.
+       `39d5f74d32` (D7) and `0e5706a308` (F1): the dialog's meaning names, and the canonical manifestation time.
+    7. A reopened sealed run showed no seal line. `e8e3c63093` (D7): it shows the line when its seal verifies.
+    8. Opening your own Account panel reset Reporting with an "original account" notice. `52f0b562b9` (D7) fixes the
+       words. The same-account reload belongs to the shared session hook and `authService.refreshUser`, and is routed
+       to their holders.
+  - **The pack ZIP's legal chooser, walked with a registered original:** it refuses a letter whose Vault version is not
+    yet approved, and says why. Approving it through Vault and the ZIP with it are not walked.
+  - **The production pre-deploy step** for 0014 is written into the evidence and pointed at from
+    `docs/runbooks/protected-release-setup.md` (`3964cb4b64`, `f681dfb1a8`).
+  - **Held, not pushed:** all of the above, at the coordinating session's request, until its demo freeze lifts after
+    23:00 UTC. 0014's preflight would stop a Codespace start on a group membership whose group and project disagree.
 
 #### L1 (rows D7, D6) — prior filings read back as filed state, and archive names checked where they are read (session `session_01Gx2fiwvxaXi6mQgddPqMaG`, 2026-11-01 to 2026-11-02)
 

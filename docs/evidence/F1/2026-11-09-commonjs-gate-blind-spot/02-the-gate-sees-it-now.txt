@@ -1,0 +1,24 @@
+=== widened glob, openai-service not yet fixed ===
+$ npm run ci:commonjs-require
+
+❌ CommonJS require() in an ESM package — this throws at runtime, not at build.
+
+   server/openai-service.ts:313
+     const fs = require('fs');
+
+   package.json is "type": "module" and the server bundle is esbuild format:'esm'.
+   `require` is undefined in BOTH runtimes, so this line throws ReferenceError
+   the first time its branch executes — a 500 at click time, invisible until then.
+   Vitest supplies a working `require`, so a passing unit test proves nothing here.
+
+=== the fix: the module already imports fs on line 2 ===
+$ sed -n 1,3p server/openai-service.ts
+import pdfParse from './utils/pdfParse';
+import fs from 'fs';
+
+-      const fs = require('fs');
+       buffer = fs.readFileSync(pdfPathOrBuffer);
+
+=== after ===
+$ npm run ci:commonjs-require
+check-commonjs-require: no new occurrences. 8 baselined across 8 file(s).

@@ -42,6 +42,14 @@ hiding the other: the broken id meant nobody ever reached the broken hash.
 |---|---|
 | `services/cmc/batch-release-evidence.ts` | imports `stableStringify` only and hashes with `node:crypto`, as the skills library already does |
 | `shared/canonical-json.ts` | `sha256Hex` and `stableHash` **throw a named error** instead of a bare `ReferenceError`, naming what to do instead. A function that cannot run anywhere is worse than no function: its callers type-check and fail when used. `stableStringify` — the part both runtimes need — is untouched |
+
+> **Superseded the same day** by `docs/evidence/F1/2026-11-09-canonical-json-hash-removed/`.
+> Two things were wrong with that row. It pushed a red — this module's own suite exercises
+> `stableHash` in two cases and I did not run it. And the argument in it ("its callers
+> type-check and fail when used") argues past the fix: a *throwing* function still
+> type-checks for a future caller, which fails in production. Both exports are now deleted,
+> so such a caller is refused at compile time, and a tripwire refuses a hash put back here.
+
 | `services/vault/document-catalog-governance.service.ts` | the **other** live caller, found by the contract case below and fixed the same way |
 
 ## A unit test could not have caught this, and did not

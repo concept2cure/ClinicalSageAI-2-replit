@@ -69,7 +69,7 @@ Publication request for the demo followthrough, 2026-11-06 22:01 UTC: its source
 
 | Files | Held by | For |
 |---|---|---|
-| `shared/constants/document-intake-formats.ts` (the `.zip` row only), `shared/constants/upload-name-bindings.ts` (a `.zip` binding), and their tests; tests of `server/routes/vault-ingest.ts` and `client/src/concept2cure/v2/surfaces/VaultUploadStaging.tsx` (no edit to either file) | Codebase market readiness (`01Gx2fiw…`), from 2026-11-09 | P-112 item 1: the Vault admits a `.zip`, stored opaque and bounded (MR-08 Stage 3 step 3), red first. The Data Room's in-browser expansion is unchanged. Released by the commit that lands it. |
+| (none held) | Codebase market readiness (`01Gx2fiw…`), 2026-11-09 | **P-112 item 1 landed: the Vault admits a `.zip`, stored as one file.** `.zip` is `vault: true` in `shared/constants/document-intake-formats.ts`, and its name binds a zip container in `shared/constants/upload-name-bindings.ts` (a `.zip` declared `text/html` with HTML bytes passed both checks before). The archive bound, the signature check and the no-text extraction were already there. The Data Room's in-browser expansion is unchanged. Evidence `docs/evidence/MR-08/2026-11-09-vault-admits-zip/`. **→ RIM:** P-108 4(a) (a sponsor's copy of a sent package, matched by SHA-256) can now take the package from the Vault; it is under the 50 MB upload limit until the founder sets the admission size (P-112, open). **→ Vault parity (S6):** P-112 items 2 to 4 (the picked-document export, reaching compression, combining). Holds released. |
 | `server/routes/ind-lifecycle/sequence.routes.ts` (deleted whole); the P-106 handlers in `server/routes/ind-lifecycle/submission.routes.ts` (`GET /portfolio` stays); their mounts in the IND lifecycle router; `tests/schema-contract/one-dispatch-verdict.contract.test.ts` (:72–76 read `sequence.routes.ts`); `server/services/export/__tests__/recorded-downloads.contract.test.ts` (:88, :195 list the portfolio/drift handlers); the openapi route-count test | RIM system build-out (`011e42…`), recorded by the coordinating session 2026-11-09 | `Plan: R1`, one deletion commit: P-87 with P-106, both the founder's (no `LAUNCH_DEFINITION_OF_DONE.md` change). R1's holder (`01QoxbLdKp…`) does **not** hold these files. R1's rule is met by RIM's commit: no caller in any history (the full-history search re-run and filed with the commit), and the replacement named by path (the sequence's one verdict, per project). Taken after D7-A1, D7-A2, C3 and P-92 C1/C2 unless re-ordered; released with the commit |
 | (none held) | D7-record (`015weq…`), 2026-11-09 | P-95 Q2 landed as ruled in row 38 (`4eb094196f`, evidence `docs/evidence/W5/2026-11-01/p95-q2/`). A placed artifact (a CTD section set, in any module) or type `section` needs two independent reviewers, refused 409 REVIEW_REQUIRED with the count. Any `ctd_section` change with a decision on the current version moves the version on, as an edit does: the editor's save, placement, ctd-section, the spine's `setPlacementTx` and the signed `place_in_dossier`, which now binds the version at its new place. `GET …/reviews/status` reads readiness from the quorum. **B (write-once class) is owed**, with its ten re-resolution sites listed in that README. **→ S4 (`01KZK3…`):** `reviews/status` adds `notReadyReason` beside `readyForApproval`; the Review step may show it. **→ CMC/AnA:** a placed document now needs two reviewers, and moving a reviewed document returns it to review. |
 | (none held) | D7-record (`015weq…`), 2026-11-09 | F1, landed and released (`c3240962e7`, evidence `docs/evidence/W5/2026-11-01/module3-bridge/`). A compiled Module 3 section can now be approved: `content_hash` is `sha256(text)`, which the signed act requires, where a compile hash made every approval 409 ARTIFACT_CHANGED. A locked section is refused, never written over, under its row lock. Each version is recorded, and the metadata is merged. **→ CMC (`01GJidg5…`):** a compile into a released section now answers `bridged: false, reason: 'artifact_locked'` with its sentence, which your routes already report. **Q2 (`../p95-q2/`) waits on the coordinating session's choice of the floor's source.** |
@@ -217,6 +217,34 @@ S10 (the agency's communications back into the project) is held by RIM since 202
 - **R1 rows found by sessions:** the war-game report has had no renderer since `WarGameReport.tsx` was deleted in
   `2895218b8` (2026-08-04) with no replacement named; AnA narrates the report instead. Reach it in the conversation
   and canvas, or retire it by founder decision.
+
+## Found by the demo walk (D7-record `015weq…`) in files other lanes hold, 2026-11-09
+
+The deep demo walk (`docs/evidence/DEMO/2026-11-09-rehearsal/deep-walk/`) confirmed 36 high findings on a freshly
+seeded database. This lane is fixing the ones in free files under F1, holding each file only while its fix is applied.
+Two of the findings are in files another lane holds. Each comes with the independent verifier's minimal fix.
+
+**→ the project-page lane (`01FTWcmXm7At3ZXBE5VWn6oS`, D3's `surfaces/Project*.tsx`), two copy fixes (findings 0.2 and
+0.6):**
+
+1. **Dossier readiness reads "0 in review · 0 drafted" and "No editing copy of this filing yet" six to eight times**,
+   directly under a list of drafts, a document in review and frozen or approved documents. The counts cover only
+   sections bound to the filing's editing copy, and the seeded documents are not bound to it. In `ProjectDossier.tsx`:
+   - `:241`: say that no document is the filing's editing copy yet, so the documents above are not counted;
+   - `:280`: say it once, in the lead, not on every home module row;
+   - `:194`: "Of these sections: N in review · N drafted", so it cannot be read against the Filing card's "2 documents
+     in review";
+   - `:122`: add `['todo', 'Not started']` to `SECTION_STATUS_LABELS`. Today the raw value "todo" prints.
+   - Tests that pin the old strings: `projectDossierDetails.test.tsx:60, :89`; `projectHomeDocuments.test.tsx:206,
+     :222, :334`; `tests/e2e/project-dossier-details.e2e.ts:127`.
+2. **C2C-201 says "No documents in this project yet" and "0 drafted"**, while CMC / Module 3 holds its 21 drafted
+   sections. Those sections appear only inside the closed "Artifact section status" disclosure.
+   - `ProjectHome.tsx`: pass the existing `cmcComposes` on to `ProjectDocumentsBody` (`:1600`, prop at `:1516`). When it
+     is set, the empty state (`:1532`, `:1548`) says Module 3 is composed in CMC / Module 3, and names where its drafted
+     sections are listed.
+   - `ProjectArtifactReadiness.tsx:82`: open the disclosure when the rollup has sections.
+   - The lasting fix is a decision for the CMC lane: either the CMC section lifecycle writes the filing's Module 3
+     `c2c_document_sections` rows, or `dossier-read.ts` counts `cmc_module3_sections` for the Module 3 row.
 
 ## Found by the CMC session (`01GJidg5…`) outside its files, 2026-11-09
 

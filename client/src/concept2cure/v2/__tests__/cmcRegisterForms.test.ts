@@ -13,6 +13,9 @@ import {
   referenceStandardBody,
   referenceStandardPatch,
   METHOD_VALIDATION_OUTCOMES,
+  METHOD_SIGNED_STATES,
+  statusOptionsFor,
+  statusDefaultFor,
   SIGNED_ACTS,
   qualifyForm,
   qualifyBody,
@@ -1100,5 +1103,71 @@ describe('the method validation outcomes', () => {
     });
     expect(body).toMatchObject({ outcome: 'validated' });
     expect(body).not.toHaveProperty('phase');
+  });
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * P-110 gave one register a second signed state, and the edit drawer knew one.
+ *
+ * `statusOptionsFor` re-offers the signed status to a record that already holds
+ * it, because offering only the ungoverned statuses sends the base status on
+ * every Save — reverting a Part 11 signature while leaving the signer and date
+ * populated, and (since the server refuses that) answering 409, so the record
+ * is uneditable through the product. It took ONE signed word. P-110 made
+ * `phase-appropriate` a second signed outcome of the analytical-method
+ * signature, so a method signed suitable for its phase opened its drawer on
+ * 'development' and could not be saved at all — the validated-process defect
+ * the parameter was added for, one register over.
+ * ────────────────────────────────────────────────────────────────────────────*/
+describe('a register that signs two states round-trips either one', () => {
+  const statusOf = (row?: Record<string, unknown>) =>
+    methodForm(row as never).fields.find((f) => f.key === 'status')!;
+
+  it('offers the drawer neither signed word on a new method', () => {
+    const status = statusOf();
+    expect(status.options).not.toContain('validated');
+    expect(status.options).not.toContain('phase-appropriate');
+    expect(status.default).toBe('development');
+  });
+
+  it('round-trips a validated method, as it always did', () => {
+    const status = statusOf({ status: 'validated' });
+    expect(status.default).toBe('validated');
+    expect(status.options).toContain('validated');
+    expect(status.options).not.toContain('development');
+  });
+
+  // The defect: default 'development', which the server answers 409 to.
+  it('round-trips a phase-appropriate method', () => {
+    const status = statusOf({ status: 'phase-appropriate' });
+    expect(status.default).toBe('phase-appropriate');
+    expect(status.options).toContain('phase-appropriate');
+    expect(status.options).not.toContain('development');
+  });
+
+  it('leaves a status that is neither signed nor the base alone', () => {
+    const status = statusOf({ status: 'validation' });
+    expect(status.default).toBe('validation');
+    expect(status.options).toEqual(['development', 'validation', 'retired']);
+  });
+
+  /* The edit drawer must recognise exactly what the Validate drawer can sign.
+     Two lists that drift are how the one-word version survived P-110 at all. */
+  it('recognises exactly the outcomes the signing drawer offers', () => {
+    expect([...METHOD_SIGNED_STATES]).toEqual(METHOD_VALIDATION_OUTCOMES.map((o) => o.value));
+  });
+
+  it('still takes a single word, for the eight registers that sign one', () => {
+    expect(statusOptionsFor(['draft', 'retired'], 'qualified')).toEqual(['qualified', 'retired']);
+    expect(statusDefaultFor(['draft', 'retired'], 'qualified')).toBe('qualified');
+    expect(statusOptionsFor(['draft', 'retired'], 'draft')).toEqual(['draft', 'retired']);
+  });
+
+  /* The stability register's vocabulary is upper-case; the register's own
+     casing comes back, not the stored row's. */
+  it('returns the register casing, matching case-insensitively', () => {
+    const statuses = ['DRAFT', 'ACTIVE', 'PAUSED'];
+    expect(statusDefaultFor(statuses, 'completed', 'COMPLETED')).toBe('COMPLETED');
+    expect(statusOptionsFor(statuses, ' Completed ', 'COMPLETED')).toEqual(['COMPLETED', 'ACTIVE', 'PAUSED']);
   });
 });

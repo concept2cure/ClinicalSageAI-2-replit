@@ -26,6 +26,7 @@
  * @module server/services/report-os/pdf/run-pdf
  */
 import { GREY, Writer, iso } from './writer';
+import { formatSignedAtUtc } from '../../compliance/signature-manifestation';
 import { prepareReportPdfBranding } from './company-branding';
 import type { CompanyDocumentProfile } from '../../../../shared/company-documents';
 import type { RenderedReport, ReportBlock } from '../render/types';
@@ -84,13 +85,15 @@ function blockLines(block: ReportBlock): string[] {
     : [`[Unsupported block ${String(block.kind)}; recorded content: ${JSON.stringify(block)}]`];
 }
 
-/** The signature manifestation line (11.50): who, as what, when. */
+/** The signature manifestation line (11.50): who, its meaning in words, and when, as the canonical
+ *  manifestation formats the time (compliance/signature-manifestation.ts). It read "as authorship,
+ *  2026-11-09T18:53:45.935Z (UTC)" (Reporting use walk, 2026-11-09). */
 function signatureLine(s: RunSealView): string {
   const sig = s.signature;
   const who = sig?.signerName || 'not recorded';
-  const meaning = sig?.meaning || 'not recorded';
+  const meaning = sig?.meaning ? sig.meaning.charAt(0).toUpperCase() + sig.meaning.slice(1) : 'not recorded';
   // A chain's finalization time cannot fill in a missing signature time.
-  return `Final. Signed by ${who} as ${meaning}, ${iso(sig?.signedAt)} (UTC).`;
+  return `Final. Signed by ${who}, meaning ${meaning}, ${sig?.signedAt ? formatSignedAtUtc(sig.signedAt) : 'signing time not recorded'}.`;
 }
 
 /** The signature and seal of a final run, or why there is none. */

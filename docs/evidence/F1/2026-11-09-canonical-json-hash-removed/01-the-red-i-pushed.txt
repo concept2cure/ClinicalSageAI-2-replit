@@ -1,0 +1,20 @@
+$ git log --oneline -1 -- shared/canonical-json.ts
+90d65c4ee F1: batch release crashed inside a hash, so it had never completed
+
+$ npx vitest run shared/__tests__/canonical-json.test.ts      # on trunk, before this change
+
+ FAIL  shared/__tests__/canonical-json.test.ts > canonical JSON — the property the hashes depend on > is insensitive to key insertion order
+Error: shared/canonical-json: sha256Hex cannot run here. It reached node:crypto through `require`, which does not exist in an ESM runtime, and a static import would put crypto in the client bundle (five client files import stableStringify from this module). In a server module: import { createHash } from 'node:crypto' and hash stableStringify(value) — createHash('sha256').update(stableStringify(value), 'utf8').digest('hex').
+ ❯ sha256Hex shared/canonical-json.ts:104:9
+ ❯ stableHash shared/canonical-json.ts:117:10
+ ❯ shared/__tests__/canonical-json.test.ts:61:12
+
+ FAIL  shared/__tests__/canonical-json.test.ts > canonical JSON — the property the hashes depend on > produces a stable 64-char hex digest
+Error: shared/canonical-json: sha256Hex cannot run here. [...]
+ ❯ shared/__tests__/canonical-json.test.ts:76:12
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)
+
+Both failures are mine, from 90d65c4ee, pushed to trunk. I ran the CMC and Vault
+suites after that change and not this module's own.

@@ -1,0 +1,40 @@
+$ git ls-files 'server/**/*.ts' 'shared/**/*.ts' 'workers/**/*.ts' 'services/**/*.ts' | wc -l
+8257
+$ git ls-files 'server/*.ts'    'shared/*.ts'    'workers/*.ts'    'services/*.ts'    | wc -l
+8313
+
+# The 56 the gate could not see (tests already excluded by the gate itself):
+server/academic-knowledge-service.ts      shared/artifact-governance.ts
+server/academic-knowledge-tracker.ts      shared/biostat-vocabulary.ts
+server/academic-resource-upload.ts        shared/calendar-day.ts
+server/auth.ts                            shared/canonical-json.ts      <-- the §11.50 one
+server/betaRouteManifest.ts               shared/client-visibility.ts
+server/buildStamp.ts                      shared/clinical-phase.ts
+server/check-secrets.ts                   shared/cmc-schema.ts
+server/data-importer-v2.ts                shared/company-correspondence.ts
+server/data-importer.ts                   shared/company-document-designs.ts
+server/db.ts                              shared/company-documents.ts
+server/deep-csr-analyzer.ts               shared/company-legal-workflows.ts
+server/drizzle.ts                         shared/csr-adam-bundle.ts
+server/huggingface-service.ts             shared/csr-narrative-reference.ts
+server/index.ts                           shared/csr-source-contract.ts
+server/intelligence-service.ts            shared/csr-source-input.ts
+server/openai-service.ts    <-- the hit   shared/data-room-processing-status.ts
+server/protocol-analyzer-service.ts       shared/db.ts
+server/protocol-optimizer-service.ts      shared/docTypes.ts
+server/research-companion-service.ts      shared/document-data-disposition.ts
+server/sage-plus-service.ts               shared/evidenceSchema.ts
+server/seed.ts                            shared/project-intake-workspace.ts
+server/socketServer.ts                    shared/project-recorded-context.ts
+server/statistics-service.ts              shared/project-settings.ts
+server/storage.ts                         shared/project-sharing.ts
+server/strategic-report-generator.ts      shared/project-team.ts
+server/vite.ts                            shared/rule-pack-provenance.ts
+services/capability-unavailable.ts        shared/schema.ts
+                                          shared/task-assignment.ts
+                                          shared/versioned-digest.ts
+
+$ # of those 56, the ones containing a require( call at all:
+server/openai-service.ts:313:      const fs = require('fs');
+# exactly one. So the widened sweep adds one finding, which is fixed here
+# rather than baselined.
