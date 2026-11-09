@@ -227,7 +227,9 @@ describe('credential use retains current membership through its durable audit', 
     await assertCredentialUseCurrent((await captureCredentialForUse(ORG, 'llm_openai', 'model_inference', pool))!, 11, true, pool);
     await changeCard({ ...cardChange('rotate'), credentials: { apiKey: ROTATED } });
     await assertCredentialUseCurrent((await captureCredentialForUse(ORG, 'llm_openai', 'model_inference', pool))!, 11, true, pool);
-    const uses = (await holder.pg.query("SELECT table_name, record_id, user_id, new_values FROM audit_logs WHERE action = 'credential.use' ORDER BY occurred_at, id")).rows;
+    type UseRow = { table_name: string; record_id: string; user_id: number;
+      new_values: { credentialId: string; grantId: string; revision: string; purpose: string; accountOwner: string } };
+    const uses = (await holder.pg.query<UseRow>("SELECT table_name, record_id, user_id, new_values FROM audit_logs WHERE action = 'credential.use' ORDER BY occurred_at, id")).rows;
     expect(uses).toHaveLength(2);
     for (const use of uses) {
       expect(use).toMatchObject({ table_name: 'connector_credential_grant', record_id: 'llm_openai', user_id: 11 });
