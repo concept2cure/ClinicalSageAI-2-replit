@@ -1,0 +1,9 @@
+ × server/services/cmc/__tests__/analytical-method-source.test.ts > specificationMethodVerdict — a limit is approved only on a procedure shown fit > refuses a SUITABLE status that carries no signature — the unsigned word 7ms
+   → an unsigned "qualified" supported an approved limit: expected true to be false // Object.is equality
+ × server/services/cmc/__tests__/analytical-method-source.test.ts > specificationMethodVerdict — a limit is approved only on a procedure shown fit > approves the same SUITABLE status once the register carries the signature 1ms
+   → expected '"M" is recorded as phase-appropriate' to match /under signature/
+ × server/services/cmc/__tests__/analytical-method-source.test.ts > specificationMethodVerdict — a limit is approved only on a procedure shown fit > needs BOTH halves of the signature, because one alone is not a signed act 3ms
+   → expected { approve: true, …(1) } to match object { approve: false, …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 24 passed (27)
