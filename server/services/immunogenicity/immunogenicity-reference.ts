@@ -4,6 +4,14 @@
  *
  * The types, score bands, citations and stated-input helpers that every
  * immunogenicity tool uses. Deterministic: no LLM, no network, no database.
+ *
+ * It is also the one home of the stated-input helpers that EVERY Rule 2 S5
+ * engine uses, not only immunogenicity's: the readers (statedBoolean,
+ * booleanInputStates, statedNumber, statedOneOf) and, since S5d-0
+ * (2026-11-09), the three-valued helpers (unstated, anyOf, allOf) and the
+ * every-answer search (everyAnswer, conclusions, decidingFacts). Import them
+ * from here; do not copy them into an engine or move them back.
+ * s5-three-valued-helpers-have-one-home.test.ts fails if an engine does.
  * Split out of immunogenicity-knowledge.ts on 2026-10-15 when that file
  * crossed the repository size ceiling; it re-exports the public names, so
  * importers of the knowledge module are unchanged.
@@ -116,6 +124,73 @@ export function statedNumber(field: string, value: unknown, ok: (n: number) => b
   if (value === undefined || value === null) return undefined;
   if (typeof value === 'number' && Number.isFinite(value) && ok(value)) return value;
   throw new ComputationRefusal('invalid_input', `${field} must be ${rule} (got ${shown(value)}).`, field);
+}
+
+/* ── Three-valued facts (S5d-0, 2026-11-09) ─────────────────────────────────
+   One home for the helpers every S5 engine uses to keep an unstated fact
+   unstated: moved here verbatim from biomarker-knowledge.ts (the answer
+   search) and from the GCP and GMP engines (unstated / anyOf / allOf), which
+   carried identical copies. */
+
+/** True when a value was left out or given as null: it was not stated. */
+export function unstated(value: unknown): boolean {
+  return value === undefined || value === null;
+}
+
+/** Three-valued OR: true if any fact is true, false only when every one is stated, else undefined (not assessed). */
+export function anyOf(...facts: Array<boolean | null | undefined>): boolean | undefined {
+  if (facts.some((f) => f === true)) return true;
+  return facts.some(unstated) ? undefined : false;
+}
+
+/** Three-valued AND: false if any stated fact is not true, true only when every one is true, else undefined. */
+export function allOf(...facts: Array<boolean | null | undefined>): boolean | undefined {
+  if (facts.some((f) => !unstated(f) && f !== true)) return false;
+  return facts.some(unstated) ? undefined : true;
+}
+
+/** The distinct items, in first-seen order. */
+export function uniqueStrings(items: string[]): string[] {
+  const out: string[] = [];
+  for (const item of items) {
+    if (!out.includes(item)) {
+      out.push(item);
+    }
+  }
+  return out;
+}
+
+/** Every answer the unstated facts could take: each stated fact kept, each undefined one both true and false. */
+export function everyAnswer<K extends string>(stated: Record<K, boolean | undefined>): Array<Record<K, boolean>> {
+  let answers: Array<Record<K, boolean>> = [{} as Record<K, boolean>];
+  for (const key of Object.keys(stated) as K[]) {
+    const fact = stated[key];
+    const values = fact === undefined ? [true, false] : [fact];
+    answers = answers.flatMap((a: Record<K, boolean>) => values.map((v: boolean) => ({ ...a, [key]: v })));
+  }
+  return answers;
+}
+
+/** The distinct conclusions those answers give, in first-seen order: one means the stated facts decide it. */
+export function conclusions<K extends string, T extends string>(
+  stated: Record<K, boolean | undefined>,
+  conclude: (answer: Record<K, boolean>) => T,
+): T[] {
+  return uniqueStrings(everyAnswer(stated).map(conclude)) as T[];
+}
+
+/** The unstated facts whose answer can change the conclusion. */
+export function decidingFacts<K extends string, T>(
+  stated: Record<K, boolean | undefined>,
+  conclude: (answer: Record<K, boolean>) => T,
+): K[] {
+  return (Object.keys(stated) as K[]).filter(
+    (key: K): boolean =>
+      stated[key] === undefined &&
+      everyAnswer({ ...stated, [key]: false }).some(
+        (a: Record<K, boolean>): boolean => conclude({ ...a, [key]: true }) !== conclude(a),
+      ),
+  );
 }
 
 /** Canonical citations reused across the engine. */
