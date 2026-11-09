@@ -300,7 +300,8 @@ function ruleActions(r: RuleRow): string {
   const types = (Array.isArray(r.actions) ? r.actions : [])
     .map(a => (a && typeof a.type === 'string' ? ruleWords(a.type).toLowerCase() : ''))
     .filter(Boolean);
-  return types.length ? types.join(' and ') : 'no action';
+  // A rule with no action configured says so as configuration ("none set"), not as a clearance.
+  return types.length ? types.join(' and ') : 'none set';
 }
 
 function AutomationCard() {
