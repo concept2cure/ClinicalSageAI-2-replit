@@ -22,7 +22,16 @@
  * @module server/services/cmc/batch-release-evidence
  */
 
-import { stableHash } from '../../../shared/canonical-json';
+import { createHash } from 'node:crypto';
+/* `stableStringify` only. `shared/canonical-json`'s own `sha256Hex` reaches
+   `node:crypto` through a dynamic `require` — deliberately, so that a module
+   five client files import does not pull crypto into the browser bundle — and
+   `require` does not exist in this server's ESM runtime. Calling it here made
+   every batch release answer 500 `ReferenceError: require is not defined`,
+   measured against `npm run dev` on 2026-11-09, on the one path that reaches a
+   signature. `services/ana/skills/library/index.ts` hashes by hand for the same
+   reason and says so. */
+import { stableStringify } from '../../../shared/canonical-json';
 
 export type ReleaseDecision = 'approved' | 'rejected' | 'conditional';
 export type ReleaseStatus = 'released' | 'conditional-release' | 'rejected';
@@ -171,5 +180,5 @@ export function evidenceFingerprint(tests: RecordedReleaseTest[]): string {
   // A passing/reviewed flag does not identify the result, its acceptance
   // criterion, attribution or reviewer. This is a transient comparison across
   // reauthentication, not a rewrite of any previously signed digest.
-  return stableHash(tests);
+  return createHash('sha256').update(stableStringify(tests), 'utf8').digest('hex');
 }
