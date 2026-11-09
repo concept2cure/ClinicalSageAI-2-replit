@@ -522,6 +522,9 @@
 .c2c-v2 .pj-work-project-own{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:4px;}
 .c2c-v2 .pj-work-project-own > .pj-plan-assigned{margin-left:0;}
 .c2c-v2 .pj-work-project-own > .pj-plan-assigned::before{content:none;}
+/* The Vault document it produces (S12 gap 5): its picker wraps under the row and never widens it past the page. */
+.c2c-v2 .pj-work-project-family{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-width:0;max-width:100%;}
+.c2c-v2 .pj-work-project-family > select{min-width:0;max-width:100%;}
 /* Inside the work projects section, this filing's sections drafted from the Vault (S12 gap 5): no heading of its own. */
 .c2c-v2 .pj-vault-feeds{margin-top:10px;padding-top:10px;border-top:1px solid var(--border-subtle);}
 .c2c-v2 :is(.pj-work-area-l, .pj-k-row-l){flex:1;min-width:0;overflow-wrap:anywhere;}
