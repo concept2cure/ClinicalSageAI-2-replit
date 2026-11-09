@@ -9,7 +9,8 @@ const DARK = process.env.DARK === '1';
 
 const ERR_WORDS = /couldn.t load|could not be read|failed to load|something went wrong|did not load|unexpected error|internal server error|is not a function|undefined is not|cannot read prop/i;
 
-async function stop(page, name, results, net, cons, fn) {
+async function stop(page, name, w, fn) {
+  const { results, net, cons } = w;
   const before = { net: net.length, cons: cons.length };
   const r = { stop: name };
   try {
@@ -42,11 +43,12 @@ async function stop(page, name, results, net, cons, fn) {
   page.on('console', (m) => { if (m.type() === 'error') cons.push(m.text().slice(0, 200)); });
   page.on('pageerror', (e) => cons.push('PAGEERROR ' + String(e).slice(0, 200)));
   const results = [];
+  const W = { results, net, cons };
   await page.goto(BASE + '/concept2cure', { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.evaluate((d) => { try { const k = 'c2c-v2-prefs'; const p = JSON.parse(localStorage.getItem(k) || '{}'); p.dark = d; localStorage.setItem(k, JSON.stringify(p)); } catch { /* none */ } }, DARK);
 
-  await stop(page, '01-home', results, net, cons, async () => { await page.goto(BASE + '/concept2cure', { waitUntil: 'domcontentloaded' }); await page.waitForSelector('.c2c-v2'); });
-  await stop(page, '02-projects', results, net, cons, async () => { await page.goto(BASE + '/concept2cure/projects', { waitUntil: 'domcontentloaded' }); await page.waitForSelector('.c2c-v2'); });
+  await stop(page, '01-home', W, async () => { await page.goto(BASE + '/concept2cure', { waitUntil: 'domcontentloaded' }); await page.waitForSelector('.c2c-v2'); });
+  await stop(page, '02-projects', W, async () => { await page.goto(BASE + '/concept2cure/projects', { waitUntil: 'domcontentloaded' }); await page.waitForSelector('.c2c-v2'); });
   const projects = await page.evaluate(() => [...document.querySelectorAll('a, button, [role="link"]')].map((a) => a.textContent.trim()).filter((t) => /^\[Demo/.test(t)).slice(0, 12));
   results.push({ stop: 'projects-listed', projects });
 
@@ -59,21 +61,21 @@ async function stop(page, name, results, net, cons, fn) {
     await row.locator('button', { hasText: /^\s*Open\s*$/ }).first().click();
     await page.waitForSelector('.ed', { timeout: 30000 }); await page.waitForTimeout(2500);
   };
-  await stop(page, '03-c2c101-project', results, net, cons, go(`/concept2cure/project-home?program=${C}`));
-  await stop(page, '04-clinical-overview', results, net, cons, openDoc(C, 'Module 2.5 Clinical Overview'));
+  await stop(page, '03-c2c101-project', W, go(`/concept2cure/project-home?program=${C}`));
+  await stop(page, '04-clinical-overview', W, openDoc(C, 'Module 2.5 Clinical Overview'));
   results[results.length - 1].bar = await page.evaluate(() => document.querySelector('.dcv-bar-t')?.textContent.trim() ?? null);
-  await stop(page, '05-clinical-overview-document', results, net, cons, async () => { const d = page.getByRole('button', { name: /^Document$/ }).first(); if (await d.count()) await d.click(); });
-  await stop(page, '06-vault', results, net, cons, go(`/concept2cure/vault?program=${C}`));
-  await stop(page, '07-submission-center', results, net, cons, go(`/concept2cure/submission-center?program=${C}`));
-  await stop(page, '08-cmc', results, net, cons, go(`/concept2cure/cmc?program=${C}`));
-  await stop(page, '09-lmn201-project', results, net, cons, go(`/concept2cure/project-home?program=${L}`));
-  await stop(page, '10-lmn201-rbm', results, net, cons, go(`/concept2cure/rbm?program=${L}`));
-  await stop(page, '11-lmn201-quality', results, net, cons, go(`/concept2cure/quality?program=${L}`));
-  await stop(page, '12-lmn201-tasks', results, net, cons, go(`/concept2cure/tasks?program=${L}`));
-  await stop(page, '13-neuropanel-project', results, net, cons, go(`/concept2cure/project-home?program=${M}`));
-  await stop(page, '14-neuropanel-510k-summary', results, net, cons, openDoc(M, '510(k) Summary'));
-  await stop(page, '15-insights', results, net, cons, go('/concept2cure/insights'));
-  await stop(page, '16-biostatistics', results, net, cons, go(`/concept2cure/biostatistics?program=${C}`));
+  await stop(page, '05-clinical-overview-document', W, async () => { const d = page.getByRole('button', { name: /^Document$/ }).first(); if (await d.count()) await d.click(); });
+  await stop(page, '06-vault', W, go(`/concept2cure/vault?program=${C}`));
+  await stop(page, '07-submission-center', W, go(`/concept2cure/submission-center?program=${C}`));
+  await stop(page, '08-cmc', W, go(`/concept2cure/cmc?program=${C}`));
+  await stop(page, '09-lmn201-project', W, go(`/concept2cure/project-home?program=${L}`));
+  await stop(page, '10-lmn201-rbm', W, go(`/concept2cure/rbm?program=${L}`));
+  await stop(page, '11-lmn201-quality', W, go(`/concept2cure/quality?program=${L}`));
+  await stop(page, '12-lmn201-tasks', W, go(`/concept2cure/tasks?program=${L}`));
+  await stop(page, '13-neuropanel-project', W, go(`/concept2cure/project-home?program=${M}`));
+  await stop(page, '14-neuropanel-510k-summary', W, openDoc(M, '510(k) Summary'));
+  await stop(page, '15-insights', W, go('/concept2cure/insights'));
+  await stop(page, '16-biostatistics', W, go(`/concept2cure/biostatistics?program=${C}`));
   await browser.close();
   fs.writeFileSync(OUT + '/tour.json', JSON.stringify(results, null, 1));
 })().catch((e) => { console.error('ERR', String(e).slice(0, 600)); process.exit(1); });

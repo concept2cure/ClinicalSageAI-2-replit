@@ -15,6 +15,6 @@ const OUT = S + '/walk-1109-evidence/rbm-words'; require('fs').mkdirSync(OUT, { 
     out.push({ tab, leaks: [...new Set(text.match(ids) || [])] });
     await p.screenshot({ path: `${OUT}/${tab.replace(/[^a-z]+/gi, '-').toLowerCase()}.png` });
   }
-  console.log(JSON.stringify(out, null, 1));
+  console.info(JSON.stringify(out, null, 1));
   await b.close();
 })().catch((e) => { console.error(String(e).slice(0, 400)); process.exit(1); });
