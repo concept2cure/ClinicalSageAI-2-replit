@@ -1,0 +1,8 @@
+MUTATION 11-no-refusal-at-the-gateway in server/services/submission-gateways/fda-esg.ts (on the final code and tests, 2026-11-09T01:23:51.572221Z): replaced [    if (overCeiling) {] with [    if (overCeiling && false) {]
+ × server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FDA ESG refuses a package over 1 GiB before any transmittal row (P-93) > 1 GiB and one byte is refused as a validation error that proves nothing was sent 49ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FDA ESG refuses a package over 1 GiB before any transmittal row (P-93) > exactly 1 GiB reaches the AS2 path, recorded as AS2 4ms
+      Tests  1 failed | 1 passed | 31 skipped (33)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FDA ESG refuses a package over 1 GiB before any transmittal row (P-93) > 1 GiB and one byte is refused as a validation error that proves nothing was sent
+AssertionError: expected null to match object { errorClass: 'validation', …(1) }
+restored sha256 50d52c47390093341e524c0345516b12a3d82e310fe7ac88c4bbd10fc2f575e8 (expected 50d52c47390093341e524c0345516b12a3d82e310fe7ac88c4bbd10fc2f575e8)

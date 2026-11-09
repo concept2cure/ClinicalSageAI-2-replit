@@ -187,7 +187,7 @@ export const MARKET_SUBMISSION_SPECS: MarketSubmissionSpec[] = [
     region: 'fda',
     family: 'ectd',
     submissionFormat: usEctdSubmissionFormat(),
-    gateway: 'FDA ESG (AS2 over HTTPS or SFTP)',
+    gateway: 'FDA ESG (AS2 over HTTPS)',
     productScope: ['drug', 'biologic', 'generic'],
     language: {
       primary: 'en',

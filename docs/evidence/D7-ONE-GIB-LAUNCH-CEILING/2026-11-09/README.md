@@ -106,11 +106,110 @@ The tests:
   - the Dispatch tab's read names none.
   - It pins how the screen renders readiness's refusal, so it passes before and after; the server tests carry the red.
 
-The readiness, gate and act tests run as `vitest` on PGlite and in-memory doubles. The running-app check of design §4
-is not in this commit.
+The readiness, gate and act tests run as `vitest` on PGlite and in-memory doubles.
+
+## Commit 2: FDA ESG's SFTP branch is retired; the 1 GiB refusal replaces it
+
+**Deleted**, all in `server/services/submission-gateways/fda-esg.ts`:
+- `transmitViaSftp` and `sftpApplicationId`;
+- the size switch (`bundle.sizeBytes > 1_073_741_824`) and the SFTP branch of `transmit`;
+- the SFTP credential fields and their reads;
+- the `ssh2-sftp-client` probe, its `sftpAvailable` field and its `missingDependencies` entry;
+- the imports only that code used.
+
+Also deleted:
+- `RUNTIME_EXCEPTIONS['ssh2-sftp-client']` (`scripts/ci/check-server-bundle-prod-imports.mjs`);
+- `server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts`. Its property (an SFTP deposit is in
+  transit, never an acknowledgement) has no subject left. AS2's "no fabricated acknowledgement" stays pinned by
+  `fda-esg-hardening.test.ts`'s MDN cases and `fda-esg-receipts.pglite.test.ts`;
+- the SFTP rows, warning and branch of `scripts/fda-esg-uat-smoke.ts`.
+
+**The user outcome it delivered.** An FDA package over 1 GiB was routed to SFTP. No image ever shipped the module, so
+every attempt was refused after the signature. It answered 500 on the sequence route, left a stored copy of a package
+that never left, and left a 'rejected' transmittal row.
+
+**The decision.** P-93, quoted above: "The undocumented SFTP transmit (`transmitViaSftp`, `ssh2-sftp-client`) is
+retired: removed, its reachable replacement being that refusal, named by path in the removing commit (working
+agreement)."
+
+**The reachable replacement, by path.** An FDA sequence over 1 GiB is refused by name before anyone signs:
+- `sequenceTransmitReadiness`, `assertSequencePackageable` and `transmitDispatchedSequence` in
+  `server/services/submission-service/submission-service.ts`;
+- reached by `POST /api/submissions/sequences/:seqId/governed-precheck` (`server/routes/submissions.ts`), from
+  `client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx` (`precheckRefusal`) and the Dispatch tab
+  (`SubmissionSeqWorkspaces.tsx`);
+- every other FDA caller (the package spine, AnA's 510(k) transmit, unguarded scripts) is refused before any
+  transmittal row by `FdaEsgGateway.transmit` (`fda-esg.ts`), in place of the deleted switch: "Refusing to transmit to
+  FDA: the package is …, and at launch Concept2Cure sends packages of up to 1 GiB to FDA. Nothing was sent." It carries
+  the proof that nothing was sent, so a guarded caller's claim is released;
+- the ceiling is `LAUNCH_SEQUENCE_MAX_BYTES` (`server/services/ectd/ectd-regional-rules.ts`).
+
+**Proven reachable by:**
+- `launch-sequence-size.pglite.test.ts` (readiness, freeze, dispatch and renewal);
+- `transmit-guard-refusal-releases-claim.test.ts` (the act, on the input the deleted SFTP cases used);
+- `fda-esg-hardening.test.ts` (the gateway, for every caller);
+- `submissionCenterLaunchCeiling.test.tsx` (the screen);
+- the gate `ci:server-bundle-prod-imports`, shown red with the stale entry.
+
+**History searches** (`history-searches.txt`, full history in a separate clone):
+- The deletion search ran to the end: no SFTP-named file was ever deleted.
+- The two pickaxe searches did not complete. The clone is blobless, so each blob is fetched on demand, and the
+  searches hit their time limit. That file says so and cites the design's own full runs of 2026-11-02 (§1.8).
+
+**The dependency.** `ssh2-sftp-client` was never declared in `package.json` or `package-lock.json`. Nothing was
+installed or uninstalled, and both files are unchanged (`green-commit2-bundle-gate.txt`: `git diff --exit-code`, and
+`npm ls ssh2-sftp-client` prints an empty tree).
+
+**Also corrected (comment and copy only):**
+- `submission-gateways/index.ts`: `refusedBeforeWire`'s list of current throw sites names the launch-ceiling refusal
+  in place of the SFTP client-module refusal. The dated 2026-09-23 note stays, because it records a past defect.
+- `types.ts`: "FDA Electronic Submissions Gateway (AS2)". `Transport`'s `'sftp'` stays, because stored rows carry
+  it (RULE 1).
+- `ana-ri/mdx-command-handlers.ts`: "SFTP fallback" is dropped from what `fda-esg.ts` holds.
+- `market-submission-specs.ts`: "FDA ESG (AS2 over HTTPS)".
+- `ga-readiness-report.mjs`: "FDA ESG (AS2)".
+- `AnaToolDefinitions.ts`: `check_gateway_status` says what FDA ESG returns, "the transmittal's stored status and its
+  verified AS2 receipt". `npm run manifest:ana` changed only that one description in
+  `docs/ana-capability-manifest.json`.
+- `docs/runbooks/fda-esg-production-uat.md`:
+  - §8 is now "A sequence over 1 GiB is refused before signing (P-93)". It quotes the refusals verbatim and gives the
+    operator queries: the SFTP-branch transmittals, and the sequences still held 'transmitting', with the legacy
+    unbound ones marked.
+  - The SFTP prerequisites, variables, checklist, troubleshooting rows and known gap are removed, with "remove any
+    `FDA_ESG*_SFTP_*` secret".
+- `docs/runbooks/esg-production-setup.md` and `docs/design/FEATURE_AND_SERVICE_INVENTORY.md`: AS2 only.
+
+**Left as they are.** Dated history stays as written: comments, migration comments (RULE 1), audits, work orders and
+findings JSON.
+
+### Proof (commit 2)
+
+| File | What it shows |
+|---|---|
+| `red-commit2.txt` | the code deleted, the tests not yet changed: `refused-before-wire` fails (fda-esg.ts has 4 audited sites, not 5), and both `fda-esg-sftp-ack` cases fail |
+| `red-commit2-bundle-gate.txt` | the server bundle rebuilt without the branch: the gate fails, "RUNTIME_EXCEPTIONS lists ssh2-sftp-client, which the bundle no longer imports. Remove the entry." A control on a bundle built from HEAD's `fda-esg.ts` passes, so the red is this change's |
+| `green-commit2-bundle-gate.txt` | the gate and its selftest pass; the bundle names `ssh2-sftp-client` 0 times; `package.json` and the lockfile are unchanged |
+| `green-commit2.txt` | every submission-gateways test, every test naming a changed function, and every test that reaches FDA ESG, the market specs or the AnA tool definitions |
+| `mutation-11` … `mutation-12` | site (e) dropped, and `>` → `>=` at (e): each red in `fda-esg-hardening` |
+
+**Found here.** The hardening test's old SFTP cases were expected to fail once their path was gone (design §4). They
+did not. They asserted `message: /application number/` through `toMatchObject` on an `Error`, and Vitest does not
+compare an Error's non-enumerable `message` there, so the matcher was never checked; their other fields also hold
+for the new refusal. The replacement reads the message itself. Other tests may rely on the same pattern; that is
+owed as its own F1 item.
+
+**Rows the retired branch left.** These are the design's §6 queries, now in the runbook's §8. They are read-only; a
+person decides what each row means. A sequence 'transmitting' whose claim predates the per-attempt binding (no
+attempt or signature bound) cannot be settled by any act today. It is escalated, never reset by hand, under the
+question asked jointly with P-92's Q11.
+
+**The running-app check (design §4).** Not yet done. The design calls for synthetic, incompressible leaves of about
+1.2 GiB, measured by the dry-run assembly, and a staging account at `esg.example.invalid` so that no byte can reach
+FDA. Until it is recorded here, P-93 is not reported done.
 
 ## Plan
 
-`Plan: F1`, `Completes: server/services/submission-service/submission-service.ts`, `Completes:
-server/services/ectd/ectd-regional-rules.ts`. The holds are as `.design/claude-convergence/COORDINATION.md` records
+Commit 1: `Plan: F1`, `Completes: server/services/submission-service/submission-service.ts`, `Completes:
+server/services/ectd/ectd-regional-rules.ts`. Commit 2: `Plan: F1`, with a `Completes:` trailer for each file it
+corrects. Both commits go in one push, so no deployed build carries commit 1 alone. The holds are as `.design/claude-convergence/COORDINATION.md` records
 them.
