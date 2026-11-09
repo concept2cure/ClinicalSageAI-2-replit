@@ -270,35 +270,21 @@ gateway does not currently persist the raw MDN. **Flagged as engineering follow-
 
 ### 5.4 Wait for ack2 and ack3
 
-ack2 (virus scan + structure check) and ack3 (CDER/CDRH/CBER acceptance) are emitted
-asynchronously by FDA hours–days later. The gateway does not poll for them today
-(`fda-esg.ts:442–464`); UAT verification is manual:
+ack2 (virus scan and structure check) and ack3 (the center's validation result) arrive from FDA hours to days later.
+FDA ESG's WebTrader was retired in April 2025 (`fda-esg.ts`, the header comment).
 
-1. Sign into the FDA ESG WebTrader portal as the sponsor.
-2. Find the submission by `applicationId` + `sequence`.
-3. Confirm ack2 appears with disposition `accepted`; record the timestamp.
-4. Confirm ack3 appears with disposition `accepted`; record the timestamp + the center
-   (CDER / CDRH / CBER).
+**The status is never patched by hand** (P-92, founder 2026-11-02: "no settlement by an unsigned action"). The earlier
+`UPDATE submission_transmittals SET status = 'ack…_received'` statements in this section are retired. What records an
+acknowledgement:
 
-Manually patch the transmittal row to reflect each ack — the orchestrator UI consumes the
-`status` enum (`types.ts:74–76`):
-
-```sql
-UPDATE submission_transmittals
-   SET status = 'ack1_received', ack_received_at = NOW(), updated_at = NOW()
- WHERE id = <transmittalId>;
--- after ack2 lands in WebTrader:
-UPDATE submission_transmittals
-   SET status = 'ack2_received', updated_at = NOW()
- WHERE id = <transmittalId>;
--- after ack3:
-UPDATE submission_transmittals
-   SET status = 'ack3_received', updated_at = NOW()
- WHERE id = <transmittalId>;
-```
-
-(Manual patching is acceptable during UAT only. Automated ack polling is the GA-1 follow-up
-called out in §1.)
+- **FDA's signed MDN:** "Record agency MDN" on Gateway transmittals (`ingestFdaAs2Receipt`). It checks FDA's signature,
+  the original message and the payload MIC, and records the send by FDA's own answer.
+- **A send that is held** (handed to the gateway, with no verified answer): it is settled from the sequence's Dispatch
+  tab by a signed act (`settleHeldSend`, `POST /api/submissions/sequences/:seqId/held-send/settle`).
+  - It is recorded as received on FDA's Ack2 or Ack3, kept in the project's Vault.
+  - Or it is released as not received, on FDA's written confirmation, or on the platform's own proof that nothing left
+    (P-108 1(b)).
+  - See `docs/runbooks/ectd-transmit-path.md`, "A held send".
 
 ---
 
@@ -317,45 +303,24 @@ called out in §1.)
 
 ---
 
-## 7. Rollback procedure
+## 7. When a send went wrong
 
-**You cannot un-transmit.** Once the AS2 POST returns a 2xx (`fda-esg.ts:412`), the bytes
-are with FDA. The rollback is
-in our own state, not theirs.
+**You cannot un-transmit.** Once the AS2 POST returns a 2xx, the bytes are with FDA.
 
-If the transmit completed but is wrong (wrong bundle, wrong application number, wrong
-sequence):
+**The manual rollback that was here is retired, on both spines** (P-92, founder 2026-11-02: "no settlement by an
+unsigned action" and "the removed rollback route stays removed"; the route's removing commit `6ef0ef121`). No SQL marks a
+transmittal rejected by hand. Instead:
 
-1. **Mark the transmittal failed in the orchestrator state.** Run:
+- **A filing that went out wrong** is taken back by a **withdrawal sequence**, sent from Submission Center (sequence
+  type `'withdrawal'`, `server/routes/submissions.ts`), as the removing commit says.
+- **A send held with no verified answer** is settled by the signed act in §5.4. Its release states the duplicate-filing
+  risk to the signer before they sign.
+- **On the package spine there is no signed settlement yet.** `/api/submission-ops/packages/*` is retired (P-103), so the
+  sequence is the one filing path. A package-spine held send is escalated (design §7 item 12), with no SQL. The
+  expected count is zero; the query in `ectd-transmit-path.md`, "A held send", counts it.
 
-   ```sql
-   UPDATE submission_transmittals
-      SET status = 'rejected',
-          error_class = 'gateway',
-          error_message = 'Manual rollback — incorrect submission. See ticket <id>.',
-          updated_at = NOW()
-    WHERE id = <transmittalId>;
-   ```
-
-   This matches the error-class taxonomy in `types.ts:83–88` and how the gateway itself
-   writes failures (`fda-esg.ts:421–438`).
-
-2. **Flag for human review.** File the WebTrader retraction request with the FDA ESG help
-   desk — only FDA can mark the submission rejected on their side; we cannot.
-
-3. **Record a governed action.** The transmit route writes a `sign` governed action after
-   successful transmit (`mdx-submission-gateway.ts:326–342`); the rollback needs a sibling
-   `unsign`-style action explaining why. **Flagged as engineering follow-up** — there is no
-   existing `recordGovernedAction` shape for rollback; for UAT, record the action manually
-   in the audit log channel.
-
-4. **Block any further transmit on the same package** until the WebTrader retraction is
-   confirmed. The orchestrator does not have a per-package transmit lock today —
-   **flagged as engineering follow-up**.
-
-If the transmit failed at the AS2 layer (4xx/5xx HTTP, `fda-esg.ts:402–411`) the gateway
-already marked the row `rejected` with `error_class = 'gateway'` — no rollback needed beyond
-ticketing FDA for an explanation.
+A transmit that failed at the AS2 layer (4xx or 5xx) is already recorded by the gateway with its error. Nothing more is
+written by hand.
 
 ---
 
@@ -435,10 +400,9 @@ UAT passes only when **every** item below is true.
       `status = 'active'` (`fda-esg.ts:91–102`).
 - [ ] `submission_governed_actions` carries one `command = 'sign'` entry for the
       transmittal (`mdx-submission-gateway.ts:326–342`).
-- [ ] ack2 observed in WebTrader within FDA's published SLA (typically <24 h); transmittal
-      manually patched to `ack2_received`.
-- [ ] ack3 observed in WebTrader from the correct center (CDER for IND); transmittal
-      manually patched to `ack3_received`.
+- [ ] ack2 recorded by FDA's signed MDN ("Record agency MDN") or by the signed settlement (§5.4), never by a manual
+      status patch.
+- [ ] ack3 from the correct center (CDER for an IND) recorded the same way.
 
 ### A sequence over 1 GiB (P-93)
 

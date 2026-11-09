@@ -10,11 +10,15 @@
  * S5d-0b (2026-11-09) adds the small input adapters: `listed` ("a, b and c"), `oneOfInput` and `textInput` (the
  * `refuseUnlessStated` checks for a vocabulary and for non-empty text), which the biomarker and digital-health
  * engines carried byte for byte.
+ *
+ * S5d (2026-11-09) adds `statedText` and `statedList`, `statedBoolean`'s twins for text and for a list, with their
+ * first callers (benefit-risk, then post-approval and regulatory strategy), each of which had written its own.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
+import { ComputationRefusal } from '../../ana-biostats/computation-engine';
 import {
   allOf,
   anyOf,
@@ -23,6 +27,8 @@ import {
   everyAnswer,
   listed,
   oneOfInput,
+  statedList,
+  statedText,
   textInput,
   uniqueStrings,
   unstated,
@@ -41,6 +47,8 @@ const NAMES = [
   'listed',
   'oneOfInput',
   'textInput',
+  'statedText',
+  'statedList',
 ] as const;
 
 /**
@@ -52,6 +60,11 @@ const NOT_THESE: Record<string, { names: readonly string[]; reason: string }> = 
   'study-design/external-control-plan.ts': { names: ['unstated'], reason: "lists a plan's unstated elements as text" },
   'study-design/master-protocol.ts': { names: ['unstated'], reason: 'builds a not-stated protocol element' },
   'ana/saved-section-writing-review.ts': { names: ['listed'], reason: 'truncates a list of items for a payload, not prose' },
+  // The governance ledgers' own text readers: required or trimmed, refused with LedgerInputRefusal or read as null.
+  'assumption-registry-service.ts': { names: ['statedText'], reason: 'a required ledger text, refused with LedgerInputRefusal' },
+  'decision-record-service.ts': { names: ['statedText'], reason: 'a ledger text read as null when blank' },
+  'governance-boundary-service.ts': { names: ['statedText'], reason: 'a ledger text, trimmed, or null when blank' },
+  'dose-optimization/dose-optimization-knowledge.ts': { names: ['statedList'], reason: 'reads each entry with a reader and refuses an empty one' },
 };
 
 /** Every non-test .ts file under server/services, relative to it. */
@@ -90,7 +103,7 @@ describe('the S5 three-valued helpers have one home', () => {
     expect(stale).toEqual([]);
   });
 
-  it('the home defines all ten', () => {
+  it('the home defines all twelve', () => {
     expect(defines(fs.readFileSync(path.join(SERVICES, HOME), 'utf8'))).toEqual([...NAMES]);
   });
 
@@ -141,6 +154,21 @@ describe('the S5 three-valued helpers have one home', () => {
     expect([undefined, 'B', 1].map((v) => oneOfInput('kind', v, ['a', 'b']).ok)).toEqual([F, F, F]);
     expect(textInput('name', 'X')).toEqual({ field: 'name', value: 'X', ok: true, expected: 'non-empty text' });
     expect([undefined, '', '  ', 5].map((v) => textInput('name', v).ok)).toEqual([F, F, F, F]);
+  });
+
+  it.each([
+    ['statedText', statedText, 'x', 5, 'text'],
+    ['statedList', statedList, ['x'], 'x', 'a list'],
+  ] as const)('%s keeps a stated value, leaves an omitted or null one unstated, and refuses anything else by field', (_, read, good, bad, kind) => {
+    expect([read('f', good), read('f', U), read('f', N)]).toEqual([good, U, U]);
+    let refusal: unknown;
+    try {
+      read('f', bad);
+    } catch (err) {
+      refusal = err;
+    }
+    expect(refusal).toBeInstanceOf(ComputationRefusal);
+    expect(refusal).toMatchObject({ code: 'invalid_input', field: 'f', message: expect.stringContaining(`f must be ${kind} (got `) });
   });
 
   it('conclusions lists the distinct conclusions, and decidingFacts the unstated facts that change one', () => {

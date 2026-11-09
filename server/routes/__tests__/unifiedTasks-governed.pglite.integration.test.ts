@@ -87,6 +87,7 @@ const DDL = [
     'db/migrations/20260807_unified_tasks_soft_delete.sql',
     // The review route columns the Drizzle model names (RR1a).
     'migrations/20261023_review_routes.sql',
+    'migrations/20261109_unified_tasks_parent_task.sql', // P-111: unified_tasks.parent_task_id, which the Drizzle model names
     // stability_studies.project_id — the Drizzle model the CMC sync selects
     // through names it (90b34d33c), so the sync fails without it.
     'migrations/20261005_cmc_core_registers_project.sql',

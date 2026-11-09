@@ -285,6 +285,23 @@ export function retirementMeaningRefusal(meaning: unknown): string | null {
   return meaning === 'responsibility' ? null : 'retiring a sequence is signed with the meaning responsibility';
 }
 
+/**
+ * Who may sign the retirement, as the precheck tells it before anyone signs (C2): the answer of
+ * separation-of-duties.ts signerIndependenceOf, which the act's own check gives too. A creator who cannot be
+ * resolved, or a check that failed, is said so; neither is taken as independence, nor called authorship.
+ */
+export function retirementSignerRefusal(sequenceNumber: string, state: 'independent' | 'author' | 'unresolved' | 'unverified'): string | null {
+  if (state === 'independent') return null;
+  if (state === 'author') {
+    return `You created sequence ${sequenceNumber}, so you cannot sign its retirement. Another person with signing authority signs it.`;
+  }
+  if (state === 'unresolved') {
+    return `Who created sequence ${sequenceNumber} cannot be resolved from its record, so no one can be shown to be independent of its creator, ` +
+      'and its retirement cannot be signed.';
+  }
+  return `Whether you created sequence ${sequenceNumber} could not be checked, so its retirement cannot be signed now. Try again.`;
+}
+
 /** Gate 1's payload check: the signature carries the statement for this sequence, exactly. */
 export function retirementPayloadRefusal(sequenceNumber: string) {
   const statement = retirementStatement(sequenceNumber);
@@ -319,20 +336,23 @@ export interface RetirementFacts extends KeptFacts {
   /** Check 5b: a filed sequence of the same number whose record is read from compiles. */
   compileReadTwin: boolean;
   stagingTransmittalIds: number[];
+  /** The same sends, by the UTC day each was recorded, for the precheck to show (C2). */
+  stagingSends: Array<{ sentOn: string }>;
   numberFreed: boolean;
 }
 
 const day = (v: unknown): string => (v ? new Date(String(v)).toISOString().slice(0, 10) : 'an unrecorded date');
 
 /** Check 3, under P-108 2(a) (the coordinating session, 2026-11-09): a non-staging transmittal bound to the sequence
- *  blocks retirement unless a chained TRANSMIT_BLOCKED with transmitted false names that attempt's signature. A
- *  missing environment counts as production, and a blocked row naming no signature proves nothing. When P-92's
- *  "released as not received" is built, checks 3 and 4 exclude a released attempt too. */
+ *  blocks retirement unless a chained TRANSMIT_BLOCKED with transmitted false names that attempt's signature, or P-92's
+ *  signed settlement released it as not received (on FDA's letter or the platform's own proof). A missing environment
+ *  counts as production, and a blocked row naming no signature proves nothing. Check 4 excludes the same release. */
 async function boundProductionSend(q: BaselineQueryable, org: number, id: number): Promise<SendOnRecord | null> {
   const { rows } = await q.query(
     `SELECT t.created_at, t.metadata->>'environment' AS environment FROM submission_transmittals t
       WHERE t.organization_id = $1 AND t.metadata->'dispatchBinding'->>'sequenceId' = $2::text
         AND COALESCE(t.metadata->>'environment', '') <> 'staging'
+        AND COALESCE(t.metadata->'heldSendSettlement'->>'outcome', '') <> 'not-received'
         AND NOT EXISTS (SELECT 1 FROM audit_logs a
               WHERE a.tenant_id = $1 AND a.table_name = 'ectd_sequence' AND a.record_id = $2::text
                 AND a.action = 'TRANSMIT_BLOCKED' AND a.new_values::jsonb->>'transmitted' = 'false'
@@ -347,6 +367,7 @@ async function boundProductionSend(q: BaselineQueryable, org: number, id: number
     `SELECT occurred_at, new_values::jsonb->>'environment' AS environment FROM audit_logs
       WHERE tenant_id = $1 AND table_name = 'ectd_sequence' AND record_id = $2::text AND action = 'ECTD_TRANSMITTED'
         AND COALESCE(new_values::jsonb->>'environment', '') <> 'staging'
+        AND NOT (COALESCE(new_values::jsonb->>'source', '') = 'held-send-settlement' AND COALESCE(new_values::jsonb->>'status', '') = 'not-received')
       ORDER BY occurred_at LIMIT 1`,
     [org, id],
   );
@@ -415,7 +436,7 @@ export async function readRetirementFacts(
     later.push({ sequenceNumber: l.sequenceNumber, kept: keptRefusal(await keptFacts(q, org, l))?.reason ?? null });
   }
   const staging = await q.query(
-    `SELECT id FROM submission_transmittals
+    `SELECT id, created_at FROM submission_transmittals
       WHERE organization_id = $1 AND metadata->'dispatchBinding'->>'sequenceId' = $2::text AND metadata->>'environment' = 'staging'
       ORDER BY id`,
     [org, s.id],
@@ -424,6 +445,7 @@ export async function readRetirementFacts(
     ...own, later,
     compileReadTwin: await filedTwin(s.sequenceNumber),
     stagingTransmittalIds: staging.rows.map((r) => Number(r.id)),
+    stagingSends: staging.rows.map((r) => ({ sentOn: day(r.created_at) })),
     numberFreed: !siblings.some((x) => x.sequenceNumber === s.sequenceNumber),
   };
 }
@@ -438,12 +460,14 @@ const IND_KINDS: Array<[keyof KeptFacts['filedIndRecords'], string, string]> = [
 function keptRefusal(f: KeptFacts): { sentence: string; reason: string } | null {
   const n = f.sequenceNumber;
   if (isFiledDispatchStatus(f.dispatchStatus)) {
+    // In words, never the stored status (P-92 C1; the coordinating session, 2026-11-09).
+    const acknowledged = f.dispatchStatus === 'acknowledged' ? ', which acknowledged it' : '';
     return { reason: 'it is on file with the agency',
-      sentence: `Sequence ${n} is on file with the agency (dispatch status '${f.dispatchStatus}'), so it cannot be retired. A correction is a new sequence numbered after it.` };
+      sentence: `Sequence ${n} is on file with the agency${acknowledged}, so it cannot be retired. A correction is a new sequence numbered after it.` };
   }
   if (f.dispatchStatus === 'transmitting') {
     return { reason: 'a send of it is in flight',
-      sentence: `A send of sequence ${n} is in flight and not yet settled, so it cannot be retired now. Record the agency's receipt, or wait for the send to settle, then look again.` };
+      sentence: `A send of sequence ${n} is in flight and not yet settled, so it cannot be retired now. Record the agency's receipt, settle the held send from the Dispatch tab, or wait for the send to settle, then look again.` };
   }
   if (f.productionSend) {
     const on = `${day(f.productionSend.at)} UTC`;
@@ -489,7 +513,7 @@ export function retirementRefusal(f: RetirementFacts): string | null {
 /** A removed sequence's retirement record, or null when it was removed some other way (or is live). */
 export async function retiredSequenceRecord(q: BaselineQueryable, org: number, id: number) {
   const { rows } = await q.query(
-    `SELECT s.sequence_number, a.occurred_at, a.actor_id FROM ectd_sequences s
+    `SELECT s.sequence_number, s.region, a.occurred_at, a.actor_id, a.reason, a.new_values::jsonb ->> 'meaning' AS meaning FROM ectd_sequences s
        JOIN audit_logs a ON a.tenant_id = s.organization_id AND a.table_name = 'ectd_sequence'
         AND a.record_id = s.id::text AND a.action = $3
       WHERE s.id = $1 AND s.organization_id = $2 AND s.deleted_at IS NOT NULL
@@ -497,5 +521,17 @@ export async function retiredSequenceRecord(q: BaselineQueryable, org: number, i
     [id, org, ECTD_SEQUENCE_RETIRED_ACTION],
   );
   const r = rows[0];
-  return r ? { sequenceNumber: String(r.sequence_number), retiredDay: day(r.occurred_at), actorId: Number(r.actor_id) || null } : null;
+  return r ? {
+    sequenceNumber: String(r.sequence_number), region: String(r.region), retiredDay: day(r.occurred_at), actorId: Number(r.actor_id) || null,
+    meaning: (r.meaning as string | null) ?? null, reason: (r.reason as string | null) ?? null,
+  } : null;
+}
+
+/** A sequence of this organisation that is no longer in use, whatever removed it; null when it is live or not its. */
+export async function removedSequenceOf(q: BaselineQueryable, org: number, id: number) {
+  const { rows } = await q.query(
+    `SELECT sequence_number, region FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NOT NULL`,
+    [id, org],
+  );
+  return rows[0] ? { sequenceNumber: String(rows[0].sequence_number), region: String(rows[0].region) } : null;
 }

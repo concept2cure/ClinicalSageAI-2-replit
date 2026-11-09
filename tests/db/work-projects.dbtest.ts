@@ -234,3 +234,224 @@ describe('a project\'s work projects, read by the project page (S12)', () => {
   });
 });
 
+
+/* P-111 slice 2, the coordinating session's ruling (b) of 2026-11-09: a filing project's writers are admitted on its work
+   projects' tasks, in one direction only, through the one task admission (tasking/task-project.ts). Each case calls
+   admitTaskCreationProject on a request's own tenant-scoped connection, inside its transaction, as POST /tasks does. */
+describe('a work project\'s tasks admit its filing project\'s writers, one direction only (P-111)', () => {
+  function admitApp(actor: number, organizationId = 9) {
+    const a = express(); a.use(express.json());
+    a.use((req, _res, next) => { Object.assign(req, { userId: actor, user: { id: actor, organizationId, role: 'member' }, organizationId }); next(); });
+    a.use((req, res, next) => scope.establishRequestTenantScope(req, res, next));
+    a.post('/admit', async (req, res) => {
+      const { requestPgClient } = await import('../../server/db/requestDb');
+      const { admitTaskCreationProject } = await import('../../server/services/tasking/task-project');
+      const q = requestPgClient(req);
+      await q.query('BEGIN');
+      try {
+        const admitted = await admitTaskCreationProject(q, { organizationId, actorUserId: actor, projectId: Number(req.body.projectId) });
+        await q.query('ROLLBACK');
+        res.json({ admitted: admitted.projectId });
+      } catch (error) {
+        await q.query('ROLLBACK');
+        const e = error as { status?: number; code?: string };
+        res.status(e.status ?? 500).json({ code: e.code ?? 'UNKNOWN' });
+      }
+    });
+    return a;
+  }
+  const admit = (actor: number, projectId: number, organizationId = 9) => request(admitApp(actor, organizationId)).post('/admit').send({ projectId });
+
+  /** Two work projects under project 11, created by the lead (7); a parent writer (12, an edit member of 11 only); a
+   *  child-only member (13, an edit member of the first work project only). */
+  async function family() {
+    const cmcChild = (await add(11, cmc)).body.data.projectId as number;
+    const sibling = (await add(11, { name: 'Drug product QA', workKind: 'quality' })).body.data.projectId as number;
+    await owner.query(`INSERT INTO users(id,name,email,password_hash,status) VALUES(13,'Child member','child@example.test','x','active');
+      INSERT INTO organization_users(organization_id,user_id,role) VALUES(9,13,'member');
+      INSERT INTO project_members(project_id,organization_id,user_id,role,status) VALUES(11,9,12,'edit','active'),($1,9,13,'edit','active')`
+      .replace('$1', String(cmcChild)));
+    return { cmcChild, sibling };
+  }
+
+  it('admits a writer on the filing project to add on its work project', async () => {
+    const { cmcChild } = await family();
+    expect((await admit(12, 11)).body).toEqual({ admitted: 11 });
+    const res = await admit(12, cmcChild);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body).toEqual({ admitted: cmcChild });
+  });
+
+  it('gives a work project\'s own member nothing on its filing project or on a sibling', async () => {
+    const { cmcChild, sibling } = await family();
+    expect((await admit(13, cmcChild)).body).toEqual({ admitted: cmcChild });
+    for (const elsewhere of [11, sibling]) expect((await admit(13, elsewhere)).status).toBe(403);
+  });
+
+  it('gives another organisation nothing on a work project', async () => {
+    const { cmcChild } = await family();
+    const foreign = await admit(9, cmcChild, 10);
+    expect([403, 404]).toContain(foreign.status);
+    expect(foreign.body).not.toHaveProperty('admitted');
+  });
+
+  it('respects a work project\'s own private visibility: the filing project\'s writer is refused there', async () => {
+    const { cmcChild } = await family();
+    await owner.query(`INSERT INTO project_visibility_settings(project_id,organization_id,visibility) VALUES($1,9,'private')`, [cmcChild]);
+    expect((await admit(12, cmcChild)).status).toBe(403);
+    // Its own member is still admitted.
+    expect((await admit(13, cmcChild)).body).toEqual({ admitted: cmcChild });
+  });
+});
+
+/* P-111 item 3, the coordinating session's A1 of 2026-11-09: a filing project's work view rolls up its work projects'
+   tasks for the reader the route admitted, decided for all work projects at once by the same rule as the task
+   admission. Each case runs loadUnifiedWork on a request's own tenant-scoped connection under row-level security. */
+/* P-111 items 3 and 4: the readers and fixtures the roll-up and subtask cases share. */
+function workApp(actor: number, organizationId = 9) {
+  const a = express();
+  a.use((req, _res, next) => { Object.assign(req, { userId: actor, user: { id: actor, organizationId, role: 'member' }, organizationId }); next(); });
+  a.use((req, res, next) => scope.establishRequestTenantScope(req, res, next));
+  a.get('/work/:projectId', async (req, res) => {
+    const { requestDb, requestPgClient } = await import('../../server/db/requestDb');
+    const { loadUnifiedWork } = await import('../../server/services/unified-work/unified-work-view');
+    const view = await loadUnifiedWork({ organizationId, projectId: Number(req.params.projectId),
+      rollUpFor: { userId: actor, role: 'member', executor: requestPgClient(req) } }, requestDb(req));
+    res.json(view);
+  });
+  return a;
+}
+const work = async (actor: number, projectId: number, organizationId = 9) => {
+  const res = await request(workApp(actor, organizationId)).get(`/work/${projectId}`);
+  expect(res.status, JSON.stringify(res.body)).toBe(200);
+  return (res.body.items as Array<{ title: string; projectId: number; workProject?: { id: number; name: string } }>)
+    .map((i) => [i.title, i.projectId, i.workProject?.name ?? null]);
+};
+const task = (projectId: number, title: string, organizationId = 9) => owner.query(
+  `INSERT INTO unified_tasks(task_id,organization_id,title,module_type,status,project_id) VALUES($1,$2,$3,'CMC','pending',$4)`,
+  [`t-${projectId}-${title.length}-${Math.random().toString(36).slice(2, 8)}`, organizationId, title, projectId]);
+
+/** The filing project 11 with its own task; two work projects with one task each; a parent writer (12, edit on 11
+ *  only) and a child-only member (13, edit on the CMC work project only). */
+async function family() {
+  const cmcChild = (await add(11, cmc)).body.data.projectId as number;
+  const sibling = (await add(11, { name: 'Drug product QA', workKind: 'quality' })).body.data.projectId as number;
+  await owner.query(`INSERT INTO users(id,name,email,password_hash,status) VALUES(13,'Child member','child@example.test','x','active');
+    INSERT INTO organization_users(organization_id,user_id,role) VALUES(9,13,'member');
+    INSERT INTO project_members(project_id,organization_id,user_id,role,status) VALUES(11,9,12,'edit','active'),(${cmcChild},9,13,'edit','active')`);
+  await task(11, 'Assemble Module 3'); await task(cmcChild, 'Confirm the specification'); await task(sibling, 'Close the CAPA');
+  return { cmcChild, sibling };
+}
+
+/* P-111 item 4 (slice 5): one level of subtasks in unified_tasks. */
+const taskRow = async (projectId: number, title: string, parentTaskId: number | null = null, organizationId = 9) => (await owner.query(
+  `INSERT INTO unified_tasks(task_id,organization_id,title,module_type,status,project_id,parent_task_id)
+     VALUES($1,$2,$3,'CMC','pending',$4,$5) RETURNING id`,
+  [`t-${Math.random().toString(36).slice(2, 10)}`, organizationId, title, projectId, parentTaskId])).rows[0].id as number;
+
+function parentApp(actor: number, organizationId = 9) {
+  const a = express(); a.use(express.json());
+  a.use((req, _res, next) => { Object.assign(req, { userId: actor, user: { id: actor, organizationId, role: 'member' }, organizationId }); next(); });
+  a.use((req, res, next) => scope.establishRequestTenantScope(req, res, next));
+  a.post('/parent', async (req, res) => {
+    const { requestPgClient } = await import('../../server/db/requestDb');
+    const { admitParentTask } = await import('../../server/services/tasking/task-project');
+    const q = requestPgClient(req);
+    await q.query('BEGIN');
+    try { res.json({ admitted: await admitParentTask(q, { organizationId, projectId: req.body.projectId, parentTaskId: req.body.parentTaskId }) }); }
+    catch (error) { const e = error as { status?: number; code?: string }; res.status(e.status ?? 500).json({ code: e.code }); }
+    finally { await q.query('ROLLBACK'); }
+  });
+  return a;
+}
+const parent = (projectId: number, parentTaskId: unknown, organizationId = 9) =>
+  request(parentApp(12, organizationId)).post('/parent').send({ projectId, parentTaskId });
+
+describe('a filing project\'s work rolls up its work projects\' tasks for the admitted reader (P-111 item 3)', () => {
+  beforeAll(async () => {
+    await owner.query(await tableDdl('migrations/0000_sweet_joseph.sql', ['unified_tasks']));
+    for (const file of ['db/migrations/20260727_unified_tasks_mdx_metadata.sql', 'db/migrations/20260807_unified_tasks_soft_delete.sql',
+      'migrations/20261023_review_routes.sql', 'migrations/20261109_unified_tasks_parent_task.sql']) await owner.query(await readFile(file, 'utf8'));
+    await owner.query(`ALTER TABLE unified_tasks ENABLE ROW LEVEL SECURITY; ALTER TABLE unified_tasks FORCE ROW LEVEL SECURITY;
+      ${tenantIsolationPolicySql('unified_tasks', 'organization_id')};
+      GRANT SELECT, INSERT, UPDATE, DELETE ON unified_tasks TO ${runtimeRole}; GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO ${runtimeRole}`);
+  }, 60_000);
+  beforeEach(async () => { await owner.query('TRUNCATE unified_tasks RESTART IDENTITY'); });
+
+  it('shows a parent writer each work project\'s tasks, marked with where it lives; the filing project\'s own are unchanged', async () => {
+    const { cmcChild, sibling } = await family();
+    expect((await work(12, 11)).sort()).toEqual([
+      ['Assemble Module 3', 11, null], ['Close the CAPA', sibling, 'Drug product QA'], ['Confirm the specification', cmcChild, 'Drug substance CMC'],
+    ].sort());
+  });
+
+  it('leaves a private work project\'s tasks out for the parent writer', async () => {
+    const { cmcChild, sibling } = await family();
+    await owner.query(`INSERT INTO project_visibility_settings(project_id,organization_id,visibility) VALUES($1,9,'private')`, [cmcChild]);
+    expect((await work(12, 11)).sort()).toEqual([['Assemble Module 3', 11, null], ['Close the CAPA', sibling, 'Drug product QA']].sort());
+  });
+
+  it('gives a reader who is not a writer exactly what the exact rule gives: a non-private work project, never a private one', async () => {
+    const { cmcChild, sibling } = await family();
+    await owner.query(`INSERT INTO users(id,name,email,password_hash,status) VALUES(14,'Reader','reader@example.test','x','active');
+      INSERT INTO organization_users(organization_id,user_id,role) VALUES(9,14,'member');
+      INSERT INTO project_members(project_id,organization_id,user_id,role,status) VALUES(11,9,14,'use','active')`);
+    // A work project with no private setting is readable by the organisation's members by its own access.
+    expect((await work(14, 11)).sort()).toEqual([['Assemble Module 3', 11, null], ['Close the CAPA', sibling, 'Drug product QA'],
+      ['Confirm the specification', cmcChild, 'Drug substance CMC']].sort());
+    await owner.query(`INSERT INTO project_visibility_settings(project_id,organization_id,visibility) VALUES($1,9,'private')`, [cmcChild]);
+    expect((await work(14, 11)).sort()).toEqual([['Assemble Module 3', 11, null], ['Close the CAPA', sibling, 'Drug product QA']].sort());
+  });
+
+  it('gives a work project\'s own member its tasks directly, and nothing of its siblings', async () => {
+    const { cmcChild } = await family();
+    expect(await work(13, cmcChild)).toEqual([['Confirm the specification', cmcChild, null]]);
+  });
+
+  it('gives another organisation nothing', async () => {
+    await family();
+    expect(await work(9, 11, 10)).toEqual([]);
+  });
+});
+
+describe('a work project\'s subtasks: one level, the same project, held by the database (P-111 item 4)', () => {
+  beforeEach(async () => { await owner.query('TRUNCATE unified_tasks RESTART IDENTITY'); });
+
+  it('admits a subtask under a task of the same project, and refuses every other parent the same way (P-111 item 4)', async () => {
+    const { cmcChild, sibling } = await family();
+    const top = await taskRow(cmcChild, 'Confirm the specification (top)');
+    const sub = await taskRow(cmcChild, 'Check the impurity limits', top);
+    const elsewhere = await taskRow(sibling, 'Close the CAPA (top)');
+    expect((await parent(cmcChild, top)).body).toEqual({ admitted: top });
+    for (const [projectId, parentTaskId] of [[cmcChild, sub], [cmcChild, elsewhere], [cmcChild, 999999], [cmcChild, 'x']] as const) {
+      const res = await parent(projectId, parentTaskId);
+      expect(res.status, String(parentTaskId)).toBe(409);
+      expect(res.body).toEqual({ code: 'PARENT_TASK_REFUSED' });
+    }
+    // Another organisation cannot name this organisation's task as a parent.
+    const foreign = await parent(cmcChild, top, 10);
+    expect(foreign.body).not.toHaveProperty('admitted');
+  });
+
+  it('rolls a work project\'s subtask up with the task it belongs to', async () => {
+    const { cmcChild } = await family();
+    const top = await taskRow(cmcChild, 'Confirm the specification (top)');
+    await taskRow(cmcChild, 'Check the impurity limits', top);
+    const res = await request(workApp(12)).get('/work/11');
+    const items = res.body.items as Array<{ id: string; title: string; subtaskOf?: string }>;
+    const parentItem = items.find((i) => i.title === 'Confirm the specification (top)')!;
+    expect(items.find((i) => i.title === 'Check the impurity limits')?.subtaskOf).toBe(parentItem.id);
+    expect(parentItem.subtaskOf).toBeUndefined();
+  });
+
+  it('holds the column in the database: a task is not its own parent, and a deleted parent leaves its subtask a task', async () => {
+    const { cmcChild } = await family();
+    const top = await taskRow(cmcChild, 'Confirm the specification (top)');
+    const sub = await taskRow(cmcChild, 'Check the impurity limits', top);
+    await expect(owner.query('UPDATE unified_tasks SET parent_task_id = id WHERE id = $1', [top])).rejects.toThrow(/unified_tasks_parent_not_self/);
+    await owner.query('DELETE FROM unified_tasks WHERE id = $1', [top]);
+    expect((await owner.query('SELECT parent_task_id FROM unified_tasks WHERE id = $1', [sub])).rows[0].parent_task_id).toBeNull();
+    // Replaying the migration changes nothing (RULE 1).
+    await owner.query(await readFile('migrations/20261109_unified_tasks_parent_task.sql', 'utf8'));
+  });
+});

@@ -1,0 +1,141 @@
+# RULE 3 searches for P-92 C1, re-run 2026-11-09T13:17:11Z on the full clone
+$ git rev-parse --is-shallow-repository
+false
+$ git rev-list --count origin/concept2cure-v2
+19240
+$ git log --reverse --format='%h %cs' origin/concept2cure-v2 | head -1
+3e1dcf8f01 2025-11-20
+$ git rev-parse --short origin/concept2cure-v2
+3e0ca1e181
+
+## Code, on origin/concept2cure-v2 (before C1), server/ client/ shared/
+git grep -i -F 'non-receipt' -> 0 files
+git grep -i -F 'held send' -> 2 files
+   origin/concept2cure-v2:server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+   origin/concept2cure-v2:server/services/submission-service/__tests__/transmit-refusals.test.ts
+git grep -i -F 'held-send' -> 0 files
+git grep -i -F 'heldSend' -> 0 files
+git grep -i -F 'settleHeld' -> 0 files
+
+## Writers of ack2_received / ack3_received outside the runbook (assignments or inserts)
+   (end)
+   (both are test comments: 'nothing ... is a held send'; neither is a settlement)
+
+## History, git log origin/concept2cure-v2 -S (pickaxe), every path
+$ git log origin/concept2cure-v2 -S'settleHeldSend' --format='%h %cs %s'
+   b0bb8dccc3 2026-11-08 Plan progress (P-100): RIM, what the agency holds is what was sent, and the queued filing work
+   (end)
+$ git log origin/concept2cure-v2 -S'HELD_SEND' --format='%h %cs %s'
+   79cf94384f 2026-11-09 F1: P-92's design re-cut on today's trunk (§10.3), with the citation re-check beside it
+   b0bb8dccc3 2026-11-08 Plan progress (P-100): RIM, what the agency holds is what was sent, and the queued filing work
+   (end)
+$ git log origin/concept2cure-v2 -S'heldSend' --format='%h %cs %s'
+   79cf94384f 2026-11-09 F1: P-92's design re-cut on today's trunk (§10.3), with the citation re-check beside it
+   b0bb8dccc3 2026-11-08 Plan progress (P-100): RIM, what the agency holds is what was sent, and the queued filing work
+   (end)
+$ git log origin/concept2cure-v2 -S'released as not received' --format='%h %cs %s'
+   79cf94384f 2026-11-09 F1: P-92's design re-cut on today's trunk (§10.3), with the citation re-check beside it
+   bc7ffda391 2026-11-09 F1: P-92 and P-99 designs carry the coordinator's answers of 2026-11-08 and the founder's P-108
+   2b79ca12ed 2026-11-09 D7: retire an unfiled sequence by a signed act, on the drafts' own removal (P-86)
+   3a00e32bdd 2026-11-08 P-108: RIM's twelve recommendations accepted (held sends, retiring and size, uploads, unrecorded sends)
+   b0bb8dccc3 2026-11-08 Plan progress (P-100): RIM, what the agency holds is what was sent, and the queued filing work
+   1c48581ae7 2026-11-02 P-92 to P-95: the founder answers the D7-record session's four questions
+   (end)
+$ git log origin/concept2cure-v2 -S'held-send' --format='%h %cs %s'
+   79cf94384f 2026-11-09 F1: P-92's design re-cut on today's trunk (§10.3), with the citation re-check beside it
+   bc7ffda391 2026-11-09 F1: P-92 and P-99 designs carry the coordinator's answers of 2026-11-08 and the founder's P-108
+   b0bb8dccc3 2026-11-08 Plan progress (P-100): RIM, what the agency holds is what was sent, and the queued filing work
+   1f8fd9839c 2026-11-01 L1: this session's D7 work, aligned to the one design plan
+   (end)
+$ git log origin/concept2cure-v2 -S'non-receipt' --format='%h %cs %s'
+   79cf94384f 2026-11-09 F1: P-92's design re-cut on today's trunk (§10.3), with the citation re-check beside it
+   bc7ffda391 2026-11-09 F1: P-92 and P-99 designs carry the coordinator's answers of 2026-11-08 and the founder's P-108
+   e772ae19c5 2026-11-09 Coordination: 2026-11-09 rulings for RIM P-86 C1, S7, S12 gap 5, R1 candidates, D0 §8
+   3a00e32bdd 2026-11-08 P-108: RIM's twelve recommendations accepted (held sends, retiring and size, uploads, unrecorded sends)
+   b0bb8dccc3 2026-11-08 Plan progress (P-100): RIM, what the agency holds is what was sent, and the queued filing work
+   1c48581ae7 2026-11-02 P-92 to P-95: the founder answers the D7-record session's four questions
+   1f8fd9839c 2026-11-01 L1: this session's D7 work, aligned to the one design plan
+   (end)
+
+## The same pickaxe limited to code paths (server/ client/ shared/ scripts/ migrations/): every hit above is a docs commit
+-S'settleHeldSend' -- server client shared scripts migrations -> 0 commits
+-S'HELD_SEND' -- server client shared scripts migrations -> 0 commits
+-S'heldSend' -- server client shared scripts migrations -> 0 commits
+-S'released as not received' -- server client shared scripts migrations -> 1 commits
+-S'held-send' -- server client shared scripts migrations -> 0 commits
+-S'non-receipt' -- server client shared scripts migrations -> 0 commits
+
+## Deletions, full clone (not shallow), filtered case-insensitively
+$ git -c gc.auto=0 log origin/concept2cure-v2 --full-history --diff-filter=D --name-only --format='@@ %h %cs %s' -- 'server/**' 'client/**' 'shared/**' 'scripts/**' 'docs/runbooks/**' | (keep a path matching /ack|poller|webtrader|esg|rollback|receipt|mdn|retract|transmittal|settle|held/i, with its commit)
+   edd225c027 2026-11-09 D7: FDA ESG's SFTP branch is retired; the 1 GiB refusal replaces it   ::  server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts
+   b9de04c622 2026-10-29 Fold device-vault and the Artifacts center into Vault (D2, fold F3)  ::  client/src/concept2cure/mdx/surfaces/__tests__/VaultSurface.noUnbackedClaim.test.tsx
+   d7c0448978 2026-10-15 D2: the readiness twin records only what it assessed; dead innovatio  ::  server/services/FDAComplianceTracker.ts
+   62ff3edc35 2026-10-05 Nothing is sent to PMDA over an unsourced protocol, and Japan device  ::  server/services/submission-gateways/__tests__/pmda-missing-receipt.test.ts
+   ad69500f01 2026-09-21 WE: AI draft refuses without a provider (no template fallback); Vaul  ::  server/routes/__tests__/authoringAiDraftFallback.test.ts
+   61029acb55 2026-09-21 W4: converge on W3a's validation package; keep the citation gate it   ::  scripts/ops/generate-validation-package.mjs
+   0377c67bac 2026-08-30 L48: one eCTD template catalog, because two of them ship a wrong reg  ::  server/data/fallback-templates.ts
+   bf84d94a57 2026-08-24 feat(cmc): the correspondence loop can be written, not just read  ::  server/api/cmc/__tests__/irPackagerPathContainment.test.ts
+   bf84d94a57 2026-08-24 feat(cmc): the correspondence loop can be written, not just read  ::  server/api/cmc/regulatory_irPackager.ts
+   89c83f58ad 2026-08-14 feat(esg): the device transmit affordance reaches the real gateway,   ::  server/services/__tests__/esg-submission-status.test.ts
+   c6d7295a8d 2026-08-13 refactor(510k): delete the legacy route families and generators —   ::  server/routes/esgSubmissionRoutes.ts
+   c6d7295a8d 2026-08-13 refactor(510k): delete the legacy route families and generators —   ::  server/services/510kComplianceTracker.ts
+   c6d7295a8d 2026-08-13 refactor(510k): delete the legacy route families and generators —   ::  server/services/FDA510kTemplateServiceBackend.ts
+   2895218b8b 2026-08-04 refactor: one shell, and delete the dead code for good  ::  client/src/concept2cure/insights/charts/DataTableFallback.tsx
+   2895218b8b 2026-08-04 refactor: one shell, and delete the dead code for good  ::  client/src/concept2cure/insights/charts/LifecycleStackedBar.tsx
+   796c9ac986 2026-07-25 chore(cre): Phase 8 — delete the orphaned foresight subtree (13 fi  ::  server/routes/foresight-feedback.ts
+   796c9ac986 2026-07-25 chore(cre): Phase 8 — delete the orphaned foresight subtree (13 fi  ::  server/services/foresight-feedback-orchestrator.ts
+   66bfc819eb 2026-06-04 refactor(ectd): retire orphaned reg packager; document unification s  ::  server/src/services/reg/packager.ts
+   e5a74a4dfa 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2  ::  client/src/concept2cure/components/common/WelcomeBackScreen.tsx
+   e5a74a4dfa 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2  ::  client/src/concept2cure/components/editor/extensions/TrackChangesExtension.ts
+   e5a74a4dfa 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2  ::  client/src/concept2cure/components/regulatory/AnalyticalValidationTracker.tsx
+   e5a74a4dfa 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2  ::  client/src/concept2cure/components/regulatory/ClinicalEvidenceTracker.tsx
+   e5a74a4dfa 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2  ::  client/src/concept2cure/components/regulatory/PackBuilderPanel.tsx
+   e5a74a4dfa 2026-06-02 Remove disconnected legacy dead-code island from client/src/concept2  ::  client/src/concept2cure/hooks/usePackaging.ts
+   7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/  ::  client/src/components/510k/FDATimelineTracker.jsx
+   7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/  ::  client/src/components/510k/PackagePreview.jsx
+   7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/  ::  client/src/components/510k/ProgressTracker.jsx
+   7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/  ::  client/src/components/cer/TooltipTracker.jsx
+   7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/  ::  client/src/components/cmc/PackagingSerializationPanel.jsx
+   7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/  ::  client/src/components/extensions/TrackChangesExtension.js
+   7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/  ::  client/src/components/regulatory/ComplianceTrackingDashboard.tsx
+   7a144fd1e4 2026-05-01 chore: delete all non-Claude-Design UI under client/src/  ::  client/src/routes/regulatory/EctdPackager.tsx
+   95f18694d1 2026-05-01 chore: delete orphaned legacy UI dirs + bundle-surface-frame  ::  client/src/components/predicate/DefensePacketPanel.tsx
+   8ba28dc0db 2026-05-01 Delete more zero-importer orphan files across legacy folders  ::  client/src/concept2cure/components/regulatory/PreSubPackageGenerator.tsx
+   87f9f17f3d 2026-04-28 feat(home): wire all interactive surfaces; remove broken legacy load  ::  client/src/services/packageMonitorService.js
+   b79f020e1a 2026-04-05 refactor: surgical dead code purge — 670 files removed, build veri  ::  client/src/components/510k/ProgressTracker.jsx
+   b79f020e1a 2026-04-05 refactor: surgical dead code purge — 670 files removed, build veri  ::  scripts/aiBackfill.js
+   b79f020e1a 2026-04-05 refactor: surgical dead code purge — 670 files removed, build veri  ::  scripts/backfill_embeddings.js
+   b79f020e1a 2026-04-05 refactor: surgical dead code purge — 670 files removed, build veri  ::  scripts/schedule-backup.js
+   fc9a7943bb 2026-04-04 refactor: Phase 2D — delete orphaned editors, pages, and route com  ::  client/src/components/510k/PackagePreview.jsx
+   3ea8cc863d 2026-04-04 refactor: Phase 2 — massive dead client component purge  ::  client/src/components/cer/TooltipTracker.jsx
+   e1dca6e3de 2026-04-04 refactor: Phase 1 final — delete remaining orphaned services  ::  server/services/esgService.js
+   b6e991501c 2026-04-04 refactor: Phase 1 dead code purge — delete unused routes and orpha  ::  server/services/esgPush.js
+   a0f4d73a9f 2026-04-01 refactor: remove dead scripts, configs, shared stubs, agents (~62,00  ::  scripts/deploy/deploy-backend-only.sh
+   a0f4d73a9f 2026-04-01 refactor: remove dead scripts, configs, shared stubs, agents (~62,00  ::  scripts/test/demonstration/valid_package/m1/admin/cover_letter.pdf
+   a0f4d73a9f 2026-04-01 refactor: remove dead scripts, configs, shared stubs, agents (~62,00  ::  scripts/test/demonstration/valid_package/m2/quality/overview.pdf
+   a0f4d73a9f 2026-04-01 refactor: remove dead scripts, configs, shared stubs, agents (~62,00  ::  scripts/test/demonstration/valid_package/m3/quality/specifications.pdf
+   a0f4d73a9f 2026-04-01 refactor: remove dead scripts, configs, shared stubs, agents (~62,00  ::  scripts/test/demonstration/valid_package/m4/nonclinical/study_reports.pdf
+   a0f4d73a9f 2026-04-01 refactor: remove dead scripts, configs, shared stubs, agents (~62,00  ::  scripts/test/demonstration/valid_package/m5/clinical/study_reports.pdf
+   83fa7f6cfb 2026-04-01 refactor: remove 146 orphaned client files (~42,000 lines)  ::  client/src/components/AppPackagesBanner.hardcoded.jsx
+   83fa7f6cfb 2026-04-01 refactor: remove 146 orphaned client files (~42,000 lines)  ::  client/src/components/AppPackagesBanner.jsx
+   83fa7f6cfb 2026-04-01 refactor: remove 146 orphaned client files (~42,000 lines)  ::  client/src/components/ExampleReportPackages.jsx
+   83fa7f6cfb 2026-04-01 refactor: remove 146 orphaned client files (~42,000 lines)  ::  client/src/components/PackageHealthMonitor.jsx
+   83fa7f6cfb 2026-04-01 refactor: remove 146 orphaned client files (~42,000 lines)  ::  client/src/components/SummaryPacketArchive.jsx
+   83fa7f6cfb 2026-04-01 refactor: remove 146 orphaned client files (~42,000 lines)  ::  client/src/components/SummaryPacketGenerator.jsx
+   f355be1daa 2026-04-01 refactor: remove 21 orphaned .js route files (~6,800 lines)  ::  server/routes/esgSubmission.js
+   eef86e6345 2026-03-26 docs: baseline package-manager constraints and quality blockers  ::  client/src/components/AppPackagesBanner.backup.jsx
+   eef86e6345 2026-03-26 docs: baseline package-manager constraints and quality blockers  ::  client/src/components/cer/CerBuilderPanel-backup.jsx
+   eef86e6345 2026-03-26 docs: baseline package-manager constraints and quality blockers  ::  client/src/components/cer/CerPreviewPanel-backup.jsx
+   eef86e6345 2026-03-26 docs: baseline package-manager constraints and quality blockers  ::  client/src/components/cer/EvaluatorQualificationsPanel_backup.jsx
+   eef86e6345 2026-03-26 docs: baseline package-manager constraints and quality blockers  ::  scripts/setup_supabase.js.backup
+   eef86e6345 2026-03-26 docs: baseline package-manager constraints and quality blockers  ::  shared/schema_backup.ts
+   87d13d7cd4 2026-03-25 chore: BETA audit — remove mock data route + 127 dead Python files  ::  server/export_summary_packet.py
+   87d13d7cd4 2026-03-25 chore: BETA audit — remove mock data route + 127 dead Python files  ::  server/routes/acks.py
+   87d13d7cd4 2026-03-25 chore: BETA audit — remove mock data route + 127 dead Python files  ::  server/tasks/esg_tasks.py
+   87d13d7cd4 2026-03-25 chore: BETA audit — remove mock data route + 127 dead Python files  ::  server/utils/esg_ack_poller.py
+   87d13d7cd4 2026-03-25 chore: BETA audit — remove mock data route + 127 dead Python files  ::  server/utils/esg_submitter.py
+   77034aa5ff 2026-03-23 feat: batch 3 — eliminate alternate product universes, collapse to  ::  client/src/concept2cure/pages/MissionControl/AuthorityTracker.tsx
+   b49e7495f5 2026-02-21 cleanup: delete 180 orphan/duplicate pages (84k+ lines of dead code)  ::  client/src/pages/full_backup.jsx
+   af8aa33dd9 2026-01-26 Save all Codespace work - updated features and fixes  ::  server/services/_archived/openaiServiceWithFallback.ts
+   4a87d39a4a 2026-01-26 WIP: reconcile codespace changes  ::  server/routes/_deprecated/export/summary-packet.ts
+   (end)

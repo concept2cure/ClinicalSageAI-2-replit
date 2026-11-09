@@ -1,0 +1,15 @@
+# P-92 C1, the broad server suites on the final C1 code (before check 2b's sentence; that change is covered by 02-green.txt)
+$ npx vitest run server/services/submission-service server/services/submission-gateways server/services/ectd server/mcp shared/navigation server/routes/__tests__/submissions server/services/ana/__tests__/ana-cannot
+ Test Files  270 passed | 3 skipped (273)
+      Tests  3318 passed | 8 skipped (3326)
+EXIT 0
+
+# The first broad run (before the fixes the README's departures 2 and 3 describe), for the record:
+ Test Files  5 failed | 265 passed | 3 skipped (273)
+      Tests  41 failed | 3270 passed | 8 skipped (3319)
+EXIT 1
+     10  FAIL  server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts
+     11  FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts
+      1  FAIL  server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts
+      1  FAIL  server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts
+     18  FAIL  server/services/submission-service/__tests__/transmit-recorded-identity.test.ts

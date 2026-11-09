@@ -118,7 +118,8 @@ describe('DocumentAuthoring — asks arrive in the canonical conversation', () =
     expect(screen.queryByLabelText(/AnA — document authoring/)).toBeNull();
     fireEvent.click(toolbarDraftButton());
     const composer = await screen.findByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
-    expect(composer.value).toMatch(/Draft 3\.2\.S\.1 General Information/);
+    // The person's words only; the section travels in the saved context below, never its stored title (2026-11-09).
+    expect(composer.value).toBe('Draft this section from the linked section evidence.');
     expect(sentAuthoringTurns()).toHaveLength(0);
     await sendAuthoringPrefill();
     await waitFor(() => expect(sentAuthoringTurns()).toHaveLength(1));
@@ -141,7 +142,9 @@ describe('DocumentAuthoring — asks arrive in the canonical conversation', () =
     expect(screen.getByRole('button', { name: /Draft with AnA/ }).closest('.rse-empty-cta')).not.toBeNull();
     fireEvent.click(toolbarDraftButton());
     await sendAuthoringPrefill();
-    await waitFor(() => expect(sentAuthoringTurns()[0]?.message).toMatch(/Draft 3\.2\.S\.1/));
+    // The exact section is named in the turn's saved context, not by writing its stored title into the ask (2026-11-09).
+    await waitFor(() => expect(sentAuthoringTurns()[0]?.message).toBe('Draft this section from the linked section evidence.'));
+    expect(sentAuthoringTurns()[0].module_context).toMatchObject({ sectionId: 'aaaaaaaa-0000-4000-8000-000000000001' });
   });
 
   it('the canonical composer sends the person’s edited question in the same saved document context', async () => {

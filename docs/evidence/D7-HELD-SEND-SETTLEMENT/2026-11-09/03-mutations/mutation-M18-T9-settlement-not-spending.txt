@@ -1,0 +1,7 @@
+MUTATION M18-T9-settlement-not-spending in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T13:43:13.451129Z): replaced [${ECTD_SEQUENCE_RETIRED_ACTION}, ${ECTD_HELD_SEND_SETTLED_ACTION})] with [${ECTD_SEQUENCE_RETIRED_ACTION})]
+ ✓ server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts > P-92 T5 and T9: the signature binds what was settled, and is spent once > T5 a statement altered by one character is refused, and the signature is voided 397ms
+ ✓ server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts > P-92 T5 and T9: the signature binds what was settled, and is spent once > T5 a signature for another attempt does not settle this one; nor one for the other outcome 58ms
+ × server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts > P-92 T5 and T9: the signature binds what was settled, and is spent once > T9 a repeated request after success is refused, and the signature that performed the act is not voided 84ms
+      Tests  1 failed | 2 passed | 28 skipped (31)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 2621075162e184977da0e6dcd6c07ebfa1f6a8eb469cad66a13df74acfd4d0f1 (expected 2621075162e184977da0e6dcd6c07ebfa1f6a8eb469cad66a13df74acfd4d0f1)

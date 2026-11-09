@@ -12,8 +12,9 @@
  *   - server/services/global-ri/pediatric-requirements.ts (the PMDA obligation);
  *   - server/services/global-ri/special-designations.ts (PMDA orphan criteria and
  *     the paediatric programme);
- *   - server/services/regulatory-strategy/regulatory-strategy-knowledge.ts
- *     (Japan's expedited pathways and conditional approval).
+ *   - server/services/regulatory-strategy/regulatory-strategy-reference.ts
+ *     (Japan's expedited pathways and conditional approval, which
+ *     regulatory-strategy-knowledge.ts compares; moved there on 2026-11-09).
  * Until 2026-10-05 each of those carried its own Japan prose, as the law stood
  * before the 2025 amendment and with no basis ("Confirmatory clinical trials are
  * difficult", "No mandatory pediatric study plan", "Pediatric development is

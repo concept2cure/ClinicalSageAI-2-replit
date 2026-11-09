@@ -9,14 +9,14 @@ import { describe, it, expect, vi } from 'vitest';
 vi.mock('../../../db', () => ({ db: {}, pool: { query: vi.fn() } }));
 
 import {
-  retirementRefusal, retirementStatement, retirementPayloadRefusal, retirementMeaningRefusal, type RetirementFacts,
+  retirementRefusal, retirementStatement, retirementPayloadRefusal, retirementMeaningRefusal, retirementSignerRefusal, type RetirementFacts,
 } from '../filed-sequence-baseline';
 import { writeChainedAuditRow } from '../../auditService';
 
 const CLEAR: RetirementFacts = {
   sequenceNumber: '0000', dispatchStatus: 'pending', productionSend: null, packageSend: false,
   filedIndRecords: { safetyReports: 0, amendments: 0, annualReports: 0 },
-  later: [], compileReadTwin: false, stagingTransmittalIds: [], numberFreed: true,
+  later: [], compileReadTwin: false, stagingTransmittalIds: [], stagingSends: [], numberFreed: true,
 };
 
 describe('retirementRefusal: what keeps a sequence, first reason first', () => {
@@ -80,6 +80,21 @@ describe('what the signer states, and what the signature must carry', () => {
     for (const m of ['approval', 'release', 'review', 'retirement', undefined, null]) {
       expect(retirementMeaningRefusal(m)).toBe('retiring a sequence is signed with the meaning responsibility');
     }
+  });
+});
+
+describe('who may sign the retirement, as the precheck tells it (C2)', () => {
+  it('the creator is told another person signs it; an independent signer is not stopped', () => {
+    expect(retirementSignerRefusal('0003', 'independent')).toBeNull();
+    expect(retirementSignerRefusal('0003', 'author')).toBe(
+      'You created sequence 0003, so you cannot sign its retirement. Another person with signing authority signs it.');
+  });
+
+  it('a creator who cannot be resolved, or a check that failed, is said so, never taken as independence or as authorship', () => {
+    expect(retirementSignerRefusal('0003', 'unresolved')).toBe(
+      "Who created sequence 0003 cannot be resolved from its record, so no one can be shown to be independent of its creator, and its retirement cannot be signed.");
+    expect(retirementSignerRefusal('0003', 'unverified')).toBe(
+      'Whether you created sequence 0003 could not be checked, so its retirement cannot be signed now. Try again.');
   });
 });
 

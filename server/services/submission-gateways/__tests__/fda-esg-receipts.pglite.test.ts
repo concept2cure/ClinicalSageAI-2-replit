@@ -12,7 +12,7 @@ vi.mock('../../../routes/c2c/actions', () => ({ recordGovernedAction: async (cli
   if (state.auditFail) throw new Error('audit unavailable');
   await client.query('INSERT INTO receipt_audit(organization_id,user_id,receipt_sha256) VALUES($1,$2,$3)', [args.orgId, args.userId, args.payload.receiptSha256]);
 } }));
-import { ingestFdaAs2Receipt } from '../fda-esg-receipts';
+import { ingestFdaAs2Receipt, releasedSendReceivedRefusal } from '../fda-esg-receipts';
 import { as2CmsFixture, receiptReport } from './support/as2-cms-fixture';
 let fixture: ReturnType<typeof as2CmsFixture>;
 const MESSAGE = '<retained@sponsor>', MIC = createHash('sha256').update('retained-bundle').digest('base64'), SHA = 'b'.repeat(64);
@@ -169,3 +169,57 @@ describe("a receipt from the agency's test environment (F1, row D7)", () => {
     expect(result.environment).toBe('staging');
   });
 });
+
+/* P-92 T7 (design §3.3, P-108 1(c)): a verified FDA receipt that contradicts a signed settlement is KEPT beside it,
+   never thrown away and never written over it; the call answers 409 with the contradiction; and while FDA's receipt
+   contradicts a release, the sequence is not sent again. Re-opening the settlement is C3's second signed act. */
+describe('P-92 T7: a late FDA receipt after a signed settlement', () => {
+  const settled = async (outcome: 'received' | 'not-received') => {
+    const meta = { heldSendSettlement: { outcome, kind: outcome === 'received' ? 'ack2' : 'fda-non-receipt-confirmation', verified: false, settledAt: '2026-11-03T14:05:00.000Z', signatureActionId: 'act_settle', sequenceNumber: '0001' } };
+    await state.pg!.query(`UPDATE submission_transmittals SET status = $1, metadata = metadata || $2::jsonb`, [outcome === 'received' ? 'ack2_received' : 'rejected', JSON.stringify(meta)]);
+    await state.pg!.exec(outcome === 'received'
+      ? "UPDATE ectd_sequences SET dispatch_status = 'sent'"
+      : "UPDATE ectd_sequences SET dispatch_status = 'pending', transmit_signature_action_id = NULL, transmit_attempt_id = NULL");
+  };
+  const history = async () => ((await read()).metadata.as2ReceiptHistory ?? []) as Array<{ contradicts?: string; verified?: boolean }>;
+
+  it("after a release, FDA's positive receipt is kept with the send's record, answers 409, and holds the resend", async () => {
+    await settled('not-received');
+    const input = args();
+    await expect(ingestFdaAs2Receipt(input)).rejects.toMatchObject({ code: 'AS2_RECEIPT_CONTRADICTS_SETTLEMENT', status: 409, message: expect.stringMatching(/shows it received this send of sequence/) });
+    const row = await read();
+    expect(row.status).toBe('rejected');
+    expect(row.metadata.as2Receipt).toBeUndefined();
+    expect(row.metadata.heldSendSettlement).toMatchObject({ outcome: 'not-received' });
+    expect(await history()).toEqual([expect.objectContaining({ verified: true, contradicts: 'not-received' })]);
+    expect((await state.pg!.query('SELECT * FROM receipt_audit')).rows).toHaveLength(1);
+    // The same bytes again: the same answer, and nothing more is written.
+    await expect(ingestFdaAs2Receipt(input)).rejects.toMatchObject({ code: 'AS2_RECEIPT_CONTRADICTS_SETTLEMENT' });
+    expect(await history()).toHaveLength(1);
+    expect((await state.pg!.query('SELECT * FROM receipt_audit')).rows).toHaveLength(1);
+    // While it stands, the sequence is not sent again.
+    expect(await releasedSendReceivedRefusal(state.pg! as never, 42, 88)).toMatch(/already received sequence .* which was released as not received\. .* is not sent again/);
+  });
+
+  it("after a release, FDA's refusal agrees with it: recorded, no sequence moves, no resend hold", async () => {
+    await settled('not-received');
+    const result = await ingestFdaAs2Receipt(args(MESSAGE, MIC, 'failed'));
+    expect(result).toMatchObject({ status: 'rejected' });
+    expect((await state.pg!.query<any>('SELECT dispatch_status FROM ectd_sequences')).rows[0].dispatch_status).toBe('pending');
+    expect(await releasedSendReceivedRefusal(state.pg! as never, 42, 88)).toBeNull();
+  });
+
+  it("after 'received', FDA's refusal is kept with the record and answers 409; the sequence stays recorded as received", async () => {
+    await settled('received');
+    await expect(ingestFdaAs2Receipt(args(MESSAGE, MIC, 'failed'))).rejects.toMatchObject({ code: 'AS2_RECEIPT_CONTRADICTS_SETTLEMENT', message: expect.stringMatching(/refuses this send of sequence .* which was recorded as received/) });
+    expect((await read()).status).toBe('ack2_received');
+    expect(await history()).toEqual([expect.objectContaining({ contradicts: 'received' })]);
+    expect((await state.pg!.query<any>('SELECT dispatch_status FROM ectd_sequences')).rows[0].dispatch_status).toBe('sent');
+  });
+
+  it('a transmittal with no settlement takes exactly today\'s path', async () => {
+    expect((await ingestFdaAs2Receipt(args())).sequenceResolution).toBe('resolved');
+    expect(await releasedSendReceivedRefusal(state.pg! as never, 42, 88)).toBeNull();
+  });
+});
+

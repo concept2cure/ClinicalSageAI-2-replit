@@ -1,0 +1,15 @@
+MUTATION: the tasks are read before the binding is proven
+says a refused binding and a failed task read, never "no tasks" 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)
+
+MUTATION: every work item is listed, not only the work project's unified_tasks
+is bound by the door, keeps the binding on its URL, and lists the work project's own tasks 54ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)
+
+MUTATION: every area is bound, not only CMC and Quality
+offers no add to a person who may not write, and binds only the areas that show tasks 17ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)
+

@@ -1,0 +1,6 @@
+MUTATION C2-M8-unresolved-called-authorship in server/services/submission-service/filed-sequence-baseline.ts (on the final code and tests, 2026-11-09T08:12:32.438789Z): replaced [  if (state === 'author') {] with [  if (state === 'author' || state === 'unresolved') {]
+ ✓ server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > who may sign the retirement, as the precheck tells it (C2) > the creator is told another person signs it; an independent signer is not stopped 2ms
+ × server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > who may sign the retirement, as the precheck tells it (C2) > a creator who cannot be resolved, or a check that failed, is said so, never taken as independence or as authorship 9ms
+      Tests  1 failed | 1 passed | 9 skipped (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 d8e3de8f5dfa649340558f47ea9fd00a5d7dcdb9d01389f056caba57a07d8aa4 (expected d8e3de8f5dfa649340558f47ea9fd00a5d7dcdb9d01389f056caba57a07d8aa4)

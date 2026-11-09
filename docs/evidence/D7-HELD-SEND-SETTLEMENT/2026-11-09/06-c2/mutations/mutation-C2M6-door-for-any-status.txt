@@ -1,0 +1,8 @@
+MUTATION C2M6-door-for-any-status in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-09T14:24:21.500236Z): replaced [{t.dispatchStatus === 'transmitting' && <HeldSendSettlement] with [{t.dispatchStatus !== 'never' && <HeldSendSettlement]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > there is no door while the dispatch status is pending 95ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > there is no door while the dispatch status is sent 28ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > there is no door while the dispatch status is acknowledged 25ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > there is no door while the dispatch status is rejected 25ms
+      Tests  4 failed | 24 skipped (28)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 cc8e6fd2277a9e2819e99cfadfa66fb29e15668bf829b5053fd5739969b26acc (expected cc8e6fd2277a9e2819e99cfadfa66fb29e15668bf829b5053fd5739969b26acc)

@@ -1,0 +1,26 @@
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > S0: closed by default, quiet, and asks nothing until opened 5071ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > S1 → S2: reading, then what retiring does, the test send it keeps, the number freed, and the button 5008ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > S2 says the test sends it keeps: [] 5008ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > S2 says the test sends it keeps: [{"sentOn":"2026-10-30"},{"sentOn":"2026-10-31"},{"sentOn":"2026-11-01"}] 5008ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > S2 with the number still taken says so, and does not promise a free number 5008ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > S3: the server's sentence, as a note, and no button; a record key in it is said in words 5006ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > S4: the creator is told why they cannot sign it, and offered no button 5007ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > S5 (a failed read): could not be checked, never "cannot be retired", and no button 5008ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > S5 (a cleared answer without the statement): could not be checked, never "cannot be retired", and no button 5010ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > S5 (an answer of another shape): could not be checked, never "cannot be retired", and no button 5007ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > renders when the readiness read fails, so a sequence whose gate cannot be read can still be retired 5006ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > asks again on every open, and keeps no answer across a close 5006ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > the button asks once more, and opens the signature only when that answer clears 5007ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > a refusal at the click is said inside the disclosure, focused, and nothing is signed 5006ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — "Retire sequence 0000…" at the foot of Dispatch > an unreadable answer at the click is said as that, focused, and nothing is signed 5007ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > signs the server's statement, then retires; no record key and no signature id on screen 5236ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a retirement that leaves the number taken says so 5063ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > S7: the act's refusal is shown inline, with the server's words; nothing is said retired 5061ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a 200 without retired: true is not a success 5059ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a 200 for another sequence is not a success 5069ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a 200 an empty body is not a success 5054ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a cleared precheck without the statement opens no signature 5041ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T3 — a transmission is marked by the sequence it is bound to > this one, another sequence of the same number, an unbound row of this number, and another number 5007ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 23 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  23 failed (23)

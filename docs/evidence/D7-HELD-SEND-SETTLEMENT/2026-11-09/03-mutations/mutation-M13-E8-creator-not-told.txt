@@ -1,0 +1,5 @@
+MUTATION M13-E8-creator-not-told in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T13:42:19.068091Z): replaced [  if (state === 'author') return `You created] with [  if (state === ('nobody' as string)) return `You created]
+ × server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts > P-92 T4: the document, the kind and the signer > E8: the sequence's creator is told before signing that they cannot settle its send 334ms
+      Tests  1 failed | 30 skipped (31)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 2621075162e184977da0e6dcd6c07ebfa1f6a8eb469cad66a13df74acfd4d0f1 (expected 2621075162e184977da0e6dcd6c07ebfa1f6a8eb469cad66a13df74acfd4d0f1)

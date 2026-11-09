@@ -1,0 +1,4 @@
+ok  the objective field is labelled optional, with the server's limit
+ok  the project is created with its objective, in one write, and its objective of record is it
+ok  an over-long objective is refused by the server in its own words
+ok  the field at 390 dark

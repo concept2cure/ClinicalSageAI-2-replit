@@ -64,11 +64,21 @@ function CsrStep({ state, scope, programId }: { state: PeerReviewDecision; scope
     disabled={state.busy || state.blocked} onChange={state.setCsrEvidence} />;
 }
 
+/**
+ * "Revision 3", or nothing when the document carries no revision number (J3 R10). Nothing writes
+ * authoring_documents.version, so "not recorded" read as a fault on every document; the verdict is bound to the
+ * saved text by its digest, which the receipt says.
+ */
+function revisionWords(version: AuthoringReviewContext['snapshot']['version']): string | null {
+  return version === null || String(version).trim() === '' ? null : `Revision ${version}`;
+}
+
 function SavedReviewRead({ context }: { context: AuthoringReviewContext }) {
   const snapshot = context.snapshot;
+  const identity = [revisionWords(snapshot.version), snapshot.module, snapshot.locale, snapshot.productCode].filter(Boolean).join(' · ');
   return <section aria-label="Complete saved document" className="rv-decision-read">
     <h3>{snapshot.title ?? 'Untitled document'}</h3>
-    <p>Revision {snapshot.version ?? 'not recorded'}{snapshot.module ? ` · ${snapshot.module}` : ''}{snapshot.locale ? ` · ${snapshot.locale}` : ''}{snapshot.productCode ? ` · ${snapshot.productCode}` : ''}</p>
+    {identity && <p>{identity}</p>}
     {context.myReview && <p>Review requested <GovernedTimestamp value={context.myReview.requestedAt} /></p>}
     {snapshot.sections.length === 0 && <p>No saved sections are present in this document.</p>}
     {snapshot.sections.map((section) => <section key={section.id} className="rv-decision-section">
@@ -157,7 +167,7 @@ function findingSectionLabel(context: AuthoringReviewContext, finding: Independe
 function DecisionReceipt({ receipt }: { receipt: AuthoringReviewRow }) {
   return <section className="rv-decision-receipt" aria-label="Your recorded decision" role="status">
     <h3>Your decision recorded — {PEER_VERDICT_LABEL[receipt.review_status as PeerVerdict]}</h3>
-    <p>Revision {receipt.reviewed_snapshot?.version ?? 'not recorded'} · Recorded <GovernedTimestamp value={receipt.reviewed_at} /></p>
+    <p>{[revisionWords(receipt.reviewed_snapshot?.version ?? null), 'Recorded '].filter(Boolean).join(' · ')}<GovernedTimestamp value={receipt.reviewed_at} /></p>
     {receipt.review_comments && <p>{receipt.review_comments}</p>}
     <p>This verdict is bound to the saved content and review request shown above. The audit record was confirmed. Current standing comes from the refreshed review board.</p>
   </section>;

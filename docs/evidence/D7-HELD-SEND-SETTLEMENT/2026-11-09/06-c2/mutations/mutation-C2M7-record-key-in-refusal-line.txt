@@ -1,0 +1,5 @@
+MUTATION C2M7-record-key-in-refusal-line in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-09T14:24:30.941628Z): replaced [Transmit is not available: {clause(blockerForDisplay(blockedBy))}.] with [Transmit is not available: {clause(blockedBy)}.]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1b — a way chosen: FDA's document, or the platform's own proof, then the statement > the transmit refusal line never shows a record key 5069ms
+      Tests  1 failed | 27 skipped (28)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 cc8e6fd2277a9e2819e99cfadfa66fb29e15668bf829b5053fd5739969b26acc (expected cc8e6fd2277a9e2819e99cfadfa66fb29e15668bf829b5053fd5739969b26acc)

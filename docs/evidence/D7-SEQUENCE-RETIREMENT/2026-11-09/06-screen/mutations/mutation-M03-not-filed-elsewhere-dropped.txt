@@ -1,0 +1,5 @@
+MUTATION M03-not-filed-elsewhere-dropped in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-09T11:40:06.129630Z): replaced [{ notFiledElsewhere: true, statement: f.statement }] with [{ statement: f.statement }]
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > signs the server's statement, then retires; no record key and no signature id on screen 461ms
+      Tests  1 failed | 22 skipped (23)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 2f387068faf71317cc2ff69866ccedc9cf3257e7bd8111905fef2c7dd46c456e (expected 2f387068faf71317cc2ff69866ccedc9cf3257e7bd8111905fef2c7dd46c456e)

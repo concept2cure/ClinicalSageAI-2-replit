@@ -95,3 +95,17 @@ logs its cause. It landed at 04:28 UTC, before this change was pushed (`1696fca9
 
   With (a), C2C-101's native Quality source verifies again. This change's report mode keeps the list alive for the
   next native source that genuinely cannot be verified.
+
+## After: the harness applies the files that alter its tables (2026-11-09)
+
+The coordinating session found `test:proof-tier` red on trunk. `tests/schema-contract/authoring-migration-list-closure.contract.test.ts`
+named this change's suite, `section-sources-unverifiable-native.pglite.test.ts`:
+
+- it built `authoring_comments`, `user_pins` and `doc_revisions` without applying
+  `db/migrations/20260730_authoring_comments_router_columns.sql` and
+  `db/migrations/20260817_doc_revisions_immutable_ledger.sql`, which alter them;
+- so the suite proved nothing against the shape those tables have in production.
+
+The suite now applies both, right after the loop tables, as `vault-citation-changes.pglite.integration.test.ts`
+does. Before the fix, the contract fails on that suite (`closure-red.log`). With it, the contract and the suite pass,
+7 cases (`closure.log`).

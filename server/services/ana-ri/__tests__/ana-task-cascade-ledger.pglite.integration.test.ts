@@ -60,6 +60,7 @@ const DDL = [
     'db/migrations/20260807_unified_tasks_soft_delete.sql',
     // The review route columns the Drizzle model names (RR1a).
     'migrations/20261023_review_routes.sql',
+    'migrations/20261109_unified_tasks_parent_task.sql', // P-111: unified_tasks.parent_task_id, which the Drizzle model names
   ].map(f => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8')),
 ].join('\n');
 

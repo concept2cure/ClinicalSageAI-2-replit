@@ -22,18 +22,25 @@
   /* ── Editor (full-bleed 3-pane) ── */
   .ed {
     display: grid;
-    grid-template-columns: 220px minmax(420px, 1fr);
+    grid-template-columns: 260px minmax(420px, 1fr);
     height: 100%;
     min-height: 0;
     min-width: 0;
   }
   .ed[data-comments='true'] {
-    grid-template-columns: 220px minmax(420px, 1fr) clamp(300px, 24vw, 460px);
+    grid-template-columns: 260px minmax(420px, 1fr) clamp(300px, 24vw, 460px);
   }
-  /* Those three tracks have a hard floor: 220 + 420 + 300 = 940px. The editor
+  /* D4-4: with the outline closed, the page takes its column (the outline is 260px, §D4.K). */
+  .ed[data-outline='closed'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ed[data-outline='closed'][data-comments='true'] {
+    grid-template-columns: minmax(420px, 1fr) clamp(300px, 24vw, 460px);
+  }
+  /* Those three tracks have a hard floor: 260 + 420 + 300 = 980px. The editor
      pane is the window minus the rail (`.shell[data-editor='true']` is
      `var(--rail) 1fr 0`, and --rail is 264px expanded), so the pane drops under
-     940 as soon as the window is narrower than 1204 — and the page then
+     980 as soon as the window is narrower than 1244 — and the page then
      scrolled SIDEWAYS rather than anything scrolling inside itself, because
      .ed is `overflow: visible`. visual-qa:overflow measured it at 940 > 796.
      Below that width the comments pane floats over the document column instead
@@ -41,10 +48,13 @@
      and the document keeps the 420px measure it needs to be edited in — the
      alternative, letting the middle column shrink, leaves 276px for the
      document, which is not an editor. */
-  @media (max-width: 1204px) {
+  @media (max-width: 1244px) {
     .ed[data-comments='true'] {
       position: relative;
-      grid-template-columns: 220px minmax(0, 1fr);
+      grid-template-columns: 260px minmax(0, 1fr);
+    }
+    .ed[data-outline='closed'][data-comments='true'] {
+      grid-template-columns: minmax(0, 1fr);
     }
     .ed[data-comments='true'] > .ed-comments {
       position: absolute;
@@ -75,6 +85,10 @@
     min-height: 0;
     overflow-y: auto;
     background: var(--bg-000);
+  }
+  /* `display: flex` above would otherwise outrank the attribute (D4-4, the outline on demand). */
+  .ed-tree[hidden] {
+    display: none;
   }
   .ed-tree-h {
     padding: 14px 16px;
@@ -125,11 +139,28 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 5px;
   }
+  /* The project's filings band (FilingMarkets.tsx) is the same band with a heading row. */
   .ed-basis-h {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 4px 6px;
+  }
+  /* D4-4: the outline basis is a disclosure, "{headline} · About this outline", its paragraph one click away. A
+     block, not a grid: not every browser lays out a <details> as a grid. */
+  details.ed-basis {
+    display: block;
+  }
+  .ed-basis > summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 6px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .ed-basis > summary::-webkit-details-marker {
+    display: none;
   }
   /* The tone is the word's colour, not a pill: "Harmonised standard ·
      outline basis", quiet. */
@@ -164,7 +195,7 @@
   }
   /* 12px, the floor (D0 §3): this paragraph was 10.5px. */
   .ed-basis-d {
-    margin: 0;
+    margin: 6px 0 0;
     font-size: var(--fs-caption, 12px);
     line-height: 1.5;
     color: var(--text-300);
@@ -213,6 +244,10 @@
   .ed-tree-row[data-blocker='true'] .ed-num {
     color: var(--error);
   }
+  /* An unstarted node reads quieter by colour at full opacity; it was dimmed to .62 (D4-4). */
+  .ed-tree-row[data-unstarted] .ed-lbl {
+    color: var(--text-300);
+  }
   /* 12px, the floor: the code was 10px. */
   .ed-num {
     font-family: var(--font-mono);
@@ -226,6 +261,37 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .ed-lbl[data-depth='0'] {
+    font-weight: 600;
+  }
+  /* A required node not yet started: a ring, with "required" for a screen reader; it was a REQUIRED pill (D4-4). */
+  .ed-req {
+    width: 7px;
+    height: 7px;
+    flex-shrink: 0;
+    margin-left: auto;
+    border-radius: 50%;
+    border: 1.5px solid var(--text-400);
+  }
+  .ed-tree-n {
+    margin-left: auto;
+    font-size: var(--fs-caption, 12px);
+    color: var(--text-300);
+    font-variant-numeric: tabular-nums;
+  }
+  .ed-tree-key {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 16px 12px;
+    font-size: var(--fs-caption, 12px);
+    color: var(--text-300);
+  }
+  .ed-tree-key .ed-req,
+  .ed-tree-key .ed-dot {
+    margin-left: 0;
   }
   /* A drafted node's dot is `data-s="ok"` (DocumentWorkbench's outline), and
      no rule coloured it, so it was invisible. Any other state is the quiet
@@ -1517,153 +1583,91 @@
     margin-top: 4px;
     min-width: 0;
   }
+  /* The chip (D4-5b, D4.md §D4.I and §D4.K "Chip"): an icon tile, the title, one line of kind and state, and Open,
+     as Claude shows an artifact under a message. */
   .dcv-card {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--bg-000);
-    padding: 16px 18px 14px;
     display: grid;
-    gap: 12px;
+    gap: 8px;
+    max-width: 560px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--bg-000);
+    transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
   }
   .dcv-card[hidden] {
     display: none;
   }
-  .dcv-head {
-    display: grid;
-    gap: 4px;
+  /* The chip of the document open beside the conversation: a stronger hairline and a quiet fill. It was an orange
+     inset bar. */
+  .dcv-card[data-open-beside] {
+    border-color: var(--border-strong);
+    background: var(--bg-050);
   }
-  .dcv-kind {
+  .dcv-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+  .dcv-ic {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    font-size: var(--fs-caption);
-    font-weight: 600;
-    color: var(--text-400);
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    background: var(--bg-100);
+    color: var(--text-300);
   }
-  .dcv-kind svg {
-    width: 12px;
-    height: 12px;
+  .dcv-ic svg {
+    width: 18px;
+    height: 18px;
+  }
+  .dcv-head {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 2px;
   }
   .dcv-title {
-    font-family: var(--font-serif);
-    font-size: 17px;
-    font-weight: 600;
-    line-height: 1.3;
-    color: var(--text-100);
     margin: 0;
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-sans);
+    font-size: var(--fs-body, 14px);
+    font-weight: 500;
+    color: var(--text-100);
   }
   .dcv-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px 14px;
-    font-size: 12px;
+    gap: 0 6px;
+    font-size: var(--fs-small, 13px);
     color: var(--text-300);
   }
-  .dcv-project {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    min-width: 0;
+  .dcv-meta > * + *::before {
+    content: '·';
+    margin-right: 6px;
+    color: var(--text-400);
   }
-  .dcv-project svg {
-    width: 13px;
-    height: 13px;
-    flex-shrink: 0;
+  .dcv-project {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .dcv-project-none {
     color: var(--warning);
   }
-  .dcv-prov {
-    font-size: 11.5px;
-    color: var(--text-400);
+  .dcv-prov,
+  .dcv-note {
+    font-size: var(--fs-caption, 12px);
+    color: var(--text-300);
   }
   .dcv-prov[data-source='ana']::before {
     content: '✻ ';
     color: var(--accent-200);
-  }
-  .dcv-body {
-    border-top: 1px solid var(--border);
-    padding-top: 12px;
-    display: grid;
-    gap: 14px;
-  }
-  .dcv-body[hidden] {
-    display: none;
-  }
-  .dcv-sec {
-    display: grid;
-    gap: 2px;
-    min-width: 0;
-  }
-  .dcv-sec-h {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin-bottom: 6px;
-  }
-  /* --accent-200, not --accent-100. The brand orange measures 2.96:1 on
-     --bg-000 (measured at 390px and 1440px, docs/evidence/CANVAS-POLISH/
-     2026-09-21/audit-light.json) and this is 12px text, so it failed 1.4.3
-     outright; --accent-200 is the same hue at 4.98:1 and is what
-     .ct-head-open and .ph-eyebrow already use for exactly this reason. */
-  .dcv-sec-num {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--accent-200);
-  }
-  .dcv-sec-t {
-    font-family: var(--font-serif);
-    font-size: 14.5px;
-    font-weight: 600;
-    color: var(--text-100);
-  }
-  .dcv-sec-body {
-    max-height: 380px;
-    overflow: hidden;
-    position: relative;
-    -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent);
-    mask-image: linear-gradient(to bottom, #000 82%, transparent);
-  }
-  .dcv[data-expanded] .dcv-sec-body,
-  .dcv-body:has(.dcv-showall[aria-expanded='true']) .dcv-sec-body {
-    max-height: none;
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-  .dcv-sec-empty,
-  .dcv-empty {
-    font-size: 13px;
-    color: var(--text-400);
-    font-style: italic;
-    margin: 0;
-  }
-  /* "Ask AnA to draft <code>" beside a section's empty state (2026-10-01):
-     the action, not the italic note, so it reads upright. */
-  .dcv-sec-empty .nda-open {
-    margin-left: 8px;
-    font-style: normal;
-  }
-  .dcv-showall {
-    justify-self: start;
-  }
-  .dcv-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-    border-top: 1px solid var(--border);
-    padding-top: 12px;
-  }
-  /* The four card actions were sized by an inline `height: 30` on each
-     button, which no stylesheet and therefore no breakpoint could reach. The
-     size lives here instead, so the phone block below can raise it. */
-  .dcv-actions .btn {
-    min-height: 32px;
-  }
-  .dcv-open-surface {
-    margin-left: auto;
   }
 
   /* ── The card, expanded into the editor ── */
@@ -1695,6 +1699,10 @@
   @media (prefers-reduced-motion: reduce) {
     .dcv-expanded {
       animation: none;
+    }
+    /* The chip's hairline and fill change without easing (D4-5b). */
+    .dcv-card {
+      transition: none;
     }
   }
   /* The artifact panel's slim header (D0 §4.2.17): 48px, a hairline under it, no band. */
@@ -1733,80 +1741,7 @@
     width: 32px;
     padding: 0;
   }
-  .dcv-bar-hint {
-    margin-left: auto;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--text-300);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 1px 5px;
-    flex-shrink: 0;
-  }
-  /* ── The outline and the refresh line (2026-10-01) ──
-     Every section, drafted or not, so the card says how far along the
-     document is; choosing one shows it below. */
-  .dcv-outline {
-    list-style: none;
-    margin: 0 0 10px;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 4px;
-  }
-  .dcv-outline > li {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-  }
-  .dcv-outline-item {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    gap: 8px;
-    align-items: baseline;
-    padding: 4px 6px;
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text-100);
-    font: inherit;
-    font-size: 12.5px;
-    text-align: left;
-    cursor: pointer;
-  }
-  .dcv-outline-item:hover,
-  .dcv-outline-item[aria-current] {
-    background: var(--bg-050);
-  }
-  .dcv-outline-code {
-    font-family: var(--font-mono);
-    color: var(--text-300);
-    flex-shrink: 0;
-  }
-  .dcv-outline-t {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .dcv-outline-state {
-    flex-shrink: 0;
-    font-size: 11.5px;
-    color: var(--text-300);
-    padding-right: 6px;
-  }
-  .dcv-outline > li[data-drafted='false'] .dcv-outline-t {
-    color: var(--text-300);
-  }
-  .dcv-outline > li[data-updated] .dcv-outline-state {
-    color: var(--accent-strong);
-    font-weight: 600;
-  }
+  /* The refresh line under the chip (2026-10-01). */
   .dcv-updated {
     margin-top: 6px;
     font-size: 12px;
@@ -1822,8 +1757,10 @@
      keeps a reading column with its answers and composer, and the document
      takes the rest. Too narrow for two columns, the document takes the screen
      and "Back to conversation" is the way out, as before. */
+  /* D4-5 (§D4.A): the conversation keeps a reading column of 420 to 560 px beside the document; the outline
+     opens closed there (D4-4), so the page keeps its measure. */
   .ct-main[data-canvas-open] > .ct-conv {
-    flex: 0 0 clamp(340px, 34%, 520px);
+    flex: 0 0 clamp(420px, 38%, 560px);
     border-right: 1px solid var(--border);
   }
   /* The panel fills the pane edge to edge. No border-left: `.ct-conv` already
@@ -1853,17 +1790,6 @@
     font-family: var(--font-serif);
     font-size: var(--fs-prose);
     line-height: 1.7;
-  }
-  /* The card that opened the editor stays in the thread, marked, so the
-     conversation still says which document is open beside it. */
-  .dcv-card[data-open-beside] {
-    border-color: var(--accent-muted);
-    box-shadow: inset 3px 0 0 var(--accent);
-  }
-  .dcv-open-note {
-    align-self: center;
-    font-size: 12px;
-    color: var(--text-300);
   }
   /* A document AnA built while another is open beside the conversation, or
      at a width with no room beside it: offered here, never forced open
@@ -1960,13 +1886,15 @@
     outline-offset: 2px;
     border-radius: 4px;
   }
-  .cdl-scope {
+  /* The conversation's Documents list uses D0's segmented control (`.cdl-scope.seg`, `.seg-b`, D4-5b); it was an
+     orange pressed pill. The library and project-files scopes keep this look until their own steps. */
+  .cdl-scope:not(.seg) {
     display: inline-flex;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     overflow: hidden;
   }
-  .cdl-scope-btn {
+  .cdl-scope:not(.seg) > .cdl-scope-btn {
     border: 0;
     background: none;
     padding: 5px 10px;
@@ -1974,10 +1902,10 @@
     color: var(--text-200);
     cursor: pointer;
   }
-  .cdl-scope-btn + .cdl-scope-btn {
+  .cdl-scope:not(.seg) > .cdl-scope-btn + .cdl-scope-btn {
     border-left: 1px solid var(--border);
   }
-  .cdl-scope-btn[aria-pressed='true'] {
+  .cdl-scope:not(.seg) > .cdl-scope-btn[aria-pressed='true'] {
     background: var(--accent-000);
     color: var(--accent-200);
     font-weight: 600;
@@ -2204,11 +2132,63 @@
       padding: 0;
     }
   }
+  /* The panel is a size container (D4.md §D4.K, `artifact`): what fits beside the page depends on the panel's
+     width, not the window's. */
   .dcv-workbench {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    container: artifact / inline-size;
+  }
+  /* D4-4: in a panel under 900px the outline floats over the page instead of taking a column of it, and Escape
+     closes it first (DocumentWorkbench `outlineOverlays`). An open rail floats too, so the page keeps the width. */
+  @container artifact (max-width: 899px) {
+    .dcv-workbench > .ed,
+    .dcv-workbench > .ed[data-comments='true'] {
+      position: relative;
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .dcv-workbench > .ed > .ed-tree {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 6;
+      width: min(280px, 100%);
+      max-height: none;
+      border-bottom: 0;
+      border-right: 1px solid var(--border);
+      box-shadow: var(--v2-shadow-lg);
+    }
+    .dcv-workbench > .ed[data-comments='true'] > .ed-comments {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: min(380px, 100%);
+      z-index: 5;
+      box-shadow: -8px 0 24px color-mix(in oklab, var(--black) 10%, transparent);
+    }
+  }
+  /* §D4.K "Page": in the panel, the page's sides follow the panel's width, not the window's. Beside the conversation
+     (729 px at 1440) the page kept its full-width 48 px sides. The variable moves with the padding, because the
+     ribbon spans the padding through it (rich-section-editor.css). The phone media rule below still serves the
+     editor outside a panel. */
+  @container artifact (max-width: 899px) {
+    .ed-doc-inner {
+      --ed-page-pad-x: 28px;
+      padding: 24px var(--ed-page-pad-x) 96px;
+    }
+  }
+  @container artifact (max-width: 560px) {
+    .ed-doc-inner {
+      --ed-page-pad-x: 16px;
+      padding: 20px var(--ed-page-pad-x) 80px;
+    }
+    .ed-mast-t {
+      font-size: 22px;
+    }
   }
   .dcv-workbench > .ed {
     flex: 1;
@@ -2221,7 +2201,10 @@
   @media (max-width: 1500px) {
     .dcv-workbench > .ed[data-comments='true'] {
       position: relative;
-      grid-template-columns: 220px minmax(0, 1fr);
+      grid-template-columns: 260px minmax(0, 1fr);
+    }
+    .dcv-workbench > .ed[data-outline='closed'][data-comments='true'] {
+      grid-template-columns: minmax(0, 1fr);
     }
     .dcv-workbench > .ed[data-comments='true'] > .ed-comments {
       position: absolute;
@@ -2298,41 +2281,18 @@
       font-size: 12px;
     }
 
-    /* ── The card ── */
-    .dcv-card {
-      padding: 14px 14px 12px;
-    }
-    /* 12px is the floor: five strings on this card were set between 10px and
-       11.5px, which is a size to glance at a number in, not to read a
-       provenance line in at arm's length. */
-    .dcv-kind,
+    /* ── The chip ── 12px is the floor (D0 §3). */
     .dcv-prov,
-    .dcv-sec-num,
-    .dcv-bar-p,
-    .dcv-bar-hint,
-    .dcv-showall,
-    .dcv-open-surface {
+    .dcv-bar-p {
       font-size: 12px;
     }
-    /* 44×44 (WCAG 2.2 Target Size). The `.btn` actions were 30px tall by an
-       inline style and the two `.nda-open` links 17px — a link-shaped control
-       is still a control. `min-height` rather than `height`, so a label that
-       wraps still gets its second line. */
-    .dcv-actions .btn,
-    .dcv-actions .nda-open,
-    .dcv-showall,
-    .dcv-bar .ed-back {
+    /* 44×44 (WCAG 2.2 Target Size): the chip's Open and the bar's way to the list. */
+    .dcv-card .btn,
+    .dcv-bar .ed-back,
+    .dcv-bar .btn {
       min-height: 44px;
       min-width: 44px;
       justify-content: center;
-    }
-    .dcv-actions .btn,
-    .dcv-actions .nda-open {
-      flex: 1 1 auto;
-    }
-    /* Left-aligned, `margin-left:auto` sends it to its own row on a phone. */
-    .dcv-open-surface {
-      margin-left: 0;
     }
 
     /* ── The editor, expanded ── */
@@ -2343,10 +2303,6 @@
       flex-wrap: wrap;
       row-gap: 4px;
     }
-    .dcv-bar-hint {
-      /* The keyboard hint is for a keyboard. There is not one here. */
-      display: none;
-    }
     /* One column at phone width, wherever the editor is mounted. Scoped to
        the canvas only, the Authoring surface kept its 220px outline beside
        the page, and the page column was 114px wide at 390px (QA 2026-10-08,
@@ -2356,6 +2312,12 @@
     .ed[data-no-comments] {
       grid-template-columns: minmax(0, 1fr);
       grid-template-rows: auto minmax(0, 1fr);
+    }
+    /* With the outline closed there is no first row: the page takes the height (D4-4). */
+    .ed[data-outline='closed'],
+    .ed[data-outline='closed'][data-comments='true'] {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr);
     }
     /* The outline scrolls as one box here (RR5 phone acceptance, 2026-10-30).
        Capped at 180px with no overflow of its own, its header (the program,
@@ -2376,9 +2338,9 @@
       width: 100%;
     }
     /* The page keeps a 16px gutter, and the title steps down as the page
-       titles do (D4-1). §D4.K writes these as `@container artifact` queries;
-       the container is D4-5's panel shell, and until it exists this is the
-       width that needs them. */
+       titles do (D4-1). Inside the panel the `@container artifact` rules
+       above do this by the panel's width; this rule is the editor outside a
+       panel, at the window's. */
     .ed-doc-inner {
       --ed-page-pad-x: 16px;
       padding: 20px var(--ed-page-pad-x) 80px;

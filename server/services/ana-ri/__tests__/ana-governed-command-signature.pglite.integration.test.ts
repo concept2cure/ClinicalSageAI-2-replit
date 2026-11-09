@@ -30,6 +30,7 @@ import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import { extractTableDdl } from '../../../../tests/golden-journeys/harness';
 import { GOVERNED_ACTION_LEDGER_PGLITE_DDL } from './governed-action-ledger.fixture';
 import { pglitePool } from './pglite-pool.fixture';
+import { BASE_DDL, D6_MIGRATION, ELECTRONIC_SIGNATURES_PRE_D6_DDL, THREAD_COMMENTS_DDL } from './ana-governed-command-signature.fixture';
 import { BINDING_BASIS, sha256CanonicalJson } from '../../part11/signature-persistence';
 import type { Part11Signoff } from '../part11-governance';
 
@@ -76,44 +77,6 @@ const PROJECT = 1;
 const SIGNER = 42;
 const SIGNER_NAME = 'Quinn A. Lead';
 const REASON = 'Signed for the IND 30-day safety update package';
-
-// electronic_signatures in its pre-D6 physical shape, then the REAL D6
-// migration on top (as governed-sign-esignature.pglite.integration.test.ts).
-const ELECTRONIC_SIGNATURES_PRE_D6_DDL = `
-CREATE TABLE electronic_signatures (
-  id serial PRIMARY KEY, document_id integer NOT NULL, version_id integer NOT NULL,
-  signature_type varchar(50) NOT NULL, signature_purpose text NOT NULL, signature_level integer DEFAULT 1,
-  signer_id integer NOT NULL, signer_name text NOT NULL, signer_title text, signer_email text NOT NULL,
-  authentication_method varchar(50) NOT NULL, authentication_timestamp timestamp NOT NULL,
-  second_factor_verified boolean DEFAULT false, signature_hash varchar(256) NOT NULL,
-  signature_meaning text, signature_manifest json, is_valid boolean DEFAULT true,
-  verification_status varchar(50), verification_date timestamp, compliance_statement text,
-  legal_disclaimer text, ip_address varchar(45), device_info json,
-  signed_at timestamp DEFAULT now() NOT NULL, created_at timestamp DEFAULT now() NOT NULL,
-  updated_at timestamp DEFAULT now(), organization_id integer,
-  bound_payload_digest text NOT NULL DEFAULT '', superseded_by integer
-);`;
-const D6_MIGRATION = fs.readFileSync(
-  path.join(__dirname, '../../../../migrations/20260813d_esignature_governed_unification.sql'),
-  'utf8',
-);
-// concept2cure_thread_comments as migrations/phase13_review_threads_tasks.sql
-// declares it, less the FKs whose referents are out of scope.
-const THREAD_COMMENTS_DDL = `
-CREATE TABLE concept2cure_thread_comments (
-  id SERIAL PRIMARY KEY, comment_id TEXT NOT NULL UNIQUE, org_id INTEGER NOT NULL,
-  thread_id INTEGER NOT NULL, artifact_id INTEGER NOT NULL, version_id INTEGER, parent_comment_id INTEGER,
-  author_id INTEGER NOT NULL, author_name TEXT NOT NULL, author_role TEXT, body TEXT NOT NULL,
-  kind TEXT NOT NULL DEFAULT 'comment', created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), edited_at TIMESTAMPTZ, deleted_at TIMESTAMPTZ
-);`;
-const BASE_DDL = `
-CREATE TABLE organizations (id serial PRIMARY KEY, name text, settings jsonb DEFAULT '{}'::jsonb);
-CREATE TABLE projects (id serial PRIMARY KEY, organization_id integer NOT NULL, name text);
--- The project-membership check (PF-03) reads programs and projects as one; a
--- package's integer project matches only the projects arm.
-CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id integer NOT NULL, deleted_at timestamp);
-`;
 
 const signoff = (over: Partial<Part11Signoff> = {}): Part11Signoff => ({
   reasonForChange: REASON,
@@ -179,6 +142,9 @@ beforeAll(async () => {
     'users', 'organization_users', 'concept2cure_conversations', 'concept2cure_artifacts', 'concept2cure_artifact_versions',
   ]));
   await pg.exec(extractTableDdl('migrations/0002_phase15_submission_ops.sql', ['c2c_submission_packages']));
+  // The review tables, from their creator on the set: P-95 Q2 (2026-11-09) has a placement read whether a
+  // review decision is recorded on the artifact's current version.
+  await pg.exec(fs.readFileSync(path.join(__dirname, '../../../..', 'db/migrations/20260314_phase12_multi_user_review.sql'), 'utf8'));
   /* The tracked-filing store create_submission_package writes (fold F5 item 1), from its creators on the set; the
      one-store migration reads two columns 20260814 and 20260524 give these tables on a deployed database. */
   await pg.exec('ALTER TABLE projects ADD COLUMN regulatory_program_id uuid; ALTER TABLE regulatory_programs ADD COLUMN product_type text;');
@@ -202,6 +168,7 @@ beforeEach(async () => {
   await pg.exec(`
     DROP TABLE IF EXISTS concept2cure_thread_comments;
     DELETE FROM electronic_signatures; DELETE FROM c2c_ana_actions; DELETE FROM audit_logs;
+    DELETE FROM concept2cure_review_decisions; DELETE FROM concept2cure_review_assignments;
     DELETE FROM concept2cure_artifact_versions; DELETE FROM concept2cure_artifacts;
     DELETE FROM concept2cure_conversations; DELETE FROM c2c_submission_packages; DELETE FROM estar_submissions;
     DELETE FROM gdpr_data_subject_requests; DELETE FROM organization_users; DELETE FROM users;
@@ -249,6 +216,32 @@ describe('place_in_dossier signs the placement it makes', () => {
     expect(ledger).toHaveLength(1);
     expect(ledger[0].target).toBe(`artifact:${ARTIFACT_EXT}`);
     expect(ledger[0].surface).toBe('ana-governed-action');
+  });
+
+  it('P-95 Q2: placing a reviewed document voids its review, as an edit does; the signature binds the version at its new place', async () => {
+    await seedArtifact();
+    await q(`INSERT INTO users (id, email, name, password_hash) VALUES (43, 'reviewer@acme.test', 'Rae Reviewer', 'x')`);
+    await q(
+      `WITH a AS (
+         INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, status)
+         SELECT 'asg_placed', id, organization_id, 43, $2, 'completed' FROM concept2cure_artifacts WHERE artifact_id = $1
+         RETURNING id, artifact_id, organization_id)
+       INSERT INTO concept2cure_review_decisions (decision_id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
+       SELECT 'dec_placed', a.id, a.artifact_id, a.organization_id, 43, 1, 'approve', 3 FROM a`,
+      [ARTIFACT_EXT, SIGNER],
+    );
+    const { placeInDossier } = await import('../command-executor');
+    const r = await placeInDossier(ctxWith(signoff()) as never, {
+      projectId: PROJECT, artifactId: ARTIFACT_EXT as never, ctdSection: '2.7.3.1',
+    });
+    expect(r.success, r.message).toBe(true);
+
+    const [art] = await q(`SELECT ctd_section, version FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT_EXT]);
+    expect(art).toMatchObject({ ctd_section: '2.7.3.1', version: 4 });
+    const [sig] = await signatures();
+    expect(sig.bound_payload_digest).toBe(
+      sha256CanonicalJson({ artifactId: ARTIFACT_EXT, version: 4, contentSha256: sha(V3), ctdSection: '2.7.3.1' }),
+    );
   });
 
   it('without a verified sign-off it places nothing and signs nothing', async () => {

@@ -211,13 +211,15 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="ae">
-      <div className="reg-head" style={{ marginBottom: 6 }}>
+      {/* D0's page header (§D4.J): no context eyebrow; asking AnA is quiet, and the one primary is below. */}
+      <div className="ph">
         <div>
-          <div className="reg-eyebrow">Biotech & Pharma {I.dot} authoring</div>
-          <h1 className="reg-title">AnA authoring engine</h1>
-          <p className="reg-sub">One route from raw data to a final draft across the CTD. Each document type has its own drafting system that works from evidence you have locked, cites each claim to its source, and surfaces anything it could not ground — across text, tables, figures and graphs.</p>
+          <h1 className="ph-title">AnA authoring engine</h1>
+          <p className="ph-sub">One route from raw data to a final draft across the CTD. Each document type has its own drafting system that works from evidence you have locked, cites each claim to its source, and surfaces anything it could not ground — across text, tables, figures and graphs.</p>
         </div>
-        <button className="reg-ask" onClick={() => ask('Draft my next CTD document with the right document-type system, grounded on the locked evidence')}>{I.sparkles} Draft with AnA</button>
+        <div className="ph-acts">
+          <button className="btn ghost" onClick={() => ask('Draft my next CTD document with the right document-type system, grounded on the locked evidence')}>{I.sparkles} Draft with AnA</button>
+        </div>
       </div>
 
       <div className="ae-badges">
@@ -284,7 +286,7 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
                 <div className="ae-detail-t">{sys.t}</div>
                 <div className="ae-detail-s">{sys.sub}</div>
               </div>
-              <button className="reg-ask" onClick={() => ask(`Draft the ${sys.t} (${sys.loc}) with its document-type system, grounded on the locked evidence`)}>{I.sparkles} Draft this</button>
+              <button className="btn ghost small" onClick={() => ask(`Draft the ${sys.t} (${sys.loc}) with its document-type system, grounded on the locked evidence`)}>{I.sparkles} Draft this</button>
             </div>
             <div className="ae-detail-cols">
               <div>

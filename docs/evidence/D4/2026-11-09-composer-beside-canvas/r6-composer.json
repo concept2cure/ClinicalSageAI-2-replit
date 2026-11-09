@@ -1,0 +1,179 @@
+[
+ {
+  "case": "r6-1440-light",
+  "url": "/concept2cure/conversation-thread?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+  "found": true,
+  "conv": {
+   "left": 264,
+   "right": 664,
+   "width": 400
+  },
+  "canvasOpen": true,
+  "foot": {
+   "width": 351,
+   "height": 111
+  },
+  "controls": [
+   {
+    "cls": "ana-drive-ctl",
+    "text": "AnA drives: onDemos",
+    "left": 373,
+    "right": 554,
+    "width": 182,
+    "height": 27,
+    "inside": true,
+    "visible": true
+   },
+   {
+    "cls": "ana-policy ana-policy-foot",
+    "text": "Between stepsManualAnA takes one step, t",
+    "left": 288,
+    "right": 639,
+    "width": 351,
+    "height": 48,
+    "inside": true,
+    "visible": true
+   },
+   {
+    "cls": "ct-engine",
+    "text": "Skills: AnA chooses",
+    "left": 334,
+    "right": 468,
+    "width": 133,
+    "height": 24,
+    "inside": true,
+    "visible": true
+   },
+   {
+    "cls": "ct-engine",
+    "text": "Engine: Balanced",
+    "left": 473,
+    "right": 593,
+    "width": 120,
+    "height": 24,
+    "inside": true,
+    "visible": true
+   }
+  ],
+  "allInside": true,
+  "allVisible": true
+ },
+ {
+  "case": "r6-1440-dark",
+  "url": "/concept2cure/conversation-thread?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+  "found": true,
+  "conv": {
+   "left": 264,
+   "right": 664,
+   "width": 400
+  },
+  "canvasOpen": true,
+  "foot": {
+   "width": 351,
+   "height": 111
+  },
+  "controls": [
+   {
+    "cls": "ana-drive-ctl",
+    "text": "AnA drives: onDemos",
+    "left": 373,
+    "right": 554,
+    "width": 182,
+    "height": 27,
+    "inside": true,
+    "visible": true
+   },
+   {
+    "cls": "ana-policy ana-policy-foot",
+    "text": "Between stepsManualAnA takes one step, t",
+    "left": 288,
+    "right": 639,
+    "width": 351,
+    "height": 48,
+    "inside": true,
+    "visible": true
+   },
+   {
+    "cls": "ct-engine",
+    "text": "Skills: AnA chooses",
+    "left": 334,
+    "right": 468,
+    "width": 133,
+    "height": 24,
+    "inside": true,
+    "visible": true
+   },
+   {
+    "cls": "ct-engine",
+    "text": "Engine: Balanced",
+    "left": 473,
+    "right": 593,
+    "width": 120,
+    "height": 24,
+    "inside": true,
+    "visible": true
+   }
+  ],
+  "allInside": true,
+  "allVisible": true
+ },
+ {
+  "case": "r6-1280-light",
+  "url": "/concept2cure/conversation-thread?program=c2ed888d-2958-4332-b186-e81482f2ceec",
+  "found": true,
+  "conv": {
+   "left": 264,
+   "right": 609,
+   "width": 345
+  },
+  "canvasOpen": true,
+  "foot": {
+   "width": 296,
+   "height": 111
+  },
+  "controls": [
+   {
+    "cls": "ana-drive-ctl",
+    "text": "AnA drives: onDemos",
+    "left": 345,
+    "right": 527,
+    "width": 182,
+    "height": 27,
+    "inside": true,
+    "visible": true
+   },
+   {
+    "cls": "ana-policy ana-policy-foot",
+    "text": "Between stepsManualAnA takes one step, t",
+    "left": 288,
+    "right": 584,
+    "width": 296,
+    "height": 48,
+    "inside": true,
+    "visible": true
+   },
+   {
+    "cls": "ct-engine",
+    "text": "Skills: AnA chooses",
+    "left": 307,
+    "right": 440,
+    "width": 133,
+    "height": 24,
+    "inside": true,
+    "visible": true
+   },
+   {
+    "cls": "ct-engine",
+    "text": "Engine: Balanced",
+    "left": 445,
+    "right": 565,
+    "width": 120,
+    "height": 24,
+    "inside": true,
+    "visible": true
+   }
+  ],
+  "allInside": true,
+  "allVisible": true
+ }
+]

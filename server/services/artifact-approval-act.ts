@@ -46,6 +46,9 @@
  * through the same act (server/services/artifact-signed-act.ts).
  */
 
+import { sql, type SQL } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
+import { concept2cureArtifacts } from '../../shared/schema';
 import type { GovernedSignMeaning } from './part11/signature-meanings';
 import { artifactApproval } from './ectd/package-content-fingerprint';
 import { assertSignerIsNotAuthor, resolveTargetAuthors, separationOfDutiesRefusal } from './governance/separation-of-duties';
@@ -249,8 +252,11 @@ async function reviewIndependenceVerdict(
     }
   }
   const [artifact] = (
-    await q.query(`SELECT artifact_id FROM concept2cure_artifacts WHERE id = $1 AND organization_id = $2`, [artifactPk, organizationId])
-  ).rows as Array<{ artifact_id: string }>;
+    await q.query(
+      `SELECT artifact_id, type, ctd_section FROM concept2cure_artifacts WHERE id = $1 AND organization_id = $2`,
+      [artifactPk, organizationId]
+    )
+  ).rows as Array<{ artifact_id: string; type: string | null; ctd_section: string | null }>;
   if (!artifact) return { met: false, message: 'Cannot approve: the artifact could not be read in this organization.' };
   const { authors } = await resolveTargetAuthors(`artifact:${artifact.artifact_id}`, organizationId, q);
   const authorReviewers = active.filter(a => authors.map(Number).includes(Number(a.reviewer_id)));
@@ -260,7 +266,96 @@ async function reviewIndependenceVerdict(
       message: `Cannot approve: ${authorReviewers.length} reviewer(s) in the latest review round wrote this document, and an author's review does not count. Assign a reviewer who did not write it.`,
     };
   }
+  const floor = reviewFloor(artifact);
+  if (active.length < floor.reviewers) {
+    return {
+      met: false,
+      code: 'REVIEW_REQUIRED',
+      message: `Cannot approve: this document needs ${floor.reviewers} independent reviewers, because ${floor.because}; ${active.length} has approved this version. ${NAME_A_REVIEWER}`,
+    };
+  }
   return { met: true };
+}
+
+/**
+ * The values AnA writes into ctd_section to mean "no section": 'unassigned'
+ * (ana-ri/command-executor.ts, which itself reads it as unplaced) and
+ * 'ana-ri.<action>' (ana-ri/artifact-generator.ts). Any other value is a
+ * section the artifact was placed in, recognised or not (fail closed).
+ */
+function placedSection(ctdSection: string | null): string | null {
+  const section = (ctdSection ?? '').trim();
+  if (!section || section === 'unassigned' || section.startsWith('ana-ri.')) return null;
+  return section;
+}
+
+/**
+ * P-95 Q2 (ruled 2026-11-09 by the coordinating session under P-107,
+ * COORDINATION.md): how many independent reviewers must approve this version.
+ * Two where the contract names regulated_dual_review, read only from fields
+ * no request can lower: a CTD section is set, in any module (a placed
+ * artifact is a submission_component, which documentClassSemantics.ts makes
+ * dual), or the type is 'section' (type is never updated). Every other
+ * artifact keeps one, as the single classes (memos, summaries) do. The class
+ * re-resolved per request (metadata.harness.documentClass) is not read: any
+ * writer can lower it (docs/evidence/W5/2026-11-01/p95-q2/README.md).
+ */
+export function reviewFloor(artifact: { type: string | null; ctd_section: string | null }): { reviewers: number; because: string } {
+  const section = placedSection(artifact.ctd_section);
+  if (section) return { reviewers: 2, because: `it is placed in CTD ${section}` };
+  if (artifact.type === 'section') return { reviewers: 2, because: 'it is a dossier section' };
+  return { reviewers: 1, because: 'it is not placed in a filing' };
+}
+
+/**
+ * P-95 Q2: moving an artifact voids its review decisions, as an edit does.
+ * Every UPDATE of concept2cure_artifacts that may change ctd_section adds this
+ * to version: 1 when the section changes, the artifact is not locked and a
+ * review decision is recorded on its current version, else 0. Decisions on an
+ * earlier version are already void, so an edit and a move in one transaction
+ * move it once. The version moves on, so every decision is on an earlier
+ * version and the quorum refuses it ("Route it for review again"); an approval
+ * no longer covers the version, as after an edit. The reviewers judged the
+ * text at its place. SET expressions read the row as it was, so ctd_section
+ * here is the section it is moving from. A drizzle template: the new section
+ * is a bound parameter and the columns are quoted identifiers, so no value
+ * reaches the SQL text (ci:sql-interpolation).
+ */
+export function moveVoidsReview(newSection: string | null): SQL {
+  const a = concept2cureArtifacts;
+  return sql`(CASE WHEN ${a.ctdSection} IS DISTINCT FROM ${newSection}::text
+      AND ${a.status} IS DISTINCT FROM 'locked'
+      AND EXISTS (SELECT 1 FROM concept2cure_review_decisions d
+                   WHERE d.artifact_id = ${a.id}
+                     AND d.organization_id = ${a.organizationId}
+                     AND d.version_reviewed = ${a.version})
+    THEN 1 ELSE 0 END)`;
+}
+
+const pgDialect = new PgDialect();
+
+/**
+ * The move for a writer on a pg client (AnA's spine and its signed
+ * place_in_dossier): ctd_section set and the version moved on by
+ * moveVoidsReview, in one statement, rendered to text and bound parameters.
+ * Null when the row is not this organization's.
+ */
+export async function moveArtifactToSection(
+  q: ApprovalActQueryable,
+  artifactPk: number,
+  organizationId: number,
+  section: string
+): Promise<{ ctd_section: string | null; version: number } | null> {
+  const a = concept2cureArtifacts;
+  const query = pgDialect.sqlToQuery(sql`UPDATE ${a}
+       SET ${sql.identifier(a.ctdSection.name)} = ${section},
+           ${sql.identifier(a.version.name)} = ${a.version} + ${moveVoidsReview(section)},
+           ${sql.identifier(a.updatedAt.name)} = now()
+     WHERE ${a.id} = ${artifactPk} AND ${a.organizationId} = ${organizationId}
+     RETURNING ${a.ctdSection}, ${a.version}`);
+  const { rows } = await q.query(query.sql, query.params);
+  const row = rows[0] as { ctd_section: string | null; version: number | string } | undefined;
+  return row ? { ctd_section: row.ctd_section, version: Number(row.version) } : null;
 }
 
 /** The governed approval act — the only writer of approved_version_id. */
