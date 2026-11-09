@@ -294,3 +294,11 @@ export function rbmBoardHasData(board: RbmBoard | null): boolean {
     board.attention.length > 0
   );
 }
+
+/** The assessment framework as a reader names it. The record stores a code (`ich_e6r3`, the schema default);
+ *  an unknown code is shown as recorded rather than guessed at. */
+const FRAMEWORK_LABEL: Record<string, string> = { ich_e6r3: 'ICH E6(R3)', ich_e6r2: 'ICH E6(R2)' };
+export function frameworkLabel(code: string | null | undefined): string {
+  const c = (code ?? '').trim();
+  return FRAMEWORK_LABEL[c] ?? c;
+}

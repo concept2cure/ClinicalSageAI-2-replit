@@ -21,8 +21,8 @@
  *   GET /:id/change-impact         recent edits + cross-section refs
  *   GET /:id/safety-signals        CER signals from safety_signals
  *   GET /:id/literature            year-bucketed literature corpus
- *   GET /:id/pma-modules           cerv2_510k_sections grouped by PMA module
- *   GET /:id/pma-trial-metrics     clinical_ops.studies-derived KPIs
+ *   GET /:id/pma-modules           the project's PMA document, by the PMA mapper's modules
+ *   GET /:id/pma-trial-metrics     KPIs of the clinical_ops study the project is linked to
  *   GET /portfolio-insights        cross-portfolio insights
  */
 

@@ -225,6 +225,16 @@ if [[ ! -f "$C2C_CODESPACE_STATE/csr-study.done" ]]; then
     node scripts/cre/fetch-cdisc-pilot-adam.mjs "$C2C_CDISC_DIR" >"$C2C_CODESPACE_STATE/cdisc-fetch.log" 2>&1 ||
       c2c_log "The CDISC pilot files could not be fetched; see $C2C_CODESPACE_STATE/cdisc-fetch.log."
   fi
+  if [[ -f "$C2C_CDISC_DIR/adsl.xpt" ]] && ! node -e "require.resolve('playwright')" >/dev/null 2>&1; then
+    # The preparation walk drives a browser with playwright, which is not a project dependency: without it every
+    # fresh Codespace stopped here with "Cannot find module 'playwright'" (2026-11-09). Installed for this checkout
+    # only (--no-save), with its browser; a failure leaves the app running and the preparation re-tried next start.
+    c2c_log "Installing playwright for the CSR study preparation; log: $C2C_CODESPACE_STATE/playwright-install.log"
+    { timeout 900 npm install --no-save --no-audit --no-fund playwright@1.56.1 &&
+      timeout 900 npx playwright install chromium &&
+      c2c_sudo timeout 900 "$(command -v npx)" playwright install-deps chromium; } >"$C2C_CODESPACE_STATE/playwright-install.log" 2>&1 ||
+      c2c_log "playwright could not be installed; see $C2C_CODESPACE_STATE/playwright-install.log."
+  fi
   if [[ -f "$C2C_CDISC_DIR/adsl.xpt" ]]; then
     c2c_log "Preparing the CSR study in the app (Vault uploads, approvals, CSR document, frozen study data)."
     if DEMO_TAG=codespace DEMO_PREPARE_UNTIL=freeze DEMO_AUTHOR_EMAIL="$DEMO_AUTHOR_EMAIL" \

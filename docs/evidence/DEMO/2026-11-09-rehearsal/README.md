@@ -54,3 +54,38 @@
 | `seed-mdx-after-fix.txt` | **exit 0.** The 510(k) Summary reviewed, frozen and approved; SOP-101 and SOP-102 effective, SOP-103 in review, SOP-104 draft; the ledger chain verifies |
 
 Pack tests: `node --test scripts/demo/launch-demo/*.test.mjs`, 119/119. ESLint: unchanged on the three files.
+
+## The walk, in a browser (Playwright, Chromium, 1440×900), on trunk `b4284d08ce`
+
+Signed in through the login page's **Demo access** button. Nothing was typed into an address bar: each screen was
+reached from the rail, a project, its journey bar or Search, as a person reaches it.
+
+| Screen | What it showed | Errors |
+|---|---|---|
+| Login → Demo access | Signed in as the presenter (`screens/01`, `02`) | none, **after the migration below** |
+| Every rail screen: Home, Projects, Tasks, Communication, Vault, Submission Center, CMC / Module 3, Biostatistics, Risk-based monitoring, Quality, Reporting & analytics | Each opened. Communication, Submission Center and CMC say they open inside a project, by design | no 5xx, no console error, no error text |
+| C2C-101 project, journey Plan → Respond | The documents, "Dossier readiness 0%", "IND · FDA (US) Dispatch blocked · 4 blockers", "Agency letters 1 open" (`screens/03`) | none |
+| C2C-101 Protocol Synopsis in the editor | "Frozen v1", read only, sealed under a content hash; "98% of this section has a recorded origin" (`screens/04`) | none |
+| C2C-101 Submission Center | "1 sequence: 0000, assembling" (`screens/05`) | none |
+| Quality register | C2C-SOP-001 and -002 "Approved by Quinn Signer"; C2C-SOP-003 "Under review — Waiting for Quinn Signer"; the MDx SOPs (`screens/06`) | none |
+| Audit trail (through Search) | "Hash chain verifies intact over 544 chained entries"; 5 e-signature events (`screens/07`) | none |
+| NeuroPanel-Dx 510(k) Summary in the editor | "Approved v1", "approved and frozen … part of the signed record" (`screens/08`) | none |
+| NeuroPanel-Dx journey Plan → Respond | each stage opened | none |
+
+**The one break: Demo access refused to sign in, until today's migrations were applied.**
+- The button checks that the demo is usable before keeping the session, and that check reads the Tasking board.
+  `GET /api/task-management/board` answered 500, because `unified_tasks.parent_task_id` did not exist.
+- That column arrived today in `91939f245f` (13:36 UTC), with `migrations/20261109_unified_tasks_parent_task.sql`.
+- The rehearsal database had been migrated before it, and the server was restarted on newer code. `deploy-migrate`
+  applied it, and `20261109_ectd_sequence_removal_guard.sql`, and Demo access signed in.
+- **An environment that pulls today's trunk must run the migration step before the app restarts.** A deployment
+  does.
+
+**Server log during the walk.** Thirteen error lines. One is the board failure above, before the migration. The
+rest are requests the script abandoned by navigating or closing within seconds (`RequestEndedError`, "Cannot query a
+released request DB client"); none showed on a screen.
+
+**Not rehearsed.** AnA answering or drafting: no model provider is configured on this machine, as the walkthroughs
+say. And a live approval of an AnA conversation artifact. Since today (P-95) that needs a named reviewer, and two for
+a document placed in a CTD section, in the artifact card's Review section.
+
