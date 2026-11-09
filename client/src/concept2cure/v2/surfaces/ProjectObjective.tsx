@@ -171,7 +171,8 @@ export function NewProjectObjectiveField({ value, onChange }: { value: string; o
   return (
     <div className="npw-field npw-field-wide">
       <label className="npw-field-l" htmlFor="npw-objective">Objective (optional)</label>
-      <textarea id="npw-objective" className="c2c-input" rows={3} value={value} aria-describedby="npw-objective-help"
+      {/* The server's limit (charter-objectives.ts objectivesBodySchema, checked by POST /api/c2c/projects). */}
+      <textarea id="npw-objective" className="c2c-input" rows={3} value={value} maxLength={4000} aria-describedby="npw-objective-help"
         onChange={e => onChange(e.target.value)}
         /* For every filing type: a device 510(k) has no study endpoint to state (human test J1, 2026-11-06). */
         placeholder="What this project must achieve, e.g. study-may-proceed on the IND, or 510(k) clearance, and by when." />
