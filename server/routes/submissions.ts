@@ -1507,6 +1507,34 @@ router.post('/sequences/:seqId/shadow-review/waive', limiter, requireRole(AUTHOR
   }
 });
 
+// ── Retiring a sequence never filed (P-86, decided 2026-11-01; launch row D7) ─
+// Offered only while nothing keeps the sequence: it is not filed or in flight,
+// no production send is bound to it, its number was not sent as a package, no
+// IND record is filed in it, and no later sequence is in use (ask POST
+// governed-precheck { step: 'retire' }, which answers the statement to sign).
+// Sign first: POST /api/c2c/actions/sign, target "ectd-sequence:<seqId>",
+// payload { intent: 'retire', meaning: 'responsibility', notFiledElsewhere:
+// true, statement }, with the reason: the signature's reason is the
+// retirement's. Then pass its actionId here. 403 GOVERNED_REQUIRED for a
+// missing, spent, void or wrong signature; 403 FORBIDDEN for the sequence's
+// creator; 409 SEQUENCE_NOT_RETIRABLE, with what keeps it; a refused retirement
+// voids its signature. The act is retireSequence's; no AnA tool reaches this door.
+const retireSequenceSchema = z.object({ signatureActionId: z.string().min(1).max(128) });
+router.post('/sequences/:seqId/retire', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = retireSequenceSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { retireSequence } = await import('../services/submission-service/submission-service');
+    res.json(await retireSequence({ sequenceId: seqId, signatureActionId: parsed.data.signatureActionId }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 // ── Closing a critical Shadow Review finding (P-35, decided 2026-10-15) ─────
 // Each open critical finding is closed on its own: 'accepted' (risk accepted)
 // or 'fixed' (offered only when a completed Shadow Review ran after the
@@ -2065,7 +2093,9 @@ const governedPrecheckSchema = z
     // the failed run it would cite, before anyone signs one.
     // 'shadow-finding-disposition' (P-35): whether the named finding may be
     // closed that way now, before anyone signs.
-    step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver', 'shadow-finding-disposition']),
+    // 'retire' (P-86): whether the sequence may be retired, by this person,
+    // and the statement the signature carries; its own rule answers it.
+    step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver', 'shadow-finding-disposition', 'retire']),
     environment: z.enum(['staging', 'production']).optional(),
     // Transmit: the number the person typed, judged against the program record
     // before anyone signs (P-23), by the rule transmit itself applies.
@@ -2086,7 +2116,8 @@ router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR),
   const parsed = governedPrecheckSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    const { precheckGovernedStep } = await import('../services/submission-service/submission-service');
+    const { precheckGovernedStep, precheckSequenceRetirement } = await import('../services/submission-service/submission-service');
+    if (parsed.data.step === 'retire') return res.json(await precheckSequenceRetirement(seqId, ctx));
     res.json(
       await precheckGovernedStep(seqId, parsed.data.step, ctx, {
         environment: parsed.data.environment,

@@ -1,0 +1,5 @@
+MUTATION C2-M7-mcp-unreadable-read-as-not-in-use in server/mcp/tools/catalog.ts (on the final code and tests, 2026-11-09T08:12:28.861232Z): replaced [    return refused(`Sequence #${id} is not in use in this organisation, and whether it was retired could not be read: ${errorMessage(readErr)}`);] with [    return undefined;]
+ × server/mcp/__tests__/sequence-status-retired.test.ts > c2c_get_sequence_status on a sequence no longer in use > a retirement record that cannot be read is a refusal, never "not in use" 17ms
+      Tests  1 failed | 6 skipped (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 88d3082c7be7fb760670787319e766d6687cf960e94b8510cb59e0b309c1fd10 (expected 88d3082c7be7fb760670787319e766d6687cf960e94b8510cb59e0b309c1fd10)
