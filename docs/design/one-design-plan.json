@@ -34,7 +34,9 @@
     "P-107",
     "P-108",
     "P-109",
-    "P-110"
+    "P-110",
+    "P-111",
+    "P-112"
   ],
   "alwaysAllowed": [
     "**/__tests__/**",
@@ -618,7 +620,7 @@
     },
     {
       "id": "S12",
-      "title": "Spine 12: work projects (CMC, biostatistics, RBM, data management, clin pharm, nonclinical) and their deliverables mapped downstream, versioned with lineage, with change flags (P-83)",
+      "title": "Spine 12: work projects (CMC, biostatistics, RBM, data management, clin pharm, nonclinical) and their deliverables mapped downstream, versioned with lineage, with change flags (P-83); a CMC or Quality work project manages its own smaller tasks inside its work area (P-111)",
       "status": "open",
       "dependsOn": [],
       "paths": [
@@ -645,7 +647,14 @@
         "migrations/**",
         "db/migrations/**",
         "scripts/db/migration-set.mjs",
-        "shared/schema/**"
+        "shared/schema/**",
+        "client/src/concept2cure/quality/**",
+        "client/src/concept2cure/v2/surfaces/Quality*.tsx",
+        "server/services/qms/**",
+        "server/services/capa-mdr/**",
+        "server/services/tasking/**",
+        "server/services/unified-work/**",
+        "shared/schema.ts"
       ]
     },
     {

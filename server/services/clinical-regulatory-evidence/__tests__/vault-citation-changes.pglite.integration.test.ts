@@ -22,7 +22,7 @@ const pool = {
 };
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) } }));
 
-import { listChangedVaultCitations } from '../vault-citation-changes';
+import { listChangedVaultCitations, listVaultFedSections } from '../vault-citation-changes';
 
 const ORG_A = 931;
 const ORG_B = 942;
@@ -150,5 +150,22 @@ describe('a section drafted from a Vault version, once a later version is approv
     await drafted(ORG_A, mine, t1);
     expect((await changes()).some((c) => c.sectionId === theirs || c.sectionId === mine)).toBe(false);
     expect((await changes(ORG_B, PROGRAM_B)).map((c) => c.sectionId)).toEqual([theirs]);
+  });
+
+  it('the program map lists every Vault-fed section with its standing, current or replaced (S12 gap 5)', async () => {
+    const replaced = await section(ORG_A, PROGRAM_A, '3.2.P.3.3');
+    const current = await section(ORG_A, PROGRAM_A, '3.2.P.3.4');
+    const m1 = await version(ORG_A, PROGRAM_A, 'DP-MFG', '1.0');
+    await drafted(ORG_A, replaced, m1);
+    const m2 = await version(ORG_A, PROGRAM_A, 'DP-MFG', '2.0', m1);
+    await stage(ORG_A, m2, 'approved');
+    await drafted(ORG_A, current, m2);
+    const fed = await listVaultFedSections(pool, ORG_A, { userId: 1, programId: PROGRAM_A });
+    expect(fed.find((f) => f.sectionId === replaced)).toMatchObject({ state: 'replaced', citedVersion: '1.0', approvedVaultId: m2, approvedVersion: '2.0' });
+    expect(fed.find((f) => f.sectionId === current)).toMatchObject({ state: 'current', citedVersion: '2.0', approvedVaultId: null, approvedVersion: null });
+    // The changed list is the replaced half of the same read.
+    const changed = await changes();
+    expect(changed.some((c) => c.sectionId === replaced)).toBe(true);
+    expect(changed.some((c) => c.sectionId === current)).toBe(false);
   });
 });
