@@ -21,6 +21,7 @@ import React, { useMemo } from 'react';
 import * as PG from './ProtocolGov';
 import { PaneHead } from './ProtocolDevShared';
 import { hasKeys, useLiveData } from '../dataConnect';
+import { assessmentState } from '../assessmentState';
 
 type Row = Record<string, unknown>;
 const asRows = (v: unknown): Row[] => (Array.isArray(v) ? (v as Row[]) : []);
@@ -314,9 +315,12 @@ function DeviationTrendSignals({ documentId }: { documentId: string }) {
   if (read.loading && !read.data) return null;
   if (read.error && !read.data) return <div className="pde-note" role="note">The deviation trends could not be read.</div>;
   const signals = read.data?.trends.signals ?? [];
+  // "No trend signal" is a finding only because the engine answered: the loading and failed reads returned above,
+  // so reaching here with data is the positive evidence the assessment ran (assessmentState.ts).
+  const state = assessmentState({ scopeExists: true, findingCount: signals.length, assessmentRan: Boolean(read.data) });
   return (
     <div className="pde-note" data-testid="deviation-trend-signals">
-      {signals.length === 0
+      {state === 'assessed-clear'
         ? 'No trend signal over the window the trend engine reads.'
         : signals.map((s, i) => <div key={s.code + i}><strong>{s.code}</strong> {s.message}</div>)}
     </div>

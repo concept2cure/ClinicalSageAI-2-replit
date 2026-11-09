@@ -131,7 +131,18 @@ describe('a sequence number is used once in a submission (F1 repair A)', () => {
   it('a removed 0000 does not hold its number', async () => {
     const sub = await submission();
     const first = await createSequence(sub, '0000');
-    await owner.query('UPDATE ectd_sequences SET deleted_at = now() WHERE id = $1', [first.body.id]);
+    // A removed sequence is made only by a recorded act (P-86's retirement, or the filed-elsewhere baseline's removal of
+    // drafts): migrations/20261109_ectd_sequence_removal_guard.sql refuses any other removal at COMMIT. This fixture stands
+    // in for one, with triggers off for its own transaction only (as review-route-guard.dbtest.ts lays a row).
+    const lay = await owner.connect();
+    try {
+      await lay.query('BEGIN');
+      await lay.query('SET LOCAL session_replication_role = replica');
+      await lay.query('UPDATE ectd_sequences SET deleted_at = now() WHERE id = $1', [first.body.id]);
+      await lay.query('COMMIT');
+    } finally {
+      lay.release();
+    }
     const again = await createSequence(sub, '0000');
     expect(again.status, JSON.stringify(again.body)).toBe(201);
     expect(await liveCount(sub, '0000')).toBe(1);
@@ -143,7 +154,11 @@ describe('a sequence number is used once in a submission (F1 repair A)', () => {
     const res = await racedWith(
       'SELECT id FROM ectd_sequences WHERE id = $1 FOR UPDATE', [seq.id],
       async () => request(await app()).post(`/api/submissions/sequences/${seq.id}/transition`).send({ status: 'assembling' }),
-      async (c) => { await c.query('UPDATE ectd_sequences SET deleted_at = now() WHERE id = $1', [seq.id]); },
+      // The racing removal stands in for a recorded one, triggers off for its transaction only (see the case above).
+      async (c) => {
+        await c.query('SET LOCAL session_replication_role = replica');
+        await c.query('UPDATE ectd_sequences SET deleted_at = now() WHERE id = $1', [seq.id]);
+      },
     );
     expect(res.status, JSON.stringify(res.body)).toBe(409);
     expect((await owner.query('SELECT status FROM ectd_sequences WHERE id = $1', [seq.id])).rows[0].status).toBe('draft');
