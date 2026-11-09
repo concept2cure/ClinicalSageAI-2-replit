@@ -13,6 +13,7 @@
  * Every pack passes its own content; nothing here names a product.
  */
 import { must } from '../lib.mjs';
+import { NOT_EXECUTED_NO_SIGNER } from './biotech-shared.mjs';
 
 const DAY = 86_400_000;
 const isoIn = (days) => new Date(Date.now() + days * DAY).toISOString();
@@ -154,6 +155,132 @@ export async function ensureTasks({ api, run, tally }, program, tasks, label) {
 
 /* ───────────────────────── CMC / Module 3 ───────────────────────── */
 
+/**
+ * The drug substance and the drug product §3.2.S and §3.2.P are written about.
+ *
+ * These two records are what the rest of the dossier is ABOUT, and no pack
+ * recorded either: `compositionRefusal` found no drug substance and answered
+ * `CMC_MODALITY_NOT_ESTABLISHED` — "this project records no drug substance" —
+ * instead of the refusal that is true of the programme, and §3.2.S.1 / §3.2.P.1
+ * composed with no source (J5-13).
+ *
+ * The modality is sent as the pack states it. `classifySubstanceModality` reads
+ * it from the manufacturing route when the record does not state it, and a demo
+ * whose composition scope rests on that heuristic changes meaning the next time
+ * someone rewords a process description.
+ */
+async function ensureMaterials({ api, tally }, program, cmc) {
+  let created = 0;
+  const s = cmc.substance;
+  if (s) {
+    const listed = rowsOf(must(await api('GET', `/api/cmc/drug-substances?projectId=${encodeURIComponent(program.id)}`), 200, 'list drug substances'));
+    const found = listed.find((r) => String(r.substanceName ?? r.substance_name ?? '').trim() === s.name);
+    if (found) tally.found('cmc-drug-substance');
+    else {
+      must(await api('POST', '/api/cmc/drug-substances', {
+        substanceName: s.name,
+        ...(s.inn ? { inn: s.inn } : {}),
+        ...(s.structuralFormula ? { structuralFormula: s.structuralFormula } : {}),
+        manufacturingProcess: { manufacturer: s.manufacturer, route: s.route, ...(s.site ? { site: s.site } : {}) },
+        ...(s.modality ? { modality: s.modality } : {}),
+        ...(s.biologicalOrigin ? { biologicalOrigin: s.biologicalOrigin } : {}),
+        ...(s.cellLine ? { cellLine: s.cellLine } : {}),
+        ...(s.sourceOrganism ? { sourceOrganism: s.sourceOrganism } : {}),
+        ...(s.viralSafetyEvaluation ? { viralSafetyEvaluation: s.viralSafetyEvaluation } : {}),
+        ...(s.tseStatus ? { tseStatus: s.tseStatus } : {}),
+        ...(s.developmentPhase ? { developmentPhase: s.developmentPhase } : {}),
+        status: s.status ?? 'development',
+        projectId: program.id,
+      }), [200, 201], `create drug substance "${s.name}"`);
+      tally.created('cmc-drug-substance');
+      created += 1;
+    }
+  }
+  const p = cmc.product;
+  if (p) {
+    const listed = rowsOf(must(await api('GET', `/api/cmc/drug-products?projectId=${encodeURIComponent(program.id)}`), 200, 'list drug products'));
+    const found = listed.find((r) => String(r.productName ?? r.product_name ?? '').trim() === p.name);
+    if (found) tally.found('cmc-drug-product');
+    else {
+      must(await api('POST', '/api/cmc/drug-products', {
+        productName: p.name,
+        dosageForm: p.dosageForm,
+        strength: p.strength,
+        ...(p.route ? { routeOfAdministration: p.route } : {}),
+        composition: { description: p.composition },
+        batchFormula: { description: p.batchFormula ?? p.composition },
+        manufacturingProcess: { description: p.process, ...(p.site ? { site: p.site } : {}) },
+        packagingMaterials: { containerClosure: p.containerClosure },
+        status: p.status ?? 'development',
+        projectId: program.id,
+      }), [200, 201], `create drug product "${p.name}"`);
+      tally.created('cmc-drug-product');
+      created += 1;
+    }
+  }
+  return created;
+}
+
+/**
+ * The analytical procedures the specifications name, in the method register.
+ *
+ * Why the seed must do this: the approval route resolves a limit's named
+ * procedure against this register and refuses `METHOD_NOT_IN_REGISTER` when it
+ * does not hold it (services/cmc/analytical-method-source.ts), so a demo whose
+ * specifications name procedures nobody recorded is a demo whose limits cannot
+ * be approved. §3.2.S.4.3's Analytical Methods table has no other source
+ * either.
+ *
+ * `status` is never `validated` on the create: validation is a governed act and
+ * an ordinary write carrying that word is refused with a 409
+ * (`ungovernedQualificationRefusal`). Each method is recorded with its ICH Q2
+ * parameters — which is what the validation signs for, and without which the
+ * ceremony refuses with "nothing to sign" — and signed below when a signer
+ * credential is supplied, exactly as the pack's other signatures are.
+ */
+async function ensureMethods({ api, tally, signer }, program, methods) {
+  if (!methods?.length) return { created: 0, validated: 0, signerMissing: false };
+  const list = rowsOf(must(await api('GET', `/api/cmc/analytical-methods?projectId=${encodeURIComponent(program.id)}`), 200, 'list analytical methods'));
+  const byTitle = new Map(list.map((m) => [String(m.title ?? '').trim().toLowerCase(), m]));
+  let created = 0;
+  let validated = 0;
+  for (const m of methods) {
+    const titleKey = String(m.title).trim().toLowerCase();
+    let row = byTitle.get(titleKey) ?? null;
+    if (row) tally.found('cmc-method');
+    else {
+      row = must(await api('POST', '/api/cmc/analytical-methods', {
+        methodCode: m.code,
+        title: m.title,
+        purpose: m.purpose,
+        analyte: m.analyte,
+        matrix: m.matrix,
+        technique: m.technique,
+        status: m.status,
+        ichQ2Parameters: { characteristics: m.characteristics, summary: m.summary },
+        projectId: program.id,
+      }), [200, 201], `create analytical method "${m.title}"`).data;
+      byTitle.set(titleKey, row);
+      tally.created('cmc-method');
+      created += 1;
+    }
+    /* Already signed, or no signer to sign with. A method left in `validation`
+       is refused at approval by name and status, which is the honest state —
+       not a silent pass. */
+    if (String(row?.status ?? '').trim().toLowerCase() === 'validated') continue;
+    if (!signer) continue;
+    must(await (signer.api ?? api)('POST', `/api/cmc/analytical-methods/${row.id}/validate`, {
+      reason: 'Demo seed: the ICH Q2 validation package for this procedure is complete and is signed for.',
+      meaning: 'approval',
+      reauth: { password: signer.password },
+      idempotencyKey: `demo-method-validate-${program.id}-${m.code}`,
+    }), [200, 201], `validate "${m.title}"`);
+    tally.created('cmc-method-validation');
+    validated += 1;
+  }
+  return { created, validated, signerMissing: !signer };
+}
+
 async function ensureSpecs({ api, tally }, program, specs) {
   const list = rowsOf(must(await api('GET', `/api/cmc/specifications/${program.id}`), 200, 'list specifications'));
   const have = new Set(list.map((s) => s.material_name ?? s.materialName));
@@ -202,6 +329,18 @@ async function ensureStability({ api, tally }, program, studies) {
         startDate: start.toISOString(),
         plannedEndDate: end.toISOString(),
         notes: s.notes,
+        /* §3.2.P.8.1's whole subject. `mapStabilityPayload` emits
+           `drugProductShelfLifeClaim` only from a recorded claim, and the seed
+           sent none — so §3.2.P.8 composed at 0% complete, missing
+           `drugProductShelfLifeClaim`, for every demo project. Found by running
+           the seed against a server; no unit case noticed, because the results
+           table and its OOS row compose from `results` either way.
+
+           The field is `shelfLife` — the register's own column. Sending
+           `shelfLifeClaim` (the name the COMPOSER reads) returned 200 and
+           changed nothing, because the route parses the body with a Zod schema
+           that strips unknown keys. See the read-back below. */
+        ...(s.shelfLife ? { shelfLife: s.shelfLife } : {}),
         projectId: program.id,
       }), [200, 201], `create stability study "${s.title}"`).data;
       tally.created('cmc-stability');
@@ -215,6 +354,74 @@ async function ensureStability({ api, tally }, program, studies) {
       }), 200, `record results for "${s.title}"`);
       tally.created('cmc-stability-results');
     }
+    /* The shelf-life claim, on a study that is already on file without one.
+       Same rule as the results above, and for the same reason: a seeder that
+       can only set a field at CREATE leaves every database seeded before the
+       field existed permanently incomplete — §3.2.P.8 at 0%, missing the one
+       input the section is about. Measured on this container's database after
+       the field was added. */
+    const claim = row?.shelfLife ?? row?.shelf_life ?? null;
+    if (s.shelfLife && !String(claim ?? '').trim()) {
+      const saved = must(await api('PUT', `/api/cmc/stability-studies/${row.id}`, {
+        shelfLife: s.shelfLife,
+        reason: 'Demo seed: record the shelf life this study supports, which §3.2.P.8.1 states.',
+      }), 200, `record the shelf-life claim for "${s.title}"`);
+      /* READ THE WRITE BACK. The register's PUT parses its body with a Zod
+         schema that STRIPS unknown keys, so a field named wrongly returns 200
+         having changed nothing — which is exactly what happened here: three
+         studies were reported updated and none was. A seed that reports a
+         write it did not make is worse than one that fails. */
+      const stored = saved?.data ?? saved;
+      const after = stored?.shelfLife ?? stored?.shelf_life ?? null;
+      if (!String(after ?? '').trim()) {
+        throw new Error(
+          `the shelf-life claim for "${s.title}" was accepted (200) and not stored — ` +
+          'the register ignored the field. Check the column name against shared/schema.ts.',
+        );
+      }
+      tally.created('cmc-stability-shelf-life');
+    }
+  }
+  return created;
+}
+
+/**
+ * The recorded release results — which ARE the batch analyses of §3.2.S.4.4 and
+ * §3.2.P.5.4.
+ *
+ * The seed recorded batch RECORDS (the manufacture) and no QC results (the
+ * testing), so both sections composed missing `drugSubstanceBatchAnalyses` /
+ * `drugProductBatchAnalyses`: the two sections whose entire purpose is to carry
+ * quantitative results had none, in the demo of a product whose phase 4
+ * acceptance is about exactly those tables. Found by running the seed against a
+ * server and reading the composed sections, not by a unit case.
+ *
+ * `sampleType` is the register's closed vocabulary (`shared/cmc/qc-sample-types`):
+ * it decides which material the result is evidence for, and a value outside it
+ * is attributed to neither. `reviewed` is left to the register's own
+ * second-person review route — a result this seed marked reviewed would be one
+ * person recording both halves of a two-person rule.
+ */
+async function ensureQcResults({ api, tally }, program, results) {
+  if (!results?.length) return 0;
+  const list = rowsOf(must(await api('GET', `/api/cmc/qc-testing?projectId=${encodeURIComponent(program.id)}`), 200, 'list QC results'));
+  const have = new Set(list.map((r) => String(r.sampleId ?? r.sample_id ?? '').trim()));
+  let created = 0;
+  for (const r of results) {
+    if (have.has(r.sampleId)) { tally.found('cmc-qc-result'); continue; }
+    must(await api('POST', '/api/cmc/qc-testing', {
+      sampleId: r.sampleId,
+      batchNumber: r.batch,
+      sampleType: r.sampleType,
+      testMethod: r.method,
+      testResults: { value: r.value, unit: r.unit, ...(r.observation ? { observation: r.observation } : {}) },
+      specifications: { acceptanceCriteria: r.criterion },
+      passFailStatus: r.disposition,
+      testDate: new Date(Date.now() - (r.daysAgo ?? 30) * DAY).toISOString(),
+      projectId: program.id,
+    }), [200, 201], `create QC result "${r.sampleId}"`);
+    tally.created('cmc-qc-result');
+    created += 1;
   }
   return created;
 }
@@ -239,12 +446,33 @@ async function ensureBatches({ api, tally }, program, batches) {
   return created;
 }
 
-/** cmc: { specs: [...], stability: [...], batches: [...] } */
+/** cmc: { methods: [...], specs: [...], stability: [...], batches: [...] } */
 export async function ensureCmc(ctx, program, cmc, label) {
   const { run } = ctx;
+  /* The materials first: §3.2.S and §3.2.P are written about them, and the
+     composition boundary is decided from the drug substance record. */
+  const materials = [cmc.substance, cmc.product].filter(Boolean).length;
+  if (materials > 0) {
+    await run.step(`CMC / Module 3: drug substance and drug product on ${label}`, async () =>
+      `${await ensureMaterials(ctx, program, cmc)} created of ${materials}`);
+  }
+  /* Then the methods: a specification names one, and the approval route
+     resolves that name against the method register. */
+  await run.step(`CMC / Module 3: analytical methods on ${label}`, async () => {
+    const { created, validated, signerMissing } = await ensureMethods(ctx, program, cmc.methods);
+    const total = cmc.methods?.length ?? 0;
+    return signerMissing
+      ? `${created} created of ${total}; validation ${NOT_EXECUTED_NO_SIGNER} — their specifications are refused at approval until a method is validated`
+      : `${created} created of ${total}, ${validated} validated under signature`;
+  });
   await run.step(`CMC / Module 3: specifications on ${label}`, async () => `${await ensureSpecs(ctx, program, cmc.specs)} created of ${cmc.specs.length}`);
   await run.step(`CMC / Module 3: stability programme on ${label}`, async () => `${await ensureStability(ctx, program, cmc.stability)} created of ${cmc.stability.length}`);
   await run.step(`CMC / Module 3: batch records on ${label}`, async () => `${await ensureBatches(ctx, program, cmc.batches)} created of ${cmc.batches.length}`);
+  if (cmc.qcResults?.length) {
+    await run.step(`CMC / Module 3: recorded release results on ${label}`, async () =>
+      `${await ensureQcResults(ctx, program, cmc.qcResults)} created of ${cmc.qcResults.length}` +
+      ' — second-person review is left to the register, so these compose as not reviewed');
+  }
 }
 
 /* ───────────────────────── Biostatistics ───────────────────────── */

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMockRequest, createMockResponse } from '../setup';
 const h = vi.hoisted(() => ({ query: vi.fn(), sections: [] as Array<Record<string, unknown>>, failure: false }));
 vi.mock('../../server/db', () => ({ pool: { query: h.query } }));
-vi.mock('../../server/services/cmc/submission-spine', () => ({ resolveSubmissionSpine: async () => null, resolveSequenceSpine: async () => null }));
+vi.mock('../../server/services/cmc/submission-spine', async (orig) => ({ ...(await orig<object>()), resolveSubmissionSpine: async () => null, resolveSequenceSpine: async () => null }));
 vi.mock('../../server/services/ectd/required-sections', () => ({ resolveRequiredSections: async () => ({ modules: [{ code: 'm3', name: 'Quality', requiredSections: ['3.2.S.3'] }], provenance: { source: 'test requirements' } }) }));
 import routes from '../../server/routes/ectd-compile';
 function handler(path: string, method: string) {

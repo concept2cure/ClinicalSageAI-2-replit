@@ -1,0 +1,6 @@
+# Mutant: the signer check reads only the latest round (the first draft of this change)
+# + AND review_round = (SELECT MAX(review_round) FROM concept2cure_review_assignments WHERE artifact_id = $1 AND organization_id = $2)
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q1: the reviewer is neither the approving signer nor an author > the signer reviewed this version in a closed round, and a colleague in a new one: still refused 58ms
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 166 passed (167)

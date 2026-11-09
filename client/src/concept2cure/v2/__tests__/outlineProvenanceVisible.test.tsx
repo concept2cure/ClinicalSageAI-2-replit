@@ -49,7 +49,7 @@ const AUTHORING_DOCS = {
   documents: [
     {
       id: 'D1', title: 'Technical Documentation', module: 'M3', product_code: 'ABC',
-      status: 'draft', updated_at: '2026-08-01T10:00:00Z', section_count: 1,
+      status: 'draft', updated_at: '2026-08-01T10:00:00Z', section_count: 1, c2c_document_id: DOC_ID,
     },
   ],
 };
@@ -82,13 +82,28 @@ function outlineResponse(provenance: unknown) {
   };
 }
 
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
+/** GET /api/c2c/documents as server/routes/c2c/documents.ts answers it: each row's project_id, and `scope` lists only that part. */
+const c2cDocuments = (url: string, home: object[], market: object[] = []) => {
+  const query = new URLSearchParams(url.split('?')[1]);
+  const rows = query.get('scope') === 'market' ? market : query.get('scope') === 'home' ? home : [...home, ...market];
+  return { documents: rows.map(row => ({ ...row, project_id: query.get('projectId') })) };
+};
+
 function wire(provenance: unknown) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(AUTHORING_DOCS);
+    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, AUTHORING_DOCS));
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(AUTHORING_SECTIONS);
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1') {
+      return ok({ success: true, document: { ...AUTHORING_DOCS.documents[0], client_program_id: PROJECT_ID } });
+    }
     if (method === 'GET' && url.startsWith('/api/c2c/documents?projectId=')) {
-      return ok({ documents: [{ id: DOC_ID, doc_type: 'mdr', agency: 'ema', title: 'Technical Documentation', rule_pack_version: 'v1', status: 'draft', readiness: 20 }] });
+      return ok(c2cDocuments(url, [{ id: DOC_ID, doc_type: 'mdr', agency: 'ema', title: 'Technical Documentation', rule_pack_version: 'v1', status: 'draft', readiness: 20 }]));
     }
     if (method === 'GET' && url === `/api/c2c/documents/${DOC_ID}/outline`) {
       return ok(outlineResponse(provenance));

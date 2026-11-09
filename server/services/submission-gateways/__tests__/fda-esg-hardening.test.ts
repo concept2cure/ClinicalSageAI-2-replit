@@ -358,39 +358,34 @@ describe('checkStatus — says where the status came from', () => {
   });
 });
 
-/* ─── SFTP path identity ────────────────────────────────────────── */
+/* ─── The launch ceiling (P-93) ─────────────────────────────────── */
 
-describe('SFTP path — the application number is required, never invented', () => {
-  it('refuses an over-1GB bundle with no application number before any transmittal row exists', async () => {
-    // The path FDA files the bundle under used to default to `APP-<packageId>`.
+/* Founder decision P-93 (2026-11-02): an FDA package over 1 GiB is out of scope
+   for launch. The size switch that sent such a bundle to an SFTP branch (whose
+   module no image shipped) is replaced, in place, by a refusal before any
+   transmittal row, so every caller of this class is refused the same way and
+   AS2 is never handed more than 1 GiB. The SFTP identifier cases that stood
+   here went with their path. Their `message` matchers were never checked:
+   toMatchObject does not read an Error's non-enumerable `message`, so this
+   reads the message itself. */
+describe('FDA ESG refuses a package over 1 GiB before any transmittal row (P-93)', () => {
+  it('1 GiB and one byte is refused as a validation error that proves nothing was sent', async () => {
     const req = SMALL_AS2_REQUEST();
-    req.bundle.sizeBytes = 2 * 1_073_741_824;
-    req.metadata = { sequence: '0002', environment: 'production' } as any;
-    await expect(new FdaEsgGateway().transmit(req)).rejects.toMatchObject({ errorClass: 'validation', message: /application number/ });
+    req.bundle.sizeBytes = 2 ** 30 + 1;
+    const err = await new FdaEsgGateway().transmit(req).then(() => null, (e: unknown) => e as Error & Record<string, unknown>);
+    expect(err).toMatchObject({ errorClass: 'validation', transmitted: false });
+    expect(err?.message).toBe('Refusing to transmit to FDA: the package is just over 1 GiB (1,073,741,825 bytes), and at ' +
+      'launch Concept2Cure sends packages of up to 1 GiB to FDA. Nothing was sent.');
     expect(poolQueries.some((q) => /INSERT INTO submission_transmittals/i.test(q.sql))).toBe(false);
   });
 
-  it('refuses an UNASSIGNED placeholder application number', async () => {
+  it('exactly 1 GiB reaches the AS2 path, recorded as AS2', async () => {
     const req = SMALL_AS2_REQUEST();
-    req.bundle.sizeBytes = 2 * 1_073_741_824;
-    req.metadata = { applicationId: 'UNASSIGNED-SEQ-9', sequence: '0002', environment: 'production' } as any;
-    await expect(new FdaEsgGateway().transmit(req)).rejects.toMatchObject({ errorClass: 'validation' });
-  });
-
-  /* 2026-10-01 (W5/D7, sweep F18): the number names the directory FDA's
-     /incoming/<application>/<sequence>/ deposit is made in, and the stored
-     transmission id, but was only trimmed — '../', '/' or a space reached the
-     PUT path. It is held to the repo's one identifier rule
-     (ectd/regulatory-identifiers), refused before any row, with the proof
-     that nothing was sent. */
-  it.each(['../../outgoing', '/', 'IND 123456', 'IND123456/0001', ' '])('refuses %j as the application number before any transmittal row exists', async (applicationId) => {
-    const req = SMALL_AS2_REQUEST();
-    req.bundle.sizeBytes = 2 * 1_073_741_824;
-    req.metadata = { applicationId, sequence: '0002', environment: 'production' } as any;
-    await expect(new FdaEsgGateway().transmit(req)).rejects.toMatchObject({
-      errorClass: 'validation', transmitted: false, message: /application number/,
-    });
-    expect(poolQueries.some((q) => /INSERT INTO submission_transmittals/i.test(q.sql))).toBe(false);
+    req.bundle.sizeBytes = 2 ** 30;
+    await new FdaEsgGateway().transmit(req).catch(() => undefined);
+    const inserts = poolQueries.filter((q) => /INSERT INTO submission_transmittals/i.test(q.sql));
+    expect(inserts).toHaveLength(1);
+    expect(inserts[0].args[5]).toBe('as2');
   });
 });
 

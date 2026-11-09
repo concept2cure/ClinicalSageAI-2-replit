@@ -392,9 +392,12 @@ describe('assess_recorded_process_capability', () => {
   const call = (input: Record<string, unknown>, ctx?: Record<string, unknown>) => {
     const run = () => getToolHandler('assess_recorded_process_capability')!(input, ctx as never);
     const org = ctx?.organizationId;
+    // With the verified account where the context names a member, as a request's scope carries it: since
+    // a2f9264a the standing-rule gate reads that member's private rules only for the verified owner.
+    const accountId = ctx?.userId == null ? {} : { accountId: Number(ctx.userId) };
     return org == null
       ? run()
-      : runWithTenantScope({ tenantId: String(org), source: 'test', caller: 'tool:assess_recorded_process_capability' }, run);
+      : runWithTenantScope({ tenantId: String(org), ...accountId, source: 'test', caller: 'tool:assess_recorded_process_capability' }, run);
   };
 
   it('refuses without an organization', async () => {

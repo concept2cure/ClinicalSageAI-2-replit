@@ -21,7 +21,7 @@
  * (shared/ana/dossier-consistency.ts); the decision is consistency-verdict.ts.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 
 const dbState = vi.hoisted(() => ({ rows: [] as unknown[], reads: 0 }));
 
@@ -304,6 +304,14 @@ describe('reconcileDeviceDocuments: only current documents are compared (review 
 });
 
 describe('reconcile_device_documents: the tool says nothing was compared', () => {
+  /* The tool is reached through AnaToolExecutor, a 20,000-line module whose cold import now takes
+     about 12 s under load, past the 10 s default. The first case timed out, and its pending call then
+     restored `ownership.ours` only after the next case had read it, so that case was refused too.
+     Paid once here, as sub-agent-verifiers.test.ts and cmc-launch-scope-flip.test.ts do. */
+  beforeAll(async () => {
+    await import('../../ana/AnaToolExecutor');
+  }, 120_000);
+
   it('a program that is not the caller organization\'s is still refused, before anything is read', async () => {
     ownership.ours = false;
     try {

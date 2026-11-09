@@ -1,0 +1,40 @@
+# 3b slice 3 (c) under P-97: RED, the doors' cases against ectd-compile.ts BEFORE the change (HEAD bab2b503f), 2026-11-08T22:25:59Z
+ ✓ server/services/submission-service/__tests__/class-project-never-an-application.test.ts > no creator writes a submission into a project that is not an application > the transactional creator refuses a clinical study report project, as the standalone one does
+ ✓ server/services/submission-service/__tests__/class-project-never-an-application.test.ts > no creator writes a submission into a project that is not an application > the standalone creator refuses a regional device preparation project
+ ✓ server/services/submission-service/__tests__/class-project-never-an-application.test.ts > no creator writes a submission into a project that is not an application > the transactional creator refuses a regional device preparation project
+ ✓ server/services/submission-service/__tests__/class-project-never-an-application.test.ts > no creator writes a submission into a project that is not an application > the IND project still takes its IND
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > 'csr'/'compile' is refused with the class sentence after the anchor read alone
+   → expected "vi.fn()" to be called with arguments: [ 422 ]
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > 'csr'/'status' is refused with the class sentence after the anchor read alone
+   → expected "vi.fn()" to be called with arguments: [ 422 ]
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > 'csr'/'validate' is refused with the class sentence after the anchor read alone
+   → expected "vi.fn()" to be called with arguments: [ 422 ]
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > 'pas'/'compile' is refused with the class sentence after the anchor read alone
+   → expected "vi.fn()" to be called with arguments: [ 422 ]
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > 'pas'/'status' is refused with the class sentence after the anchor read alone
+   → expected "vi.fn()" to be called with arguments: [ 422 ]
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > 'pas'/'validate' is refused with the class sentence after the anchor read alone
+   → expected "vi.fn()" to be called with arguments: [ 422 ]
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > an imported validator report does not reach a class project either
+   → expected "vi.fn()" to be called with arguments: [ 422 ]
+ ✓ server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a filing document class project is not compiled as an eCTD sequence > a regional device project keeps its own sentence
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'csr' with no dispatched sequence: the filed state is refused with the class sentence
+   → expected "vi.fn()" to be called with arguments: [ 422 ]
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'pas' with no dispatched sequence: the filed state is refused with the class sentence
+   → expected "vi.fn()" to be called with arguments: [ 422 ]
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'csr' with a dispatched sequence: what is on file is read, from the submission that holds it
+   → expected "vi.fn()" to be called with arguments: [ Anything, …(1) ]
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'pas' with a dispatched sequence: what is on file is read, from the submission that holds it
+   → expected "vi.fn()" to be called with arguments: [ Anything, …(1) ]
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'shonin' with a dispatched sequence: what is on file is read, from the submission that holds it
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > a failed read of whether the project filed is a failure, never a refusal or an empty answer
+   → expected "vi.fn()" to be called with arguments: [ 503 ]
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected "vi.fn()" to be called with arguments: [ 422 ]
+AssertionError: expected "vi.fn()" to be called with arguments: [ 422 ]
+AssertionError: expected "vi.fn()" to be called with arguments: [ 422 ]
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, …(1) ]
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+AssertionError: expected "vi.fn()" to be called with arguments: [ 503 ]
+      Tests  13 failed | 5 passed (18)

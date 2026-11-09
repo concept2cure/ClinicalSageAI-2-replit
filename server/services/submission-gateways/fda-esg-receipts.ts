@@ -12,7 +12,8 @@ import { writeChainedAuditRow } from '../auditService';
 export class FdaAs2ReceiptRefusal extends Error {
   constructor(readonly code: string, readonly status: 400 | 403 | 404 | 409 | 422, message: string) { super(message); }
 }
-export interface FdaAs2ReceiptResult { verified: true; recorded: true; status: 'received' | 'rejected'; duplicate: boolean; auditTrail: true; sequenceResolution: 'resolved' | 'already-resolved' | 'unreconciled' }
+/** `environment` is the original send's, as its binding recorded it: a receipt from the agency's test environment files nothing (F1, row D7). */
+export interface FdaAs2ReceiptResult { verified: true; recorded: true; status: 'received' | 'rejected'; duplicate: boolean; auditTrail: true; sequenceResolution: 'resolved' | 'already-resolved' | 'unreconciled'; environment: 'staging' | 'production' }
 interface ReceiptBinding { messageId: string; mic: string; environment: 'staging' | 'production' }
 function bindingOf(metadata: Record<string, unknown> | null): ReceiptBinding {
   const binding = metadata?.as2 as Partial<ReceiptBinding> | undefined;
@@ -74,7 +75,7 @@ export async function ingestFdaAs2Receipt(args: ReceiptInput): Promise<FdaAs2Rec
     const history = Array.isArray(current.metadata?.as2ReceiptHistory) ? current.metadata.as2ReceiptHistory : [];
     if (history.some((entry: { sha256?: string }) => entry?.sha256 === sha256)) {
       const sequenceResolution = await resolveReceiptSequence(client, args.organizationId, current, status);
-      await client.query('COMMIT'); return { verified: true, recorded: true, status, duplicate: true, auditTrail: true, sequenceResolution };
+      await client.query('COMMIT'); return { verified: true, recorded: true, status, duplicate: true, auditTrail: true, sequenceResolution, environment: binding.environment };
     }
     const nextStatus = nextReceiptStatus(current.status, status);
     const observedAt = new Date().toISOString();
@@ -90,7 +91,7 @@ export async function ingestFdaAs2Receipt(args: ReceiptInput): Promise<FdaAs2Rec
     await recordGovernedAction(client, { orgId: args.organizationId, userId: args.userId, command: 'transition', target: `submission-transmittal:${args.transmittalId}`, reason: 'Recorded cryptographically verified FDA AS2 receipt', domain: 'regulatory', surface: 'gateway-transmittals',
       payload: { receiptSha256: sha256, from: current.status, to: nextStatus, receiptKind: 'AS2-MDN', originalMessageId: binding.messageId, micVerified: status === 'received', sequenceResolution },
     });
-    await client.query('COMMIT'); return { verified: true, recorded: true, status, duplicate: false, auditTrail: true, sequenceResolution };
+    await client.query('COMMIT'); return { verified: true, recorded: true, status, duplicate: false, auditTrail: true, sequenceResolution, environment: binding.environment };
   } catch (err) { await client.query('ROLLBACK'); throw err; }
   finally { client.release(); }
 }
@@ -105,7 +106,13 @@ function dispatchBindingOf(transmittal: ReceiptTransmittal, organizationId: numb
 async function resolveReceiptSequence(client: { query: (sql: string, args?: unknown[]) => Promise<{ rows: any[] }> }, organizationId: number, transmittal: ReceiptTransmittal, status: 'received' | 'rejected', receipt?: { userId: number; transmittalId: number; receiptSha256: string; originalMessageId: string }): Promise<FdaAs2ReceiptResult['sequenceResolution']> {
   const binding = dispatchBindingOf(transmittal, organizationId);
   if (!binding) return 'unreconciled';
-  const next = status === 'received' ? 'sent' : 'rejected';
+  // F1 (row D7, 2026-11-01): only a production receipt files the sequence. One
+  // from the agency's test environment settles the attempt it binds to
+  // 'pending', never 'sent' or 'rejected': the test environment's verdict is not
+  // FDA's, and the sequence can still be filed (submission-service.ts
+  // toDispatchStatus). `!==`, so an environment that is neither files nothing.
+  const environment = (transmittal.metadata?.as2 as Partial<ReceiptBinding> | undefined)?.environment;
+  const next = environment !== 'production' ? 'pending' : status === 'received' ? 'sent' : 'rejected';
   if (receipt) {
     const sequence = (await client.query(`SELECT id FROM ectd_sequences WHERE id=$1 AND organization_id=$2
       AND status='dispatched' AND deleted_at IS NULL FOR UPDATE`, [binding.sequenceId, organizationId])).rows[0];
@@ -119,7 +126,7 @@ async function resolveReceiptSequence(client: { query: (sql: string, args?: unkn
     if (!spent.rows.length) await writeChainedAuditRow(client, {
       organizationId, userId: receipt.userId, action: 'ECTD_TRANSMITTED', resourceType: 'ectd_sequence', resourceId: binding.sequenceId,
       details: { ...receipt, signatureActionId: binding.signatureActionId, transmitAttemptId: binding.attemptId,
-        status, environment: (transmittal.metadata?.as2 as ReceiptBinding).environment, region: 'fda', gateway: 'esg', source: 'agency-signed-receipt-reconciliation' },
+        status, environment, region: 'fda', gateway: 'esg', source: 'agency-signed-receipt-reconciliation' },
     });
     const changed = await client.query(`UPDATE ectd_sequences SET dispatch_status = $3, updated_at = now()
       WHERE id = $1 AND organization_id = $2 AND status = 'dispatched' AND deleted_at IS NULL

@@ -95,6 +95,40 @@ describe('Dispatch tab: transmissions and acknowledgements (F13)', () => {
     expect(r.textContent).toContain('sent by user #6');
   });
 
+  /* F1 (row D7, 2026-11-01): after a reload the sequence reads only 'pending',
+     so the lasting word that a test send is not a filing is the row's. The
+     environment is said in words; the stored value never reaches the screen. */
+  it("says where each transmission went, in words, and that a test send is not a filing", async () => {
+    render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
+    await waitFor(() => expect(text()).toContain('Transmittal #42'));
+    const r = region();
+    const sentOn = (iso: string) => `on ${new Date(iso).toLocaleString()}`;
+    expect(r.textContent).toContain(`sent by Dana Approver ${sentOn('2026-10-08T09:00:00Z')} to the agency's test environment (a test send is not a filing)`);
+    expect(r.textContent).toContain(`sent by user #6 ${sentOn('2026-10-01T09:00:00Z')} to the agency's production environment`);
+    expect(r.textContent?.match(/a test send is not a filing/g)).toHaveLength(1);
+    expect(r.textContent).toContain('a transmittal records the number of the sequence it carried');
+    expect(r.textContent).not.toContain('(production)');
+    expect(text()).not.toMatch(/staging/i);
+  });
+
+  it('a recorded environment this screen does not name is not printed as stored', async () => {
+    list = () => json({ data: [{ ...ROWS[1], metadata: { sequence: '0000', environment: 'sandbox_x' } }], meta: { count: 1 } });
+    render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
+    await waitFor(() => expect(text()).toContain('Transmittal #40'));
+    expect(region().textContent).toContain('to an environment this screen does not name');
+    expect(region().textContent).not.toContain('sandbox_x');
+  });
+
+  /* F1 (row D7, 2026-11-08): a transmittal with no recorded environment is said to
+     have none, so it is never read as a send of either kind. */
+  it('a transmittal with no recorded environment says so', async () => {
+    list = () => json({ data: [{ ...ROWS[1], metadata: { sequence: '0000' } }], meta: { count: 1 } });
+    render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
+    await waitFor(() => expect(text()).toContain('Transmittal #40'));
+    expect(region().textContent).toContain('(environment not recorded)');
+    expect(region().textContent).not.toMatch(/production environment|test environment/);
+  });
+
   it('a failed read is an error, not "none sent"', async () => {
     list = () => json({ error: 'Internal error' }, 500);
     render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
@@ -117,6 +151,8 @@ describe('Dispatch tab: transmissions and acknowledgements (F13)', () => {
   it('a submission with no project cannot be listed by project, and says so; nothing is read', async () => {
     render(<DispatchWorkspace sub={{ ...SUB, programId: null }} seq={SEQ} onGoverned={vi.fn()} />);
     await waitFor(() => expect(region().textContent).toContain('This submission is not anchored to a project'));
+    // A test send, which files nothing, is not listed either, and the note says so.
+    expect(region().textContent).toContain('test sends included (a test send files nothing)');
     expect(listCalls()).toEqual([]);
   });
 });

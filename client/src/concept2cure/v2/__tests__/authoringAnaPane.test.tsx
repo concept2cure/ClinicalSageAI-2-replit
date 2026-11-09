@@ -27,6 +27,11 @@ import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 import { CanonicalAuthoringFlow, setAuthoringFlowScope, clearAuthoringFlowScope, serveAuthoringStream, sendAuthoringPrefill, toolbarDraftButton, sentAuthoringTurns } from './canonicalAuthoringFlow';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload } as Response);
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 
 function anaStream(events: unknown[]): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
@@ -83,7 +88,7 @@ beforeEach(() => {
   setAuthoringFlowScope();
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, DOCS));
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok(SECTIONS);
     if (method === 'GET' && url.startsWith('/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000001/history'))
@@ -123,7 +128,7 @@ describe('DocumentAuthoring — asks arrive in the canonical conversation', () =
 
   it('an empty section keeps both draft controls, and the toolbar asks for the exact section', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+      if (url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, DOCS));
       if (url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
       if (url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok({ sections: [{ ...SECTIONS.sections[0], content: '' }] });
       if (url.startsWith('/api/c2c/documents/')) return { ...ok({}), ok: false, status: 404 };

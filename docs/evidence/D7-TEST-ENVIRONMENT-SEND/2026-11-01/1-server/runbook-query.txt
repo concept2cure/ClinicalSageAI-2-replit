@@ -1,0 +1,74 @@
+# The runbook's two queries (docs/runbooks/ectd-transmit-path.md, 'The same rule on the sequence spine'), run as the database owner on the real
+# PostgreSQL 16 test database c2c_test, 2026-11-02T03:52:49Z. Scoped here to the submissions the F1 case of
+# tests/db/commitment-fulfilment-evidence.dbtest.ts created ('IND 123456, sent to the test environment'; submission_id IN (611,617,623)), one per run:
+# - in the two runs against the code BEFORE this change (red.txt), the test environment's receipt left sequence 0050 'sent': the deployed
+#   defect. Both queries find it (environment 'staging'); neither lists 0051, filed by a production receipt.
+# - in the runs AFTER the change (green.txt), 0050 is 'pending', so neither query lists it.
+# The text below is the runbook's, with only the submission scope added. Unscoped, query (a) also lists every fixture sequence seeded 'sent'
+# with no ECTD_TRANSMITTED row: a row with no environment fails closed, for a person to decide.
+
+-- (a) The act that set the status: each sequence on file and the ECTD_TRANSMITTED row of the attempt its
+--     columns bind (the latest such row when the sequence predates transmit_signature_action_id, 20261014).
+SELECT s.organization_id, s.id AS sequence_id, s.submission_id, s.sequence_number, s.dispatch_status,
+       a.id AS audit_id, a.occurred_at, a.new_values::jsonb ->> 'environment' AS environment
+  FROM ectd_sequences s
+  LEFT JOIN LATERAL (
+    SELECT al.id, al.occurred_at, al.new_values
+      FROM audit_logs al
+     WHERE al.tenant_id = s.organization_id
+       AND al.table_name = 'ectd_sequence'
+       AND al.record_id = s.id::text
+       AND al.action = 'ECTD_TRANSMITTED'
+       AND (s.transmit_signature_action_id IS NULL
+            OR al.new_values::jsonb ->> 'signatureActionId' = s.transmit_signature_action_id)
+     ORDER BY al.occurred_at DESC, al.id DESC
+     LIMIT 1
+  ) a ON true
+ WHERE s.deleted_at IS NULL
+   AND s.dispatch_status IN ('sent', 'acknowledged')
+   AND (a.new_values::jsonb ->> 'environment') IS DISTINCT FROM 'production'
+   AND s.submission_id IN (611,617,623)
+ ORDER BY s.organization_id, s.submission_id, s.sequence_number;
+
+-- (b) What the filed fold reads (F1 slice 1): the transmittal each sequence on file binds, when it was not
+--     a production send.
+SELECT s.organization_id, s.id AS sequence_id, s.submission_id, s.sequence_number, s.dispatch_status,
+       t.id AS transmittal_id,
+       COALESCE(t.metadata ->> 'environment', t.metadata -> 'as2' ->> 'environment') AS environment
+  FROM ectd_sequences s
+  JOIN submission_transmittals t
+    ON t.organization_id = s.organization_id
+   AND lower(t.metadata -> 'dispatchBinding' ->> 'attemptId') = s.transmit_attempt_id::text
+   AND t.metadata -> 'dispatchBinding' ->> 'sequenceId' = s.id::text
+   AND t.metadata -> 'dispatchBinding' ->> 'signatureActionId' = s.transmit_signature_action_id
+ WHERE s.deleted_at IS NULL
+   AND s.dispatch_status IN ('sent', 'acknowledged')
+   AND COALESCE(t.metadata ->> 'environment', t.metadata -> 'as2' ->> 'environment') IS DISTINCT FROM 'production'
+   AND s.submission_id IN (611,617,623)
+ ORDER BY s.organization_id, s.submission_id, s.sequence_number;
+
+## Result
+ organization_id | sequence_id | submission_id | sequence_number | dispatch_status |               audit_id               |        occurred_at         | environment 
+-----------------+-------------+---------------+-----------------+-----------------+--------------------------------------+----------------------------+-------------
+             944 |        7971 |           611 | 0050            | sent            | b307c8f7-72af-4656-827f-b3e5cb6ce1a3 | 2026-11-02 03:47:24.568+00 | staging
+             946 |        8213 |           617 | 0050            | sent            | 138fb9f6-8e60-41b3-af2a-8ebfd0347e56 | 2026-11-02 03:48:29.834+00 | staging
+(2 rows)
+
+ organization_id | sequence_id | submission_id | sequence_number | dispatch_status | transmittal_id | environment 
+-----------------+-------------+---------------+-----------------+-----------------+----------------+-------------
+             944 |        7971 |           611 | 0050            | sent            |             30 | staging
+             946 |        8213 |           617 | 0050            | sent            |             32 | staging
+(2 rows)
+
+
+## Those submissions' 0050 and 0051 sequences, for reference
+ submission_id |  id  | sequence_number | dispatch_status 
+---------------+------+-----------------+-----------------
+           611 | 7971 | 0050            | sent
+           611 | 7972 | 0051            | sent
+           617 | 8213 | 0050            | sent
+           617 | 8214 | 0051            | sent
+           623 | 8455 | 0050            | pending
+           623 | 8456 | 0051            | sent
+(6 rows)
+

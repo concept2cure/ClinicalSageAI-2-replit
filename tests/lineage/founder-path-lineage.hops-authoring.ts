@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
-  Hop, ORG_A, PASSWORD, SERVED_MODEL, QUOTE, X, SHA256_X, HEX64,
+  Hop, ORG_A, PASSWORD, REVIEWER, SERVED_MODEL, QUOTE, X, SHA256_X, HEX64,
   sha256, json, asPrincipal, type World,
 } from './founder-path-lineage.world';
 
@@ -330,6 +330,19 @@ export async function hopEditSave(w: World): Promise<void> {
 export async function hopSeal(w: World): Promise<void> {
   const { k, q } = w;
   const hop = new Hop('seal');
+  // P-95 (2026-11-09): an approval follows a completed review. The author sends the document for review to the QA
+  // reviewer (POST /documents/:id/request-review opens its RR5 route), and the reviewer signs the review on it.
+  // The request-review writer runs on the request's pinned connection, which the walk attaches from its principal headers.
+  const sent = await w.asAuthor(asPrincipal(ORG_A, 3)(request(w.app).post(`/api/authoring/documents/${k.docId}/request-review`))).send({
+    reviewers: [{ id: Number(REVIEWER.id), name: REVIEWER.name, email: REVIEWER.email }],
+    route: { reviewDueDate: new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10) },
+    reason: 'Send the C2C-101 IND section for QA review before approval.',
+  });
+  expect(sent.status, JSON.stringify(sent.body)).toBeLessThan(300);
+  const reviewed = await w.asReviewer(request(w.app).post(`/api/authoring/docs/${k.docId}/e-sign`)).send({
+    password: PASSWORD, meaning: 'REVIEWER', intent: 'Reviewed for the C2C-101 IND original sequence',
+  });
+  expect(reviewed.status, JSON.stringify(reviewed.body)).toBe(200);
   // DP-35 (2026-10-01): the freeze is signed — its meaning and the author's re-verified password.
   const fr = await w.asAuthor(request(w.app).post(`/api/authoring/docs/${k.docId}/freeze`)).send({
     reason: 'Sealed for the C2C-101 IND original sequence.', meaning: 'AUTHOR', password: PASSWORD,

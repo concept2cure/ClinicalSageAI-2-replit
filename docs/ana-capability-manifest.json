@@ -400,9 +400,9 @@
         "id": "authoring",
         "label": "Authoring & rendering"
       },
-      "description": "Turn a document AnA has drafted into a REAL authoring document in the open project: the editor's own store (authoring_documents / authoring_sections), status draft, one section per { code, title, content } with the content stored as sanitized HTML, provenance recorded as drafted by AnA, a genesis revision and a Part 11 CREATE audit row per section. The person then sees it as a canvas in the conversation, can open it in the full editor, and can file it into the project vault. Use this — not save_document_to_vault, its single-body form — whenever the deliverable is a document with sections (a Module 2.5 excerpt, an IB section set, a 510(k) summary). Requires an open project; refuses otherwise. Tenant-scoped. Returns { status: 'generated', saved: true, documentStatus: 'draft', authoringDocId, programId, title, sectionCount, content }; the durable authoringDocId proves it was saved, while approval and filing remain separate.",
+      "description": "Turn a document AnA has drafted into a REAL authoring document in the open project: the editor's own store (authoring_documents / authoring_sections), status draft, one section per { code, title, content }, with sanitized HTML, machine provenance, genesis revisions and CREATE audit. With derivativeId, use title exactly 'Reviewed derivative draft' and omit sections and all caller prose. The parent AnA drafts ONLY from the tenant's current human-attested candidate; independently checked immutable generation provenance must match before saving. Its reinjected content stays in the project editor; the tool returns a public pointer summary. Derivative drafting cannot run in worker tools. Optional module/documentType are save metadata, never model context; qualifiedModelPin is an exact governed model choice. Requires an open project. The saved authoringDocId opens the real document; independent review, approval and filing remain separate.",
       "scope": "project",
-      "governed": false,
+      "governed": true,
       "renderer": "document-canvas",
       "example": "",
       "inputs": [
@@ -410,7 +410,19 @@
           "name": "title",
           "type": "string",
           "required": true,
-          "description": "Document title."
+          "description": "Document title; derivative mode requires exactly 'Reviewed derivative draft'."
+        },
+        {
+          "name": "derivativeId",
+          "type": "string",
+          "required": false,
+          "description": "Use only a current human-attested derivative reference. Omit sections and all caller prose in this mode."
+        },
+        {
+          "name": "qualifiedModelPin",
+          "type": "object",
+          "required": false,
+          "description": "Optional exact governed model/evidence pin for derivative drafting."
         },
         {
           "name": "module",
@@ -427,13 +439,12 @@
         {
           "name": "sections",
           "type": "array",
-          "required": true,
+          "required": false,
           "description": "The sections in reading order. content is HTML (p, h1-h6, ul/ol/li, table, strong/em); scripts and unknown markup are stripped."
         }
       ],
       "requiredInputs": [
-        "title",
-        "sections"
+        "title"
       ],
       "derived": true
     },
@@ -2630,7 +2641,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Assess the clinical validation of a biomarker from a 2x2 confusion table. Computes clinical sensitivity and specificity, positive and negative predictive value (PPV/NPV) at the apparent prevalence of the table, and — when an intended-use prevalence is supplied — re-projects PPV/NPV to that prevalence by Bayes’ theorem (exposing the low-prevalence screening pitfall where most positives are false positives). Evaluates clinical-validity integrity (adequate accuracy, pre-specified cutoff, independent validation set) and articulates the clinical-VALIDITY vs clinical-UTILITY distinction. Returns all metrics, whether validity is established, cutoff and utility notes, findings (e.g. data-derived cutoff optimism bias), and citations (FDA-NIH BEST Resource, FDA Biomarker Qualification Evidentiary Framework 2018, CLSI EP12). Use when the user has biomarker classification-vs-outcome counts and needs clinical performance and its interpretation. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Assess the clinical validation of a biomarker from a 2x2 confusion table: clinical sensitivity and specificity with exact 95% intervals, PPV and NPV at the table’s apparent prevalence and, when an intended-use prevalence is supplied, re-projected to it by Bayes’ theorem (the low-prevalence screening pitfall). Checks validity (sensitivity and specificity >= 80%, a pre-specified cutoff, an independent validation set) and keeps clinical validity apart from clinical utility. Returns the metrics, validityEstablished (null while an unstated cutoff or independence fact could make it true), cutoff and utility notes, findings and citations (FDA-NIH BEST Resource, FDA Biomarker Qualification Evidentiary Framework 2018, CLSI EP12). Deterministic, no LLM: report the returned numbers and citations verbatim; do not recompute them or substitute your own interpretation. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "navigation",
@@ -2676,19 +2687,19 @@
           "name": "clinicalUtilityDemonstrated",
           "type": "boolean",
           "required": false,
-          "description": "Whether clinical utility (acting on the result improves measurable patient outcomes) is demonstrated. Distinct from clinical validity."
+          "description": "Whether clinical utility (acting on the result improves measurable patient outcomes) is demonstrated. Distinct from clinical validity. Omitted or null stays not_stated, and the result says so."
         },
         {
           "name": "cutoffPrespecified",
           "type": "boolean",
           "required": false,
-          "description": "Whether the cutoff was pre-specified before the validation dataset was analyzed. A data-derived cutoff fitted on the reporting dataset overstates accuracy (optimism bias)."
+          "description": "Whether the cutoff was pre-specified before the validation dataset was analyzed. A data-derived cutoff fitted on the reporting dataset overstates accuracy (optimism bias). Omitted or null stays not_stated: validityEstablished is null unless"
         },
         {
           "name": "independentValidationSet",
           "type": "boolean",
           "required": false,
-          "description": "Whether validation used an independent dataset (not the cutoff-derivation set). Required to establish clinical validity without overfitting."
+          "description": "Whether validation used an independent dataset (not the cutoff-derivation set). Required to establish clinical validity without overfitting. Omitted or null stays not_stated: validityEstablished is null unless another fact settles it."
         }
       ],
       "requiredInputs": [
@@ -2925,7 +2936,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Classify a protocol deviation as important or non-important and determine its reportability, severity, and corrective/preventive actions. Assesses participant-safety impact (none/potential/actual) and data-integrity impact (none/minor/significant) from the deviation features (category, effect on safety, primary endpoint, critical eligibility, consent validity, recurrence, participants affected, unreported SAE, increased risk) and returns whether it is reportable to the IRB/IEC, sponsor, and/or FDA, whether prompt reporting is required, and recommended CAPA. A fact left out is not read as false (see notAssessed). Cites 21 CFR 312.60/312.66 and 56.108, and ICH E6(R3). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Classify a protocol deviation as important or non-important and determine its reportability, severity, and corrective/preventive actions. Assesses participant-safety impact (none/potential/actual) and data-integrity impact (none/minor/significant) from the deviation features (category, effect on safety, primary endpoint, critical eligibility, consent validity, recurrence, participants affected, unreported SAE, increased risk) and returns whether it is reportable to the IRB/IEC, sponsor, and/or FDA, whether prompt reporting is required, and recommended CAPA. A fact left out is not read as false (see notAssessed). Cites 21 CFR 312.60/312.66 and 56.108, and ICH E6(R3). Deterministic: no LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -2935,61 +2946,61 @@
           "name": "category",
           "type": "string",
           "required": false,
-          "description": "Category of the deviation."
+          "description": "Category of the deviation. Omitted or null stays not_stated (see notAssessed)."
         },
         {
           "name": "affectsParticipantSafety",
           "type": "boolean",
           "required": false,
-          "description": "Whether the deviation affects participant safety."
+          "description": "Whether the deviation affects participant safety. Omitted or null stays not_stated and is not read as false (see notAssessed)."
         },
         {
           "name": "affectsPrimaryEndpoint",
           "type": "boolean",
           "required": false,
-          "description": "Whether the deviation affects the primary endpoint / data integrity."
+          "description": "Whether the deviation affects the primary endpoint / data integrity. Omitted or null stays not_stated and is not read as false (see notAssessed)."
         },
         {
           "name": "affectsEligibilityCriticalCriterion",
           "type": "boolean",
           "required": false,
-          "description": "Whether a critical eligibility criterion was violated."
+          "description": "Whether a critical eligibility criterion was violated. Omitted or null stays not_stated and is not read as false (see notAssessed)."
         },
         {
           "name": "affectsConsentValidity",
           "type": "boolean",
           "required": false,
-          "description": "Whether informed-consent validity is affected."
+          "description": "Whether informed-consent validity is affected. Omitted or null stays not_stated and is not read as false (see notAssessed)."
         },
         {
           "name": "isRecurring",
           "type": "boolean",
           "required": false,
-          "description": "Whether the deviation is recurring/systemic."
+          "description": "Whether the deviation is recurring/systemic. Omitted or null stays not_stated and is not read as false (see notAssessed)."
         },
         {
           "name": "numberOfParticipantsAffected",
           "type": "number",
           "required": false,
-          "description": "Number of participants affected."
+          "description": "Number of participants affected, a whole number of at least 1. Read only for the systemic-cause note on a minor deviation."
         },
         {
           "name": "involvedUnreportedSAE",
           "type": "boolean",
           "required": false,
-          "description": "Whether an unreported serious adverse event was involved."
+          "description": "Whether an unreported serious adverse event was involved. Omitted or null stays not_stated and is not read as false (see notAssessed)."
         },
         {
           "name": "deviationFromIRBApprovedProtocol",
           "type": "boolean",
           "required": false,
-          "description": "Whether this is a deviation from the IRB-approved protocol."
+          "description": "Whether this is a deviation from the IRB-approved protocol. Omitted or null stays not_stated and is not read as false (see notAssessed)."
         },
         {
           "name": "increasedRiskToSubjects",
           "type": "boolean",
           "required": false,
-          "description": "Whether the deviation increased risk to subjects."
+          "description": "Whether the deviation increased risk to subjects. Omitted or null stays not_stated and is not read as false (see notAssessed)."
         },
         {
           "name": "description",
@@ -3240,7 +3251,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Build a clinical evidence strategy for a medical device or IVD: determine whether clinical data are required, recommend the study type(s) (no clinical / literature & clinical evaluation / real-world evidence / feasibility-first-in-human / pivotal / IVD clinical performance), and scope the EU clinical evaluation (MDR Article 61 & Annex XIV, MEDDEV 2.7/1 rev 4) or IVDR performance evaluation (Annex XIII). When a fact that decides it was not stated, clinicalDataRequired (or usIDERequired) is null and missingFacts names what to ask for: say it is not determined; never report clinical data or an IDE as not required. Returns whether a US IDE (21 CFR 812) is required for a significant-risk investigation, an evidence hierarchy, and benefit-risk framing per the FDA 2019 factors guidance. Use when the user must decide whether and how to generate clinical evidence for a device submission. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Build a clinical evidence strategy for a device or IVD: whether clinical data are required, the study type(s) (no clinical / literature & clinical evaluation / real-world evidence / feasibility-first-in-human / pivotal / IVD clinical performance), and the EU clinical evaluation (MDR Article 61 & Annex XIV, MEDDEV 2.7/1 rev 4) or IVDR performance evaluation (Annex XIII). When a fact that decides it was not stated, clinicalDataRequired (or usIDERequired) is null and missingFacts names what to ask for: say it is not determined; never report clinical data or an IDE as not required. A study or EU evaluation an unstated fact decides is named, not assumed. Also returns the US IDE (21 CFR 812) answer, an evidence hierarchy and FDA 2019 benefit-risk framing. Use to decide whether and how to generate clinical evidence for a device submission. Deterministic: report the results and regulatory citations verbatim; do not recompute or reinterpret them. A malformed value is refused by field: relay the validation error.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -3250,19 +3261,19 @@
           "name": "usClass",
           "type": "string",
           "required": true,
-          "description": "US device class (Class III generally requires pivotal clinical evidence). Without it, \"not required\" is never answered."
+          "description": "US device class (Class III generally requires pivotal clinical evidence). Without it, \"not required\" is never answered; another value is refused."
         },
         {
           "name": "usPathway",
           "type": "string",
           "required": false,
-          "description": "Intended US pathway; PMA/HDE/IDE-then-PMA imply clinical data are required."
+          "description": "Intended US pathway; PMA/HDE/IDE-then-PMA imply clinical data are required. Omitted, it is read as none of those."
         },
         {
           "name": "novelTechnology",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is first-of-a-kind technology or a new indication (raises clinical questions). State true or false: unstated leaves \"not required\" undetermined."
+          "description": "Whether the device is first-of-a-kind technology or a new indication (raises clinical questions). State true or false: unstated leaves \"not required\" undetermined and, for a device not class III, implanted or life-supporting, a feasibility "
         },
         {
           "name": "clinicalDataNeededForSE",
@@ -3286,31 +3297,31 @@
           "name": "isIVD",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is an IVD (selects an IVD clinical performance study and IVDR Annex XIII)."
+          "description": "Whether the device is an IVD (selects an IVD clinical performance study and IVDR Annex XIII). Omitted or null stays not_stated (inputStates): the confirmatory study and the EU evaluation are not assessed."
         },
         {
           "name": "existingLiterature",
           "type": "boolean",
           "required": false,
-          "description": "Whether substantial published literature exists for the device type/indication (enables a literature route)."
+          "description": "Whether substantial published literature exists for the device type/indication (enables a literature route). Omitted or null stays not_stated (inputStates): that route is not assessed."
         },
         {
           "name": "realWorldDataAvailable",
           "type": "boolean",
           "required": false,
-          "description": "Whether fit-for-purpose real-world data (registries, EHR, claims) are available."
+          "description": "Whether fit-for-purpose real-world data (registries, EHR, claims) are available. Omitted or null stays not_stated (inputStates): real-world evidence is not assessed."
         },
         {
           "name": "euMarket",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is also pursuing the EU market (scopes MDR/IVDR evaluation)."
+          "description": "Whether the device is also pursuing the EU market (scopes MDR/IVDR evaluation). Omitted or null stays not_stated (inputStates): no EU evaluation is scoped, and the plan says so."
         },
         {
           "name": "euMdrClass",
           "type": "string",
           "required": false,
-          "description": "EU MDR class, when the EU market applies (implantable/Class III usually require clinical investigations)."
+          "description": "EU MDR class, when the EU market applies (implantable/Class III usually require clinical investigations). Unstated, with implantable not true, whether investigations are generally required is not assessed."
         },
         {
           "name": "significantRisk",
@@ -3330,7 +3341,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Build an IMDRF N41 clinical evaluation / validation evidence plan for a SaMD, scaled to its IMDRF risk category (I-IV). Structures the evidence around the three N41 pillars — (1) Valid Clinical Association (is the output meaningful?), (2) Analytical/Technical Validation (does the SaMD process input correctly?), and (3) Clinical Validation (does using the output achieve the intended purpose?) — and returns a numbered evidence plan, whether independent review of results is expected, study-design guidance (prospective vs. real-world data), performance-metrics guidance (operating characteristic, subgroup stratification, stand-alone vs. Human-AI team performance), an overall narrative, and citations (IMDRF N41/N12, GMLP 2021, IEC 62304, FDA Transparency 2024). For AI/ML SaMD it adds generalizability and subgroup/bias requirements. Use when the user needs to scope the clinical evidence for a SaMD. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Build an IMDRF N41 clinical evaluation / validation evidence plan for a SaMD, scaled to its IMDRF category (I-IV). Structures the evidence around the three N41 pillars: (1) Valid Clinical Association (is the output meaningful?), (2) Analytical/Technical Validation (does the SaMD process input correctly?), and (3) Clinical Validation (does using the output achieve the intended purpose?). Returns a numbered evidence plan, whether independent review of results is expected, study-design guidance (prospective vs. real-world data), performance-metrics guidance, an overall narrative, and citations (IMDRF N41/N12, GMLP 2021, IEC 62304, FDA Transparency 2024). For AI/ML SaMD it adds generalizability and subgroup/bias requirements. An unstated fact is named in the plan, not assumed. Deterministic, no LLM: report the findings and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -3346,37 +3357,37 @@
           "name": "validClinicalAssociationEstablished",
           "type": "boolean",
           "required": false,
-          "description": "Whether the underlying clinical association is already well-established in the literature/guidelines. If true, the engine recommends leveraging existing evidence for the first pillar."
+          "description": "Whether the underlying clinical association is already well-established in the literature/guidelines. If true, the engine recommends leveraging existing evidence for the first pillar. Omitted or null stays not_stated: that pillar's rigor is"
         },
         {
           "name": "isAIML",
           "type": "boolean",
           "required": false,
-          "description": "Whether the SaMD is an AI/ML function. Adds analytical-generalizability and subgroup/bias evidence requirements (GMLP)."
+          "description": "Whether the SaMD is an AI/ML function. Adds analytical-generalizability and subgroup/bias evidence requirements (GMLP). Omitted or null stays not_stated, and the plan names it."
         },
         {
           "name": "intendedUse",
           "type": "string",
           "required": false,
-          "description": "Free-text intended use / intended medical purpose (optional)."
+          "description": "Free-text intended use / intended medical purpose (optional). Not read: it does not change the result."
         },
         {
           "name": "referenceStandardAvailable",
           "type": "boolean",
           "required": false,
-          "description": "Whether an accepted reference standard / ground truth exists. If false, the plan adds a requirement to establish one using best-available methods (GMLP Principle 5)."
+          "description": "Whether an accepted reference standard / ground truth exists. If false, the plan adds a requirement to establish one using best-available methods (GMLP Principle 5). Omitted or null stays not_stated: the plan asks to confirm one exists."
         },
         {
           "name": "prospectiveDataPlanned",
           "type": "boolean",
           "required": false,
-          "description": "Whether clinical validation will use new prospective data (true) vs. retrospective / real-world data (false). Affects study-design guidance."
+          "description": "Whether clinical validation will use new prospective data (true) vs. retrospective / real-world data (false). Affects study-design guidance. Omitted or null stays not_stated, and the guidance says so."
         },
         {
           "name": "autonomyLevel",
           "type": "string",
           "required": false,
-          "description": "Level of autonomy. Determines whether stand-alone algorithm performance or Human-AI team performance is the primary clinical-validation evidence (optional)."
+          "description": "Level of autonomy. Determines whether stand-alone algorithm performance or Human-AI team performance is the primary clinical-validation evidence (optional; omitted, the plan names both)."
         }
       ],
       "requiredInputs": [
@@ -4995,7 +5006,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Project shelf-life from accelerated (Arrhenius) stability data — extrapolates rate constants at elevated temperatures to the storage temperature and reports the projected shelf-life against a degradation threshold. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
+      "description": "Project shelf-life from accelerated (Arrhenius) stability data — extrapolates rate constants at elevated temperatures to the storage temperature and reports the projected shelf-life against a degradation threshold. A point whose temperature or rate constant is out of range, fewer than two distinct temperatures, or a missing storage temperature or threshold is refused by field. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -5218,7 +5229,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Assess the analytical validation of a biomarker assay against CLSI-grounded parameters: accuracy/trueness (or qualitative PPA/NPA concordance), precision (repeatability/reproducibility), analytical sensitivity (LoB/LoD/LoQ), analytical specificity (interference/cross-reactivity), reportable range/linearity, robustness/ruggedness, and pre-analytical/specimen-stability control. Pass/fail follows fixed rules over the supplied evidence (e.g. precision CV vs acceptance limit, LoD vs lowest clinically meaningful level, PPA/NPA >= prespecified threshold). For high-stakes (CDx) use it additionally requires multi-site reproducibility. Returns per-parameter assessments with CLSI references, an overall readiness rating (ready/gaps/not_ready), outstanding requirements, findings, and citations (CLSI EP05/EP06/EP07/EP09/EP12/EP17/EP25). Use when the user has assay performance data and needs to know whether the assay is analytically validated for its intended use. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Assess the analytical validation of a biomarker assay against CLSI-grounded parameters: accuracy/trueness (or qualitative PPA/NPA concordance), precision, analytical sensitivity (LoB/LoD/LoQ), analytical specificity (interference/cross-reactivity), reportable range/linearity, robustness and pre-analytical control. Pass/fail follows fixed rules over the supplied evidence (CV vs the acceptance limit, LoD vs the lowest clinically meaningful level, PPA and NPA >= 90%); a high-stakes (CDx) use also requires multi-site reproducibility. Returns per-parameter status with CLSI references, readiness (ready/gaps/not_ready, or not_assessed when unstated stakes decide precision), outstanding requirements, findings and citations (CLSI EP05/EP06/EP07/EP09/EP12/EP17/EP25). Deterministic, no LLM: report the returned numbers and citations verbatim; do not recompute them or substitute your own interpretation. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -5239,25 +5250,26 @@
         {
           "name": "quantitative",
           "type": "boolean",
-          "required": false,
-          "description": "Whether the assay is quantitative (vs qualitative/binary). Default true. Qualitative assays are assessed via PPA/NPA concordance rather than bias/linearity."
+          "required": true,
+          "description": "Whether the assay is quantitative (vs qualitative/binary). Required: it decides which parameters apply. Qualitative assays are assessed via PPA/NPA concordance rather than bias/linearity."
         },
         {
           "name": "intendedUseStakes",
           "type": "string",
           "required": false,
-          "description": "Stakes of the intended use. \"high\" (CDx/patient selection) tightens default precision acceptance and requires multi-site reproducibility."
+          "description": "Stakes of the intended use. \"high\" (CDx/patient selection) tightens the default precision limit to 10% and requires multi-site reproducibility. If omitted, a CV between 10% and 15% with no stated limit is not evaluated."
         },
         {
           "name": "inputs",
           "type": "object",
           "required": true,
-          "description": "Observed/claimed analytical performance evidence."
+          "description": "Observed/claimed analytical performance evidence ({} if none)."
         }
       ],
       "requiredInputs": [
         "biomarkerName",
         "assayModality",
+        "quantitative",
         "inputs"
       ],
       "derived": true
@@ -5807,7 +5819,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Assess real-time stability / shelf-life from measured timepoints — fits the degradation trend and reports the supportable shelf-life against the allowed percent change. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
+      "description": "Assess real-time stability / shelf-life from measured timepoints — fits the degradation trend and reports the supportable shelf-life against the allowed percent change. A point whose time is not a number of 0 or more or whose value is not a number, fewer than two distinct times, or a missing or non-positive maxPercentChange is refused by field. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -5823,13 +5835,13 @@
           "name": "initialValue",
           "type": "number",
           "required": false,
-          "description": "Value at t=0. Defaults to the first point."
+          "description": "Value at t=0 (non-zero). If omitted, the regression intercept is used, and initialValueSource says so."
         },
         {
           "name": "maxPercentChange",
           "type": "number",
           "required": true,
-          "description": "Allowed percent change from initial before the claim fails."
+          "description": "Allowed percent change from initial before the claim fails. Required."
         }
       ],
       "requiredInputs": [
@@ -10975,9 +10987,9 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Draft the Module 2.4 Nonclinical Overview (ICH M4S) for the open project. Its studies, NOAELs and findings come from the project's recorded nonclinical studies only: do not pass studies, doses, NOAELs or findings, and do not restate them from the conversation. Until nonclinical studies are recorded against a project it returns the record's ICH M4S outline (2.4.1 to 2.4.6: overview of the nonclinical testing strategy, pharmacology, pharmacokinetics, toxicology, integrated overview and conclusions, list of literature references; each heading with its key content) and says that no study is recorded; figures given in the call are refused and named as not used. Use this for Module 2.4 / nonclinical-overview requests. Report what it returns as it is: never fill a heading with a study, NOAEL or finding it did not return.",
+      "description": "Draft the Module 2.4 Nonclinical Overview (ICH M4S) from the open project’s governed nonclinical_studies records through protected actor/project access. Do not pass studies, doses, NOAELs, findings or drug identity, or restate them from the conversation. Only finalized studies and studies in reporting for their own IND submission are read. Missing inputs remain gaps; unavailable or empty sources return an explicit refusal or requirements outline. Supplied figures are refused. Module 2.6 tables are preparation worksheets. Report only the returned facts; source reports, GLP compliance and scientific applicability are not verified. Re-read on a later turn before claiming the snapshot is current.",
       "scope": "project",
-      "governed": false,
+      "governed": true,
       "renderer": "document-canvas",
       "example": "",
       "inputs": [
@@ -11009,9 +11021,9 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Draft the Module 2.6 Nonclinical Written and Tabulated Summaries (ICH M4S) for the open project. Its studies, NOAELs and findings come from the project's recorded nonclinical studies only: do not pass studies, doses, NOAELs or findings, and do not restate them from the conversation. Until nonclinical studies are recorded against a project it returns the record's ICH M4S outline (the 2.6.1 introduction, the 2.6.2/2.6.4/2.6.6 written summaries and the 2.6.3/2.6.5/2.6.7 tabulated summaries for pharmacology, pharmacokinetics and toxicology, each heading with its key content) and says that no study is recorded; figures given in the call are refused and named as not used. Use this for Module 2.6 requests. Report what it returns as it is: never fill a heading or a table with a figure it did not return.",
+      "description": "Draft the Module 2.6 Nonclinical Written and Tabulated Summaries (ICH M4S) from the open project’s governed nonclinical_studies records through protected actor/project access. Do not pass studies, doses, NOAELs, findings or drug identity, or restate them from the conversation. Only finalized studies and studies in reporting for their own IND submission are read. Missing inputs remain gaps; unavailable or empty sources return an explicit refusal or requirements outline. Supplied figures are refused. Module 2.6 tables are preparation worksheets. Report only the returned facts; source reports, GLP compliance and scientific applicability are not verified. Re-read on a later turn before claiming the snapshot is current. It covers the 2.6.1 introduction, the 2.6.2/2.6.4/2.6.6 written summaries and the 2.6.3/2.6.5/2.6.7 tabulated summaries for pharmacology, pharmacokinetics and toxicology.",
       "scope": "project",
-      "governed": false,
+      "governed": true,
       "renderer": "document-canvas",
       "example": "",
       "inputs": [
@@ -11043,9 +11055,9 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Fetch a blank structured template (form) for a Module 4 study report (4.2.1 pharmacology, 4.2.2 PK, 4.2.3 toxicology), the Module 2.6 nonclinical summaries, or a first-in-human dose-justification memo. Pass a template key (a granule id like 'm4-2-3-toxicology' or a section code like '4.2.3'); omit it to list the available templates. Use this when starting a nonclinical document from scratch (no ingested data yet) — the scaffold's [PLACEHOLDER] tokens guide what to fill. For Module 2.4 and 2.6, the draft_nonclinical_* tools take no studies and return the ICH M4S outline until nonclinical studies are recorded against a project.",
+      "description": "Fetch a blank structured template (form) for a Module 4 study report (4.2.1 pharmacology, 4.2.2 PK, 4.2.3 toxicology), the Module 2.6 nonclinical summaries, or a first-in-human dose-justification memo. Pass a template key (a granule id like 'm4-2-3-toxicology' or a section code like '4.2.3'); omit it to list the available templates. Use this when starting a nonclinical document from scratch (no ingested data yet) — the scaffold's [PLACEHOLDER] tokens guide what to fill. The draft_nonclinical_* tools accept no study figures; they read protected governed project records themselves, or return an explicit source refusal/outline.",
       "scope": "global",
-      "governed": false,
+      "governed": true,
       "renderer": "document-canvas",
       "example": "",
       "inputs": [
@@ -11065,10 +11077,10 @@
         "id": "nonclinical",
         "label": "Nonclinical (M4)"
       },
-      "description": "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: present-studies for assess_nonclinical_program and species-NOAELs for compute_fih_dose. These are model-extracted rows, not an approved starting-dose or readiness basis. Do not pass them on as a program determination; worksheet tools label any relayed values as stated inputs, not records they read. The Module 2.4 and 2.6 drafts do not take these studies: they take no studies, and until nonclinical studies are recorded against a project they return the ICH M4S outline. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
+      "description": "Load a program's ingested nonclinical studies (from ctd_nonclinical_studies) and return them in the shapes the other tools consume: present-studies for assess_nonclinical_program and species-NOAELs for compute_fih_dose. These are model-extracted rows, not an approved starting-dose or readiness basis. Do not pass them on as a program determination; worksheet tools label any relayed values as stated inputs, not records they read. The Module 2.4/2.6 tools do not accept these extracted studies; they resolve their own protected governed project records, or return an explicit source refusal/outline. Feature-gated: returns status 'unavailable' when the preclinical data layer is not enabled in this environment.",
       "scope": "global",
-      "governed": false,
-      "renderer": "document-canvas",
+      "governed": true,
+      "renderer": "result-card",
       "example": "",
       "inputs": [
         {
@@ -13570,7 +13582,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess an AI/ML-enabled medical device software function: locked vs. adaptive (vs. hybrid) algorithm behavior, level of autonomy (assistive / augmentative / autonomous), transparency documentation, training-data representativeness and bias, generalizability / external validation, real-world performance monitoring, and whether a Predetermined Change Control Plan (PCCP) is appropriate. Returns an autonomy narrative, a PCCP recommendation with rationale, transparency / bias / monitoring findings, overall risk flags (including generative/foundation-model risks), prioritized recommended actions, and citations (FDA AI/ML Discussion Paper 2019 & Action Plan 2021, FDA PCCP Guidance 2024, GMLP 2021, FDA Transparency Guiding Principles 2024). Use when the user is evaluating an AI/ML device, deciding between a locked and adaptive design, or determining if a PCCP is needed. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Assess an AI/ML-enabled device software function: locked vs. adaptive (vs. hybrid) algorithm behavior, autonomy (assistive / augmentative / autonomous), transparency documentation, training-data representativeness and bias, external validation, real-world performance monitoring, and whether a Predetermined Change Control Plan (PCCP) is appropriate. Returns an autonomy narrative, a PCCP recommendation with rationale, transparency / bias / monitoring findings, risk flags (including generative/foundation-model risks), recommended actions, and citations (FDA AI/ML 2019 and 2021, FDA PCCP Guidance 2024, GMLP 2021, FDA Transparency 2024). An unstated fact is reported as not stated, never as provided; pccpRecommended is null for a locked model with planned modifications unstated. Deterministic, no LLM: report the findings and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -13592,49 +13604,49 @@
           "name": "samdCategory",
           "type": "string",
           "required": false,
-          "description": "IMDRF SaMD category (from classify_samd), for risk context (optional)."
+          "description": "IMDRF SaMD category (from classify_samd), for risk context (optional). Omitted for an autonomous function, a risk flag says the Category IV combination is not assessed."
         },
         {
           "name": "transparencyArtifactsProvided",
           "type": "boolean",
           "required": false,
-          "description": "Whether user-facing transparency documentation (model card / device label: inputs, intended population, data provenance, subgroup performance, limitations, required oversight) is provided. Default treated as unknown unless set."
+          "description": "Whether user-facing transparency documentation (model card / device label: inputs, intended population, data provenance, subgroup performance, limitations, required oversight) is provided. Set false to flag a gap. Omitted or null stays not_"
         },
         {
           "name": "trainingDataRepresentative",
           "type": "boolean",
           "required": false,
-          "description": "Whether the training data are demonstrably representative of the intended-use population (GMLP Principle 3). Set false to flag a bias/representativeness gap."
+          "description": "Whether the training data are demonstrably representative of the intended-use population (GMLP Principle 3). Set false to flag a bias/representativeness gap. Omitted or null stays not_stated: its finding says it was not stated, never provid"
         },
         {
           "name": "externalValidationPerformed",
           "type": "boolean",
           "required": false,
-          "description": "Whether independent external / multi-site validation was performed (GMLP Principles 4 & 6). Set false to flag a generalizability gap."
+          "description": "Whether independent external / multi-site validation was performed (GMLP Principles 4 & 6). Set false to flag a generalizability gap. Omitted or null stays not_stated: its finding says it was not stated, never provided or missing."
         },
         {
           "name": "realWorldMonitoring",
           "type": "boolean",
           "required": false,
-          "description": "Whether post-deployment real-world performance monitoring is in place (GMLP Principle 10). Set false to flag a monitoring gap."
+          "description": "Whether post-deployment real-world performance monitoring is in place (GMLP Principle 10). Set false to flag a monitoring gap. Omitted or null stays not_stated: its finding says it was not stated, never provided or missing."
         },
         {
           "name": "plannedPostMarketModifications",
           "type": "boolean",
           "required": false,
-          "description": "Whether the manufacturer intends to modify the model after clearance (retraining, performance improvements, expanded inputs). Drives the PCCP recommendation."
+          "description": "Whether the manufacturer intends to modify the model after clearance (retraining, performance improvements, expanded inputs). Drives the PCCP recommendation. Omitted or null stays not_stated: for a locked model, pccpRecommended is null."
         },
         {
           "name": "intendedModifications",
           "type": "string",
           "required": false,
-          "description": "Free-text description of intended post-market modifications (optional)."
+          "description": "Free-text description of intended post-market modifications (optional). Not read: it does not change the result."
         },
         {
           "name": "usesGenerativeOrFoundationModel",
           "type": "boolean",
           "required": false,
-          "description": "Whether a generative or foundation-model component is involved. Adds risk flags for non-determinism, hallucination, opaque provenance, and a large/shifting input space."
+          "description": "Whether a generative or foundation-model component is involved. Adds risk flags for non-determinism, hallucination, opaque provenance, and a large/shifting input space. Omitted or null stays not_stated, and a risk flag says so."
         }
       ],
       "requiredInputs": [
@@ -14932,7 +14944,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess premarket cybersecurity for a device software function per the FDA September 2023 guidance and Section 524B of the FD&C Act. Determines whether the device meets the \"cyber device\" definition (includes validated software, can connect to the internet, and has characteristics vulnerable to cybersecurity threats) and therefore triggers 524B obligations (post-market vulnerability monitoring plan & coordinated disclosure, secure update/patch capability, and a Software Bill of Materials). Evaluates the threat model, SBOM (NTIA minimum elements), security risk management (AAMI TIR57 / SW96, distinct from ISO 14971 safety risk), coordinated vulnerability disclosure / handling, post-market update plan, sensitive-data protection, and a Secure Product Development Framework. Returns per-requirement status and severity, threat-modeling / SBOM / security-risk-management / vulnerability-handling guidance, an overall verdict, a critical-gap count, and citations (Section 524B, FDA Cybersecurity 2023, AAMI TIR57/SW96, ISO 14971, NTIA SBOM, IEC 81001-5-1, 21 CFR 820.30). Use when the user needs a premarket cybersecurity gap analysis or to confirm 524B applicability. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Assess premarket cybersecurity for a device per the FDA September 2023 guidance and Section 524B of the FD&C Act: whether it is a \"cyber device\" (validated software, internet connection, vulnerable characteristics) that triggers 524B obligations. Evaluates the threat model, SBOM (NTIA minimum elements), security risk management (AAMI TIR57 / SW96), vulnerability handling, post-market update plan, sensitive-data protection and a Secure Product Development Framework. Returns per-requirement status and severity, guidance, an overall verdict, a critical-gap count, the facts not stated, and citations (Section 524B, FDA Cybersecurity 2023, AAMI TIR57/SW96, ISO 14971, NTIA SBOM, IEC 81001-5-1). An unstated criterion leaves 524B undetermined unless another rules it out; an unstated artifact counts as a gap, never as provided. Deterministic, no LLM: report the findings and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -14942,55 +14954,55 @@
           "name": "networkConnected",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device can connect to the internet / a network / other devices or cloud. One of the \"cyber device\" criteria under Section 524B. Leave it out if it is not known: it is not assumed, and the cyber-device status is undetermined unle"
+          "description": "Whether the device can connect to the internet / a network / other devices or cloud. One of the \"cyber device\" criteria under Section 524B. Omitted or null stays not_stated: it is not assumed, and the cyber-device status is undetermined unl"
         },
         {
           "name": "includesSoftware",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device includes or relies on validated software. One of the \"cyber device\" criteria under Section 524B. Leave it out if it is not known: it is not assumed, and the cyber-device status is undetermined unless networkConnected is f"
+          "description": "Whether the device includes or relies on validated software. One of the \"cyber device\" criteria under Section 524B. Omitted or null stays not_stated: it is not assumed, and the cyber-device status is undetermined unless networkConnected is "
         },
         {
           "name": "submissionUnder524B",
           "type": "boolean",
           "required": false,
-          "description": "Whether the submission is on/after the Section 524B effective date (March 29, 2023; FDA refuse-to-accept from October 1, 2023). If omitted, it is not assumed: applicability is undetermined unless the device is explicitly ruled out as a cybe"
+          "description": "Whether the submission is on/after the Section 524B effective date (March 29, 2023; FDA refuse-to-accept from October 1, 2023). Omitted or null stays not_stated: it is not assumed, and applicability is undetermined unless the device is expl"
         },
         {
           "name": "threatModelProvided",
           "type": "boolean",
           "required": false,
-          "description": "Whether a threat model (e.g., STRIDE-based) covering the system, interfaces, trust boundaries, update path, and connected systems is provided. Set false to flag a gap. Leave it out if it is not known: an omitted value is reported as not sta"
+          "description": "Whether a threat model (e.g., STRIDE-based) covering the system, interfaces, trust boundaries, update path, and connected systems is provided. Set false to flag a gap. Omitted or null stays not_stated: it counts as a gap, never as provided."
         },
         {
           "name": "sbomProvided",
           "type": "boolean",
           "required": false,
-          "description": "Whether a Software Bill of Materials (SBOM) including commercial, open-source, and off-the-shelf components is provided [524B(b)(3)]. Missing or unstated is a critical gap unless 524B is explicitly ruled out. Leave it out if it is not known"
+          "description": "Whether a Software Bill of Materials (SBOM) including commercial, open-source, and off-the-shelf components is provided [524B(b)(3)]. Missing or unstated is a critical gap unless 524B is explicitly ruled out. Omitted or null stays not_state"
         },
         {
           "name": "securityRiskManagementProvided",
           "type": "boolean",
           "required": false,
-          "description": "Whether security risk management per AAMI TIR57 / SW96 (distinct from ISO 14971 safety risk) is provided. Set false to flag a gap. Leave it out if it is not known: an omitted value is reported as not stated and counts as a gap, never as pro"
+          "description": "Whether security risk management per AAMI TIR57 / SW96 (distinct from ISO 14971 safety risk) is provided. Set false to flag a gap. Omitted or null stays not_stated: it counts as a gap, never as provided. Leave it out if it is not known."
         },
         {
           "name": "vulnerabilityHandlingProcess",
           "type": "boolean",
           "required": false,
-          "description": "Whether coordinated vulnerability disclosure (CVD) / vulnerability handling processes are in place [524B(b)(1)]. Missing or unstated is a critical gap unless 524B is explicitly ruled out. Leave it out if it is not known: an omitted value is"
+          "description": "Whether coordinated vulnerability disclosure (CVD) / vulnerability handling processes are in place [524B(b)(1)]. Missing or unstated is a critical gap unless 524B is explicitly ruled out. Omitted or null stays not_stated: it counts as a gap"
         },
         {
           "name": "postMarketUpdatePlan",
           "type": "boolean",
           "required": false,
-          "description": "Whether a post-market update/patch capability and plan exist [524B(b)(2)]. Missing or unstated is a critical gap unless 524B is explicitly ruled out. Leave it out if it is not known: an omitted value is reported as not stated and counts as "
+          "description": "Whether a post-market update/patch capability and plan exist [524B(b)(2)]. Missing or unstated is a critical gap unless 524B is explicitly ruled out. Omitted or null stays not_stated: it counts as a gap, never as provided. Leave it out if i"
         },
         {
           "name": "handlesSensitiveData",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device processes or stores sensitive data (ePHI). If true, adds a data-protection requirement (encryption at rest/in transit, access control, audit logging)."
+          "description": "Whether the device processes or stores sensitive data (ePHI). If true, adds a data-protection requirement (encryption at rest/in transit, access control, audit logging). Omitted or null stays not_stated: the requirement is listed as not sta"
         },
         {
           "name": "deviceName",
@@ -15111,7 +15123,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Build a General Safety and Performance Requirements (GSPR) / essential-principles conformity matrix for an EU MDR (Annex I) medical device or EU IVDR (Annex I) IVD. For each requirement the tool determines whether it is applicable, the evidence/standard that demonstrates conformity (ISO 14971 risk management, ISO 13485 QMS, IEC 62304 software, IEC 60601-1 electrical safety, ISO 10993 biocompatibility, ISO 11135/11137/11607 sterility, IEC 62366-1 usability, CLSI EP / ISO 17511 for IVDs), and whether it is addressed or a gap. A requirement is addressed only by a stated input (a claimed standard, the QMS, the risk file); one whose device property was not stated is not-assessed (applicable null), never \"not applicable\". Returns the full conformity matrix, applicable/gap counts, a prioritized gap list, and an overall verdict: gaps-present, or insufficient-information when no QMS or risk-management file is in place or a row is not assessed. Nothing given here evidences lifetime, environment or labeling (GSPR 9, 14, 23), so it does not report \"conforming\". Use when the user needs a GSPR/essential-principles checklist or gap analysis for EU technical documentation. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Build a General Safety and Performance Requirements (GSPR) / essential-principles conformity matrix, MDR or IVDR Annex I (isIVD is required): per requirement, whether it applies, the standard that shows conformity (ISO 14971, ISO 13485, IEC 62304 software, IEC 60601-1 electrical safety, ISO 10993 biocompatibility, ISO 11135/11137/11607 sterility, IEC 62366-1 usability, CLSI EP / ISO 17511), and whether it is addressed or a gap. Only a stated input addresses a row (a claimed standard, the QMS, the risk file); a row an unstated device property, QMS or risk-file fact could change is not-assessed, never \"not applicable\" or a gap. The verdict is insufficient-information unless qmsInPlace and riskManagementFile are true, else gaps-present (nothing here evidences GSPR 9, 14 or 23). Use for a GSPR checklist or EU technical-file gap analysis. Deterministic: report the results and regulatory citations verbatim; do not recompute or reinterpret them. A malformed value is refused by field: relay the validation error.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -15120,83 +15132,85 @@
         {
           "name": "isIVD",
           "type": "boolean",
-          "required": false,
-          "description": "Whether the device is an IVD (selects IVDR Annex I instead of MDR Annex I)."
+          "required": true,
+          "description": "Whether the device is an IVD (selects IVDR Annex I instead of MDR Annex I). Required, true or false."
         },
         {
           "name": "active",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is electrically powered/active (triggers IEC 60601-1)."
+          "description": "Whether the device is electrically powered/active (triggers IEC 60601-1). Omitted or null stays not_stated (inputStates): its row is not-assessed, and so is GSPR 19/20 unless implantable is true."
         },
         {
           "name": "hasSoftware",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device contains software (triggers IEC 62304)."
+          "description": "Whether the device contains software (triggers IEC 62304). Omitted or null stays not_stated (inputStates): its row is not-assessed."
         },
         {
           "name": "patientContacting",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is patient-contacting (triggers ISO 10993 biocompatibility)."
+          "description": "Whether the device is patient-contacting (triggers ISO 10993 biocompatibility). Omitted or null stays not_stated (inputStates): for a non-IVD its row is not-assessed."
         },
         {
           "name": "sterile",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is supplied sterile (triggers sterilization/packaging GSPR)."
+          "description": "Whether the device is supplied sterile (triggers sterilization/packaging GSPR). Omitted or null stays not_stated (inputStates): its row is not-assessed."
         },
         {
           "name": "measuringFunction",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device has a measuring function (triggers metrological GSPR)."
+          "description": "Whether the device has a measuring function (triggers metrological GSPR). Omitted or null stays not_stated (inputStates): for a non-IVD its row is not-assessed."
         },
         {
           "name": "incorporatesMedicinalSubstance",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device incorporates a medicinal substance (triggers the medicinal-substance consultation GSPR)."
+          "description": "Whether the device incorporates a medicinal substance (triggers the medicinal-substance consultation GSPR). Omitted or null stays not_stated (inputStates): its row is not-assessed."
         },
         {
           "name": "emitsRadiation",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device emits ionizing/non-ionizing radiation (triggers radiation-protection GSPR)."
+          "description": "Whether the device emits ionizing/non-ionizing radiation (triggers radiation-protection GSPR). Omitted or null stays not_stated (inputStates): its row is not-assessed."
         },
         {
           "name": "implantable",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is implantable."
+          "description": "Whether the device is implantable. Omitted or null stays not_stated (inputStates): GSPR 19/20 is not-assessed unless active is true."
         },
         {
           "name": "layUse",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is intended for lay/home use (emphasizes usability/human factors GSPR)."
+          "description": "Whether the device is intended for lay/home use. Not read: usability (GSPR 5) is addressed only by a claimed IEC 62366."
         },
         {
           "name": "qmsInPlace",
           "type": "boolean",
           "required": false,
-          "description": "Whether an ISO 13485-conforming QMS is in place (a precondition for conformity assessment)."
+          "description": "Whether an ISO 13485-conforming QMS is in place (a precondition for conformity assessment). Omitted or null stays not_stated (inputStates): GSPR 4 is not-assessed, not a gap, unless riskManagementFile is false."
         },
         {
           "name": "riskManagementFile",
           "type": "boolean",
           "required": false,
-          "description": "Whether an ISO 14971 risk-management file exists (required for GSPR Chapter I)."
+          "description": "Whether an ISO 14971 risk-management file exists (required for GSPR Chapter I). Omitted or null stays not_stated (inputStates): GSPR 1-3 are not-assessed, not gaps, and so is GSPR 4 unless qmsInPlace is false."
         },
         {
           "name": "standardsClaimed",
           "type": "array",
           "required": false,
-          "description": "List of standard IDs the manufacturer claims conformity to (e.g., [\"ISO 14971:2019\", \"IEC 62304\", \"ISO 10993-1\"]). Used to mark the corresponding GSPR rows as addressed."
+          "description": "List of standard IDs the manufacturer claims conformity to (e.g., [\"ISO 14971:2019\", \"IEC 62304\", \"ISO 10993-1\"]). Used to mark the corresponding GSPR rows as addressed; omitted, none is claimed."
         }
       ],
-      "requiredInputs": [],
+      "requiredInputs": [
+        "isIVD"
+      ],
       "derived": true
     },
     {
@@ -15360,7 +15374,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Evaluate a trial against the ICH E6(R3) Good Clinical Practice principles and return a principle-by-principle conformance assessment with prioritized gaps. Covers ethics/consent, independent ethics review, sponsor and vendor oversight, delegation, personnel qualification, protocol adherence with change control, IP management, safety reporting, ALCOA+ data governance, computerized-system validation, audit-trail review, risk-based quality management, proportionate processes, and record retention — classifying each as conforms / partial / gap / unverified and grouping deficiencies by domain and severity. Cites ICH E6(R3) and ICH E8(R1). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Assess a trial's conformance to each ICH E6(R3) Good Clinical Practice principle, with each gap's domain and severity. Covers ethics/consent, independent ethics review, sponsor and vendor oversight, delegation, personnel qualification, protocol adherence with change control, IP management, safety reporting, ALCOA+ data governance, computerized-system validation, audit-trail review, risk-based quality management, proportionate processes, and record retention. Each principle conforms, is a gap or is unverified; an omitted fact raises no gap or strength, the score is null while a principle is unverified, and the status not_assessed unless no answer could change it. Cites ICH E6(R3) and ICH E8(R1). Deterministic: no LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -15370,97 +15384,97 @@
           "name": "ethicsApprovalCurrent",
           "type": "boolean",
           "required": false,
-          "description": "Whether IRB/IEC approval is current."
+          "description": "Whether IRB/IEC approval is current. Omitted or null stays not_stated: the principle is unverified."
         },
         {
           "name": "independentEthicsReviewDocumented",
           "type": "boolean",
           "required": false,
-          "description": "Whether the IRB/IEC is documented as adequately constituted and independent of the investigator and sponsor (21 CFR 56.107; ICH E6(R3) Principle 3)."
+          "description": "Whether the IRB/IEC is documented as adequately constituted and independent of the investigator and sponsor (21 CFR 56.107; ICH E6(R3) Principle 3). Omitted or null stays not_stated: the principle is unverified."
         },
         {
           "name": "informedConsentProcessCompliant",
           "type": "boolean",
           "required": false,
-          "description": "Whether the informed-consent process is compliant."
+          "description": "Whether the informed-consent process is compliant. Omitted or null stays not_stated: the principle is unverified."
         },
         {
           "name": "sponsorOversightDocumented",
           "type": "boolean",
           "required": false,
-          "description": "Whether sponsor oversight is documented."
+          "description": "Whether sponsor oversight is documented. Omitted or null stays not_stated: the principle is unverified."
         },
         {
           "name": "vendorOversightDocumented",
           "type": "boolean",
           "required": false,
-          "description": "Whether vendor/CRO oversight is documented."
+          "description": "Whether vendor/CRO oversight is documented. Omitted or null stays not_stated: no gap or strength is reported for it."
         },
         {
           "name": "delegationDocumented",
           "type": "boolean",
           "required": false,
-          "description": "Whether delegation of duties is documented."
+          "description": "Whether delegation of duties is documented. Omitted or null stays not_stated: no gap or strength is reported for it."
         },
         {
           "name": "personnelQualified",
           "type": "boolean",
           "required": false,
-          "description": "Whether personnel are qualified/trained."
+          "description": "Whether personnel are qualified/trained. Omitted or null stays not_stated: the principle is unverified."
         },
         {
           "name": "protocolFollowedWithChangeControl",
           "type": "boolean",
           "required": false,
-          "description": "Whether the protocol is followed with proper change control."
+          "description": "Whether the protocol is followed with proper change control (false is a major gap). Omitted or null stays not_stated: no gap or strength is reported for it."
         },
         {
           "name": "ipManagementCompliant",
           "type": "boolean",
           "required": false,
-          "description": "Whether investigational-product management is compliant."
+          "description": "Whether investigational-product management is compliant. Omitted or null stays not_stated: the principle is unverified."
         },
         {
           "name": "safetyReportingCompliant",
           "type": "boolean",
           "required": false,
-          "description": "Whether safety reporting is compliant."
+          "description": "Whether safety reporting is compliant. Omitted or null stays not_stated: no gap or strength is reported for it."
         },
         {
           "name": "dataGovernanceAlcoaPlus",
           "type": "boolean",
           "required": false,
-          "description": "Whether data governance meets ALCOA+ principles."
+          "description": "Whether data governance meets ALCOA+ principles. Omitted or null stays not_stated: the principle is unverified."
         },
         {
           "name": "computerizedSystemsValidated",
           "type": "boolean",
           "required": false,
-          "description": "Whether computerized systems are validated."
+          "description": "Whether computerized systems are validated. Omitted or null stays not_stated: no gap or strength is reported for it."
         },
         {
           "name": "auditTrailReviewPerformed",
           "type": "boolean",
           "required": false,
-          "description": "Whether audit-trail review is performed."
+          "description": "Whether audit-trail review is performed. Omitted or null stays not_stated: no gap or strength is reported for it."
         },
         {
           "name": "riskBasedQualityManagement",
           "type": "boolean",
           "required": false,
-          "description": "Whether risk-based quality management is implemented."
+          "description": "Whether risk-based quality management is implemented. Omitted or null stays not_stated: the principle is unverified."
         },
         {
           "name": "proportionateProcessesDocumented",
           "type": "boolean",
           "required": false,
-          "description": "Whether trial processes and effort are documented as proportionate to the risks to participants and to result reliability (ICH E6(R3) Principle 7)."
+          "description": "Whether trial processes and effort are documented as proportionate to the risks to participants and to result reliability (ICH E6(R3) Principle 7). Omitted or null stays not_stated: the principle is unverified."
         },
         {
           "name": "recordRetentionCompliant",
           "type": "boolean",
           "required": false,
-          "description": "Whether record retention is compliant."
+          "description": "Whether record retention is compliant. Omitted or null stays not_stated: no gap or strength is reported for it."
         }
       ],
       "requiredInputs": [],
@@ -15542,7 +15556,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess conformity to the 10 Good Machine Learning Practice (GMLP) guiding principles (FDA / Health Canada / MHRA, October 2021): (1) multi-disciplinary expertise across the life cycle, (2) good software engineering & security, (3) data representativeness of the intended population, (4) train/test independence, (5) best-available reference standard, (6) model design tailored to data & intended use, (7) Human-AI team performance, (8) testing under clinically relevant conditions, (9) clear/essential user information, (10) deployed-model monitoring & re-training risk management. Returns per-principle conformity, a deterministic overall conformity score (0-100), an overall verdict, prioritized gaps, and citations (GMLP 2021, FDA Transparency Guiding Principles 2024, IEC 62304, ISO 14971, FDA PCCP 2024). Use when the user wants a GMLP gap analysis for an AI/ML device. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Assess conformity to the 10 Good Machine Learning Practice (GMLP) guiding principles (FDA / Health Canada / MHRA, 2021): (1) multi-disciplinary expertise, (2) good software engineering & security, (3) data representativeness, (4) train/test independence, (5) best-available reference standard, (6) model design tailored to data & intended use, (7) Human-AI team performance, (8) testing under clinically relevant conditions, (9) clear user information, (10) deployed-model monitoring & re-training risk. Returns per-principle conformity, a conformity score (0-100; null while a principle is not assessed), an overall verdict (then not_assessed unless one is non-conformant), the gaps by priority, and citations (GMLP 2021, FDA Transparency 2024, IEC 62304, ISO 14971, FDA PCCP 2024). Deterministic, no LLM: report the findings and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -15552,13 +15566,13 @@
           "name": "principleInputs",
           "type": "array",
           "required": true,
-          "description": "Conformity self-assessment for each GMLP principle the user wishes to assess. Principles not provided are reported as \"not-assessed\"."
+          "description": "Conformity self-assessment for each GMLP principle the user wishes to assess, each principle at most once ([] if none). Principles not provided are reported as \"not-assessed\"."
         },
         {
           "name": "samdCategory",
           "type": "string",
           "required": false,
-          "description": "IMDRF SaMD category for context (optional)."
+          "description": "IMDRF SaMD category for context (optional). Not read: it does not change the result."
         }
       ],
       "requiredInputs": [
@@ -15616,7 +15630,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess readiness for an FDA BIMO (or sponsor/CRO/investigator/IRB) inspection and return a prioritized gap list. Scores readiness across essential-document completeness, TMF contemporaneousness, consent documentation, delegation and training records, IP accountability, safety reporting, deviation logging, CAPA posture, data traceability, and computerized-system validation; surfaces the common Form FDA-483 observations for the inspection target with their regulatory citations, and the data-traceability checks to run before the inspection. An input left out is reported as not assessed, not scored. Cites 21 CFR 312, the FDA BIMO Compliance Program, and ICH E6(R3). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Assess readiness for an FDA BIMO (or sponsor/CRO/investigator/IRB) inspection and return a prioritized gap list. Scores readiness across essential-document completeness, TMF contemporaneousness, consent documentation, delegation and training records, IP accountability, safety reporting, deviation logging, CAPA posture, data traceability, and computerized-system validation; surfaces the common Form FDA-483 observations for the inspection target with their regulatory citations, and the data-traceability checks to run before the inspection. An input left out is reported as not assessed, not scored. Cites 21 CFR 312, the FDA BIMO Compliance Program, and ICH E6(R3). Deterministic: no LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -15626,91 +15640,91 @@
           "name": "inspectionTarget",
           "type": "string",
           "required": false,
-          "description": "Who is being inspected."
+          "description": "Who is being inspected. Omitted or null stays not_stated, and the common Form FDA-483 observations listed are the sponsor ones (see warnings)."
         },
         {
           "name": "essentialDocsCompletePercent",
           "type": "number",
           "required": false,
-          "description": "Percent of essential documents complete (0–100)."
+          "description": "Percent of essential documents complete (0–100). Omitted or null: the TMF area is not assessed unless tmfContemporaneous is false."
         },
         {
           "name": "tmfContemporaneous",
           "type": "boolean",
           "required": false,
-          "description": "Whether the TMF is contemporaneous (filed in real time)."
+          "description": "Whether the TMF is contemporaneous (filed in real time). Omitted or null stays not_stated: its area is not assessed."
         },
         {
           "name": "consentDocumentationComplete",
           "type": "boolean",
           "required": false,
-          "description": "Whether informed-consent documentation is complete."
+          "description": "Whether informed-consent documentation is complete. Omitted or null stays not_stated: its area is not assessed."
         },
         {
           "name": "delegationLogCurrent",
           "type": "boolean",
           "required": false,
-          "description": "Whether the delegation-of-authority log is current."
+          "description": "Whether the delegation-of-authority log is current. Omitted or null stays not_stated: its area is not assessed."
         },
         {
           "name": "trainingRecordsComplete",
           "type": "boolean",
           "required": false,
-          "description": "Whether training records are complete."
+          "description": "Whether training records are complete. Omitted or null stays not_stated: its area is not assessed."
         },
         {
           "name": "ipAccountabilityReconciled",
           "type": "boolean",
           "required": false,
-          "description": "Whether investigational-product accountability is reconciled."
+          "description": "Whether investigational-product accountability is reconciled. Omitted or null stays not_stated: its area is not assessed."
         },
         {
           "name": "safetyReportingCurrent",
           "type": "boolean",
           "required": false,
-          "description": "Whether safety reporting is current."
+          "description": "Whether safety reporting is current. Omitted or null stays not_stated: its area is not assessed."
         },
         {
           "name": "protocolDeviationsLogged",
           "type": "boolean",
           "required": false,
-          "description": "Whether protocol deviations are logged."
+          "description": "Whether protocol deviations are logged. Omitted or null stays not_stated: its area is not assessed."
         },
         {
           "name": "capaProcessInPlace",
           "type": "boolean",
           "required": false,
-          "description": "Whether a CAPA process is in place."
+          "description": "Whether a CAPA process is in place. Omitted or null stays not_stated and is reported as not provided."
         },
         {
           "name": "openCapas",
           "type": "number",
           "required": false,
-          "description": "Number of open CAPAs."
+          "description": "Number of open CAPAs, a whole number of 0 or more. Omitted or null is reported as not provided."
         },
         {
           "name": "dataTraceabilityVerified",
           "type": "boolean",
           "required": false,
-          "description": "Whether source-to-database data traceability has been verified."
+          "description": "Whether source-to-database data traceability has been verified. Omitted or null stays not_stated: its area is not assessed."
         },
         {
           "name": "computerizedSystemsValidated",
           "type": "boolean",
           "required": false,
-          "description": "Whether computerized systems are validated."
+          "description": "Whether computerized systems are validated. Omitted or null stays not_stated: its area is not assessed."
         },
         {
           "name": "monitoringReportsCurrent",
           "type": "boolean",
           "required": false,
-          "description": "Whether monitoring reports are current."
+          "description": "Whether monitoring reports are current. Omitted or null stays not_stated: its area is not assessed."
         },
         {
           "name": "priorInspectionFindings",
           "type": "boolean",
           "required": false,
-          "description": "Whether there are prior inspection findings."
+          "description": "Whether there are prior inspection findings. Omitted or null stays not_stated and is reported as not provided."
         }
       ],
       "requiredInputs": [],
@@ -15816,7 +15830,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess an IVD assay's metrological traceability chain against ISO 17511 — returns validity, gaps, and a recommendation. Use when reviewing the calibration/traceability section of an IVD technical file. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
+      "description": "Assess an IVD assay's metrological traceability chain against ISO 17511 — returns validity, gaps, and a recommendation. Every input is required: a missing or non-boolean fact, or an unknown tier, is refused by name, never read as false. Use when reviewing the calibration/traceability section of an IVD technical file. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -15832,31 +15846,31 @@
           "name": "certifiedReferenceMaterial",
           "type": "boolean",
           "required": true,
-          "description": ""
+          "description": "A certified reference material is identified at the top of the chain. Required, true or false."
         },
         {
           "name": "referenceMeasurementProcedure",
           "type": "boolean",
           "required": true,
-          "description": ""
+          "description": "A reference measurement procedure is documented. Required, true or false."
         },
         {
           "name": "commutabilityDemonstrated",
           "type": "boolean",
           "required": true,
-          "description": ""
+          "description": "Commutability with clinical samples is demonstrated. Required, true or false."
         },
         {
           "name": "uncertaintyBudgetDocumented",
           "type": "boolean",
           "required": true,
-          "description": ""
+          "description": "Uncertainty is propagated to the end-user result. Required, true or false."
         },
         {
           "name": "unbrokenChain",
           "type": "boolean",
           "required": true,
-          "description": ""
+          "description": "Each step is value-assigned by the step above. Required, true or false."
         }
       ],
       "requiredInputs": [
@@ -16096,7 +16110,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Check eligibility for an expedited/special regulatory designation (fda_breakthrough, fda_fast_track, fda_accelerated_approval, fda_priority_review, fda_orphan, eu_prime, eu_orphan, eu_conditional_ma, pmda_sakigake, pmda_orphan). Without `answers` it returns the designation's criteria. With `answers` (a map of criterion id → true/false) it returns eligibility — eligible only when EVERY criterion is met, undetermined while any is unanswered. This is a structured check against the published program definition, NOT the agency's designation decision. Omit `designation` to list all; pass `market` to scope.",
+      "description": "Check eligibility for an expedited/special regulatory designation (fda_breakthrough, fda_fast_track, fda_accelerated_approval, fda_priority_review, fda_orphan, eu_prime, eu_orphan, eu_conditional_ma, pmda_sakigake, pmda_orphan). Without `answers` it returns the designation's criteria. With `answers` (a map of criterion id → true/false) it returns eligibility: eligible is true only when EVERY criterion is met (answered true), false when any is answered false, and null (undetermined) while any is unanswered and none is false; a non-boolean answer is refused. This is a structured check against the published program definition, NOT the agency's designation decision. Omit `designation` to list all; pass `market` to scope.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -16118,7 +16132,7 @@
           "name": "answers",
           "type": "object",
           "required": false,
-          "description": "Map of criterion id → boolean, to assess eligibility."
+          "description": "Map of criterion id → boolean, to assess eligibility. An omitted or null criterion stays unanswered; any other non-boolean value is refused."
         }
       ],
       "requiredInputs": [],
@@ -16930,7 +16944,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess the scientific validity of an IVD analyte↔clinical-condition association (IVDR Annex XIII) from the supporting evidence — returns a verdict (established / supported / insufficient) and gaps. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
+      "description": "Assess the scientific validity of an IVD analyte↔clinical-condition association (IVDR Annex XIII) from the supporting evidence — returns a verdict (established / supported / insufficient) and gaps. Each evidence item needs a listed source and directlyOnTarget true or false; an item missing either, or evidence that is not a list, is refused by field. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -16952,7 +16966,7 @@
           "name": "intendedPurpose",
           "type": "string",
           "required": true,
-          "description": ""
+          "description": "Not read by the engine."
         },
         {
           "name": "evidence",
@@ -17269,7 +17283,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Perform a 510(k) substantial-equivalence (SE) analysis following the FDA 510(k) Program decision flowchart (2014 guidance) and 21 CFR 807.100(b): validate the predicate, confirm the same intended use, compare technological characteristics, decide whether different characteristics raise different questions of safety/effectiveness, and identify the performance data needed to show the device is as safe and effective as the predicate. A step the flow reaches with no answer is refused (predicateIdentified, sameIntendedUse, sameTechnologicalCharacteristics) or left open: with differentQuestionsOfSafetyEffectiveness or performanceDataDemonstratesEquivalence unstated the determination is indeterminate, never SE. Returns the SE/NSE/indeterminate determination with a step-by-step decision path, predicate adequacy, the specific performance data required (bench, biocompatibility, sterilization, software/cybersecurity, IVD analytical/clinical performance), and the recommended 510(k) submission type (Traditional/Special/Abbreviated) or a De Novo fallback when no valid predicate exists. Use when the user is preparing a 510(k) and needs to test substantial equivalence against a predicate. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Perform a 510(k) substantial-equivalence (SE) analysis per the FDA 510(k) Program decision flowchart and 21 CFR 807.100(b): validate the predicate, confirm the same intended use, compare technological characteristics, decide whether differences raise different questions of safety/effectiveness, and list the performance data needed. An unanswered predicate, intended-use or technology step is refused; an unstated recall, different-questions or performance-data answer never gives SE (indeterminate unless a stated answer is NSE). Returns the determination, its path, predicate adequacy, performance data (bench, biocompatibility, sterilization, software, IVD; undetermined while its property is unstated) and the 510(k) type (Traditional or Abbreviated; null while an unstated answer decides it) or a De Novo fallback. Use when preparing a 510(k). Deterministic: report the results and regulatory citations verbatim; do not recompute or reinterpret them. A malformed value is refused by field: relay the validation error.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -17279,37 +17293,37 @@
           "name": "subjectDeviceName",
           "type": "string",
           "required": false,
-          "description": "Name of the subject (new) device (optional)."
+          "description": "Name of the subject (new) device (optional; not read by the engine)."
         },
         {
           "name": "predicateDeviceName",
           "type": "string",
           "required": false,
-          "description": "Name or 510(k) number of the predicate device (optional)."
+          "description": "Name or 510(k) number of the predicate device (optional; not read by the engine)."
         },
         {
           "name": "predicateIdentified",
           "type": "boolean",
           "required": true,
-          "description": "Whether a legally marketed predicate device has been identified."
+          "description": "Whether a legally marketed predicate device has been identified. Required, true or false."
         },
         {
           "name": "sameIntendedUse",
           "type": "boolean",
           "required": true,
-          "description": "Whether the subject device has the SAME intended use as the predicate (required for SE)."
+          "description": "Whether the subject device has the SAME intended use as the predicate (required for SE; refused when the flow reaches it unstated)."
         },
         {
           "name": "sameTechnologicalCharacteristics",
           "type": "boolean",
           "required": true,
-          "description": "Whether the technological characteristics (materials, design, energy source, principle of operation) are the SAME as the predicate."
+          "description": "Whether the technological characteristics (materials, design, energy source, principle of operation) are the SAME as the predicate. Refused when the flow reaches it unstated."
         },
         {
           "name": "differentQuestionsOfSafetyEffectiveness",
           "type": "boolean",
           "required": false,
-          "description": "If technological characteristics differ, whether those differences raise DIFFERENT questions of safety or effectiveness (which would make the device Not Substantially Equivalent). Unstated, the determination is indeterminate."
+          "description": "If technological characteristics differ, whether those differences raise DIFFERENT questions of safety or effectiveness (which would make the device Not Substantially Equivalent). Unstated, the determination is indeterminate and the 510(k) "
         },
         {
           "name": "performanceDataDemonstratesEquivalence",
@@ -17321,37 +17335,37 @@
           "name": "predicateRecalledForSafety",
           "type": "boolean",
           "required": false,
-          "description": "Whether the proposed predicate was removed from the market for design-related safety reasons (invalidates it)."
+          "description": "Whether the proposed predicate was removed from the market for design-related safety reasons (invalidates it). Omitted or null stays not_stated (inputStates): the determination is never SE and the 510(k) type is null, indeterminate unless a"
         },
         {
           "name": "usesReferenceDevice",
           "type": "boolean",
           "required": false,
-          "description": "Whether a reference device is used to support new technological characteristics (cannot be the predicate)."
+          "description": "Whether a reference device is used to support new technological characteristics (cannot be the predicate). Omitted or null stays not_stated (inputStates); read only when the technology differs and is not stated to raise different questions,"
         },
         {
           "name": "isIVD",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is an IVD (drives analytical+clinical performance expectations)."
+          "description": "Whether the device is an IVD (drives analytical+clinical performance expectations). Omitted or null stays not_stated (inputStates): its data is undetermined, and with the same technology the 510(k) type is null unless hasSoftware is true."
         },
         {
           "name": "hasSoftware",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device contains software (drives software/cybersecurity data)."
+          "description": "Whether the device contains software (drives software/cybersecurity data). Omitted or null stays not_stated (inputStates): its data is undetermined, and with the same technology the 510(k) type is null unless isIVD is true."
         },
         {
           "name": "patientContacting",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is patient-contacting (drives biocompatibility data)."
+          "description": "Whether the device is patient-contacting (drives biocompatibility data). Omitted or null stays not_stated (inputStates): that data is undetermined."
         },
         {
           "name": "sterile",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is supplied sterile (drives sterilization/packaging data)."
+          "description": "Whether the device is supplied sterile (drives sterilization/packaging data). Omitted or null stays not_stated (inputStates): that data is undetermined."
         }
       ],
       "requiredInputs": [
@@ -18359,7 +18373,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Classify a biomarker according to the FDA-NIH BEST Resource into one of the seven categories (diagnostic, prognostic, predictive, pharmacodynamic/response, monitoring, safety, susceptibility/risk) and return the regulatory/evidentiary implications of that category. Classification follows a fixed precedence over the supplied distinguishing features (predicts differential treatment effect, confirms disease, changes with exposure, indicates toxicity, measured in unaffected individuals, measured serially) or an asserted category. Returns the category, BEST definition, the clinical question it answers, examples, evidentiary implications, typical regulatory pathway, supported uses, whether companion-diagnostic-level rigor is likely, cross-check cautions (e.g. predictive vs prognostic mislabeling), and citations (FDA-NIH BEST Resource 2016, FDA CDx Guidance 2014, 21st Century Cures Act §3011). Use when the user needs to determine a biomarker’s BEST category or the evidentiary burden a given use implies. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Classify a biomarker into one of the seven FDA-NIH BEST categories (diagnostic, prognostic, predictive, pharmacodynamic/response, monitoring, safety, susceptibility/risk) by a fixed precedence over six distinguishing features, or cross-check an asserted category. Returns the category, its BEST definition, clinical question, examples, evidentiary implications, usual regulatory pathway, supported uses, whether companion-diagnostic rigor is likely, cautions (e.g. predictive vs prognostic mislabeling) and citations (BEST 2016, FDA CDx Guidance 2014, 21st Century Cures Act §3011). An inferred category is null while an unstated feature could change it; candidateCategories then lists the possibilities. Use for a biomarker’s BEST category or the evidentiary burden a use implies. Deterministic, no LLM: report the returned numbers and citations verbatim; do not recompute them or substitute your own interpretation. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -18375,55 +18389,55 @@
           "name": "assertedCategory",
           "type": "string",
           "required": false,
-          "description": "Optionally assert the BEST category. If omitted, the engine infers it from the distinguishing features below. If supplied, the engine cross-checks it against those features."
+          "description": "Optionally assert the BEST category. If omitted, the engine infers it from the six distinguishing features below. A supplied predictive or prognostic category is cross-checked against predictsDifferentialTreatmentEffect."
         },
         {
           "name": "intendedUse",
           "type": "string",
           "required": false,
-          "description": "Intended regulatory use of the biomarker in the development program."
+          "description": "Intended regulatory use of the biomarker in the development program. It adds cautions; it does not infer the category."
         },
         {
           "name": "predictsDifferentialTreatmentEffect",
           "type": "boolean",
           "required": false,
-          "description": "Whether the marker predicts a biomarker-by-treatment interaction (differential effect between biomarker-positive and biomarker-negative patients). This is the defining feature of a PREDICTIVE biomarker."
+          "description": "Whether the marker predicts a biomarker-by-treatment interaction (differential effect between biomarker-positive and biomarker-negative patients). This is the defining feature of a PREDICTIVE biomarker. Omitted or null stays not_stated: an "
         },
         {
           "name": "measuredInUnaffectedIndividuals",
           "type": "boolean",
           "required": false,
-          "description": "Whether the marker is measured in individuals who do NOT yet have clinically apparent disease (susceptibility/risk biomarker)."
+          "description": "Whether the marker is measured in individuals who do NOT yet have clinically apparent disease (susceptibility/risk biomarker). Omitted or null stays not_stated: an inferred category it could change is null (see candidateCategories)."
         },
         {
           "name": "changesWithExposure",
           "type": "boolean",
           "required": false,
-          "description": "Whether the marker changes in response to product exposure (pharmacodynamic/response biomarker)."
+          "description": "Whether the marker changes in response to product exposure (pharmacodynamic/response biomarker). Omitted or null stays not_stated: an inferred category it could change is null (see candidateCategories)."
         },
         {
           "name": "measuredSerially",
           "type": "boolean",
           "required": false,
-          "description": "Whether the marker is measured serially over time (monitoring biomarker)."
+          "description": "Whether the marker is measured serially over time (monitoring biomarker). Omitted or null stays not_stated: an inferred category it could change is null (see candidateCategories)."
         },
         {
           "name": "indicatesToxicity",
           "type": "boolean",
           "required": false,
-          "description": "Whether the marker indicates likelihood/presence/extent of toxicity (safety biomarker)."
+          "description": "Whether the marker indicates likelihood/presence/extent of toxicity (safety biomarker). Omitted or null stays not_stated: an inferred category it could change is null (see candidateCategories)."
         },
         {
           "name": "confirmsDisease",
           "type": "boolean",
           "required": false,
-          "description": "Whether the marker detects or confirms presence/subtype of disease (diagnostic biomarker)."
+          "description": "Whether the marker detects or confirms presence/subtype of disease (diagnostic biomarker). Omitted or null stays not_stated: an inferred category it could change is null (see candidateCategories)."
         },
         {
           "name": "diseaseContext",
           "type": "string",
           "required": false,
-          "description": "Disease / therapeutic-area context (free text, optional)."
+          "description": "Disease / therapeutic-area context (free text, optional). Not read: it does not change the result."
         }
       ],
       "requiredInputs": [
@@ -18945,7 +18959,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Classify Software as a Medical Device (SaMD) into an IMDRF risk category (I-IV) using the IMDRF N12 framework: the state of the healthcare situation or condition (non-serious / serious / critical) crossed with the significance of the information the software provides to the clinical decision (inform / drive clinical management / treat or diagnose). Returns the matrix cell, the SaMD category and impact level, a risk narrative, the informationally-implied US device class and likely premarket pathway, QMS expectations (21 CFR 820.30 / QMSR, IEC 62304, ISO 14971, IMDRF N23), the clinical-evaluation rigor, a Clinical Decision Support (CDS) screen, and citations (IMDRF N10/N12/N41, FDA CDS Guidance 2022). Use when the user needs to categorize a SaMD, understand its risk level, or scope the evidentiary burden for a digital-health product. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Classify Software as a Medical Device (SaMD) into an IMDRF risk category (I-IV) with the IMDRF N12 framework: the state of the healthcare situation (non-serious / serious / critical) crossed with the significance of the information the software provides (inform / drive clinical management / treat or diagnose). Returns the matrix cell, the category and impact level, a risk narrative, the informationally implied US device class and likely pathway, QMS expectations (21 CFR 820.30 / QMSR, IEC 62304, ISO 14971, IMDRF N23), the clinical-evaluation rigor, a Clinical Decision Support (CDS) screen, and citations (IMDRF N10/N12/N41, FDA CDS Guidance 2022). An unstated SaMD-definition or platform fact is named in the considerations, not assumed. Deterministic, no LLM: report the findings and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -18967,25 +18981,25 @@
           "name": "intendedUse",
           "type": "string",
           "required": false,
-          "description": "The SaMD definition statement / intended medical purpose (optional). Anchors the categorization and clinical evaluation."
+          "description": "The SaMD definition statement / intended medical purpose (optional). Not read: it does not change the result."
         },
         {
           "name": "meetsSaMDDefinition",
           "type": "boolean",
           "required": false,
-          "description": "Whether the software meets the IMDRF SaMD definition (software intended for a medical purpose that performs that purpose without being part of a hardware medical device). Default true. If false, the engine notes it may be SiMD (software in "
+          "description": "Whether the software meets the IMDRF SaMD definition (software intended for a medical purpose that performs that purpose without being part of a hardware medical device). If false, the engine notes it may be SiMD (software in a device). Omi"
         },
         {
           "name": "generalPurposePlatform",
           "type": "boolean",
           "required": false,
-          "description": "Whether the software runs on a general-purpose computing platform (vs. an embedded / non-general-purpose platform). Affects the SaMD-vs-SiMD note. Default true."
+          "description": "Whether the software runs on a general-purpose computing platform (vs. an embedded / non-general-purpose platform). Affects the SaMD-vs-SiMD note. Omitted or null stays not_stated, and a consideration says so."
         },
         {
           "name": "targetPopulation",
           "type": "string",
           "required": false,
-          "description": "Free-text description of the intended-use patient population (optional)."
+          "description": "Free-text description of the intended-use patient population (optional). Not read: it does not change the result."
         }
       ],
       "requiredInputs": [
@@ -22113,7 +22127,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Design a contemporaneous drug + companion-diagnostic (CDx) co-development program. Determines whether the test is a true companion diagnostic (essential for safe/effective use) versus a complementary diagnostic, selects the device pathway (PMA per 21 CFR 814, 510(k) per 21 CFR 807 Subpart E, or De Novo), lays out parallel therapeutic/diagnostic milestones from discovery through contemporaneous approval, and determines whether a clinical-trial-assay (CTA) to market-ready IVD bridging study is required (with a bridging plan). Returns CDx vs complementary determination, device pathway with rationale, the parallel timeline, bridging requirement and plan, cross-labeling guidance, findings, and citations (FDA IVD Companion Diagnostic Devices 2014, FDA CDx Codevelopment Principles 2016, 21 CFR 809.10/814/807). Use when the user is co-developing a drug and a patient-selection test and needs the device pathway, timeline alignment, and bridging strategy. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Design a contemporaneous drug + companion-diagnostic (CDx) co-development program. Determines whether the test is a companion diagnostic (essential for safe/effective use) or a complementary one, the device pathway (PMA per 21 CFR 814, 510(k) per 21 CFR 807 Subpart E, or De Novo), parallel therapeutic and diagnostic milestones through contemporaneous approval, and whether a clinical-trial-assay (CTA) to market-ready IVD bridging study is required. Returns these with rationale, the bridging plan, cross-labeling, findings and citations (FDA CDx 2014, FDA Codevelopment 2016, 21 CFR 809.10/814/807). An unstated essentialForUse leaves companion vs complementary not_assessed (and, with no risk class, the pathway); bridging is null while an unstated CTA fact could change it. Deterministic, no LLM: report the returned numbers and citations verbatim; do not recompute them or substitute your own interpretation. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -22141,25 +22155,25 @@
           "name": "essentialForUse",
           "type": "boolean",
           "required": false,
-          "description": "Whether the test is essential for safe/effective use of the therapeutic (true companion diagnostic). Default true; set false for a complementary diagnostic that informs but does not gate use."
+          "description": "Whether the test is essential for safe/effective use of the therapeutic (true companion diagnostic); false for a complementary diagnostic that informs but does not gate use. Omitted or null stays not_stated: companion vs complementary is no"
         },
         {
           "name": "deviceRiskClass",
           "type": "string",
           "required": false,
-          "description": "Device risk class. If omitted, defaults to Class III for a companion diagnostic (PMA). Class III => PMA; Class II => 510(k); Class I (novel, no predicate) => De Novo."
+          "description": "Device risk class. Class III => PMA; Class II => 510(k); Class I (novel, no predicate) => De Novo. If omitted, Class III is assumed for a companion diagnostic and Class II for a complementary one, and a finding says so; with essentialForUse"
         },
         {
           "name": "usedClinicalTrialAssay",
           "type": "boolean",
           "required": false,
-          "description": "Whether a clinical trial assay (CTA) was used to enroll the pivotal trial (rather than the market-ready IVD)."
+          "description": "Whether a clinical trial assay (CTA) was used to enroll the pivotal trial (rather than the market-ready IVD). Omitted or null stays not_stated: unless marketAssayDiffersFromCTA is false, ctaBridgingRequired is null."
         },
         {
           "name": "marketAssayDiffersFromCTA",
           "type": "boolean",
           "required": false,
-          "description": "Whether the market-ready IVD differs from the CTA. If true (and a CTA was used), a bridging study is required to link clinical outcomes to the marketed test."
+          "description": "Whether the market-ready IVD differs from the CTA. If true (and a CTA was used), a bridging study is required to link clinical outcomes to the marketed test. Omitted or null stays not_stated: unless usedClinicalTrialAssay is false, ctaBridg"
         },
         {
           "name": "therapeuticPhase",
@@ -22171,7 +22185,7 @@
           "name": "framework",
           "type": "string",
           "required": false,
-          "description": "Regulatory framework / jurisdiction (default fda)."
+          "description": "Regulatory framework / jurisdiction. Not read: the plan follows the FDA pathway."
         }
       ],
       "requiredInputs": [
@@ -22504,7 +22518,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Design an informed-consent framework per 21 CFR 50.25 and ICH E6(R3). Returns the eight basic required elements, the additional elements, and which additional elements apply given the study features (randomization, placebo, greater-than-minimal risk, biospecimen collection, future research use, genomic data, commercial profit potential). Adds readability guidance, population-specific safeguards for vulnerable groups (children, pregnant, cognitively impaired, prisoners, non-English speakers, emergency), re-consent triggers, electronic/remote consent considerations, and documentation requirements. Cites 21 CFR 50.25, 21 CFR 50 Subpart B, and ICH E6(R3). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Design an informed-consent framework per 21 CFR 50.25 and ICH E6(R3). Returns the eight basic required elements, the additional elements, and which of them apply given the study features (greater-than-minimal risk, biospecimen collection, genomic data, commercial profit potential); an omitted feature leaves the elements it decides not assessed (see warnings). Adds readability guidance, population-specific safeguards for vulnerable groups (children, pregnant, cognitively impaired, prisoners, non-English speakers, emergency), re-consent triggers, electronic/remote consent considerations, and documentation requirements. Cites 21 CFR 50.25, 21 CFR 50 Subpart B, and ICH E6(R3). Deterministic: no LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -22514,79 +22528,79 @@
           "name": "studyType",
           "type": "string",
           "required": false,
-          "description": "Type of study."
+          "description": "Type of study. Read for two warnings: observational drops the applicable-clinical-trial one, and gene_therapy adds a long-term follow-up reminder unless genomicData is true. Omitted or null is read as neither."
         },
         {
           "name": "applicableClinicalTrial",
           "type": "boolean",
           "required": false,
-          "description": "Whether the trial is an applicable clinical trial (42 U.S.C. 282(j)). Decides the 21 CFR 50.25(c) ClinicalTrials.gov statement; omit when unknown and the result will say so."
+          "description": "Whether the trial is an applicable clinical trial (42 U.S.C. 282(j)). Decides the 21 CFR 50.25(c) ClinicalTrials.gov statement. Omitted or null stays not_stated; unless the study is observational, the result says so."
         },
         {
           "name": "involvesRandomization",
           "type": "boolean",
           "required": false,
-          "description": "Whether the study involves randomization."
+          "description": "Whether the study involves randomization. Not read: it does not change the result."
         },
         {
           "name": "involvesPlacebo",
           "type": "boolean",
           "required": false,
-          "description": "Whether a placebo is used."
+          "description": "Whether a placebo is used (adds a placebo-disclosure warning). Omitted or null stays not_stated, and the warnings say placebo use was not stated."
         },
         {
           "name": "moreThanMinimalRisk",
           "type": "boolean",
           "required": false,
-          "description": "Whether the study poses more than minimal risk."
+          "description": "Whether the study poses more than minimal risk (decides the unforeseeable-risks element). Omitted or null stays not_stated: that element is not assessed (see warnings)."
         },
         {
           "name": "collectsBiospecimens",
           "type": "boolean",
           "required": false,
-          "description": "Whether biospecimens are collected."
+          "description": "Whether biospecimens are collected (decides the commercial-profit, return-of-results and genome-sequencing elements). Omitted or null stays not_stated: each is not assessed unless another stated fact decides it (see warnings)."
         },
         {
           "name": "futureResearchUse",
           "type": "boolean",
           "required": false,
-          "description": "Whether specimens/data may be used for future research."
+          "description": "Whether specimens/data may be used for future research. Not read: it does not change the result."
         },
         {
           "name": "genomicData",
           "type": "boolean",
           "required": false,
-          "description": "Whether genomic data are collected."
+          "description": "Whether genomic data are collected (decides the genome-sequencing element). Omitted or null stays not_stated: unless collectsBiospecimens is true, that element is not assessed (see warnings)."
         },
         {
           "name": "vulnerablePopulations",
           "type": "array",
           "required": false,
-          "description": "Vulnerable populations enrolled — drives additional safeguards."
+          "description": "Vulnerable populations enrolled — drives additional safeguards. An empty list means none; omitted or null lists no safeguard and says so (see warnings)."
         },
         {
           "name": "electronicConsent",
           "type": "boolean",
           "required": false,
-          "description": "Whether electronic consent (eConsent) is used."
+          "description": "Whether electronic consent (eConsent) is used. Omitted or null stays not_stated: unless remoteConsent is true, the consent method is not assessed."
         },
         {
           "name": "remoteConsent",
           "type": "boolean",
           "required": false,
-          "description": "Whether consent is obtained remotely."
+          "description": "Whether consent is obtained remotely. Omitted or null stays not_stated: unless electronicConsent is true, the consent method is not assessed."
         },
         {
           "name": "commercialProfitPotential",
           "type": "boolean",
           "required": false,
-          "description": "Whether there is commercial profit potential from specimens/data (triggers disclosure)."
+          "description": "Whether there is commercial profit potential from specimens/data (decides the commercial-profit element when biospecimens are collected). Omitted or null stays not_stated (see warnings)."
         },
         {
           "name": "targetReadingGradeLevel",
           "type": "number",
           "required": false,
-          "description": "Target reading grade level for the consent form (e.g., 6–8)."
+          "description": "Target reading grade level for the consent form, from 4 to 12 (e.g., 6–8). Omitted or null: grade 8 is used, and the guidance says no target was stated."
         }
       ],
       "requiredInputs": [],
@@ -22746,7 +22760,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Design a risk-based monitoring (RBM) plan per ICH E6(R3) and ICH E8(R1) quality-by-design principles. Scores overall trial risk from design factors (phase, first-in-human, multi-regional, blinding, vulnerable population, protocol complexity, endpoint objectivity, site experience) and returns the critical-to-quality factors, a recommended monitoring mix (centralized vs on-site vs remote with source-data-verification/review strategy and sampling approach), key risk indicators, and on-site visit frequency guidance. A factor left out is not scored as absent (see notAssessed). Cites ICH E6(R3), ICH E8(R1), and the FDA Risk-Based Monitoring guidance (2013). Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Design a risk-based monitoring (RBM) plan per ICH E6(R3) and ICH E8(R1) quality-by-design principles. Scores overall trial risk from design factors (phase, first-in-human, multi-regional, vulnerable population, protocol complexity, endpoint objectivity, site experience) and returns the critical-to-quality factors, a recommended monitoring mix (centralized vs on-site vs remote with source-data-verification/review strategy and sampling approach), key risk indicators, and on-site visit frequency guidance. A factor left out is not scored as absent (see notAssessed). Cites ICH E6(R3), ICH E8(R1), and the FDA Risk-Based Monitoring guidance (2013). Deterministic: no LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "ranked-cards",
@@ -22756,91 +22770,91 @@
           "name": "phase",
           "type": "string",
           "required": false,
-          "description": "Trial phase."
+          "description": "Trial phase. Omitted or null stays not_stated (see notAssessed)."
         },
         {
           "name": "therapeuticArea",
           "type": "string",
           "required": false,
-          "description": "Therapeutic area (context for risk weighting)."
+          "description": "Therapeutic area. Not read: it does not change the result."
         },
         {
           "name": "numberOfSites",
           "type": "number",
           "required": false,
-          "description": "Number of investigational sites."
+          "description": "Number of investigational sites, a whole number of at least 1. Omitted or null stays not_stated (see notAssessed)."
         },
         {
           "name": "plannedEnrollment",
           "type": "number",
           "required": false,
-          "description": "Planned total enrollment."
+          "description": "Planned total enrollment, a whole number of at least 1. Read only for the enrollment-per-site warning."
         },
         {
           "name": "isFirstInHuman",
           "type": "boolean",
           "required": false,
-          "description": "Whether this is a first-in-human study."
+          "description": "Whether this is a first-in-human study. Omitted or null stays not_stated; a risk factor it decides is not scored (see notAssessed)."
         },
         {
           "name": "isMultiRegional",
           "type": "boolean",
           "required": false,
-          "description": "Whether the trial is multi-regional (MRCT)."
+          "description": "Whether the trial is multi-regional (MRCT). Omitted or null stays not_stated; a risk factor it decides is not scored (see notAssessed)."
         },
         {
           "name": "usesInvestigationalDevice",
           "type": "boolean",
           "required": false,
-          "description": "Whether an investigational device is used."
+          "description": "Whether an investigational device is used. Omitted or null stays not_stated; a risk factor it decides is not scored (see notAssessed)."
         },
         {
           "name": "blinded",
           "type": "boolean",
           "required": false,
-          "description": "Whether the trial is blinded."
+          "description": "Whether the trial is blinded (adds blinding maintenance as a critical-to-quality factor). Omitted or null stays not_stated, and notes name that factor as not assessed."
         },
         {
           "name": "vulnerablePopulation",
           "type": "boolean",
           "required": false,
-          "description": "Whether vulnerable populations are enrolled."
+          "description": "Whether vulnerable populations are enrolled. Omitted or null stays not_stated; a risk factor it decides is not scored (see notAssessed)."
         },
         {
           "name": "complexProtocol",
           "type": "boolean",
           "required": false,
-          "description": "Whether the protocol is operationally complex."
+          "description": "Whether the protocol is operationally complex. Omitted or null stays not_stated; a risk factor it decides is not scored (see notAssessed)."
         },
         {
           "name": "noveltyOfIntervention",
           "type": "string",
           "required": false,
-          "description": "Novelty of the intervention."
+          "description": "Novelty of the intervention. Omitted or null stays not_stated (see notAssessed)."
         },
         {
           "name": "endpointObjectivity",
           "type": "string",
           "required": false,
-          "description": "Objectivity of the primary endpoint."
+          "description": "Objectivity of the primary endpoint. Omitted or null stays not_stated (see notAssessed)."
         },
         {
           "name": "electronicDataCapture",
           "type": "boolean",
           "required": false,
-          "description": "Whether EDC is used (enables centralized monitoring)."
+          "description": "Whether EDC is used (enables centralized monitoring). Omitted or null stays not_stated; a risk factor it decides is not scored (see notAssessed)."
         },
         {
           "name": "experiencedSites",
           "type": "boolean",
           "required": false,
-          "description": "Whether sites are experienced with this type of trial."
+          "description": "Whether sites are experienced with this type of trial. Omitted or null stays not_stated; a risk factor it decides is not scored (see notAssessed)."
         },
         {
           "name": "priorInspectionFindings",
           "type": "boolean",
           "required": false,
-          "description": "Whether there are prior inspection findings to account for."
+          "description": "Whether there are prior inspection findings to account for. Omitted or null stays not_stated; a risk factor it decides is not scored (see notAssessed)."
         }
       ],
       "requiredInputs": [],
@@ -23184,7 +23198,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Design a Predetermined Change Control Plan (PCCP) for an AI/ML-enabled device per the FDA December 2024 guidance. Builds the three FDA-required components — (1) Description of Modifications, (2) Modification Protocol (data management, retraining practices, performance evaluation with pre-specified acceptance criteria, and update procedures), and (3) Impact Assessment — and flags modifications that fall OUTSIDE a PCCP envelope (intended-use changes, population expansion, output/architecture changes, uncontrolled continuous learning) that instead require a new marketing submission. Returns per-modification envelope eligibility, the full modification protocol, the impact assessment, acceptance-criteria guidance, filing guidance, and citations (FDA PCCP Guidance 2024, GMLP 2021, ISO 14971, IEC 62304, 21 CFR 820.30). Use when the user wants to pre-authorize iterative AI/ML model updates without a new submission for each change. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Design a Predetermined Change Control Plan (PCCP) for an AI/ML-enabled device per the FDA December 2024 guidance, to pre-authorize iterative AI/ML model updates without a new submission for each change. Builds the three FDA-required components (1) Description of Modifications, (2) Modification Protocol (data management, retraining, performance evaluation, update procedures), and (3) Impact Assessment, and flags modifications OUTSIDE a PCCP envelope (intended-use changes, population expansion, output/architecture changes, uncontrolled continuous learning) that need a new marketing submission. Returns per-modification envelope eligibility, the protocol, acceptance-criteria and filing guidance, and citations (FDA PCCP Guidance 2024, GMLP 2021, ISO 14971, IEC 62304, 21 CFR 820.30). An unstated scope fact is named, not read as false. Deterministic, no LLM: report the findings and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -23206,37 +23220,37 @@
           "name": "algorithmType",
           "type": "string",
           "required": false,
-          "description": "Algorithm behavior over the lifecycle (optional)."
+          "description": "Algorithm behavior over the lifecycle (optional). Not read: it does not change the result."
         },
         {
           "name": "plannedModifications",
           "type": "array",
           "required": true,
-          "description": "The set of modifications to pre-authorize within the PCCP."
+          "description": "The modifications to pre-authorize within the PCCP: at least one."
         },
         {
           "name": "changesIntendedUse",
           "type": "boolean",
           "required": false,
-          "description": "Whether any modification changes the intended use / indications for use. If true, that modification CANNOT be authorized via a PCCP and requires a new marketing submission."
+          "description": "Whether any modification changes the intended use / indications for use. If true, that modification CANNOT be authorized via a PCCP and requires a new marketing submission. Omitted or null stays not_stated, and outOfScopeModifications names"
         },
         {
           "name": "expandsPopulation",
           "type": "boolean",
           "required": false,
-          "description": "Whether any modification expands the patient population beyond the cleared one."
+          "description": "Whether any modification expands the patient population beyond the cleared one. Omitted or null stays not_stated, and outOfScopeModifications names it."
         },
         {
           "name": "addsNewInputModality",
           "type": "boolean",
           "required": false,
-          "description": "Whether any modification introduces a new input type/modality (changes analytical validation needs)."
+          "description": "Whether any modification introduces a new input type/modality (changes analytical validation needs). Omitted or null stays not_stated, and outOfScopeModifications names it."
         },
         {
           "name": "continuousLearningProposed",
           "type": "boolean",
           "required": false,
-          "description": "Whether automated/continuous learning (\"learning in the field\") is proposed. Hard to bound within a PCCP; FDA generally expects controlled, verifiable updates with human oversight."
+          "description": "Whether automated/continuous learning (\"learning in the field\") is proposed. Hard to bound within a PCCP; FDA generally expects controlled, verifiable updates with human oversight. Omitted or null stays not_stated, and outOfScopeModificatio"
         }
       ],
       "requiredInputs": [
@@ -28436,7 +28450,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Plan an FDA biomarker qualification under the Drug Development Tool (DDT) program. Defines the Context of Use (COU), scales evidentiary criteria to the COU impact tier (low/moderate/high), chooses between formal DDT qualification (cross-program reuse under FD&C Act §507) and a drug-specific submission (single program), and lays out the three-stage process: Letter of Intent (LOI), Qualification Plan (QP), and Full Qualification Package (FQP). Returns the COU, impact tier with its evidentiary expectation, recommended pathway with rationale, the three stages with FDA submissions and key deliverables, scaled evidentiary criteria, the clinical evidence level required, findings, and citations (21st Century Cures Act §3011 / FD&C Act §507, FDA Biomarker Qualification Evidentiary Framework 2018, ICH E16 for genomic markers). Use when the user needs to plan how to qualify a biomarker and what evidence FDA will expect. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Plan an FDA biomarker qualification under the Drug Development Tool (DDT) program: the Context of Use (COU), evidentiary criteria scaled to the COU impact tier (low/moderate/high), formal DDT qualification (cross-program reuse under FD&C Act §507) versus a drug-specific submission, and the three stages: Letter of Intent (LOI), Qualification Plan (QP) and Full Qualification Package (FQP). Returns the tier and its evidentiary expectation, the pathway and rationale, stages, criteria, clinical evidence level, findings and citations (21st Century Cures Act §3011, FDA Biomarker Qualification Evidentiary Framework 2018, ICH E16). The pathway is not_assessed while an unstated scope fact could change it. Use to plan a qualification and the evidence FDA will expect. Deterministic, no LLM: report the returned numbers and citations verbatim; do not recompute them or substitute your own interpretation. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -28464,31 +28478,31 @@
           "name": "couImpact",
           "type": "string",
           "required": false,
-          "description": "Consequence/impact tier of the COU. If omitted, inferred from category (predictive/diagnostic => high; safety/monitoring => moderate; otherwise low). Supplying it locks the evidentiary scaling."
+          "description": "Consequence/impact tier of the COU. If omitted, inferred from category (predictive/diagnostic => high; safety/monitoring => moderate; otherwise low), and a finding says so. Supplying it locks the evidentiary scaling."
         },
         {
           "name": "crossProgramUse",
           "type": "boolean",
           "required": false,
-          "description": "Whether the biomarker is intended for use across multiple drug-development programs (favors formal DDT qualification)."
+          "description": "Whether the biomarker is intended for use across multiple drug-development programs (favors formal DDT qualification). Omitted or null stays not_stated: a pathway it could change is not_assessed."
         },
         {
           "name": "isGenomic",
           "type": "boolean",
           "required": false,
-          "description": "Whether the biomarker is genomic (engages the ICH E16 submission structure)."
+          "description": "Whether the biomarker is genomic (engages the ICH E16 submission structure). Omitted or null stays not_stated, and the result says so."
         },
         {
           "name": "consortiumSponsored",
           "type": "boolean",
           "required": false,
-          "description": "Whether a consortium is sponsoring the qualification (typical for DDT qualification)."
+          "description": "Whether a consortium is sponsoring the qualification (typical for DDT qualification). Omitted or null stays not_stated: a pathway it could change is not_assessed."
         },
         {
           "name": "singleDrugOnly",
           "type": "boolean",
           "required": false,
-          "description": "Whether the marker is intended only for one specific drug program (favors a drug-specific submission over formal qualification)."
+          "description": "Whether the marker is intended only for one specific drug program (favors a drug-specific submission over formal qualification). Omitted or null stays not_stated: a pathway it could change is not_assessed."
         }
       ],
       "requiredInputs": [
@@ -28744,7 +28758,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Plan an FDA enrichment strategy for a clinical trial. Classifies the enrichment as PROGNOSTIC (selecting higher-risk/higher-event-rate patients to raise power, no differential-benefit claim) or PREDICTIVE (selecting patients more likely to respond to the specific mechanism), based on the biomarker’s BEST category. Recommends a trial design — all-comers, biomarker-positive-only, marker-stratified, or enrichment-with-negative-cohort — from whether negatives may benefit, whether effect is concentrated in positives, and whether negatives must be characterized. Computes prevalence-driven feasibility (screens per enrolled positive) and flags low-prevalence challenges. Returns enrichment type with rationale, recommended design with rationale, all design options with tradeoffs, feasibility metrics, findings (e.g. missing validated assay for positive-only enrollment), and citations (FDA Enrichment Strategies Guidance 2019, FDA-NIH BEST Resource, FDA CDx Guidance 2014). Use when the user needs to choose an enrichment approach and trial design for a biomarker-defined population. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Plan an FDA enrichment strategy. Classifies the enrichment as PROGNOSTIC (higher-risk patients, raising event rates; no differential-benefit claim) or PREDICTIVE (likely responders) from the biomarker’s BEST category. Recommends all-comers, biomarker-positive-only, marker-stratified or enrichment-with-negative-cohort from whether negatives may benefit, the effect is concentrated in positives, or negatives must be characterized; a predictive marker’s design is not_assessed while an unstated fact could change it. Feasibility is screens per enrolled positive. Returns the type and design with rationales, design options and tradeoffs, feasibility, findings (e.g. no validated assay for positive-only enrollment) and citations (FDA Enrichment 2019, BEST, FDA CDx 2014). Deterministic, no LLM: report the returned numbers and citations verbatim; do not recompute them or substitute your own interpretation. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -28766,37 +28780,37 @@
           "name": "biomarkerPositivePrevalence",
           "type": "number",
           "required": true,
-          "description": "Prevalence (0-1) of the biomarker-positive subgroup in the screened population. Drives feasibility (screens per enrolled positive)."
+          "description": "Prevalence (above 0, at most 1) of the biomarker-positive subgroup in the screened population. Drives feasibility (screens per enrolled positive)."
         },
         {
           "name": "negativesExpectedToBenefit",
           "type": "boolean",
           "required": false,
-          "description": "Whether biomarker-negative patients are expected to derive any benefit. If true, favors a stratified all-comers design over positive-only enrollment."
+          "description": "Whether biomarker-negative patients are expected to derive any benefit. If true, favors a stratified all-comers design over positive-only enrollment. Omitted or null stays not_stated: for a predictive marker, a design it could change is not"
         },
         {
           "name": "effectConcentratedInPositives",
           "type": "boolean",
           "required": false,
-          "description": "Whether the treatment effect is plausibly large only in biomarker-positives (favors predictive enrichment via positive-only enrollment)."
+          "description": "Whether the treatment effect is plausibly large only in biomarker-positives (favors predictive enrichment via positive-only enrollment). Omitted or null stays not_stated: for a predictive marker, a design it could change is not_assessed."
         },
         {
           "name": "screeningPoolSize",
           "type": "number",
           "required": false,
-          "description": "Total screening pool size, if known (used to estimate screens needed)."
+          "description": "Total screening pool size, if known: a whole number of at least 1, reported as estimatedScreensNeeded."
         },
         {
           "name": "characterizeNegatives",
           "type": "boolean",
           "required": false,
-          "description": "Whether the goal is also to characterize the biomarker-negative population (favors enrichment with a smaller negative cohort)."
+          "description": "Whether the goal is also to characterize the biomarker-negative population (favors enrichment with a smaller negative cohort). Omitted or null stays not_stated: for a predictive marker, a design it could change is not_assessed."
         },
         {
           "name": "validatedAssayAvailable",
           "type": "boolean",
           "required": false,
-          "description": "Whether a validated assay exists to operationalize enrichment at screening. Required for biomarker-positive-only enrollment and the eventual CDx."
+          "description": "Whether a validated assay exists to operationalize enrichment at screening. Required for biomarker-positive-only enrollment and the eventual CDx. Omitted or null stays not_stated, and the result says so."
         }
       ],
       "requiredInputs": [
@@ -28812,7 +28826,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Generate the essential-documents / Trial Master File (TMF) plan per ICH E6 (the before-, during-, and after-trial document sets). Returns the essential documents grouped by trial stage, a TMF zone structure (aligned to the DIA TMF Reference Model concepts), a completeness/QC plan with citations, and record-retention guidance — distinguishing the investigator site file from the sponsor TMF and accounting for electronic TMF and device trials. Cites ICH E6(R3) Section on essential documents and 21 CFR 312.57/312.62. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
+      "description": "Generate the essential-documents / Trial Master File (TMF) plan per ICH E6 (the before-, during-, and after-trial document sets). Returns the essential documents grouped by trial stage, a TMF zone structure (aligned to the DIA TMF Reference Model concepts), a completeness/QC plan with citations, and record-retention guidance — distinguishing the investigator site file from the sponsor TMF and accounting for electronic TMF and device trials. An unstated device status is not read as no device (see notes). Cites ICH E6(R3) Section on essential documents and 21 CFR 312.57/312.62. Deterministic: no LLM, no network. Report the returned data and regulatory citations verbatim — do NOT reinterpret citations, invent additional guidance, or substitute your own recommendations. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -28822,37 +28836,37 @@
           "name": "stage",
           "type": "string",
           "required": false,
-          "description": "Trial stage to scope the document set (default all)."
+          "description": "Trial stage to scope the document set. Omitted or null: all stages."
         },
         {
           "name": "includeInvestigatorSiteFile",
           "type": "boolean",
           "required": false,
-          "description": "Whether to include the investigator site file (ISF)."
+          "description": "Whether to include the investigator site file (ISF). Omitted or null stays not_stated, and the ISF documents are included."
         },
         {
           "name": "includeSponsorTmf",
           "type": "boolean",
           "required": false,
-          "description": "Whether to include the sponsor TMF."
+          "description": "Whether to include the sponsor TMF. Omitted or null stays not_stated, and the sponsor TMF documents are included."
         },
         {
           "name": "electronicTmf",
           "type": "boolean",
           "required": false,
-          "description": "Whether an electronic TMF (eTMF) is used."
+          "description": "Whether an electronic TMF (eTMF) is used (adds an eTMF QC check). Omitted or null stays not_stated and adds no such check."
         },
         {
           "name": "usesInvestigationalDevice",
           "type": "boolean",
           "required": false,
-          "description": "Whether an investigational device is used (adds device-specific documents)."
+          "description": "Whether an investigational device is used (adds device-specific documents). Omitted or null stays not_stated: outside the during stage, notes name the device records, which are not added."
         },
         {
           "name": "multiSite",
           "type": "boolean",
           "required": false,
-          "description": "Whether the trial is multi-site."
+          "description": "Whether the trial is multi-site (adds a per-site ISF note). Omitted or null stays not_stated and adds no such note."
         }
       ],
       "requiredInputs": [],
@@ -31789,28 +31803,70 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Start a sub-agent for ONE bounded, independent sub-task and wait for its report before you continue. Put run_agent calls in a step of their own: up to 4 in one step run together, at most 6 per turn, and all report back before your next step. A sub-agent cannot see this conversation, cannot change, file, approve or sign anything, cannot ask the person, cannot start agents and cannot search the web. It stops at its budget: 6 rounds, 3 minutes of work. Its tools are the project, Vault and governed-document reads, the ICH and regulatory-currency registries, and the public literature, trial and FDA adverse-event searches. None of them can call a generative model; searches embed the query, and the public searches send it to PubMed, ClinicalTrials.gov and openFDA. role research: investigate and report, citing the tool result behind every figure. role verify: pass the exact text in text_to_check. Checks then run on that text as given, before the agent starts: whether each figure carries a citation marker (the marker is not checked against any source), whether any labelled figure stated more than once is stated with two different values, and, when a numbered project is open, whether any figure differs from the same labelled figure in the project records. No checker verifies that a citation exists or supports the text, or that a quotation matches its source. For those, the agent can only find and quote source passages, and its report is advisory. The verdict comes only from the checks.",
-      "scope": "global",
+      "description": "Start a sub-agent for ONE bounded, independent sub-task and wait for its report before you continue. Put run_agent calls in a step of their own: up to 4 in one step run together, at most 6 per turn, and all report back before your next step. A sub-agent cannot see this conversation, cannot change, file, approve or sign anything, cannot ask the person, cannot start agents and cannot search the web. It stops at its budget: 6 rounds, 3 minutes of work. Its tools are the project, Vault and governed-document reads, the ICH and regulatory-currency registries, and the public literature, trial and FDA adverse-event searches. None of them can call a generative model; searches embed the query, and the public searches send it to PubMed, ClinicalTrials.gov and openFDA. role research: investigate and report, citing the tool result behind every figure. role verify: pass the exact text in text_to_check. Checks then run on that text as given, before the agent starts: whether each figure carries a citation marker (the marker is not checked against any source), whether any labelled figure stated more than once is stated with two different values, and, when a numbered project is open, whether any figure differs from the same labelled figure in the project records. No checker verifies that a citation exists or supports the text. Optionally provide source_spans to compare exact quotation spans against stored artifacts through the available project-scoped read_vault_document tool before the agent starts. These checks compare only those spans, not semantic support or source authenticity. For other citations, the agent can only find and quote source passages, and its report is advisory. Optionally pass source_document_ids (existing Vault version UUIDs) for an independent server read and deterministic clinical figure comparison. Recognized complete numeric/arm/explicit-zero frames can be contradicted or unsupported by those sources. General prose, ambiguous frames and unrecognized comparisons or negations remain unverified. All child model calls treat the unassessed brief as T3/local-only. The verdict comes only from the checks.",
+      "scope": "project",
       "governed": true,
       "renderer": "result-card",
       "example": "",
       "inputs": [
         {
+          "name": "action",
+          "type": "string",
+          "required": false,
+          "description": "Default spawn. Existing team actions only use this live run’s server-issued workers."
+        },
+        {
+          "name": "intent_id",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "recipient",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "message_kind",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "required": false,
+          "description": "Optional bounded peer proposal. Protected tenant-key capture is required; no text is broadcast or returned by team reads."
+        },
+        {
+          "name": "report_event_id",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "report_sha256",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
           "name": "role",
           "type": "string",
-          "required": true,
+          "required": false,
           "description": "'research' to investigate and report; 'verify' to check text_to_check."
         },
         {
           "name": "objective",
           "type": "string",
-          "required": true,
+          "required": false,
           "description": "One line naming the sub-task, shown to the person (at most 200 characters)."
         },
         {
           "name": "instructions",
           "type": "string",
-          "required": true,
+          "required": false,
           "description": "Everything the agent needs, self-contained: it cannot see this conversation (at most 8000 characters)."
         },
         {
@@ -31818,13 +31874,21 @@
           "type": "string",
           "required": false,
           "description": "verify only: the exact text to check, as written (at most 40000 characters)."
+        },
+        {
+          "name": "source_spans",
+          "type": "array",
+          "required": false,
+          "description": "verify only: optional exact quotation references (up to 8). UTF-16 character offsets, end exclusive; source and draft spans must have equal length (1–2000 characters). Source end must be at most 30000. No source text is accepted as evidence"
+        },
+        {
+          "name": "source_document_ids",
+          "type": "array",
+          "required": false,
+          "description": "verify only: 1–8 current Vault document-version UUIDs in the open project. The server independently loads their current source text and hashes. No caller source text, success flag, classification or scientific qualification is accepted."
         }
       ],
-      "requiredInputs": [
-        "role",
-        "objective",
-        "instructions"
-      ],
+      "requiredInputs": [],
       "derived": true
     },
     {
@@ -32956,7 +33020,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Select the US premarket pathway (510(k) premarket notification, De Novo classification, PMA, Humanitarian Device Exemption (HDE), 510(k)-exempt, IDE-then-PMA, or BLA) and the EU conformity assessment route (self-certification vs notified-body involvement), with rationale, alternatives, and an approximate FDA review clock. Implements the decision logic of 21 CFR 807.81 (when a 510(k) is required), FD&C Act §513(f)(2) and 21 CFR 860 Subpart D (De Novo), 21 CFR 814 (PMA/HDE), and MDR/IVDR conformity routing by class. Handles HUD/HDE eligibility (not more than 8,000 US patients/year, with an OOPD HUD designation), predicate availability, 510(k) exemption by product code, novel low/moderate-risk devices, biologics, and EU Class I sterile/measuring/reusable-instrument special routes. When the inputs cannot decide the US pathway it returns \"undetermined\" with a NEEDS-INPUT finding naming what is missing. Use when the user needs to choose a regulatory filing pathway for a device or IVD. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Select the US premarket pathway (510(k) premarket notification, De Novo classification, PMA, Humanitarian Device Exemption (HDE), 510(k)-exempt, IDE-then-PMA, or BLA) and the EU conformity assessment route (self-certification vs notified-body involvement), with rationale, alternatives and an approximate FDA review clock, per 21 CFR 807.81, FD&C Act §513(f)(2) and 21 CFR 860 Subpart D (De Novo), 21 CFR 814 (PMA/HDE) and MDR/IVDR routing by class. Reads the predicate, product-code exemption, novelty, biologics, HUD/HDE eligibility (not more than 8,000 US patients/year, with an OOPD HUD designation) and the MDR Class I sterile/measuring/reusable routes. A pathway an unstated one of these facts could change is \"undetermined\", with NEEDS-INPUT findings. Use when the user needs to choose a regulatory filing pathway for a device or IVD. Deterministic: report the results and regulatory citations verbatim; do not recompute or reinterpret them. A malformed value is refused by field: relay the validation error.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -32966,49 +33030,49 @@
           "name": "usClass",
           "type": "string",
           "required": true,
-          "description": "US device class (from classify_device or a known product code)."
+          "description": "US device class (from classify_device or a known product code). Required."
         },
         {
           "name": "predicateExists",
           "type": "boolean",
           "required": true,
-          "description": "Whether a legally marketed predicate device of the same type exists (enables 510(k))."
+          "description": "Whether a legally marketed predicate device of the same type exists (enables 510(k)). Required, true or false."
         },
         {
           "name": "novelLowModerateRisk",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is a novel low-to-moderate-risk type with no predicate (De Novo candidate)."
+          "description": "Whether the device is a novel low-to-moderate-risk type with no predicate (De Novo candidate). Omitted or null stays not_stated (inputStates); with no predicate, a pathway it could change is undetermined."
         },
         {
           "name": "humanitarianUseDevice",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device targets a rare condition and may qualify as a Humanitarian Use Device (HDE)."
+          "description": "Whether the device targets a rare condition and may qualify as a Humanitarian Use Device (HDE). Omitted or null stays not_stated (inputStates); for class III, a pathway it could change is undetermined."
         },
         {
           "name": "estimatedAnnualUSPopulation",
           "type": "number",
           "required": false,
-          "description": "Estimated US patient population per year. Not more than 8,000 supports HUD/HDE eligibility; without it HDE is undetermined."
+          "description": "Estimated US patient population per year (0 or more). Not more than 8,000 supports HUD/HDE eligibility; without it HDE is undetermined."
         },
         {
           "name": "exempt",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product code's classification regulation exempts it from 510(k) with no .9 limitation applying. Without it a class I device is undetermined."
+          "description": "Whether the product code's classification regulation exempts it from 510(k) with no .9 limitation applying. Omitted or null stays not_stated (inputStates), and a pathway it could change is undetermined."
         },
         {
           "name": "isBiologic",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product incorporates a biologic regulated under a BLA (PHS Act §351)."
+          "description": "Whether the product incorporates a biologic regulated under a BLA (PHS Act §351). Omitted or null stays not_stated (inputStates), and a pathway it could change is undetermined."
         },
         {
           "name": "isIVD",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is an IVD (selects IVDR conformity routing)."
+          "description": "Whether the device is an IVD (selects IVDR conformity routing). Omitted or null stays not_stated (inputStates): one stated EU class names its regulation; with both stated the route is undetermined."
         },
         {
           "name": "euMdrClass",
@@ -33026,19 +33090,19 @@
           "name": "sterile",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is supplied sterile (affects the EU Class I/A conformity route). Unstated, an IVDR Class A route is undetermined."
+          "description": "Whether the device is supplied sterile (affects the MDR Class I and IVDR Class A routes). Omitted or null stays not_stated (inputStates): an IVDR Class A route is undetermined, and so is an MDR Class I route with no aspect stated true."
         },
         {
           "name": "measuringFunction",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device has a measuring function (affects the EU Class I conformity route)."
+          "description": "Whether the device has a measuring function (affects the MDR Class I route; not read for IVDR). Omitted or null stays not_stated (inputStates): an MDR Class I route with no aspect stated true is undetermined."
         },
         {
           "name": "reusableSurgicalInstrument",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is a reusable surgical instrument (affects the EU Class I conformity route)."
+          "description": "Whether the device is a reusable surgical instrument (affects the MDR Class I route). Omitted or null stays not_stated (inputStates): an MDR Class I route with no aspect stated true is undetermined."
         }
       ],
       "requiredInputs": [
@@ -34987,15 +35051,19 @@
       "example": "",
       "inputs": [
         {
+          "name": "worker_dispositions",
+          "type": "array",
+          "required": false,
+          "description": "Explicit AnA assessment of current immutable worker report receipts; completion alone never accepts work."
+        },
+        {
           "name": "steps",
           "type": "array",
-          "required": true,
+          "required": false,
           "description": "The whole plan, in order: 1 to 8 steps."
         }
       ],
-      "requiredInputs": [
-        "steps"
-      ],
+      "requiredInputs": [],
       "derived": true
     },
     {
@@ -35622,7 +35690,7 @@
         "id": "qms",
         "label": "Quality management"
       },
-      "description": "Inspect or gap-check a device quality management system against ISO 13485:2016 (with the FDA QSR→QMSR mapping). Without `present_clause_ids` it returns the major clause structure (design controls, purchasing, production, complaints/reporting, nonconforming product, CAPA…) with each clause's FDA mapping (21 CFR 820.x) and auditor questions, plus the QMSR transition note (effective 2026-02-02). With `present_clause_ids` it reports readiness + missing clauses. Static reference + pure assessment, deterministic — an audit-prep aid, not an audit verdict.",
+      "description": "Inspect or gap-check a device quality management system against ISO 13485:2016 (with the FDA QSR→QMSR mapping). Without `present_clause_ids` it returns the major clause structure (design controls, purchasing, production, complaints/reporting, nonconforming product, CAPA…) with each clause's FDA mapping (21 CFR 820.x) and auditor questions, plus the QMSR transition note (effective 2026-02-02). With `present_clause_ids` it reports readiness + missing clauses; an id that is not a clause id is refused, never counted as missing. Static reference + pure assessment, deterministic — an audit-prep aid, not an audit verdict.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -35632,7 +35700,7 @@
           "name": "present_clause_ids",
           "type": "array",
           "required": false,
-          "description": "Clause ids the QMS has in place (for the readiness assessment)."
+          "description": "Clause ids the QMS has in place (for the readiness assessment), as the clause structure lists them."
         }
       ],
       "requiredInputs": [],
@@ -36524,7 +36592,7 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "Poll the latest status for a transmitted submission. For FDA ESG, fetches the AS2 MDN / SFTP ack chain. For EMA CESP, polls /baskets/{id}. For EUDAMED, returns the most recent stored state. For PMDA Gateway, polls /receipts/{id}. Status transitions surface from the gateway's domain language (received → ack1 → ack2 → ack3 → validation_passed → review_started etc.).",
+      "description": "Poll the latest status for a transmitted submission. For FDA ESG, returns the transmittal's stored status and its verified AS2 receipt. For EMA CESP, polls /baskets/{id}. For EUDAMED, returns the most recent stored state. For PMDA Gateway, polls /receipts/{id}. Status transitions surface from the gateway's domain language (received → ack1 → ack2 → ack3 → validation_passed → review_started etc.).",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -37192,7 +37260,7 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "Produce a submission plan for a medical device or IVD: the required content for the chosen US pathway (eSTAR/510(k) sections per 21 CFR 807.87, De Novo content per 21 CFR 860 Subpart D (860.220), PMA modules per 21 CFR 814.20, HDE per 21 CFR 814.104, or general-controls file when exempt), the EU technical documentation set (MDR/IVDR Annex II/III: device description, labeling, design & manufacturing, GSPR checklist, benefit-risk, verification & validation, post-market surveillance), an indicative end-to-end timeline (Q-Sub, testing, compilation, FDA review clock, EU notified-body assessment), and a Pre-Submission (Q-Sub) strategy. Use when the user needs to scope the contents, sequence, and timeline of a device marketing submission. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Produce a submission plan for a medical device or IVD: the required content for the chosen US pathway (eSTAR/510(k) sections per 21 CFR 807.87, De Novo content per 21 CFR 860 Subpart D (860.220), PMA modules per 21 CFR 814.20, HDE per 21 CFR 814.104, or general-controls file when exempt), the EU technical documentation set (MDR/IVDR Annex II/III: device description, labeling, design & manufacturing, GSPR checklist, benefit-risk, verification & validation, post-market surveillance), an indicative timeline (Q-Sub, testing, compilation, FDA review clock, EU notified-body assessment), and a Pre-Submission (Q-Sub) strategy. A section an unstated device fact decides stays on the plan marked undetermined, and an unstated EU market or Pre-Submission is named. Use to scope the contents, sequence and timeline of a device marketing submission. Deterministic: report the results and regulatory citations verbatim; do not recompute or reinterpret them. A malformed value is refused by field: relay the validation error.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -37202,61 +37270,61 @@
           "name": "usPathway",
           "type": "string",
           "required": true,
-          "description": "Target US pathway (from select_device_pathway). Drives the section set and review clock."
+          "description": "Target US pathway (from select_device_pathway). Drives the section set and review clock. Required."
         },
         {
           "name": "isIVD",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is an IVD (adds analytical/clinical performance sections). Unstated, the section stays on the plan marked undetermined."
+          "description": "Whether the device is an IVD (adds analytical/clinical performance sections). Omitted or null stays not_stated (inputStates): those sections stay on the plan marked undetermined, and the EU documentation names MDR or IVDR."
         },
         {
           "name": "hasSoftware",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device contains software (adds software/cybersecurity section). Unstated, the section stays on the plan marked undetermined."
+          "description": "Whether the device contains software (adds software/cybersecurity section). Omitted or null stays not_stated (inputStates): the section stays on the plan marked undetermined."
         },
         {
           "name": "sterile",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is sterile (adds sterilization/packaging section). Unstated, the section stays on the plan marked undetermined."
+          "description": "Whether the device is sterile (adds sterilization/packaging section). Omitted or null stays not_stated (inputStates): the section stays on the plan marked undetermined."
         },
         {
           "name": "patientContacting",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is patient-contacting (adds biocompatibility section). Unstated, the section stays on the plan marked undetermined."
+          "description": "Whether the device is patient-contacting (adds the biocompatibility section of an HDE, BLA or undetermined plan; the eSTAR plans always carry it). Omitted or null stays not_stated (inputStates): that section stays marked undetermined."
         },
         {
           "name": "clinicalDataIncluded",
           "type": "boolean",
           "required": false,
-          "description": "Whether clinical data are part of the submission (adds clinical sections; lengthens the timeline). Unstated, the testing phase is not estimated."
+          "description": "Whether clinical data are part of the submission (adds clinical sections; lengthens the timeline). Omitted or null stays not_stated (inputStates): the testing phase is not estimated."
         },
         {
           "name": "euMarket",
           "type": "boolean",
           "required": false,
-          "description": "Whether the device is also pursuing the EU market (adds EU technical documentation + NB phase)."
+          "description": "Whether the device is also pursuing the EU market (adds EU technical documentation + NB phase). Omitted or null stays not_stated (inputStates): no EU documentation is planned, and a finding says so."
         },
         {
           "name": "euMdrClass",
           "type": "string",
           "required": false,
-          "description": "EU MDR class for technical-documentation scoping."
+          "description": "EU MDR class. Not read by the plan."
         },
         {
           "name": "euIvdrClass",
           "type": "string",
           "required": false,
-          "description": "EU IVDR class for technical-documentation scoping."
+          "description": "EU IVDR class. Not read by the plan."
         },
         {
           "name": "preSubmissionDone",
           "type": "boolean",
           "required": false,
-          "description": "Whether a Pre-Submission (Q-Sub) has already occurred (changes the timeline and Q-Sub strategy)."
+          "description": "Whether a Pre-Submission (Q-Sub) has already occurred (changes the timeline and Q-Sub strategy). Omitted or null stays not_stated (inputStates): the Q-Sub strategy, and the Q-Sub phase where there is one, say it was not stated."
         }
       ],
       "requiredInputs": [
@@ -37435,35 +37503,35 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "Resolve the multi-region BUILD + SUBMIT plan for a filing across FDA (US), EMA (EU), and PMDA (Japan). Given a filing type (IND/NDA/BLA/MAA/JNDA/…) and/or product class, returns the regional equivalent application per region (e.g. a biologic marketing application → US BLA, EU MAA, JP JNDA), each with its dossier standard, region Module 1 path, validation profile, blueprints, and submission gateway, plus whether region-correct build and gateway submission are supported. Also returns an overall coverage summary asserting which (filing × region) combinations are fully supported. Use when the user asks whether/how a product can be filed in the US, EU, and Japan, or which gateway/structure applies.",
+      "description": "Read-only submission planning through the existing shared resolver for the selected filing, product class and regions. Preserves the selected registry filing in its own region and reports compatible registry candidates elsewhere; these candidates are not legal equivalents. Returns each region's dossier standard, applicable Module 1 path, validation profile, blueprints, channel, buildSupported and submitSupported, plus coverage, gaps and methodology. Report missing, inactive, product-conflicting, portal-only, unconnected and unsupported outcomes as returned; never substitute another filing to hide a gap. A catalog match or coverage result is not project readiness, license entitlement, delivery acceptance or regulatory approval, and does not authorize signing, release or transmission. Use recorded or explicitly supplied settings; ask for missing material settings rather than inventing them. Omitted regions use the existing US, EU and JP comparison default; disclose that default. Use for medicines, medical devices, IVDs and combination products without claiming that every selected product or market is supported.",
       "scope": "global",
       "governed": false,
-      "renderer": "document-canvas",
+      "renderer": "findings-list",
       "example": "",
       "inputs": [
         {
           "name": "filingType",
           "type": "string",
           "required": false,
-          "description": "Filing string or registry id (IND, NDA, BLA, MAA, JNDA, …)."
+          "description": "Selected filing string or registry ID. Preserve the recorded selection; do not substitute another filing when it is unknown, inactive or incompatible."
         },
         {
           "name": "applicationFamily",
           "type": "string",
           "required": false,
-          "description": "Used when no filingType is given."
+          "description": "Canonical application family, used only when no filingType is given. A family in this vocabulary is not a claim that a compatible filing or supported channel exists."
         },
         {
           "name": "productClass",
           "type": "string",
           "required": false,
-          "description": "Drives the regional equivalent (biologic → BLA in the US)."
+          "description": "Recorded or explicitly supplied canonical product class. Use medical_device for a medical device, ivd for an in vitro diagnostic, and combination_product for a combination product; do not replace a specific class with any to obtain a match."
         },
         {
           "name": "regions",
           "type": "array",
           "required": false,
-          "description": "Target regions (default US, EU, JP)."
+          "description": "Explicit target-region codes in the requested order. Omission retains the US, EU, JP comparison default; disclose it. A selectable region is not a claim of region-correct build or connected submission support."
         }
       ],
       "requiredInputs": [],

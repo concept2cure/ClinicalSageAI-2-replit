@@ -112,8 +112,11 @@ describe('a program UUID reaches the project readers as its linked project id', 
     h.state.script = [[{ id: 'tu_1', name: 'search_literature', input: { query: 'endpoint' } }], 'Done.'];
     await streamTurn(app, { message: 'Review the project', project_id: PROGRAM, userId: 999, user_id: 999 });
 
-    expect(io.resolve).toHaveBeenCalledTimes(1);
-    expect(io.resolve.mock.calls[0][1]).toMatchObject({ ref: PROGRAM, orgId: 7 });
+    // The route resolves once. Since 2026-11-06 (P-104, a2f9264a/4852aa78) the
+    // personal-context binding and the standing-rule gate before the one tool
+    // each re-admit the same project at their own boundary: never another ref.
+    expect(io.resolve).toHaveBeenCalledTimes(3);
+    for (const [, asked] of io.resolve.mock.calls) expect(asked).toEqual({ ref: PROGRAM, orgId: 7 });
     expect(io.memory).toHaveBeenCalledWith(expect.objectContaining({ projectId: 42 }));
     expect(io.prefetch).toHaveBeenCalledWith(expect.objectContaining({ projectId: PROGRAM, projectIdNumber: 42 }));
     // Enrichment keeps the UUID for the reads keyed on the program (CMC build state).

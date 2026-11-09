@@ -1,0 +1,59 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T00:12:05.129Z",
+  "steps": [
+    {
+      "name": "uploaded version 1",
+      "sourceId": 222
+    },
+    {
+      "name": "cited version 1",
+      "document": "2.3 · Quality Overall Summary",
+      "section": "2.3"
+    }
+  ],
+  "v1": {
+    "status": 200,
+    "keys": [
+      "fileId",
+      "message",
+      "status",
+      "fileName",
+      "sourceId",
+      "dataRoom",
+      "extractionMethod",
+      "extractionWords",
+      "extractionCoverage",
+      "retrieval"
+    ],
+    "sourceId": 222
+  },
+  "cite": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "citationId": "ba7b4174-f57f-4684-8a15-ad4c6c211a93",
+      "citedChecksum": "698d0cd3471d355a4137c09417a876082aed1844717e62fbebdb9da66af358c1",
+      "created": true
+    }
+  },
+  "v2": {
+    "status": 200,
+    "sourceId": 223,
+    "supersedes": {
+      "recorded": true,
+      "readable": true,
+      "processing": {
+        "ok": true,
+        "processed": true,
+        "status": "completed"
+      }
+    }
+  },
+  "changes": {
+    "status": 200,
+    "mine": []
+  },
+  "finishedAt": "2026-11-09T00:12:10.684Z"
+}

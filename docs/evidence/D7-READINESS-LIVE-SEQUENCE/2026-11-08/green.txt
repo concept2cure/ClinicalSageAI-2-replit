@@ -1,0 +1,6 @@
+# GREEN: every test naming assessSequenceDispatchReadiness or its module, after repair B, 2026-11-09T00:09:44Z
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > throws VALIDATION naming the eSubmission Gateway; getGateway is never called
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 36 passed | 1 skipped (38)
+      Tests  1 failed | 654 passed | 2 skipped (657)
+# The one failure, gateway-selection's AUDIT_UNCONFIRMED case, is pre-existing on trunk and with the coordinating session.

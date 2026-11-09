@@ -23,10 +23,15 @@
 > | S5a dose optimization | done | `s5a-dose-optimization/` |
 > | S5a RWE | done | `s5a-rwe/` |
 > | S5c GMP quality systems | done | `s5c-gmp-quality-systems/` |
+> | S5c GCP operations | done | `s5c-gcp-operations/` |
+> | S5b biomarkers | done | `s5b-biomarkers/` |
+> | S5b digital health | done | `s5b-digital-health/` |
+> | S5b medical device | done | `s5b-medical-device/` |
+> | S5b IVD lifecycle, QMS and pathway eligibility | done | `s5b-ivd-lifecycle/` |
 > | S6b | done; PMA withheld per P-55 R-7 | `s6b-generate-document-records/` |
 > | S6 | done, with its review | `s6-plan-ind-module-authoring-retired/` |
 > | `start_war_game` (found 2026-11-01) | done | `war-game-stored-session/` |
-> | S5b, S5c GCP, S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
+> | S5d, S7–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
 
@@ -503,7 +508,7 @@ This mechanism applies under either F2 option; availability remains undecided.
 - Record-reading/source/structure tools must not receive a stated-input claim. Existing RIM readers use the explicit opt-out; `compare_recorded_dissolution` and `estimate_recorded_shelf_life` keep their separate recorded envelopes. Successful output pins cover both paths.
 - Red: a table-driven test over a sample from each wrapper asserts `basis: 'stated'`; it is absent on trunk.
 
-**S5a–S5d, one commit per definition family.** Each engine audit makes an omitted boolean read as `not_stated`, never true or false (the GCP engine already does this). Red: each family's "omitted means not stated" case.
+**S5a–S5d, one commit per definition family.** Each engine audit makes an omitted boolean read as `not_stated`, never true or false (before S5c the GCP engine did this only for the monitoring risk band, the inspection-readiness areas and the deviation classification; see S5c GCP operations below). Red: each family's "omitted means not stated" case.
 
 **S5a COA/PRO — What already exists (execution audit):** the six functions in
 `clinical-outcome-assessment/coa-knowledge.ts` are already reached by `coaProTools.ts`
@@ -628,6 +633,116 @@ clinical-notes or pharmacy capture trait that a stated flag contradicts.
   - `biomarkerTools` and `ivdLifecycleTools`: `assess_iso17511_traceability`, `assess_scientific_validity`, `assess_shelf_life_stability`, `assess_accelerated_stability`;
   - `digitalHealthTools`, `medicalDeviceTools`, `assess_qms`, `assess_pathway_eligibility`.
   - For an IVD program, `assess_biomarker_clinical_validation` and `assess_biomarker_analytical_validation` also take an optional `study_id`. They then read `ivd_clinical_performance` / `ivd_analytical_performance` (P-A, scoped to the organization and program, through a `RECORD_SCOPES` entry), with the I-22 provenance line.
+
+**S5b biomarkers — What already exists (execution audit):** the six functions in
+`biomarkers/biomarker-knowledge.ts` are already reached by `biomarkerTools.ts`, the
+executor's `runStatsTool` stated-input wrapper and the diagnostics and clinical skills. The
+engine had no three-valued helpers of its own: S3 (2026-10-26) had made only the
+clinical-validation cutoff fact three-valued and moved the 2×2 onto `computeDiagnosticAccuracy`.
+Extend the six and their result types; reuse `statedBoolean`, `booleanInputStates`,
+`statedNumber`, `statedOneOf`, `refuseUnlessStated` and the shared `DEVICE_CLASSES`. Other
+biomarker and companion-diagnostic code is not touched: `regulatory/cdx-pairing.ts` and the IVD
+knowledge base's biomarker-validity entries, `global-ri/companion-diagnostics.ts`, and the
+protocol flow that imports only the `EnrichmentDesignOption` type. The local history is shallow,
+with no biomarker-name deletion matches. Evidence: `s5b-biomarkers/`.
+
+**S5b biomarkers execution result:** each of the 25 optional booleans the six functions read
+reports true, false or `not_stated` through `inputStates`; a malformed boolean, enum, count,
+percentage or prevalence is refused by field, and every required text, enum and count by name.
+`assess_biomarker_analytical_validation` now requires `quantitative`. An inferred BEST category,
+the qualification pathway, companion versus complementary, the CTA bridging requirement, a
+predictive marker's enrichment design, clinical validity and, where an unstated stakes level
+decides precision, the analytical readiness are given only when every answer to the unstated
+facts gives the same one; otherwise they are null or `not_assessed`, and the result names the
+deciding facts. With all six distinguishing features stated false the category is prognostic,
+and an intended use that contradicts that is flagged. An omitted COU impact or device risk class
+is still inferred, and a finding now says so. No source reader, app or service was added.
+
+**S5b digital health — What already exists (execution audit):** the six functions in
+`digital-health/digital-health-knowledge.ts` are already reached by `digitalHealthTools.ts`, the
+executor's `runStatsTool` stated-input wrapper and the device skill's software and cybersecurity
+methods. S3 (2026-10-26, with its review `dd60c6e12`) had already made the cybersecurity worksheet
+three-valued: an unstated criterion leaves the cyber-device status and 524B undetermined, an unstated
+artifact is `not_stated` and counts as a gap (critical for the mandatory 524B artifacts until 524B is
+ruled out), and `statedBoolean` refuses a non-boolean. That rule is kept. Extend the other five
+functions, and the cybersecurity worksheet's `inputStates` and sensitive-data row; reuse
+`statedBoolean`, `booleanInputStates`, `statedOneOf` and `refuseUnlessStated`. Other digital-health
+code is not touched: the record-backed PCCP service (`ai-ml-pccp/`, behind `routes/pccp.ts`), the
+524B and device-software routes (`routes/cybersecurity-524b.ts`, `routes/mdx-software.ts`) and
+`routes/device-classification.ts`, which reaches `regulatory/samd-classification.ts`, a second IMDRF N12
+matrix (its nine cells agree with the engine's); none imports the engine. The local history is shallow, with no
+digital-health deletion matches. Evidence: `s5b-digital-health/`.
+
+**S5b digital health execution result:** each of the 25 optional booleans the six functions read
+reports true, false or `not_stated` through `inputStates`; a malformed boolean, enum, modification or
+principle entry is refused by field, and every required enum and list by name. `classify_samd` no
+longer reads an omitted SaMD-definition or platform fact as true: `isSaMD` is null and a consideration
+names it. `assess_ai_ml_device` reports an omitted transparency, representativeness, external-validation
+or monitoring fact as not stated instead of passing it, leaves a locked model's PCCP recommendation null
+while planned modifications are unstated, and names an unstated generative component or, for an
+autonomous function, SaMD category. `design_pccp` names the unstated scope facts. While a principle is
+not assessed, `assess_gmlp`'s score is null and its verdict `not_assessed`, unless a principle is
+non-conformant. `design_samd_clinical_validation` names each unstated fact in the plan, and the
+association pillar's rigor is `not_assessed` while that fact is unstated. `assess_device_cybersecurity`
+lists an unstated sensitive-data fact as a not-stated row at attention, which is not a gap. No source
+reader, app or service was added.
+
+**S5b medical device — What already exists (execution audit):** the five worksheets in
+`medical-device/medical-device-knowledge.ts` are already reached by `medicalDeviceTools.ts`, the
+executor's `runStatsTool` stated-input wrapper and the device, diagnostics, regulatory-strategy and
+submissions skills. `classify_medical_device` is `classify_device` under a second name and runs the
+fail-closed `market-specs/device-classification.ts`, which is not touched. The 2026-10-15 sweep had
+already made the substantial-equivalence steps, the clinical-data answer, the GSPR applicability, the
+IVDR Class A sterility route and the plan's conditional sections three-valued (`seStepAnswer`,
+`unstated`, `notRequiredMissingFacts`, `statedProperty`, `conditionalSection`, pinned by the engine's
+five suites). Extend those; reuse `booleanInputStates`, `statedNumber`, `statedOneOf`,
+`refuseUnlessStated` and the shared `DEVICE_CLASSES`, `MDR_DECLARED_CLASSES` and `IVDR_CLASSES`. The
+engine was over the 100,000-byte ceiling, so its fixed study, performance-data, PMA, non-eSTAR and
+EU-documentation entries move into the existing sibling `medical-device-knowledge-data.ts`. The local
+history is shallow; the 2026-10-15 removal of `classifyDevice` from the engine is its only device-name
+deletion. Evidence: `s5b-medical-device/`.
+
+**S5b medical device execution result:** each of the 47 true/false inputs the five functions read
+reports true, false or `not_stated` through `inputStates`, and a malformed one is refused by field; the
+pathway's US class and predicate answer, the plan's US pathway and the GSPR `isIVD` are refused by name
+when missing or malformed.
+`select_device_pathway` gives a US pathway only when no answer to an unstated biologic, exemption,
+novelty or HUD fact could change it, and otherwise says what each answer would give;
+`clinicalEvidenceLikelyRequired` is null while the pathway is undetermined. An MDR Class I route with no
+aspect stated true and one unstated is undetermined, a single stated EU class names its regulation, and
+an IVDR Class A route reads sterility only. `assess_substantial_equivalence` finds no SE and names no
+510(k) type while the predicate recall or a different-questions answer is unstated, and names the
+performance data and the 510(k) type an unstated device property leaves open; an unstated exemption
+leaves a class III pathway as it is, since no class III device is 510(k)-exempt. `design_device_clinical_evidence` names the studies and the EU evaluation an
+unstated fact decides. `assess_essential_principles` leaves a GSPR 1–4 row not assessed, with no
+"missing" finding, while the QMS or risk-file fact it turns on is unstated. `plan_device_submission` keeps the IVD eSTAR questions,
+marked undetermined, for an unstated IVD, and says when the EU market or a Pre-Submission was not
+stated. No source reader, app or service was added.
+
+**S5b IVD lifecycle, QMS and pathway eligibility — What already exists (execution audit):**
+`regulatory/iso-17511-traceability.ts`, `regulatory/scientific-validity.ts` and the two stability
+functions of `stats/analytical-performance-extensions.ts` are reached by `ivdLifecycleTools.ts` through
+the executor's `ivdComputed` and `ivdError`, not `runStatsTool`: a refusal reaches AnA as
+`needs_parameters` with the engine's message but without `code` or `field`, and the `/api/ivd-lifecycle`
+calculator routes answer it 422. `market-specs/quality-system.ts` and `market-specs/pathway-eligibility.ts`
+are reached by `assess_qms` and `assess_pathway_eligibility` (`submission-center-tool-defs.ts`), whose
+handlers return a refusal as their `{ error }`, and by Submission Center routes. Eligibility already
+listed an unanswered criterion; none of the five refused a malformed value. Extend them; reuse
+`refuseUnlessStated`, `ComputationRefusal`, `statedBoolean` and `statedNumber`. The global-RI
+special-designations engine and the study-design eligibility model are other code and are not touched.
+The local history is shallow; its one deleted-name match, `innovation/auto-traceability-service.ts`, is
+requirements traceability, not calibrator traceability. Evidence: `s5b-ivd-lifecycle/`.
+
+**S5b IVD lifecycle execution result:** the traceability tier and its five facts, each
+scientific-validity item's source and `directlyOnTarget`, the stability points, `maxPercentChange`,
+storage temperature and degradation threshold are required and refused by field when missing or
+malformed, as are a malformed initial value, clause id or eligibility answer, and a series with fewer
+than two distinct times or temperatures. The real-time result says when the regression intercept stood
+in for an omitted initial value. A designation with an unanswered criterion and none answered false is
+`eligible: null`, no longer false. Fully stated inputs keep their results. `POST /api/submissions/device/qms/assess`
+(cleared by the coordinating session, in the same change) answers an unknown clause id's refusal 400 `VALIDATION`
+with its field, where `fail()` would have answered 500, and refuses an omitted clause list instead of reading it as
+empty. No source reader, app or service was added.
 - **S5c (quality):** `gcpOperationsTools`, `gmpQualitySystemsTools`.
 
 **S5c GMP quality systems — What already exists (execution audit):** the six functions in
@@ -656,6 +771,36 @@ and marks the controls it would add, and an unstated significance leaves the cha
 assessed unless a critical or level-4 step settles it. An unstated heat stability, or the filterability of a
 product that is not heat-stable, leaves the sterilisation approach not assessed. Every required text and
 enum is refused by name. No source reader, app or service was added.
+
+**S5c GCP operations — What already exists (execution audit):** the six functions in
+`gcp-operations/gcp-operations-knowledge.ts` are already reached by `gcpOperationsTools.ts`,
+the executor's `runStatsTool` stated-input wrapper and the clinical GCP and consent skills.
+Before S5c an unstated fact was already left undecided in the monitoring plan's risk band,
+the inspection-readiness areas and the deviation classification (the 2026-10-15 sweep), and
+in the compliance principles (unverified) and the consent's ClinicalTrials.gov statement.
+Elsewhere it was read as an answer (true, false or a milder gap): in the compliance gaps,
+score and status, the other consent elements, the consent method and the placebo
+disclosure, the monitoring critical-to-quality factors, the readiness prior-findings line
+and the device records. No function refused a malformed value. Extend the six and their
+result types; reuse `booleanInputStates`, `statedNumber`, `statedOneOf` and
+`ComputationRefusal`, and the engine's own three-valued `anyOf`, `allOf` and `stated`.
+Other GCP code is not touched: the record-backed deviation, eTMF, inspection and consent
+services; the consent-form QC in `ana/gcp-consent.ts` (`advise_gcp`,
+`review_informed_consent`); `global-ri/inspection-readiness.ts`; and
+`global-ri/gcp-essential-documents.ts`, a second principles and essential-records table
+behind the Global RI `/gcp` routes. The local history is shallow, with no GCP-name deletion
+matches. Evidence: `s5c-gcp-operations/`.
+
+**GCP operations execution result:** each boolean the six functions read reports true,
+false or `not_stated` through `inputStates`, and a malformed boolean, enum, list, count, grade
+level or percentage that they read is refused by field. `assess_gcp_compliance` raises no gap
+or strength from an unstated fact and reads `protocolFollowedWithChangeControl` (stated false
+is a major gap). Its score is `null` while a principle is unverified, and its overall status is
+`not_assessed` unless no answer could change it. `design_informed_consent` names the
+additional elements an unstated feature leaves undecided and says when placebo use was not
+stated, and does not call an unstated consent method paper. `design_monitoring_plan` names a
+critical-to-quality factor an unstated fact leaves out, and `plan_essential_documents` the
+device records. No source reader, app or service was added.
 - **S5d:** `benefitRiskTools`, `biosimilarTools`, `immunogenicityTools`, `postApprovalTools`, `regulatoryStrategyTools`, `bioequivalenceTools`.
   - `assess_orphan_designation`: a prevalence with no stated source gives `fdaEligible: null`.
   - `assess_dissolution_similarity` instruction: "for recorded profiles use `compare_recorded_dissolution`."

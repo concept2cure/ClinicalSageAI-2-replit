@@ -1,0 +1,2 @@
+⎯⎯⎯⎯⎯⎯ Failed Tests 36 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  36 failed | 11 passed (47)

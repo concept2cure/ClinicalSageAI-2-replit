@@ -1,0 +1,33 @@
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 5101ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 5025ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a role refusal (403) is said as itself 5017ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a record not in this organization (404) is said as itself 5014ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > an expired session (401) is said as itself 5016ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > an ownership check that could not run (503) is said as itself 5019ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 203ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 5149ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 5121ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a role refusal (403) is said as itself 5101ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a record not in this organization (404) is said as itself 5073ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > an expired session (401) is said as itself 5084ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > an ownership check that could not run (503) is said as itself 5092ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 120ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 5065ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 5097ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a role refusal (403) is said as itself 5071ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a record not in this organization (404) is said as itself 5104ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > an expired session (401) is said as itself 5062ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > an ownership check that could not run (503) is said as itself 5060ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 79ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 5056ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 5062ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a role refusal (403) is said as itself 5083ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a record not in this organization (404) is said as itself 5065ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > an expired session (401) is said as itself 5083ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > an ownership check that could not run (503) is said as itself 5059ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 113ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the export-readiness chip, which is not a panel > a plan without the feature is said as itself, not as a failed verdict 5020ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the export-readiness chip, which is not a panel > a failure to answer still says the verdict could not be read 18ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > what a 200 board reports about its own sub-reads is not a refusal > an unreadable section store is still a failed read, in the board’s own words 13ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 25 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  25 failed | 6 passed (31)

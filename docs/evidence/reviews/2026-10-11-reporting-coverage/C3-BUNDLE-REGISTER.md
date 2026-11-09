@@ -117,3 +117,18 @@ re-runs on every deploy.
 
 That is a change of its own, not a tail end of this one. The silent cap is the
 part that was losing information on every read, and it is closed.
+
+## Closed, 2026-11-08: the register has its own tables
+
+Founder decision P-91 admitted the three tables this section describes. The change is under `Plan: L1`, with its
+evidence in `docs/evidence/L1-C3-REPORT-BUNDLE-REGISTER/2026-11-08/`.
+- `public.report_bundles` is one row per pack, holding the manifest whole.
+- `report_bundle_runs` and `report_bundle_projects` are rows of their own, so "which packs hold this run?" is an
+  index read.
+- `migrations/20261108_report_bundle_register.sql` carries every legacy `bundle:<uuid>` pack once and drops nothing.
+- The `project_memory_entries` path is deleted from `server/routes/report-os.ts`.
+
+Each of the three reasons above is answered:
+1. one copy;
+2. `count(*)` on a table of packs (health now counts packs, not copies);
+3. a run is found by its own row.

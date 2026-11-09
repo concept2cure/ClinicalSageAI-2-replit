@@ -18,8 +18,12 @@ let fixture: ReturnType<typeof as2CmsFixture>;
 const MESSAGE = '<retained@sponsor>', MIC = createHash('sha256').update('retained-bundle').digest('base64'), SHA = 'b'.repeat(64);
 // What the transmit guard recorded the send carried (F1, 2026-11-01): the fold reads it once the receipt settles the sequence.
 const SENT_LEAVES = [{ ctdSection: '3.2.S.1', fileName: 'general.pdf', href: 'm3/general.pdf', md5: 'a'.repeat(32), operation: 'new' }];
+// Each case's transmittal is a PRODUCTION send unless it says otherwise: only a
+// production receipt files the sequence (F1, row D7, 2026-11-01). Both
+// environments pin the agency's receipt certificate.
 beforeAll(async () => {
   fixture = as2CmsFixture(); state.pg = new PGlite();
+  vi.stubEnv('FDA_ESG_MDN_CERT_PATH', join(fixture.directory, 'agency.pem'));
   vi.stubEnv('FDA_ESG_STAGING_MDN_CERT_PATH', join(fixture.directory, 'agency.pem'));
   await state.pg.exec(`CREATE TABLE users(id int PRIMARY KEY,status text); CREATE TABLE organizations(id int PRIMARY KEY,status text);
     CREATE TABLE organization_users(organization_id int,user_id int,role text);
@@ -32,7 +36,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   state.auditFail = false;
   await state.pg!.exec(`DELETE FROM submission_transmittals; DELETE FROM ectd_sequences; DELETE FROM receipt_audit; DELETE FROM audit_logs; UPDATE organization_users SET role='member';`);
-  const metadata = { as2: { messageId: MESSAGE, mic: MIC, environment: 'staging' }, dispatchBinding: { organizationId: 42, sequenceId: 88, signatureActionId: 'act_original', attemptId: 'a0000000-0000-4000-8000-000000000001', bundleSha256: SHA }, leafManifest: SENT_LEAVES };
+  const metadata = { as2: { messageId: MESSAGE, mic: MIC, environment: 'production' }, dispatchBinding: { organizationId: 42, sequenceId: 88, signatureActionId: 'act_original', attemptId: 'a0000000-0000-4000-8000-000000000001', bundleSha256: SHA }, leafManifest: SENT_LEAVES };
   await state.pg!.query(`INSERT INTO submission_transmittals(id,organization_id,region,gateway,transport,status,metadata,bundle_sha256) VALUES(1,42,'fda','esg','as2','in_transit',$1::jsonb,$2)`, [JSON.stringify(metadata), SHA]);
   await state.pg!.exec(`INSERT INTO ectd_sequences VALUES(88,42,'dispatched','transmitting','act_original','a0000000-0000-4000-8000-000000000001',NULL,now());`);
 });
@@ -42,12 +46,17 @@ function args(message = MESSAGE, mic = MIC, disposition = 'processed') {
   return { organizationId: 42, transmittalId: 1, userId: 7, ...signed };
 }
 async function read() { return (await state.pg!.query<any>('SELECT * FROM submission_transmittals WHERE id=1')).rows[0]; }
+/** The transmittal as a send to the agency's test environment. */
+async function sentToTestEnvironment() { await state.pg!.exec(`UPDATE submission_transmittals SET metadata = jsonb_set(metadata, '{as2,environment}', '"staging"')`); }
+async function sequenceRow() { return (await state.pg!.query<any>('SELECT dispatch_status, transmit_signature_action_id, transmit_attempt_id::text AS transmit_attempt_id FROM ectd_sequences WHERE id=88')).rows[0]; }
 describe('actual agency-signed MDN ingestion and governed scope/atomicity', () => {
   it('records exact receipt bytes/audit and resolves only the retained matching sequence claim', async () => {
     const input = args(); const result = await ingestFdaAs2Receipt(input);
     expect(result).toMatchObject({ verified: true, recorded: true, status: 'received', auditTrail: true, sequenceResolution: 'resolved' });
     const row = await read(); expect(row.status).toBe('received'); expect(Buffer.from(row.metadata.as2Receipt.bodyBase64, 'base64')).toEqual(input.body);
+    // A production receipt files the sequence (unchanged).
     expect((await state.pg!.query<any>('SELECT dispatch_status FROM ectd_sequences')).rows[0].dispatch_status).toBe('sent');
+    expect(result.environment).toBe('production');
     // The receipt merges into the row: what was sent, and the attempt it binds, stay on it.
     expect(row.metadata.leafManifest).toEqual(SENT_LEAVES);
     expect(row.metadata.dispatchBinding).toMatchObject({ sequenceId: 88, attemptId: 'a0000000-0000-4000-8000-000000000001' });
@@ -117,5 +126,46 @@ describe('actual agency-signed MDN ingestion and governed scope/atomicity', () =
     await expect(ingestFdaAs2Receipt(args())).rejects.toThrow('audit unavailable');
     expect((await read()).status).toBe('in_transit'); expect((await read()).metadata.as2Receipt).toBeUndefined();
     expect((await state.pg!.query<any>('SELECT dispatch_status FROM ectd_sequences')).rows[0].dispatch_status).toBe('transmitting');
+  });
+});
+/* F1 (row D7, 2026-11-01): a receipt from the agency's test environment is
+   not a filing. It is recorded on the transmittal as any receipt is, and it
+   settles the attempt it binds to 'pending', never to 'sent' or 'rejected':
+   the test environment's verdict is not FDA's. */
+describe("a receipt from the agency's test environment (F1, row D7)", () => {
+  it("a test environment's positive receipt records the receipt and settles the claim to pending, never sent", async () => {
+    await sentToTestEnvironment();
+    const input = args(); const result = await ingestFdaAs2Receipt(input);
+    // Only dispatch_status: the columns still name the attempt the test receipt settled.
+    expect(await sequenceRow(), 'a test receipt filed the sequence').toEqual({ dispatch_status: 'pending', transmit_signature_action_id: 'act_original', transmit_attempt_id: 'a0000000-0000-4000-8000-000000000001' });
+    expect(result).toMatchObject({ verified: true, recorded: true, status: 'received', sequenceResolution: 'resolved' });
+    expect((await read()).status).toBe('received');
+    // The wire attempt happened: its signature is spent by the one-use ledger (P-23), naming the test environment.
+    const spent = (await state.pg!.query<any>(`SELECT action, new_values::jsonb->>'environment' AS environment FROM audit_logs WHERE new_values::jsonb->>'signatureActionId'='act_original'`)).rows;
+    expect(spent).toEqual([{ action: 'ECTD_TRANSMITTED', environment: 'staging' }]);
+    expect((await ingestFdaAs2Receipt(input))).toMatchObject({ duplicate: true, sequenceResolution: 'already-resolved' });
+    expect((await sequenceRow()).dispatch_status).toBe('pending');
+    // The result names the environment, so the person can be told a test receipt files nothing.
+    expect(result.environment).toBe('staging');
+  });
+  it("a test environment's refusal settles the claim to pending, never rejected", async () => {
+    await sentToTestEnvironment();
+    const result = await ingestFdaAs2Receipt(args(MESSAGE, MIC, 'failed'));
+    expect((await sequenceRow()).dispatch_status, "the test environment's refusal was recorded as FDA's").toBe('pending');
+    expect(result).toMatchObject({ status: 'rejected', sequenceResolution: 'resolved' });
+    expect((await read()).status).toBe('rejected');
+    expect(result.environment).toBe('staging');
+  });
+  it('a test receipt for an attempt whose claim was released and whose signature was voided moves no sequence and spends nothing', async () => {
+    // What transmitSequence leaves after a test send failed after the wire: claim released, signature void.
+    await sentToTestEnvironment();
+    await state.pg!.exec(`UPDATE ectd_sequences SET dispatch_status='pending', transmit_signature_action_id=NULL, transmit_attempt_id=NULL;
+      INSERT INTO audit_logs (id, tenant_id, table_name, record_id, action, new_values) VALUES ('void-1', 42, 'ectd_sequence', '88', 'GOVERNED_SIGNATURE_VOIDED', '{"signatureActionId":"act_original","step":"transmit"}');`);
+    const result = await ingestFdaAs2Receipt(args());
+    expect(await sequenceRow()).toEqual({ dispatch_status: 'pending', transmit_signature_action_id: null, transmit_attempt_id: null });
+    expect(result).toMatchObject({ verified: true, recorded: true, status: 'received', sequenceResolution: 'unreconciled' });
+    expect((await read()).status).toBe('received');
+    expect((await state.pg!.query("SELECT * FROM audit_logs WHERE action='ECTD_TRANSMITTED'")).rows).toHaveLength(0);
+    expect(result.environment).toBe('staging');
   });
 });

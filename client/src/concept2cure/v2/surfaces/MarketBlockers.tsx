@@ -113,7 +113,7 @@ function TodoList({ todos, onNav, center }: { todos: MarketTodo[]; onNav: (id: s
         <li key={t.key} className="pj-mkt-todo-i">
           <span className="pj-mkt-todo-t">{t.text}</span>
           {t.act && center && (
-            <button type="button" className="btn ghost pj-mkt-btn pj-mkt-todo-act" onClick={() => openSubmissionCenter(onNav, t.act!.at)}>
+            <button type="button" className="btn small pj-mkt-todo-act" onClick={() => openSubmissionCenter(onNav, t.act!.at)}>
               {t.act.label} {I.right}
             </button>
           )}

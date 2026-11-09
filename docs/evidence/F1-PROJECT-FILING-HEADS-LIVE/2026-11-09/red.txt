@@ -1,0 +1,8 @@
+# RED: the removed-sequence case against projectFilingHeads at HEAD 74383c2df, 2026-11-09T02:48:31Z
+ × server/services/projects/schedule-of-events/__tests__/admission.test.ts > canonical gate observation adapters > a project whose only sequence was removed has no filing target, and nothing is assessed from it 76ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { state: 'blocked', …(2) } to deeply equal { state: 'not_assessed', …(2) }
+- Expected
++ Received
+ Test Files  1 failed (1)
+      Tests  1 failed | 78 passed (79)

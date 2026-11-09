@@ -1,0 +1,8 @@
+MUTATION 10-void-row-without-test-send-context (on the final code, 2026-11-08T21:34:46Z): replaced [          ? { environment, transmitAttemptId: attempt.testSendClaim, testSend: TEST_SEND_VOIDED }] with [          ? {}]
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send that fails after the wire releases the claim and voids its signature; a fresh one files in production 336ms
+   → expected { environment: null, …(2) } to deeply equal { environment: 'staging', …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send that fails after the wire releases the claim and voids its signature; a fresh one files in production
+AssertionError: expected { environment: null, …(2) } to deeply equal { environment: 'staging', …(2) }
+      Tests  1 failed | 14 skipped (15)
+restored sha256 1eb39576d1bbe6976ac537e782854a73ce70999758cccbb9d35d2ac2463474d6 (expected 1eb39576d1bbe6976ac537e782854a73ce70999758cccbb9d35d2ac2463474d6)

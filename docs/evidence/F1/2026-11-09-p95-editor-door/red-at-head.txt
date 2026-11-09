@@ -1,0 +1,242 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/authoring-approval-review-required.test.ts
+{
+  "timestamp": "2026-11-09T01:52:46.447Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T01:52:46.449Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-approval-review-required.test.ts
+{
+  "timestamp": "2026-11-09T01:52:46.450Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-approval-review-required.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused while the review is still open, saying how many reviewers have signed
+{
+  "timestamp": "2026-11-09T01:52:48.654Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the text changed after the review was signed
+{
+  "timestamp": "2026-11-09T01:52:48.662Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the latest review was withdrawn
+{
+  "timestamp": "2026-11-09T01:52:48.669Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the document was never sent for review, before the password is checked 72ms
+   → {"error":"Signature rejected: password verification failed (§11.200).","code":"PASSWORD_VERIFICATION_FAILED"}: expected 401 to be 409 // Object.is equality
+ × server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused while the review is still open, saying how many reviewers have signed 11ms
+   → {"success":true,"signatureId":"d4790bc4-037a-46a6-91ae-416e9201cf6a","documentHash":"22f329b17645c1de836c25c435ff0ba65c2df8c4f8574d10fc7b856747b8ad7e","digest":"74ae916c0c0429957757b29ba8eee3a80ad032a52c98dfe3590dcdb753d84e2f","covers":{"version":"approved","contentHash":"69434a9202143f2c6661a46023266cc228781a704eec1a675ad02c084377cc40"},"workflowSourceAdoption":null,"signedAt":"2026-11-09T01:52:48.655Z","filingApproval":{"approved":[],"notApproved":[],"documentId":null,"reason":"The governed document store is not provisioned here, so there is no filing to approve."}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the text changed after the review was signed 7ms
+   → {"success":true,"signatureId":"c094e659-e5a9-4734-bcb2-d4938fbc6271","documentHash":"22f329b17645c1de836c25c435ff0ba65c2df8c4f8574d10fc7b856747b8ad7e","digest":"a2c2d03d58072d144026159a6ad600e04918aa9af04cdfbe8c56b4bc9bc473d9","covers":{"version":"approved","contentHash":"f516640b95410e473c51f418e800086b2d19f3e0c4d8d806e991d31510f26e91"},"workflowSourceAdoption":null,"signedAt":"2026-11-09T01:52:48.663Z","filingApproval":{"approved":[],"notApproved":[],"documentId":null,"reason":"The governed document store is not provisioned here, so there is no filing to approve."}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the latest review was withdrawn 6ms
+   → {"success":true,"signatureId":"1f26621c-5613-4dd4-b1b1-0165644389b6","documentHash":"22f329b17645c1de836c25c435ff0ba65c2df8c4f8574d10fc7b856747b8ad7e","digest":"83e870aa838fec7b4a2b3d3eadc9929a04457d9c4d1544bed14963e8dff659a8","covers":{"version":"approved","contentHash":"671c86d0763ce5fdb620ee7e3be880c8e2ed04ac42f8f1685e4800a808d88ab4"},"workflowSourceAdoption":null,"signedAt":"2026-11-09T01:52:48.669Z","filingApproval":{"approved":[],"notApproved":[],"documentId":null,"reason":"The governed document store is not provisioned here, so there is no filing to approve."}}: expected 200 to be 409 // Object.is equality
+stdout | server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the latest review was returned
+{
+  "timestamp": "2026-11-09T01:52:48.675Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused for an approver who reviewed this version themselves
+{
+  "timestamp": "2026-11-09T01:52:48.686Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is taken once every named reviewer has signed the text being approved
+{
+  "timestamp": "2026-11-09T01:52:48.692Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc d0c0d0c0-0000-4000-8000-0000000000d1 by a***@test.co",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the latest review was returned 12ms
+   → {"success":true,"signatureId":"57775062-ddd2-4c87-acd6-074a00c07043","documentHash":"22f329b17645c1de836c25c435ff0ba65c2df8c4f8574d10fc7b856747b8ad7e","digest":"e928542a001e61e35193805058840a4f0f62ffcb60b3202013dc8c7b0a50885f","covers":{"version":"approved","contentHash":"5d6529ec718346e7696bb0c49faccf79a39938f07680b50b2a44dbd55303c38b"},"workflowSourceAdoption":null,"signedAt":"2026-11-09T01:52:48.676Z","filingApproval":{"approved":[],"notApproved":[],"documentId":null,"reason":"The governed document store is not provisioned here, so there is no filing to approve."}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused for an approver who reviewed this version themselves 6ms
+   → {"success":true,"signatureId":"4fc01c74-86dc-4045-8a12-3a65394a2a1e","documentHash":"22f329b17645c1de836c25c435ff0ba65c2df8c4f8574d10fc7b856747b8ad7e","digest":"1a628d082c0bbede1960654a9a6cedddf538d4722b97aa4a03425fe9f772b13f","covers":{"version":"approved","contentHash":"c5d200c2eef903330d3488e9f7abff13400534489bbe4bd375840f12aeb2213f"},"workflowSourceAdoption":null,"signedAt":"2026-11-09T01:52:48.686Z","filingApproval":{"approved":[],"notApproved":[],"documentId":null,"reason":"The governed document store is not provisioned here, so there is no filing to approve."}}: expected 200 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is taken once every named reviewer has signed the text being approved 6ms
+ × server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the workflow /sign as APPROVER > is refused the same way when the document was never reviewed 5ms
+   → {"error":"Signature rejected: password verification failed (§11.200).","code":"PASSWORD_VERIFICATION_FAILED"}: expected 401 to be 409 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the document was never sent for review, before the password is checked
+AssertionError: {"error":"Signature rejected: password verification failed (§11.200).","code":"PASSWORD_VERIFICATION_FAILED"}: expected 401 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 401
+
+ ❯ expectReviewRequired server/routes/__tests__/authoring-approval-review-required.test.ts:168:48
+    166|
+    167| function expectReviewRequired(res: request.Response, says: RegExp) {
+    168|   expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                ^
+    169|   expect(res.body?.error?.code).toBe('REVIEW_REQUIRED');
+    170|   expect(res.body?.error?.message).toMatch(says);
+ ❯ server/routes/__tests__/authoring-approval-review-required.test.ts:180:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused while the review is still open, saying how many reviewers have signed
+AssertionError: {"success":true,"signatureId":"d4790bc4-037a-46a6-91ae-416e9201cf6a","documentHash":"22f329b17645c1de836c25c435ff0ba65c2df8c4f8574d10fc7b856747b8ad7e","digest":"74ae916c0c0429957757b29ba8eee3a80ad032a52c98dfe3590dcdb753d84e2f","covers":{"version":"approved","contentHash":"69434a9202143f2c6661a46023266cc228781a704eec1a675ad02c084377cc40"},"workflowSourceAdoption":null,"signedAt":"2026-11-09T01:52:48.655Z","filingApproval":{"approved":[],"notApproved":[],"documentId":null,"reason":"The governed document store is not provisioned here, so there is no filing to approve."}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ expectReviewRequired server/routes/__tests__/authoring-approval-review-required.test.ts:168:48
+    166|
+    167| function expectReviewRequired(res: request.Response, says: RegExp) {
+    168|   expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                ^
+    169|   expect(res.body?.error?.code).toBe('REVIEW_REQUIRED');
+    170|   expect(res.body?.error?.message).toMatch(says);
+ ❯ server/routes/__tests__/authoring-approval-review-required.test.ts:186:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the text changed after the review was signed
+AssertionError: {"success":true,"signatureId":"c094e659-e5a9-4734-bcb2-d4938fbc6271","documentHash":"22f329b17645c1de836c25c435ff0ba65c2df8c4f8574d10fc7b856747b8ad7e","digest":"a2c2d03d58072d144026159a6ad600e04918aa9af04cdfbe8c56b4bc9bc473d9","covers":{"version":"approved","contentHash":"f516640b95410e473c51f418e800086b2d19f3e0c4d8d806e991d31510f26e91"},"workflowSourceAdoption":null,"signedAt":"2026-11-09T01:52:48.663Z","filingApproval":{"approved":[],"notApproved":[],"documentId":null,"reason":"The governed document store is not provisioned here, so there is no filing to approve."}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ expectReviewRequired server/routes/__tests__/authoring-approval-review-required.test.ts:168:48
+    166|
+    167| function expectReviewRequired(res: request.Response, says: RegExp) {
+    168|   expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                ^
+    169|   expect(res.body?.error?.code).toBe('REVIEW_REQUIRED');
+    170|   expect(res.body?.error?.message).toMatch(says);
+ ❯ server/routes/__tests__/authoring-approval-review-required.test.ts:192:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the latest review was withdrawn
+AssertionError: {"success":true,"signatureId":"1f26621c-5613-4dd4-b1b1-0165644389b6","documentHash":"22f329b17645c1de836c25c435ff0ba65c2df8c4f8574d10fc7b856747b8ad7e","digest":"83e870aa838fec7b4a2b3d3eadc9929a04457d9c4d1544bed14963e8dff659a8","covers":{"version":"approved","contentHash":"671c86d0763ce5fdb620ee7e3be880c8e2ed04ac42f8f1685e4800a808d88ab4"},"workflowSourceAdoption":null,"signedAt":"2026-11-09T01:52:48.669Z","filingApproval":{"approved":[],"notApproved":[],"documentId":null,"reason":"The governed document store is not provisioned here, so there is no filing to approve."}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ expectReviewRequired server/routes/__tests__/authoring-approval-review-required.test.ts:168:48
+    166|
+    167| function expectReviewRequired(res: request.Response, says: RegExp) {
+    168|   expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                ^
+    169|   expect(res.body?.error?.code).toBe('REVIEW_REQUIRED');
+    170|   expect(res.body?.error?.message).toMatch(says);
+ ❯ server/routes/__tests__/authoring-approval-review-required.test.ts:198:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused when the latest review was returned
+AssertionError: {"success":true,"signatureId":"57775062-ddd2-4c87-acd6-074a00c07043","documentHash":"22f329b17645c1de836c25c435ff0ba65c2df8c4f8574d10fc7b856747b8ad7e","digest":"e928542a001e61e35193805058840a4f0f62ffcb60b3202013dc8c7b0a50885f","covers":{"version":"approved","contentHash":"5d6529ec718346e7696bb0c49faccf79a39938f07680b50b2a44dbd55303c38b"},"workflowSourceAdoption":null,"signedAt":"2026-11-09T01:52:48.676Z","filingApproval":{"approved":[],"notApproved":[],"documentId":null,"reason":"The governed document store is not provisioned here, so there is no filing to approve."}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ expectReviewRequired server/routes/__tests__/authoring-approval-review-required.test.ts:168:48
+    166|
+    167| function expectReviewRequired(res: request.Response, says: RegExp) {
+    168|   expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                ^
+    169|   expect(res.body?.error?.code).toBe('REVIEW_REQUIRED');
+    170|   expect(res.body?.error?.message).toMatch(says);
+ ❯ server/routes/__tests__/authoring-approval-review-required.test.ts:198:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the APPROVER e-signature on the editor's document > is refused for an approver who reviewed this version themselves
+AssertionError: {"success":true,"signatureId":"4fc01c74-86dc-4045-8a12-3a65394a2a1e","documentHash":"22f329b17645c1de836c25c435ff0ba65c2df8c4f8574d10fc7b856747b8ad7e","digest":"1a628d082c0bbede1960654a9a6cedddf538d4722b97aa4a03425fe9f772b13f","covers":{"version":"approved","contentHash":"c5d200c2eef903330d3488e9f7abff13400534489bbe4bd375840f12aeb2213f"},"workflowSourceAdoption":null,"signedAt":"2026-11-09T01:52:48.686Z","filingApproval":{"approved":[],"notApproved":[],"documentId":null,"reason":"The governed document store is not provisioned here, so there is no filing to approve."}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ expectReviewRequired server/routes/__tests__/authoring-approval-review-required.test.ts:168:48
+    166|
+    167| function expectReviewRequired(res: request.Response, says: RegExp) {
+    168|   expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                ^
+    169|   expect(res.body?.error?.code).toBe('REVIEW_REQUIRED');
+    170|   expect(res.body?.error?.message).toMatch(says);
+ ❯ server/routes/__tests__/authoring-approval-review-required.test.ts:204:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/routes/__tests__/authoring-approval-review-required.test.ts > P-95: the workflow /sign as APPROVER > is refused the same way when the document was never reviewed
+AssertionError: {"error":"Signature rejected: password verification failed (§11.200).","code":"PASSWORD_VERIFICATION_FAILED"}: expected 401 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 401
+
+ ❯ expectReviewRequired server/routes/__tests__/authoring-approval-review-required.test.ts:168:48
+    166|
+    167| function expectReviewRequired(res: request.Response, says: RegExp) {
+    168|   expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                ^
+    169|   expect(res.body?.error?.code).toBe('REVIEW_REQUIRED');
+    170|   expect(res.body?.error?.message).toMatch(says);
+ ❯ server/routes/__tests__/authoring-approval-review-required.test.ts:223:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+   Start at  01:52:39
+   Duration  9.61s (transform 6.54s, setup 89ms, import 9.13s, tests 129ms, environment 0ms)
+

@@ -20,6 +20,16 @@ vi.mock('../../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }
 vi.mock('../../surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: () => null }));
 vi.mock('../../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: () => null }));
 vi.mock('../../surfaces/AuthoringPlaceIntoFiling', () => ({ AuthoringPlaceIntoFiling: () => null }));
+/* The assembly flow, run for real; the options the workbench gives it are kept so a case can press the
+   assembly list's "Review" exactly as the flow does once it has checked a retained candidate's section. */
+const assemblyOptions = vi.hoisted(() => ({ current: null as null | { onReviewSection: (sectionId: string) => void } }));
+vi.mock('../useAuthoringAssemblyBuild', async original => {
+  const real = await original<typeof import('../useAuthoringAssemblyBuild')>();
+  return { ...real, useAuthoringAssemblyBuild: (options: Parameters<typeof real.useAuthoringAssemblyBuild>[0]) => {
+    assemblyOptions.current = options;
+    return real.useAuthoringAssemblyBuild(options);
+  } };
+});
 
 import { DocumentAuthoring } from '../../surfaces/DocumentAuthoring';
 import { ApiRequestError } from '@/lib/queryClient';
@@ -436,6 +446,25 @@ describe('Offering alternatives is refused, with the reason, before anything is 
     offer();
     expect(notice()).toMatch(/more than one place/);
     expect(screen.queryByRole('region', { name: /alternatives for a passage/i })).toBeNull();
+    expect(drafts()).toHaveLength(0);
+  });
+});
+
+/* Decision 4 of docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md (slices 3–4): with the passage view open on a
+   section, the assembly list's "Review" for that same section left the panel on the passage, a stale view over
+   the section the person asked to review. Review now opens the section's draft review. */
+describe('The assembly list\'s Review over an open passage', () => {
+  it('replaces the passage view with the section\'s draft review', async () => {
+    serve(CURRENT);
+    await openSection('as the protocol required');
+    select(QUOTE, 1);
+    offer();
+    expect(panel()).toBeTruthy();
+
+    act(() => assemblyOptions.current!.onReviewSection(SEC));
+
+    await waitFor(() => expect(screen.queryByRole('region', { name: /alternatives for a passage of 11\.4\.1/i })).toBeNull());
+    expect(screen.getByTestId('ai-draft-panel')).toBeTruthy();
     expect(drafts()).toHaveLength(0);
   });
 });

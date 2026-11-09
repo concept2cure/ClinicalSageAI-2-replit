@@ -1,0 +1,8 @@
+MUTATION 2-own-property-unchecked in server/routes/ind-lifecycle/shared.ts (on the final code and tests, 2026-11-09T00:40:14.236006Z): replaced [typeof code === 'string' && Object.hasOwn(SUBMISSION_ERROR_STATUS, code)] with [typeof code === 'string' && code in SUBMISSION_ERROR_STATUS]
+ ↓ server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > every code the service names answers the status it gives: VALIDATION_FAILED → 422
+ × server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > a code the service does not name, even one spelled like an object property, answers 500 48ms
+      Tests  1 failed | 23 skipped (24)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ind-lifecycle/__tests__/fail-answers-the-service-status.test.ts > the IND lifecycle routes answer the service’s own status (F1 repair C) > a code the service does not name, even one spelled like an object property, answers 500
+AssertionError: constructor: expected undefined to deeply equal { code: 'INTERNAL', …(1) }
+restored sha256 6ec0d2eec9fa1810fa20533f7f828a09b22f0cf8445c1144ff2e51c1ae2a0248 (expected 6ec0d2eec9fa1810fa20533f7f828a09b22f0cf8445c1144ff2e51c1ae2a0248)

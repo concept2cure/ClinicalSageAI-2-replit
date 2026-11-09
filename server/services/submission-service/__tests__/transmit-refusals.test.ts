@@ -133,9 +133,17 @@ describe('transmit claim — source contract', () => {
     expect(CODE).toMatch(/SET dispatch_status = \$1[^`]*AND dispatch_status = \$4/);
   });
 
-  it('never releases the claim after the bytes may have left', () => {
+  it("chooses that write's dispatch status with the send's environment (F1, row D7)", () => {
+    // A send to the agency's test environment is not a filing: the status the
+    // post-wire write sets is chosen knowing where the package went. Still a
+    // parameter, never a literal, so the write stays the resolution of THIS
+    // attempt (behaviour pinned in refused-step-voids-signature.pglite.test.ts).
+    expect(CODE).toMatch(/const dispatchStatus = toDispatchStatus\(result\.status, environment\);/);
+  });
+
+  it('never releases the claim after the bytes may have left a production send', () => {
     // Delivery is ambiguous once gw.transmit is entered, so the claim is left
-    // standing for a human. Every release must precede it — except one: a
+    // standing for a human. Every release must precede it — except two. One: a
     // refusal the gateway GUARD made before handing anything to the gateway
     // (refusedBeforeWire), which left a never-sent sequence stuck 'transmitting'
     // (2026-09-23, W5/D7; behaviour pinned in
@@ -147,7 +155,25 @@ describe('transmit claim — source contract', () => {
     expect(releases.length).toBeGreaterThan(0);
     const after = releases.filter((at) => at > transmit);
     expect(after).toHaveLength(1);
-    const line = CODE.slice(CODE.lastIndexOf('\n', after[0]) + 1, CODE.indexOf('\n', after[0]));
-    expect(line).toMatch(/^\s*if \(refusedBeforeWire\(err\)\) await releaseTransmitSlot\(sequenceId/);
+    const lines = CODE.slice(CODE.lastIndexOf('\n', after[0]) + 1).split('\n').filter((l) => l.trim() !== '');
+    expect(lines[0]).toMatch(/^\s*if \(refusedBeforeWire\(err\)\) await releaseTransmitSlot\(sequenceId/);
+    // Two (F1, row D7, 2026-11-01): a send to the agency's TEST environment,
+    // which files nothing, so nothing it holds is a held send. Only a
+    // non-production attempt is marked, and transmitSequence releases it only
+    // after the signature it was given is void (voidingSignatureOnRefusal), so
+    // that signature cannot take the released claim again.
+    expect(lines[1]).toMatch(/^\s*else if \(environment !== 'production'\) attempt\.testSendClaim = attemptId;/);
+    const fn = CODE.indexOf('export async function transmitSequence');
+    const voiding = CODE.indexOf('await voidingSignatureOnRefusal(', fn);
+    const marked = CODE.indexOf('if (attempt.testSendClaim) {', voiding);
+    const released = CODE.indexOf('throw await releasedTestSend(err, ', marked);
+    expect(voiding).toBeGreaterThan(fn);
+    expect(marked).toBeGreaterThan(voiding);
+    expect(released).toBeGreaterThan(marked);
+    expect(released).toBeLessThan(CODE.indexOf('async function transmitDispatchedSequence'));
+    // Three (F1, row D7, review 2026-11-08): a test send that went over the wire and
+    // then failed to record its result holds nothing either, so it is marked as soon as
+    // the gateway returns, still inside the try whose catch handles the wire.
+    expect(CODE.slice(transmit)).toMatch(/\}\);\n(?:\s*\/\/[^\n]*\n)*\s*if \(environment !== 'production'\) attempt\.testSendClaim = attemptId;\n\s*\} catch \(err\) \{/);
   });
 });

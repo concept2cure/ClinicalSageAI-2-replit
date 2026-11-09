@@ -17,8 +17,17 @@
  * the real Gate 1, the real assembler and the real chained audit writer. Only
  * the readiness assessor (so the gate can block, then clear) and the agency
  * gateway (so nothing leaves the process) are stubbed.
+ *
+ * F1 (row D7, 2026-11-01): a send to the agency's test environment is not a
+ * filing. The last describe drives the REAL transmit guard (getGateway, which
+ * stamps what a sequence transmit carried and for which attempt) and stubs only
+ * the FDA ESG gateway's own transmit, which writes the transmittal row the guard
+ * handed it. A staging send leaves the sequence 'pending' and its 0000 holds
+ * back no later sequence as filed; a staging failure after the wire releases the
+ * claim and voids its signature; the production send of the same sequence, with
+ * a fresh signature, files it, and the filed fold reads that send's leaves.
  */
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 
 const holder = vi.hoisted(() => ({
@@ -29,6 +38,12 @@ const holder = vi.hoisted(() => ({
   /** The applicant each transmitted package's us-regional backbone names. */
   applicants: [] as string[],
   failBlockedAudit: false,
+  /** On: the signature void reaches neither record (its signature row and its GOVERNED_SIGNATURE_VOIDED row both fail). */
+  failVoid: false,
+  /** On: the chained ECTD_TRANSMITTED row that records a send's result fails, so recording it rolls back. */
+  failTransmittedAudit: false,
+  /** On: transmit goes through the REAL guard to the FDA ESG gateway, whose own transmit the case stubs. */
+  realGuard: false,
 }));
 
 vi.mock('../../../db', async () => {
@@ -38,6 +53,13 @@ vi.mock('../../../db', async () => {
   const run = (textOrConfig: unknown, params?: unknown[]) => {
     if (holder.failBlockedAudit && String(textOrConfig).includes('INSERT INTO audit_logs') && params?.[3] === 'TRANSMIT_BLOCKED') {
       throw new Error('PRIVATE_AUDIT_FAILURE_CANARY');
+    }
+    if (holder.failVoid && (/UPDATE electronic_signatures\s+SET is_valid = false/.test(String(textOrConfig))
+      || (String(textOrConfig).includes('INSERT INTO audit_logs') && params?.[3] === 'GOVERNED_SIGNATURE_VOIDED'))) {
+      throw new Error('VOID_FAILURE_CANARY');
+    }
+    if (holder.failTransmittedAudit && String(textOrConfig).includes('INSERT INTO audit_logs') && params?.[3] === 'ECTD_TRANSMITTED') {
+      throw new Error('TRANSMITTED_AUDIT_FAILURE_CANARY');
     }
     return makeRequestDbClient(holder.pglite).query(textOrConfig, params);
   };
@@ -55,9 +77,11 @@ vi.mock('../../ectd/assess-dispatch-readiness', () => ({
     };
   },
 }));
-vi.mock('../../submission-gateways/index', async (orig) => ({
-  ...(await orig<Record<string, unknown>>()),
-  getGateway: () => ({
+vi.mock('../../submission-gateways/index', async (orig) => {
+  const real = await orig<Record<string, unknown> & { getGateway: (...a: unknown[]) => unknown }>();
+  return {
+  ...real,
+  getGateway: (...args: unknown[]) => holder.realGuard ? real.getGateway(...args) : ({
     isConfigured: async () => holder.gw.configured,
     transmit: async (req: { metadata?: Record<string, unknown>; bundle?: { path?: string } }) => {
       holder.gw.sent.push(req.metadata ?? {});
@@ -72,13 +96,18 @@ vi.mock('../../submission-gateways/index', async (orig) => ({
       return { transmittalId: 900 + holder.gw.sent.length, transmissionId: `T-${holder.gw.sent.length}`, status: 'submitted' };
     },
   }),
-}));
+  };
+});
+// The guard keeps the exact bytes before the wire (sent-package-archive.ts); in memory here.
+vi.mock('../../storage', async () => (await import('../../submission-gateways/__tests__/sent-package-storage-stub')).storageModule);
 
 import { createIndPgliteDb, AUDIT_LOGS_PGLITE_DDL, type IndPgliteDb } from '../../../db/pglite-harness';
 import { ORG, USER, FREEZE_GATE_SEED_SQL, FREEZE_SPONSOR_ID, freezeGateHelpers } from './_freeze-gate-fixture';
 import { freezeSequence, transmitSequence, precheckGovernedStep } from '../submission-service';
 import { deriveGovernedTargetBinding, persistGovernedSignSignature, BINDING_BASIS } from '../../part11/signature-persistence';
 import { recordGovernedAction } from '../../../routes/c2c/actions';
+import { GatewayError } from '../../submission-gateways/types';
+import { testSendHelpers, testSendSeedSql, AFTER_THE_WIRE } from './_test-send-fixture';
 
 let h: IndPgliteDb;
 const ctx = { organizationId: ORG, userId: USER };
@@ -172,7 +201,12 @@ beforeAll(async () => {
       (64, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${ORG}, ${USER}),
       (65, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${ORG}, ${USER}),
       (66, 'm2.3', 'Quality Overall Summary', 'new', 'coauthor_documents', 202, ${ORG}, ${USER});
+    -- The account a guarded send goes out under (gateway-accounts.ts); no row is the platform's.
+    CREATE TABLE IF NOT EXISTS organization_gateway_accounts (organization_id INTEGER, region TEXT, gateway TEXT, environment TEXT,
+      account_mode TEXT, sender_identifier TEXT, credentials_ciphertext TEXT, credential_fields JSONB, reason TEXT,
+      updated_by INTEGER, updated_at TIMESTAMPTZ);
   `);
+  await h.pglite.exec(testSendSeedSql(ORG, USER, PROGRAM));
 }, 120_000);
 afterAll(async () => { await h.close(); });
 
@@ -226,7 +260,7 @@ describe('a refused freeze voids the signature given for it', () => {
 describe('a transmit that sent nothing voids the signature given for it', () => {
   it('with no gateway credentials nothing is sent and the signature is void; once credentials exist it is refused, and a fresh one transmits', async () => {
     holder.gw = { configured: false, sent: [] };
-    const given = await sign(61, 'transmit');
+    const given = await sign(61, 'transmit', 'approval', { environment: 'staging' });
     const notSent = await transmitSequence({ sequenceId: 61, ctx, signatureActionId: given, environment: 'staging', applicationId: '000061' });
     expect(notSent).toMatchObject({ transmitted: false, reason: 'gateway_not_configured' });
 
@@ -242,9 +276,12 @@ describe('a transmit that sent nothing voids the signature given for it', () => 
     expect((await rowsNaming(given)).filter(r => r.action === 'GOVERNED_SIGNATURE_VOIDED')).toHaveLength(1);
     expect((await rowsNaming(given)).filter(r => r.action === 'TRANSMIT_BLOCKED')).toHaveLength(2);
 
-    const fresh = await sign(61, 'transmit');
+    const fresh = await sign(61, 'transmit', 'approval', { environment: 'staging' });
     const sent = await transmitSequence({ sequenceId: 61, ctx, signatureActionId: fresh, environment: 'staging', applicationId: '000061' });
-    expect(sent).toMatchObject({ transmitted: true, dispatchStatus: 'sent' });
+    // F1 (D7): sent to the agency's test environment, so not filed: the
+    // sequence stays 'pending' and can still be filed with the agency.
+    expect(sent).toMatchObject({ transmitted: true, dispatchStatus: 'pending' });
+    expect((await statusOf(61)).dispatch_status, 'a send to the test environment filed the sequence').toBe('pending');
     expect(holder.gw.sent).toHaveLength(1);
     expect(await signatureRow(fresh)).toEqual({ is_valid: true, verification_status: 'valid' });
   }, 120_000);
@@ -253,7 +290,7 @@ describe('a transmit that sent nothing voids the signature given for it', () => 
 /** Real ledger + canonical signature persistence, with explicitly fixture-only authentication. */
 async function approveFixturePackage(sequenceId: number): Promise<string> {
   const q = { query: (text: string, params?: unknown[]) => h.pglite.query(text, params) as Promise<{ rows: any[] }> };
-  const target = `ectd-sequence:${sequenceId}`, payload = { meaning: 'approval', intent: 'transmit' };
+  const target = `ectd-sequence:${sequenceId}`, payload = { meaning: 'approval', intent: 'transmit', environment: 'staging' };
   await q.query('BEGIN');
   try {
     const ledger = await recordGovernedAction(q, { orgId: ORG, userId: USER, command: 'sign', target,
@@ -328,7 +365,7 @@ describe('transmit checks the typed application number against the program recor
 
   it('a contradicting number is refused 409, nothing is sent, and its signature is void; the recorded number transmits', async () => {
     holder.gw = { configured: true, sent: [] };
-    const given = await sign(62, 'transmit');
+    const given = await sign(62, 'transmit', 'approval', { environment: 'staging' });
     const refused = await outcome(transmitSequence({ sequenceId: 62, ctx, signatureActionId: given, environment: 'staging', applicationId: '999999' }));
     expect(refused, 'transmit sent a package under a number the program record contradicts').toMatchObject({
       code: 'APPLICATION_NUMBER_MISMATCH',
@@ -338,7 +375,7 @@ describe('transmit checks the typed application number against the program recor
     expect(await signatureRow(given)).toEqual({ is_valid: false, verification_status: 'voided' });
     expect((await statusOf(62)).dispatch_status).toBe('pending');
 
-    const fresh = await sign(62, 'transmit');
+    const fresh = await sign(62, 'transmit', 'approval', { environment: 'staging' });
     const sent = await transmitSequence({ sequenceId: 62, ctx, signatureActionId: fresh, environment: 'staging', applicationId: ' 123456 ' });
     expect(sent).toMatchObject({ transmitted: true });
     expect(holder.gw.sent).toEqual([expect.objectContaining({ applicationId: '123456' })]);
@@ -354,7 +391,7 @@ describe('transmit names the applicant and the application from the record', () 
   it('the package sent names the organisation as the applicant, never a placeholder', async () => {
     holder.gw = { configured: true, sent: [] };
     holder.applicants = [];
-    const given = await sign(66, 'transmit');
+    const given = await sign(66, 'transmit', 'approval', { environment: 'staging' });
     const sent = await transmitSequence({ sequenceId: 66, ctx, signatureActionId: given, environment: 'staging', applicationId: '123456' });
     expect(sent).toMatchObject({ transmitted: true });
     expect(holder.applicants).toEqual([SPONSOR]);
@@ -368,7 +405,7 @@ describe('transmit names the applicant and the application from the record', () 
     const pre = await precheckGovernedStep(seqId, 'transmit', ctx, { environment: 'staging', applicationId: 'IND-000064' });
     expect(pre.cleared).toBe(false);
     expect(pre.refusal).toMatch(says);
-    const given = await sign(seqId, 'transmit');
+    const given = await sign(seqId, 'transmit', 'approval', { environment: 'staging' });
     const refused = await outcome(
       transmitSequence({ sequenceId: seqId, ctx, signatureActionId: given, environment: 'staging', applicationId: 'IND-000064' }),
     );
@@ -380,5 +417,220 @@ describe('transmit names the applicant and the application from the record', () 
     expect(holder.gw.sent).toEqual([]);
     expect(await signatureRow(given)).toEqual({ is_valid: false, verification_status: 'voided' });
     expect((await statusOf(seqId)).dispatch_status).toBe('pending');
+  }, 120_000);
+});
+
+/* F1 (row D7, 2026-11-01): a send to the agency's test environment is not a
+   filing. The package spine already holds this (governed-transmit.ts
+   recordTransmittedSequence, sweep F14: a non-production send records
+   nothing); the sequence spine wrote 'sent' for a staging send, so the test
+   send filed the very sequence production must file, every filed reader read
+   it as on file, and resendRefusal refused the production send. These cases go
+   through the REAL transmit guard; only the FDA ESG gateway's own transmit is
+   stubbed, and it writes the transmittal row the guard handed it. */
+const { stubEsgGateway, transmittalsOf, claimOf, filedState, voidContextOf, transmitTo } = testSendHelpers(() => h, ctx);
+const resetTestSend = () => {
+  holder.realGuard = false;
+  vi.restoreAllMocks();
+};
+
+describe("a send to the agency's test environment is not a filing (F1, D7)", () => {
+  afterEach(resetTestSend);
+
+  it('a staging send leaves 0000 unfiled to every reader; a fresh signature files it in production, and the fold reads that send', async () => {
+    holder.realGuard = true;
+    const wire = stubEsgGateway();
+    const testSig = await sign(167, 'transmit', 'approval', { environment: 'staging' });
+    const test = await transmitTo(167, testSig, 'staging');
+    expect(test).toMatchObject({ transmitted: true, dispatchStatus: 'pending' });
+    const [testRow] = await transmittalsOf(167);
+    expect(testRow.metadata).toMatchObject({ environment: 'staging', dispatchBinding: { sequenceId: 167, signatureActionId: testSig } });
+    // Only dispatch_status is written: the columns still name the attempt that went to the test environment.
+    expect(await claimOf(167), 'a send to the test environment filed the sequence').toEqual({
+      dispatch_status: 'pending', transmit_signature_action_id: testSig, transmit_attempt_id: testRow.metadata.dispatchBinding.attemptId,
+    });
+
+    // Not filed, to the fold and to the filing order: nothing is on file, and 0001, which files
+    // the same document in the same section, still waits on 0000.
+    const unfiled = await filedState(27);
+    expect(unfiled.sequences.find((s) => s.sequenceNumber === '0000')).toEqual({ sequenceNumber: '0000', dispatchStatus: 'pending', filed: false, basis: null });
+    expect(unfiled.leaves).toEqual([]);
+    const held = await precheckGovernedStep(168, 'freeze', ctx);
+    expect(held.refusal, 'a later sequence was judged against a test send as if it were on file').toMatch(/sequence 0000 is not yet filed/);
+
+    // The test send spent its signature (P-23): it serves no filing.
+    const reused = await outcome(transmitTo(167, testSig, 'production'));
+    // Given for a send to the test environment, it never authorizes a filing (F1, row D7, 2026-11-08).
+    expect(reused).toMatchObject({ code: 'GOVERNED_REQUIRED', message: expect.stringMatching(/a send to the agency's test environment, not to the agency's production environment; sign again/) });
+    expect(wire).toHaveBeenCalledTimes(1);
+
+    // The test send's record is made to differ, so which send the fold reads is visible.
+    await h.pglite.query(`UPDATE submission_transmittals SET metadata = jsonb_set(metadata, '{leafManifest}', $2::jsonb) WHERE id = $1`, [
+      testRow.id, JSON.stringify([{ ctdSection: '2.4', fileName: 'test-only.pdf', href: '0000/m2/24-nonclin-over/test-only.pdf', md5: 'f'.repeat(32), operation: 'new' }]),
+    ]);
+
+    const filingSig = await sign(167, 'transmit', 'approval', { environment: 'production' });
+    const filing = await transmitTo(167, filingSig, 'production');
+    expect(filing, 'the production send of a sequence that went to the test environment was refused').toMatchObject({ transmitted: true, dispatchStatus: 'sent' });
+    const rows = await transmittalsOf(167);
+    expect(rows).toHaveLength(2);
+    const prod = rows[1];
+    expect(prod.metadata).toMatchObject({ environment: 'production', dispatchBinding: { sequenceId: 167, signatureActionId: filingSig } });
+    expect(prod.metadata.dispatchBinding.attemptId).not.toBe(testRow.metadata.dispatchBinding.attemptId);
+    expect(await claimOf(167)).toEqual({ dispatch_status: 'sent', transmit_signature_action_id: filingSig, transmit_attempt_id: prod.metadata.dispatchBinding.attemptId });
+
+    // The fold reads the PRODUCTION transmittal's leaves, never the test send's.
+    const filed = await filedState(27);
+    expect(filed.sequences.find((s) => s.sequenceNumber === '0000')).toEqual({ sequenceNumber: '0000', dispatchStatus: 'sent', filed: true, basis: 'transmit' });
+    expect(prod.metadata.leafManifest.length).toBeGreaterThan(0);
+    expect(filed.leaves.map((l) => [l.ctdSection, l.fileName])).toEqual(prod.metadata.leafManifest.map((l) => [l.ctdSection, l.fileName]));
+    expect(filed.leaves.map((l) => l.fileName)).not.toContain('test-only.pdf');
+
+    // Filed now: 0001 is no longer held back by 0000.
+    expect((await precheckGovernedStep(168, 'freeze', ctx)).refusal ?? '').not.toMatch(/not yet filed/);
+
+    // The record: one transmit row per send, each naming its environment, its own signature and
+    // what it left the sequence at; the test send's says, in words, that it filed nothing.
+    const transmits = await h.pglite.query(
+      `SELECT new_values::jsonb ->> 'environment' AS environment, new_values::jsonb ->> 'signatureActionId' AS sig,
+              new_values::jsonb ->> 'dispatchStatus' AS left_at, new_values::jsonb ->> 'testSend' AS test_send
+         FROM audit_logs WHERE action = 'ECTD_TRANSMITTED' AND record_id = '167' ORDER BY occurred_at, id`,
+    );
+    expect(transmits.rows).toEqual([
+      { environment: 'staging', sig: testSig, left_at: 'pending', test_send: expect.stringMatching(/A test send is not a filing/) },
+      { environment: 'production', sig: filingSig, left_at: 'sent', test_send: null },
+    ]);
+  }, 120_000);
+
+});
+
+describe("a send that fails after the wire: a test send holds nothing, a production send stays held (F1, D7)", () => {
+  afterEach(resetTestSend);
+
+  it('a staging send that fails after the wire releases the claim and voids its signature; a fresh one files in production', async () => {
+    holder.realGuard = true;
+    stubEsgGateway('fails after the wire');
+    const testSig = await sign(169, 'transmit', 'approval', { environment: 'staging' });
+    const failed = await outcome(transmitTo(169, testSig, 'staging'));
+    expect(failed).toBeInstanceOf(GatewayError);
+    // Released, not held: nothing a test environment holds is a filing.
+    expect(await claimOf(169), 'a failed test send held the sequence').toEqual({ dispatch_status: 'pending', transmit_signature_action_id: null, transmit_attempt_id: null });
+    expect(failed.message).toContain(AFTER_THE_WIRE);
+    expect(failed.message, 'the person is not told the test send holds nothing').toMatch(/agency's test environment, which files nothing/);
+    expect(failed.message).toMatch(/signature given for this transmit is now void/);
+    // Void where every reader looks, and the void is the audit row of the attempt.
+    expect(await signatureRow(testSig)).toEqual({ is_valid: false, verification_status: 'voided' });
+    expect((await rowsNaming(testSig)).map((r) => [r.action, r.step])).toEqual([['GOVERNED_SIGNATURE_VOIDED', 'transmit']]);
+    expect((await rowsNaming(testSig))[0].refusal).toContain(AFTER_THE_WIRE);
+    // The void row says which send this was and that it filed nothing: a reviewer reading
+    // "FDA may hold it" beside a released sequence sees it was the test environment.
+    const [testRow] = await transmittalsOf(169);
+    expect(await voidContextOf(testSig)).toEqual({
+      environment: 'staging', transmit_attempt_id: testRow.metadata.dispatchBinding.attemptId,
+      test_send: expect.stringMatching(/A test send is not a filing/),
+    });
+
+    // The signature the signer gave for a test send never files the sequence.
+    vi.restoreAllMocks();
+    const wire = stubEsgGateway();
+    const reused = await outcome(transmitTo(169, testSig, 'production'));
+    expect(reused, 'a test send signature was accepted for a filing').toMatchObject({
+      code: 'GOVERNED_REQUIRED', message: expect.stringMatching(/given for a send to the agency's test environment, not to the agency's production environment/),
+    });
+    expect(wire).not.toHaveBeenCalled();
+    const filingSig = await sign(169, 'transmit', 'approval', { environment: 'production' });
+    expect(await transmitTo(169, filingSig, 'production')).toMatchObject({ transmitted: true, dispatchStatus: 'sent' });
+    expect((await claimOf(169)).dispatch_status).toBe('sent');
+  }, 120_000);
+
+  it('a production send that fails after the wire still holds the claim, and its signature is not voided', async () => {
+    holder.realGuard = true;
+    stubEsgGateway('fails after the wire');
+    const filingSig = await sign(170, 'transmit', 'approval', { environment: 'production' });
+    const failed = await outcome(transmitTo(170, filingSig, 'production'));
+    expect(failed).toBeInstanceOf(GatewayError);
+    expect(failed.message).not.toMatch(/test environment|now void/);
+    const [row] = await transmittalsOf(170);
+    // Unchanged: the agency may hold it, so a person resolves it (P-92 will settle it by a signed act).
+    expect(await claimOf(170)).toEqual({ dispatch_status: 'transmitting', transmit_signature_action_id: filingSig, transmit_attempt_id: row.metadata.dispatchBinding.attemptId });
+    expect(await signatureRow(filingSig)).toEqual({ is_valid: true, verification_status: 'valid' });
+    expect(await rowsNaming(filingSig)).toEqual([]);
+  }, 120_000);
+
+});
+
+describe('a test send whose void or record fails: the claim is released only once the signature is void (F1, D7, review 2026-11-08)', () => {
+  afterEach(resetTestSend);
+
+  it('a staging send that fails after the wire, whose signature cannot be voided, keeps its claim; that signature never files it', async () => {
+    holder.realGuard = true;
+    stubEsgGateway('fails after the wire');
+    const testSig = await sign(171, 'transmit', 'approval', { environment: 'staging' });
+    holder.failVoid = true;
+    let failed: any;
+    try {
+      failed = await outcome(transmitTo(171, testSig, 'staging'));
+    } finally {
+      holder.failVoid = false;
+    }
+    expect(failed).toBeInstanceOf(GatewayError);
+    // The void reached no record, so the signature is still in force: the claim stays, as before F1.
+    expect(await signatureRow(testSig)).toEqual({ is_valid: true, verification_status: 'valid' });
+    expect(await rowsNaming(testSig)).toEqual([]);
+    const [row] = await transmittalsOf(171);
+    expect(await claimOf(171), 'a test send whose signature is still live released its claim').toEqual({
+      dispatch_status: 'transmitting', transmit_signature_action_id: testSig, transmit_attempt_id: row.metadata.dispatchBinding.attemptId,
+    });
+    expect(failed.message).toMatch(/could not be marked void right now; do not reuse it/);
+    expect(failed.message, 'the person was told the sequence is not held').not.toMatch(/the sequence is not held/);
+    expect(failed.message).toMatch(/stays held as transmitting until a person resolves it/);
+
+    // The live signature cannot take the sequence to production: the claim refuses it, and nothing is sent.
+    vi.restoreAllMocks();
+    const wire = stubEsgGateway();
+    const reused = await outcome(transmitTo(171, testSig, 'production'));
+    expect(reused, 'a test send signature filed the sequence').not.toMatchObject({ transmitted: true });
+    expect(wire).not.toHaveBeenCalled();
+    expect((await claimOf(171)).dispatch_status).toBe('transmitting');
+  }, 120_000);
+
+  it('a staging send the agency answered, whose result cannot be recorded, is released and its signature voided', async () => {
+    holder.realGuard = true;
+    stubEsgGateway();
+    const testSig = await sign(172, 'transmit', 'approval', { environment: 'staging' });
+    holder.failTransmittedAudit = true;
+    let failed: any;
+    try {
+      failed = await outcome(transmitTo(172, testSig, 'staging'));
+    } finally {
+      holder.failTransmittedAudit = false;
+    }
+    expect(String(failed?.message ?? failed)).toContain('TRANSMITTED_AUDIT_FAILURE_CANARY');
+    // Recording rolled back, but a test send holds nothing: released, not left 'transmitting'.
+    expect(await claimOf(172), 'a test send whose record failed held the sequence').toEqual({
+      dispatch_status: 'pending', transmit_signature_action_id: null, transmit_attempt_id: null,
+    });
+    expect(failed.message).toMatch(/agency's test environment, which files nothing: the sequence is not held/);
+    expect(await signatureRow(testSig)).toEqual({ is_valid: false, verification_status: 'voided' });
+    expect((await rowsNaming(testSig)).map((r) => r.action)).toEqual(['GOVERNED_SIGNATURE_VOIDED']);
+    const [row] = await transmittalsOf(172);
+    expect(await voidContextOf(testSig)).toMatchObject({ environment: 'staging', transmit_attempt_id: row.metadata.dispatchBinding.attemptId });
+
+    // A fresh signature files it in production.
+    const filingSig = await sign(172, 'transmit', 'approval', { environment: 'production' });
+    expect(await transmitTo(172, filingSig, 'production')).toMatchObject({ transmitted: true, dispatchStatus: 'sent' });
+  }, 120_000);
+});
+
+/* F1 (row D7, 2026-11-08, the coordinating session's order): a test send and a
+   filing are different acts, so a transmit signature names the environment it
+   was given for (21 CFR 11.50, 11.70), and authorizes a send to that one only. */
+describe('a transmit signature names the environment it was given for (F1, D7)', () => {
+  it('one given for a filing does not send to the test environment, and one that names none sends nowhere', async () => {
+    const refused = async (sig: string) => (await outcome(transmitTo(173, sig, 'staging'))) as { code: string; message: string };
+    const filing = await refused(await sign(173, 'transmit', 'approval', { environment: 'production' }));
+    expect([filing.code, filing.message]).toEqual(['GOVERNED_REQUIRED', expect.stringMatching(/a send to the agency's production environment, not to the agency's test environment; sign again/)]);
+    expect((await refused(await sign(173, 'transmit'))).message).toMatch(/the signature does not name where the package goes; a transmit signature names its environment/);
+    expect((await claimOf(173)).dispatch_status).toBe('pending');
   }, 120_000);
 });

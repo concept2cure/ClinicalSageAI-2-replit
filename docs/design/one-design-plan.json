@@ -31,7 +31,10 @@
     "P-104",
     "P-105",
     "P-106",
-    "P-107"
+    "P-107",
+    "P-108",
+    "P-109",
+    "P-110"
   ],
   "alwaysAllowed": [
     "**/__tests__/**",
@@ -621,6 +624,8 @@
       "paths": [
         "server/services/project-rollup-service.ts",
         "server/routes/project-hierarchy.ts",
+        "server/services/c2c/program-project-anchor.ts",
+        "server/routes/c2c/projects.ts",
         "server/services/ana/changePropagationTools.ts",
         "server/services/cmc/**",
         "server/api/cmc/**",

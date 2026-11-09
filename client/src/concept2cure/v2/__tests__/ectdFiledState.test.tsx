@@ -232,3 +232,17 @@ describe('On file at the agency: what the record cannot say is never shown as em
     expect(cardText()).not.toMatch(/nothing on file|Nothing is on file|not on file at the agency/i);
   });
 });
+
+/* 3b slice 3 (c), under founder decision P-97: a project that is not an
+   application and never filed is refused the filed state with the reason. That
+   is said as the reason, never as "didn't respond", and offers no retry. */
+describe('a project that is not an application and never filed', () => {
+  it('shows why nothing is on file, not a failed read', async () => {
+    const why = "This project is a clinical study report, authored here and not compiled as an eCTD sequence.";
+    apiRequest.mockRejectedValueOnce(Object.assign(new Error(why), { status: 422, payload: { error: { code: 'ECTD_NOT_APPLICABLE', message: why } } }));
+    card();
+    expect(await screen.findByText(why)).toBeTruthy();
+    expect(cardText()).not.toMatch(/didn’t respond|not loaded/);
+    expect(screen.queryByRole('button', { name: /retry/i })).toBeNull();
+  });
+});

@@ -50,6 +50,10 @@ vi.mock('../release-signature-status', async (importOriginal) => ({
 }));
 
 import { assessSequenceDispatchReadiness } from '../assess-dispatch-readiness';
+import * as leafSources from '../leaf-source-resolver';
+import { promises as fsp } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 let harness: IndPgliteDb;
 const ORG = 41;
@@ -305,4 +309,97 @@ describe('assessSequenceDispatchReadiness — a continuing marketing-application
     expect(a.readiness.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION')).toEqual([]);
     expect(a.validationErrors).toBe(0);
   });
+});
+
+/* P-94 (founder, 2026-11-02): "An uploaded leaf goes through the same approval as an authored one ... Readiness and
+   transmit both refuse an unapproved upload, as they do an unapproved authored leaf." P-108 3(a) (founder, 2026-11-08):
+   "An upload counts as approved when the same bytes, matched by content hash, are already approved by the Vault's
+   existing act in the same project, with no new act." The coordinating session reads "placed" as "filed" (2026-11-08).
+   Before this, an upload leaf (ctd_onboarding_documents) carried no approval verdict and was released unapproved. */
+describe('an onboarding upload is released only when the same bytes are approved in the project\'s Vault (P-94, P-108 3(a))', () => {
+  const OTHER_PROGRAM = '77777777-7777-4777-8777-777777777777';
+  let uploadDir: string;
+  let nextUpload = 900;
+  const UPLOAD_PROJECT = 4100;
+
+  beforeAll(async () => {
+    uploadDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'p94-upload-'));
+    await harness.pglite.exec(`
+      ALTER TABLE ctd_onboarding_documents ADD COLUMN IF NOT EXISTS ctd_project_id INTEGER;
+      CREATE TABLE IF NOT EXISTS projects (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, name TEXT NOT NULL DEFAULT '', regulatory_program_id UUID);
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+      CREATE TABLE IF NOT EXISTS ctd_onboarding_projects (id INTEGER PRIMARY KEY, organization_id INTEGER NOT NULL, project_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'active');
+    `);
+    await harness.pglite.query(`INSERT INTO regulatory_programs (id, organization_id) VALUES ($1::uuid, $2)`, [OTHER_PROGRAM, ORG]);
+    await harness.pglite.query(`INSERT INTO projects (id, organization_id, name, regulatory_program_id) VALUES ($1, $2, 'NeuroPanel-Dx', $3::uuid)`, [UPLOAD_PROJECT, ORG, PROGRAM]);
+    await harness.pglite.query(`INSERT INTO ctd_onboarding_projects (id, organization_id, project_id) VALUES (1, $1, $2)`, [ORG, UPLOAD_PROJECT]);
+  });
+  afterAll(async () => { if (uploadDir) await fsp.rm(uploadDir, { recursive: true, force: true }); });
+
+  /** A PDF uploaded during onboarding, its bytes on disk; returns its id and sha256. */
+  async function seedUpload(label: string): Promise<{ id: number; hash: string }> {
+    const id = nextUpload++;
+    const bytes = Buffer.from(`%PDF-1.4\n% ${label}\n1 0 obj << /Type /Catalog >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n`);
+    const storagePath = path.join(uploadDir, `${id}.pdf`);
+    await fsp.writeFile(storagePath, bytes);
+    await harness.pglite.query(
+      `INSERT INTO ctd_onboarding_documents (id, organization_id, file_name, mime_type, storage_path, ctd_project_id)
+       VALUES ($1, $2, $3, 'application/pdf', $4, 1)`, [id, ORG, `${label}.pdf`, storagePath]);
+    return { id, hash: createHash('sha256').update(bytes).digest('hex') };
+  }
+
+  /** A Vault version of exactly these bytes in a program, approved for them or not. */
+  async function seedVaultCopy(hash: string, opts: { program?: string; approved: boolean }): Promise<void> {
+    const uuid = nextUuid();
+    await harness.pglite.query(
+      `INSERT INTO vault.documents (id, program_id, organization_id, document_code, storage_version_id, content_hash, file_name)
+       VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, 'upload-copy.pdf')`,
+      [uuid, opts.program ?? PROGRAM, ORG, `code-${uuid.slice(0, 8)}`, `ver-${uuid}`, hash]);
+    if (opts.approved) {
+      await harness.pglite.query(
+        `INSERT INTO canonical_documents (canonical_id, organization_id, project_id, title, document_type, stage, has_content, content_hash, source_refs)
+         VALUES ($1, $2, $3, 'upload-copy.pdf', 'OTHER', 'approved', true, $4, jsonb_build_object('vault_documents', jsonb_build_object('nativeId', $5::text, 'role', 'artifact')))`,
+        [`cd-${uuid}`, ORG, opts.program ?? PROGRAM, hash, uuid]);
+    }
+  }
+
+  async function assessUpload(upload: { id: number; hash: string }) {
+    const sequenceId = await seedSequence();
+    await seedLeaf(sequenceId, { sectionCode: '1.1', title: 'Signed Form 3514', documentTable: 'ctd_onboarding_documents', documentId: upload.id, pin: upload.hash });
+    const a = await assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG });
+    return { a, notApproved: a.readiness.findings.filter((f) => f.code === 'DOCUMENT_NOT_APPROVED' && f.sectionCode === '1.1') };
+  }
+
+  it('an upload with no approved copy in the project\'s Vault is a DOCUMENT_NOT_APPROVED warning that blocks every release verdict', async () => {
+    const { a, notApproved } = await assessUpload(await seedUpload('form-3514-unapproved'));
+    expect(leafSources.ONBOARDING_UPLOAD_NOT_APPROVED).toBe(
+      'an uploaded file whose bytes no Vault version of this project has approved, so approve the same file in the Vault');
+    expect(notApproved).toHaveLength(1);
+    expect(notApproved[0]).toMatchObject({ severity: 'warning', blocksRelease: true });
+    expect(notApproved[0].message).toContain(`not yet approved (${leafSources.ONBOARDING_UPLOAD_NOT_APPROVED})`);
+    expect(a.validationErrors).toBe(0);
+    for (const gate of [a.freezeGate, a.gate, a.dispatchGateOnSigning]) {
+      expect(gate.cleared).toBe(false);
+      expect(gate.blockers.join(' ')).toMatch(/1 leaf points at a document not yet approved/);
+    }
+  }, 60_000);
+
+  it('the same bytes approved in the project\'s Vault clear the upload, with no new act', async () => {
+    const upload = await seedUpload('form-3514-approved-in-vault');
+    await seedVaultCopy(upload.hash, { approved: true });
+    const { notApproved } = await assessUpload(upload);
+    expect(notApproved).toEqual([]);
+  }, 60_000);
+
+  it('the same bytes in the Vault but not approved do not clear it', async () => {
+    const upload = await seedUpload('form-3514-in-vault-unreviewed');
+    await seedVaultCopy(upload.hash, { approved: false });
+    expect((await assessUpload(upload)).notApproved).toHaveLength(1);
+  }, 60_000);
+
+  it('the same bytes approved in another project\'s Vault do not clear it', async () => {
+    const upload = await seedUpload('form-3514-approved-elsewhere');
+    await seedVaultCopy(upload.hash, { program: OTHER_PROGRAM, approved: true });
+    expect((await assessUpload(upload)).notApproved).toHaveLength(1);
+  }, 60_000);
 });

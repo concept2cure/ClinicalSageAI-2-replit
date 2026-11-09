@@ -1,0 +1,4 @@
+$ planted in server/routes/project-hierarchy.ts: router.post("/:parentId/children", ...)
+[ci:project-creation-owners] FAILED
+server/routes/project-hierarchy.ts:386: retired POST /:parentId/children; use Projects -> POST /api/c2c/projects.
+exit 1

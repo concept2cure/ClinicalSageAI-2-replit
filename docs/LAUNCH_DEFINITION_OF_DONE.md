@@ -1879,6 +1879,49 @@ Raised by the D7-record session ("For the founder" 5; `artifact-approval-act.ts`
   catalog's existing classification; where the catalog does not say, the document is treated as regulated (fail
   closed).
 
+*Clarification, 2026-11-09 (the coordinating session, `01JbQU…`, under the founder's delegation of 2026-11-08, P-107).*
+The record assumed the one editor could reach the artifact reviewer routes. It cannot, because the editor and the
+approval act work on two different records:
+- **The editor's document.** The editor opens an authoring document. Its approval is the APPROVER e-signature,
+  `POST /api/authoring/docs/:docId/e-sign` in `server/routes/authoring.router.ts`.
+- **The conversation artifact.** The approval act and its reviewer routes govern AnA's conversation artifact:
+  `server/services/artifact-approval-act.ts`, and `POST …/artifacts/:artifactId/reviewers` in
+  `server/routes/c2c/artifacts.ts`.
+- **No link.** No editor document holds an artifact id. The projection between the two records was retired on
+  2026-10-17 (`server/services/ana/authoring-canonical-bridge.ts`) and stays retired.
+
+Both records file: `server/services/ectd/leaf-source-resolver.ts` admits an approved authoring document and an approved
+or locked artifact. So:
+- **Every door that makes a document fileable applies P-95, each with its own record's review.** This answers open
+  question 3 of `docs/evidence/W5/2026-11-01/p95/README.md`. Neither record is bound to the other to borrow its review.
+- **The editor's document.** The APPROVER e-signature is refused with `REVIEW_REQUIRED`, before the credential, unless
+  the document's review route is complete over the content being approved. Complete means every named reviewer has
+  signed as REVIEWER on the current sections digest (`authoringStanding`,
+  `server/services/authoring/authoring-review-route.ts`, RR5).
+  - **What does not count:** a review requested before RR5 (`legacy`), a withdrawn or returned route, and a complete
+    route over older content. The remedy for each is to send the document for review again.
+  - **The reach already exists:** "Send for review" in the editor's Review tasks rail and on the canvas card
+    (`editor/SendForReviewDialog.tsx`). D4 makes the refusal and its remedy legible where Approve is offered.
+  - **Owner:** the coordinating session, the server refusal under F1 and the reach under D4.
+- **The conversation artifact.** The planned refusal (changes 1 to 6 of the evidence) stays held until the artifact's
+  own reach exists. Today AnA's signed `update_artifact_status` is the artifact's only approval in the product, so the
+  refusal alone would refuse every artifact.
+  - **Its reach is the conversation's artifact panel** (`client/src/concept2cure/v2/surfaces/ConversationThread.tsx`),
+    which already sends an artifact to review. That send names the reviewers through `POST …/reviewers`, and a named
+    reviewer decides there through `POST …/reviews/submit`. It is the canvas beside the conversation
+    (`docs/design/ONE_ANA_ONE_CANVAS.md`), not a new screen.
+  - **Owners:** the reach, S4's holder of that file (the Anna runtime epic, `01KZK3…`); the refusal, the D7-record
+    session as before, landing after the reach.
+- **What counts as a review (open question 1).** The reviewer is neither the approving signer nor an author, read as
+  P-18 reads authors. An approver who signed as a reviewer on the same route or round cannot approve that version.
+  This applies on both doors.
+- **How many reviewers (open question 2).** Where the document's contract names `regulated_dual_review`
+  (`shared/types/document-contract.ts`), at least two named reviewers must complete review. That is the type raising
+  the floor through data, as NEW-4 allows (`docs/design/REVIEW_ROUTING_2026-10-23.md` §4). It lands as its own slice
+  after the one-reviewer refusal.
+- **Unchanged:** nothing is retroactive, an approval before P-95 stays approved, and no file, route, table, screen or
+  tool is added (RULE 6).
+
 ### P-96 — An acknowledgement recorded as FDA's before DP-81 is marked in the product
 
 The founder, 2026-11-02, answering "Before the DP-81 fix, some acknowledgement downloads were recorded as coming from
@@ -2192,3 +2235,171 @@ global sme."** The coordinating session decided as follows, as P-28 was decided 
   - item 3: the Vault parity lane `01KnUG…`, or S6's holder;
   - items 4 and 5: R1's session;
   - item 7: the new project-page session.
+
+### P-108 — Held FDA sends, retiring and size, onboarding uploads, and restoring an unrecorded send: RIM's recommendations accepted
+
+The founder, 2026-11-08, answered four questions put in the coordinating session (`01JbQU…`). They were RIM's open
+questions from its designs for P-86, P-92, P-93, P-94 and P-99 (`docs/evidence/RIM/2026-11-08-designs/`), each put with
+RIM's recommendation. The founder accepted every recommendation.
+
+1. **Held FDA sends (P-92).** Asked: "(a) Once an Ack3 has arrived, 'received' needs the Ack3 to accept; a failed Ack3
+   after an Ack2 is recorded as a technical rejection. (b) Where the platform's own record proves nothing left (no
+   message formed, refused before the wire), a narrow signed release may cite that proof instead of a letter from FDA,
+   since FDA can't confirm a send it never got. (c) If FDA's verified answer later contradicts a signed settlement,
+   FDA's answer wins, through a second signed act that re-opens it; both records are kept, and resends are refused
+   meanwhile." Answer: **"Accept all three."**
+   - **(b) amends P-92:** for a send the platform's own record proves never left, a signed release cites that proof,
+     not FDA's written confirmation of non-receipt.
+   - (a) means completing `filed-sequence-rejection.ts` for the sequence spine, under F1.
+2. **Retiring sequences and the size limit (P-86, P-93).** Asked: "(a) A production attempt that records nothing
+   reached FDA (released as not received on FDA's written confirmation, or refused before any connection) is not a
+   'bound production send', so the sequence can be retired by P-86's signed act. (b) The 1 GiB limit has no FDA source:
+   FDA's documented maximum is 10 GB (Form 5640 v2.0). Build at 1 GiB anyway, since that fails closed, and never call
+   1 GiB FDA's limit. (c) Build no settlement path for a legacy hold older than the per-attempt binding of 2026-10-14;
+   the runbook escalates if one is ever found (expected zero)." Answer: **"Accept all three."**
+3. **Onboarding uploads (P-94).** Asked: "(a) An upload counts as approved when the same bytes, matched by content hash,
+   are already approved by the Vault's existing act in the same project, with no new act. The alternative is
+   requiring every upload to be replaced by a Vault version. (b) Retire ctd_onboarding_documents as a source of
+   placeable leaves; it has no upload caller in any history and no deploy applier. Its replacement is
+   VaultPlaceIntoSubmission.tsx." Answer: **"Accept both."** The coordinating session's ruling of the same day reads
+   "placed" in P-94 as "filed".
+4. **Restoring an unrecorded sent sequence (P-99).** Asked: "(a) If a sequence was sent with no compile and no kept
+   bytes, accept the sponsor's own copy of the package when its SHA-256 matches the one recorded for that send;
+   otherwise it needs a re-filing. This depends on MR-08's open question about admitting .zip files to Vault. (b) A
+   sequence known only from its compiles counts as unrecorded: re-derived from bytes it becomes 'transmit', and a
+   statement restores it only as 'statement'. (c) A kept package that can no longer be read is an integrity incident,
+   never covered by a statement. (d) A signed statement cannot be superseded for now; a correction is a later
+   sequence." Answer: **"Accept all four."**
+
+- **What is not decided.**
+  - MR-08's question about admitting `.zip` files to Vault stays open; 4(a) depends on it.
+  - Raising the 1 GiB limit stays with the founder, when a larger channel is documented.
+  - The coordinating session's rulings on RIM's coordinator questions are coordination, not founder decisions. RIM
+    appends them to its designs.
+- **Owner.** RIM (`011e42…`), under F1 and S5, in the order recorded in COORDINATION.md.
+
+### P-109 — S12's work projects live inside their filing project; a deliverable is a Vault version family
+
+Decided 2026-11-08 by the coordinating session (`01JbQU…`) under the founder's delegation of that day ("No you decide as
+the global sme", P-107). The project-page session (`01FTWcmX…`) asked four questions after inventorying S12
+(`docs/evidence/SPINE/S12/2026-11-08-what-already-exists/README.md`).
+
+- **What is decided.**
+  1. **A work project is a child of its filing project.** It hangs off the filing project's anchored integer `projects`
+     row (`parent_project_id`, depth 2 or 3) and is anchored to the same `regulatory_programs` row. It is reached through
+     the existing `server/routes/project-hierarchy.ts`. A work project gets no new `program_type`, and `projects.ts` and
+     `project-intake.ts` do not change.
+  2. **No cross-project exception.** Because a work project sits inside its filing project's program, its deliverable
+     feeding that filing is a citation within one program. `citation-ends.ts`'s isolation rule is unchanged.
+     - Reusing a deliverable across different programs, such as an IND's CMC work feeding the NDA, stays refused until
+       a later decision.
+     - If `citation-ends.ts` checks the integer project id rather than the program, the session reports that before
+       changing anything.
+  3. **A deliverable is a Vault document's version family**, the governed record.
+     - Only an approved version feeds a filing section.
+     - `c2c_artifact_section_map` is the link from a Vault family to the section it feeds, with its owner and due date.
+       It is not a second deliverable store.
+     - Data-room sources stay inputs, with their lineage.
+     - Vault changes go through S6's holder.
+  4. **S12's ledger paths gain `server/services/c2c/program-project-anchor.ts`**, so the anchor accepts a parent.
+     Nothing else is added.
+- **What is not decided.** Feeds across programs. Whether a work project may outlive or move between filing projects.
+  No new file, route, table, screen or tool is approved (RULE 6).
+- **Owner.** The project-page session (`01FTWcmX…`), which holds D3's files for S12.
+
+*Clarification, 2026-11-09 (the coordinating session, under the same delegation).* Item 1's wording, "anchored to the
+same `regulatory_programs` row", would break PF-08: `migrations/20261001b_projects_one_anchor_per_program.sql` allows one
+anchor row per program, and every anchor reader assumes it. The project-page session found this before writing code.
+So:
+- **The work project's row.** It has `regulatory_program_id` NULL and `parent_project_id` set to the filing project's
+  anchor row (depth 2 or 3), with its path from `recomputePaths`.
+- **Its program.** It is the root ancestor's program, read through the existing ancestor query.
+- **What stays under the anchor.** Governed artifacts, exports and the Vault stay filed under the program's one anchor
+  row.
+- **Its kind.** It is `projects.metadata.workKind`, one of `cmc`, `biostatistics`, `rbm`, `data_management`,
+  `clin_pharm` or `nonclinical` (P-83). `projects.type` stays `'regulatory'`, and its domain is not widened.
+- **The create door.** It is one POST on the existing `server/routes/project-hierarchy.ts` router.
+  - It requires the editor role, the same organisation and the program's admission.
+  - The parent must be the anchor or one of its descendants.
+  - It writes through a new writer in `program-project-anchor.ts`, in a transaction with an audit row. That writer never
+    sets `regulatory_program_id`.
+  - It is an endpoint in an existing route file, not a new file or mount.
+
+Items 2 to 4 are unchanged. `citation-ends.ts` compares program UUIDs, so a citation from a work project to its filing
+project is within one program.
+
+*Second clarification, 2026-11-09 (the coordinating session, under the same delegation).* The first clarification put
+the create door on `server/routes/project-hierarchy.ts`. That door, "hierarchy child create", was retired on
+2026-10-26 by A2.9, which left canonical intake as the one HTTP creator of projects
+(`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.9/README.md`; `ci:project-creation-owners`). The coordinating
+session approved it without that history, and the gate refused the slice. Corrected:
+- **The one door.** A work project is created through canonical intake, `POST /api/c2c/projects`, with an optional
+  `{ parentProjectId, workKind }`.
+  - **The work-project branch** checks the editor role, the admission of the parent's program, a parent within that
+    program's anchor tree, and `workKind` from P-83's six. It skips the program, quota, pathway and scaffold steps that
+    do not apply.
+  - **Without those fields,** intake is unchanged.
+- **The one writer.** The child row is written by the anchor file's one existing `projects` writer, extended to take an
+  optional parent (`regulatory_program_id` NULL when it has one). `ci:project-creation-owners` keeps `count: 1`, and no
+  gate is widened.
+- **The retired door stays retired.** The hierarchy `POST` is dropped; the governed children read stays.
+- **S12's ledger paths gain `server/routes/c2c/projects.ts`.**
+
+*Third clarification, 2026-11-09 (the coordinating session, under the same delegation).* Item 3 named
+`c2c_artifact_section_map` as the link from a Vault family to the section it feeds. It is not one. The project-page
+session (`01FTWcmX…`) found this before writing code. The table (`migrations/0002_phase15_submission_ops.sql:41-52`)
+links a conversation artifact (`concept2cure_artifacts`) to a Submission Ops package section
+(`c2c_package_sections`). It has no key for a Vault document or family, none for an editor section, and no due date.
+Using it would have made a second deliverable store, which item 3 forbids. Corrected:
+- **The link is the one that exists.** A section is fed by the Vault version it was drafted from. That is
+  `document_span_lineage` with provenance `vault_document`, the Vault version's id and content hash:
+  - written by `server/services/clinical-regulatory-evidence/span-lineage-vault.ts`;
+  - read by `server/services/vault/vault-where-used.ts`;
+  - retired by the lineage gate.
+  `c2c_artifact_section_map` stays as Submission Ops' own, and no second link is made.
+- **"Only an approved version feeds a filing section."** The section is flagged as changed when a live `vault_document`
+  span cites version V and a later version in V's family (`vault-version-family.ts`) is at a STEADY stage
+  (`vault-lifecycle.ts`). The flag shows in the project's changes list, in Evidence and in the editor rail ("replaced
+  since cited"). It is built on S12's existing source-usage reads. A later version that is not yet approved does not flag
+  the section, and neither does a retired span.
+- **No Vault file is edited.** The Vault's rules are imported read-only, with no new table, route or column. A
+  deliverable's owner and due date come from its work project (`projects.owner_id`) and that project's existing tasks.
+
+### P-110 — CMC: suitability is a signed act, and an under-described substance is not composed as a small molecule
+
+Decided 2026-11-09 by the coordinating session (`01JbQU…`) under the founder's delegation of 2026-11-08 ("No you decide
+as the global sme", P-107). The CMC session (`01GJidg5…`) raised both questions in `4b9af67aa0`
+(`.design/claude-convergence/COORDINATION.md`), with options in its evidence.
+
+1. **An analytical method is recorded as suitable only by a signed act, never by an edit.**
+   - **The finding.** The specification approval gate admits a validated or a suitable method (`METHOD_SUITABLE`,
+     which `q2Expectation` in `services/cmc/ich-compliance-q2.ts` relies on before phase 3). But no form can record
+     suitability, so in practice every limit needs a fully validated method
+     (`docs/evidence/S7/2026-11-09-demo-cmc-methods/`).
+   - **Decided: option (b), by extending the existing act.** The signed validation act
+     (`POST /api/cmc/analytical-methods/:id/validate`, `server/api/cmc/routes.ts`) takes an outcome:
+     - `validated`, as today;
+     - or suitable for its phase, with the signer's reason and the phase.
+     It is the same ceremony, the same audit and the same route; there is no second endpoint. This follows what FDA asks
+     at phase 1: procedures that are scientifically sound and fit for their use, with full validation by the
+     pivotal phase (21 CFR 312.23(a)(7); ICH Q2(R2) and Q14).
+   - **Option (a), the unsigned `qualified` status, is refused, including as an interim.** A word typed into a GxP
+     register must not unlock an approval that validation reaches only by signature. Until the act takes its new
+     outcome, today's stricter behaviour stands: only a validated method supports an approved limit.
+   - **Owner.** The CMC session (S7). Tests are red first, and `METHOD_SUITABLE`'s words are read only from the signed
+     outcome.
+2. **The composition boundary fails closed when the modality is inferred rather than recorded.**
+   - **The finding.** `classifySubstanceModality` (`server/services/cmc/substance-modality.ts`) reads "a recorded
+     chemical process, and nothing suggesting biology" as a small molecule. So a terse route admitted a monoclonal
+     antibody into small-molecule Module 3 composition (`docs/evidence/S7/2026-11-09-demo-cmc-materials/`, mutation 5).
+   - **Decided: option (a).**
+     - `compositionRefusal` (`server/services/cmc/composition-scope.ts`) accepts a small molecule only when the
+       modality is stated. An inferred verdict is refused as `CMC_MODALITY_NOT_ESTABLISHED`, and the refusal asks for
+       the modality to be recorded.
+     - §3.2.A.2 keeps its current reading.
+     - Existing substance rows are not rewritten. Each is refused at composition until its modality is recorded.
+   - **Why.** This narrows P-28's boundary, it does not widen it. A boundary that decides what a filing may say rests
+     on a recorded fact, not on the absence of words in a free-text field.
+   - **Owner.** The CMC session (S7, or F1 for the boundary). The test includes mutation 5's antibody.
+- **Unchanged.** No new file, route, table, screen or tool (RULE 6). The CMC composition scope of P-28 is otherwise as
+  decided.

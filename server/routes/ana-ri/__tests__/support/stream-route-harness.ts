@@ -514,6 +514,9 @@ export const mocks = {
 
 export const harness = { state, handlers, gateway };
 
+/** The organization every harness request is in (req.tenantId and its tenant scope). */
+const HARNESS_TENANT_ID = 7;
+
 /**
  * An app with the stream route mounted, signed in as `state.user` in org 7.
  * `tenantScope` opts the request into a tenant scope, as the auth boundary
@@ -528,14 +531,17 @@ export function streamApp(
   // The scripted authenticated host binds its fixture's admitted subject;
   // synthetic SQL derives owner vars from this actual ALS premise, never a
   // global default owner. Invalid identities stay ownerless and fail closed.
+  // The scope's tenant is the request's (req.tenantId below), as
+  // establishRequestTenantScope binds both from one value; a user whose own
+  // organizationId differs does not move it (P-104 reads the two together).
   app.use((_req, _res, next) => {
-    const tenantId = options.tenantScope ?? String(state.user.organizationId ?? '');
+    const tenantId = options.tenantScope ?? String(HARNESS_TENANT_ID);
     const accountId = Number(state.user.id);
     if (!/^[1-9]\d*$/.test(tenantId) || !Number.isSafeInteger(accountId) || accountId <= 0) return next();
     return runWithTenantScope({ tenantId, accountId, source: 'test', caller: 'stream-harness' }, next);
   });
   app.use((req, res, next) => {
-    (req as any).tenantId = 7;
+    (req as any).tenantId = HARNESS_TENANT_ID;
     (req as any).user = { ...state.user };
     // The actual host now passes the request executor to source tools. Keep
     // that per-request contract in this scripted, post-admission harness too —

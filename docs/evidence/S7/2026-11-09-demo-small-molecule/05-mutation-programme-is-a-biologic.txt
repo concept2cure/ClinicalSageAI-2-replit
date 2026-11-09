@@ -1,0 +1,6 @@
+ × server/services/cmc/__tests__/demo-small-molecule-composes.test.ts > the demo small molecule is inside the composition boundary > is admitted for a US IND, and refused for a marketing application 5ms
+   → expected { …(3) } to be null
+ × server/services/cmc/__tests__/demo-small-molecule-composes.test.ts > the demo small molecule is inside the composition boundary > states its modality, so the boundary does not rest on the route’s wording 3ms
+   → expected 'biologic' to be 'small_molecule' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 6 passed (8)

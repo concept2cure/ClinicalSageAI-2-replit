@@ -1,0 +1,9 @@
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 58ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 18ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a role refusal (403) is said as itself 15ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a record not in this organization (404) is said as itself 14ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > an expired session (401) is said as itself 19ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > an ownership check that could not run (503) is said as itself 12ms
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the export-readiness chip, which is not a panel > a plan without the feature is said as itself, not as a failed verdict 5024ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 40 passed (47)

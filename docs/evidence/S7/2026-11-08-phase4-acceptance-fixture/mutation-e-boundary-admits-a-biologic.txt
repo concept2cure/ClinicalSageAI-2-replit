@@ -1,0 +1,4 @@
+ × server/services/cmc/__tests__/phase4-acceptance-fixture-tables.test.ts > the US small-molecule IND composition boundary stays enforced > refuses the same programme with a biologic substance, by name 4ms
+   → expected undefined to be 'CMC_MODALITY_OUT_OF_SCOPE' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 passed (18)
