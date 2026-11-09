@@ -61,6 +61,7 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { useSurfaceActionHandlers } from '../surfaceActions';
 import {
   CALCULATORS,
+  IVD_CALCULATOR_BASE,
   buildRequestBody,
   calculatorEndpoint,
   calculatorResultKey,
@@ -75,6 +76,34 @@ import type { FireToast } from '../toast';
 import { useAuthoringHandoff } from '../authoringHandoff';
 import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
 import { engineResultToHtml, engineResultTableColumns, engineResultCellText, type EngineResultTable } from '../engineResultHtml';
+
+/**
+ * Where a computed result belongs in the filing.
+ *
+ * Every hand-off said `module: 'M5'` from 2026-07-21 to 2026-11-09, the eleven
+ * CLSI calculators included — and a 510(k), De Novo, PMA or IVDR filing has no
+ * CTD Module 5. It files an eSTAR or a technical file, which is why every
+ * device placement in `services/biostatistics-bridge/filing-placement.ts` is an
+ * `ESTAR(...)` rule with `module: null`, and why `BridgePlacement.module` is
+ * typed `'M1' | … | 'M5' | null`. That catalog's header names this hardcode as
+ * the defect it was written to end; the sibling surface was fixed then and the
+ * calculators were not, because they had no project in scope until the two
+ * surfaces merged.
+ *
+ * Two things make a result a device result: the project files a device
+ * application, or the engine is one of the CLSI analytical/clinical-performance
+ * estimators, which are not clinical study reports in anyone's filing. The
+ * column is `text('module')` and its own comment reads "ind-wizard, coauthor,
+ * cmc, etc." — 'Risk-based monitoring' and 'eCTD co-author' are already in it —
+ * so naming the eSTAR is within its purpose, and nothing parses this into a CTD
+ * placement (the eSTAR and PMA mappers place by their own keys).
+ *
+ * 'M5' remains the answer for a drug design engine, as it has been throughout.
+ */
+export function filingModuleForCalculator(calc: Calculator, deviceProject?: boolean): string {
+  const clsi = calc.base === IVD_CALCULATOR_BASE;
+  return deviceProject || clsi ? 'eSTAR performance' : 'M5';
+}
 
 /** A dimension of the engine's judgment (ana-biostats JudgmentDimension). */
 interface JudgedDimension {
@@ -316,7 +345,7 @@ function Field({ field, value, error, onChange }: {
   );
 }
 
-function CalculatorPanel({ calc, fireToast, onNav }: { calc: Calculator; fireToast: FireToast; onNav?: (id: string) => void }) {
+function CalculatorPanel({ calc, fireToast, onNav, deviceProject }: { calc: Calculator; fireToast: FireToast; onNav?: (id: string) => void; deviceProject?: boolean }) {
   const handoff = useAuthoringHandoff();
   const saveToAuthoring = handoff.save;
   const [values, setValues] = useState<Record<string, string>>(() => initialValues(calc));
@@ -369,13 +398,13 @@ function CalculatorPanel({ calc, fireToast, onNav }: { calc: Calculator; fireToa
     });
     const outcome = await saveToAuthoring({
       title: `${calc.title} — engine result`,
-      module: 'M5',
+      module: filingModuleForCalculator(calc, deviceProject),
       code: `biostat.${calc.id}`,
       content: html,
       subject: 'the computed result',
     });
     if (outcome.isCurrent() && !outcome.ok && outcome.phase === 'blocked') fireToast(outcome.message, 'error');
-  }, [acceptedResult, calc, rows, tables, provenance, fireToast, saveToAuthoring, handoff.blocked]);
+  }, [acceptedResult, calc, rows, tables, provenance, fireToast, saveToAuthoring, handoff.blocked, deviceProject]);
 
   const run = useCallback(async () => {
     const generation = discardResult();
@@ -707,7 +736,7 @@ export function DefensibilitySection({ fireToast }: { fireToast: FireToast }) {
  * open an engine by name moved with it, and is registered here under the
  * surviving surface's id.
  */
-export function DesignCalculatorsSection({ fireToast, onNav }: { fireToast: FireToast; onNav?: (id: string) => void }) {
+export function DesignCalculatorsSection({ fireToast, onNav, deviceProject }: { fireToast: FireToast; onNav?: (id: string) => void; deviceProject?: boolean }) {
   const [activeId, setActiveId] = useState<string>(CALCULATORS[0].id);
   const active = useMemo(() => CALCULATORS.find(c => c.id === activeId) ?? CALCULATORS[0], [activeId]);
 
@@ -756,7 +785,7 @@ export function DesignCalculatorsSection({ fireToast, onNav }: { fireToast: Fire
       {/* Remounted per calculator so form state never leaks between engines —
           a leftover value under a key the next engine also uses would be sent
           silently. */}
-      <CalculatorPanel key={active.id} calc={active} fireToast={fireToast} onNav={onNav} />
+      <CalculatorPanel key={active.id} calc={active} fireToast={fireToast} onNav={onNav} deviceProject={deviceProject} />
     </section>
   );
 }

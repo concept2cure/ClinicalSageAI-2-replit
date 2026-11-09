@@ -1270,7 +1270,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           decided ("Survivor: biostatistics. Fold the workbench in as a tab")
           was carried out then. See BiostatWorkbench.tsx's header. */}
       <DefensibilitySection fireToast={fireToast} />
-      <DesignCalculatorsSection fireToast={fireToast} onNav={onNav} />
+      <DesignCalculatorsSection fireToast={fireToast} onNav={onNav} deviceProject={isDeviceFamily(program?.productType)} />
 
       {/* The two capabilities that RECORD. Everything above sizes, judges and
           writes: a figure is computed, a document is produced, nothing about
