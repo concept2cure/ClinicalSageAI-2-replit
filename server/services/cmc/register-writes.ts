@@ -110,13 +110,87 @@ export const manufacturingProcessBody = z.object({
 
 /* ─── Governed-state refusals ─────────────────────────────────────────────── */
 
-/** A write the register allows only through a governed path — the route's 409. */
+/**
+ * A write the register refuses, with the status the route answers.
+ *
+ * 409 by default: a write the register allows only through a governed path.
+ * 400 where the REQUEST is wrong rather than the record's state — a body
+ * naming a field the register does not record (`refuseUnrecordedFields`).
+ */
 export class RegisterWriteRefusal extends Error {
-  readonly status = 409 as const;
-  constructor(message: string) {
+  constructor(message: string, readonly status: 400 | 409 = 409) {
     super(message);
     this.name = 'RegisterWriteRefusal';
   }
+}
+
+/* ─── A field the register has no column for ───────────────────────────────── */
+
+/**
+ * Keys a register HANDLER reads from the body itself rather than from the
+ * register's schema, so they are not unrecorded fields.
+ *
+ * `reason` is the governed reason the signed-record edit path reads from the
+ * body (§11.10); a caller cannot know in advance whether the record it is
+ * editing is signed, so it is accepted on every register's edit.
+ */
+export const HANDLER_BODY_KEYS: readonly string[] = ['reason'];
+
+/**
+ * The top-level keys of `body` the register's schema does not accept.
+ *
+ * ── Why 200 was the wrong answer ─────────────────────────────────────────────
+ * Every register body is parsed with `schema.parse` or
+ * `schema.partial().parse`, and a zod object STRIPS the keys it does not know.
+ * So a write that named a field the register has no column for was answered
+ * 200, with the record unchanged and nothing anywhere saying so.
+ *
+ * Measured on this repository's own demo seeder, 2026-11-09: it sent
+ * `shelfLifeClaim` where the column is `shelf_life` (`shelfLife`). Three PUTs,
+ * three 200s, nothing stored, and the seeder reported the shelf life as
+ * recorded. A read-back caught it, which no ordinary caller performs.
+ *
+ * "Saved" is a claim about the record. A write that stored none of what it was
+ * asked to store must not make it (working agreement: fail closed, never
+ * fabricate). Partial application is the same claim in a quieter voice: a body
+ * of three fields of which one is misspelled stored two and said it stored
+ * three.
+ */
+export function unrecordedBodyFields(
+  schema: z.ZodObject<z.ZodRawShape>,
+  body: unknown,
+  alsoAccepted: readonly string[] = HANDLER_BODY_KEYS,
+): string[] {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return [];
+  const accepted = new Set<string>([...Object.keys(schema.shape), ...alsoAccepted]);
+  return Object.keys(body as Record<string, unknown>)
+    .filter(k => !accepted.has(k))
+    .sort();
+}
+
+/**
+ * Refuses a body naming fields the register does not record, by throwing the
+ * route's own refusal — so a call site is one statement with no branch, and
+ * the handler's existing catch answers it 400.
+ *
+ * The message names the fields it could not record AND the ones the register
+ * accepts, because the caller's next move is to correct the call: a refusal
+ * that only says "no" leaves them guessing at a column name.
+ */
+export function refuseUnrecordedFields(
+  schema: z.ZodObject<z.ZodRawShape>,
+  body: unknown,
+  registerPath: string,
+): void {
+  const unrecorded = unrecordedBodyFields(schema, body);
+  if (unrecorded.length === 0) return;
+  const accepted = Object.keys(schema.shape).sort();
+  throw new RegisterWriteRefusal(
+    `/api/cmc/${registerPath} does not record ` +
+      `${unrecorded.map(f => `"${f}"`).join(', ')}, so nothing was written — an edit is never ` +
+      `applied in part. This register records: ${accepted.join(', ')}.`,
+    400,
+  );
 }
 
 /* ─── The program a register record is filed under ────────────────────────── */
