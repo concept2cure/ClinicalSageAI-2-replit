@@ -241,10 +241,17 @@ function adaptPredicate(c: ServerPredicateCandidate): Predicate | null {
   };
 }
 
+/** The predicate service answered that it is not configured for this workspace (503, its own code). */
+export const PREDICATE_INTELLIGENCE_NOT_CONFIGURED = 'PREDICATE_INTELLIGENCE_NOT_CONFIGURED';
+const unconfigured = (failure: { status?: number; code?: string } | null | undefined): boolean =>
+  failure?.status === 503 && failure.code === PREDICATE_INTELLIGENCE_NOT_CONFIGURED;
+
 export interface UseK510PredicatesResult {
   rows: Predicate[] | null;
   loading: boolean;
   error: string | null;
+  /** True when the service said it is not configured: trying again cannot change that. */
+  notConfigured: boolean;
   /** Re-runs the search. A failed read has to offer a way back — UI standards §8. */
   refresh: () => void;
 }
@@ -263,7 +270,7 @@ export function useK510Predicates(programId: string | null): UseK510PredicatesRe
   const url = programId
     ? `/api/predicate-intelligence/candidates?program_id=${encodeURIComponent(programId)}`
     : null;
-  const { data, loading, error, refresh } = useFetchJson<CandidatesPayload>(url);
+  const { data, loading, error, failure, refresh } = useFetchJson<CandidatesPayload>(url);
   /* Memoized on the payload. The adapter used to re-run on every render, so
      `rows` came back with a new identity each time — and the surface re-seeds
      its predicate selection from that array in an effect, which made a new
@@ -279,7 +286,7 @@ export function useK510Predicates(programId: string | null): UseK510PredicatesRe
      the idle state, and a program with a completed search that returned no
      candidates would be told to open a program it already has. An empty
      result is an empty result. */
-  return { rows, loading, error, refresh };
+  return { rows, loading, error, notConfigured: unconfigured(failure), refresh };
 }
 
 /* ─── Reduced predicate fallback (openFDA clearances, LOCAL endpoint) ── */
@@ -399,6 +406,8 @@ export interface UseK510SeMatrixResult {
   rows: SeRow[] | null;
   loading: boolean;
   error: string | null;
+  /** True when the predicate service said it is not configured. */
+  notConfigured: boolean;
   refresh: () => void;
 }
 
@@ -411,8 +420,8 @@ export function useK510SeMatrix(programId: string | null): UseK510SeMatrixResult
   const url = programId
     ? `/api/predicate-intelligence/se-matrix?program_id=${encodeURIComponent(programId)}`
     : null;
-  const { data, loading, error, refresh } = useFetchJson<SeMatrixPayload>(url);
-  if (!data) return { rows: null, loading, error, refresh };
+  const { data, loading, error, failure, refresh } = useFetchJson<SeMatrixPayload>(url);
+  if (!data) return { rows: null, loading, error, notConfigured: unconfigured(failure), refresh };
   const list = data.rows ?? data.matrix ?? data.data ?? [];
   const rows = list.map(adaptSeRow).filter((r): r is SeRow => r !== null);
   /* `length > 0 ? rows : null` collapsed "searched, found nothing" into
@@ -420,5 +429,5 @@ export function useK510SeMatrix(programId: string | null): UseK510SeMatrixResult
      the idle state, and a program with a completed search that returned no
      candidates would be told to open a program it already has. An empty
      result is an empty result. */
-  return { rows, loading, error, refresh };
+  return { rows, loading, error, notConfigured: false, refresh };
 }

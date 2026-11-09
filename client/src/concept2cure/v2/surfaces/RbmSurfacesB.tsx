@@ -23,6 +23,7 @@
  * on it (409 amendment_not_in_force).
  */
 import { ErrorState } from '../dataConnect';
+import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import React, { useState } from 'react';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
@@ -277,7 +278,7 @@ export function RbmPatients({ board, onReload }: SubProps) {
       )}
       <RbmWriteNote note={mut.note} />
       <div className="rbm-bar">
-        <span className="rbm-bar-info">scorePatientCohort — robust modified z-score — MIN_COHORT 5 — {board.summary.patients.scored} subjects — {scannedAt ? `scored ${scannedAt}` : 'never scored'}</span>
+        <span className="rbm-bar-info">Robust modified z-score · minimum cohort of 5 · {board.summary.patients.scored} subjects · {scannedAt ? <>scored <GovernedTimestamp value={scannedAt} layout="inline" /></> : 'never scored'}</span>
         <button className="rbm-btn pri" disabled={mut.busy} onClick={scanCohort}>{I.zap}{mut.busy ? 'Scanning…' : 'Scan cohort'}</button>
       </div>
       <div className="rbm-pt-cols">
@@ -327,7 +328,7 @@ export function RbmPatients({ board, onReload }: SubProps) {
           </div>
         )}
       </div>
-      <div className="rbm-note">{I.info}The bars are the accessible equivalent of a cohort scatter — every dimension shows its signed z. Cohorts below MIN_COHORT (5) are not scored (no false anomalies on thin data). Scoring runs over the metrics already loaded into the profile store; it is not a full patient timeline of visits, dosing, adverse events and concomitant medication.</div>
+      <div className="rbm-note">{I.info}The bars are the accessible equivalent of a cohort scatter — every dimension shows its signed z. Cohorts smaller than 5 subjects are not scored (no false anomalies on thin data). Scoring runs over the metrics already loaded into the profile store; it is not a full patient timeline of visits, dosing, adverse events and concomitant medication.</div>
     </div>
   );
 }
@@ -356,7 +357,7 @@ export function RbmSites({ board, onReload }: SubProps) {
       )}
       <RbmWriteNote note={mut.note} />
       <div className="rbm-bar">
-        <span className="rbm-bar-info">site-risk-engine — composite from Site Intelligence — {at ? `scored ${at}` : 'never scored'}</span>
+        <span className="rbm-bar-info">Composite from site intelligence · {at ? <>scored <GovernedTimestamp value={at} layout="inline" /></> : 'never scored'}</span>
         <button className="rbm-btn pri" disabled={mut.busy} onClick={recompute}>{I.zap}{mut.busy ? 'Recomputing…' : 'Recompute site risk'}</button>
       </div>
       <div className="rbm-card">
@@ -375,7 +376,7 @@ export function RbmSites({ board, onReload }: SubProps) {
           {sites.length === 0 && <tr><td colSpan={5} className="rbm-col-empty">No site risk scored for this study yet.</td></tr>}
           </tbody></table>
       </div>
-      <div className="rbm-note">{I.info}All {sites.length} scored site{sites.length === 1 ? '' : 's'} shown, ranked by composite risk. Tier assignment is monitoringTierFromRisk() on the composite; the enhanced tier drives the monitoring-plan visit cadence. Recomputing replaces the current snapshot — per-run history is not retained, so trend over time is not available.</div>
+      <div className="rbm-note">{I.info}All {sites.length} scored site{sites.length === 1 ? '' : 's'} shown, ranked by composite risk. The tier is set from the composite score; the enhanced tier drives the monitoring-plan visit cadence. Recomputing replaces the current snapshot — per-run history is not retained, so trend over time is not available.</div>
     </div>
   );
 }

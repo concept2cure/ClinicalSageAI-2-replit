@@ -1,0 +1,70 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > appends a KRI reading through the real values endpoint
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > creates a KRI against the program, with blank thresholds left null
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > writes a QTL breach response onto the QTL
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > posts a CtQ factor with the components, letting the engine derive the score
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > triages a signal through the signals endpoint
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > runs central monitoring server-side and reports the engine counts
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > recomputes site risk server-side
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > advances a monitoring action through the actions endpoint
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > generates the plan from the RACT when the study has none
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > seeds the KRI library through the engine when the study has none (J5-03)
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > seeds the default QTLs through the engine when the study has none (J5-03)
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > offers no library seed once the study has indicators or limits
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > will not offer to raise an action when there is no plan to attach it to
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > refuses to edit the CtQ register of an approved assessment
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > omits fields it cannot show when editing, instead of blanking them
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > shows and mutates only the governing plan's actions
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > records an investigation and its follow-up action in one transactional call
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > states outright when no source feed is tracked
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > marks a stale feed on the overview rather than showing its age neutrally
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > surfaces the server error and changes nothing when a write is rejected
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — reports what the load actually did > posts the pasted extract with its source and cutoff
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — reports what the load actually did > shows the rejected rows and their reasons on a partial load
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — reports what the load actually did > calls out metrics that matched no indicator, even when nothing was rejected
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > offers Amend on an approved assessment instead of dead-ending the register
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > opens the amendment with a reason, and says the signed version is preserved
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > renders the version chain with each version's own signature
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > does not offer Add CtQ factor when the study has no risk assessment
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > does not offer Amend on a draft — a draft is already editable
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM plan — an approved plan is amended, not edited > offers Amend on an approved plan and posts the reason to /amend
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM plan — an approved plan is amended, not edited > does not offer Amend on a draft plan
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > Add action posts to the plan in force while the amendment draft is on screen
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > a signal follow-up is raised on the plan in force
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > an investigation follow-up is raised on the plan in force
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > says so when the server saved the notes but did not raise the action
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > a scheduled oversight visit is raised on the plan in force
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > opening an amendment does not claim to carry actions forward
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — a duplicate load is refused, and reprocess needs a reason > holds the 409 as its own state and resubmits only with reprocess + reason
+ × client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — a duplicate load is refused, and reprocess needs a reason > says how the attention list is ordered and when, without a function name or a raw ISO time 51ms
+   → expected 'buildAttentionFeed — ordered by sever…' not to match /buildAttentionFeed/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — a duplicate load is refused, and reprocess needs a reason > says how the attention list is ordered and when, without a function name or a raw ISO time
+AssertionError: expected 'buildAttentionFeed — ordered by sever…' not to match /buildAttentionFeed/
+
+- Expected:
+/buildAttentionFeed/
+
++ Received:
+"buildAttentionFeed — ordered by severity — as of 2026-07-01T00:00:00.000Z"
+
+ ❯ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx:590:33
+    588|     render(<RbmOverview board={board()} onTab={vi.fn()} />);
+    589|     const sub = screen.getByText('Needs attention now').closest('.rbm-…
+    590|     expect(sub.textContent).not.toMatch(/buildAttentionFeed/);
+       |                                 ^
+    591|     expect(sub.textContent).not.toMatch(/T00:00:00\.000Z/);
+    592|     expect(sub.textContent).toMatch(/^Ordered by severity · as of /);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 37 skipped (38)
+   Start at  17:19:19
+   Duration  1.99s (transform 1.03s, setup 136ms, import 1.22s, tests 56ms, environment 438ms)
+

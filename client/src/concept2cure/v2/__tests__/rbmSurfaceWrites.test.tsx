@@ -581,4 +581,5 @@ describe('RBM metric ingest — a duplicate load is refused, and reprocess needs
     expect(posts[0]).not.toHaveProperty('reprocess');
     expect(posts[1]).toMatchObject({ reprocess: true, reprocessReason: 'Unit mapping corrected' });
   });
+
 });

@@ -18,11 +18,13 @@ import React, { useState } from 'react';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import type { RbmBoard, RbmBoardItem, RbmBoardKri, RbmBoardQtl, RbmBoardFreshness } from './rbmBoard';
+import { frameworkLabel } from './rbmBoard';
 import {
   RbmChip, RbmScore, RiskMatrix, Sparkline, ThresholdGauge, TrendTable,
   RbmFormModal, GovernedApprovalDialog, type FormField,
 } from './RbmSurfaces';
 import { ErrorState } from '../dataConnect';
+import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { useRbmMutation, useRbmOwners, ownerId, rbmWrite } from './rbmWrites';
 import { RbmIngestDialog } from './RbmIngest';
 import '../styles/rbm-v2.css';
@@ -153,7 +155,7 @@ export function RbmOverview({ board, onTab, onReload }: SubProps) {
   const kriUneval = S.kris.notEvaluated ?? 0;
   const qtlUneval = S.qtls.notEvaluated ?? 0;
   const tiles = [
-    { k: 'Overall risk', v: null as string | null, chip: <RbmChip vocab="band" value={S.overallRisk ?? 'unknown'} />, sub: 'rbm-engine — L x I banding', nav: 'ract' },
+    { k: 'Overall risk', v: null as string | null, chip: <RbmChip vocab="band" value={S.overallRisk ?? 'unknown'} />, sub: 'Likelihood × impact banding', nav: 'ract' },
     { k: 'Critical CtQ factors', v: String(S.riskItems.critical), chip: null, sub: `${S.riskItems.open} of ${S.riskItems.total} open`, nav: 'ract' },
     { k: 'KRIs red / amber', v: `${S.kris.red} / ${S.kris.amber}`, chip: null, sub: `${S.kris.total} indicators — ${kriUneval} not evaluated`, nav: 'kris', warn: S.kris.red > 0 || kriUneval > 0 },
     { k: 'QTLs breached', v: String(S.qtls.breached), chip: null, sub: `${S.qtls.approaching} approaching — ${qtlUneval} not evaluated`, nav: 'qtls', err: S.qtls.breached > 0 },
@@ -175,7 +177,7 @@ export function RbmOverview({ board, onTab, onReload }: SubProps) {
           </button>
         ))}
       </div>
-      <div className="rbm-sec-h"><h2>Needs attention now</h2><span className="rbm-sec-sub">buildAttentionFeed — ordered by severity — as of {S.asOf}</span></div>
+      <div className="rbm-sec-h"><h2>Needs attention now</h2><span className="rbm-sec-sub">Ordered by severity · as of <GovernedTimestamp value={S.asOf} layout="inline" /></span></div>
       <div className="rbm-att">
         {board.attention.map((a, i) => (
           <button key={i} className="rbm-att-row" data-sev={a.sev} onClick={() => onTab?.(a.nav)}>
@@ -205,9 +207,9 @@ export function RbmReport({ board, onAsk }: SubProps) {
     <div className="rbm-report">
       <div className="rbm-report-h">
         <div>
-          <div className="rbm-report-fw">{R.framework}</div>
+          <div className="rbm-report-fw">{frameworkLabel(R.framework)}</div>
           <h2 className="rbm-report-t">Risk review</h2>
-          <div className="rbm-report-m">As of {R.asOf} — overall risk <RbmChip vocab="band" value={R.overallRisk} /> — {R.attentionCount} attention items — {R.approved ? 'assessment approved' : 'assessment approval pending'}</div>
+          <div className="rbm-report-m">As of <GovernedTimestamp value={R.asOf} layout="inline" /> — overall risk <RbmChip vocab="band" value={R.overallRisk} /> — {R.attentionCount} attention items — {R.approved ? 'assessment approved' : 'assessment approval pending'}</div>
         </div>
         <div className="rbm-report-acts">
           <button className="rbm-btn" onClick={() => onAsk?.('Export the risk review report as markdown')} title="Sends this request to AnA in the rail — it does not download a file here">{I.sparkles}Ask AnA to export markdown</button>
@@ -358,7 +360,7 @@ export function RbmRact({ board, onReload }: SubProps) {
       {asmt ? (
         <div className="rbm-asmt">
           <div className="rbm-asmt-l">
-            <b>{asmt.framework}</b>
+            <b>{frameworkLabel(asmt.framework)}</b>
             <span>Version {asmt.version} — <RbmChip vocab={asmt.status === 'active' ? 'action' : 'item'} value={asmt.status === 'active' ? 'done' : 'open'} /> {asmt.status === 'active' ? 'active' : 'draft — approval pending'} — {items.length} CtQ factors, {items.filter(x => x.critical).length} critical</span>
             {asmt.approval ? <span className="rbm-audit">{I.check}Approved by {asmt.approval.by} — {asmt.approval.when} — &quot;{asmt.approval.reason}&quot;</span> : null}
           </div>
@@ -415,7 +417,7 @@ export function RbmRact({ board, onReload }: SubProps) {
             </tbody></table>
         </div>
       </div>
-      <div className="rbm-note">{I.info}The governing risk score is <b>likelihood x impact</b> (rbm-engine scoreRisk), banded low &lt;8 / medium 8-14 / high 15+. Detectability is recorded against each factor for review but is <b>not</b> multiplied into the score — one scoring method, applied consistently. Residual score is derived the same way from the post-mitigation likelihood and impact.</div>
+      <div className="rbm-note">{I.info}The governing risk score is <b>likelihood x impact</b>, banded low &lt;8 / medium 8-14 / high 15+. Detectability is recorded against each factor for review but is <b>not</b> multiplied into the score — one scoring method, applied consistently. Residual score is derived the same way from the post-mitigation likelihood and impact.</div>
       {locked && (
         <div className="rbm-note">{I.lock}This assessment is <b>approved</b>, so its critical-to-quality content is fixed: the e-signature above attests to these factors as they stand. To revise it, use <b>Amend</b> — that opens the next version as a draft carrying a copy of this register, leaving v{asmt?.version} and its signature intact as the historical record. The amendment governs nothing until it is approved in its own right.</div>
       )}
