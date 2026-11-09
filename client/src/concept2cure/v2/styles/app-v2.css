@@ -3152,6 +3152,9 @@
   font-family:Georgia,'Times New Roman',serif;font-size:14px;line-height:1.9;
   color:#222220;margin:0 0 12px;text-align:justify;hyphens:auto;
 }
+/* The journey's preview is a past version of a document the editor writes, so its prose takes the editor's type
+   (D4-7, §D4.J; `rich-section-editor.css` `.rse-body .tiptap`). The paper's ink and margins stay. */
+.c2c-v2 .dj-stagepane .dj-page .dj-page-p{font-family:var(--font-serif);font-size:var(--fs-prose, 16px);line-height:1.7;}
 /* `.lp-page.hl` and `.lp-bw` were declared here AND again in the lineage-page
    component block ~130 lines below. Same specificity, so the later block won —
    except this copy of .lp-page.hl carried !important and beat it, which is why
@@ -3230,7 +3233,6 @@
 .c2c-v2 .dj-stage-ic{color:var(--accent-100);display:inline-flex;}.c2c-v2 .dj-stage-ic svg{width:18px;height:18px;}
 .c2c-v2 .dj-stage-t{font-size:15px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .dj-stage-v{font-size:11px;font-family:var(--font-mono);color:var(--text-400);}
-.c2c-v2 .dj-stage-acts{display:flex;gap:6px;}
 .c2c-v2 .reg-mini{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-300);border:1px solid var(--border);border-radius:7px;padding:5px 9px;background:var(--bg-000);}
 .c2c-v2 .reg-mini:hover{border-color:var(--accent-100);color:var(--accent-200);}
 .c2c-v2 .reg-mini svg{width:13px;height:13px;}

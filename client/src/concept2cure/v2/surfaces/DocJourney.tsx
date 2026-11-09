@@ -391,17 +391,23 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="reg-wrap">
-      <div className="reg-head">
+      {/* D0's page header (§D4.J): no context eyebrow, one primary. "Open in editor" is the page's one way to the
+          document, so it is here once, and only when there is a document to open. */}
+      <div className="ph">
         <div>
-          <div className="reg-eyebrow">Workspace · authoring</div>
-          <h1 className="reg-title">Document journey</h1>
-          <p className="reg-sub">
+          <h1 className="ph-title">Document journey</h1>
+          <p className="ph-sub">
             One document’s lifecycle — creation, authoring, review, approval and freeze — reconstructed from its real audit trail, with the document itself in view.
           </p>
         </div>
-        <button className="reg-cta" onClick={() => onAsk && onAsk('Advance this document to the next stage')}>
-          {I.sparkles} Continue with AnA
-        </button>
+        <div className="ph-acts">
+          <button className="btn ghost" onClick={() => onAsk && onAsk('Advance this document to the next stage')}>
+            {I.sparkles} Continue with AnA
+          </button>
+          {stage && (
+            <button className="btn primary" onClick={openEditor}>{I.penLine} Open in editor</button>
+          )}
+        </div>
       </div>
 
       {live.loading ? (
@@ -472,9 +478,6 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
                     <span className="dj-stage-ic">{I[stage.ic] || I.fileText}</span>
                     <span className="dj-stage-t">{stage.label}</span>
                     <span className="dj-stage-v">{stage.ver}</span>
-                  </div>
-                  <div className="dj-stage-acts">
-                    <button className="reg-mini" onClick={openEditor}>{I.penLine} Open in editor</button>
                   </div>
                 </div>
               )}
