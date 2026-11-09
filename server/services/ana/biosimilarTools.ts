@@ -5,6 +5,8 @@
  *
  * Every engine is pure, closed-form, and reproducible: no LLM, no network.
  * Handlers live in AnaToolExecutor.ts and dynamic-import the knowledge module.
+ * A required or malformed input is refused by field, and a conclusion an
+ * unstated fact could change is null or not_assessed (Rule 2 S5d, 2026-11-09).
  *
  * Tools:
  *   assess_analytical_similarity_biosimilar — Analytical similarity tier classification per FDA 2017
@@ -20,10 +22,9 @@
 import type { AnaTool } from '../ai-gateway/types';
 
 const DETERMINISTIC_NOTE =
-  'Deterministic — identical input always yields identical output. No LLM, no network. ' +
-  'Report the returned data and regulatory citations verbatim. Do NOT recompute, ' +
-  'round differently, or substitute your own regulatory interpretation — a fabricated ' +
-  'or misattributed regulatory citation in a biosimilar submission is a critical defect.';
+  'Deterministic, no LLM: report the returned data and citations verbatim. If a parameter is missing or ' +
+  'invalid, relay the validation error and ask the user for the correct value.';
+const NOT_READ = ' Not read: it does not change the result.';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. assess_analytical_similarity_biosimilar
@@ -32,18 +33,15 @@ const DETERMINISTIC_NOTE =
 export const ASSESS_ANALYTICAL_SIMILARITY_BIOSIMILAR: AnaTool = {
   name: 'assess_analytical_similarity_biosimilar',
   description:
-    'Assess analytical similarity for a biosimilar product per the FDA 2017 Statistical ' +
-    'Approaches to Evaluate Analytical Similarity guidance and EMA biosimilar quality ' +
-    'guidelines. Returns tier classification (Tier 1 / Tier 2 / Tier 3) for each critical ' +
-    'quality attribute (CQA) based on product type and clinical relevance, the statistical ' +
-    'approach for each tier (equivalence test with quality range for Tier 1, quality range ' +
-    'for Tier 2, raw data/graphical for Tier 3), reference product lot requirements ' +
-    '(minimum 10 per FDA, 3 per EMA), recommended analytical methods per CQA, and ' +
-    'product-specific guidance for mAbs, fusion proteins, insulin, EPO, filgrastim, ' +
-    'pegfilgrastim, adalimumab biosimilars, and trastuzumab biosimilars. Use when the user ' +
-    'asks about analytical similarity assessment, CQA tier classification, statistical ' +
-    'approaches for biosimilar characterization, or reference lot requirements. ' +
-    DETERMINISTIC_NOTE,
+    'Assess analytical similarity for a biosimilar product per the FDA 2017 Statistical Approaches to ' +
+    'Evaluate Analytical Similarity guidance and EMA biosimilar quality guidelines. Returns the tier (1, 2 ' +
+    'or 3) of each critical quality attribute (CQA) for the product type, the statistical approach per tier ' +
+    '(equivalence test, quality range, or raw data/graphical), reference product lot requirements (minimum ' +
+    '10 per FDA, 3 per EMA), recommended analytical methods per CQA, product-specific guidance (mAbs, fusion ' +
+    'proteins, insulin, EPO, filgrastim, pegfilgrastim, adalimumab and trastuzumab biosimilars) and ' +
+    'selectionNotes, which say when a requested CQA or method list matched nothing and the full list is ' +
+    'returned. Use for analytical similarity assessment, CQA tier classification, or reference lot ' +
+    'requirements. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
@@ -67,14 +65,16 @@ export const ASSESS_ANALYTICAL_SIMILARITY_BIOSIMILAR: AnaTool = {
         items: { type: 'string' },
         description:
           'Optional list of specific CQAs to assess (e.g., "afucosylation", "ADCC", ' +
-          '"charge variants"). If omitted, returns the full CQA panel for the product type.',
+          '"charge variants"). If omitted, returns the full CQA panel for the product type; if none ' +
+          'matches, the full panel is returned and selectionNotes says so.',
       },
       analyticalMethodsUsed: {
         type: 'array',
         items: { type: 'string' },
         description:
           'Optional list of analytical methods available or planned (e.g., "SPR", "HILIC-UPLC", ' +
-          '"SE-HPLC"). Used to filter recommended methods to those in the user\'s capability.',
+          '"SE-HPLC"). Used to filter recommended methods to those in the user\'s capability; where none ' +
+          'matches an attribute, its full list is returned and selectionNotes says so.',
       },
     },
     required: ['productType'],
@@ -88,18 +88,16 @@ export const ASSESS_ANALYTICAL_SIMILARITY_BIOSIMILAR: AnaTool = {
 export const DESIGN_BIOSIMILAR_CLINICAL: AnaTool = {
   name: 'design_biosimilar_clinical',
   description:
-    'Design a biosimilar clinical development program including PK similarity study, ' +
-    'comparative clinical efficacy study, and immunogenicity assessment strategy. Returns ' +
-    'clinical pharmacology study design (population, PK endpoints, equivalence margins ' +
-    '80-125%, single-dose vs. multi-dose), comparative clinical study design (most sensitive ' +
-    'indication selection, primary endpoint [ACR20 for anti-TNF, ORR for oncology mAbs, ' +
-    'DSN for G-CSF, HbA1c for insulin], equivalence margin derivation, sample size), ' +
-    'immunogenicity assessment (tiered ADA assay strategy — screening, confirmatory, titer, ' +
-    'neutralizing antibody, cross-reactivity), switching study requirements, and approved ' +
-    'biosimilar precedents with endpoints used (Zarxio, Inflectra, Amjevita, Ogivri, ' +
-    'Semglee, etc.). Use when the user asks about biosimilar clinical program design, ' +
-    'clinical endpoints for biosimilars, immunogenicity comparison strategy, or PK ' +
-    'similarity study design. ' + DETERMINISTIC_NOTE,
+    'Design a biosimilar clinical development program: PK similarity study, comparative clinical efficacy ' +
+    'study and immunogenicity assessment strategy. Returns the PK study design (population, PK endpoints, ' +
+    '80-125% margins, single vs. multi-dose), the comparative clinical study design (most sensitive ' +
+    'indication, primary endpoint [ACR20 for anti-TNF, ORR for oncology mAbs, DSN for G-CSF, HbA1c for ' +
+    'insulin], equivalence margin derivation, sample size), the tiered ADA strategy, switching study ' +
+    'requirements and approved biosimilar precedents (Zarxio, Inflectra, Amjevita, Ogivri, Semglee, etc.). ' +
+    'A missing or malformed productType, referenceProduct, ' +
+    'pkComplexity or immunogenicityRisk is refused. Use for biosimilar clinical program design, clinical ' +
+    'endpoints for biosimilars, immunogenicity comparison strategy, or PK similarity study design. ' +
+    DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
@@ -129,7 +127,7 @@ export const DESIGN_BIOSIMILAR_CLINICAL: AnaTool = {
         items: { type: 'string' },
         description:
           'Approved indications of the reference product that the biosimilar targets ' +
-          '(e.g., ["rheumatoid arthritis", "psoriasis", "Crohn\'s disease"]).',
+          '(e.g., ["rheumatoid arthritis", "psoriasis", "Crohn\'s disease"]).' + NOT_READ,
       },
       mechanismOfAction: {
         type: 'string',
@@ -143,9 +141,7 @@ export const DESIGN_BIOSIMILAR_CLINICAL: AnaTool = {
           'growth_factor_stimulation',
           'anti_proliferative',
         ],
-        description:
-          'Primary mechanism of action of the reference product. Affects study design ' +
-          'and analytical requirements (e.g., ADCC-dependent mAbs require afucosylation matching).',
+        description: 'Primary mechanism of action of the reference product.' + NOT_READ,
       },
       pkComplexity: {
         type: 'string',
@@ -163,14 +159,7 @@ export const DESIGN_BIOSIMILAR_CLINICAL: AnaTool = {
           'on PK/efficacy (e.g., anti-drug antibodies neutralize the product).',
       },
     },
-    required: [
-      'productType',
-      'referenceProduct',
-      'indications',
-      'mechanismOfAction',
-      'pkComplexity',
-      'immunogenicityRisk',
-    ],
+    required: ['productType', 'referenceProduct', 'pkComplexity', 'immunogenicityRisk'],
   },
 };
 
@@ -181,17 +170,15 @@ export const DESIGN_BIOSIMILAR_CLINICAL: AnaTool = {
 export const ASSESS_INDICATION_EXTRAPOLATION: AnaTool = {
   name: 'assess_indication_extrapolation',
   description:
-    'Assess the scientific justification for extrapolation of a biosimilar\'s approved ' +
-    'indications from the studied indication to other reference product indications. ' +
-    'Returns feasibility assessment for each unstudied indication (likely_extrapolable, ' +
-    'conditional, additional_data_needed), scientific justification requirements (same MOA, ' +
-    'PK similarity, safety applicability, immunogenicity considerations), conditions where ' +
-    'extrapolation is typically accepted vs. requires additional data, and key regulatory ' +
-    'precedents (infliximab biosimilars extrapolated from RA to IBD, adalimumab extrapolated ' +
-    'to all indications, trastuzumab to gastric cancer). Use when the user asks about ' +
-    'extrapolation of indications, whether additional clinical studies are needed for ' +
-    'unstudied indications, or how to scientifically justify extrapolation. ' +
-    DETERMINISTIC_NOTE,
+    'Assess the scientific justification for extrapolation of a biosimilar\'s approved indications from the ' +
+    'studied indication to other reference product indications. Returns, for each unstudied indication, the ' +
+    'feasibility (likely_extrapolable, conditional, additional_data_needed, or not_assessed while the ' +
+    'mechanism of action or target of it or of the studied indication is not stated), justification ' +
+    'requirements (same MOA, PK similarity, safety, immunogenicity), risk factors and key regulatory ' +
+    'precedents (infliximab biosimilars extrapolated from RA to IBD, adalimumab to all indications, ' +
+    'trastuzumab to gastric cancer). Give targetReceptorPerIndication too: feasibility compares both. Use ' +
+    'for extrapolation of indications, whether unstudied indications need additional clinical studies, or ' +
+    'how to scientifically justify extrapolation. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
@@ -207,7 +194,8 @@ export const ASSESS_INDICATION_EXTRAPOLATION: AnaTool = {
         description:
           'Map of indication to mechanism of action (e.g., ' +
           '{"RA": "TNF-alpha neutralization", "Crohn\'s disease": "TNF-alpha neutralization + transmembrane TNF reverse signaling"}). ' +
-          'Differences in MOA across indications affect extrapolation feasibility.',
+          'Differences in MOA across indications affect extrapolation feasibility; an indication whose ' +
+          'mechanism, or the studied indication\'s, is not stated is not_assessed.',
       },
       clinicalStudyIndication: {
         type: 'string',
@@ -218,9 +206,10 @@ export const ASSESS_INDICATION_EXTRAPOLATION: AnaTool = {
       targetReceptorPerIndication: {
         type: 'object',
         description:
-          'Optional map of indication to target/receptor ' +
+          'Map of indication to target/receptor ' +
           '(e.g., {"RA": "TNF-alpha", "psoriasis": "TNF-alpha"}). ' +
-          'Helps assess whether the same molecular target is engaged across indications.',
+          'Feasibility compares it with the mechanism: an indication whose target, or the studied ' +
+          'indication\'s, is not stated is not_assessed.',
       },
     },
     required: [
@@ -238,16 +227,15 @@ export const ASSESS_INDICATION_EXTRAPOLATION: AnaTool = {
 export const ASSESS_INTERCHANGEABILITY: AnaTool = {
   name: 'assess_interchangeability',
   description:
-    'Assess FDA interchangeability requirements per BPCIA (42 USC 262(k)(4)) and the FDA ' +
-    '2019 Guidance on Interchangeability. Returns: requirements assessment (biosimilarity ' +
-    'established, expected same clinical result, switching safety demonstrated), switching ' +
-    'study design (3-sequence crossover with >= 3 alternations, PK and immunogenicity ' +
-    'endpoints), Purple Book reference, state pharmacy substitution law implications, ' +
-    'current interchangeable products (Semglee as first, Cyltezo, Hadlima, Hyrimoz, ' +
-    'Yuflyma), and EMA approach (no separate interchangeability pathway — member state ' +
-    'decision). Use when the user asks about interchangeability vs. biosimilarity, switching ' +
-    'study requirements, pharmacy substitution, Purple Book listing, or the regulatory ' +
-    'pathway for interchangeable biosimilars. ' + DETERMINISTIC_NOTE,
+    'Assess FDA interchangeability requirements per BPCIA (42 USC 262(k)(4)) and the FDA 2019 Guidance on ' +
+    'Interchangeability. Returns the requirements (biosimilarity established, expected same clinical result, ' +
+    'switching safety demonstrated; each null when not stated, and overallEligible null until both inputs ' +
+    'are stated or one is false), inputStates, the switching study design (3-sequence crossover with >= 3 ' +
+    'alternations, PK and immunogenicity endpoints), Purple Book reference, state pharmacy substitution ' +
+    'law implications, current interchangeable products (Semglee as first, Cyltezo, Hadlima, Hyrimoz, ' +
+    'Yuflyma), and EMA approach (a member state decision). Use when ' +
+    'the user asks about interchangeability vs. biosimilarity, switching study requirements, pharmacy ' +
+    'substitution, Purple Book listing, or the pathway for interchangeable biosimilars. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
@@ -255,13 +243,15 @@ export const ASSESS_INTERCHANGEABILITY: AnaTool = {
         type: 'boolean',
         description:
           'Whether biosimilarity to the reference product has been established through ' +
-          'analytical, PK, and clinical comparative data. Must be true for interchangeability.',
+          'analytical, PK, and clinical comparative data. Must be true for interchangeability. ' +
+          'Omitted or null stays not_stated, and overallEligible is then null unless the other is false.',
       },
       switchingStudyDataAvailable: {
         type: 'boolean',
         description:
           'Whether a dedicated switching study with multiple alternations between the ' +
-          'biosimilar and reference product has been conducted.',
+          'biosimilar and reference product has been conducted. Omitted or null stays not_stated, and ' +
+          'overallEligible is then null unless the other is false.',
       },
       productType: {
         type: 'string',
@@ -275,7 +265,7 @@ export const ASSESS_INTERCHANGEABILITY: AnaTool = {
           'adalimumab_biosimilar',
           'trastuzumab_biosimilar',
         ],
-        description: 'Type of biosimilar product.',
+        description: 'Type of biosimilar product.' + NOT_READ,
       },
       dosingFrequency: {
         type: 'string',
@@ -284,12 +274,7 @@ export const ASSESS_INTERCHANGEABILITY: AnaTool = {
           'Affects switching study duration and design.',
       },
     },
-    required: [
-      'biosimilarityEstablished',
-      'switchingStudyDataAvailable',
-      'productType',
-      'dosingFrequency',
-    ],
+    required: ['dosingFrequency'],
   },
 };
 
@@ -306,9 +291,9 @@ export const PLAN_BIOSIMILAR_IP_STRATEGY: AnaTool = {
     '(4-year data + 12-year market + pediatric extension + first interchangeable exclusivity), ' +
     'EU exclusivity (8+2+1 formula), freedom-to-operate analysis framework (8-step process), ' +
     'design-around strategies for process/formulation/method-of-use patents, and risk-at-launch ' +
-    'considerations. Use when the user asks about biosimilar patent strategy, BPCIA patent ' +
-    'dance, biologics exclusivity, freedom-to-operate, or launch-at-risk scenarios. ' +
-    DETERMINISTIC_NOTE,
+    'considerations. A missing or unknown market is refused; patent dates are not read. Use when the user ' +
+    'asks about biosimilar patent strategy, BPCIA patent dance, biologics exclusivity, freedom-to-operate, ' +
+    'or launch-at-risk scenarios. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
@@ -320,7 +305,7 @@ export const PLAN_BIOSIMILAR_IP_STRATEGY: AnaTool = {
       patentExpiryDates: {
         type: 'object',
         description:
-          'Known patent expiry dates for the reference product. Object with optional keys: ' +
+          'Known patent expiry dates for the reference product.' + NOT_READ + ' Object with optional keys: ' +
           '"substance" (compound/composition patent), "formulation" (formulation patent), ' +
           '"methodOfUse" (method of treatment patent), "process" (manufacturing process patent). ' +
           'Values are date strings (e.g., "2025-12-31").',
@@ -347,8 +332,7 @@ export const PLAN_BIOSIMILAR_IP_STRATEGY: AnaTool = {
         type: 'string',
         description:
           'Current exclusivity status of any biosimilars already approved for the same reference ' +
-          '(e.g., "first interchangeable approved", "multiple biosimilars on market"). ' +
-          'Affects competitive landscape analysis.',
+          '(e.g., "first interchangeable approved", "multiple biosimilars on market").' + NOT_READ,
       },
       market: {
         type: 'string',
@@ -358,7 +342,7 @@ export const PLAN_BIOSIMILAR_IP_STRATEGY: AnaTool = {
           '"EU" returns EU-specific analysis, "both" returns comprehensive analysis.',
       },
     },
-    required: ['referenceProductName', 'patentExpiryDates', 'market'],
+    required: ['referenceProductName', 'market'],
   },
 };
 
@@ -369,18 +353,15 @@ export const PLAN_BIOSIMILAR_IP_STRATEGY: AnaTool = {
 export const ASSESS_BIOSIMILAR_CMC: AnaTool = {
   name: 'assess_biosimilar_cmc',
   description:
-    'Assess the CMC (Chemistry, Manufacturing, and Controls) development strategy for a ' +
-    'biosimilar product. Returns: reverse-engineering strategy for reference product ' +
-    'characterization (8-step process), expression system selection guidance (CHO, E. coli, ' +
-    'yeast, insect, HEK293 with advantages, disadvantages, glycosylation capability), ' +
-    'process development approach (cell line development, upstream optimization including ' +
-    'glycosylation tuning, downstream purification, formulation matching), formulation ' +
-    'matching strategy (same excipients preferred, different acceptable with justification), ' +
-    'container closure considerations (vial vs. PFS vs. autoinjector), specification setting ' +
-    'relative to reference product, manufacturing comparability strategy, and quality target ' +
-    'product profile (QTPP) elements specific to biosimilars. Use when the user asks about ' +
-    'biosimilar manufacturing, expression system selection, process development, formulation ' +
-    'development, or quality target product profile for a biosimilar. ' + DETERMINISTIC_NOTE,
+    'Assess the CMC (Chemistry, Manufacturing, and Controls) development strategy for a biosimilar ' +
+    'product. Returns: reverse-engineering strategy for reference product characterization (8 steps), ' +
+    'expression system guidance (CHO, E. coli, yeast, insect, HEK293), process development (cell line, upstream with glycosylation tuning, ' +
+    'downstream purification, formulation), formulation matching (same excipients preferred, different ' +
+    'acceptable with justification), container closure (vial vs. PFS vs. autoinjector), specifications ' +
+    'relative to the reference product, manufacturing comparability, and biosimilar quality target ' +
+    'product profile (QTPP) elements. A missing or unknown input is refused. Use for biosimilar ' +
+    'manufacturing, expression system selection, process or formulation development, or the quality target ' +
+    'product profile for a biosimilar. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {

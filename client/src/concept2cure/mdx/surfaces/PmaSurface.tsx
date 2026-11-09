@@ -123,7 +123,8 @@ export function PmaSurface({ program, onAskAna, onOpenEditor, onOpenLetter }: Pm
      same computation as the assembly verdict; until M18 (2026-11-02) they
      grouped the organization's legacy 510(k) sections by a six-card kit
      taxonomy. Trial metrics join to clinical_ops.studies for the program's
-     enrollment / sites / AE rate / endpoints.
+     enrollment / sites / serious protocol deviations / endpoints, from the
+     clinical_ops study the project is linked to (M20).
 
      These two read `Falls back to kit fixtures during load + on error`, and
      did exactly that, through a ternary rather than a `??`:

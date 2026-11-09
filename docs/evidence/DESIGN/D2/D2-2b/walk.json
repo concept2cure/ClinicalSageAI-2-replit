@@ -1,0 +1,71 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "startedAt": "2026-11-09T14:00:23.151Z",
+  "steps": [
+    {
+      "name": "the filing step at 1440-light",
+      "tab": {
+        "color": "rgb(20, 20, 19)",
+        "underline": "rgb(20, 20, 19)"
+      },
+      "card": {
+        "shadow": "rgb(20, 20, 19) 0px 0px 0px 1px inset",
+        "border": "rgb(20, 20, 19)"
+      },
+      "fchip": {
+        "color": "rgb(20, 20, 19)",
+        "border": "rgb(20, 20, 19)"
+      },
+      "hScroll": 0
+    },
+    {
+      "name": "the filing step at 1440-dark",
+      "tab": {
+        "color": "rgb(250, 249, 245)",
+        "underline": "rgb(250, 249, 245)"
+      },
+      "card": {
+        "shadow": "rgb(250, 249, 245) 0px 0px 0px 1px inset",
+        "border": "rgb(250, 249, 245)"
+      },
+      "fchip": {
+        "color": "rgb(250, 249, 245)",
+        "border": "rgb(250, 249, 245)"
+      },
+      "hScroll": 0
+    },
+    {
+      "name": "the filing step at 390-light",
+      "tab": {
+        "color": "rgb(20, 20, 19)",
+        "underline": "rgb(20, 20, 19)"
+      },
+      "card": {
+        "shadow": "rgb(20, 20, 19) 0px 0px 0px 1px inset",
+        "border": "rgb(20, 20, 19)"
+      },
+      "fchip": {
+        "color": "rgb(20, 20, 19)",
+        "border": "rgb(20, 20, 19)"
+      },
+      "hScroll": 0
+    },
+    {
+      "name": "the filing step at 390-dark",
+      "tab": {
+        "color": "rgb(250, 249, 245)",
+        "underline": "rgb(250, 249, 245)"
+      },
+      "card": {
+        "shadow": "rgb(250, 249, 245) 0px 0px 0px 1px inset",
+        "border": "rgb(250, 249, 245)"
+      },
+      "fchip": {
+        "color": "rgb(250, 249, 245)",
+        "border": "rgb(250, 249, 245)"
+      },
+      "hScroll": 0
+    }
+  ],
+  "finishedAt": "2026-11-09T14:00:45.316Z"
+}

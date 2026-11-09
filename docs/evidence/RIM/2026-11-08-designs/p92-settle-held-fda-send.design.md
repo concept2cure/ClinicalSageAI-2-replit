@@ -1071,3 +1071,461 @@ re-cut that applies them is recorded there, with the tree it was checked against
   `boundProductionSend` (`filed-sequence-baseline.ts`) says P-92's release joins that exclusion.
 - **2(c), Q11.** No settlement path is built for a legacy hold older than the per-attempt binding of 2026-10-14. The
   runbook escalates if one is ever found (expected zero). E1's refusal stands.
+
+### 10.3 The re-cut that applies them (2026-11-09, on trunk after P-86 C2 and C3, `dd9a78374`)
+
+This section binds where §0–§9 differ. The line citations of §1–§9 are as of `ffd2bd772`. They were each re-read at
+`bc7ffda39` (2026-11-09 08:26 UTC): 132 citations, 67 the same, 47 moved, 18 changed, 3 gone. The table is kept beside
+this design as `p92-settle-held-fda-send.citations-2026-11-09.md`. Since then:
+- P-86 C2 (`7ba85e00c`) added 81 lines to `submission-service.ts`: +5 before about `:2410`, and +81 after it.
+- It added 32 lines to `filed-sequence-baseline.ts` and 31 to `server/routes/submissions.ts`.
+- `fda-esg.ts`, `fda-esg-receipts.ts`, `as2-transport.ts` and both runbooks are unchanged.
+
+Each commit below re-reads its own citations before its first edit.
+
+#### A. What the answers change
+
+1. **A second ground for a release: the platform's own proof that nothing left (P-108 1(b)).** The founder's P-92
+   record required FDA's written confirmation of non-receipt. P-108 1(b) amends it: "for a send the platform's own record
+   proves never left, a signed release cites that proof, not FDA's written confirmation". So the "not-received"
+   outcome has two evidence kinds:
+   - `fda-non-receipt-confirmation`, as §3: FDA's letter, retained in the project's Vault, judged by E6;
+   - **`platform-proof`**: no document. The proof is read by the server, under the lock, and never typed by the
+     signer.
+
+   **What counts as proof (E9, new).** E2's row is `transport = 'as2'` and carries **no AS2 identity**: `bindingOf`
+   fails, because `metadata.as2.messageId` is absent.
+   - **Why that is proof, by code order.** Since `e1f3fd425` (on trunk 2026-10-17), and in today's code:
+     - the row is created first, binding `dispatchBinding` and writing `as2: undefined` (`fda-esg.ts:326-345`, `:654`);
+     - `in_transit` is written (`:668`);
+     - the AS2 identity is minted (`:672`) and written, awaited, "before any byte leaves this process" (`:680-681`);
+     - only then is the request built and posted (`:687`).
+
+     A failure to write the identity is marked `NOTHING_TRANSMITTED` (`:590-592`). Nothing later removes it: its
+     writer is a `jsonb_set` (`:588`), and the receipt path spreads the metadata it read (`fda-esg-receipts.ts:83`).
+   - **Why every bound row comes from code with that order.** `dispatchBinding` and the pre-wire identity arrived in the
+     same commit. E1 already refuses an unbound hold (P-108 2(c)).
+   - **What the proof covers.** H7, H9 before the binding, the unmarked pre-wire failures (a non-credential account or
+     certificate read, a failed `in_transit` write), and a failed failure-write after any of them. Status `pending`
+     falls inside E9.
+   - **What is not proof:**
+     - no transmittal row at all (H8): absence of a record, equally a read failure. E2 still refuses it;
+     - `transmission_id IS NULL`;
+     - `http_status IS NULL`;
+     - no `as2Receipt`;
+     - a `TRANSMIT_BLOCKED` row. Such a row never exists for a held attempt: it accompanies a released claim
+       (`submission-service.ts:1393` today).
+   - **Legacy bound SFTP rows (H5′).** Every SFTP attempt ended before `connect()`, because no image ever shipped
+     `ssh2-sftp-client` (`edd225c02`; P-93 design §6.1). That is a fact of the code's history, not of the row. Whether
+     it is "the platform's own record" in P-108 1(b)'s sense is asked in B below. Until the answer comes, an H5′ row is
+     released only on FDA's letter. This fails closed.
+
+   **E7, extended:** `platform-proof` is valid only for "not-received", and only while E9 holds. E6 does not apply to
+   it: no Vault document is chosen, and none is linked.
+
+   **The statement** (`heldSendStatement`, §3.4):
+   > "The platform's own record shows that the send of sequence NNNN on DATE never left this platform: no AS2 message was
+   > formed for it, and this platform forms that message before any byte is sent. FDA cannot confirm a send it never
+   > received, so no FDA document is cited. Releasing the send lets sequence NNNN be sent again, under a new signature.
+   > If this record is wrong and FDA did receive the first send, sending sequence NNNN again files it twice: FDA would
+   > hold two copies, and may refuse the second or require it to be corrected."
+
+   The duplicate-filing risk stays in words, as P-92's record requires.
+
+   **What is recorded.** The payload's evidence is `{ kind: 'platform-proof', proof: 'no-as2-message', transmittalId }`.
+   `ECTD_HELD_SEND_SETTLED` and `metadata.heldSendSettlement` record the same, with the row's `transport`, `status` and
+   `created_at` as read under the lock. There is no `vaultDocumentId` or `sha256`. `payloadRefusal` (§3.6) checks the
+   kind against E9 as it checks E7.
+
+2. **The over-size release statement goes** (§3.4's fourth bullet).
+   - P-93 has landed: a package over 1 GiB is refused before any row (`fda-esg.ts:650-653`), and `createTransmittalRow`
+     writes only `'as2'` (`:338`), so no new H5′ can occur.
+   - P-108 2(b): 1 GiB is never called FDA's limit. The constant is Concept2Cure's launch scope
+     (`LAUNCH_SEQUENCE_MAX_BYTES`, `ectd-regional-rules.ts:395-402`).
+   - P-108 2(a): a released sequence can be retired, so it is not stranded.
+
+   A legacy H5′ row's release uses the standard release statement on FDA's letter, or on E9's ground if B1 is answered
+   yes. A further sentence quotes `launchSequenceSizeRefusal`'s clause (`:410-421`) when its bundle exceeds the
+   constant.
+3. **A contradicting verified FDA answer wins, through a second signed act (P-108 1(c)).** §3.3's handling of a late
+   receipt stands: it is kept, never thrown, with `contradicts`, and resends are held by `releasedSendReceivedRefusal`.
+   Re-opening it is a new commit, **C3**:
+   - intent `held-send-reopen`, meaning `responsibility`;
+   - offered only while a verified `as2ReceiptHistory` entry carries `contradicts`;
+   - the signed payload names the settlement's signature T and the receipt's `sha256`;
+   - the act sets the sequence to what FDA's verified answer says. After a release that FDA's positive MDN contradicts,
+     that is `toDispatchStatus(<the MDN's status>, 'production')`. After "received" that FDA's refusal contradicts, it
+     is the technical rejection of item 4.
+
+   Both records are kept: `heldSendSettlement` gains `reopenedBy`. Resends stay refused until C3's act or FDA's answer
+   settles it. Until C3 lands, §3.3's sentences stand.
+4. **Ack3 decides once it has arrived (P-108 1(a)).** "Received" on an Ack3 requires that the Ack3 accepts (the
+   statement already says so). A failed Ack3 after an Ack2 is recorded as a technical rejection: that completes
+   `filed-sequence-rejection.ts` for the sequence spine, as **C4** under F1. Until C4 lands, the "received, Ack2"
+   statement adds: "No Ack3 for this send is on the platform. If one arrives and does not accept sequence NNNN, it is
+   recorded as a technical rejection."
+5. **A released attempt is not a bound production send (P-108 2(a)).** C1 edits `filed-sequence-baseline.ts`:
+   - `boundProductionSend` (check 3, `:345-360` today) excludes a transmittal whose `heldSendSettlement.outcome` is
+     `'not-received'`, on either ground;
+   - check 4 excludes the `ECTD_TRANSMITTED` row that spends S with `status: 'not-received'` and
+     `source 'held-send-settlement'`;
+   - check 2b's sentence ("Record the agency's receipt, or wait for the send to settle") adds "or settle it from the
+     Dispatch tab" once C2 lands.
+
+   Red cases go in `sequence-retirement.pglite.test.ts`, on P-86's fixture. The code note in `boundProductionSend`
+   already names this step.
+6. **Legacy holds (P-108 2(c)).** No settlement path is built for a hold older than the per-attempt binding. E1's
+   refusal stands, and the runbook escalates if one is ever found (expected zero).
+7. **The coordinating session's rulings:**
+   - C4: H3's 4xx arm becomes a transport refusal only with a proven pinned peer. That is its own F1 repair, not one
+     of P-92's commits; E5b's 4xx clause then covers only an unproven peer.
+   - C5: the package spine is not settled. The runbook adds its deployed count query beside P-92's.
+   - C6: the holds on `server/routes/submissions.ts` and `GatewayTransmittals.tsx` are granted. C2's held-send line
+     lands under F1, with C1.
+   - C9: the order is respected.
+8. **The precheck is answered at the route,** as P-86 C2 does for `retire`. `precheckGovernedStep` is at complexity
+   15, and today takes `Exclude<SequenceSignatureIntent, typeof SEQUENCE_RETIREMENT_INTENT>`. The route sends
+   `held-send-settlement` and `held-send-reopen` to their own functions.
+
+#### B. Questions back (to the coordinating session)
+
+1. **H5′ under P-108 1(b).** Answered in §10.4: yes, under four conditions.
+
+#### C. Statements in §0–§9 that are no longer true, and what replaces them
+
+1. **Staging holds** (§0, §1.1, E3). A staging send that fails after the wire is released once its signature's void
+   reaches a record Gate 1 reads (`releasedTestSend`). Otherwise it is held as `TEST_SEND_STILL_HELD`, and slice 2's
+   runbook query finds it (coordinator C3). E3 stays: it refuses them here.
+2. **`toDispatchStatus`** takes the environment (`toDispatchStatus(status, environment)`, slice 2). Every call P-92
+   makes passes `'production'`.
+3. **`signatureSpentBy`'s list** now includes `'TRANSMIT_BLOCKED'` and `ECTD_SEQUENCE_RETIRED_ACTION`, and Gate 1 reads
+   `TRANSMIT_BLOCKED` as void. The shared `spendTransmitSignature` asks Gate 1's own question, not
+   `fda-esg-receipts.ts`'s shorter list, and P-92 adds `ECTD_HELD_SEND_SETTLED` and `ECTD_HELD_SEND_REOPENED`.
+4. **`applySequenceChangeWithAudit`** already takes `audit.reason`, a `params` function of the act's instant, and
+   returns `{ occurredAt }` (P-86). Only `afterUpdate` remains to add. It still sets no tenant context, so §3.3 step 1
+   stands.
+5. **"No trigger guards either table"** (§1.5). `ectd_sequences` has P-86's removal guard and its deferred record check
+   (`migrations/20261109_ectd_sequence_removal_guard.sql`). Neither fires on P-92's live-row UPDATE (both are
+   `WHEN … deleted_at …`), and there is still no CHECK on either status column.
+6. **P-86 refuses a held sequence twice:** check 2b, and the trigger's `SEQUENCE_FILED_NOT_REMOVABLE` for
+   `'transmitting'`. A settlement ends both refusals: received files the sequence, and a release returns it to
+   `'pending'`, which A.5 then lets P-86 retire.
+7. **The SFTP refusals** (H5's `index.ts:171-189`, `fda-esg.ts:630-660`, `:749`, `:782`) are gone (`edd225c02`). The
+   historical claim that SFTP holds before the binding are L stands.
+8. **The binding date.** The binding migration is dated 2026-10-14. It and its code reached trunk on 2026-10-17
+   (`e1f3fd425`). P-108 2(c) says 10-14, and E1 tests the binding's presence, not a date.
+9. **`fda-esg-receipts.ts` is 139 lines,** not 132. A verified staging MDN settles its attempt to `'pending'` and
+   leaves S and A (`:114-115`). Not a production hold.
+10. **§3.7's file list adds `filed-sequence-baseline.ts`** (A.5) and is otherwise unchanged.
+11. **§5.0's holders.** These are on trunk:
+    - slice 2;
+    - repairs A to C;
+    - P-93 (`b21dbdffa`, `edd225c02`, `96ca836e5`, `17463713f`);
+    - P-94 with P-108 3(b) (`b14086c7d`, `217f50153`);
+    - P-86 C1 to C3;
+    - P-99 C1;
+    - D7-A1 and D7-A2.
+
+    `SubmissionSeqWorkspaces.tsx` and `SubmissionCenter.tsx` are RIM's under L9. C2's held-send line follows D7-A2's
+    layout: a quiet line where the send is told, and a `.pj-more` door beside the one verdict, built from existing
+    components.
+12. **§6's composition:**
+    - **P-86:** a released sequence is retirable (A.5). P-93's "only way out" is gone (P-93 design §6.1).
+    - **P-94:** onboarding uploads are no longer placed in a sequence (P-108 3(b)), so no such refusal can meet a
+      re-send.
+13. **§7:**
+    - **Item 1:** `runTransmit` now says "Request failed." without "Nothing was sent." (`eac69256c`). The route still
+      answers a `GatewayError` with a bare 500, so the gateway's own sentence still does not reach the screen. Still
+      owed.
+    - **Item 11:** `TransmitFacts` says the dispatch status in words (`dispatchStatusWords`). The held line from
+      `resendRefusal` still prints the raw `'transmitting'`; C2 replaces it.
+    - **Items 3, 4, 5, 6, 8, 12 and 15:** they asked; they are now decided by 10.1, 10.2 and this section.
+
+#### D. The commits, re-cut
+
+All four are under F1. C1 and C2 are pushed together. Before each commit's first edit, RIM sends the coordinating
+session its file list.
+
+| | What | Files |
+|---|---|---|
+| **C1** | The settlement act with both outcomes and all three evidence kinds (E1 to E9), its precheck answered at the route, the door. `afterUpdate`. The shared `spendTransmitSignature`. A.5 in P-86's checks. The runbook's two count queries. Red-first: §5's tests, plus E9's cases (an `as2`-transport bound row with no identity is released on proof; one with an identity is not; an SFTP row is not, until B1), plus A.5's retirement cases. | `submission-service.ts`, `fda-esg-receipts.ts`, `server/routes/submissions.ts`, `filed-sequence-baseline.ts`, `docs/runbooks/fda-esg-production-uat.md`, `docs/runbooks/ectd-transmit-path.md`, and their tests |
+| **C2** | The held send told in the Dispatch tab (one quiet line), and the door: the precheck's statement, Responsibility only, no record key; the platform-proof ground shown as the server's sentence, with no document picker. The line on Gateway transmittals. | `SubmissionSeqWorkspaces.tsx`, `SubmissionCenter.tsx`, `GatewayTransmittals.tsx`, client tests |
+| **C3** | The re-open act (A.3). | `fda-esg-receipts.ts`, `submission-service.ts`, `submissions.ts`, client |
+| **C4** | The technical rejection on a failed Ack3 after an Ack2, completing `filed-sequence-rejection.ts` for the sequence spine (A.4). | `filed-sequence-rejection.ts`, `fda-esg-receipts.ts`, tests |
+
+Separately, under F1 and not P-92's: the coordinating session's C4 repair (H3's 4xx arm with a pinned peer).
+
+### 10.4 B1 answered: a bound legacy SFTP row is proven never to have left, under four conditions (2026-11-09)
+
+The coordinating session answered B1: **yes, with the proof made explicit and checkable.** A bound legacy-SFTP attempt
+counts as "the platform's own record proves it never left" (P-108 1(b)) only when all four conditions hold. Each is
+applied as follows.
+
+**(a) The proof is reproducible from the repository.** It is held: the search and its output are kept beside this
+design as `p92-settle-held-fda-send.b1-sftp-search-2026-11-09.txt`, and anyone can rerun them.
+- **Scope.** `origin/concept2cure-v2`'s full history, unshallowed (19,239 commits back to 2025-11-20), and every tag
+  (`v1.0.0`).
+- **The search.**
+
+  ```
+  git log --oneline -S'ssh2-sftp-client' origin/concept2cure-v2 --tags -- \
+    ':(glob)**/package.json' ':(glob)**/package-lock.json' ':(glob)**/npm-shrinkwrap.json' \
+    ':(glob)**/yarn.lock' ':(glob)**/pnpm-lock.yaml'
+  ```
+
+  It finds no commit, so the package was never added to or removed from any manifest or lockfile at any depth. The
+  same is true for the bare `ssh2-sftp` and for its transport, `"ssh2"`.
+- **A positive control.** The same search finds `node_modules/express` in `package-lock.json`, so the search works.
+- **No other way in.** No Dockerfile, CI workflow, deploy script or shell script ever mentions `ssh2`.
+- **The deploy path.**
+  - `.github/workflows/deploy-aws.yml` runs on tags `v*` and `rc-*`, or on dispatch;
+  - it builds `Dockerfile.optimized --target production` (`:396`);
+  - that image installs with `npm ci --legacy-peer-deps --omit=dev` (`Dockerfile.optimized:159`), which installs
+    exactly the lockfile.
+
+  So no deployed image ever held the module.
+- **What the code did without it.** The retired branch (`edd225c02^:server/services/submission-gateways/fda-esg.ts`,
+  `:640-662`, the throw at `:657`) loaded the module by a dynamic `import()`, and on failure threw "FDA ESG SFTP transport requires
+  'ssh2-sftp-client' package; nothing was sent.", marked `NOTHING_TRANSMITTED`. The `connect()` call comes after that
+  import (`:670`). Without the module there is no client to connect, so no version could have connected.
+
+**(b) The row is the legacy SFTP gateway, and nothing on it says bytes reached anyone.** E9′ checks this under the
+lock. E2's bound row must have:
+- `transport = 'sftp'`;
+- no `metadata.as2` and no `metadata.as2Receipt`;
+- `transmission_id IS NULL`, `ack_received_at IS NULL` and `mdn_raw IS NULL`;
+- a status of `pending`, `in_transit` or `rejected`. It is never received, `ack2_received` or `ack3_received`.
+
+Any one of these failing refuses the ground. Such a row keeps FDA's letter as its only ground, which fails closed.
+
+**(c) The statement names the ground in words, and keeps the risk sentence:**
+> "The send of sequence NNNN on DATE used the SFTP route to FDA, and no connection to FDA could be made for it: the
+> platform never shipped the SFTP client that route needed. FDA cannot confirm a send it never received, so no FDA
+> document is cited. Releasing the send lets sequence NNNN be sent again, under a new signature. If this record is
+> wrong and FDA did receive the first send, sending sequence NNNN again files it twice: FDA would hold two copies, and
+> may refuse the second or require it to be corrected."
+
+The payload's evidence is `{ kind: 'platform-proof', proof: 'sftp-client-never-shipped', transmittalId }`.
+
+**(d) The ground is narrow.**
+- It applies to `transport = 'sftp'` only.
+- E9's `no-as2-message` ground applies to `transport = 'as2'` only.
+- Any other transport, or any row with an unknown outcome that fails E9 or E9′, still needs FDA's letter.
+
+`payloadRefusal` checks the proof kind against the row's transport.
+
+**C1's red cases add:**
+- a bound SFTP row with no receipt is released on `sftp-client-never-shipped`;
+- one with a `transmission_id`, an `as2Receipt` or a received status is not;
+- an AS2 row never takes the SFTP proof, and an SFTP row never takes the AS2 one.
+
+The evidence README carries (a)'s search and its output again, run at the commit, so a reviewer can compare them.
+
+### 10.5 C3 and C4, before any code (2026-11-09, read at `f71ca16bb4`)
+
+This section binds C3 and C4 where §10.3 differs. The coordinating session agreed (2026-11-09): design first, this file
+the only edit until it has read this section, and C4 before C3. It asked this section to settle three things: the
+package-spine half of `filed-sequence-rejection.ts`, the number and retirement rules after a failed Ack3 (from FDA's own
+text), and the act's signature and evidence. Each is below. One of them is not settled in this session (§10.5 D), and
+one defect in what C1 landed was found on the way (§10.5 B).
+
+#### A. What already exists (RULE 3), by path
+
+1. **The sequence's dispatch statuses** are `pending`, `transmitting`, `sent`, `acknowledged` and `rejected`
+   (`filed-dispatch.ts:4-8`; the schema comment at `shared/schema/submissions.ts:119` leaves out `transmitting`). No
+   CHECK constrains them. Only `sent` and `acknowledged` are filed (`filed-dispatch.ts:30-36`).
+   `toDispatchStatus(status, environment)` (`submission-service.ts:3154-3159`) maps a transmittal status: not production
+   to `pending`; `rejected` or `validation_failed` to `rejected`; `ack3_received`, `validation_passed` or `completed` to
+   `acknowledged`; anything else to `sent`.
+2. **`rejected` on the sequence today.**
+   - Its one FDA writer is the receipt path: a verified negative production MDN, while the sequence is `transmitting`
+     under the same signature and attempt (`fda-esg-receipts.ts:125`, `:137-139`). FDA ESG's transmit never returns
+     `rejected`; its refusals throw and leave the sequence `transmitting` (`fda-esg.ts:447-453`, `:717-722`).
+   - It can be sent again under the same number: `resendRefusal` returns null for it (`submission-service.ts:3126-3136`),
+     the claim accepts it (`:3294-3301`), and dispatch re-authorization accepts it (`:2220`).
+   - P-86 keeps its number: check 3 (`boundProductionSend`, `filed-sequence-baseline.ts:350-375`) finds its bound
+     production transmittal, and check 4 its `ECTD_TRANSMITTED` row. So it cannot be retired.
+   - The screen says "rejected by the agency" (`CommitmentRow.tsx:115-120`, through `dispatchStatusWords`,
+     `SubmissionSeqWorkspaces.tsx:1829-1832`).
+3. **Ack2 and Ack3.** Nothing parses or stores FDA's acknowledgements. `GatewayStatusResult.ackLevel` is declared and
+   never written (`types.ts:349`). The transmittal statuses `ack2_received` and `ack3_received` are written for FDA only
+   by C1's settlement (`submission-service.ts:2844`, `:2880`), which keeps the evidence kind (`ack2` or `ack3`) in
+   `heldSendSettlement`. `validation_failed` is never written for FDA.
+4. **A contradicting receipt** (`fda-esg-receipts.ts:330-357`). Two pairs only: a release (`not-received`) that FDA's
+   positive MDN contradicts, and "received" that FDA's negative MDN contradicts. The entry is kept in
+   `as2ReceiptHistory` with `contradicts`, its bytes (`bodyBase64`), `verified: true` and the uploader; the status,
+   `as2Receipt`, `mdn_raw`, the settlement and the sequence are untouched, and the upload answers 409. Resends are
+   held only for the first pair (`releasedSendReceivedRefusal`, `:360-372`); in the second the sequence is `sent` or
+   `acknowledged`, which `resendRefusal` already refuses.
+5. **The package-spine technical rejection** (`server/services/ectd/filed-sequence-rejection.ts`, 406 lines; test
+   `server/services/ectd/__tests__/filed-sequence-rejection.test.ts`). It is keyed on a transmittal with a
+   `package_id`, takes the latest entry of `c2c_submission_packages.metadata.filedSequences` off file
+   (`state: 'rejected'`), moves an awaiting status to `validation_failed`, writes `metadata.technicalRejection`, and
+   signs over the notice's Vault hash (`persistGovernedActionSignature`, `VAULT_DOCUMENT_VERSION`).
+   - **Its way in is live.** `POST /api/mdx/gateways/transmittals/:id/technical-rejection`
+     (`mdx-submission-gateway.ts:600`) is mounted (`register-inline-routes.ts:1203`), and the launch gate passes it on
+     purpose: `launch-scope-api-gate.test.ts:222-241` (2026-10-17, F12 and LX-13) refuses the package *transmit* and
+     keeps "the log, its status poll, its ACK and the signed technical rejection". Its client door is Gateway
+     transmittals' "Record a technical rejection", offered only on a row with a `package_id`
+     (`GatewayTransmittals.tsx:150`, `:406`).
+   - **What can still reach it:** no new package transmittal in production (the package transmit is refused there
+     since 2026-10-17), but every package transmittal written before then. P-103 retired
+     `/api/submission-ops/packages/*` only; it does not touch `/api/mdx/gateways`.
+   - **So the package-spine half has a live caller.** It is not retired by C4. This comes back to the coordinating
+     session (§10.5 E, question 1).
+   - Sequence-spine sends are written with `packageId: null` (`submission-service.ts:3874`), so that door is never
+     offered for them, and nothing on the sequence spine reads `isRejectedFiling`
+     (`package-sequence-lifecycle.ts:81`); the fold reads `dispatch_status IN ('sent','acknowledged')`
+     (`prior-sequence-loader.ts:103`, `:316`, `:565`).
+6. **Not found.** `held-send-reopen`, `HELD_SEND_REOPEN`, `ECTD_HELD_SEND_REOPENED`, `reopenedBy`, and any sequence-spine
+   technical rejection (`technical rejection`, `TECHNICAL_REJECTION`, `technicalRejection`, `rejectedByAgency`,
+   `ECTD_SEQUENCE_REJECTED`, `sequence_rejected`), searched in `server`, `shared`, `client/src`, `migrations` and
+   `scripts`. The only hits are this design, the package spine, and the held-send statement's promise
+   (`fda-esg-receipts.ts:304-306`). `git log --all --diff-filter=D -- '*rejection*' '*Rejection*'` finds only an
+   unrelated seeder (`a0f4d73a9f`).
+
+#### B. A defect in what C1 landed: a release that FDA's receipt contradicts can be retired
+
+P-108 1(c) says resends are refused while FDA's verified answer contradicts a settlement. C1 holds the resend
+(`releasedSendReceivedRefusal`), but P-86's check 3 excludes every transmittal whose settlement is `not-received`
+(`filed-sequence-baseline.ts:355`), and check 4 excludes the settlement's own `ECTD_TRANSMITTED` row (`:369`), whether or
+not a verified contradicting receipt is kept beside it. So, shown red on 2026-11-09 at 16:56 UTC against `f71ca16bb4`'s
+code, by a test kept outside the repository until this repair is cleared (built on
+`held-send-settlement.pglite.test.ts`'s setup), on both grounds of a release, FDA's letter and the platform's own proof:
+
+1. a production send is released as not received (C1);
+2. FDA's signed MDN arrives and shows it received; it is kept with `contradicts: 'not-received'` (C1, T7);
+3. P-86's act retires the sequence, and its number is freed, though FDA holds a sequence under it. The precheck
+   cleared, the act answered retired, and the row's `deleted_at` was set. The test moves into
+   `sequence-retirement.pglite.test.ts` with the repair, red first there as well.
+
+**The repair, first and alone (F1):** checks 3 and 4 exclude a release only while no verified entry of that
+transmittal's `as2ReceiptHistory` carries `contradicts: 'not-received'`, the same test `releasedSendReceivedRefusal`
+makes. P-86's sentence for it, in words: "FDA's signed receipt shows it received sequence NNNN's send of DATE, which was
+released as not received, so it cannot be retired. Contact FDA before anything else is done with it." Red first in
+`sequence-retirement.pglite.test.ts` (the retire act and its precheck), on P-86's fixture. Files:
+`filed-sequence-baseline.ts` and that test. It lands before C4, under its own push window.
+
+#### C. C4: FDA's failed Ack3, recorded on the sequence
+
+**What it records.** FDA's Ack3 for a send the platform records as received (the sequence `sent`), reporting that the
+center did not accept sequence NNNN. It completes `filed-sequence-rejection.ts` for the sequence spine: the rule, the
+statement and the record's shape go in that file, beside the package spine's, sharing `ACCEPTANCE_STATUSES`,
+`AWAITING_AGENCY_STATUSES` and `REJECTED_BY_AGENCY`. The act joins the sequence's own signing chain, as C1's does.
+
+**Eligibility (R1 to R7), one pure rule, read at the precheck, at the act, and again under the locks:**
+- R1. The sequence is `sent`. `acknowledged` refuses: an Ack3 that accepted it is already on record (the package spine's
+  acceptance refusal). `rejected` refuses: already recorded. Any other status: nothing on file to reject.
+- R2. Its production send is one transmittal bound to the sequence's last claim (signature and attempt, C1's E2), FDA
+  ESG, not staging. Two refuse (fail closed); none refuses.
+- R3. That transmittal's status is an awaiting one (`received`, `ack1_received`, `ack2_received`). An acceptance status
+  refuses.
+- R4. Latest only: no later sequence of the same submission is `dispatched` with a send in flight or on file
+  (`transmitting`, `sent`, `acknowledged`). It was planned against this one, and its rejection is recorded first.
+- R5. The evidence is FDA's Ack3, a document in this project's Vault, as C1's E6 judges it: this organization's and
+  this project's, not deleted, not dated before the send, and not the evidence of another settlement or rejection.
+- R6. The signer is not the sequence's creator (C1's E8), and the meaning is responsibility.
+- R7. The send's own record does not contradict it: no verified negative MDN is pending a C3 decision for it.
+
+**The signature and the evidence (the coordinating session's third point).** As C1: the statement and the evidence
+are read by the server, quoted to the signer, signed, and compared word for word under the transmittal's and the
+sequence's locks. The Vault document is read `FOR SHARE` in the signing transaction, and its content hash is part of
+the signed payload.
+- **The Ack3 is absent** (deleted, not in this project's Vault, or another organization's): R5 refuses before signing
+  ("FDA's Ack3 for sequence NNNN must be a document in this project's Vault. Upload it there and choose it."), and the
+  act refuses again under the lock. A refused act voids its signature (P-23).
+- **Its bytes changed** after the statement was read: the hash under the lock differs from the signed one, the act
+  refuses ("The chosen document changed after it was quoted. Nothing was recorded; look at it again and sign anew."),
+  and the signature is void.
+Both are red-first cases.
+
+**Effects, one transaction:** the sequence `sent` to `rejected`; the transmittal's status to `validation_failed`, with
+`metadata.technicalRejection` in the package spine's shape (sequence, recordedAt, recordedBy, reason, evidence,
+transmittalStatus, actionId, signatureId); a chained `ECTD_TECHNICAL_REJECTION_RECORDED` row with the meaning and the
+reason; the signature spent (`signatureSpentBy` and `spendTransmitSignature` gain the action). Nothing is deleted.
+
+**The statement**, server-held, one source:
+> "FDA's Ack3 for the send of sequence NNNN on DATE is the document chosen from this project's Vault. It reports that
+> the center did not accept sequence NNNN. Sequence NNNN is recorded as rejected by FDA: it is no longer on file with
+> FDA." Then the number sentence, which waits on §10.5 D.
+
+**The door.** A send recorded as received is told in the Dispatch tab today. Beside it, a closed `.pj-more` door,
+"Record FDA's technical rejection…", built from C2's components: the precheck's statement, the existing Vault picker,
+Responsibility only, no record key. Without it the act is unreachable (RULE 5), so C4 carries its door and is pushed
+as one, as C1 and C2 were. Route: `POST /sequences/:seqId/technical-rejection` in `server/routes/submissions.ts`, its
+precheck answered at the route (A.8).
+
+**Files:** `server/services/ectd/filed-sequence-rejection.ts`, `submission-service.ts`, `server/routes/submissions.ts`,
+`SubmissionSeqWorkspaces.tsx`, `SubmissionCenter.tsx`, `gatewayLabels.ts`, their tests, and an evidence folder. No
+table, mount or route file. `fda-esg-receipts.ts` only if R7 needs a shared reader.
+
+#### D. The number and retirement rules: FDA's text is not yet in hand
+
+The coordinating session asked for FDA's own text on whether a technically rejected sequence counts as received, and
+whether its number is reused on resubmission, and will not rule from memory. This session could not read it:
+`www.fda.gov` is outside this environment's network policy, and the change that would allow it was not approved.
+
+What a web search returned (excerpts as the search tool quoted them, **not verified against the documents, with no
+page, section or version checked**):
+- *Specifications for eCTD v4.0 Validation Criteria* (`https://www.fda.gov/media/179723/download`): for several
+  rejections, "You may resubmit using the original sequence number of the submission"; for others, a new, unique
+  sequence number is required.
+- *Specifications for eCTD Validation Criteria* (v3.2.2, `https://www.fda.gov/media/87056/download`): reuse of "the
+  original sequence number of the submission" after a rejection, and a separate rejection, "The sequence number used in
+  your submission has already been submitted to the application."
+- FDA's "Update on eCTD Submissions" presentations (`https://www.fda.gov/media/189612/download`): duplicate sequence
+  numbers are the most common rejection; "Even if a submission is withdrawn, FDA continues to keep the sequence."
+
+If the documents say what the excerpts say, the rule depends on the rejection's own validation code: most technical
+rejections are resubmitted under the same number, and a rejection for a duplicate number needs a new one. The platform
+does not parse the Ack3, so it cannot tell which code applies.
+
+**Until the text is read and cited, C4 changes no number or retirement rule (fail closed to what exists):**
+- the sequence becomes `rejected`, which today can be sent again under its own number (§10.5 A.2), and the statement
+  says so, naming that FDA's notice decides whether that number can be used again;
+- P-86 keeps refusing to retire it (check 3 still finds the bound production send). Its sentence, in words: "Sequence
+  NNNN was sent to FDA on DATE and rejected by FDA, so it is on FDA's record and cannot be retired. A correction is sent
+  again as sequence NNNN or as a new sequence, as FDA's notice says."
+- Neither is final until the source is quoted with its version and section.
+
+#### E. C3: the re-open, and a correction to §10.3 A.3
+
+**A correction, owed to the coordinating session.** §10.3 A.3 says that after "received", FDA's refusal re-opens to
+"the technical rejection of item 4", and I asked for C4 first on that basis. But the FDA answer in that arm is a
+**negative MDN**: FDA's AS2 gateway refusing the message, not the center's Ack3. The receipt path records that answer
+as `rejected` on both rows (§10.5 A.2), never as `validation_failed` or `technicalRejection`. Two ways to build it:
+- **(i) Apply FDA's answer as it stands** (recommended): the re-open writes what the receipt path would have written
+  had FDA's answer arrived before the settlement. That is the sequence `toDispatchStatus(<MDN status>, 'production')`
+  and the transmittal the MDN's status, with `as2Receipt` and `mdn_raw` from the kept entry. That is P-108 1(c)'s
+  "FDA's answer wins" read literally, and it keeps "technical rejection" meaning the Ack3 only. C3 then needs nothing
+  from C4, and the order between them is free.
+- **(ii) C4's record with a second evidence kind:** the verified negative MDN kept on the transmittal. That widens C4
+  to a non-Ack3 evidence and names an AS2 refusal a technical rejection.
+
+**The act under (i).** Intent `held-send-reopen`, meaning responsibility, an independent signer.
+- **Offered only while** a verified `as2ReceiptHistory` entry of the settled transmittal carries `contradicts`, and the
+  sequence is where the settlement left it: `pending` with no claim after a release, or `sent`/`acknowledged` after
+  "received".
+- **The signed payload** names the settlement's signature and the kept entry's `sha256`, both compared under the
+  locks.
+- **Arm (a), a release FDA's positive MDN contradicts:** the sequence `pending` to `sent`; the transmittal to
+  `received`, with `as2Receipt`, `mdn_raw` and `ack_received_at` from the entry, as the receipt path writes them.
+- **Arm (b), "received" FDA's negative MDN contradicts:** the sequence to `rejected`; the transmittal to `rejected`.
+- **Both:** `heldSendSettlement` gains `reopenedBy` (actor, time, signature, the entry's `sha256`), set once; the
+  settlement is never removed. A chained `ECTD_HELD_SEND_REOPENED` row; the signature spent.
+- **Refused, in words, with the runbook's escalation:** a sequence no longer where the settlement left it (sent again
+  before FDA's answer arrived, or retired before the repair of §10.5 B). FDA may then hold two copies, and that is for
+  a person and FDA, not an act.
+- **The door:** where C2 tells the contradicting answer (the Dispatch tab's transmissions row), a closed door "Re-open
+  the settlement on FDA's answer…", with the precheck's statement, Responsibility only.
+- **Files:** `fda-esg-receipts.ts`, `submission-service.ts`, `server/routes/submissions.ts`, `SubmissionSeqWorkspaces.tsx`,
+  `SubmissionCenter.tsx`, `gatewayLabels.ts`, tests, evidence. No table, mount or route file.
+
+**Questions back to the coordinating session:**
+1. The package-spine technical rejection keeps a live caller (§10.5 A.5): historical package transmittals, through
+   Gateway transmittals. Keep it beside C4's sequence-spine act, or retire it (its rows then have no way to record a
+   rejection)?
+2. C3's arm (b): (i) or (ii)?
+3. FDA's text (§10.5 D): allow `www.fda.gov` in this environment, or supply the two specifications, so the number rule
+   can be cited. Until then C4 lands with the fail-closed rule above, or waits: which?
+4. §10.5 B's repair: one small F1 commit, before C4, under its own window?

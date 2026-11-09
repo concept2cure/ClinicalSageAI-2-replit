@@ -1559,13 +1559,7 @@
 @media (max-width:720px){ .c2c-v2 .sr-gates{ grid-template-columns:1fr; } }
 
 /* ════════ Dispatch Readiness (dispatch-readiness.jsx) — proven pre-transmit gate ════════ */
-.c2c-v2 .dr2{ max-width:1000px; margin:0 auto; padding:26px 30px 60px; }
-.c2c-v2 .dr2-head{ margin-bottom:14px; }
 .c2c-v2 .dr2-readiness{ border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--bg-000); padding:14px 16px; margin-top:14px; }
-.c2c-v2 .dr2-eyebrow{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-.c2c-v2 .dr2-kicker{ font-size:var(--fs-caption); font-weight:600; color:var(--text-300); }
-.c2c-v2 .dr2-title{ font-size:22px; font-weight:600; color:var(--text-100); margin:0 0 3px; letter-spacing:-.01em; }
-.c2c-v2 .dr2-sub{ font-size:12px; color:var(--text-400); }
 .c2c-v2 .dr2-gates{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
 /* F18: the gates and findings are lists, one per market. */
 .c2c-v2 ul.dr2-gates, .c2c-v2 ul.dr2-finds{ list-style:none; margin-top:0; padding:0; }
@@ -1607,7 +1601,9 @@
 .c2c-v2 .dr2-find-fix{ flex:none; font:inherit; font-size:11px; font-weight:600; color:var(--accent-200); background:var(--accent-000); border:1px solid color-mix(in srgb,var(--accent-200) 25%,transparent); border-radius:7px; padding:4px 10px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
 .c2c-v2 .dr2-find-fix:hover{ background:var(--accent-strong); color:var(--accent-on-strong); }
 .c2c-v2 .dr2-find-fix svg{ width:12px; height:12px; }
-.c2c-v2 .dr2-foot{ margin-top:18px; padding-top:14px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:10px; }
+/* D7-A2 step 11: Submission readiness is on the one page frame (.page-inner, data-work-area); its own frame,
+   head, eyebrow and kicker rules went with them. The foot is a disclosure. */
+.c2c-v2 .dr2-foot{ margin-top:24px; }
 .c2c-v2 .dr2-foot-note{ font-size:11px; color:var(--text-400); line-height:1.55; text-wrap:pretty; }
 .c2c-v2 .dr2-transmit{ align-self:flex-start; font:inherit; font-size:12px; font-weight:600; color:var(--on-success); background:var(--success); border:none; border-radius:9px; padding:9px 15px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; }
 .c2c-v2 .dr2-transmit svg{ width:14px; height:14px; }
@@ -1631,3 +1627,9 @@
 .c2c-v2 .sc-context{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; margin:0 0 16px; font-size:var(--fs-small); color:var(--text-300); }
 .c2c-v2 .sc-context-f{ display:inline-flex; align-items:center; gap:8px; min-width:0; max-width:100%; }
 .c2c-v2 .sc-context-f > select{ width:auto; max-width:100%; min-width:0; }
+/* D7-A2 walk (2026-11-09): at a phone's width a market's door names its whole job ("Build the IND · FDA (US) sequence
+   in Submission Center"). As a no-wrap button it set the work area's minimum width and the page scrolled sideways by
+   53 px; it wraps under its row instead. */
+@media (max-width: 640px) {
+  .c2c-v2 [data-work-area="dispatch-readiness"] .pj-mkt .btn { height: auto; min-height: 28px; padding-block: 4px; white-space: normal; text-align: left; }
+}

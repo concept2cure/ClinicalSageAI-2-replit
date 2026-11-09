@@ -85,7 +85,7 @@ export const UPDATE_Q_SUB_COMMITMENT_ROLLED_IN: AnaTool = {
 export const LINK_PROGRAM_CLINICAL_STUDY: AnaTool = {
   name: 'link_program_clinical_study',
   description:
-    "Bind a regulatory program to a specific clinical_ops.studies row by writing the study UUID into program.metadata.clinicalStudyId. The PMA trial-metrics endpoint reads this binding to compute Enrolled / Sites / AE rate / Endpoints-achieved — without it the endpoint falls back to a fuzzy product-name match that can pick up the wrong study in orgs running multiple trials. Use whenever the user identifies which clinical study backs a program. Tenant-scoped.",
+    "Bind a regulatory program to a specific clinical_ops.studies row by writing the study UUID into program.metadata.clinicalStudyId. The PMA trial-metrics endpoint reads this binding, and only this binding, to compute Enrolled / Sites active / Serious deviations / Endpoints achieved; without it the PMA trial cards say no study is linked. Use whenever the user identifies which clinical study backs a program. Tenant-scoped.",
   input_schema: {
     type: 'object',
     properties: {

@@ -18,6 +18,7 @@ import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { applySurfaceAction, type SurfaceActionOutcome } from '../surfaceActions';
 import { C2CToast, useToast } from '../toast';
 import {consumeNavParams,NAV_PARAMS_EVENT} from '../navParams';
+import { keepWorkProjectBinding } from './ProjectWorkTasks';
 
 export function QualityModule({ onAsk, onNav }: SurfaceViewProps) {
   const [notice, notify] = useToast();
@@ -27,6 +28,7 @@ export function QualityModule({ onAsk, onNav }: SurfaceViewProps) {
       ? params.qmsTab as QualityRouteProps['initialTab'] : undefined;
   const [target, setTarget] = React.useState(() => {
     const params = consumeNavParams('quality');
+    keepWorkProjectBinding(params); // P-111: a Quality work project's door binds the area (ProjectWorkTasks.tsx)
     return { id: params?.qmsDocumentId, intent: intentOf(params), tab: tabOf(params), request: 0 };
   });
   React.useEffect(() => {
@@ -35,6 +37,7 @@ export function QualityModule({ onAsk, onNav }: SurfaceViewProps) {
     };
     const receive = () => {
       const params = consumeNavParams('quality');
+      keepWorkProjectBinding(params);
       if (params?.qmsDocumentId) {
         setTarget(current => ({ ...current, id: params.qmsDocumentId, intent: intentOf(params), request: current.request + 1 }));
       } else if (tabOf(params)) {

@@ -100,8 +100,6 @@ describe('The Review board at 390px', () => {
       expect(phoneRule(surfaces, sel, 'flex-wrap', /^wrap$/), sel).toBe(true);
     }
     expect(phoneRule(surfaces, '.c2c-v2 .rv-reply-in', 'min-width', /^0(px)?$/)).toBe(true);
-    expect(phoneRule(surfaces, '.c2c-v2 .btn.rv-scope-program', 'white-space', /^normal$/)).toBe(true);
-    expect(phoneRule(surfaces, '.c2c-v2 .btn.rv-scope-program', 'max-width', /^100%$/)).toBe(true);
   });
 
   it('makes every control a reviewer taps there a 44px target', () => {
@@ -114,7 +112,9 @@ describe('The Review board at 390px', () => {
     const src = fs.readFileSync(path.join(V2, 'surfaces', 'Review.tsx'), 'utf8');
     expect(src).toMatch(/className="dt-acts"/);
     expect(src).toMatch(/className="btn ghost rv-doc-open"[^>]*data-testid="rv-open-in-editor"/);
-    expect(src).toMatch(/className="btn ghost rv-scope-program"/);
+    // The project switch is D0's segmented control (D4-7): fixed labels, the name in a tooltip, and `.seg` scrolls
+    // inside itself, so no phone rule has to wrap a long project name.
+    expect(src).toMatch(/className="seg rv-scope-program" role="group" aria-label="Projects"/);
     expect(src).not.toMatch(/style=\{\{ height: 28 \}\}[^>]*data-testid="rv-open-in-editor"/);
   });
 });

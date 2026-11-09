@@ -1,0 +1,6 @@
+MUTATION C2M5-statement-not-asked-again in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-09T14:24:17.070918Z): replaced [    if (f.kind === 'held-send-settlement' && again.statement !== f.statement) throw new Error(STATEMENT_CHANGED);
+] with []
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2b — what is not signed, and what is not a success > a statement that changed after the dialog opened is not signed 5492ms
+      Tests  1 failed | 27 skipped (28)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 aa9da32b57f3e6c981d6febb6d7a91d29febc1d6723f4db4005f6e16f87313f0 (expected aa9da32b57f3e6c981d6febb6d7a91d29febc1d6723f4db4005f6e16f87313f0)

@@ -87,7 +87,7 @@ import { scopedProposalResult, type EditorProposalReceipt } from './editorPropos
 import { readSavedTemplateContext, savedTemplateFacts, sourceMetadataUnavailable } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { MenuButton, MenuItem, WORKING_COPY_NOTE, downloadWorkingCopy } from './DownloadMenu';
-import { StatusPill } from './CanvasDocumentList';
+import { StatusPill, ToDocumentsButton } from './CanvasDocumentList';
 import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
 import { StudyDataBuild } from './StudyDataBuild';
 import { isCsrTemplateId } from '@shared/authoring/csr-scientific-review';
@@ -1031,6 +1031,31 @@ export function escapeBelongsToInner(target: KeyboardEvent['target']): boolean {
   );
 }
 
+/** Where the outline's open or closed choice is remembered (D4-4, D4.md §D4.C). */
+export const OUTLINE_KEY = 'c2c.editor.outline';
+
+/**
+ * The outline's first state (D4-4). A remembered choice wins. Otherwise it opens on the page at 1280 px and wider,
+ * and stays closed beside the conversation, where the document needs the width. Where the width cannot be read it
+ * opens: the outline is how a filing's sections are reached. Storage can throw (a private window), so it is tried.
+ */
+export function initialOutline(embedded: boolean): boolean {
+  try {
+    const stored = window.localStorage.getItem(OUTLINE_KEY);
+    if (stored === 'open') return true;
+    if (stored === 'closed') return false;
+  } catch { /* no storage: fall through to the default */ }
+  if (embedded) return false;
+  return typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 1280px)').matches;
+}
+
+/** Whether the open outline floats over the page rather than taking a column (the narrow `artifact` container,
+ *  authoring-v2.css). Read from the cascade, because the width that decides it is the panel's, not the window's. */
+export function outlineOverlays(root: Element | null | undefined): boolean {
+  const tree = root?.querySelector<HTMLElement>(':scope > .ed-tree');
+  return !!tree && !tree.hidden && window.getComputedStyle(tree).position === 'absolute';
+}
+
 /** A right rail's own close control, matching AnA's (`ed-comments-close`).
  *  2026-09-28, coverage-gap sweep GA-4: six rails had none. */
 function RailClose({ label, onClose }: { label: string; onClose: () => void }) {
@@ -1245,16 +1270,21 @@ export interface DocumentWorkbenchProps {
   /** Pin the workbench to one document (the canvas). The tree lists only it
    *  and no document switch is offered. */
   pinnedDocId?: string | null;
-  /** Mounted inside a conversation: draws "Back to conversation" and uses
-   *  that host's composer for every AnA request.
-   *  `hostShowsBack` when the host's own chrome already carries the way back —
-   *  the document canvas's bar does — so this component does not draw a
-   *  second one into its crumb trail. `onBack` is still the one callback the
-   *  way back runs, whoever draws the control. */
+  /** Mounted inside a conversation or a work area: the bar draws the way back and uses that host's composer for
+   *  every AnA request. Since D4-5 the bar is the only one: the document canvas no longer draws its own above it. */
   embedded?: {
     onBack: () => void;
     backLabel?: string;
-    hostShowsBack?: boolean;
+    /** The host only hides this workbench when it closes and keeps it mounted (the document canvas), so nothing is
+     *  lost and the close needs no leave guard. It is "Back to conversation", and Escape does the same. */
+    collapses?: boolean;
+    /** The conversation's documents, "← Documents (n)", drawn after the outline toggle. */
+    onShowList?: () => void;
+    listCount?: number | null;
+    /** "Open full width": the same document, full width, in the editor's page placement. */
+    onExpand?: () => void;
+    /** The close button, for the host's focus contract (canvasFocus.ts `useCanvasRegionFocus`). */
+    closeRef?: React.Ref<HTMLButtonElement>;
     /** The host is told which section is open and given its suggestion door,
      *  or null with no section open. A sealed document is reported as not editable. */
     onEditorBridge?: (bridge: EditorBridge | null) => void;
@@ -1364,6 +1394,18 @@ export function DocumentWorkbench({
     if (chosenDocId && docs.some(d => d.id === chosenDocId)) return chosenDocId;
     return docs[0]?.id ?? null;
   }, [pinnedDocId, chosenDocId, docs]);
+
+  /* The outline, on demand (D4-4): a toggle in the bar shows and hides it, and the choice is remembered. While no
+     document is open it stays open, because then it is the document list. */
+  const [outlineOpen, setOutlineOpen] = useState(() => initialOutline(!!embedded));
+  const outlineId = useId();
+  const outlineToggleRef = useRef<HTMLButtonElement | null>(null);
+  const outlineForced = !activeDocId && docsState === 'ready';
+  const outlineShown = outlineOpen || outlineForced;
+  const setOutline = useCallback((open: boolean) => {
+    setOutlineOpen(open);
+    try { window.localStorage.setItem(OUTLINE_KEY, open ? 'open' : 'closed'); } catch { /* not remembered */ }
+  }, []);
 
   const { user } = useAuth();
   const readSession = useAuthoringReadSession(user);
@@ -2207,12 +2249,32 @@ export function DocumentWorkbench({
          own control — the canvas's Back bar — is the host's. */
       const t = event.target;
       if (t instanceof Node && t !== document.body && !rootRef.current?.contains(t)) return;
+      if (t instanceof Element && t.closest('[data-host-close]')) return;
       event.preventDefault();
       closeRail();
     };
     document.addEventListener('keydown', closeOnEscape);
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [closeRail, rail]);
+  /* D4-4: floating over a narrow page, the outline closes on Escape first, as a rail does, and focus returns to its
+     toggle. Docked in its own column it is not in the way, so Escape leaves it to the host. */
+  useEffect(() => {
+    if (!outlineShown || outlineForced) return;
+    const closeOverlay = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      if (escapeBelongsToInner(event.target)) return;
+      if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
+      const t = event.target;
+      if (t instanceof Node && t !== document.body && !rootRef.current?.contains(t)) return;
+      if (t instanceof Element && t.closest('[data-host-close]')) return;
+      if (!outlineOverlays(rootRef.current)) return;
+      event.preventDefault();
+      setOutline(false);
+      outlineToggleRef.current?.focus({ preventScroll: true });
+    };
+    document.addEventListener('keydown', closeOverlay);
+    return () => document.removeEventListener('keydown', closeOverlay);
+  }, [outlineShown, outlineForced, setOutline]);
 
   /* ── The document list is the host's ──
      The Authoring surface reads it (status filter, program scope) and the
@@ -2470,7 +2532,7 @@ export function DocumentWorkbench({
     activeSectionId, docPane: () => docScrollRef.current,
   });
   /* F22b: a market's editing copy, created bound to its document and opened. */
-  const treeTitleRef = useRef<HTMLDivElement>(null);
+  const treeTitleRef = useRef<HTMLSpanElement>(null);
   const marketCopy = useCreateMarketCopy({
     programId, fireToast, openDocument: openPulledDocument, focusOpened: () => treeTitleRef.current?.focus(),
   });
@@ -4250,9 +4312,10 @@ export function DocumentWorkbench({
     [activeDocId, flushDecisions],
   );
 
-  const draftPrompt = activeSection
-    ? `Draft ${activeSection.code} ${activeSection.title} from the linked section evidence.`
-    : 'Draft this section from the linked section evidence.';
+  /* The person's words only. The section travels in the saved origin (askAna, originWithSavedVersion), so a stored
+     title, which anyone with the edit right can write, never becomes part of what the person asks (2ae0b1cb5a's
+     guarantee). It is the sentence the empty section's "Draft with AnA" already sends. */
+  const draftPrompt = 'Draft this section from the linked section evidence.';
 
   // What the filing outline was built FROM, in the words the filer sees.
   // Null only when there is no governed document, in which case there is no
@@ -4286,10 +4349,11 @@ export function DocumentWorkbench({
     : narrativeReference ? 'These narratives are held by reference: they are read here, not drafted.' : undefined);
 
   return (
-    <div className="ed" ref={rootRef} data-comments={rail != null || undefined} data-rail={rail ?? undefined}>
+    <div className="ed" ref={rootRef} data-comments={rail != null || undefined} data-rail={rail ?? undefined}
+      data-outline={outlineShown ? 'open' : 'closed'}>
       {readRefusal ? <div className="scaf-note" role="alert">{readRefusal}</div> : <>
       {/* ── Left: document + section tree ── */}
-      <aside className="ed-tree">
+      <aside className="ed-tree" id={outlineId} hidden={!outlineShown} aria-label="Outline">
         <div className="ed-tree-h">
           {/* The project and the module, from the crumbs the bar replaced (D4-2). */}
           {(headline || moduleWord) && (
@@ -4297,10 +4361,7 @@ export function DocumentWorkbench({
               {[headline, moduleWord].filter(Boolean).join(' · ')}
             </div>
           )}
-          {/* Focusable by script only: after a market's editing copy is created
-              and opened, focus lands here, on the opened document's name
-              (accessibility review, 2026-10-15; FilingMarkets.tsx). */}
-          <div className="ed-tree-t" tabIndex={-1} ref={treeTitleRef}>
+          <div className="ed-tree-t">
             {unboundDraft ? activeDoc?.title : filing.document ? filing.document.title : pinnedDocId ? (activeDoc?.title ?? 'Document') : 'Document tree'}
           </div>
           <div className="ed-tree-m">
@@ -4374,15 +4435,16 @@ export function DocumentWorkbench({
             they were drafting against. The provenance columns recorded the
             difference; this is where it becomes visible. */}
         {provenance && filing.tree.length > 0 && (
-          <div className="ed-basis">
-            <div className="ed-basis-h">
+          /* One click away rather than a paragraph above every row (D4-4): the headline keeps its tone. */
+          <details className="ed-basis">
+            <summary>
               <span className="ed-basis-chip" data-tone={provenance.tone}>
                 {provenance.headline}
               </span>
-              <span className="ed-basis-l">outline basis</span>
-            </div>
+              <span className="ed-basis-l">About this outline</span>
+            </summary>
             <p className="ed-basis-d">{provenance.detail}</p>
-          </div>
+          </details>
         )}
 
         {/* ── The governed filing outline, when this project has one ──
@@ -4414,7 +4476,8 @@ export function DocumentWorkbench({
                   key={node.key}
                   className="ed-tree-row"
                   data-active={isActive || undefined}
-                  style={{ paddingLeft: 10 + node.depth * 12, opacity: bound || sectionsUnread ? 1 : 0.62 }}
+                  data-unstarted={(!bound && !sectionsUnread) || undefined}
+                  style={{ paddingLeft: 8 + node.depth * 12 }}
                   title={
                     readState !== 'ready'
                       ? unboundNodeTitle(node.label, readState)
@@ -4442,24 +4505,18 @@ export function DocumentWorkbench({
                   }}
                 >
                   <span className="ed-num">{node.key}</span>
-                  <span className="ed-lbl" style={{ fontWeight: node.depth === 0 ? 600 : 400 }}>
+                  <span className="ed-lbl" data-depth={node.depth}>
                     {node.label}
                   </span>
                   {node.mandatory && !bound && !sectionsUnread && (
-                    <span
-                      className="rd-chip tone-idle"
-                      style={{ marginLeft: 'auto' }}
-                      title="Required by the rule pack"
-                    >
-                      required
-                    </span>
+                    <span className="ed-req" title="Required by the rule pack"><span className="sr-only">required</span></span>
                   )}
                   {/* Asked of BOTH stores. node.has_content reads the governed
                       c2c_document_sections; this editor writes authoring_sections,
                       so on its own the dot could never light for anything drafted
                       here. See nodeHasDraft. */}
                   {nodeHasDraft(node, bound) && (
-                    <span className="ed-dot" data-s="ok" title={node.status} />
+                    <span className="ed-dot" data-s="ok" title={node.status}><span className="sr-only">drafted</span></span>
                   )}
                 </button>
               );
@@ -4547,7 +4604,7 @@ export function DocumentWorkbench({
                   >
                     <span className="ed-num">{d.module ?? '—'}</span>
                     <span className="ed-lbl">{d.title}</span>
-                    <span className="rd-chip tone-idle" style={{ marginLeft: 'auto' }}>
+                    <span className="ed-tree-n">
                       {/* null is "not counted", not zero */}
                       {d.section_count == null ? '—' : num(d.section_count)}
                     </span>
@@ -4622,6 +4679,11 @@ export function DocumentWorkbench({
             })
           )}
         </div>
+        {!unboundDraft && filing.tree.length > 0 && (
+          <p className="ed-tree-key" aria-hidden="true">
+            <span className="ed-req" /> required, not started · <span className="ed-dot" data-s="ok" /> drafted
+          </p>
+        )}
       </aside>
 
       {/* ── Center: editable canvas ── */}
@@ -4637,16 +4699,27 @@ export function DocumentWorkbench({
             Freeze, E-sign, Place into filing and Re-file saved text stay in the
             bar, mounted as they were, until D4-3 gives them the inspector. */}
         <header className="dcv-bar ed-bar" data-testid="ed-bar">
+          <button ref={outlineToggleRef} type="button" className="btn ed-ico" onClick={() => setOutline(!outlineOpen)}
+            disabled={outlineForced} aria-controls={outlineId} aria-expanded={outlineShown}
+            aria-label={outlineShown ? 'Hide the outline' : 'Show the outline'}
+            title={outlineForced ? 'The outline lists the documents while none is open' : outlineShown ? 'Hide the outline' : 'Show the outline'}
+            data-testid="ed-outline-toggle">
+            {I.panelLeft}
+          </button>
+          {embedded?.onShowList && <ToDocumentsButton count={embedded.listCount ?? null} onClick={embedded.onShowList} />}
           <div className="ed-bar-id">
-            <span className="dcv-bar-t" title={activeDoc ? [activeDoc.title, headline].filter(Boolean).join(' — ') : undefined}>
+            {/* Focusable by script only: after a market's editing copy is created and opened, focus lands on the
+                opened document's name (accessibility review, 2026-10-15; FilingMarkets.tsx). It was the outline's
+                title until D4-4 made the outline closable. */}
+            <span className="dcv-bar-t" tabIndex={-1} ref={treeTitleRef}
+              title={activeDoc ? [activeDoc.title, headline].filter(Boolean).join(' — ') : undefined}>
               {activeDoc?.title ?? (docsState === 'ready' ? 'No document open' : 'Documents')}
             </span>
             <span className="dcv-bar-p">
               {activeDoc && (
                 <button type="button" className="ed-status" title="Review and sign"
                   onClick={e => openRail('tasks', e.currentTarget)} data-testid="ed-status">
-                  {/* No `dc-status` test id until D4-5 retires the canvas's own bar, which carries it. */}
-                  <StatusPill status={activeDoc.status ?? null} />
+                  <StatusPill status={activeDoc.status ?? null} testId="dc-status" />
                 </button>
               )}
               {activeSection && (
@@ -4930,13 +5003,28 @@ export function DocumentWorkbench({
                 );
               }}
             </MenuButton>
-            {!embedded && (
+            {/* D4-5 (§D4.A step 5): beside the conversation, the same document full width; on the page, the
+                conversation beside it. */}
+            {embedded?.onExpand ? (
+              <button type="button" className="btn ed-ico" onClick={embedded.onExpand}
+                aria-label="Open full width" title="Open full width" data-testid="dc-edit-in-authoring">
+                {I.maximize}
+              </button>
+            ) : !embedded && (
               <button type="button" className="btn ed-ico" onClick={() => requestLeave({ kind: 'conversation', prompt: '' })}
                 aria-label="Show the conversation" title="Show the conversation" data-testid="ed-show-conversation">
                 {I.minimize}
               </button>
             )}
-            {((embedded && !embedded.hostShowsBack) || (!embedded && returnTo)) && (
+            {/* The canvas's close (§D4.A step 6): it only hides the editor, so it needs no leave guard, and Escape
+                does the same. `data-host-close`: an Escape from it is the host's, not an open rail's. */}
+            {embedded?.collapses ? (
+              <button ref={embedded.closeRef} type="button" className="btn ed-ico" onClick={embedded.onBack}
+                aria-label="Back to conversation" aria-keyshortcuts="Escape" title="Back to conversation (Esc)"
+                data-host-close="" data-testid="dc-back">
+                {I.close}
+              </button>
+            ) : (embedded || returnTo) && (
               <button
                 type="button"
                 className="btn ed-ico"

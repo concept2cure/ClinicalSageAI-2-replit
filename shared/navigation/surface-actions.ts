@@ -98,9 +98,10 @@ export type SurfaceActionResolution =
  * structural exclusion as a signature) joined with wave 4. `grant` (a module
  * grant is an entitlement change), `checkout` and `purchase` (payment starts)
  * joined with wave 6, when the admin and licensing consoles became operable.
+ * `retire` joined with P-86 (2026-11-01): a sequence is retired by a signed act.
  */
 export const GOVERNED_VERB_PATTERN =
-  /\b(sign|esign|e-sign|approve|reject|submit|transmit|lock|unlock|release|revoke|delete|destroy|certify|attest|countersign|freeze|dispatch|accept|advance|launch|grant|checkout|purchase)\b/i;
+  /\b(sign|esign|e-sign|approve|reject|submit|transmit|lock|unlock|release|revoke|delete|destroy|certify|attest|countersign|freeze|dispatch|accept|advance|launch|grant|checkout|purchase|retire)\b/i;
 
 /** Throws for an action id that names governed work. Exported for the tests. */
 export function assertUngovernedActionId(id: string): void {

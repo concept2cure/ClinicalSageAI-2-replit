@@ -7,7 +7,8 @@
  *
  * It is also the one home of the stated-input helpers that EVERY Rule 2 S5
  * engine uses, not only immunogenicity's: the readers (statedBoolean,
- * booleanInputStates, statedNumber, statedOneOf) and, since S5d-0
+ * booleanInputStates, statedNumber, statedOneOf, and since S5d statedText
+ * and statedList) and, since S5d-0
  * (2026-11-09), the three-valued helpers (unstated, anyOf, allOf), the
  * every-answer search (everyAnswer, conclusions, decidingFacts) and the input
  * adapters (oneOfInput, textInput, listed; S5d-0b). Import them from here;
@@ -217,6 +218,33 @@ export function oneOfInput(field: string, value: unknown, allowed: readonly stri
 /** "a", "a and b", "a, b and c". */
 export function listed(items: readonly string[]): string {
   return items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
+/* ── Text and list readers (Rule 2 S5d, 2026-11-09) ───────────────────────────
+   statedBoolean's twins for text and for a list, landed with their first
+   callers (the benefit-risk engine, then post-approval and regulatory
+   strategy), which had each written its own. */
+
+/** A stated text input, or undefined when it was not stated. Absent is not empty; anything else is refused. */
+export function statedText(field: string, value: unknown): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'string') return value;
+  throw new ComputationRefusal(
+    'invalid_input',
+    `${field} must be text (got ${shown(value)}). Leave it out if it is not known.`,
+    field,
+  );
+}
+
+/** A stated list input, or undefined when it was not stated. Absent is not empty; anything else is refused. */
+export function statedList(field: string, value: unknown): readonly unknown[] | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (Array.isArray(value)) return value;
+  throw new ComputationRefusal(
+    'invalid_input',
+    `${field} must be a list (got ${shown(value)}). Leave it out if it is not known.`,
+    field,
+  );
 }
 
 /** Canonical citations reused across the engine. */

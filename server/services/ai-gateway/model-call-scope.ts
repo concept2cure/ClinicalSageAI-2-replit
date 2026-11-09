@@ -163,6 +163,8 @@ export function createRunSourceAuthority(raw: SourceRunIdentity): RunSourceAutho
     return inherited;
   }
   const authority = Object.freeze({}) as RunSourceAuthority;
+  // A run starts at the conversation's tier; each classified source it reads raises it (recordCurrentRunSource), so a
+  // CONFIDENTIAL or RESTRICTED read is still refused on a frontier provider (d8febe0207, and above).
   sourceAuthorities.set(authority, { identity, tiers: new Set([CONVERSATION_DEFAULT_TIER]), grants: new Map(), revision: 0 });
   return authority;
 }

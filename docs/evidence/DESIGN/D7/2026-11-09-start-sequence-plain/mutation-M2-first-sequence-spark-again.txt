@@ -1,0 +1,5 @@
+MUTATION M2-first-sequence-spark-again in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-09T12:13:31.323352Z): replaced [                        {creatingSeq ? 'Creating…' : 'Start sequence 0000'}] with [                        {I.sparkles} {creatingSeq ? 'Creating…' : 'Start sequence 0000'}]
+ × client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx > SubmissionCenter — the next sequence > the first sequence, on an empty submission is started from a hairline button: not orange, no spark 391ms
+      Tests  1 failed | 7 skipped (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 0fd1212db9755e079e1a51bf6c014b82fee419c09f1ff8f99cfa2b300c4394d5 (expected 0fd1212db9755e079e1a51bf6c014b82fee419c09f1ff8f99cfa2b300c4394d5)

@@ -93,8 +93,9 @@ describe('Builder — source document column', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Builder' }));
     const row = await rowFor('[Demo · MDX] Labeling and Instructions for Use (Draft)');
     expect(row.queryByText('unlinked')).toBeNull();
-    expect(row.getByText(/Vault document/)).toBeTruthy();
-    expect(row.getByTitle(UUID)).toBeTruthy();
+    // D7-A2 step 9: the cell names the store; its key is on hover, whole.
+    expect(row.getByText('Vault document')).toBeTruthy();
+    expect(row.getByTitle(`Vault document #${UUID}`)).toBeTruthy();
     expect(row.getByText('source verified')).toBeTruthy();
   });
 
@@ -107,7 +108,7 @@ describe('Builder — source document column', () => {
     const missing = await rowFor('Nonclinical Overview');
     expect(missing.getByText('not found in this organization')).toBeTruthy();
     const unpinned = await rowFor('Clinical Overview');
-    expect(unpinned.getByText(/Authored document #88/)).toBeTruthy();
+    expect(unpinned.getByTitle('Authored document #88').textContent).toBe('Authored document');
     expect(unpinned.getByText('no content pin')).toBeTruthy();
   });
 

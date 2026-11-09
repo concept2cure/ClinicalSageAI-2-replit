@@ -1,0 +1,5 @@
+MUTATION C2-M2-no-author-branch in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T08:11:55.935100Z): replaced [retirementSignerRefusal(n, await signerIndependenceOf(] with [(() => null)(n, await signerIndependenceOf(]
+ × server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the precheck asks the retirement rule before anyone signs (C2) > the sequence's creator is told another person signs it 37ms
+      Tests  1 failed | 25 skipped (26)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 c181f73fc67b752a4b89be87365668aec37fd22d8efc1e2f6d3deed64d3c4f64 (expected c181f73fc67b752a4b89be87365668aec37fd22d8efc1e2f6d3deed64d3c4f64)

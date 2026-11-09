@@ -1,0 +1,279 @@
+[
+ {
+  "case": "page-1440-light",
+  "opened": {
+   "dataOutline": "open",
+   "treeHidden": false,
+   "treeVisible": true,
+   "treeWidth": 260,
+   "treePosition": "static",
+   "docWidth": 916,
+   "toggle": {
+    "expanded": "true",
+    "label": "Hide the outline",
+    "visible": true
+   },
+   "rows": 35,
+   "visibleRequiredWords": 0,
+   "rings": 0,
+   "unstartedDimmedByOpacity": 0,
+   "activeRowBg": "rgb(232, 230, 220)",
+   "activeRowColor": "rgb(20, 20, 19)",
+   "basis": null,
+   "focusIs": "",
+   "pageSideways": false
+  },
+  "toggled": {
+   "dataOutline": "closed",
+   "treeHidden": true,
+   "treeVisible": false,
+   "treeWidth": 0,
+   "treePosition": "static",
+   "docWidth": 1176,
+   "toggle": {
+    "expanded": "false",
+    "label": "Show the outline",
+    "visible": true
+   },
+   "rows": 35,
+   "visibleRequiredWords": 0,
+   "rings": 0,
+   "unstartedDimmedByOpacity": 0,
+   "activeRowBg": "rgb(232, 230, 220)",
+   "activeRowColor": "rgb(20, 20, 19)",
+   "basis": null,
+   "focusIs": "ed-outline-toggle",
+   "pageSideways": false
+  },
+  "reloaded": {
+   "dataOutline": "closed",
+   "treeHidden": true,
+   "treeVisible": false,
+   "treeWidth": 0,
+   "treePosition": "static",
+   "docWidth": 1176,
+   "toggle": {
+    "expanded": "false",
+    "label": "Show the outline",
+    "visible": true
+   },
+   "rows": 35,
+   "visibleRequiredWords": 0,
+   "rings": 0,
+   "unstartedDimmedByOpacity": 0,
+   "activeRowBg": "rgb(232, 230, 220)",
+   "activeRowColor": "rgb(20, 20, 19)",
+   "basis": null,
+   "focusIs": "",
+   "pageSideways": false
+  }
+ },
+ {
+  "case": "page-1440-dark",
+  "opened": {
+   "dataOutline": "open",
+   "treeHidden": false,
+   "treeVisible": true,
+   "treeWidth": 260,
+   "treePosition": "static",
+   "docWidth": 916,
+   "toggle": {
+    "expanded": "true",
+    "label": "Hide the outline",
+    "visible": true
+   },
+   "rows": 35,
+   "visibleRequiredWords": 0,
+   "rings": 0,
+   "unstartedDimmedByOpacity": 0,
+   "activeRowBg": "rgb(61, 61, 58)",
+   "activeRowColor": "rgb(250, 249, 245)",
+   "basis": null,
+   "focusIs": "dark",
+   "pageSideways": false
+  },
+  "toggled": {
+   "dataOutline": "closed",
+   "treeHidden": true,
+   "treeVisible": false,
+   "treeWidth": 0,
+   "treePosition": "static",
+   "docWidth": 1176,
+   "toggle": {
+    "expanded": "false",
+    "label": "Show the outline",
+    "visible": true
+   },
+   "rows": 35,
+   "visibleRequiredWords": 0,
+   "rings": 0,
+   "unstartedDimmedByOpacity": 0,
+   "activeRowBg": "rgb(61, 61, 58)",
+   "activeRowColor": "rgb(250, 249, 245)",
+   "basis": null,
+   "focusIs": "ed-outline-toggle",
+   "pageSideways": false
+  },
+  "reloaded": {
+   "dataOutline": "closed",
+   "treeHidden": true,
+   "treeVisible": false,
+   "treeWidth": 0,
+   "treePosition": "static",
+   "docWidth": 1176,
+   "toggle": {
+    "expanded": "false",
+    "label": "Show the outline",
+    "visible": true
+   },
+   "rows": 35,
+   "visibleRequiredWords": 0,
+   "rings": 0,
+   "unstartedDimmedByOpacity": 0,
+   "activeRowBg": "rgb(61, 61, 58)",
+   "activeRowColor": "rgb(250, 249, 245)",
+   "basis": null,
+   "focusIs": "dark",
+   "pageSideways": false
+  }
+ },
+ {
+  "case": "page-390-light",
+  "opened": {
+   "dataOutline": "closed",
+   "treeHidden": true,
+   "treeVisible": false,
+   "treeWidth": 0,
+   "treePosition": "static",
+   "docWidth": 390,
+   "toggle": {
+    "expanded": "false",
+    "label": "Show the outline",
+    "visible": true
+   },
+   "rows": 35,
+   "visibleRequiredWords": 0,
+   "rings": 0,
+   "unstartedDimmedByOpacity": 0,
+   "activeRowBg": "rgb(232, 230, 220)",
+   "activeRowColor": "rgb(20, 20, 19)",
+   "basis": null,
+   "focusIs": "",
+   "pageSideways": false
+  },
+  "toggled": {
+   "dataOutline": "open",
+   "treeHidden": false,
+   "treeVisible": true,
+   "treeWidth": 390,
+   "treePosition": "static",
+   "docWidth": 390,
+   "toggle": {
+    "expanded": "true",
+    "label": "Hide the outline",
+    "visible": true
+   },
+   "rows": 35,
+   "visibleRequiredWords": 0,
+   "rings": 0,
+   "unstartedDimmedByOpacity": 0,
+   "activeRowBg": "rgb(232, 230, 220)",
+   "activeRowColor": "rgb(20, 20, 19)",
+   "basis": null,
+   "focusIs": "ed-outline-toggle",
+   "pageSideways": false
+  },
+  "reloaded": {
+   "dataOutline": "open",
+   "treeHidden": false,
+   "treeVisible": true,
+   "treeWidth": 390,
+   "treePosition": "static",
+   "docWidth": 390,
+   "toggle": {
+    "expanded": "true",
+    "label": "Hide the outline",
+    "visible": true
+   },
+   "rows": 35,
+   "visibleRequiredWords": 0,
+   "rings": 0,
+   "unstartedDimmedByOpacity": 0,
+   "activeRowBg": "rgb(232, 230, 220)",
+   "activeRowColor": "rgb(20, 20, 19)",
+   "basis": null,
+   "focusIs": "",
+   "pageSideways": false
+  }
+ },
+ {
+  "case": "pane-1440-light",
+  "before": {
+   "dataOutline": "closed",
+   "treeHidden": true,
+   "treeVisible": false,
+   "treeWidth": 0,
+   "treePosition": "absolute",
+   "docWidth": 776,
+   "toggle": {
+    "expanded": "false",
+    "label": "Show the outline",
+    "visible": true
+   },
+   "rows": 24,
+   "visibleRequiredWords": 0,
+   "rings": 0,
+   "unstartedDimmedByOpacity": 0,
+   "activeRowBg": "rgb(232, 230, 220)",
+   "activeRowColor": "rgb(20, 20, 19)",
+   "basis": null,
+   "focusIs": "",
+   "pageSideways": false
+  },
+  "open": {
+   "dataOutline": "open",
+   "treeHidden": false,
+   "treeVisible": true,
+   "treeWidth": 280,
+   "treePosition": "absolute",
+   "docWidth": 776,
+   "toggle": {
+    "expanded": "true",
+    "label": "Hide the outline",
+    "visible": false
+   },
+   "rows": 24,
+   "visibleRequiredWords": 0,
+   "rings": 0,
+   "unstartedDimmedByOpacity": 0,
+   "activeRowBg": "rgb(232, 230, 220)",
+   "activeRowColor": "rgb(20, 20, 19)",
+   "basis": null,
+   "focusIs": "ed-outline-toggle",
+   "pageSideways": false
+  },
+  "afterEscape": {
+   "dataOutline": "closed",
+   "treeHidden": true,
+   "treeVisible": false,
+   "treeWidth": 0,
+   "treePosition": "absolute",
+   "docWidth": 776,
+   "toggle": {
+    "expanded": "false",
+    "label": "Show the outline",
+    "visible": true
+   },
+   "rows": 24,
+   "visibleRequiredWords": 0,
+   "rings": 0,
+   "unstartedDimmedByOpacity": 0,
+   "activeRowBg": "rgb(232, 230, 220)",
+   "activeRowColor": "rgb(20, 20, 19)",
+   "basis": null,
+   "focusIs": "ed-outline-toggle",
+   "pageSideways": false
+  },
+  "canvasStillOpen": true
+ }
+]

@@ -1,0 +1,915 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "creator": "ana.author@concept2cure.pro",
+  "signer": "dana.signer@concept2cure.pro",
+  "program": "95249590-7d36-442f-a317-211d243c52e1",
+  "submission": "18",
+  "sequences": {
+    "proof": "31",
+    "document": "32"
+  },
+  "browser": "141.0.7390.37",
+  "screens": {
+    "s0-held-closed-1440-light": {
+      "file": "s0-held-closed-1440-light.png",
+      "who": "signer",
+      "door": {
+        "open": false,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s2-offered-platform-proof-1440-light": {
+      "file": "s2-offered-platform-proof-1440-light.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0001's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.The platform's record shows this send never left the platform, so an FDA acknowledgement cannot be for it. Nothing was changed.Release as not receivedOn the platform's own record that this send never left. Sequence 0001 can then be sent again, under a new signature.",
+        "buttons": [
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s2-offered-documents-1440-light": {
+      "file": "s2-offered-documents-1440-light.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.Otherwise, settle it by signature, on FDA's own document added to this project's Vault.Record as receivedOn FDA's Ack2 or Ack3 for this send. Sequence 0002 is then on file with FDA and is not sent again.Release as not receivedOn FDA's written confirmation that this send did not arrive. Sequence 0002 can then be sent again, under a new signature.",
+        "buttons": [
+          {
+            "text": "Record as received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s2a-received-stated-1440-light": {
+      "file": "s2a-received-stated-1440-light.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.Otherwise, settle it by signature, on FDA's own document added to this project's Vault.Record as receivedOn FDA's Ack2 or Ack3 for this send. Sequence 0002 is then on file with FDA and is not sent again.Release as not receivedOn FDA's written confirmation that this send did not arrive. Sequence 0002 can then be sent again, under a new signature.Find FDA's document in this project's VaultSearch VaultShowing 1–1 of 1 matches.Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document)version 1Select documentPrevious Vault resultsNext Vault resultsChosen: Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document), version 1.Which acknowledgement is it?Ack2: FDA unpacked it and delivered it to the centerAck3: the center's validation resultBy signing, you would state:FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.Sign: record sequence 0002 as received",
+        "buttons": [
+          {
+            "text": "Record as received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Search Vault",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Select document",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Previous Vault results",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Next Vault results",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Sign: record sequence 0002 as received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s6-signing-received-1440-light": {
+      "file": "s6-signing-received-1440-light.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "covered by div.es-head",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.Otherwise, settle it by signature, on FDA's own document added to this project's Vault.Record as receivedOn FDA's Ack2 or Ack3 for this send. Sequence 0002 is then on file with FDA and is not sent again.Release as not receivedOn FDA's written confirmation that this send did not arrive. Sequence 0002 can then be sent again, under a new signature.Find FDA's document in this project's VaultSearch VaultShowing 1–1 of 1 matches.Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document)version 1Select documentPrevious Vault resultsNext Vault resultsChosen: Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document), version 1.Which acknowledgement is it?Ack2: FDA unpacked it and delivered it to the centerAck3: the center's validation resultBy signing, you would state:FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.Sign: record sequence 0002 as received",
+        "buttons": [
+          {
+            "text": "Record as received",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          },
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          },
+          {
+            "text": "Search Vault",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          },
+          {
+            "text": "Select document",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          },
+          {
+            "text": "Previous Vault results",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          },
+          {
+            "text": "Next Vault results",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          },
+          {
+            "text": "Sign: record sequence 0002 as received",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          }
+        ]
+      },
+      "dialog": {
+        "text": "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingSequence 0002 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)FDA (US) · settles the held send of 7 November 2026; nothing is sent to FDADSDana Signerdana.signer@concept2cure.proSignature meaning · §11.50ResponsibilityYou take responsibility for this contentBy signing, you state:FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.Reason for this actionMinimum 8 characters.Password · §11.200CancelSign and commit",
+        "meanings": [
+          "Responsibility"
+        ],
+        "statement": "FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.",
+        "buttons": [
+          {
+            "text": "",
+            "className": "es-close",
+            "hit": "hit"
+          },
+          {
+            "text": "Responsibility",
+            "className": "es-meaning-opt",
+            "hit": "hit"
+          },
+          {
+            "text": "Cancel",
+            "className": "es-btn-secondary",
+            "hit": "hit"
+          },
+          {
+            "text": "Sign and commit",
+            "className": "es-btn-primary",
+            "hit": "hit"
+          }
+        ]
+      },
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s4-creator-1440-light": {
+      "file": "s4-creator-1440-light.png",
+      "who": "creator",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.You created sequence 0002, so you cannot sign the settlement of its held send. Another person with signing authority signs it.",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s0-held-closed-1440-dark": {
+      "file": "s0-held-closed-1440-dark.png",
+      "who": "signer",
+      "door": {
+        "open": false,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s2-offered-platform-proof-1440-dark": {
+      "file": "s2-offered-platform-proof-1440-dark.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0001's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.The platform's record shows this send never left the platform, so an FDA acknowledgement cannot be for it. Nothing was changed.Release as not receivedOn the platform's own record that this send never left. Sequence 0001 can then be sent again, under a new signature.",
+        "buttons": [
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s2-offered-documents-1440-dark": {
+      "file": "s2-offered-documents-1440-dark.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.Otherwise, settle it by signature, on FDA's own document added to this project's Vault.Record as receivedOn FDA's Ack2 or Ack3 for this send. Sequence 0002 is then on file with FDA and is not sent again.Release as not receivedOn FDA's written confirmation that this send did not arrive. Sequence 0002 can then be sent again, under a new signature.",
+        "buttons": [
+          {
+            "text": "Record as received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s2a-received-stated-1440-dark": {
+      "file": "s2a-received-stated-1440-dark.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.Otherwise, settle it by signature, on FDA's own document added to this project's Vault.Record as receivedOn FDA's Ack2 or Ack3 for this send. Sequence 0002 is then on file with FDA and is not sent again.Release as not receivedOn FDA's written confirmation that this send did not arrive. Sequence 0002 can then be sent again, under a new signature.Find FDA's document in this project's VaultSearch VaultShowing 1–1 of 1 matches.Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document)version 1Select documentPrevious Vault resultsNext Vault resultsChosen: Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document), version 1.Which acknowledgement is it?Ack2: FDA unpacked it and delivered it to the centerAck3: the center's validation resultBy signing, you would state:FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.Sign: record sequence 0002 as received",
+        "buttons": [
+          {
+            "text": "Record as received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Search Vault",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Select document",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Previous Vault results",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Next Vault results",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Sign: record sequence 0002 as received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s6-signing-received-1440-dark": {
+      "file": "s6-signing-received-1440-dark.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "covered by div.es-head",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.Otherwise, settle it by signature, on FDA's own document added to this project's Vault.Record as receivedOn FDA's Ack2 or Ack3 for this send. Sequence 0002 is then on file with FDA and is not sent again.Release as not receivedOn FDA's written confirmation that this send did not arrive. Sequence 0002 can then be sent again, under a new signature.Find FDA's document in this project's VaultSearch VaultShowing 1–1 of 1 matches.Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document)version 1Select documentPrevious Vault resultsNext Vault resultsChosen: Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document), version 1.Which acknowledgement is it?Ack2: FDA unpacked it and delivered it to the centerAck3: the center's validation resultBy signing, you would state:FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.Sign: record sequence 0002 as received",
+        "buttons": [
+          {
+            "text": "Record as received",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          },
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          },
+          {
+            "text": "Search Vault",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          },
+          {
+            "text": "Select document",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          },
+          {
+            "text": "Previous Vault results",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          },
+          {
+            "text": "Next Vault results",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          },
+          {
+            "text": "Sign: record sequence 0002 as received",
+            "className": "btn ghost small",
+            "hit": "covered by div.es-overlay"
+          }
+        ]
+      },
+      "dialog": {
+        "text": "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingSequence 0002 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)FDA (US) · settles the held send of 7 November 2026; nothing is sent to FDADSDana Signerdana.signer@concept2cure.proSignature meaning · §11.50ResponsibilityYou take responsibility for this contentBy signing, you state:FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.Reason for this actionMinimum 8 characters.Password · §11.200CancelSign and commit",
+        "meanings": [
+          "Responsibility"
+        ],
+        "statement": "FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.",
+        "buttons": [
+          {
+            "text": "",
+            "className": "es-close",
+            "hit": "hit"
+          },
+          {
+            "text": "Responsibility",
+            "className": "es-meaning-opt",
+            "hit": "hit"
+          },
+          {
+            "text": "Cancel",
+            "className": "es-btn-secondary",
+            "hit": "hit"
+          },
+          {
+            "text": "Sign and commit",
+            "className": "es-btn-primary",
+            "hit": "hit"
+          }
+        ]
+      },
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s4-creator-1440-dark": {
+      "file": "s4-creator-1440-dark.png",
+      "who": "creator",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.You created sequence 0002, so you cannot sign the settlement of its held send. Another person with signing authority signs it.",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s0-held-closed-390-light": {
+      "file": "s0-held-closed-390-light.png",
+      "who": "signer",
+      "door": {
+        "open": false,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s2-offered-platform-proof-390-light": {
+      "file": "s2-offered-platform-proof-390-light.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0001's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.The platform's record shows this send never left the platform, so an FDA acknowledgement cannot be for it. Nothing was changed.Release as not receivedOn the platform's own record that this send never left. Sequence 0001 can then be sent again, under a new signature.",
+        "buttons": [
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s2-offered-documents-390-light": {
+      "file": "s2-offered-documents-390-light.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.Otherwise, settle it by signature, on FDA's own document added to this project's Vault.Record as receivedOn FDA's Ack2 or Ack3 for this send. Sequence 0002 is then on file with FDA and is not sent again.Release as not receivedOn FDA's written confirmation that this send did not arrive. Sequence 0002 can then be sent again, under a new signature.",
+        "buttons": [
+          {
+            "text": "Record as received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s2a-received-stated-390-light": {
+      "file": "s2a-received-stated-390-light.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "offscreen",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.Otherwise, settle it by signature, on FDA's own document added to this project's Vault.Record as receivedOn FDA's Ack2 or Ack3 for this send. Sequence 0002 is then on file with FDA and is not sent again.Release as not receivedOn FDA's written confirmation that this send did not arrive. Sequence 0002 can then be sent again, under a new signature.Find FDA's document in this project's VaultSearch VaultShowing 1–1 of 1 matches.Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document)version 1Select documentPrevious Vault resultsNext Vault resultsChosen: Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document), version 1.Which acknowledgement is it?Ack2: FDA unpacked it and delivered it to the centerAck3: the center's validation resultBy signing, you would state:FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.Sign: record sequence 0002 as received",
+        "buttons": [
+          {
+            "text": "Record as received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Search Vault",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Select document",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Previous Vault results",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Next Vault results",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Sign: record sequence 0002 as received",
+            "className": "btn ghost small",
+            "hit": "offscreen"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s6-signing-received-390-light": {
+      "file": "s6-signing-received-390-light.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "offscreen",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.Otherwise, settle it by signature, on FDA's own document added to this project's Vault.Record as receivedOn FDA's Ack2 or Ack3 for this send. Sequence 0002 is then on file with FDA and is not sent again.Release as not receivedOn FDA's written confirmation that this send did not arrive. Sequence 0002 can then be sent again, under a new signature.Find FDA's document in this project's VaultSearch VaultShowing 1–1 of 1 matches.Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document)version 1Select documentPrevious Vault resultsNext Vault resultsChosen: Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document), version 1.Which acknowledgement is it?Ack2: FDA unpacked it and delivered it to the centerAck3: the center's validation resultBy signing, you would state:FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.Sign: record sequence 0002 as received",
+        "buttons": [
+          {
+            "text": "Record as received",
+            "className": "btn ghost small",
+            "hit": "offscreen"
+          },
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "offscreen"
+          },
+          {
+            "text": "Search Vault",
+            "className": "btn ghost small",
+            "hit": "offscreen"
+          },
+          {
+            "text": "Select document",
+            "className": "btn ghost small",
+            "hit": "offscreen"
+          },
+          {
+            "text": "Previous Vault results",
+            "className": "btn ghost small",
+            "hit": "offscreen"
+          },
+          {
+            "text": "Next Vault results",
+            "className": "btn ghost small",
+            "hit": "offscreen"
+          },
+          {
+            "text": "Sign: record sequence 0002 as received",
+            "className": "btn ghost small",
+            "hit": "covered by q"
+          }
+        ]
+      },
+      "dialog": {
+        "text": "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingSequence 0002 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)FDA (US) · settles the held send of 7 November 2026; nothing is sent to FDADSDana Signerdana.signer@concept2cure.proSignature meaning · §11.50ResponsibilityYou take responsibility for this contentBy signing, you state:FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.Reason for this actionMinimum 8 characters.Password · §11.200CancelSign and commit",
+        "meanings": [
+          "Responsibility"
+        ],
+        "statement": "FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.",
+        "buttons": [
+          {
+            "text": "",
+            "className": "es-close",
+            "hit": "offscreen"
+          },
+          {
+            "text": "Responsibility",
+            "className": "es-meaning-opt",
+            "hit": "hit"
+          },
+          {
+            "text": "Cancel",
+            "className": "es-btn-secondary",
+            "hit": "hit"
+          },
+          {
+            "text": "Sign and commit",
+            "className": "es-btn-primary",
+            "hit": "hit"
+          }
+        ]
+      },
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s4-creator-390-light": {
+      "file": "s4-creator-390-light.png",
+      "who": "creator",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.You created sequence 0002, so you cannot sign the settlement of its held send. Another person with signing authority signs it.",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s0-held-closed-390-dark": {
+      "file": "s0-held-closed-390-dark.png",
+      "who": "signer",
+      "door": {
+        "open": false,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s2-offered-platform-proof-390-dark": {
+      "file": "s2-offered-platform-proof-390-dark.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0001's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.The platform's record shows this send never left the platform, so an FDA acknowledgement cannot be for it. Nothing was changed.Release as not receivedOn the platform's own record that this send never left. Sequence 0001 can then be sent again, under a new signature.",
+        "buttons": [
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s2-offered-documents-390-dark": {
+      "file": "s2-offered-documents-390-dark.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.Otherwise, settle it by signature, on FDA's own document added to this project's Vault.Record as receivedOn FDA's Ack2 or Ack3 for this send. Sequence 0002 is then on file with FDA and is not sent again.Release as not receivedOn FDA's written confirmation that this send did not arrive. Sequence 0002 can then be sent again, under a new signature.",
+        "buttons": [
+          {
+            "text": "Record as received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s2a-received-stated-390-dark": {
+      "file": "s2a-received-stated-390-dark.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "offscreen",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.Otherwise, settle it by signature, on FDA's own document added to this project's Vault.Record as receivedOn FDA's Ack2 or Ack3 for this send. Sequence 0002 is then on file with FDA and is not sent again.Release as not receivedOn FDA's written confirmation that this send did not arrive. Sequence 0002 can then be sent again, under a new signature.Find FDA's document in this project's VaultSearch VaultShowing 1–1 of 1 matches.Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document)version 1Select documentPrevious Vault resultsNext Vault resultsChosen: Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document), version 1.Which acknowledgement is it?Ack2: FDA unpacked it and delivered it to the centerAck3: the center's validation resultBy signing, you would state:FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.Sign: record sequence 0002 as received",
+        "buttons": [
+          {
+            "text": "Record as received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Search Vault",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Select document",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Previous Vault results",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Next Vault results",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Sign: record sequence 0002 as received",
+            "className": "btn ghost small",
+            "hit": "offscreen"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s6-signing-received-390-dark": {
+      "file": "s6-signing-received-390-dark.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "offscreen",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.Otherwise, settle it by signature, on FDA's own document added to this project's Vault.Record as receivedOn FDA's Ack2 or Ack3 for this send. Sequence 0002 is then on file with FDA and is not sent again.Release as not receivedOn FDA's written confirmation that this send did not arrive. Sequence 0002 can then be sent again, under a new signature.Find FDA's document in this project's VaultSearch VaultShowing 1–1 of 1 matches.Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document)version 1Select documentPrevious Vault resultsNext Vault resultsChosen: Walk stand-in for FDA Ack2, sequence 0002 (not an FDA document), version 1.Which acknowledgement is it?Ack2: FDA unpacked it and delivered it to the centerAck3: the center's validation resultBy signing, you would state:FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.Sign: record sequence 0002 as received",
+        "buttons": [
+          {
+            "text": "Record as received",
+            "className": "btn ghost small",
+            "hit": "offscreen"
+          },
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "offscreen"
+          },
+          {
+            "text": "Search Vault",
+            "className": "btn ghost small",
+            "hit": "offscreen"
+          },
+          {
+            "text": "Select document",
+            "className": "btn ghost small",
+            "hit": "offscreen"
+          },
+          {
+            "text": "Previous Vault results",
+            "className": "btn ghost small",
+            "hit": "offscreen"
+          },
+          {
+            "text": "Next Vault results",
+            "className": "btn ghost small",
+            "hit": "offscreen"
+          },
+          {
+            "text": "Sign: record sequence 0002 as received",
+            "className": "btn ghost small",
+            "hit": "covered by q"
+          }
+        ]
+      },
+      "dialog": {
+        "text": "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingSequence 0002 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)FDA (US) · settles the held send of 7 November 2026; nothing is sent to FDADSDana Signerdana.signer@concept2cure.proSignature meaning · §11.50ResponsibilityYou take responsibility for this contentBy signing, you state:FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.Reason for this actionMinimum 8 characters.Password · §11.200CancelSign and commit",
+        "meanings": [
+          "Responsibility"
+        ],
+        "statement": "FDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.",
+        "buttons": [
+          {
+            "text": "",
+            "className": "es-close",
+            "hit": "offscreen"
+          },
+          {
+            "text": "Responsibility",
+            "className": "es-meaning-opt",
+            "hit": "hit"
+          },
+          {
+            "text": "Cancel",
+            "className": "es-btn-secondary",
+            "hit": "hit"
+          },
+          {
+            "text": "Sign and commit",
+            "className": "es-btn-primary",
+            "hit": "hit"
+          }
+        ]
+      },
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s4-creator-390-dark": {
+      "file": "s4-creator-390-dark.png",
+      "who": "creator",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0002's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.You created sequence 0002, so you cannot sign the settlement of its held send. Another person with signing authority signs it.",
+        "buttons": []
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    }
+  },
+  "checks": {}
+}

@@ -1,0 +1,8 @@
+unmet omitted      trunk: favourable_with_conditions net 0.115 patched: null net null
+unmet false        trunk: favourable_with_conditions net 0.115 patched: favourable_with_conditions net 0.115
+unmet true         trunk: favourable net 0.195                 patched: favourable net 0.195
+mitigated omitted  trunk: indeterminate net 0.043              patched: null net null
+mitigated false    trunk: indeterminate net 0.043              patched: indeterminate net 0.043
+patched undecided [{"conclusion":"netBalance","decidingFacts":["unmetMedicalNeed"],"couldBe":[0.115,0.195]},{"conclusion":"verdict","decidingFacts":["unmetMedicalNeed"],"couldBe":["favourable_with_conditions","favourable"]}]
+trunk keyRisks text: 12 rows of evidence
+trunk audiences text: p,a,t,i,e,n,t

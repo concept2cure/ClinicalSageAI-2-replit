@@ -515,6 +515,11 @@
 .c2c-v2 .pj-work-projects-h{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
 .c2c-v2 .pj-work-projects-h h4{margin:0;font-size:var(--fs-small);font-weight:500;color:var(--text-200);}
 .c2c-v2 .pj-work-projects-l{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;}
+/* A work project's tasks at the top of its work area (P-111): set apart from the area's own header below it. */
+.c2c-v2 .pj-work-project-bound{margin:0 0 20px;padding-bottom:14px;border-bottom:1px solid var(--border-subtle);}
+/* A task's subtasks (P-111 item 4): one level, indented under it with a quiet rule. */
+.c2c-v2 .pj-work-project-subtasks{margin:4px 0 2px 14px;padding-left:10px;border-left:1px solid var(--border-subtle);}
+.c2c-v2 .pj-work-project-bound .pj-work-projects-l li > button{align-self:flex-start;}
 .c2c-v2 .pj-work-projects-l li{display:flex;flex-direction:column;gap:0;min-width:0;}
 .c2c-v2 .pj-work-project-n{font-size:var(--fs-small);color:var(--text-100);overflow-wrap:anywhere;}
 /* A work project that opens on its work area is a row like the areas above it, its name over its kind and owner. */

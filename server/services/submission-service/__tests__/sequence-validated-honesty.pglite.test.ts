@@ -148,6 +148,8 @@ beforeAll(async () => {
   // The program spine: a transmit precheck reads what the package would name as
   // its applicant and application (package-identity.ts, QA 2026-10-08 j6).
   harness = await createIndPgliteDb({ submissionCore: true, leafSources: true, programSpine: true, shadowReview: true });
+  // Transmit readiness reads whether a released send was in fact received (P-92 §3.3); every deployed database has the table.
+  await harness.pglite.exec(`CREATE TABLE IF NOT EXISTS submission_transmittals (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, region TEXT, metadata JSONB DEFAULT '{}'::jsonb)`);
   holder.db = harness.db;
   holder.pool = { query: (text: string, params?: unknown[]) => harness.pglite.query(text, params as unknown[]) };
   // Validation reads the tenant's saved company legal requirements, and refuses a tenant it cannot find.

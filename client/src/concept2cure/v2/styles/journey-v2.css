@@ -193,8 +193,9 @@
    Namespace: ae-*
    ════════════════════════════════════════════════════════════════════ */
 .c2c-v2 .ae{height:100%;overflow-y:auto;padding:26px 30px 72px;max-width:1180px;margin:0 auto;}
-.c2c-v2 .ae-badges{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 22px;}
-.c2c-v2 .ae-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--text-300);border:1px solid var(--border);background:var(--bg-000);border-radius:99px;padding:5px 11px;}
+/* The engine's claims, as quiet words with a check (D4-7: D0 §1.9, words not pills). */
+.c2c-v2 .ae-badges{display:flex;flex-wrap:wrap;gap:6px 18px;margin:4px 0 22px;}
+.c2c-v2 .ae-badge{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-small);font-weight:400;color:var(--text-300);}
 .c2c-v2 .ae-badge svg{width:13px;height:13px;color:var(--success);}
 
 /* Pipeline: raw data → final draft */

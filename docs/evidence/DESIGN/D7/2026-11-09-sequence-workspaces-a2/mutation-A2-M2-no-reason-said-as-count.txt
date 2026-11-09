@@ -1,0 +1,8 @@
+MUTATION A2-M2-no-reason-said-as-count in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-09T10:36:51.474098Z): replaced [      : count === 0
+        // The engine] with [      : false
+        // The engine]
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceHonesty.test.tsx > DispatchWorkspace — the one verdict says what the engine answered > a gate that is not cleared and lists no reason is said as that, never as cleared 5051ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchWorkspaceHonesty.test.tsx > DispatchWorkspace — the one verdict says what the engine answered > a record key in a blocker is said in words, and is in no attribute either 19ms
+      Tests  1 failed | 1 passed | 2 skipped (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 6fe780db49451fcf3551c47352017541200bb3b620e5a1571c87f94069a16452 (expected 6fe780db49451fcf3551c47352017541200bb3b620e5a1571c87f94069a16452)

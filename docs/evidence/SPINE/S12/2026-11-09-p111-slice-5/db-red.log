@@ -1,0 +1,127 @@
+
+> concept2cure-riai@1.0.0 test:db
+> vitest run --config vitest.db.config.ts tests/db/work-projects.dbtest.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-09T12:51:56.249Z","pid":1346,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-09T12:51:56.250Z","pid":1346,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T12:51:56.250Z","pid":1346,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > adds the child under the anchor with no program id of its own, its kind, and its audit row in one transaction 81ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > is idempotent: the same name and kind under the same parent is the existing child, with no second audit row 72ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > adds a Quality work project (P-111 item 5): quality is a work kind 63ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > nests under one of the program's work projects, and refuses a fourth level by name 107ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > refuses, by name, a parent that is not the program's project or below it, and writes nothing 71ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > under row-level security, refuses a child of another organisation's anchor and reads none of it 55ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > refuses a viewer, an unknown kind and an empty name 58ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > has one door: the project hierarchy no longer creates a project 44ms
+stderr | tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > rolls the child back if its chained audit row cannot be written
+{
+  "timestamp": "2026-11-09T12:52:00.139Z",
+  "level": "error",
+  "message": "[c2c-projects] Work project not added",
+  "context": {
+    "err": {
+      "length": 219,
+      "name": "error",
+      "severity": "ERROR",
+      "code": "23514",
+      "schema": "public",
+      "table": "audit_logs",
+      "constraint": "synthetic_work_project_audit_failure",
+      "file": "execMain.c",
+      "line": "2109",
+      "routine": "ExecConstraints"
+    }
+  }
+}
+
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > rolls the child back if its chained audit row cannot be written 49ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > lists the anchor's work projects with their kind, admitted as the project page is 74ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > refuses a project outside the program, another organisation's member, and a member not on a private project 73ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > needs the program named 46ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project's tasks admit its filing project's writers, one direction only (P-111) > admits a writer on the filing project to add on its work project 104ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project's tasks admit its filing project's writers, one direction only (P-111) > gives a work project's own member nothing on its filing project or on a sibling 89ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project's tasks admit its filing project's writers, one direction only (P-111) > gives another organisation nothing on a work project 92ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project's tasks admit its filing project's writers, one direction only (P-111) > respects a work project's own private visibility: the filing project's writer is refused there 82ms
+{"level":50,"time":"2026-11-09T12:52:00.849Z","pid":1346,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:00.850Z","pid":1346,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:00.851Z","pid":1346,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > shows a parent writer each work project's tasks, marked with where it lives; the filing project's own are unchanged 134ms
+{"level":50,"time":"2026-11-09T12:52:00.971Z","pid":1346,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:00.971Z","pid":1346,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:00.972Z","pid":1346,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > leaves a private work project's tasks out for the parent writer 111ms
+{"level":50,"time":"2026-11-09T12:52:01.069Z","pid":1346,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:01.070Z","pid":1346,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:01.070Z","pid":1346,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:01.084Z","pid":1346,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:01.084Z","pid":1346,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:01.085Z","pid":1346,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > gives a reader who is not a writer exactly what the exact rule gives: a non-private work project, never a private one 111ms
+{"level":50,"time":"2026-11-09T12:52:01.183Z","pid":1346,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:01.184Z","pid":1346,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:01.185Z","pid":1346,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > gives a work project's own member its tasks directly, and nothing of its siblings 98ms
+{"level":50,"time":"2026-11-09T12:52:01.281Z","pid":1346,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:01.282Z","pid":1346,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:01.282Z","pid":1346,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > gives another organisation nothing 98ms
+{"level":50,"time":"2026-11-09T12:52:01.476Z","pid":1346,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:01.477Z","pid":1346,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T12:52:01.477Z","pid":1346,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+ × tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > admits a subtask under a task of the same project, and refuses every other parent the same way (P-111 item 4) 98ms
+   → expected {} to deeply equal { admitted: 4 }
+ × tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > rolls a work project's subtask up with the task it belongs to 101ms
+   → expected undefined to be 'board:t-pmx9p3wi' // Object.is equality
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > holds the column in the database: a task is not its own parent, and a deleted parent leaves its subtask a task 96ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > admits a subtask under a task of the same project, and refuses every other parent the same way (P-111 item 4)
+AssertionError: expected {} to deeply equal { admitted: 4 }
+
+- Expected
++ Received
+
+- {
+-   "admitted": 4,
+- }
++ {}
+
+ ❯ tests/db/work-projects.dbtest.ts:420:48
+    418|     const sub = await taskRow(cmcChild, 'Check the impurity limits', t…
+    419|     const elsewhere = await taskRow(sibling, 'Close the CAPA (top)');
+    420|     expect((await parent(cmcChild, top)).body).toEqual({ admitted: top…
+       |                                                ^
+    421|     for (const [projectId, parentTaskId] of [[cmcChild, sub], [cmcChil…
+    422|       const res = await parent(projectId, parentTaskId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > rolls a work project's subtask up with the task it belongs to
+AssertionError: expected undefined to be 'board:t-pmx9p3wi' // Object.is equality
+
+- Expected:
+"board:t-pmx9p3wi"
+
++ Received:
+undefined
+
+ ❯ tests/db/work-projects.dbtest.ts:438:83
+    436|     const items = res.body.items as Array<{ id: string; title: string;…
+    437|     const parentItem = items.find((i) => i.title === 'Confirm the spec…
+    438|     expect(items.find((i) => i.title === 'Check the impurity limits')?…
+       |                                                                                   ^
+    439|     expect(parentItem.subtaskOf).toBeUndefined();
+    440|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 22 passed (24)
+   Start at  12:51:54
+   Duration  6.96s (transform 2.72s, setup 50ms, import 149ms, tests 6.59s, environment 0ms)
+

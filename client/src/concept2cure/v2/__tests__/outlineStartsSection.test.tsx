@@ -322,3 +322,66 @@ describe('the outline offers a start only where the section can be started (F4)'
     expect(row.getAttribute('aria-busy')).toBeNull();
   });
 });
+
+/* D4-4 (D4.md §D4.C): the outline appears when asked for, as Claude's sidebar does. A toggle in the bar shows and
+   hides it and the choice is remembered; it opens by default on the page at 1280 px and wider, closed beside the
+   conversation, and always while no document is open, because then it is the list. Required nodes carry a ring with
+   "required" for a screen reader rather than a REQUIRED pill, and unstarted rows are not dimmed by opacity. */
+describe('the outline on demand (D4-4)', () => {
+  const wide = (matches: boolean) => { (window as any).matchMedia = (q: string) => ({ matches: matches && /min-width:\s*1280px/.test(q), media: q, addEventListener() {}, removeEventListener() {} }); };
+  const aside = () => document.querySelector('aside.ed-tree') as HTMLElement;
+  const toggle = () => screen.getByTestId('ed-outline-toggle');
+  beforeEach(() => { try { localStorage.removeItem('c2c.editor.outline'); } catch { /* none */ } });
+  afterEach(() => { delete (window as any).matchMedia; });
+
+  it('opens on the page at 1280 px and wider; the toggle hides it, says so, and is remembered', async () => {
+    wide(true); wire();
+    const view = render(<DocumentAuthoring {...props()} />);
+    await unstartedRow();
+    expect(aside().hidden).toBe(false);
+    expect(document.querySelector('.ed')?.getAttribute('data-outline')).toBe('open');
+    expect(toggle().getAttribute('aria-controls')).toBe(aside().id);
+    expect(toggle().getAttribute('aria-expanded')).toBe('true');
+    fireEvent.click(toggle());
+    expect(aside().hidden).toBe(true);
+    expect(toggle().getAttribute('aria-expanded')).toBe('false');
+    expect(document.querySelector('.ed')?.getAttribute('data-outline')).toBe('closed');
+    expect(localStorage.getItem('c2c.editor.outline')).toBe('closed');
+    view.unmount(); cleanup();
+    render(<DocumentAuthoring {...props()} />);
+    await unstartedRow();
+    expect(aside().hidden).toBe(true);
+  });
+
+  it('is closed by default on a narrower page, and open whenever no document is open', async () => {
+    wide(false); wire();
+    const view = render(<DocumentAuthoring {...props()} />);
+    await unstartedRow();
+    expect(aside().hidden).toBe(true);
+    view.unmount(); cleanup();
+    wire({ docs: [] });
+    render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(document.querySelector('.ed-tree-m')?.textContent).toMatch(/^0 documents/));
+    expect(aside().hidden).toBe(false);
+    expect((toggle() as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('marks a required node with a ring and "required" for a screen reader, and no unstarted row is dimmed', async () => {
+    wide(true); wire();
+    render(<DocumentAuthoring {...props()} />);
+    const row = await unstartedRow();
+    const tree = aside();
+    const seen = (el: Element) => { const c = el.cloneNode(true) as Element; c.querySelectorAll('.sr-only').forEach(n => n.remove()); return c.textContent ?? ''; };
+    for (const r of tree.querySelectorAll('.ed-tree-row')) expect(seen(r)).not.toMatch(/required/i);
+    const rings = tree.querySelectorAll('.ed-tree-row .ed-req');
+    expect(rings.length).toBe(3);
+    for (const ring of rings) {
+      expect(ring.getAttribute('title')).toBe('Required by the rule pack');
+      expect(ring.querySelector('.sr-only')?.textContent).toBe('required');
+    }
+    expect(tree.querySelector('.rd-chip')).toBeNull();
+    expect(row.hasAttribute('data-unstarted')).toBe(true);
+    for (const r of tree.querySelectorAll<HTMLElement>('.ed-tree-row')) expect(r.style.opacity).toBe('');
+    expect(tree.querySelector('.ed-tree-key')?.textContent).toMatch(/required, not started · .*drafted/);
+  });
+});

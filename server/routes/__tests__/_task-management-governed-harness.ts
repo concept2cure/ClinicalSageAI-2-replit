@@ -252,7 +252,8 @@ function workflowProjectFixture(statement: string, params: unknown[]) {
     { id: 14, client_workspace_id: 74, status: 'active' },
     { id: 25, client_workspace_id: 75, status: 'active' },
   ];
-  if (statement.includes('SELECT id,client_workspace_id,status FROM projects')) {
+  // P-111 (b): the admission's locked row read also names parent_project_id.
+  if (/SELECT id,client_workspace_id,status(,parent_project_id)? FROM projects/.test(statement)) {
     return { rows: params[1] === 2 ? parents.filter(parent => parent.id === params[0]) : [] };
   }
   if (statement.includes('FROM client_workspaces')) {

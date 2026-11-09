@@ -39,7 +39,7 @@ vi.mock('../filed-sequence-baseline', async (importOriginal) => {
 
 import { createIndPgliteDb, AUDIT_LOGS_PGLITE_DDL, applySequenceRemovalGuard, type IndPgliteDb } from '../../../db/pglite-harness';
 import { ORG, USER, FREEZE_GATE_SEED_SQL, FREEZE_PROGRAM_ID, freezeGateHelpers } from './_freeze-gate-fixture';
-import { retireSequence, getSequence } from '../submission-service';
+import { retireSequence, getSequence, precheckSequenceRetirement } from '../submission-service';
 import { retirementStatement } from '../filed-sequence-baseline';
 
 let h: IndPgliteDb;
@@ -155,9 +155,10 @@ describe('P-86: a sequence never filed is retired by its signed act, and its num
 });
 
 describe('P-86: what keeps a sequence (the agency may hold it, or its number)', () => {
-  it.each([['sent'], ['acknowledged']])('refuses a sequence that is %s, the agency holds it', async (status) => {
+  // In words, never the stored status (P-92 C1; the coordinating session, 2026-11-09).
+  it.each([['sent', ''], ['acknowledged', ', which acknowledged it']])('refuses a sequence that is %s, the agency holds it', async (status, acknowledged) => {
     const { id } = await sequenceOf({ dispatchStatus: status });
-    await refusedWith(id, `Sequence 0000 is on file with the agency (dispatch status '${status}'), so it cannot be retired.`);
+    await refusedWith(id, `Sequence 0000 is on file with the agency${acknowledged}, so it cannot be retired. A correction is a new sequence numbered after it.`);
   }, 120_000);
 
   it('refuses a sequence whose send is in flight', async () => {
@@ -297,6 +298,56 @@ describe('P-86: the signature, and what a refusal does to it', () => {
     const sig = await retireSig(id);
     holder.afterFirstFacts = async () => { await bound(id, 'production'); };
     await refusedWithSig(id, sig);
+  }, 120_000);
+});
+
+describe('P-86: the precheck asks the retirement rule before anyone signs (C2)', () => {
+  it('a retirable sequence: cleared, its test sends by UTC day, its number freed, the statement to sign; nothing changes', async () => {
+    const { id } = await sequenceOf();
+    for (const at of ['2026-11-02T23:30:00-05:00', '2026-11-04T09:00:00Z']) {
+      await q(`INSERT INTO submission_transmittals (organization_id, region, metadata, created_at) VALUES (${ORG}, 'fda', $1, $2)`,
+        [JSON.stringify({ environment: 'staging', dispatchBinding: { sequenceId: id, signatureActionId: 'sig-x' } }), at]);
+    }
+    const before = await row(id);
+    expect(await precheckSequenceRetirement(id, ctx)).toEqual({
+      step: 'retire', cleared: true, refusal: null,
+      retirement: { sequenceNumber: '0000', stagingSends: [{ sentOn: '2026-11-03' }, { sentOn: '2026-11-04' }], numberFreed: true, statement: retirementStatement('0000') },
+    });
+    expect(await row(id)).toEqual(before);
+    expect(await retiredRows(id)).toEqual([]);
+  }, 120_000);
+
+  it("the sequence's creator is told another person signs it", async () => {
+    const { id } = await sequenceOf();
+    expect(await precheckSequenceRetirement(id, { organizationId: ORG, userId: AUTHOR })).toMatchObject({
+      step: 'retire', cleared: false,
+      refusal: 'You created sequence 0000, so you cannot sign its retirement. Another person with signing authority signs it.',
+      retirement: { sequenceNumber: '0000', statement: retirementStatement('0000') },
+    });
+  }, 120_000);
+
+  it('a sequence something keeps is refused in the words the act refuses it with, before the creator rule', async () => {
+    const { id } = await sequenceOf();
+    await bound(id, 'production');
+    const answer = await precheckSequenceRetirement(id, { organizationId: ORG, userId: AUTHOR });
+    const act = await outcome(retireSequence({ sequenceId: id, signatureActionId: await retireSig(id) }, ctx));
+    expect(answer).toMatchObject({ step: 'retire', cleared: false, retirement: { numberFreed: true } });
+    expect(answer.refusal).toMatch(/^A send of sequence 0000 to the agency's production environment is recorded on \d{4}-\d{2}-\d{2} UTC/);
+    expect(act.message.startsWith(answer.refusal as string), act.message).toBe(true);
+  }, 120_000);
+
+  it('a legacy duplicate is answered with its number not freed', async () => {
+    const first = await sequenceOf();
+    const twin = await sequenceOf({ submissionId: first.submissionId });
+    expect((await precheckSequenceRetirement(twin.id, ctx)).retirement).toMatchObject({ numberFreed: false });
+  }, 120_000);
+
+  it('a retired sequence is answered with when and by whom it was retired', async () => {
+    const { id } = await sequenceOf();
+    await retireSequence({ sequenceId: id, signatureActionId: await retireSig(id) }, ctx);
+    expect(await outcome(precheckSequenceRetirement(id, ctx))).toMatchObject({
+      code: 'INVALID_STATE', message: expect.stringMatching(/^Sequence 0000 was retired on \d{4}-\d{2}-\d{2} UTC by Riley Retirer\. Nothing was changed\.$/),
+    });
   }, 120_000);
 });
 

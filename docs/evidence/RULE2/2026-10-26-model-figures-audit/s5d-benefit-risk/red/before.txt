@@ -1,0 +1,152 @@
+# S5d benefit-risk red: server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts on f68840f22, in the working tree before the change. 69 of 78 fail, all on assertions; the 9 controls pass.
+
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the six benefit-risk tools compute from stated facts > 'structure_benefit_risk_framework' reaches its engine with a stated basis 5ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the six benefit-risk tools compute from stated facts > 'build_effects_table' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the six benefit-risk tools compute from stated facts > 'assess_benefit_risk_balance' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the six benefit-risk tools compute from stated facts > 'design_value_tree' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the six benefit-risk tools compute from stated facts > 'assess_br_uncertainty' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the six benefit-risk tools compute from stated facts > 'plan_br_communication' reaches its engine with a stated basis 1ms
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > each true/false input is kept as stated > 'structure_benefit_risk_framework' 'unmetMedicalNeed' reads not_stated when omitted or null, and is refused when malformed 10ms
+   → expected { productName: 'DrugX', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > each true/false input is kept as stated > 'structure_benefit_risk_framework' 'keyRisks[0].manageable' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { productName: 'DrugX', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_benefit_risk_balance' 'unmetMedicalNeed' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { productName: 'DrugX', …(15) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_benefit_risk_balance' 'risks[0].mitigated' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { productName: 'DrugX', …(15) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > each true/false input is kept as stated > 'plan_br_communication' 'includeVisualSummary' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { productName: 'DrugX', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > each true/false input is kept as stated > 'plan_br_communication' 'patientExperienceDataAvailable' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { productName: 'DrugX', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > structure_benefit_risk_framework concludes nothing from an unstated fact > an omitted unmet need beside an approved option is not "Effective alternatives exist" 1ms
+   → expected false to be null
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > structure_benefit_risk_framework concludes nothing from an unstated fact > a stated false is kept when no treatment list is given 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > structure_benefit_risk_framework concludes nothing from an unstated fact > an option of unstated status is not read as approved 1ms
+   → expected 'Docetaxel (approved).' to match /status not stated/
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > structure_benefit_risk_framework concludes nothing from an unstated fact > an option of unstated status decides nothing beside a stated off-label one 1ms
+   → expected false to be null
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > structure_benefit_risk_framework concludes nothing from an unstated fact > an omitted manageable is not "Considered manageable", and a risk conclusion it decides is not assessed 1ms
+   → expected 'Neutropenia — Severity: severe. Rever…' to match /Manageability not stated\./
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > structure_benefit_risk_framework concludes nothing from an unstated fact > an omitted condition severity is not "of lower severity" 1ms
+   → expected 0.5 to be null
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > structure_benefit_risk_framework concludes nothing from an unstated fact > control: keeps the stated answer 0ms
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > assess_benefit_risk_balance gives no verdict an unstated fact could change > an omitted unmet need that decides the verdict leaves it null, with both answers named 1ms
+   → expected 'favourable_with_conditions' to be null
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > assess_benefit_risk_balance gives no verdict an unstated fact could change > an omitted mitigation that decides the verdict leaves it, the risk weight and that driver null 1ms
+   → expected 'indeterminate' to be null
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > assess_benefit_risk_balance gives no verdict an unstated fact could change > names only the verdicts an answer gives, not every verdict between the two 1ms
+   → expected 'unfavourable' to be null
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > assess_benefit_risk_balance gives no verdict an unstated fact could change > a verdict every answer gives is kept, with the net balance it cannot fix left null 1ms
+   → expected 0.78 to be null
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > assess_benefit_risk_balance gives no verdict an unstated fact could change > names the omitted grades a score used at its middle value 0ms
+   → expected 'Benefit and risk weights are importan…' to match /risks\[0\]\.reversibility \(partially…/
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > assess_benefit_risk_balance gives no verdict an unstated fact could change > control: keeps the stated answer 0ms
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > plan_br_communication > says when patient-experience data were not stated, instead of leaving them out 0ms
+   → expected 'Frame in plain language around what t…' to match /…/PFDD data are available was not stated
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > plan_br_communication > control: keeps the stated framing 0ms
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > plan_br_communication > names the visual-summary and audience defaults 1ms
+   → expected 'Audience framings follow FDA labeling…' to match /includeVisualSummary was not stated/
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework conditionSeverity "Severe" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework conditionCourse "Chronic" 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework currentTreatments "docetaxel" 2ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework currentTreatments[0].status "Approved" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework keyBenefits[0].magnitude "large" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework keyBenefits[0].endpointType "clinical" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework keyRisks "neutropenia" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework keyRisks[0].reversibility "reversible" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework riskManagementTools "REMS" 1ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework productName 42 1ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > build_effects_table effects "OS" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > build_effects_table effects[0].direction "Favourable" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > build_effects_table effects[0].treatmentValue "12" 6ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > build_effects_table effects[0].ciLow null 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > build_effects_table effects[0].evidenceSource "RCT" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > build_effects_table effects[0].uncertainty "Low" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance benefits "OS" 1ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance benefits[0].magnitude "large" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance benefits[0].weight 1.5 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance benefits[0].weight "heavy" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance risks[0].severity "Severe" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance risks[0].frequency "often" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance conditionSeverity "Serious" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance specialPopulations "elderly" 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_value_tree criteria "OS" 1ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_value_tree criteria[0].type "Benefit" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_value_tree criteria[0].importanceRank "1" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_value_tree criteria[0].importanceRank 0 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_value_tree weightingApproach "MCDA" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_value_tree alternatives "placebo" 1ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_br_uncertainty sources "missing data" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_br_uncertainty sources[0].type "bias" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_br_uncertainty sources[0].level "High" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_br_uncertainty sources[0].affects "efficacy" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_br_uncertainty netBalanceEstimate "0.3" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > plan_br_communication audiences "patient" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > plan_br_communication audiences[0] "Patients" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > plan_br_communication keyBenefitMessages "longer survival" 1ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > build_effects_table refuses an omitted required list, effects 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance refuses an omitted required list, risks 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_value_tree refuses an omitted required list, criteria 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_br_uncertainty refuses an omitted required list, sources 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'structure_benefit_risk_framework' 'unmetMedicalNeed' says what an omission leaves, and claims no default 1ms
+   → expected 'Whether an unmet medical need exists.…' to match /Omitted or null/
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'structure_benefit_risk_framework' 'keyRisks[0].manageable' says what an omission leaves, and claims no default 2ms
+   → expected 'Whether the risk is readily manageabl…' to match /Omitted or null/
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_benefit_risk_balance' 'unmetMedicalNeed' says what an omission leaves, and claims no default 0ms
+   → expected 'Whether an unmet medical need exists;…' to match /Omitted or null/
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_benefit_risk_balance' 'risks[0].mitigated' says what an omission leaves, and claims no default 0ms
+   → expected 'Whether a risk-mitigation measure mea…' to match /Omitted or null/
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'plan_br_communication' 'includeVisualSummary' says what an omission leaves, and claims no default 0ms
+   → expected 'Whether to include visual-summary rec…' to match /Omitted or null/
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'plan_br_communication' 'patientExperienceDataAvailable' says what an omission leaves, and claims no default 0ms
+   → expected 'Whether patient-experience / PFDD dat…' to match /Omitted or null/
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > the balance description says the verdict can be none, naming the facts 1ms
+   → expected 'Produce a deterministic, integrated b…' to match /or none, naming the facts/
+ × server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > each description fits the gateway limit 1ms
+   → structure_benefit_risk_framework: expected 1321 to be less than or equal to 1024
+⎯⎯⎯⎯⎯⎯ Failed Tests 69 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  69 failed | 9 passed (78)

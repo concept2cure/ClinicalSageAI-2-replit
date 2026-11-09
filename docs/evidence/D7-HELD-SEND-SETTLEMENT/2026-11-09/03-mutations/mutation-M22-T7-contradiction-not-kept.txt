@@ -1,0 +1,9 @@
+MUTATION M22-T7-contradiction-not-kept in server/services/submission-gateways/fda-esg-receipts.ts (on the final code and tests, 2026-11-09T13:43:52.960320Z): replaced [      await keepContradictingReceipt(client, args, current, { sha256, status, messageId: binding.messageId, history });
+] with []
+ × server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > P-92 T7: a late FDA receipt after a signed settlement > after a release, FDA's positive receipt is kept with the send's record, answers 409, and holds the resend 155ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > P-92 T7: a late FDA receipt after a signed settlement > after a release, FDA's refusal agrees with it: recorded, no sequence moves, no resend hold 128ms
+ × server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > P-92 T7: a late FDA receipt after a signed settlement > after 'received', FDA's refusal is kept with the record and answers 409; the sequence stays recorded as received 88ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > P-92 T7: a late FDA receipt after a signed settlement > a transmittal with no settlement takes exactly today's path 105ms
+      Tests  2 failed | 2 passed | 15 skipped (19)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 039d6b13181040d8b556c095a5ec7b8e27fc02fbfdd9bf72293c2ba6ed1f5a93 (expected 039d6b13181040d8b556c095a5ec7b8e27fc02fbfdd9bf72293c2ba6ed1f5a93)

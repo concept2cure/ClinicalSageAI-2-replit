@@ -55,18 +55,20 @@ Each fix has a test that fails at trunk and passes with it, and was checked agai
 
 ## What remains (not fixed here), with the reason
 
-| # | What a tester sees | Why it stays |
-|---|---|---|
-| R1 | At 1440 px the ribbon's **Comment** and **Track changes** sit past its right edge; the ribbon scrolls sideways | The ribbon is deliberately one scrolling row (`styles/rich-section-editor.css`, `.ed .rse-ribbon`); moving them is a layout decision for D4 |
-| R2 | After "Request changes", opening the document shows nothing about it; the reason is under ⋮ → Review tasks | Showing it on open is a change to the editor's layout (D4) |
-| R3 | The SOP shows **Place into filing** and "Unbound working copy … place the document into a filing", though Project home says quality documents are not part of the filing | Whether a controlled document may ever be filed is a product decision |
-| R4 | Quality's *New controlled document* does not preselect the project the page is opened for | Quality is J5's surface; told to J5 here |
-| R5 | "Filings in this project · FDA · IND — home filing" wraps one word per line in the editor's left column | Layout (D4) |
-| R6 | With the canvas open, the conversation's composer controls crowd and clip at 1440 px (`x-20-`) | The conversation lane's layout |
-| R7 | An approval was accepted on an IB with 14 of 15 sections empty | Not a refusal to loosen; whether approval should require every section is the founder's decision |
-| R8 | New document lists all 469 templates on every project, and CTD module choices on a 510(k) | Filtering the catalog by client type is a product change |
-| R9 | The build preview tells an empty section "Preserve existing section and text … only if this saved section is empty" | Copy in the assembly plan; low |
-| R10 | The decision dialog's receipt reads "Revision not recorded" | Low |
+The status column was added on 2026-11-09. A fixed row keeps its original text so the finding stays readable.
+
+| # | What a tester sees | Why it stays | Status (2026-11-09) |
+|---|---|---|---|
+| R1 | At 1440 px the ribbon's **Comment** and **Track changes** sit past its right edge; the ribbon scrolls sideways | The ribbon is deliberately one scrolling row (`styles/rich-section-editor.css`, `.ed .rse-ribbon`); moving them is a layout decision for D4 | **Fixed.** `9273b055b` (D4-6: one row, with More formatting and AnA's actions as icons) and `b7fff28fd` (the ribbon spans the page); walked in the running app (`docs/evidence/DESIGN/D0/D0-15-running-app-walk/ribbon-after/`) |
+| R2 | After "Request changes", opening the document shows nothing about it; the reason is under ⋮ → Review tasks | Showing it on open is a change to the editor's layout (D4) | **Fixed.** `da668fca6`: a review returned for changes is said where the document opens |
+| R3 | The SOP shows **Place into filing** and "Unbound working copy … place the document into a filing", though Project home says quality documents are not part of the filing | Whether a controlled document may ever be filed is a product decision | Open: a founder decision |
+| R4 | Quality's *New controlled document* does not preselect the project the page is opened for | Quality is J5's surface; told to J5 here | Open: J5's |
+| R5 | "Filings in this project · FDA · IND — home filing" wraps one word per line in the editor's left column | Layout (D4) | **Fixed.** `4a281557c`: the line reads on one line, its button beneath |
+| R6 | With the canvas open, the conversation's composer controls crowd and clip at 1440 px (`x-20-`) | The conversation lane's layout | **Fixed.** `dbc080553` (2026-11-06): the foot wraps into centred rows inside the column. Rechecked in the running app on 2026-11-09 at 1440 light and dark and at 1280, where every control sits inside the column and is visible (`docs/evidence/D4/2026-11-09-composer-beside-canvas/`) |
+| R7 | An approval was accepted on an IB with 14 of 15 sections empty | Not a refusal to loosen; whether approval should require every section is the founder's decision | Open: a founder decision |
+| R8 | New document lists all 469 templates on every project, and CTD module choices on a 510(k) | Filtering the catalog by client type is a product change | Open: a product change |
+| R9 | The build preview tells an empty section "Preserve existing section and text … only if this saved section is empty" | Copy in the assembly plan; low | **Fixed.** `bba3a4336`: the preview says what the build will do (`docs/evidence/D4/2026-11-09-build-preview-words/`) |
+| R10 | The decision dialog's receipt reads "Revision not recorded" | Low | **Fixed.** `f6694d692`: a revision is named only when the document has one (`docs/evidence/D4/2026-11-09-decision-receipt-revision/`) |
 
 ## Known limits without a model key
 

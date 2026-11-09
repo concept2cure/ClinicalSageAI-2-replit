@@ -1,0 +1,11 @@
+## MUTATION: the roll-up ignores a work project's private visibility
+leaves a private work project's tasks out for the parent writer 134ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 20 passed (21)
+
+## MUTATION: the exact project's own access no longer admits (only the parent clause)
+admits a writer on the filing project to add on its work project 110ms
+gives a work project's own member nothing on its filing project or on a sibling 85ms
+respects a work project's own private visibility: the filing project's writer is refused there 99ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 18 passed (21)

@@ -180,7 +180,7 @@ describe('the store the service reads, not just the one the router writes', () =
     );
   }, T);
 
-  it('deviations carries severity — the adverse-event rate reads it', async () => {
+  it('deviations carries severity — the PMA serious-deviations card reads it', async () => {
     const { rows } = await jdb.pool.query(
       `SELECT column_name FROM information_schema.columns
         WHERE table_schema = 'clinical_ops' AND table_name = 'deviations'

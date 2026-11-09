@@ -59,8 +59,8 @@ for the founder to say which holds. Slices 3 and 4 are valid under both.
 | 3b Slices 1 and 2 (the 2.5/2.7 composers read the open project's CSRs; 2.4/2.6 refuse model-written studies) | done | — |
 | 3b Slice 3: a class project never becomes an application | done: the readiness digest (`9c05a6ac8`), both creators (RIM, `63e51b02e`) and the eCTD doors (RIM, `61ab17676`) | F1 |
 | 3b Slice 4: the "not offered" reason names where the QOS, 3.2.S and 3.2.P are written (`reasonByFiling`) | done: the server half (`b0bba18e6`) and the picker's lookup (`bfa9c6869`) | F1 (S5's globs are root-anchored and do not match `server/services/regulatory/`) |
-| 3b Slices 5–7: the author-only 2.5/2.4/2.7/2.6 class packs | open; **wait on the founder (P-55 vs P-83)** | — |
-| 3b Slice 8 | follows 5 | — |
+| 3b Slices 5–7: the author-only 2.5/2.4/2.7/2.6 class packs | **retired, not built**: the founder answered on 2026-11-09 that P-83 governs, so the Module 2 summaries stay sections of the filing project | — |
+| 3b Slice 8 | retired with slice 5 | — |
 | Module 1 for each region (US, EU, Japan, Canada, Australia) | open; regional depth is uneven (plan §1a step 7) | S5 |
 | Organise, build, customise and complete a filing | open | S11 (the pyramid becomes the project's work breakdown, with owners, due dates and a content plan per leaf, P-82) and D4 (outline organise/customise in the one editor) |
 | F-B "not applicable" for a conditional heading | decided (P-55); not built | D4 / S11 |
@@ -114,5 +114,8 @@ Each slice goes red first. Each files "What already exists" and gets an adversar
 Each commit carries `Plan:` and `Completes:`.
 
 For the founder:
-- 3b slices 5–7: P-55 or P-83?
-- The R1 retirements: the cleanup deletions above and Rule 2 S13.
+- 3b slices 5–7: P-55 or P-83? **Answered 2026-11-09: P-83.** Slices 5–8 are retired, not built; slices 1–4 stand.
+  Nothing to undo: no component class was built, and the `clin_overview` / `nonclin_*` ids are only legacy catalog
+  aliases, with section blueprints used inside the filing project.
+- The R1 retirements: the cleanup deletions above and Rule 2 S13. **Answered 2026-11-09: list first.** The founder
+  sees the exact files, routes and replacements, and only what is then approved is deleted.

@@ -1,0 +1,7 @@
+Full run, 117 suites that render the editor, canvas or thread or read its stylesheet:
+ Test Files  117 passed (117)
+      Tests  1386 passed (1386)
+
+Targeted rerun of the ten suites D4-4 touches directly:
+ Test Files  10 passed (10)
+      Tests  145 passed (145)

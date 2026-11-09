@@ -1,0 +1,30 @@
+# P-92 C2 ESLint, final counts (each at or under trunk's: SubmissionSeqWorkspaces 7, SubmissionCenter 5, GatewayTransmittals 3, the rest 0)
+client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx now: 7 {"max-lines":1,"max-lines-per-function":3,"complexity":3}
+client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx now: 5 {"max-lines-per-function":1,"complexity":2,"max-lines":1,"react-hooks/exhaustive-deps":1}
+client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx now: 3 {"max-lines-per-function":1,"complexity":2}
+client/src/concept2cure/v2/surfaces/FiledElsewhereBaseline.tsx now: 0 {}
+client/src/concept2cure/v2/gatewayLabels.ts now: 0 {}
+client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx now: 0 {}
+client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx now: 0 {}
+client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx now: 0 {}
+client/src/concept2cure/v2/__tests__/filedElsewhereBaseline.test.tsx now: 0 {}
+docs/evidence/D7-HELD-SEND-SETTLEMENT/2026-11-09/07-screen/capture.cjs now: 0 {}
+
+# trunk's counts and the ratchet findings, from the first comparison:
+== client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx
+base: 7 {"max-lines":1,"max-lines-per-function":3,"complexity":3}
+== client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx
+base: 5 {"max-lines-per-function":1,"complexity":2,"max-lines":1,"react-hooks/exhaustive-deps":1}
+== client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx
+base: 3 {"max-lines-per-function":1,"complexity":2}
+== client/src/concept2cure/v2/surfaces/FiledElsewhereBaseline.tsx
+base: 0 {}
+== client/src/concept2cure/v2/gatewayLabels.ts
+base: 0 {}
+== client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx
+== client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx
+base: 0 {}
+== client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx
+base: 0 {}
+== client/src/concept2cure/v2/__tests__/filedElsewhereBaseline.test.tsx
+base: 0 {}
