@@ -1304,7 +1304,7 @@
 .c2c-v2 .pj .pj-top .pj-desc{margin:8px 0 0;max-width:68ch;font-size:var(--fs-body,14px);line-height:1.55;color:var(--text-200);}
 .c2c-v2 .pj .pj-tags{display:block;margin-top:6px;font-size:var(--fs-small);line-height:1.5;color:var(--text-300);}
 .c2c-v2 .pj .pj-byline{margin:6px 0 0;}
-.c2c-v2 .pj .pj-tags .rd-chip{display:inline-block;margin-right:8px;background:none;border:0;padding:0;border-radius:0;font-size:13px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-300);}
+.c2c-v2 .pj .pj-tags .rd-chip{display:inline;white-space:normal;overflow-wrap:anywhere;margin-right:8px;background:none;border:0;padding:0;border-radius:0;font-size:13px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-300);}
 .c2c-v2 .pj .pj-tags .rd-chip:not(:last-child)::after{content:"·";margin-left:8px;color:var(--text-500);}
 .c2c-v2 .pj .pj-tags .rd-chip.tone-ok{color:var(--success);}
 .c2c-v2 .pj .pj-tags .rd-chip.tone-warn{color:var(--warning);}
@@ -1356,9 +1356,6 @@
    panel, bounded so a large vault scrolls inside the section, not the page. */
 .c2c-v2 .pj-evidence .pf-search{padding:0 0 10px;border-bottom:none;}
 .c2c-v2 .pj-evidence .pf-list{max-height:480px;border:1px solid var(--border);border-radius:var(--radius-md);}
-.c2c-v2 .pj-map{display:flex;gap:18px;align-items:center;}
-.c2c-v2 .pj-map-ring{position:relative;flex-shrink:0;text-align:center;}
-.c2c-v2 .pj-map-ring-l{font-size:10px;color:var(--text-400);margin-top:2px;line-height:1.2;}
 .c2c-v2 .pj-mods{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0;}
 .c2c-v2 .pj-mod{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:6px 4px;}
 .c2c-v2 .pj-mod:hover .pj-mod-t{color:var(--accent-200);}
@@ -3975,6 +3972,42 @@
    one rule for both — whichever of D3 and this lands second drops its copy). */
 .c2c-v2 :is(.pj-main, [data-work-area]) .pj-sec{background:none;border:0;border-radius:0;padding:0;}
 .c2c-v2 :is(.pj-main, [data-work-area]) .pj-sec + .pj-sec{margin-top:32px;}
+/* The step bodies' rows (D3-4, D3.md §4.7, §4.12): separated by a hairline, not boxed; the title at the body size. */
+.c2c-v2 .pj-main .pj-files{display:flex;flex-direction:column;gap:0;}
+.c2c-v2 .pj-main .pj-file{padding:10px 0;border:0;border-bottom:1px solid var(--border-subtle);border-radius:0;background:none;}
+.c2c-v2 .pj-main .pj-file:last-child{border-bottom:0;}
+.c2c-v2 .pj-main .pj-file .pj-file-top{align-items:baseline;gap:12px;margin:0;}
+.c2c-v2 .pj-main .pj-file .pj-file-n{font-size:var(--fs-body);font-weight:500;line-height:1.4;color:var(--text-100);}
+.c2c-v2 .pj-main .pj-file .pj-file-m{margin-top:2px;font-size:var(--fs-small);color:var(--text-300);}
+/* Module completion's lead: the dossier's figure line and markets; the drawn ring is gone. */
+.c2c-v2 .pj-dossier-lead{display:flex;flex-direction:column;gap:4px;margin:0 0 16px;}
+.c2c-v2 .pj-dossier-k{display:flex;align-items:baseline;gap:8px;}
+.c2c-v2 .pj-dossier-k h3{margin:0;font-size:var(--fs-small);font-weight:500;color:var(--text-300);}
+.c2c-v2 .pj-dossier-lead [data-testid="pj-dossier-home"] > .pj-card-note:first-child{font-size:var(--fs-section);font-weight:500;color:var(--text-100);}
+.c2c-v2 .pj-main .pj-sec > .pj-more{margin-top:8px;}
+/* At a phone's width nothing on the project page is wider than the page (D3.md §6 item 14, walked 2026-11-08): a
+   long indication in the byline, a record's title in Project knowledge, and a door that names its job all wrap. */
+.c2c-v2 .pj-side .pj-act{flex-wrap:wrap;min-width:0;}
+.c2c-v2 .pj-side .pj-act-w{flex-shrink:1;min-width:0;overflow-wrap:anywhere;}
+/* At 390 a section's actions ran past the page's edge ("See every sequence in Submission Center" on the Submit step,
+   human test J1, 2026-11-06): on a phone the head wraps and its actions wrap under the heading, starting left.
+   Moved here from project-home-v2.css (2026-11-08), whose rules may not name this sheet's classes. */
+@media (max-width: 640px) {
+  .c2c-v2 .pj .pj-sec-h { flex-wrap: wrap; }
+  .c2c-v2 .pj .pj-sec-acts { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; max-width: 100%; }
+  .c2c-v2 .pj-main .pj-sec-acts { justify-content: flex-start; flex-basis: 100%; }
+  .c2c-v2 .pj-main .btn, .c2c-v2 .pj .pj-sec-acts > .btn { white-space: normal; max-width: 100%; text-align: left; }
+}
+/* New project's filing tabs (Pharma & Biotech, Medical Devices, Diagnostics & IVD, Cross-Cutting Documents) are 661px
+   wide; at 390 the last two were cut off, so a diagnostics company could not open its own tab on a phone (human test
+   J1, 2026-11-06). The row scrolls sideways in place. Moved here from project-home-v2.css (2026-11-08). */
+.c2c-v2 .npw .rpk-tabs { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.c2c-v2 .npw .rpk-tabs > * { flex-shrink: 0; }
+/* A module row says its name and its count in full, on its own line above the bar (walked 2026-11-08: a 104px
+   ellipsis cut "Module 1 · Administrative · 0 of 13 approved or locked" to "Module 1 · Admin…", so the count was
+   only in the row's accessible name). */
+.c2c-v2 .pj-main .pj-lmod{flex-wrap:wrap;row-gap:6px;}
+.c2c-v2 .pj-main .pj-lmod-t{flex:1 1 100%;width:auto;white-space:normal;overflow:visible;font-size:var(--fs-small);}
 .c2c-v2 [data-work-area] .pj-sec > .reg-tbl{margin:0;}
 /* The section's lead: heading and count together, actions right. `.pj-sec-h`
    is space-between, which with three children strands the count in the middle. */

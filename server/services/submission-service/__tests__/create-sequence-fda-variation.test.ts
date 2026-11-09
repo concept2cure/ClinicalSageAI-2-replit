@@ -12,7 +12,13 @@ vi.mock('../../../db', () => {
   const chain = { values: () => chain, returning: async () => { h.insert(); return [{ id: 9, type: 'variation' }]; } };
   const select = () => ({ from: () => ({ where: () => ({ limit: async () => [{ id: 1, organizationId: 7, primaryRegion: h.primaryRegion }] }) }) });
   // execute: the declaration of sequences filed elsewhere, read by createSequence (D7, 2026-10-29): none here.
-  return { db: { insert: () => chain, select, execute: async () => ({ rows: [] }) }, pool: {} };
+  // Since F1 repair A (2026-11-08) it runs in a transaction that locks the submission row first.
+  const textOf = (q: any): string =>
+    (q?.queryChunks ?? []).map((c: any) => (Array.isArray(c?.value) ? c.value.join('') : c?.queryChunks ? textOf(c) : '')).join('');
+  const execute = async (q: unknown) => ({ rows: /FROM submissions/.test(textOf(q)) ? [{ program_id: null }] : [] });
+  const db: Record<string, unknown> = { insert: () => chain, select, execute };
+  db.transaction = async (fn: (tx: unknown) => Promise<unknown>) => fn(db);
+  return { db, pool: {} };
 });
 vi.mock('../../audit/audit-write-outcome', () => ({ recordAuditRow: vi.fn(async () => ({ ok: true })) }));
 

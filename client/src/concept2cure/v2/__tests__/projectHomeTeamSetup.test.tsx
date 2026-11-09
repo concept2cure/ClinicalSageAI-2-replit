@@ -247,7 +247,7 @@ describe('one read, several readers (D3-2b)', () => {
     serveAll(); render(<ProjectHome {...props} />);
     const card = await screen.findByRole('region', { name: 'Team' });
     await within(card).findByText('2 open · next due Jan 5, 2020');
-    for (const label of ['Plan', 'Review', 'Respond', 'Plan', 'Review']) step(label);
+    for (const label of ['Plan', 'Review', 'Respond', 'Review', 'Plan']) step(label);
     await screen.findByRole('region', { name: 'Tasks and approvals' });
     expect(calls(WORK_URL)).toBe(1);
     expect(calls(COMMS_URL)).toBe(1);
@@ -261,6 +261,10 @@ describe('one read, several readers (D3-2b)', () => {
     expect(request.mock.calls.some(([, path]) => path === COMMIT_URL)).toBe(true);
     fireEvent.click(row);
     await waitFor(() => expect(document.querySelector('.pj-lc-stage[aria-current="step"]')?.textContent?.trim()).toBe('Respond'));
+    /* D3-4: Respond lists the same commitments, from the same read (D3.md §4.10). */
+    const listed = await screen.findByRole('region', { name: 'Commitments to the agency' });
+    for (const id of [1, 2, 3]) expect(listed.textContent).toContain(`Commitment ${id}`);
+    expect(request.mock.calls.filter(([, path]) => path === COMMIT_URL)).toHaveLength(1);
   });
 
   it('a commitments read that failed says so, never "None open"', async () => {

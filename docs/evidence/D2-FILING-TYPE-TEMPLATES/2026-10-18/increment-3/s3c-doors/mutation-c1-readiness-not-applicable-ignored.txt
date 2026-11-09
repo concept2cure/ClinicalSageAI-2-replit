@@ -1,0 +1,8 @@
+MUTATION c1-readiness-not-applicable-ignored in client/src/concept2cure/v2/surfaces/EctdCompile.tsx (on the final code and tests, 2026-11-08T22:36:53.064339Z): replaced [    if (notApplicable) { setStatus(null); setStatusNote(notApplicable); setStatusState('not_applicable'); return; }] with []
+ × client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > a project that is not an application is not compiled as an eCTD sequence > the readiness card says so and gives the reason, never a failed read 5082ms
+ × client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > a project that is not an application is not compiled as an eCTD sequence > validation says the reason, not an HTTP status 5030ms
+      Tests  2 failed | 5 skipped (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > a project that is not an application is not compiled as an eCTD sequence > the readiness card says so and gives the reason, never a failed read
+ FAIL  client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > a project that is not an application is not compiled as an eCTD sequence > validation says the reason, not an HTTP status
+restored sha256 fe41e1bc3479c449dcac6103d53e1f6d415ef963d271aff4d8ee493d95fa3937 (expected fe41e1bc3479c449dcac6103d53e1f6d415ef963d271aff4d8ee493d95fa3937)

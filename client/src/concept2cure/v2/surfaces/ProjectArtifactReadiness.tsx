@@ -79,9 +79,11 @@ export function ArtifactSectionStatus({ read }: { read: DossierState }) {
       </div>
     </>;
   }
-  return <section className="pj-sec" aria-labelledby={heading}>
-    <div className="pj-sec-h"><h2 id={heading}>Artifact section status</h2></div>
-    <p className="pj-card-note">Each section shows its weakest recorded artifact state. Unknown states remain not assessed. These artifact states are separate from document-section completion and do not establish filing readiness.</p>
-    {body}
-  </section>;
+  return <details className="pj-more" data-testid="pj-artifact-status">
+    <summary id={heading}>Artifact section status</summary>
+    <section aria-labelledby={heading}>
+      <p className="pj-card-note">Each section shows its weakest recorded artifact state. Unknown states remain not assessed. These artifact states are separate from document-section completion and do not establish filing readiness.</p>
+      {body}
+    </section>
+  </details>;
 }

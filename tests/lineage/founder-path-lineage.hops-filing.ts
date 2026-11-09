@@ -240,7 +240,8 @@ async function freezeDispatchTransmit(w: World): Promise<request.Response> {
     const s = await as(4)(request(w.app).post('/api/c2c/actions/sign')).send({
       target: `ectd-sequence:${seqId}`,
       reason: `Approved for ${intent}: the C2C-101 IND original sequence is complete.`,
-      payload: { intent, meaning: 'approval' },
+      // A transmit signature names the environment it is given for (F1, row D7, 2026-11-08).
+      payload: { intent, meaning: 'approval', ...(intent === 'transmit' ? { environment: 'staging' } : {}) },
       reauth: { password: PASSWORD },
     });
     expect(s.status, JSON.stringify(s.body)).toBe(200);

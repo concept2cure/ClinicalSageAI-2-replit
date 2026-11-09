@@ -1,0 +1,23 @@
+# ci:purge-coverage with the fix, same database, against HEAD's baseline (docs/reports/purge-coverage-baseline.json unchanged)
+✅ purge-coverage: no foreign key stops the purge part-way (3 from tables it does not erase, each named).
+✅ purge-coverage: 452 org-keyed tables outside the purge reach (baseline 468, new 0, 16 now covered).
+   Newly covered — re-run with --write-baseline to lock the gain in:
+     coauthor_import_history
+     coauthor_status_history
+     compliance_review_records
+     csr_extraction_log
+     document_audit_log
+     document_folders
+     indemnification_attestations
+     knowledge_graph_edges
+     knowledge_graph_nodes
+     lumen_knowledge_graph_edges
+     qmp_audit_trail
+     reg_responses
+     report_atom_provenance
+     report_seal_events
+     simple_documents
+     tenant_export_receipts
+exit: 0
+# ci:purge-coverage:selftest
+[ci:purge-coverage:selftest] 59 passed — the gate fails on what it exists to catch.

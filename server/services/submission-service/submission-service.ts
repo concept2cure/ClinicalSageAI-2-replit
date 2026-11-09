@@ -93,6 +93,7 @@ import {
 import { isWaivableShadowReviewFailure } from '../../../shared/constants/shadow-review-failure';
 import { isSameSubmissionType, resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge';
 import { cespChannelRefusal } from '../submission-gateways/ema-cesp';
+import { ENVIRONMENT_WORDS } from '../submission-gateways/governed-transmit-checks';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
 import {
   packageIdentityRefusal, readSubmissionPackageIdentity, lockSubmissionPackageIdentity, lockRecordedPackageIdentity,
@@ -711,23 +712,45 @@ export async function createSequence(
   // does not get one past. The reason is the market verdict's.
   const refused = sequenceTypeRefusal(input.region, input.type) ?? sequenceTypeRefusal(parent.primaryRegion, input.type);
   if (refused) throw new SubmissionError('VALIDATION', refused);
-  // Sequences declared filed outside the platform (filed-sequence-baseline.ts):
-  // their numbers are taken, and one of them opened the Original Application.
-  const baseline = await readCurrentFiledBaseline(queryableFromDrizzle(db), ctx.organizationId, input.submissionId);
-  const filedElsewhere = sequenceCreationRefusal(baseline, input.region, input);
-  if (filedElsewhere) throw new SubmissionError('INVALID_STATE', filedElsewhere);
-  const [row] = await db
-    .insert(ectdSequences)
-    .values({
-      submissionId: input.submissionId,
-      region: input.region,
-      sequenceNumber: input.sequenceNumber,
-      type: input.type ?? 'original',
-      status: 'draft',
-      organizationId: ctx.organizationId,
-      createdBy: ctx.userId,
-    })
-    .returning();
+  // F1 repair A (2026-11-08): under the submission's row lock, so two creates
+  // of one number in flight together cannot both pass the checks below.
+  const row = await db.transaction(async (tx) => {
+    const q = queryableFromDrizzle(tx);
+    const locked = await lockSubmissionPackageIdentity(q, ctx.organizationId, input.submissionId, { forUpdate: true });
+    if (!locked) throw new SubmissionError('NOT_FOUND', 'Submission not found for this organization.');
+    // Sequences declared filed outside the platform (filed-sequence-baseline.ts):
+    // their numbers are taken, and one of them opened the Original Application.
+    const baseline = await readCurrentFiledBaseline(q, ctx.organizationId, input.submissionId);
+    const filedElsewhere = sequenceCreationRefusal(baseline, input.region, input);
+    if (filedElsewhere) throw new SubmissionError('INVALID_STATE', filedElsewhere);
+    // A number a live sequence of this submission and region holds is used once.
+    // The filed fold joins compiles to sequences by number, so a second live 0000
+    // would corrupt what the agency is read to hold (row D7). A removed sequence
+    // holds no number. No unique index: a deployed tenant may already hold
+    // duplicates (RULE 1), and the evidence carries the query that finds them.
+    const taken = await q.query(
+      `SELECT 1 FROM ectd_sequences WHERE submission_id = $1 AND organization_id = $2 AND region = $3
+          AND sequence_number = $4 AND deleted_at IS NULL LIMIT 1`,
+      [input.submissionId, ctx.organizationId, input.region, input.sequenceNumber],
+    );
+    if (taken.rows.length > 0) {
+      throw new SubmissionError('INVALID_STATE',
+        `Sequence ${input.sequenceNumber} already exists in this submission. A sequence number is used once. Nothing was created.`);
+    }
+    const [inserted] = await tx
+      .insert(ectdSequences)
+      .values({
+        submissionId: input.submissionId,
+        region: input.region,
+        sequenceNumber: input.sequenceNumber,
+        type: input.type ?? 'original',
+        status: 'draft',
+        organizationId: ctx.organizationId,
+        createdBy: ctx.userId,
+      })
+      .returning();
+    return inserted;
+  });
   // Part 11 §11.10(e). The INSERT above is committed before this runs; a failed
   // audit write never deletes the sequence (a filing's sequence numbering is
   // regulatory state — removing a created sequence to make its log row's absence
@@ -832,6 +855,9 @@ export async function transitionSequence(
         eq(ectdSequences.id, id),
         eq(ectdSequences.organizationId, ctx.organizationId),
         eq(ectdSequences.status, seq.status),
+        // A sequence removed while this transition was in flight does not move
+        // (F1 repair A, 2026-11-08); it is the lost compare-and-set below.
+        isNull(ectdSequences.deletedAt),
       ),
     )
     .returning();
@@ -972,6 +998,25 @@ const INTENT_MEANING_REFUSAL: Partial<Record<SequenceSignatureIntent, (meaning: 
 
 /** Why a signature's payload does not authorize this particular request, or null (P-35: which finding, closed how). */
 type SignaturePayloadRefusal = (payload: Record<string, unknown> | null) => string | null;
+
+/**
+ * Why a transmit signature does not authorize a send to `environment`, or null
+ * (F1, row D7, 2026-11-08). A send to the agency's test environment and a
+ * filing in its production environment are different acts with different
+ * meanings (21 CFR 11.50, 11.70), and the signing dialog says which it signs.
+ * The signature names the one it was given for; one that names none, or
+ * another, never authorizes this send. Signatures recorded before this carried
+ * no environment and are refused: each is single-use, and a fresh one is signed.
+ */
+function transmitEnvironmentRefusal(payload: Record<string, unknown> | null, environment: 'staging' | 'production'): string | null {
+  const signed = payload?.environment;
+  if (signed === environment) return null;
+  const wanted = ENVIRONMENT_WORDS[environment];
+  if (signed !== 'staging' && signed !== 'production') {
+    return `the signature does not name where the package goes; a transmit signature names its environment, so sign again for a send to ${wanted}`;
+  }
+  return `this signature was given for a send to ${ENVIRONMENT_WORDS[signed]}, not to ${wanted}; sign again for this send`;
+}
 
 /**
  * Why a recorded governed `sign` action does not authorize `step` on `target`
@@ -2955,13 +3000,16 @@ async function transmitDispatchedSequence(
   const numberRefusal = transmitApplicationNumberRefusal(applicationId, identity.applicationNumber);
   if (numberRefusal) throw numberRefusal;
 
-  // Gate 1 — Part 11 e-signature on this sequence, for transmit, by this actor.
+  // Gate 1 — Part 11 e-signature on this sequence, for transmit, by this actor,
+  // for a send to THIS environment (F1, row D7, 2026-11-08).
   const target = `ectd-sequence:${sequenceId}`;
-  const verdict = await governedSignatureVerdict(signatureActionId, target, ctx, 'transmit');
+  const verdict = await governedSignatureVerdict(signatureActionId, target, ctx, 'transmit',
+    (payload) => transmitEnvironmentRefusal(payload, checked.environment));
   if (verdict.refusal !== null) {
     throw new SubmissionError(
       'GOVERNED_REQUIRED',
-      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign with intent 'transmit', then pass its actionId. Refused: ${verdict.refusal}.`
+      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign with intent 'transmit' and the environment ` +
+        `'${checked.environment}' in its payload, then pass its actionId. Refused: ${verdict.refusal}.`
     );
   }
 

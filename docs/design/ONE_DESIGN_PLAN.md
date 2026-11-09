@@ -1399,6 +1399,35 @@ first.
    and Respond use the calm section pattern, and Respond lists Commitments from the page's one read. This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
    Module completion without the ring.
 
+#### D3 — The project page, D3-4 (session `session_01FTWcmXm7At3ZXBE5VWn6oS`, from 2026-11-08, P-107 item 7)
+
+- **D3-4, the step bodies**, `d50c5f07e`, `docs/evidence/DESIGN/D3/D3-4/`. It completes the six items of the
+  hand-off by path; nothing new.
+  - Plan holds the one Tasks and approvals, by due date, with the status in words. A Tasks handoff opens Plan.
+  - Evidence gains Protocol from the lifted records read.
+  - Author's Module completion is led by the figure line, with no ring.
+  - Submit's doors are small, and "Add a market" is ghost.
+  - Respond lists the commitments to the agency, and its Fulfil opens the existing dialog.
+- 36 cases were red on trunk's source and are green. 918 of 919 project tests pass; the failure is trunk's own
+  `projectHomeStageCss`.
+- D3 §6 was walked whole in the running app: C2C-101 and the NeuroPanel-Dx 510(k), at 1440 and 390, light and dark,
+  every step, with no failed request.
+- The walk found and fixed:
+  - a Tasks handoff dropped under React.StrictMode;
+  - module rows whose count was cut off;
+  - overflow and sub-44px touch targets at 390;
+  - the Filing card's broken label.
+- Also fixed in D3's tests, both red on trunk: the Vault-door tests now follow the founder's `5144702d21`, and a
+  biotech-plan fixture follows `3d9879dfc`.
+- **Found, for other owners** (COORDINATION.md row):
+  - `install-fresh.mjs` refuses `ctd_cross_references` (no RLS policy);
+  - the demo seed writes the Lumen pack's GMP deviations into other projects' data rooms;
+  - `AgencyInbox.tsx`'s orange draft button;
+  - `TaskBoard.tsx`'s `stage: 'review'`;
+  - the `documents` alias still sends a no-project visit to Projects.
+
+**Next:** S12, work projects (P-83, §1c), in the same files.
+
 #### F1 — saved conversation handoffs (Codex continuation, 2026-11-06)
 
 **Delivered**
@@ -1571,6 +1600,29 @@ no screen, route, service, table or component file.
     replay and drop-safety work, shown red first. It is not started, because the coordinator's file hold can't be
     asked for while it is unavailable.
   - Re-walk Reporting in the running app at the current head. The ProjectBack switch has jsdom evidence only.
+- **Update, 2026-11-08 (later the same day):**
+  - **C-3 landed** (`Plan: L1`, P-91): `aadca02cc7` and `17315d82fd`, with evidence
+    `docs/evidence/L1-C3-REPORT-BUNDLE-REGISTER/2026-11-08/`.
+    - `public.report_bundles`, `report_bundle_runs` and `report_bundle_projects` replace the `bundle:<uuid>`
+      memory path, which is deleted.
+    - A blank database built by install-fresh plus deploy-migrate applies it twice, and
+      `tests/db/report-pack-export.dbtest.ts` passes 8 of 8 as `app_service`.
+    - **Missed, and fixed by the coordinator:** the three tables were not in the tenant purge list
+      (`PURGE_CHILD_TABLES`), so `ci:purge-coverage` went red. The fix is `360d4de53d`, pushing at the time of
+      writing. A new org-keyed table goes into that list in the same commit, and `ci:purge-coverage` is run on a
+      blank database before the push.
+  - **Running-app re-walk** (`aaec73f581`, `docs/evidence/DESIGN/D7/2026-11-08-reporting-rewalk/`). The shared
+    back link and the Bundles tab hold. It **found** the page saying "4 critical gaps outstanding" beside a digest
+    that said 23. That is fixed in `c37e5c8f6b` (F1, red first): the orchestrator cut the critical list to four
+    before it was counted. All 24 captures at `c9e45ef009` pass.
+  - **Two stale tests, red on trunk since `98661f418b`** (the assurance pack gained an engine):
+    - `b29a5b1d66`, suggestion-service;
+    - `e67f9fe798`, insights-canvas-catalog.
+
+    Each is shown red with the engine removed.
+  - **Next:**
+    - Nothing open in D7-D's steps.
+    - The Bundles screen's "Choose legal companions for ZIP" is reached but was not walked to an export.
 
 #### L1 (rows D7, D6) — prior filings read back as filed state, and archive names checked where they are read (session `session_01Gx2fiwvxaXi6mQgddPqMaG`, 2026-11-01 to 2026-11-02)
 
@@ -1724,11 +1776,34 @@ route, service, table or AnA tool; one file was split and one shared component a
    installed zod 3.25.76 while the lockfile said 4.6.7 (`76adba84d`). `npm ci` fixed it; the repository was never
    broken. 1,714 server and 374 client CMC/biostat tests pass at `bc5a34030`.
 
-**What is next.** Roadmap phase 4 (CMC / Module 3) acceptance under S7/S12: fixture batch/stability tables matching
-expected cells, OOS flagged explicitly, QOS and Module 3 sharing atoms and method references, with the P-28
-small-molecule US-IND boundary unchanged. Then the D0 refused-read rule in `CmcModule.tsx` (13 sites, the most of any
-screen in `docs/evidence/D0/2026-11-06-refused-read-one-rule/03-adoption-list.txt`), and J5-13 — the biotech demo is a
-monoclonal antibody, so Module 3 build is correctly refused there and the demo cannot show it.
+**Continued 2026-11-08/09 — found item 1 fixed, and roadmap phase 4 accepted.**
+
+| Slice | Commit / evidence | Verification and limit |
+|---|---|---|
+| F1 — the method gate the screen promised (found item 1 above) | `7092a0b80`; `docs/evidence/F1/2026-11-08-specification-method-gate/` | `POST /api/cmc/specifications/:id/approve` now refuses a limit whose analytical procedure is not shown fit, **before** the signer's password. `specificationMethodVerdict` refuses only what it knows is unfit: `METHOD_NOT_NAMED`, `METHOD_NOT_FIT` (a status in neither `METHOD_VALIDATED` nor `METHOD_SUITABLE`, named with its status), `METHOD_NOT_IN_REGISTER`, `METHOD_NOT_VERIFIABLE` (an unreadable register is an outage, not the signer's data being wrong). The ICH Q2 vocabulary moved to the module that owns the field it reads, so the Q2 check and the approval gate cannot disagree about what "validated" means. Two screen strings corrected: the banner counted "no validated method" over a condition that is "no method recorded". Shown red on the route with the gate removed — **all three refusals returned 200**, the defect exactly as shipped. |
+| F1 — the ceremony stays at the signed write | in `7092a0b80` | `ci:sign-ceremony` refused two attempts to extract the approve handler's preamble, and it was right to: `checkSigningAuthority` and `verifyReauth` are both in the handler, authority first, with only the approvability read extracted. Two tests pin the order a status code cannot — the approvability check back inside the transaction still answers 409, and authority after the password still answers 403; only those assertions go red. The complexity the extraction was buying came from naming the handler's tenant read instead (`signingTenantOf`, which keeps this route's deliberate `Number()`-not-`parseInt` reading: a malformed tenant `'7abc'` is refused, not read as tenant 7). |
+| S7 — the 2.3 cites Module 3's records and procedures (phase 4 clause 3) | `05adc9e78`; `docs/evidence/S7/2026-11-08-qos-shares-module3-atoms/` | `ComposedSection` carries the atoms (`lineage`) and the `method` register rows (`structuredPayload.sourceObjects`); the QOS builder received the sections and dropped both, keeping only `inputSectionKeys`, which names sections rather than records. So a figure in 3.2 could be traced and the same figure in 2.3 could not, and the QOS closed with "Full data and analytical methods are provided in Module 3" — printed whether or not a procedure was recorded, naming none, while the composed *Analytical Methods* table reached the 2.3 by no route at all. Both are now **derived from the sections the builder is given, never read again**, so the 2.3's records are the 3.2's by construction; `loadProjectAnalyticalMethods` was deliberately not used, because two reads that agree today are two sources of truth. Six mutations, including the two shipped rules themselves. |
+| S7 — phase 4's acceptance fixture (clauses 1, 2 and 4) | `6e7ed6073`; `docs/evidence/S7/2026-11-08-phase4-acceptance-fixture/` | One named small-molecule US IND, payloads built by the **real write-through mappers**, with every cell of both batch and both stability tables asserted whole-table by equality. OOS is flagged in the tables (`declared pass — the recorded result is OUTSIDE its recorded acceptance criterion`; `out of specification (computed)`; `OUTSIDE`) and in all four narratives, which count the comparisons, name the failing point, withhold the stability conclusion, file the 24-month claim as unsigned, and decline to report a trend from three points. The QOS shares that fixture's eleven atoms and its one procedure under both headings. The P-28 boundary is admitted once and refused four ways. Five mutations red. |
+
+**Found, 2026-11-08/09.**
+5. **A hand-written canonical payload is not what the registers write.** The acceptance fixture's first draft recorded
+   `storageCondition` and `timePoints` directly and §3.2.S.7 came back 0% complete, missing
+   `drugSubstanceTimePoints` and `drugSubstanceStorageCondition` — side-scoped keys only `mapStabilityPayload` emits,
+   and only for a study whose recorded scope covers that side. Every fixture payload now goes through the real
+   mapper, so a mapper that stops emitting a key fails the acceptance run too.
+6. **A reference-standard qualification is excluded from the batch series twice**, at the write
+   (`mapQcTestingPayload` stores `isBatchAnalysis: false`) and at the read (`isBatchAnalysisFor`'s vocabulary check).
+   Either alone suffices for this fixture, so removing only the read-time check leaves the acceptance run green. The
+   read-time check governs rows written before the write-time rule existed, so both are kept; recorded rather than
+   presented as a passing mutation.
+
+**What is next.** The D0 refused-read rule in `CmcModule.tsx` (13 sites, the most of any screen in
+`docs/evidence/D0/2026-11-06-refused-read-one-rule/03-adoption-list.txt`); S12, work projects and their deliverables
+mapped downstream with lineage and change flags (P-83); and J5-13 — the biotech demo is a monoclonal antibody, so
+Module 3 build is correctly refused there and the demo cannot show it, which a small-molecule demo project would.
+**Open for the founder:** the free-text spec → method → result chain (found item 2 above), written up with options in
+`docs/evidence/F1/2026-11-08-specification-method-gate/`; the recommendation is to reference the register row by id,
+which is additive and needs no backfill to be correct.
 
 ## 4. How everyone works
 

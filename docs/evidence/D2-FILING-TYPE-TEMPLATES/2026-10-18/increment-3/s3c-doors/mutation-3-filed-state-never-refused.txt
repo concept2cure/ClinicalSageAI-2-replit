@@ -1,0 +1,12 @@
+MUTATION 3-filed-state-never-refused in server/routes/ectd-compile.ts (on the final code and tests, 2026-11-08T22:32:12.850173Z): replaced [  if (notApplicable) {
+    try {] with [  if (notApplicable && false) {
+    try {]
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'csr' with no dispatched sequence: the filed state is refused with the class sentence 7ms
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'pas' with no dispatched sequence: the filed state is refused with the class sentence 1ms
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'csr' with a dispatched sequence: what is on file is read, from the submission that holds it 2ms
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'pas' with a dispatched sequence: what is on file is read, from the submission that holds it 1ms
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > 'shonin' with a dispatched sequence: what is on file is read, from the submission that holds it 1ms
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > a project that already filed keeps its filed state (P-97) > a failed read of whether the project filed is a failure, never a refusal or an empty answer 1ms
+      Tests  6 failed | 12 skipped (18)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 c9014c2134604cc6775bf3e595ef81262501b8d25da32ea40e32c7f8329ea4b8 (expected c9014c2134604cc6775bf3e595ef81262501b8d25da32ea40e32c7f8329ea4b8)

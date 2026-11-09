@@ -4,7 +4,25 @@
  */
 import React from 'react';
 import { I } from '../icons';
-import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
+import { PJ_LIFECYCLE, type LifecycleStage } from '../fixtures/project-home-data';
+
+/** The same steps as a device or diagnostic filing words them: its own blurbs for Author and Submit, its "now" lines
+ *  and its suggestions. A lifecycle definition the page uses, so it lives with the steps, not under fixtures/ (moved
+ *  2026-11-08: ci:launch-scope found ProjectHome importing it from fixtures/ with no allowlist reason). */
+export const PJ_LIFECYCLE_DEVICE: LifecycleStage[] = PJ_LIFECYCLE.map((item) => {
+  const device = { ...item, now: item.nowDevice ?? item.now, starter: item.starterDevice ?? item.starter };
+  if (item.id === 'author') return { ...device, blurb: 'Author filing documents from the project’s device or diagnostic evidence' };
+  if (item.id === 'submit') return { ...device, blurb: 'Assemble eSTAR or the applicable technical documentation' };
+  return device;
+});
+
+/** The two wordings of the steps, by the filing's track. A choice between two definitions, not a fallback. */
+const LIFECYCLES: Record<'device' | 'medicinal', LifecycleStage[]> = { device: PJ_LIFECYCLE_DEVICE, medicinal: PJ_LIFECYCLE };
+
+/** The steps a project's filing has: a device or diagnostic filing's wording, or the medicinal one. */
+export function lifecycleFor(deviceFiling: boolean): LifecycleStage[] {
+  return LIFECYCLES[deviceFiling ? 'device' : 'medicinal'];
+}
 
 /* ════ Lifecycle (canonical stage catalog — not data) ════
    The tracker is navigation over the stage catalog, not a progress meter.

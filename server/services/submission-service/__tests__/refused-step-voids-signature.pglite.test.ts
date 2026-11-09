@@ -260,7 +260,7 @@ describe('a refused freeze voids the signature given for it', () => {
 describe('a transmit that sent nothing voids the signature given for it', () => {
   it('with no gateway credentials nothing is sent and the signature is void; once credentials exist it is refused, and a fresh one transmits', async () => {
     holder.gw = { configured: false, sent: [] };
-    const given = await sign(61, 'transmit');
+    const given = await sign(61, 'transmit', 'approval', { environment: 'staging' });
     const notSent = await transmitSequence({ sequenceId: 61, ctx, signatureActionId: given, environment: 'staging', applicationId: '000061' });
     expect(notSent).toMatchObject({ transmitted: false, reason: 'gateway_not_configured' });
 
@@ -276,7 +276,7 @@ describe('a transmit that sent nothing voids the signature given for it', () => 
     expect((await rowsNaming(given)).filter(r => r.action === 'GOVERNED_SIGNATURE_VOIDED')).toHaveLength(1);
     expect((await rowsNaming(given)).filter(r => r.action === 'TRANSMIT_BLOCKED')).toHaveLength(2);
 
-    const fresh = await sign(61, 'transmit');
+    const fresh = await sign(61, 'transmit', 'approval', { environment: 'staging' });
     const sent = await transmitSequence({ sequenceId: 61, ctx, signatureActionId: fresh, environment: 'staging', applicationId: '000061' });
     // F1 (D7): sent to the agency's test environment, so not filed: the
     // sequence stays 'pending' and can still be filed with the agency.
@@ -290,7 +290,7 @@ describe('a transmit that sent nothing voids the signature given for it', () => 
 /** Real ledger + canonical signature persistence, with explicitly fixture-only authentication. */
 async function approveFixturePackage(sequenceId: number): Promise<string> {
   const q = { query: (text: string, params?: unknown[]) => h.pglite.query(text, params) as Promise<{ rows: any[] }> };
-  const target = `ectd-sequence:${sequenceId}`, payload = { meaning: 'approval', intent: 'transmit' };
+  const target = `ectd-sequence:${sequenceId}`, payload = { meaning: 'approval', intent: 'transmit', environment: 'staging' };
   await q.query('BEGIN');
   try {
     const ledger = await recordGovernedAction(q, { orgId: ORG, userId: USER, command: 'sign', target,
@@ -365,7 +365,7 @@ describe('transmit checks the typed application number against the program recor
 
   it('a contradicting number is refused 409, nothing is sent, and its signature is void; the recorded number transmits', async () => {
     holder.gw = { configured: true, sent: [] };
-    const given = await sign(62, 'transmit');
+    const given = await sign(62, 'transmit', 'approval', { environment: 'staging' });
     const refused = await outcome(transmitSequence({ sequenceId: 62, ctx, signatureActionId: given, environment: 'staging', applicationId: '999999' }));
     expect(refused, 'transmit sent a package under a number the program record contradicts').toMatchObject({
       code: 'APPLICATION_NUMBER_MISMATCH',
@@ -375,7 +375,7 @@ describe('transmit checks the typed application number against the program recor
     expect(await signatureRow(given)).toEqual({ is_valid: false, verification_status: 'voided' });
     expect((await statusOf(62)).dispatch_status).toBe('pending');
 
-    const fresh = await sign(62, 'transmit');
+    const fresh = await sign(62, 'transmit', 'approval', { environment: 'staging' });
     const sent = await transmitSequence({ sequenceId: 62, ctx, signatureActionId: fresh, environment: 'staging', applicationId: ' 123456 ' });
     expect(sent).toMatchObject({ transmitted: true });
     expect(holder.gw.sent).toEqual([expect.objectContaining({ applicationId: '123456' })]);
@@ -391,7 +391,7 @@ describe('transmit names the applicant and the application from the record', () 
   it('the package sent names the organisation as the applicant, never a placeholder', async () => {
     holder.gw = { configured: true, sent: [] };
     holder.applicants = [];
-    const given = await sign(66, 'transmit');
+    const given = await sign(66, 'transmit', 'approval', { environment: 'staging' });
     const sent = await transmitSequence({ sequenceId: 66, ctx, signatureActionId: given, environment: 'staging', applicationId: '123456' });
     expect(sent).toMatchObject({ transmitted: true });
     expect(holder.applicants).toEqual([SPONSOR]);
@@ -405,7 +405,7 @@ describe('transmit names the applicant and the application from the record', () 
     const pre = await precheckGovernedStep(seqId, 'transmit', ctx, { environment: 'staging', applicationId: 'IND-000064' });
     expect(pre.cleared).toBe(false);
     expect(pre.refusal).toMatch(says);
-    const given = await sign(seqId, 'transmit');
+    const given = await sign(seqId, 'transmit', 'approval', { environment: 'staging' });
     const refused = await outcome(
       transmitSequence({ sequenceId: seqId, ctx, signatureActionId: given, environment: 'staging', applicationId: 'IND-000064' }),
     );
@@ -440,7 +440,7 @@ describe("a send to the agency's test environment is not a filing (F1, D7)", () 
   it('a staging send leaves 0000 unfiled to every reader; a fresh signature files it in production, and the fold reads that send', async () => {
     holder.realGuard = true;
     const wire = stubEsgGateway();
-    const testSig = await sign(167, 'transmit');
+    const testSig = await sign(167, 'transmit', 'approval', { environment: 'staging' });
     const test = await transmitTo(167, testSig, 'staging');
     expect(test).toMatchObject({ transmitted: true, dispatchStatus: 'pending' });
     const [testRow] = await transmittalsOf(167);
@@ -460,7 +460,8 @@ describe("a send to the agency's test environment is not a filing (F1, D7)", () 
 
     // The test send spent its signature (P-23): it serves no filing.
     const reused = await outcome(transmitTo(167, testSig, 'production'));
-    expect(reused).toMatchObject({ code: 'GOVERNED_REQUIRED', message: expect.stringMatching(/already authorized a governed transition/) });
+    // Given for a send to the test environment, it never authorizes a filing (F1, row D7, 2026-11-08).
+    expect(reused).toMatchObject({ code: 'GOVERNED_REQUIRED', message: expect.stringMatching(/a send to the agency's test environment, not to the agency's production environment; sign again/) });
     expect(wire).toHaveBeenCalledTimes(1);
 
     // The test send's record is made to differ, so which send the fold reads is visible.
@@ -468,7 +469,7 @@ describe("a send to the agency's test environment is not a filing (F1, D7)", () 
       testRow.id, JSON.stringify([{ ctdSection: '2.4', fileName: 'test-only.pdf', href: '0000/m2/24-nonclin-over/test-only.pdf', md5: 'f'.repeat(32), operation: 'new' }]),
     ]);
 
-    const filingSig = await sign(167, 'transmit');
+    const filingSig = await sign(167, 'transmit', 'approval', { environment: 'production' });
     const filing = await transmitTo(167, filingSig, 'production');
     expect(filing, 'the production send of a sequence that went to the test environment was refused').toMatchObject({ transmitted: true, dispatchStatus: 'sent' });
     const rows = await transmittalsOf(167);
@@ -509,7 +510,7 @@ describe("a send that fails after the wire: a test send holds nothing, a product
   it('a staging send that fails after the wire releases the claim and voids its signature; a fresh one files in production', async () => {
     holder.realGuard = true;
     stubEsgGateway('fails after the wire');
-    const testSig = await sign(169, 'transmit');
+    const testSig = await sign(169, 'transmit', 'approval', { environment: 'staging' });
     const failed = await outcome(transmitTo(169, testSig, 'staging'));
     expect(failed).toBeInstanceOf(GatewayError);
     // Released, not held: nothing a test environment holds is a filing.
@@ -534,10 +535,10 @@ describe("a send that fails after the wire: a test send holds nothing, a product
     const wire = stubEsgGateway();
     const reused = await outcome(transmitTo(169, testSig, 'production'));
     expect(reused, 'a test send signature was accepted for a filing').toMatchObject({
-      code: 'GOVERNED_REQUIRED', message: expect.stringMatching(/given for a transmit the server refused, so it is void/),
+      code: 'GOVERNED_REQUIRED', message: expect.stringMatching(/given for a send to the agency's test environment, not to the agency's production environment/),
     });
     expect(wire).not.toHaveBeenCalled();
-    const filingSig = await sign(169, 'transmit');
+    const filingSig = await sign(169, 'transmit', 'approval', { environment: 'production' });
     expect(await transmitTo(169, filingSig, 'production')).toMatchObject({ transmitted: true, dispatchStatus: 'sent' });
     expect((await claimOf(169)).dispatch_status).toBe('sent');
   }, 120_000);
@@ -545,7 +546,7 @@ describe("a send that fails after the wire: a test send holds nothing, a product
   it('a production send that fails after the wire still holds the claim, and its signature is not voided', async () => {
     holder.realGuard = true;
     stubEsgGateway('fails after the wire');
-    const filingSig = await sign(170, 'transmit');
+    const filingSig = await sign(170, 'transmit', 'approval', { environment: 'production' });
     const failed = await outcome(transmitTo(170, filingSig, 'production'));
     expect(failed).toBeInstanceOf(GatewayError);
     expect(failed.message).not.toMatch(/test environment|now void/);
@@ -564,7 +565,7 @@ describe('a test send whose void or record fails: the claim is released only onc
   it('a staging send that fails after the wire, whose signature cannot be voided, keeps its claim; that signature never files it', async () => {
     holder.realGuard = true;
     stubEsgGateway('fails after the wire');
-    const testSig = await sign(171, 'transmit');
+    const testSig = await sign(171, 'transmit', 'approval', { environment: 'staging' });
     holder.failVoid = true;
     let failed: any;
     try {
@@ -596,7 +597,7 @@ describe('a test send whose void or record fails: the claim is released only onc
   it('a staging send the agency answered, whose result cannot be recorded, is released and its signature voided', async () => {
     holder.realGuard = true;
     stubEsgGateway();
-    const testSig = await sign(172, 'transmit');
+    const testSig = await sign(172, 'transmit', 'approval', { environment: 'staging' });
     holder.failTransmittedAudit = true;
     let failed: any;
     try {
@@ -616,7 +617,20 @@ describe('a test send whose void or record fails: the claim is released only onc
     expect(await voidContextOf(testSig)).toMatchObject({ environment: 'staging', transmit_attempt_id: row.metadata.dispatchBinding.attemptId });
 
     // A fresh signature files it in production.
-    const filingSig = await sign(172, 'transmit');
+    const filingSig = await sign(172, 'transmit', 'approval', { environment: 'production' });
     expect(await transmitTo(172, filingSig, 'production')).toMatchObject({ transmitted: true, dispatchStatus: 'sent' });
+  }, 120_000);
+});
+
+/* F1 (row D7, 2026-11-08, the coordinating session's order): a test send and a
+   filing are different acts, so a transmit signature names the environment it
+   was given for (21 CFR 11.50, 11.70), and authorizes a send to that one only. */
+describe('a transmit signature names the environment it was given for (F1, D7)', () => {
+  it('one given for a filing does not send to the test environment, and one that names none sends nowhere', async () => {
+    const refused = async (sig: string) => (await outcome(transmitTo(173, sig, 'staging'))) as { code: string; message: string };
+    const filing = await refused(await sign(173, 'transmit', 'approval', { environment: 'production' }));
+    expect([filing.code, filing.message]).toEqual(['GOVERNED_REQUIRED', expect.stringMatching(/a send to the agency's production environment, not to the agency's test environment; sign again/)]);
+    expect((await refused(await sign(173, 'transmit'))).message).toMatch(/the signature does not name where the package goes; a transmit signature names its environment/);
+    expect((await claimOf(173)).dispatch_status).toBe('pending');
   }, 120_000);
 });

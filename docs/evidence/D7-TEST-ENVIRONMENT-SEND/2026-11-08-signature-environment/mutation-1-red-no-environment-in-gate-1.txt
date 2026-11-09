@@ -1,0 +1,10 @@
+MUTATION 1-red-no-environment-in-gate-1 in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-08T22:55:45.542117Z): replaced [  const verdict = await governedSignatureVerdict(signatureActionId, target, ctx, 'transmit',
+    (payload) => transmitEnvironmentRefusal(payload, checked.environment));] with [  const verdict = await governedSignatureVerdict(signatureActionId, target, ctx, 'transmit');]
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send leaves 0000 unfiled to every reader; a fresh signature files it in production, and the fold reads that send 320ms
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a transmit signature names the environment it was given for (F1, D7) > one given for a filing does not send to the test environment, and one that names none sends nowhere 135ms
+      Tests  2 failed | 14 skipped (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send leaves 0000 unfiled to every reader; a fresh signature files it in production, and the fold reads that send
+AssertionError: expected SubmissionError: A valid e-signature is r… { code: '…' } to match object { code: 'GOVERNED_REQUIRED', …(1) }
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a transmit signature names the environment it was given for (F1, D7) > one given for a filing does not send to the test environment, and one that names none sends nowhere
+restored sha256 2d093dc8ad688bf5021825888aa51abf144f2d1ebb3e6614b984c1a3f9c6c194 (expected 2d093dc8ad688bf5021825888aa51abf144f2d1ebb3e6614b984c1a3f9c6c194)
