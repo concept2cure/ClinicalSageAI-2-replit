@@ -2017,6 +2017,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
 //
 // `changes`: data-room citations. `vaultChanges` (S12): sections drafted from a
 // Vault version that a later approved version replaced (vault-citation-changes.ts).
+// `vaultFeeds` (S12 gap 5): every Vault-fed section, current or replaced.
 //
 // Every citation in this project still carrying a checksum its source no longer
 // has. That is a fact recorded at cite time
@@ -2044,12 +2045,15 @@ router.get('/:id/source-changes', async (req: Request, res: Response) => {
     );
     const changes = await listChangedSourceUsages(pool, orgId, { userId: resolveUserId(req) ?? undefined, programId: String(req.params.id) });
     /* S12 (P-83, P-109): sections drafted from a Vault version that a later approved version replaced. */
-    const { listChangedVaultCitations } = await import(
+    const { listVaultFedSections, replacedVaultCitations } = await import(
       '../../services/clinical-regulatory-evidence/vault-citation-changes.js'
     );
-    const vaultChanges = await listChangedVaultCitations(pool, orgId, { userId: resolveUserId(req) ?? undefined, programId: String(req.params.id) });
+    /* One read: every Vault-fed section with its standing (S12 gap 5, the program's map), and its replaced half. */
+    const vaultFeeds = await listVaultFedSections(pool, orgId, { userId: resolveUserId(req) ?? undefined, programId: String(req.params.id) });
+    const vaultChanges = replacedVaultCitations(vaultFeeds);
 
-    return res.json({ projectId: String(req.params.id), changes, count: changes.length, vaultChanges, vaultCount: vaultChanges.length });
+    return res.json({ projectId: String(req.params.id), changes, count: changes.length, vaultChanges, vaultCount: vaultChanges.length,
+      vaultFeeds, vaultFeedCount: vaultFeeds.length });
   } catch (err: unknown) {
     if (err instanceof ProgramReadAccessError || err instanceof SourceReadAccessError) return sendProjectAccessFailure(res, new ProgramReadAccessError(err.status, err.code, err.message), true);
     return serverError(res, logger, 'loading the source changes', err, { programId: String(req.params.id) });
