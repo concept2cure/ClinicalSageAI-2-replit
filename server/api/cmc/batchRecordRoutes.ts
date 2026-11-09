@@ -26,6 +26,10 @@ import { filedProjectOnCreate, RegisterWriteRefusal } from '../../services/cmc/r
 /* The batch record and the record of WHO recorded it, on one pinned connection
    and one transaction (§11.10(e); services/cmc/register-audit.ts). */
 import { createOnConnection } from '../../services/cmc/register-audit';
+/* The same contract for an EDIT, on the raw-SQL path: the stored row re-read
+   FOR UPDATE, the UPDATE, and the audit row with the field-by-field diff, all
+   on one pinned connection and one transaction. */
+import { updateOnConnection } from '../../services/cmc/register-edit-audit';
 /* The CANONICAL org resolver. This module defined its own, reading two of the
    four places the canonical one reads, in its own order — and a second answer
    to "which organization is this" is a tenant-isolation decision, not a helper
@@ -85,6 +89,9 @@ const updateBatchSchema = z.object({
   inProcessControls: z.any().optional(),
   yieldData: z.any().optional(),
   deviations: z.any().optional(),
+  /* Reason for change (§11.10(e)). Recorded on the audit row the edit writes,
+     beside the field-by-field diff; it is not a column on the batch. */
+  reason: z.string().trim().min(1).optional(),
 });
 
 const releaseSchema = z.object({
@@ -284,6 +291,45 @@ router.post('/', async (req, res) => {
   }
 });
 
+/** The batch columns an ordinary edit may set, by the body's own field names. */
+const BATCH_EDITABLE_COLUMNS: Record<string, string> = {
+  batchNumber: 'batch_number',
+  productName: 'product_name',
+  batchSize: 'batch_size',
+  manufacturingDate: 'manufacturing_date',
+  expiryDate: 'expiry_date',
+  manufacturingSite: 'manufacturing_site',
+  status: 'status',
+  processParameters: 'process_parameters',
+  inProcessControls: 'in_process_controls',
+  yieldData: 'yield_data',
+  deviations: 'deviations',
+};
+
+/**
+ * The SET fragments and their values for the fields the body actually sent,
+ * with the next free placeholder index.
+ *
+ * Only the names in `BATCH_EDITABLE_COLUMNS` reach the SQL, so no request text
+ * becomes an identifier. `reason` is deliberately absent from that map: it is
+ * recorded on the audit row, not on the batch.
+ */
+function batchSetClause(
+  data: z.infer<typeof updateBatchSchema>,
+): { updates: string[]; values: unknown[]; paramIndex: number } {
+  const updates: string[] = [];
+  const values: unknown[] = [];
+  let paramIndex = 1;
+  for (const [key, col] of Object.entries(BATCH_EDITABLE_COLUMNS)) {
+    const val = (data as Record<string, unknown>)[key];
+    if (val === undefined) continue;
+    updates.push(`${col} = $${paramIndex}`);
+    values.push(typeof val === 'object' && val !== null ? JSON.stringify(val) : val);
+    paramIndex++;
+  }
+  return { updates, values, paramIndex };
+}
+
 // PUT /api/cmc/batch-records/:id - Update batch record
 router.put('/:id', async (req, res) => {
   try {
@@ -319,38 +365,7 @@ router.put('/:id', async (req, res) => {
     const refusal = batchWriteRefusal(req.body ?? {}, existing.rows[0]);
     if (refusal) return res.status(409).json({ success: false, error: refusal, code: 'SIGNED_RECORD' });
 
-    // Build dynamic update
-    const updates: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
-
-    const fieldMap: Record<string, string> = {
-      batchNumber: 'batch_number',
-      productName: 'product_name',
-      batchSize: 'batch_size',
-      manufacturingDate: 'manufacturing_date',
-      expiryDate: 'expiry_date',
-      manufacturingSite: 'manufacturing_site',
-      status: 'status',
-      processParameters: 'process_parameters',
-      inProcessControls: 'in_process_controls',
-      yieldData: 'yield_data',
-      deviations: 'deviations',
-    };
-
-    for (const [key, col] of Object.entries(fieldMap)) {
-      if ((data as any)[key] !== undefined) {
-        updates.push(`${col} = $${paramIndex}`);
-        const val = (data as any)[key];
-        if (typeof val === 'object' && val !== null) {
-          values.push(JSON.stringify(val));
-        } else {
-          values.push(val);
-        }
-        paramIndex++;
-      }
-    }
-
+    const { updates, values, paramIndex } = batchSetClause(data);
     if (updates.length === 0) {
       return res.status(400).json({ success: false, error: 'No updates provided' });
     }
@@ -367,13 +382,41 @@ router.put('/:id', async (req, res) => {
       RETURNING *
     `;
 
-    const updateResult = await pool.query(updateQuery, values);
+    /* §11.10(e). Until 2026-11-09 this was a bare `pool.query(updateQuery)` —
+       no transaction, and NO AUDIT ROW. The batch record is a manufacturing
+       record under 21 CFR 211.188, and it was the one CMC register whose edit
+       left no trail at all: its own CREATE has gone through `createOnConnection`
+       since the register-audit work, and `console.log` is not an audit trail. A
+       batch number, a manufacturing date or a deviation could be changed and
+       nothing recorded who did it, when, or what moved.
 
-    console.log(`[CMC Batch] Updated batch record ${id}`);
+       `updateOnConnection` is the existing door for exactly this shape (an
+       `UPDATE … RETURNING` in a route rather than a Drizzle update); the
+       comparability register already takes it. The diff is computed over the
+       row read INSIDE the transaction, FOR UPDATE, because a diff against the
+       existence SELECT above would name a `from` another writer had already
+       replaced. That SELECT stays outside: it is the signed-state check, which
+       must refuse before a transaction opens. */
+    const updatedBatch = await updateOnConnection<{ id: number | string }>(
+      pool,
+      {
+        organizationId: orgId,
+        actor: { userId: resolveActorUserId(req) },
+        register: 'batch_record',
+        table: 'cmc_batch_records',
+        reason: data.reason ?? null,
+      },
+      async (client) => (await client.query(
+        `SELECT * FROM cmc_batch_records
+          WHERE id = $1 AND (tenant_id = $2 OR organization_id = $3) FOR UPDATE`,
+        [id, ...tenantParams(orgId)],
+      )).rows[0],
+      async (client) => (await client.query(updateQuery, values)).rows[0],
+    );
+
     // Fail closed on an UPDATE that matched nothing: the row was re-tenanted or
     // deleted between the existence SELECT and here. Reporting 200 over it
     // would tell the caller a change landed that did not.
-    const updatedBatch = updateResult.rows[0];
     if (!updatedBatch) {
       return res.status(404).json({ success: false, error: 'Batch record not found' });
     }
