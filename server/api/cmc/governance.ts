@@ -52,6 +52,16 @@ export const governedSignatureSchema = z.object({
     })
     .optional(),
   idempotencyKey: z.string().optional(),
+  /**
+   * Which outcome the signer attests, for a register whose act records more
+   * than one (P-110 item 1, 2026-11-09). Omitted means the register's first,
+   * which is what every caller sent before — so an existing caller keeps
+   * working. Validated against the register's own closed list by
+   * `resolveSignedOutcome`, never used as a value anywhere.
+   */
+  outcome: z.string().optional(),
+  /** The development phase the outcome covers, where the outcome needs one. */
+  phase: z.string().optional(),
 });
 
 /**

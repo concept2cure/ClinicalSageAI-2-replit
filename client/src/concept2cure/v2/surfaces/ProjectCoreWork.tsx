@@ -66,12 +66,23 @@ export function workAreasFor(track: WorkAreaTrack): WorkArea[] {
 /** P-83's kinds, in the words a person reads (server: program-project-anchor.ts WORK_KINDS). */
 export const WORK_KIND_LABEL: Record<string, string> = {
   cmc: 'CMC', biostatistics: 'Biostatistics', rbm: 'Risk-based monitoring', data_management: 'Data management',
-  clin_pharm: 'Clinical pharmacology', nonclinical: 'Nonclinical',
+  clin_pharm: 'Clinical pharmacology', nonclinical: 'Nonclinical', quality: 'Quality',
 };
 
-/** The work area a work project opens on, for the kinds that have one (P-83 (b); S12 inventory gap 2). The other kinds
- *  (data management, clinical pharmacology, nonclinical) have no work area in the product, and their rows say so. */
-export const WORK_KIND_AREA: Record<string, string> = { cmc: 'cmc', biostatistics: 'biostatistics', rbm: 'rbm' };
+/** The work area a work project opens on, for the kinds that have one (P-83 (b); S12 inventory gap 2; Quality by P-111).
+ *  The other kinds (data management, clinical pharmacology, nonclinical) have no work area in the product, and their rows
+ *  say so. */
+export const WORK_KIND_AREA: Record<string, string> = { cmc: 'cmc', biostatistics: 'biostatistics', rbm: 'rbm', quality: 'quality' };
+
+/** Work areas that are the organisation's, not a track's: Quality (the QMS) serves every project, so a Quality work
+ *  project (P-111 item 5) opens it wherever the person may, while the project's own work-areas card is unchanged. */
+const ORGANISATION_WORK_AREAS: ReadonlySet<string> = new Set(['quality']);
+
+/** Whether a work project's row is a door to its area: an area this project's track offers, or an organisation's work
+ *  area, and in either case one the person may open. */
+export function workProjectOpenable(trackAreaIds: ReadonlySet<string>, available: (id: string) => boolean): (id: string) => boolean {
+  return (id) => (trackAreaIds.has(id) || ORGANISATION_WORK_AREAS.has(id)) && available(id);
+}
 
 export interface WorkProjectRow { id: number; name: string; workKind: string | null; ownerName: string | null }
 interface WorkProjectsRead { children: WorkProjectRow[] }

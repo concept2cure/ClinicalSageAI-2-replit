@@ -1,0 +1,5 @@
+ × server/services/cmc/__tests__/process-capability.test.ts > the distribution the index presumes > declines to judge the shape when there are too few batches to tell 6ms
+   → expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected true to be false // Object.is equality
+      Tests  1 failed | 14 passed (15)

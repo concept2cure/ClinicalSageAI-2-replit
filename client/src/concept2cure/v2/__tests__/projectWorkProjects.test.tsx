@@ -17,7 +17,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({ ...(await importOrigin
 const auth = vi.hoisted(() => ({ user: null as null | { id: string; permissions?: string[] } }));
 vi.mock('@/services/portal/authService', async (original) => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => auth, useAuthUser: () => auth.user }));
 
-import { ProjectWorkProjects, WORK_PROJECT_TASK_ENTITY } from '../surfaces/ProjectCoreWork';
+import { ProjectWorkProjects, WORK_PROJECT_TASK_ENTITY, workProjectOpenable } from '../surfaces/ProjectCoreWork';
 
 const PID = '6065271c-d4b0-4936-aad1-02855423a738';
 const READ = `/api/project-hierarchy/11/children?programId=${PID}`;
@@ -84,7 +84,9 @@ describe('the project\'s work projects (S12)', () => {
     render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
     await screen.findByText(/None yet/);
     fireEvent.click(screen.getByRole('button', { name: /Add a work project/ }));
-    fireEvent.change(await screen.findByLabelText(/Kind of work/), { target: { value: 'biostatistics' } });
+    const kinds = await screen.findByLabelText(/Kind of work/);
+    expect(Array.from(kinds.querySelectorAll('option')).map((o) => o.textContent)).toContain('Quality');
+    fireEvent.change(kinds, { target: { value: 'biostatistics' } });
     fireEvent.change(screen.getByLabelText(/^Name/), { target: { value: 'Study 201 biostatistics' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add work project' }));
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/c2c/projects',
@@ -115,19 +117,33 @@ describe('the project\'s work projects (S12)', () => {
 
   it('opens a work project on its work area where the project offers it, and says when its kind has none (P-83 (b))', async () => {
     rows = [child(101, 'Drug substance CMC', 'cmc'), child(102, 'Study 201 biostatistics', 'biostatistics'),
-      child(103, 'Site monitoring', 'rbm'), child(104, 'Tox package', 'nonclinical')];
+      child(103, 'Site monitoring', 'rbm'), child(104, 'Tox package', 'nonclinical'), child(105, 'Drug product QA', 'quality')];
     const onOpen = vi.fn();
     render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange openable={(id) => id !== 'rbm'} onOpen={onOpen} />);
     const cmc = await screen.findByRole('button', { name: /Drug substance CMC/ });
     expect(cmc.getAttribute('title')).toBe('Open CMC / Module 3 on this project');
     fireEvent.click(cmc);
     fireEvent.click(screen.getByRole('button', { name: /Study 201 biostatistics/ }));
-    expect(onOpen.mock.calls).toEqual([['cmc'], ['biostatistics']]);
+    // A Quality work project (P-111 item 5) is a door to the Quality area, in words.
+    const quality = screen.getByRole('button', { name: /Drug product QA/ });
+    expect(quality.textContent).toContain('Quality · JM Smith');
+    fireEvent.click(quality);
+    expect(onOpen.mock.calls).toEqual([['cmc'], ['biostatistics'], ['quality']]);
     // An area this project does not offer is no door; a kind with no work area says so, and is no door either.
     expect(screen.queryByRole('button', { name: /Site monitoring/ })).toBeNull();
     expect(screen.getByText('Site monitoring')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Tox package/ })).toBeNull();
     expect(screen.getByText(/Nonclinical · JM Smith · No work area for this kind yet/)).toBeTruthy();
+  });
+
+  it('opens a Quality work project on the organisation\'s Quality area wherever the person may, whatever the track (P-111 item 5)', () => {
+    const trackAreas = new Set(['cmc', 'biostatistics']);
+    const all = workProjectOpenable(trackAreas, () => true);
+    expect(['cmc', 'biostatistics', 'quality'].map(all)).toEqual([true, true, true]);
+    // An area the track does not offer stays no door; a person without the area gets no door to it.
+    expect(all('rbm')).toBe(false);
+    const noQuality = workProjectOpenable(trackAreas, (id) => id !== 'quality');
+    expect([noQuality('cmc'), noQuality('quality')]).toEqual([true, false]);
   });
 
   it('gives a work project its owner and due date through the Plan\'s assign, and says when its assignment cannot be read', async () => {

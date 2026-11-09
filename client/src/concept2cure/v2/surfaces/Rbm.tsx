@@ -330,7 +330,7 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
   if (!current()) return <EmptyState title="Risk-based monitoring is unavailable for this session" hint="Reopen monitoring after selecting your account and project." />;
 
   return (
-    <div className="rbm-page" data-screen-label={`RBM — ${nav.label}`}>
+    <div className="page-inner" data-screen-label={`RBM — ${nav.label}`}>
       <div className="reg-head">
         <div>
           <div className="ph-eyebrow">Clinical — risk-based quality management</div>

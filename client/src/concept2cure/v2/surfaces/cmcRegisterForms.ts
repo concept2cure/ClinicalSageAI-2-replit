@@ -34,7 +34,7 @@
  */
 
 import { QC_SAMPLE_TYPES as SHARED_QC_SAMPLE_TYPES } from '@shared/cmc/qc-sample-types';
-import type { C2CFormConfig } from '../C2CForm';
+import type { C2CFormConfig, C2CFormFieldOption } from '../C2CForm';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 /* The scope vocabulary is the composer's, not the form's: shared/cmc/material-scope.ts. */
 import { CMC_MATERIAL_SCOPES } from '@shared/cmc/material-scope';
@@ -1346,7 +1346,32 @@ export interface QualifyBody {
   reason: string;
   meaning: string;
   reauth: { password?: string; totp?: string };
+  /** Which outcome the signer attests, where the act records more than one. */
+  outcome?: string;
+  /** The development phase that outcome covers, where it needs one. */
+  phase?: string;
 }
+
+/**
+ * The outcomes the analytical-method register's one signed act records
+ * (P-110 item 1, 2026-11-09, docs/LAUNCH_DEFINITION_OF_DONE.md).
+ *
+ * The server's `SIGNED_REGISTERS.analyticalMethods.signedOutcomes`
+ * (`server/services/cmc/signed-record.ts`) is the authority; these are the
+ * same two said in the person's language, as `SIGNED_ACTS` above is for the
+ * verb. The values must match the server's `outcome` words exactly, which
+ * `cmcRegisterForms.test.ts` pins.
+ *
+ * Why two: FDA asks at phase 1 for procedures that are scientifically sound
+ * and fit for their use, with full validation by the pivotal phase (21 CFR
+ * 312.23(a)(7); ICH Q2(R2) and Q14). Before this, the only word the act wrote
+ * was `validated`, so a phase-1 programme had to claim full validation or
+ * leave every specification unapprovable.
+ */
+export const METHOD_VALIDATION_OUTCOMES: C2CFormFieldOption[] = [
+  { value: 'validated', label: 'Validated in full (ICH Q2(R2))' },
+  { value: 'phase-appropriate', label: 'Suitable for its phase, short of full validation' },
+];
 
 /**
  * Qualifying a container closure system or a reference standard is a Part 11
@@ -1374,7 +1399,23 @@ export const SIGNED_ACTS = {
 
 export type SignedAct = (typeof SIGNED_ACTS)[keyof typeof SIGNED_ACTS];
 
-export function qualifyForm(subject: string, name: string, act: SignedAct = SIGNED_ACTS.qualify): C2CFormConfig {
+/**
+ * The signature dialog for a governed register act.
+ *
+ * `outcomes` is given only where the act records more than one — the
+ * analytical-method register (P-110 item 1). The phase is NOT conditionally
+ * hidden, because this form is declarative and has no conditional field: it is
+ * offered, described as belonging to the suitability outcome, and the server
+ * refuses a suitability signature with no phase in its own sentence, which the
+ * register surfaces. Showing a field that is sometimes not needed is a smaller
+ * fault than hiding one that is.
+ */
+export function qualifyForm(
+  subject: string,
+  name: string,
+  act: SignedAct = SIGNED_ACTS.qualify,
+  outcomes?: C2CFormFieldOption[],
+): C2CFormConfig {
   return {
     eyebrow: `${act.noun} — 21 CFR Part 11 signature`,
     title: `${act.verb} ${subject}`,
@@ -1384,6 +1425,26 @@ export function qualifyForm(subject: string, name: string, act: SignedAct = SIGN
       'Your name, the time and the reason below are recorded against this record. ' +
       `${act.noun} cannot be undone by an ordinary edit.`,
     fields: [
+      ...(outcomes
+        ? [
+            {
+              key: 'outcome',
+              label: 'What you are attesting',
+              type: 'select' as const,
+              options: outcomes,
+              default: outcomes[0].value,
+              required: true,
+            },
+            {
+              key: 'phase',
+              label: 'Phase this covers',
+              type: 'text' as const,
+              placeholder: 'Phase 1',
+              half: true,
+              desc: 'Required when you attest suitability for a phase: a procedure is suitable for something.',
+            },
+          ]
+        : []),
       { key: 'meaning', label: 'Meaning of signature', type: 'select', options: ['approval', 'review', 'responsibility', 'authorship'], default: 'approval', required: true, half: true },
       { key: 'reason', label: 'Reason', type: 'textarea', required: true, placeholder: 'What qualifies this record — the protocol executed, the report accepted, the data reviewed…' },
       { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
@@ -1397,6 +1458,11 @@ export function qualifyBody(v: Record<string, string>): QualifyBody {
     reason: req(v.reason),
     meaning: req(v.meaning) || 'approval',
     reauth: { password: v.password || undefined, totp: v.totp || undefined },
+    /* Sent only when the dialog offered them. An act that records one outcome
+       is refused a named outcome by the server, so a form that always sent one
+       would break every other register's signature. */
+    ...(v.outcome ? { outcome: req(v.outcome) } : {}),
+    ...(v.phase && req(v.phase) ? { phase: req(v.phase) } : {}),
   };
 }
 

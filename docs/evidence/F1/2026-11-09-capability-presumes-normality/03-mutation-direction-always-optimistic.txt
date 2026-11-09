@@ -1,0 +1,4 @@
+ × server/services/cmc/__tests__/process-capability.test.ts > the distribution the index presumes > names the direction for a LOWER limit too, where right-skew is conservative 6ms
+   → expected 'Preliminary: 12 batches. A capability…' to match /conservative/i
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 14 passed (15)

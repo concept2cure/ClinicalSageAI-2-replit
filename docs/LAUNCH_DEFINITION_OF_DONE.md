@@ -2511,3 +2511,91 @@ answer, verbatim: "Yes vaul accepts zips and also generates zips and also can co
   - **Admission:** the market-readiness session, which needs it for stage 9, with a hold row before its first edit.
   - **The picked-document export, compression and combining:** the Vault parity lane (S6), in the order the
     coordinating session sets in `.design/claude-convergence/COORDINATION.md`.
+
+### P-113 — All of CMC in the CMC module: the record gaps, the AI layer, and the CMC work project's own plan
+
+Decided 2026-11-09 by the founder, in the CMC session (`01GJidg5…`): *"All possible CMC data and tests and studies
+and needs and more across all of chemical, manufacturing and controls; must be part of this special module. Using
+all types of AI and machine learn and testing and I want you to study what all advanced current market offerings
+are doing in this exact space and add that to their roadmap for cmc — study external. And I think there should be a
+sub-project management feature dedicated just for cmc but connected to the parent project management module."*
+
+The study this rests on is `docs/evidence/S7/2026-11-09-cmc-scope-market-and-roadmap/`: the inventory of the 57 CMC
+services, 19 canonical record kinds and 9 signed registers that exist; the external study of QbDVision, Weave Bio,
+DDi, Veeva, the CPV platforms, the Rockwell-led Digital CMC Consortium and the published ML work; and the gap list
+below. Its sources are named there, and almost all vendor material is marketing — the two findings that are not
+are FDA's PQ/CMC data standards and the ICH M4Q(R2) draft.
+
+**1. The record gaps are approved as work, in three tiers.**
+
+- **Tier A — extend an existing register. No addition, no decision needed beyond this one.** Nitrosamine risk
+  assessment, ICH Q3D elemental impurities, ICH Q3C residual solvents, photostability (Q1B), in-use and
+  reconstitution stability, post-approval stability commitments, method transfer and co-validation studies,
+  extractables and leachables as studies, cleaning and shipping validation as validation kinds, supplier
+  qualification on the material-spec register, batch genealogy on the batch register, and the OOS/OOT investigation
+  lifecycle on the existing contradiction-lifecycle pattern.
+- **Tier B — compose what is already judged.** **3.2.A.1** (facilities and equipment), **3.2.A.2** (adventitious
+  agents, from `substance-modality.ts`), **3.2.A.3** (novel excipients, from `materialSpec.novelExcipient`) and
+  **3.2.R** (US regional, from `us-ind-regional.ts`). The judgements exist; no section is composed from them.
+- **Tier C — three new records, approved here as `approvedAdditions` entries when each is designed.** Each needs
+  its own design with a "What already exists" section first (RULE 3) and an additive, re-runnable migration
+  (RULE 1):
+  1. **Manufacturing sites and equipment.** Every 3.2.S.2.1 and 3.2.P.3.1 names manufacturers and today that is a
+     free-text `manufacturingSite`. The record holds the site, its licence, its GMP status and its inspection
+     history, and 3.2.A.1 composes from it.
+  2. **QTPP, CQA and CPP as records.** `qbd-analyzer.ts` derives `CqaItem` / `CppItem` at read time and QTPP exists
+     nowhere. A derived attribute cannot be versioned, owned, risk-assessed or signed, so the control strategy has
+     no governed object at its centre. The analyzer reads these records instead of deriving them, and keeps
+     deriving where none is recorded.
+  3. **Established conditions and the post-approval change management protocol (ICH Q12).** `supac-classifier.ts`
+     classifies a change; nothing records what was filed as an established condition, which is what decides
+     whether a change is reportable at all.
+
+**2. The AI and machine-learning layer is approved within RULE 2, which is unchanged.** Numbers, verdicts and
+governed content come from the deterministic engines; the model narrates, proposes and flags. A tool that asks a
+model for a figure stays a defect. Five approved candidates, each named with the engine it defers to:
+
+1. **Document and instrument intake into the registers** — a CoA, an executed batch record, a stability table or a
+   validation report read in as *proposed* records a person confirms. The registers' existing refusals decide. This
+   is the founder's "data entry points", and the largest practical win.
+2. **"What a reviewer will ask"** — a ranking layer over the deterministic contradiction sweep, trained on real
+   deficiency letters, that shows its basis and its corpus and never states a verdict.
+3. **Early degradation and out-of-trend signal** — advisory beside `stability-trending.ts`, which stays the sole
+   authority on shelf life.
+4. **Specification-setting proposals** — limits proposed from batch history with the distribution and batch count
+   shown; `process-capability.ts` keeps the arithmetic; a proposed limit is never a recorded one.
+5. **Narrative drafting** — exists, and stays bound by `module3-narrative-governance-refusal.ts`.
+
+**3. FDA PQ/CMC alignment is approved as the strategic item.** FDA's Phase 1 domains — drug product, drug
+substance, quality specification, batch analysis and stability — are this module's five strongest registers, which
+already hold that data as records with lineage. The work is a mapping to the HL7 FHIR Implementation Guide, not a
+data project. It is **not** an operational requirement yet, so it is built as an export beside the existing
+composition rather than in place of it.
+
+**4. ICH M4Q(R2) is designed for and not built against.** It is a January 2026 FDA draft, Level 1, not for
+implementation, with sources disagreeing on a 2027 adoption date. Two consequences to design for: a second,
+Description–Manufacture–Control–Storage-shaped projection beside the composer's section-per-CTD-node shape, and
+QTPP/CQA-as-records becoming a filing requirement rather than an improvement (Tier C item 2 above).
+
+**5. The CMC work project's own plan.** The sub-project management the founder asks for is **P-111**, decided
+earlier today and routed to S12: a CMC work project is a child `projects` row, opening it opens the CMC area bound
+to it, and the area shows its own tasks with owner, due date, status and one level of subtasks, filed on the work
+project and rolling up into the filing project and each person's Tasks. **No new decision is needed for it.** This
+decision adds the part P-111 does not cover and §7a of `THE_PROGRAM_2026-11-01.md` asks for: **a CMC deliverable's
+owner, due date and dependencies**, which today have nowhere to live, because a CMC deliverable is not a row but
+the set of records of one source type in one project
+(`docs/evidence/S12/2026-11-09-deliverable-feeds/`). That is approved as a Tier C record under S12, designed with
+S12, and it is what makes the critical path to a filing date answerable.
+
+- **Owners.** S7 for the registers, the composed sections, the engines and the AI layer. S12 for the work project's
+  plan and its deliverable dates, with the CMC session holding the CMC area's screens, as P-111 already says. The
+  two coordinate through `.design/claude-convergence/COORDINATION.md`.
+- **Unchanged.** No new screen, rail entry, card, workspace or second editor (RULES 4 and 5): every item lands in
+  the existing CMC work area, the one editor, or an existing register. RULE 2's engine/narration line is unchanged.
+  The P-28 / P-110 composition boundary is unchanged — none of this widens it to a biologic, a marketing
+  application or a non-US clinical-trial application. RULE 6 still applies to each Tier C record: it is built only
+  under an `approvedAdditions` entry naming it.
+- **Not approved.** Formulation or molecular ML (ZoomLab, Schrödinger, digital twins): outside P-28 and outside the
+  spine. Matching the AI-authoring vendors feature for feature: they draft prose into documents, and this module's
+  advantage is that Module 3 composes from governed records with lineage, which is the direction FDA's own
+  programme is moving.

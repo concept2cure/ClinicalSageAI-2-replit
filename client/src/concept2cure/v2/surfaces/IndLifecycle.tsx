@@ -724,7 +724,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   );
   if (loading) {
     return (
-      <div className="page-inner indl" data-screen-label="IND forms">
+      <div className="page-inner" data-screen-label="IND forms">
         <div className="surface-head">
           <div>
             {kicker}
@@ -739,7 +739,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   }
   if (error) {
     return (
-      <div className="page-inner indl" data-screen-label="IND forms">
+      <div className="page-inner" data-screen-label="IND forms">
         <div className="surface-head">
           <div>
             {kicker}
@@ -757,7 +757,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   }
   if (!checklist) {
     return (
-      <div className="page-inner indl" data-screen-label="IND forms">
+      <div className="page-inner" data-screen-label="IND forms">
         <div className="surface-head">
           <div>
             {kicker}
@@ -1143,7 +1143,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   return (
-    <div className="page-inner indl" data-screen-label="IND forms">
+    <div className="page-inner" data-screen-label="IND forms">
       <div className="surface-head">
         <div>
           {kicker}

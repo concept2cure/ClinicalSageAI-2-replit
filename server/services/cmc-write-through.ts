@@ -359,6 +359,11 @@ export function mapAnalyticalMethodPayload(record: Record<string, any>): Record<
        validated and when. */
     ichQ2Parameters: record.ichQ2Parameters || record.ich_q2_parameters || null,
     validationDate: record.validationDate || record.validation_date || null,
+    /* Who signed the validation act. Carried since P-110 (2026-11-09), because
+       the specification approval gate honours a SUITABLE status only from a
+       signed outcome and the signer is half of what says there was one
+       (`specificationMethodVerdict`). The date was already here. */
+    validatedBy: alias(record, 'validatedBy', 'validated_by'),
     validation_data: record.validation_data || record.ichQ2Parameters || record.ich_q2_parameters || null,
     specificity_data: record.specificity_data || null,
     linearity_data: record.linearity_data || null,

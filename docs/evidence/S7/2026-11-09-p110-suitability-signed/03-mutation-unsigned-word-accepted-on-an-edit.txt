@@ -1,0 +1,6 @@
+ × server/services/cmc/__tests__/register-writes.test.ts > ungovernedQualificationRefusal — one rule, three vocabularies > refuses the transition into the signed state, allows a round-trip, refuses an unsigned reversal, allows retiring 6ms
+   → expected { signedValue: 'validated', …(3) } to deeply equal { signedValue: 'validated', …(3) }
+ × server/services/cmc/__tests__/signed-outcome.test.ts > the unsigned word is refused on an ordinary edit, including as an interim > refuses every word the approval gate would honour 4ms
+   → an ordinary edit set the method status to "verified": expected null not to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 62 passed (64)

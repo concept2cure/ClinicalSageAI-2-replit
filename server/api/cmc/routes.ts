@@ -68,6 +68,7 @@ import {
   SIGNED_REGISTERS,
   type SignedRegister,
   isSigned,
+  resolveSignedOutcome,
   retireSignedRecord,
   signedRegisterEditRefusal,
   withoutSignatureFields,
@@ -1299,11 +1300,19 @@ async function qualifyRegisterRecord(
        never fire — a second close-out answered 200 and re-stamped the signature
        date over the first signer's
        (docs/evidence/CMC-M3-GA/2026-10-19/11-stability-close-out/). */
-    if (String(current.rows[0][signing.statusColumn] || '').toLowerCase() === signing.signedValue.toLowerCase()) {
+    /* Which outcome is being signed (P-110 item 1). The descriptor decides;
+       this handler asks. A register with one outcome answers `signedValue`,
+       which is every register but the analytical-method one. */
+    const outcome = resolveSignedOutcome(spec.register, parsed.data, current.rows[0][signing.statusColumn]);
+    if ('refusal' in outcome) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ success: false, error: outcome.refusal });
+    }
+    if (String(current.rows[0][signing.statusColumn] || '').toLowerCase() === outcome.value.toLowerCase()) {
       await client.query('ROLLBACK');
       return res.status(409).json({
         success: false,
-        error: `This ${subject} is already ${signing.signedValue}`,
+        error: `This ${subject} is already ${outcome.value}`,
         qualifiedAt: current.rows[0][signing.signedAtColumn] ?? null,
       });
     }
@@ -1323,15 +1332,18 @@ async function qualifyRegisterRecord(
       : userId;
     /* Every interpolated name here is a literal from this file's own closed
        set — the descriptor table above — never caller input; the values still
-       travel as parameters. */
+       travel as parameters. The STATUS was interpolated too until P-110 made
+       it an outcome the request names: it is resolved against the register's
+       own closed list above and bound as $4, because a value a request can
+       steer does not belong in SQL text whatever validates it. */
     await client.query(
       `UPDATE ${table}
-          SET ${signing.statusColumn} = '${signing.signedValue}',
+          SET ${signing.statusColumn} = $4,
               ${signing.signedByColumn} = $3,
               ${signing.signedAtColumn} = NOW(),
               updated_at = NOW()
         WHERE id = $1 AND organization_id = $2`,
-      [id, orgId, signedBy],
+      [id, orgId, signedBy, outcome.value],
     );
     const governance = await recordGovernedAction(client, {
       orgId,
@@ -1339,7 +1351,7 @@ async function qualifyRegisterRecord(
       command: 'sign',
       target: `${spec.target}:${id}`,
       reason,
-      payload: { meaning },
+      payload: { meaning, outcome: outcome.value, phase: outcome.phase },
       domain: 'biopharma',
       surface: spec.surface,
       idempotencyKey: idempotencyKey ?? null,
@@ -1347,14 +1359,21 @@ async function qualifyRegisterRecord(
     // 21 CFR Part 11 signature row, same transaction as the ledger pair; none
     // was written until 2026-10-01 (P0-10b, DP-02). Factors as verified above.
     await persistGovernedActionSignature(client, {
-      orgId, userId, target: `${spec.target}:${id}`, reason, payload: { meaning },
+      orgId, userId, target: `${spec.target}:${id}`, reason,
+      payload: { meaning, outcome: outcome.value, phase: outcome.phase },
       actionId: governance.actionId, auditId: governance.auditId, sha256Chain: governance.sha256Chain,
       ...verifiedReauthFactors(reauth),
       ipAddress: clientIpOf(req),
       occurredAt: new Date(),
       binding: { digest: null, basis: BINDING_BASIS.GOVERNED_ACTION_LEDGER, note: `No content digest is registered for a ${subject}, so none is claimed: bound_payload_digest is the governed action audit sha256 chain hash (target, payload hash, actor, time), not a content hash.` },
-      extraManifest: { act: { [signing.statusColumn]: signing.signedValue } },
-      complianceStatement: `${subject} ${act} applied under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.`,
+      extraManifest: {
+        act: { [signing.statusColumn]: outcome.value },
+        /* WHAT was attested, and for which phase — the half of a §11.50
+           manifestation that a status word alone does not carry. */
+        attests: outcome.attests,
+        ...(outcome.phase ? { phase: outcome.phase } : {}),
+      },
+      complianceStatement: `${subject} ${act} applied under 21 CFR Part 11 §11.50/§11.70/§11.200, attesting ${outcome.attests}; ledger-chained to the audit_logs sha256 chain.`,
     });
     await client.query('COMMIT');
 

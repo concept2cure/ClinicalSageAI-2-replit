@@ -49,6 +49,11 @@ describe('the stability register keeps its own vocabulary', () => {
       signedValue: 'COMPLETED',
       verb: 'Closing out a stability study with its shelf life',
       path: 'close-out',
+      /* One word, lower-cased for comparison: this register signs one outcome,
+         as every register but the analytical-method one does (P-110 item 1).
+         The stored value keeps its own upper case; every comparison lowercases
+         both sides. */
+      governedValues: ['completed'],
     });
   });
 
