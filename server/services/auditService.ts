@@ -53,6 +53,14 @@ interface AuditLogEntry {
    * through `details`, so a caller that wants it chained carries it there too.
    */
   reason?: string | null;
+  /**
+   * The instant the act took, when the caller holds one (P-86: a retirement
+   * takes it after its locks, and writes the same instant to the row it
+   * removes). writeChainedAuditRow seals it, normalised to an ISO string; an
+   * invalid value throws before anything is written. Absent, the row's time is
+   * now, as it always was.
+   */
+  occurredAt?: string;
   /** Alias accepted by callers that use "organizationId" instead of tenantId */
   organizationId?: string | number;
   /**
@@ -266,6 +274,14 @@ export interface AuditWriteResult {
  * Same shape as `recordGovernedAction(client, …)` in server/routes/c2c/actions.ts,
  * which already executes on the caller's client for exactly this reason.
  */
+/** The row's sealed time: the caller's instant, normalised, or now. An unreadable instant is refused, never replaced. */
+function sealedInstant(given: string | undefined): string {
+  if (given === undefined) return new Date().toISOString();
+  const t = new Date(given);
+  if (Number.isNaN(t.getTime())) throw new Error(`Audit row not written: its time "${given}" is not an instant.`);
+  return t.toISOString();
+}
+
 export async function writeChainedAuditRow(
   client: { query: (sql: string, params?: unknown[]) => Promise<unknown> },
   entry: AuditLogEntry,
@@ -279,7 +295,7 @@ export async function writeChainedAuditRow(
     entry.recordId?.toString() ??
     'unknown';
 
-  const occurredAt = new Date().toISOString();
+  const occurredAt = sealedInstant(entry.occurredAt);
   const actorId =
     entry.userId != null && Number.isFinite(Number(entry.userId)) ? Number(entry.userId) : null;
   const tenantId = Number.isFinite(Number(tenantIdSource)) ? Number(tenantIdSource) : 0;
