@@ -1,0 +1,8 @@
+MUTATION C2M07-no-cas in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T21:16:25.204564Z): replaced [            WHERE id = $1 AND organization_id = $2 AND NOT (metadata ? 'leafManifest') AND NOT (metadata ? 'sentRecordStatement')
+] with [            WHERE id = $1 AND organization_id = $2
+]
+ ✓ server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T10 what is recorded is what the person read: a different read-back is refused, and nothing is written 1301ms
+ ✓ server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T10 judged again under the lock: a send put on record after this act read it is not recorded twice 160ms
+ ✓ server/services/submission-service/__tests__/sent-record-rederive.pglite.test.ts > P-99 C2: a sent sequence’s send is put on record, read back from the package it sent > T10 a reason is required 112ms
+      Tests  3 passed | 12 skipped (15)
+restored sha256 fba58ccd0c16f10793d436b0f20fb23833c7143dc75b1252abd5f4f5470c1990 (expected fba58ccd0c16f10793d436b0f20fb23833c7143dc75b1252abd5f4f5470c1990)

@@ -48,7 +48,7 @@ import { FILING_COPY_DOCUMENT_TABLE } from '@shared/types/submission-api';
 import { downloadBlob } from '../download';
 import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
 import {
-  gatewayLabel, transmittalStatusTone, heldSendWhen, heldSendSettlementWords, technicalRejectionWords, awaitsReopen, type HeldSendSettlementRecord, type KeptReceipt,
+  gatewayLabel, transmittalStatusTone, heldSendWhen, heldSendDay, heldSendSettlementWords, technicalRejectionWords, awaitsReopen, type HeldSendSettlementRecord, type KeptReceipt,
   type TechnicalRejectionRecord,
 } from '../gatewayLabels';
 import { dispatchWords } from './CommitmentRow';
@@ -1898,6 +1898,8 @@ export interface TransmitReadiness {
   recordedApplicant?: string | null;
   gate: { cleared: boolean; blockers: string[] };
   refusal: string | null;
+  /** P-99 C2: for a filed sequence, where its record of what it sent is read from; absent from an older server. */
+  sentRecord?: { basis: 'transmit' | 'compiles' | 'none' } | null;
 }
 /** POST /sequences/:seqId/governed-precheck {step:'retire'} → its `retirement` (P-86 C2,
  *  submission-service.ts SequenceRetirementPrecheck): what retiring leaves on record, whether the number is freed,
@@ -1919,7 +1921,29 @@ export interface GovernedPrecheck {
   heldSend?: HeldSendOverview;
   rejection?: TechnicalRejectionOverview;
   reopen?: HeldSendReopenOverview;
+  sentRecord?: SentRecordOverview;
 }
+
+/** P-99 C2: POST governed-precheck {step:'sent-record'} → how a filed sequence's send can be put on record, and, for a
+ *  read-back, every document it would record, in words (no hrefs, IDs or checksums) and the read-back's manifestSha256. */
+export interface SentRecordOverview {
+  sequenceNumber: string;
+  sentAt: string | null;
+  agency: string;
+  basis: 'none' | 'compiles';
+  path: 'read-back' | 'statement' | null;
+  readBack?: { leaves: Array<{ ctdSection: string; fileName: string; operation: string; title?: string }>; leafCount: number; manifestSha256: string; notRecoverable: string[] };
+}
+/** A sent-record answer the screen can act on, or null; an offered read-back must carry what it records. */
+export function sentRecordOf(p: GovernedPrecheck | null | undefined): SentRecordOverview | null {
+  const r = p?.sentRecord;
+  if (!r || typeof r.sequenceNumber !== 'string') return null;
+  if (p?.cleared === true && (r.path !== 'read-back' || !r.readBack || !Array.isArray(r.readBack.leaves) || !/^[0-9a-f]{64}$/.test(String(r.readBack.manifestSha256)))) return null;
+  return r;
+}
+/** P-99 C2: a filed sequence whose record of what it sent is read from nothing, or only its compiles. */
+export const awaitsSentRecord = (t: Pick<TransmitReadiness, 'dispatchStatus' | 'sentRecord'>): boolean =>
+  (t.dispatchStatus === 'sent' || t.dispatchStatus === 'acknowledged') && (t.sentRecord?.basis === 'none' || t.sentRecord?.basis === 'compiles');
 
 /** A retirement answer the screen can act on, or null (P-86 C3). The statement is the server's and is signed word for
  *  word, so an answer without one is unreadable, never "cleared". */
@@ -2160,6 +2184,8 @@ interface DispatchActs {
 function TransmitPanel({ seq, programId, acts, canSign }: { seq: SeqRow; programId: string | null | undefined; acts: DispatchActs; canSign: boolean }) {
   const { onTransmit, onSettle, onReject } = acts;
   const [ready, setReady] = React.useState<{ phase: 'loading' | 'done' | 'error'; t?: TransmitReadiness; error?: string }>({ phase: 'loading' });
+  // P-99 C2: after a send is put on record, the panel reads again (SentRecordPlace says so).
+  const [readNo, setReadNo] = React.useState(0);
   const [environment, setEnvironment] = React.useState<'staging' | 'production'>('staging');
   const [applicationId, setApplicationId] = React.useState('');
   React.useEffect(() => {
@@ -2177,7 +2203,7 @@ function TransmitPanel({ seq, programId, acts, canSign }: { seq: SeqRow; program
     return () => {
       cancelled = true;
     };
-  }, [seq.id]);
+  }, [seq.id, readNo]);
 
   if (ready.phase === 'loading') return <div role="status" className="scaf-note sc-mt">Checking where this sequence would be sent…</div>;
   const t = ready.t;
@@ -2231,6 +2257,8 @@ function TransmitPanel({ seq, programId, acts, canSign }: { seq: SeqRow; program
       {t.dispatchStatus === 'transmitting' && <HeldSendSettlement seq={seq} programId={programId} onSettle={onSettle} />}
       {/* Where a send recorded as received by FDA is told, the door to record FDA's failed Ack3 (P-92 C4). */}
       {t.dispatchStatus === 'sent' && t.route.ok && t.route.region === 'fda' && <TechnicalRejection seq={seq} programId={programId} onReject={onReject} />}
+      {/* A filed sequence with nothing, or only compiles, on record of what it sent: the door to put its send on record (P-99 C2). */}
+      <SentRecordPlace t={t} seq={seq} onRecorded={() => setReadNo((n) => n + 1)} />
       {t.route.ok && <DossierTransmissions programId={programId} region={t.route.region} seq={seq} onReopen={acts.onReopen} />}
     </div>
   );
@@ -2522,6 +2550,100 @@ function HeldSendWays({ seq, programId, overview: h, onSettle }: {
           {way && <HeldSendChoice key={way} seq={seq} programId={programId} outcome={way} proof={way === 'not-received' && proof} onSettle={onSettle} />}
         </>
       )}
+    </>
+  );
+}
+
+/** The server's answer to how a filed sequence's send can be put on record (P-99 C2), or why not. */
+type SentRecordState = { phase: 'closed' | 'reading' | 'unreadable' } | { phase: 'blocked'; refusal: string } | { phase: 'offered'; overview: SentRecordOverview };
+async function askSentRecord(seq: SeqRow): Promise<SentRecordState> {
+  const r = await mutateVerbatim<GovernedPrecheck>('POST', precheckPath(seq.id), { step: 'sent-record' });
+  const overview = sentRecordOf(r.data);
+  if (!overview || typeof r.data?.cleared !== 'boolean') return { phase: 'unreadable' };
+  if (r.data.refusal) return { phase: 'blocked', refusal: r.data.refusal };
+  return overview.readBack ? { phase: 'offered', overview } : { phase: 'unreadable' };
+}
+
+/** The read-back offered: what the platform kept, every document it would record, what a package cannot hold. */
+function SentRecordReadBack({ seq, overview: o, onRecorded }: { seq: SeqRow; overview: SentRecordOverview; onRecorded: (said: string) => void }) {
+  const [reason, setReason] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [refusal, setRefusal] = React.useState<string | null>(null);
+  const n = o.sequenceNumber;
+  const rb = o.readBack!;
+  const record = async () => {
+    setBusy(true);
+    setRefusal(null);
+    const done = await mutateVerbatim<{ recorded?: unknown; sequenceId?: unknown; recordedAt?: unknown }>('POST',
+      `/api/submissions/sequences/${seq.id}/sent-record/rederive`, { reason: reason.trim(), manifestSha256: rb.manifestSha256 });
+    setBusy(false);
+    if (done.error) return setRefusal(blockerForDisplay(done.error));
+    if (done.data?.recorded !== true || done.data.sequenceId !== seq.id) return setRefusal(`The server did not confirm that sequence ${n}'s send was put on record. Check its Dispatch tab before trying again.`);
+    onRecorded(`Sequence ${n}'s record was read back from the package it sent, on ${heldSendDay(String(done.data.recordedAt ?? '')) ?? 'an unrecorded day'}. The next sequence can now be built against it.`);
+  };
+  return (
+    <>
+      <div>{`The platform kept the exact package sequence ${n} sent to ${o.agency.toUpperCase()} on ${heldSendWhen(o.sentAt) ?? 'an unrecorded day'}. `}
+        {`Its record can be read back from that package: ${rb.leafCount} document${rb.leafCount === 1 ? '' : 's'}, listed below. Nothing is sent to the agency.`}</div>
+      <div className="sc-mt">
+        <div className="tl-spec-k sc-mb">What would be recorded</div>
+        <ul className="sc-blockers">{rb.leaves.map((l) => <li key={`${l.ctdSection}/${l.fileName}/${l.operation}`}>{`${l.ctdSection} · ${l.fileName} · ${l.operation}`}</li>)}</ul>
+      </div>
+      <div className="scaf-note sc-mt">Two things a package does not hold are not recorded: a file&#39;s checksum before it was converted to PDF/A, and the proof kept for a signed original. If such a document is filed again unchanged, the next sequence replaces it.</div>
+      <div className="sc-field sc-mt">
+        <label htmlFor={`sent-record-reason-${seq.id}`}>Why you are recording this</label>
+        <input id={`sent-record-reason-${seq.id}`} className="sc-subpick" type="text" maxLength={2000} value={reason} disabled={busy} onChange={(e) => setReason(e.target.value)} />
+      </div>
+      {refusal && <div role="note">{refusal}</div>}
+      <div className="sc-mt">
+        <button type="button" className="btn ghost small" disabled={busy || !reason.trim()} onClick={() => { void record(); }}>{`Record what sequence ${n} sent`}</button>
+      </div>
+    </>
+  );
+}
+
+/** Where the door sits, and what it said once the send was put on record; the panel reads again on `onRecorded`. */
+function SentRecordPlace({ t, seq, onRecorded }: { t: TransmitReadiness; seq: SeqRow; onRecorded: () => void }) {
+  const [said, setSaid] = React.useState<string | null>(null);
+  return (
+    <>
+      {awaitsSentRecord(t) && <SentRecord seq={seq} basis={t.sentRecord!.basis as 'none' | 'compiles'} onRecorded={(text) => { setSaid(text); onRecorded(); }} />}
+      {said && <div role="status" className="scaf-note sc-mt">{said}</div>}
+    </>
+  );
+}
+
+/**
+ * Put a filed sequence's send on record (P-99 C2; design §4, C4's read-back states): under "Transmit is not available",
+ * a line saying what is on record, and a closed door. Each open asks the server again and keeps nothing across a close;
+ * the read-back records exactly what the person read (its manifestSha256), with their reason. Unsigned: no dialog.
+ */
+function SentRecord({ seq, basis, onRecorded }: { seq: SeqRow; basis: 'none' | 'compiles'; onRecorded: (said: string) => void }) {
+  const [state, setState] = React.useState<SentRecordState>({ phase: 'closed' });
+  const asked = React.useRef(0);
+  const wasOpen = React.useRef(false);
+  const n = seq.sequenceNumber;
+  const onToggle = (e: React.SyntheticEvent<HTMLElement>) => {
+    const open = (e.currentTarget as { open?: boolean }).open === true;
+    if (open === wasOpen.current) return;
+    wasOpen.current = open;
+    const id = ++asked.current;
+    if (!open) { setState({ phase: 'closed' }); return; }
+    setState({ phase: 'reading' });
+    void askSentRecord(seq).then((answer) => { if (asked.current === id) setState(answer); });
+  };
+  return (
+    <>
+      <div className="scaf-note sc-mt">{basis === 'none'
+        ? `Nothing on record says what sequence ${n} carried, so the next sequence of this submission cannot be built against it.`
+        : `Sequence ${n} is read from its compiles, which may differ from what it sent.`}</div>
+      <details className="pj-more sc-mt" data-testid="sent-record" onToggle={onToggle}>
+        <summary>{`Put sequence ${n}'s send on record…`}</summary>
+        {state.phase === 'reading' && <div role="status">{`Checking how sequence ${n}'s send can be put on record…`}</div>}
+        {state.phase === 'unreadable' && <div role="status">How this send can be put on record could not be checked. Close this and open it again to retry.</div>}
+        {state.phase === 'blocked' && <div role="note">{blockerForDisplay(state.refusal)}</div>}
+        {state.phase === 'offered' && <SentRecordReadBack seq={seq} overview={state.overview} onRecorded={onRecorded} />}
+      </details>
     </>
   );
 }

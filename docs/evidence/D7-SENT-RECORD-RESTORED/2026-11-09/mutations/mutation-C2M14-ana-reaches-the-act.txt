@@ -1,0 +1,12 @@
+MUTATION C2M14-ana-reaches-the-act in server/services/ana/AnaToolDefinitions.ts (on the final code and tests, 2026-11-09T21:17:29.807476Z): replaced [/**
+ * AnA Tool Definitions — Agentic Document Generation
+] with [// rederiveSentRecord(
+/**
+ * AnA Tool Definitions — Agentic Document Generation
+]
+ ✓ server/services/ana/__tests__/ana-cannot-restore-sent-record.test.ts > no AnA tool can put a sent sequence's send on record > no tool is declared to read a send back or restore its record 4ms
+ × server/services/ana/__tests__/ana-cannot-restore-sent-record.test.ts > no AnA tool can put a sent sequence's send on record > no AnA or MCP source reaches the act 69ms
+ ✓ server/services/ana/__tests__/ana-cannot-restore-sent-record.test.ts > no AnA tool can put a sent sequence's send on record > the pattern matches the act and nothing near it 1ms
+      Tests  1 failed | 2 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 76572675832f8d7c10811adb8caf244b6e2a5b5848174dc24078c5890278dc62 (expected 76572675832f8d7c10811adb8caf244b6e2a5b5848174dc24078c5890278dc62)
