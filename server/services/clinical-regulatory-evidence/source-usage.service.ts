@@ -55,7 +55,7 @@ import { visibleOrgClause } from './evidence-spine.service';
 import type { RequestSqlClient } from '../../db/requestDb';
 import { getCurrentAuthoringReadScope, requireAuthoringReadScopeStillCurrent } from '../authoring/authoring-read-scope';
 import { getCurrentReadableSourceScope, requireSourceReadScopeStillCurrent } from './source-read-access';
-import { adaptUsageRow } from './source-usage-projection';
+import { adaptSectionUsage, adaptUsageRow } from './source-usage-projection';
 import type { Queryable } from './span-lineage.service';
 import { citesAcrossProjects, readCitationEnds } from './citation-ends';
 import { capturedDataEligibleSql } from '../document-data-disposition/eligibility';
@@ -124,8 +124,10 @@ function citationImage(row: CitationImage): CitationImage {
  *                source itself carries none — nothing to compare, so nothing
  *                is claimed
  *   unresolved   the reference does not resolve to a source this caller can see
+ *   unverifiable a native source whose current record could not be verified now (S12, 2026-11-09): listed with its
+ *                reason, its details withheld, and never admitted for drafting or citing
  */
-export type UsageState = 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved';
+export type UsageState = 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved' | 'unverifiable';
 
 export interface SectionSourceUsage {
   citationId: string;
@@ -136,6 +138,8 @@ export interface SectionSourceUsage {
   /** The checksum recorded when this citation was made. */
   citedChecksum: string | null;
   state: UsageState;
+  /** Why an `unverifiable` source could not be verified (its refusal code); absent otherwise. */
+  reasonCode?: string;
   source: {
     id: number;
     title: string | null;
@@ -365,9 +369,12 @@ export async function listSectionSources(orgId: number, sectionId: string,
   // Live section reads admit source identities before metadata. The retained
   // internal/fixture adapter keeps its declared tenant-only correspondence.
   const q = access?.executor ?? pool;
-  const readable = access ? await getCurrentReadableSourceScope(q, { organizationId: orgId, userId: access.userId }) : null;
+  /* One native source that cannot be verified does not take the section's list down with it (S12, the coordinating
+     session's ruling of 2026-11-09): it is reported, and its citation listed as unverifiable. The route's read is a
+     caller-owned transaction, which report mode needs. */
+  const readable = access ? await getCurrentReadableSourceScope(q, { organizationId: orgId, userId: access.userId, unverified: 'report' }) : null;
   const { rows } = await q.query(
-    `SELECT c.id, c.section_id, c.created_at, c.created_by, c.citation_text, c.payload_sha256,
+    `SELECT c.id, c.section_id, c.created_at, c.created_by, c.citation_text, c.payload_sha256, c.reference_id,
             src.id AS source_id, src.title, src.checksum, src.source_type,
             src.ingestion_status, src.extraction_status, src.updated_at AS source_updated_at,
             src.metadata->>'mimeType'      AS mime_type,
@@ -392,7 +399,8 @@ export async function listSectionSources(orgId: number, sectionId: string,
   );
   if (access && readable) await requireSourceReadScopeStillCurrent(q, { organizationId: orgId, userId: access.userId }, readable);
 
-  return (rows as Array<Record<string, unknown>>).map(adaptUsageRow);
+  const unverified = new Map((readable?.unverified ?? []).map((u) => [String(u.id), u.code]));
+  return (rows as Array<Record<string, unknown>>).map((row) => adaptSectionUsage(row, unverified));
 }
 
 /**
@@ -550,14 +558,10 @@ export async function listChangedSourceUsages(
   await requireAuthoringReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId,programId:opts.programId},access);
   await requireSourceReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId},sources);
   return (rows as Array<Record<string, unknown>>).map((r) => ({
-    citationId: String(r.id),
-    sectionId: String(r.section_id),
-    sectionCode: (r.section_code as string) ?? null,
-    sectionTitle: (r.section_title as string) ?? null,
-    documentId: r.doc_id ? String(r.doc_id) : null,
-    documentTitle: (r.document_title as string) ?? null,
-    sourceId: Number(r.source_id),
-    sourceTitle: (r.source_title as string) ?? null,
+    citationId: String(r.id), sectionId: String(r.section_id),
+    sectionCode: (r.section_code as string) ?? null, sectionTitle: (r.section_title as string) ?? null,
+    documentId: r.doc_id ? String(r.doc_id) : null, documentTitle: (r.document_title as string) ?? null,
+    sourceId: Number(r.source_id), sourceTitle: (r.source_title as string) ?? null,
     citedChecksum: r.payload_sha256 == null ? null : String(r.payload_sha256), currentChecksum: r.checksum == null ? null : String(r.checksum),
     citedAt: r.created_at ? new Date(r.created_at as string).toISOString() : null,
     sourceUpdatedAt: r.source_updated_at ? new Date(r.source_updated_at as string).toISOString() : null,

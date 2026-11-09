@@ -1,7 +1,7 @@
 /** Source-row visibility never authorizes a citing document. */
 import type { RequestSqlClient } from '../../db/requestDb';
 import { getCurrentAccessibleProgramScope, requireCurrentProgramAccess, requireProgramScopeStillCurrent, ProgramReadAccessError, type CurrentAccessibleProgramScope } from '../c2c/current-program-access';
-import { createNativeRecordAdmission } from './record-source';
+import { createNativeRecordAdmission, NATIVE_RECORD_ORIGIN } from './record-source';
 import { AnaProjectScopeError } from '../ana/project-scope-admission';
 
 export class SourceReadAccessError extends Error {
@@ -105,9 +105,43 @@ async function admitReadableIdentity(q:RequestSqlClient, row:Record<string,unkno
     throw error;
   }
 }
+/** A native source whose current Quality record could not be verified (S12, the coordinating session's ruling of
+ *  2026-11-09): reported by id and reason, never admitted, never read to prose. */
+export interface UnverifiedSource { id: number; code: string }
+
+/* A native source's admission failed for a reason that is not "denied or missing" (which stays an omission): the
+   record could not be verified, or it changed since capture. */
+function unverifiableNative(row: Record<string, unknown>, error: unknown): string | null {
+  const native = (row.provenance as { origin?: unknown } | null)?.origin === NATIVE_RECORD_ORIGIN;
+  if (!native || !(error instanceof SourceReadAccessError)) return null;
+  return error.status === 503 || error.code === 'NATIVE_SOURCE_CHANGED' ? error.code : null;
+}
+
+/* One evaluated identity. In report mode (a caller-owned transaction; S12) a native identity is admitted under a
+   savepoint, so one that cannot be verified is rolled back and reported instead of aborting the caller's whole read. */
+async function admitEvaluated(q: RequestSqlClient, row: Record<string, unknown>, admit: () => Promise<void>,
+  report: boolean): Promise<UnverifiedSource | null> {
+  const guarded = report && (row.provenance as { origin?: unknown } | null)?.origin === NATIVE_RECORD_ORIGIN;
+  if (!guarded) { await admit(); return null; }
+  await q.query('SAVEPOINT native_source_admission');
+  try {
+    await admit();
+    await q.query('RELEASE SAVEPOINT native_source_admission');
+    return null;
+  } catch (error) {
+    await q.query('ROLLBACK TO SAVEPOINT native_source_admission');
+    const code = unverifiableNative(row, error);
+    if (code) return { id: Number(row.id), code };
+    throw error;
+  }
+}
+
 export async function getCurrentReadableSourceScope(q: RequestSqlClient, input: {
   organizationId: number; userId: number | undefined; sourceIds?: number[]; programId?: string;
-}): Promise<{ scope: 'verified-accessible-sources'; sourceIds: number[] }> {
+  /** 'report': a native source that cannot be verified is reported in `unverified` instead of failing the read. Only
+   *  for an evaluated list (no `sourceIds`), on a caller-owned transaction. Never admits it. */
+  unverified?: 'report';
+}): Promise<{ scope: 'verified-accessible-sources'; sourceIds: number[]; unverified: UnverifiedSource[] }> {
   try {
     const programs = await getCurrentAccessibleProgramScope(q,input);
     const selected = input.sourceIds;
@@ -122,17 +156,20 @@ export async function getCurrentReadableSourceScope(q: RequestSqlClient, input: 
     if (selected && rows.rows.length!==new Set(selected).size) throw new SourceReadAccessError(404,'SOURCE_NOT_FOUND','Source not found.');
     const admitNative = createNativeRecordAdmission(q,{organizationId:input.organizationId,userId:programs.actor.userId});
     const readable: number[] = [];
+    const unverified: UnverifiedSource[] = [];
+    const report = input.unverified === 'report' && !selected;
     for (const row of rows.rows) {
       try {
-        await admitReadableIdentity(q,row,{organizationId:input.organizationId,programs,selected,admitNative});
-        readable.push(Number(row.id));
+        const failed = await admitEvaluated(q, row,
+          () => admitReadableIdentity(q,row,{organizationId:input.organizationId,programs,selected,admitNative}), report);
+        if (failed) unverified.push(failed); else readable.push(Number(row.id));
       } catch (error) {
         // Evaluated lists omit inaccessible/unresolved identities. Failed verification does not become empty success.
         if (selected || !evaluatedSourceOmission(error)) throw error;
       }
     }
     await requireProgramScopeStillCurrent(q,input,programs);
-    return {scope:'verified-accessible-sources',sourceIds:readable};
+    return {scope:'verified-accessible-sources',sourceIds:readable,unverified};
   } catch (error) {
     if (error instanceof SourceReadAccessError || error instanceof ProgramReadAccessError) throw error;
     throw new SourceReadAccessError(503,'SOURCE_ACCESS_UNAVAILABLE','Current source access could not be verified.');
