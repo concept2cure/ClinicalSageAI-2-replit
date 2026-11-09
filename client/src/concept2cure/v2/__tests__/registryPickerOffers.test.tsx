@@ -44,15 +44,24 @@ const packs: ActiveRulePacks = {
 const ASOF = '2026-10-08';
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as unknown as Response;
 
-/** GET /api/submissions/market-support, as server/routes/submissions.ts answers it. */
+/** GET /api/submissions/market-support, as server/routes/submissions.ts answers it: one type, or (amended
+ *  2026-11-09) a comma-separated list of types answered by type; `market` one market or a comma-separated list. */
 function serverAnswer(_m: string, raw: unknown) {
   const url = new URL(String(raw), 'http://x');
   const applicationType = url.searchParams.get('applicationType') ?? '';
   const market = url.searchParams.get('market');
-  const markets = (market ? [market] : Object.keys(REGION_IDENTITY))
-    .map((m) => marketSupport({ applicationType, market: m }, packs, ASOF));
-  return Promise.resolve(ok({ applicationType, asOf: ASOF, markets }));
+  const markets = market ? market.split(',').map((m) => m.trim()).filter(Boolean) : Object.keys(REGION_IDENTITY);
+  const rows = (t: string) => markets.map((m) => marketSupport({ applicationType: t, market: m }, packs, ASOF));
+  if (!applicationType.includes(',')) return Promise.resolve(ok({ applicationType, asOf: ASOF, markets: rows(applicationType) }));
+  const types = [...new Set(applicationType.split(',').map((t) => t.trim()).filter(Boolean))];
+  return Promise.resolve(ok({ applicationTypes: types, asOf: ASOF, byType: Object.fromEntries(types.map((t) => [t, rows(t)])) }));
 }
+
+/** A market-support read asked about this type at this market (one or a list of each; amended 2026-11-09). */
+const asked = (type: string, market: string) => apiRequest.mock.calls.some((c) => {
+  const q = new URL(String(c[1]), 'http://x').searchParams;
+  return (q.get('applicationType') ?? '').split(',').includes(type) && (q.get('market') ?? '').split(',').includes(market);
+});
 
 const typeOf = (e: { id: string; pathwayKey?: string | null }) =>
   programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey || 'ctd' }, 'biotech');
@@ -122,7 +131,8 @@ describe('RegistryPicker selected filing reference and build facts', () => {
     apiRequest.mockImplementation(async (method: string, raw: unknown) => {
       const response = await serverAnswer(method, raw);
       const body = await response.json();
-      body.markets.forEach((m: { outline?: unknown }) => { delete m.outline; });
+      // One type's rows, or (a list read, 2026-11-09) every listed type's.
+      [...(body.markets ?? []), ...Object.values(body.byType ?? {}).flat()].forEach((m: { outline?: unknown }) => { delete m.outline; });
       return ok(body);
     });
     renderPicker(vi.fn(), 'us_ind');
@@ -319,7 +329,7 @@ describe('RegistryPicker states only what the verdict states for that filing', (
     renderPicker(vi.fn(), 'ich_csr');
     await waitFor(() => expect(screen.getByTestId('rpk-chosen-offer')).toBeTruthy());
     expect(screen.getByTestId('rpk-chosen-offer').textContent).toMatch(/^Author documents for this market\. Author the documents here\. The clinical study report is a harmonised \(ICH\) document/);
-    expect(apiRequest.mock.calls.some((c) => /applicationType=csr.*market=ICH\+%2F\+Global/.test(String(c[1])))).toBe(true);
+    expect(asked('csr', 'ICH / Global')).toBe(true);
   });
 
   it('the EU MDR/IVDR lane at a Notified Body is offered for authoring, asked of the server by its own market', async () => {
@@ -329,7 +339,7 @@ describe('RegistryPicker states only what the verdict states for that filing', (
     const nb = tiles().filter((t) => t.agency === 'EU / Notified Body');
     expect(nb.length).toBeGreaterThan(0);
     expect(nb.every((t) => t.authorOnly)).toBe(true);
-    expect(apiRequest.mock.calls.some((c) => /market=EU\+%2F\+Notified\+Body/.test(String(c[1])))).toBe(true);
+    expect(asked('mdr', 'EU / Notified Body')).toBe(true);
   });
 
   it('a search lists not-offered filings by the same fields as offered ones (an eCTD search finds Health Canada)', async () => {
@@ -408,5 +418,16 @@ describe('RegistryPicker reads what the platform offers once, not on every open'
     await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
     expect(reads()).toBe(once);
     expect(tiles()).toEqual(shown);
+  });
+
+  /* Biotech sweep (2026-11-09): the first open after a page load still asked once per application type and again per
+     (type, agency) the first round did not name, ~87 parallel reads. Against production's 200 a minute per address,
+     two opens a minute rate-limited the whole app. The route takes a list of types, and readMarketSupport already took
+     a list of inputs, so one read answers the first round and one the unnamed pairs. */
+  it('the first open asks at most two reads, one for every type and one for the pairs the first did not name', async () => {
+    renderPicker();
+    await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
+    const paths = apiRequest.mock.calls.map((c) => String(c[1])).filter((p) => p.startsWith('/api/submissions/market-support'));
+    expect(paths.length, paths.slice(0, 4).join('\n')).toBeLessThanOrEqual(2);
   });
 });
