@@ -55,8 +55,10 @@ Moving to ISO 22514-2's non-normal percentile families would change values that 
 methodological decision and not a session's — it is recorded in P-113's roadmap instead. A case pins that Ppk is
 still exactly `(0.5 − x̄) / 3s` on the skewed series.
 
-**No consumer changed.** `capabilitySentence` already renders `notes.join(' ')`, so the sentence reaches
-§3.2.S.4.4 / §3.2.P.5.4 and the CPV view by the route the other four notes already take.
+**No consumer changed.** `capabilitySentence` already renders `notes.join(' ')`, so the sentence reaches the
+filed section by the route the other four notes already take:
+`assessRecordedCapability` → `capabilitySentence` → `batchCapabilityRendering` → §3.2.S.4's narrative
+(`module3Composer.ts:836`). **That path is now tested, not read** — see the second suite below.
 
 ## Verified by making each check fail
 
@@ -66,17 +68,26 @@ still exactly `(0.5 − x̄) / 3s` on the skewed series.
 | `03-mutation-direction-always-optimistic.txt` — the direction hard-coded toward the limit | *"expected 'Preliminary: 12 batches. A capability…' to match /conservative/i"* — the assay case, where the skew runs away from the limit |
 | `04-mutation-shape-judged-from-six-batches.txt` — the `n` floor removed | *"expected true to be false"*: six batches were judged skewed, which the estimate cannot support |
 | `05-mutation-nothing-is-ever-skewed.txt` — `materiallySkewed` forced false | 2 red, both directions |
-| `02-green.txt` | 30 of 30 across the capability suites |
+| `06-mutation-the-note-never-reaches-the-section.txt` — the note computed and not pushed | 5 red, including the composer case: *"the capability index reached §3.2.S.4 without the presumption it rests on"* |
+| `02-green.txt` | 34 of 34 across the three capability suites |
 
-Tests: `services/cmc/__tests__/process-capability.test.ts` (+6, 15 total) — the measured skewness, the presumption
-stated, the direction both ways, the index left alone, a symmetric series left silent, and a six-batch series
-reported as not assessed rather than normal.
+Tests, two suites:
+
+- `services/cmc/__tests__/process-capability.test.ts` (+6, 15 total) — the measured skewness, the presumption
+  stated, the direction both ways, the index left alone, a symmetric series left silent, and a six-batch series
+  reported as not assessed rather than normal.
+- `services/cmc/__tests__/capability-shape-reaches-the-section.test.ts` (new, 4 cases) — **the claim that
+  matters**: eleven right-skewed impurity results against `NMT 0.5 %`, composed through the real engine, and the
+  §3.2.S.4 narrative carries the presumption, the direction, and still the index. Written because the first draft
+  of this evidence asserted that path from *reading* `module3Composer.ts` rather than from a test, and said so.
+  The phase-4 acceptance fixture could not have caught it: it records five QC results, and capability refuses
+  below six batches, so the shape note never fires there.
 
 ## Gates
 
 `tsc --noEmit` 0 errors. `ci:pushed-lint-warnings`: no file changed its warning count — `assessProcessCapability`
 reached 103 lines and `distributionNote` is the extraction that answered it. `server/services/cmc` and
-`server/services/regulatory`: **151 files, 2,522 cases.**
+`server/services/regulatory`: **151 files, 2,522 cases** (before the composer suite was added).
 
 ## The larger question this leaves open, for P-113
 
