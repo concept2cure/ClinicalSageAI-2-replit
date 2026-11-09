@@ -1,0 +1,64 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T01:20:08.755Z",
+  "steps": [
+    {
+      "name": "Drug substance CMC 2026-11-09T01:20"
+    },
+    {
+      "name": "the card at 1440 dark",
+      "shot": "screenshots/card-1440-dark.png",
+      "hScroll": 0,
+      "text": "Work projects Add a work projectDrug substance CMC 2026-11-09T00:42CMC · JM SmithDrug substance CMC 2026-11-09T00:43CMC · JM SmithDrug substance CMC 2026-11-09T01:20CMC · JM Smith"
+    },
+    {
+      "name": "the card at 390 light",
+      "shot": "screenshots/card-390-light.png",
+      "hScroll": 0,
+      "text": "Work projects Add a work projectDrug substance CMC 2026-11-09T00:42CMC · JM SmithDrug substance CMC 2026-11-09T00:43CMC · JM SmithDrug substance CMC 2026-11-09T01:20CMC · JM Smith"
+    },
+    {
+      "name": "the card at 390 dark",
+      "shot": "screenshots/card-390-dark.png",
+      "hScroll": 0,
+      "text": "Work projects Add a work projectDrug substance CMC 2026-11-09T00:42CMC · JM SmithDrug substance CMC 2026-11-09T00:43CMC · JM SmithDrug substance CMC 2026-11-09T01:20CMC · JM Smith"
+    }
+  ],
+  "requests": [
+    {
+      "GET": "/api/project-hierarchy/1/children?programId=6065271c-d4b0-4936-aad1-02855423a738",
+      "status": 200
+    },
+    {
+      "POST": "/api/c2c/projects",
+      "status": 201
+    },
+    {
+      "post": "/api/c2c/projects",
+      "status": 201,
+      "body": {
+        "data": {
+          "projectId": 9,
+          "created": true,
+          "parentId": 1,
+          "depth": 1,
+          "path": "1/9",
+          "programId": "6065271c-d4b0-4936-aad1-02855423a738",
+          "name": "Drug substance CMC 2026-11-09T01:20",
+          "workKind": "cmc"
+        },
+        "meta": {
+          "created": true,
+          "organizationId": 2,
+          "actorUserId": 1
+        }
+      }
+    },
+    {
+      "GET": "/api/project-hierarchy/1/children?programId=6065271c-d4b0-4936-aad1-02855423a738",
+      "status": 200
+    }
+  ],
+  "finishedAt": "2026-11-09T01:20:27.842Z"
+}
