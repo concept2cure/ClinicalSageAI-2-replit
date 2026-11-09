@@ -35,6 +35,7 @@ import {
 } from './changeData';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../v2/surfaceActions';
 import { usePublishSurfaceContext } from '../v2/surfaceContext';
+import { WorkProjectTasks } from '../v2/surfaces/ProjectWorkTasks';
 
 /** Stable identity for an unread register, so memo deps do not churn. */
 const NO_CHANGES: ChangeControlRow[] = [];
@@ -366,6 +367,8 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
 
       <div className="qms-page">
         <div className="qms-page-inner">
+          {/* P-111: opened from a Quality work project's door, its tasks above the whole project's records. */}
+          {!editingDocument && <WorkProjectTasks area="quality" />}
           {tab !== 'sop' && tab !== 'change' ? (
             <QmsRecords tab={tab} onAsk={onAsk} onContext={setRecordCtx} />
           ) : tab === 'sop' ? (

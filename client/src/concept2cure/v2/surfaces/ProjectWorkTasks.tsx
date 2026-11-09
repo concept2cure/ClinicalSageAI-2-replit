@@ -31,7 +31,6 @@ export const WORK_PROJECT_TASKS_ENTITY = 'work_project_task';
 
 /** The task module each bound area files its tasks under, as its other tasks are. */
 const AREA_TASK_MODULE: Record<string, string> = { cmc: 'CMC', quality: 'Quality' };
-const AREA_LABEL: Record<string, string> = { cmc: 'CMC', quality: 'Quality' };
 
 function positiveId(value: unknown): number | null {
   const n = typeof value === 'string' && /^\d{1,10}$/.test(value.trim()) ? Number(value) : NaN;
@@ -45,6 +44,22 @@ export const WORK_PROJECT_BOUND_AREAS: ReadonlySet<string> = new Set(['cmc', 'qu
  *  did, with nothing handed off. */
 export function bindWorkProject(areaId: string, workProjectId: number): void {
   if (WORK_PROJECT_BOUND_AREAS.has(areaId)) stashNavParamsForTarget(areaId, { [WORK_PROJECT_URL_PARAM]: String(workProjectId) });
+}
+
+/** Fired when a surface that consumes its own navigation hand-off passes a work project binding on. */
+export const WORK_PROJECT_BINDING_EVENT = 'c2c:work-project-binding';
+
+/** For an area that consumes its navigation hand-off itself (QualityModule does, for its tabs and documents): the
+ *  one-shot entry is cleared by that read, so the area passes the binding on: kept on the URL, and said to the panel. */
+export function keepWorkProjectBinding(params: Record<string, string> | null | undefined): void {
+  const id = positiveId(params?.[WORK_PROJECT_URL_PARAM]);
+  if (id === null) return;
+  writeUrlBinding(id);
+  try { window.dispatchEvent(new CustomEvent(WORK_PROJECT_BINDING_EVENT)); } catch { /* no window */ }
+}
+
+function urlBinding(): number | null {
+  try { return positiveId(new URLSearchParams(window.location.search).get(WORK_PROJECT_URL_PARAM)); } catch { return null; }
 }
 
 function writeUrlBinding(id: number | null): void {
@@ -64,8 +79,7 @@ export function useBoundWorkProject(areaId: string): [number | null, () => void]
   const surfaceId = React.useMemo(() => resolveSurfaceIdForTarget(areaId), [areaId]);
   const [id, setId] = React.useState<number | null>(() => {
     const handed = positiveId(consumeNavParams(surfaceId)?.[WORK_PROJECT_URL_PARAM]);
-    if (handed !== null) return handed;
-    try { return positiveId(new URLSearchParams(window.location.search).get(WORK_PROJECT_URL_PARAM)); } catch { return null; }
+    return handed ?? urlBinding();
   });
   React.useEffect(() => { writeUrlBinding(id); }, [id]);
   React.useEffect(() => {
@@ -74,8 +88,10 @@ export function useBoundWorkProject(areaId: string): [number | null, () => void]
       const handed = positiveId(consumeNavParams(surfaceId)?.[WORK_PROJECT_URL_PARAM]);
       if (handed !== null) setId(handed);
     };
+    const onPassedOn = () => { const kept = urlBinding(); if (kept !== null) setId(kept); };
     window.addEventListener(NAV_PARAMS_EVENT, onHandOff);
-    return () => window.removeEventListener(NAV_PARAMS_EVENT, onHandOff);
+    window.addEventListener(WORK_PROJECT_BINDING_EVENT, onPassedOn);
+    return () => { window.removeEventListener(NAV_PARAMS_EVENT, onHandOff); window.removeEventListener(WORK_PROJECT_BINDING_EVENT, onPassedOn); };
   }, [surfaceId]);
   return [id, () => setId(null)];
 }
@@ -229,13 +245,15 @@ export function WorkProjectTasks({ area }: { area: 'cmc' | 'quality' }) {
   if (proof.loading) return <p className="pj-card-note" role="status" data-testid="work-project-bound">Reading the work project…</p>;
   if (proof.error || !proof.data) return <BindingRefused proof={proof} unbind={unbind} />;
   const name = row?.name ?? 'This work project';
-  const facts = [name, AREA_LABEL[area], row?.ownerName].filter(Boolean).join(' · ');
+  const facts = [name, row?.ownerName].filter(Boolean).join(' · ');
   return (
-    <section className="pj-work-projects" data-testid="work-project-bound" aria-label={`Work project: ${name}`}>
+    <section className="pj-work-projects pj-work-project-bound" data-testid="work-project-bound" aria-label={`Work project: ${name}`}>
       <div className="pj-work-projects-h">
-        <p className="pj-work-project-n">Working in {facts}</p>
+        <p className="pj-work-project-n">{facts}</p>
         <button type="button" className="btn ghost small" onClick={unbind}>Show the whole project</button>
       </div>
+      {/* Which records are in view (the CMC session's wording): the area's own name is the page's, not repeated here. */}
+      <p className="pj-card-note">Its tasks are listed here. The records below are the whole project’s.</p>
       <TaskList tasks={tasks} />
       <AddTask areaId={area} programId={programId} workProjectId={workProjectId} name={name} onAdded={() => setVersion((n) => n + 1)} />
     </section>
