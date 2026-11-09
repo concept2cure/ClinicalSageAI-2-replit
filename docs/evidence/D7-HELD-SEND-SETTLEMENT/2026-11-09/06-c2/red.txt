@@ -1,0 +1,194 @@
+# P-92 C2 red, 2026-11-09T13:50:05Z, before any client code: the four C2 test files
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > S0: the held line, then a closed, quiet door that asks nothing until opened 5052ms
+   → Unable to find an element by: [data-testid="held-send"]
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > there is no door while the dispatch status is pending 27ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > there is no door while the dispatch status is sent 18ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > there is no door while the dispatch status is acknowledged 19ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > there is no door while the dispatch status is rejected 19ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > S1 → S2: reading, then the send, the MDN on Gateway transmittals, and the two ways, each said 5008ms
+   → Unable to find an element by: [data-testid="held-send"]
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > asks again on every open and keeps no answer across a close 5008ms
+   → Unable to find an element by: [data-testid="held-send"]
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > S11, a send that may still be in progress: the server's sentence as a note, no opening line and no button 5010ms
+   → Unable to find an element by: [data-testid="held-send"]
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > S3, a send FDA already answered: the server's sentence as a note, no opening line and no button 5012ms
+   → Unable to find an element by: [data-testid="held-send"]
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > one way refused: its sentence stands where its button would, and the other way is offered 5009ms
+   → Unable to find an element by: [data-testid="held-send"]
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > S4: the sequence's creator is told why, and offered no way; the MDN sentence stays 5009ms
+   → Unable to find an element by: [data-testid="held-send"]
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > S5: a failed read is "could not be checked", never "nothing to settle" 5009ms
+   → Unable to find an element by: [data-testid="held-send"]
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > S5: an answer of another shape is "could not be checked", never "nothing to settle" 5008ms
+   → Unable to find an element by: [data-testid="held-send"]
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > S5: an overview without its outcomes is "could not be checked", never "nothing to settle" 5008ms
+   → Unable to find an element by: [data-testid="held-send"]
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > S2a, received: FDA's document from this project's Vault and which acknowledgement it is, then the statement and the sign button 5008m
+   → Unable to find an element by: [data-testid="held-send"]
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > S2a, a chosen document the server refuses: its sentence, and no sign button 5012ms
+   → Unable to find an element by: [data-testid="held-send"]
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > the platform's own proof: no Vault document, the server's sentence, and the release offered on it 5011ms
+   → Unable to find an element by: [data-testid="held-send"]
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > S10: a resend FDA has contradicted shows the server sentence through the readiness line, with no door 180ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > signs the server's statement, asks again, then settles; no record key and no signature id on screen 5097ms
+   → Unable to find an element by: [data-testid="held-send"]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a received settlement names the FDA document it rests on in the signed rows and the notice 5092ms
+   → Unable to find an element by: [data-testid="held-send"]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a statement that changed after the dialog opened is not signed 5079ms
+   → Unable to find an element by: [data-testid="held-send"]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > S7: the act's refusal is shown inline, with the server's words; nothing is said settled 5045ms
+   → Unable to find an element by: [data-testid="held-send"]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a 200 without settled: true is not a success 5062ms
+   → Unable to find an element by: [data-testid="held-send"]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a 200 for another sequence is not a success 5061ms
+   → Unable to find an element by: [data-testid="held-send"]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a 200 the other way is not a success 5057ms
+   → Unable to find an element by: [data-testid="held-send"]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a 200 an empty body is not a success 5068ms
+   → Unable to find an element by: [data-testid="held-send"]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a cleared answer without the statement opens no signature 5049ms
+   → Unable to find an element by: [data-testid="held-send"]
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > reads only the transmittal log: no package list, no gateway roster, no separation-of-duties dry run 130ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > offers no transmit, assemble, identifiers or rollback control 383ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > sends the person to the sequences to transmit, through the Submission Center hand-off 100ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > keeps the reads on every row: status and ACK 81ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > offers the signed technical rejection by the authority the log reports: false hides it, true and unknown offer it 266ms
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > a held send settled by signature is said under its status: {"outcome":"received","kind":"ack2","settledAt":"2026-11-04T09:00
+   → Unable to find an element by: [data-testid="held-send-settlement-note"]
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > a held send settled by signature is said under its status: {"outcome":"received","kind":"ack3","settledAt":"2026-11-04T09:00
+   → Unable to find an element by: [data-testid="held-send-settlement-note"]
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > a held send settled by signature is said under its status: {"outcome":"not-received","kind":"fda-non-receipt-confirmation","
+   → Unable to find an element by: [data-testid="held-send-settlement-note"]
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > a held send settled by signature is said under its status: {"outcome":"not-received","kind":"platform-proof","settledAt":"20
+   → Unable to find an element by: [data-testid="held-send-settlement-note"]
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > a failed log read is an error, never "No transmittals yet" 18ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > lists the project’s transmissions for this market: status, id, acknowledgement time, sender 303ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > says where each transmission went, in words, and that a test send is not a filing 56ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a recorded environment this screen does not name is not printed as stored 52ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a transmittal with no recorded environment says so 42ms
+ × client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a held send settled by signature says so on its row: {"outcome":"received","kind":"ack2","settledAt":"2026-11-04T09:00:00.000Z"} 4
+   → expected 'Transmissions and acknowledgementsFil…' to contain 'FDA may hold it. · recorded as receiv…'
+ × client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a held send settled by signature says so on its row: {"outcome":"not-received","kind":"fda-non-receipt-confirmation","settledAt":"
+   → expected 'Transmissions and acknowledgementsFil…' to contain 'FDA may hold it. · released as not re…'
+ × client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a held send settled by signature says so on its row: {"outcome":"not-received","kind":"platform-proof","settledAt":"2026-11-04T09:
+   → expected 'Transmissions and acknowledgementsFil…' to contain 'FDA may hold it. · released as not re…'
+ × client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a held send settled by signature says so on its row: {"outcome":"received","kind":"ack3","settledAt":"2026-11-04T09:00:00.000Z"} 3
+   → expected 'Transmissions and acknowledgementsFil…' to contain 'FDA may hold it. · recorded as receiv…'
+ ✓ client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a failed read is an error, not "none sent" 57ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a 200 that is not a list is an error too 43ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > none recorded is said as the server answered it 61ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx > Dispatch tab: transmissions and acknowledgements (F13) > a submission with no project cannot be listed by project, and says so; nothing is read 35ms
+ ✓ client/src/concept2cure/v2/__tests__/filedElsewhereBaseline.test.tsx > Sequences filed before this platform > declares them with a signature over the stated sequences and evidence 419ms
+ ✓ client/src/concept2cure/v2/__tests__/filedElsewhereBaseline.test.tsx > Sequences filed before this platform > shows the server's refusal in its own words, and declares nothing 99ms
+ ✓ client/src/concept2cure/v2/__tests__/filedElsewhereBaseline.test.tsx > Sequences filed before this platform > refuses an Original Application after the last sequence before anything is signed 27ms
+ × client/src/concept2cure/v2/__tests__/filedElsewhereBaseline.test.tsx > Sequences filed before this platform > opens from a hairline secondary button, not a line of text, with no spark and no orange 13ms
+   → expected 'sc-btn' to be 'btn ghost' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/filedElsewhereBaseline.test.tsx > Sequences filed before this platform > shows the declaration in force, with who declared it 3ms
+ ✓ client/src/concept2cure/v2/__tests__/filedElsewhereBaseline.test.tsx > Sequences filed before this platform > a failed read is said, and no sequence number is offered 6ms
+ ✓ client/src/concept2cure/v2/__tests__/filedElsewhereBaseline.test.tsx > Sequences filed before this platform > numbers after the sequences filed elsewhere, and after the platform's own 0ms
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ renderDispatch client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:144:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:152:11
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > S1 → S2: reading, then the send, the MDN on Gateway transmittals, and the two ways, each said
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ renderDispatch client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:144:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:173:11
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ renderDispatch client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:144:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:194:11
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ renderDispatch client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:144:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:209:11
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ renderDispatch client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:144:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:220:11
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ renderDispatch client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:144:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:229:11
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ renderDispatch client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:144:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:242:11
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ renderDispatch client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:144:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:251:30
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ renderDispatch client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:144:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:276:11
+            [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review critica
+              [0mDispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the canonical leaves and open Shadow Review criti
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ renderDispatch client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:144:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:288:30
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ openRelease client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:343:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:366:5
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:409:11
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ openRelease client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:343:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:435:5
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ openRelease client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:343:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:448:5
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ openRelease client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:343:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:463:5
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ openRelease client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:343:9
+ ❯ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx:477:5
+ ❯ client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx:153:18
+ ❯ client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx:153:18
+ ❯ client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx:153:18
+ ❯ client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx:153:18
+ ❯ client/src/concept2cure/v2/__tests__/filedElsewhereBaseline.test.tsx:98:28
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx:120:25
+ Test Files  4 failed (4)
+      Tests  31 failed | 25 passed (56)

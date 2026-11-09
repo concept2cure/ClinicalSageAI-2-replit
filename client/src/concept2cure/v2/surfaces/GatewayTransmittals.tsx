@@ -48,7 +48,7 @@ import { stashNavParamsForTarget } from '../navParams';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
-import { gatewayLabel, transmittalStatusTone as statusTone } from '../gatewayLabels';
+import { gatewayLabel, transmittalStatusTone as statusTone, heldSendSettlementWords, type HeldSendSettlementRecord, type KeptReceipt } from '../gatewayLabels';
 import { useTransmittalTarget } from './useTransmittalTarget';
 import { ceremonyOpen } from '../ceremony';
 import { canGovernedWrite } from '@shared/constants/permissions';
@@ -79,6 +79,9 @@ interface Transmittal {
     /** 2026-10-29 (W5/D7): where the exact bytes sent are kept, stamped by the
      *  guarded transmit before the wire. Absent on rows sent before then. */
     sentPackage?: { sha256?: string | null; sizeBytes?: number | null } | null;
+    /** P-92: a held send settled by signature, and FDA's verified receipts kept with the row. */
+    heldSendSettlement?: HeldSendSettlementRecord | null;
+    as2ReceiptHistory?: KeptReceipt[] | null;
     [k: string]: unknown;
   } | null;
 }
@@ -154,6 +157,15 @@ function technicalRejectionNote(t: Transmittal): React.ReactNode {
       technical rejection recorded{recorded.sequence ? ` · sequence ${recorded.sequence} off file` : ''}
     </div>
   );
+}
+
+/** The line under a transmittal's status once its held send is settled by signature (P-92 C2), with FDA's verified
+ *  answer kept against it after; a read-only note, as the technical rejection's is. */
+function heldSendSettlementNote(t: Transmittal): React.ReactNode {
+  const words = heldSendSettlementWords(t.metadata, 'log');
+  if (!words) return null;
+  // --text-300 is the ramp's tested secondary (surface-text-ramp.css); --muted is not defined in v2 and renders near-invisible.
+  return <div data-testid="held-send-settlement-note" style={{ fontSize: 11, color: 'var(--text-300)' }}>{words}</div>;
 }
 
 /** A refused governed act in the server's own words; when it gave none, only
@@ -583,7 +595,7 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
 function TransmittalStatusCell({ t }: { t: Transmittal }) { return (
                   <td>{t.status && <span className={'rd-chip tone-' + statusTone(t.status)}>{t.status}</span>}
                     {t.error_message && <div style={{ fontSize: 11, color: 'var(--error)' }}>{t.error_message}</div>}
-                    {technicalRejectionNote(t)}</td>
+                    {technicalRejectionNote(t)}{heldSendSettlementNote(t)}</td>
   ); }
 function TransmittalSignatureCell({ t }: { t: Transmittal }) { return (
                   <td>{t.submitted_by_name ?? (t.submitted_by != null ? `user #${t.submitted_by}` : '—')}

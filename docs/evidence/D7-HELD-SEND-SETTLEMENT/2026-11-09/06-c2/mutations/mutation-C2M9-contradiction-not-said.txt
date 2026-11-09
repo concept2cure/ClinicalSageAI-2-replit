@@ -1,0 +1,8 @@
+MUTATION C2M9-contradiction-not-said in client/src/concept2cure/v2/gatewayLabels.ts (on the final code and tests, 2026-11-09T14:24:37.979297Z): replaced [  const kept = (m?.as2ReceiptHistory ?? []).find((e) => e?.verified === true && e.contradicts === s.outcome);] with [  const kept = undefined as KeptReceipt | undefined;]
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > a held send settled by signature is said under its status: {"outcome":"received","kind":"ack2","settledAt":"2026-11-04T09:00:00.000Z"} 361ms
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > a held send settled by signature is said under its status: {"outcome":"received","kind":"ack3","settledAt":"2026-11-04T09:00:00.000Z"} 35ms
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > a held send settled by signature is said under its status: {"outcome":"not-received","kind":"fda-non-receipt-confirmation","settledAt":"2026-11-04T09:00:00.000Z"} 26ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittalsReadOnly.test.tsx > Gateway transmittals — a read-only transmission log > a held send settled by signature is said under its status: {"outcome":"not-received","kind":"platform-proof","settledAt":"2026-11-04T09:00:00.000Z"} 86ms
+      Tests  2 failed | 2 passed | 6 skipped (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 1d974f68e729cdaa0ebadd72f3274147d714d8ba8b9c2d5a7590ed0f23905f34 (expected 1d974f68e729cdaa0ebadd72f3274147d714d8ba8b9c2d5a7590ed0f23905f34)

@@ -320,3 +320,148 @@ more than 50 files, and its pattern is shown to match the act and nothing near i
   claim's two columns (`transmitSignatureActionId`, `transmitAttemptId`), which `getSequence` already returns. Until
   then `submission-service.ts` names them in a local `ClaimedSequence` (departure 7), at the coordinating session's
   ruling of 2026-11-09.
+
+## C2: the door, in the Dispatch tab, and the record on both lists (`06-c2/`, `07-screen/`)
+
+### What already exists (RULE 3)
+
+- **Where the held send is told.** `TransmitPanel` (`SubmissionSeqWorkspaces.tsx`) reads
+  `governed-precheck { step: 'transmit' }`. For a held send it says "Transmit is not available: …" with the
+  server's `resendRefusal` sentence, which until C1 named the stored status.
+- **The template for a door beside the one verdict.** P-86 C3's `RetireSequence`: a closed `.pj-more` disclosure that
+  asks the server on every open and keeps no answer across a close. Its signing branch in `SubmissionCenter.tsx`
+  (`retirementSigning`, `runRetire`) offers Responsibility only, signs the server's statement word for word, and puts
+  no record key on the target line.
+- **The one signing dialog** (`EsignModal`, through `requestGoverned` and `runGoverned`). It takes
+  `renderMeaningDetails` and `signedRows`.
+- **The Vault picker** (`VaultVersionPicker`, `VaultLibraryResults.tsx`). It searches one project's Vault and returns
+  the chosen version's id, title, version and hash. It is used by `CommitmentFulfilment.tsx` and
+  `OfficialEstarAttachments.tsx`.
+- **The two lists.** The Dispatch tab's `DossierTransmissions`, and Gateway transmittals' read-only log with its
+  `technicalRejectionNote` under the status. Both read a transmittal's `metadata`.
+- **The shared gateway words**, `client/src/concept2cure/v2/gatewayLabels.ts`, which both lists already import.
+- **FiledElsewhereBaseline.tsx**: "Declare sequences filed before this platform" was a bare `sc-btn`.
+- **Searches** (`git grep` on the client, and the deletion search of C1 above): no held-send or settlement control,
+  no Ack2 or Ack3 control, and no client caller of `/held-send/settle` existed in any form.
+
+### The change
+
+- **The door** (`HeldSendSettlement`, with `HeldSendWays`, `HeldSendWay`, `HeldSendChoice` and `HeldSendJudged`, all in
+  `SubmissionSeqWorkspaces.tsx`):
+  - It appears only while the send is held (`dispatchStatus === 'transmitting'`), directly under the held line, as
+    `<details class="pj-more">` "Settle the held send…".
+  - Each open asks `governed-precheck { step: 'held-send-settlement' }`.
+  - **Offered:** "Sequence NNNN's send of DATE is held: the platform holds no verified answer from FDA to it."
+    Gateway transmittals' "Record agency MDN" is named only when an MDN could come (`receiptUpload`). Then one quiet
+    button per way, each with what it does:
+    - "Record as received", on FDA's Ack2 or Ack3;
+    - "Release as not received", on FDA's written confirmation or, where the record proves nothing left, on the
+      platform's own record.
+  - A way the server refuses shows the server's sentence in its place. A blocked send (FDA's answer already kept, or
+    a send still in progress) shows only the server's sentence. The sequence's creator is told why they cannot sign
+    it, and offered no way.
+  - **A way chosen.** FDA's document comes from this project's Vault, through the existing picker. To record it
+    received, the signer also says which acknowledgement it is (Ack2 or Ack3). A release on the platform's own proof
+    asks for no document.
+  - The server's answer for that choice is shown as "By signing, you would state:" and its statement, quoted. The
+    sign button hands the choice to Submission Center.
+- **The signature** (`SubmissionCenter.tsx`):
+  - The 'held-send-settlement' branch asks again before the dialog opens.
+  - The dialog offers Responsibility only.
+  - The target line is "FDA (US) · settles the held send of DATE; nothing is sent to FDA", with no record key.
+  - The statement is quoted word for word. The signed rows name the FDA document and the statement.
+  - Before signing, it asks again. A statement that changed since the dialog opened is not signed.
+  - The sign payload is §3.1's: the outcome, the transmittal and attempt, the evidence and the statement, as the
+    server answered them.
+  - The act posts `{ signatureActionId, outcome }`. Only an answer that says this sequence's held send was settled,
+    the way it was signed, is a success.
+  - The notice names the ground and the signer, never a signature id.
+  - `requestGoverned` and `precheckAnswer` now take one request object in place of four positional extras. The
+    sixth would have broken the `max-params` ratchet.
+- **The lists.** `heldSendSettlementWords` (`gatewayLabels.ts`) says how a send was settled, and FDA's verified answer
+  kept against it. The Dispatch tab's transmissions add it after the row. Gateway transmittals adds it as a note
+  under the status, beside the technical rejection's; still no control.
+- **The declaration control** (`FiledElsewhereBaseline.tsx`), at the coordinating session's rulings of 2026-11-09:
+  - "Declare sequences filed before this platform" is `btn ghost`;
+  - in the open form, "Sign declaration" is D0's `btn primary` (the form's one primary while it is open), replacing
+    the legacy `sp-primary`;
+  - Cancel is `btn ghost`.
+
+  Red first on each class (`06-c2/red-declaration-form.txt` for the open form).
+- **The refusal line says a record key in words** (`blockerForDisplay`). The walk found it (below).
+
+### Departures, each found by the tests, the gates or the walk
+
+1. **No "no signing authority" state (design S4b).** The Dispatch tab has no read of signing authority; only Gateway
+   transmittals' list carries `meta.signing`. The sign route refuses without authority, and the dialog shows its
+   sentence inline (S7).
+2. **The opening line says the send "is held"**, not "was sent to FDA": for a send the platform's own record proves
+   never left, "was sent" would be false.
+3. **The release on the platform's own proof asks for no document** and shows no picker (§10.3 D). When the proof
+   holds, it is the ground offered.
+4. **The door's text inherits the door's type.** The first walk showed the lines under each button, the chosen
+   document and the statement at body size: `.pj-more > :not(summary)` styles only direct children. They are now
+   `div`s inside the door's blocks. The two acknowledgement radios use the existing `company-check` row
+   (`company-documents.css`, loaded with the Dispatch tab); at first they ran together on one line.
+5. **The transmit refusal line showed a record key.** After the release, the panel's refusal is the dispatch gate's,
+   which named `ectd-sequence:31`. The line now passes it through `blockerForDisplay`, as every blocker on the page
+   does (D7-A2 step 10). Red first (`06-c2/red-record-key.txt`).
+6. **The Gateway transmittals note uses `--text-300`.** It first used the technical rejection note's
+   `var(--muted, inherit)`. `--muted` is not defined in v2, and the note was near-invisible.
+7. **The signing dialog shows the action only once signed.** `EsignModal` prints `action` in the signed manifest, so
+   the red test that looked for it before signing was corrected to look after.
+
+### Proof
+
+- **Red** (`06-c2/red.txt`): 31 failing on the missing door, notes and class; the guards that must hold (no door
+  unless held, the resend hold through the readiness line) pass.
+- **Green** (`06-c2/green.txt`): the four C2 test files, 58 of 58.
+- **The client suites** (`06-c2/client-broad.txt`): every client test file that imports a file C2 changed, 53 files,
+  584 tests, all pass.
+- **Mutations** (`06-c2/mutations/`, driver beside them): 11, each red on its own case.
+  - The design's six:
+    - the client signs its own copy of the statement;
+    - approval is offered;
+    - a record key is on the target line;
+    - any 200 counts as settled;
+    - the statement is not asked again before signing;
+    - the door shows for any dispatch status.
+  - And five more:
+    - the refusal line keeps a record key;
+    - "Declare…" reads as text;
+    - FDA's contradicting answer is not said;
+    - the platform's proof asks for a document;
+    - the creator is offered a way.
+- **Gates** (`06-c2/gates.txt`): ana-surface-context, css-selector-shadowing, phantom-tokens, shell-css-collisions,
+  design-system, empty-state-honesty, internals-in-copy, one-product, surface-text-ramp, token-cascade and
+  undefined-css-classes, all OK.
+- **Typecheck** (`06-c2/typecheck.txt`): the pre-push gate on C1 and C2 together, 0 errors.
+- **ESLint** (`06-c2/lint.txt`): every changed file at or under trunk's count.
+- **The running app** (`07-screen/`). This was a throwaway local database (`seed.sql`: two held production sends,
+  shaped as the gateway leaves them), never FDA.
+  - The server connected as the non-superuser `app_service` with `RLS_ENFORCE=on`, so row-level security was
+    enforced. The earlier walks ran as the superuser, which bypasses it.
+  - The project's author added a clearly labelled stand-in for FDA's Ack2 through the Vault's own upload
+    (`POST /api/vault/ingest`, 201).
+  - An independent signer signed both settlements:
+    - **0001** released on the platform's own proof;
+    - **0002** recorded as received on the Ack2 stand-in.
+  - Screens at 1440 and 390, light and dark: S0, S2 (both sends), S2a, S4 (the creator), S6, S8 and S9 (both lists),
+    and the declaration control closed and open (`declare-*`, the classes read in `probes-declare.json`).
+    `probes-*.json` measures each: every button hit at its centre, no record key, no signature id, no horizontal
+    overflow, no script error.
+  - What the two acts left (`db-after.txt`):
+    - 0001 is `pending`, with S and A cleared, and its transmittal is `rejected` on `platform-proof`;
+    - 0002 is `sent`, with A kept, and its transmittal is `ack2_received`, citing the Vault document;
+    - each spent S (`ECTD_TRANSMITTED`, source `held-send-settlement`);
+    - each recorded `ECTD_HELD_SEND_SETTLED` with the meaning responsibility and the signer's reason.
+
+### Seen, not changed here (reported to the coordinating session)
+
+- **Gateway transmittals:** four other uses of `var(--muted, inherit)` render near-invisible, among them the technical
+  rejection note and the row's "sequence NNNN". Its Actions column also runs past the card at 1440.
+- **The Dispatch tab's transmit button** ("Send sequence NNNN to the agency's test environment") runs past its
+  container at 390.
+- **Raw statuses on screen:** the transmissions list and Gateway transmittals print the stored status as a chip
+  (`In_transit`, `Ack2_received`). P-86's retirement sentence, seen with them, is now in words (departure 6).
+- **FiledElsewhereBaseline's open form:** the agency acknowledgment is typed as a Vault id, not chosen in the Vault.
