@@ -257,6 +257,12 @@ more than 50 files, and its pattern is shown to match the act and nothing near i
 8. **§10.3 A.2's size sentence** says "Sequence NNNN cannot be sent as it is: …", quoting `launchSequenceSizeRefusal`.
    The design's §4 wording ("larger than FDA's documented channel takes") is superseded by P-108 2(b): 1 GiB is never
    called FDA's limit.
+9. **The held send's read built its lock into the SQL text.** `readHeldSend` appended `FOR UPDATE` with
+   `${opts.lock ? ' FOR UPDATE' : ''}`. That is a constant, not a value, but `ci:sql-interpolation` counts any expression
+   in SQL text, and the pre-push hook refused the first push on it. It is now two literal statements that differ only
+   by `FOR UPDATE` (checked), with no baseline raised. Red, then green, and the nine suites again at 140 of 140:
+   `08-sql-interpolation.txt`. It is its own commit after C1 and C2, because they were already merged when the hook
+   found it.
 
 ## Proof
 

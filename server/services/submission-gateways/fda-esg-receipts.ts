@@ -208,11 +208,17 @@ function transmittalFacts(r: Record<string, any>): HeldSendTransmittal {
 export async function readHeldSend(q: Queryable, organizationId: number, seq: HeldSendSequence, opts: { lock?: boolean } = {}): Promise<HeldSendFacts> {
   const now = Date.now();
   if (!seq.transmitSignatureActionId || !seq.transmitAttemptId) return { sequence: seq, transmittal: null, now };
-  const { rows } = await q.query(`SELECT id, transport, status, metadata, bundle_sha256, bundle_size_bytes, http_status, transmission_id, error_message,
+  const params = [organizationId, String(seq.id), seq.transmitAttemptId];
+  // Two literal statements, the act's under FOR UPDATE: no SQL text is built from an expression (ci:sql-interpolation).
+  const { rows } = opts.lock
+    ? await q.query(`SELECT id, transport, status, metadata, bundle_sha256, bundle_size_bytes, http_status, transmission_id, error_message,
       ack_received_at, mdn_raw IS NOT NULL AS has_mdn, submitted_at, updated_at FROM submission_transmittals
     WHERE organization_id = $1 AND region = 'fda' AND gateway = 'esg' AND metadata->'dispatchBinding'->>'sequenceId' = $2::text
-      AND lower(metadata->'dispatchBinding'->>'attemptId') = lower($3) ORDER BY id${opts.lock ? ' FOR UPDATE' : ''}`,
-  [organizationId, String(seq.id), seq.transmitAttemptId]);
+      AND lower(metadata->'dispatchBinding'->>'attemptId') = lower($3) ORDER BY id FOR UPDATE`, params)
+    : await q.query(`SELECT id, transport, status, metadata, bundle_sha256, bundle_size_bytes, http_status, transmission_id, error_message,
+      ack_received_at, mdn_raw IS NOT NULL AS has_mdn, submitted_at, updated_at FROM submission_transmittals
+    WHERE organization_id = $1 AND region = 'fda' AND gateway = 'esg' AND metadata->'dispatchBinding'->>'sequenceId' = $2::text
+      AND lower(metadata->'dispatchBinding'->>'attemptId') = lower($3) ORDER BY id`, params);
   const bound = rows.filter((r) => dispatchBindingOf(r as ReceiptTransmittal, organizationId)?.signatureActionId === seq.transmitSignatureActionId);
   if (bound.length > 1) throw new Error(`Two FDA transmittals are bound to one attempt of sequence ${seq.sequenceNumber}`);
   return { sequence: seq, transmittal: bound[0] ? transmittalFacts(bound[0]) : null, now };
