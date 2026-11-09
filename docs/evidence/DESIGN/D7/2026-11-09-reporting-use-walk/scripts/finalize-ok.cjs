@@ -39,7 +39,7 @@ fs.mkdirSync(OUT, { recursive: true });
   await p.locator('[role="tabpanel"] tbody tr').first().waitFor({ timeout: 30000 });
   out.historyFirst = await p.evaluate(() => document.querySelector('[role="tabpanel"] tbody tr').innerText.replace(/\s+/g, ' '));
   await p.getByRole('button', { name: /^Open the Research Administration Scorecard run of / }).first().click();
-  await p.locator('.ro-rep-actions').waitFor({ timeout: 30000 }); await p.waitForTimeout(1500);
+  await p.locator('.ro-rep-actions').waitFor({ timeout: 30000 }); await p.getByTestId('ro-seal').waitFor({ timeout: 15000 }).catch(() => null);
   out.reopenedText = await p.evaluate(() => { const c = document.querySelector('.rc-canvas'); return c.innerText.replace(/\s+/g, ' ').slice(0, 700); });
   out.reopenedTail = await p.evaluate(() => { const c = document.querySelector('.rc-canvas'); const t = c.innerText.replace(/\s+/g, ' '); return t.slice(-700); });
   out.reopenedSeal = (await p.getByTestId('ro-seal').count()) ? await p.getByTestId('ro-seal').innerText() : null;

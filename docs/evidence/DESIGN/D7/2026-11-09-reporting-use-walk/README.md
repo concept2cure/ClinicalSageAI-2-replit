@@ -69,7 +69,7 @@ saying why:
 
 Only the **Research Administration Scorecard** can be finalized.
 
-Walked at the head (`0e5706a308`) with `scripts/finalize-ok.cjs` and `scripts/reopen-seal.cjs`, as the demo user with
+Walked at `0e5706a308`, and again at `e8e3c63093`, with `scripts/finalize-ok.cjs` and `scripts/reopen-seal.cjs`, as the demo user with
 the demo password:
 - **Before signing**, the report offers "Export PDF" and "Finalize…".
 - **The dialog** offers the meanings Authorship, Approval and Responsibility, and takes the reason and the password.
@@ -86,9 +86,11 @@ the demo password:
   It names the signer, time, meaning and reason. No audit HMAC key is configured here, and the section says so.
 - No script errors, and no 4xx or 5xx.
 
-**One difference, not fixed here.** Right after signing, the seal line sits under the report. A reopened sealed run
-shows the same facts only inside the "Seal, signature and sources" section, which is closed until opened. The PDF
-carries the line either way.
+**Fixed after the first finalize walk:** a reopened sealed run showed its signature only inside the closed seal
+section, while right after signing the line sat under the report. Since `e8e3c63093` (D7), reopening reads the seal
+back and shows the same line when the seal verifies, and shows no line when it does not. Re-walked at `e8e3c63093` on
+run 82: the reopened line is identical to the one shown at signing (`finalize-ok/finalize-ok-reopened-1440.png`,
+`finalize-ok-probes.json`).
 
 ## Pre-deploy step, production: required before `deploy-migrate` runs at `22256c6750` or later
 
