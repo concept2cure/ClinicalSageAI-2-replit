@@ -195,7 +195,7 @@ export async function untilStampHasBegun(stamp: Date): Promise<void> {
 
 /*
  * endEverySessionOf (sign out everywhere) and stopPersonsRuns live in
- * ana/run-control.ts, beside the stopRunsFor they call (2026-11-08). Here they
+ * ana/run-session-end.ts, beside run control's stopRunsFor (2026-11-08). Here they
  * made every reader of this module reach AnA's run machinery, and through it a
  * model call, at file level: part11's signer re-verification reads
  * isAccountActive, so the engine tools behind it failed ci:step-presentation.

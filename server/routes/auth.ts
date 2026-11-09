@@ -54,7 +54,7 @@ import {
   untilStampHasBegun,
 } from '../services/account-standing';
 // Ending sessions stops the runs they started; both live with run control (2026-11-08).
-import { endEverySessionOf, stopPersonsRuns } from '../services/ana/run-control';
+import { endEverySessionOf, stopPersonsRuns } from '../services/ana/run-session-end';
 import {
   EMAIL_UNVERIFIED_MESSAGE,
   VERIFICATION_LINK_INVALID_MESSAGE,

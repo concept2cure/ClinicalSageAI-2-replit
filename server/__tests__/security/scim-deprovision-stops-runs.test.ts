@@ -7,7 +7,7 @@
  * missed, so a departed employee's detached turn ran on until its next round.
  *
  * The data layer is mocked as in scim-provisioning.contract.test.ts; what is
- * read is the stop the route asks for (ana/run-control.ts stopPersonsRuns).
+ * read is the stop the route asks for (ana/run-session-end.ts stopPersonsRuns).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -33,7 +33,7 @@ vi.mock('../../db', () => ({
   transaction: async (cb: (client: unknown) => Promise<unknown>) => cb({ query: clientQueryMock }),
 }));
 vi.mock('../../services/auditService', () => ({ writeChainedAuditRow: vi.fn(async () => undefined) }));
-vi.mock('../../services/ana/run-control', async importOriginal => ({
+vi.mock('../../services/ana/run-session-end', async importOriginal => ({
   ...(await importOriginal<Record<string, unknown>>()),
   stopPersonsRuns: stopsMock,
 }));

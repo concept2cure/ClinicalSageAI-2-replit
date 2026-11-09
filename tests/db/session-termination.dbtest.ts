@@ -626,7 +626,7 @@ describe('(5) the stamp itself (migrations/20261001_users_sessions_ended_at.sql,
     await owner.query(`UPDATE users SET sessions_ended_at = $2, status = 'active' WHERE id = $1`, [id, later]);
     await owner.query(`UPDATE users SET status = 'inactive' WHERE id = $1`, [id]);
     expect((await stampOf(id))!.getTime(), 'the trigger moved the stamp backwards').toBe(later.getTime());
-    const { endEverySessionOf } = await import('../../server/services/ana/run-control');
+    const { endEverySessionOf } = await import('../../server/services/ana/run-session-end');
     // Bound to the account, as the sign-out route is once its token verifies (D3, 2026-10-04).
     const { runAsAccount } = await import('../../server/db/tenantStore');
     expect(await runAsAccount(id, 'dbste:stamp', () => endEverySessionOf(id, new Date(0)))).toBe(true);
