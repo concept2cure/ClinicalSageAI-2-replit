@@ -46,3 +46,19 @@ Both were extracted unchanged first, so the red is behavioural, then fixed:
   chain is intact.
 - `all-run1.log`, `all-run2.log`: `--pack all` twice in a row, **both exit 0** (18:52–18:55 UTC). The one record
   created on each run is C2C-201's Module 3 compile, which the pack runs every time by design.
+
+## Follow-up (approved by the coordinating session for after 23:00 UTC): the demo change controls name their program
+
+- **What already exists.** POST `/api/mdx/qms/changes` admits a body `programId` (`server/routes/mdx-qms-context.ts`
+  `admitBodyProject`) and records it. The Quality evidence capture reads change controls as
+  `program_id IS NULL OR = this program` (`server/services/qms/project-evidence-queries.ts:22,27`), so a change control
+  created with none is organization-wide and appears in every project of the workspace.
+- **What changed.** `biotech-qms.mjs` `biotechChangeBody` (C2C-CC-001) and `mdx-qms.mjs` `mdxChangeBody` (the NP-100
+  software release) send their own pack's program.
+- **Red first.** `qms-change-program.test.mjs`: on the extracted bodies 2 of 3 fail (`change-program-red.log`); with the
+  fix 3 of 3 pass; all pack tests 142 of 142 (`tests.log`).
+- **In the running app.** A change control created with the new body answers 201 with `program_id` =
+  C2C-101's (`change-program-live.log`).
+- **Not changed, said here:** a change control that already exists without a program (any database seeded before this)
+  keeps none. PATCH `/api/mdx/qms/changes/:id` has no `programId` field, and the pack finds the record by its number
+  and does not re-create it.
