@@ -89,7 +89,9 @@ describe('current schedule caller admission and executor forwarding', () => {
     expect(h.access).toHaveBeenCalledWith(7, actor, 12, q);
     expect(h.globalQuery).not.toHaveBeenCalled(); expect(h.anchor).not.toHaveBeenCalled();
     expect(h.query).toHaveBeenCalledWith(expect.any(String), [12, 7]);
-    if (action.service === h.unified) expect(h.unified).toHaveBeenCalledExactlyOnceWith({ organizationId: 7, projectId: 12 }, requestDb(received[0]));
+    // P-111 item 3 (A1): the work projects' roll-up gets the reader this route admitted, and nothing else.
+    if (action.service === h.unified) expect(h.unified).toHaveBeenCalledExactlyOnceWith({ organizationId: 7, projectId: 12,
+      rollUpFor: { userId: 41, role: 'member', executor: q } }, requestDb(received[0]));
     else if (action.service === h.get) expect(h.get).toHaveBeenCalledExactlyOnceWith(7, 12, context);
     else {
       expect(action.service).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ orgId: 7, projectId: 12, triggeredBy: 'user' }), context);
@@ -180,7 +182,8 @@ describe('program UUID admission reuses the canonical unique anchor scope', () =
     expect(h.program).toHaveBeenCalledWith(q, { organizationId: 7, userId: 41, programId: PROGRAM.toLowerCase() });
     expect(h.anchor).not.toHaveBeenCalled(); expect(h.globalQuery).not.toHaveBeenCalled();
     if (action.service === h.get) expect(h.get).toHaveBeenCalledExactlyOnceWith(7, 11, context);
-    else if (action.service === h.unified) expect(h.unified).toHaveBeenCalledExactlyOnceWith({ organizationId: 7, projectId: 11 }, requestDb(received[0]));
+    else if (action.service === h.unified) expect(h.unified).toHaveBeenCalledExactlyOnceWith({ organizationId: 7, projectId: 11,
+      rollUpFor: { userId: 41, role: 'member', executor: q } }, requestDb(received[0]));
     else expect(h.generate).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ orgId: 7, projectId: 11 }), context);
   });
   it.each(['missing', 'ambiguous'])('maps a %s anchor to generic PROGRAM_UNANCHORED without using the lowest row', async state => {
@@ -247,6 +250,7 @@ describe('browser input supplies schedule intent, never execution authority', ()
     });
     const res = await send(cases[5], {}, PROGRAM); expect(res.status).toBe(503);
     expect(JSON.stringify(res.body)).not.toContain('PRIVATE-EARLIER-ANCHOR'); expect(h.program).toHaveBeenCalledTimes(2);
-    expect(h.unified).toHaveBeenCalledExactlyOnceWith({ organizationId: 7, projectId: 11 }, requestDb(received[0]));
+    expect(h.unified).toHaveBeenCalledExactlyOnceWith({ organizationId: 7, projectId: 11,
+      rollUpFor: { userId: 41, role: 'member', executor: q } }, requestDb(received[0]));
   });
 });

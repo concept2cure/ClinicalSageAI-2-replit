@@ -29,7 +29,8 @@
 
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db';
-import type { RequestDb } from '../../db/requestDb';
+import type { RequestDb, RequestSqlClient } from '../../db/requestDb';
+import { workProjectsReadableBy } from '../tasking/task-project';
 import { projectTasks, c2cProjectWorkItems, unifiedTasks } from '../../../shared/schema';
 import { estarSubmissions } from '../../../shared/schema/estar-submission';
 import { describeFailure, type VerificationOutcome } from '../../lib/verification-outcome';
@@ -61,6 +62,8 @@ export interface UnifiedWorkItem {
   /** Primary key in the owning system, as a string. */
   nativeId: string;
   projectId: number | null;
+  /** Set only on a task rolled up from one of the filing project's work projects (P-111): where it lives. */
+  workProject?: { id: number; name: string };
   title: string;
   status: UnifiedWorkStatus;
   priority: UnifiedWorkPriority | null;
@@ -357,6 +360,13 @@ export interface LoadUnifiedWorkInput {
    * neither the total nor the done count.
    */
   includeCompleted?: boolean;
+  /**
+   * P-111 item 3, the coordinating session's A1: also roll up the tasks of this filing project's work projects that
+   * this reader may read (tasking/task-project.ts workProjectsReadableBy, one decision for all of them). Only the
+   * route that has already admitted the reader passes it: the admitted actor and the request's own connection.
+   * Callers that pass nothing get exactly what they got before.
+   */
+  rollUpFor?: { userId: number; role: string | null | undefined; executor: RequestSqlClient };
 }
 
 export interface UnifiedWorkResult {
@@ -410,6 +420,37 @@ async function readSource<T>(
     });
     return { rows: [], read: { ran: false, reason: SOURCE_UNREAD_REASON } };
   }
+}
+
+/** The work projects' tasks for one filing project, for a reader the route has admitted (P-111 item 3): which work
+ * projects is decided once for all of them, then their open board tasks are read in one query, each marked with
+ * where it lives. A failure of either read is said as an unread source, never as no work. */
+async function rollUpWorkProjectTasks(
+  database: Pick<RequestDb, 'select'>, organizationId: number, filingProjectId: number, statuses: string[],
+  reader: NonNullable<LoadUnifiedWorkInput['rollUpFor']>,
+): Promise<{ items: UnifiedWorkItem[]; read: UnifiedWorkSourceRead | null }> {
+  let children: Array<{ id: number; name: string }>;
+  try {
+    children = await workProjectsReadableBy(reader.executor, organizationId, { userId: reader.userId, role: reader.role }, filingProjectId);
+  } catch (err) {
+    logger.error('work projects for the roll-up could not be decided', { reason: driverReason(err) });
+    return { items: [], read: { ran: false, reason: SOURCE_UNREAD_REASON } };
+  }
+  if (!children.length) return { items: [], read: null };
+  const names = new Map(children.map((c) => [c.id, c.name]));
+  const rows = await readSource<UnifiedTaskRowLike>('unified_tasks', database.select().from(unifiedTasks).where(and(
+    eq(unifiedTasks.organizationId, organizationId),
+    inArray(unifiedTasks.projectId, children.map((c) => c.id)),
+    inArray(unifiedTasks.status, statuses),
+    isNull(unifiedTasks.deletedAt),
+    sqlDistinctFromProjectTask(),
+  )));
+  const items = rows.rows.map((r) => {
+    const item = unifiedTaskToUnified(r);
+    const id = item.projectId ?? 0;
+    return names.has(id) ? { ...item, workProject: { id, name: names.get(id)! } } : item;
+  });
+  return { items, read: rows.read };
 }
 
 /**
@@ -489,18 +530,22 @@ export async function loadUnifiedWork(input: LoadUnifiedWorkInput, database: Pic
       ),
   );
 
+  const rolled = projectId !== undefined && input.rollUpFor
+    ? await rollUpWorkProjectTasks(database, organizationId, projectId, boardStatuses, input.rollUpFor)
+    : { items: [], read: null };
   const sources: UnifiedWorkSources = {
     project_tasks: tasks.read,
     c2c_project_work_items: workItems.read,
     estar_submissions: filings.read,
-    unified_tasks: boardTasks.read,
+    // A roll-up that could not be read makes the board's contribution partial, never an empty answer.
+    unified_tasks: rolled.read && !rolled.read.ran ? rolled.read : boardTasks.read,
   };
-  const items = mergeUnifiedWork({
+  const items = [...mergeUnifiedWork({
     tasks: tasks.rows,
     workItems: workItems.rows,
     filings: filings.rows,
     boardTasks: boardTasks.rows,
-  });
+  }), ...rolled.items].sort(compareUnifiedWork);
   return { items, summary: summarizeUnifiedWork(items, sources), sources };
 }
 
