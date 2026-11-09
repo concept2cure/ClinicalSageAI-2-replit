@@ -69,7 +69,7 @@ function LegalPackageSelection({ bundleId, disabled, owner }: { bundleId: string
   };
   const active = current(), blocked = !active || busy || disabled;
   return <div className="rl-form">
-    <button className="rl-card-run" type="button" disabled={blocked} onClick={choose}>
+    <button className="btn ghost rl-card-run" type="button" disabled={blocked} onClick={choose}>
       {open && active ? 'Refresh legal companions' : 'Choose legal companions for ZIP'}
     </button>
     {open && active && <fieldset disabled={blocked}>
