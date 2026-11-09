@@ -1034,15 +1034,6 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Biopharma submissions routes:', error);
   }
 
-  // CTD Module 1 (regional administrative) + Module 2 (CTD summaries) home.
-  try {
-    const ctdModule = await import('../routes/biopharma/ctd');
-    app.use('/api/biopharma/ctd', authMiddleware, ctdModule.default);
-    console.info('✅ Biopharma CTD M1/M2 routes mounted (/api/biopharma/ctd)');
-  } catch (error) {
-    console.error('❌ Failed to mount Biopharma CTD routes:', error);
-  }
-
   // Biopharma specialty reads — pediatric plans, orphan designations, lifecycle
   // supplements. Each mounts at its own sub-prefix (rather than the bare
   // /api/biopharma) so it resolves ahead of the programs router's GET /:id.

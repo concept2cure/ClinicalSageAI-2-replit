@@ -652,3 +652,41 @@ file exists, and the manifest lists it. The 3 controls pass on trunk:
 - `ci:migration-drop-safety` and `ci:migration-set-order`;
 - `check-duplicate-table-ddl`, `check-migration-reachability` and `check-journey-migration-reachability`;
 - `ci:unkeyed-request-tables` and `db:sync-manifest:check`.
+
+### S12 — delete `/api/biopharma/ctd` and its build-state helpers, replaced by AnA `get_ctd_module_home` and the filing outline
+
+**Deleted:**
+- `server/routes/biopharma/ctd.ts`, which served `GET /structure` and `GET /build-state/:projectId`, and its mount in
+  `server/bootstrap/register-inline-routes.ts`.
+- From `server/services/regulatory/ctd-module-structure.ts`, the build-state helpers only that route used:
+  `annotateModuleBuildState`, `SectionStatusRow`, `ModuleBuildState`, `CtdSectionState`, `SectionStatus`,
+  `moduleReadiness`, `coerceStatus` and their two status sets. Its three cases in
+  `tests/services/regulatory/ctd-module-structure.test.ts` went with them.
+
+**What already exists:**
+- **Callers:** no screen ever called either route. Across the full history, the only client request was
+  `BiopharmaProject.tsx` asking for the mount root, which never had a handler. That screen was retired in `e3c80c548`
+  (2026-07-31). Production refused both routes.
+- **The structure:** AnA `get_ctd_module_home` (`server/services/ana/AnaToolExecutor.ts`), over `getCtdModuleHome`,
+  which stays with the structure tests.
+- **A filing's sections and their state:** `GET /api/c2c/documents/:id/outline` (`server/routes/c2c/documents.ts`). It
+  is read by the editor's filing outline (`client/src/concept2cure/v2/useFilingOutline.ts`) and by AnA
+  `list_authoring_outline`. In the running app the editor shows "Filings in this project · FDA · IND — home filing"
+  and its section tree. The outline answers 200 (`r1-batch-1/app-02-editor-filing-outline.png`,
+  `patched-server-probe.txt`).
+
+**Changed:**
+- `get_ctd_module_home`'s description (`bla-biologics-tool-defs.ts`) no longer sends the model to the retired route. It
+  names `list_authoring_outline` instead. `docs/ana-capability-manifest.json` was regenerated with
+  `npm run manifest:ana`: that one line, and nothing else.
+- The route file's entries leave `scripts/ci/tenant-resolvers-baseline.json` and
+  `docs/reports/requestdb-coverage-baseline.json`.
+- A comment in `csr-workflow-routes.ts` that cited its build-state pattern.
+
+**Red:** `s12-red.txt`. `biopharma-ctd-route-retired.test.ts` fails 4 of 5 on trunk, all on assertions: the file, the
+mount, the helper export and the tool sentence. The control, that both replacements are reached, passes on trunk.
+
+**Gates:** all exit 0:
+- `ci:audit-route-mounts:no-regression` and `ci:route-ownership-matrix:check`;
+- `audit-requestdb-coverage.mjs --strict-no-regression` and `ci:tenant-resolvers`;
+- the 15 tool-selection, manifest and `get_ctd_module_home` suites: 461 pass.

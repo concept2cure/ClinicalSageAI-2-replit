@@ -25,7 +25,6 @@
     "server/routes/batch-draft-routes.ts",
     "server/routes/biopharma-specialty.routes.ts",
     "server/routes/biopharma/bla-workbench.ts",
-    "server/routes/biopharma/ctd.ts",
     "server/routes/biopharma/programs.ts",
     "server/routes/biosketch.ts",
     "server/routes/biostat-design-stats.ts",
