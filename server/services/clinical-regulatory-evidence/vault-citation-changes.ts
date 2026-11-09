@@ -22,6 +22,9 @@ import type { RequestSqlClient } from '../../db/requestDb';
 import { getCurrentAuthoringReadScope, requireAuthoringReadScopeStillCurrent } from '../authoring/authoring-read-scope';
 import { readPredecessorIds, readVersionFamily, type FamilyVersion } from '../vault/vault-version-family';
 import { STEADY_STAGES } from '../vault/vault-lifecycle';
+import { supersededSql } from '../vault/vault-version-family.js';
+import { vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
+import { programOfProject } from '../c2c/program-project-anchor';
 
 export interface ChangedVaultCitation {
   sectionId: string;
@@ -138,4 +141,69 @@ export async function listChangedVaultCitations(
 export function replacedVaultCitations(feeds: VaultFedSection[]): ChangedVaultCitation[] {
   return feeds.flatMap(({ state, approvedVaultId, approvedVersion, ...rest }) =>
     state === 'replaced' && approvedVaultId ? [{ ...rest, approvedVaultId, approvedVersion }] : []);
+}
+
+/* ── A work project's assigned Vault family (S12 gap 5, slice 2; the coordinating session's conditions, 2026-11-09) ──
+   A work project may be assigned to produce a Vault document family (`document_code`). The one check, used where the
+   assignment is written (POST /api/tasks/tasks) and again where it is read (the project's map): the family has a current
+   live version in this organisation's filing program. "Current live" is the Vault tree's own predicate
+   (project-vault.ts): not deleted, its data not withdrawn (vaultDataEligibleSql), and not superseded (supersededSql).
+   One refusal for every reason a family is not there (none, another program, another organisation), so the check cannot
+   be used to learn whether a code exists elsewhere. */
+
+/** The refusal, in its own words. */
+export const VAULT_FAMILY_NOT_IN_PROGRAM = {
+  code: 'VAULT_FAMILY_NOT_IN_PROGRAM',
+  message: 'That Vault document is not in this project’s Vault. Nothing was assigned.',
+} as const;
+
+export interface VaultFamilyHead { id: string; version: string | null; title: string | null; documentCode: string }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The family's current live version in this organisation's program, or null when it has none there. */
+export async function vaultFamilyInProgram(
+  q: Pick<RequestSqlClient, 'query'>, orgId: number, programId: string, documentCode: unknown,
+): Promise<VaultFamilyHead | null> {
+  const code = typeof documentCode === 'string' ? documentCode.trim() : '';
+  if (!code || code.length > 200 || !UUID.test(programId) || !Number.isSafeInteger(orgId) || orgId <= 0) return null;
+  const { rows } = await q.query(
+    `SELECT d.id::text AS id, d.version, d.document_title AS title, d.document_code
+       FROM vault.documents d
+      WHERE d.organization_id = $1 AND d.program_id = $2::uuid AND d.document_code = $3 AND d.deleted_at IS NULL
+        AND ${vaultDataEligibleSql('d')} AND NOT ${supersededSql('d')}
+      ORDER BY d.created_at DESC, d.id LIMIT 1`,
+    [orgId, programId, code],
+  );
+  const row = (rows as Array<Record<string, unknown>>)[0];
+  return row ? { id: String(row.id), version: (row.version as string) ?? null, title: (row.title as string) ?? null,
+    documentCode: String(row.document_code) } : null;
+}
+
+/** The assignment's refusal: one status, one code and the same words, whatever the reason. */
+export class VaultFamilyRefusal extends Error {
+  readonly status = 409;
+  readonly code = VAULT_FAMILY_NOT_IN_PROGRAM.code;
+  constructor() { super(VAULT_FAMILY_NOT_IN_PROGRAM.message); this.name = 'VaultFamilyRefusal'; }
+}
+
+/**
+ * Where a task is written with `moduleData.vaultDocumentCode` (a work project assigned to produce a Vault family): the
+ * family must be in the filing program of the task's own admitted project. The program is never taken from the body:
+ * it is the admitted project's root's (programOfProject). A body `programId` that differs is refused the same way, so a
+ * caller cannot name another program and learn whether a code exists there. A task without the field is untouched.
+ */
+export async function requireAssignedVaultFamily(
+  q: Pick<RequestSqlClient, 'query'>, orgId: number, projectId: number | undefined, moduleData: unknown,
+): Promise<VaultFamilyHead | null> {
+  const data = moduleData && typeof moduleData === 'object' && !Array.isArray(moduleData) ? moduleData as Record<string, unknown> : null;
+  if (!data || data.vaultDocumentCode === undefined) return null;
+  if (projectId === undefined) throw new VaultFamilyRefusal();
+  const programId = await programOfProject(q as never, orgId, projectId);
+  if (!programId || (data.programId !== undefined && String(data.programId).toLowerCase() !== programId.toLowerCase())) {
+    throw new VaultFamilyRefusal();
+  }
+  const head = await vaultFamilyInProgram(q, orgId, programId, data.vaultDocumentCode);
+  if (!head) throw new VaultFamilyRefusal();
+  return head;
 }

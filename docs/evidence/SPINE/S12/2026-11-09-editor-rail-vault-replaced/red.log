@@ -1,0 +1,7 @@
+ok  earlier walk runs' seeded spans retired on the local database
+ok  seeded on the local database: v1, v2 superseding it in review, and a span in the section drafted from v1
+ok  version 3 approved (seeded at that stage; see the README)
+locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByTestId('section-vault-replacements') to be visible[22m
+

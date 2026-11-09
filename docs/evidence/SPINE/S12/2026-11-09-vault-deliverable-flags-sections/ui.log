@@ -1,0 +1,43 @@
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > rereads recovered persisted text for the same source without sending a processing mutation 461ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > shows persisted retry-needed processing instead of a premature extracted label 155ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > keeps legacy unknown availability ineligible instead of inventing readable text 91ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > shows a superseded source as historical even when its persisted text exists 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers only the shared chat candidates from its project-source picker 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > lists the project's real sources 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > says a document is readable only when its extraction succeeded 59ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > reports how many sources are actually usable 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > renders an honest empty state for a project with no sources 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > distinguishes a failed read from an empty data room 44ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > searches the whole room on the server, by title and text, and lists its answer 389ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a pending source search does not report zero matches 379ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: null 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: {"sources":{}} 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: {"sources":[],"total":null} 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > offers a way to add sources 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > says how many pages OCR read for an upload a budget stopped 49ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > cannot pin a source whose text was never read 69ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > hands the pinned set to AnA 84ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > offers no pin action until something is pinned 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > reports the sections and documents a source is cited in 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > says plainly when nothing was written from a source 47ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > flags the sections written against content the source no longer has 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows nothing rather than a zero when the server sends no usage field 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is undefined 47ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is organization-wide 44ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":-1,"documents":0,"changedSections":0} 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":"0","documents":0,"changedSections":0} 40ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":0,"documents":1,"changedSections":0} 43ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":1,"documents":2,"changedSections":0} 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":1,"documents":1,"changedSections":2} 40ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > names the affected sections when a source has changed under them 33ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > shows no change banner when nothing is stale 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > two returned citations of one section are described as citations, not two sections 29ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 34ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 34ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 34ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > names the sections drafted from a Vault version that a later approved version replaced (S12) 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > counts a re-uploaded file once 62ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > shows what the catalog found: protocol, registry id, data cut-off, and a table's CDISC domain 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > a full page shows the exact total and pages to the older sources 62ms
+      Tests  42 passed (42)

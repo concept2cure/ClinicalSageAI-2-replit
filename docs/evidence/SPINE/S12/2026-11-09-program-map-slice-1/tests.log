@@ -1,0 +1,6 @@
+ ✓ is listed, naming the cited version and the approved one; a later draft alone does not list it 44ms
+ ✓ names the latest approved version across several, and a section citing it is not listed 26ms
+ ✓ is not listed once its span is retired, nor through a link the family rule refuses 32ms
+ ✓ reads only its own organization's sections and versions 42ms
+ ✓ the program map lists every Vault-fed section with its standing, current or replaced (S12 gap 5) 68ms
+      Tests  5 passed (5)
