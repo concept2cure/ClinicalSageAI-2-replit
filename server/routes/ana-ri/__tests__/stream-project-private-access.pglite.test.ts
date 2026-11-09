@@ -50,6 +50,7 @@ vi.mock('../../../services/anthropic-files.js', async () => (await harnessModule
 
 import { mountStreamRoute } from '../stream.js';
 import { harness as h, resetHarness, streamApp } from './support/stream-route-harness.js';
+import { OWNER_CONVERSATION_STORE_DDL, ownerScopedClient } from '../../../services/ana/__tests__/support/request-owner';
 
 const app = streamApp(router => {
   // Source admission must use this suite's actual SQL, as project admission does.
@@ -81,6 +82,7 @@ beforeAll(async () => {
       client_program_id uuid, client_workspace_id integer, deleted_at timestamp, provenance jsonb,
       source_type text, created_by integer, metadata jsonb NOT NULL DEFAULT '{}');
     CREATE TABLE file_uploads (id text PRIMARY KEY, organization_id integer, user_id integer);
+    ${OWNER_CONVERSATION_STORE_DDL}
     INSERT INTO regulatory_programs VALUES ('${PROGRAM}',7,NULL);
     INSERT INTO projects (id,organization_id,regulatory_program_id,client_workspace_id,owner_id,created_by_id,settings)
       VALUES (42,7,'${PROGRAM}',NULL,5,5,'{}');
@@ -108,9 +110,11 @@ beforeEach(async () => {
   vi.clearAllMocks();
   await database.exec('DELETE FROM project_members');
   statements.length = 0;
+  // The request's connection carries its verified owner, as the conversation step reads it (P-104).
+  const ownerSql = ownerScopedClient((sql, params) => database.query<Record<string, unknown>>(sql, params));
   io.query.mockReset().mockImplementation(async (sql: string, params?: unknown[]) => {
     statements.push(sql);
-    return database.query<Record<string, unknown>>(sql, params);
+    return ownerSql.query(sql, params);
   });
   io.resolve.mockReset().mockResolvedValue(42);
   io.memory.mockReset().mockResolvedValue({ memoryBlock: '', atoms: [], diagnostics: null });
@@ -167,7 +171,11 @@ describe('AnA admits a private project before its context, run or tools', () => 
   });
   it('preserves an organization conversation without a selected project', async () => {
     expect((await httpRequest(app).post('/api/ana-ri/stream').send({ message: 'Explain IND requirements' })).status).toBe(200);
-    expect(statements.some(sql => /organization_users|project_members/.test(sql))).toBe(false);
+    // No project admission ran. Since a2f9264a (P-104) every turn reads the member's own private
+    // rules, after confirming their current organization membership (organization_users) only.
+    expect(statements.some(sql => /\bprojects\b|project_members|project_visibility_settings|regulatory_programs/.test(sql))).toBe(false);
+    expect(statements.filter(sql => /organization_users/.test(sql)).every(sql => /ou\.organization_id=\$1 AND ou\.user_id=\$2/.test(sql))).toBe(true);
+    expect(h.state.gatewayCalls, 'the conversation went on').toBe(1);
   });
   it('refuses a selected private source even when the open project is public and accessible', async () => {
     const response = await httpRequest(app).post('/api/ana-ri/stream').send({

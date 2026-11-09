@@ -17,7 +17,8 @@ vi.mock('../../db.js', () => ({
   },
 }));
 
-import { endEverySessionOf, stopPersonsRuns } from '../account-standing';
+// Both moved from account-standing.ts to run control on 2026-11-08; the contract is unchanged.
+import { endEverySessionOf, stopPersonsRuns } from '../ana/run-session-end';
 
 const runStops = () => db.calls.filter(c => /UPDATE ana_runs/.test(c.text));
 

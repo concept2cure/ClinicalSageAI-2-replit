@@ -69,7 +69,8 @@ vi.mock('../../../db', () => {
       if (/FROM regulatory_programs/.test(text)) return { rowCount: 1, rows: [{ application_number: rows.applicationNumber }] };
       return { rowCount: 0, rows: [] };
     },
-    connect: async () => { throw new Error('not expected'); },
+    // 5c5b89836: a pre-wire refusal records TRANSMIT_BLOCKED in its own transaction (recordBlockedSequenceTransmit).
+    connect: async () => ({ query: (text: string) => pool.query(text), release: () => undefined }),
   };
   return { db: { select, execute }, pool };
 });

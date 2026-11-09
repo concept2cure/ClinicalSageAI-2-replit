@@ -66,6 +66,26 @@ const LMN201_DS = 'LMN-201 drug substance (illustrative)';
 const LMN201_DP = 'LMN-201 enteric capsules (illustrative)';
 
 export const LMN201_CMC = {
+  /* The procedures the specifications below name, recorded in the method
+     register so the approval route can resolve them (see biotech-work-content's
+     note). Illustrative demo values, not Lumen data. */
+  methods: [
+    { code: 'LMN-AM-01', title: 'LC-MS peptide map', purpose: 'Identity', analyte: 'LMN-201 protein identity', matrix: 'Drug substance', technique: 'LC-MS peptide mapping', status: 'validation',
+      characteristics: ['specificity', 'precision (repeatability)', 'precision (intermediate)'],
+      summary: 'Illustrative: peptide coverage against the reference map, conformance assessed by retention and mass match.' },
+    { code: 'LMN-AM-02', title: 'Cell-based toxin B cytotoxicity neutralisation assay', purpose: 'Potency', analyte: 'Anti-toxin B neutralising activity', matrix: 'Drug substance', technique: 'Cell-based bioassay', status: 'validation',
+      characteristics: ['specificity', 'accuracy', 'precision (repeatability)', 'precision (intermediate)', 'linearity', 'range'],
+      summary: 'Illustrative: relative potency against the reference standard over 50–200% of nominal, within the 60–140% release range.' },
+    { code: 'LMN-AM-03', title: 'Ph. Eur. 2.6.12 / 2.6.13', purpose: 'Microbial enumeration and specified organisms', analyte: 'TAMC, TYMC, E. coli', matrix: 'Drug substance', technique: 'Compendial microbiological examination', status: 'validation',
+      characteristics: ['specificity', 'accuracy', 'precision (repeatability)'],
+      summary: 'Illustrative: compendial procedures verified for this matrix, growth promotion and suitability demonstrated.' },
+    { code: 'LMN-AM-04', title: 'USP <711> delayed-release, apparatus 2', purpose: 'Enteric protection and release', analyte: 'Released protein', matrix: 'Drug product', technique: 'Dissolution, apparatus 2', status: 'validation',
+      characteristics: ['specificity', 'accuracy', 'precision (repeatability)', 'linearity', 'range'],
+      summary: 'Illustrative: acid stage and buffer stage profiles against the 2 h / 45 min acceptance table.' },
+    { code: 'LMN-AM-05', title: 'Karl Fischer titration', purpose: 'Water content', analyte: 'Water', matrix: 'Drug product', technique: 'Coulometric Karl Fischer', status: 'validation',
+      characteristics: ['specificity', 'accuracy', 'precision (repeatability)', 'linearity', 'range'],
+      summary: 'Illustrative: recovery 97–103% over 2–10% w/w against the 8.0% limit.' },
+  ],
   specs: [
     { material: 'Drug substance', name: `${LMN201_DS} — identity`, release: 'Conforms to reference by peptide mapping', method: 'LC-MS peptide map', ich: 'ICH Q6B', justification: 'Illustrative demo specification.' },
     { material: 'Drug substance', name: `${LMN201_DS} — potency (toxin B neutralisation)`, release: '60–140% of reference standard', method: 'Cell-based toxin B cytotoxicity neutralisation assay', ich: 'ICH Q6B', justification: 'Illustrative demo range.' },

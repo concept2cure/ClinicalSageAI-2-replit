@@ -144,6 +144,10 @@ beforeAll(async () => {
   `);
   for (const m of MIGRATIONS) await h.pglite.exec(readFileSync(path.join(ROOT, m), 'utf8'));
   await h.pglite.exec(AUDIT_LOGS_PGLITE_DDL);
+  // The chain's order key, as the deployed set has it: since b8cee0745c every release reads the
+  // document's chained ledger ordered by chain_seq (workflow-import-governance.ts independentLedger),
+  // and without the column every seal answered INDEPENDENT_CHECK_REQUIRED.
+  await h.pglite.exec(readFileSync(path.join(ROOT, 'migrations/20260921_audit_logs_chain_seq.sql'), 'utf8'));
   await installCurrentSnapshotActor(h.pglite, { organizationId: ORG, userId: 3, role: 'member', email: 'member@org.test' });
   const authoringRouter = (await import('../authoring.router')).default;
   app = express();
