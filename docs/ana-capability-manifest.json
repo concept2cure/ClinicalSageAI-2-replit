@@ -13759,7 +13759,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Produce a deterministic, integrated benefit-risk balance assessment with the principal drivers made explicit. Integrates key benefits (importance-weighted by clinical-endpoint hierarchy, discounted for uncertainty) and key risks (severity × reversibility × frequency weight, with credit for mitigation) into a benefit weight, a risk weight, a net balance, and a confidence score, then returns one of four verdicts: favourable, favourable_with_conditions, indeterminate, or unfavourable. Applies a bounded credit to the net balance for disease severity and unmet need (FDA Analysis-of-Condition logic). Surfaces the drivers, key-benefit and key-risk summaries, mitigation impact, population/subgroup considerations, conditions for a favourable conclusion, and a structured conclusion narrative. Grounded in ICH M4E(R2) §2.5.6, CIOMS Working Group IV, the FDA framework, EMA methodology, and EMA GVP Module V. Use when the user needs an integrated benefit-risk judgment that names the load-bearing benefits, risks, and mitigations. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Produce an integrated benefit-risk balance assessment with its principal drivers. Integrates key benefits (importance-weighted by clinical-endpoint hierarchy, discounted for uncertainty) and key risks (severity × reversibility × frequency, credited for mitigation) into a benefit weight, risk weight, net balance and confidence score, and returns one of four verdicts: favourable, favourable_with_conditions, indeterminate or unfavourable, or none, naming the facts, while an unstated one could change it. Adds a bounded credit for disease severity and unmet need. Returns the drivers, key-benefit and key-risk summaries, mitigation impact, subgroup considerations, conditions for a favourable conclusion and a structured conclusion narrative. Grounded in ICH M4E(R2) §2.5.6, CIOMS IV, the FDA framework and EMA methodology. Use for an integrated benefit-risk judgment. Deterministic: no LLM, no network. Report the returned values and regulatory citations verbatim; do not substitute your own regulatory interpretation.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -13781,13 +13781,13 @@
           "name": "conditionSeverity",
           "type": "string",
           "required": false,
-          "description": "Seriousness of the condition; raises risk tolerance via a bounded additive credit to the net balance."
+          "description": "Seriousness of the condition; raises risk tolerance via a bounded additive credit to the net balance. Omitted or null: no credit, named in methodNotes."
         },
         {
           "name": "unmetMedicalNeed",
           "type": "boolean",
           "required": false,
-          "description": "Whether an unmet medical need exists; adds a bounded credit to the net balance when true."
+          "description": "Whether an unmet medical need exists; adds a bounded credit to the net balance when true. Omitted or null stays not_stated, and a conclusion it could change is not assessed (see undecided)."
         },
         {
           "name": "benefits",
@@ -14050,7 +14050,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess the uncertainty surrounding a benefit-risk conclusion. Enumerates the declared uncertainty sources (data quality/bias, extrapolation, rare serious events, indirect evidence, surrogate-endpoint translation, missing data, external validity, subgroup heterogeneity, long-term efficacy/safety, comparator relevance), grades each source's impact on the balance, and judges how robust the conclusion is (robust / sensitive / fragile) by combining the count and severity of uncertainties with the net benefit-risk margin. Returns, deterministically, what would change the conclusion, recommended sensitivity analyses (including a tornado diagram), and the residual uncertainty to carry into the label / risk management plan as missing information. Grounded in the EMA benefit-risk methodology, IMI PROTECT, the FDA framework's uncertainty discipline, PrOACT-URL, and ICH E2C(R2). Use when the user needs to stress-test a benefit-risk conclusion or document its uncertainties. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Assess the uncertainty around a benefit-risk conclusion. Takes the declared uncertainty sources (data quality/bias, extrapolation, rare serious events, indirect evidence, surrogate-endpoint translation, missing data, external validity, subgroup heterogeneity, long-term efficacy/safety, comparator relevance), grades each source's impact on the balance, and judges how robust the conclusion is (robust / sensitive / fragile) from their count and severity and the net benefit-risk margin. Returns what would change the conclusion, recommended sensitivity analyses (including a tornado diagram) and the residual uncertainty to carry into the label / risk management plan as missing information. Grounded in EMA benefit-risk methodology, IMI PROTECT, the FDA framework, PrOACT-URL and ICH E2C(R2). Use to stress-test a benefit-risk conclusion or document its uncertainties. Deterministic: no LLM, no network. Report the returned values and regulatory citations verbatim; do not substitute your own regulatory interpretation.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -14072,7 +14072,7 @@
           "name": "currentVerdict",
           "type": "string",
           "required": false,
-          "description": "The current best-estimate benefit-risk verdict to stress-test."
+          "description": "The current best-estimate benefit-risk verdict to stress-test. Not read: it does not change the result."
         },
         {
           "name": "netBalanceEstimate",
@@ -17597,7 +17597,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Build an EMA-style effects table — the standardized tabulation of favourable and unfavourable effects that appears in the benefit-risk section of every EMA assessment report / EPAR. Each effect is resolved into a row with its direction, unit, treatment vs comparator values, absolute difference, confidence interval, ordinal magnitude, an explicit uncertainty grade, the evidence source, and a references/strength-of-evidence annotation. Magnitude is taken from a supplied ordinal judgment or derived deterministically from the relative treatment-vs-comparator difference; the table's overall evidence quality is set to the worst uncertainty present (conservative reading). Confidence intervals that include the null are flagged as not statistically established. Grounded in the EMA Benefit-Risk Methodology Project and EMA effects-table convention, and the IMI PROTECT visualization recommendations. Use when the user has favourable/unfavourable effect estimates and needs them organized into the canonical EMA effects table. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Build an EMA-style effects table: the standardized tabulation of favourable and unfavourable effects in the benefit-risk section of every EMA assessment report / EPAR. Each effect is a row with its direction, unit, treatment vs comparator values, absolute difference, confidence interval, ordinal magnitude, uncertainty grade, evidence source and strength of evidence. Magnitude is the supplied ordinal judgment or is derived from the relative treatment-vs-comparator difference; overall evidence quality is the worst uncertainty present. Confidence intervals that include the null are flagged as not statistically established. Grounded in the EMA Benefit-Risk Methodology Project, the EMA effects-table convention and IMI PROTECT visualization recommendations. Use to organize favourable/unfavourable effect estimates into the canonical EMA effects table. Deterministic: no LLM, no network. Report the returned values and regulatory citations verbatim; do not substitute your own regulatory interpretation.",
       "scope": "global",
       "governed": false,
       "renderer": "table-csv",
@@ -23983,7 +23983,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Design a PrOACT-URL / IMI PROTECT BRAT value tree for a benefit-risk decision: the decision objective (root) decomposes into benefit and risk branches, each criterion operationalized by an outcome measure and unit. Returns the resolved benefit and risk criteria, the decision alternatives, the recommended weighting approach (qualitative, swing weighting, or full MCDA) with guidance, the full PrOACT-URL element mapping (Problem, Objectives, Alternatives, Consequences, Trade-offs, Uncertainty, Risk attitude, Linked decisions), and a tree narrative. When swing weighting or MCDA is selected and importance ranks are supplied, deterministic normalized swing weights (rank 1 → 100 points, inverse-linear, normalized to sum to 1) are computed. Grounded in the PrOACT-URL framework, IMI PROTECT WP5 / BRAT, and MCDA swing-weighting methodology. Use when the user needs to structure a benefit-risk decision into a value tree or choose and apply a weighting approach. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Design a PrOACT-URL / IMI PROTECT BRAT value tree for a benefit-risk decision: the decision objective decomposes into benefit and risk branches, each criterion operationalized by an outcome measure and unit. Returns the benefit and risk criteria, the decision alternatives, the recommended weighting approach (qualitative, swing weighting or full MCDA) with guidance, the PrOACT-URL element mapping (Problem, Objectives, Alternatives, Consequences, Trade-offs, Uncertainty, Risk attitude, Linked decisions) and a tree narrative. With swing weighting or MCDA and importance ranks, it computes normalized swing weights (rank 1 → 100 points, inverse-linear, summing to 1). Grounded in the PrOACT-URL framework, IMI PROTECT WP5 / BRAT and MCDA swing-weighting methodology. Use to structure a benefit-risk decision into a value tree, or choose and apply a weighting approach. Deterministic: no LLM, no network. Report the returned values and regulatory citations verbatim; do not substitute your own regulatory interpretation.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -24017,7 +24017,7 @@
           "name": "weightingApproach",
           "type": "string",
           "required": false,
-          "description": "Weighting approach to recommend/apply (default \"swing_weighting\"). Qualitative yields no numeric weights; swing_weighting and mcda compute normalized swing weights when ranks are supplied."
+          "description": "Weighting approach to recommend/apply. Omitted or null: swing_weighting, said in methodNotes. Qualitative yields no numeric weights; swing_weighting and mcda compute normalized swing weights when ranks are supplied."
         },
         {
           "name": "alternatives",
@@ -28095,7 +28095,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Place a document into an eCTD sequence of the canonical submission core — create or update a submission_leaves row (upsert semantics: pass leaf_id to update an existing leaf, omit it to create one). Tenant and acting user come from the active context; the write is audited (LEAF_CREATED / LEAF_UPDATED). The server REFUSES a frozen or dispatched sequence (its leaves are immutable) and a source document not owned by the caller's organization (coauthor_documents, unified_documents, ctd_onboarding_documents, rendered_leaf_files and c2c_document_sections are all tenancy-checked at placement) — surface that refusal verbatim, never claim a placement the server declined. document_table/document_id link the leaf to its source. document_table is a CLOSED set — the server REFUSES (400) any value outside it, so a guessed or misspelled table is never placed; pick the table the document actually lives in. coauthor_documents, unified_documents, ctd_onboarding_documents, rendered_leaf_files and c2c_document_sections are materialized into the package; vault_documents is a documented pointer the assembler cannot materialize: the dispatch-readiness gate reports it as an ERROR (EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE) and transmit fails closed on it, so do not place one unless the user explicitly asks for that pointer. Use this when a user asks to file a drafted document into a sequence.",
+      "description": "Place a document into an eCTD sequence of the canonical submission core — create or update a submission_leaves row (upsert semantics: pass leaf_id to update an existing leaf, omit it to create one). Tenant and acting user come from the active context; the write is audited (LEAF_CREATED / LEAF_UPDATED). The server REFUSES a frozen or dispatched sequence (its leaves are immutable) and a source document not owned by the caller's organization (coauthor_documents, unified_documents, ctd_onboarding_documents, rendered_leaf_files and c2c_document_sections are all tenancy-checked at placement) — surface that refusal verbatim, never claim a placement the server declined. document_table/document_id link the leaf to its source. document_table is a CLOSED set — the server REFUSES (400) any value outside it, so a guessed or misspelled table is never placed; pick the table the document actually lives in. coauthor_documents, unified_documents, rendered_leaf_files and c2c_document_sections are materialized into the package. ctd_onboarding_documents takes a withdrawal only (lifecycle_op 'delete', for an upload already filed): the server REFUSES new content from it, because an upload is no longer placed in a sequence. A document uploaded there is uploaded to the project's Vault, approved there and placed from the Vault. vault_documents is materialized too (an already-valid PDF, checked against its recorded hash), but a Vault document is keyed by a uuid this tool does not take, so the person places a Vault version from the Vault ('Place into filing'), not with this tool. Use this when a user asks to file a drafted document into a sequence.",
       "scope": "project",
       "governed": true,
       "renderer": "document-canvas",
@@ -28525,7 +28525,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Build a benefit-risk communication plan across audiences. For each audience (product label, advisory committee, prescribers, patients/caregivers, payers/HTA, internal regulatory review) returns the appropriate framing, recommended format, must-include content, and cautions — for example natural-frequency/icon-array framing and no relative-risk-only presentation for patients, and even-handed presentation with explicit uncertainties for advisory committees. Recommends a visual-summary approach (EMA effects table, forest plot, value-tree/MCDA diagram, icon array, tornado diagram) mapped to the relevant audiences, and generates a single core benefit-risk message that all artifacts must restate without overstating benefit or softening risk, enforcing cross-channel consistency. Grounded in the FDA framework, FDA Patient-Focused Drug Development guidance, the EMA effects table / EPAR communication, IMI PROTECT visualization recommendations, and CIOMS VI. Use when the user needs to plan how to communicate a benefit-risk conclusion to one or more audiences. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Build a benefit-risk communication plan across audiences. For each audience (product label, advisory committee, prescribers, patients/caregivers, payers/HTA, internal regulatory review) returns the framing, format, must-include content and cautions: e.g. natural-frequency/icon-array framing and no relative-risk-only presentation for patients, and even-handed presentation with explicit uncertainties for advisory committees. Recommends a visual-summary approach (EMA effects table, forest plot, value-tree/MCDA diagram, icon array, tornado diagram), and one core benefit-risk message every artifact restates without overstating benefit. Grounded in the FDA framework and Patient-Focused Drug Development guidance, EPAR communication, IMI PROTECT visualization recommendations and CIOMS VI. Use to plan how to communicate a benefit-risk conclusion to its audiences. Deterministic: no LLM, no network. Report the returned values and regulatory citations verbatim; do not substitute your own regulatory interpretation.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -28571,13 +28571,13 @@
           "name": "includeVisualSummary",
           "type": "boolean",
           "required": false,
-          "description": "Whether to include visual-summary recommendations (default true)."
+          "description": "Whether to include visual-summary recommendations. Omitted or null stays not_stated, and they are included (said in methodNotes)."
         },
         {
           "name": "patientExperienceDataAvailable",
           "type": "boolean",
           "required": false,
-          "description": "Whether patient-experience / PFDD data are available to inform patient framing (which outcomes patients value most)."
+          "description": "Whether patient-experience / PFDD data are available to inform patient framing (which outcomes patients value most). Omitted or null stays not_stated, and the patient framing says so."
         }
       ],
       "requiredInputs": [
@@ -34191,7 +34191,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Build the FDA Benefit-Risk Assessment Framework grid for a product and indication. Returns the four structured framework rows — Analysis of Condition, Current Treatment Options, Benefit, and Risk and Risk Management — each with its evidence and uncertainties plus a conclusions-and-reasons cell, followed by an integrated assessment narrative. Encodes the FDA framework logic that acceptable risk and uncertainty rise with disease severity and unmet medical need, and that the clinical importance of a benefit depends on its endpoint (mortality > irreversible morbidity > function > symptom > surrogate > biomarker). Grounded in FDA \"Benefit-Risk Assessment for New Drug and Biological Products\" (2023), the PDUFA VI and PDUFA VII commitment letters, and the FDA benefit-risk framework grid. Use when the user needs to organize a marketing-application benefit-risk story into the FDA framework, prepare an integrated assessment, or structure Module 2.5.6 reasoning around the FDA grid. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Build the FDA Benefit-Risk Assessment Framework grid for a product and indication: the four rows (Analysis of Condition, Current Treatment Options, Benefit, and Risk and Risk Management), each with its evidence and uncertainties and a conclusions-and-reasons cell, and an integrated assessment narrative. Acceptable risk and uncertainty rise with disease severity and unmet medical need, and a benefit's clinical importance follows its endpoint (mortality > irreversible morbidity > function > symptom > surrogate > biomarker). Grounded in FDA \"Benefit-Risk Assessment for New Drug and Biological Products\" (2023), PDUFA VI and VII, and the FDA benefit-risk framework grid. A row an unstated fact decides is not assessed. Use to organize a marketing-application benefit-risk story into the FDA framework, or structure Module 2.5.6 reasoning around the FDA grid. Deterministic: no LLM, no network. Report the returned values and regulatory citations verbatim; do not substitute your own regulatory interpretation.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -34213,7 +34213,7 @@
           "name": "conditionSeverity",
           "type": "string",
           "required": false,
-          "description": "Seriousness of the condition. Higher severity raises acceptable risk and uncertainty in the Analysis-of-Condition row and the integrated assessment."
+          "description": "Seriousness of the condition. Higher severity raises acceptable risk and uncertainty in the Analysis-of-Condition row and the integrated assessment. Omitted or null: that row's conclusion is not assessed."
         },
         {
           "name": "conditionCourse",
@@ -34231,13 +34231,13 @@
           "name": "unmetMedicalNeed",
           "type": "boolean",
           "required": false,
-          "description": "Whether an unmet medical need exists. When true (or when no adequate options are supplied), an incremental benefit can justify a higher level of risk."
+          "description": "Whether an unmet medical need exists. When true (or when the options supplied are none, or all none or supportive care), an incremental benefit can justify a higher level of risk. Omitted or null stays not_stated, and a conclusion it could "
         },
         {
           "name": "currentTreatments",
           "type": "array",
           "required": false,
-          "description": "Current treatment options in the therapeutic landscape (Current Treatment Options row)."
+          "description": "Current treatment options in the therapeutic landscape (Current Treatment Options row). An empty list states that there are none."
         },
         {
           "name": "keyBenefits",
