@@ -13,9 +13,37 @@
  *   - CLSI EP06      — dilution linearity / recovery
  *   - CLSI EP07      — recovery (spike-recovery)
  *   - Youden J / ROC — clinical decision point (cut-off) determination
+ *
+ * 2026-11-08 (the two stability functions): a missing or malformed number was read as given. An omitted
+ * maxPercentChange gave shelfLife null ("no measurable degradation") and "out of spec"; storageTemperatureC '4'
+ * (text) gave a shelf-life of 0; two points at one time or temperature gave nulls. Each is refused by field
+ * (ComputationRefusal), and the real-time result says when the regression intercept stood in for initialValue.
  */
 
 import { linearRegression } from './analytical-performance';
+import { ComputationRefusal, refuseUnlessStated } from '../ana-biostats/computation-engine';
+import { statedNumber } from '../immunogenicity/immunogenicity-reference';
+
+const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+
+/** The points of a stability series, each field a finite number within its rule, with two distinct `distinct` values. */
+function statedPoints<T>(fn: string, points: unknown, rules: Record<string, [(n: number) => boolean, string]>, distinct: string): T[] {
+  if (!Array.isArray(points) || points.length < 2) {
+    throw new ComputationRefusal(
+      points === undefined || points === null ? 'missing_input' : 'invalid_input',
+      fn + ': points is required: a list of at least 2 points (got ' + JSON.stringify(points) + ').',
+      'points',
+    );
+  }
+  refuseUnlessStated(fn, points.flatMap((p: unknown, i: number) => Object.entries(rules).map(([k, [ok, rule]]) => {
+    const v = (p as Record<string, unknown> | null)?.[k];
+    return { field: `points[${i}].${k}`, value: v, ok: finite(v) && ok(v), expected: rule };
+  })), 'computed');
+  if (new Set(points.map((p) => (p as Record<string, number>)[distinct])).size < 2) {
+    throw new ComputationRefusal('invalid_input', fn + ': points must have at least 2 distinct ' + distinct + ' values.', 'points');
+  }
+  return points as T[];
+}
 
 const round = (n: number, dp = 4): number => {
   const f = 10 ** dp;
@@ -62,6 +90,8 @@ export interface RealTimeStabilityResult {
   shelfLife: number | null;
   /** Whether the product remained within spec across the observed window. */
   withinSpecAcrossWindow: boolean;
+  /** 'regression_intercept' when initialValue was not stated and the fitted intercept stood in for it. */
+  initialValueSource: 'stated' | 'regression_intercept';
   method: 'CLSI EP25 real-time stability (linear degradation)';
 }
 
@@ -70,18 +100,23 @@ export interface RealTimeStabilityResult {
  * time and projecting to the specification limit.
  */
 export function assessRealTimeStability(args: RealTimeStabilityArgs): RealTimeStabilityResult {
-  const { points, maxPercentChange } = args;
-  if (points.length < 2) {
-    throw new Error('Real-time stability requires at least 2 timepoints.');
-  }
-  if (maxPercentChange <= 0) {
-    throw new Error('maxPercentChange must be positive.');
-  }
+  const a = (args ?? {}) as Partial<RealTimeStabilityArgs>;
+  const points = statedPoints<StabilityPoint>('assessRealTimeStability', a.points, {
+    time: [(n) => n >= 0, 'an elapsed time, 0 or more'],
+    value: [() => true, 'a number'],
+  }, 'time');
+  refuseUnlessStated('assessRealTimeStability', [
+    { field: 'maxPercentChange', value: a.maxPercentChange, ok: finite(a.maxPercentChange) && a.maxPercentChange > 0, expected: 'a percentage above 0' },
+  ], 'computed');
+  const maxPercentChange = a.maxPercentChange as number;
+  const statedInitial = statedNumber('initialValue', a.initialValue, (n) => n !== 0, 'a non-zero number');
   const x = points.map(p => p.time);
   const y = points.map(p => p.value);
   const fit = linearRegression(x, y);
-  const initial = args.initialValue ?? fit.intercept;
-  if (initial === 0) throw new Error('Initial value must be non-zero to compute percent change.');
+  const initial = statedInitial ?? fit.intercept;
+  if (initial === 0) {
+    throw new ComputationRefusal('invalid_input', 'Initial value must be non-zero to compute percent change: the regression intercept is 0, so state initialValue.', 'initialValue');
+  }
 
   const slope = fit.slope;
   const percentChangePerUnitTime = (slope / initial) * 100;
@@ -101,6 +136,7 @@ export function assessRealTimeStability(args: RealTimeStabilityArgs): RealTimeSt
     percentChangePerUnitTime: round(percentChangePerUnitTime),
     shelfLife: shelfLife === null ? null : round(shelfLife, 2),
     withinSpecAcrossWindow,
+    initialValueSource: statedInitial === undefined ? 'regression_intercept' : 'stated',
     method: 'CLSI EP25 real-time stability (linear degradation)',
   };
 }
@@ -151,19 +187,20 @@ const R_GAS = 8.314; // J/(mol·K)
 export function assessAcceleratedStability(
   args: AcceleratedStabilityArgs
 ): AcceleratedStabilityResult {
-  const { points, storageTemperatureC, degradationThreshold } = args;
-  if (points.length < 2) {
-    throw new Error('Arrhenius analysis requires at least 2 temperature points.');
-  }
-  if (degradationThreshold <= 0 || degradationThreshold >= 1) {
-    throw new Error('degradationThreshold must be in (0,1).');
-  }
+  const a = (args ?? {}) as Partial<AcceleratedStabilityArgs>;
+  const points = statedPoints<ArrheniusPoint>('assessAcceleratedStability', a.points, {
+    temperatureC: [(n) => n > -273.15, 'a temperature above -273.15 °C'],
+    rateConstant: [(n) => n > 0, 'a rate constant above 0'],
+  }, 'temperatureC');
+  refuseUnlessStated('assessAcceleratedStability', [
+    { field: 'storageTemperatureC', value: a.storageTemperatureC, ok: finite(a.storageTemperatureC) && a.storageTemperatureC > -273.15, expected: 'a temperature above -273.15 °C' },
+    { field: 'degradationThreshold', value: a.degradationThreshold, ok: finite(a.degradationThreshold) && a.degradationThreshold > 0 && a.degradationThreshold < 1, expected: 'a fraction strictly between 0 and 1' },
+  ], 'computed');
+  const storageTemperatureC = a.storageTemperatureC as number;
+  const degradationThreshold = a.degradationThreshold as number;
   // x = 1/T (Kelvin), y = ln(k)
   const x = points.map(p => 1 / (p.temperatureC + 273.15));
-  const y = points.map(p => {
-    if (p.rateConstant <= 0) throw new Error('Rate constants must be positive.');
-    return Math.log(p.rateConstant);
-  });
+  const y = points.map(p => Math.log(p.rateConstant));
   const fit = linearRegression(x, y);
   // slope = -Ea/R  →  Ea = -slope * R
   const eaJ = -fit.slope * R_GAS;

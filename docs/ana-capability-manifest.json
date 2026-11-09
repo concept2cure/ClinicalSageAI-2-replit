@@ -5006,7 +5006,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Project shelf-life from accelerated (Arrhenius) stability data — extrapolates rate constants at elevated temperatures to the storage temperature and reports the projected shelf-life against a degradation threshold. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
+      "description": "Project shelf-life from accelerated (Arrhenius) stability data — extrapolates rate constants at elevated temperatures to the storage temperature and reports the projected shelf-life against a degradation threshold. A point whose temperature or rate constant is out of range, fewer than two distinct temperatures, or a missing storage temperature or threshold is refused by field. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -5819,7 +5819,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Assess real-time stability / shelf-life from measured timepoints — fits the degradation trend and reports the supportable shelf-life against the allowed percent change. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
+      "description": "Assess real-time stability / shelf-life from measured timepoints — fits the degradation trend and reports the supportable shelf-life against the allowed percent change. A point whose time is not a number of 0 or more or whose value is not a number, fewer than two distinct times, or a missing or non-positive maxPercentChange is refused by field. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -5835,13 +5835,13 @@
           "name": "initialValue",
           "type": "number",
           "required": false,
-          "description": "Value at t=0. Defaults to the first point."
+          "description": "Value at t=0 (non-zero). If omitted, the regression intercept is used, and initialValueSource says so."
         },
         {
           "name": "maxPercentChange",
           "type": "number",
           "required": true,
-          "description": "Allowed percent change from initial before the claim fails."
+          "description": "Allowed percent change from initial before the claim fails. Required."
         }
       ],
       "requiredInputs": [
@@ -15830,7 +15830,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess an IVD assay's metrological traceability chain against ISO 17511 — returns validity, gaps, and a recommendation. Use when reviewing the calibration/traceability section of an IVD technical file. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
+      "description": "Assess an IVD assay's metrological traceability chain against ISO 17511 — returns validity, gaps, and a recommendation. Every input is required: a missing or non-boolean fact, or an unknown tier, is refused by name, never read as false. Use when reviewing the calibration/traceability section of an IVD technical file. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -15846,31 +15846,31 @@
           "name": "certifiedReferenceMaterial",
           "type": "boolean",
           "required": true,
-          "description": ""
+          "description": "A certified reference material is identified at the top of the chain. Required, true or false."
         },
         {
           "name": "referenceMeasurementProcedure",
           "type": "boolean",
           "required": true,
-          "description": ""
+          "description": "A reference measurement procedure is documented. Required, true or false."
         },
         {
           "name": "commutabilityDemonstrated",
           "type": "boolean",
           "required": true,
-          "description": ""
+          "description": "Commutability with clinical samples is demonstrated. Required, true or false."
         },
         {
           "name": "uncertaintyBudgetDocumented",
           "type": "boolean",
           "required": true,
-          "description": ""
+          "description": "Uncertainty is propagated to the end-user result. Required, true or false."
         },
         {
           "name": "unbrokenChain",
           "type": "boolean",
           "required": true,
-          "description": ""
+          "description": "Each step is value-assigned by the step above. Required, true or false."
         }
       ],
       "requiredInputs": [
@@ -16110,7 +16110,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Check eligibility for an expedited/special regulatory designation (fda_breakthrough, fda_fast_track, fda_accelerated_approval, fda_priority_review, fda_orphan, eu_prime, eu_orphan, eu_conditional_ma, pmda_sakigake, pmda_orphan). Without `answers` it returns the designation's criteria. With `answers` (a map of criterion id → true/false) it returns eligibility — eligible only when EVERY criterion is met, undetermined while any is unanswered. This is a structured check against the published program definition, NOT the agency's designation decision. Omit `designation` to list all; pass `market` to scope.",
+      "description": "Check eligibility for an expedited/special regulatory designation (fda_breakthrough, fda_fast_track, fda_accelerated_approval, fda_priority_review, fda_orphan, eu_prime, eu_orphan, eu_conditional_ma, pmda_sakigake, pmda_orphan). Without `answers` it returns the designation's criteria. With `answers` (a map of criterion id → true/false) it returns eligibility: eligible is true only when EVERY criterion is met (answered true), false when any is answered false, and null (undetermined) while any is unanswered and none is false; a non-boolean answer is refused. This is a structured check against the published program definition, NOT the agency's designation decision. Omit `designation` to list all; pass `market` to scope.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -16132,7 +16132,7 @@
           "name": "answers",
           "type": "object",
           "required": false,
-          "description": "Map of criterion id → boolean, to assess eligibility."
+          "description": "Map of criterion id → boolean, to assess eligibility. An omitted or null criterion stays unanswered; any other non-boolean value is refused."
         }
       ],
       "requiredInputs": [],
@@ -16944,7 +16944,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess the scientific validity of an IVD analyte↔clinical-condition association (IVDR Annex XIII) from the supporting evidence — returns a verdict (established / supported / insufficient) and gaps. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
+      "description": "Assess the scientific validity of an IVD analyte↔clinical-condition association (IVDR Annex XIII) from the supporting evidence — returns a verdict (established / supported / insufficient) and gaps. Each evidence item needs a listed source and directlyOnTarget true or false; an item missing either, or evidence that is not a list, is refused by field. DETERMINISTIC: report the returned values and verdict verbatim — do not recompute or estimate. If the engine reports a validation error or a missing[] list, relay exactly which field is missing or invalid.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -16966,7 +16966,7 @@
           "name": "intendedPurpose",
           "type": "string",
           "required": true,
-          "description": ""
+          "description": "Not read by the engine."
         },
         {
           "name": "evidence",
@@ -35690,7 +35690,7 @@
         "id": "qms",
         "label": "Quality management"
       },
-      "description": "Inspect or gap-check a device quality management system against ISO 13485:2016 (with the FDA QSR→QMSR mapping). Without `present_clause_ids` it returns the major clause structure (design controls, purchasing, production, complaints/reporting, nonconforming product, CAPA…) with each clause's FDA mapping (21 CFR 820.x) and auditor questions, plus the QMSR transition note (effective 2026-02-02). With `present_clause_ids` it reports readiness + missing clauses. Static reference + pure assessment, deterministic — an audit-prep aid, not an audit verdict.",
+      "description": "Inspect or gap-check a device quality management system against ISO 13485:2016 (with the FDA QSR→QMSR mapping). Without `present_clause_ids` it returns the major clause structure (design controls, purchasing, production, complaints/reporting, nonconforming product, CAPA…) with each clause's FDA mapping (21 CFR 820.x) and auditor questions, plus the QMSR transition note (effective 2026-02-02). With `present_clause_ids` it reports readiness + missing clauses; an id that is not a clause id is refused, never counted as missing. Static reference + pure assessment, deterministic — an audit-prep aid, not an audit verdict.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -35700,7 +35700,7 @@
           "name": "present_clause_ids",
           "type": "array",
           "required": false,
-          "description": "Clause ids the QMS has in place (for the readiness assessment)."
+          "description": "Clause ids the QMS has in place (for the readiness assessment), as the clause structure lists them."
         }
       ],
       "requiredInputs": [],

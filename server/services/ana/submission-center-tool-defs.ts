@@ -679,13 +679,13 @@ export const GET_SUBMISSION_REQUIREMENTS: AnaTool = {
 export const ASSESS_PATHWAY_ELIGIBILITY: AnaTool = {
   name: 'assess_pathway_eligibility',
   description:
-    "Check eligibility for an expedited/special regulatory designation (fda_breakthrough, fda_fast_track, fda_accelerated_approval, fda_priority_review, fda_orphan, eu_prime, eu_orphan, eu_conditional_ma, pmda_sakigake, pmda_orphan). Without `answers` it returns the designation's criteria. With `answers` (a map of criterion id → true/false) it returns eligibility — eligible only when EVERY criterion is met, undetermined while any is unanswered. This is a structured check against the published program definition, NOT the agency's designation decision. Omit `designation` to list all; pass `market` to scope.",
+    "Check eligibility for an expedited/special regulatory designation (fda_breakthrough, fda_fast_track, fda_accelerated_approval, fda_priority_review, fda_orphan, eu_prime, eu_orphan, eu_conditional_ma, pmda_sakigake, pmda_orphan). Without `answers` it returns the designation's criteria. With `answers` (a map of criterion id → true/false) it returns eligibility: eligible is true only when EVERY criterion is met (answered true), false when any is answered false, and null (undetermined) while any is unanswered and none is false; a non-boolean answer is refused. This is a structured check against the published program definition, NOT the agency's designation decision. Omit `designation` to list all; pass `market` to scope.",
   input_schema: {
     type: 'object',
     properties: {
       designation: { type: 'string', description: "e.g. 'fda_breakthrough', 'eu_prime', 'pmda_sakigake'." },
       market: { type: 'string', description: 'Filter the list by market (us, eu, jp).' },
-      answers: { type: 'object', description: 'Map of criterion id → boolean, to assess eligibility.' },
+      answers: { type: 'object', description: 'Map of criterion id → boolean, to assess eligibility. An omitted or null criterion stays unanswered; any other non-boolean value is refused.' },
     },
     required: [],
   },
@@ -930,11 +930,11 @@ export const GET_DEVICE_LABELING: AnaTool = {
 export const ASSESS_QMS: AnaTool = {
   name: 'assess_qms',
   description:
-    "Inspect or gap-check a device quality management system against ISO 13485:2016 (with the FDA QSR→QMSR mapping). Without `present_clause_ids` it returns the major clause structure (design controls, purchasing, production, complaints/reporting, nonconforming product, CAPA…) with each clause's FDA mapping (21 CFR 820.x) and auditor questions, plus the QMSR transition note (effective 2026-02-02). With `present_clause_ids` it reports readiness + missing clauses. Static reference + pure assessment, deterministic — an audit-prep aid, not an audit verdict.",
+    "Inspect or gap-check a device quality management system against ISO 13485:2016 (with the FDA QSR→QMSR mapping). Without `present_clause_ids` it returns the major clause structure (design controls, purchasing, production, complaints/reporting, nonconforming product, CAPA…) with each clause's FDA mapping (21 CFR 820.x) and auditor questions, plus the QMSR transition note (effective 2026-02-02). With `present_clause_ids` it reports readiness + missing clauses; an id that is not a clause id is refused, never counted as missing. Static reference + pure assessment, deterministic — an audit-prep aid, not an audit verdict.",
   input_schema: {
     type: 'object',
     properties: {
-      present_clause_ids: { type: 'array', items: { type: 'string' }, description: 'Clause ids the QMS has in place (for the readiness assessment).' },
+      present_clause_ids: { type: 'array', items: { type: 'string' }, description: 'Clause ids the QMS has in place (for the readiness assessment), as the clause structure lists them.' },
     },
     required: [],
   },
