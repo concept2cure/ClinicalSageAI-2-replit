@@ -60,6 +60,7 @@ import {
   requiresIndependence,
   SeparationOfDutiesAuthorUnresolvedError,
   SeparationOfDutiesError,
+  signerIndependenceOf,
 } from '../governance/separation-of-duties';
 import {
   SHADOW_REVIEW_WAIVED_ACTION,
@@ -111,11 +112,13 @@ import {
   SEQUENCE_RETIREMENT_INTENT,
   liveSetRemoval,
   readRetirementFacts,
+  removedSequenceOf,
   retiredSequenceRecord,
   retirementStatement,
   retirementMeaningRefusal,
   retirementPayloadRefusal,
   retirementRefusal,
+  retirementSignerRefusal,
   sequenceCreationRefusal,
   type RetirementSequence,
 } from './filed-sequence-baseline';
@@ -756,7 +759,9 @@ export async function createSequence(
     );
     if (taken.rows.length > 0) {
       throw new SubmissionError('INVALID_STATE',
-        `Sequence ${input.sequenceNumber} already exists in this submission. A sequence number is used once. Nothing was created.`);
+        `Sequence ${input.sequenceNumber} already exists in this submission. A sequence number is used once. ` +
+          "A sequence never sent to the agency's production environment can be retired from its Dispatch tab, which frees its number. " +
+          'Nothing was created.');
     }
     const [inserted] = await tx
       .insert(ectdSequences)
@@ -2408,6 +2413,29 @@ export interface SequenceRetirementRecord {
   numberFreed: boolean;
 }
 
+/** What the retirement's precheck answers (C2): the rule's verdict, and what the person is about to sign. */
+export interface SequenceRetirementPrecheck {
+  step: typeof SEQUENCE_RETIREMENT_INTENT;
+  cleared: boolean;
+  refusal: string | null;
+  retirement: {
+    sequenceNumber: string;
+    /** The sends to the agency's test environment the retirement leaves on record, by UTC day. */
+    stagingSends: Array<{ sentOn: string }>;
+    numberFreed: boolean;
+    /** The words the dialog shows and the signature carries, exactly (retirementStatement). */
+    statement: string;
+  };
+}
+
+/** A sequence no longer in use, as MCP reports it (C2): retired, with its record, or removed with none. */
+export type RetiredSequenceAnswer =
+  | {
+    state: 'retired'; sequenceId: number; sequenceNumber: string; region: string;
+    retiredOn: string; retiredBy: string | null; meaning: string | null; reason: string | null;
+  }
+  | { state: 'removed'; sequenceId: number; sequenceNumber: string; region: string };
+
 /**
  * Retire a sequence that was never filed, by a signed act that frees its number
  * (P-86, founder 2026-11-01; launch row D7). The person signs the sequence with
@@ -2426,6 +2454,55 @@ export function retireSequence(
     () => applySequenceRetirement(input, ctx),
     { signatureActionId: input.signatureActionId, sequenceId: input.sequenceId, ctx, step: SEQUENCE_RETIREMENT_INTENT },
   );
+}
+
+/**
+ * Ask the retirement's rule before anyone signs (P-86 C2): what keeps the
+ * sequence, in the words the act refuses with, then whether this person may
+ * sign it; with the test sends it leaves on record, whether its number is
+ * freed, and the statement the signature must carry. It changes nothing, and
+ * authorizes nothing: the act judges everything again, under its lock.
+ * Reached by POST /api/submissions/sequences/:seqId/governed-precheck with
+ * step 'retire'; no AnA tool reaches it.
+ */
+export async function precheckSequenceRetirement(
+  id: number,
+  ctx: { organizationId: number; userId: number },
+): Promise<SequenceRetirementPrecheck> {
+  const seq = await retirementTarget(id, ctx);
+  const n = seq.sequenceNumber;
+  const facts = await checkedRetirementFacts(asQueryable(pool), retirementSubject(seq), ctx.organizationId, '');
+  const refusal = retirementRefusal(facts) ??
+    retirementSignerRefusal(n, await signerIndependenceOf(`ectd-sequence:${seq.id}`, ctx.organizationId, ctx.userId));
+  return {
+    step: SEQUENCE_RETIREMENT_INTENT, cleared: refusal === null, refusal,
+    retirement: { sequenceNumber: n, stagingSends: facts.stagingSends, numberFreed: facts.numberFreed, statement: retirementStatement(n) },
+  };
+}
+
+/**
+ * A sequence of this organisation that is no longer in use (C2): its
+ * retirement, with when, by whom, with what meaning and why; or a removal with
+ * no retirement recorded. Null when the id is live, another organisation's, or
+ * none. A read that fails throws: it is never "not in use".
+ */
+export async function readRetiredSequence(sequenceId: number, ctx: { organizationId: number }): Promise<RetiredSequenceAnswer | null> {
+  const q = asQueryable(pool);
+  const record = await retiredSequenceRecord(q, ctx.organizationId, sequenceId);
+  if (record) {
+    const retiredBy = record.actorId ? (await resolveActorNames([record.actorId])).get(record.actorId)?.name ?? null : null;
+    return {
+      state: 'retired', sequenceId, sequenceNumber: record.sequenceNumber, region: record.region,
+      retiredOn: record.retiredDay, retiredBy, meaning: record.meaning, reason: record.reason,
+    };
+  }
+  const removed = await removedSequenceOf(q, ctx.organizationId, sequenceId);
+  return removed ? { state: 'removed', sequenceId, ...removed } : null;
+}
+
+/** The facts about a sequence the retirement rules read. */
+function retirementSubject(seq: EctdSequence): RetirementSequence {
+  return { id: seq.id, submissionId: seq.submissionId, sequenceNumber: seq.sequenceNumber, region: seq.region, dispatchStatus: seq.dispatchStatus ?? null };
 }
 
 /** The live sequence to retire; a sequence already retired is answered with when and by whom. */
@@ -2448,15 +2525,19 @@ async function compileReadTwin(q: SequenceQueryable, organizationId: number, sub
   return state.sequences.some((x) => x.sequenceNumber === sequenceNumber && x.basis === 'compiles');
 }
 
-/** The facts the act judges, or its refusal. A read that fails is never a pass. */
-async function retirableFacts(q: SequenceQueryable, s: RetirementSequence, organizationId: number) {
-  let facts: Awaited<ReturnType<typeof readRetirementFacts>>;
+/** The facts the rules judge, read on one queryable. A read that fails is "could not be checked", never a pass. */
+async function checkedRetirementFacts(q: SequenceQueryable, s: RetirementSequence, organizationId: number, outcome: string) {
   try {
-    facts = await readRetirementFacts(q, organizationId, s, (n) => compileReadTwin(q, organizationId, s.submissionId, n));
+    return await readRetirementFacts(q, organizationId, s, (n) => compileReadTwin(q, organizationId, s.submissionId, n));
   } catch (err) {
     logger.warn('Retirement facts unreadable', { sequenceId: s.id, err: err instanceof Error ? err.message : String(err) });
-    throw new SubmissionError('INVALID_STATE', `Whether sequence ${s.sequenceNumber} can be retired could not be checked, so it was not retired. Try again.`);
+    throw new SubmissionError('INVALID_STATE', `Whether sequence ${s.sequenceNumber} can be retired could not be checked${outcome}. Try again.`);
   }
+}
+
+/** The facts the act judges, or its refusal. A read that fails is never a pass. */
+async function retirableFacts(q: SequenceQueryable, s: RetirementSequence, organizationId: number) {
+  const facts = await checkedRetirementFacts(q, s, organizationId, ', so it was not retired');
   const refusal = retirementRefusal(facts);
   if (refusal) throw new SubmissionError('SEQUENCE_NOT_RETIRABLE', refusal);
   return facts;
@@ -2479,7 +2560,7 @@ async function applySequenceRetirement(
   if (independence) throw independence;
   const reason = await dispositionSignatureReason(asQueryable(pool), { organizationId: ctx.organizationId, signatureActionId: input.signatureActionId });
   if (!reason) throw new SubmissionError('GOVERNED_REQUIRED', `The signature records no reason, so sequence ${n} was not retired; sign again with your reason.`);
-  const subject: RetirementSequence = { id: seq.id, submissionId: seq.submissionId, sequenceNumber: n, region: seq.region, dispatchStatus: seq.dispatchStatus ?? null };
+  const subject = retirementSubject(seq);
   await retirableFacts(asQueryable(pool), subject, ctx.organizationId);
   // Filled from the facts judged under the lock, before the audit row is written.
   const details: Record<string, unknown> = {

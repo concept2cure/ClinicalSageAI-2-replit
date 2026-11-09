@@ -108,6 +108,9 @@ describe('a sequence number is used once in a submission (F1 repair A)', () => {
     const second = await createSequence(sub, '0000');
     expect(second.status).toBe(409);
     expect(second.body.error).toMatchObject({ code: 'INVALID_STATE', message: expect.stringMatching(/^Sequence 0000 already exists in this submission\. A sequence number is used once\./) });
+    // P-86 (C2): the way to free a number is named where it is refused.
+    expect(second.body.error.message).toContain(
+      "A sequence never sent to the agency's production environment can be retired from its Dispatch tab, which frees its number. Nothing was created.");
     expect(await liveCount(sub, '0000')).toBe(1);
   });
 

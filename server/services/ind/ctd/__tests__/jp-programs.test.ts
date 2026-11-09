@@ -37,6 +37,8 @@ const MIGRATED = [
   'server/services/global-ri/pediatric-requirements.ts',
   'server/services/global-ri/special-designations.ts',
   'server/services/regulatory-strategy/regulatory-strategy-knowledge.ts',
+  // 2026-11-09 (Rule 2 S5d): the engine's Japan rows moved, unchanged, into its sibling.
+  'server/services/regulatory-strategy/regulatory-strategy-reference.ts',
 ];
 
 /** Japan paediatric or conditional-approval statements that belong only in jp-programs.ts. */

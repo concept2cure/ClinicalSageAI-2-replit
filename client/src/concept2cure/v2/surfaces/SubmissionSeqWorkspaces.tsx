@@ -257,8 +257,8 @@ export function SeqPicker({
   if (rows.length === 0) {
     return (
       <div className="scaf-note sc-mb">
-        This submission has no eCTD sequences yet — create sequence 0000 from the Sequences
-        workspace first.
+        This submission has no eCTD sequences yet — create sequence 0000 from the Sequences tab
+        first.
       </div>
     );
   }
@@ -1373,9 +1373,11 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
             )}
             {findings.length > 0 && (
               <div className="cm-pushbar sc-mt">
+                {/* A secondary act beside the page's one orange fill (D0 §7 check 2): ghost, with the spark of a
+                    request to the model (the coordinating session, 2026-11-09). */}
                 <button
                   type="button"
-                  className="sp-primary sc-btn"
+                  className="btn ghost small"
                   disabled={explain.phase === 'running'}
                   onClick={runExplain}
                 >
@@ -1751,8 +1753,9 @@ interface DispatchQcResult {
 /** The governed steps the parent's e-signature chain runs. 'shadow-waiver' is
  *  the P-34 Shadow Review waiver (ShadowReviewWaiver.tsx);
  *  'shadow-finding-disposition' closes one critical finding (P-35,
- *  ShadowFindingDisposition.tsx). */
-export type GovernedKind = 'freeze' | 'dispatch' | 'transmit' | 'shadow-waiver' | 'shadow-finding-disposition';
+ *  ShadowFindingDisposition.tsx); 'retire' takes a sequence never filed out of
+ *  use and frees its number (P-86, RetireSequence below). */
+export type GovernedKind = 'freeze' | 'dispatch' | 'transmit' | 'shadow-waiver' | 'shadow-finding-disposition' | 'retire';
 /** What a transmit needs beyond its signature (POST /sequences/:id/transmit). */
 export interface TransmitRequest {
   environment: 'staging' | 'production';
@@ -1803,12 +1806,31 @@ export interface TransmitReadiness {
   gate: { cleared: boolean; blockers: string[] };
   refusal: string | null;
 }
+/** POST /sequences/:seqId/governed-precheck {step:'retire'} → its `retirement` (P-86 C2,
+ *  submission-service.ts SequenceRetirementPrecheck): what retiring leaves on record, whether the number is freed,
+ *  and the statement the signer makes, which the signature carries word for word. */
+export interface RetirementPrecheck {
+  sequenceNumber: string;
+  /** The sends to the agency's test environment the retirement leaves on record, by UTC day. */
+  stagingSends: Array<{ sentOn: string }>;
+  numberFreed: boolean;
+  statement: string;
+}
 /** POST /sequences/:seqId/governed-precheck — the step's gates, asked before signing. */
 export interface GovernedPrecheck {
   step: GovernedKind;
   cleared: boolean;
   refusal: string | null;
   transmit?: TransmitReadiness;
+  retirement?: RetirementPrecheck;
+}
+
+/** A retirement answer the screen can act on, or null (P-86 C3). The statement is the server's and is signed word for
+ *  word, so an answer without one is unreadable, never "cleared". */
+export function retirementOf(p: GovernedPrecheck | null | undefined): RetirementPrecheck | null {
+  const r = p?.retirement;
+  if (!r || typeof r.statement !== 'string' || !r.statement.trim()) return null;
+  return Array.isArray(r.stagingSends) && typeof r.numberFreed === 'boolean' ? r : null;
 }
 
 const credentialWord = (v: boolean | null): string =>
@@ -1914,8 +1936,18 @@ interface DossierTransmittal {
   ack_received_at?: string | null;
   submitted_by?: number | null;
   submitted_by_name?: string | null;
-  /** transmitSequence records the sequence NUMBER it carried and the environment. */
-  metadata?: { sequence?: string | null; environment?: string | null } | null;
+  /** transmitSequence records the sequence NUMBER it carried and the environment; a send since F1 slice 1 also names
+   *  the sequence it is bound to (`dispatchBinding.sequenceId`). */
+  metadata?: { sequence?: string | null; environment?: string | null; dispatchBinding?: { sequenceId?: number } | null } | null;
+}
+
+/** Whose transmission a row is (P-86 C3): by the sequence it is bound to, never by its number alone, because a
+ *  retired sequence's number can be started again. A row with no binding is said to be of this number, no more. */
+function transmittalMark(t: DossierTransmittal, sequenceId: number, sequenceNumber: string): string {
+  const bound = t.metadata?.dispatchBinding?.sequenceId;
+  if (bound === sequenceId) return ' (this one)';
+  if (t.metadata?.sequence !== sequenceNumber) return '';
+  return typeof bound === 'number' ? ` (another sequence numbered ${sequenceNumber})` : ' (this number)';
 }
 
 const whenOf = (iso: string | null | undefined): string | null => (iso ? new Date(iso).toLocaleString() : null);
@@ -1931,7 +1963,9 @@ const whenOf = (iso: string | null | undefined): string | null => (iso ? new Dat
  * row says where it went in words, and a send to the agency's test environment
  * that it is not a filing (F1, row D7, 2026-11-01).
  */
-function DossierTransmissions({ programId, region, sequenceNumber }: { programId: string | null | undefined; region: string; sequenceNumber: string }) {
+function DossierTransmissions({ programId, region, sequenceId, sequenceNumber }: {
+  programId: string | null | undefined; region: string; sequenceId: number; sequenceNumber: string;
+}) {
   const path = programId
     ? `/api/mdx/gateways/transmittals?program_id=${encodeURIComponent(programId)}&region=${encodeURIComponent(region)}`
     : null;
@@ -1966,7 +2000,7 @@ function DossierTransmissions({ programId, region, sequenceNumber }: { programId
             <div key={t.id} className="tl-spec-row">
               <span className="tl-spec-k">
                 Transmittal #{t.id}
-                {filed ? ` · sequence ${filed}${filed === sequenceNumber ? ' (this one)' : ''}` : ' · sequence not recorded'}
+                {filed ? ` · sequence ${filed}${transmittalMark(t, sequenceId, sequenceNumber)}` : ' · sequence not recorded'}
               </span>
               <span className="tl-spec-v">
                 {t.status ? <span className={`rd-chip tone-${transmittalStatusTone(t.status)}`}>{t.status}</span> : 'status not recorded'}
@@ -2077,7 +2111,7 @@ function TransmitPanel({ seq, programId, onTransmit, canSign }: { seq: SeqRow; p
           No agency application number is recorded for this project. Enter the number the agency assigned; a package is never sent without one.
         </div>
       ) : null}
-      {t.route.ok && <DossierTransmissions programId={programId} region={t.route.region} sequenceNumber={seq.sequenceNumber} />}
+      {t.route.ok && <DossierTransmissions programId={programId} region={t.route.region} sequenceId={seq.id} sequenceNumber={seq.sequenceNumber} />}
     </div>
   );
 }
@@ -2140,6 +2174,101 @@ function DispatchVerdict({ a, sequenceNumber: n, awaitingOwnSignature, reauthori
       <AnswerLead emphasis="verdict" tone={cleared ? 'good' : awaitingOwnSignature ? 'calm' : 'urgent'}
         eyebrow="Cleared to dispatch?" headline={headline} body={body} />
     </div>
+  );
+}
+
+/** What a retirement keeps on record, in words: the test sends are named, never counted as filings. */
+function retirementHistory(sends: ReadonlyArray<{ sentOn: string }>): string {
+  const sent = sends.length === 0 ? '' : sends.length === 1 ? `, its test send of ${sends[0].sentOn} UTC` : `, its ${sends.length} test sends`;
+  return `Its leaves, compiles${sent} and its signatures stay recorded as history; it is no longer listed, built on or sent.`;
+}
+
+type RetireAnswer =
+  | { phase: 'offered'; retirement: RetirementPrecheck }
+  | { phase: 'refused'; refusal: string }
+  | { phase: 'unreadable' };
+type RetireState = { phase: 'closed' } | { phase: 'reading' } | (RetireAnswer & { atClick?: boolean });
+
+/** The retirement's own precheck (P-86 C2): offered, refused with the server's sentence, or unreadable. */
+async function askRetirement(seq: SeqRow): Promise<RetireAnswer> {
+  const r = await mutateVerbatim<GovernedPrecheck>('POST', `/api/submissions/sequences/${seq.id}/governed-precheck`, { step: 'retire' });
+  if (!r.data || typeof r.data.cleared !== 'boolean') return { phase: 'unreadable' };
+  if (!r.data.cleared) {
+    return { phase: 'refused', refusal: r.data.refusal?.trim() || `The server would not retire sequence ${seq.sequenceNumber}, and gave no reason.` };
+  }
+  const retirement = retirementOf(r.data);
+  return retirement ? { phase: 'offered', retirement } : { phase: 'unreadable' };
+}
+
+/**
+ * Retire this sequence (P-86, founder 2026-11-01; launch row D7): a sequence never filed is taken out of use by a
+ * signed act, and its number is freed. The foot of the Dispatch tab, closed by default, and outside the readiness
+ * read, so a sequence whose gate cannot be computed can still be retired. Each open asks the server again and no
+ * answer is kept across a close; the button asks once more and opens the one signature only when that answer clears.
+ * A refusal is said here, focused, never off screen. Nothing is signed or changed by this component.
+ */
+function RetireSequence({ seq, onRetire }: { seq: SeqRow; onRetire: () => void }) {
+  const n = seq.sequenceNumber;
+  const [state, setState] = React.useState<RetireState>({ phase: 'closed' });
+  const [busy, setBusy] = React.useState(false);
+  const asked = React.useRef(0);
+  const wasOpen = React.useRef(false);
+  const said = React.useRef<HTMLParagraphElement>(null);
+  const atClick = 'atClick' in state && state.atClick === true;
+  React.useEffect(() => { if (atClick) said.current?.focus(); }, [atClick, state]);
+  const onToggle = (e: React.SyntheticEvent<HTMLElement>) => {
+    // One open is one question: a toggle event that does not change the state asks nothing again.
+    const open = (e.currentTarget as { open?: boolean }).open === true;
+    if (open === wasOpen.current) return;
+    wasOpen.current = open;
+    const id = ++asked.current;
+    setBusy(false);
+    if (!open) { setState({ phase: 'closed' }); return; }
+    setState({ phase: 'reading' });
+    void askRetirement(seq).then((answer) => { if (asked.current === id) setState(answer); });
+  };
+  const retire = async () => {
+    const id = asked.current;
+    setBusy(true);
+    const answer = await askRetirement(seq);
+    if (asked.current !== id) return;
+    setBusy(false);
+    if (answer.phase === 'offered') { setState(answer); onRetire(); return; }
+    setState({ ...answer, atClick: true });
+  };
+  return (
+    <details className="pj-more" data-testid="retire-sequence" onToggle={onToggle}>
+      <summary>Retire sequence {n}…</summary>
+      {state.phase === 'reading' && <p role="status">Checking whether sequence {n} can be retired…</p>}
+      {state.phase === 'offered' && (
+        <>
+          <p>
+            Retiring takes sequence {n} out of use. Nothing is sent to the agency.{' '}
+            {retirementHistory(state.retirement.stagingSends)}{' '}
+            {state.retirement.numberFreed
+              ? `Its number, ${n}, becomes free, so a corrected sequence ${n} can then be started from the Sequences tab.`
+              : `Another sequence ${n} is in use, so the number stays taken.`}{' '}
+            Retirement cannot be undone.
+          </p>
+          <div className="sc-mt">
+            <button type="button" className="btn ghost small" disabled={busy} onClick={() => void retire()}>
+              Retire sequence {n}
+            </button>
+          </div>
+        </>
+      )}
+      {state.phase === 'refused' && (
+        <p ref={said} tabIndex={-1} role={atClick ? 'status' : 'note'}>
+          {blockerForDisplay(state.refusal)}{atClick ? ' Nothing was signed.' : ''}
+        </p>
+      )}
+      {state.phase === 'unreadable' && (
+        <p ref={said} tabIndex={-1} role="status">
+          Whether sequence {n} can be retired could not be checked.{atClick ? ' Nothing was signed.' : ''} Close this and
+          open it again to retry.
+        </p>
+      )}
+    </details>
   );
 }
 
@@ -2484,6 +2613,8 @@ export function DispatchWorkspace({
           </>
         )}
       </div>
+      {/* Outside the readiness read (P-86 C3): retiring a sequence never filed does not wait on its dispatch gate. */}
+      <RetireSequence seq={seq} onRetire={() => onGoverned(seq, 'retire')} />
     </div>
   );
 }
