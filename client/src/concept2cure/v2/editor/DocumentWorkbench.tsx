@@ -771,7 +771,9 @@ interface SectionSource {
   citedAt: string | null;
   citationText: string | null;
   citedChecksum: string | null;
-  state: 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved';
+  state: 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved' | 'unverifiable';
+  /** Why an `unverifiable` source could not be verified (its refusal code). */
+  reasonCode?: string;
   source: {
     id: number;
     title: string | null;
@@ -816,6 +818,13 @@ function sourceStateLabel(s: SectionSource): {
         text: 'Source changed since cited',
         tone: 'warn',
         hint: 'This section was drafted from earlier content. Nothing has been rewritten — re-read the source and decide whether it changes what this section says.',
+      };
+    case 'unverifiable':
+      /* S12 (2026-11-09): one native source that cannot be verified is listed, never used, and the others still are. */
+      return {
+        text: 'Source could not be verified',
+        tone: 'warn',
+        hint: `This source’s current record could not be verified${s.reasonCode ? ` (${s.reasonCode})` : ''}, so it is not used for drafting or citing. The citation remains recorded; nothing has been rewritten.`,
       };
     case 'unresolved':
       return {
