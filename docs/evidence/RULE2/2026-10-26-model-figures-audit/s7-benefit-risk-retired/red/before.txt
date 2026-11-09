@@ -1,0 +1,19 @@
+# S7 red: server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts on 96ae110e8, in the working tree before the change. 6 of 8 fail; the 2 controls (the replacement is defined and registered, and computes) pass.
+
+ × server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > is no longer defined, registered, authorised or in the launch scope 5ms
+   → expected [ 'list_fda_forms', …(790) ] to not include 'assess_benefit_risk'
+ × server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > its engine, which had no other caller, is gone 3ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > the replacement is defined and registered 1ms
+ ✓ server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > the replacement computes a balance from stated benefits and risks 33ms
+ × server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > "run a structured benefit-risk assessment weighing the benefits against the risks" still offers the replacement 7ms
+   → expected [ 'list_platform_commands', …(49) ] to not include 'assess_benefit_risk'
+ × server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > "BRAT weighted benefit risk score with an importance weight for each benefit and risk" still offers the replacement 10ms
+   → expected [ 'list_platform_commands', …(49) ] to not include 'assess_benefit_risk'
+ × server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > "compute the net benefit and favorability from weighted benefits and risks" still offers the replacement 4ms
+   → expected [ 'list_platform_commands', …(49) ] to not include 'assess_benefit_risk'
+ × server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > "structured benefit-risk decision aid for the clinical overview 2.5.6" still offers the replacement 6ms
+   → expected [ 'list_platform_commands', …(49) ] to not include 'assess_benefit_risk'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)

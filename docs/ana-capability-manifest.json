@@ -20,7 +20,7 @@
     "none": "No dedicated rendering (discovery/utility)."
   },
   "totals": {
-    "tools": 791,
+    "tools": 790,
     "byCategory": {
       "Authoring & rendering": 28,
       "Biostatistics": 12,
@@ -31,7 +31,7 @@
       "Evidence & intelligence": 52,
       "Governance & data": 13,
       "Nonclinical (M4)": 13,
-      "Other": 524,
+      "Other": 523,
       "Platform control": 2,
       "Quality management": 17,
       "Submission / eCTD": 37
@@ -13750,43 +13750,6 @@
         "batches",
         "specLimit",
         "direction"
-      ],
-      "derived": true
-    },
-    {
-      "name": "assess_benefit_risk",
-      "category": {
-        "id": "other",
-        "label": "Other"
-      },
-      "description": "Compute a transparent structured benefit-risk assessment (BRAT / FDA structured-benefit-risk style). You supply benefits and risks, each with an importance weight and a 0–100 magnitude score; the engine normalizes weights within each category, computes the weighted benefit, weighted risk, the net, and a favorability call (favorable/unfavorable/borderline), with EVERY item's contribution itemized. DETERMINISTIC. This is a structured DECISION AID, not a regulatory determination — report the disclaimer and the per-item contributions, and never present it as an approval decision. Deterministic engine — report the returned numbers/decision verbatim and relay validation errors rather than guessing.",
-      "scope": "global",
-      "governed": false,
-      "renderer": "ranked-cards",
-      "example": "",
-      "inputs": [
-        {
-          "name": "benefits",
-          "type": "array",
-          "required": true,
-          "description": "Benefits (≥1)."
-        },
-        {
-          "name": "risks",
-          "type": "array",
-          "required": true,
-          "description": "Risks (≥1)."
-        },
-        {
-          "name": "favorabilityThreshold",
-          "type": "number",
-          "required": false,
-          "description": "Net-score band for the call (default 10): net ≥ +threshold favorable, ≤ −threshold unfavorable, else borderline."
-        }
-      ],
-      "requiredInputs": [
-        "benefits",
-        "risks"
       ],
       "derived": true
     },

@@ -26,7 +26,6 @@ describe('deepening tools — registration', () => {
     'list_cmc_registers',
     'estimate_recorded_shelf_life',
     'get_submission_readiness_twin',
-    'assess_benefit_risk',
     'assess_recorded_stability_trend',
     'assess_recorded_process_capability',
   ])('%s is defined and registered', (name) => {
@@ -84,22 +83,6 @@ describe('assess_batch_poolability', () => {
   });
   it('requires ≥2 batches', async () => {
     const out = JSON.parse(await getToolHandler('assess_batch_poolability')!({ batches: [{ batchId: 'A', data: [{ time: 0, value: 1 }, { time: 1, value: 1 }, { time: 2, value: 1 }] }], specLimit: 0, direction: 'decreasing' }));
-    expect(out.status).toBe('needs_parameters');
-  });
-});
-
-describe('assess_benefit_risk', () => {
-  it('computes a structured benefit-risk result', async () => {
-    const out = JSON.parse(await getToolHandler('assess_benefit_risk')!({
-      benefits: [{ name: 'Efficacy', weight: 3, score: 80 }],
-      risks: [{ name: 'AEs', weight: 1, score: 30 }],
-    }));
-    expect(out.status).toBe('computed');
-    expect(out.result.favorability).toBe('favorable');
-    expect(out.result.disclaimer).toMatch(/decision aid/i);
-  });
-  it('validates inputs', async () => {
-    const out = JSON.parse(await getToolHandler('assess_benefit_risk')!({ benefits: [], risks: [{ name: 'R', weight: 1, score: 1 }] }));
     expect(out.status).toBe('needs_parameters');
   });
 });
