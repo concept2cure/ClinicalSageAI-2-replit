@@ -2403,3 +2403,52 @@ as the global sme", P-107). The CMC session (`01GJidg5…`) raised both question
    - **Owner.** The CMC session (S7, or F1 for the boundary). The test includes mutation 5's antibody.
 - **Unchanged.** No new file, route, table, screen or tool (RULE 6). The CMC composition scope of P-28 is otherwise as
   decided.
+
+### P-111 — A CMC or Quality work project manages its own smaller tasks, inside its own work area
+
+Decided 2026-11-09 by the founder, in the reporting session (`011HLkYC…`): "the CMC module should have its own child
+project management module dedicated to all the smaller CMC related tasks", and "Same with QS QA". Asked where it
+lives, the founder chose **inside each work area**, not a separate screen, and asked that it be **routed to S12**.
+
+- **What exists today** (inventoried 2026-11-09, by path):
+  - A CMC work project is a child `projects` row (`program-project-anchor.ts` `ensureWorkProjectUnderAnchor`, P-109).
+    It carries one owner and one due date: a single `unified_tasks` row, "Deliver: <name>"
+    (`ProjectCoreWork.tsx` `ProjectWorkProjects`), filed on the **filing** project.
+  - It has no page or task list of its own. Its door opens the CMC area on the program, unbound to the work project
+    (`docs/evidence/SPINE/S12/2026-11-09-work-project-opens-its-area/README.md`).
+  - CMC's smaller work becomes ordinary `unified_tasks` rows, all filed on the filing project:
+    - the per-register "Task" push (`CmcModule.tsx` `cmcTask`);
+    - Module 3 contradictions (`services/cmc/contradiction-tasks.ts`).
+    Change controls, stability, batches and specifications carry no owner or due date.
+  - Quality's tasks are source-linked `unified_tasks` rows (`qms-record-tasks.ts`, `periodic-review-task.ts`,
+    `training-task.ts`, and `capa-tasks.ts` with one task per CAPA action item), placed on the program's anchor or the
+    organisation. **Quality is not a work-project kind** (`WORK_KINDS`, `program-project-anchor.ts:491`).
+  - `unified_tasks` has no parent task. Only the legacy `project_tasks` WBS has `parent_task_id`, and no client calls it.
+  - The project's work panel (`unified-work-view.ts`) and Tasks (`TaskBoard.tsx`) match the exact project. Neither
+    rolls a child up.
+- **What is decided.**
+  1. **A work project manages its own smaller tasks.** Opening a CMC or Quality work project opens its existing work
+     area **bound to that work project** (THE_PROGRAM §7a: "a work project opens on its work area … bound to it"). The
+     area shows the work project's **Tasks**: each with an owner, due date and status, and **one level of subtasks**.
+  2. **The tasks are `unified_tasks` rows filed on the work project itself** (`project_id` = the child; task admission,
+     `tasking/task-project.ts`, already accepts it).
+     - The existing producers file there when they act within a work project: the CMC "Task" push, contradictions,
+       Quality's record, CAPA-action, periodic-review and training tasks.
+     - Each producer keeps its source identity and reconciliation (QUALITY_CORE_WORKFLOW's contract).
+  3. **They roll up.** A work project's tasks show in its filing project's work panel and in each person's Tasks. They
+     are never a second list beside them.
+  4. **Subtasks live in the canonical store, `unified_tasks`**, never in the legacy `project_tasks` WBS (zero
+     duplication). Whether that means a parent column or the existing `linked_tasks`/`dependencies` is S12's design to
+     show, with its "What already exists" section first (RULE 3). A column is added by an additive, re-runnable
+     migration (RULE 1).
+  5. **Quality becomes a work-project kind** (`quality` in `WORK_KINDS`). It gets a door among the project's work areas
+     (`ProjectCoreWork.tsx`) that opens the Quality area bound to it.
+- **Owner.** S12, the project-page session (`01FTWcmX…`). The CMC session holds the CMC area's screens and the Quality
+  lane holds Quality's; S12 coordinates with each through `.design/claude-convergence/COORDINATION.md`. S12's ledger
+  paths widen to the Quality and tasking files this needs.
+- **Unchanged.**
+  - No new screen, rail entry, card, workspace, route file, service or table (RULES 4 and 6). The task list is part of
+    the existing CMC and Quality areas.
+  - Module 3 remains a document type that converges into the project's document start and the one editor (RULE 4).
+    This decision is about the work area's tasks, not the Module 3 document.
+  - The CMC composition boundary (P-28, P-110) is unchanged.
