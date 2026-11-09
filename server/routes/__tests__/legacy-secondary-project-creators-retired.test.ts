@@ -12,7 +12,7 @@ const h = vi.hoisted(() => ({
 vi.mock('../../services/ana-platform-controller', () => ({ anaPlatformController: h }));
 vi.mock('../../services/ctd-ingestion-service.js', () => ({
   createCTDProject: h.createCTDProject, listCTDProjects: h.listCTDProjects,
-  getCTDProjectStatus: vi.fn(), uploadCTDDocument: vi.fn(), detectCTDSection: vi.fn(), validateCTDCompleteness: vi.fn(),
+  getCTDProjectStatus: vi.fn(), detectCTDSection: vi.fn(), validateCTDCompleteness: vi.fn(),
 }));
 vi.mock('../../services/program-journey/program-journey-service', () => ({
   createProgramJourney: h.createJourney, updateJourneyStage: h.updateStage, listProgramJourneys: h.listJourneys,

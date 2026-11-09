@@ -21,7 +21,7 @@ describe('transmitSequence refusals (no database access)', () => {
   it('refuses when no environment is named — it never defaults to production', async () => {
     await expect(
       transmitSequence({ sequenceId: 1, ctx, signatureActionId: 'sig-1', applicationId: 'IND123456' } as any),
-    ).rejects.toMatchObject({ code: 'VALIDATION', message: /explicit environment/ });
+    ).rejects.toMatchObject({ code: 'VALIDATION', message: expect.stringMatching(/explicit environment/) });
   });
 
   it('refuses an environment outside staging|production', async () => {
@@ -33,13 +33,13 @@ describe('transmitSequence refusals (no database access)', () => {
   it('refuses when no application number is recorded', async () => {
     await expect(
       transmitSequence({ sequenceId: 1, ctx, signatureActionId: 'sig-1', environment: 'staging' } as any),
-    ).rejects.toMatchObject({ code: 'VALIDATION', message: /application number/ });
+    ).rejects.toMatchObject({ code: 'VALIDATION', message: expect.stringMatching(/application number/) });
   });
 
   it('refuses an UNASSIGNED placeholder application number', async () => {
     await expect(
       transmitSequence({ sequenceId: 1, ctx, signatureActionId: 'sig-1', environment: 'staging', applicationId: 'UNASSIGNED-SEQ-1' }),
-    ).rejects.toMatchObject({ code: 'VALIDATION', message: /application number/ });
+    ).rejects.toMatchObject({ code: 'VALIDATION', message: expect.stringMatching(/application number/) });
   });
 
   it('refuses a whitespace-only application number', async () => {
@@ -53,7 +53,7 @@ describe('transmitSequence refusals (no database access)', () => {
     // goes into the backbone and the package name. It used to be sent as typed.
     await expect(
       transmitSequence({ sequenceId: 1, ctx, signatureActionId: 'sig-1', environment: 'staging', applicationId: 'EMEA/H/C/001234' }),
-    ).rejects.toMatchObject({ code: 'VALIDATION', message: /"EMEA\/H\/C\/001234" is not a usable application number/ });
+    ).rejects.toMatchObject({ code: 'VALIDATION', message: expect.stringMatching(/"EMEA\/H\/C\/001234" is not a usable application number/) });
   });
 });
 

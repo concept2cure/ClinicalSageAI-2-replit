@@ -27,6 +27,7 @@ import { InsightsDevicePortfolio, type DevicePortfolioView } from './InsightsDev
 import { LIBRARY_VIEWS, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
 import type { BundlePdfContent, ReportRunRow } from './insightsLibraryModel';
 import { getSurfaceMeta } from '../registryModel';
+import { GlobalSchedule, type ScheduleProject } from './PyramidProject';
 import { getApplicationType } from '@shared/regulatory/global-document-registry';
 
 /* ── Entitlement tiers (mdx-entitlements) ── */
@@ -533,6 +534,8 @@ function roRouteIntent(utterance: string): { matched: boolean; name?: string; ca
     regional_gap_analysis: ['gap', 'gaps', 'market', 'region', 'fda', 'ema', 'pmda', 'missing'],
     compare_regions: ['compare', 'comparison', 'versus', 'harmonization', 'markets', 'delta'],
     get_prediction: ['predict', 'prediction', 'forecast', 'risk', 'trajectory', 'likelihood'],
+    // THE_PROGRAM §5: the global schedule, each project's filing date and review clock side by side.
+    global_schedule: ['schedule', 'timeline', 'timelines', 'milestones', 'clock', 'clocks', 'dates', 'when'],
   };
   const scored = Object.keys(keywords).map(name => ({ name, score: keywords[name].reduce((a, kw) => a + (tokens.has(kw) ? 1 : 0), 0) })).sort((a, b) => b.score - a.score);
   const best = scored[0];
@@ -547,6 +550,20 @@ function roMarketsIn(utterance: string): string[] {
   const checks: [string, string][] = [['fda', 'FDA'], ['ema', 'EMA'], ['pmda', 'PMDA'], ['nmpa', 'NMPA'], ['mhra', 'MHRA'], ['health canada', 'Health Canada'], ['tga', 'TGA'], ['mfds', 'MFDS']];
   checks.forEach(([k, v]) => { if (t.includes(k)) out.push(v); });
   return out;
+}
+
+/* ── The global schedule (S11 step 6b; THE_PROGRAM §5) ──
+   Not a readiness figure and not the Enterprise rollup: every reader sees the projects they can open on one axis,
+   each from its own plan's dates (the schedule engine) and its agency's published clock. Nothing is computed here. */
+function roScheduleReply(tool: string, programs: NonNullable<CanvasOverview['programs']>): RouteReply {
+  const projects = programs.map((p) => ({ programId: p.programId, name: programName(p) }));
+  if (projects.length === 0) return { tool, text: 'There is no project you can open, so there is no schedule to lay out.', report: null, dashboard: null };
+  return {
+    tool,
+    text: `The schedule covers the ${projects.length === 1 ? 'one project' : `${projects.length} projects`} you can open, each from its own plan’s dates and its agency’s published review clock.`,
+    dashboard: { kind: 'schedule', label: 'Global schedule', why: 'Filing dates and review clocks', projects },
+    report: null,
+  };
 }
 
 /* ── Portfolio rollup (live, from overview.portfolio.programs) ── */
@@ -600,6 +617,7 @@ function roSuggestForClient(p: ProgramCtx, seg: string, types: ReportType[]) {
       p.readiness != null ? `How ready is ${p.code} to file?` : `Generate the Executive Readiness Digest for ${p.code}`,
       `What reports can you run for ${p.code}?`,
       'Compare readiness across all my projects',
+      'When does each project file?',
     ],
   };
 }
@@ -736,6 +754,8 @@ interface DashboardData {
   why: string;
   types?: string[];
   rows?: PortfolioRow[];
+  /** The global schedule's projects: the ones the reader can open (`overview.programs`). */
+  projects?: ScheduleProject[];
   markets?: string[];
   program?: ProgramCtx;
   /**
@@ -792,7 +812,7 @@ function roPortfolioCovers(count: number, truncated: boolean, dataScope?: string
  * "I will not show an estimated result" credited a judgement to AnA that a
  * `switch` had made. The routing is unchanged; the first person is gone.
  */
-function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCtx; portfolio: CanvasPortfolio; types: ReportType[]; report?: RenderedReport | null }): RouteReply {
+function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCtx; portfolio: CanvasPortfolio; types: ReportType[]; report?: RenderedReport | null; programs?: CanvasOverview['programs'] }): RouteReply {
   const c = ctx;
   const route = roRouteIntent(utterance);
   const name = route.matched ? route.name! : (route.candidates && route.candidates[0]) || 'generate_report';
@@ -816,6 +836,7 @@ function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCt
     const truncated = ctx.portfolio.summary?.truncated === true;
     return { tool: name, text: `${roPortfolioCovers(rows.length, truncated, ctx.portfolio.dataScope)} The numbers are the governed readiness scores, ranked — not recomputed here.`, dashboard: { kind: 'portfolio', label: 'Portfolio readiness', why: portfolioScopeText(ctx.portfolio.dataScope), rows, truncated, dataScope: ctx.portfolio.dataScope }, report: null };
   }
+  if (name === 'global_schedule') return roScheduleReply(name, ctx.programs ?? []);
   if (name === 'compare_regions') {
     const markets = roMarketsIn(utterance);
     if (markets.length < 2) return { tool: name, question: true, text: `Which markets should be compared for ${p.code}? Pick at least two.`, chips: [['FDA vs EMA', `Compare FDA and EMA for ${p.code}`], ['FDA vs EMA vs PMDA', `Compare FDA, EMA and PMDA for ${p.code}`], ['FDA vs NMPA', `Compare FDA and NMPA for ${p.code}`]], report: null, dashboard: null };
@@ -1150,6 +1171,16 @@ function RunPackTile({ type, fam, onRun }: { type: ReportType; fam: { label?: st
 
 /* `onAsk` is gone from here too — it was declared, threaded down from the
    canvas and never called once in the whole component. */
+/** The global schedule's answer in the canvas (S11 step 6b): the Plan step's line, one row per project. */
+function ScheduleDashboard({ dashboard, onOpenProject }: { dashboard: DashboardData; onOpenProject?: (programId: string) => void }) {
+  return (
+    <div className="ro-dash">
+      <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio — schedule</div><h2 className="ro-rep-title">{dashboard.label}</h2></div></div>
+      <GlobalSchedule projects={dashboard.projects ?? []} onOpen={onOpenProject} />
+    </div>
+  );
+}
+
 function RODashboard({ dashboard, tier, actualTier, tierResolved, onRun, canRun, scope, catalog, onOpenProgram }: { dashboard: DashboardData; tier: string; actualTier: string; tierResolved: boolean; onRun: (t: ReportType) => void; canRun: boolean; scope: string; catalog: ReportType[]; onOpenProgram?: (r: PortfolioRow) => void }) {
   if (!dashboard) return null;
 
@@ -1881,7 +1912,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     // roRouteReply resolves intent, chips and the entitlement lock — all
     // deterministic. When it resolves a report type, generation goes to the REAL
     // backend via runReport, not to a client-built preview.
-    const reply = roRouteReply(text, tier, { program, portfolio: { ...data.portfolio, dataScope: data.dataScope }, types: catalog, report });
+    const reply = roRouteReply(text, tier, { program, portfolio: { ...data.portfolio, dataScope: data.dataScope }, types: catalog, report, programs: data.programs });
     setFound({ text: reply.text, chips: reply.chips, locked: reply.locked, nav: reply.nav });
     if (reply.reportType) {
       await runReport(reply.reportType);
@@ -2068,6 +2099,12 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     if (!reportAccessCurrent()) return;
     if (!row.programId) return;
     publishShellProject({ id: row.programId, title: row.label, code: row.code });
+    onNav?.('project-home');
+  };
+  const openScheduleProject = (programId: string) => {
+    if (!reportAccessCurrent()) return;
+    const choice = (data?.programs ?? []).find((c) => c.programId === programId);
+    publishShellProject({ id: programId, title: choice?.label ?? undefined, code: choice?.code ?? undefined });
     onNav?.('project-home');
   };
   const libraryTabs = <ReportingTabs value={paneView} id={tabsId} onChange={view => { setPaneView(view); pushCanvasTop(); }} />;
@@ -2334,7 +2371,8 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
         {libraryTabs}
         {recoveryNotice}
         <div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>
-        {libraryPane || reportPane || (dashboard ? <RODashboard dashboard={dashboard} tier={tier} actualTier={realTier} tierResolved={tierResolved} onRun={runFromTile} canRun={canExecute} scope={p.scope} catalog={catalog} onOpenProgram={openPortfolioProgram} />
+        {libraryPane || reportPane || (dashboard?.kind === 'schedule' ? <ScheduleDashboard dashboard={dashboard} onOpenProject={openScheduleProject} />
+          : dashboard ? <RODashboard dashboard={dashboard} tier={tier} actualTier={realTier} tierResolved={tierResolved} onRun={runFromTile} canRun={canExecute} scope={p.scope} catalog={catalog} onOpenProgram={openPortfolioProgram} />
           : (
             <>
               {/* The standard packs (D7 §D.4 step 8): objects to pick, so cards.

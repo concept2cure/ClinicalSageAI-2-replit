@@ -1,17 +1,20 @@
 /**
  * CTD Onboarding Routes
  *
- * Endpoints for managing client CTD project onboarding, document upload,
- * section detection, and compliance validation.
+ * Reads of existing CTD onboarding projects, section detection, and compliance
+ * validation.
+ *
+ * 2026-11-09 (P-108 3(b), item 5): `POST /projects/:id/upload` is removed. It
+ * wrote into `ctd_onboarding_documents`, the store P-108 retired as a source of
+ * placeable leaves, and no client ever called it. An uploaded file goes into the
+ * project's Vault, is approved there, and that Vault version is placed:
+ * client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx. The rows it
+ * wrote stay, as history (RULE 1: no DROP).
  *
  * @module server/routes/ctd-onboarding
  */
 
 import { Router, Request, Response } from 'express';
-import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import { authMiddleware } from '../auth.js';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -20,40 +23,11 @@ const logger = createScopedLogger('ctd-onboarding');
 import {
   listCTDProjects,
   getCTDProjectStatus,
-  uploadCTDDocument,
   detectCTDSection,
   validateCTDCompleteness,
 } from '../services/ctd-ingestion-service.js';
 
 const router = Router();
-
-// Multer config for CTD document uploads
-const uploadDir = path.join(process.cwd(), 'uploads', 'ctd');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDir),
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${uniqueSuffix}-${file.originalname}`);
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB for CTD documents
-  fileFilter: (_req, file, cb) => {
-    const allowed = ['.pdf', '.doc', '.docx', '.xml', '.txt', '.xlsx', '.xls'];
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (allowed.includes(ext)) {
-      cb(null, true);
-    } else {
-      cb(new Error(`Unsupported file type: ${ext}`));
-    }
-  },
-});
 
 // All routes require auth
 router.use(authMiddleware);
@@ -104,77 +78,6 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Get project error', { err: message });
     return res.status(500).json({ error: 'Failed to get CTD project' });
-  }
-});
-
-// ============================================================================
-// POST /api/ctd/projects/:id/upload — Upload document to CTD project
-// ============================================================================
-
-router.post('/projects/:id/upload', upload.single('file'), async (req: Request, res: Response) => {
-  try {
-    const organizationId = Number(req.tenantId);
-    if (!organizationId) {
-      return res.status(401).json({ error: 'Organization context required' });
-    }
-    const projectId = parseInt(String(req.params.id), 10);
-
-    if (isNaN(projectId)) {
-      return res.status(400).json({ error: 'Invalid project ID' });
-    }
-
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
-
-    // SECURITY: magic-byte signature + AV scan (fail-closed in prod) before the
-    // file is persisted/processed. Cleans up the temp file on rejection.
-    try {
-      await assertUploadSafe(req.file.path, req.file.mimetype, req.file.originalname);
-    } catch (err) {
-      if (err instanceof UploadSafetyError) {
-        try { fs.unlinkSync(req.file.path); } catch { /* best-effort cleanup */ }
-        return res.status(err.status).json(err.body);
-      }
-      throw err;
-    }
-
-    const { ctdModule, ctdSection, sectionTitle, documentType } = req.body;
-
-    if (!ctdModule || !ctdSection || !sectionTitle || !documentType) {
-      return res.status(400).json({
-        error: 'Missing required fields: ctdModule, ctdSection, sectionTitle, documentType',
-      });
-    }
-
-    const result = await uploadCTDDocument(projectId, organizationId, {
-      fileName: req.file.originalname,
-      fileSize: req.file.size,
-      mimeType: req.file.mimetype,
-      storagePath: req.file.path,
-      ctdModule: parseInt(ctdModule, 10),
-      ctdSection,
-      sectionTitle,
-      documentType,
-    });
-
-    return res.status(201).json({
-      message: 'Document uploaded successfully',
-      documentId: result.id,
-      uuid: result.uuid,
-    });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Upload error', { err: message });
-    if (req.file?.path) {
-      fs.unlink(req.file.path, () => {
-        // Best-effort cleanup for orphaned uploads.
-      });
-    }
-    if (message === 'CTD project not found for organization') {
-      return res.status(404).json({ error: 'CTD project not found' });
-    }
-    return res.status(500).json({ error: 'Failed to upload document' });
   }
 });
 
