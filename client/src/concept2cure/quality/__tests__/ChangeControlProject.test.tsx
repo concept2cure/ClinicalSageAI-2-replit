@@ -29,8 +29,13 @@ vi.mock('../changeHooks', async () => {
   const { CHANGE_SUMMARY } = await import('./changeRows');
   return { useChangeSummary: () => ({ summary: CHANGE_SUMMARY, loading: false, error: null }) };
 });
+/* a2f9264a5d gave Change control a reviewed-learning step that reads through the editor's session owner
+   (`editor/authoringCurrentRead.ts`), which asks `authService` for the account and its session guard. The same
+   account object is returned each time, as the real service does, so the guard stays current. */
+const ACCOUNT = { id: 9, organizationId: 3, name: 'Q. Author', role: 'editor' };
 vi.mock('@/services/portal/authService', () => ({
-  useAuthUser: () => ({ id: 9, organizationId: 3, name: 'Q. Author', role: 'editor' }),
+  useAuthUser: () => ACCOUNT,
+  authService: { getUser: () => ACCOUNT, captureSessionReadGuard: () => ({ sameRevision: () => true }), on: () => () => {} },
 }));
 vi.mock('@/lib/queryClient', () => ({
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
