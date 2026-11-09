@@ -212,3 +212,23 @@ export function asProjectUuid(id: string | null | undefined): string | undefined
   const t = id.trim();
   return UUID_RE.test(t) ? t : undefined;
 }
+
+/**
+ * One sentence out of a lead and the server's own words, without inventing a
+ * second full stop.
+ *
+ * Seen in the running app on 2026-11-09: the approval gate's refusal reached
+ * the user as *"…record the status that shows it is suitable for this use.."*
+ * — the toast appended a period to a message that already ended in one
+ * (`docs/evidence/S7/2026-11-09-cmc-walk-c2c201/`). The server's refusals are
+ * written as sentences, and a caller that always appends punctuation will
+ * always double it; one that never appends will leave a fragment unterminated
+ * when the server sends a bare code. So the joining is decided from what the
+ * message actually ends with.
+ */
+export function joinSentence(lead: string, message: string, tail = ''): string {
+  const body = String(message ?? '').trim();
+  const terminated = /[.!?]$/.test(body);
+  const head = `${lead}${body}${body && !terminated ? '.' : ''}`;
+  return tail ? `${head} ${tail}` : head;
+}

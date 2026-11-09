@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  joinSentence,
   specRowFromApi,
   specRowsFromApi,
   specCreateBody,
@@ -142,5 +143,39 @@ describe('cmcSpec mapping', () => {
     expect(asProjectUuid('123')).toBeUndefined();
     expect(asProjectUuid('')).toBeUndefined();
     expect(asProjectUuid(null)).toBeUndefined();
+  });
+});
+
+/**
+ * Seen in the running app: the approval gate's refusal reached the user as
+ * "…record the status that shows it is suitable for this use.." — the toast
+ * appended a period to a sentence that already had one.
+ */
+describe('joinSentence — the server\'s words, with one full stop', () => {
+  const LEAD = 'Couldn’t approve the specification — ';
+
+  it('does not add a second full stop to a sentence that has one', () => {
+    const refusal = 'The analytical method "Dissolution (USP <711>, apparatus 2)" is recorded as validation, which is neither validated nor shown suitable, so a limit measured by it cannot be approved (ICH Q2).';
+    expect(joinSentence(LEAD, refusal)).toBe(LEAD + refusal);
+    expect(joinSentence(LEAD, refusal)).not.toContain('..');
+  });
+
+  it('terminates a bare fragment, so the sentence is not left open', () => {
+    expect(joinSentence(LEAD, 'METHOD_NOT_FIT')).toBe(LEAD + 'METHOD_NOT_FIT.');
+  });
+
+  it('respects a question or an exclamation as a terminator', () => {
+    expect(joinSentence(LEAD, 'Is the method validated?')).toBe(LEAD + 'Is the method validated?');
+  });
+
+  it('adds the tail as its own sentence, once', () => {
+    expect(joinSentence(LEAD, 'The server refused.', 'Nothing was persisted.'))
+      .toBe(LEAD + 'The server refused. Nothing was persisted.');
+    expect(joinSentence(LEAD, 'METHOD_NOT_FIT', 'Nothing was persisted.'))
+      .toBe(LEAD + 'METHOD_NOT_FIT. Nothing was persisted.');
+  });
+
+  it('leaves no dangling separator when the server said nothing', () => {
+    expect(joinSentence(LEAD, '', 'Nothing was persisted.')).toBe(LEAD + ' Nothing was persisted.');
   });
 });
