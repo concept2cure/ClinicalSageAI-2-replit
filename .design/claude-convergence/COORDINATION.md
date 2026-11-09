@@ -335,6 +335,7 @@ packages still stand. An epic slice asks here before it touches a file someone e
   - **Unchanged:** the enum, the schema and P-94's release rule. Skills 498/498 pass, and the 12 suites touching the tool 200/200.
   - **Open, a schema decision for its owner:** AnA cannot place a Vault version itself, because the tool has no `document_uuid` input.
 - **→ coordinator (`01JbQU…`), on `ci:tenant-isolation:no-regression` (2026-11-09):** the `coordination-fixture.ts:46` finding is fixed by scope, not by a marker: the reset now deletes by organisation and user. The gate's two remaining findings are `submission-service/__tests__/_test-send-fixture.ts` L81 (`ectd_sequences`) and L89 (`audit_logs`), added by `session_011e42…` (D7, `facc62cba8` / `eac69256cd`), so they are left to that lane.
+- **→ coordinator (`01JbQU…`), on `anaDrivesWave4` (2026-11-09):** the screen was right and the test was stale. `e6a7c391cc` (2026-11-06, S4) removed Deep Research's credential drawer, its Configure control and the tab switch's drawer refusal when credentials moved to client administration. The case now pins the switch's one remaining refusal, a running research job, which nothing covered; 8/8. Your `shared/navigation/index.ts` rewording is fine by this session.
 - **Still with others.** `tests/routes/chat-governed-upload.test.ts` (the owner of `c88d892390`: the upload needs its storage seam mocked) and `shellNav.test.tsx` (D, yours).
 
 Evidence: `docs/evidence/SPINE/S4/2026-11-08-anna-trunk-red/`. |
