@@ -138,12 +138,13 @@ afterAll(async () => {
   await harness.close();
 });
 
-function place(documentTable: string, documentId: number) {
+function place(documentTable: string, documentId: number, lifecycleOp?: 'delete') {
   return upsertLeaf(
     {
       sequenceId: SEQUENCE_ID,
       sectionCode: '2.7.3',
       title: 'Device description',
+      ...(lifecycleOp ? { lifecycleOp } : {}),
       documentTable,
       documentId,
     },
@@ -158,8 +159,10 @@ describe('upsertLeaf — cross-tenant document pointers are refused', () => {
     );
   });
 
+  // P-108 3(b), 2026-11-09: the upload store takes withdrawals only, so the
+  // tenancy check is proven on the one placement it still accepts.
   it('refuses another organization’s ctd_onboarding_documents id', async () => {
-    await expect(place('ctd_onboarding_documents', FOREIGN_CTD_ID)).rejects.toThrow(
+    await expect(place('ctd_onboarding_documents', FOREIGN_CTD_ID, 'delete')).rejects.toThrow(
       /not found for this organization/i,
     );
   });

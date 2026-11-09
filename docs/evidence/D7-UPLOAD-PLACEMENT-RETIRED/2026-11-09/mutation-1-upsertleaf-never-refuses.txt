@@ -1,0 +1,14 @@
+MUTATION 1-upsertleaf-never-refuses in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T04:39:44.135425Z): replaced [  if (retiredSource) throw new SubmissionError('VALIDATION', retiredSource);] with [  void retiredSource;]
+ ✓ server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): an upload already filed can still be withdrawn > places the withdrawal of the filed upload (lifecycle operation delete) 30ms
+ × server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses an upload placed with lifecycle operation (none given), and writes nothing 19ms
+ × server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses an upload placed with lifecycle operation new, and writes nothing 9ms
+ × server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses an upload placed with lifecycle operation replace, and writes nothing 11ms
+ × server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses an upload placed with lifecycle operation append, and writes nothing 11ms
+ × server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses re-writing an upload leaf placed before this change, and leaves it as it was 11ms
+ × server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts > P-108 3(b): each door hands back the one refusal and places nothing > REST PUT /api/submissions/sequences/:seqId/leaves answers 400 with the refusal 47ms
+ × server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts > P-108 3(b): each door hands back the one refusal and places nothing > AnA place_into_sequence returns the refusal verbatim 16ms
+ × server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts > P-108 3(b): each door hands back the one refusal and places nothing > MCP c2c_file_draft_for_review is refused with the same sentence 3ms
+ ✓ server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts > P-108 3(b): AnA keeps the upload store for a withdrawal > places a withdrawal (lifecycle operation delete) of an upload through place_into_sequence 3ms
+      Tests  8 failed | 2 passed (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 772e0d09dca7727f350109951b6f7666c2e1a1ce611cef2aeb4a316b23ee908d (expected 772e0d09dca7727f350109951b6f7666c2e1a1ce611cef2aeb4a316b23ee908d)

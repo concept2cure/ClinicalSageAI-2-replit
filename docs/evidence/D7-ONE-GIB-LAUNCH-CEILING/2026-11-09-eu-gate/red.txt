@@ -1,0 +1,10 @@
+# RED: the EU package gate and the guard's boundary wording, at HEAD 7e521b0d3, 2026-11-09T03:42:08Z
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > a route whose gateway limit is sourced is refused over it before signing (P-93, question 1(a)) > an EU national filing over CESP’s 600 MiB is refused by the guard’s own sentence, and nothing is signed 121ms
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > a route whose gateway limit is sourced is refused over it before signing (P-93, question 1(a)) > an EU national filing over 600 MiB is refused at freeze, while its leaves can still change 122ms
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > a route whose gateway limit is sourced is refused over it before signing (P-93, question 1(a)) > a frozen EU national filing over 600 MiB is refused at dispatch, saying its leaves are locked 115ms
+ × server/services/submission-gateways/__tests__/pre-transmit-size-limit-only-where-one-is-on-file.test.ts > the size sentence never reads the two figures as equal > a package over EU CESP’s 600 MiB is said in MiB against the whole-MiB limit 4ms
+ × server/services/submission-gateways/__tests__/pre-transmit-size-limit-only-where-one-is-on-file.test.ts > the size sentence never reads the two figures as equal > one byte over 600 MiB is said in bytes, since the MiB figures would read alike 1ms
+ × server/services/submission-gateways/__tests__/pre-transmit-size-limit-only-where-one-is-on-file.test.ts > the size sentence never reads the two figures as equal > FDA’s decimal 10 GB stays in GB, and one byte over it is said in bytes 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  6 failed | 26 passed (32)
