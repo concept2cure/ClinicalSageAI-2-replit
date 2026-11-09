@@ -690,3 +690,50 @@ mount, the helper export and the tool sentence. The control, that both replaceme
 - `ci:audit-route-mounts:no-regression` and `ci:route-ownership-matrix:check`;
 - `audit-requestdb-coverage.mjs --strict-no-regression` and `ci:tenant-resolvers`;
 - the 15 tool-selection, manifest and `get_ctd_module_home` suites: 461 pass.
+
+### S13 — delete the orchestrator's five request-body builders, replaced by the program's run and AnA's Module 2 tools
+
+**Deleted:** from `server/routes/submission-orchestrator.ts`, these five routes:
+- `POST /m2/nonclinical`, `/m2/clinical` and `/m2/clinical-overview`;
+- `POST /csr/tabulate`;
+- `POST /validate/hardened`.
+
+Their imports went with them, as did `auditOrchestratorAccess`, which only they called. A dated note where they stood
+names the replacements.
+
+**Why:** each built Module 2 summaries, CSR tables or a go/no-go validation from whatever the request body carried.
+No record backed it and nobody approved it. That is the defect `/m2/qos` was retired for on 2026-10-05 (RULE 2).
+
+**What already exists:**
+- **Callers:** no screen ever called any of the five. Their paths appear in client and shared history only as a
+  registry comment, `4a4e92b3d`. Production refused them.
+- **A run built from the program's records:** `POST /api/submission-orchestrator/runs/for-program`, sent by eCTD
+  Compile's run controls (`client/src/concept2cure/v2/surfaces/OrchestratorRunControls.tsx`). Its m2.4, m2.5, m2.7, CSR
+  and gateway steps (`server/services/submission-package-orchestrator.ts`) call the same builders over stored inputs.
+  - In the running app the controls load saved runs (200).
+  - Build package run refuses with its named reason (409): the demo project records no agency application number
+    (`r1-batch-1/app-05-build-package-run.png`). That is the designed fail-closed answer. Nothing edits the number after
+    a project is created.
+- **The hardened validator** stays at sign and release (`server/routes/submission-sign-release.ts`).
+- **AnA's Module 2 tools,** over the project's records.
+- **Kept:** the three schemas the run itself uses, `NonclinicalStudySchema`, `CSRInputSchema` and `StudyDataSchema`.
+
+**Changed:**
+- The file header.
+- The `package.validate` comment in `submission-package-orchestrator.ts`.
+- `module3-regional-readiness.test.ts`: its pin required the route file to name `JURISDICTION_REGIONS`. That held only
+  because `/validate/hardened` derived its enum from it. Its intent, no hand-written region list in the file, is still
+  asserted, and it passes 38 of 38.
+
+**Left, as the plan says:**
+- `csr-readiness-launch-claim.test.ts`, whose paths stay unmapped.
+- The `ui-surface-registry.ts` comment, which belongs to the UI lane (H10).
+
+**Red:** `s13-red.txt`. `orchestrator-request-body-builders-retired.test.ts` fails 6 of 8 on trunk, all on assertions:
+the five routes and the audit helper. The two controls pass on trunk: the run route is reached, and the run still
+composes with the builders.
+
+**Gates:**
+- `ci:audit-route-mounts:no-regression` and `ci:route-ownership-matrix:check`;
+- the orchestrator suites, including `orchestrator-csr-readiness.pglite.test.ts` and
+  `submission-orchestrator-inputs.pglite.test.ts`.
