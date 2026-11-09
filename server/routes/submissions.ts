@@ -958,7 +958,8 @@ router.get('/device/qms/structure', limiter, requireRole(AUTHOR), async (req, re
     res.json({ clauses: QMS_CLAUSES, fdaNote: FDA_QMSR_NOTE });
   } catch (err) { fail(res, err); }
 });
-const qmsAssessSchema = z.object({ presentClauseIds: z.array(z.string().max(64)).max(100).default([]) });
+// 2026-11-09 (S5b): an omitted list was read as "no clause in place" (ready: false, every clause missing). It is required.
+const qmsAssessSchema = z.object({ presentClauseIds: z.array(z.string().max(64)).max(100) });
 router.post('/device/qms/assess', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
@@ -967,7 +968,15 @@ router.post('/device/qms/assess', limiter, requireRole(AUTHOR), async (req, res)
   try {
     const { assessQmsReadiness } = await import('../services/market-specs/quality-system.js');
     res.json(assessQmsReadiness(parsed.data.presentClauseIds));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    // An unknown clause id is the caller's to correct (quality-system.ts refuses it by index), not a server fault.
+    if ((err as { name?: string } | null)?.name === 'ComputationRefusal') {
+      const refusal = err as Error & { field?: string };
+      res.status(400).json({ error: { code: 'VALIDATION', message: refusal.message, field: refusal.field } });
+      return;
+    }
+    fail(res, err);
+  }
 });
 
 // Device labeling requirements (21 CFR 801 / MDR Annex I §23 / ISO 15223-1) from facts.

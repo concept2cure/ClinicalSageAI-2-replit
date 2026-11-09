@@ -1,0 +1,684 @@
+# S5b IVD lifecycle green: both tests after the change, with the market-specs, traceability, validity and analytical-performance suites, in the working tree.
+
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a non-invasive device is Class I 3ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a transient surgically invasive device is IIa; a short-term one is also IIa (Rule 7 default) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a transient surgically invasive device that is absorbed is IIb under Rule 6 (not III, not "Rule 8/17") 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a short-term absorbed device is III under Rule 7; an implantable absorbed one is III under Rule 8 2ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > an implantable device is IIb, or IIa when placed in the teeth 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > an implantable device contacting the CNS/central circulation is III 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a pacemaker (active implantable) is III under Rule 8 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > breast implants, surgical meshes, joint replacements and spinal implants are III under Rule 8 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > a device incorporating a medicinal substance is III (Rule 14) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > software in an implant makes it an active implantable (Article 2(4)), the fail-closed reading 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > takes the HIGHEST applicable class and traces every rule that fired 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 11 has IIa, IIb and III tiers 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 10: an active diagnostic device for a patient in immediate danger is IIb; the trace says why 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 12: an active device administering a medicine is IIa, IIb only when potentially hazardous 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification (Annex VIII Rules 1–22) > Rule 17 is X-ray image recording (IIa); Rule 22 closed-loop diagnostic function is III 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses to state a class when the facts that decide it are missing 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > states no class for an empty fact set: Rule 1 is not a verdict on facts never given 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > states no class below III for any device whose invasiveness was never given: an implant would be Rule 8 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > never drops a qualifier given without the fact it qualifies: names that fact instead of stating a lower class 2ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses a qualifier whose own fact is stated false, rather than picking one reading 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > states no class for an active device whose invasiveness was never given: Rule 13 is a default, too 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses a fact it does not know, rather than ignoring it and stating the class of a device without it 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses a fact of the wrong type or outside its values ("true" is not true; "long" is not a duration) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — fail closed on facts missing or unreadable > refuses contradictory invasiveness rather than picking one reading 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — a fact names the device it describes > a device that is active by a Rule 9/10 fact is an active implantable when implanted (Rule 8 → III, not IIb) 2ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > MDR classification — a fact names the device it describes > never drops administrationPotentiallyHazardous on a device no rule reads it for (only Rules 6 and 12 do) 2ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR classification (Annex VIII Rules 1–7) > blood-donation screening is Class D (Rule 1, first indent) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR classification (Annex VIII Rules 1–7) > Rule 1 is cited by indent, never by a letter it does not have (the citation form MDCG 2020-16 uses) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > blood grouping with no marker named states no class: the most common devices (ABO/RhD) are D 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > refuses contradictory Rule 2 facts rather than picking one reading 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > blood grouping is C, and D only for a listed Rule 2 marker 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > reads the Annex's own system names, the ISBT codes and the usual aliases of a listed Rule 2 marker as Class D 4ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > a recognised marker outside the Rule 2 list stays Class C 2ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > refuses a blood-grouping marker it cannot read rather than stating Class C 2ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rule 2 — blood-grouping markers read through closed tables > reads a hostile marker in linear time and refuses an over-long one (no catastrophic backtracking) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a companion diagnostic is Class C under Rule 3(f) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > Rule 3 sub-points are cited by letter 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > reads a Rule 3 sub-point however it is written: one string or a list, any letter case, with or without "Rule 3" 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses a Rule 3 sub-point it cannot read rather than falling through to Rule 6 (Class B) 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > self-testing is Class C under Rule 4(a) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a self-test for an enumerated Rule 4(a) analyte is Class B, however the analyte is written 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses a self-test analyte it cannot read rather than guessing B or C 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a control without an assigned value is Class B under Rule 7 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > a general lab reagent/instrument is Class A 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > gives Class B (Rule 6) only when the facts given say each higher-class rule does not apply 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > states no class when no IVDR fact was given at all: Rule 6 is not a verdict on facts never given 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > one false fact is not a statement that no other rule applies: Rule 6 names the facts still unstated 2ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses contradictory Rule 3 facts rather than picking one reading 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > refuses an IVDR fact it does not know, or of the wrong type 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > IVDR Rules 3–7 > takes the highest class (infectious + self-test → C) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > the EU rule tables are the one record, each row with a basis > MDR table covers Rules 1–22 and IVDR table Rules 1–7 1ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > the EU rule tables are the one record, each row with a basis > every row carries a well-formed basis, labelled recall with the EUR-Lex URL until checked 5ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > the EU rule tables are the one record, each row with a basis > the trace says the wording is recall, never checked regulator text 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > exempt device → exempt 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > Class III → PMA 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > predicate available → 510(k) 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > novel low-to-moderate risk, no predicate → De Novo 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > no facts → undetermined, not PMA 0ms
+ ✓ server/services/market-specs/__tests__/device-classification.test.ts > FDA pathway recommendation (heuristic) > every recommendation carries a confirm caveat 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > has unique ids and at least one section per template 40ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > every template requires at least one section 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > Clinical Overview matches the ICH M4E 2.5.1–2.5.7 spine 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > 510(k) Summary carries the 21 CFR 807.92 elements incl. substantial equivalence 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > SmPC has the 10 top-level sections 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > GSPR checklist maps to MDR Annex I chapters I–III 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no template serves both eu_mdr and eu_ivdr under one Annex I numbering 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > shares blank_crf across MDR and IVDR without claiming their Annex I numbering 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > shares crf_annotation_worksheet across MDR and IVDR without claiming their Annex I numbering 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no eu_ivdr template cites MDR Annex I numbering 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > gspr_checklist is the MDR checklist: MDR only, MDR Annex I basis, recall-labelled 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > ivdr_gspr_checklist cites IVDR Annex I: Ch I §1–8, Ch II §9–19, Ch III §20 (label 20.2, IFU 20.4) 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR checklist's Chapter III and the IVD labelling record cite the same section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > each EU device submission type points its GSPR row at its own regulation's checklist 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR technical-file assembler places a leaf typed ivdr_gspr_checklist in the GSPR slot 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the MDR technical-file assembler does not take the IVDR checklist as its GSPR by type 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > filters by family 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > resolves a template by CTD section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > returns undefined for an unknown id 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_substance reads the record's 3.2.S subtree, not a project blueprint copy 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_product reads the record's 3.2.P subtree, not a project blueprint copy 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > statistical_analysis_plan reads the existing ICH_SAP project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > informed_consent reads the existing ICH_ICF project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > clinical overview and summary registry ids share their existing component sections 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > aliases for existing IB and RMP resolve the very same template and never add a second outline 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > DSUR reads the corrected E2F record including all 20 numbered sections and the unnumbered front/back matter 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > registry requests reuse the named canonical clinical and quality outlines 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > a registry outline prefers the dedicated existing regional blueprint and labels its required flags as platform scaffolding 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > unknown or missing blueprints never fall back to a full CTD dossier 6ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact EU_CTA scaffold with its scope limitations 4ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact CA_CTA scaffold with its scope limitations 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact CA_CTA_A scaffold with its scope limitations 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact JP_CTN scaffold with its scope limitations 5ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact ICH_NONCLIN_SUMMARY scaffold with its scope limitations 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact US_IND_AMENDMENT scaffold with its scope limitations 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > coverage lists active medicinal, device, diagnostics and the four shared planning entries once with explicit outline gaps 9ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — current canonical M11 protocol > the protocol projects the current M11 retained headings including estimands, immunogenicity and quality management 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — current canonical M11 protocol > named, registry and project protocols share one current tree without a CTD module placement claim 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — current canonical M11 protocol > the existing outline renderer explains heading retention, applicable content and deeper unmodelled fields 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — subtype-scoped IND safety scaffold > keeps numeric compatibility keys without assigning all safety reports to Module 5 or requiring every case component 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > current protocol registry authority > identifies the current M11 structure and keeps the separate SAP discoverable 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > shares inquiry prompts without exposing mutable preparation defaults or changing priorities 3ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > asks three decisive questions and never certifies readiness 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > continues an interview without re-asking answered topics or promoting them to evidence 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps all discussion markers from becoming a filing-ready verdict 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps an EU CTA on CTIS, with national documents and disclosure questions 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not confuse Canada CTA with a full marketing dossier 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > does not re-label a Japanese trial notification as a marketing eCTD 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > makes Japanese language and ethnic evidence conditional 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — region and evidence before drafting > keeps pediatric and advanced-therapy overlays conditional 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > does not infer an application from an ambiguous alias or an unknown id 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > rejects contradictory market and filing identity 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > does not assume a drug pathway for a device entry 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > routes all four marketing regions with independent regional requirements 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > uses document-specific questions, not trial results for every build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > uses the shared component mapping for registry-only protocol and SAP builds 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > prepares an exact device component without inventing a medicinal pathway 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses smpc as a direct non-EU build 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses impd as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses risk_management_plan as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > refuses rmp as a direct non-EU build 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > keeps safety messages and datasets outside generic prose build claims 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech document preparation — exact scope and document-specific inquiry > rejects unrecognized topics instead of silently skipping questions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_DMF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_ASMF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks CA_MF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks JP_MF about access rights and confidential quality records, not trial outcomes 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > resolves US_IND_AMENDMENT change scope and agency issues before generic scientific drafting 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > resolves CA_CTA_A change scope and agency issues before generic scientific drafting 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_NDA_SUPP approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_BLA_SUPP approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_CBE approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes US_SUPAC approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_VARIATION_IA approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_VARIATION_IB approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_VARIATION_II approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes EU_LINE_EXTENSION approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes CA_SNDS approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes CA_SANDS approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes JP_PARTIAL_CHANGE approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prioritizes JP_MINOR_CHANGE approved-to-proposed changes and affected evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_PRE_IND around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_TYPE_A_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_TYPE_B_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_TYPE_C_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares EU_SCIENTIFIC_ADVICE around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares CA_PRESUB_MEETING around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares JP_PRE_CONSULT around questions and sponsor positions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_PSP about age groups, extrapolation and existing plan decisions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_PIP about age groups, extrapolation and existing plan decisions 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_ORPHAN for regional rarity evidence and a defensible condition definition 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_ORPHAN for regional rarity evidence and a defensible condition definition 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_351K for reference-product comparative evidence without prescribing a universal study 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_BIOSIMILAR_MAA for reference-product comparative evidence without prescribing a universal study 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks JP_BIOSIMILAR for reference-product comparative evidence without prescribing a universal study 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares ICH_ICSR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares ICH_SUSAR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_ICSR_15DAY as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares EU_EUDRAVIGILANCE_ICSR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares US_IND_SR as a reconciled safety case, not an aggregate efficacy report 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_IND_ANNUAL about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_NDA_ANNUAL about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks EU_PSUR about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks US_PADER about the actual reporting interval and cumulative versus interval data 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares post-marketing studies from the actual obligation and milestone record 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_COMPARABILITY for the specific quality experiment rather than human trial results 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_STABILITY_PROTOCOL for the specific quality experiment rather than human trial results 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_CTD_M3 for the specific quality experiment rather than human trial results 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_NONCLIN_SUMMARY about nonclinical findings and their translational limits 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > asks ICH_CTD_M4 about nonclinical findings and their translational limits 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > keeps a selected protocol interview scientific even when the filing context is an amendment 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > prepares a global device clinical-investigation entry using its confirmed device market 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — lifecycle inquiry depth > does not turn complete lifecycle discussion markers into qualified evidence 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > keeps IND aggregate safety assessment available alongside individual cases 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_CTN 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_MF 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_MINOR_CHANGE 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not assign the English marketing-application measure to JP_PRE_CONSULT 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > does not turn an integral-device opinion into a medicines meeting package 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > asks US_REMS about risk controls and their assessment, not just adverse events 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > asks EU_RMP about risk controls and their assessment, not just adverse events 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — scientific and regional boundaries > requires reviewed signal evidence and alternative explanations before concluding a risk 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_DMF inquiry within the existing paged tool budget 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the EU_ASMF inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the CA_MF inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the JP_MF inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_IND_AMENDMENT inquiry within the existing paged tool budget 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the CA_CTA_A inquiry within the existing paged tool budget 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_351K inquiry within the existing paged tool budget 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_PSP inquiry within the existing paged tool budget 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the EU_PIP inquiry within the existing paged tool budget 1ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the EU_ORPHAN inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the ICH_COMPARABILITY inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the ICH_STABILITY_PROTOCOL inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/document-preparation.test.ts > biotech preparation — existing tool delivery > delivers the US_IND_SR inquiry within the existing paged tool budget 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a declared-clean PDF is NOT assessed for security or size — the verdict says so 3ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a declared violation is still reported, and marked as declared 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a file with no extension or format is not judged for type — it used to pass 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > no files is not a conformant package 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > measured facts > reads encryption from the bytes and calls a measured clean set conformant 1203ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > measured facts > does not flag an FDA form submitted as FDA issued it 90ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF attachments" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF (eSTAR form)" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF/A-1b" and never read is not_assessed, with PDF_NO_SECURITY listed 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "eSTAR" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > an unread leaf declared as a non-PDF format is still not assessed for security 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > a declared encrypted:true is still a finding, not a not-assessed entry 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "estar") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "form") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.docx" (declared "a") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "attachments") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd refuses the fragment token "x.pdf" (declared "pd") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd refuses the fragment token "x.pdf" (declared "df") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF (eSTAR form)" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF attachments" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared undefined as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd accepts "x.pdf" declared "PDF/A-1b" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd accepts "x.PDF" declared undefined as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > eu-mdr accepts "td.pdf" declared "pdf/a" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.docx is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xpt is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xml is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xlsx is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.txt is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > pdfa-detect exports the predicate 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a .pdf whose header is past 1 KB is judged for security — and refused, as the packager and transmit guard refuse it 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a .pdf whose bytes are not a PDF is reported under ACCEPTED_FILE_TYPES, not accepted by its extension 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > so does a leaf DECLARED as PDF whose bytes are not a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > secured PDF bytes under a non-.pdf name are still judged 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a measured non-PDF leaf (neither name nor header) is judged, not left unassessed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > the packager and the transmit guard use the shared predicate, not an inline copy 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a .pdf whose bytes are not a PDF is an error whatever format is declared 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a file whose extension is not accepted is flagged even when declared as an accepted format 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a declared format that disagrees with an accepted extension is flagged 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a declared format that agrees with the extension is not flagged 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > an unread file with no extension, judged only by its declared format, is not assessed for type 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > an unread file with no extension declared as a format that is not accepted is still reported 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a read file with no extension whose bytes are a PDF is judged 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a dotted name whose suffix is not an extension is judged by its declared format 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a real extension is still read: letters, digits, letter-digit mixes and longer extensions 0ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP05 imprecision (one-way ANOVA) > grand mean and ANOVA intermediates 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP05 imprecision (one-way ANOVA) > repeatability, between-run, and within-lab SD 0ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP05 imprecision (one-way ANOVA) > clamps a negative between-run variance estimate to zero 0ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP05 imprecision (one-way ANOVA) > rejects unbalanced or too-small designs 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP17 detection capability (LoB / LoD) > LoB = 0 for a zero-SD blank; LoD = cβ·SD_low 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP17 detection capability (LoB / LoD) > LoB uses mean + cp·SD of the blank 0ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP17 detection capability (LoB / LoD) > respects the EP17-A2 bias-correction factor K 0ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP06 linearity > linearRegression recovers slope/intercept/R² exactly on linear data 0ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP06 linearity > polynomialFit recovers known quadratic coefficients 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP06 linearity > reports ~zero deviation-from-linearity on perfectly linear levels 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP06 linearity > flags curvature with a large deviation-from-linearity 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP06 linearity > requires at least 3 levels 0ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP09 method comparison > estimates slope/intercept and bias from paired data 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP09 method comparison > reports systematic bias at a decision level 0ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP09 method comparison > null decision-level bias when not requested; rejects unpaired input 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP09 method comparison > Bland–Altman limits of agreement = meanBias ± 1.96·sdBias 0ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP07 interference > computes percent bias from baseline vs with-interferent 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP07 interference > flags interference when bias exceeds the allowable limit 0ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP07 interference > rejects empty input or zero baseline 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP28 reference interval > type-7 percentile limits on 1..100 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP28 reference interval > limits are ordered and CIs bracket them 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP28 reference interval > rejects <3 values or bad quantiles 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > studentTQuantile > matches standard t-table values 3ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > studentTQuantile > is symmetric about zero 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP25 stability / shelf-life > on a noise-free degrading line, shelf-life equals the nominal crossing 3ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP25 stability / shelf-life > with scatter the confidence bound shortens shelf-life below the nominal crossing 3ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP25 stability is the ICH Q1E engine, not a second copy of it > caps the proposable shelf life at the Q1E extrapolation limit and reports the crossing alongside 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP25 stability is the ICH Q1E engine, not a second copy of it > returns exactly what the canonical estimator returns, field for field 2ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP25 stability is the ICH Q1E engine, not a second copy of it > maps 'upper' to the increasing (impurity) direction and confidence to alpha 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP12 qualitative dose-response (C5–C95) > recovers a known logistic and the C5/C50/C95 interval 1ms
+ ✓ server/services/stats/__tests__/analytical-performance.test.ts > EP12 qualitative dose-response (C5–C95) > rejects too few levels or invalid counts 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > is undetermined — never Basic — when the pre-risk-control hazard fact is absent 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > is Enhanced for a device IEC 62304 rates Class B after controls whose failure could cause probable serious injury before controls 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > is Basic only when the fact is recorded as false 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > cites the 2023 guidance on fda.gov, seen in a search extract, with a well-formed basis 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaDocumentationLevel > reads the documentation-level fact from questionnaire answers (yes/no), not from a Level of Concern or an IEC class 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > Basic excludes the SDS, unit/integration protocols and reports, and the full CM/maintenance plan 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > Basic includes the testing summary (unit, integration and system) and the system-level protocol and report 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > Enhanced is Basic plus the SDS, unit/integration protocols and reports, and the full CM/maintenance plan 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > carries no cybersecurity item — that branch is keyed on the cyber-device flag, not on the level 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > FDA_SOFTWARE_DOCUMENTATION_SET > every row has a well-formed basis, and every row is labelled recall (only the level definition was checked) 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaCybersecurityDocumentation (FD&C Act §524B; DEVICE_FLAGS.cyberDevice) > is undetermined when cyber-device status is unknown, never "not required" 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaCybersecurityDocumentation (FD&C Act §524B; DEVICE_FLAGS.cyberDevice) > requires the SBOM and threat model for a cyber device, whatever the documentation level 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > fdaCybersecurityDocumentation (FD&C Act §524B; DEVICE_FLAGS.cyberDevice) > is not required for a device recorded as not a cyber device 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > eSTAR software slots (nIVD template) > every named slot exists in the template and files into CH3.05.05.x (software) or CH3.05.05.11 (cybersecurity) 189ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > 510(k) auditor: a software device with no documentation-level fact gets "FDA software documentation level not determined" 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > 510(k) auditor: no software Level of Concern finding anywhere 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > 510(k) auditor: silent once the fact is recorded, and for a device recorded as containing no software 0ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > PMA auditor: the software finding names the Documentation Level and lists the set for the level 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > software reviewer persona: asks for the Documentation Level, not a "basic / moderate / major" Level of Concern 1ms
+ ✓ server/services/market-specs/__tests__/software-documentation-level.test.ts > consumers read the Documentation Level, not the retired Level of Concern > shadow reviewer: the 510(k) software question asks for the Documentation Level; cybersecurity is its own question 1ms
+ ✓ server/routes/__tests__/device-qms-assess-refuses-an-unknown-or-omitted-clause-list.test.ts > POST /api/submissions/device/qms/assess > refuses an id that is not a clause id with 400, naming it (not 200, and not 500) 47ms
+ ✓ server/routes/__tests__/device-qms-assess-refuses-an-unknown-or-omitted-clause-list.test.ts > POST /api/submissions/device/qms/assess > refuses an omitted list with 400, instead of assessing no clause as in place 7ms
+ ✓ server/routes/__tests__/device-qms-assess-refuses-an-unknown-or-omitted-clause-list.test.ts > POST /api/submissions/device/qms/assess > assesses a stated list of clause ids, as before 5ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the stated answers are kept > a complete chain is valid, and a stated gap is still a gap 5ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the stated answers are kept > established scientific validity stays established 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the stated answers are kept > a declining series and an ordinary Arrhenius study keep their shelf-lives 2ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the stated answers are kept > QMS readiness and designation eligibility keep their stated answers 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > certifiedReferenceMaterial omitted or null is refused by name, not a gap 2ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > referenceMeasurementProcedure omitted or null is refused by name, not a gap 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > commutabilityDemonstrated omitted or null is refused by name, not a gap 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > uncertaintyBudgetDocumented omitted or null is refused by name, not a gap 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > unbrokenChain omitted or null is refused by name, not a gap 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > certifiedReferenceMaterial malformed is refused by name 2ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > referenceMeasurementProcedure malformed is refused by name 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > commutabilityDemonstrated malformed is refused by name 2ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > uncertaintyBudgetDocumented malformed is refused by name 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > unbrokenChain malformed is refused by name 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_iso17511_traceability reads no omitted or malformed fact as false > refuses a tier outside the ISO 17511 tiers 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_scientific_validity scores no item whose source or target is unstated or malformed > refuses 'evidence[0].directlyOnTarget' = { directlyOnTarget: undefined } 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_scientific_validity scores no item whose source or target is unstated or malformed > refuses 'evidence[0].directlyOnTarget' = { directlyOnTarget: 'false' } 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_scientific_validity scores no item whose source or target is unstated or malformed > refuses 'evidence[0].source' = { source: 'Guidelines' } 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_scientific_validity scores no item whose source or target is unstated or malformed > refuses evidence that is not a list, or an item that is not an object 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'maxPercentChange' ({ maxPercentChange: undefined }) 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'maxPercentChange' ({ maxPercentChange: '10' }) 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'maxPercentChange' ({ maxPercentChange: NaN }) 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'maxPercentChange' ({ maxPercentChange: +0 }) 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'initialValue' ({ initialValue: '100' }) 5ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'initialValue' ({ initialValue: +0 }) 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'points' ({ points: 'abc' }) 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'points[1].time' ({ Object (points) }) 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'points[1].value' ({ Object (points) }) 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'points[0].time' ({ Object (points) }) 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > refuses 'points' ({ Object (points) }) 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_shelf_life_stability computes nothing from a missing or malformed number > says when the regression intercept stood in for an omitted initial value 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'degradationThreshold' ({ degradationThreshold: undefined }) 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'degradationThreshold' ({ degradationThreshold: '0.1' }) 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'degradationThreshold' ({ degradationThreshold: 1 }) 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'storageTemperatureC' ({ storageTemperatureC: undefined }) 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'storageTemperatureC' ({ storageTemperatureC: '4' }) 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'points[0].temperatureC' ({ points: [ { …(2) }, { …(2) } ] }) 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'points[0].temperatureC' ({ points: [ { …(2) }, { …(2) } ] }) 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'points[0].rateConstant' ({ points: [ { …(2) }, { …(2) } ] }) 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'points[0].rateConstant' ({ points: [ { …(2) }, { …(2) } ] }) 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_accelerated_stability projects nothing from a missing or malformed number > refuses 'points' ({ points: [ { …(2) }, { …(2) } ] }) 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_qms refuses a clause id it does not know, instead of counting the clause missing > refuses an unknown or non-text id by index 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_pathway_eligibility calls nothing ineligible from an unanswered criterion > leaves eligibility null while a criterion is unanswered and none is false 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > assess_pathway_eligibility calls nothing ineligible from an unanswered criterion > refuses an answer that is not true or false, by criterion 1ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the definitions say what is refused, within the trimmed length > assess_iso17511_traceability says a missing or malformed input is refused 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the definitions say what is refused, within the trimmed length > assess_scientific_validity says a missing or malformed input is refused 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the definitions say what is refused, within the trimmed length > assess_shelf_life_stability says a missing or malformed input is refused 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the definitions say what is refused, within the trimmed length > assess_accelerated_stability says a missing or malformed input is refused 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the definitions say what is refused, within the trimmed length > says what an omitted initial value means, and which inputs are not read 0ms
+ ✓ server/services/ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts > the definitions say what is refused, within the trimmed length > says an unanswered criterion is null and a malformed answer or clause id is refused 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > has the core RMF sections with reviewer questions 2ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > asks about pre-defined acceptability criteria and foreseeable misuse 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > assesses completeness deterministically 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > looks up a section 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > EU MDR and EU IVDR require AFAP with no economic justification, citing Annex I §2 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA follows the manufacturer-defined ISO 14971:2019 criteria (clauses 4.2 and 4.4) 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > OTHER is not modelled and says so, asserting no economic permission it does not model 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA basis says clause 4.2 NOTE 1 lets the manufacturer's policy adopt ALARP, so economics are the manufacturer's choice 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > never states that ISO 14971:2019 does not use ALARP: clause 4.2 NOTE 1 lists ALARP, ALARA and AFAP as policy options 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA statement is labelled recall and calls ISO 14971:2019 a recognised consensus standard, not an FDA rule 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > the EU statement is scoped to devices 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > every basis is well formed and none is presented as checked regulator text 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > is exported from the default export 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags ALARP with a cost justification for the EU 3ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags the spelled-out phrase once, not again as "reasonably practicable" 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags "reasonably practicable" on its own 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags economic or disproportionate stopping rules near residual risk 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag AFAP language that rules economics out 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag the EU policy statement itself 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags an economic stopping rule stated as a reason, as cost-effectiveness or as an absent budget: Further mitigation of the residual risk was not implemented for economic reasons. 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags an economic stopping rule stated as a reason, as cost-effectiveness or as an absent budget: The residual risk is accepted; additional controls are not cost-effective. 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags an economic stopping rule stated as a reason, as cost-effectiveness or as an absent budget: Risk reduction was stopped as there was no budget for a redesign. 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > still does not flag a sentence that rules a budget out as a reason 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag a cost stated as a fact, with no stopping or justification cue 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag ALARP that the sentence says was not applied 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags ALARP used as a criterion even when a negation sits earlier in the sentence 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > returns [] for FDA and OTHER, where ISO 14971:2019 leaves the criteria to the manufacturer 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > returns [] for empty input 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > has unique types, required fields, and at least one required document each 2ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > every referenced templateId resolves in the document template library 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — consistency > covers the major submission types 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > reports ready when all required documents and forms are present 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > reports the specific missing required documents and forms 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > does not let not-applicable documents block readiness once every deciding fact is known 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — gap assessment > returns undefined for an unknown submission type 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a 510(k) with no labeling, IFU, T&A statement, biocompatibility or user fee is not ready 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > the same gaps hold for a De Novo request 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > every always-slot of the 510k eSTAR registry is a required row, and nothing else is 2ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > every always-slot of the de_novo eSTAR registry is a required row, and nothing else is 1ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > 510k is filed as an eSTAR through the CDRH Portal, with the FDA 3601 user fee 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > de_novo is filed as an eSTAR through the CDRH Portal, with the FDA 3601 user fee 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a 510(k) Statement satisfies the summary-or-statement requirement, and so does the summary template 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > an unanswered device flag is undetermined and keeps ready false 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > a conditional section becomes required when its flag is set 0ms
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts > submission requirements — 510(k) and De Novo derive from the eSTAR registry > an IVD 510(k) is held to the IVD registry: no analytical performance, not ready 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > (a) an IVD gets the 809.10(a) label elements and the 809.10(b)(1)–(b)(12) insert items 3ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > a non-IVD device gets no 809.10 element 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > an RUO IVD carries the 809.10(c)(2)(i) statement and is exempt from (a) and (b) 1ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > every 809.10 / 812.5 element carries a well-formed basisDetail; regulator text points at eCFR 4ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 812.5 — investigational devices > (b) a device for clinical investigation carries the 812.5(a) caution statement on the FDA label 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 812.5 — investigational devices > (c) an IVD study exempt under 812.2(c)(3) gets the IUO statement and no 812.5 element 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 812.5 — investigational devices > an investigational IVD not shown exempt gets both the IUO statement and 812.5 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > (d) an IVD insert without a Limitations heading reports 809.10(b)(10) as not_found 2ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > with the heading present, 809.10(b)(10) is found 1ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > lot matching preserves letter/digit boundaries and later valid occurrences: slot 1ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > lot matching preserves letter/digit boundaries and later valid occurrences: lottery 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > lot matching preserves letter/digit boundaries and later valid occurrences: 2lot 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > lot matching preserves letter/digit boundaries and later valid occurrences: lot2 1ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > lot matching preserves letter/digit boundaries and later valid occurrences: (LOT) 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > lot matching preserves letter/digit boundaries and later valid occurrences: slot lottery LOT: A01 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > headings preserve start-of-line matching, boundaries and normalization: LimitationsExtra 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > headings preserve start-of-line matching, boundaries and normalization: Limitations2 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > headings preserve start-of-line matching, boundaries and normalization: Text about limitations 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > headings preserve start-of-line matching, boundaries and normalization: Limitations of the procedure 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > headings preserve start-of-line matching, boundaries and normalization: ## 10. LIMITATIONS: interference 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > no section, or only an unauthored one, is not_checkable rather than not_found 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > the 812.5(a) caution statement is found only when its wording is present 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > one requirement list — the ivd-knowledge prose points at the engine > labeling-rules no longer enumerates (and misnumbers) the 809.10(b) items 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > one requirement list — the ivd-knowledge prose points at the engine > fda-ivd no longer holds a parallel package-insert list 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is 100 / ready when everything is complete 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is not_ready / low when nothing is done, and surfaces gaps 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > scores partial evidence via present/total 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > counts a dimension nothing assessed as not assessed — not as absent 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > keeps an applicable evidence module nothing has assessed, as not assessed 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > derives the scorecard from a blueprint (CER partially authored) 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > credits a fully-authored CER 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > scores an MDR classification with a missing deciding fact as not started, naming the fact 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > scores an IVDR classification with a missing deciding fact as not started 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > still credits a determined class 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains each source component, guidance, requirements and honest basis without copied trees 20ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for pre_ind_meeting 1ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for end_of_phase_2_meeting 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for pre_nda_meeting 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for pre_bla_meeting 1ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for ind_protocol_amendment 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for ind_information_amendment 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for ind_cmc_amendment 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for ind_response_to_clinical_hold 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for cbe_30 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for cbe_0 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for iss 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for ise 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for us_type_d_meeting 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for us_interact_meeting 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for expanded_access_individual 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for expanded_access_intermediate 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for expanded_access_treatment 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for us_bla_annual_report 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for us_bla_pediatric_annual_report 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for us_bla_pmr_status_report 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for us_bla_distribution_report 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for us_bpdr 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for us_bla_periodic_adverse_experience_report 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for us_bla_pas 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for us_bla_cbe_30 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for us_bla_cbe_0 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for us_cber_master_file 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for us_cber_lot_release 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > retains exact original-source preparation policy for us_eua_therapeutic 0ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > does not introduce equivalent whole-filing/annual/DSUR/PAS copies or scope arbitrary similar IDs 1ms
+ ✓ server/services/market-specs/__tests__/us-biotech-lifecycle-templates.test.ts > one projection of exact existing FDA lifecycle parts > does not turn PDUFA meeting or NDA CBE records into broader biologics procedures 0ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > classifySoftware states no IEC 62304 class that an unstated harm fact could change > is undetermined, naming both facts, when neither harm fact is stated 2ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > classifySoftware states no IEC 62304 class that an unstated harm fact could change > is undetermined (at least Class B), not Class B, when only non-serious injury is stated 0ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > classifySoftware states no IEC 62304 class that an unstated harm fact could change > is undetermined when one harm fact is stated false and the other is not stated 0ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > classifySoftware states no IEC 62304 class that an unstated harm fact could change > does not read a value that is not true or false as a stated fact 0ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > classifySoftware states no IEC 62304 class that an unstated harm fact could change > states Class A, B and C from stated facts 1ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > classifySoftware states no IEC 62304 class that an unstated harm fact could change > drops no deliverable while the class is undetermined 0ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > the blueprint and scorecard do not assess software whose class is undetermined > marks the software module not assessed and keeps the Class B/C deliverables listed 0ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > the blueprint and scorecard do not assess software whose class is undetermined > does not report the evidence ready 0ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > the blueprint and scorecard do not assess software whose class is undetermined > scores the software dimension not assessed, naming the facts to supply 1ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > the blueprint and scorecard do not assess software whose class is undetermined > still assesses and credits a class stated from facts 0ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > states no pathway, and no predicate finding, from no facts 2ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > does not send a device stated to be Class I or Class II to PMA 1ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > names only the deciding fact still missing 0ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > states PMA once the facts recorded rule out 510(k) and De Novo 1ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > refuses a fact it cannot read instead of reading it by truthiness 1ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > refuses a Class III device stated to be 510(k)-exempt 0ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > refuses a Class I or II device whose other facts leave only PMA 0ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > keeps the pathways the stated facts decide 0ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > the readiness scorecard does not count an undetermined FDA pathway as a classification > scores the classification not started and names the facts to supply 1ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > the readiness scorecard does not count an undetermined FDA pathway as a classification > still credits a pathway the facts decide 0ms
+ ✓ server/services/market-specs/__tests__/electrical-and-sterilization-unstated-facts-are-undetermined.test.ts > applicableElectricalStandards with a fact left out > is undetermined, not "not applicable", when electricallyPowered is not stated 3ms
+ ✓ server/services/market-specs/__tests__/electrical-and-sterilization-unstated-facts-are-undetermined.test.ts > applicableElectricalStandards with a fact left out > names a conditional collateral whose fact is not stated as undetermined, not absent 1ms
+ ✓ server/services/market-specs/__tests__/electrical-and-sterilization-unstated-facts-are-undetermined.test.ts > applicableElectricalStandards with a fact left out > still answers "does not apply" for a device stated not to be powered 0ms
+ ✓ server/services/market-specs/__tests__/electrical-and-sterilization-unstated-facts-are-undetermined.test.ts > applicableElectricalStandards with a fact left out > determines every standard once every fact is stated 0ms
+ ✓ server/services/market-specs/__tests__/electrical-and-sterilization-unstated-facts-are-undetermined.test.ts > sterilizationRequirements with sterile left out > is undetermined, not "does not apply" 0ms
+ ✓ server/services/market-specs/__tests__/electrical-and-sterilization-unstated-facts-are-undetermined.test.ts > sterilizationRequirements with sterile left out > still answers "does not apply" for a device stated non-sterile 0ms
+ ✓ server/services/market-specs/__tests__/electrical-and-sterilization-unstated-facts-are-undetermined.test.ts > buildDeviceBlueprint with power or sterility left out > does not list the modules as not applicable, and names them undetermined 1ms
+ ✓ server/services/market-specs/__tests__/electrical-and-sterilization-unstated-facts-are-undetermined.test.ts > buildDeviceBlueprint with power or sterility left out > is not evidenceReady while either module may apply 0ms
+ ✓ server/services/market-specs/__tests__/electrical-and-sterilization-unstated-facts-are-undetermined.test.ts > buildDeviceBlueprint with power or sterility left out > is evidenceReady once both are stated not to apply 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — clean input > passes well-formed FDA eCTD files with no findings 2ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > flags an uppercase / spaced file name against the naming pattern 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > flags an over-length file name 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > flags an over-length path 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > warns on a non-accepted file type 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > errors on an encrypted file (encryption not allowed) 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > holds an FDA eCTD sequence to FDA’s 10 GB, not 4 GiB 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — violations > errors when the total exceeds the EU 600 MB submission limit 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — spec-driven (applies to every market) > uses the EU pattern (periods allowed) where FDA would also pass 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-validator.test.ts > market formatting validator — spec-driven (applies to every market) > does not impose a submission size limit where the spec defines none (JP per-file path ok) 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > recommends the 510(k) pathway from FDA facts 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > pulls the 510(k) required documents and forms 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > marks risk management, biocompatibility and software applicable (CER/PER not) 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > classifies software Class B with architecture (not detailed design) 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > includes the biocompatibility endpoints for a permanent implant 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — 510(k) software implant > attaches the FDA 510(k) reviewer checklist 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > classifies the device IIb (implantable) 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > marks clinical evaluation applicable and gap-checks it 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > uses the Notified Body CER reviewer checklist 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — EU MDR technical file > evidenceReady is false while assessed modules are incomplete 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — IVDR companion diagnostic > classifies the IVD Class C 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint.test.ts > device blueprint — IVDR companion diagnostic > marks performance evaluation applicable (not clinical evaluation) 0ms
+ ✓ server/services/stats/__tests__/analytical-performance-extensions.test.ts > assessRealTimeStability > projects shelf-life from a declining series 2ms
+ ✓ server/services/stats/__tests__/analytical-performance-extensions.test.ts > assessAcceleratedStability > derives a positive activation energy and shelf-life 1ms
+ ✓ server/services/stats/__tests__/analytical-performance-extensions.test.ts > assessCarryover > passes when carryover is below 1% 0ms
+ ✓ server/services/stats/__tests__/analytical-performance-extensions.test.ts > assessCarryover > fails when carryover exceeds the limit 0ms
+ ✓ server/services/stats/__tests__/analytical-performance-extensions.test.ts > assessHookEffect > detects a high-dose hook 0ms
+ ✓ server/services/stats/__tests__/analytical-performance-extensions.test.ts > assessHookEffect > no hook for a monotonic series 0ms
+ ✓ server/services/stats/__tests__/analytical-performance-extensions.test.ts > assessRecovery > passes when all points are within the band 0ms
+ ✓ server/services/stats/__tests__/analytical-performance-extensions.test.ts > assessRecovery > flags an out-of-band point 0ms
+ ✓ server/services/stats/__tests__/analytical-performance-extensions.test.ts > determineCutoff > selects the Youden-optimal threshold 1ms
+ ✓ server/services/stats/__tests__/analytical-performance-extensions.test.ts > determineCutoff > throws without both classes 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint-evidence-not-ready-while-a-module-is-unassessed.test.ts > evidenceReady with an applicable evidence module nobody assessed > is not true for an mdr_td file with a complete RMF and no CER sections 2ms
+ ✓ server/services/market-specs/__tests__/device-blueprint-evidence-not-ready-while-a-module-is-unassessed.test.ts > evidenceReady with an applicable evidence module nobody assessed > names an applicable software module whose deliverables nobody listed 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint-evidence-not-ready-while-a-module-is-unassessed.test.ts > evidenceReady with an applicable evidence module nobody assessed > names applicable modules whose evidence the blueprint lists but does not assess 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint-evidence-not-ready-while-a-module-is-unassessed.test.ts > evidenceReady with an applicable evidence module nobody assessed > is null, not false, when nothing applicable was assessed 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint-evidence-not-ready-while-a-module-is-unassessed.test.ts > evidenceReady once modules are assessed > is false when an assessed module is not ready, whatever else was not assessed 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint-evidence-not-ready-while-a-module-is-unassessed.test.ts > evidenceReady once modules are assessed > is true only when every applicable module was assessed and is ready 0ms
+ ✓ server/services/market-specs/__tests__/cer-structure.test.ts > CER structure — consistency > has the five MEDDEV stages in order 2ms
+ ✓ server/services/market-specs/__tests__/cer-structure.test.ts > CER structure — consistency > has unique section ids, each with a purpose and ≥1 reviewer question 1ms
+ ✓ server/services/market-specs/__tests__/cer-structure.test.ts > CER structure — consistency > flattens reviewer questions across all sections 0ms
+ ✓ server/services/market-specs/__tests__/cer-structure.test.ts > CER structure — consistency > marks the data-bearing sections as requiring clinical data 0ms
+ ✓ server/services/market-specs/__tests__/cer-structure.test.ts > CER structure — completeness assessment > is ready when all required (non-equivalence) sections are present and equivalence is not claimed 1ms
+ ✓ server/services/market-specs/__tests__/cer-structure.test.ts > CER structure — completeness assessment > requires the equivalence section only when equivalence is claimed 1ms
+ ✓ server/services/market-specs/__tests__/cer-structure.test.ts > CER structure — completeness assessment > reports the specific missing required sections 0ms
+ ✓ server/services/market-specs/__tests__/cer-structure.test.ts > CER structure — completeness assessment > surfaces present sections that still need clinical-data substantiation 0ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — internal consistency > has unique ids scoped to their market and required fields 4ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — internal consistency > summary counts are internally consistent 1ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — internal consistency > covers the formats the Submission Center operates 1ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — eCTD invariants > every eCTD family spec has an index.xml backbone, regional XML, 4-digit sequencing, and lifecycle ops 2ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — eCTD invariants > device/portal families correctly carry no eCTD backbone 0ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — cross-references > an eCTD spec ruleCorpusRegion resolves to corpus rules 0ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — cross-references > region-coded specs map to the system region codes (fda|eu|jp) 1ms
+ ✓ server/services/market-specs/__tests__/market-submission-specs.test.ts > market submission specs — cross-references > scopes by market 0ms
+ ✓ server/services/market-specs/__tests__/cer-equivalence-unrecorded-is-not-addressed.test.ts > assessCerStructure with no recorded equivalence claim > does not say equivalence is addressed for an empty CER 2ms
+ ✓ server/services/market-specs/__tests__/cer-equivalence-unrecorded-is-not-addressed.test.ts > assessCerStructure with no recorded equivalence claim > is not ready without the Equivalence section, and names the fact that decides it 1ms
+ ✓ server/services/market-specs/__tests__/cer-equivalence-unrecorded-is-not-addressed.test.ts > assessCerStructure with no recorded equivalence claim > is ready with the Equivalence section present, which satisfies either answer 1ms
+ ✓ server/services/market-specs/__tests__/cer-equivalence-unrecorded-is-not-addressed.test.ts > assessCerStructure with no recorded equivalence claim > keeps the recorded answers 1ms
+ ✓ server/services/market-specs/__tests__/cer-equivalence-unrecorded-is-not-addressed.test.ts > the blueprint and scorecard with no recorded equivalence claim > do not call a CER without its Equivalence section ready 0ms
+ ✓ server/services/market-specs/__tests__/cer-equivalence-unrecorded-is-not-addressed.test.ts > the blueprint and scorecard with no recorded equivalence claim > score the clinical evaluation not assessed, naming the fact to supply 1ms
+ ✓ server/services/market-specs/__tests__/per-structure.test.ts > PER structure — consistency > has the three performance pillars 2ms
+ ✓ server/services/market-specs/__tests__/per-structure.test.ts > PER structure — consistency > catalogs analytical metrics incl. LoD/LoQ, precision, trueness, traceability 1ms
+ ✓ server/services/market-specs/__tests__/per-structure.test.ts > PER structure — consistency > catalogs clinical metrics incl. sensitivity/specificity, PPV/NPV 0ms
+ ✓ server/services/market-specs/__tests__/per-structure.test.ts > PER structure — consistency > every section has a purpose and ≥1 reviewer question 1ms
+ ✓ server/services/market-specs/__tests__/per-structure.test.ts > PER structure — consistency > resolves metrics by pillar 1ms
+ ✓ server/services/market-specs/__tests__/per-structure.test.ts > PER structure — assessment > is ready and covers all three pillars when every required section is present 1ms
+ ✓ server/services/market-specs/__tests__/per-structure.test.ts > PER structure — assessment > flags a missing pillar 0ms
+ ✓ server/services/market-specs/__tests__/per-structure.test.ts > PER structure — assessment > reports specific missing sections from a partial PER 0ms
+ ✓ server/services/market-specs/__tests__/per-structure.test.ts > PER structure — assessment > looks up a section by id 0ms
+ ✓ server/services/market-specs/__tests__/stored-cer-assessment.test.ts > stored CER mapping — report columns > maps populated JSON columns to canonical sections 3ms
+ ✓ server/services/market-specs/__tests__/stored-cer-assessment.test.ts > stored CER mapping — report columns > treats null/empty columns as absent 1ms
+ ✓ server/services/market-specs/__tests__/stored-cer-assessment.test.ts > stored CER mapping — section rows > matches free-form section ids/titles by keyword 1ms
+ ✓ server/services/market-specs/__tests__/stored-cer-assessment.test.ts > stored CER mapping — section rows > combines columns + rows and feeds the canonical assessment 1ms
+ ✓ server/services/market-specs/__tests__/stored-cer-assessment.test.ts > stored CER mapping — section rows > reports the missing required sections for a sparse stored CER 0ms
+ ✓ server/services/market-specs/__tests__/post-submission-changes.test.ts > change categories — consistency > has unique ids and required fields 3ms
+ ✓ server/services/market-specs/__tests__/post-submission-changes.test.ts > change categories — consistency > scopes by market 1ms
+ ✓ server/services/market-specs/__tests__/post-submission-changes.test.ts > change classifier — US precedence > a scope extension or major impact → Prior Approval Supplement 0ms
+ ✓ server/services/market-specs/__tests__/post-submission-changes.test.ts > change classifier — US precedence > an immediate safety change → CBE-0 0ms
+ ✓ server/services/market-specs/__tests__/post-submission-changes.test.ts > change classifier — US precedence > a moderate change → CBE-30, a minimal change → Annual Report 0ms
+ ✓ server/services/market-specs/__tests__/post-submission-changes.test.ts > change classifier — US precedence > defaults to the most conservative category when flags are absent 0ms
+ ✓ server/services/market-specs/__tests__/post-submission-changes.test.ts > change classifier — EU precedence > a scope extension → line extension; major → Type II 0ms
+ ✓ server/services/market-specs/__tests__/post-submission-changes.test.ts > change classifier — EU precedence > minimal impact → Type IA, or IAIN when immediate notification is required 0ms
+ ✓ server/services/market-specs/__tests__/post-submission-changes.test.ts > change classifier — EU precedence > moderate impact → Type IB 0ms
+ ✓ server/services/market-specs/__tests__/post-submission-changes.test.ts > change classifier — EU precedence > every recommendation carries a sequence type and a confirm caveat 0ms
+ ✓ server/services/market-specs/__tests__/device-global-strategy.test.ts > device global strategy — evidence categories > marks recognised standards as shared and clinical/labelling/UDI as region-specific 1ms
+ ✓ server/services/market-specs/__tests__/device-global-strategy.test.ts > device global strategy — regions by kind > devices map to fda/eu_mdr/pmda; IVDs map to fda/eu_ivdr/pmda 2ms
+ ✓ server/services/market-specs/__tests__/device-global-strategy.test.ts > device global strategy — build > builds a device strategy with the right per-region clinical document 1ms
+ ✓ server/services/market-specs/__tests__/device-global-strategy.test.ts > device global strategy — build > builds an IVD strategy with the PER as the EU evidence and analytical performance shared 0ms
+ ✓ server/services/market-specs/__tests__/device-global-strategy.test.ts > device global strategy — build > filters to the requested regions and ignores ones not applicable to the kind 0ms
+ ✓ server/services/market-specs/__tests__/device-global-strategy.test.ts > device global strategy — build > always carries the strategic notes (shared once; clinical is region-specific) 0ms
+ ✓ server/services/market-specs/__tests__/biocompatibility-matrix.test.ts > biocompatibility matrix — anchor cases > intact-skin limited contact → cytotoxicity, sensitization, irritation only 3ms
+ ✓ server/services/market-specs/__tests__/biocompatibility-matrix.test.ts > biocompatibility matrix — anchor cases > a blood-contacting device includes haemocompatibility 1ms
+ ✓ server/services/market-specs/__tests__/biocompatibility-matrix.test.ts > biocompatibility matrix — anchor cases > a permanent implant in tissue/bone includes implantation, chronic toxicity and carcinogenicity 1ms
+ ✓ server/services/market-specs/__tests__/biocompatibility-matrix.test.ts > biocompatibility matrix — anchor cases > limited tissue/bone contact does NOT trigger implantation (duration too short) 0ms
+ ✓ server/services/market-specs/__tests__/biocompatibility-matrix.test.ts > biocompatibility matrix — anchor cases > permanent circulating-blood contact escalates to chronic toxicity + carcinogenicity 0ms
+ ✓ server/services/market-specs/__tests__/biocompatibility-matrix.test.ts > biocompatibility matrix — invariants > is deterministic and emits endpoints in canonical order with a caveat 1ms
+ ✓ server/services/market-specs/__tests__/biocompatibility-matrix.test.ts > biocompatibility matrix — invariants > escalation is monotonic in duration for the same nature 2ms
+ ✓ server/services/market-specs/__tests__/biocompatibility-matrix.test.ts > biocompatibility matrix — invariants > every base contact addresses cytotoxicity, sensitization, irritation 0ms
+ ✓ server/services/market-specs/__tests__/udi-validator.test.ts > GS1 mod-10 check digit > computes the canonical check digit 1ms
+ ✓ server/services/market-specs/__tests__/udi-validator.test.ts > GS1 mod-10 check digit > throws on non-digit input 1ms
+ ✓ server/services/market-specs/__tests__/udi-validator.test.ts > GTIN-14 validation > accepts a valid GTIN-14 and rejects a bad check digit 0ms
+ ✓ server/services/market-specs/__tests__/udi-validator.test.ts > GTIN-14 validation > rejects wrong length / non-numeric 0ms
+ ✓ server/services/market-specs/__tests__/udi-validator.test.ts > GS1 UDI parsing (parenthesised AI form) > splits UDI-DI (01) and UDI-PI (17 expiry, 10 lot, 21 serial) 1ms
+ ✓ server/services/market-specs/__tests__/udi-validator.test.ts > GS1 UDI parsing (parenthesised AI form) > warns on an invalid GTIN check digit 0ms
+ ✓ server/services/market-specs/__tests__/udi-validator.test.ts > GS1 UDI parsing (parenthesised AI form) > warns on a malformed date AI 0ms
+ ✓ server/services/market-specs/__tests__/udi-validator.test.ts > GS1 UDI parsing (parenthesised AI form) > flags a missing UDI-DI 0ms
+ ✓ server/services/market-specs/__tests__/udi-validator.test.ts > GS1 UDI parsing (parenthesised AI form) > detects HIBCC / ICCBBA carriers without parsing them 0ms
+ ✓ server/services/market-specs/__tests__/udi-validator.test.ts > GS1 UDI parsing (parenthesised AI form) > collects unknown AIs separately 1ms
+ ✓ server/services/market-specs/__tests__/udi-validator.test.ts > validateUdi > annotates GUDID + EUDAMED registration and the DI status 0ms
+ ✓ server/services/market-specs/__tests__/udi-validator.test.ts > validateUdi > udiDiOk is false when the GS1 check digit fails 0ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software classification (IEC 62304 §4.3) > death/serious injury → Class C 2ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software classification (IEC 62304 §4.3) > non-serious injury, and no serious injury → Class B 1ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software classification (IEC 62304 §4.3) > no possible injury, recorded → Class A 0ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software deliverables by class > Class A excludes architecture and detailed design 2ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software deliverables by class > Class B adds architecture + integration testing but not detailed design 1ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software deliverables by class > Class C adds detailed design 0ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software deliverables by class > deliverable count escalates A < B < C 0ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software deliverable assessment > reports the missing deliverables for a class 0ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software deliverable assessment > is ready when all class deliverables are present 0ms
+ ✓ server/services/market-specs/__tests__/software-lifecycle.test.ts > software deliverable assessment > exposes reviewer questions incl. SOUP and cybersecurity 0ms
+ ✓ server/services/market-specs/__tests__/combination-products.test.ts > combination products — detection > a single-component product is not a combination 2ms
+ ✓ server/services/market-specs/__tests__/combination-products.test.ts > combination products — detection > ≥2 distinct component types is a combination 0ms
+ ✓ server/services/market-specs/__tests__/combination-products.test.ts > combination products — PMOA → lead center > drug PMOA → CDER 1ms
+ ✓ server/services/market-specs/__tests__/combination-products.test.ts > combination products — PMOA → lead center > device PMOA → CDRH 0ms
+ ✓ server/services/market-specs/__tests__/combination-products.test.ts > combination products — PMOA → lead center > biologic PMOA → CBER 0ms
+ ✓ server/services/market-specs/__tests__/combination-products.test.ts > combination products — PMOA → lead center > recommends an RFD when PMOA is not established 0ms
+ ✓ server/services/market-specs/__tests__/combination-products.test.ts > combination products — PMOA → lead center > ignores a PMOA that is not one of the components 0ms
+ ✓ server/services/market-specs/__tests__/combination-products.test.ts > combination products — EU + Part 4 > surfaces the EU Article 117 consideration for drug+device 0ms
+ ✓ server/services/market-specs/__tests__/combination-products.test.ts > combination products — EU + Part 4 > notes co-packaged labeling coordination 1ms
+ ✓ server/services/market-specs/__tests__/device-shadow-reviewer.test.ts > device shadow-reviewer — question banks > 510(k) questions cover the substantial-equivalence and RTA gate 2ms
+ ✓ server/services/market-specs/__tests__/device-shadow-reviewer.test.ts > device shadow-reviewer — question banks > PMA questions cover reasonable assurance + benefit-risk 1ms
+ ✓ server/services/market-specs/__tests__/device-shadow-reviewer.test.ts > device shadow-reviewer — checklist builder > builds a 510(k) checklist with consistent severity counts 1ms
+ ✓ server/services/market-specs/__tests__/device-shadow-reviewer.test.ts > device shadow-reviewer — checklist builder > sources the CER checklist from the CER structure (single source of truth) 0ms
+ ✓ server/services/market-specs/__tests__/device-shadow-reviewer.test.ts > device shadow-reviewer — checklist builder > sources the PER checklist from the PER structure 0ms
+ ✓ server/services/market-specs/__tests__/device-shadow-reviewer.test.ts > device shadow-reviewer — checklist builder > covers every device submission type 1ms
+ ✓ server/services/market-specs/__tests__/pathway-eligibility.test.ts > pathway eligibility — consistency > has unique ids, ≥1 criterion each, and required fields 2ms
+ ✓ server/services/market-specs/__tests__/pathway-eligibility.test.ts > pathway eligibility — consistency > scopes designations by market 0ms
+ ✓ server/services/market-specs/__tests__/pathway-eligibility.test.ts > pathway eligibility — assessment > is eligible only when every criterion is met 1ms
+ ✓ server/services/market-specs/__tests__/pathway-eligibility.test.ts > pathway eligibility — assessment > is not eligible when a criterion is false 1ms
+ ✓ server/services/market-specs/__tests__/pathway-eligibility.test.ts > pathway eligibility — assessment > leaves eligibility undetermined (null) while a criterion is unanswered 1ms
+ ✓ server/services/market-specs/__tests__/pathway-eligibility.test.ts > pathway eligibility — assessment > returns undefined for an unknown designation 0ms
+ ✓ server/services/market-specs/__tests__/pathway-eligibility.test.ts > pathway eligibility — assessment > handles a single-criterion designation (orphan) 0ms
+ ✓ server/services/market-specs/__tests__/soup-items-uncounted-vulnerabilities-are-not-zero.test.ts > assessSoupItems > is not complete with an unevaluated anomaly list, and sums counted vulnerabilities 2ms
+ ✓ server/services/market-specs/__tests__/soup-items-uncounted-vulnerabilities-are-not-zero.test.ts > assessSoupItems > states no total when an item was not counted, and names the item 1ms
+ ✓ server/services/market-specs/__tests__/soup-items-uncounted-vulnerabilities-are-not-zero.test.ts > assessSoupItems > counts only true as a recorded flag 0ms
+ ✓ server/services/market-specs/__tests__/soup-items-uncounted-vulnerabilities-are-not-zero.test.ts > assessSoupItems > is not complete, and states no total, with no items listed 0ms
+ ✓ server/services/market-specs/__tests__/soup-items-uncounted-vulnerabilities-are-not-zero.test.ts > assessSoupItems > refuses an unreadable count or an unnamed item 1ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — always-on elements > a basic device carries manufacturer, UDI, and intended use on both regions 2ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — always-on elements > does not include sterile / single-use / Rx-only for a basic device 1ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — conditional elements > adds sterile state + sterile symbol + IFU sterile handling for a sterile device 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — conditional elements > adds single-use + do-not-reuse for a single-use device 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — conditional elements > adds reprocessing IFU for a reusable device 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — conditional elements > adds Rx-only for a prescription device 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — conditional elements > notes the implant card for implantable devices 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — conditional elements > always surfaces the labeling reviewer questions 0ms
+ ✓ server/services/market-specs/__tests__/estar-advisory-formatting.test.ts > eSTAR advisory formatting (E1 wiring) > resolves the us-estar market spec 1ms
+ ✓ server/services/market-specs/__tests__/estar-advisory-formatting.test.ts > eSTAR advisory formatting (E1 wiring) > validates the built eSTAR package into a well-formed report 2ms
+ ✓ server/services/market-specs/__tests__/estar-advisory-formatting.test.ts > eSTAR advisory formatting (E1 wiring) > flags an encrypted attachment (the case the advisory is meant to catch) 1ms
+ ✓ server/services/market-specs/__tests__/regulatory-timelines.test.ts > regulatory timelines — consistency > every pathway has an authority, basis, caveat, and a submission milestone at day 0 2ms
+ ✓ server/services/market-specs/__tests__/regulatory-timelines.test.ts > regulatory timelines — consistency > clock-defined milestones are non-decreasing in day 1ms
+ ✓ server/services/market-specs/__tests__/regulatory-timelines.test.ts > regulatory timelines — anchors > 510(k) has the 15-day RTA and a ~90-day MDUFA decision goal 0ms
+ ✓ server/services/market-specs/__tests__/regulatory-timelines.test.ts > regulatory timelines — anchors > PMA has a 45-day filing decision and 180-day decision goal 0ms
+ ✓ server/services/market-specs/__tests__/regulatory-timelines.test.ts > regulatory timelines — anchors > EU MDR CE has NO statutory clock (null days), stated honestly 0ms
+ ✓ server/services/market-specs/__tests__/regulatory-timelines.test.ts > regulatory timelines — anchors > EU MAA has the day-120 clock stop and 210-day opinion 0ms
+ ✓ server/services/market-specs/__tests__/regulatory-timelines.test.ts > regulatory timelines — anchors > returns undefined for an unknown pathway 0ms
+ ✓ server/services/market-specs/__tests__/electrical-safety.test.ts > electrical safety — applicability > does not apply to a non-powered device 2ms
+ ✓ server/services/market-specs/__tests__/electrical-safety.test.ts > electrical safety — applicability > always includes the general standard + EMC + usability for powered devices 1ms
+ ✓ server/services/market-specs/__tests__/electrical-safety.test.ts > electrical safety — applicability > adds the alarms collateral when the device has alarms 0ms
+ ✓ server/services/market-specs/__tests__/electrical-safety.test.ts > electrical safety — applicability > adds home-use and closed-loop collaterals when triggered 0ms
+ ✓ server/services/market-specs/__tests__/electrical-safety.test.ts > electrical safety — applicability > notes a particular standard when present 0ms
+ ✓ server/services/market-specs/__tests__/electrical-safety.test.ts > electrical safety — applicability > surfaces the reviewer questions + test categories 0ms
+ ✓ server/services/market-specs/__tests__/electrical-safety.test.ts > electrical safety — applicability > the general standard is marked always-applicable 0ms
+ ✓ server/services/market-specs/__tests__/sterilization.test.ts > sterilization methods > maps each terminal method to its ISO standard and SAL 10⁻⁶ 2ms
+ ✓ server/services/market-specs/__tests__/sterilization.test.ts > sterilization methods > aseptic processing is non-terminal with no SAL claim 1ms
+ ✓ server/services/market-specs/__tests__/sterilization.test.ts > sterilization methods > EO carries the residual standard (ISO 10993-7) 0ms
+ ✓ server/services/market-specs/__tests__/sterilization.test.ts > sterilizationRequirements > does not apply to a non-sterile device 1ms
+ ✓ server/services/market-specs/__tests__/sterilization.test.ts > sterilizationRequirements > resolves the method standard + packaging for a sterile device 0ms
+ ✓ server/services/market-specs/__tests__/sterilization.test.ts > sterilizationRequirements > flags an unspecified method but still applies 0ms
+ ✓ server/services/market-specs/__tests__/quality-system.test.ts > QMS clauses > covers the major ISO 13485 clauses with FDA mapping + reviewer questions 2ms
+ ✓ server/services/market-specs/__tests__/quality-system.test.ts > QMS clauses > maps design controls to 21 CFR 820.30 and CAPA to 820.100 0ms
+ ✓ server/services/market-specs/__tests__/quality-system.test.ts > QMS clauses > asks about reportability and design verification/validation 0ms
+ ✓ server/services/market-specs/__tests__/quality-system.test.ts > QMS clauses > carries the QMSR transition note (effective 2026-02-02) 0ms
+ ✓ server/services/market-specs/__tests__/quality-system.test.ts > QMS readiness assessment > is ready when all major clauses are present 1ms
+ ✓ server/services/market-specs/__tests__/quality-system.test.ts > QMS readiness assessment > reports missing clauses for a partial QMS 0ms
+ ✓ server/services/market-specs/__tests__/regulatory-capabilities-index.test.ts > regulatory capabilities index — consistency > has unique ids, a category, and a description for every capability 4ms
+ ✓ server/services/market-specs/__tests__/regulatory-capabilities-index.test.ts > regulatory capabilities index — consistency > index summary counts are consistent 0ms
+ ✓ server/services/market-specs/__tests__/regulatory-capabilities-index.test.ts > regulatory capabilities index — consistency > every referenced AnA tool exists in the registry (no drift) 1ms
+ ✓ server/services/market-specs/__tests__/regulatory-capabilities-index.test.ts > regulatory capabilities index — consistency > covers each capability category 0ms
+ ✓ server/services/regulatory/__tests__/iso-17511-traceability.test.ts > assessTraceability > a complete SI-anchored chain is valid 3ms
+ ✓ server/services/regulatory/__tests__/iso-17511-traceability.test.ts > assessTraceability > flags missing commutability 1ms
+ ✓ server/services/regulatory/__tests__/iso-17511-traceability.test.ts > assessTraceability > weakest tier yields the strengthening recommendation 1ms
+ ✓ server/services/regulatory/__tests__/scientific-validity.test.ts > assessScientificValidity > established when guideline + corroborating studies are on target 1ms
+ ✓ server/services/regulatory/__tests__/scientific-validity.test.ts > assessScientificValidity > insufficient when only expert opinion is on target 0ms
+ ✓ server/services/regulatory/__tests__/scientific-validity.test.ts > assessScientificValidity > flags when no evidence is on target 0ms
+ ✓ server/services/market-specs/__tests__/regional-template-source-selection.test.ts > regional template source selection > EU PSUR uses every numbered section of the canonical PBRER, and its front matter 2ms
+ ✓ server/services/market-specs/__tests__/regional-template-source-selection.test.ts > regional template source selection > NDA/BLA annual reports use the post-approval lifecycle record, not IND annual headings 1ms
+ Test Files  44 passed (44)
+      Tests  680 passed (680)

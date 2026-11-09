@@ -196,7 +196,16 @@ function evaluateDtdSelfContainment(
  * getGatewaySizeLimit, which answered figures no agency publishes (FDA's 4 GB
  * for CA, 1 GB for CN, KR and the rest) and refused packages against them.
  */
-function checkGatewaySize(
+/**
+ * Whether this gateway's package-size limit is enforced: on file, and sourced.
+ * The transmit precheck measures a package against it before anyone signs
+ * (sequenceTransmitReadiness; P-93, question 1(a)), on this same rule.
+ */
+export function gatewaySizeLimitEnforced(region: Region): boolean {
+  return getGatewaySizeLimitOnFile(REGION_TO_REGULATORY[region]) !== null && !SIZE_LIMIT_UNSOURCED[region];
+}
+
+export function checkGatewaySize(
   region: Region,
   sizeBytes: number,
 ): { check?: PreTransmitCheck; blocker?: string; warning?: string } {

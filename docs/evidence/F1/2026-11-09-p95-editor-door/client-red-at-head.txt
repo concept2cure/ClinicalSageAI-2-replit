@@ -1,0 +1,9 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/authoringFilingBarReviewRequired.test.tsx   # before the bar change (excerpt: cases, first assertion of each, totals)
+ × client/src/concept2cure/v2/__tests__/authoringFilingBarReviewRequired.test.tsx > P-95: an approval the server refuses because review is not complete > says why, in the server's words, and offers Send for review, with nothing to answer and nothing signed 5305ms
+ × client/src/concept2cure/v2/__tests__/authoringFilingBarReviewRequired.test.tsx > P-95: an approval the server refuses because review is not complete > closes without sending anything when the approver closes it 5074ms
+ × client/src/concept2cure/v2/__tests__/authoringFilingBarReviewRequired.test.tsx > P-95: an approval the server refuses because review is not complete > shows the server's other reasons as they are, such as a review still open 5099ms
+ × client/src/concept2cure/v2/__tests__/authoringFilingBarReviewRequired.test.tsx > P-95: an approval the server refuses because review is not complete > without a way to send for review, the question still says why and only closes 5072ms
+TestingLibraryElementError: Unable to find an element by: [data-testid="form-title"]
+TestingLibraryElementError: Unable to find an element by: [data-testid="form-sub"]
+ Test Files  1 failed (1)
+      Tests  4 failed (4)

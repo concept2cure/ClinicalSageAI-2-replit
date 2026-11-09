@@ -10,7 +10,14 @@
  *   material (CRM) → manufacturer's selected measurement procedure → working
  *   calibrator → end-user routine result. Commutability of reference materials
  *   must be demonstrated for the chain to be valid.
+ *
+ * 2026-11-08: every input is required, and none was checked. An omitted fact read as false and became a gap
+ * ("Commutability ... is not demonstrated") that nobody stated, and commutabilityDemonstrated 'false' (text) read
+ * as true, giving a valid chain. A missing or non-boolean fact, or a tier outside TRACEABILITY_TIERS, is refused
+ * by name (ComputationRefusal).
  */
+
+import { refuseUnlessStated } from '../ana-biostats/computation-engine';
 
 /** Ordered traceability tiers, strongest → weakest (ISO 17511 §5). */
 export const TRACEABILITY_TIERS = [
@@ -61,8 +68,21 @@ const TIER_RECOMMENDATION: Record<TraceabilityTier, string> = {
     'Establish a manufacturer reference measurement procedure; an internal working calibrator alone is the weakest defensible tier.',
 };
 
+const CHAIN_FACTS = [
+  'certifiedReferenceMaterial',
+  'referenceMeasurementProcedure',
+  'commutabilityDemonstrated',
+  'uncertaintyBudgetDocumented',
+  'unbrokenChain',
+] as const;
+
 /** Assess a calibrator traceability chain against ISO 17511:2020. */
 export function assessTraceability(input: TraceabilityChainInput): TraceabilityAssessment {
+  const given = (input ?? {}) as unknown as Partial<Record<string, unknown>>;
+  refuseUnlessStated('assessTraceability', [
+    { field: 'tier', value: given.tier, ok: (TRACEABILITY_TIERS as readonly unknown[]).includes(given.tier), expected: 'one of ' + TRACEABILITY_TIERS.join(', ') },
+    ...CHAIN_FACTS.map((field) => ({ field, value: given[field], ok: typeof given[field] === 'boolean', expected: 'true or false' })),
+  ], 'assessed');
   const tierRank = TRACEABILITY_TIERS.indexOf(input.tier);
   const checks = [
     input.certifiedReferenceMaterial || input.referenceMeasurementProcedure,
