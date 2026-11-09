@@ -14,8 +14,106 @@ import path from 'node:path';
 import { DEMO_PREFIX, sha256 } from './lib.mjs';
 import { ALL_HEADINGS, COMPANIES, HALCYRA_IR_LETTER, STAGES, STUDIES, buildCsrSource, companyOf, narrative, primaryEndpointName, sourceCounts, stageTasks } from './packs/portfolio-content.mjs';
 import { csrDocTitle, headingsFor, mapHeadings, needsSource, objectiveFor, plannedTitles, projectTitle, seed, sourceBytes } from './packs/portfolio.mjs';
+// Namespace imports for the sponsor-workspace parts, so a pack without them fails these cases, not the file.
+import * as content from './packs/portfolio-content.mjs';
+import * as pack from './packs/portfolio.mjs';
+import { SUPPLIERS as LUMEN_SUPPLIERS } from './packs/lumen-qms-content.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
+const firstWord = (name) => String(name).trim().split(/\s+/)[0].toLowerCase();
+
+test('each fictional sponsor is its own client workspace, named "(fictional demo)", one per company', () => {
+  const ws = content.SPONSOR_WORKSPACES;
+  assert.ok(Array.isArray(ws), 'portfolio-content.mjs exports SPONSOR_WORKSPACES');
+  assert.equal(ws.length, COMPANIES.length);
+  assert.deepEqual(ws.map((w) => w.key), COMPANIES.map((c) => c.key));
+  for (const w of ws) {
+    assert.match(w.name, /\(fictional demo\)$/, w.name);
+    assert.match(w.slug, /^[a-z0-9]+(-[a-z0-9]+)*$/, w.slug);
+    assert.doesNotMatch(w.name, /concept2cure/i, 'never the organisation\'s own workspace');
+    assert.equal(firstWord(w.name), firstWord(COMPANIES.find((c) => c.key === w.key).name), `${w.key} workspace is named for its company`);
+  }
+  assert.equal(new Set(ws.map((w) => w.name)).size, ws.length);
+  assert.equal(new Set(ws.map((w) => w.slug)).size, ws.length);
+});
+
+test('every project spec carries its sponsor\'s workspace, and the intake body names it explicitly', () => {
+  assert.equal(typeof content.workspaceOf, 'function', 'portfolio-content.mjs exports workspaceOf');
+  assert.equal(typeof pack.projectIntakeBody, 'function', 'portfolio.mjs exports projectIntakeBody');
+  for (const s of STUDIES) {
+    const w = content.workspaceOf(s);
+    assert.ok(w, `${s.key} has a sponsor workspace`);
+    assert.equal(w.key, s.company, `${s.key} is in its own sponsor's workspace`);
+    const body = pack.projectIntakeBody(s, 41);
+    assert.equal(body.clientWorkspaceId, 41, `${s.key} names its workspace`);
+    assert.equal(body.name, `[Demo · Portfolio] ${projectTitle(s)}`);
+    assert.throws(() => pack.projectIntakeBody(s, undefined), /workspace/i, 'a project is never created without its workspace');
+    assert.throws(() => pack.projectIntakeBody(s, 0), /workspace/i);
+  }
+  for (const w of content.SPONSOR_WORKSPACES) assert.equal(STUDIES.filter((s) => content.workspaceOf(s).key === w.key).length, 2, w.key);
+});
+
+test('no sponsor is named like a Lumen pack supplier (or any other fictional company in the packs)', () => {
+  const taken = new Set(LUMEN_SUPPLIERS.map((s) => firstWord(s.name)));
+  for (const c of COMPANIES) {
+    assert.ok(!taken.has(firstWord(c.name)), `${c.name} shares its name with a Lumen supplier`);
+    assert.ok(!LUMEN_SUPPLIERS.some((s) => s.name.toLowerCase() === c.name.replace(/ \(fictional\)$/, '').toLowerCase()), c.name);
+  }
+  assert.ok(!COMPANIES.some((c) => /corvane/i.test(`${c.key} ${c.name} ${c.profile}`)), 'the Corvane name is the Lumen pack\'s supplier');
+});
+
+test('a portfolio project found by title in another workspace is refused: never moved, never reused', () => {
+  assert.equal(typeof pack.existingProjectFor, 'function', 'portfolio.mjs exports existingProjectFor');
+  const title = '[Demo · Portfolio] X';
+  assert.deepEqual(pack.existingProjectFor([{ id: 'p0', title: 'other', client_workspace_id: 7 }], title, 7), { action: 'create' });
+  assert.deepEqual(pack.existingProjectFor([{ id: 'p1', title, client_workspace_id: '7' }], title, 7), { action: 'reuse', id: 'p1' });
+  const refused = pack.existingProjectFor([{ id: 'p2', title, client_workspace_id: 2 }], title, 7);
+  assert.equal(refused.action, 'refuse');
+  assert.equal(refused.id, 'p2');
+  assert.equal(refused.foundWorkspaceId, 2);
+  assert.match(refused.reason, /refused/i);
+  assert.match(refused.reason, /not moved/i);
+  assert.equal(pack.existingProjectFor([{ id: 'p3', name: title, client_workspace_id: null }], title, 7).action, 'refuse');
+  assert.throws(() => pack.existingProjectFor([{ id: 'a', title, client_workspace_id: 7 }, { id: 'b', title, client_workspace_id: 2 }], title, 7), /more than one/);
+});
+
+test('a sponsor workspace is found by exact name in this organisation, or refused, never adopted by a near match', () => {
+  assert.equal(typeof pack.matchSponsorWorkspace, 'function', 'portfolio.mjs exports matchSponsorWorkspace');
+  const spec = content.SPONSOR_WORKSPACES[0];
+  const row = (o) => ({ id: '9', name: spec.name, slug: spec.slug, organizationId: '2', status: 'active', ...o });
+  assert.equal(pack.matchSponsorWorkspace([], spec, 2), null);
+  assert.equal(pack.matchSponsorWorkspace([row({ name: 'Concept2Cure Therapeutics', slug: 'concept2cure' })], spec, 2), null);
+  assert.equal(pack.matchSponsorWorkspace([row()], spec, 2), 9);
+  assert.throws(() => pack.matchSponsorWorkspace([row(), row({ id: '10', slug: 'x' })], spec, 2), /more than one/);
+  assert.throws(() => pack.matchSponsorWorkspace([row({ status: 'archived' })], spec, 2), /not active/);
+  assert.throws(() => pack.matchSponsorWorkspace([row({ organizationId: '3' })], spec, 2), /another organisation/);
+  assert.throws(() => pack.matchSponsorWorkspace([row({ name: 'Someone else', id: '11' })], spec, 2), /slug/);
+});
+
+test('a study design titled for the pack but bound to another project is left where it is', () => {
+  assert.equal(typeof pack.designOwnedElsewhere, 'function', 'portfolio.mjs exports designOwnedElsewhere');
+  const title = '[Demo · Portfolio] D';
+  assert.equal(pack.designOwnedElsewhere([], title, 'p1'), null);
+  assert.equal(pack.designOwnedElsewhere([{ title, programId: 'p1', studyId: 's1' }], title, 'p1'), null);
+  assert.deepEqual(pack.designOwnedElsewhere([{ title, programId: 'p0', studyId: 's0' }], title, 'p1'), { studyId: 's0', programId: 'p0' });
+});
+
+test('the known product behaviour says what the server does: the first data-room read of ANY project captures organisation-wide Quality records, whatever its workspace', () => {
+  const k = pack.KNOWN_PRODUCT_BEHAVIOUR;
+  assert.ok(k && typeof k === 'object', 'portfolio.mjs exports KNOWN_PRODUCT_BEHAVIOUR');
+  assert.match(k.where, /every project/i);
+  assert.match(k.where, /any client workspace/i);
+  assert.match(k.trigger, /GET \/api\/c2c\/projects\/:id\/sources at offset 0/);
+  for (const file of ['data-room-search.ts', 'record-source.ts', 'project-evidence-queries.ts']) assert.ok(k.cause.includes(file), `cause names ${file}`);
+  assert.match(k.ownWorkspace, /does not stop/i);
+  assert.doesNotMatch(JSON.stringify(k), /letter[^"]*triggers|only (on )?stage h/i, 'the letter upload is not the trigger');
+  // The pack's header says the same: no longer that the letter triggers it, nor that the own workspace keeps the evidence out.
+  const header = readFileSync(path.join(HERE, 'packs/portfolio.mjs'), 'utf8').split('*/')[0].replace(/\n\s*\*\s?/g, ' ');
+  assert.doesNotMatch(header, /uploading stage h's letter[^.]*triggers/i);
+  assert.doesNotMatch(header, /so every sponsor's projects showed/i);
+  assert.match(header, /first read of any project's data room/i);
+  assert.match(header, /does not stop/i);
+});
 
 test('portfolio has its own prefix and every planned record title carries it', () => {
   assert.equal(DEMO_PREFIX.portfolio, '[Demo · Portfolio]');
@@ -111,7 +209,7 @@ test('a non-randomized study never says it was randomized (PTR-022-102, open-lab
 test('a resolved comment that claims an edit points at text that exists; open comments point at existing passages', () => {
   const f = STUDIES.find((x) => x.key === 'ptr022-102');
   assert.match(narrative(f).safety, /ADA-positive/);
-  const e = STUDIES.find((x) => x.key === 'crv310-201');
+  const e = STUDIES.find((x) => x.key === 'vnh310-201');
   assert.match(narrative(e).safety, /pneumonitis/i);
   assert.match(narrative(e).discussion, /dose justification/i);
 });

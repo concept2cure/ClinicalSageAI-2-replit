@@ -8,14 +8,31 @@
  * It runs only as `--pack portfolio`; seed.mjs leaves it out of `--pack all`
  * (as it does faux), so a Codespace's automatic `--pack all` is unchanged.
  *
- * WHERE THE COMPANIES LIVE. No client workspace is created. Each fictional
- * company is the NAMED SPONSOR of its projects (project title and objective,
- * the protocol PDF, the study-data source's `sponsor`, and the CSR synopsis),
- * inside the organisation's own client workspace: the one whose name is the
- * organisation's name. Every project passes that clientWorkspaceId explicitly,
- * so this pack neither depends on nor changes how a workspace is chosen for
- * any other pack (AMBIGUOUS_CLIENT_WORKSPACE), and no organisation setting is
- * touched.
+ * WHERE THE COMPANIES LIVE. Each fictional company is its OWN client
+ * workspace ("<Company> (fictional demo)", portfolio-content.mjs
+ * SPONSOR_WORKSPACES), created through the product's client-workspace API
+ * (POST /api/clients, exactly as the Lumen and Faux packs create theirs) and
+ * found again by exact name. Until 2026-11-09 the four sponsors were named
+ * sponsors inside the organisation's own workspace. Every project is created
+ * with its sponsor's clientWorkspaceId explicitly. No workspace is marked the
+ * organisation's default and no organisation setting is touched. The own
+ * workspace does not stop organisation-wide Quality records reaching the
+ * sponsor's projects (KNOWN PRODUCT BEHAVIOUR, below).
+ *
+ * NEVER MOVED, NEVER REUSED ACROSS WORKSPACES. A project with this pack's exact
+ * title found in any workspace other than its sponsor's is refused: that study
+ * stops there, nothing is attached to the project, the refusal is recorded in
+ * the manifest (`refused`), the other studies continue, and the run ends
+ * failed so the operator sees it. A study design titled for the pack but bound
+ * to another project is left where it is (the product refuses to move a
+ * design, PROGRAM_MISMATCH) and is recorded in `refused` too; that study's
+ * other steps go on.
+ *
+ * ORDER ON A FRESH DATABASE. Run `--pack all` before `--pack portfolio`. These
+ * four workspaces, like Lumen's, make "several workspaces, none marked
+ * default"; a pack that creates a project without naming a workspace is then
+ * refused by intake (AMBIGUOUS_CLIENT_WORKSPACE). Projects that already exist
+ * are found by title and are unaffected.
  *
  * WHAT IS CREATED, through the product's own HTTP API as the signed-in user,
  * idempotently by exact "[Demo · Portfolio] …" title: for each study a project
@@ -33,11 +50,12 @@
  * freeze and e-signature (signer credential), and the eCTD compile and any
  * agency outcome. Synthetic numbers are not clinical evidence.
  *
- * DEMO STORYLINE (Projects → the project → its documents / Vault / Tasks):
- *  - Corvane Oncology (oncology mAb CRV-310).
- *    a) "CRV-310-301 Phase 3 CSR (planning)": protocol and SAP in the Vault, an
+ * DEMO STORYLINE (client switcher → the sponsor's workspace → Projects → the
+ * project → its documents / Vault / Tasks):
+ *  - Varnhollow Oncology (oncology mAb VNH-310).
+ *    a) "VNH-310-301 Phase 3 CSR (planning)": protocol and SAP in the Vault, an
  *       empty CSR shell with every ICH E3 heading; tasks for the TLF shells.
- *    e) "CRV-310-201 Phase 2 CSR (in review)": open the CSR — every narrative
+ *    e) "VNH-310-201 Phase 2 CSR (in review)": open the CSR — every narrative
  *       heading written; three reviewer comments open, one resolved. "Send for
  *       review" is where a second member would be named.
  *  - Petrelline Rare Therapeutics (enzyme replacement PTR-022).
@@ -63,33 +81,44 @@
  *       CSR was NOT filed: it is not placed in IND sequence 0000 (refused as in
  *       g), and nothing in this pack says it was filed or submitted.
  *
- * KNOWN PRODUCT BEHAVIOUR (reported as a defect, not hidden by this pack):
- * uploading stage h's letter to the project's data room triggers the product's
- * quality-evidence capture (server/services/qms/project-evidence.ts), which on
- * the local database attached 21 quality records from OTHER demo packs (Lumen
- * GMP deviations, audits, management reviews and suppliers, a C2C-101 and an
- * MDX NP-100 change control) to the Halcyra project's Records > Data Room
- * sources. The pack changes nothing to mask it; before a client demo, do not
- * open stage h's Records until the product owner has ruled on the capture. It
- * is also recorded in the manifest (knownProductBehaviour).
+ * KNOWN PRODUCT BEHAVIOUR (reported, not hidden by this pack): the first read
+ * of any project's data room (GET /api/c2c/projects/:id/sources at offset 0:
+ * opening Records > Data Room sources, the editor's sources rail, or a seed
+ * pack's read) runs the product's Quality capture, in any client workspace
+ * (data-room-search.ts prepareSourceScope → record-source.ts
+ * syncQualityProjectSources). It snapshots into that project's data room what
+ * server/services/qms/project-evidence-queries.ts returns: suppliers, internal
+ * audits and management reviews for the whole organisation, change controls
+ * with no program, GMP deviations with no client workspace, and their record
+ * relationships. A sponsor's own workspace does not stop it: on the local
+ * database (2026-11-09) every portfolio project in its sponsor's workspace
+ * holds the same 21 records from other packs as the archived projects in the
+ * organisation's own workspace. It is not caused by stage h's letter; this
+ * pack makes that read on one project only (stage h, through the shared
+ * agency-letter step and its read-back). The coordinator or product owner
+ * rules on the capture's scope. The pack changes nothing to mask it and
+ * records it with each run's own stage h read (KNOWN_PRODUCT_BEHAVIOUR,
+ * manifest knownProductBehaviour).
  *
  * LOCAL LEFTOVERS (this pack corrects what it can through the API): narrative
  * text it wrote earlier that no longer matches the pack (it starts with the
  * SYNTHETIC tag) is corrected once as a saved revision; an earlier task that
- * called the stage-h CSR "filed" is archived and replaced. Not correctable
- * here: project h's objective, written at creation, still names the old stage
- * label ("Post-filing scenario"), and the stored stage-h letter keeps its old
- * line "submitted in Module 5.3.5.1" (the inbox entry is found by type and is
- * not re-uploaded, to avoid re-triggering the capture above). A fresh database
- * gets the corrected wording for both.
+ * called the stage-h CSR "filed" is archived and replaced. The first local
+ * projects, created in the organisation's own workspace, were archived through
+ * the product's archive route (2026-11-09, docs/evidence/DEMO/portfolio/
+ * sponsor-workspaces/local-archive.log) and are not touched by this pack.
  */
 import { connectSigner, demoTitle, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
 import { asArray, makeTally, NOT_EXECUTED_NO_SIGNER } from './biotech-shared.mjs';
+import { canonicalSubmissionFor } from './biotech-submission.mjs';
 import { ensureAgencyLetter, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
 import {
-  ALL_HEADINGS, COMPANIES, HALCYRA_IR_LETTER, HEADING_PATTERNS, STAGES, STUDIES, SYNTHETIC,
-  buildCsrSource, companyOf, narrative, protocolSections, sapSections, stageTasks, studyDesignFor,
+  ALL_HEADINGS, COMPANIES, HALCYRA_IR_LETTER, HEADING_PATTERNS, KNOWN_PRODUCT_BEHAVIOUR, SPONSOR_WORKSPACES, STAGES, STUDIES, SYNTHETIC,
+  buildCsrSource, companyOf, designOwnedElsewhere, existingProjectFor, matchSponsorWorkspace, narrative, protocolSections,
+  sapSections, stageTasks, studyDesignFor, workspaceIdOf, workspaceOf,
 } from './portfolio-content.mjs';
+
+export { KNOWN_PRODUCT_BEHAVIOUR, designOwnedElsewhere, existingProjectFor, matchSponsorWorkspace };
 
 export const PACK = 'portfolio';
 const T = (name) => demoTitle(PACK, name);
@@ -122,6 +151,23 @@ export function plannedTitles() {
   return out;
 }
 
+/** The canonical intake's body for a study's project. It always names the sponsor's workspace; there is no default. */
+export function projectIntakeBody(study, workspaceId) {
+  if (!Number.isSafeInteger(workspaceId) || workspaceId <= 0) {
+    throw new Error(`no client workspace for ${study.protocolNumber}: a portfolio project is created only in its sponsor's workspace`);
+  }
+  const ind = study.programType === 'ind';
+  return {
+    name: T(projectTitle(study)), productName: study.productName,
+    programType: ind ? 'ind' : 'csr', submissionTypeId: ind ? 'us_ind' : 'ich_csr',
+    productType: study.productType, primaryAgency: 'FDA',
+    clientWorkspaceId: workspaceId,
+    indication: study.indication,
+    objective: objectiveFor(study), objectiveSources: [],
+    priority: ['e', 'f', 'h'].includes(study.stage) ? 'high' : 'medium', teamMembers: [],
+  };
+}
+
 export function objectiveFor(study) {
   const c = companyOf(study);
   return [
@@ -134,17 +180,31 @@ export function objectiveFor(study) {
 
 /* ───────── API steps ───────── */
 
-async function organisationWorkspace({ api, run, identity }) {
-  return run.step('Client workspace: the organisation\'s own (no workspace created)', async () => {
-    const j = must(await api('GET', '/api/clients?purpose=project-intake'), 200, 'list client workspaces');
-    const rows = (Array.isArray(j.clients) ? j.clients : []).filter((c) =>
-      c.name === identity.organizationName && String(c.status ?? 'active').toLowerCase() === 'active');
-    if (rows.length !== 1) throw new Error(`expected exactly one active client workspace named "${identity.organizationName}", found ${rows.length}. Nothing was written.`);
-    const id = Number(rows[0].id);
-    if (!Number.isSafeInteger(id) || id <= 0) throw new Error('the organisation workspace has no valid id. Nothing was written.');
-    run.record('clientWorkspace', { id, name: rows[0].name, created: false });
-    return id;
-  });
+/** Each sponsor's own client workspace: found by exact name, else created through POST /api/clients (as Lumen and Faux do). */
+async function ensureSponsorWorkspaces({ api, run, tally, identity }) {
+  const out = new Map(), recorded = [];
+  for (const spec of SPONSOR_WORKSPACES) {
+    await run.step(`Client workspace: ${spec.name}`, async () => {
+      const listed = must(await api('GET', '/api/clients'), 200, 'list client workspaces');
+      if (!Array.isArray(listed.clients)) throw new Error('the client workspace catalog was unavailable; no workspace was created.');
+      let id = matchSponsorWorkspace(listed.clients, spec, identity.organizationId);
+      const created = id === null;
+      if (created) {
+        const j = must(await api('POST', '/api/clients', { name: spec.name, slug: spec.slug }), [200, 201], `create client workspace ${spec.name}`);
+        const saved = j.client ?? j.data ?? j;
+        const confirmed = saved.name === spec.name && saved.slug === spec.slug && String(saved.organizationId ?? '') === String(identity.organizationId);
+        if (!confirmed) throw new Error(`the new workspace's receipt did not confirm "${spec.name}" in organisation ${identity.organizationId}; no project was created.`);
+        id = Number(saved.id);
+        if (!Number.isSafeInteger(id) || id <= 0) throw new Error(`client workspace create answered no id: ${JSON.stringify(j).slice(0, 300)}`);
+        tally.created('client-workspace');
+      } else tally.found('client-workspace');
+      out.set(spec.key, id);
+      recorded.push({ key: spec.key, id, name: spec.name, slug: spec.slug, created });
+      return `${created ? 'created' : 'found'} ${id}`;
+    });
+  }
+  run.record('clientWorkspaces', recorded);
+  return out;
 }
 
 async function listProjects(api) {
@@ -162,31 +222,26 @@ async function listProjects(api) {
 
 async function ensureProject({ api, run, tally }, projects, study, workspaceId) {
   const name = T(projectTitle(study));
-  return run.step(`Project (${study.stage}) ${projectTitle(study)}`, async () => {
-    const same = projects.filter((p) => (p.title ?? p.name) === name);
-    if (same.length > 1) throw new Error(`more than one project is titled "${name}"; reconcile before seeding`);
-    let id = same[0]?.id ?? null;
+  return run.step(`Project (${study.stage}) ${projectTitle(study)} — workspace ${workspaceId}`, async () => {
+    const decision = existingProjectFor(projects, name, workspaceId);
+    // A project with this study's title in another workspace: the study stops (seedStudy records it), the others go on.
+    if (decision.action === 'refuse') {
+      const { id: projectId, foundWorkspaceId, expectedWorkspaceId, reason } = decision;
+      throw Object.assign(new Error(reason), { refusal: { title: name, projectId, foundWorkspaceId, expectedWorkspaceId, reason } });
+    }
+    let id = decision.id ?? null;
     let submissionId = null;
-    if (!id) {
-      const ind = study.programType === 'ind';
-      const j = must(await api('POST', '/api/c2c/projects', {
-        name, productName: study.productName,
-        programType: ind ? 'ind' : 'csr', submissionTypeId: ind ? 'us_ind' : 'ich_csr',
-        productType: study.productType, primaryAgency: 'FDA',
-        clientWorkspaceId: workspaceId,
-        indication: study.indication,
-        objective: objectiveFor(study), objectiveSources: [],
-        priority: ['e', 'f', 'h'].includes(study.stage) ? 'high' : 'medium', teamMembers: [],
-      }), 201, `create project ${study.protocolNumber}`);
+    if (decision.action === 'create') {
+      const j = must(await api('POST', '/api/c2c/projects', projectIntakeBody(study, workspaceId)), 201, `create project ${study.protocolNumber}`);
       id = j.data?.id;
       submissionId = j.meta?.submissionId ?? null;
       tally.created('project');
     } else tally.found('project');
     if (!id) throw new Error('project creation returned no id');
     const detail = must(await api('GET', `/api/c2c/projects/${id}`), 200, `read project ${id}`);
-    if (Number(detail.client_workspace_id) !== workspaceId) throw new Error(`project ${id} is not in client workspace ${workspaceId}; nothing was attached`);
+    if (workspaceIdOf(detail) !== workspaceId) throw new Error(`project ${id} is not in client workspace ${workspaceId}; nothing was attached`);
     if (detail.program_type !== study.programType) throw new Error(`project ${id} is not a ${study.programType} project; nothing was attached`);
-    return { id, title: name, programType: study.programType, productName: study.productName, submissionId };
+    return { id, title: name, programType: study.programType, productName: study.productName, submissionId, clientWorkspaceId: workspaceId };
   });
 }
 
@@ -359,8 +414,9 @@ async function placeAt5351({ api, run, tally }, project, doc, notExecuted) {
     try {
       let subId = project.submissionId;
       if (!subId) {
+        // By the server's spine rule: the submission anchored to THIS project, never another project's of the same title.
         const list = asArray(must(await api('GET', '/api/submissions'), 200, 'list submissions'), 'data');
-        subId = list.find((s) => s.title === project.title)?.id ?? null;
+        subId = canonicalSubmissionFor(list, project)?.id ?? null;
       }
       if (!subId) throw new Error('the IND project has no submission spine');
       const seqs = asArray(must(await api('GET', `/api/submissions/${subId}/sequences`), 200, 'list sequences'), 'data');
@@ -459,10 +515,51 @@ async function reconcileClaims({ api, run, tally }, project, tasks) {
   });
 }
 
-async function seedStudy(c, study, { projects, workspaceId, template, notExecuted }) {
+/** Stage b: the design is persisted for THIS project, unless a design of the same title is bound to another project. */
+async function ensureStageBDesign(c, project, study, refused) {
+  const title = T(`${study.protocolNumber} — Phase 3 study design (fictional)`);
+  const designs = asArray(must(await c.api('GET', '/api/biostat-bridge/designs'), 200, 'list study designs'), 'data', 'designs');
+  const elsewhere = designOwnedElsewhere(designs, title, project.id);
+  if (elsewhere) {
+    const reason = `refused — study design ${elsewhere.studyId} "${title}" is bound to project ${elsewhere.programId}, not ${project.id}. The product does not move a design between projects (PROGRAM_MISMATCH) and the pack does not ask it to; Biostatistics shows no design for this project until that one is renamed or a person records a new one.`;
+    refused.push({ title: project.title, projectId: project.id, step: 'study design', reason });
+    console.info(`  • Biostatistics: study design "${title}" … ${reason}`);
+    return { title, action: 'refused', boundTo: elsewhere };
+  }
+  await ensureStudyDesign(c, project, null, studyDesignFor(study, title));
+  return { title, action: 'ensured' };
+}
+
+/**
+ * Stage h: what the data room lists after the letter. Like every first-page read of any project's data room, this read
+ * runs the product's Quality capture (KNOWN_PRODUCT_BEHAVIOUR); the pack writes nothing itself here.
+ */
+async function readDataRoom({ api, run }, project) {
+  return run.step('Data room: sources on the stage h project after the letter (a first-page read; the product runs its Quality capture on it)', async () => {
+    const j = must(await api('GET', `/api/c2c/projects/${encodeURIComponent(project.id)}/sources?limit=200`), 200, 'read the data room');
+    const rows = Array.isArray(j.sources) ? j.sources : [];
+    const others = rows.filter((r) => r.title !== HALCYRA_IR_LETTER.fileName).map((r) => r.title);
+    return { total: rows.length, otherThanLetter: others.length, titles: others.slice(0, 40) };
+  });
+}
+
+async function seedStudy(c, study, { projects, workspaces, template, notExecuted, refused }) {
   const { run } = c;
-  const rec = { stage: study.stage, stageLabel: STAGES[study.stage], company: companyOf(study).name, protocolNumber: study.protocolNumber };
-  const project = await ensureProject(c, projects, study, workspaceId);
+  const workspace = workspaceOf(study);
+  const workspaceId = workspaces.get(workspace.key);
+  const rec = { stage: study.stage, stageLabel: STAGES[study.stage], company: companyOf(study).name, protocolNumber: study.protocolNumber,
+    clientWorkspace: { id: workspaceId ?? null, name: workspace.name } };
+  let project;
+  try {
+    project = await ensureProject(c, projects, study, workspaceId);
+  } catch (err) {
+    if (!err.refusal) throw err;
+    refused.push({ ...err.refusal, step: 'project' });
+    console.info(`  refused · ${err.refusal.title}: ${err.refusal.reason}`);
+    Object.assign(rec, { projectId: null, title: err.refusal.title, refused: err.refusal });
+    run.record(`project.${study.stage}.${study.key}`, rec);
+    return rec;
+  }
   Object.assign(rec, { projectId: project.id, title: project.title, programType: project.programType });
   rec.protocol = await ensureVaultFile(c, project, {
     label: `${study.protocolNumber} protocol · synthetic`, fileName: `${study.protocolNumber.toLowerCase()}-protocol-synthetic.pdf`,
@@ -487,8 +584,7 @@ async function seedStudy(c, study, { projects, workspaceId, template, notExecute
     notExecuted.push({ project: project.title, step: 'build from the study\'s data / AnA drafting', reason: NO_MODEL });
   }
   if (study.stage === 'b') {
-    await ensureStudyDesign(c, project, null, studyDesignFor(study, T(`${study.protocolNumber} — Phase 3 study design (fictional)`)));
-    rec.studyDesign = T(`${study.protocolNumber} — Phase 3 study design (fictional)`);
+    rec.studyDesign = await ensureStageBDesign(c, project, study, refused);
     notExecuted.push({ project: project.title, step: 'enrolment register', reason: 'not executed — no enrolment register has a mounted writer; enrolment is shown through the project\'s tasks' });
   }
   const doc = await ensureCsrDocument(c, project, study, template);
@@ -506,6 +602,7 @@ async function seedStudy(c, study, { projects, workspaceId, template, notExecute
   }
   if (study.stage === 'h') {
     rec.agencyLetter = await ensureLetterOnce(c, project, study);
+    rec.dataRoom = await readDataRoom(c, project);
     notExecuted.push({ project: project.title, step: 'approval of the response to the information request', reason: NOT_EXECUTED_NO_SIGNER });
   }
   const tasks = stageTasks(study).map((t) => {
@@ -528,34 +625,36 @@ export async function seed(ctx) {
     return null;
   });
   const c = { ...ctx, tally, signer };
-  ctx.run.note(`FICTIONAL CSR portfolio: ${COMPANIES.length} invented sponsor companies, ${STUDIES.length} CSR projects at stages a–h. ${SYNTHETIC}. The companies are named sponsors inside the organisation's own client workspace; no client workspace or organisation setting is created or changed.`);
+  ctx.run.note(`FICTIONAL CSR portfolio: ${COMPANIES.length} invented sponsor companies, each its own client workspace ("(fictional demo)"), ${STUDIES.length} CSR projects at stages a–h. ${SYNTHETIC}. No workspace is marked the organisation's default and no organisation setting is changed.`);
   ctx.run.record('companies', COMPANIES);
-  ctx.run.record('knownProductBehaviour', [
-    {
-      where: 'stage h project (Halcyra HLY-09-101), Records > Data Room sources',
-      what: 'Uploading the fictional letter to the data room triggered the product\'s quality-evidence capture (server/services/qms/project-evidence.ts); on the local database it attached 21 quality records from other demo packs (Lumen deviations, audits, reviews, suppliers; a C2C-101 and an MDX NP-100 change control) to the project.',
-      action: 'Reported to the product owner as a defect. Not hidden by the pack. Do not open stage h\'s Records in a client demo until it is ruled on.',
-    },
-    {
-      where: 'stage h, local database only',
-      what: 'Project h\'s objective still names the old stage label ("Post-filing scenario"), and the stored letter keeps the line "submitted in Module 5.3.5.1". No project-objective update route was used and the letter is not re-uploaded; a fresh database gets the corrected wording.',
-      action: 'Known leftover; the CSR is not filed and the task and stage label say so.',
-    },
-  ]);
   const template = await canonicalCsrTemplate(c);
-  const workspaceId = await organisationWorkspace(c);
+  const workspaces = await ensureSponsorWorkspaces(c);
   const projects = await listProjects(ctx.api);
   const notExecuted = [];
+  const refused = [];
   const seeded = [];
-  for (const study of STUDIES) seeded.push(await seedStudy(c, study, { projects, workspaceId, template, notExecuted }));
+  for (const study of STUDIES) seeded.push(await seedStudy(c, study, { projects, workspaces, template, notExecuted, refused }));
+  const h = seeded.find((r) => r.stage === 'h');
+  ctx.run.record('knownProductBehaviour', [{
+    ...KNOWN_PRODUCT_BEHAVIOUR,
+    observedThisRun: h?.dataRoom ? { project: 'stage h (Halcyra HLY-09-101)', ...h.dataRoom } : 'not read (stage h did not run)',
+  }]);
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+  const byWorkspace = SPONSOR_WORKSPACES.map((w) => ({ key: w.key, id: workspaces.get(w.key) ?? null, name: w.name,
+    projects: seeded.filter((r) => r.clientWorkspace.name === w.name).map((r) => ({ stage: r.stage, id: r.projectId, title: r.title })) }));
   ctx.run.record('notExecuted', notExecuted);
+  ctx.run.record('refused', refused);
   ctx.run.record('summary', {
-    created: sum(tally.tally.created), found: sum(tally.tally.found), notExecuted: notExecuted.length,
-    projects: seeded.map((r) => ({ stage: r.stage, id: r.projectId, title: r.title, csrDocumentId: r.csrDocument?.id ?? null })),
+    created: sum(tally.tally.created), found: sum(tally.tally.found), notExecuted: notExecuted.length, refused: refused.length, workspaces: byWorkspace,
+    projects: seeded.map((r) => ({ stage: r.stage, id: r.projectId, title: r.title, clientWorkspaceId: r.clientWorkspace.id, csrDocumentId: r.csrDocument?.id ?? null })),
   });
-  console.info(`  summary: created ${sum(tally.tally.created)}, found ${sum(tally.tally.found)}, not executed ${notExecuted.length}`);
+  console.info(`  summary: created ${sum(tally.tally.created)}, found ${sum(tally.tally.found)}, not executed ${notExecuted.length}, refused ${refused.length}`);
+  for (const w of byWorkspace) console.info(`  workspace ${w.id} · ${w.name}: ${w.projects.map((r) => `${r.stage} ${r.id ?? 'REFUSED'}`).join(', ')}`);
   for (const n of notExecuted) console.info(`  not executed · ${n.project} · ${n.step}: ${n.reason}`);
+  for (const r of refused) console.info(`  refused · ${r.title} · ${r.step}: ${r.reason}`);
+  if (refused.some((r) => r.step === 'project')) {
+    throw new Error(`${refused.filter((r) => r.step === 'project').length} portfolio project(s) refused: found by title outside their sponsor's workspace and not moved (manifest: refused). The other studies were seeded.`);
+  }
 }
 
 export async function purge({ run }) {

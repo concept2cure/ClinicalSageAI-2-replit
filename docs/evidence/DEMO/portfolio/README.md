@@ -15,18 +15,24 @@ changed. The Codespace's automatic `--pack all` is unchanged by it.
 
 ## What it seeds (through the product's own API, idempotent by title)
 
-Each fictional company is the named **sponsor** inside the organization's existing client workspace ("Concept2Cure
-Therapeutics", passed explicitly as `clientWorkspaceId`). No client workspace is created, so the existing biotech pack's
-program creation cannot become `AMBIGUOUS_CLIENT_WORKSPACE` because of this pack. Every CSR is a document in the one editor
-from the canonical CSR template.
+**Superseded in part by `sponsor-workspaces/README.md`** (the coordinating session's item 1b, a later local commit):
+each fictional sponsor is now its **own client workspace** ("<Sponsor> (fictional demo)", created through POST
+`/api/clients` as the lumen, mdx and faux packs do), every project names its sponsor's workspace explicitly, and a
+project found by title in another workspace is refused, never moved. "Corvane Oncology" was renamed **Varnhollow
+Oncology** (product code VNH-310) so it no longer collides with the Lumen pack's fictional supplier "Corvane Biologics".
+The sponsor workspaces do **not** keep the organization's suppliers, internal audits and management reviews out of a
+sponsor's data room (see "Known product behaviour" below). **Order on a fresh database:** run `--pack all` before
+`--pack portfolio` — with more than one active client workspace, the canonical intake refuses a project that names no
+workspace, and the biotech pack's first program names none. Every CSR is a document in the one editor from the
+canonical CSR template.
 
 | Stage | Company · study | What makes the stage visible |
 |---|---|---|
-| a. Planning | Corvane Oncology · CRV-310-301 (Phase 3) | protocol and SAP in the Vault; empty CSR shell |
+| a. Planning | Varnhollow Oncology · VNH-310-301 (Phase 3) | protocol and SAP in the Vault; empty CSR shell |
 | b. Enrolling | Petrelline Rare Therapeutics · PTR-022-301 (Phase 3) | study design (Biostatistics); tasks: 58 of 96 randomized, an overdue site item |
 | c. Database lock | Quillmont Immunology · QLM-118-202 (Phase 2b) | synthetic study source (210 participants) in the data room, not approved; freeze task blocked |
 | d. Drafting | Halcyra Vaccines · HLY-09-201 (Phase 2) | Title Page and 5 of 8 ICH E3 headings written |
-| e. Medical review comments open | Corvane · CRV-310-201 (Phase 2) | full narrative; 3 comments open, 1 resolved |
+| e. Medical review comments open | Varnhollow · VNH-310-201 (Phase 2) | full narrative; 3 comments open, 1 resolved |
 | f. Awaiting signature | Petrelline · PTR-022-102 (Phase 1/2, open-label cohorts) | full narrative; comments resolved; Freeze and E-sign honestly disabled until scientific review |
 | g. Ready to file | Quillmont · QLM-118-101 (Phase 1) | IND sequence 0000 open; placement refused by the product (`CSR_SCIENTIFIC_REVIEW_REQUIRED`) |
 | h. Information-request scenario | Halcyra · HLY-09-101 (Phase 1) | a fictional FDA information request in the inbox; the CSR is stated as not placed |
@@ -52,8 +58,13 @@ faked. It needs no `OQ_SIGNER_*` and no model key.
 
 ## Known product behaviour seen while seeding (reported, not hidden)
 
-- Stage h's data room listed 21 records of other demo clients (Lumen, C2C-101, MDX) captured when the letter was
-  uploaded: a cross-workspace capture to report to the product owner. Do not open stage h's Records in a demo.
+- The first read of any project's data room (GET `/api/c2c/projects/:id/sources`, first page) runs the Quality
+  evidence capture (`syncQualityProjectSources`), which attaches what `server/services/qms/project-evidence-queries.ts`
+  admits: suppliers, internal audits and management reviews **organization-wide (no workspace predicate)**; change
+  controls with no program; deviations and quality plans with no client workspace. So every portfolio project, in its
+  own workspace or not, shows the organization's 21 such records (Lumen suppliers, audits, deviations; the C2C-101 and
+  NP-100 change controls). This needs the product owner's ruling on the capture's scope; it is reported to the
+  coordinating session.
 
 ## To seed it (after the demo, once cleared)
 

@@ -8,14 +8,20 @@
  * Every company, product, study, number and letter here is INVENTED for a
  * product demonstration. None is a real company, a marketed product, a real
  * trial or a real person. The data are SYNTHETIC and are not clinical evidence.
- * Pure data and pure functions only: nothing here calls the API.
+ * Pure data and pure functions only (including the sponsor-workspace placement
+ * rules the pack applies before any write): nothing here calls the API.
  */
 
 export const SYNTHETIC = 'SYNTHETIC demonstration data, fictional sponsor; not clinical evidence';
 
-/** The four fictional sponsors. Each is shown as the named sponsor inside the organisation's own client workspace. */
+/**
+ * The four fictional sponsors. Each is its OWN client workspace (SPONSOR_WORKSPACES), so a sponsor's projects
+ * show that sponsor's records and not the organisation's own workspace's. "Varnhollow Oncology" replaced
+ * "Corvane Oncology" (2026-11-09): Corvane Biologics is the Lumen pack's fictional CDMO (lumen-qms-content.mjs),
+ * and one invented name must not stand for two companies in the same demonstration tenant.
+ */
 export const COMPANIES = [
-  { key: 'corvane', name: 'Corvane Oncology (fictional)', profile: 'Clinical-stage oncology company developing CRV-310, a fictional humanized IgG1 monoclonal antibody for previously treated non-small cell lung cancer.' },
+  { key: 'varnhollow', name: 'Varnhollow Oncology (fictional)', profile: 'Clinical-stage oncology company developing VNH-310, a fictional humanized IgG1 monoclonal antibody for previously treated non-small cell lung cancer.' },
   { key: 'petrelline', name: 'Petrelline Rare Therapeutics (fictional)', profile: 'Rare-disease biologics company developing PTR-022, a fictional recombinant enzyme replacement therapy for late-onset Pompe disease.' },
   { key: 'quillmont', name: 'Quillmont Immunology (fictional)', profile: 'Immunology company developing QLM-118, a fictional oral small-molecule selective kinase inhibitor for ulcerative colitis.' },
   { key: 'halcyra', name: 'Halcyra Vaccines (fictional)', profile: 'Vaccine company developing HLY-09, a fictional adjuvanted recombinant RSV prefusion F protein vaccine for adults aged 60 and over.' },
@@ -39,16 +45,16 @@ export const STAGES = {
  */
 export const STUDIES = [
   {
-    key: 'crv310-301', company: 'corvane', stage: 'a', programType: 'csr', productName: 'CRV-310', productType: 'biologic',
-    protocolNumber: 'CRV-310-301', phase: '3',
-    shortTitle: 'CRV-310-301 Phase 3 CSR (planning)',
-    title: 'A Phase 3, randomized, open-label study of CRV-310 plus docetaxel versus docetaxel in previously treated advanced non-small cell lung cancer',
+    key: 'vnh310-301', company: 'varnhollow', stage: 'a', programType: 'csr', productName: 'VNH-310', productType: 'biologic',
+    protocolNumber: 'VNH-310-301', phase: '3',
+    shortTitle: 'VNH-310-301 Phase 3 CSR (planning)',
+    title: 'A Phase 3, randomized, open-label study of VNH-310 plus docetaxel versus docetaxel in previously treated advanced non-small cell lung cancer',
     indication: 'Previously treated advanced non-small cell lung cancer (fictional study)',
     design: 'Phase 3, randomized 1:1, open-label, active-controlled, multicentre',
     comparator: 'Docetaxel 75 mg/m2 every 3 weeks',
     primaryEndpoint: 'Overall survival',
     secondaryEndpoints: ['Progression-free survival by blinded independent central review', 'Objective response rate (RECIST 1.1)'],
-    plannedN: 480, plannedArms: [{ armName: 'CRV-310 1200 mg Q3W + docetaxel', n: 240 }, { armName: 'Docetaxel', n: 240 }],
+    plannedN: 480, plannedArms: [{ armName: 'VNH-310 1200 mg Q3W + docetaxel', n: 240 }, { armName: 'Docetaxel', n: 240 }],
     dates: { protocolFinal: '2026-09-18', plannedFirstPatientIn: '2027-02-15', plannedPrimaryAnalysis: '2029-06-30' },
   },
   {
@@ -101,17 +107,17 @@ export const STUDIES = [
     dates: { firstPatientIn: '2025-09-08', lastPatientOut: '2026-06-30', dataCut: '2026-08-07', databaseLock: '2026-08-14' },
   },
   {
-    key: 'crv310-201', company: 'corvane', stage: 'e', programType: 'csr', productName: 'CRV-310', productType: 'biologic',
-    protocolNumber: 'CRV-310-201', phase: '2',
-    shortTitle: 'CRV-310-201 Phase 2 CSR (in review)',
-    title: 'A Phase 2, randomized, open-label dose-optimization study of CRV-310 monotherapy in previously treated advanced non-small cell lung cancer',
+    key: 'vnh310-201', company: 'varnhollow', stage: 'e', programType: 'csr', productName: 'VNH-310', productType: 'biologic',
+    protocolNumber: 'VNH-310-201', phase: '2',
+    shortTitle: 'VNH-310-201 Phase 2 CSR (in review)',
+    title: 'A Phase 2, randomized, open-label dose-optimization study of VNH-310 monotherapy in previously treated advanced non-small cell lung cancer',
     indication: 'Previously treated advanced non-small cell lung cancer (fictional study)',
     design: 'Phase 2, randomized 1:1, open-label, two-dose optimization',
     comparator: 'None (two dose levels compared)',
     primaryEndpoint: 'Objective response rate (RECIST 1.1, blinded independent central review)',
     arms: [
-      { armId: 'D600', armName: 'CRV-310 600 mg Q3W', n: 45, completed: 30, responders: 13, teae: 41, sae: 9, aeDisc: 3 },
-      { armId: 'D1200', armName: 'CRV-310 1200 mg Q3W', n: 45, completed: 28, responders: 17, teae: 43, sae: 12, aeDisc: 5 },
+      { armId: 'D600', armName: 'VNH-310 600 mg Q3W', n: 45, completed: 30, responders: 13, teae: 41, sae: 9, aeDisc: 3 },
+      { armId: 'D1200', armName: 'VNH-310 1200 mg Q3W', n: 45, completed: 28, responders: 17, teae: 43, sae: 12, aeDisc: 5 },
     ],
     aeTerms: [['Fatigue', 'General disorders and administration site conditions'], ['Infusion-related reaction', 'Injury, poisoning and procedural complications'], ['Decreased appetite', 'Metabolism and nutrition disorders'], ['Pneumonitis', 'Respiratory, thoracic and mediastinal disorders'], ['Rash', 'Skin and subcutaneous tissue disorders']],
     dates: { firstPatientIn: '2024-05-13', dataCut: '2026-07-31', databaseLock: '2026-08-28' },
@@ -138,7 +144,8 @@ export const STUDIES = [
     randomized: false,
     primaryEndpoint: 'Incidence of treatment-emergent adverse events (safety)',
     efficacyEndpoint: { name: 'Exploratory: >= 30 m improvement in 6-minute walk distance at Week 26', type: 'exploratory' },
-    // v2 of this source was refused by the source contract during development (no primary result) and stays in its data room.
+    // v2 of this source was refused by the source contract during development (no primary result); it stays in the first local
+    // project's data room (archived 2026-11-09). The label stays v3 so the source's title is the same on every database.
     sourceVersion: 'v3',
     arms: [
       { armId: 'C10', armName: 'PTR-022 10 mg/kg every other week', n: 8, completed: 8, responders: 3, teae: 7, sae: 1, aeDisc: 0 },
@@ -191,6 +198,74 @@ export const STUDIES = [
 ];
 
 export const companyOf = (study) => COMPANIES.find((c) => c.key === study.company);
+
+/**
+ * One client workspace per fictional sponsor, created through the product's client-workspace API
+ * (POST /api/clients, as the Lumen and Faux packs create theirs) and found again by exact name. The name says
+ * "(fictional demo)"; the slug is the workspace's URL key. None is ever marked the organisation's default.
+ */
+export const SPONSOR_WORKSPACES = [
+  { key: 'varnhollow', name: 'Varnhollow Oncology (fictional demo)', slug: 'varnhollow-oncology-portfolio-demo' },
+  { key: 'petrelline', name: 'Petrelline Rare Therapeutics (fictional demo)', slug: 'petrelline-rare-therapeutics-portfolio-demo' },
+  { key: 'quillmont', name: 'Quillmont Immunology (fictional demo)', slug: 'quillmont-immunology-portfolio-demo' },
+  { key: 'halcyra', name: 'Halcyra Vaccines (fictional demo)', slug: 'halcyra-vaccines-portfolio-demo' },
+];
+
+/** The sponsor workspace a study's project is created in: its own company's, never another's. */
+export const workspaceOf = (study) => SPONSOR_WORKSPACES.find((w) => w.key === study.company);
+
+/* ── where a project may live: pure placement rules the pack applies before any write (portfolio.mjs) ── */
+
+/** A project row's client workspace id (list rows and the detail read both carry it), or null. */
+export const workspaceIdOf = (row) => {
+  const raw = row?.client_workspace_id ?? row?.clientWorkspaceId ?? null;
+  return raw == null || raw === '' ? null : Number(raw);
+};
+
+/**
+ * What to do with the projects already titled `title` (the list excludes archived ones): create one, reuse the one
+ * in the sponsor's workspace, or REFUSE one found anywhere else. A project is never moved between workspaces and a
+ * project in another workspace is never reused. Duplicates are refused before anything is decided.
+ */
+export function existingProjectFor(projects, title, workspaceId) {
+  const same = (projects ?? []).filter((p) => (p.title ?? p.name) === title);
+  if (same.length > 1) throw new Error(`more than one project is titled "${title}"; reconcile before seeding`);
+  if (!same.length) return { action: 'create' };
+  const found = workspaceIdOf(same[0]);
+  if (found === workspaceId) return { action: 'reuse', id: same[0].id };
+  return {
+    action: 'refuse', id: same[0].id, foundWorkspaceId: found, expectedWorkspaceId: workspaceId,
+    reason: `refused — project ${same[0].id} has this pack's title but is in client workspace ${found ?? '(none)'}, not its sponsor's workspace ${workspaceId}. It was not moved and not reused; nothing was attached to it. Archive it through Project settings (or rename it) and run the pack again.`,
+  };
+}
+
+/**
+ * The sponsor's client workspace among the organisation's client workspaces (GET /api/clients), by exact name, or
+ * null when there is none. Refused rather than adopted: two with the name, one in another organisation or not active,
+ * or the slug held by a workspace of another name (POST would answer 409 on the slug).
+ */
+export function matchSponsorWorkspace(rows, spec, organizationId) {
+  const all = Array.isArray(rows) ? rows : [];
+  const named = all.filter((c) => c.name === spec.name);
+  if (named.length > 1) throw new Error(`more than one client workspace is named "${spec.name}"; reconcile before seeding. Nothing was written.`);
+  if (!named.length) {
+    const slugHolder = all.find((c) => c.slug === spec.slug);
+    if (slugHolder) throw new Error(`the slug "${spec.slug}" is held by client workspace ${slugHolder.id} ("${slugHolder.name}"), not "${spec.name}"; it was not adopted. Nothing was written.`);
+    return null;
+  }
+  const row = named[0];
+  if (String(row.organizationId ?? '') !== String(organizationId)) throw new Error(`client workspace ${row.id} "${spec.name}" belongs to another organisation; it was not adopted.`);
+  if (String(row.status ?? 'active').toLowerCase() !== 'active') throw new Error(`client workspace ${row.id} "${spec.name}" is not active (${row.status}); it was not reopened or adopted.`);
+  const id = Number(row.id);
+  if (!Number.isSafeInteger(id) || id <= 0) throw new Error(`client workspace "${spec.name}" has no valid id.`);
+  return id;
+}
+
+/** A study design with this title bound to ANOTHER project, or null. The product never moves a design between projects. */
+export function designOwnedElsewhere(designs, title, projectId) {
+  const other = (designs ?? []).find((d) => d.title === title && String(d.programId ?? d.program_id ?? '') !== String(projectId));
+  return other ? { studyId: other.studyId ?? other.study_id ?? null, programId: other.programId ?? other.program_id ?? null } : null;
+}
 
 /* ───────────────── synthetic study-data source (concept2cure.csr-source.v1) ───────────────── */
 
@@ -515,3 +590,17 @@ Sincerely,
 DEMONSTRATION ONLY: FICTIONAL LETTER. NOT ISSUED BY FDA.
 `,
 };
+
+/* ───────────────── known product behaviour (reported, not hidden) ───────────────── */
+
+/**
+ * The product's Quality capture as read in the server (2026-11-09). portfolio.mjs records it in the manifest
+ * (knownProductBehaviour) with this run's stage h read; the pack changes nothing to mask it.
+ */
+export const KNOWN_PRODUCT_BEHAVIOUR = Object.freeze({
+  where: 'Records > Data Room sources of every project, in any client workspace (each sponsor\'s own workspace included), from the first time anyone reads that project\'s data room',
+  trigger: 'the first page of a project\'s data room, GET /api/c2c/projects/:id/sources at offset 0: opening Records > Data Room sources, the editor\'s sources rail, or a seed pack\'s read. This pack makes that read on one project, stage h (the shared agency-letter step and its read-back); the capture is the same on every project whoever reads it first.',
+  cause: 'server/services/clinical-regulatory-evidence/data-room-search.ts prepareSourceScope calls record-source.ts syncQualityProjectSources, which snapshots into the project\'s data room what server/services/qms/project-evidence-queries.ts returns: suppliers, internal audits and management reviews for the whole organisation; change controls with no program; GMP deviations and quality plans with no client workspace; and their record relationships.',
+  ownWorkspace: 'A sponsor\'s own client workspace does not stop it. On the local database (2026-11-09) every portfolio project in its sponsor\'s workspace holds the same 21 records from other packs (Lumen suppliers, internal audits, management reviews and GMP deviations; change controls for C2C-101 and MDX NP-100 with no program; four record relationships) as the archived projects in the organisation\'s own workspace (docs/evidence/DEMO/portfolio/sponsor-workspaces/README.md).',
+  action: 'Reported to the coordinator and the product owner, who rule on the capture\'s scope in project-evidence-queries.ts. The pack changes nothing to mask it; observedThisRun is stage h\'s data room as this run read it back.',
+});
