@@ -1,0 +1,930 @@
+# GREEN: run 2026-11-09T21:05:48Z after the fix (working tree).
+# Files (40): client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts client/src/concept2cure/v2/__tests__/csrRunBuildsScope.test.tsx client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx client/src/concept2cure/v2/__tests__/filingAskPrompt.test.tsx client/src/concept2cure/v2/__tests__/filingCatalogDestinationShell.test.tsx client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx client/src/concept2cure/v2/__tests__/indLifecycleEctdFormat.test.tsx client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx client/src/concept2cure/v2/__tests__/missionControl.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx client/src/concept2cure/v2/__tests__/newSubmissionRegionStatement.test.tsx client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx server/routes/__tests__/submissions-create-not-offered.test.ts server/routes/__tests__/submissions-market-support.test.ts server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts server/services/regulatory/__tests__/market-support-offer.test.ts server/services/regulatory/__tests__/market-support.test.ts server/services/regulatory/__tests__/regional-device-market-support.test.ts 
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > requires a local multi-workspace choice despite the global default, and sends the reviewed sponsor 463ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > names and records the single verified workspace 192ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed duplicate directory without enabling Continue 120ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed foreign directory without enabling Continue 114ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed inactive directory without enabling Continue 107ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed actor directory without enabling Continue 135ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed missing-name directory without enabling Continue 111ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified workspace creation receipt 257ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified actor creation receipt 264ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified anchor creation receipt 251ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified uuid creation receipt 250ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified json creation receipt 275ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown transport outcome 272ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown server outcome 267ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refreshes active options before retrying a confirmed refusal 242ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires sponsor form contents on an account or organization change 205ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not send a stale write after a token switch 193ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires a late workspace read when the bearer changes without a render 91ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not publish or navigate after an old create receipt arrives under another bearer 266ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > returns to Configure without writing if the selected workspace changes before Create 279ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > states confirmed creation when only the saved project details are unavailable 241ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project verified workspace handoff > hands the verified sponsor to the actual sharing and assignment consumers before leaving the wizard 221ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project verified workspace handoff > hands off the verified workspace for a confirmed scaffold notice without navigating 204ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Cancel, then restores Check projects after uncertainty 303ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Projects, then restores Check projects after uncertainty 304ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Escape, then restores Check projects after uncertainty 373ms
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-11-09T21:05:59.314Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T21:05:59.315Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-11-09T21:05:59.316Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Database connection successful
+
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > shows the catalog description and the selected market facts as visible text 154ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > asks the catalog question about the chosen filing without changing the selection 222ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > keeps author-only limits in the details instead of claiming a sequence or transmit 80ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > does not present parent-application build facts as facts about an unclaimed filing 94ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > reports missing build fields without discarding the existing offer or inventing facts 67ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > keeps Ask AnA absent for callers with no question callback 55ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker description search > finds an offered filing using wording present only in its description 70ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker description search > uses the same description rule for refused filings and retains the refusal reason 70ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker description search > a refused filing with a reason of its own shows that reason, not the market's general one 66ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > for every catalog row, a tile is shown exactly when the server offers the filing, and author-only ones say so 1338ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > offers exact Canada device authoring while medicinal applications retain their refusal 105ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a filing whose agency the server names no market for is not offered, and its reason is the server's 102ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > the chosen filing states its offer as text 84ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > lists nothing while the verdict is pending 6ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a failed read is an error with Retry, never an empty or a full list 87ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a tab shows the filings built and validated here first; the rest are one press away 176ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a chosen filing among the rest is never hidden behind the press 485ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a search lists everything it matches, built here or not, with no press 87ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a filing that creates an IND without being one (a Pre-IND meeting) states no tier; the NDA itself says Build and sequence 145ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a Type A meeting package is its own class: authored here, and says so 85ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the harmonised documents are offered for authoring under ICH, asked of the server by their own market 74ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the EU MDR/IVDR lane at a Notified Body is offered for authoring, asked of the server by its own market 69ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a search lists not-offered filings by the same fields as offered ones (an eCTD search finds Health Canada) 135ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the not-offered note counts the tab it is shown on 162ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > Retry stays mounted and busy while it reads again, and focus lands on the search box when the list arrives 75ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > catalogue functions carried into the Projects picker > shows the selected filing lifecycle as a clearly labelled reference 151ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > catalogue functions carried into the Projects picker > keeps the segment visible on a search result across all segments 71ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > catalogue functions carried into the Projects picker > finds a filing by the existing workflow label 81ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker reads what the platform offers once, not on every open > a second open within minutes reads nothing again, and both show the same filings 143ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker reads what the platform offers once, not on every open > the first open asks at most two reads, one for every type and one for the pairs the first did not name 72ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_cdx_pma retains CDx in review and create across arrival lanes 516ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_cdx_510k retains CDx in review and create across arrival lanes 275ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > eu_cdx_ivdr_d retains CDx in review and create across arrival lanes 211ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_510k permits the supported samd refinement and sends the reviewed value 255ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > ca_mdl permits the supported samd refinement and sends the reviewed value 246ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > ca_ivd_licence permits the supported cdx refinement and sends the reviewed value 199ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > jp_ivd_approval permits the supported cdx refinement and sends the reviewed value 191ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > retires a previous subtype when the person changes filing 350ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'us_hde' retains 'hde'/'device'/'FDA' 237ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'us_hde' retains 'hde'/'ivd'/'FDA' 237ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'ca_mdl' retains 'mdl'/'device'/'Health Canada' 219ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'ca_ivd_licence' retains 'ivd_licence'/'ivd'/'Health Canada' 210ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_shonin' retains 'shonin'/'device'/'PMDA' 196ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_nintei' retains 'ninsho'/'device'/'Registered certification body' 208ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_todokede' retains 'todokede'/'device'/'PMDA' 206ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'jp_ivd_approval' retains 'ivd_approval'/'ivd'/'PMDA' 204ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'jp_cdx' retains 'jp_cdx'/'cdx'/'PMDA' 237ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'mdrIII' offers only its exact declared-class scope, without choosing one 348ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'mdrI' offers only its exact declared-class scope, without choosing one 146ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'ivdrA' offers only its exact declared-class scope, without choosing one 130ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'ivdrCD' offers only its exact declared-class scope, without choosing one 144ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > leaves a class-specific filing unconfirmed when the sponsor has not stated its class 237ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > mdr asks its regional class, initially unstated 160ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > ivdr asks its regional class, initially unstated 151ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > mdr sends and reviews only the stated regional classification 191ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > ivdr sends and reviews only the stated regional classification 197ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > an unstated IVDR class sends null, never an FDA class 159ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > changing from FDA to IVDR retires hidden FDA facts and does not restore them on return 606ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > changing MDR to IVDR and back retires both earlier regional classifications 343ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > is a labelled region, not a modal dialog 137ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > closes on Escape and hands focus into the view on open 8ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > offers a named way back to the portfolio 76ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > states the current step in text, not only in colour 6ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > shows the human sentence and never the enum token 261ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > offers a retry for a confirmed refusal, after verifying workspaces again 235ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > shows the correlation id as the support handle 230ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > renders nothing internal even if an internal string reaches it 192ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > does not render a browser-native fetch message 205ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — created but not scaffolded > is a polite status with no retry, because the project exists 215ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > reads only on request, previews context, and copies stated fields only after confirmation 459ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > preserves manually entered fields, including entries typed after the preview was loaded 287ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > allows a member to reuse a saved draft and never substitutes therapeutic area for indication 197ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > copies device purpose only into intended use and leaves classification fields unset 255ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > keeps project creation on the separate review step and sends the reviewed copied wording 282ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > shows an honest unstarted state while manual project entry remains usable 142ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > reports a network read failure and allows an explicit retry 196ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > reports a invalid read failure and allows an explicit retry 157ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > drops a late tenant read and never applies another organization’s preview 6ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx > filing catalogue functions reached in the canonical picker > shows category descriptions and identifies the segment on cross-segment results 279ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx > filing catalogue functions reached in the canonical picker > searches by the existing workflow display label as well as descriptions 201ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx > filing catalogue functions reached in the canonical picker > shows exact filing metadata and authored lifecycle content for an offered selection 72ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx > filing catalogue functions reached in the canonical picker > lets every unavailable filing be inspected without selecting or starting it 93ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx > filing catalogue functions reached in the canonical picker > reports only the actual segment and search to its caller 71ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx > filing catalogue functions reached in the canonical picker > publishes the opened unavailable reference separately and clears it when closed 121ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx > filing catalogue functions reached in the canonical picker > retires an inspected reference when search or segment removes its detail 1155ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > offers no therapeutic area and no pre-chosen indication: the indication is an empty text field 324ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends no indication when none was typed, and the review says it is not stated 204ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends exactly the indication the person typed 189ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > starts on "Not stated — choose" and offers only drug and biologic 120ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > cannot continue until the product type is chosen 142ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > records the class that was chosen, and the review shows it 156ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — a filing type that fixes the class asks nothing > an NDA is recorded as a drug with no product-type question 148ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external failed outcome (gate breakdown=true) 158ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external invalid outcome (gate breakdown=true) 76ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external failed outcome (gate breakdown=false) 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > retains advisory clearance while displaying the external invalid outcome (gate breakdown=false) 59ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > an IND to FDA blocked by 2 blockers, and an MAA to EMA with no sequence, each say so on their own row 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a 500 on one verdict shows "No verdict" with a retry on that row only, never "Cleared", and keeps the other row 270ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — one row per market, each with its own server verdict > a sequence list with no body is "No verdict" with a retry, never "No sequence yet" 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > opening a row stashes the submission, its sequence and Validation when blocked, then opens the Submission Center 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > "Add a market" opens the Submission Center on New submission; "See every sequence in Submission Center" on the list 77ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > "Add a market" is a ghost button, first in the header; the other doors and each act are small buttons 47ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a project with no submission says so in words and offers Add a market 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a 403 on the list is the person’s role, stated once, with no retry and no alert in the header 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > Submit — opening the Submission Center, and the list’s own states > a failed list read is a failure with a retry, never "no market" 98ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > states both verdicts and the count in review, from the reads the tabs make (one board read) 95ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a board of approved documents is not "in review" 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectMarkets.test.tsx > the project header — each market’s verdict and the documents in review > a failed verdict is "No verdict" in the header too, never "Cleared" 41ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'eu_mdr_techdoc' records 'device' 468ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'eu_cer' records 'device' 243ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'medtech' search for 'us_510k_ivd' records 'ivd' 272ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'us_510k' records 'ivd' 300ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > asks for the trade name as well as the number 437ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > sends both halves when both are given 361ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > does not read a number with no trade name as a recorded predicate 265ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > says nothing about a predicate when neither half is given 190ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > publishes the first step and chosen filing, and passes Ask AnA through 320ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > reports actual picker segment and search alongside the selected filing 66ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > keeps an inspected unavailable filing separate from the selected creation choice and retires both with the actor 70ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > reports the visible filing segment and search, and clears the browsing context on close 87ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > tracks Configure, Review and Back while excluding entered/private fields 271ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > replaces a prior selection and restores portfolio context on close 118ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > keeps wizard state when a delayed portfolio response arrives 60ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > retires selected metadata if the signed-in organization no longer matches 62ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > starts a matching new account at the first step with no prior selection 165ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required 352ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name 164ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)" 131ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them 229ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product 194ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > never sends the filing type label as the name or the product 211ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > lists programs from /api/mission-control/programs 198ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > renders the SERVER’s measured readiness, names what is not measured, and invents no overall 77ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > shows the blockers and next actions the engine derived 39ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > distinguishes "could not load" from a bad score 36ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > survives a readiness body with no readiness map 19ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > survives list endpoints that answer with a non-array 20ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > says to sign in on a 401 instead of showing an empty program list 9ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > offers the empty state when the organization genuinely has no programs 13ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > creates a program through the real endpoint and reloads the list 124ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > refuses to create a program with no name, and says so out loud 87ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > the selected program states its regulatory frame, derived from modality 34ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > a program with no modality renders no frame rather than a guessed one 56ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > creates a program with the canonical modality on the wire, and omits "Not set" 97ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > an unset modality is omitted from the create body, not sent as an empty string 83ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > gives its tables explicit column headers 27ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > switching programs refetches that program’s records 51ms
+ ✓ client/src/concept2cure/v2/__tests__/missionControl.test.tsx > Mission Control — reads the real program engine > marks the selected program for assistive technology, not by colour alone 27ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > has no eyebrow, and one sub-line that says what the three steps do 155ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > states each step for screen readers only, and the current one with aria-current 12ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > keeps the step-1 note as text, without AnA’s spark 9ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > step 2 has no Team members field and no empty-state box 212ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > step 3 says, under the list, what happens on create and where to add people; the body is unchanged 285ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > the place the review names exists: the project page has a Team section that grants sharing 348ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > is found 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > draws no orange: the one primary button is D0’s, not this block’s 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > sizes every text from the D0 type scale, never below 12px 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > uses no muted ink below --text-300 (the quiet floor off --bg-000) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > marks the current step in ink, a done step in --text-200, never in a status colour 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > turns the step-1 box into one quiet line, and retires the kicker and the green box 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > keeps `.npw-seg-t` a heading where step 2 uses it, outside the step-1 note 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > frames the review once, at radius 12, with hairline rows and no fill 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > aligns the header, rail, body and footer on one gutter, the Projects page’s 1120px column 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > gives form fields 36px, and gives touch its 44px back 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > keeps the shared field classes’ layout where other screens use them: the two-column grid is the wizard’s own 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the registry picker reads as Claude's (D2-2b) > draws no orange and no status colour anywhere in the picker 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the registry picker reads as Claude's (D2-2b) > marks the chosen tab with an ink underline, and the chosen card with an ink ring 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the registry picker reads as Claude's (D2-2b) > gives a document type's agency, region, dossier and CTD chips one neutral style: they are facts, not statuses 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the registry picker reads as Claude's (D2-2b) > sizes no picker text below 12px and uses no muted ink below --text-300 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the registry picker reads as Claude's (D2-2b) > lays the cards in one column at phone width, and the cards at radius 12 1ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > "Add a market" opens New submission on arrival (F9) > with the project open, the form is open on arrival with its filing preselected 92ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > "Add a market" opens New submission on arrival (F9) > with no project open, nothing opens on its own 98ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an NDA · FDA project opens on NDA · FDA (US), with the project's client type 55ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an MAA · EMA project opens on MAA · EU (EMA), not on a US IND 40ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a Health Canada project preselects Health Canada, whatever its spelling 37ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project opened from a link (no workspace on the shell) takes its client type from the project's product type 44ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an IVD product is an IVD client, whatever bucket its filing type falls in 44ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when that market already exists on the project, no region is preselected, and the field says why 46ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each defaulted field says it came from the project's record 37ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a small-molecule IND is a Pharma client: the product type decides, not the filing type's bucket 34ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > opens at once while the project is read: the dialog says so, with no fields and no submit 32ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a type the form does not offer (J-NDA) is not guessed 30ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project record that could not be read preselects nothing, and says why 37ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when the project's submissions cannot be read, no region is preselected, and the drawer says why 37ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type 49ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission with no project open (F20) > preselects no application type, region or client type 25ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission over an unreadable submissions reply (F20) > a submissions reply with no list is a failed read: no region is preselected, and the drawer says why 38ms
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > is labelled optional and held to the server's 4,000 characters
+An update to NewProjectWizardSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NewProjectWizardSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > is labelled optional and held to the server's 4,000 characters
+An update to WizardFilingSetup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > is labelled optional and held to the server's 4,000 characters 273ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > shows it on the review and sends it with the create, in one write 248ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > sends none when none is stated 215ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > says a refused objective in the server's own words, and opens no project 210ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — a disabled Continue says why > names the first missing field beside Continue, step by step, and Continue is described by it 413ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — a disabled Continue says why > states the order the fields are asked in, for the create step too 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > opens Configure with the outline the project is built against, without transmit caveats 75ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > keeps a filing the platform does not offer in the server’s words 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > names the filing and the product type by their labels, and prints the date as a date 187ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > labels a filing as people name it, never by its key 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > the project header, its markets and its records name a filing as this list does 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > says when the name is already a project in the portfolio, and does not refuse it 161ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx > existing project setup monitoring choice > reviews and persists the explicitly selected monitoring service without seeding a record 553ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx > existing project setup monitoring choice > leaves monitoring unselected unless the creator chooses it 234ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > states the reason, offers no "Try again", and "Choose another filing" returns to step 1 without sending again 418ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > another confirmed refusal keeps "Try again" 202ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > Home names a project's client type in words > a device project reads "Medical device & IVD", never the key MDX 142ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > Home names a project's client type in words > with no project, the example names a device filing as well as a drug one 6ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > New project's review names the client type in words > an NDA is reviewed under "Client type", not "Workstream" 215ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > New project's review names the client type in words > a 510(k) is reviewed as "Medical device & IVD", never MDX 220ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > New project's objective speaks to every filing type > the placeholder names a device outcome beside the IND one, and no study endpoint 7ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > opens the real wizard using a validated action, and never submits intake 217ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > preserves a chosen filing and typed input when opened again 162ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > stashes across navigation and mount and consumes the opener once 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > keeps other portfolio actions guarded while the person is in intake 71ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > does not advertise an AnA cancellation action while the wizard owns the screen 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > can open intake even when the portfolio read failed 25ms
+ ✓ client/src/concept2cure/v2/__tests__/filingCatalogDestinationShell.test.tsx > the old filing catalogue reaches the core wizard > uses the same global wizard action with project-open=false 7ms
+ ✓ client/src/concept2cure/v2/__tests__/filingCatalogDestinationShell.test.tsx > the old filing catalogue reaches the core wizard > uses the same global wizard action with project-open=true 1ms
+stderr | client/src/concept2cure/v2/__tests__/filingCatalogDestinationShell.test.tsx > the old filing catalogue reaches the core wizard > replaces a copied URL once in StrictMode and preserves query and hash
+An update to TopBar inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CmdK inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to V2App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to V2App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to V2App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/filingCatalogDestinationShell.test.tsx > the old filing catalogue reaches the core wizard > replaces a copied URL once in StrictMode and preserves query and hash 416ms
+ ✓ client/src/concept2cure/v2/__tests__/filingCatalogDestinationShell.test.tsx > the old filing catalogue reaches the core wizard > imperative old navigation opens the wizard through one canonical history write 102ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > WS_LABEL names each workstream code as a client type > is exported, in sentence case, with the rail’s device name 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > reads the stated description first 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > falls back to the filing in words when no description is stated 16ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > falls back to the stage and lead for a payload without the four fields 9ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > never fills a value the record does not hold 12ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > ends with the code and when it was updated, and the target date only when one is set 14ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > carries no readiness bar, no chip and no readiness line 15ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the Projects header holds the title and one primary action > has no eyebrow, no sub-line and no Ask AnA button, and one New project 142ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the Projects header holds the title and one primary action > states the count the search covers in its placeholder, and none while loading 12ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the list view holds what the cards dropped, as text > names the client type in words and puts the portfolio figures after the table 109ms
+ ✓ client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > Ask AnA first, then your projects and your open items; no conversation list 157ms
+ ✓ client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > lists five projects and names how many there are in all 85ms
+stderr | client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > your tasks opens the task board
+An update to NamedReviewGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Home inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Ask AnA > keeps AnA’s run controls behind one AnA settings button
+An update to NamedReviewGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Home inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Ask AnA > the composer is named by its heading
+An update to NamedReviewGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HomeTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Home inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > New project opens the new-project wizard, not the portfolio behind it 59ms
+ ✓ client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > your tasks opens the task board 24ms
+ ✓ client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Ask AnA > keeps AnA’s run controls behind one AnA settings button 30ms
+ ✓ client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Ask AnA > the composer is named by its heading 14ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > each submission row shows its market's support, in the server's words 136ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > a failed read says it failed and offers a retry; it never reads as a market with nothing to say 198ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > a read in flight claims nothing about the market 3ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > says nothing, and reads nothing, without both an application type and a market 1ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > does not repeat the summary when the line says the same thing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > a line that opens with the summary is shown once, not after the summary 0ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > selected filing build facts use the existing market response > names the recorded pack/version and keeps Module 1 and channel limitations 1ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > selected filing build facts use the existing market response > does not invent a pack when the response states no outline 0ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > selected filing build facts use the existing market response > requires readable outline facts 0ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > selected filing build facts use the existing market response > requires readable module1 facts 0ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > selected filing build facts use the existing market response > requires readable channel facts 0ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > selected filing build facts use the existing market response > refuses malformed fields and contradictory outline identity 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newSubmissionRegionStatement.test.tsx > New submission: the chosen region is stated in full > states the chosen region's summary and line under the select, and follows the choice 281ms
+ ✓ client/src/concept2cure/v2/__tests__/newSubmissionRegionStatement.test.tsx > New submission: a market not offered cannot be chosen > disables the option the statement does not offer, and keeps the offered ones 112ms
+ ✓ client/src/concept2cure/v2/__tests__/filingAskPrompt.test.tsx > the canonical picker preserves the filing catalogue Ask AnA question > uses the shared builder for the chosen real catalog filing without changing selection 307ms
+ ✓ client/src/concept2cure/v2/__tests__/filingAskPrompt.test.tsx > the canonical picker preserves the filing catalogue Ask AnA question > preserves the existing question wording and the catalog display name 2ms
+ ✓ client/src/concept2cure/v2/__tests__/csrRunBuildsScope.test.tsx > clears old build, review and assembly immediately on a project/run switch 75ms
+ ✓ client/src/concept2cure/v2/__tests__/csrRunBuildsScope.test.tsx > ignores a late reply from the previously selected project after the new project loads 11ms
+ ✓ client/src/concept2cure/v2/__tests__/csrRunBuildsScope.test.tsx > does not let an older headings reply restore superseded review state 110ms
+ ✓ client/src/concept2cure/v2/__tests__/csrRunBuildsScope.test.tsx > withholds narrative and assembly actions on a failed section read, then retries into the current headings 45ms
+ ✓ client/src/concept2cure/v2/__tests__/csrRunBuildsScope.test.tsx > rejects malformed or unrecognized saved build records without exposing review controls 11ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > retires engineering working state when the selected project changes 38ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > draws no portfolio and no creation door; with no project open it sends the person to Projects 119ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > says which postmarket panels are this project's, without changing the selected project 5ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > requires an explicit project selection before mounting a project feature 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > never substitutes another same-pathway project for an unavailable selection 3ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > software does not borrow the first project 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > keeps the selected project and responds when the shell switches projects 18ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > withholds the leaf on a failed context read and offers a retry 16ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > routes an IVD away from MDR CER into performance evaluation 15ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > opens the CER document type for the selected project, preserving pathway-specific authoring 14ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > keeps a secondary IVDR performance section out of the primary 510(k) document 11ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleEctdFormat.test.tsx > IndLifecycle — the format it names > names eCTD v3.2.2, the format FDA packages are built in, and never v4.0 214ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > EmptyState — the four-part contract > renders all four parts, and the action fires 117ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > EmptyState — the four-part contract > a failure is not an empty state: tone="error" drops the CTA and the regulation line 18ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > EmptyState — the four-part contract > openProgramAction navigates when it holds nav, and reaches the shell when it does not 1ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > the passive instruction is retired from the converted surfaces > CmcModule3Build.tsx no longer says "Select a program" (or "Select a project") as prose 0ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > the passive instruction is retired from the converted surfaces > CmcQuality.tsx no longer says "Select a program" (or "Select a project") as prose 0ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > the passive instruction is retired from the converted surfaces > CmcModule.tsx no longer says "Select a program" (or "Select a project") as prose 1ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > the passive instruction is retired from the converted surfaces > each converted surface offers the one real action instead 1ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyState.contract.test.tsx > EmptyState carries no chip tone > the idle panel is `c2c-empty-state` alone 3ms
+stdout | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-11-09T21:07:03.772Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T21:07:03.774Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-11-09T21:07:03.774Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/submissions-market-support.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-11-09T21:07:04.075Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > a failed pack read is a failure, never a market with no outline
+{
+  "timestamp": "2026-11-09T21:07:10.155Z",
+  "level": "error",
+  "message": "[submissions-routes] submissions route error",
+  "context": {
+    "err": "connection reset",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > without a market, states every region the platform names for the application type, from one pack read 21ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > with a market, states that one 6ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > refuses a request with no application type 3ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > a failed pack read is a failure, never a market with no outline 4ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > answers every listed type by type, each exactly as its own single read answers it, from one pack read 14ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > states each listed type at each listed market, as the market was asked 7ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > one type at a list of markets keeps the single answer, one row per market as asked 3ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > repeats no type and no market 2ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > refuses a type the platform does not know, naming it, before any read 3ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > takes every type the platform knows in one read, and refuses a list longer than 100 entries before any read 24ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > every type the New project picker can ask, for every catalog filing in every lane, is a type the list accepts 2ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support with a list of application types > keeps the single-type answer exactly as it was for every existing caller 4ms
+stdout | server/routes/__tests__/submissions-create-not-offered.test.ts
+{
+  "timestamp": "2026-11-09T21:07:10.929Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T21:07:10.930Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/submissions-create-not-offered.test.ts
+{
+  "timestamp": "2026-11-09T21:07:10.931Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/submissions-create-not-offered.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/submissions-create-not-offered.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submissions-create-not-offered.test.ts
+{
+  "timestamp": "2026-11-09T21:07:10.988Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/submissions-create-not-offered.test.ts > POST /api/submissions — a market the platform does not offer > refuses a UK IND with the statement, and creates nothing 23ms
+ ✓ server/routes/__tests__/submissions-create-not-offered.test.ts > POST /api/submissions — a market the platform does not offer > creates a US IND as before 8ms
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-11-09T21:07:12.993Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T21:07:12.995Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-11-09T21:07:12.995Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+[database] Database connection successful
+
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (maa, EMA) → Module 1 without the agency's headings, no transmit channel 2ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, FDA) → Module 1 to the agency's headings 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nds, Health_Canada) → No outline, no transmit channel 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, ANVISA) → Not supported 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > a market is named by its agency, its region code or its submission region alike 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > FDA: transmit is wired but not proven, and the line says why 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA MAA: flat Module 1, and the applicant uploads it 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA CTA goes through the CTIS portal only 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > PMDA J-NDA: flat, the adapter refuses, and a new application is blocked on eCTD v4.0 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > Health Canada: no outline; its adapter posts to an endpoint written from no agency source, so no channel 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > NMPA, MFDS and TGA: no outline; no channel. NMPA and MFDS are gate-checked, TGA is not 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > MHRA "IND" is not offered: the UK has no IND, and the ind:mhra pack is mislabelled 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > an unmapped agency is not supported: no outline or channel, and no refusal is claimed 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no line names a rule pack, an adapter or a signature format 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no pack is borrowed from another agency: an FDA NDA pack does not give Health Canada an outline 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > module1ShapeForAgency is the backbone classification, by agency 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (510k, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (pma, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (de_novo, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (ide, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (mdr, EMA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (cer, EMA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > a 510(k) has its outline: outline only, no package 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > a DMF has the ICH Module 3 outline the scaffolder gives its project 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport fails closed on an empty rule-pack read > no active pack at all is a failed read, not "No outline" for every market 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport reads the active packs once, from c2c_rule_packs > asks only for packs not superseded, and composes every requested market from that one read 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > EMA and PMDA are no longer reported buildable; FDA is 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > PMDA is not reported submit-supported while its adapter refuses every transmit 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > the coverage matrix agrees with the plan 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > FDA market support separates product copy from technical diagnostics > renders the plain FDA product line while retaining its technical diagnostic 0ms
+stdout | server/services/regulatory/__tests__/market-support-offer.test.ts
+{
+  "timestamp": "2026-11-09T21:07:14.099Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T21:07:14.101Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support-offer.test.ts
+{
+  "timestamp": "2026-11-09T21:07:14.101Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/regulatory/__tests__/market-support-offer.test.ts
+[database] Database connection successful
+
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (ind, FDA) is built and sequenced, and says transmit is not proven 3ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (nda, FDA) is built and sequenced, and says transmit is not proven 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (bla, FDA) is built and sequenced, and says transmit is not proven 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (anda, FDA) is built and sequenced, and says transmit is not proven 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > an EU MAA: Module 1 is flat, so no EMA sequence is built 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > an EU clinical trial (CTA through CTIS) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (510k): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (de_novo): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (pma): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (ide): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a master file: bound to the harmonised Module 3 outline, as creation binds it, and authored 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a continuing PMDA application (approval number on file): authored, Module 1 flat 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nds, Health_Canada) 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, Health Canada) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (cta, Health_Canada) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, TGA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, NMPA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, MFDS) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EMA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (ind, MHRA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, ANVISA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EU / Notified Body) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (device, EU / Notified Body) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (device, FDA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (jnda, PMDA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > sequenceTypeRefusal — FDA has no variation > refuses a variation for FDA, however the region is named 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > sequenceTypeRefusal — FDA has no variation > an EU variation, and every other FDA type, is not refused here 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an FDA NDA names the NDA and the marketing applications of its family, and no meeting, designation, supplement, report or QMS record 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an FDA BLA names the BLA and the 351(k), not the supplement 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an author-only or refused offer is not scoped to named filings 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (mdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (ivdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (cer, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > however the catalog or an API caller names it 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, us) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, US) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (maa, EU) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (maa, eu) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, FDA) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, Health Canada) → Health_Canada 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (mdr, EU / Notified Body) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (ivdr, EU / Notified Body) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (cer, EU / Notified Body) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, EU / Notified Body) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, Swissmedic) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (device, EU / Notified Body) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > Health Canada: the channel says nothing is sent, not that an adapter posts > the statement uses the Health Canada sentence, which the adapter refusal also uses 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > a filing document class is stated as authored, and claims no build, Module 1 or channel > (pas, FDA): an outline, author-only, nothing built or sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > a filing document class is stated as authored, and claims no build, Module 1 or channel > (briefing, FDA): an outline, author-only, nothing built or sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > a filing document class is stated as authored, and claims no build, Module 1 or channel > (psur, EMA): an outline, author-only, nothing built or sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > a filing document class is stated as authored, and claims no build, Module 1 or channel > (csr, ICH / Global): an outline, author-only, nothing built or sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > a filing document class is stated as authored, and claims no build, Module 1 or channel > a class at an agency with no pack for it is not offered, with the reason 0ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > Project home keeps one column width on every step > `.pj` claims the flex row it sits in 3ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > The Projects list reads at 1440 and at 390 > a cell's text wraps inside its column 0ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > The Projects list reads at 1440 and at 390 > on a phone the table scrolls inside its frame and keeps its columns 0ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > Project home's section actions stay on a phone's screen > the head and its actions wrap at ≤640px 4ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > New project's filing tabs reach every client type on a phone > the wizard scrolls its filing tabs sideways and does not shrink them 4ms
+stdout | server/services/regulatory/__tests__/regional-device-market-support.test.ts
+{
+  "timestamp": "2026-11-09T21:07:15.252Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T21:07:15.253Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/regional-device-market-support.test.ts
+{
+  "timestamp": "2026-11-09T21:07:15.253Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/regulatory/__tests__/regional-device-market-support.test.ts
+[database] Database connection successful
+
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > hde offers only its exact outline and no package or transport 4ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > mdl offers only its exact outline and no package or transport 1ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ivd_licence offers only its exact outline and no package or transport 1ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > shonin offers only its exact outline and no package or transport 1ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ninsho offers only its exact outline and no package or transport 1ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > todokede offers only its exact outline and no package or transport 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ivd_approval offers only its exact outline and no package or transport 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > jp_cdx offers only its exact outline and no package or transport 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > hde refuses missing exact outline even if an ICH outline exists 1ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > mdl refuses missing exact outline even if an ICH outline exists 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ivd_licence refuses missing exact outline even if an ICH outline exists 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > shonin refuses missing exact outline even if an ICH outline exists 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ninsho refuses missing exact outline even if an ICH outline exists 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > todokede refuses missing exact outline even if an ICH outline exists 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ivd_approval refuses missing exact outline even if an ICH outline exists 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > jp_cdx refuses missing exact outline even if an ICH outline exists 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > hde refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > mdl refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ivd_licence refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > shonin refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ninsho refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > todokede refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > ivd_approval refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > jp_cdx refuses another authority even when that authority has a same-name pack 0ms
+ ✓ server/services/regulatory/__tests__/regional-device-market-support.test.ts > regional device offers judge the exact authoring application and authority > certification does not become PMDA approval when Japan is selected 0ms
+stdout | server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts
+{
+  "timestamp": "2026-11-09T21:07:16.329Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T21:07:16.330Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts
+{
+  "timestamp": "2026-11-09T21:07:16.331Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts
+[database] Database connection successful
+
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > ICH / Global, asked for a filing that is not a harmonised document class: not offered, and why > (nda, ICH / Global) 2ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > ICH / Global, asked for a filing that is not a harmonised document class: not offered, and why > (ind, ICH / Global) 1ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > ICH / Global, asked for a filing that is not a harmonised document class: not offered, and why > (bla, ICH) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > ICH / Global, asked for a filing that is not a harmonised document class: not offered, and why > (maa, ich_global) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > ICH / Global, asked for a filing that is not a harmonised document class: not offered, and why > (pas, ICH / Global) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > ICH / Global, asked for a filing that is not a harmonised document class: not offered, and why > no part of the statement claims a missing outline or names a document agency 1ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > ICH / Global, asked for a filing that is not a harmonised document class: not offered, and why > project creation reads the same refusal, whatever the scaffold would find 0ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > the QOS, the drug substance and the drug product each say where they are written > exactly these three registered filings carry a reason of their own, and the tier is unchanged 0ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > the QOS, the drug substance and the drug product each say where they are written > each names its module, where it is written, and what is composed for a small-molecule US IND 0ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > the QOS, the drug substance and the drug product each say where they are written > each reads as sentences, with no ids or tool names on screen 1ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > the QOS, the drug substance and the drug product each say where they are written > only ICH's not-offered statement carries a per-filing reason 2ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > what the three sentences state is true of the records they name > the registry places the QOS at 2.3, the drug substance at 3.2.S and the drug product at 3.2.P 0ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > what the three sentences state is true of the records they name > a drug substance filed on its own has its filing types, each in the catalog and offered for authoring 0ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > what the three sentences state is true of the records they name > AnA composes the QOS: its record-composed Module 2.3 tool is in the launch scope 1ms
+ ✓ server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts > a harmonised document at ICH says it is filed from its application's own project (as 5ab138ed3 words it) > (csr, ICH / Global): authored here, and filed in its application's sequence from that project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > medtech (undefined) → medtech 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > medtech (medical_device) → medtech 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > medtech (ivd_diagnostics) → diagnostics 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > biotech (undefined) → biotech 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > pharma (undefined) → pharma 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > cro (undefined) → cro 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > an industry that serves every category states none, so the column keeps its default 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > sign-up states the client type its industry names > the sign-up route writes it on the new organisation 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > the shell's lane follows the organisation until the person chooses one > a medtech or diagnostics organisation opens on its own lane, not the stored default 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > the shell's lane follows the organisation until the person chooses one > biotech and pharma are the one biopharma lane 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > the shell's lane follows the organisation until the person chooses one > a lane the person chose wins; an unknown or unread client type keeps the stored lane 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientTypeFollowsTenant.test.ts > the shell's lane follows the organisation until the person chooses one > every client type sign-up can state names a lane 0ms
+
+ Test Files  40 passed (40)
+      Tests  454 passed (454)
+   Start at  21:05:49
+   Duration  87.18s (transform 11.83s, setup 1.75s, import 29.31s, tests 41.42s, environment 10.60s)
+
