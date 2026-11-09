@@ -1,0 +1,33 @@
+GET /api/c2c/projects/6065271c-d4b0-4936-aad1-02855423a738/source-changes -> 200
+{
+  "vaultFeedCount": 1,
+  "vaultFamiliesTruncated": false,
+  "vaultFamilyCount": 18,
+  "vaultFamilies": [
+    {
+      "id": "a2617cdb-6f2a-4232-9623-2619156a49c5",
+      "version": "2.0",
+      "title": "Drug substance specification",
+      "documentCode": "S12-WALK-1794192292154"
+    },
+    {
+      "id": "af68853b-1118-44b5-b0a7-dad3d90abd00",
+      "version": "2.0",
+      "title": "Drug substance specification",
+      "documentCode": "S12-WALK-1794192311375"
+    },
+    {
+      "id": "1def1241-85fb-4029-ad5c-93c4d952f018",
+      "version": "3.0",
+      "title": "Drug substance specification",
+      "documentCode": "S12-WALK-1794192323817"
+    },
+    {
+      "id": "21dde493-bb5b-4dc8-bc07-774851d8d1ab",
+      "version": "2.0",
+      "title": "Drug substance specification",
+      "documentCode": "S12-WALK-1794192376320"
+    }
+  ]
+}
+unauthenticated -> 401

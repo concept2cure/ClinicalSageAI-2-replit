@@ -47,7 +47,7 @@ beforeEach(() => {
     if (method === 'POST' && url === '/api/tasks/tasks') {
       const task = body as unknown as Record<string, unknown>;
       planTasks = [...(planTasks === 'fail' ? [] : planTasks), { taskId: 'task-9', sourceEntityType: task.sourceEntityType, sourceEntityId: task.sourceEntityId,
-        assigneeId: 12, assigneeName: 'Dana Ruiz', dueDate: task.dueDate, status: 'pending', createdAt: '2026-11-09T00:00:00Z' }];
+        assigneeId: 12, assigneeName: 'Dana Ruiz', dueDate: task.dueDate, status: 'pending', createdAt: '2026-11-09T00:00:00Z', moduleData: task.moduleData }];
       return ok({ success: true, data: { taskId: 'task-9', assigneeName: 'Dana Ruiz', assigneeId: 12, sourceEntityType: task.sourceEntityType, sourceEntityId: task.sourceEntityId } }, 201);
     }
     if (method === 'POST' && url === '/api/c2c/projects') {
@@ -159,7 +159,7 @@ describe('the program map beside the work projects (S12 gap 5)', () => {
       sectionId: `s-${sectionCode}`, sectionCode, documentTitle: 'Module 3 quality', citedVaultId: `v-${sectionCode}`, citedVersion,
       vaultTitle: 'Drug substance specification', state, approvedVaultId: approvedVersion ? 'v-new' : null, approvedVersion });
     const vaultFeeds = [feed('3.2.S.4.1', 'replaced', '1.0', '3.0'), feed('3.2.S.4.2', 'current', '3.0', null)];
-    changesReply = { changes: [], count: 0, vaultChanges: [], vaultCount: 0, vaultFeeds, vaultFeedCount: 2 };
+    changesReply = { changes: [], count: 0, vaultChanges: [], vaultCount: 0, vaultFeeds, vaultFeedCount: 2, vaultFamilies: [], vaultFamiliesTruncated: false };
     render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
     const map = await screen.findByTestId('pj-vault-feeds');
     expect(map.textContent).toContain('2 sections of this filing were drafted from Vault versions; 1 was replaced since cited.');
@@ -179,5 +179,63 @@ describe('the program map beside the work projects (S12 gap 5)', () => {
     const refused = await screen.findByTestId('pj-vault-feeds-unread');
     expect(refused.textContent).not.toContain('could not be checked');
     expect(refused.textContent).toMatch(/the sections drafted from the Vault/);
+  });
+
+  it('names the Vault document a work project is assigned to produce, re-checked on read, and never as lineage (S12 gap 5)', async () => {
+    rows = [child(101, 'Drug substance CMC', 'cmc')];
+    const spec = { documentCode: 'DS-SPEC', title: 'Drug substance specification', version: '2.0' };
+    changesReply = { changes: [], count: 0, vaultChanges: [], vaultCount: 0, vaultFeeds: [], vaultFeedCount: 0,
+      vaultFamilies: [spec, { documentCode: 'DS-PROC', title: 'Drug substance process', version: '1.0' }], vaultFamiliesTruncated: false };
+    render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
+    expect(await screen.findByText('No one is assigned to deliver it yet.')).toBeTruthy();
+    expect(screen.queryByTestId('pj-work-project-produces')).toBeNull();
+    // The picker lists the program's current families; choosing one sends its code with the Plan's task.
+    const picker = await screen.findByLabelText(/Vault document it produces/);
+    expect(Array.from(picker.querySelectorAll('option')).map((o) => o.textContent))
+      .toEqual(['Not named', 'Drug substance specification · DS-SPEC · v2.0', 'Drug substance process · DS-PROC · v1.0']);
+    fireEvent.change(picker, { target: { value: 'DS-SPEC' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Assign$/ }));
+    fireEvent.change(await screen.findByLabelText(/^Person/), { target: { value: '12' } });
+    fireEvent.change(screen.getByLabelText(/^Due date/), { target: { value: '2026-11-30' } });
+    fireEvent.click(document.querySelector('.de-btn.primary') as HTMLElement);
+    await waitFor(() => expect(apiRequest.mock.calls.some(([m, u]) => m === 'POST' && u === '/api/tasks/tasks')).toBe(true));
+    const [, , task] = apiRequest.mock.calls.find(([m, u]) => m === 'POST' && u === '/api/tasks/tasks')!;
+    expect(task).toMatchObject({ moduleData: { programId: PID, workProjectId: 101, vaultDocumentCode: 'DS-SPEC' } });
+    expect((await screen.findByTestId('pj-work-project-produces')).textContent)
+      .toBe('Assigned to produce Drug substance specification (current v2.0)');
+    expect(screen.queryByTestId('pj-work-project-family-partial')).toBeNull();
+    cleanup();
+    // Read again, the picker starts from the assigned family, so assigning another person keeps it.
+    render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
+    await screen.findByTestId('pj-work-project-produces');
+    expect((screen.getByLabelText(/Vault document it produces/) as HTMLSelectElement).value).toBe('DS-SPEC');
+    cleanup();
+    // A person who may not write is told what it was assigned to produce, and offered no picker.
+    auth.user = { id: '7', permissions: ['read'] };
+    render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
+    await screen.findByTestId('pj-work-project-produces');
+    expect(screen.queryByLabelText(/Vault document it produces/)).toBeNull();
+    auth.user = null;
+    cleanup();
+    // The family is gone from the program's complete list: said, as a warning.
+    changesReply = { ...changesReply, vaultFamilies: [] };
+    render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
+    expect((await screen.findByTestId('pj-work-project-produces')).textContent)
+      .toBe('The assigned Vault document (DS-SPEC) is no longer in this project’s Vault.');
+    cleanup();
+    // A list that was cut short cannot say it is gone, and its picker says it is partial.
+    changesReply = { ...changesReply, vaultFamilies: [{ documentCode: 'DS-PROC', title: 'Drug substance process', version: '1.0' }],
+      vaultFamiliesTruncated: true };
+    render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
+    expect((await screen.findByTestId('pj-work-project-produces')).textContent)
+      .toBe('The assigned Vault document (DS-SPEC) could not be checked.');
+    expect(screen.getByTestId('pj-work-project-family-partial').textContent).toBe('Showing the first 1 Vault document.');
+    cleanup();
+    // A map that could not be read offers no picker, and cannot say the family is current.
+    changesReply = { changes: [], count: 0 };
+    render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
+    expect((await screen.findByTestId('pj-work-project-produces')).textContent)
+      .toBe('The assigned Vault document (DS-SPEC) could not be checked.');
+    expect(screen.queryByLabelText(/Vault document it produces/)).toBeNull();
   });
 });

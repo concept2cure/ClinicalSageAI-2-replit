@@ -1,0 +1,463 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > lists them by the project's verified id and program, with their kind in words 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > says none, and a failed read is an error, never "none" 16ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > adds one with its kind and name, then lists it 155ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > says a refusal, and offers no add to a person who may not change the project, nor anything before the id is known 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > opens a work project on its work area where the project offers it, and says when its kind has none (P-83 (b)) 73ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > gives a work project its owner and due date through the Plan's assign, and says when its assignment cannot be read 54ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > beside the work projects, names the filing's sections drafted from the Vault with their standing, unattributed (S12 gap 5) 20ms
+ × client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > names the Vault document a work project is assigned to produce, re-checked on read, and never as lineage (S12 gap 5) 5010ms
+   → Unable to find a label with the text of: /Vault document it produces/
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-work-projects"[39m
+      [33mdata-testid[39m=[32m"pj-work-projects"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-work-projects-h"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0mWork projects[0m
+        [36m</h4>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-plus"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 5v14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Add a work project[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"pj-work-projects-l"[39m
+      [36m>[39m
+        [36m<li>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-work-project-n"[39m
+          [36m>[39m
+            [0mDrug substance CMC[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-card-note"[39m
+          [36m>[39m
+            [0mCMC · JM Smith[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-work-project-own"[39m
+            [33mdata-testid[39m=[32m"pj-work-project-own"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-card-note"[39m
+            [36m>[39m
+              [0mNo one is assigned to deliver it yet.[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-users"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"9"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 3.13a4 4 0 0 1 0 7.75"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssign[0m
+            [36m</button>[39m
+          [36m</span>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-work-projects"[39m
+      [33mdata-testid[39m=[32m"pj-work-projects"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-work-projects-h"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0mWork projects[0m
+        [36m</h4>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-plus"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 5v14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Add a work project[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"pj-work-projects-l"[39m
+      [36m>[39m
+        [36m<li>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-work-project-n"[39m
+          [36m>[39m
+            [0mDrug substance CMC[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-card-note"[39m
+          [36m>[39m
+            [0mCMC · JM Smith[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-work-project-own"[39m
+            [33mdata-testid[39m=[32m"pj-work-project-own"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-card-note"[39m
+            [36m>[39m
+              [0mNo one is assigned to deliver it yet.[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-users"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"9"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 3.13a4 4 0 0 1 0 7.75"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssign[0m
+            [36m</button>[39m
+          [36m</span>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > names the Vault document a work project is assigned to produce, re-checked on read, and never as lineage (S12 gap 5)
+TestingLibraryElementError: Unable to find a label with the text of: /Vault document it produces/
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-work-projects"[39m
+      [33mdata-testid[39m=[32m"pj-work-projects"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-work-projects-h"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0mWork projects[0m
+        [36m</h4>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-plus"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 5v14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Add a work project[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"pj-work-projects-l"[39m
+      [36m>[39m
+        [36m<li>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-work-project-n"[39m
+          [36m>[39m
+            [0mDrug substance CMC[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-card-note"[39m
+          [36m>[39m
+            [0mCMC · JM Smith[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-work-project-own"[39m
+            [33mdata-testid[39m=[32m"pj-work-project-own"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-card-note"[39m
+            [36m>[39m
+              [0mNo one is assigned to deliver it yet.[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-users"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"9"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 3.13a4 4 0 0 1 0 7.75"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssign[0m
+            [36m</button>[39m
+          [36m</span>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-work-projects"[39m
+      [33mdata-testid[39m=[32m"pj-work-projects"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-work-projects-h"[39m
+      [36m>[39m
+        [36m<h4>[39m
+          [0mWork projects[0m
+        [36m</h4>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-plus"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 5v14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Add a work project[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"pj-work-projects-l"[39m
+      [36m>[39m
+        [36m<li>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-work-project-n"[39m
+          [36m>[39m
+            [0mDrug substance CMC[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-card-note"[39m
+          [36m>[39m
+            [0mCMC · JM Smith[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-work-project-own"[39m
+            [33mdata-testid[39m=[32m"pj-work-project-own"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"pj-card-note"[39m
+            [36m>[39m
+              [0mNo one is assigned to deliver it yet.[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-users"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"9"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 3.13a4 4 0 0 1 0 7.75"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mAssign[0m
+            [36m</button>[39m
+          [36m</span>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx:193:33
+    191|     expect(screen.queryByTestId('pj-work-project-produces')).toBeNull(…
+    192|     // The picker lists the program's current families; choosing one s…
+    193|     const picker = await screen.findByLabelText(/Vault document it pro…
+       |                                 ^
+    194|     expect(Array.from(picker.querySelectorAll('option')).map((o) => o.…
+    195|       .toEqual(['Not named', 'Drug substance specification · DS-SPEC ·…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  07:27:40
+   Duration  6.49s (transform 463ms, setup 100ms, import 568ms, tests 5.42s, environment 303ms)
+

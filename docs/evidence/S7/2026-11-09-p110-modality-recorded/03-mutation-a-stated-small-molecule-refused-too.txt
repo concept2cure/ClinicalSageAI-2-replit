@@ -1,0 +1,14 @@
+ × server/services/cmc/__tests__/composition-scope.test.ts > the product class the person recorded is asked first > composes a program recorded as a drug 7ms
+   → expected { …(3) } to be null
+ × server/services/cmc/__tests__/composition-scope.test.ts > the product class the person recorded is asked first > falls through to the substance record when no class is recorded (pre-P-21 data) 1ms
+   → expected { …(3) } to be null
+ × server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > composes a small molecule for a US IND, however the type is cased 1ms
+   → expected { …(3) } to be null
+ × server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > composes for an IND program that has no submission row yet 1ms
+   → expected { …(3) } to be null
+ × server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses a CTA or NDA program that has no submission row yet 3ms
+   → CTA: expected 'CMC_MODALITY_NOT_ESTABLISHED' to be 'CMC_APPLICATION_OUT_OF_SCOPE' // Object.is equality
+ × server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses when the program row itself could not be read 1ms
+   → expected 'CMC_MODALITY_NOT_ESTABLISHED' to be 'CMC_APPLICATION_NOT_READABLE' // Object.is equality
+ × server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > admits a small molecule once its modality is recorded, and only then 1ms
+   → the boundary refused a substance that states it is a small molecule: expected { …(3) } to be null
