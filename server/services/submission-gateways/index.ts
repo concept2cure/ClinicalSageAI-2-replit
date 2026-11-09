@@ -359,6 +359,10 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
           technicalRejection: undefined,
           as2Receipt: undefined,
           as2ReceiptHistory: undefined,
+          // P-99 C2: a sent sequence's record put back on record, and the binding its act restores, are that act's alone.
+          leafManifestDerivation: undefined,
+          sentRecordStatement: undefined,
+          restoredBinding: undefined,
         },
       });
       // What was checked travels with the result — including checks that

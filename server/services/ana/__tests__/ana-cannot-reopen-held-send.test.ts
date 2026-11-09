@@ -13,7 +13,7 @@ import { ALL_ANA_TOOLS_RAW } from '../AnaToolDefinitions.js';
 
 const SERVER = path.resolve(__dirname, '../../..');
 const TOOL_ROOTS = [path.join(SERVER, 'services/ana'), path.join(SERVER, 'mcp')];
-/** What only the technical rejection's own path names. */
+/** What only the re-open's own path names. */
 const REOPEN_ACT =
   /recordHeldSendReopen\b|applyHeldSendReopen|precheckHeldSendReopen|ECTD_HELD_SEND_REOPENED|HELD_SEND_REOPEN_INTENT|['"`]held-send-reopen['"`]|held-send\/reopen/;
 
