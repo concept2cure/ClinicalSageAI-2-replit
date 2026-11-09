@@ -43,7 +43,7 @@
 
 import { createHash } from 'node:crypto';
 import { recordCurrentRunSource } from '../ai-gateway/model-call-scope.js';
-import { sensitivityTierForClassification, decideInputTierPlacement } from '../ai-gateway/sensitive-placement-policy.js';
+import { sensitivityTierForClassification } from '../ai-gateway/sensitive-placement-policy.js';
 import { LEGACY_CATALOG_VERIFICATION_SCOPE } from '../../../shared/ana/catalog-facts.js';
 import type { ToolContext } from './AnaToolExecutor.js';
 import type { ProjectDocumentPage } from '../vault/document-catalog.service.js';
@@ -60,7 +60,7 @@ import {
 import { registerDocumentPlacementHandlers } from './document-placement-tools.js';
 import { registerDocumentPassageHandlers } from './document-passage-tools.js';
 import { vaultWriteRefusal } from '../vault/vault-write-authority.js';
-import { catalogScope, catalogDocumentBoundary, sourceReadInput } from './catalog-scope.js';
+import { catalogScope, catalogDocumentBoundary, readDocumentBoundary, sourceReadInput } from './catalog-scope.js';
 import { requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 import { sourceAvailabilityPresentation, catalogVersionRefusal } from '../vault/document-catalog-eligibility.js';
 import { RESULT_BUDGET } from './agentic-loop.js';
@@ -379,26 +379,6 @@ function registerDocumentRoutingSource(svc: CatalogService, actor: ReturnType<ty
     } });
 }
 
-/**
- * A document the model serving this turn may not receive is refused at the read, before any of its text enters the
- * turn (demo sweep, 2026-11-09). Read and recorded as a run source, it refused the turn's next round with
- * DENY_INPUT_TIER: the step showed as done, and AnA never answered. The classification is not changed here; the
- * person is told where it is set. Only when the serving model is known: other callers keep the run-source check.
- */
-function tierRefusal(doc: LoadedDocument, ctx?: ToolContext): string | null {
-  const provider = ctx?.servingModel?.provider;
-  if (!provider) return null;
-  const tier = sensitivityTierForClassification(doc.classification);
-  if (decideInputTierPlacement({ tiers: [tier], provider }).allowed) return null;
-  const label = typeof doc.classification === 'string' && doc.classification.trim() ? doc.classification.trim().toUpperCase() : 'not classified';
-  return JSON.stringify({
-    ok: false, code: 'SOURCE_TIER_NOT_SENDABLE', documentId: doc.id, classification: label,
-    error: `This document is classified ${label}, and its text is not sent to ${provider}, so it was not read. ` +
-      'If it may be shared with the AI provider, a person can set its classification to Internal or Public in the Vault (Edit details). ' +
-      'Tell the person this; do not guess its contents.',
-  });
-}
-
 async function handleReadProjectDocument(input: Record<string, unknown>, ctx?: ToolContext): Promise<string> {
   const gate = await requireDocumentAccess(ctx, 'read_project_document');
   if ('refusal' in gate) return JSON.stringify({ ok: false, error: gate.refusal, ...('code' in gate ? { code: gate.code } : {}) });
@@ -416,10 +396,8 @@ async function handleReadProjectDocument(input: Record<string, unknown>, ctx?: T
   if (!doc) {
     return unknownDocumentRefusal(documentId, 'read_project_document');
   }
-  const boundary = catalogDocumentBoundary(scope, doc.programId);
+  const boundary = readDocumentBoundary(scope, doc, ctx);
   if (boundary) return boundary;
-  const notSendable = tierRefusal(doc, ctx);
-  if (notSendable) return notSendable;
 
   const sourceCatalogStatus = storedCatalogStatus(doc), text = doc.extractedText ?? '';
   const extractedTextSha256 = createHash('sha256').update(text).digest('hex');
