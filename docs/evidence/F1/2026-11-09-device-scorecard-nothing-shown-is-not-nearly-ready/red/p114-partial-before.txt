@@ -1,0 +1,43 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is 100 / ready when everything is complete 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is not_ready / low when nothing is done, and surfaces gaps 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > scores partial evidence via present/total 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > counts a dimension nothing assessed as not assessed — not as absent 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > keeps an applicable evidence module nothing has assessed, as not assessed 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > derives the scorecard from a blueprint (CER partially authored) 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > credits a fully-authored CER 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > scores an MDR classification with a missing deciding fact as not started, naming the fact 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > scores an IVDR classification with a missing deciding fact as not started 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > still credits a determined class 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > one required module of six not started: 90, in progress, and the gap is named 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > one module whose required set turns on an unstated fact: not assessed, in progress 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > the risk class not determined, everything else shown: 90, in progress 0ms
+ × server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > a required set only partly present is in progress too, and 100 with no gap is ready 5ms
+   → expected 'nearly_ready' to be 'in_progress' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > a required set only partly present is in progress too, and 100 with no gap is ready
+AssertionError: expected 'nearly_ready' to be 'in_progress' // Object.is equality
+
+Expected: "in_progress"
+Received: "nearly_ready"
+
+ ❯ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts:199:27
+    197|     expect(partial.dimensions.every((d) => d.status !== 'not_started' …
+    198|     expect(partial.score).toBeGreaterThanOrEqual(80);
+    199|     expect(partial.level).toBe('in_progress');
+       |                           ^
+    200|     const done = computeDeviceReadinessScorecard({ classificationKnown…
+    201|     expect(done).toMatchObject({ score: 100, level: 'ready', topGaps: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)
+   Start at  18:54:28
+   Duration  2.99s (transform 269ms, setup 106ms, import 224ms, tests 20ms, environment 0ms)
+

@@ -128,8 +128,10 @@ export const FREE_TEXT_NON_GOVERNED_TOOLS: Readonly<Record<string, string>> = {
  * It is a routing hint, not the control — phrasing it misses still meets the
  * gate, and gets an honest refusal rather than an unapproved draft.
  */
+// "create" and "start" (2026-11-09): "Start a 510(k) summary document" was routed to Balanced, and the draft the
+// person then confirmed was refused at the gate. Seen walking the running app.
 export const GOVERNED_DRAFT_REQUEST =
-  /\b(draft|redraft|write|rewrite|author|compose|prepare|generate)\b(?:\W+\w+){0,6}?\W+(document|section|sections|summary|overview|narrative|letter|response|module|report|protocol|plan|sop|label|labeling|consent|briefing|submission|amendment|biosketch)\b/i;
+  /\b(draft|redraft|write|rewrite|author|compose|prepare|generate|create|start)\b(?:\W+\w+){0,6}?\W+(document|section|sections|summary|overview|narrative|letter|response|module|report|protocol|plan|sop|label|labeling|consent|briefing|submission|amendment|biosketch)\b/i;
 
 export function requestsGovernedDraft(message: string | null | undefined): boolean {
   return typeof message === 'string' && !requestsReadOnly(message) && GOVERNED_DRAFT_REQUEST.test(message);
