@@ -23,6 +23,8 @@ import { I } from '../icons';
 import { C2CForm } from '../C2CForm';
 import { readRefusalWords, useLiveData, type ShapeGuard } from '../dataConnect';
 import { C2CToast, useToast } from '../toast';
+import { useAuth } from '@/services/portal/authService';
+import { canGovernedWrite } from '@shared/constants/permissions';
 import { AssignAction, AssignmentLine, PLAN_TASK_MODULE, planAssignments, planTaskKey, usePlanAssignments, type PlanAssignment } from './PlanAssign';
 
 /** What the project's record says about its track. */
@@ -89,6 +91,8 @@ export const WORK_PROJECT_TASK_ENTITY = 'work_project';
 
 export function buildWorkProjectTaskBody(form: {
   programId: string; projectId: number; workProject: WorkProjectRow; assignee: string; due: string; note: string;
+  /** The Vault family it is assigned to produce (S12 gap 5, slice 2); checked by the server on write. */
+  vaultDocumentCode?: string;
 }): Record<string, unknown> {
   const { workProject } = form;
   return {
@@ -102,26 +106,89 @@ export function buildWorkProjectTaskBody(form: {
     sourceEntityType: WORK_PROJECT_TASK_ENTITY,
     sourceEntityId: planTaskKey(form.programId, String(workProject.id)),
     regulatoryImpact: true,
-    moduleData: { programId: form.programId, workProjectId: workProject.id, workKind: workProject.workKind, raisedFrom: 'project-work-projects' },
+    moduleData: { programId: form.programId, workProjectId: workProject.id, workKind: workProject.workKind, raisedFrom: 'project-work-projects',
+      ...(form.vaultDocumentCode ? { vaultDocumentCode: form.vaultDocumentCode } : {}) },
     tags: ['plan', 'work-project'],
   };
 }
 
-interface Ownership {
-  programId: string; anchorProjectId: number; assignment: PlanAssignment | null; unread: boolean; onAssigned: () => void;
+/** A Vault family as the program's map lists it (vault-citation-changes.ts listVaultFamilies). */
+export interface VaultFamilyOption { documentCode: string; title: string | null; version: string | null }
+
+/** What the work project was assigned to produce, re-checked on this read: said as an assignment, never as lineage. */
+export type AssignedFamily =
+  | { state: 'none' }
+  | { state: 'current'; family: VaultFamilyOption }
+  | { state: 'gone'; documentCode: string }
+  | { state: 'unknown'; documentCode: string };
+
+export function assignedFamilyText(f: AssignedFamily): string | null {
+  if (f.state === 'none') return null;
+  if (f.state === 'current') return `Assigned to produce ${f.family.title || f.family.documentCode}${f.family.version ? ` (current v${f.family.version})` : ''}`;
+  if (f.state === 'gone') return `The assigned Vault document (${f.documentCode}) is no longer in this project’s Vault.`;
+  return `The assigned Vault document (${f.documentCode}) could not be checked.`;
 }
 
-/** "Assigned to Dana, due Nov 30", or that no one is; and Assign, for a person who may change the project. */
+/** A picker option: titles repeat across families, so each is named by its title, its code and its current version. */
+export function familyOptionText(f: VaultFamilyOption): string {
+  return [f.title, f.documentCode, f.version ? `v${f.version}` : null].filter(Boolean).join(' · ');
+}
+
+/** The family a newest assignment names, re-checked against the program's current families. */
+export function assignedFamily(code: unknown, families: VaultFamilyOption[] | null, truncated: boolean): AssignedFamily {
+  if (typeof code !== 'string' || !code.trim()) return { state: 'none' };
+  const documentCode = code.trim();
+  if (!families) return { state: 'unknown', documentCode };
+  const family = families.find((f) => f.documentCode === documentCode);
+  if (family) return { state: 'current', family };
+  return truncated ? { state: 'unknown', documentCode } : { state: 'gone', documentCode };
+}
+
+interface Ownership {
+  programId: string; anchorProjectId: number; assignment: PlanAssignment | null; unread: boolean; onAssigned: () => void;
+  family: AssignedFamily;
+  /** The program's families for the picker, or null when they could not be read (then no picker). */
+  families: VaultFamilyOption[] | null;
+  /** The families' read was cut short: the picker says the list is partial. */
+  familiesTruncated: boolean;
+}
+
+/** "Assigned to Dana, due Nov 30", or that no one is; what it was assigned to produce; and, for a person who may change
+ *  the project, the Vault document it produces (optional) and Assign. */
 function WorkProjectOwnership({ row, own }: { row: WorkProjectRow; own: Ownership }) {
+  const { user } = useAuth();
+  /* The picker starts from the family already assigned, so a second Assign keeps it unless someone changes it. */
+  const [picked, setPicked] = React.useState<string | null>(null);
+  const code = picked ?? (own.family.state === 'current' ? own.family.family.documentCode : '');
+  const produces = assignedFamilyText(own.family);
   return (
     <span className="pj-work-project-own" data-testid="pj-work-project-own">
       {own.unread ? <span className="pj-card-note">Its assignment could not be read.</span>
         : own.assignment ? <AssignmentLine assignment={own.assignment} />
           : <span className="pj-card-note">No one is assigned to deliver it yet.</span>}
+      {produces && (
+        <span className={own.family.state === 'current' ? 'pj-card-note' : 'pj-card-note sp-tone-warn'} data-testid="pj-work-project-produces">{produces}</span>
+      )}
+      {/* Offered only beside Assign: to a person who may write (AssignAction's own rule), once the families were read. */}
+      {!own.unread && canGovernedWrite(user) && own.families && own.families.length > 0 && (
+        <label className="pj-card-note pj-work-project-family">
+          <span>Vault document it produces</span>
+          <select value={code} onChange={(e) => setPicked(e.target.value)}>
+            <option value="">Not named</option>
+            {own.families.map((f) => <option key={f.documentCode} value={f.documentCode}>{familyOptionText(f)}</option>)}
+          </select>
+          {own.familiesTruncated && (
+            <span data-testid="pj-work-project-family-partial">
+              Showing the first {own.families.length} Vault document{own.families.length === 1 ? '' : 's'}.
+            </span>
+          )}
+        </label>
+      )}
       {!own.unread && (
         <AssignAction deliverable={{ id: String(row.id), title: row.name, group: 'work project' }} programId={own.programId}
           projectId={own.anchorProjectId} assigned={!!own.assignment} onAssigned={own.onAssigned}
-          buildBody={(form) => buildWorkProjectTaskBody({ programId: own.programId, projectId: own.anchorProjectId, workProject: row, ...form })} />
+          buildBody={(form) => buildWorkProjectTaskBody({ programId: own.programId, projectId: own.anchorProjectId, workProject: row,
+            ...form, ...(code ? { vaultDocumentCode: code } : {}) })} />
       )}
     </span>
   );
@@ -161,12 +228,17 @@ export interface VaultFeed {
   sectionId: string; sectionCode: string | null; documentTitle: string | null; citedVaultId: string;
   citedVersion: string | null; vaultTitle: string | null; state: 'current' | 'replaced'; approvedVersion: string | null;
 }
-interface VaultFeedsRead { vaultFeeds: VaultFeed[]; vaultFeedCount: number }
+interface VaultFeedsRead {
+  vaultFeeds: VaultFeed[]; vaultFeedCount: number; vaultFamilies: VaultFamilyOption[]; vaultFamiliesTruncated: boolean;
+}
 const isVaultFeedsRead: ShapeGuard<VaultFeedsRead> = (value): value is VaultFeedsRead => {
   const read = value as Partial<VaultFeedsRead> | null;
   return !!read && Array.isArray(read.vaultFeeds) && read.vaultFeedCount === read.vaultFeeds.length
-    && read.vaultFeeds.every((f) => f && typeof f.sectionId === 'string' && (f.state === 'current' || f.state === 'replaced'));
+    && read.vaultFeeds.every((f) => f && typeof f.sectionId === 'string' && (f.state === 'current' || f.state === 'replaced'))
+    && Array.isArray(read.vaultFamilies) && typeof read.vaultFamiliesTruncated === 'boolean'
+    && read.vaultFamilies.every((f) => f && typeof f.documentCode === 'string');
 };
+type MapRead = ReturnType<typeof useLiveData<VaultFeedsRead>>;
 
 /** "Module 3 quality · 3.2.S.4.1 — Drug substance specification v1.0 · replaced since cited; v3.0 is approved". */
 export function vaultFeedText(f: VaultFeed): string {
@@ -177,9 +249,7 @@ export function vaultFeedText(f: VaultFeed): string {
   return `${where} — ${from} · ${standing}`;
 }
 
-function VaultFedSections({ programId }: { programId: string }) {
-  const path = `/api/c2c/projects/${encodeURIComponent(programId)}/source-changes`;
-  const read = useLiveData<VaultFeedsRead>(path, [path], isVaultFeedsRead);
+function VaultFedSections({ read }: { read: MapRead }) {
   if (read.loading) return null;
   if (read.error || !read.data) {
     /* A refused read says the refusal (the shared rule); only a failure to answer is "could not be checked". */
@@ -211,16 +281,27 @@ function VaultFedSections({ programId }: { programId: string }) {
 }
 
 /** The listed work projects with their assignments, read (the Plan's task read) only once there are rows to show. */
-function WorkProjectList({ rows, programId, anchorProjectId, version, openable, onOpen, onAssigned }: {
+function WorkProjectList({ rows, programId, anchorProjectId, version, openable, onOpen, onAssigned, map }: {
   rows: WorkProjectRow[]; programId: string; anchorProjectId: number; version: number;
-  openable: (areaId: string) => boolean; onOpen?: (areaId: string) => void; onAssigned: () => void;
+  openable: (areaId: string) => boolean; onOpen?: (areaId: string) => void; onAssigned: () => void; map: MapRead;
 }) {
   const tasks = usePlanAssignments(programId, version);
   const assigned = planAssignments(tasks.rows, programId, WORK_PROJECT_TASK_ENTITY);
+  const families = map.data && !map.error ? map.data.vaultFamilies : null;
+  const truncated = map.data?.vaultFamiliesTruncated === true;
+  /* The newest assignment's named family, from the same task row the assignment line reads. */
+  const codeOf = (taskId: string | undefined) => {
+    const task = (Array.isArray(tasks.rows) ? tasks.rows as Array<Record<string, unknown>> : []).find((t) => String(t?.taskId) === taskId);
+    return (task?.moduleData as { vaultDocumentCode?: unknown } | undefined)?.vaultDocumentCode;
+  };
   return (
     <ul className="pj-work-projects-l">
-      {rows.map((row) => <WorkProjectItem key={row.id} row={row} openable={openable} onOpen={onOpen}
-        own={{ programId, anchorProjectId, assignment: assigned.get(String(row.id)) ?? null, unread: !!tasks.error, onAssigned }} />)}
+      {rows.map((row) => {
+        const assignment = assigned.get(String(row.id)) ?? null;
+        return <WorkProjectItem key={row.id} row={row} openable={openable} onOpen={onOpen}
+          own={{ programId, anchorProjectId, assignment, unread: !!tasks.error, onAssigned,
+            family: assignedFamily(codeOf(assignment?.taskId), families, truncated), families, familiesTruncated: truncated }} />;
+      })}
     </ul>
   );
 }
@@ -241,6 +322,9 @@ export function ProjectWorkProjects({ programId, anchorProjectId, canChange, ope
   const path = anchorProjectId !== null
     ? `/api/project-hierarchy/${anchorProjectId}/children?programId=${encodeURIComponent(programId)}` : null;
   const read = useLiveData<WorkProjectsRead>(path, [path, version], isWorkProjectsRead);
+  /* The program's map (S12 gap 5): its Vault-fed sections and current families, read once there are rows to show. */
+  const mapPath = read.data ? `/api/c2c/projects/${encodeURIComponent(programId)}/source-changes` : null;
+  const map = useLiveData<VaultFeedsRead>(mapPath, [mapPath, version], isVaultFeedsRead);
   if (anchorProjectId === null) return null;
   const rows = read.data?.children ?? null;
   const add = async (v: Record<string, string>) => {
@@ -268,10 +352,10 @@ export function ProjectWorkProjects({ programId, anchorProjectId, canChange, ope
         : read.error || !rows ? <p role="alert" className="pj-card-note">This project's work projects could not be read.</p>
           : rows.length === 0 ? <p className="pj-card-note">None yet. A work project (CMC, a study's biostatistics, its monitoring) holds the work this filing is written from.</p>
             : (
-              <WorkProjectList rows={rows} programId={programId} anchorProjectId={anchorProjectId} version={version}
+              <WorkProjectList rows={rows} programId={programId} anchorProjectId={anchorProjectId} version={version} map={map}
                 openable={openable} onOpen={onOpen} onAssigned={() => setVersion((n) => n + 1)} />
             )}
-      {rows && <VaultFedSections programId={programId} />}
+      {rows && <VaultFedSections read={map} />}
       {adding && (
         <C2CForm
           config={{
