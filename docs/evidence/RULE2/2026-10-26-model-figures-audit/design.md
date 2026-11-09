@@ -33,6 +33,7 @@
 > | S6 | done, with its review | `s6-plan-ind-module-authoring-retired/` |
 > | `start_war_game` (found 2026-11-01) | done | `war-game-stored-session/` |
 > | S5d-0: the three-valued helpers have one home | done | `s5d-0-three-valued-helpers/` |
+> | S5d-0b: the input adapters join them | done | `s5d-0b-input-adapters/` |
 > | S5d, S8–S14 | queued; packages and order in `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-01-plan-alignment/` | — |
 
 # Adversarial review of the Rule 2 design: the corrected design and the evidence behind it
