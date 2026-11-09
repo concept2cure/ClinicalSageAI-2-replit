@@ -43,6 +43,7 @@
 
  */
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { SectionVaultReplacements } from './SectionVaultReplacements';
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState, useDataReadVisit, type DataReadOwner, type DataReadVisit } from '../dataConnect';
@@ -6256,6 +6257,8 @@ export function DocumentWorkbench({
               )}
             </>
           )}
+          {/* S12: an independent read, so a failed citations read above does not hide it. */}
+          {activeSection && <SectionVaultReplacements programId={programId} sectionId={activeSection.id} onNav={onNav} />}
         </aside>
       )}
 
