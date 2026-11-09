@@ -1303,6 +1303,15 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   // views; library views and precedent rows have no cascade and are reached
   // only here.
   'saved_precedent_queries',
+  /* The folders a person makes in a project's Vault (S6,
+     migrations/20261106_document_folders_project_scope.sql), BEFORE
+     regulatory_programs. Their program_id REFERENCES regulatory_programs(id)
+     with NO ACTION, so until this entry the purge of any tenant with one folder
+     in a project failed there with 23503 and rolled back the whole erasure
+     (ci:purge-coverage, 2026-11-08; tenant-purge-document-folders.pglite.test.ts).
+     Their names are the tenant's content. One statement deletes a tenant's
+     folders together, so parent_id, their own key, never blocks it. */
+  'document_folders',
   'regulatory_programs',
   'file_uploads',
   // Digital-twin simulations. Customer content: each row stores the tenant's
