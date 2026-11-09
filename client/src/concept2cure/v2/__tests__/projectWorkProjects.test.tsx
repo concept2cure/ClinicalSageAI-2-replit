@@ -26,13 +26,21 @@ const child = (id: number, name: string, workKind: string) => ({ id, name, workK
 let rows: unknown[] = [];
 /** The Plan's task rows (GET /api/tasks/tasks/by-module/Plan), or 'fail'. */
 let planTasks: unknown[] | 'fail' = [];
+/** The project's changes (GET /api/c2c/projects/:id/source-changes): its Vault-fed sections, or a reply without them. */
+let changesReply: Record<string, unknown> | null = null;
 const PLAN_READ = '/api/tasks/tasks/by-module/Plan';
 
+/** The project's changes, when a case sets them. */
+const changesRoute = (method: string, url: string) =>
+  method === 'GET' && url === `/api/c2c/projects/${PID}/source-changes` && changesReply ? ok(changesReply) : null;
+
 beforeEach(() => {
-  rows = []; planTasks = []; auth.user = null;
+  rows = []; planTasks = []; auth.user = null; changesReply = null;
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: { name: string; workKind: string }) => {
     if (method === 'GET' && url === READ) return ok({ success: true, data: { parentId: 11, programId: PID, anchorProjectId: 11, children: rows, total: rows.length } });
+    const changes = changesRoute(method, url);
+    if (changes) return changes;
     if (method === 'GET' && url === PLAN_READ) return planTasks === 'fail' ? ok({ message: 'unavailable' }, 503) : ok({ success: true, data: planTasks, count: planTasks.length });
     if (method === 'GET' && url === '/api/task-management/assignees') return ok({ success: true, data: [{ id: '12', name: 'Dana Ruiz' }] });
     if (method === 'POST' && url === '/api/tasks/tasks') {
@@ -140,5 +148,27 @@ describe('the project\'s work projects (S12)', () => {
     render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
     expect(await screen.findByText('Its assignment could not be read.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^Assign/ })).toBeNull();
+  });
+});
+
+describe('the program map beside the work projects (S12 gap 5)', () => {
+  it('beside the work projects, names the filing\'s sections drafted from the Vault with their standing, unattributed (S12 gap 5)', async () => {
+    rows = [child(101, 'Drug substance CMC', 'cmc')];
+    const feed = (sectionCode: string, state: 'current' | 'replaced', citedVersion: string, approvedVersion: string | null) => ({
+      sectionId: `s-${sectionCode}`, sectionCode, documentTitle: 'Module 3 quality', citedVaultId: `v-${sectionCode}`, citedVersion,
+      vaultTitle: 'Drug substance specification', state, approvedVaultId: approvedVersion ? 'v-new' : null, approvedVersion });
+    const vaultFeeds = [feed('3.2.S.4.1', 'replaced', '1.0', '3.0'), feed('3.2.S.4.2', 'current', '3.0', null)];
+    changesReply = { changes: [], count: 0, vaultChanges: [], vaultCount: 0, vaultFeeds, vaultFeedCount: 2 };
+    render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
+    const map = await screen.findByTestId('pj-vault-feeds');
+    expect(map.textContent).toContain('2 sections of this filing were drafted from Vault versions; 1 was replaced since cited.');
+    expect(map.textContent).toContain('Which work project produced each version is not recorded yet.');
+    expect(within(map).getByText('Module 3 quality · 3.2.S.4.1 — Drug substance specification v1.0 · replaced since cited; v3.0 is approved')).toBeTruthy();
+    expect(within(map).getByText('Module 3 quality · 3.2.S.4.2 — Drug substance specification v3.0 · current')).toBeTruthy();
+    cleanup();
+    changesReply = { changes: [], count: 0, vaultChanges: [], vaultCount: 0 };
+    render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
+    expect(await screen.findByText('The sections drafted from the Vault could not be checked.')).toBeTruthy();
+    expect(screen.queryByTestId('pj-vault-feeds')).toBeNull();
   });
 });

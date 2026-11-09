@@ -91,25 +91,51 @@ async function approvedIds(q: RequestSqlClient, orgId: number, ids: string[]): P
   return new Set((rows as unknown as Array<{ vault_id: string }>).map((r) => r.vault_id));
 }
 
-/** The program's sections whose live Vault citation names a version a later approved version has replaced. */
-export async function listChangedVaultCitations(
+/** A section drafted from a Vault version, and that version's standing (S12 gap 5, the program's map): `current` when no
+ *  later version of its document is approved, `replaced` when one is (then named). Not attributed to a work project. */
+export interface VaultFedSection {
+  sectionId: string; sectionCode: string | null; sectionTitle: string | null;
+  documentId: string; documentTitle: string | null;
+  citedVaultId: string; citedVersion: string | null; vaultTitle: string | null;
+  state: 'current' | 'replaced';
+  approvedVaultId: string | null; approvedVersion: string | null;
+  spans: number;
+}
+
+/** The program's sections with a live Vault citation, each with its standing. One read, the same readers and scope. */
+export async function listVaultFedSections(
   q: RequestSqlClient,
   orgId: number,
   opts: { userId: number | undefined; programId: string; limit?: number },
-): Promise<ChangedVaultCitation[]> {
+): Promise<VaultFedSection[]> {
   const identity = { organizationId: orgId, userId: opts.userId, programId: opts.programId };
   const access = await getCurrentAuthoringReadScope(q, identity);
   const cited = await citedVersions(q, orgId, opts.programId, access.sectionIds, Math.min(Math.max(opts.limit ?? 100, 1), 500));
   const later = await laterVersions(q, orgId, opts.programId, [...new Set(cited.map((r) => r.cited_id))]);
   const approved = await approvedIds(q, orgId, [...new Set([...later.values()].flat().map((v) => v.id))]);
   await requireAuthoringReadScopeStillCurrent(q, identity, access);
-  return cited.flatMap((r) => {
-    const latest = (later.get(r.cited_id) ?? []).find((version) => approved.has(version.id));
-    return latest ? [{
+  return cited.map((r) => {
+    const latest = (later.get(r.cited_id) ?? []).find((version) => approved.has(version.id)) ?? null;
+    return {
       sectionId: r.section_id, sectionCode: r.section_code ?? null, sectionTitle: r.section_title ?? null,
       documentId: r.document_id, documentTitle: r.document_title ?? null, citedVaultId: r.cited_id,
-      citedVersion: r.cited_version ?? null, vaultTitle: r.vault_title ?? null, approvedVaultId: latest.id,
-      approvedVersion: latest.version, spans: Number(r.spans) || 0,
-    }] : [];
+      citedVersion: r.cited_version ?? null, vaultTitle: r.vault_title ?? null, state: latest ? 'replaced' : 'current',
+      approvedVaultId: latest?.id ?? null, approvedVersion: latest?.version ?? null, spans: Number(r.spans) || 0,
+    };
   });
+}
+
+/** The program's sections whose live Vault citation names a version a later approved version has replaced. */
+export async function listChangedVaultCitations(
+  q: RequestSqlClient,
+  orgId: number,
+  opts: { userId: number | undefined; programId: string; limit?: number },
+): Promise<ChangedVaultCitation[]> {
+  return replacedVaultCitations(await listVaultFedSections(q, orgId, opts));
+}
+
+/** The replaced half of a program's Vault-fed sections, as the project's changes report it. */
+export function replacedVaultCitations(feeds: VaultFedSection[]): ChangedVaultCitation[] {
+  return feeds.flatMap(({ state, approvedVaultId, approvedVersion, ...rest }) =>
+    state === 'replaced' && approvedVaultId ? [{ ...rest, approvedVaultId, approvedVersion }] : []);
 }
