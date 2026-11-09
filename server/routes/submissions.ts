@@ -1563,6 +1563,29 @@ router.post('/sequences/:seqId/held-send/settle', limiter, requireRole(AUTHOR), 
   }
 });
 
+// A settlement FDA's verified answer contradicts, re-opened on that answer (P-92 C3,
+// P-108 1(c)). Ask POST governed-precheck { step: 'held-send-reopen' } for the
+// statement; sign ectd-sequence:<seqId> with intent 'held-send-reopen', the
+// meaning responsibility, the settlement's signature, FDA's answer and the
+// statement, with the reason; then pass its actionId here. 409
+// HELD_SEND_NOT_REOPENABLE with what keeps it; 403 GOVERNED_REQUIRED or
+// FORBIDDEN; a refused act voids its signature. No AnA tool reaches it.
+const heldSendReopenSchema = z.object({ signatureActionId: z.string().min(1).max(128) });
+router.post('/sequences/:seqId/held-send/reopen', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = heldSendReopenSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { recordHeldSendReopen } = await import('../services/submission-service/submission-service');
+    res.json(await recordHeldSendReopen({ sequenceId: seqId, signatureActionId: parsed.data.signatureActionId }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 // FDA's failed Ack3 for a sequence recorded as received (P-92 C4, P-108 1(a)).
 // Ask POST governed-precheck { step: 'technical-rejection', evidenceDocumentId }
 // for the statement; sign ectd-sequence:<seqId> with intent
@@ -2153,7 +2176,9 @@ const governedPrecheckSchema = z
     // 'technical-rejection' (P-92 C4): whether FDA's failed Ack3 may be recorded
     // on the sequence, by this person, on which Vault document, and the
     // statement the signature carries; its own rule answers it.
-    step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver', 'shadow-finding-disposition', 'retire', 'held-send-settlement', 'technical-rejection']),
+    // 'held-send-reopen' (P-92 C3): whether a settlement FDA's verified answer
+    // contradicts may be re-opened, by this person, and the statement signed.
+    step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver', 'shadow-finding-disposition', 'retire', 'held-send-settlement', 'technical-rejection', 'held-send-reopen']),
     environment: z.enum(['staging', 'production']).optional(),
     // Transmit: the number the person typed, judged against the program record
     // before anyone signs (P-23), by the rule transmit itself applies.
@@ -2186,8 +2211,9 @@ router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR),
   const parsed = governedPrecheckSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    const { precheckGovernedStep, precheckSequenceRetirement, precheckHeldSendSettlement, precheckTechnicalRejection } = await import('../services/submission-service/submission-service');
+    const { precheckGovernedStep, precheckSequenceRetirement, precheckHeldSendSettlement, precheckTechnicalRejection, precheckHeldSendReopen } = await import('../services/submission-service/submission-service');
     if (parsed.data.step === 'retire') return res.json(await precheckSequenceRetirement(seqId, ctx));
+    if (parsed.data.step === 'held-send-reopen') return res.json(await precheckHeldSendReopen(seqId, ctx));
     if (parsed.data.step === 'technical-rejection') {
       const { evidenceDocumentId } = parsed.data;
       return res.json(await precheckTechnicalRejection(seqId, ctx, evidenceDocumentId ? { evidenceDocumentId } : {}));

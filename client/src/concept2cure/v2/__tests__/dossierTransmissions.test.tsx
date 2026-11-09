@@ -154,19 +154,6 @@ describe('Dispatch tab: transmissions and acknowledgements (F13)', () => {
     expect(said).not.toMatch(/not-received|platform-proof|fda-non-receipt|ack2|heldSendSettlement/);
   });
 
-  // P-92 C4: FDA's technical rejection recorded on the sequence is said on its row, in words, with no stored key.
-  it("FDA's technical rejection recorded by signature says so on its row", async () => {
-    const rejected = { ...ROWS[1], id: 45, status: 'validation_failed', error_message: null,
-      metadata: { sequence: '0001', environment: 'production', dispatchBinding: { sequenceId: 21 },
-        technicalRejection: { sequence: '0001', recordedAt: '2026-11-09T18:00:00.000Z', evidence: { kind: 'ack3', vaultDocumentId: 'x', sha256: 'f'.repeat(64) } } } };
-    list = () => json({ data: [rejected], meta: { count: 1 } });
-    render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
-    await waitFor(() => expect(text()).toContain('Transmittal #45'));
-    const said = region().textContent ?? '';
-    expect(said).toContain(" · rejected by FDA on its Ack3, by signature, 9 November 2026");
-    expect(said).not.toMatch(/technicalRejection|ack3\b/);
-  });
-
   it('a failed read is an error, not "none sent"', async () => {
     list = () => json({ error: 'Internal error' }, 500);
     render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
@@ -192,5 +179,34 @@ describe('Dispatch tab: transmissions and acknowledgements (F13)', () => {
     // A test send, which files nothing, is not listed either, and the note says so.
     expect(region().textContent).toContain('test sends included (a test send files nothing)');
     expect(listCalls()).toEqual([]);
+  });
+});
+
+// P-92 C3 and C4: what a person's signed act recorded on a transmission, said on its row in words.
+describe('Dispatch tab: signed acts said on the transmissions row (P-92 C3, C4)', () => {
+  // P-92 C3: a settlement re-opened on FDA's answer says so after FDA's answer, in words.
+  it("a settlement re-opened on FDA's answer says so on its row", async () => {
+    const reopened = { ...ROWS[1], id: 46, status: 'received', error_message: null,
+      metadata: { sequence: '0001', environment: 'production', dispatchBinding: { sequenceId: 21 },
+        heldSendSettlement: { outcome: 'not-received', kind: 'platform-proof', settledAt: '2026-11-04T09:00:00.000Z', reopenedBy: { at: '2026-11-09T19:00:00.000Z' } },
+        as2ReceiptHistory: [{ verified: true, contradicts: 'not-received', receivedAt: '2026-11-05T10:00:00.000Z' }] } };
+    list = () => json({ data: [reopened], meta: { count: 1 } });
+    render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
+    await waitFor(() => expect(text()).toContain('Transmittal #46'));
+    expect(region().textContent ?? '').toContain("shows it was received · re-opened on FDA's answer, by signature, 9 November 2026");
+    expect(screen.queryByTestId('held-send-reopen')).toBeNull();
+  });
+
+  // P-92 C4: FDA's technical rejection recorded on the sequence is said on its row, in words, with no stored key.
+  it("FDA's technical rejection recorded by signature says so on its row", async () => {
+    const rejected = { ...ROWS[1], id: 45, status: 'validation_failed', error_message: null,
+      metadata: { sequence: '0001', environment: 'production', dispatchBinding: { sequenceId: 21 },
+        technicalRejection: { sequence: '0001', recordedAt: '2026-11-09T18:00:00.000Z', evidence: { kind: 'ack3', vaultDocumentId: 'x', sha256: 'f'.repeat(64) } } } };
+    list = () => json({ data: [rejected], meta: { count: 1 } });
+    render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
+    await waitFor(() => expect(text()).toContain('Transmittal #45'));
+    const said = region().textContent ?? '';
+    expect(said).toContain(" · rejected by FDA on its Ack3, by signature, 9 November 2026");
+    expect(said).not.toMatch(/technicalRejection|ack3\b/);
   });
 });

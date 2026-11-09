@@ -164,7 +164,8 @@ export type SubmissionErrorCode =
   | 'SHADOW_FINDING_NOT_DISPOSABLE'
   | 'SEQUENCE_NOT_RETIRABLE'
   | 'HELD_SEND_NOT_SETTLEABLE'
-  | 'TECHNICAL_REJECTION_NOT_RECORDABLE';
+  | 'TECHNICAL_REJECTION_NOT_RECORDABLE'
+  | 'HELD_SEND_NOT_REOPENABLE';
 
 /** P-92 (founder 2026-11-02): a held FDA send is settled by a signed act with this intent, and the act is recorded as this. */
 export const HELD_SEND_SETTLEMENT_INTENT = 'held-send-settlement' as const;
@@ -172,6 +173,9 @@ export const ECTD_HELD_SEND_SETTLED_ACTION = 'ECTD_HELD_SEND_SETTLED';
 /** P-92 C4: FDA's failed Ack3 for a sequence recorded as received, recorded by the sequence's own signed act. */
 export const TECHNICAL_REJECTION_INTENT = 'technical-rejection' as const;
 export const ECTD_TECHNICAL_REJECTION_RECORDED_ACTION = 'ECTD_TECHNICAL_REJECTION_RECORDED';
+/** P-92 C3: a settlement FDA's verified answer contradicts, re-opened on that answer by a second signed act (P-108 1(c)). */
+export const HELD_SEND_REOPEN_INTENT = 'held-send-reopen' as const;
+export const ECTD_HELD_SEND_REOPENED_ACTION = 'ECTD_HELD_SEND_REOPENED';
 
 /**
  * Transitions that are irreversible / outward-facing and must go through the
@@ -230,6 +234,7 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   // kept, it may still be in progress, or the evidence does not fit it.
   HELD_SEND_NOT_SETTLEABLE: 409,
   TECHNICAL_REJECTION_NOT_RECORDABLE: 409,
+  HELD_SEND_NOT_REOPENABLE: 409,
 };
 
 // ── Pure lifecycle rules ────────────────────────────────────────────────────
@@ -1012,7 +1017,8 @@ export type SequenceSignatureIntent =
   | typeof SHADOW_FINDING_DISPOSITION_INTENT
   | typeof SEQUENCE_RETIREMENT_INTENT
   | typeof HELD_SEND_SETTLEMENT_INTENT
-  | typeof TECHNICAL_REJECTION_INTENT;
+  | typeof TECHNICAL_REJECTION_INTENT
+  | typeof HELD_SEND_REOPEN_INTENT;
 
 /** How a sentence names the act a signature was given for. */
 const INTENT_LABEL: Record<SequenceSignatureIntent, string> = {
@@ -1024,6 +1030,7 @@ const INTENT_LABEL: Record<SequenceSignatureIntent, string> = {
   [SEQUENCE_RETIREMENT_INTENT]: 'retirement',
   [HELD_SEND_SETTLEMENT_INTENT]: 'settlement of the held send',
   [TECHNICAL_REJECTION_INTENT]: 'record of the technical rejection',
+  [HELD_SEND_REOPEN_INTENT]: 're-opening of the settlement',
 };
 
 /**
@@ -1045,6 +1052,7 @@ const INTENT_MEANING_REFUSAL: Partial<Record<SequenceSignatureIntent, (meaning: 
   [HELD_SEND_SETTLEMENT_INTENT]: (m) => (m === 'responsibility' ? null : 'settling a held send is signed with the meaning responsibility'),
   // P-92 C4: as the settlement, a record of what FDA holds, answered for by the signer.
   [TECHNICAL_REJECTION_INTENT]: (m) => (m === 'responsibility' ? null : 'recording a technical rejection is signed with the meaning responsibility'),
+  [HELD_SEND_REOPEN_INTENT]: (m) => (m === 'responsibility' ? null : 're-opening a settlement is signed with the meaning responsibility'),
 };
 
 /** Why a signature's payload does not authorize this particular request, or null (P-35: which finding, closed how). */
@@ -1242,7 +1250,8 @@ async function signatureSpentBy(signatureActionId: string, target: string, organ
       AND record_id = ${sequenceId}
       AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED', ${SHADOW_REVIEW_WAIVED_ACTION},
                      ${SHADOW_FINDING_DISPOSITIONED_ACTION}, ${SIGNATURE_VOIDED_ACTION}, 'TRANSMIT_BLOCKED',
-                     ${ECTD_SEQUENCE_RETIRED_ACTION}, ${ECTD_HELD_SEND_SETTLED_ACTION}, ${ECTD_TECHNICAL_REJECTION_RECORDED_ACTION})
+                     ${ECTD_SEQUENCE_RETIRED_ACTION}, ${ECTD_HELD_SEND_SETTLED_ACTION}, ${ECTD_TECHNICAL_REJECTION_RECORDED_ACTION},
+                     ${ECTD_HELD_SEND_REOPENED_ACTION})
       AND (new_values::jsonb ->> 'signatureActionId') = ${signatureActionId}
     LIMIT 1
   `;
@@ -2026,7 +2035,7 @@ async function precheckShadowFindingDisposition(
 export async function precheckGovernedStep(
   id: number,
   /** A retirement (P-86) is not prechecked here yet: its precheck comes with its door (C2). */
-  step: Exclude<SequenceSignatureIntent, typeof SEQUENCE_RETIREMENT_INTENT | typeof HELD_SEND_SETTLEMENT_INTENT | typeof TECHNICAL_REJECTION_INTENT>,
+  step: Exclude<SequenceSignatureIntent, typeof SEQUENCE_RETIREMENT_INTENT | typeof HELD_SEND_SETTLEMENT_INTENT | typeof TECHNICAL_REJECTION_INTENT | typeof HELD_SEND_REOPEN_INTENT>,
   ctx: { organizationId: number; userId: number },
   opts: GovernedPrecheckOptions = {},
 ): Promise<GovernedStepPrecheck> {
@@ -3117,6 +3126,174 @@ async function applyTechnicalRejection(input: { sequenceId: number; signatureAct
   return {
     recorded: true, sequenceId: seq.id, sequenceNumber: n, dispatchStatus: 'rejected', transmittalId: t.id,
     signatureActionId: input.signatureActionId, signatureId: verdict.signatureId, recordedAt: occurredAt ?? recordedAt,
+  };
+}
+
+// ── P-92 C3: a settlement FDA's verified answer contradicts, re-opened on that answer (design §10.5 E (i)) ───
+
+type ReopenFactsOf = Awaited<ReturnType<HeldSendRules['readReopenFacts']>>;
+export interface HeldSendReopenOverview {
+  sequenceNumber: string; outcome: HeldSendOutcome | null; sentAt: string | null; keptAt: string | null; signerRefusal: string | null;
+  statement?: string; settlementSignatureActionId?: string; receiptSha256?: string;
+}
+export interface HeldSendReopenPrecheck { step: typeof HELD_SEND_REOPEN_INTENT; cleared: boolean; refusal: string | null; reopen: HeldSendReopenOverview }
+export interface HeldSendReopenRecord {
+  reopened: true; sequenceId: number; sequenceNumber: string; outcome: HeldSendOutcome; dispatchStatus: 'sent' | 'rejected'; transmittalId: number;
+  signatureActionId: string; signatureId: number | null; reopenedAt: string;
+}
+
+const reopenSubject = (seq: ClaimedSequence) => ({
+  id: seq.id, sequenceNumber: seq.sequenceNumber, status: seq.status ?? null, dispatchStatus: seq.dispatchStatus ?? null,
+  transmitAttemptId: seq.transmitAttemptId ? String(seq.transmitAttemptId) : null,
+});
+
+/** The facts the re-open judges. A read that fails is "could not be checked", never a pass. */
+async function checkedReopen(rules: HeldSendRules, q: SequenceQueryable, seq: ClaimedSequence, organizationId: number, opts: { lock?: boolean } = {}) {
+  try {
+    return await rules.readReopenFacts(q, organizationId, reopenSubject(seq), opts);
+  } catch (err) {
+    logger.warn('Held-send re-open facts unreadable', { sequenceId: seq.id, err: err instanceof Error ? err.message : String(err) });
+    throw new SubmissionError('INVALID_STATE', `Whether sequence ${seq.sequenceNumber}'s settlement can be re-opened could not be checked, so nothing was changed. Try again.`);
+  }
+}
+
+function reopenSignerRefusal(n: string, state: 'independent' | 'author' | 'unresolved' | 'unverified'): string | null {
+  if (state === 'independent') return null;
+  if (state === 'author') return `You created sequence ${n}, so you cannot sign the re-opening of its settlement. Another person with signing authority signs it.`;
+  if (state === 'unresolved') return `Who created sequence ${n} cannot be resolved from its record, so the re-opening of its settlement cannot be signed by anyone shown to be independent of its creator.`;
+  return `Whether you created sequence ${n} could not be checked, so the re-opening of its settlement cannot be signed now. Try again.`;
+}
+
+/**
+ * Before anyone signs (P-92 C3): may this sequence's settlement be re-opened on FDA's verified answer, by this person,
+ * and the statement the signature carries. Asked at POST governed-precheck with step 'held-send-reopen'; no AnA tool.
+ */
+export async function precheckHeldSendReopen(id: number, ctx: { organizationId: number; userId: number }): Promise<HeldSendReopenPrecheck> {
+  const seq: ClaimedSequence = await getSequence(id, ctx);
+  const rules = await heldSendRules();
+  const facts = await checkedReopen(rules, asQueryable(pool), seq, ctx.organizationId);
+  const t = facts.settled;
+  const reopen: HeldSendReopenOverview = {
+    sequenceNumber: seq.sequenceNumber, outcome: (t?.answer.contradicts as HeldSendOutcome | undefined) ?? null, sentAt: t?.submittedAt ?? null,
+    keptAt: t?.answer.receivedAt ?? null,
+    signerRefusal: reopenSignerRefusal(seq.sequenceNumber, await signerIndependenceOf(`ectd-sequence:${seq.id}`, ctx.organizationId, ctx.userId)),
+  };
+  const blocker = rules.reopenBlocker(facts);
+  if (blocker || !t) return { step: HELD_SEND_REOPEN_INTENT, cleared: false, refusal: blocker, reopen };
+  return { step: HELD_SEND_REOPEN_INTENT, cleared: true, refusal: null,
+    reopen: { ...reopen, statement: rules.reopenStatement(facts), settlementSignatureActionId: String(t.settlement.signatureActionId ?? ''), receiptSha256: t.answer.sha256 } };
+}
+
+/** Gate 1's payload check: this settlement, this answer of FDA's, and a statement. */
+function reopenPayloadRefusal(facts: ReopenFactsOf, n: string) {
+  return (payload: Record<string, unknown> | null): string | null => {
+    if (payload?.settlementSignatureActionId !== facts.settled?.settlement.signatureActionId) return `it names another settlement of sequence ${n}`;
+    if (payload?.receiptSha256 !== facts.settled?.answer.sha256) return "it names another of FDA's answers";
+    return typeof payload?.statement === 'string' && payload.statement.trim() ? null : 'it carries no statement';
+  };
+}
+
+/** Judge the re-open, and refuse in words; the same call before the lock and under it. */
+function reopenableNow(rules: HeldSendRules, facts: ReopenFactsOf, signed: Record<string, unknown> | null): string {
+  const blocker = rules.reopenBlocker(facts);
+  if (blocker || !facts.settled) throw new SubmissionError('HELD_SEND_NOT_REOPENABLE', blocker ?? 'There is nothing to re-open. Nothing was changed.');
+  const statement = rules.reopenStatement(facts);
+  if (signed?.statement !== statement) {
+    throw new SubmissionError('GOVERNED_REQUIRED', `The signature does not re-open this settlement: what it states is not what the record of sequence ${facts.sequence.sequenceNumber} shows now. Nothing was changed; sign it again from the Dispatch tab.`);
+  }
+  return statement;
+}
+
+async function verifiedReopenSignature(input: { signatureActionId: string }, seq: ClaimedSequence, facts: ReopenFactsOf, ctx: { organizationId: number; userId: number }) {
+  const target = `ectd-sequence:${seq.id}`;
+  let signed: Record<string, unknown> | null = null;
+  const check = reopenPayloadRefusal(facts, seq.sequenceNumber);
+  const verdict = await governedSignatureVerdict(input.signatureActionId, target, ctx, HELD_SEND_REOPEN_INTENT, (payload) => { signed = payload; return check(payload); });
+  if (verdict.refusal !== null) {
+    throw new SubmissionError('GOVERNED_REQUIRED', `The signature does not re-open the settlement of sequence ${seq.sequenceNumber}: ${verdict.refusal}. Sign it again from the Dispatch tab.`);
+  }
+  const independence = await independentSignerRefusal(target, ctx, verdict.meaning);
+  if (independence) throw independence;
+  const reason = await dispositionSignatureReason(asQueryable(pool), { organizationId: ctx.organizationId, signatureActionId: input.signatureActionId });
+  if (!reason) throw new SubmissionError('GOVERNED_REQUIRED', `The signature records no reason, so sequence ${seq.sequenceNumber}'s settlement was not re-opened; sign again with your reason.`);
+  return { verdict, reason, signed: signed as Record<string, unknown> | null };
+}
+
+/**
+ * Re-open a settlement that FDA's verified answer contradicts (P-92 C3; P-108 1(c); launch row D7). FDA's answer is applied
+ * as the receipt path would have written it had it arrived first: after a release, the sequence 'sent' (its claim restored
+ * from the send's binding) and the transmittal 'received' with FDA's receipt; after "received", both 'rejected'. The
+ * settlement stays, with reopenedBy set once; the chained ECTD_HELD_SEND_REOPENED row spends the signature; everything is
+ * judged again under the transmittal's and the sequence's locks. A refused act voids its signature (P-23). Its one door is
+ * POST /api/submissions/sequences/:seqId/held-send/reopen; no AnA tool.
+ */
+export function recordHeldSendReopen(input: { sequenceId: number; signatureActionId: string }, ctx: { organizationId: number; userId: number }): Promise<HeldSendReopenRecord> {
+  return voidingSignatureOnRefusal(
+    () => applyHeldSendReopen(input, ctx),
+    { signatureActionId: input.signatureActionId, sequenceId: input.sequenceId, ctx, step: HELD_SEND_REOPEN_INTENT },
+  );
+}
+
+/** The sequence's UPDATE for each arm, guarded by where the settlement left it. */
+function reopenSequenceUpdate(arm: HeldSendOutcome, seqId: number, organizationId: number, binding: { signatureActionId: string; attemptId: string }) {
+  return arm === 'not-received'
+    ? { text: `UPDATE ectd_sequences SET dispatch_status = 'sent', transmit_signature_action_id = $3, transmit_attempt_id = $4::uuid, updated_at = NOW()
+              WHERE id = $1 AND organization_id = $2 AND status = 'dispatched' AND dispatch_status = 'pending'
+                AND transmit_attempt_id IS NULL AND deleted_at IS NULL`,
+      params: [seqId, organizationId, binding.signatureActionId, binding.attemptId] }
+    : { text: `UPDATE ectd_sequences SET dispatch_status = 'rejected', updated_at = NOW()
+              WHERE id = $1 AND organization_id = $2 AND status = 'dispatched' AND dispatch_status IN ('sent', 'acknowledged')
+                AND transmit_attempt_id = $3::uuid AND deleted_at IS NULL`,
+      params: [seqId, organizationId, binding.attemptId] };
+}
+
+async function applyHeldSendReopen(input: { sequenceId: number; signatureActionId: string }, ctx: { organizationId: number; userId: number }): Promise<HeldSendReopenRecord> {
+  const seq: ClaimedSequence = await getSequence(input.sequenceId, ctx);
+  const n = seq.sequenceNumber;
+  const rules = await heldSendRules();
+  const facts = await checkedReopen(rules, asQueryable(pool), seq, ctx.organizationId);
+  const { verdict, reason, signed } = await verifiedReopenSignature(input, seq, facts, ctx);
+  const statement = reopenableNow(rules, facts, signed);
+  const t = facts.settled as NonNullable<ReopenFactsOf['settled']>;
+  const arm = t.answer.contradicts as HeldSendOutcome;
+  const dispatchTo = arm === 'not-received' ? 'sent' : 'rejected';
+  const reopenedAt = new Date().toISOString();
+  const reopenedBy = { userId: ctx.userId, at: reopenedAt, signatureActionId: input.signatureActionId, signatureId: verdict.signatureId, receiptSha256: t.answer.sha256 };
+  const details: Record<string, unknown> = {
+    description: `Sequence ${n}'s settlement re-opened on FDA's verified answer, by Part 11 e-signature (responsibility)`,
+    outcome: arm, signatureActionId: input.signatureActionId, signatureId: verdict.signatureId, meaning: 'responsibility', reason, statement,
+    settlementSignatureActionId: t.settlement.signatureActionId, receiptSha256: t.answer.sha256, transmittalId: t.id,
+    dispatchStatus: { from: seq.dispatchStatus, to: dispatchTo }, transmittalStatus: { from: t.status, to: t.answer.status }, boundDigest: verdict.boundDigest,
+  };
+  const update = reopenSequenceUpdate(arm, seq.id, ctx.organizationId, t.binding);
+  const { occurredAt } = await applySequenceChangeWithAudit(
+    {
+      underLock: async (client) => {
+        await setTenantContextTx(client, ctx.organizationId);
+        // The transmittal first, as the receipt path and the settlement take it.
+        await checkedReopen(rules, asQueryable(client), seq, ctx.organizationId, { lock: true });
+        await recheckUnderSequenceLock(client, {
+          sequenceId: seq.id, submissionId: seq.submissionId, organizationId: ctx.organizationId, boundDigest: verdict.boundDigest, act: 're-opening',
+          recheck: async (q) => {
+            const row = (await q.query(`SELECT status, dispatch_status, transmit_attempt_id::text AS transmit_attempt_id FROM ectd_sequences WHERE id = $1 AND organization_id = $2`, [seq.id, ctx.organizationId])).rows[0] ?? {};
+            const now: ClaimedSequence = { ...seq, status: row.status ?? seq.status, dispatchStatus: row.dispatch_status ?? null, transmitAttemptId: row.transmit_attempt_id ?? null };
+            reopenableNow(rules, await checkedReopen(rules, q, now, ctx.organizationId), signed);
+          },
+        });
+      },
+      text: update.text,
+      params: update.params,
+      noRowsRefusal: `Sequence ${n} changed while its settlement was being re-opened, so it was not re-opened.`,
+      afterUpdate: async (client) => {
+        await rules.markHeldSendReopened(asQueryable(client), { organizationId: ctx.organizationId, transmittalId: t.id, answer: t.answer, reopenedBy });
+      },
+    },
+    { organizationId: ctx.organizationId, userId: ctx.userId, action: ECTD_HELD_SEND_REOPENED_ACTION, resourceId: seq.id, reason, details },
+  );
+  logger.info('Held-send settlement re-opened', { sequenceId: seq.id, outcome: arm, organizationId: ctx.organizationId });
+  return {
+    reopened: true, sequenceId: seq.id, sequenceNumber: n, outcome: arm, dispatchStatus: dispatchTo, transmittalId: t.id,
+    signatureActionId: input.signatureActionId, signatureId: verdict.signatureId, reopenedAt: occurredAt ?? reopenedAt,
   };
 }
 

@@ -1,0 +1,13 @@
+# P-92 C3 client red, 2026-11-09T18:52:24Z, before the client code: dispatchHeldSendReopen.test.tsx
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R1 — "Re-open the settlement on FDA's answer…" where FDA's contradicting answer is told > a closed, quiet door under the transmissions that asks nothing until opened 142ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R1 — "Re-open the settlement on FDA's answer…" where FDA's contradicting answer is told > there is no door with no answer of FDA's kept against it 25ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R1 — "Re-open the settlement on FDA's answer…" where FDA's contradicting answer is told > there is no door with the settlement already re-opened 28ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R1 — "Re-open the settlement on FDA's answer…" where FDA's contradicting answer is told > there is no door with another sequence's row 19ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R1 — "Re-open the settlement on FDA's answer…" where FDA's contradicting answer is told > opened: the server's statement and a quiet sign button 23ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R1 — "Re-open the settlement on FDA's answer…" where FDA's contradicting answer is told > the server's refusal stands in its words; the creator is told; an unreadable answer is said 23ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R2 — the one signature, Responsibility only, the statement word for word > signs the server's statement, asks again, then re-opens; no record key or signature id on screen 5178ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R2 — the one signature, Responsibility only, the statement word for word > a statement that changed after the dialog opened is not signed 5052ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSendReopen.test.tsx > R2 — the one signature, Responsibility only, the statement word for word > a 200 that is not the re-opening of this sequence is not a success 5047ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  6 failed | 3 passed (9)

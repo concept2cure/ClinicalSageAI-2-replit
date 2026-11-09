@@ -48,7 +48,7 @@ import { FILING_COPY_DOCUMENT_TABLE } from '@shared/types/submission-api';
 import { downloadBlob } from '../download';
 import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
 import {
-  gatewayLabel, transmittalStatusTone, heldSendWhen, heldSendSettlementWords, technicalRejectionWords, type HeldSendSettlementRecord, type KeptReceipt,
+  gatewayLabel, transmittalStatusTone, heldSendWhen, heldSendSettlementWords, technicalRejectionWords, awaitsReopen, type HeldSendSettlementRecord, type KeptReceipt,
   type TechnicalRejectionRecord,
 } from '../gatewayLabels';
 import { dispatchWords } from './CommitmentRow';
@@ -1760,7 +1760,7 @@ interface DispatchQcResult {
  *  ShadowFindingDisposition.tsx); 'retire' takes a sequence never filed out of
  *  use and frees its number (P-86, RetireSequence below). */
 export type GovernedKind = 'freeze' | 'dispatch' | 'transmit' | 'shadow-waiver' | 'shadow-finding-disposition' | 'retire' | 'held-send-settlement'
-  | 'technical-rejection';
+  | 'technical-rejection' | 'held-send-reopen';
 
 /** P-92: the two ways a held FDA send is settled, and what each rests on (server: fda-esg-receipts.ts). */
 export type HeldSendOutcome = 'received' | 'not-received';
@@ -1809,6 +1809,25 @@ export interface TechnicalRejectionOverview {
   signerRefusal: string | null;
   statement?: string;
   evidence?: Record<string, unknown>;
+}
+/** P-92 C3: POST governed-precheck {step:'held-send-reopen'} → its `reopen`: which settlement FDA's answer contradicts and
+ *  who may sign; when cleared, the statement, the settlement's signature and FDA's answer the signature names. */
+export interface HeldSendReopenOverview {
+  sequenceNumber: string;
+  outcome: HeldSendOutcome | null;
+  sentAt: string | null;
+  keptAt: string | null;
+  signerRefusal: string | null;
+  statement?: string;
+  settlementSignatureActionId?: string;
+  receiptSha256?: string;
+}
+/** A re-open answer the screen can act on, or null; a cleared one must carry its statement and what it names. */
+export function reopenOf(p: GovernedPrecheck | null | undefined): HeldSendReopenOverview | null {
+  const r = p?.reopen;
+  if (!r || typeof r.sequenceNumber !== 'string' || !(r.signerRefusal === null || typeof r.signerRefusal === 'string')) return null;
+  if (p?.cleared === true && (typeof r.statement !== 'string' || !r.statement.trim() || !r.settlementSignatureActionId || !r.receiptSha256)) return null;
+  return r;
 }
 /** What a technical rejection needs beyond its signature: FDA's Ack3, by Vault id and in words. */
 export interface RejectionRequest { evidenceDocumentId: string; documentLabel?: string }
@@ -1899,6 +1918,7 @@ export interface GovernedPrecheck {
   retirement?: RetirementPrecheck;
   heldSend?: HeldSendOverview;
   rejection?: TechnicalRejectionOverview;
+  reopen?: HeldSendReopenOverview;
 }
 
 /** A retirement answer the screen can act on, or null (P-86 C3). The statement is the server's and is signed word for
@@ -2043,9 +2063,11 @@ const whenOf = (iso: string | null | undefined): string | null => (iso ? new Dat
  * row says where it went in words, and a send to the agency's test environment
  * that it is not a filing (F1, row D7, 2026-11-01).
  */
-function DossierTransmissions({ programId, region, sequenceId, sequenceNumber }: {
-  programId: string | null | undefined; region: string; sequenceId: number; sequenceNumber: string;
+function DossierTransmissions({ programId, region, seq, onReopen }: {
+  programId: string | null | undefined; region: string; seq: SeqRow; onReopen: () => void;
 }) {
+  const sequenceId = seq.id;
+  const sequenceNumber = seq.sequenceNumber;
   const path = programId
     ? `/api/mdx/gateways/transmittals?program_id=${encodeURIComponent(programId)}&region=${encodeURIComponent(region)}`
     : null;
@@ -2115,6 +2137,8 @@ function DossierTransmissions({ programId, region, sequenceId, sequenceNumber }:
         </div>
       )}
       {body}
+      {/* Where FDA's verified answer contradicting a settlement is said, the door to re-open it on that answer (P-92 C3). */}
+      {live.rows.some((t) => awaitsReopen(t.metadata, sequenceId)) && <HeldSendReopen seq={seq} onReopen={onReopen} />}
     </div>
   );
 }
@@ -2128,7 +2152,11 @@ function DossierTransmissions({ programId, region, sequenceId, sequenceNumber }:
  */
 /** What the Dispatch tab hands up for the one signature: a transmit, a held send's settlement (P-92 C2), or FDA's
  *  technical rejection (P-92 C4). */
-interface DispatchActs { onTransmit: (req: TransmitRequest) => void; onSettle: (req: SettlementRequest) => void; onReject: (req: RejectionRequest) => void }
+interface DispatchActs {
+  onTransmit: (req: TransmitRequest) => void; onSettle: (req: SettlementRequest) => void; onReject: (req: RejectionRequest) => void;
+  /** P-92 C3: re-open a settlement FDA's verified answer contradicts. */
+  onReopen: () => void;
+}
 function TransmitPanel({ seq, programId, acts, canSign }: { seq: SeqRow; programId: string | null | undefined; acts: DispatchActs; canSign: boolean }) {
   const { onTransmit, onSettle, onReject } = acts;
   const [ready, setReady] = React.useState<{ phase: 'loading' | 'done' | 'error'; t?: TransmitReadiness; error?: string }>({ phase: 'loading' });
@@ -2203,7 +2231,7 @@ function TransmitPanel({ seq, programId, acts, canSign }: { seq: SeqRow; program
       {t.dispatchStatus === 'transmitting' && <HeldSendSettlement seq={seq} programId={programId} onSettle={onSettle} />}
       {/* Where a send recorded as received by FDA is told, the door to record FDA's failed Ack3 (P-92 C4). */}
       {t.dispatchStatus === 'sent' && t.route.ok && t.route.region === 'fda' && <TechnicalRejection seq={seq} programId={programId} onReject={onReject} />}
-      {t.route.ok && <DossierTransmissions programId={programId} region={t.route.region} sequenceId={seq.id} sequenceNumber={seq.sequenceNumber} />}
+      {t.route.ok && <DossierTransmissions programId={programId} region={t.route.region} seq={seq} onReopen={acts.onReopen} />}
     </div>
   );
 }
@@ -2495,6 +2523,55 @@ function HeldSendWays({ seq, programId, overview: h, onSettle }: {
         </>
       )}
     </>
+  );
+}
+
+/** The server's answer to the re-open of a settlement: who may sign it and what they would state, or why not. */
+type ReopenState = { phase: 'closed' | 'reading' | 'unreadable' } | { phase: 'blocked'; refusal: string } | { phase: 'offered'; overview: HeldSendReopenOverview };
+async function askReopen(seq: SeqRow): Promise<ReopenState> {
+  const r = await mutateVerbatim<GovernedPrecheck>('POST', precheckPath(seq.id), { step: 'held-send-reopen' });
+  const overview = reopenOf(r.data);
+  if (!overview || typeof r.data?.cleared !== 'boolean') return { phase: 'unreadable' };
+  return r.data.refusal ? { phase: 'blocked', refusal: r.data.refusal } : { phase: 'offered', overview };
+}
+
+/**
+ * Re-open a settlement on FDA's answer (P-92 C3; design §10.5 E (i)): where the transmissions say FDA's verified answer
+ * contradicting a settlement, a closed door. Each open asks the server again; the statement shown is the server's, and
+ * the sign button hands the one signature to Submission Center, which asks again. Nothing is signed or changed here.
+ */
+function HeldSendReopen({ seq, onReopen }: { seq: SeqRow; onReopen: () => void }) {
+  const [state, setState] = React.useState<ReopenState>({ phase: 'closed' });
+  const asked = React.useRef(0);
+  const wasOpen = React.useRef(false);
+  const onToggle = (e: React.SyntheticEvent<HTMLElement>) => {
+    const open = (e.currentTarget as { open?: boolean }).open === true;
+    if (open === wasOpen.current) return;
+    wasOpen.current = open;
+    const id = ++asked.current;
+    if (!open) { setState({ phase: 'closed' }); return; }
+    setState({ phase: 'reading' });
+    void askReopen(seq).then((answer) => { if (asked.current === id) setState(answer); });
+  };
+  const o = state.phase === 'offered' ? state.overview : null;
+  return (
+    <details className="pj-more sc-mt" data-testid="held-send-reopen" onToggle={onToggle}>
+      <summary>Re-open the settlement on FDA&#39;s answer…</summary>
+      {state.phase === 'reading' && <div role="status">Checking whether the settlement can be re-opened…</div>}
+      {state.phase === 'unreadable' && <div role="status">Whether the settlement can be re-opened could not be checked. Close this and open it again to retry.</div>}
+      {state.phase === 'blocked' && <div role="note">{blockerForDisplay(state.refusal)}</div>}
+      {o && (o.signerRefusal ? <div role="note">{blockerForDisplay(o.signerRefusal)}</div> : (
+        <>
+          <div data-testid="held-send-reopen-would-state">
+            <span className="tl-spec-k">By signing, you would state:</span>
+            <div><q>{o.statement}</q></div>
+          </div>
+          <div className="sc-mt">
+            <button type="button" className="btn ghost small" onClick={onReopen}>{`Sign: re-open sequence ${o.sequenceNumber}'s settlement`}</button>
+          </div>
+        </>
+      ))}
+    </details>
   );
 }
 
@@ -2872,6 +2949,7 @@ export function DispatchWorkspace({
                 onTransmit: (req) => onGoverned(seq, 'transmit', req),
                 onSettle: (req) => onGoverned(seq, 'held-send-settlement', undefined, undefined, req),
                 onReject: (req) => onGoverned(seq, 'technical-rejection', undefined, undefined, req),
+                onReopen: () => onGoverned(seq, 'held-send-reopen'),
               }}
             />
             {/* A freeze instruction reads the FREEZE verdict. Gated on `gate`,

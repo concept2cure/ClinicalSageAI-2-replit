@@ -77,6 +77,7 @@ import {
   retirementOf,
   settlementOf,
   rejectionStatedOf,
+  reopenOf,
   TEST_SEND_NOT_A_FILING,
   type GovernedKind,
   type GovernedPrecheck,
@@ -84,6 +85,7 @@ import {
   type SettlementRequest,
   type RejectionRequest,
   type TechnicalRejectionOverview,
+  type HeldSendReopenOverview,
   type Notice,
   type SeqRow,
   type TransmitRequest,
@@ -323,15 +325,17 @@ type GovernedFlow = {
   settlement?: SettlementRequest; heldSend?: HeldSendOverview;
   /** FDA's technical rejection (P-92 C4): the Ack3 chosen, and the server's answer it is signed over. */
   rejection?: RejectionRequest; rejectionOverview?: TechnicalRejectionOverview;
+  /** A settlement re-opened on FDA's answer (P-92 C3): the server's answer it is signed over. */
+  reopenOverview?: HeldSendReopenOverview;
 };
 const GOVERNED_LABEL: Record<GovernedKind, string> = {
   freeze: 'Freeze', dispatch: 'Dispatch', transmit: 'Transmit', 'shadow-waiver': 'Shadow Review waiver',
   'shadow-finding-disposition': 'Closing a critical finding', retire: 'Retirement', 'held-send-settlement': 'Settling a held send',
-  'technical-rejection': "Recording FDA's technical rejection",
+  'technical-rejection': "Recording FDA's technical rejection", 'held-send-reopen': 'Re-opening a settlement',
 };
 const GOVERNED_PAST: Record<GovernedKind, string> = {
   freeze: 'frozen', dispatch: 'dispatched', transmit: 'transmitted', 'shadow-waiver': 'waived', 'shadow-finding-disposition': 'closed',
-  retire: 'retired', 'held-send-settlement': 'settled', 'technical-rejection': 'recorded',
+  retire: 'retired', 'held-send-settlement': 'settled', 'technical-rejection': 'recorded', 'held-send-reopen': 're-opened',
 };
 /** What a governed step needs beyond its kind: where a transmit goes, the run a waiver answers (P-34), the finding a
  *  disposition closes (P-35), or the way a held send is settled (P-92). */
@@ -352,6 +356,9 @@ function missingRequest(kind: GovernedKind, req: GovernedRequest): string | null
 /** A cleared answer that carried no statement: nothing can be signed over it. */
 const NO_STATEMENT = 'Whether the server would accept this could not be checked — the answer carried no statement to sign. Nothing was signed.';
 const STATEMENT_CHANGED = 'What you would state changed since this dialog opened. Nothing was signed; close it and open it again.';
+/** The steps signed over a statement the dialog shows, asked again before signing: a settlement, a technical rejection
+ *  and a re-open (P-92 C2 to C4). */
+const STATED_KINDS: ReadonlySet<GovernedKind> = new Set<GovernedKind>(['held-send-settlement', 'technical-rejection', 'held-send-reopen']);
 
 /** What a settlement's precheck asks: the way and its ground. */
 function settlementBody(r: SettlementRequest | undefined): Record<string, string> {
@@ -373,13 +380,25 @@ function rejectionFields(f: GovernedFlow): Record<string, unknown> {
   if (f.kind !== 'technical-rejection' || !f.rejectionOverview) return {};
   return { transmittalId: f.rejectionOverview.transmittalId, transmitAttemptId: f.rejectionOverview.attemptId, evidence: f.rejectionOverview.evidence, statement: f.statement };
 }
-type ClearedAnswer = { refusal: string | null; statement?: string; heldSend?: HeldSendOverview; rejectionOverview?: TechnicalRejectionOverview };
+type ClearedAnswer = {
+  refusal: string | null; statement?: string; heldSend?: HeldSendOverview; rejectionOverview?: TechnicalRejectionOverview; reopenOverview?: HeldSendReopenOverview;
+};
+/** What a re-open's signature carries beyond its intent and meaning (P-92 C3): the settlement, FDA's answer and the
+ *  statement, as the server answered them, compared by the server word for word. */
+function reopenFields(f: GovernedFlow): Record<string, unknown> {
+  if (f.kind !== 'held-send-reopen' || !f.reopenOverview) return {};
+  return { settlementSignatureActionId: f.reopenOverview.settlementSignatureActionId, receiptSha256: f.reopenOverview.receiptSha256, statement: f.statement };
+}
 /** The step's own statement, from a cleared answer: a retirement's (P-86), a settlement's (P-92) or a technical
  *  rejection's (P-92 C4); none for the others. */
 function clearedAnswer(kind: GovernedKind, data: GovernedPrecheck): ClearedAnswer {
   if (kind === 'technical-rejection') {
     const stated = rejectionStatedOf(data);
     return stated ? { refusal: null, statement: stated.statement, rejectionOverview: stated } : { refusal: NO_STATEMENT };
+  }
+  if (kind === 'held-send-reopen') {
+    const reopen = reopenOf(data);
+    return reopen?.statement ? { refusal: null, statement: reopen.statement, reopenOverview: reopen } : { refusal: NO_STATEMENT };
   }
   if (kind === 'retire') {
     const retirement = retirementOf(data);
@@ -472,9 +491,29 @@ function rejectionSigning(flow: GovernedFlow, region: string): SigningWords {
   };
 }
 
-/** The steps whose dialog says the server's statement: a retirement (P-86), a settlement and a technical rejection (P-92). */
+/** A re-open's one signature (P-92 C3): Responsibility only; a target line with no record key; the server's statement. */
+function reopenSigning(flow: GovernedFlow, region: string): SigningWords {
+  const statement = flow.statement ?? '';
+  const kept = heldSendDay(flow.reopenOverview?.keptAt);
+  return {
+    action: `Re-open sequence ${flow.seq.sequenceNumber}'s settlement on FDA's answer`,
+    targetMeta: `${region} · re-opens the settlement on FDA's signed answer${kept ? ` of ${kept}` : ''}; nothing is sent to FDA`,
+    defaultMeaning: 'responsibility',
+    meanings: ['responsibility'],
+    renderMeaningDetails: () => (
+      <div className="sc-mb" data-testid="held-send-reopen-statement">
+        <span className="tl-spec-k">By signing, you state:</span>
+        <p><q>{statement}</q></p>
+      </div>
+    ),
+    signedRows: [{ label: 'Stated', value: statement }],
+  };
+}
+
+/** The steps whose dialog says the server's statement: a retirement (P-86), and a settlement, a technical rejection and
+ *  a re-open (P-92). */
 const STATED_SIGNING: Partial<Record<GovernedKind, (flow: GovernedFlow, region: string) => SigningWords>> = {
-  retire: retirementSigning, 'held-send-settlement': settlementSigning, 'technical-rejection': rejectionSigning,
+  retire: retirementSigning, 'held-send-settlement': settlementSigning, 'technical-rejection': rejectionSigning, 'held-send-reopen': reopenSigning,
 };
 
 /** The words of the one signing dialog, for the step in flight. */
@@ -1099,7 +1138,7 @@ export function SubmissionCenter({
     setActing(s.id);
     setNotice(null);
     const { transmit, waiver, disposition, settlement, rejection } = req;
-    const { refusal, statement, heldSend, rejectionOverview } = await precheckAnswer(s, kind, req);
+    const { refusal, statement, heldSend, rejectionOverview, reopenOverview } = await precheckAnswer(s, kind, req);
     setActing(null);
     if (refusal) {
       setNotice({ tone: 'err', text: `${GOVERNED_LABEL[kind]} of sequence ${s.sequenceNumber} not started — ${refusal}` });
@@ -1108,7 +1147,7 @@ export function SubmissionCenter({
     setFlow({
       seq: s, kind, ...(transmit ? { transmit } : {}), ...(waiver ? { waiver } : {}), ...(disposition ? { disposition } : {}),
       ...(statement ? { statement } : {}), ...(settlement ? { settlement } : {}), ...(heldSend ? { heldSend } : {}),
-      ...(rejection ? { rejection } : {}), ...(rejectionOverview ? { rejectionOverview } : {}),
+      ...(rejection ? { rejection } : {}), ...(rejectionOverview ? { rejectionOverview } : {}), ...(reopenOverview ? { reopenOverview } : {}),
     });
   };
 
@@ -1126,9 +1165,9 @@ export function SubmissionCenter({
   const askAgain = async (f: GovernedFlow) => {
     const again = await precheckAnswer(f.seq, f.kind, { transmit: f.transmit, waiver: f.waiver, disposition: f.disposition, settlement: f.settlement, rejection: f.rejection });
     if (again.refusal) throw new Error(again.refusal);
-    // A settlement (P-92 C2) and a technical rejection (C4) are signed over the statement the dialog shows; the
-    // server's answer now must be the same.
-    if ((f.kind === 'held-send-settlement' || f.kind === 'technical-rejection') && again.statement !== f.statement) throw new Error(STATEMENT_CHANGED);
+    // A settlement (P-92 C2), a technical rejection (C4) and a re-open (C3) are signed over the statement the dialog
+    // shows; the server's answer now must be the same.
+    if (STATED_KINDS.has(f.kind) && again.statement !== f.statement) throw new Error(STATEMENT_CHANGED);
   };
   const runGoverned = async (
     f: GovernedFlow,
@@ -1145,7 +1184,7 @@ export function SubmissionCenter({
         // a transmit's names where the package goes (F1, row D7, 2026-11-08).
         payload: {
           intent: f.kind, meaning: input.meaning, ...dispositionFields(f.disposition), ...transmitEnvironmentField(f), ...retirementFields(f),
-          ...settlementFields(f), ...rejectionFields(f),
+          ...settlementFields(f), ...rejectionFields(f), ...reopenFields(f),
         },
         reauth: { password: input.password, ...(input.totp ? { totp: input.totp } : {}) },
       },
@@ -1165,6 +1204,7 @@ export function SubmissionCenter({
       retire: runRetire,
       'held-send-settlement': runSettlement,
       'technical-rejection': runRejection,
+      'held-send-reopen': runReopen,
     };
     const act = ownAct[f.kind];
     if (act) return act(f, sign.data.actionId, input, sign.data.sha256Chain);
@@ -1315,6 +1355,31 @@ export function SubmissionCenter({
         throw new Error(`The server did not confirm that sequence ${f.seq.sequenceNumber}'s technical rejection was recorded. Check its Dispatch tab before signing again.`);
       }
       setNotice({ tone: 'ok', text: `Sequence ${f.seq.sequenceNumber} is recorded as rejected by FDA, on its Ack3 kept in the Vault, signed by ${signerLabel} (${input.meaning}). It is no longer on file with FDA.` });
+      return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
+    } finally {
+      setReadinessBump((b) => b + 1);
+    }
+  };
+
+  /** The re-open's act (P-92 C3): only a server answer that says this sequence's settlement was re-opened is a success. */
+  const runReopen = async (
+    f: GovernedFlow,
+    signatureActionId: string,
+    input: { meaning: EsigMeaning; reason: string },
+    hash: string | undefined,
+  ) => {
+    try {
+      const done = await mutateVerbatim<{ reopened?: unknown; sequenceId?: unknown; outcome?: unknown }>(
+        'POST', `/api/submissions/sequences/${f.seq.id}/held-send/reopen`, { signatureActionId },
+      );
+      if (done.error) throw new Error(blockerForDisplay(done.error));
+      if (done.data?.reopened !== true || done.data.sequenceId !== f.seq.id) {
+        throw new Error(`The server did not confirm that sequence ${f.seq.sequenceNumber}'s settlement was re-opened. Check its Dispatch tab before signing again.`);
+      }
+      const n = f.seq.sequenceNumber;
+      setNotice({ tone: 'ok', text: done.data.outcome === 'received'
+        ? `Sequence ${n} is recorded as rejected by FDA, on FDA's signed answer, signed by ${signerLabel} (${input.meaning}). It can be sent again under a new signature.`
+        : `Sequence ${n} is recorded as received by FDA, on FDA's signed receipt, signed by ${signerLabel} (${input.meaning}). The release stays on the record beside it.` });
       return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
     } finally {
       setReadinessBump((b) => b + 1);
