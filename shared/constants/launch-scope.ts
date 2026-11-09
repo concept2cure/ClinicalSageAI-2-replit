@@ -253,7 +253,8 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // with a project" half. Surfaces only, as for
     // risk-based monitoring (P-76): professional-tier and explicit grants keep
     // deciding who holds it, and no module is granted to a new organisation.
-    surfaces: ['biostatistics', 'biostat-workbench'],
+    // One surface since 2026-11-09: `biostat-workbench` was retired into it.
+    surfaces: ['biostatistics'],
     modules: [],
   },
   {

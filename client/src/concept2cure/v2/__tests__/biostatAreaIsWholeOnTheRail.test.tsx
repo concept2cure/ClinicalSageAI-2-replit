@@ -88,10 +88,13 @@ describe('the rail lands on the whole biostatistics area', () => {
     await waitFor(() => expect(screen.getByText('Method precedent')).toBeTruthy());
   });
 
-  it('still offers the calculators, which the registry leaves on the other surface', async () => {
+  /* Written on 2026-11-09 asserting a ghost button to `biostat-workbench`.
+     Later the same day that surface was retired into this one
+     (biostatIsOneSurface.test.tsx), so the calculators are a section here and
+     there is no button to anywhere. The capability is what this pins. */
+  it('carries the calculators itself, with no second surface to send anyone to', async () => {
     quietServer();
-    const onNav = vi.fn();
-    render(<Surface onAsk={() => {}} onNav={onNav} />);
-    await waitFor(() => expect(screen.getByRole('button', { name: /Design calculators/i })).toBeTruthy());
+    render(<Surface onAsk={() => {}} onNav={() => {}} />);
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Design calculators' })).toBeTruthy());
   });
 });

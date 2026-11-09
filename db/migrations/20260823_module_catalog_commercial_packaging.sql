@@ -1,3 +1,9 @@
+-- AMENDED IN PLACE 2026-11-09 — biostat-workbench retired into biostatistics (CLAUDE.md Rule 1).
+-- 20260810 no longer upserts biostat-workbench; its replay deprecates the existing row. Remove its packaging
+-- row too, so the unknown-module guard below still passes on a fresh database that never holds it. Replayed
+-- databases keep the deprecated row, the tier it was given ('professional'), its subscriptions and every other
+-- module's tier unchanged (biostatistics stays 'professional', the surviving surface's tier, so a plan that
+-- included the workbench includes the one Biostatistics surface that now holds its calculators).
 -- AMENDED IN PLACE 2026-11-05 — agency-meetings retired into Communication (P-39 step 4; CLAUDE.md Rule 1).
 -- 20260810 no longer upserts agency-meetings; its replay deprecates the existing row. Remove its packaging row
 -- too, so the unknown-module guard below still passes on a fresh database that never holds it. Replayed databases
@@ -316,7 +322,7 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   -- multi_agency_export, ctd_builder, document_builder) and to mdx-entitlements
   -- (prediction, scheduled/drift reporting).
   --
-  --   biostatistics, biostat-workbench     FEATURE_TIER_MAP biostatistics:professional
+  --   biostatistics                        FEATURE_TIER_MAP biostatistics:professional
   --   pharmacovigilance, pv-cockpit        post-approval; a pre-approval company has no PV obligation
   --   rbm                                  multi-study clinical operations
   --   device-postmarket                    PMS/PMCF + "Advanced Analytics"
@@ -327,7 +333,6 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   --   shadow-review, submission-twin       predictive review simulation -- the prediction moat
   --   gateway-transmittals                 FEATURE_TIER_MAP multi_agency_export:professional
   --   qmp                                  quality-management PROGRAMS, not the compliance record
-  ('biostat-workbench', 'professional'),
   ('biostatistics', 'professional'),
   ('device-postmarket', 'professional'),
   ('gateway-transmittals', 'professional'),

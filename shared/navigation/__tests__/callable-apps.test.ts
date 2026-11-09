@@ -19,7 +19,7 @@ describe('CALLABLE_APPS', () => {
 
   it('includes the module workstreams and the tool-like globals, not the shell destinations', () => {
     const ids = CALLABLE_APPS.map((a) => a.id);
-    expect(ids).toEqual(expect.arrayContaining(['cmc', 'labeling', 'biostatistics', 'biostat-workbench', 'deep-research', 'communication-center', 'tasking']));
+    expect(ids).toEqual(expect.arrayContaining(['cmc', 'labeling', 'biostatistics', 'deep-research', 'communication-center', 'tasking']));
     expect(ids).not.toContain('projects');
     expect(ids).not.toContain('project-home');
     expect(ids).not.toContain('apps');
@@ -79,9 +79,12 @@ describe('parseAppMentions', () => {
     // The handles context enrichment accepted before the composer offered a
     // menu — a message that worked then must resolve to the same app now.
     for (const [handle, id] of [
-      ['biostats', 'biostat-workbench'], ['510k', 'device-510k'], ['pma', 'device-pma'], ['cer', 'device-cer'],
+      /* `biostats` pointed at the retired `biostat-workbench` until the two
+         surfaces were merged on 2026-11-09; the old handle still lands on the
+         one surface that holds the calculators. */
+      ['biostats', 'biostatistics'], ['510k', 'device-510k'], ['pma', 'device-pma'], ['cer', 'device-cer'],
       ['ectd', 'ectd-coauthor'], ['vault', 'vault'], ['safety', 'safety'], ['precedent', 'precedent-intelligence'],
-      ['deep-research', 'deep-research'], ['biostat-workbench', 'biostat-workbench'],
+      ['deep-research', 'deep-research'],
     ]) {
       expect(findCallableApp(handle)?.id, handle).toBe(id);
       const m = parseAppMentions(`@${handle} please`);
@@ -116,9 +119,9 @@ describe('parseAppMentions', () => {
   });
 
   it('a longer handle wins over a shorter one it starts with', () => {
-    expect(parseAppMentions('@biostatistics workbench now')[0].app.id).toBe('biostat-workbench');
+    expect(parseAppMentions('@biostatistics workbench now')[0].app.id).toBe('biostatistics');
     expect(parseAppMentions('@biostatistics now')[0].app.id).toBe('biostatistics');
-    expect(parseAppMentions('@biostat now')[0].app.id).toBe('biostat-workbench');
+    expect(parseAppMentions('@biostat now')[0].app.id).toBe('biostatistics');
   });
 
   it('every alias and id is unique across the vocabulary', () => {
