@@ -204,6 +204,23 @@ const versions = async () =>
   (await run(`SELECT id, version, content_hash, change_description FROM concept2cure_artifact_versions`)).rows;
 const snapshots = async () => (await run(`SELECT version_id FROM concept2cure_submission_snapshots`)).rows;
 
+/**
+ * P-95 (2026-11-09): an artifact is approved only after its review. A completed
+ * round-1 review approving `version`, by a reviewer who is neither the signer
+ * nor an author (Q1), for the cases that approve to test something else.
+ */
+async function reviewed(version = 2, reviewer = ADA) {
+  await run(
+    `WITH a AS (
+       INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, review_round, status)
+       SELECT 'asgn_reviewed', id, organization_id, $2::int, $3::int, 1, 'completed' FROM concept2cure_artifacts WHERE artifact_id = $1
+       RETURNING id, artifact_id, organization_id)
+     INSERT INTO concept2cure_review_decisions (decision_id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
+     SELECT 'dec_reviewed', a.id, a.artifact_id, a.organization_id, $2::int, 1, 'approve', $4::int FROM a`,
+    [ARTIFACT, reviewer, USER, version],
+  );
+}
+
 async function seed(status: 'review' | 'approved', opts: { versionRow?: boolean; author?: number } = {}) {
   await run(
     `INSERT INTO concept2cure_artifacts
@@ -233,6 +250,7 @@ beforeAll(async () => {
   await holder.pg.exec(
     `INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${USER}, 'admin')`,
   );
+  await addReviewers();
 }, 60_000);
 afterAll(async () => {
   await holder.pg?.close();
@@ -253,6 +271,7 @@ describe('approving an artifact is an electronic signature', () => {
     ['a wrong password', { reauth: { password: 'not-it' } }],
   ])('%s: refused 401, and the artifact, the signatures and the ledger are untouched', async (_label, over) => {
     await seed('review');
+    await reviewed();
     const res = await putStatus({ ...APPROVE, ...over });
 
     expect(res.status, JSON.stringify(res.body)).toBe(401);
@@ -282,6 +301,7 @@ describe('approving an artifact is an electronic signature', () => {
 
   it('re-authenticated: approved at the version, one signature naming the verified signer and how, and its ledger row', async () => {
     await seed('review');
+    await reviewed();
     const res = await putStatus(APPROVE);
 
     expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -306,6 +326,7 @@ describe('approving: what the signature binds, and what goes back with it', () =
   it('enrolled in TOTP: signed with password and a verified code; without the code, refused', async () => {
     holder.mfa = true;
     await seed('review');
+    await reviewed();
 
     const noCode = await putStatus(APPROVE);
     expect(noCode.status, JSON.stringify(noCode.body)).toBe(401);
@@ -320,6 +341,7 @@ describe('approving: what the signature binds, and what goes back with it', () =
 
   it('no stored row for the version: the act records it from the content and signs that — never approved unsigned', async () => {
     await seed('review', { versionRow: false });
+    await reviewed();
     const res = await putStatus(APPROVE);
 
     expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -338,6 +360,7 @@ describe('approving: what the signature binds, and what goes back with it', () =
 
   it('a provenance event that cannot be written takes the whole act back', async () => {
     await seed('review');
+    await reviewed();
     await holder.pg.exec('ALTER TABLE concept2cure_provenance_events RENAME TO concept2cure_provenance_events_away');
     let res: request.Response;
     try {
@@ -354,6 +377,7 @@ describe('approving: what the signature binds, and what goes back with it', () =
 
   it('a signature that cannot be written takes the approval back with it', async () => {
     await seed('review');
+    await reviewed();
     await holder.pg.exec('ALTER TABLE concept2cure_signatures RENAME TO concept2cure_signatures_away');
     let res: request.Response;
     try {
@@ -533,6 +557,7 @@ describe('the column set the signed act accepts', () => {
 
   it('the harness metadata the route republishes is written by the act, through the route', async () => {
     await seed('review');
+    await reviewed();
     const res = await putStatus(APPROVE);
 
     expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -594,6 +619,7 @@ describe('P-18: the author cannot approve or release their own artifact', () => 
 
   it('becoming an author after the preflight (a version written while signing): refused 403 on the signing transaction, nothing written', async () => {
     await seed('review');
+    await reviewed();
     holder.duringReauth = () =>
       run(
         `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash, created_by_id)
@@ -928,6 +954,50 @@ describe('F1: the latest review round is open, so an assignment joins it and the
  * version's approval. The routes refused only the creator as a reviewer, and
  * nothing compared the reviewer with the signer.
  */
+/**
+ * P-95 (2026-11-09): review is mandatory before a regulated document is
+ * approved, and every artifact counts as regulated. Until then no assignment at
+ * all met the quorum. The refusal is 409 REVIEW_REQUIRED before the password, as
+ * the editor's door answers its own, and the signing transaction reads it again.
+ */
+describe('P-95: an artifact is approved only after its review', () => {
+  it('no reviewer named: refused 409 REVIEW_REQUIRED before the password is verified, nothing written', async () => {
+    await seed('review');
+    let reauthAsked = false;
+    holder.duringReauth = async () => { reauthAsked = true; };
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(JSON.stringify(res.body)).toContain('REVIEW_REQUIRED');
+    expect(JSON.stringify(res.body)).toMatch(/no one has reviewed this document.*Review section/);
+    expect(reauthAsked, 'the password was verified for an act that cannot be signed').toBe(false);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+    expect(await ledger()).toEqual([]);
+  });
+
+  it('the review is gone by the time it is signed: refused on the signing transaction, nothing written', async () => {
+    await seed('review');
+    await reviewed();
+    holder.duringReauth = () => run(`DELETE FROM concept2cure_review_assignments`);
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).not.toBe(200);
+    expect(JSON.stringify(res.body)).toMatch(/no one has reviewed this document/);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+  });
+
+  it('an independent reviewer approved this version: approved', async () => {
+    await seed('review');
+    await reviewed();
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 2 });
+  });
+});
+
 describe('P-95 Q1: the reviewer is neither the approving signer nor an author', () => {
   beforeAll(addReviewers);
   /** Makes `userId` a version writer: a version row numbered by their id, so it never collides. The current version is unchanged. */

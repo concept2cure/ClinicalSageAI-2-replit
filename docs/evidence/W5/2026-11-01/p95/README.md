@@ -1,4 +1,4 @@
-# P-95: review before a regulated document is approved — design, not yet built (2026-11-02)
+# P-95: review before a regulated document is approved — designed 2026-11-02, landed on the artifact door 2026-11-09
 
 **Decision.** The coordinating session relayed the founder's answer to question 5 of `../README.md`.
 P-95: review is mandatory before a regulated document is approved. "Regulated" is the document-type
@@ -86,8 +86,9 @@ first.**
 1. ~~The round repair (this lane, F1).~~ *Landed 2026-11-02, `0f7706e637` (`../review-round/`). It
    also refuses an all-withdrawn latest round under P-95, and refuses a new round over an objection to
    the current version.*
-2. D4's reach of the two routes (the coordinating session).
-3. The P-95 refusal (this lane, F1).
+2. ~~D4's reach of the two routes.~~ *Landed 2026-11-09, `2b092fd1d9` (the Anna runtime session): the
+   artifact card's Review step, `ConversationArtifactReview.tsx`, in `ConversationThread.tsx`.*
+3. ~~The P-95 refusal (this lane, F1).~~ *Landed 2026-11-09; see "Landed" below.*
 
 ## Open questions (P-95 does not settle them)
 
@@ -99,3 +100,70 @@ first.**
    reviewers? The quorum today counts whatever was assigned.
 3. **Should the authoring-document and Vault approval doors also apply P-95?** They are other files,
    and this refusal does not reach them.
+
+## Landed (2026-11-09): an artifact with no review is refused REVIEW_REQUIRED
+
+The reach is on origin (`2b092fd1d9`), and its author recorded in `COORDINATION.md` that the refusal
+could land. This lane held the files there before editing them.
+
+**What changed.** One source file, `server/services/artifact-approval-act.ts`. It completes changes 1
+to 4 and 6 above; change 5 landed earlier.
+1. **`reviewQuorumVerdict`.** No assignment at all is refused with `code: 'REVIEW_REQUIRED'`. Until
+   2026-11-09 it met the quorum. A latest round whose reviewers were all withdrawn already refused
+   (`0f7706e637`) and now carries the same code. Both messages say where a reviewer is named: "Name a
+   reviewer in the artifact's Review section; once every named reviewer has approved this version, it
+   can be approved."
+2. **`refuseSignedArtifactAct`.** It answers `REVIEW_REQUIRED` **409**, as the editor's door answers
+   its own (`33c3e4de9e`, `authoring.router.ts`). Every other quorum refusal stays 400, with no code.
+   - The status route forwards the code and refuses before the password.
+   - AnA's `update_artifact_status` forwards it in `data.code`, after the sign-off, as that door's other
+     refusals do.
+3. **Order is unchanged:** lock coverage, contradictions, the author (P-18), then review (P-95, with
+   Q1's independence last).
+4. **The signing transaction** re-reads the quorum under the row lock, as before. A review removed
+   between the preflight and the signature is refused there, and nothing is signed.
+5. **A release reads no review.** Approved → locked releases the approval, which was the reviewed act.
+6. **Nothing is retroactive.** An approval already recorded stays approved, and it can be released.
+
+**Every artifact counts as regulated** (see "What follows" above). No catalog class has a zero-review
+path, and nothing on the row names its class, so no classification lookup is made.
+
+### Who is affected
+
+- **The product.** AnA's signed approval of an artifact is refused until someone other than the person
+  in the conversation, and other than an author, has been named and has approved this version. That
+  happens in the artifact card's Review step.
+- **CI's browser journeys.** `golden-customer-journey.e2e.ts` assigns a reviewer, records an approving
+  decision and does not approve. It is unaffected.
+- **Demos.** No script under `scripts/demo` approves an artifact through either door. Seeds that insert
+  approved artifacts directly do not pass through the act.
+- **Tests.** Suites that approve to test something else now seed a completed approving review by a
+  third user, as the editor door's suites do with `withCompletedReview`:
+  - the ceremony suite, `reviewed()`;
+  - the AnA signed-act suite, `approvingReview()`;
+  - the quorum integrity suite, `reviewed()`;
+  - the lock-coverage suite, `reviewedAt()`;
+  - `project-write-gates.pglite.test.ts`'s approving case, which seeds A's approver's review inline.
+
+  The fixture's first case flips to refused.
+
+### Runs
+
+| Run | File | Result |
+|---|---|---|
+| Red first: this change's tests against HEAD `8dc4a34dec`'s `artifact-approval-act.ts` | `red-first.txt` | 7 red. Status route: 409 before the password, and the transaction re-read. AnA: `REVIEW_REQUIRED`. Preflight: no reviewer, and all withdrawn. Fixture: case 1. Lock coverage: the route's 409 |
+| Mutant: no assignment meets the quorum again | `mutant-no-assignment-met.txt` | 6 red |
+| Mutant: the preflight answers every quorum refusal 400, with no code | `mutant-code-not-passed.txt` | 5 red |
+| Mutant: an all-withdrawn round without the code | `mutant-withdrawn-no-code.txt` | 1 red |
+| Mutant: the signing transaction ignores the quorum it re-reads | `mutant-transaction-no-reread.txt` | 2 red |
+| Green: ceremony, quorum integrity, AnA signed act and lock coverage | (in the commit) | 191/191 |
+| Downstream: every suite that loads the artifact router, the review tables or the act, or calls it (125 files) | `downstream.txt` | One case was this change's: `project-write-gates` approved with no review, and now seeds one (685/685). The other 64 failures, in 4 files, fail identically at HEAD |
+| Lint | `eslint-changed-files.txt` | 0 errors; 1 warning before and after (the ceremony suite's length) |
+
+### Still open
+
+- **Q2:** `regulated_dual_review` needs two completed reviewers. It is the next slice on this door.
+- **For the founder (from `../review-round/`):** is a reviewer who asked for changes carried into the
+  next round?
+- **Known, not repaired:** `POST …/reviewers` checks `status = 'review'` before taking the row lock.
+

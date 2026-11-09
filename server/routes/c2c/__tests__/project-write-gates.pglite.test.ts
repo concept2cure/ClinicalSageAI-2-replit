@@ -369,6 +369,13 @@ describe('approving an artifact through PUT …/status', () => {
   afterEach(() => { vi.restoreAllMocks(); });
 
   it('an organization reviewer who is not an edit member, and holds signing authority, approves: the signed act commits', async () => {
+    // P-95 (2026-11-09): an artifact is approved only after its review. A's
+    // approver (14), neither the signer (13) nor the author (10), approved v1.
+    await h.state.pg.exec(`
+      INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, status)
+        VALUES ('asg_4099', 4099, ${ORG_A}, ${A_APPROVER.userId}, 10, 'completed');
+      INSERT INTO concept2cure_review_decisions (decision_id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
+        SELECT 'dec_4099', id, 4099, ${ORG_A}, ${A_APPROVER.userId}, review_round, 'approve', 1 FROM concept2cure_review_assignments WHERE assignment_id = 'asg_4099';`);
     const outcome = await approveAs(A_REVIEWER);
     expect(outcome.status, JSON.stringify({ ...outcome, body: undefined })).toBe(200);
     expect(await statusOf()).toBe('approved');
