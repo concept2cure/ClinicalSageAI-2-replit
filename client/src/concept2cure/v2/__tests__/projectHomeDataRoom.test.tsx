@@ -341,11 +341,12 @@ describe('ProjectHome — pinning sources as context', () => {
 });
 
 /** Route /sources and /source-changes independently. */
-function mockUsageApi(sources: unknown[], changes: unknown[] = [], usageScope: string | undefined = 'accessible-citations') {
+function mockUsageApi(sources: unknown[], changes: unknown[] = [], usageScope: string | undefined = 'accessible-citations',
+  vaultChanges: unknown[] = []) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, url: string) => {
     if (url === `/api/c2c/projects/${PID}/sources`) return ok({ projectId: PID, sources, unscoped: [], usageScope });
-    if (url === `/api/c2c/projects/${PID}/source-changes`) return ok({ projectId: PID, changes, count: changes.length });
+    if (url === `/api/c2c/projects/${PID}/source-changes`) return ok({ projectId: PID, changes, count: changes.length, vaultChanges, vaultCount: vaultChanges.length });
     if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'BX-301' });
     return ok({});
   });
@@ -396,7 +397,7 @@ describe('ProjectHome — where a source is used', () => {
     if (scope === undefined) apiRequest.mockImplementation(async (_m: string, url: string) => {
       if (url === `/api/c2c/projects/${PID}/sources`) return ok({ projectId: PID, sources: [source({ title: 'scope-unverified.pdf', usage: { sections: 0, documents: 0, changedSections: 0 } })] });
       if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'BX-301' });
-      return ok({ changes: [], count: 0 });
+      return ok({ changes: [], count: 0, vaultChanges: [], vaultCount: 0 });
     });
     renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('scope-unverified.pdf');
@@ -466,8 +467,10 @@ describe('ProjectHome — usage and changed-citation read verification', () => {
 
   it.each([
     { ok: false, status: 503, json: async () => ({ message: 'Read unavailable' }) } as Response,
-    ok({ changes: {}, count: 0 }),
-    ok({ changes: [], count: null }),
+    ok({ changes: {}, count: 0, vaultChanges: [], vaultCount: 0 }),
+    ok({ changes: [], count: null, vaultChanges: [], vaultCount: 0 }),
+    // S12: a read that does not say which Vault-drafted sections changed confirms nothing either.
+    ok({ changes: [], count: 0 }),
   ])('an unavailable or malformed change read preserves sources without implying no affected citations', async reply => {
     mockUsageApi([source({ title: 'still-usable.pdf', usage: { sections: 0, documents: 0, changedSections: 0 } })]);
     const base = apiRequest.getMockImplementation()!;
@@ -475,6 +478,17 @@ describe('ProjectHome — usage and changed-citation read verification', () => {
     renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('still-usable.pdf');
     await screen.findByText(/Source-change citations could not be verified for your current access/);
+    expect(screen.queryByText(/accessible citations? shown in this project/)).toBeNull();
+  });
+
+  it('names the sections drafted from a Vault version that a later approved version replaced (S12)', async () => {
+    mockUsageApi([source({ title: 'spec.pdf', usage: { sections: 0, documents: 0, changedSections: 0 } })], [], 'accessible-citations', [
+      { sectionId: 's1', sectionCode: '3.2.S.4.1', documentTitle: 'Module 3 quality', citedVaultId: 'v1', citedVersion: '1.0',
+        vaultTitle: 'Drug substance specification', approvedVersion: '2.0' },
+    ]);
+    renderOnEvidence(<ProjectHome {...props()} />);
+    await screen.findByText('1 section was drafted from a Vault version that a later approved version has replaced.');
+    expect(screen.getByText('Module 3 quality · 3.2.S.4.1 — drafted from Drug substance specification v1.0; v2.0 is approved')).toBeTruthy();
     expect(screen.queryByText(/accessible citations? shown in this project/)).toBeNull();
   });
 });

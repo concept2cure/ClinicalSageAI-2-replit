@@ -1,0 +1,10 @@
+# eslint on the changed files: warnings at HEAD -> with this change
+server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts errors 0 warnings 1 -> 1
+server/services/module3-convergence-service.ts errors 0 warnings 6 -> 6
+   artifact-approval-ceremony.pglite.integration.test.ts max-lines File has too many lines (930). Maximum allowed is 500.
+   module3-convergence-service.ts @typescript-eslint/no-unused-vars 'tablesToMarkdown' is defined but never used.
+   module3-convergence-service.ts max-lines-per-function Async function 'getModule3BuildStatus' has too many lines (212). Maximum allowed is 100.
+   module3-convergence-service.ts complexity Async function 'getModule3BuildStatus' has a complexity of 23. Maximum allowed is 15.
+   module3-convergence-service.ts complexity Arrow function has a complexity of 24. Maximum allowed is 15.
+   module3-convergence-service.ts max-lines-per-function Async function 'bridgeCompileToArtifact' has too many lines (147). Maximum allowed is 100.
+   module3-convergence-service.ts max-lines File has too many lines (580). Maximum allowed is 500.

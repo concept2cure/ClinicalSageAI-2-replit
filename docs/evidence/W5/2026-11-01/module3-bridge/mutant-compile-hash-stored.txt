@@ -1,0 +1,8 @@
+# Mutant: a recompile stores the compile hash as content_hash again
+# in server/services/module3-convergence-service.ts
+# -         [fullContent, textHash, JSON.stringify(metadata), orgId, row.id],
+# +         [fullContent, contentHash, JSON.stringify(metadata), orgId, row.id],
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a Module 3 section bridged from a compile > a recompile records the version it writes and keeps the metadata other writers recorded 21ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 49 skipped (52)

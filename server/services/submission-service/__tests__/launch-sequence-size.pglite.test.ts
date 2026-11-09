@@ -180,7 +180,7 @@ describe('a route whose gateway limit is sourced is refused over it before signi
     const pre = await readiness(id, 'production');
     expect(pre.cleared).toBe(false);
     expect(pre.refusal).toBe(
-      'Refusing to transmit: Package is 0.73 GB, over the EMA gateway limit of 0.63 GB. Submit via the agency\'s ' +
+      'Refusing to transmit: Package is 700.0 MiB, over the EMA gateway limit of 600 MiB. Submit via the agency\'s ' +
       'large-submission channel (e.g. physical media) instead of the gateway. The sequence is dispatched, so its leaves ' +
       'can no longer be changed, and it cannot be sent as it is.');
     expect((await q(`SELECT id FROM electronic_signatures WHERE signed_target = $1`, [`ectd-sequence:${id}`])).rows).toEqual([]);
@@ -190,6 +190,27 @@ describe('a route whose gateway limit is sourced is refused over it before signi
     const id = await sequence('dispatched', 'eu', 'EU_GENERIC_DCP');
     h.sizeBytes = EU_LIMIT + 1;
     expect((await readiness(id, 'production')).refusal).toMatch(/^Refusing to transmit: Package is .* over the EMA gateway limit/);
+  }, 120_000);
+
+  /* The coordinating session, 2026-11-09 (Q1(a) follow-on): the package gate refuses it at freeze and dispatch too,
+     by the same rule and sentence, so a sequence that cannot be sent is not sealed or dispatched first. */
+  it('an EU national filing over 600 MiB is refused at freeze, while its leaves can still change', async () => {
+    const id = await sequence('validated', 'eu', 'EU_GENERIC_DCP');
+    h.sizeBytes = 700 * 1024 * 1024;
+    expect((await precheckGovernedStep(id, 'freeze', ctx)).refusal).toBe(
+      'Refusing to freeze: Package is 700.0 MiB, over the EMA gateway limit of 600 MiB. Submit via the agency\'s ' +
+      'large-submission channel (e.g. physical media) instead of the gateway. Remove some of its leaves and place them ' +
+      'in a later sequence, so that each package is 600 MiB or less. Transmit would refuse this package, and once the ' +
+      'sequence is frozen its leaves can no longer be changed.');
+  }, 120_000);
+
+  it('a frozen EU national filing over 600 MiB is refused at dispatch, saying its leaves are locked', async () => {
+    const id = await sequence('frozen', 'eu', 'EU_GENERIC_DCP');
+    h.sizeBytes = 700 * 1024 * 1024;
+    expect((await precheckGovernedStep(id, 'dispatch', ctx)).refusal).toBe(
+      'Refusing to dispatch: Package is 700.0 MiB, over the EMA gateway limit of 600 MiB. Submit via the agency\'s ' +
+      'large-submission channel (e.g. physical media) instead of the gateway. The sequence is frozen, so its leaves can ' +
+      'no longer be changed, and it cannot be sent as it is.');
   }, 120_000);
 
   it('at exactly CESP’s 600 MiB it is not refused on size', async () => {

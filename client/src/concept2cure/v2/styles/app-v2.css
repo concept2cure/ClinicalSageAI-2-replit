@@ -209,7 +209,17 @@
 .c2c-v2 :is(.btn.small, .btn.sm, .reg-cta.sm) { height: 28px; padding: 0 10px; gap: 5px; font-size: var(--fs-small); }
 .c2c-v2 :is(.btn.small, .btn.sm) :is(.ico, svg) { width: 14px; height: 14px; font-size: 14px; }
 .c2c-v2 :is(.btn, .reg-cta, .landing-newproj):disabled { opacity: .5; cursor: not-allowed; }
+/* A disabled primary is grey, not faded orange (D0.md §8.2): it is not the view's orange action, and it
+   should not read as one. The same treatment `.sp-primary:disabled` has (journey-v2.css). */
+.c2c-v2 :is(.btn.primary, .reg-cta, .landing-newproj):disabled,
+.c2c-v2 :is(.btn.primary, .reg-cta, .landing-newproj):disabled:hover { opacity: 1; background: var(--bg-200); border-color: transparent; color: var(--text-400); }
 @media (pointer: coarse) { .c2c-v2 :is(.btn, .reg-cta, .landing-newproj, .sp-primary) { min-height: 44px; } }
+/* D0.md §8.5: on a touch screen the tabs, segmented items, the composer's send and a drawer's close reach
+   44px too. A fine pointer keeps 36, 28, 32 and 32, which pass WCAG 2.5.8 AA (24px). */
+@media (pointer: coarse) {
+  .c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab, .seg-b, .ml-seg-btn) { min-height: 44px; }
+  .c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send, .de-x) { min-width: 44px; min-height: 44px; }
+}
 
 /* Inputs: 32px inline (`.c2c-input`, matches `.btn`), 36px in forms (`.de-input`,
    matches `.de-btn`), 14px text, radius 8, one focus ring. */
@@ -434,7 +444,9 @@
 
 /* Composer chrome (each composer keeps its own layout). */
 .c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer) {
-  background: var(--canvas-elevated); border: 1px solid var(--border); border-radius: 20px;
+  /* The resting edge is --border-control, 3.91:1 on the page and 4.12:1 on the fill in light, 4.36 and 3.80 in
+     dark (D0.md §8.4, WCAG 1.4.11). --border was 1.41:1, and --border-strong 1.70:1 in dark. */
+  background: var(--canvas-elevated); border: 1px solid var(--border-control); border-radius: 20px;
   box-shadow: 0 1px 2px rgb(20 20 19 / .04), 0 6px 20px -8px rgb(20 20 19 / .10);
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
@@ -3763,7 +3775,7 @@
    the action is `btn ghost al-btn` and the alt `btn al-btn2` (AnswerLead.tsx), so
    the header's one primary stays the view's only orange. Serif only at
    data-emphasis="verdict", the one screen where the answer is the screen. */
-.c2c-v2 .al-lead { max-width: 72ch; margin: 0 0 24px; padding: 0; border: 0; border-radius: 0; background: none; }
+.c2c-v2 .al-lead { max-width: 72ch; margin: 24px 0; padding: 0; border: 0; border-radius: 0; background: none; }
 .c2c-v2 .al-k { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; font-size: var(--fs-small); font-weight: 500; line-height: 1.4; letter-spacing: 0; text-transform: none; color: var(--text-300); }
 .c2c-v2 .al-urgent .al-k { color: var(--warning); }
 .c2c-v2 .al-good .al-k { color: var(--success); }
@@ -3775,7 +3787,8 @@
 .c2c-v2 .al-urgent .al-cue { color: var(--warning); }
 .c2c-v2 .al-good .al-cue { color: var(--success); }
 .c2c-v2 .al-cue svg { width: 14px; height: 14px; }
-.c2c-v2 .al-h { margin: 0 0 4px; font-family: var(--font-sans); font-size: var(--fs-section); font-weight: 600; line-height: 1.45; color: var(--text-100); }
+/* D0.md §8.3: quieter than a section heading (500, not 600), with room above (.al-lead's 24px margin). */
+.c2c-v2 .al-h { margin: 0 0 4px; font-family: var(--font-sans); font-size: var(--fs-section); font-weight: 500; line-height: 1.45; color: var(--text-100); }
 .c2c-v2 .al-h b { font-weight: 600; }
 .c2c-v2 .al-lead[data-emphasis="verdict"] .al-h { font-family: var(--font-serif); font-size: 20px; font-weight: 500; line-height: 1.35; }
 .c2c-v2 .al-b { font-size: var(--fs-body); line-height: 1.6; color: var(--text-300); }

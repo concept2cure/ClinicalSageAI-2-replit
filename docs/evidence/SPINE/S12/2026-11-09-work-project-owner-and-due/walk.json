@@ -1,0 +1,32 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T05:34:20.794Z",
+  "steps": [
+    {
+      "name": "Drug product CMC 2026-11-09T05:34",
+      "id": 13
+    },
+    {
+      "name": "it says no one is assigned to deliver it yet"
+    },
+    {
+      "name": "the row says who delivers it and when, read back from the Plan's tasks",
+      "words": "Assigned to JM Smith, due Nov 30, 2026",
+      "person": "JM Smith"
+    },
+    {
+      "name": "the same at 390 dark",
+      "hScroll": 0
+    }
+  ],
+  "requests": [
+    {
+      "post": "/api/tasks/tasks",
+      "status": 200,
+      "sourceEntityType": "work_project",
+      "sourceEntityId": "6065271c-d4b0-4936-aad1-02855423a738:13"
+    }
+  ],
+  "finishedAt": "2026-11-09T05:34:28.564Z"
+}

@@ -122,6 +122,13 @@ vi.mock('../../../services/intelligence/rim-interceptors.js', () => ({
   interceptArtifactChange: vi.fn(),
   interceptFeedback: vi.fn(),
 }));
+/* The Module 3 compile bridge (below) attributes its text through the span
+   lineage gate, whose tables this suite does not build. No other case here
+   reaches the gate: the suite drives the status route only. */
+vi.mock('../../../services/clinical-regulatory-evidence/lineage-gate', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../services/clinical-regulatory-evidence/lineage-gate')>()),
+  enforceAuthorLineage: vi.fn(async () => ({ clausesInAcceptedText: 0 })),
+}));
 
 import artifactRouter from '../artifacts';
 import { db } from '../../../db';
@@ -133,6 +140,7 @@ import {
 import { artifactStatusUpdate, reviewQuorumVerdict } from '../../../services/artifact-approval-act';
 import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../../../shared/schema';
 import { eq } from 'drizzle-orm';
+import { bridgeCompileToArtifact } from '../../../services/module3-convergence-service';
 
 const BASELINE = 'migrations/0000_sweet_joseph.sql';
 const DDL = [
@@ -149,6 +157,7 @@ const DDL = [
     'db/migrations/20260828_align_written_columns_with_migrations.sql',
     'db/migrations/20260314_phase12_multi_user_review.sql',
   ].map(f => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8')),
+  extractTableDdl('db/migrations/20260401_cmc_convergence_os.sql', ['cmc_provenance_events']),
 ].join('\n');
 
 const ORG = 99;
@@ -204,6 +213,23 @@ const versions = async () =>
   (await run(`SELECT id, version, content_hash, change_description FROM concept2cure_artifact_versions`)).rows;
 const snapshots = async () => (await run(`SELECT version_id FROM concept2cure_submission_snapshots`)).rows;
 
+/**
+ * P-95 (2026-11-09): an artifact is approved only after its review. A completed
+ * round-1 review approving `version`, by a reviewer who is neither the signer
+ * nor an author (Q1), for the cases that approve to test something else.
+ */
+async function reviewed(version = 2, reviewer = ADA) {
+  await run(
+    `WITH a AS (
+       INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, review_round, status)
+       SELECT 'asgn_reviewed', id, organization_id, $2::int, $3::int, 1, 'completed' FROM concept2cure_artifacts WHERE artifact_id = $1
+       RETURNING id, artifact_id, organization_id)
+     INSERT INTO concept2cure_review_decisions (decision_id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
+     SELECT 'dec_reviewed', a.id, a.artifact_id, a.organization_id, $2::int, 1, 'approve', $4::int FROM a`,
+    [ARTIFACT, reviewer, USER, version],
+  );
+}
+
 async function seed(status: 'review' | 'approved', opts: { versionRow?: boolean; author?: number } = {}) {
   await run(
     `INSERT INTO concept2cure_artifacts
@@ -233,6 +259,7 @@ beforeAll(async () => {
   await holder.pg.exec(
     `INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${USER}, 'admin')`,
   );
+  await addReviewers();
 }, 60_000);
 afterAll(async () => {
   await holder.pg?.close();
@@ -253,6 +280,7 @@ describe('approving an artifact is an electronic signature', () => {
     ['a wrong password', { reauth: { password: 'not-it' } }],
   ])('%s: refused 401, and the artifact, the signatures and the ledger are untouched', async (_label, over) => {
     await seed('review');
+    await reviewed();
     const res = await putStatus({ ...APPROVE, ...over });
 
     expect(res.status, JSON.stringify(res.body)).toBe(401);
@@ -282,6 +310,7 @@ describe('approving an artifact is an electronic signature', () => {
 
   it('re-authenticated: approved at the version, one signature naming the verified signer and how, and its ledger row', async () => {
     await seed('review');
+    await reviewed();
     const res = await putStatus(APPROVE);
 
     expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -306,6 +335,7 @@ describe('approving: what the signature binds, and what goes back with it', () =
   it('enrolled in TOTP: signed with password and a verified code; without the code, refused', async () => {
     holder.mfa = true;
     await seed('review');
+    await reviewed();
 
     const noCode = await putStatus(APPROVE);
     expect(noCode.status, JSON.stringify(noCode.body)).toBe(401);
@@ -320,6 +350,7 @@ describe('approving: what the signature binds, and what goes back with it', () =
 
   it('no stored row for the version: the act records it from the content and signs that — never approved unsigned', async () => {
     await seed('review', { versionRow: false });
+    await reviewed();
     const res = await putStatus(APPROVE);
 
     expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -338,6 +369,7 @@ describe('approving: what the signature binds, and what goes back with it', () =
 
   it('a provenance event that cannot be written takes the whole act back', async () => {
     await seed('review');
+    await reviewed();
     await holder.pg.exec('ALTER TABLE concept2cure_provenance_events RENAME TO concept2cure_provenance_events_away');
     let res: request.Response;
     try {
@@ -354,6 +386,7 @@ describe('approving: what the signature binds, and what goes back with it', () =
 
   it('a signature that cannot be written takes the approval back with it', async () => {
     await seed('review');
+    await reviewed();
     await holder.pg.exec('ALTER TABLE concept2cure_signatures RENAME TO concept2cure_signatures_away');
     let res: request.Response;
     try {
@@ -533,6 +566,7 @@ describe('the column set the signed act accepts', () => {
 
   it('the harness metadata the route republishes is written by the act, through the route', async () => {
     await seed('review');
+    await reviewed();
     const res = await putStatus(APPROVE);
 
     expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -594,6 +628,7 @@ describe('P-18: the author cannot approve or release their own artifact', () => 
 
   it('becoming an author after the preflight (a version written while signing): refused 403 on the signing transaction, nothing written', async () => {
     await seed('review');
+    await reviewed();
     holder.duringReauth = () =>
       run(
         `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash, created_by_id)
@@ -656,10 +691,10 @@ const decisionRows = async () =>
   (await run(`SELECT reviewer_id, review_round, decision, version_reviewed FROM concept2cure_review_decisions ORDER BY review_round, reviewer_id`)).rows;
 const lastAssignmentEvent = async () =>
   (await run(`SELECT source_description, details FROM concept2cure_provenance_events WHERE event_action = 'reviewer_assigned' ORDER BY id DESC LIMIT 1`)).rows[0];
-/** The production quorum, read as both approval doors read it. */
-const quorum = async (currentVersion: number) => {
+/** The production quorum, read as both approval doors read it, optionally for a signer (P-95 Q1). */
+const quorum = async (currentVersion: number, signerId?: number) => {
   const [{ id }] = (await run(`SELECT id FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT])).rows;
-  return reviewQuorumVerdict({ query: (text, params) => run(text, params ?? []) }, id, ORG, currentVersion);
+  return reviewQuorumVerdict({ query: (text, params) => run(text, params ?? []) }, id, ORG, currentVersion, signerId);
 };
 /** The author revises the document under review: a new version, as the race case above edits it. */
 const editToVersion = (version: number) => run(`UPDATE concept2cure_artifacts SET version = $2 WHERE artifact_id = $1`, [ARTIFACT, version]);
@@ -919,3 +954,226 @@ describe('F1: the latest review round is open, so an assignment joins it and the
     ]);
   });
 });
+
+/**
+ * 2026-11-09 (F1, P-95 Q1, under the founder's delegation): what counts as a
+ * review. The reviewer is neither the approving signer nor an author, read as
+ * P-18 reads authors (the artifact's creator and every version's writer). An
+ * approver who recorded a decision on a version, in any round, cannot sign that
+ * version's approval. The routes refused only the creator as a reviewer, and
+ * nothing compared the reviewer with the signer.
+ */
+/**
+ * P-95 (2026-11-09): review is mandatory before a regulated document is
+ * approved, and every artifact counts as regulated. Until then no assignment at
+ * all met the quorum. The refusal is 409 REVIEW_REQUIRED before the password, as
+ * the editor's door answers its own, and the signing transaction reads it again.
+ */
+describe('P-95: an artifact is approved only after its review', () => {
+  it('no reviewer named: refused 409 REVIEW_REQUIRED before the password is verified, nothing written', async () => {
+    await seed('review');
+    let reauthAsked = false;
+    holder.duringReauth = async () => { reauthAsked = true; };
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(JSON.stringify(res.body)).toContain('REVIEW_REQUIRED');
+    expect(JSON.stringify(res.body)).toMatch(/no one has reviewed this document.*Review section/);
+    expect(reauthAsked, 'the password was verified for an act that cannot be signed').toBe(false);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+    expect(await ledger()).toEqual([]);
+  });
+
+  it('the review is gone by the time it is signed: refused on the signing transaction, nothing written', async () => {
+    await seed('review');
+    await reviewed();
+    holder.duringReauth = () => run(`DELETE FROM concept2cure_review_assignments`);
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).not.toBe(200);
+    expect(JSON.stringify(res.body)).toMatch(/no one has reviewed this document/);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+  });
+
+  it('an independent reviewer approved this version: approved', async () => {
+    await seed('review');
+    await reviewed();
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 2 });
+  });
+});
+
+describe('P-95 Q1: the reviewer is neither the approving signer nor an author', () => {
+  beforeAll(addReviewers);
+  /** Makes `userId` a version writer: a version row numbered by their id, so it never collides. The current version is unchanged. */
+  const writeVersionAs = (userId: number) =>
+    run(
+      `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash, created_by_id)
+       SELECT id, organization_id, $2::int, 'draft', 'h-' || $2::text, $2::int FROM concept2cure_artifacts WHERE artifact_id = $1`,
+      [ARTIFACT, userId],
+    );
+
+  it('the signer reviewed and approved this version: their approval is refused before the password is verified, nothing written', async () => {
+    await seed('review');
+    ok(await assign([USER]));
+    ok(await decide(USER, 'approve'));
+    let reauthAsked = false;
+    holder.duringReauth = async () => { reauthAsked = true; };
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(JSON.stringify(res.body)).toMatch(/you reviewed this version in review round 1/);
+    expect(reauthAsked, 'the password was verified for an act that cannot be signed').toBe(false);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+  });
+
+  it('the signer reviewed this version in a closed round, and a colleague in a new one: still refused', async () => {
+    await seed('review');
+    ok(await assign([USER]));
+    ok(await decide(USER, 'approve'));
+    expect(ok(await assign([ADA])), 'the assignment opened round 2').toMatchObject({ reviewRound: 2, previousRound: 1 });
+    ok(await decide(ADA, 'approve'));
+    expect(await quorum(2, USER)).toMatchObject({ met: false, message: expect.stringMatching(/you reviewed this version in review round 1/) });
+
+    const res = await putStatus(APPROVE);
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+  });
+
+  it('the signer becomes a reviewer of the round while signing: refused on the signing transaction, nothing written', async () => {
+    await seed('review');
+    ok(await assign([ADA]));
+    ok(await decide(ADA, 'approve'));
+    holder.duringReauth = () =>
+      run(
+        `WITH a AS (
+           INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, review_round, status)
+           SELECT 'asgn_signer', id, organization_id, $2, $2, 1, 'completed' FROM concept2cure_artifacts WHERE artifact_id = $1
+           RETURNING id, artifact_id, organization_id)
+         INSERT INTO concept2cure_review_decisions (decision_id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
+         SELECT 'dec_signer', a.id, a.artifact_id, a.organization_id, $2, 1, 'approve', 2 FROM a`,
+        [ARTIFACT, USER],
+      );
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).not.toBe(200);
+    expect(JSON.stringify(res.body)).toMatch(/you reviewed this version in review round 1/);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+  });
+
+  it('a reviewer who wrote a version is not assigned (400), and cannot decide once they have written one (403)', async () => {
+    await seed('review');
+    await writeVersionAs(ADA);
+    const assigned = await assign([ADA]);
+    expect(assigned.status, JSON.stringify(assigned.body)).toBe(400);
+    expect(JSON.stringify(assigned.body)).toMatch(/wrote this document/);
+
+    ok(await assign([BEN]));
+    await writeVersionAs(BEN);
+    const decided = await decide(BEN, 'approve');
+    expect(decided.status, JSON.stringify(decided.body)).toBe(403);
+    expect(await decisionRows()).toEqual([]);
+  });
+
+  it('a decision by someone who is now an author does not meet the quorum', async () => {
+    await seed('review');
+    ok(await assign([ADA]));
+    ok(await decide(ADA, 'approve'));
+    expect(await quorum(2)).toEqual({ met: true });
+    await writeVersionAs(ADA);
+    expect(await quorum(2)).toMatchObject({ met: false, message: expect.stringMatching(/wrote this document/) });
+    expect((await putStatus(APPROVE)).status).not.toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+  });
+});
+
+/**
+ * 2026-11-09 (F1, found while designing P-95 Q2): a Module 3 section bridged
+ * from a compile (bridgeCompileToArtifact, module3-convergence-service.ts) is a
+ * governed artifact like any other. It can be approved through the signed act,
+ * it is never written over once released, and every version it writes is
+ * recorded. Until then the bridge:
+ * - stored a compile hash as content_hash, which the signed act refuses;
+ * - overwrote a locked artifact and set it to draft;
+ * - wrote no version row;
+ * - replaced the whole metadata.
+ */
+describe('a Module 3 section bridged from a compile', () => {
+  const SECTION = '3.2.S.4';
+  const compiled = (text: string) => ({
+    narrativeDraft: text, tables: [], completeness: 100, missingInputs: [],
+    lineage: [{ sourceObjectId: 'src-1', sourceHashAtCompile: 'h' }],
+  });
+  const bridge = (text: string) => bridgeCompileToArtifact(ORG, String(PROJECT), SECTION, compiled(text), { createdById: AUTHOR });
+  const bridged = async () =>
+    (await run(
+      `SELECT id, artifact_id, content, content_hash, version, status, metadata FROM concept2cure_artifacts WHERE ctd_section = $1 ORDER BY version DESC LIMIT 1`,
+      [SECTION],
+    )).rows[0] as { id: number; artifact_id: string; content: string; content_hash: string; version: number; status: string; metadata: Record<string, unknown> };
+  const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');
+  const versionRows = async (id: number) =>
+    (await run(`SELECT version, content, content_hash FROM concept2cure_artifact_versions WHERE artifact_id = $1 ORDER BY version`, [id])).rows;
+
+  it('stores sha256 of its text, so the signed act approves it after an independent review', async () => {
+    expect(await bridge('Specifications for the drug substance.')).toMatchObject({ bridged: true, isNew: true });
+    const row = await bridged();
+    expect(row.content_hash).toBe(sha256(row.content));
+    expect(await versionRows(row.id)).toEqual([{ version: 1, content: row.content, content_hash: sha256(row.content) }]);
+
+    // Under the suite's artifact id, in review, with an approving review by Ada.
+    await run(`UPDATE concept2cure_artifacts SET artifact_id = $1, status = 'review' WHERE id = $2`, [ARTIFACT, row.id]);
+    await reviewed(row.version);
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 1 });
+  });
+
+  it('a recompile records the version it writes and keeps the metadata other writers recorded', async () => {
+    await bridge('First compile.');
+    const first = await bridged();
+    await run(`UPDATE concept2cure_artifacts SET metadata = metadata::jsonb || '{"harness":{"documentClass":"module3_output"}}'::jsonb WHERE id = $1`, [first.id]);
+
+    expect(await bridge('Second compile.')).toMatchObject({ bridged: true, isNew: false });
+    const second = await bridged();
+    expect(second).toMatchObject({ id: first.id, version: 2, status: 'draft' });
+    expect(second.content_hash).toBe(sha256(second.content));
+    expect(second.metadata).toMatchObject({ harness: { documentClass: 'module3_output' }, compiledFrom: 'module3-os', sectionKey: SECTION });
+    expect(await versionRows(first.id)).toEqual([
+      { version: 1, content: first.content, content_hash: sha256(first.content) },
+      { version: 2, content: second.content, content_hash: sha256(second.content) },
+    ]);
+  });
+
+  it('a released (locked) section is not written over: the bridge refuses, and the released text and status stay', async () => {
+    await bridge('Released text.');
+    const released = await bridged();
+    await run(
+      `UPDATE concept2cure_artifacts SET status = 'locked', locked_at = NOW(), approved_version_id = version, published_version_id = version WHERE id = $1`,
+      [released.id],
+    );
+
+    const res = await bridge('A later compile.');
+    expect(res).toMatchObject({ bridged: false, reason: 'artifact_locked' });
+    expect(res.bridged === false && res.detail).toMatch(/released by signature.*was not written/);
+    expect(await bridged()).toMatchObject({ id: released.id, status: 'locked', version: 1, content: released.content });
+    expect(await versionRows(released.id)).toHaveLength(1);
+  });
+
+  it('a row that records a lock under a legacy status (published) is not written over either', async () => {
+    await bridge('Published text.');
+    const published = await bridged();
+    await run(`UPDATE concept2cure_artifacts SET status = 'published', locked_at = NOW() WHERE id = $1`, [published.id]);
+
+    expect(await bridge('A later compile.')).toMatchObject({ bridged: false, reason: 'artifact_locked' });
+    expect(await bridged()).toMatchObject({ id: published.id, status: 'published', version: 1, content: published.content });
+  });
+});
+

@@ -1,0 +1,12 @@
+# Mutant: the version row is not recorded
+# in server/services/module3-convergence-service.ts
+# -     await client.query(
+      `INSERT INTO concept2cure_artifact_versions
+# +     if (false) await client.query(
+      `INSERT INTO concept2cure_artifact_versions
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a Module 3 section bridged from a compile > stores sha256 of its text, so the signed act approves it after an independent review 27ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a Module 3 section bridged from a compile > a recompile records the version it writes and keeps the metadata other writers recorded 14ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a Module 3 section bridged from a compile > a released (locked) section is not written over: the bridge refuses, and the released text and status stay 10ms
+ Test Files  1 failed (1)
+      Tests  3 failed | 49 skipped (52)

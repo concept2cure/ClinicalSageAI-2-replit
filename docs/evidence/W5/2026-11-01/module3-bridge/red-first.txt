@@ -1,0 +1,13 @@
+# The ceremony suite's Module 3 bridge cases against HEAD 3ea6208639's module3-convergence-service.ts
+# npx vitest run server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts -t 'a Module 3 section bridged from a compile'
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a Module 3 section bridged from a compile > stores sha256 of its text, so the signed act approves it after an independent review 25ms
+   → expected '39c85a42f6c1416ab3eadbdfaea6ddc09dc5c…' to be '9b4047687702d6b2951d817e73db37aa0a784…' // Object.is equality
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a Module 3 section bridged from a compile > a recompile records the version it writes and keeps the metadata other writers recorded 13ms
+   → expected 'ccb289b8e96429655431afd851fae43b3ed56…' to be '0be90c8ad6477b104ac28a514646a68642dd7…' // Object.is equality
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a Module 3 section bridged from a compile > a released (locked) section is not written over: the bridge refuses, and the released text and status stay 12ms
+   → expected { bridged: true, …(2) } to match object { bridged: false, …(1) }
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a Module 3 section bridged from a compile > a row that records a lock under a legacy status (published) is not written over either 8ms
+   → expected { bridged: true, …(2) } to match object { bridged: false, …(1) }
+ Test Files  1 failed (1)
+      Tests  4 failed | 49 skipped (53)

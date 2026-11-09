@@ -389,7 +389,8 @@ describe('what is not an approval asks for no signature, as before', () => {
     const res = await approve({ status: 'review' });
     expect(res.status).toBe(200);
     expect(writes()).toHaveLength(1);
-    expect(writes()[0].via).toBe('pool');
+    // On the request's own connection, not the shared pool (ci:requestdb-coverage, 2026-11-09).
+    expect(writes()[0].via).toBe('tx');
     expect(stamps()).toEqual([]);
     expect(reverifySigner).not.toHaveBeenCalled();
     expect(recordGovernedAction).not.toHaveBeenCalled();

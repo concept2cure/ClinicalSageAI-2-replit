@@ -1061,3 +1061,50 @@ names no ceremony or meaning, so D2, D3 and §9 A1 stand unchanged.
    - `server/routes/submissions.ts`, `server/mcp/tools/catalog.ts`, `shared/navigation/surface-actions.ts`.
 3. **`scripts/db/migration-set.mjs`** has one holder at a time, in queue order. The Reporting session (P-91: three
    report_bundle tables) is also queued. Ask the coordinator when ready, and never edit it without the recorded hold.
+
+## Re-anchored on the tree at `312cdc711`, 2026-11-09 (RIM; binding over §1–§4 where they differ)
+
+Every path:line in §1–§4 was checked against the tree, and the key claims below were verified by RIM directly.
+Everything not listed here still holds, at new line numbers.
+
+1. **The home of the act.** The coordinator's ruling 1 forbids `sequence-retirement.ts`, so D6's "Where the rules
+   live", §3, C1's file table and C2-T1's regex are re-cut: the act and its eligibility go in
+   `server/services/submission-service/filed-sequence-baseline.ts`.
+   - That file is 243 lines, with 0 ESLint warnings and about 325 counted lines of room under `max-lines`.
+   - It already holds the removal the act reuses (:197-202).
+2. **"No production send bound" under P-108 2(a)** (founder, 2026-11-08): "A production attempt that records nothing
+   reached FDA … is not a 'bound production send'."
+   - FDA ESG creates the transmittal row (`fda-esg.ts:654`) before it resolves credentials or builds the AS2
+     envelope. A production refusal at those steps (`NOTHING_TRANSMITTED`) therefore leaves a bound production row.
+   - The sequence spine records each such attempt as a chained `TRANSMIT_BLOCKED` audit row on the sequence
+     (`submission-service.ts:1407-1426`), with details `{ signatureActionId, transmitted: false }`.
+   - So check 3 becomes: no `submission_transmittals` row whose `metadata.dispatchBinding.sequenceId` is this
+     sequence and whose `metadata.environment` is not `staging`, unless a `TRANSMIT_BLOCKED` row with
+     `transmitted = false` names that attempt's `signatureActionId`.
+   - A missing environment counts as production. A blocked row whose `signatureActionId` is null proves nothing, so
+     its attempt still blocks retirement (fail closed).
+   - §6 item 9 ("it blocks retirement") is overturned for a proven pre-wire refusal.
+   - "Released as not received" (P-92) is not built. When it lands, checks 3 and 4 also exclude a released attempt.
+3. **Step 4 and step 8 have landed.**
+   - Step 4 is repair A (`2c0b4c8fe`): `createSequence` refuses a live holder of the number at
+     `submission-service.ts:735-744`.
+   - Step 8 is repair B (`cec19b461`): readiness answers only for a live sequence.
+   - `e4992a733` took removed sequences out of `projectFilingHeads`.
+   - D8 needs no new `deleted_at` filter. What remains is wording: MCP status and list (C2), and
+     `DossierTransmissions` marking by binding (C3).
+4. **T15 covers three bare soft-deletes on real PostgreSQL**, not one:
+   - `tests/db/vault-where-used.dbtest.ts:149`;
+   - `tests/db/sequence-number-once.dbtest.ts:134` and `:146`.
+   G1 refuses each of them at COMMIT once the guard is in the migration set.
+5. **The fixture conflict.** `_freeze-gate-fixture.ts` creates `c2c_ana_actions` and `electronic_signatures` with plain
+   `CREATE TABLE`, without `signer_id`, `signature_meaning`, `signature_type` or `created_at`. The `governedSigning`
+   flag the guard's tests need creates the same tables. T1 and M14 need that fixture widened first.
+6. **The migration** goes directly after `migrations/20261108_report_bundle_register.sql`
+   (`scripts/db/migration-set.mjs:3797`), above `UUID_TENANT_ISOLATION_NONPUBLIC`. That needs the coordinator's
+   `migration-set.mjs` turn (ruling 3).
+7. **`submission-service.ts` is 4,565 lines**, carrying 7 ESLint warnings. A new function there stays within 100
+   lines and complexity 15. `precheckGovernedStep` is at complexity 15 exactly, so C2's `retire` branch moves into a
+   helper.
+8. **C3 waits for D7-A2**, which has not landed.
+9. **The package.** `ONE_DESIGN_PLAN.md:1807` lists P-86 under F1, but the founder's record says `Plan: L1`. The record
+   wins unless the coordinator rules otherwise.

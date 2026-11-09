@@ -43,6 +43,7 @@
 
  */
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { SectionVaultReplacements } from './SectionVaultReplacements';
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState, useDataReadVisit, type DataReadOwner, type DataReadVisit } from '../dataConnect';
@@ -70,6 +71,7 @@ import { useAuthoringRefileSavedText } from './AuthoringRefileSavedText';
 import { refileControlRefusal, refileSavedSource } from './authoringRefileSavedTextState';
 import { hasUnsavedSessionWork } from '@/lib/sessionChangeGuard';
 import { SendForReviewDialog } from './SendForReviewDialog';
+import { ReturnedReviewNote } from './AuthoringReviewRound';
 import { useProgramRead, programHeadline, programName, offersIndLibrary } from './programSummary';
 import { askAnaToDraftPrompt, openConversationWithPrompt, originWithSavedVersion, prefillConversation, type AskOrigin, type SavedSectionVersion } from './askAnaToDraft';
 import { describeClaimsCheck, describeFigureCheck, describeProvenance } from './provenance';
@@ -769,7 +771,9 @@ interface SectionSource {
   citedAt: string | null;
   citationText: string | null;
   citedChecksum: string | null;
-  state: 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved';
+  state: 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved' | 'unverifiable';
+  /** Why an `unverifiable` source could not be verified (its refusal code). */
+  reasonCode?: string;
   source: {
     id: number;
     title: string | null;
@@ -814,6 +818,13 @@ function sourceStateLabel(s: SectionSource): {
         text: 'Source changed since cited',
         tone: 'warn',
         hint: 'This section was drafted from earlier content. Nothing has been rewritten — re-read the source and decide whether it changes what this section says.',
+      };
+    case 'unverifiable':
+      /* S12 (2026-11-09): one native source that cannot be verified is listed, never used, and the others still are. */
+      return {
+        text: 'Source could not be verified',
+        tone: 'warn',
+        hint: `This source’s current record could not be verified${s.reasonCode ? ` (${s.reasonCode})` : ''}, so it is not used for drafting or citing. The citation remains recorded; nothing has been rewritten.`,
       };
     case 'unresolved':
       return {
@@ -4977,6 +4988,10 @@ export function DocumentWorkbench({
         {currentMetadata?.refused && <div className="scaf-note" role="alert" style={{ padding: '8px 16px' }}>
           This document could not be read with your current access. Re-open it to read the current record.
         </div>}
+        {/* J3 R2: a review returned for changes is said where the document opens, not only under Review tasks. */}
+        {activeDocId && !currentMetadata?.refused && (
+          <ReturnedReviewNote docId={activeDocId} refreshKey={tasksEpoch} onOpenTasks={from => openRail('tasks', from)} />
+        )}
 
         {/* ── The deep-link's honest miss ──
             A workbench click named a section this canvas could not open. The
@@ -6256,6 +6271,8 @@ export function DocumentWorkbench({
               )}
             </>
           )}
+          {/* S12: an independent read, so a failed citations read above does not hide it. */}
+          {activeSection && <SectionVaultReplacements programId={programId} sectionId={activeSection.id} onNav={onNav} />}
         </aside>
       )}
 
