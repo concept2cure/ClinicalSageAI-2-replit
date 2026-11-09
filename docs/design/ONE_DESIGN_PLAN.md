@@ -1742,7 +1742,7 @@ no screen, route, service, table or component file.
 
 - **Stage 9's next steps wait on founder decisions:**
   - where an imported prior filing is recorded (a migration);
-  - whether the Vault admits `.zip`;
+  - whether the Vault admits `.zip` (decided 2026-11-09: it does, P-112);
   - whether the ICH and regional DTDs are vendored for validation.
 
   The reader holds no file now.
