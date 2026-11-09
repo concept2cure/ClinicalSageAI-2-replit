@@ -79,6 +79,10 @@ vi.mock('../../services/authoring/draft-source-references', async (orig) => {
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-signature-figure-gate';
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
+// P-95: these documents' review is complete (release-governance-reads.ts, read 5); the check has its own suite.
+vi.mock('../../services/authoring/authoring-review-route', async (orig) =>
+  (await import('../../services/authoring/__tests__/release-governance-reads')).withCompletedReview(orig));
+
 import router from '../authoring.router';
 
 const DOC = '3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';

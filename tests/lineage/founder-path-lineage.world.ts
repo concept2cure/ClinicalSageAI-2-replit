@@ -203,6 +203,8 @@ export interface World {
   app: express.Express;
   asAuthor: (r: request.Test) => request.Test;
   asApprover: (r: request.Test) => request.Test;
+  /** The QA reviewer: signs the review an approval follows (P-95). */
+  asReviewer: (r: request.Test) => request.Test;
   k: Keys;
   /** Temp directories and environment variables a hop set, undone by close(). */
   tmpDirs: string[];
@@ -381,6 +383,7 @@ export async function buildWorld(h: Holder, migrations: readonly string[], testO
     app,
     asAuthor: asToken(await mint(AUTHOR)),
     asApprover: asToken(await mint(APPROVER)),
+    asReviewer: asToken(await mint(REVIEWER)),
     k: {},
     tmpDirs: [],
     envBefore: {},

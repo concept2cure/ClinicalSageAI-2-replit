@@ -40,6 +40,7 @@ import { EsignModal, type EsigSignedManifest, type EsignSigner } from '../../_sh
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import type { WorkflowImportOrigin } from '@shared/authoring/source-import';
 import { barRefusalNote, useCsrSigningGate } from '../editor/reviewTaskState';
+import { APPROVAL_UNSETTLED_FORM, describeUnresolved, NOT_REVIEWED_FORM, UNSETTLED_FORM, type Unresolved } from './authoringApprovalQuestions';
 
 export interface AuthoringFilingBarProps {
   docId: string;
@@ -80,14 +81,14 @@ export interface AuthoringFilingBarProps {
   signerIsAuthor?: boolean;
   workflowOrigin?: WorkflowImportOrigin;
   docRevision?: string;
+  /** The editor's Send for review (SendForReviewDialog): the remedy a REVIEW_REQUIRED refusal offers (P-95).
+   *  Absent: the refusal is still explained, and the question only closes. */
+  onSendForReview?: () => void;
 }
 
-type Dialog = 'freeze' | 'freeze-unsettled' | 'freeze-figures' | 'esign' | 'esign-unsettled' | 'esign-figures' | null;
+type Dialog = 'freeze' | 'freeze-unsettled' | 'freeze-figures' | 'esign' | 'esign-unsettled' | 'esign-figures' | 'esign-unreviewed' | null;
 
 const FROZEN_STATES = new Set(['FROZEN', 'APPROVED']);
-
-/** What the server said is still outstanding on this document. */
-interface Unresolved { openComments: number; pendingEdits: number }
 
 /** A figure the text states that its section's cited sources do not hold (P-89, 409 FIGURES_UNVERIFIED). */
 interface UnverifiedFigure {
@@ -96,78 +97,6 @@ interface UnverifiedFigure {
 interface UnverifiedFigures { digest: string; items: UnverifiedFigure[] }
 /** The figures the server named, and the keys the signer acknowledged once they kept every one. */
 interface FigureQuestion { list: UnverifiedFigures; acknowledged: string[] | null }
-
-/** "1 unresolved comment and 2 tracked changes" — the same phrasing the server
- *  uses, built here so the dialog can restate it without echoing server text. */
-function describeUnresolved(u: Unresolved): string {
-  const parts: string[] = [];
-  if (u.openComments > 0) {
-    parts.push(`${u.openComments} unresolved comment${u.openComments === 1 ? '' : 's'}`);
-  }
-  if (u.pendingEdits > 0) {
-    parts.push(`${u.pendingEdits} tracked change${u.pendingEdits === 1 ? '' : 's'} nobody has accepted or rejected`);
-  }
-  return parts.join(' and ');
-}
-
-/* The freeze is a signature (DP-35), so it is asked for by the shared
- * EsignModal: meaning, reason, password and code. When the server has REFUSED
- * because the document is not settled, this form asks first — naming exactly
- * what is outstanding and making the choice explicit — and the signature
- * dialog opens again only if the user chooses to seal it as it stands. That
- * refusal is not a dead end and must not read like one: freezing a draft with
- * open comments is a real thing to want. What it is NOT is a button that
- * quietly proceeds: the acknowledgement is a deliberate selection, and the
- * server records what was sealed over. */
-const UNSETTLED_FORM = (title: string, unresolved: Unresolved): C2CFormConfig => ({
-  eyebrow: 'Part 11 · content freeze',
-  title: 'This document is not settled',
-  sub:
-    `“${title}” still has ${describeUnresolved(unresolved)}. Freezing seals the ` +
-    'content for signature and filing, so the questions would go unanswered and the ' +
-    'proposed edits would reach a reviewer undecided.',
-  governed: true,
-  submitLabel: 'Continue',
-  fields: [
-    {
-      key: 'acknowledge',
-      label: 'How do you want to proceed?',
-      type: 'seg' as const,
-      required: true,
-      options: [
-        { value: 'resolve', label: 'Go back and resolve them' },
-        { value: 'seal', label: 'Seal it as it stands' },
-      ],
-    },
-  ],
-});
-
-/* The same question for an approval (2026-10-30): an Approval signature
- * approves and freezes, so the server asks what Freeze asks and refuses while
- * comments are open or tracked changes are undecided. Approving it as it
- * stands is a deliberate choice, re-signed, and recorded by the server. */
-const APPROVAL_UNSETTLED_FORM = (title: string, unresolved: Unresolved): C2CFormConfig => ({
-  eyebrow: 'Part 11 · approval',
-  title: 'This document is not settled',
-  sub:
-    `“${title}” still has ${describeUnresolved(unresolved)}. An approval seals the ` +
-    'content for filing, so the questions would go unanswered and the proposed edits ' +
-    'would stay undecided in the approved text.',
-  governed: true,
-  submitLabel: 'Continue',
-  fields: [
-    {
-      key: 'acknowledge',
-      label: 'How do you want to proceed?',
-      type: 'seg' as const,
-      required: true,
-      options: [
-        { value: 'resolve', label: 'Go back and resolve them' },
-        { value: 'approve', label: 'Approve it as it stands' },
-      ],
-    },
-  ],
-});
 
 /* P-89 (2026-11-01): an approval or a seal is refused while the text states a
  * figure its section's cited sources do not hold, unless the signer
@@ -373,8 +302,10 @@ function signatureBody(input: SignInput, meaning: 'AUTHOR' | 'REVIEWER' | 'APPRO
   };
 }
 
-/** A "not settled" or "figures unverified" refusal as the approver's question; anything else unchanged. */
+/** A "not settled", "figures unverified" or "review required" refusal as the approver's question; anything else unchanged. */
 function approvalQuestionOr(e: unknown): unknown {
+  const err = e as Partial<ApiRequestError> | null;
+  if (err?.code === 'REVIEW_REQUIRED') return new ApprovalNotReviewed(String(err.message ?? ''));
   const unresolved = notSettledCounts(e);
   if (unresolved) return new ApprovalNotSettled(unresolved);
   const figures = unverifiedFiguresIn(e);
@@ -395,6 +326,14 @@ function unverifiedFiguresIn(e: unknown): UnverifiedFigures | null {
   if (err?.code !== 'FIGURES_UNVERIFIED') return null;
   const named = (err.payload as { unverifiedFigures?: UnverifiedFigures } | undefined)?.unverifiedFigures;
   return named && Array.isArray(named.items) && named.items.length > 0 ? named : null;
+}
+
+/** The server refused an approval because the document's review is not complete (P-95); its sentence is the message. */
+class ApprovalNotReviewed extends Error {
+  constructor(message: string) {
+    super(message || 'This document has not been reviewed. Send it for review before approving it. Nothing was signed.');
+    this.name = 'ApprovalNotReviewed';
+  }
 }
 
 /** The server refused an approval because the document is not settled; what it named. */
@@ -502,7 +441,7 @@ function RefusalNote({ id, testId, text }: { id: string; testId: string; text: s
   );
 }
 
-export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer, freezeRefusal: serverFreezeRefusal, esignRefusal: serverEsignRefusal, reviewOnly, signerIsAuthor, workflowOrigin, docRevision }: AuthoringFilingBarProps) {
+export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer, freezeRefusal: serverFreezeRefusal, esignRefusal: serverEsignRefusal, reviewOnly, signerIsAuthor, workflowOrigin, docRevision, onSendForReview }: AuthoringFilingBarProps) {
   const gate = useCsrSigningGate(docId, docRevision ?? docStatus, esignOffer(reviewOnly, signerIsAuthor).meanings,
     { freeze: serverFreezeRefusal, esign: esignRefusalFor(serverEsignRefusal, reviewOnly, signerIsAuthor) });
   const { freeze: freezeRefusal, esign: esignRefusal } = gate;
@@ -516,6 +455,8 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
   const [notApprovedKeys, setNotApprovedKeys] = useState<string[]>([]);
   /** Set when the server refused the freeze because work is outstanding. */
   const [unresolved, setUnresolved] = useState<Unresolved | null>(null);
+  /** The server's sentence when it refused an approval because review is not complete (P-95). */
+  const [notReviewed, setNotReviewed] = useState<string | null>(null);
   /** Set when the server refused an approval or a seal over unverified figures (P-89). */
   const { figures, setFigures, onFiguresChoice } = useFigureQuestion(setDialog, () => setUnresolved(null));
   const frozen = FROZEN_STATES.has(docStatus);
@@ -532,7 +473,9 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
     setDialog(v.acknowledge === 'seal' ? 'freeze' : null);
   };
 
-  const closeAll = () => { setUnresolved(null); setFigures(null); setDialog(null); };
+  const closeAll = () => { setUnresolved(null); setFigures(null); setNotReviewed(null); setDialog(null); };
+  /** The review question's answer: open the editor's Send for review, when the host offers it (P-95). */
+  const onNotReviewedChoice = () => { closeAll(); onSendForReview?.(); };
 
   /* Runs after the dialog has checked the password (and code) with the server.
      A throw is shown in the dialog, which stays open; nothing is sealed. */
@@ -583,6 +526,9 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
       } else if (e instanceof ApprovalNotSettled) {
         setUnresolved(e.unresolved);
         setDialog('esign-unsettled');
+      } else if (e instanceof ApprovalNotReviewed) {
+        setNotReviewed(e.message);
+        setDialog('esign-unreviewed');
       }
       throw e;
     }
@@ -618,7 +564,8 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
         freezeRefusal={freezeRefusal} onSign={doFreeze} onClose={closeAll} onChoice={onUnsettledChoice} onFiguresChoice={onFiguresChoice('freeze')} />
       <EsignDialogs dialog={dialog} docTitle={docTitle} unresolved={unresolved} figures={figures} reviewOnly={reviewOnly} signerIsAuthor={signerIsAuthor} signer={signer}
         gate={gate.forMeaning} onMeaningChange={onMeaningChange} renderMeaningDetails={renderMeaningDetails}
-        onSign={doSign} onClose={closeAll} onChoice={onApprovalUnsettledChoice} onFiguresChoice={onFiguresChoice('esign')} />
+        onSign={doSign} onClose={closeAll} onChoice={onApprovalUnsettledChoice} onFiguresChoice={onFiguresChoice('esign')}
+        notReviewed={notReviewed} canSendForReview={!!onSendForReview} onNotReviewedChoice={onNotReviewedChoice} />
     </>
   );
 }
@@ -677,14 +624,19 @@ function withFiguresMeta(meta: string, figures: FigureQuestion | null): string {
 }
 
 /** The E-sign dialog, and the approval's questions when the server asked them (not settled, 2026-10-30; figures, P-89). */
-function EsignDialogs({ dialog, docTitle, unresolved, figures, reviewOnly, signerIsAuthor, signer, gate, onMeaningChange, renderMeaningDetails, onSign, onClose, onChoice, onFiguresChoice }: {
+function EsignDialogs({ dialog, docTitle, unresolved, figures, reviewOnly, signerIsAuthor, signer, gate, onMeaningChange, renderMeaningDetails, onSign, onClose, onChoice, onFiguresChoice, notReviewed, canSendForReview, onNotReviewedChoice }: {
   dialog: Dialog; docTitle: string; unresolved: Unresolved | null; figures: FigureQuestion | null; reviewOnly?: boolean; signerIsAuthor?: boolean;
   /** The refusal for the meaning chosen: the server's, or the CSR review gate's (B7), shown before a password is sent. */
   signer: AuthoringFilingBarProps['signer']; gate: (m: EsigMeaning) => string | null;
   onMeaningChange: (m: EsigMeaning) => void; renderMeaningDetails: (m: EsigMeaning, disabled: boolean) => React.ReactNode;
   onSign: (input: SignInput) => Promise<EsigSignedManifest>; onClose: () => void; onChoice: (v: Record<string, string>) => void;
   onFiguresChoice: (v: Record<string, string>) => void;
+  /** P-95: the server's sentence when review is not complete, whether the host offers Send for review, and its answer. */
+  notReviewed: string | null; canSendForReview: boolean; onNotReviewedChoice: () => void;
 }) {
+  if (dialog === 'esign-unreviewed' && notReviewed) {
+    return <C2CForm config={NOT_REVIEWED_FORM(notReviewed, canSendForReview)} onCancel={onClose} onSubmit={onNotReviewedChoice} />;
+  }
   if (dialog === 'esign-unsettled' && unresolved) {
     return <C2CForm config={APPROVAL_UNSETTLED_FORM(docTitle, unresolved)} onCancel={onClose} onSubmit={onChoice} />;
   }
