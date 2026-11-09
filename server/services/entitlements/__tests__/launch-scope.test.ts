@@ -480,9 +480,10 @@ describe('Submission Readiness is a Submission Center screen — founder decisio
 describe('Biostatistics in the catalog', () => {
   it('Biostatistics is a launch app with no module grant — founder request P-77, 2026-10-31', () => {
     const biostatistics = LAUNCH_APPS.find((a) => a.id === 'biostatistics');
-    expect(biostatistics?.surfaces).toEqual(['biostatistics', 'biostat-workbench']);
+    /* One surface since the 2026-11-09 merge (SURFACE_CONSOLIDATION_2026-08 §5). */
+    expect(biostatistics?.surfaces).toEqual(['biostatistics']);
     expect(biostatistics?.modules).toEqual([]);
     expect(isLaunchSurface('biostatistics')).toBe(true);
-    expect(isLaunchSurface('biostat-workbench')).toBe(true);
+    expect(isLaunchSurface('biostat-workbench'), 'the retired id is no longer a launch surface').toBe(false);
   });
 });

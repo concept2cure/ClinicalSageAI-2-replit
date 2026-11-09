@@ -865,30 +865,16 @@ export const UI_SURFACES: UiSurface[] = [
     // The existing design assessment now also reaches stored-run reproduction, shared with protocol statistics.
     // Claim those two namespaces, not the bridge root: filing-placements and unrelated children remain excluded
     // by the launch re-proof (launch-reproof-narrowing.test.ts).
-    apiPrefixes: ['/api/biostat', '/api/ana-biostats', '/api/biostat-bridge/designs', '/api/biostat-bridge/computation-runs'],
+    /* Gained '/api/statistical-defensibility' and '/api/diagnostics-performance'
+       on 2026-11-09, when the `biostat-workbench` surface was retired into this
+       one and its two capabilities became sections here. */
+    apiPrefixes: ['/api/biostat', '/api/ana-biostats', '/api/biostat-bridge/designs', '/api/biostat-bridge/computation-runs', '/api/statistical-defensibility', '/api/diagnostics-performance'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes: 'SAP authoring, power analysis, TLF shells, adaptive trial plans, IDMC. Loads the program\'s persisted study designs through the biostatistics bridge: gaps, filing placement per application type, governed sample-size write-back and task raising.',
-  },
-  {
-    id: 'biostat-workbench',
-    label: 'Design calculators',
-    navTier: 'specialist',
-    layoutMode: 'biostatistics',
-    icon: 'sigma',
-    group: 'clinical',
-    uiKit: null,
-    // The diagnostic-accuracy calculators (biostatCalculatorsIvd.ts) are served by the CLSI engines.
-    apiPrefixes: ['/api/statistical-defensibility', '/api/biostat', '/api/diagnostics-performance'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes: 'Real statistical engine: reviewer-risk defensibility assessment + design calculators (assurance), replacing the client-side normal approximation.',
   },
   // 'rbm-operations' is retired. It was a second, thinner RBM destination
   // holding the write/compute layer (KRI value capture, site-risk recompute,
