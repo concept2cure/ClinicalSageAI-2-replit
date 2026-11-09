@@ -169,7 +169,8 @@ describe('Insights — Finalize is a signature, separate from Export', () => {
     expect(finalizeBodies[0]).toEqual({ reason: REASON, meaning: 'authorship', reauth: { password: 'correct horse' } });
 
     const seal = await screen.findByTestId('ro-seal');
-    expect(seal.textContent).toMatch(/Final\. Signed by Dana Reyes as authorship/);
+    // The meaning in the signing dialog's own word (21 CFR 11.50(a)(3)); it read "as authorship" (use walk, 2026-11-09).
+    expect(seal.textContent).toMatch(/Final\. Signed by Dana Reyes, meaning Authorship,/);
     expect(seal.textContent).toMatch(/Sealed sha256 abc123def456… over 12 provenance atoms/);
     expect(document.querySelector('.ro-status')?.textContent).toBe('final');
     // A final report is not offered Finalize again.

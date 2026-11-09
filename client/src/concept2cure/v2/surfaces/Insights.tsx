@@ -1598,7 +1598,8 @@ export interface ReportSeal {
 }
 
 const REPORT_FINALIZE_MEANINGS: ReadonlyArray<EsigMeaning> = ['authorship', 'approval', 'responsibility'];
-const SEAL_MEANING_LABEL: Record<string, string> = { authorship: 'authorship', approval: 'approval', responsibility: 'responsibility' };
+/** The signature's meaning (21 CFR 11.50(a)(3)) as the signing dialog names it. */
+const SEAL_MEANING_LABEL: Record<string, string> = { authorship: 'Authorship', approval: 'Approval', responsibility: 'Responsibility' };
 
 const textOr = (v: unknown, fallback: string): string => (typeof v === 'string' ? v : fallback);
 
@@ -1684,7 +1685,7 @@ function ROSealLine({ seal }: { seal: ReportSeal }) {
     <div className="ro-truth" role="note" data-testid="ro-seal">
       {I.shieldCheck}
       <span>
-        Final. Signed{seal.signer ? ` by ${seal.signer}` : ''} as {SEAL_MEANING_LABEL[seal.meaning] ?? seal.meaning},{' '}
+        Final. Signed{seal.signer ? ` by ${seal.signer}` : ''}, meaning {SEAL_MEANING_LABEL[seal.meaning] ?? seal.meaning},{' '}
         <GovernedTimestamp value={seal.signedAt} layout="inline" />. Sealed {seal.algorithm} {seal.hash.slice(0, 12)}… over {seal.atomCount} provenance atoms.
       </span>
     </div>
