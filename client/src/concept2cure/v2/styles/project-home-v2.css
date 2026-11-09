@@ -5,11 +5,13 @@
    title and one "New project", one quiet toolbar row, then a grid of calm cards.
    `projects` is registered `full: true` (surfaceViews.ts), and `.page-full` on
    the shell is `display:flex; padding:0`, so this claims the row, scrolls
-   itself, and carries D0's page measure: content at most 1120px, centred, with
-   D0's page padding (32/40/96, 24 at ≤1023px, 16 at ≤640px). `min-width:0` so a
-   wide list can shrink rather than push the flex row past the viewport. */
+   itself, and carries `.page-inner`'s frame (D0.md §8.6): a 1120px page, padding
+   included, centred, so the title starts where every sibling's does (32/40/96,
+   24 at ≤1023px, 16 at ≤640px). It read the 1120 as the content's width, which put
+   its title 28px left of its siblings at 1440. `min-width:0` so a wide list can
+   shrink rather than push the flex row past the viewport. */
 .c2c-v2 .pj-index { flex: 1; min-width: 0; overflow-y: auto;
-  padding: 32px max(40px, calc((100% - 1120px) / 2)) 96px; }
+  padding: 32px max(40px, calc((100% - 1120px) / 2 + 40px)) 96px; }
 @media (max-width: 1023px) { .c2c-v2 .pj-index { padding: 24px 24px 80px; } }
 @media (max-width: 640px)  { .c2c-v2 .pj-index { padding: 20px 16px 72px; } }
 
