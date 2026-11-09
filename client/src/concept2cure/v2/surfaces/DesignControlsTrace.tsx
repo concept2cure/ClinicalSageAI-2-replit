@@ -477,8 +477,8 @@ function TraceLead({ dc, onAsk }: { dc: DesignControlsTraceState; onAsk: Ask }) 
           ? "Nothing is outstanding on traceability. As design inputs are added I'll flag the first one that reaches design review without an output, verification and validation linked."
           : undefined}
       action={firstGap
-        ? { label: 'Close the ' + firstGap.id + ' gap', onClick: () => onAsk('What is missing to fully trace ' + firstGap.id + ' (' + firstGap.req + ')?') }
-        : { label: 'Draft the design review minutes', onClick: () => onAsk('Draft the design review minutes confirming full traceability') }}
+        ? { label: 'Close the ' + firstGap.id + ' gap', icon: I.sparkles, onClick: () => onAsk('What is missing to fully trace ' + firstGap.id + ' (' + firstGap.req + ')?') }
+        : { label: 'Draft the design review minutes', icon: I.sparkles, onClick: () => onAsk('Draft the design review minutes confirming full traceability') }}
       secondary="Or work the traceability matrix and design-control checklist below."
     />
   );
