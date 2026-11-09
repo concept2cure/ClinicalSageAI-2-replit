@@ -33,6 +33,9 @@
  *  - Shankar et al. (2014) AAPS J — neutralizing antibody assay
  *    recommendations.
  *
+ * Rule 2 S5d (2026-11-09): results report each true/false input as true, false
+ * or not_stated (inputStates) and say what an unstated or inferred input leaves.
+ *
  * The shared types, citations and input helpers are in
  * ./immunogenicity-reference and the comparability tool in
  * ./immunogenicity-comparability (split out on 2026-10-15 for size); both are
@@ -46,6 +49,7 @@ import {
   CITATIONS,
   RISK_SCORE_BANDS,
   RISK_TIERS,
+  booleanInputStates,
   dedupeCitations,
   maxSeverity,
   round,
@@ -121,6 +125,13 @@ const FOREIGNNESS_VALUES: Foreignness[] = ['fully_human', 'humanized', 'chimeric
 const AGGREGATION_LEVELS: AggregationLevel[] = ['low', 'moderate', 'high'];
 const GLYCOSYLATION_STATUSES: GlycosylationStatus[] = ['human_like', 'non_human_glycans', 'aglycosylated', 'not_applicable'];
 const IMMUNE_STATUSES: ImmuneStatus[] = ['immunocompetent', 'immunosuppressed', 'autoimmune', 'mixed'];
+const RISK_BOOLEANS = [
+  'hasEndogenousCounterpart', 'endogenousNonRedundant', 'hasImmunogenicImpurities', 'formulationRisk',
+  'concomitantImmunosuppression',
+] as const;
+
+/** A true/false input as stated, or not_stated when it was left out. */
+export type InputStates = Record<string, boolean | 'not_stated'>;
 
 export interface ImmunogenicityRiskParams {
   /** Therapeutic-protein product class. */
@@ -191,6 +202,7 @@ export interface RequiredStudy {
 export interface ImmunogenicityRiskResult {
   drugName: string;
   productType: ProductType;
+  inputStates: InputStates;
   /** 'undetermined' while any factor in notAssessed is unstated. */
   overallTier: RiskTier | 'undetermined';
   /** 0–100 platform-heuristic score (see methodology); null while any factor is not assessed. */
@@ -450,7 +462,9 @@ export function assessImmunogenicityRisk(params: ImmunogenicityRiskParams): Immu
     keyConcerns.push(
       nonRedundant
         ? 'Cross-reactive neutralization of a non-redundant endogenous protein is possible — design assays to detect ADA that bind the endogenous molecule and monitor for deficiency syndromes.'
-        : 'Potential cross-reactivity with the endogenous counterpart should be characterized.',
+        : endogenousNonRedundant === undefined
+          ? 'Potential cross-reactivity with the endogenous counterpart should be characterized. Whether the counterpart is non-redundant (endogenousNonRedundant) is not stated; if it is, cross-reactive neutralization could cause a deficiency syndrome.'
+          : 'Potential cross-reactivity with the endogenous counterpart should be characterized.',
     );
     mitigations.push({
       target: 'Endogenous cross-reactivity',
@@ -772,6 +786,7 @@ export function assessImmunogenicityRisk(params: ImmunogenicityRiskParams): Immu
   return {
     drugName,
     productType: fd.productType,
+    inputStates: booleanInputStates(params, RISK_BOOLEANS),
     overallTier,
     riskScore,
     bandLabel: band ? band.label : 'Undetermined: not every risk factor was stated',
@@ -849,6 +864,7 @@ export interface DrugToleranceSpec {
 
 export interface ADAAssayStrategyResult {
   drugName: string;
+  inputStates: InputStates;
   recommendedPlatform: AssayPlatform;
   platformRationale: string;
   platformAlternatives: AssayPlatform[];
@@ -902,6 +918,32 @@ const PLATFORM_LIBRARY: PlatformDescriptor[] = [
   },
 ];
 
+const PLATFORMS: AssayPlatform[] = PLATFORM_LIBRARY.map((d: PlatformDescriptor) => d.platform);
+const PRODUCT_TYPES: ProductType[] = PRODUCT_FOREIGNNESS.map((d: ForeignnessDescriptor) => d.productType);
+const MAB_PRODUCT_TYPES: ProductType[] = ['humanized_mab', 'chimeric_mab', 'murine_mab'];
+
+/**
+ * The ADA strategy's inputs as stated. S5d: productType, preferredPlatform and the
+ * sensitivity were not checked, and the two booleans were read by truthiness.
+ */
+function adaInputs(params: ADAAssayStrategyParams) {
+  const productType = statedOneOf('productType', params.productType, PRODUCT_TYPES);
+  if (productType === undefined) {
+    throw new ComputationRefusal('missing_input', `productType is required (one of ${PRODUCT_TYPES.join(', ')}).`, 'productType');
+  }
+  const statedMab = statedBoolean('isMonoclonalAntibody', params.isMonoclonalAntibody);
+  return {
+    productType,
+    highSolubleTarget: statedBoolean('highSolubleTarget', params.highSolubleTarget),
+    statedMab,
+    preferredPlatform: statedOneOf('preferredPlatform', params.preferredPlatform, PLATFORMS),
+    statedSensitivity: statedNumber(
+      'targetSensitivity_ng_per_mL', params.targetSensitivity_ng_per_mL, (n: number) => n > 0, 'a positive concentration in ng/mL',
+    ),
+    isMab: statedMab ?? MAB_PRODUCT_TYPES.includes(productType),
+  };
+}
+
 function platformDescriptor(p: AssayPlatform): PlatformDescriptor {
   for (const d of PLATFORM_LIBRARY) {
     if (d.platform === p) return d;
@@ -930,28 +972,33 @@ function drugToleranceFigures(value: unknown): { expected: number | null; recomm
  */
 export function designADAAssayStrategy(params: ADAAssayStrategyParams): ADAAssayStrategyResult {
   const drugName = params.drugName ?? '(unnamed product)';
-  const isMab = params.isMonoclonalAntibody ??
-    (params.productType === 'humanized_mab' || params.productType === 'chimeric_mab' || params.productType === 'murine_mab');
+  const { productType, highSolubleTarget, statedMab, preferredPlatform, statedSensitivity, isMab } = adaInputs(params);
 
   // ── Platform selection ──────────────────────────────────────────────────
   let recommended: AssayPlatform = 'bridging_ECL';
   let rationale =
     'A bridging electrochemiluminescence (ECL) format is recommended as the screening platform: it provides the sensitivity, dynamic range, and isotype breadth expected by FDA 2019 and is the prevailing industry standard for therapeutic protein ADA detection.';
 
-  if (params.highSolubleTarget) {
+  if (highSolubleTarget) {
     rationale +=
       ' Because a high soluble target/receptor is present, incorporate acid-dissociation sample pretreatment and a target-tolerance evaluation to prevent false negatives from drug–target complexes.';
+  } else if (highSolubleTarget === undefined) {
+    rationale +=
+      ' Whether a high soluble target or shed receptor is expected (highSolubleTarget) is not stated; if one is, add acid-dissociation pretreatment and a target-tolerance evaluation.';
   }
   if (isMab) {
     rationale +=
       ' For a monoclonal antibody, confirm the bridging reagents do not detect rheumatoid factor or other non-specific bridging, and consider an IgG4-sensitive format if the response may be IgG4-skewed.';
   }
-  if (params.preferredPlatform && params.preferredPlatform !== recommended) {
-    const pd = platformDescriptor(params.preferredPlatform);
-    rationale += ` Requested platform ${params.preferredPlatform}: ${pd.strengths} Limitation: ${pd.limitations}`;
+  if (statedMab === undefined) {
+    rationale += ` isMonoclonalAntibody is not stated; it is taken as ${isMab} from productType ${productType}.`;
+  }
+  if (preferredPlatform && preferredPlatform !== recommended) {
+    const pd = platformDescriptor(preferredPlatform);
+    rationale += ` Requested platform ${preferredPlatform}: ${pd.strengths} Limitation: ${pd.limitations}`;
     // Honor SPR/RIA only as confirmatory/characterization, keep ECL for screening.
-    if (params.preferredPlatform === 'bridging_ELISA' || params.preferredPlatform === 'ELISA') {
-      recommended = params.preferredPlatform;
+    if (preferredPlatform === 'bridging_ELISA' || preferredPlatform === 'ELISA') {
+      recommended = preferredPlatform;
       rationale +=
         ' Using the requested ELISA-based format is acceptable provided sensitivity (≤ 100 ng/mL) and drug tolerance targets are met during validation.';
     }
@@ -1043,9 +1090,10 @@ export function designADAAssayStrategy(params: ADAAssayStrategyParams): ADAAssay
   };
 
   // ── Sensitivity ─────────────────────────────────────────────────────────
-  const targetSensitivity = params.targetSensitivity_ng_per_mL ?? 100;
+  const targetSensitivity = statedSensitivity ?? 100;
   const sensitivityStatement =
     `Target assay sensitivity is ${targetSensitivity} ng/mL of a positive-control antibody (FDA 2019 recommends ≤ 100 ng/mL). ` +
+    (statedSensitivity === undefined ? 'No target was stated (targetSensitivity_ng_per_mL), so the FDA 2019 figure is used. ' : '') +
     'Sensitivity is the lowest concentration of the positive control that consistently yields a signal at or above the screening cut point, reported in mass units (ng/mL) of the surrogate positive control.';
 
   const validationParameters: string[] = [
@@ -1090,6 +1138,7 @@ export function designADAAssayStrategy(params: ADAAssayStrategyParams): ADAAssay
 
   return {
     drugName,
+    inputStates: booleanInputStates(params, ['highSolubleTarget', 'isMonoclonalAntibody']),
     recommendedPlatform: recommended,
     platformRationale: rationale,
     platformAlternatives: alternatives,
@@ -1108,6 +1157,11 @@ export function designADAAssayStrategy(params: ADAAssayStrategyParams): ADAAssay
 /* ════════════════════════════════════════════════════════════════════════
  * SECTION 3 — classifyImmunogenicityClinicalImpact
  * ════════════════════════════════════════════════════════════════════════ */
+
+const IMPACT_BOOLEANS = [
+  'pkImpact', 'neutralizingEfficacyLoss', 'hypersensitivity', 'igeMediated', 'endogenousCrossReactivity',
+  'endogenousLifeSustaining', 'persistentADA', 'highTiter', 'lifeThreateningIndication',
+] as const;
 
 /** Observed or anticipated consequence domains. */
 export interface ClinicalImpactParams {
@@ -1153,6 +1207,7 @@ export interface LabelingImplication {
 
 export interface ClinicalImpactResult {
   drugName: string;
+  inputStates: InputStates;
   /** 'undetermined' while a domain is ungraded, unless one is already 'critical' (the top of the scale). */
   overallSeverity: SeverityLevel | 'undetermined';
   domains: ImpactDomain[];
@@ -1194,6 +1249,9 @@ export function classifyImmunogenicityClinicalImpact(params: ClinicalImpactParam
   const igeMediated = statedBoolean('igeMediated', params.igeMediated);
   const crossReactivity = statedBoolean('endogenousCrossReactivity', params.endogenousCrossReactivity);
   const lifeSustaining = statedBoolean('endogenousLifeSustaining', params.endogenousLifeSustaining);
+  // S5d: persistence and titer set a grade already 'high'; they are only reported.
+  const inputStates = booleanInputStates(params, IMPACT_BOOLEANS);
+  const lifeThreatening = statedBoolean('lifeThreateningIndication', params.lifeThreateningIndication);
 
   // ── Domain 1: PK impact ─────────────────────────────────────────────────
   {
@@ -1226,7 +1284,6 @@ export function classifyImmunogenicityClinicalImpact(params: ClinicalImpactParam
     const domain = 'Efficacy (neutralization / loss of response)';
     const present = efficacyLoss === true;
     let severity: ImpactDomain['severity'] = present ? 'high' : 'none';
-    if (present && (params.persistentADA || params.highTiter)) severity = 'high';
     if (efficacyLoss === undefined) {
       severity = 'undetermined';
       notAssessed.push({ domain, input: 'neutralizingEfficacyLoss' });
@@ -1342,8 +1399,12 @@ export function classifyImmunogenicityClinicalImpact(params: ClinicalImpactParam
     domains.some((d: ImpactDomain) => d.severity === 'undetermined') && graded !== 'critical' ? 'undetermined' : graded;
 
   // ── Benefit-risk modulation for life-threatening indications ─────────────
-  if (params.lifeThreateningIndication && overall !== 'critical') {
+  if (lifeThreatening && overall === 'undetermined') {
+    monitoring.push('For a life-threatening indication, weigh these findings within the overall benefit-risk once every domain is graded.');
+  } else if (lifeThreatening && overall !== 'critical') {
     monitoring.push('For a life-threatening indication, weigh immunogenicity findings within the overall benefit-risk; loss of efficacy may be tolerable if no alternative therapy exists, but safety signals remain decisive.');
+  } else if (lifeThreatening === undefined && overall !== 'critical') {
+    monitoring.push('Whether the indication is life-threatening (lifeThreateningIndication) is not stated; if it is, weigh these findings within the overall benefit-risk.');
   }
 
   // ── Standing labeling implication ───────────────────────────────────────
@@ -1373,6 +1434,7 @@ export function classifyImmunogenicityClinicalImpact(params: ClinicalImpactParam
 
   return {
     drugName,
+    inputStates,
     overallSeverity: overall,
     domains,
     notAssessed,
@@ -1427,6 +1489,7 @@ export interface NAbAssayParams {
 
 export interface NAbAssayResult {
   drugName: string;
+  inputStates: InputStates;
   /** null while it turns on an input in notAssessed. */
   recommendedFormat: NAbFormat | null;
   /** null while it turns on endogenousNonRedundant, which was not stated. */
@@ -1538,9 +1601,8 @@ export function designNAbAssay(params: NAbAssayParams): NAbAssayResult {
       'mechanismClass',
     );
   }
-  const actsThroughReceptor =
-    statedBoolean('actsThroughCellReceptor', params.actsThroughCellReceptor) ??
-    (mechanism === 'receptor_agonist' || mechanism === 'receptor_antagonist');
+  const statedReceptor = statedBoolean('actsThroughCellReceptor', params.actsThroughCellReceptor);
+  const actsThroughReceptor = statedReceptor ?? (mechanism === 'receptor_agonist' || mechanism === 'receptor_antagonist');
   const cellBasedFeasible = statedBoolean('cellBasedFeasible', params.cellBasedFeasible);
   const endoNonRedundant = statedBoolean('endogenousNonRedundant', params.endogenousNonRedundant);
   const { expected: expectedDrug } = drugToleranceFigures(params.expectedCirculatingDrug_ug_per_mL);
@@ -1561,7 +1623,7 @@ export function designNAbAssay(params: NAbAssayParams): NAbAssayResult {
   if (mechanism !== 'enzyme' && cellBasedRequired !== false && cellBasedFeasible === undefined) {
     notAssessed.push({ factor: 'Cell-based assay feasibility', input: 'cellBasedFeasible' });
   }
-  const { recommended, rationale, fallback, fallbackJustification } = nabFormatChoice({
+  const { recommended, rationale: chosen, fallback, fallbackJustification } = nabFormatChoice({
     mechanism,
     mechanismNeedsCell,
     cellBasedRequired,
@@ -1569,6 +1631,12 @@ export function designNAbAssay(params: NAbAssayParams): NAbAssayResult {
     endoNonRedundant,
     unstated: notAssessed.map((n: { input: string }) => n.input).join(' and '),
   });
+  // S5d: an inferred receptor fact is said where it is read (receptor_agonist and
+  // soluble_target_binder do not read it).
+  const rationale =
+    statedReceptor === undefined && mechanism !== 'receptor_agonist' && mechanism !== 'soluble_target_binder'
+      ? `${chosen} actsThroughCellReceptor is not stated; it is taken as ${actsThroughReceptor} from mechanismClass ${mechanism}.`
+      : chosen;
 
   const validationParameters: string[] = [
     'NAb cut point (typically ~1% false-positive from drug-naïve donors)',
@@ -1615,6 +1683,7 @@ export function designNAbAssay(params: NAbAssayParams): NAbAssayResult {
 
   return {
     drugName,
+    inputStates: booleanInputStates(params, ['actsThroughCellReceptor', 'cellBasedFeasible', 'endogenousNonRedundant']),
     recommendedFormat: recommended,
     cellBasedRequired,
     formatRationale: rationale,
@@ -1663,6 +1732,7 @@ export interface SamplingTimepoint {
 
 export interface ImmunogenicitySamplingResult {
   drugName: string;
+  inputStates: InputStates;
   washout_days: number;
   followUpDuration_days: number;
   /** The rule that set followUpDuration_days, labelled where it is a platform heuristic. */
@@ -1858,6 +1928,7 @@ export function planImmunogenicitySampling(params: ImmunogenicitySamplingParams)
 
   return {
     drugName,
+    inputStates: booleanInputStates(params, ['endogenousNonRedundant']),
     washout_days: washout,
     followUpDuration_days: followUp,
     followUpBasis,

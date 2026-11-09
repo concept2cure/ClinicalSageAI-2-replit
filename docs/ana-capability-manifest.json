@@ -2854,7 +2854,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Classify the clinical consequence of an immune response across the four FDA 2014 consequence domains (Section II): pharmacokinetic (altered exposure), efficacy (neutralization / loss of response), safety (hypersensitivity / infusion reactions / anaphylaxis, including IgE-mediated Type I reactions), and cross-reactivity with a non-redundant endogenous protein (deficiency syndromes such as anti-EPO pure red cell aplasia). Pass only what has been observed or assessed and leave an unknown input out (false means assessed and absent): an unstated input leaves its domain ungraded and is listed in notAssessed. Returns an overall severity (none/low/moderate/high/critical, or undetermined while a domain is ungraded), per-domain severity and description, labeling implications by label section, and monitoring recommendations. Use when the user has observed or anticipated ADA effects and needs to grade clinical impact or derive labeling/monitoring consequences. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Classify the clinical consequence of an immune response across the four FDA 2014 consequence domains: pharmacokinetic (altered exposure), efficacy (neutralization / loss of response), safety (hypersensitivity, infusion reactions, IgE-mediated anaphylaxis) and cross-reactivity with a non-redundant endogenous protein (deficiency syndromes such as anti-EPO pure red cell aplasia). Pass only what was observed or assessed: an unstated input leaves its domain ungraded and is listed in notAssessed. Returns an overall severity (none to critical, or undetermined while a domain is ungraded), per-domain severity, labeling implications by label section, monitoring recommendations and inputStates. Use when the user has observed or anticipated ADA effects and needs to grade clinical impact or derive labeling/monitoring consequences. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -2864,7 +2864,7 @@
           "name": "pkImpact",
           "type": "boolean",
           "required": false,
-          "description": "Whether ADA alter drug PK (typically increased clearance / lower trough). Leave out if not known; false means stated absent."
+          "description": "Whether ADA alter drug PK (typically increased clearance / lower trough). Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "exposureReductionFraction",
@@ -2876,49 +2876,49 @@
           "name": "neutralizingEfficacyLoss",
           "type": "boolean",
           "required": false,
-          "description": "Whether neutralizing ADA reduce or abolish pharmacological activity (loss of efficacy). Leave out if not known; false means stated absent."
+          "description": "Whether neutralizing ADA reduce or abolish pharmacological activity (loss of efficacy). Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "hypersensitivity",
           "type": "boolean",
           "required": false,
-          "description": "Whether hypersensitivity / infusion reactions are observed or expected. Leave out if not known; false means stated absent."
+          "description": "Whether hypersensitivity / infusion reactions are observed or expected. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "igeMediated",
           "type": "boolean",
           "required": false,
-          "description": "Whether reactions are IgE-mediated (Type I) — raises anaphylaxis risk (graded critical). If hypersensitivity is present and this is left out, the safety domain is not graded."
+          "description": "Whether reactions are IgE-mediated (Type I) — raises anaphylaxis risk (graded critical). Omitted or null stays not_stated: if hypersensitivity is present, the safety domain is not graded."
         },
         {
           "name": "endogenousCrossReactivity",
           "type": "boolean",
           "required": false,
-          "description": "Whether ADA cross-react with an endogenous counterpart. Leave out if not known; false means stated absent."
+          "description": "Whether ADA cross-react with an endogenous counterpart. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "endogenousLifeSustaining",
           "type": "boolean",
           "required": false,
-          "description": "Whether the endogenous counterpart is life-sustaining (e.g., EPO, TPO). Cross-reactive neutralization is graded critical. If cross-reactivity is present and this is left out, that domain is not graded."
+          "description": "Whether the endogenous counterpart is life-sustaining (e.g., EPO, TPO). Cross-reactive neutralization is graded critical. Omitted or null stays not_stated: if cross-reactivity is present, that domain is not graded."
         },
         {
           "name": "persistentADA",
           "type": "boolean",
           "required": false,
-          "description": "Whether ADA are persistent (vs transient)."
+          "description": "Whether ADA are persistent (vs transient). Omitted or null stays not_stated; reported in inputStates, it does not change a grade."
         },
         {
           "name": "highTiter",
           "type": "boolean",
           "required": false,
-          "description": "Whether the ADA titer is high."
+          "description": "Whether the ADA titer is high. Omitted or null stays not_stated; reported in inputStates, it does not change a grade."
         },
         {
           "name": "lifeThreateningIndication",
           "type": "boolean",
           "required": false,
-          "description": "Whether the indication is life-threatening, which modulates the benefit-risk interpretation."
+          "description": "Whether the indication is life-threatening, which modulates the benefit-risk interpretation. Omitted or null stays not_stated, and a monitoring line says what it would add."
         },
         {
           "name": "drugName",
@@ -3192,7 +3192,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Design a biosimilar clinical development program including PK similarity study, comparative clinical efficacy study, and immunogenicity assessment strategy. Returns clinical pharmacology study design (population, PK endpoints, equivalence margins 80-125%, single-dose vs. multi-dose), comparative clinical study design (most sensitive indication selection, primary endpoint [ACR20 for anti-TNF, ORR for oncology mAbs, DSN for G-CSF, HbA1c for insulin], equivalence margin derivation, sample size), immunogenicity assessment (tiered ADA assay strategy — screening, confirmatory, titer, neutralizing antibody, cross-reactivity), switching study requirements, and approved biosimilar precedents with endpoints used (Zarxio, Inflectra, Amjevita, Ogivri, Semglee, etc.). Use when the user asks about biosimilar clinical program design, clinical endpoints for biosimilars, immunogenicity comparison strategy, or PK similarity study design. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a biosimilar submission is a critical defect.",
+      "description": "Design a biosimilar clinical development program: PK similarity study, comparative clinical efficacy study and immunogenicity assessment strategy. Returns the PK study design (population, PK endpoints, 80-125% margins, single vs. multi-dose), the comparative clinical study design (most sensitive indication, primary endpoint [ACR20 for anti-TNF, ORR for oncology mAbs, DSN for G-CSF, HbA1c for insulin], equivalence margin derivation, sample size), the tiered ADA strategy, switching study requirements and approved biosimilar precedents (Zarxio, Inflectra, Amjevita, Ogivri, Semglee, etc.). A missing or malformed productType, referenceProduct, pkComplexity or immunogenicityRisk is refused. Use for biosimilar clinical program design, clinical endpoints for biosimilars, immunogenicity comparison strategy, or PK similarity study design. Deterministic, no LLM: report the returned data and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "ranked-cards",
@@ -3213,14 +3213,14 @@
         {
           "name": "indications",
           "type": "array",
-          "required": true,
-          "description": "Approved indications of the reference product that the biosimilar targets (e.g., [\"rheumatoid arthritis\", \"psoriasis\", \"Crohn's disease\"])."
+          "required": false,
+          "description": "Approved indications of the reference product that the biosimilar targets (e.g., [\"rheumatoid arthritis\", \"psoriasis\", \"Crohn's disease\"]). Not read: it does not change the result."
         },
         {
           "name": "mechanismOfAction",
           "type": "string",
-          "required": true,
-          "description": "Primary mechanism of action of the reference product. Affects study design and analytical requirements (e.g., ADCC-dependent mAbs require afucosylation matching)."
+          "required": false,
+          "description": "Primary mechanism of action of the reference product. Not read: it does not change the result."
         },
         {
           "name": "pkComplexity",
@@ -3238,8 +3238,6 @@
       "requiredInputs": [
         "productType",
         "referenceProduct",
-        "indications",
-        "mechanismOfAction",
         "pkComplexity",
         "immunogenicityRisk"
       ],
@@ -5127,7 +5125,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Assess analytical similarity for a biosimilar product per the FDA 2017 Statistical Approaches to Evaluate Analytical Similarity guidance and EMA biosimilar quality guidelines. Returns tier classification (Tier 1 / Tier 2 / Tier 3) for each critical quality attribute (CQA) based on product type and clinical relevance, the statistical approach for each tier (equivalence test with quality range for Tier 1, quality range for Tier 2, raw data/graphical for Tier 3), reference product lot requirements (minimum 10 per FDA, 3 per EMA), recommended analytical methods per CQA, and product-specific guidance for mAbs, fusion proteins, insulin, EPO, filgrastim, pegfilgrastim, adalimumab biosimilars, and trastuzumab biosimilars. Use when the user asks about analytical similarity assessment, CQA tier classification, statistical approaches for biosimilar characterization, or reference lot requirements. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a biosimilar submission is a critical defect.",
+      "description": "Assess analytical similarity for a biosimilar product per the FDA 2017 Statistical Approaches to Evaluate Analytical Similarity guidance and EMA biosimilar quality guidelines. Returns the tier (1, 2 or 3) of each critical quality attribute (CQA) for the product type, the statistical approach per tier (equivalence test, quality range, or raw data/graphical), reference product lot requirements (minimum 10 per FDA, 3 per EMA), recommended analytical methods per CQA, product-specific guidance (mAbs, fusion proteins, insulin, EPO, filgrastim, pegfilgrastim, adalimumab and trastuzumab biosimilars) and selectionNotes, which say when a requested CQA or method list matched nothing and the full list is returned. Use for analytical similarity assessment, CQA tier classification, or reference lot requirements. Deterministic, no LLM: report the returned data and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -5143,13 +5141,13 @@
           "name": "criticalQualityAttributes",
           "type": "array",
           "required": false,
-          "description": "Optional list of specific CQAs to assess (e.g., \"afucosylation\", \"ADCC\", \"charge variants\"). If omitted, returns the full CQA panel for the product type."
+          "description": "Optional list of specific CQAs to assess (e.g., \"afucosylation\", \"ADCC\", \"charge variants\"). If omitted, returns the full CQA panel for the product type; if none matches, the full panel is returned and selectionNotes says so."
         },
         {
           "name": "analyticalMethodsUsed",
           "type": "array",
           "required": false,
-          "description": "Optional list of analytical methods available or planned (e.g., \"SPR\", \"HILIC-UPLC\", \"SE-HPLC\"). Used to filter recommended methods to those in the user's capability."
+          "description": "Optional list of analytical methods available or planned (e.g., \"SPR\", \"HILIC-UPLC\", \"SE-HPLC\"). Used to filter recommended methods to those in the user's capability; where none matches an attribute, its full list is returned and selectionN"
         }
       ],
       "requiredInputs": [
@@ -5280,7 +5278,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Assess the CMC (Chemistry, Manufacturing, and Controls) development strategy for a biosimilar product. Returns: reverse-engineering strategy for reference product characterization (8-step process), expression system selection guidance (CHO, E. coli, yeast, insect, HEK293 with advantages, disadvantages, glycosylation capability), process development approach (cell line development, upstream optimization including glycosylation tuning, downstream purification, formulation matching), formulation matching strategy (same excipients preferred, different acceptable with justification), container closure considerations (vial vs. PFS vs. autoinjector), specification setting relative to reference product, manufacturing comparability strategy, and quality target product profile (QTPP) elements specific to biosimilars. Use when the user asks about biosimilar manufacturing, expression system selection, process development, formulation development, or quality target product profile for a biosimilar. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a biosimilar submission is a critical defect.",
+      "description": "Assess the CMC (Chemistry, Manufacturing, and Controls) development strategy for a biosimilar product. Returns: reverse-engineering strategy for reference product characterization (8 steps), expression system guidance (CHO, E. coli, yeast, insect, HEK293), process development (cell line, upstream with glycosylation tuning, downstream purification, formulation), formulation matching (same excipients preferred, different acceptable with justification), container closure (vial vs. PFS vs. autoinjector), specifications relative to the reference product, manufacturing comparability, and biosimilar quality target product profile (QTPP) elements. A missing or unknown input is refused. Use for biosimilar manufacturing, expression system selection, process or formulation development, or the quality target product profile for a biosimilar. Deterministic, no LLM: report the returned data and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -5459,7 +5457,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Assess immunogenicity comparability after a manufacturing/formulation change (ICH Q5E) or for a biosimilar (FDA 2015 \"Scientific Considerations in Demonstrating Biosimilarity\" / EMA 2017). Categorizes the change impact (minor/moderate/major) from immunogenicity-relevant triggers (aggregation, glycosylation/PTMs, formulation/container-closure, impurities, analytical comparability status, product risk tier), determines whether a comparative clinical immunogenicity study is warranted, and returns the study recommendation, analytical expectations, bridging-data needs (a single validated ADA assay applied to both products), triggered risk factors, and the decision rationale. Pass only stated facts (false means stated): an omitted input is listed in notAssessed, never assumed; while one could change the verdict, changeImpact is undetermined and clinicalImmunogenicityStudyRequired null. Use when the user has a process/formulation change or a biosimilar and needs to know what immunogenicity comparability data are required. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Assess immunogenicity comparability after a manufacturing/formulation change (ICH Q5E) or for a biosimilar (FDA 2015, EMA 2017). Categorizes the change impact (minor/moderate/major) from the triggers (aggregation, glycosylation/PTMs, formulation/container-closure, impurities, analytical comparability, product risk tier), decides whether a comparative clinical immunogenicity study is warranted, and returns the study recommendation, analytical expectations, bridging data (one validated ADA assay for both products), triggered factors and inputStates. Pass only stated facts: an omitted input is listed in notAssessed; while one could change the verdict, changeImpact is undetermined and clinicalImmunogenicityStudyRequired null. Use for a process/formulation change or a biosimilar, to know what immunogenicity comparability data are needed. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",
@@ -5475,31 +5473,31 @@
           "name": "analyticalComparable",
           "type": "boolean",
           "required": false,
-          "description": "Whether analytical/structural comparability (primary structure, PTMs, charge/size variants, aggregates) has been demonstrated. If false, the change impact escalates. Leave out if not known; false means stated not demonstrated."
+          "description": "Whether analytical/structural comparability (primary structure, PTMs, charge/size variants, aggregates) has been demonstrated. If false, the change impact escalates. Leave out if not known: omitted or null stays not_stated; false means stat"
         },
         {
           "name": "affectsAggregation",
           "type": "boolean",
           "required": false,
-          "description": "Whether the change could alter aggregate / subvisible-particle levels. Leave out if not known; false means stated absent."
+          "description": "Whether the change could alter aggregate / subvisible-particle levels. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "affectsGlycosylation",
           "type": "boolean",
           "required": false,
-          "description": "Whether the change could alter glycosylation / PTMs. Leave out if not known; false means stated absent."
+          "description": "Whether the change could alter glycosylation / PTMs. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "affectsFormulation",
           "type": "boolean",
           "required": false,
-          "description": "Whether the change affects the formulation or container-closure system (leachables, silicone oil, particle formation). Leave out if not known; false means stated absent."
+          "description": "Whether the change affects the formulation or container-closure system (leachables, silicone oil, particle formation). Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "affectsImpurities",
           "type": "boolean",
           "required": false,
-          "description": "Whether the change introduces new/different process-related impurities. Leave out if not known; false means stated absent."
+          "description": "Whether the change introduces new/different process-related impurities. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "productRiskTier",
@@ -5531,7 +5529,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Classify the immunogenicity risk of a therapeutic protein product against the risk factors named in FDA 2014 \"Immunogenicity Assessment for Therapeutic Protein Products\" (Sections III–IV) and EMA 2017 (EMEA/CHMP/BMWP/14327/2006 Rev 1). The weights, the 0–100 score and the low/moderate/high tier are a platform heuristic, not an FDA/EMA scale; each factor row cites the guidance for the factor, not the weight. Pass only factors the user has stated, never an estimate: an unstated factor is listed in notAssessed, and the tier stays undetermined, with no score, until all are stated. Factors: product (foreignness, aggregation, glycosylation, formulation, impurities, endogenous counterpart) and patient/treatment (route, dose frequency, immune status, concomitant immunosuppression). Returns per-factor weights, category sums, mitigations and required studies. Use when the user asks how immunogenic a biologic is likely to be, which factors dominate, what to do about them, or which studies the program needs. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Classify the immunogenicity risk of a therapeutic protein product against the factors named in FDA 2014 \"Immunogenicity Assessment for Therapeutic Protein Products\" (Sections III–IV) and EMA 2017: product (foreignness, aggregation, glycosylation, formulation, impurities, endogenous counterpart) and patient/treatment (route, dose frequency, immune status, concomitant immunosuppression). The weights, the 0–100 score and the low/moderate/high tier are a platform heuristic, not an FDA/EMA scale. Pass only stated factors: an unstated factor is listed in notAssessed and the tier stays undetermined, with no score. Returns per-factor weights, category sums, mitigations, required studies and inputStates. Use when the user asks how immunogenic a biologic is likely to be, which factors dominate, or which studies the program needs. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "ranked-cards",
@@ -5553,7 +5551,7 @@
           "name": "hasEndogenousCounterpart",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product has a human endogenous counterpart with which ADA could cross-react. Leave out if not known; false means stated absent."
+          "description": "Whether the product has a human endogenous counterpart with which ADA could cross-react. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "endogenousNonRedundant",
@@ -5577,13 +5575,13 @@
           "name": "hasImmunogenicImpurities",
           "type": "boolean",
           "required": false,
-          "description": "Whether process-related impurities (host-cell protein, residual DNA, leachables) are present and may act as adjuvants. Leave out if not known; false means stated absent."
+          "description": "Whether process-related impurities (host-cell protein, residual DNA, leachables) are present and may act as adjuvants. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "formulationRisk",
           "type": "boolean",
           "required": false,
-          "description": "Whether the formulation/container-closure is prone to particle formation or contains adjuvant-like components (e.g., polysorbate degradation, silicone-oil microdroplets). Leave out if not known; false means stated absent."
+          "description": "Whether the formulation/container-closure is prone to particle formation or contains adjuvant-like components (e.g., polysorbate degradation, silicone-oil microdroplets). Leave out if not known: omitted or null stays not_stated; false means"
         },
         {
           "name": "route",
@@ -5607,7 +5605,7 @@
           "name": "concomitantImmunosuppression",
           "type": "boolean",
           "required": false,
-          "description": "Whether the regimen includes concomitant immunosuppression (e.g., methotrexate with a TNF inhibitor), a recognized ADA-mitigation factor. Leave out if not known; false means stated absent."
+          "description": "Whether the regimen includes concomitant immunosuppression (e.g., methotrexate with a TNF inhibitor), a recognized ADA-mitigation factor. Leave out if not known: omitted or null stays not_stated; false means stated absent."
         },
         {
           "name": "drugName",
@@ -6341,7 +6339,7 @@
         "id": "cmc_quality",
         "label": "CMC / Quality (M3)"
       },
-      "description": "Build an ADA/NAb sampling schedule (baseline, on-treatment, end-of-treatment, follow-up) per FDA 2019 / FDA 2014 / EMA 2017. Needs, as stated by the user or a source and never estimated: halfLife_days, riskTier, doseFrequency, endogenousNonRedundant, and treatmentDuration_weeks unless doseFrequency is single. Without them the engine refuses, naming each; nothing is assumed. Without drawVolume_mL the total blood volume is null. Scales the washout/trough basis and follow-up duration to the product half-life (washout ≈ 5 half-lives; follow-up extended to ≥ 8 half-lives for high-risk products and ≥ 12 half-lives for products with a non-redundant endogenous counterpart, with a 28-day minimum; the extensions and the minimum are platform heuristics, and followUpBasis says which rule set the figure), sets on-treatment frequency from dosing frequency and treatment duration, samples at trough to minimize drug interference, and computes nominal draw count and total blood volume. Returns the timepoints with timing relative to dosing, sampling principles, and citations. Use when the user needs an immunogenicity sampling schedule, follow-up duration, or blood-volume estimate. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Build an ADA/NAb sampling schedule (baseline, on-treatment, end-of-treatment, follow-up) per FDA 2019 / FDA 2014 / EMA 2017. Needs, as stated and never estimated: halfLife_days, riskTier, doseFrequency, endogenousNonRedundant, and treatmentDuration_weeks unless doseFrequency is single; without one it refuses, naming each. Washout ≈ 5 half-lives; follow-up extends to ≥ 8 half-lives for high risk and ≥ 12 for a non-redundant endogenous counterpart, with a 28-day minimum (platform heuristics; followUpBasis names the rule). On-treatment draws, at trough, follow dosing frequency and duration. Returns timepoints relative to dosing, the draw count, the total blood volume (null without drawVolume_mL), sampling principles and citations. Use for an immunogenicity sampling schedule, follow-up duration, or blood-volume estimate. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -8478,7 +8476,7 @@
         "id": "evidence",
         "label": "Evidence & intelligence"
       },
-      "description": "Provide regulatory pathway guidance for a generic drug application. Determines whether to file an ANDA under 505(j), a 505(b)(2) NDA, or whether a suitability petition is needed, based on how the proposed product compares to the reference listed drug (RLD). Returns the recommended pathway with detailed requirements, BE strategy recommendations (PK endpoint study, clinical endpoint, BCS biowaiver), Orange Book considerations (patent certifications, exclusivity), and citations (FD&C Act Section 505, 21 CFR 314/320, FDA Orange Book). Handles special cases: topical/ophthalmic/inhalation products, modified-release formulations, combination products, NTI drugs. Use when the user is developing a generic drug and needs to determine the appropriate filing pathway and study requirements. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Provide regulatory pathway guidance for a generic drug application. Determines whether to file an ANDA under 505(j), a 505(b)(2) NDA, or whether a suitability petition is needed, based on how the proposed product compares to the reference listed drug (RLD). Returns the pathway with its requirements, BE strategy recommendations (PK endpoint study, clinical endpoint, BCS biowaiver), Orange Book considerations (patent certifications, exclusivity), inputStates and citations (FD&C Act Section 505, 21 CFR 314/320, FDA Orange Book). Handles topical, ophthalmic, inhalation, modified-release and combination products and NTI drugs. While an unstated sameness fact could change the pathway it is not_assessed and the facts are named. Use when developing a generic drug to determine the filing pathway and study requirements. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -8499,8 +8497,8 @@
         {
           "name": "routeOfAdministration",
           "type": "string",
-          "required": true,
-          "description": "Proposed route of administration (e.g., \"oral\", \"topical\", \"ophthalmic\", \"inhalation\", \"intravenous\")."
+          "required": false,
+          "description": "Proposed route of administration (e.g., \"oral\", \"topical\", \"ophthalmic\", \"inhalation\", \"intravenous\"). Not read: the pathway reads sameRouteAsRLD."
         },
         {
           "name": "strengths",
@@ -8511,48 +8509,44 @@
         {
           "name": "sameDosageFormAsRLD",
           "type": "boolean",
-          "required": true,
-          "description": "Whether the proposed product has the same dosage form as the RLD. Must be true for a standard ANDA; if false, a suitability petition or 505(b)(2) is needed."
+          "required": false,
+          "description": "Whether the proposed product has the same dosage form as the RLD. Must be true for a standard ANDA; if false, a suitability petition or 505(b)(2) is needed. Omitted or null stays not_stated: a pathway it could change is not_assessed."
         },
         {
           "name": "sameRouteAsRLD",
           "type": "boolean",
-          "required": true,
-          "description": "Whether the proposed product has the same route of administration as the RLD. A different route generally requires a 505(b)(2) NDA."
+          "required": false,
+          "description": "Whether the proposed product has the same route of administration as the RLD. A different route generally requires a 505(b)(2) NDA. Omitted or null stays not_stated: a pathway it could change is not_assessed."
         },
         {
           "name": "sameStrengthAsRLD",
           "type": "boolean",
-          "required": true,
-          "description": "Whether the proposed product has the same strength(s) as the RLD. A different strength may require a suitability petition."
+          "required": false,
+          "description": "Whether the proposed product has the same strength(s) as the RLD. A different strength may require a suitability petition. Omitted or null stays not_stated: a pathway it could change is not_assessed."
         },
         {
           "name": "isCombinationProduct",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product is a combination product with multiple active ingredients."
+          "description": "Whether the product is a combination product with multiple active ingredients. Omitted or null stays not_stated, and the result names it where it applies."
         },
         {
           "name": "bcsClass",
           "type": "string",
           "required": false,
-          "description": "BCS classification of the drug, if known. Informs BE strategy recommendation."
+          "description": "BCS classification of the drug, if known. Informs BE strategy recommendation; if omitted, the strategy names both routes."
         },
         {
           "name": "isNTI",
           "type": "boolean",
           "required": false,
-          "description": "Whether the drug is a narrow therapeutic index drug. Affects acceptance criteria."
+          "description": "Whether the drug is a narrow therapeutic index drug. Affects acceptance criteria. Omitted or null stays not_stated: NTI status is then taken from activeIngredient on the platform's NTI list, which is not exhaustive."
         }
       ],
       "requiredInputs": [
         "activeIngredient",
         "dosageForm",
-        "routeOfAdministration",
-        "strengths",
-        "sameDosageFormAsRLD",
-        "sameRouteAsRLD",
-        "sameStrengthAsRLD"
+        "strengths"
       ],
       "derived": true
     },
@@ -13828,7 +13822,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Evaluate whether an in vivo bioequivalence study can be waived (biowaiver) for an immediate-release solid oral dosage form based on BCS classification, dissolution behavior, excipient similarity, NTI status, and regulatory framework. Implements the complete decision tree from FDA BCS Guidance (2017), ICH M9 (2019), and EMA guidelines. Returns a three-level decision (GRANTED / CONDITIONAL / DENIED), detailed rationale, required dissolution conditions, outstanding data requirements, and regulatory citations. Handles BCS Class I (high sol/high perm — broadest eligibility), Class III (high sol/low perm — strict excipient and dissolution criteria), Class IIa weak acids (ICH M9 exception), and always denies for Class IV and NTI drugs. Use when the user asks whether a biowaiver is possible, what conditions must be met, or what data are still needed. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Evaluate whether an in vivo bioequivalence study can be waived (biowaiver) for an immediate-release solid oral form from the BCS class, dissolution, excipients and NTI status, per ICH M9 (which FDA and EMA apply). Returns GRANTED, CONDITIONAL, DENIED or NOT_ASSESSED, the rationale, required dissolution conditions, outstanding data, inputStates and citations. Handles Class I and III (strict excipient and very rapid dissolution criteria); denies Class II and IV, modified-release forms and NTI drugs. While an unstated true/false fact could change the decision it is NOT_ASSESSED, with the facts named. NTI status is stated or taken from the drug name on the platform's NTI list, which is not exhaustive (a stated false for a listed drug is a conflict). Use when the user asks whether a biowaiver is possible or what data are still needed. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -13844,13 +13838,13 @@
           "name": "drugName",
           "type": "string",
           "required": false,
-          "description": "Name of the drug substance (optional). Used to auto-detect NTI status."
+          "description": "Name of the drug substance (optional). Looked up on the platform's NTI list, which is not exhaustive when isNTI is not stated."
         },
         {
           "name": "isNTI",
           "type": "boolean",
           "required": false,
-          "description": "Whether the drug is a narrow therapeutic index drug. NTI drugs are always excluded from BCS-based biowaivers regardless of BCS class."
+          "description": "Whether the drug is a narrow therapeutic index drug. NTI drugs are always excluded from BCS-based biowaivers regardless of BCS class. Omitted or null stays not_stated: NTI status is then taken from drugName, and with no drugName a decision "
         },
         {
           "name": "dosageForm",
@@ -13862,31 +13856,31 @@
           "name": "isWeakAcid",
           "type": "boolean",
           "required": false,
-          "description": "Whether the drug substance is a weak acid (relevant for BCS Class IIa biowaiver under ICH M9). Weak acids with high solubility at pH 6.8 may qualify."
+          "description": "Whether the drug substance is a weak acid. Reported in inputStates but not read: ICH M9 has no BCS Class II weak-acid exception. Omitted or null stays not_stated, and the result names it where it applies."
         },
         {
           "name": "doseSolubilityRatioAtPH6_8_mL",
           "type": "number",
           "required": false,
-          "description": "Dose/solubility ratio at pH 6.8 in mL (relevant for BCS Class IIa). If <= 250 mL, the drug qualifies as BCS Class IIa under ICH M9."
+          "description": "Dose/solubility ratio at pH 6.8 in mL. Not read: ICH M9 has no BCS Class II weak-acid exception."
         },
         {
           "name": "veryRapidlyDissolving",
           "type": "boolean",
           "required": false,
-          "description": "Whether the TEST product dissolves >= 85% in 15 minutes in all three dissolution media (pH 1.2, 4.5, 6.8)."
+          "description": "Whether the TEST product dissolves >= 85% in 15 minutes in all three dissolution media (pH 1.2, 4.5, 6.8). Omitted or null stays not_stated, and the result names it where it applies."
         },
         {
           "name": "rapidlyDissolving",
           "type": "boolean",
           "required": false,
-          "description": "Whether the TEST product dissolves >= 85% in 30 minutes in all three dissolution media (pH 1.2, 4.5, 6.8)."
+          "description": "Whether the TEST product dissolves >= 85% in 30 minutes in all three dissolution media (pH 1.2, 4.5, 6.8). Omitted or null stays not_stated, and the result names it where it applies."
         },
         {
           "name": "referenceVeryRapidlyDissolving",
           "type": "boolean",
           "required": false,
-          "description": "Whether the REFERENCE product dissolves >= 85% in 15 minutes in all three media. Required for BCS Class III biowaiver."
+          "description": "Whether the REFERENCE product dissolves >= 85% in 15 minutes in all three media. Required for BCS Class III biowaiver. Omitted or null stays not_stated, and the result names it where it applies."
         },
         {
           "name": "f2",
@@ -13898,19 +13892,19 @@
           "name": "excipientsQualitativelySame",
           "type": "boolean",
           "required": false,
-          "description": "Whether the test product contains the same excipients (by type/function) as the RLD. Critical for BCS Class III biowaivers."
+          "description": "Whether the test product contains the same excipients (by type/function) as the RLD. Critical for BCS Class III biowaivers. Omitted or null stays not_stated, and the result names it where it applies."
         },
         {
           "name": "excipientsQuantitativelySimilar",
           "type": "boolean",
           "required": false,
-          "description": "Whether excipient quantities are within +/- 10% of the RLD amounts. Required for BCS Class III biowaivers per ICH M9."
+          "description": "Whether excipient quantities are within +/- 10% of the RLD amounts. Required for BCS Class III biowaivers per ICH M9. Omitted or null stays not_stated, and the result names it where it applies."
         },
         {
           "name": "framework",
           "type": "string",
           "required": false,
-          "description": "Regulatory framework to apply (default \"ich_m9\"). Different frameworks have different biowaiver criteria, especially for BCS Class IIa and Class III."
+          "description": "Regulatory framework the result is labelled with; the criteria are ICH M9's, which the FDA and the EMA apply (WHO criteria are not modelled). If omitted, ich_m9 is used and defaultsApplied says so."
         }
       ],
       "requiredInputs": [
@@ -15049,7 +15043,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Compute the f2 similarity factor and f1 difference factor for two dissolution profiles (test vs. reference) and provide regulatory interpretation. The f2 factor is the primary FDA/EMA/ICH criterion for dissolution profile comparison: f2 >= 50 indicates similarity (equivalent to <= 10% mean difference at all time points). The engine applies the FDA rule that only one time point at or above 85% dissolved may be included. Also detects \"very rapidly dissolving\" products (>= 85% in 15 min) where f2 comparison is not required. Returns f2, f1, pass/fail for each, regulatory interpretation, warnings about methodology, and citations (FDA Dissolution Guidance 1997, SUPAC-IR 1995, Moore & Flanner 1996, ICH M9). Use when the user has dissolution data and needs to determine if test and reference profiles are similar. REFUSES rather than computing a void number when the eligibility conditions are not met: profiles sampled at different times, fewer than three comparable timepoints after excluding t=0 and truncating above 85%, no recorded unit count (it is NEVER assumed to be 12), no recorded SD or %RSD (without which the 20%/10% variability limits cannot be evaluated), or variability above those limits. Relay a refusal verbatim rather than restating the inputs as a conclusion. When the profiles are already ON FILE in the CMC dissolution register, use compare_recorded_dissolution instead, which reads them. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Compute the f2 similarity factor and f1 difference factor for two dissolution profiles (test vs. reference) the user supplies, with the regulatory reading: f2 >= 50 means similar (<= 10% mean difference). At most one time point at or above 85% dissolved is included; very rapidly dissolving products (>= 85% in 15 min) need no f2. Returns f2, f1, pass/fail (null when f2 is not computed), the interpretation and citations (FDA 1997, SUPAC-IR 1995, Moore & Flanner 1996, ICH M9). It REFUSES rather than computing a void number for profiles sampled at different times, fewer than three comparable time points, no unit count (never assumed to be 12), no SD or %RSD, or variability above the 20%/10% limits; relay the refusal verbatim. For recorded profiles use compare_recorded_dissolution, which reads the CMC dissolution register. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -15218,7 +15212,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess FDA expedited program eligibility for a drug or biologic product. Evaluates all five FDA expedited programs: Fast Track Designation (FD&C Act §506(b), FDASIA 2012), Breakthrough Therapy Designation (FD&C Act §506(a), FDASIA 2012), Accelerated Approval (FD&C Act §506(c), FDORA 2022), Priority Review (PDUFA VII), and RMAT Designation (FD&C Act §506(g), 21st Century Cures Act 2016). Returns per-program eligibility assessment with criteria, rationale, benefits, application timing, and caveats; a comparison matrix across all programs on 10 dimensions (statutory basis, condition requirement, evidence standard, product scope, key benefit, timing, FDA response timeline, rolling review, approval standard, historical approval rate); and strategic recommendations for program selection and sequencing. Also flags FDORA 2022 updates to Accelerated Approval post-marketing requirements. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned values verbatim. Do NOT recompute or soften them.",
+      "description": "Assess FDA expedited program eligibility for a drug or biologic product. Evaluates all five FDA expedited programs: Fast Track Designation (FD&C Act §506(b), FDASIA 2012), Breakthrough Therapy Designation (FD&C Act §506(a), FDASIA 2012), Accelerated Approval (FD&C Act §506(c), FDORA 2022), Priority Review (PDUFA VII), and RMAT Designation (FD&C Act §506(g), 21st Century Cures Act 2016). Returns per-program eligibility with criteria, rationale, benefits, application timing and caveats (null, the criterion named, where one no input states decides it); a comparison matrix across all programs on 10 dimensions (statutory basis, condition requirement, evidence standard, product scope, key benefit, timing, FDA response timeline, rolling review, approval standard, historical approval rate); and strategic recommendations for selection and sequencing, with FDORA 2022 Accelerated Approval updates. Deterministic: no LLM, no network. Report the returned values verbatim; do not recompute or soften them.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -15252,7 +15246,7 @@
           "name": "productType",
           "type": "string",
           "required": true,
-          "description": "Product type. Affects RMAT eligibility (limited to regenerative medicine therapies: cell_therapy, gene_therapy, tissue_engineered)."
+          "description": "Product type. Affects RMAT eligibility (limited to regenerative medicine therapies: cell_therapy, gene_therapy, tissue_engineered; a combination_product is null, since whether it uses one is not an input). A biosimilar is not eligible for F"
         }
       ],
       "requiredInputs": [
@@ -15549,7 +15543,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess the scientific justification for extrapolation of a biosimilar's approved indications from the studied indication to other reference product indications. Returns feasibility assessment for each unstudied indication (likely_extrapolable, conditional, additional_data_needed), scientific justification requirements (same MOA, PK similarity, safety applicability, immunogenicity considerations), conditions where extrapolation is typically accepted vs. requires additional data, and key regulatory precedents (infliximab biosimilars extrapolated from RA to IBD, adalimumab extrapolated to all indications, trastuzumab to gastric cancer). Use when the user asks about extrapolation of indications, whether additional clinical studies are needed for unstudied indications, or how to scientifically justify extrapolation. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a biosimilar submission is a critical defect.",
+      "description": "Assess the scientific justification for extrapolation of a biosimilar's approved indications from the studied indication to other reference product indications. Returns, for each unstudied indication, the feasibility (likely_extrapolable, conditional, additional_data_needed, or not_assessed while the mechanism of action or target of it or of the studied indication is not stated), justification requirements (same MOA, PK similarity, safety, immunogenicity), risk factors and key regulatory precedents (infliximab biosimilars extrapolated from RA to IBD, adalimumab to all indications, trastuzumab to gastric cancer). Give targetReceptorPerIndication too: feasibility compares both. Use for extrapolation of indications, whether unstudied indications need additional clinical studies, or how to scientifically justify extrapolation. Deterministic, no LLM: report the returned data and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "ranked-cards",
@@ -15577,7 +15571,7 @@
           "name": "targetReceptorPerIndication",
           "type": "object",
           "required": false,
-          "description": "Optional map of indication to target/receptor (e.g., {\"RA\": \"TNF-alpha\", \"psoriasis\": \"TNF-alpha\"}). Helps assess whether the same molecular target is engaged across indications."
+          "description": "Map of indication to target/receptor (e.g., {\"RA\": \"TNF-alpha\", \"psoriasis\": \"TNF-alpha\"}). Feasibility compares it with the mechanism: an indication whose target, or the studied indication's, is not stated is not_assessed."
         }
       ],
       "requiredInputs": [
@@ -15699,7 +15693,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess FDA interchangeability requirements per BPCIA (42 USC 262(k)(4)) and the FDA 2019 Guidance on Interchangeability. Returns: requirements assessment (biosimilarity established, expected same clinical result, switching safety demonstrated), switching study design (3-sequence crossover with >= 3 alternations, PK and immunogenicity endpoints), Purple Book reference, state pharmacy substitution law implications, current interchangeable products (Semglee as first, Cyltezo, Hadlima, Hyrimoz, Yuflyma), and EMA approach (no separate interchangeability pathway — member state decision). Use when the user asks about interchangeability vs. biosimilarity, switching study requirements, pharmacy substitution, Purple Book listing, or the regulatory pathway for interchangeable biosimilars. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a biosimilar submission is a critical defect.",
+      "description": "Assess FDA interchangeability requirements per BPCIA (42 USC 262(k)(4)) and the FDA 2019 Guidance on Interchangeability. Returns the requirements (biosimilarity established, expected same clinical result, switching safety demonstrated; each null when not stated, and overallEligible null until both inputs are stated or one is false), inputStates, the switching study design (3-sequence crossover with >= 3 alternations, PK and immunogenicity endpoints), Purple Book reference, state pharmacy substitution law implications, current interchangeable products (Semglee as first, Cyltezo, Hadlima, Hyrimoz, Yuflyma), and EMA approach (a member state decision). Use when the user asks about interchangeability vs. biosimilarity, switching study requirements, pharmacy substitution, Purple Book listing, or the pathway for interchangeable biosimilars. Deterministic, no LLM: report the returned data and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -15708,20 +15702,20 @@
         {
           "name": "biosimilarityEstablished",
           "type": "boolean",
-          "required": true,
-          "description": "Whether biosimilarity to the reference product has been established through analytical, PK, and clinical comparative data. Must be true for interchangeability."
+          "required": false,
+          "description": "Whether biosimilarity to the reference product has been established through analytical, PK, and clinical comparative data. Must be true for interchangeability. Omitted or null stays not_stated, and overallEligible is then null unless the ot"
         },
         {
           "name": "switchingStudyDataAvailable",
           "type": "boolean",
-          "required": true,
-          "description": "Whether a dedicated switching study with multiple alternations between the biosimilar and reference product has been conducted."
+          "required": false,
+          "description": "Whether a dedicated switching study with multiple alternations between the biosimilar and reference product has been conducted. Omitted or null stays not_stated, and overallEligible is then null unless the other is false."
         },
         {
           "name": "productType",
           "type": "string",
-          "required": true,
-          "description": "Type of biosimilar product."
+          "required": false,
+          "description": "Type of biosimilar product. Not read: it does not change the result."
         },
         {
           "name": "dosingFrequency",
@@ -15731,9 +15725,6 @@
         }
       ],
       "requiredInputs": [
-        "biosimilarityEstablished",
-        "switchingStudyDataAvailable",
-        "productType",
         "dosingFrequency"
       ],
       "derived": true
@@ -15952,7 +15943,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Assess FDA and EMA orphan drug designation eligibility based on disease prevalence, clinical rationale, and existing therapy landscape. Returns: (1) FDA eligibility assessment (Orphan Drug Act, 21 CFR 316; <200,000 US prevalence threshold); (2) EMA eligibility assessment (Regulation (EC) No 141/2000; <5 per 10,000 EU prevalence + serious/debilitating/life-threatening + no satisfactory treatment OR significant benefit); (3) benefits comparison across 7 dimensions (market exclusivity, tax credits, fee waivers, protocol assistance, regulatory pathway, grants, pediatric requirements); (4) common pitfalls in orphan designation applications; (5) success factors; (6) prevalence calculation methodology including FDA orphan subset doctrine and acceptable data sources. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned values verbatim. Do NOT recompute or soften them.",
+      "description": "Assess FDA and EMA orphan drug designation eligibility based on disease prevalence, clinical rationale, and existing therapy landscape. Returns: (1) FDA eligibility assessment (Orphan Drug Act, 21 CFR 316; <200,000 US prevalence threshold); (2) EMA eligibility assessment (Regulation (EC) No 141/2000; not more than 5 per 10,000 EU prevalence + life-threatening or chronically debilitating + no satisfactory treatment OR significant benefit); (3) benefits comparison across 7 dimensions (market exclusivity, tax credits, fee waivers, protocol assistance, regulatory pathway, grants, pediatric requirements); (4) common pitfalls in orphan designation applications; (5) success factors; (6) prevalence calculation methodology including FDA orphan subset doctrine and acceptable data sources. A prevalence with no stated source, or a criterion no input states, leaves eligibility null. Deterministic: no LLM, no network. Report the returned values verbatim; do not recompute or soften them.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -15968,60 +15959,67 @@
           "description": "Number of persons affected by the disease in the United States. Must be <200,000 for FDA orphan eligibility. Null if unknown."
         },
         {
+          "name": "diseasePrevalenceUSSource",
+          "type": "string",
+          "required": false,
+          "description": "Where the US prevalence comes from, as the user stated it (a publication, registry or database). Without it the prevalence is not used and FDA eligibility is null. Do not supply one the user did not give."
+        },
+        {
           "name": "diseasePrevalenceEU",
           "type": [
             "number",
             "null"
           ],
           "required": true,
-          "description": "Disease prevalence in the EU expressed as number per 10,000 persons. Must be <5 per 10,000 for EMA orphan eligibility. Null if unknown."
+          "description": "Disease prevalence in the EU expressed as number per 10,000 persons. Must not exceed 5 per 10,000 for EMA orphan eligibility. Null if unknown."
+        },
+        {
+          "name": "diseasePrevalenceEUSource",
+          "type": "string",
+          "required": false,
+          "description": "Where the EU prevalence comes from, as the user stated it. Without it the prevalence is not used and EMA eligibility is null. Do not supply one the user did not give."
         },
         {
           "name": "clinicalRationale",
           "type": "string",
-          "required": true,
-          "description": "Clinical rationale for the product. For EMA: if existing treatments are available, explain the \"significant benefit\" the product would provide over existing therapy."
+          "required": false,
+          "description": "Clinical rationale for the product. For EMA: if existing treatments are available, explain the \"significant benefit\" the product would provide over existing therapy. Reported, not read as a finding of significant benefit."
         },
         {
           "name": "productType",
           "type": "string",
           "required": true,
-          "description": "Product type."
+          "description": "Product type. For a vaccine or diagnostic the FDA count is persons dosed per year, which no input carries, so FDA eligibility is null."
         },
         {
           "name": "existingApprovedTherapies",
           "type": "number",
-          "required": true,
-          "description": "Number of existing approved therapies for the target indication. Affects EMA \"significant benefit\" requirement."
+          "required": false,
+          "description": "Number of existing approved therapies for the target indication, a whole number. Affects EMA \"significant benefit\" requirement. Omitted or null: EMA eligibility is null."
         },
         {
           "name": "isSerious",
           "type": "boolean",
-          "required": true,
-          "description": "Is the disease serious?"
+          "required": false,
+          "description": "Is the disease serious? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "isLifeThreatening",
           "type": "boolean",
-          "required": true,
-          "description": "Is the disease life-threatening?"
+          "required": false,
+          "description": "Is the disease life-threatening? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "isDebilitating",
           "type": "boolean",
-          "required": true,
-          "description": "Is the disease seriously debilitating?"
+          "required": false,
+          "description": "Is the disease chronically debilitating (the EU prevalence limb: life-threatening or chronically debilitating)? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         }
       ],
       "requiredInputs": [
         "diseasePrevalenceUS",
         "diseasePrevalenceEU",
-        "clinicalRationale",
-        "productType",
-        "existingApprovedTherapies",
-        "isSerious",
-        "isLifeThreatening",
-        "isDebilitating"
+        "productType"
       ],
       "derived": true
     },
@@ -18286,7 +18284,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Classify a drug substance according to the Biopharmaceutics Classification System (BCS Class I-IV) based on solubility and permeability data, and determine biowaiver eligibility under FDA, EMA, and ICH M9 frameworks. Returns the BCS class, dose-number volume, biowaiver eligibility with conditions, NTI drug check, required dissolution conditions for a biowaiver, and regulatory citations (21 CFR 320.22, FDA BCS Guidance 2017, ICH M9 2019). Use when the user asks about BCS classification, biowaiver eligibility, or whether an in vivo BE study can be waived for an immediate-release solid oral dosage form. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Classify a drug substance according to the Biopharmaceutics Classification System (BCS Class I-IV) based on solubility and permeability data, and determine biowaiver eligibility under FDA, EMA, and ICH M9 frameworks. Returns the BCS class, dose-number volume, biowaiver eligibility with conditions, the NTI check and its basis (the drug name on the platform's NTI list, which is not exhaustive), required dissolution conditions for a biowaiver, and regulatory citations (21 CFR 320.22, FDA BCS Guidance 2017, ICH M9 2019). Eligibility is null while the drug name or dosage form it turns on is not stated. Use when the user asks about BCS classification, biowaiver eligibility, or whether an in vivo BE study can be waived for an immediate-release solid oral dosage form. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -18314,13 +18312,13 @@
           "name": "drugName",
           "type": "string",
           "required": false,
-          "description": "Name of the drug substance (optional). Used to check against the narrow therapeutic index (NTI) drug list. NTI drugs are excluded from BCS-based biowaivers."
+          "description": "Name of the drug substance (optional). Checked against the platform's NTI list, which is not exhaustive; NTI drugs are excluded from BCS-based biowaivers. Without it, NTI status and so eligibility are not assessed."
         },
         {
           "name": "dosageForm",
           "type": "string",
           "required": false,
-          "description": "Dosage form of the product (e.g., \"tablet\", \"capsule\", \"immediate-release tablet\"). BCS-based biowaivers apply only to immediate-release solid oral dosage forms."
+          "description": "Dosage form of the product (e.g., \"tablet\", \"capsule\", \"immediate-release tablet\"). BCS-based biowaivers apply only to immediate-release solid oral dosage forms; a modified-release form is not one. Without it, eligibility is not assessed."
         }
       ],
       "requiredInputs": [
@@ -19226,7 +19224,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Compare regulatory pathways across target markets for a drug or biologic product. Supports 8 markets: US (FDA), EU (EMA), Japan (PMDA), China (NMPA), Canada (Health Canada), Australia (TGA), Brazil (ANVISA), and South Korea (MFDS). Returns per-market: (1) regulatory authority and division; (2) application type (NDA/BLA/MAA/J-NDA/IDLA/NDS); (3) standard and expedited review timelines; (4) expedited pathway equivalents with cross-mapping (e.g., FDA Breakthrough ↔ EMA PRIME ↔ PMDA SAKIGAKE ↔ NMPA Breakthrough); (5) orphan designation program with prevalence threshold and exclusivity period; (6) conditional/provisional approval mechanisms with post-approval requirements; (7) data requirement differences including ethnic bridging per ICH E5 for Japan/China/Korea; (8) GMP inspection requirements and PIC/S status; (9) HTA and reference pricing considerations. Also provides harmonization notes (ICH, PIC/S, Project Orbis, ACCESS Consortium), simultaneous submission strategy, and 6-dimension comparison matrix across selected markets. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned values verbatim. Do NOT recompute or soften them.",
+      "description": "Compare regulatory pathways across target markets for a drug or biologic product. 8 markets: US (FDA), EU (EMA), Japan (PMDA), China (NMPA), Canada (Health Canada), Australia (TGA), Brazil (ANVISA), and South Korea (MFDS). Returns per market: (1) authority and division; (2) application type (NDA/BLA/MAA/J-NDA/IDLA/NDS); (3) standard and expedited review timelines; (4) expedited pathway equivalents with cross-mapping (e.g., FDA Breakthrough ↔ EMA PRIME ↔ PMDA SAKIGAKE ↔ NMPA Breakthrough); (5) orphan designation, threshold and exclusivity; (6) conditional/provisional approval and post-approval requirements; (7) data requirement differences, including ethnic bridging per ICH E5 for Japan/China/Korea; (8) GMP inspection and PIC/S status; (9) HTA and reference pricing. Also harmonization notes (ICH, PIC/S, Project Orbis, ACCESS), simultaneous submission strategy and a 6-dimension comparison matrix. Deterministic: no LLM, no network. Report the returned values verbatim; do not recompute or soften them.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -19235,14 +19233,14 @@
         {
           "name": "productType",
           "type": "string",
-          "required": true,
-          "description": "Product type."
+          "required": false,
+          "description": "Product type. Not read: it does not change the result."
         },
         {
           "name": "indication",
           "type": "string",
-          "required": true,
-          "description": "Target therapeutic indication (e.g., \"non-small cell lung cancer\", \"type 2 diabetes\", \"spinal muscular atrophy\")."
+          "required": false,
+          "description": "Target therapeutic indication (e.g., \"non-small cell lung cancer\", \"type 2 diabetes\", \"spinal muscular atrophy\"). Not read: it does not change the result."
         },
         {
           "name": "targetMarkets",
@@ -19252,8 +19250,6 @@
         }
       ],
       "requiredInputs": [
-        "productType",
-        "indication",
         "targetMarkets"
       ],
       "derived": true
@@ -21621,7 +21617,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Specify a multi-tiered anti-drug antibody (ADA) assay strategy per the FDA 2019 guidance (\"Immunogenicity Testing of Therapeutic Protein Products — Developing and Validating Assays for Anti-Drug Antibody Detection\"): screening → confirmatory → titer, with neutralizing-antibody as a downstream tier. Returns the recommended detection platform (bridging ECL/ELISA, SPR) with rationale and alternatives, the tier-by-tier method and cut-point approach, cut-point statistics (screening ~5% false-positive ≈ mean + 1.645·SD; confirmatory ~1% ≈ mean + 2.33·SD), the drug-tolerance strategy (acid-dissociation, bead extraction, trough sampling), the ≤ 100 ng/mL sensitivity target, validation parameters, and matrix-interference controls (USP <1106>, Shankar 2008). Use when the user needs to design or justify an ADA assay, set cut points, or meet sensitivity/drug-tolerance expectations. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Specify a multi-tiered anti-drug antibody (ADA) assay strategy per FDA 2019 (\"Immunogenicity Testing of Therapeutic Protein Products\"): screening → confirmatory → titer, with neutralizing antibody downstream. Returns the detection platform (bridging ECL/ELISA, SPR) with rationale and alternatives, each tier's method and cut-point approach (screening ~5% false-positive ≈ mean + 1.645·SD; confirmatory ~1% ≈ mean + 2.33·SD), the drug-tolerance strategy, the sensitivity target (the FDA 2019 ≤ 100 ng/mL unless stated), validation parameters, matrix-interference controls (USP <1106>, Shankar 2008) and inputStates. The rationale names an unstated soluble-target fact and a mAb status inferred from productType. Use to design or justify an ADA assay, set cut points, or meet sensitivity/drug-tolerance expectations. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "navigation",
@@ -21643,19 +21639,19 @@
           "name": "highSolubleTarget",
           "type": "boolean",
           "required": false,
-          "description": "Whether a high soluble target / shed receptor is expected in the matrix that could interfere with a bridging assay (requires target-tolerance evaluation and possible acid-dissociation)."
+          "description": "Whether a high soluble target / shed receptor is expected in the matrix that could interfere with a bridging assay (requires target-tolerance evaluation and possible acid-dissociation). Omitted or null stays not_stated, and the rationale sa"
         },
         {
           "name": "isMonoclonalAntibody",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product is a monoclonal antibody. If omitted, inferred from productType. Affects rheumatoid-factor / heterophilic-antibody interference handling."
+          "description": "Whether the product is a monoclonal antibody. Omitted or null stays not_stated; it is then inferred from productType, and the rationale says so. Affects rheumatoid-factor / heterophilic-antibody interference handling."
         },
         {
           "name": "phase",
           "type": "string",
           "required": false,
-          "description": "Development phase (optional). Drives the expected validation rigor."
+          "description": "Development phase (optional). Not read: it does not change the result."
         },
         {
           "name": "preferredPlatform",
@@ -21667,7 +21663,7 @@
           "name": "targetSensitivity_ng_per_mL",
           "type": "number",
           "required": false,
-          "description": "Target assay sensitivity in ng/mL of a positive-control antibody. Default 100 (FDA 2019 recommends ≤ 100 ng/mL)."
+          "description": "Target assay sensitivity in ng/mL of a positive-control antibody (positive). If omitted, the FDA 2019 figure of 100 ng/mL is used and the result says so."
         },
         {
           "name": "drugName",
@@ -21950,7 +21946,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Recommend an optimal bioequivalence study design based on drug characteristics including within-subject variability, elimination half-life, NTI status, and number of formulations to compare. Returns the recommended design (2x2 crossover, replicate 3-period or 4-period, partial replicate, parallel, 3x3/4x4 Williams), acceptance criteria (80-125% or tighter for NTI drugs, scaled for HVDs), closed-form sample size estimate, washout period guidance, study conditions, and regulatory citations (21 CFR 320.26, FDA Statistical Approaches Guidance 2001, EMA/CHMP/QWP/428693/2017). Use when the user needs to plan a BE study, determine sample size, select a study design for a highly variable drug, or understand acceptance criteria for an NTI drug. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Recommend a bioequivalence study design based on within-subject variability, elimination half-life, NTI status, and number of formulations to compare. Returns the design (2x2 crossover, replicate 3-period or 4-period, partial replicate, parallel, 3x3/4x4 Williams), acceptance criteria (80-125% or tighter for NTI drugs, scaled for HVDs), a closed-form sample size estimate, washout, study conditions, inputStates, the defaults applied and citations (21 CFR 320.26, FDA Statistical Approaches 2001, EMA/CHMP/QWP/428693/2017). NTI status is stated, or taken from the drug name on the platform's NTI list, which is not exhaustive; with neither, the acceptance criteria and sample size are null. Use to plan a BE study, determine sample size, select a design for a highly variable drug, or understand acceptance criteria for an NTI drug. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -21972,25 +21968,25 @@
           "name": "isNTI",
           "type": "boolean",
           "required": false,
-          "description": "Whether the drug is a narrow therapeutic index (NTI) drug. NTI drugs have tighter acceptance criteria (90.00-111.11% instead of 80.00-125.00%). If not provided, the engine checks the drug name against a built-in NTI list."
+          "description": "Whether the drug is a narrow therapeutic index (NTI) drug. NTI drugs have tighter acceptance criteria (90.00-111.11% instead of 80.00-125.00%). Omitted or null stays not_stated: NTI status is then taken from drugName on the platform's NTI l"
         },
         {
           "name": "drugName",
           "type": "string",
           "required": false,
-          "description": "Name of the drug substance (optional). Used to auto-detect NTI status if isNTI is not specified."
+          "description": "Name of the drug substance (optional). Looked up on the platform's NTI list, which is not exhaustive when isNTI is not stated."
         },
         {
           "name": "expectedGMR",
           "type": "number",
           "required": false,
-          "description": "Expected geometric mean ratio of test-to-reference (T/R) as a percentage. Default 100 (i.e., T and R are expected to be identical). Values far from 100 increase required sample size."
+          "description": "Expected geometric mean ratio of test-to-reference (T/R) as a percentage. If omitted, 100 is used and defaultsApplied says so. Values far from 100 increase required sample size; outside the acceptance limits none is computed."
         },
         {
           "name": "targetPower",
           "type": "number",
           "required": false,
-          "description": "Target statistical power (0 to 1). Default 0.80. Common values: 0.80 (80%) or 0.90 (90%). Higher power requires larger sample sizes."
+          "description": "Target statistical power, between 0 and 1 (e.g., 0.80 or 0.90). If omitted, 0.80 is used and defaultsApplied says so. Higher power requires larger sample sizes."
         },
         {
           "name": "dosageForm",
@@ -22002,13 +21998,13 @@
           "name": "fedStudyRequired",
           "type": "boolean",
           "required": false,
-          "description": "Whether a fed-state BE study is required in addition to fasting. Default false. Set to true for products with food-effect labeling."
+          "description": "Whether a fed-state BE study is required in addition to fasting (e.g., products with food-effect labeling). Omitted or null stays not_stated, and the result names it where it applies."
         },
         {
           "name": "formulationsToCompare",
           "type": "number",
           "required": false,
-          "description": "Number of formulations to compare in the study (default 2: test vs. reference). Set to 3 for a three-way comparison (e.g., T1 vs. T2 vs. R) or 4 for four-way."
+          "description": "Number of formulations to compare (2 or more: 3 for T1 vs. T2 vs. R, 4 for four-way). If omitted, 2 (test vs. reference) is used and defaultsApplied says so."
         }
       ],
       "requiredInputs": [
@@ -22912,7 +22908,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Design a neutralizing-antibody (NAb) assay per FDA 2019 (Section VI) and Shankar 2014. Determines whether a cell-based functional assay is required (preferred when the mechanism is mediated through a cell-surface receptor or when the endogenous counterpart is non-redundant) or whether a competitive ligand-binding (CLB) format is acceptable (soluble-target binding mechanisms, or when a cell-based assay is not technically feasible — with a documented rationale that the format reflects neutralization). Returns the recommended format, a cell-based-required flag, format rationale, fallback/complementary format with justification, validation parameters, drug-tolerance approach, and matrix-interference controls (USP <1106.1>). Pass only stated facts: if the format or the cell-based requirement turns on an omitted input (cellBasedFeasible, endogenousNonRedundant), it is null and that input is listed in notAssessed. Use when the user needs to choose between cell-based and ligand-binding NAb formats or design NAb validation. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Design a neutralizing-antibody (NAb) assay per FDA 2019 and Shankar 2014: whether a cell-based functional assay is required (a mechanism mediated through a cell-surface receptor, or a non-redundant endogenous counterpart) or a competitive ligand-binding (CLB) format is acceptable (soluble-target binding, or a cell-based assay not feasible, if shown to reflect neutralization). Returns the format, a cell-based-required flag, a fallback format, validation parameters, drug-tolerance approach, matrix-interference controls (USP <1106.1>) and inputStates. If the format or the requirement turns on an omitted cellBasedFeasible or endogenousNonRedundant, it is null and listed in notAssessed; a receptor fact inferred from mechanismClass is said. Use to choose between cell-based and ligand-binding NAb formats or design NAb validation. Deterministic, no LLM: report the returned numbers and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -22928,7 +22924,7 @@
           "name": "actsThroughCellReceptor",
           "type": "boolean",
           "required": false,
-          "description": "Whether the drug acts via direct cell-surface receptor signaling. If omitted, inferred from mechanismClass. When true, a cell-based functional NAb assay is generally required."
+          "description": "Whether the drug acts via direct cell-surface receptor signaling. Omitted or null stays not_stated; it is then inferred from mechanismClass, and the rationale says so. When true, a cell-based functional NAb assay is generally required."
         },
         {
           "name": "cellBasedFeasible",
@@ -22940,7 +22936,7 @@
           "name": "endogenousNonRedundant",
           "type": "boolean",
           "required": false,
-          "description": "Whether the product has a non-redundant endogenous counterpart (false if it has none, or the counterpart is redundant). Drives the need for a sensitive cell-based NAb assay regardless of feasibility considerations. Leave out if not known; f"
+          "description": "Whether the product has a non-redundant endogenous counterpart (false if it has none, or the counterpart is redundant). Drives the need for a sensitive cell-based NAb assay regardless of feasibility considerations. Leave out if not known: o"
         },
         {
           "name": "expectedCirculatingDrug_ug_per_mL",
@@ -28481,7 +28477,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Analyze the biosimilar IP landscape and exclusivity considerations for US (BPCIA patent dance per 42 USC 262(l)) and EU markets. Returns: BPCIA patent dance process (9-step timeline from aBLA filing through second-wave litigation), US exclusivity (4-year data + 12-year market + pediatric extension + first interchangeable exclusivity), EU exclusivity (8+2+1 formula), freedom-to-operate analysis framework (8-step process), design-around strategies for process/formulation/method-of-use patents, and risk-at-launch considerations. Use when the user asks about biosimilar patent strategy, BPCIA patent dance, biologics exclusivity, freedom-to-operate, or launch-at-risk scenarios. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned data and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a biosimilar submission is a critical defect.",
+      "description": "Analyze the biosimilar IP landscape and exclusivity considerations for US (BPCIA patent dance per 42 USC 262(l)) and EU markets. Returns: BPCIA patent dance process (9-step timeline from aBLA filing through second-wave litigation), US exclusivity (4-year data + 12-year market + pediatric extension + first interchangeable exclusivity), EU exclusivity (8+2+1 formula), freedom-to-operate analysis framework (8-step process), design-around strategies for process/formulation/method-of-use patents, and risk-at-launch considerations. A missing or unknown market is refused; patent dates are not read. Use when the user asks about biosimilar patent strategy, BPCIA patent dance, biologics exclusivity, freedom-to-operate, or launch-at-risk scenarios. Deterministic, no LLM: report the returned data and citations verbatim. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -28496,14 +28492,14 @@
         {
           "name": "patentExpiryDates",
           "type": "object",
-          "required": true,
-          "description": "Known patent expiry dates for the reference product. Object with optional keys: \"substance\" (compound/composition patent), \"formulation\" (formulation patent), \"methodOfUse\" (method of treatment patent), \"process\" (manufacturing process pate"
+          "required": false,
+          "description": "Known patent expiry dates for the reference product. Not read: it does not change the result. Object with optional keys: \"substance\" (compound/composition patent), \"formulation\" (formulation patent), \"methodOfUse\" (method of treatment paten"
         },
         {
           "name": "biosimilarExclusivityStatus",
           "type": "string",
           "required": false,
-          "description": "Current exclusivity status of any biosimilars already approved for the same reference (e.g., \"first interchangeable approved\", \"multiple biosimilars on market\"). Affects competitive landscape analysis."
+          "description": "Current exclusivity status of any biosimilars already approved for the same reference (e.g., \"first interchangeable approved\", \"multiple biosimilars on market\"). Not read: it does not change the result."
         },
         {
           "name": "market",
@@ -28514,7 +28510,6 @@
       ],
       "requiredInputs": [
         "referenceProductName",
-        "patentExpiryDates",
         "market"
       ],
       "derived": true
@@ -28841,7 +28836,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Plan an FDA meeting by selecting the correct meeting type, preparing the meeting request package, and structuring the briefing document. Classifies the meeting as Type A (immediately necessary — 30-day response), Type B (pre-IND, EOP1, EOP2, pre-NDA/BLA — 75-day response), Type C (other — 75-day response), Type D (formal dispute resolution), or Pre-Submission (505(b)(2)/ANDA-specific). Returns: (1) meeting type classification with description, timeline, and regulatory basis; (2) meeting request package components, submission timing, and format requirements; (3) briefing document structure with 9 sections (objectives, product background, disease background, nonclinical summary, clinical summary, CMC summary, regulatory strategy, questions, appendices); (4) timing recommendations specific to the meeting purpose and development phase; (5) question framing tips for effective FDA engagement; (6) PDUFA VII performance goals; (7) practical advice for meeting conduct. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned values verbatim. Do NOT recompute or soften them.",
+      "description": "Plan an FDA meeting by selecting the correct meeting type, preparing the meeting request package, and structuring the briefing document. Classifies the meeting as Type A (immediately necessary — 30-day response), Type B (pre-IND, EOP1, EOP2, pre-NDA/BLA — 75-day response), Type C (other — 75-day response), Type D (formal dispute resolution), or Pre-Submission (505(b)(2)/ANDA-specific). Returns: (1) meeting type with description, timeline and regulatory basis; (2) request package components, submission timing and format requirements; (3) briefing document structure with 9 sections (objectives, product background, disease background, nonclinical summary, clinical summary, CMC summary, regulatory strategy, questions, appendices); (4) timing recommendations for the meeting purpose and development phase; (5) question framing tips; (6) PDUFA VII performance goals; (7) practical advice for meeting conduct. Deterministic: no LLM, no network. Report the returned values verbatim; do not recompute or soften them.",
       "scope": "global",
       "governed": false,
       "renderer": "document-canvas",
@@ -28868,15 +28863,14 @@
         {
           "name": "questionsToDiscuss",
           "type": "array",
-          "required": true,
-          "description": "List of key questions or topics the sponsor intends to discuss at the meeting. Used to provide tailored advice on question framing and briefing document focus areas."
+          "required": false,
+          "description": "List of key questions or topics the sponsor intends to discuss at the meeting. Not read: it does not change the result."
         }
       ],
       "requiredInputs": [
         "developmentPhase",
         "purpose",
-        "productType",
-        "questionsToDiscuss"
+        "productType"
       ],
       "derived": true
     },
@@ -32783,7 +32777,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Select the optimal FDA regulatory pathway under FD&C Act Section 505: 505(b)(1) Full NDA, 505(b)(2) NDA with reliance on prior findings, 505(j) ANDA (generic), or Suitability Petition (21 CFR 314.93). Applies a decision tree based on active ingredient novelty (NME vs. known), dosage form changes, route changes, indication changes, new combinations, formulation innovations, and availability of a reference listed drug (RLD). Returns: (1) recommended pathway with legal basis, required studies, advantages, disadvantages, and typical timeline; (2) alternative pathways with rationale; (3) decision tree rationale explaining the recommendation; (4) patent and exclusivity considerations (NCE 5-year, new clinical investigation 3-year, OTC 3-year, pediatric 6-month add-on, orphan 7-year, 180-day generic, patent term extension); (5) Paragraph I-IV certification types and implications. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned values verbatim. Do NOT recompute or soften them.",
+      "description": "Select the optimal FDA regulatory pathway under FD&C Act Section 505: 505(b)(1) Full NDA, 505(b)(2) NDA with reliance on prior findings, 505(j) ANDA (generic), or Suitability Petition (21 CFR 314.93). Applies a decision tree based on active ingredient novelty (NME vs. known), dosage form changes, route changes, indication changes, new combinations, formulation innovations, and availability of a reference listed drug (RLD); while an unstated fact could change the pathway, it is null and the facts are named. Returns: (1) recommended pathway with legal basis, required studies, advantages, disadvantages and typical timeline; (2) alternative pathways; (3) decision tree rationale; (4) patent and exclusivity considerations (NCE 5-year, new clinical investigation 3-year, OTC 3-year, pediatric 6-month add-on, orphan 7-year, 180-day generic, patent term extension); (5) Paragraph I-IV certification types. Deterministic: no LLM, no network. Report the returned values verbatim; do not recompute or soften them.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -32798,48 +32792,42 @@
         {
           "name": "dosageFormChange",
           "type": "boolean",
-          "required": true,
-          "description": "Does the product involve a change in dosage form compared to the RLD (e.g., tablet to capsule, oral to injectable)?"
+          "required": false,
+          "description": "Does the product involve a change in dosage form compared to the RLD (e.g., tablet to capsule, oral to injectable)? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "routeChange",
           "type": "boolean",
-          "required": true,
-          "description": "Does the product involve a change in route of administration compared to the RLD?"
+          "required": false,
+          "description": "Does the product involve a change in route of administration compared to the RLD? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "indicationChange",
           "type": "boolean",
-          "required": true,
-          "description": "Does the product seek a new indication not covered by the RLD labeling?"
+          "required": false,
+          "description": "Does the product seek a new indication not covered by the RLD labeling? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "newCombination",
           "type": "boolean",
-          "required": true,
-          "description": "Is the product a new fixed-dose combination of known active ingredients?"
+          "required": false,
+          "description": "Is the product a new fixed-dose combination of known active ingredients? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "formulationInnovation",
           "type": "boolean",
-          "required": true,
-          "description": "Does the product involve a formulation innovation (e.g., extended-release, novel delivery system, abuse-deterrent formulation)?"
+          "required": false,
+          "description": "Does the product involve a formulation innovation (e.g., extended-release, novel delivery system, abuse-deterrent formulation)? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         },
         {
           "name": "availableRLD",
           "type": "boolean",
-          "required": true,
-          "description": "Is a reference listed drug (RLD) available in the FDA Orange Book for the active ingredient?"
+          "required": false,
+          "description": "Is a reference listed drug (RLD) available in the FDA Orange Book for the active ingredient? Omitted or null stays not_stated, and a result it could change is null (see undecided)."
         }
       ],
       "requiredInputs": [
-        "activeIngredient",
-        "dosageFormChange",
-        "routeChange",
-        "indicationChange",
-        "newCombination",
-        "formulationInnovation",
-        "availableRLD"
+        "activeIngredient"
       ],
       "derived": true
     },
@@ -36438,7 +36426,7 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "Assess rolling submission eligibility and plan the submission schedule for an NDA/BLA application. Rolling review is available only to products with Fast Track, Breakthrough Therapy, or RMAT designation (FD&C Act §506(b)(2)). Returns: (1) eligibility assessment with rationale; (2) submission schedule template organized in 5 phases (nonclinical → CMC → clinical pharmacology → pivotal clinical → regional/administrative); (3) recommended CTD module submission order; (4) pre-submission checklist (12 items including eCTD preparation, FDA coordination, and pre-NDA/BLA meeting planning); (5) filing review clock considerations (PDUFA date calculation, refuse-to-file risk); (6) manufacturing site readiness requirements for pre-approval inspection; (7) practical tips for managing a rolling submission. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned values verbatim. Do NOT recompute or soften them.",
+      "description": "Assess rolling submission eligibility and plan the submission schedule for an NDA/BLA application. Rolling review is available only to products with Fast Track, Breakthrough Therapy, or RMAT designation (FD&C Act §506(b)(2)). Returns: (1) eligibility assessment with rationale; (2) submission schedule template organized in 5 phases (nonclinical → CMC → clinical pharmacology → pivotal clinical → regional/administrative); (3) recommended CTD module submission order; (4) pre-submission checklist (12 items including eCTD preparation, FDA coordination, and pre-NDA/BLA meeting planning); (5) filing review clock considerations (PDUFA date calculation, refuse-to-file risk); (6) manufacturing site readiness requirements for pre-approval inspection; (7) practical tips for managing a rolling submission. Deterministic: no LLM, no network. Report the returned values verbatim; do not recompute or soften them.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -36448,25 +36436,23 @@
           "name": "expeditedDesignationStatus",
           "type": "object",
           "required": true,
-          "description": "Current expedited designation status of the product."
+          "description": "Current expedited designation status of the product. Eligible when one is true; null while none is true and one is not stated."
         },
         {
           "name": "productType",
           "type": "string",
-          "required": true,
-          "description": "Product type."
+          "required": false,
+          "description": "Product type. Not read: it does not change the result."
         },
         {
           "name": "estimatedModuleCompletionDates",
           "type": "object",
-          "required": true,
-          "description": "Estimated completion dates for each CTD module (ISO 8601 format preferred). All fields optional."
+          "required": false,
+          "description": "Estimated completion dates for each CTD module (ISO 8601 format preferred). All fields optional. Not read: it does not change the result."
         }
       ],
       "requiredInputs": [
-        "expeditedDesignationStatus",
-        "productType",
-        "estimatedModuleCompletionDates"
+        "expeditedDesignationStatus"
       ],
       "derived": true
     },
