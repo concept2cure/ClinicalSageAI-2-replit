@@ -14,6 +14,7 @@ import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal, answerUnfinished } from '..
 import { useChatUpload, readyAttachmentLabel, composeTurn, type SentAttachment } from '../../hooks/useChatUpload';
 import { CHAT_UPLOAD_ACCEPT } from '@shared/constants/document-intake-formats';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
+import { ConversationArtifactReview } from './ConversationArtifactReview';
 import { SignoffList } from '../SignoffList';
 import { apiCall, apiErrorText } from '../apiCall';
 import { downloadBlob, safeFileName } from '../download';
@@ -1070,6 +1071,11 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
               about it, a few lines above. */}
           {routable && routeBlockedBecause && !art.note && (
             <div className="ct-art-note">{routeBlockedBecause}</div>
+          )}
+          {/* In review, the artifact's own review (P-95): name its reviewers and,
+              as a named reviewer, decide (ConversationArtifactReview.tsx). */}
+          {status === 'review' && art.artifactId && projectId != null && (
+            <ConversationArtifactReview projectId={projectId} artifactId={art.artifactId} title={art.title} fireToast={fireToast} />
           )}
         </div>
       )}

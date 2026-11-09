@@ -1,0 +1,66 @@
+{
+  "390": {
+    "buttons": [
+      {
+        "text": "Export manifest PDF",
+        "cls": "btn ghost rl-card-run",
+        "display": "flex",
+        "height": 44,
+        "border": "solid"
+      },
+      {
+        "text": "Export reports PDF",
+        "cls": "btn ghost rl-card-run",
+        "display": "flex",
+        "height": 44,
+        "border": "solid"
+      },
+      {
+        "text": "Choose legal companions for ZIP",
+        "cls": "btn ghost rl-card-run",
+        "display": "inline-flex",
+        "height": 44,
+        "border": "solid"
+      }
+    ],
+    "chooser": "Explicit legal companions\n\nThe ZIP contains the retained reports PDF, separate unchanged legal originals and a proof manifest. Selection does not determine agency acceptance or filing completeness. Nothing is attached automatically.\n\nReport legal originals\nSearch report legal originalsSearch legal versions\nDocument kind for report legal originals\nAll document kinds\nauthorization\npower of attorney\ndeclaration\ncertificate\nagreement\ncover letter\nother\n\nSelections identify exact registered versions. Current access, approval and applicability are checked again when saved and filed.\n\n0 accessible registered version(s) match this search.\n\nPrevious legal versionsNext legal versions\nChoose published stationery (optional)\nDownload reports and 0 selected legal originals (ZIP)",
+    "zip": {
+      "text": "Download reports and 0 selected legal originals (ZIP)",
+      "disabled": true
+    },
+    "errors": [],
+    "overflow": 10
+  },
+  "1440": {
+    "buttons": [
+      {
+        "text": "Export manifest PDF",
+        "cls": "btn ghost rl-card-run",
+        "display": "flex",
+        "height": 32,
+        "border": "solid"
+      },
+      {
+        "text": "Export reports PDF",
+        "cls": "btn ghost rl-card-run",
+        "display": "flex",
+        "height": 32,
+        "border": "solid"
+      },
+      {
+        "text": "Choose legal companions for ZIP",
+        "cls": "btn ghost rl-card-run",
+        "display": "inline-flex",
+        "height": 32,
+        "border": "solid"
+      }
+    ],
+    "chooser": "Explicit legal companions\n\nThe ZIP contains the retained reports PDF, separate unchanged legal originals and a proof manifest. Selection does not determine agency acceptance or filing completeness. Nothing is attached automatically.\n\nReport legal originals\nSearch report legal originalsSearch legal versions\nDocument kind for report legal originals\nAll document kinds\nauthorization\npower of attorney\ndeclaration\ncertificate\nagreement\ncover letter\nother\n\nSelections identify exact registered versions. Current access, approval and applicability are checked again when saved and filed.\n\n0 accessible registered version(s) match this search.\n\nPrevious legal versionsNext legal versions\nChoose published stationery (optional)\nDownload reports and 0 selected legal originals (ZIP)",
+    "zip": {
+      "text": "Download reports and 0 selected legal originals (ZIP)",
+      "disabled": true
+    },
+    "errors": [],
+    "overflow": 0
+  }
+}
