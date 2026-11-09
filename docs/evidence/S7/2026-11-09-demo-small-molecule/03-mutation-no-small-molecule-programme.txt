@@ -1,0 +1,4 @@
+not ok 26 - a pack whose second programme is missing creates only that one
+# tests 36
+# pass 35
+# fail 1

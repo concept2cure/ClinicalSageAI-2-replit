@@ -135,6 +135,132 @@ export const BIOTECH_CMC = {
 };
 
 /**
+ * C2C-201 — the SECOND fictional programme of this pack, and the only demo
+ * programme whose Module 3 this product composes.
+ *
+ * ## Why it exists (J5-13)
+ *
+ * The human-test walk found that the Module 3 build is refused on every demo
+ * project (`docs/evidence/HUMAN-TEST/J5/README.md`): C2C-101 is a monoclonal
+ * antibody and LMN-201 is a spirulina-expressed protein, so both are outside
+ * the composition boundary this platform ships — small-molecule US IND only
+ * (P-28, `services/cmc/composition-scope.ts`). Those refusals are correct and
+ * are worth showing. But with no programme inside the boundary, **the demo
+ * could not show the build at all**, and the founder walks this.
+ *
+ * C2C-201 is a fictional small molecule from the same fictional sponsor — an
+ * ordinary thing for a biotech to have beside a biologic — so the demo shows
+ * both halves: a dossier that composes, and a refusal that names ICH Q6B.
+ *
+ * It is deliberately CMC-only: a project, its registers and the Module 3
+ * build. No Vault, protocol, submission or QMS content, because J5-13 is about
+ * the build and a second full dossier would double the seed's runtime for
+ * nothing.
+ */
+export const BIOTECH_SM = {
+  molecule: 'C2C-201',
+  programName: 'C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND)',
+  productName: 'C2C-201 (oral selective JAK1 inhibitor, fictional)',
+  indication: 'Moderate-to-severe atopic dermatitis in adults',
+};
+
+/** C2C-201's CMC registers: a small molecule, so §3.2.S and §3.2.P compose. */
+export const BIOTECH_SM_CMC = {
+  substance: {
+    name: 'C2C-201',
+    inn: 'fictional — no INN assigned',
+    casNumber: 'fictional — not assigned',
+    molecularFormula: 'C19H21N5O2',
+    molecularWeight: '363.41',
+    manufacturer: 'Concept2Cure Chemical Operations (fictional)',
+    site: 'Building 2, Cambridge MA (fictional)',
+    /* A CHEMICAL route, stated. The modality is stated too: the boundary must
+       rest on the record, not on the absence of biological words in free text
+       (docs/evidence/S7/2026-11-09-demo-cmc-materials/, finding on
+       classifySubstanceModality). */
+    route: 'Four-step synthesis from the pyrrolopyrimidine core: SNAr coupling, Boc deprotection, amide formation with the cyclopropanecarbonyl chloride, then crystallisation from ethanol/water to the Form I anhydrate.',
+    structuralFormula: 'Fictional structure — SMILES recorded in §3.2.S.3.1.',
+    modality: 'small_molecule',
+    developmentPhase: 'phase_2',
+    status: 'development',
+  },
+  product: {
+    name: 'C2C-201 tablets',
+    dosageForm: 'Film-coated tablet',
+    strength: '15 mg',
+    route: 'Oral',
+    composition: 'C2C-201 15 mg, microcrystalline cellulose, lactose monohydrate, croscarmellose sodium, magnesium stearate; Opadry II film coat.',
+    batchFormula: 'Per 250 kg batch: C2C-201 11.25 kg, microcrystalline cellulose 112.5 kg, lactose monohydrate 112.5 kg, croscarmellose sodium 10.0 kg, magnesium stearate 2.5 kg, Opadry II 7.5 kg (fictional).',
+    process: 'Dry blend, roller compaction, milling, final blend with lubricant, compression, film coating, inspection and packaging.',
+    site: 'Building 3 oral solid dose suite, Cambridge MA (fictional)',
+    containerClosure: 'HDPE bottle, 30 count, with induction seal and child-resistant closure; 1 g silica gel desiccant.',
+    status: 'development',
+  },
+  methods: [
+    { code: 'AM-201', title: 'HPLC-UV assay and related substances', purpose: 'Assay and related substances', analyte: 'C2C-201 and its specified impurities', matrix: 'Drug substance and drug product', technique: 'Reverse-phase HPLC with UV detection at 254 nm', status: 'validation',
+      characteristics: ['specificity', 'accuracy', 'precision (repeatability)', 'precision (intermediate)', 'linearity', 'range', 'quantitation limit', 'detection limit', 'robustness'],
+      summary: 'Stability-indicating: forced degradation resolves all specified impurities with R > 2.0; accuracy 98–102% over 50–150% of nominal; quantitation limit 0.03% against a 0.20% specified-impurity limit.' },
+    { code: 'AM-202', title: 'Dissolution (USP <711>, apparatus 2)', purpose: 'Dissolution', analyte: 'C2C-201 released', matrix: 'Drug product', technique: 'Dissolution, apparatus 2, 900 mL pH 6.8 phosphate buffer, 50 rpm', status: 'validation',
+      characteristics: ['specificity', 'accuracy', 'precision (repeatability)', 'linearity', 'range'],
+      summary: 'Discriminating for compression force and coating level; recovery 98–102% across 10–120% of label claim.' },
+    { code: 'AM-203', title: 'Karl Fischer water determination', purpose: 'Water content', analyte: 'Water', matrix: 'Drug substance and drug product', technique: 'Coulometric Karl Fischer titration', status: 'validation',
+      characteristics: ['specificity', 'accuracy', 'precision (repeatability)', 'linearity', 'range'],
+      summary: 'Recovery 97–103% over 0.1–5.0% w/w; the Form I anhydrate specification is NMT 0.5%.' },
+    { code: 'AM-204', title: 'XRPD identity and polymorph form', purpose: 'Identity and solid form', analyte: 'C2C-201 Form I', matrix: 'Drug substance', technique: 'X-ray powder diffraction', status: 'validation',
+      characteristics: ['specificity', 'precision (repeatability)'],
+      summary: 'Form I distinguished from Forms II and the hemihydrate by characteristic 2θ peaks; a qualitative identity-class procedure.' },
+  ],
+  specs: [
+    { material: 'Drug substance', name: 'C2C-201 — assay', release: '98.0 - 102.0 % on the anhydrous basis', method: 'HPLC-UV assay and related substances', ich: 'ICH Q6A', justification: 'Set from the development and registration batches; range supports the 95.0–105.0 % product release limit.' },
+    { material: 'Drug substance', name: 'C2C-201 — specified and total impurities', release: 'Any specified impurity NMT 0.20 %; any unspecified NMT 0.10 %; total NMT 0.5 %', method: 'HPLC-UV assay and related substances', ich: 'ICH Q3A', justification: 'Identification and qualification thresholds per ICH Q3A for a 15 mg daily dose.' },
+    { material: 'Drug substance', name: 'C2C-201 — water content', release: 'NMT 0.5 % w/w', method: 'Karl Fischer water determination', ich: 'ICH Q6A', justification: 'The Form I anhydrate; water above this indicates hydrate conversion.' },
+    { material: 'Drug substance', name: 'C2C-201 — solid form', release: 'Conforms to the Form I reference diffractogram', method: 'XRPD identity and polymorph form', ich: 'ICH Q6A' },
+    { material: 'Drug product', name: 'C2C-201 tablets — assay', release: '95.0 - 105.0 % of label claim', shelf: '93.0 - 107.0 % of label claim', method: 'HPLC-UV assay and related substances', ich: 'ICH Q6A' },
+    { material: 'Drug product', name: 'C2C-201 tablets — dissolution', release: 'NLT 80 % (Q) released at 30 minutes', method: 'Dissolution (USP <711>, apparatus 2)', ich: 'ICH Q6A', justification: 'Q value set from the biobatch profile.' },
+  ],
+  stability: [
+    { title: 'C2C-201 drug substance — long-term, 25°C/60% RH', product: 'C2C-201', batch: 'C2C201-DS-2502', dosageForm: 'Powder', strength: 'n/a', scope: 'DS',
+      studyType: 'long-term', storage: ['LT', '25°C ± 2°C / 60% ± 5% RH'], duration: 36, monthsRunning: 12, timePoints: ['0', '3', '6', '9', '12', '18', '24', '36'],
+      parameters: ['Assay', 'Total impurities', 'Water content'], notes: 'Primary registration lot, double polyethylene bag in a fibre drum.',
+      results: [
+        { timePoint: '0', parameter: 'Assay', result: '99.8', specification: '98.0 - 102.0 %' },
+        { timePoint: '6', parameter: 'Assay', result: '99.4', specification: '98.0 - 102.0 %' },
+        { timePoint: '12', parameter: 'Assay', result: '99.1', specification: '98.0 - 102.0 %' },
+        { timePoint: '0', parameter: 'Total impurities', result: '0.11', specification: 'NMT 0.5 %' },
+        { timePoint: '6', parameter: 'Total impurities', result: '0.18', specification: 'NMT 0.5 %' },
+        { timePoint: '12', parameter: 'Total impurities', result: '0.24', specification: 'NMT 0.5 %' },
+      ] },
+    { title: 'C2C-201 tablets — long-term, 25°C/60% RH', product: 'C2C-201 tablets', batch: 'C2C201-DP-2503', dosageForm: 'Film-coated tablet', strength: '15 mg', scope: 'DP',
+      studyType: 'long-term', storage: ['LT', '25°C ± 2°C / 60% ± 5% RH'], duration: 24, monthsRunning: 9, timePoints: ['0', '3', '6', '9', '12', '18', '24'],
+      parameters: ['Assay', 'Dissolution', 'Total impurities'], notes: 'HDPE bottle, 30 count, with desiccant.',
+      results: [
+        { timePoint: '0', parameter: 'Assay', result: '100.2', specification: '95.0 - 105.0 %' },
+        { timePoint: '6', parameter: 'Assay', result: '99.1', specification: '95.0 - 105.0 %' },
+        { timePoint: '9', parameter: 'Assay', result: '98.6', specification: '95.0 - 105.0 %' },
+        { timePoint: '0', parameter: 'Dissolution', result: '94', specification: 'NLT 80 %' },
+        { timePoint: '9', parameter: 'Dissolution', result: '88', specification: 'NLT 80 %' },
+      ] },
+    { title: 'C2C-201 tablets — accelerated, 40°C/75% RH', product: 'C2C-201 tablets', batch: 'C2C201-DP-2503', dosageForm: 'Film-coated tablet', strength: '15 mg', scope: 'DP',
+      studyType: 'accelerated', storage: ['ACC', '40°C ± 2°C / 75% ± 5% RH'], duration: 6, monthsRunning: 6, timePoints: ['0', '1', '3', '6'],
+      parameters: ['Assay', 'Dissolution', 'Total impurities'], notes: 'Supports the ICH Q1A(R2) accelerated package.',
+      results: [
+        { timePoint: '0', parameter: 'Total impurities', result: '0.12', specification: 'NMT 0.5 %' },
+        { timePoint: '3', parameter: 'Total impurities', result: '0.38', specification: 'NMT 0.5 %' },
+        /* Out of specification at six months accelerated, as happens. The
+           composed §3.2.P.8 reports it, withholds the stability conclusion and
+           names the point — which is the behaviour phase 4's acceptance
+           fixture pins, shown here on demo data a person can click through. */
+        { timePoint: '6', parameter: 'Total impurities', result: '0.61', specification: 'NMT 0.5 %' },
+      ] },
+  ],
+  batches: [
+    { number: 'C2C201-DS-2502', product: 'C2C-201', yieldPercent: 78, openDeviations: 0 },
+    { number: 'C2C201-DP-2503', product: 'C2C-201 tablets', yieldPercent: 94, openDeviations: 0 },
+    { number: 'C2C201-DP-2601', product: 'C2C-201 tablets', yieldPercent: 92, openDeviations: 1 },
+  ],
+};
+
+/**
  * Protocol C2C-101-201's design as the protocol states it (biotech-content.mjs:
  * synopsis, §9 sample size, SAP §2-5): three arms 1:1:1, 180 participants, a
  * composite estimand for PASI 75 at Week 16, a stratified CMH test with
