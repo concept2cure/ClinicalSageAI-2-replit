@@ -51,6 +51,7 @@ vi.mock('../download', async (importOriginal) => ({
    are inputs to this test rather than an SSE stream. Everything below the hook
    is the real surface. */
 const chat = vi.hoisted(() => ({ messages: [] as unknown[] }));
+const review = vi.hoisted(() => ({ me: { id: '1', organizationId: '1', displayName: 'Test Author', email: 'author@test.co' } as unknown }));
 vi.mock('../../components/ana/useAnaChat', () => ({
   useAnaChat: () => ({
     messages: chat.messages,
@@ -73,6 +74,9 @@ vi.mock('../../components/ana/useAnaChat', () => ({
 vi.mock('@/services/portal/authService', async original => ({
   ...await original<typeof import('@/services/portal/authService')>(),
   useAuth: () => ({ user: { id: '1', organizationId: '1', displayName: 'Test Author', email: 'author@test.co' } }),
+  /* The artifact's review reads the signed-in person to leave them out of the
+     reviewers and to know whether they are one (ConversationArtifactReview). */
+  useAuthUser: () => review.me,
 }));
 
 import { ConversationThread, conversationArtifacts } from '../surfaces/ConversationThread';
@@ -241,3 +245,117 @@ describe('ConversationThread artifact panel — the controls complete their chai
     expect(screen.getByText('Open a project first — the review workflow is scoped to one.')).toBeTruthy();
   });
 });
+
+/* ── P-95: the artifact's own review, reached from its card ─────────────────
+   Review before approval is applied through each record's own review. For an
+   AnA artifact that is the artifact reviewer routes, which no client reached
+   (COORDINATION, the P-95 clarification c5208a29cd). In review, the card now
+   reads the round, names reviewers from the project team (never the person in
+   the conversation, who is the author and the eventual approver), and lets a
+   named reviewer decide. The server's rules are not repeated here; its
+   refusals are shown in its words. */
+describe('ConversationThread artifact panel — the artifact review (P-95)', () => {
+  const STATUS = '/api/concept2cure/projects/12/artifacts/artifact_1755_ab12cd34/reviews/status';
+  const TEAM = '/api/concept2cure/projects/12/team';
+  const ASSIGN = '/api/concept2cure/projects/12/artifacts/artifact_1755_ab12cd34/reviewers';
+  const SUBMIT = '/api/concept2cure/projects/12/artifacts/artifact_1755_ab12cd34/reviews/submit';
+  const NONE = { hasReviewers: false, currentRound: 0, reviewers: [], readyForApproval: false };
+  const named = (status: string, decision: unknown = null, reviewerId = 7) => ({
+    hasReviewers: true, currentRound: 1, readyForApproval: false,
+    reviewers: [{ assignmentId: 'asg_1', reviewerId, reviewerName: 'Dana Reviewer', status, decision }],
+  });
+  let reviewState: unknown;
+  let refuse: Record<string, { status: number; message: string }>;
+
+  beforeEach(() => {
+    reviewState = NONE;
+    refuse = {};
+    review.me = { id: '1', organizationId: '1', displayName: 'Test Author', email: 'author@test.co' };
+    responder = (method, path) => {
+      const no = refuse[`${method} ${path}`];
+      if (no) return { ok: false, status: no.status, json: { success: false, error: { message: no.message } } };
+      if (method === 'GET' && path === STATUS) return { ok: true, status: 200, json: { success: true, data: reviewState } };
+      if (method === 'GET' && path === TEAM) {
+        return { ok: true, status: 200, json: { success: true, data: [
+          { userId: 1, name: 'Test Author', email: 'author@test.co', role: 'admin' },
+          { userId: 7, name: 'Dana Reviewer', email: 'dana@test.co', role: 'reviewer' },
+        ] } };
+      }
+      if (method === 'POST' && path === ASSIGN) {
+        reviewState = named('pending');
+        return { ok: true, status: 200, json: { success: true, data: { reviewRound: 1 } } };
+      }
+      if (method === 'POST' && path === SUBMIT) {
+        reviewState = named('completed', { decision: 'approve', comment: 'Numbers match CSR-201.' }, 1);
+        return { ok: true, status: 200, json: { success: true, data: {} } };
+      }
+      return { ok: true, status: 200, json: {} };
+    };
+  });
+
+  async function inReview() {
+    mount();
+    fireEvent.click(screen.getByText(/Route to review/).closest('button')!);
+    await waitFor(() => expect(screen.getByText('In review')).toBeTruthy());
+  }
+
+  it('in review, reads the round from the artifact reviewer routes and says no reviewer is named', async () => {
+    await inReview();
+    await waitFor(() => expect(screen.getByText('No reviewer is named yet.')).toBeTruthy());
+    expect(calls.some(c => c.method === 'GET' && c.path === STATUS)).toBe(true);
+  });
+
+  it('names a reviewer from the project team, never the person in the conversation, and shows the round', async () => {
+    await inReview();
+    fireEvent.click(await screen.findByRole('button', { name: /Name reviewers for Clinical Overview 2.5/ }));
+    await waitFor(() => expect(screen.getByText('Dana Reviewer')).toBeTruthy());
+    // The author and eventual approver is not offered.
+    expect(screen.queryByRole('checkbox', { name: /Test Author/ })).toBeNull();
+    fireEvent.click(screen.getByRole('checkbox', { name: /Dana Reviewer/ }));
+    fireEvent.change(screen.getByLabelText(/Note for the reviewers/), { target: { value: 'Check the ORR against 7.4.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Assign' }));
+    await waitFor(() => expect(calls.some(c => c.method === 'POST' && c.path === ASSIGN)).toBe(true));
+    expect(calls.find(c => c.path === ASSIGN)!.body).toEqual({ reviewerIds: [7], notes: 'Check the ORR against 7.4.' });
+    await waitFor(() => expect(screen.getByText('Waiting for a decision')).toBeTruthy());
+    expect(screen.getByText(/Named 1 reviewer for Clinical Overview 2.5, round 1\./)).toBeTruthy();
+  });
+
+  it("shows the server's refusal in its words and assigns no one", async () => {
+    await inReview();
+    refuse[`POST ${ASSIGN}`] = { status: 403, message: 'Only admin, approver, or reviewer can assign reviewers' };
+    fireEvent.click(await screen.findByRole('button', { name: /Name reviewers for/ }));
+    fireEvent.click(await screen.findByRole('checkbox', { name: /Dana Reviewer/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Assign' }));
+    await waitFor(() => expect(screen.getByText(/Only admin, approver, or reviewer can assign reviewers/)).toBeTruthy());
+    expect(screen.getByText(/No one was assigned\./)).toBeTruthy();
+    expect(screen.queryByText('Waiting for a decision')).toBeNull();
+  });
+
+  it('a named reviewer decides through the review submit route, and the decision is shown', async () => {
+    reviewState = named('pending', null, 1);
+    await inReview();
+    fireEvent.change(await screen.findByLabelText(/You are a named reviewer/), { target: { value: 'Numbers match CSR-201.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    await waitFor(() => expect(calls.some(c => c.method === 'POST' && c.path === SUBMIT)).toBe(true));
+    expect(calls.find(c => c.path === SUBMIT)!.body).toEqual({ decision: 'approve', comment: 'Numbers match CSR-201.' });
+    await waitFor(() => expect(screen.getByText('Approved — “Numbers match CSR-201.”')).toBeTruthy());
+    expect(screen.queryByRole('button', { name: 'Approve' })).toBeNull();
+  });
+
+  it('someone not named is offered no decision', async () => {
+    reviewState = named('pending');
+    await inReview();
+    await waitFor(() => expect(screen.getByText('Waiting for a decision')).toBeTruthy());
+    expect(screen.queryByRole('button', { name: 'Approve' })).toBeNull();
+    expect(calls.some(c => c.path === SUBMIT)).toBe(false);
+  });
+
+  it('a review that cannot be read says so, and never shows as no reviewers', async () => {
+    refuse[`GET ${STATUS}`] = { status: 500, message: 'Failed to fetch review status' };
+    await inReview();
+    await waitFor(() => expect(screen.getByText(/Failed to fetch review status/)).toBeTruthy());
+    expect(screen.queryByText('No reviewer is named yet.')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Name reviewers for/ })).toBeNull();
+  });
+});
+

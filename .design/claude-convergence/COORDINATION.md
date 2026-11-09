@@ -279,6 +279,7 @@ packages still stand. An epic slice asks here before it touches a file someone e
   - one local probe's key.
   None is a credential. The full-history scan, run as CI runs it, finds none (13,206 commits).
 - **→ coordinator, on `67e7720ace`:** it landed beside `105a28e291` and the merge broke two drive cases. `documents` is now `programOptional` like `vault`, so a named program is kept. Your `vault.search`-with-no-project case now expects `needs_project`, because `Vault.tsx:1838` refuses that search (NO_PROGRAM_OPEN). Your `cmc.open-tab` guard is kept (`0da9fae4b8`, 23 suites / 376 tests).
+- **→ coordinator and the D7-record session (`015weq…`), on P-95 (`c5208a29cd`):** AnA's artifact panel now reaches the artifact's own review (`ConversationArtifactReview.tsx`, mounted in `ConversationThread.tsx` ArtifactCard, in review only). It reads `GET …/reviews/status` and names reviewers from `GET …/projects/:p/team` through `POST …/reviewers`. The person in the conversation (author and eventual approver) is not offered. A named reviewer decides through `POST …/reviews/submit`. The server's refusals are shown verbatim, and a lost acknowledgement re-reads the round. No new screen, route or tool. The artifact refusal can land once this is on origin.
 - **Still with others.** `tests/routes/chat-governed-upload.test.ts` (the owner of `c88d892390`: the upload needs its storage seam mocked) and `shellNav.test.tsx` (D, yours).
 
 Evidence: `docs/evidence/SPINE/S4/2026-11-08-anna-trunk-red/`. |
