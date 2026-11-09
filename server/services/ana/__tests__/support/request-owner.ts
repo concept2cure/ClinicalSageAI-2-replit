@@ -16,9 +16,25 @@
 import type { RequestSqlClient } from '../../../../db/requestDb';
 import { getTenantScope, runWithTenantScope } from '../../../../db/tenantStore';
 import { extractTableDdl } from '../../../../../tests/golden-journeys/harness';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../../../db/pglite-harness';
 
 /** The owner store the private-rule read opens, from its creating migration. Empty: the member has no private rules. */
 export const PRIVATE_RULE_STORE_DDL = extractTableDdl('migrations/0013_ana_intelligence_system.sql', ['user_intelligence_profiles']);
+
+/**
+ * What the AnA stream's conversation step reads for its owner since `a2f9264a`
+ * (P-104), before history: the thread (its owner-private boundary), the
+ * member's private-rule store, and audit_logs (that store's history and the
+ * thread's privacy markers). From their creating migrations; empty: a public
+ * thread whose member has no private rules.
+ */
+export const OWNER_CONVERSATION_STORE_DDL = [
+  extractTableDdl('migrations/20260728_chat_thread_store.sql', ['chat_threads']),
+  // migrations/20261001c_chat_threads_program_key.sql
+  'ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS program_id uuid;',
+  PRIVATE_RULE_STORE_DDL,
+  AUDIT_LOGS_PGLITE_DDL,
+].join('\n');
 
 type Rows = { rows: Array<Record<string, unknown>> };
 

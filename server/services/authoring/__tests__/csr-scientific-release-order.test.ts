@@ -17,9 +17,11 @@ const ORG = 7;
 const DOC = '3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
 const PROGRAM = '6f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e';
 
-/** Answers only the two reads this gate makes; anything else is a defect in the test or the gate. */
+/** Answers only the reads this gate makes; anything else is a defect in the test or the gate. */
 function reader(answer: { required?: unknown; receipts?: unknown[] }) {
   const query = vi.fn(async (sql: string) => {
+    // Since b8cee0745c the release boundary reads the independent-check ledger first: a legacy human-authored document, with no AnA/check genesis.
+    if (/WITH trails AS/.test(sql)) return { rows: [], rowCount: 0 };
     if (/SELECT EXISTS/.test(sql) && /csrScientificEvidence/.test(sql)) {
       return { rows: 'required' in answer ? [{ required: answer.required }] : [], rowCount: 1 };
     }

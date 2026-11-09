@@ -97,8 +97,13 @@ describe('the wrapper no longer drops the round', () => {
     // Without this the abort checks were advisory: they stopped us READING the
     // response while the model kept generating server-side and the turn was
     // paid for in full.
-    expect(EXECUTOR).toMatch(/gateway\.route\(\{ \.\.\.request, signal \}\)/);
+    // Every round now goes through dispatchWithRecordedTeamContext, which binds
+    // the loop's tenant; both of its gateway calls spread the request, signal included.
+    expect(EXECUTOR).toMatch(/dispatchWithRecordedTeamContext\(\{ \.\.\.request, signal \}, options, 0\)/);
     expect(EXECUTOR).toMatch(/messages: loopMessages, signal/);
+    expect(EXECUTOR).toMatch(/dispatchWithRecordedTeamContext\(roundRequest, options, round\)/);
+    expect(EXECUTOR).toMatch(/getGateway\(\)\.route\(\{ \.\.\.request, organizationId \}\)/);
+    expect(EXECUTOR).toMatch(/const scoped: GatewayRequest = \{ \.\.\.request, organizationId,/);
   });
 
   it('forwards the round-boundary checkpoint the loop has always accepted', () => {
