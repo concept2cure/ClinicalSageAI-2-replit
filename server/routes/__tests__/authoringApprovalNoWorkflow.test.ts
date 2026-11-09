@@ -72,6 +72,10 @@ vi.mock('../../middleware/orgMembership', () => ({
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-approval-chain';
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
+// P-95: these documents' review is complete (release-governance-reads.ts, read 5); the check has its own suite.
+vi.mock('../../services/authoring/authoring-review-route', async (orig) =>
+  (await import('../../services/authoring/__tests__/release-governance-reads')).withCompletedReview(orig));
+
 import router from '../authoring.router';
 import { DOC_ID, releaseGovernanceRead } from '../../services/authoring/__tests__/release-governance-reads';
 

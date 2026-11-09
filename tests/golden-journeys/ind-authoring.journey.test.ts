@@ -66,6 +66,9 @@ async function mint(user: { id: string; organizationId: number; email: string; n
 const T = 180_000;
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
+// P-95: this document's review is complete (release-governance-reads.ts, read 5). This suite runs on the C-11 authoring DDL, which has no review route tables; the review route has its own suites and the founder path walks it.
+vi.mock('../../server/services/authoring/authoring-review-route', async (orig) =>
+  (await import('../../server/services/authoring/__tests__/release-governance-reads')).withCompletedReview(orig));
 vi.mock('../../server/db', () => ({
   get db() {
     return h.db;
