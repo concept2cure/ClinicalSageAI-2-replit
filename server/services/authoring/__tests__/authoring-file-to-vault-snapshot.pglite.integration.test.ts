@@ -47,11 +47,11 @@ beforeAll(async () => {
   /* Release reads the independent-check ledger from both sides, authoring_audit_trail and the chained audit_logs
      (workflow-import-governance.ts, independentLedger), ordered by audit_logs.chain_seq, and any read error is refused
      as INDEPENDENT_CHECK_REQUIRED. With no audit_logs here every filing was refused, 32 of 32 (found by RIM,
-     2026-11-09). The table is the writer's own DDL plus chain_seq exactly as migrations/20260921_audit_logs_chain_seq.sql
-     adds it (bigint, no default); the shared DDL lacks that column, which is its holder's to add. With the trail
+     2026-11-09). The table is the writer's own DDL plus migrations/20260921_audit_logs_chain_seq.sql itself (the column, its
+     sequence and the trigger that assigns it), as production has it; the shared DDL lacks the column. With the trail
      writer mocked the ledger is empty, so this document needs no independent check. */
   await harness.pg.exec(AUDIT_LOGS_PGLITE_DDL);
-  await harness.pg.exec('ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS chain_seq bigint');
+  await harness.pg.exec(readFileSync(new URL('../../../../migrations/20260921_audit_logs_chain_seq.sql', import.meta.url), 'utf8'));
   await harness.pg.exec(`
     ALTER TABLE authoring_documents ADD COLUMN title text, ADD COLUMN module text,
       ADD COLUMN version text, ADD COLUMN created_by text, ADD COLUMN created_at timestamptz DEFAULT now(),
