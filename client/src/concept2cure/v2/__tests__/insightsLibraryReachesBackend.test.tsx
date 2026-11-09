@@ -126,7 +126,7 @@ describe('Run history — GET /api/report-os/runs', () => {
     });
     await renderCanvas();
     await openTab(/Run history/);
-    fireEvent.click((await screen.findAllByRole('button', { name: 'Open' }))[0]);
+    fireEvent.click((await screen.findAllByRole('button', { name: /^Open the / }))[0]);
     await waitFor(() =>
       expect(apiRequest.mock.calls.some(([m, u]) => m === 'GET' && u === '/api/report-os/runs/41/rendered')).toBe(true),
     );
@@ -144,7 +144,7 @@ describe('Run history — GET /api/report-os/runs', () => {
     });
     await renderCanvas();
     await openTab(/Run history/);
-    fireEvent.click((await screen.findAllByRole('button', { name: 'Open' }))[0]);
+    fireEvent.click((await screen.findAllByRole('button', { name: /^Open the / }))[0]);
     expect(await screen.findByText(/seal no longer verifies/)).toBeTruthy();
   });
 });
@@ -454,5 +454,41 @@ describe('a failed read says WHICH failure it was', () => {
     const unreached = readFailureOf({ error: 'e', status: 0 }, 'x');
     expect(unreached.retryable).toBe(true);
     expect(unreached.message).toMatch(/did not reach the server/);
+  });
+});
+
+/* Reporting use walk, 2026-11-09. Twenty Catalog buttons were each named
+   "Run", every Run history row "Open", every schedule "Pause". A screen reader's
+   list of buttons could not say which was which. A run with no recorded scope
+   name read "project — 11", a database key. */
+describe('every repeated control says what it acts on, and no row shows a database key', () => {
+  it('names each Catalog Run by its report', async () => {
+    await renderCanvas();
+    await openTab(/^Catalog$/);
+    const runs = await waitFor(() => {
+      const found = Array.from(document.querySelectorAll('button.rl-card-run')) as HTMLElement[];
+      if (!found.length) throw new Error('no Run yet');
+      return found;
+    });
+    for (const button of runs) {
+      const title = button.closest('.rl-card')?.querySelector('.rl-card-h')?.textContent;
+      expect(button.getAttribute('aria-label')).toBe(`Run ${title}`);
+    }
+  });
+
+  it('names each Run history Open by its run, and says a scope with no name without its key', async () => {
+    await renderCanvas();
+    await openTab(/Run history/);
+    expect(await screen.findByRole('button', { name: /^Open the Executive Readiness Digest run of / })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Open the eTMF Completeness & Gap Pack run of / })).toBeTruthy();
+    const table = document.querySelector('[role="tabpanel"] table') as HTMLElement;
+    expect(table.textContent).not.toMatch(/project — 11/);
+    expect(table.textContent).toMatch(/A project with no recorded name/);
+  });
+
+  it('names each schedule’s Pause by its report', async () => {
+    await renderCanvas();
+    await openTab(/Schedules/);
+    expect(await screen.findByRole('button', { name: 'Pause the Executive Readiness Digest schedule' })).toBeTruthy();
   });
 });

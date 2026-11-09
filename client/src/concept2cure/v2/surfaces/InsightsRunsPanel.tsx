@@ -37,6 +37,11 @@ import {
 } from './insightsLibraryShared';
 
 /** The filter bar. Every control maps to a parameter the route accepts. */
+/** A run's scope when its record carries no name: what it is, never its database key (Reporting use walk, 2026-11-09). */
+function unnamedScope(scopeType: string): string {
+  return scopeType === 'organization' ? 'Your organization' : `A ${scopeType.replace(/_/g, ' ')} with no recorded name`;
+}
+
 function RunFilters({
   types,
   status,
@@ -136,12 +141,12 @@ function RunRow({
         {run.reportTypeLabel}
         {market ? <div className="rl-cell-sub">{market}</div> : null}
       </td>
-      <td>{run.scopeLabel || `${run.scopeType} — ${run.scopeId}`}<RunScopeNote run={run} /></td>
+      <td>{run.scopeLabel || unnamedScope(run.scopeType)}<RunScopeNote run={run} /></td>
       <td><StatusTag status={run.status} /></td>
       <td>{confidenceText(run.confidence)}</td>
       <td>{whenText(run.completedAt ?? run.createdAt)}</td>
       <td>
-        <button type="button" className="rc-chip" onClick={onOpen}>Open</button>
+        <button type="button" className="rc-chip" onClick={onOpen} aria-label={`Open the ${run.reportTypeLabel} run of ${whenText(run.createdAt)}`}>Open</button>
       </td>
     </tr>
   );

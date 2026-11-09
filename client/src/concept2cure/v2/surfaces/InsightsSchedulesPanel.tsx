@@ -280,7 +280,8 @@ function ScheduleTable({
             </td>
             <td>
               {canWrite ? (
-                <button type="button" className="rc-chip" disabled={held || pending(s.id)} onClick={() => onToggle(s)}>
+                <button type="button" className="rc-chip" disabled={held || pending(s.id)} onClick={() => onToggle(s)}
+                  aria-label={pending(s.id) ? undefined : `${s.enabled ? 'Pause' : 'Resume'} the ${names.report(s.reportTypeId)} schedule`}>
                   {pending(s.id) ? 'Saving…' : s.enabled ? <>{I.pause} Pause</> : <>{I.play} Resume</>}
                 </button>
               ) : null}

@@ -128,6 +128,7 @@ function TypeCard({
           disabled={!canRun || busy || Boolean(unavailableReason)}
           onClick={() => onRun(type)}
           title={runControlTitle(canRun, unavailableReason)}
+          aria-label={`Run ${type.label}`}
         >
           {I.play} Run
         </button>

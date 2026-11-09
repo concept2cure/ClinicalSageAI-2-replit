@@ -54,7 +54,7 @@ function renderCanvas() {
 }
 async function run() {
   fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
-  fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
+  fireEvent.click(await screen.findByRole('button', { name: /^Run / }));
   await screen.findByText('Original private report');
 }
 function replace(user: Partial<AuthUser> = NEXT) {
@@ -85,7 +85,7 @@ describe('reporting current session — private canvas reads', () => {
     await act(async () => replace({ ...ACTOR, permissions: [] }));
     await waitFor(() => expect(screen.queryByText('Original private report')).toBeNull());
     fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
-    expect((screen.getByRole('button', { name: /^Run$/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: /^Run / }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('withdraws private results when the server refreshes the current role without rotating the session revision', async () => {
@@ -96,7 +96,7 @@ describe('reporting current session — private canvas reads', () => {
     expect(session.sameRevision()).toBe(true);
     expect(screen.queryByText('Original private report')).toBeNull();
     fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
-    expect((screen.getByRole('button', { name: /^Run$/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: /^Run / }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('discards an earlier overview that resolves after a replacement account has started its read', async () => {
@@ -116,7 +116,7 @@ describe('reporting current session — private canvas reads', () => {
     wire((method, url) => method === 'POST' && url === '/api/report-os/runs' ? creation.promise : undefined);
     renderCanvas();
     fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Run / }));
     await waitFor(() => expect(calls('POST', '/api/report-os/runs')).toHaveLength(1));
     await act(async () => replace());
     await act(async () => creation.resolve(ok({ data: { run: { id: 41 } } })));
@@ -129,7 +129,7 @@ describe('reporting current session — private canvas reads', () => {
   it('refuses a stale Run click in the same frame that the current actor changes', async () => {
     renderCanvas();
     fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
-    const oldRun = await screen.findByRole('button', { name: /^Run$/ });
+    const oldRun = await screen.findByRole('button', { name: /^Run / });
     act(() => { replace(); fireEvent.click(oldRun); });
     expect(calls('POST', '/api/report-os/runs')).toHaveLength(0);
   });
@@ -140,7 +140,7 @@ describe('reporting current session — private canvas reads', () => {
     wire((_method, url) => url === '/api/report-os/runs/41/rendered' ? { ok: true, status: 200, json: readBody } as unknown as Response : undefined);
     renderCanvas();
     fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Run / }));
     await waitFor(() => expect(readBody).toHaveBeenCalledOnce());
     await act(async () => authService.endSession(null));
     await act(async () => body.resolve(reportDocument()));
@@ -153,7 +153,7 @@ describe('reporting current session — private canvas reads', () => {
     wire((_method, url) => url === '/api/report-os/runs/41/rendered' ? response.promise : undefined);
     renderCanvas();
     fireEvent.click(await screen.findByRole('tab', { name: 'Run history' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Open' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Open the / }));
     await waitFor(() => expect(calls('GET', '/api/report-os/runs/41/rendered')).toHaveLength(1));
     await act(async () => replace());
     await act(async () => response.resolve(ok(reportDocument())));
@@ -184,7 +184,7 @@ describe('old reporting forms and signature callbacks', () => {
     wire((_method, url) => url === '/api/insights/subscriptions' ? ok({ data: [{ id: 7, reportTypeId: TYPE.typeId, scopeType: 'project', scopeId: '11', schedule: { cadence: 'daily', hour: 8 }, enabled: true, recipients: [], channel: 'platform', format: 'in_app' }] }) : undefined);
     renderCanvas();
     fireEvent.click(await screen.findByRole('tab', { name: 'Schedules' }));
-    const oldPause = await screen.findByRole('button', { name: 'Pause' });
+    const oldPause = await screen.findByRole('button', { name: /^Pause the / });
     act(() => { replace(); fireEvent.click(oldPause); });
     expect(calls('PATCH', '/api/insights/subscriptions')).toHaveLength(0);
   });
@@ -201,7 +201,7 @@ describe('old reporting forms and signature callbacks', () => {
     });
     renderCanvas();
     fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Run / }));
     expect((await screen.findByRole('alert')).textContent).toMatch(/may have completed.*Check Run history/i);
     expect(calls('POST', '/api/report-os/runs')).toHaveLength(1);
     expect(calls('GET', '/api/report-os/runs/41/rendered')).toHaveLength(0);
@@ -213,7 +213,7 @@ describe('old reporting forms and signature callbacks', () => {
     wire((method, url) => method === 'POST' && url === '/api/report-os/runs' ? { ok: false, status: 503, json: async () => payload } as Response : undefined);
     renderCanvas();
     fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Run / }));
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain(message);
     expect(alert.textContent).not.toMatch(/may have completed/);
