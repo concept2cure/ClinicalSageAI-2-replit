@@ -1189,10 +1189,7 @@ Each commit below re-reads its own citations before its first edit.
 
 #### B. Questions back (to the coordinating session)
 
-1. **H5′ under P-108 1(b).** A bound legacy SFTP row's attempt ended before `connect()`, by the code's history (the
-   client module was never installed in any image), not by anything on the row. Is that "the platform's own record
-   proves never left"? RIM's recommendation is **yes**, with the statement citing the retired transport. Until the
-   answer comes, such a row is released only on FDA's letter.
+1. **H5′ under P-108 1(b).** Answered in §10.4: yes, under four conditions.
 
 #### C. Statements in §0–§9 that are no longer true, and what replaces them
 
@@ -1257,3 +1254,69 @@ session its file list.
 | **C4** | The technical rejection on a failed Ack3 after an Ack2, completing `filed-sequence-rejection.ts` for the sequence spine (A.4). | `filed-sequence-rejection.ts`, `fda-esg-receipts.ts`, tests |
 
 Separately, under F1 and not P-92's: the coordinating session's C4 repair (H3's 4xx arm with a pinned peer).
+
+### 10.4 B1 answered: a bound legacy SFTP row is proven never to have left, under four conditions (2026-11-09)
+
+The coordinating session answered B1: **yes, with the proof made explicit and checkable.** A bound legacy-SFTP attempt
+counts as "the platform's own record proves it never left" (P-108 1(b)) only when all four conditions hold. Each is
+applied as follows.
+
+**(a) The proof is reproducible from the repository.** It is held: the search and its output are kept beside this
+design as `p92-settle-held-fda-send.b1-sftp-search-2026-11-09.txt`, and anyone can rerun them.
+- **Scope.** `origin/concept2cure-v2`'s full history, unshallowed (19,239 commits back to 2025-11-20), and every tag
+  (`v1.0.0`).
+- **The search.**
+
+  ```
+  git log --oneline -S'ssh2-sftp-client' origin/concept2cure-v2 --tags -- \
+    ':(glob)**/package.json' ':(glob)**/package-lock.json' ':(glob)**/npm-shrinkwrap.json' \
+    ':(glob)**/yarn.lock' ':(glob)**/pnpm-lock.yaml'
+  ```
+
+  It finds no commit, so the package was never added to or removed from any manifest or lockfile at any depth. The
+  same is true for the bare `ssh2-sftp` and for its transport, `"ssh2"`.
+- **A positive control.** The same search finds `node_modules/express` in `package-lock.json`, so the search works.
+- **No other way in.** No Dockerfile, CI workflow, deploy script or shell script ever mentions `ssh2`.
+- **The deploy path.**
+  - `.github/workflows/deploy-aws.yml` runs on tags `v*` and `rc-*`, or on dispatch;
+  - it builds `Dockerfile.optimized --target production` (`:396`);
+  - that image installs with `npm ci --legacy-peer-deps --omit=dev` (`Dockerfile.optimized:159`), which installs
+    exactly the lockfile.
+
+  So no deployed image ever held the module.
+- **What the code did without it.** The retired branch (`edd225c02^:server/services/submission-gateways/fda-esg.ts`,
+  `:640-662`, the throw at `:657`) loaded the module by a dynamic `import()`, and on failure threw "FDA ESG SFTP transport requires
+  'ssh2-sftp-client' package; nothing was sent.", marked `NOTHING_TRANSMITTED`. The `connect()` call comes after that
+  import (`:670`). Without the module there is no client to connect, so no version could have connected.
+
+**(b) The row is the legacy SFTP gateway, and nothing on it says bytes reached anyone.** E9′ checks this under the
+lock. E2's bound row must have:
+- `transport = 'sftp'`;
+- no `metadata.as2` and no `metadata.as2Receipt`;
+- `transmission_id IS NULL`, `ack_received_at IS NULL` and `mdn_raw IS NULL`;
+- a status of `pending`, `in_transit` or `rejected`. It is never received, `ack2_received` or `ack3_received`.
+
+Any one of these failing refuses the ground. Such a row keeps FDA's letter as its only ground, which fails closed.
+
+**(c) The statement names the ground in words, and keeps the risk sentence:**
+> "The send of sequence NNNN on DATE used the SFTP route to FDA, and no connection to FDA could be made for it: the
+> platform never shipped the SFTP client that route needed. FDA cannot confirm a send it never received, so no FDA
+> document is cited. Releasing the send lets sequence NNNN be sent again, under a new signature. If this record is
+> wrong and FDA did receive the first send, sending sequence NNNN again files it twice: FDA would hold two copies, and
+> may refuse the second or require it to be corrected."
+
+The payload's evidence is `{ kind: 'platform-proof', proof: 'sftp-client-never-shipped', transmittalId }`.
+
+**(d) The ground is narrow.**
+- It applies to `transport = 'sftp'` only.
+- E9's `no-as2-message` ground applies to `transport = 'as2'` only.
+- Any other transport, or any row with an unknown outcome that fails E9 or E9′, still needs FDA's letter.
+
+`payloadRefusal` checks the proof kind against the row's transport.
+
+**C1's red cases add:**
+- a bound SFTP row with no receipt is released on `sftp-client-never-shipped`;
+- one with a `transmission_id`, an `as2Receipt` or a received status is not;
+- an AS2 row never takes the SFTP proof, and an SFTP row never takes the AS2 one.
+
+The evidence README carries (a)'s search and its output again, run at the commit, so a reviewer can compare them.
