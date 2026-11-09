@@ -129,9 +129,16 @@ ceremony ran, in which order, and that **nothing is written** on a refusal.
 `api/cmc/__tests__/cmc-sign-signature-row.test.ts` shares one `ROW` across three ceremonies, and its own comment
 already named the pattern: *"The locked row each ceremony evaluates its precondition on … Without them those three
 answer 409 and never reach the signature, which is the point of the preconditions."* The specification approval now
-has a fourth precondition, so `ROW` gained `test_methods: { method: 'SE-HPLC' }`. Its `project_id` is null, so the
-register is unreadable for that row and the gate records the method as not evaluated rather than refusing it — which
-is the behaviour pinned above, exercised incidentally here.
+has a fourth precondition, so `ROW` gained `test_methods: { method: 'SE-HPLC' }` — and its fake client answers
+`FROM cmc_source_objects` with one `validationStatus: 'validated'` method, so the gate resolves the named procedure
+and the ceremony reaches the signature.
+
+*Corrected 2026-11-09:* this paragraph previously said `ROW.project_id` is null and the register therefore
+unreadable, so the method was recorded as "not evaluated rather than refusing it". Both halves were wrong.
+`ROW.project_id` is a real uuid, the register read is stubbed, and an unreadable register does **not** pass — it
+refuses `METHOD_NOT_VERIFIABLE`, as the rule table above says. The behaviour was right; the sentence describing it
+was not. Found while root-causing `test:proof-tier`
+(`docs/evidence/F1/2026-11-09-proof-tier-spec-contract-method/`).
 
 ## Gates
 
