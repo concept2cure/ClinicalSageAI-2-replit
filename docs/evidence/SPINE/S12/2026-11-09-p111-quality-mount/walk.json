@@ -1,0 +1,42 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T11:49:33.868Z",
+  "steps": [
+    {
+      "name": "the Quality work project, through the one intake",
+      "status": 200,
+      "id": 19
+    },
+    {
+      "name": "the door opens Quality bound to the work project, its records the whole project's",
+      "url": "/concept2cure/quality?program=6065271c-d4b0-4936-aad1-02855423a738&workProject=19",
+      "heading": "Drug product QA · JM Smith"
+    },
+    {
+      "name": "a task is added on the work project and read back",
+      "status": 200,
+      "line": "Review the CAPA effectiveness check 11:49:40 · JM Smith · due Dec 4, 2026 · Open"
+    },
+    {
+      "name": "a reload stays bound"
+    },
+    {
+      "name": "\"Show the whole project\" unbinds"
+    },
+    {
+      "name": "the same at 390 dark, from a copied link",
+      "hScroll": 0
+    }
+  ],
+  "requests": [
+    {
+      "post": "/api/tasks/tasks",
+      "status": 200,
+      "projectId": 19,
+      "sourceEntityType": "work_project_task",
+      "moduleType": "Quality"
+    }
+  ],
+  "finishedAt": "2026-11-09T11:49:45.753Z"
+}

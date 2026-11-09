@@ -1,0 +1,28 @@
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent findings within the existing human review dialog > runs checks without a model, refreshes the server receipt and unlocks an eligible approval 50ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent findings within the existing human review dialog > retains a human disagreement without letting it waive a current blocking finding 76ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent findings within the existing human review dialog > allows a reasoned human resolution only after the latest checks no longer reproduce the finding 37ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent check mutation reconciliation and session fencing > holds an unknown check outcome until an explicit reload recovers its actual server receipt 55ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent check mutation reconciliation and session fencing > fences a stale approval and stale rerun callback immediately after a new blocking receipt 54ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent check mutation reconciliation and session fencing > does not publish a delayed former actor’s findings into the replacement session 35ms
+ × client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > a document with no revision number (J3 R10) > names no revision before or after the decision, and says nothing was left unrecorded 144ms
+   → expected 'Record review decisionClinical Overvi…' not to match /Revision|not recorded/
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > a document with no revision number (J3 R10) > still names the revision when the document carries one 135ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > a document with no revision number (J3 R10) > names no revision before or after the decision, and says nothing was left unrecorded
+AssertionError: expected 'Record review decisionClinical Overvi…' not to match /Revision|not recorded/
+- Expected:
+/Revision|not recorded/
++ Received:
+"Record review decisionClinical Overview §2.5Revision not recorded · M2 · en · TESTReview requested 2026-09-20 10:00:00 UTCSep 20, 2026, 10:00 · UTC2.5.1 · Dose rationaleThe complete saved rationale includes the comparator.Saved cohort 42Your decision recorded — ApprovedRevision not recorded · Recorded 2026-10-14 11:00:00 UTCOct 14, 2026, 11:00 · UTCThis verdict is bound to the saved content and review request shown above. The audit record was confirmed. Current standing comes from the refreshed review board.Your verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.Close"
+ ❯ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx:335:36
+    333|     const recorded = await screen.findByLabelText('Your recorded decis…
+    334|     expect(recorded.textContent).toMatch(/Recorded/);
+    335|     expect(dialog.textContent).not.toMatch(/Revision|not recorded/);
+       |                                    ^
+    336|   });
+    337|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 passed (23)
+   Start at  11:16:31
+   Duration  4.14s (transform 1.05s, setup 160ms, import 1.34s, tests 1.99s, environment 487ms)

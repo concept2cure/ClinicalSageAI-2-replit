@@ -1,0 +1,5 @@
+MUTATION M09-click-refusal-not-focused in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-09T11:40:51.200380Z): replaced [React.useEffect(() => { if (atClick) said.current?.focus(); }, [atClick, state]);] with [React.useEffect(() => undefined, [atClick, state]);]
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — outside the readiness read, and asked on every open and every click > a refusal at the click is said inside the disclosure, focused, and nothing is signed 5296ms
+      Tests  1 failed | 22 skipped (23)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 c72ed2473e0ca751e687cbfc78db972a985f921a1c8a3346f40c8fbb9767c18d (expected c72ed2473e0ca751e687cbfc78db972a985f921a1c8a3346f40c8fbb9767c18d)

@@ -1,0 +1,1074 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "creator": "ana.author@concept2cure.pro",
+  "signer": "dana.signer@concept2cure.pro",
+  "program": "95249590-7d36-442f-a317-211d243c52e1",
+  "browser": "141.0.7390.37",
+  "screens": {
+    "s0-closed-1440-light": {
+      "file": "s0-closed-1440-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": false,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…",
+        "roles": [],
+        "buttons": [],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s2-offered-1440-light": {
+      "file": "s2-offered-1440-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…Retiring takes sequence 0000 out of use. Nothing is sent to the agency. Its leaves, compiles and its signatures stay recorded as history; it is no longer listed, built on or sent. Its number, 0000, becomes free, so a corrected sequence 0000 can then be started from the Sequences tab. Retirement cannot be undone.Retire sequence 0000",
+        "roles": [],
+        "buttons": [
+          "btn ghost small: Retire sequence 0000"
+        ],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s6-signing-1440-light": {
+      "file": "s6-signing-1440-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…Retiring takes sequence 0000 out of use. Nothing is sent to the agency. Its leaves, compiles and its signatures stay recorded as history; it is no longer listed, built on or sent. Its number, 0000, becomes free, so a corrected sequence 0000 can then be started from the Sequences tab. Retirement cannot be undone.Retire sequence 0000",
+        "roles": [],
+        "buttons": [
+          "btn ghost small: Retire sequence 0000"
+        ],
+        "isLastOfDispatch": true
+      },
+      "dialog": {
+        "text": "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingSequence 0000 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)FDA (US) · takes the sequence out of use; nothing is sent to the agency; cannot be undoneDSDana Signerdana.signer@concept2cure.proSignature meaning · §11.50ResponsibilityYou take responsibility for this contentBy signing, you state:Sequence 0000 has not been filed with the agency by any route: not by a send from this sequence, not as a package sent from this platform, not from an export, and not by courier or any other route.Reason for this actionMinimum 8 characters.Password · §11.200CancelSign and commit",
+        "meanings": [
+          "Responsibility"
+        ],
+        "statement": "Sequence 0000 has not been filed with the agency by any route: not by a send from this sequence, not as a package sent from this platform, not from an export, and not by courier or any other route.",
+        "quoteMarks": [
+          "open-quote",
+          "close-quote"
+        ]
+      },
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.es-meaning-opt \"Responsibility\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s4-creator-1440-light": {
+      "file": "s4-creator-1440-light.png",
+      "who": "creator",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…You created sequence 0000, so you cannot sign its retirement. Another person with signing authority signs it.",
+        "roles": [
+          "note"
+        ],
+        "buttons": [],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s0-closed-1440-dark": {
+      "file": "s0-closed-1440-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": false,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…",
+        "roles": [],
+        "buttons": [],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s2-offered-1440-dark": {
+      "file": "s2-offered-1440-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…Retiring takes sequence 0000 out of use. Nothing is sent to the agency. Its leaves, compiles and its signatures stay recorded as history; it is no longer listed, built on or sent. Its number, 0000, becomes free, so a corrected sequence 0000 can then be started from the Sequences tab. Retirement cannot be undone.Retire sequence 0000",
+        "roles": [],
+        "buttons": [
+          "btn ghost small: Retire sequence 0000"
+        ],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s6-signing-1440-dark": {
+      "file": "s6-signing-1440-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…Retiring takes sequence 0000 out of use. Nothing is sent to the agency. Its leaves, compiles and its signatures stay recorded as history; it is no longer listed, built on or sent. Its number, 0000, becomes free, so a corrected sequence 0000 can then be started from the Sequences tab. Retirement cannot be undone.Retire sequence 0000",
+        "roles": [],
+        "buttons": [
+          "btn ghost small: Retire sequence 0000"
+        ],
+        "isLastOfDispatch": true
+      },
+      "dialog": {
+        "text": "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingSequence 0000 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)FDA (US) · takes the sequence out of use; nothing is sent to the agency; cannot be undoneDSDana Signerdana.signer@concept2cure.proSignature meaning · §11.50ResponsibilityYou take responsibility for this contentBy signing, you state:Sequence 0000 has not been filed with the agency by any route: not by a send from this sequence, not as a package sent from this platform, not from an export, and not by courier or any other route.Reason for this actionMinimum 8 characters.Password · §11.200CancelSign and commit",
+        "meanings": [
+          "Responsibility"
+        ],
+        "statement": "Sequence 0000 has not been filed with the agency by any route: not by a send from this sequence, not as a package sent from this platform, not from an export, and not by courier or any other route.",
+        "quoteMarks": [
+          "open-quote",
+          "close-quote"
+        ]
+      },
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.es-meaning-opt \"Responsibility\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s4-creator-1440-dark": {
+      "file": "s4-creator-1440-dark.png",
+      "who": "creator",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…You created sequence 0000, so you cannot sign its retirement. Another person with signing authority signs it.",
+        "roles": [
+          "note"
+        ],
+        "buttons": [],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s0-closed-390-light": {
+      "file": "s0-closed-390-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": false,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…",
+        "roles": [],
+        "buttons": [],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s2-offered-390-light": {
+      "file": "s2-offered-390-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…Retiring takes sequence 0000 out of use. Nothing is sent to the agency. Its leaves, compiles and its signatures stay recorded as history; it is no longer listed, built on or sent. Its number, 0000, becomes free, so a corrected sequence 0000 can then be started from the Sequences tab. Retirement cannot be undone.Retire sequence 0000",
+        "roles": [],
+        "buttons": [
+          "btn ghost small: Retire sequence 0000"
+        ],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s6-signing-390-light": {
+      "file": "s6-signing-390-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…Retiring takes sequence 0000 out of use. Nothing is sent to the agency. Its leaves, compiles and its signatures stay recorded as history; it is no longer listed, built on or sent. Its number, 0000, becomes free, so a corrected sequence 0000 can then be started from the Sequences tab. Retirement cannot be undone.Retire sequence 0000",
+        "roles": [],
+        "buttons": [
+          "btn ghost small: Retire sequence 0000"
+        ],
+        "isLastOfDispatch": true
+      },
+      "dialog": {
+        "text": "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingSequence 0000 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)FDA (US) · takes the sequence out of use; nothing is sent to the agency; cannot be undoneDSDana Signerdana.signer@concept2cure.proSignature meaning · §11.50ResponsibilityYou take responsibility for this contentBy signing, you state:Sequence 0000 has not been filed with the agency by any route: not by a send from this sequence, not as a package sent from this platform, not from an export, and not by courier or any other route.Reason for this actionMinimum 8 characters.Password · §11.200CancelSign and commit",
+        "meanings": [
+          "Responsibility"
+        ],
+        "statement": "Sequence 0000 has not been filed with the agency by any route: not by a send from this sequence, not as a package sent from this platform, not from an export, and not by courier or any other route.",
+        "quoteMarks": [
+          "open-quote",
+          "close-quote"
+        ]
+      },
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.es-meaning-opt \"Responsibility\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s4-creator-390-light": {
+      "file": "s4-creator-390-light.png",
+      "who": "creator",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…You created sequence 0000, so you cannot sign its retirement. Another person with signing authority signs it.",
+        "roles": [
+          "note"
+        ],
+        "buttons": [],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s0-closed-390-dark": {
+      "file": "s0-closed-390-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": false,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…",
+        "roles": [],
+        "buttons": [],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s2-offered-390-dark": {
+      "file": "s2-offered-390-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…Retiring takes sequence 0000 out of use. Nothing is sent to the agency. Its leaves, compiles and its signatures stay recorded as history; it is no longer listed, built on or sent. Its number, 0000, becomes free, so a corrected sequence 0000 can then be started from the Sequences tab. Retirement cannot be undone.Retire sequence 0000",
+        "roles": [],
+        "buttons": [
+          "btn ghost small: Retire sequence 0000"
+        ],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s6-signing-390-dark": {
+      "file": "s6-signing-390-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…Retiring takes sequence 0000 out of use. Nothing is sent to the agency. Its leaves, compiles and its signatures stay recorded as history; it is no longer listed, built on or sent. Its number, 0000, becomes free, so a corrected sequence 0000 can then be started from the Sequences tab. Retirement cannot be undone.Retire sequence 0000",
+        "roles": [],
+        "buttons": [
+          "btn ghost small: Retire sequence 0000"
+        ],
+        "isLastOfDispatch": true
+      },
+      "dialog": {
+        "text": "Electronic signature21 CFR Part 11 · §11.50 · §11.100 · §11.200You are signingSequence 0000 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)FDA (US) · takes the sequence out of use; nothing is sent to the agency; cannot be undoneDSDana Signerdana.signer@concept2cure.proSignature meaning · §11.50ResponsibilityYou take responsibility for this contentBy signing, you state:Sequence 0000 has not been filed with the agency by any route: not by a send from this sequence, not as a package sent from this platform, not from an export, and not by courier or any other route.Reason for this actionMinimum 8 characters.Password · §11.200CancelSign and commit",
+        "meanings": [
+          "Responsibility"
+        ],
+        "statement": "Sequence 0000 has not been filed with the agency by any route: not by a send from this sequence, not as a package sent from this platform, not from an export, and not by courier or any other route.",
+        "quoteMarks": [
+          "open-quote",
+          "close-quote"
+        ]
+      },
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.es-meaning-opt \"Responsibility\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s4-creator-390-dark": {
+      "file": "s4-creator-390-dark.png",
+      "who": "creator",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · AssemblingShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Four things stand between sequence 0000 and dispatch.8 open error-severity validation finding(s) must be resolved before dispatch.6 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…You created sequence 0000, so you cannot sign its retirement. Another person with signing authority signs it.",
+        "roles": [
+          "note"
+        ],
+        "buttons": [],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s6-signed-1440-light": {
+      "file": "s6-signed-1440-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": {
+        "text": "Signature appliedResponsibility signature recorded against Sequence 0000 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND). The 21 CFR Part 11 audit trail has a new entry. This cannot be undone.ActionRetire sequenceStatedSequence 0000 has not been filed with the agency by any route: not by a send from this sequence, not as a package sent from this platform, not from an export, and not by courier or any other route.Signed byDana Signer · dana.signer@concept2cure.proMeaningResponsibilityReasonSequence 0000 was started with the wrong leaves; a corrected 0000 replaces it.When2026-11-09 11:27:07 UTCNov 09, 2026, 11:27 · UTCChainbff538ed75e91a46dc80070447d43d8cc7d881ecae625c3fe953b40fc01768bfDone",
+        "meanings": [],
+        "statement": null,
+        "quoteMarks": null
+      },
+      "notice": "Sequence 0000 is retired, signed by Dana Signer (responsibility). Its number is free: start sequence 0000 again from the Sequences tab.",
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.es-btn-primary \"Done\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s8-retired-1440-light": {
+      "file": "s8-retired-1440-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": "Sequence 0000 is retired, signed by Dana Signer (responsibility). Its number is free: start sequence 0000 again from the Sequences tab.",
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-dispatch-no-sequence-1440-light": {
+      "file": "after-dispatch-no-sequence-1440-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-sequences-start-0000-1440-light": {
+      "file": "after-sequences-start-0000-1440-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences (selected)",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.sp-primary.sc-btn \"Start sequence 0000\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-dispatch-no-sequence-1440-dark": {
+      "file": "after-dispatch-no-sequence-1440-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-sequences-start-0000-1440-dark": {
+      "file": "after-sequences-start-0000-1440-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences (selected)",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.sp-primary.sc-btn \"Start sequence 0000\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-dispatch-no-sequence-390-light": {
+      "file": "after-dispatch-no-sequence-390-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-sequences-start-0000-390-light": {
+      "file": "after-sequences-start-0000-390-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences (selected)",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.sp-primary.sc-btn \"Start sequence 0000\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-dispatch-no-sequence-390-dark": {
+      "file": "after-dispatch-no-sequence-390-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-sequences-start-0000-390-dark": {
+      "file": "after-sequences-start-0000-390-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences (selected)",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.sp-primary.sc-btn \"Start sequence 0000\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "replacement-started-1440-light": {
+      "file": "replacement-started-1440-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences (selected)",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · DraftShow the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.sp-primary.sc-btn \"Start sequence 0001\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "replacement-dispatch-1440-light": {
+      "file": "replacement-dispatch-1440-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · DraftShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Three things stand between sequence 0000 and dispatch.10 open error-severity validation finding(s) must be resolved before dispatch.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…You created sequence 0000, so you cannot sign its retirement. Another person with signing authority signs it.",
+        "roles": [
+          "note"
+        ],
+        "buttons": [],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "replacement-dispatch-1440-dark": {
+      "file": "replacement-dispatch-1440-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · DraftShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Three things stand between sequence 0000 and dispatch.10 open error-severity validation finding(s) must be resolved before dispatch.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…You created sequence 0000, so you cannot sign its retirement. Another person with signing authority signs it.",
+        "roles": [
+          "note"
+        ],
+        "buttons": [],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "replacement-dispatch-390-light": {
+      "file": "replacement-dispatch-390-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · DraftShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Three things stand between sequence 0000 and dispatch.10 open error-severity validation finding(s) must be resolved before dispatch.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…You created sequence 0000, so you cannot sign its retirement. Another person with signing authority signs it.",
+        "roles": [
+          "note"
+        ],
+        "buttons": [],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "replacement-dispatch-390-dark": {
+      "file": "replacement-dispatch-390-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Sequence0000 · original · DraftShow the organization's submissions",
+      "verdict": "Urgent: Cleared to dispatch?Not yet. Three things stand between sequence 0000 and dispatch.10 open error-severity validation finding(s) must be resolved before dispatch.No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on this sequence).",
+      "disclosure": {
+        "open": true,
+        "className": "pj-more",
+        "summary": "Retire sequence 0000…",
+        "text": "Retire sequence 0000…You created sequence 0000, so you cannot sign its retirement. Another person with signing authority signs it.",
+        "roles": [
+          "note"
+        ],
+        "buttons": [],
+        "isLastOfDispatch": true
+      },
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    }
+  },
+  "checks": {
+    "keyboard": {
+      "summaryFocusable": true,
+      "enterOpens": true
+    },
+    "notice": {
+      "text": "Sequence 0000 is retired, signed by Dana Signer (responsibility). Its number is free: start sequence 0000 again from the Sequences tab.",
+      "recordKey": false,
+      "signatureId": false
+    },
+    "pageHtmlHasSignatureId": false
+  }
+}

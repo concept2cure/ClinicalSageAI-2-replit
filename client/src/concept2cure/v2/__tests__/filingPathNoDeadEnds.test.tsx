@@ -192,7 +192,9 @@ describe('No dead ends on the filing path (F16)', () => {
 
     const note = await screen.findByTestId('sc-builder-sources');
     expect(note.textContent).toMatch(/Place into filing/);
-    expect(note.textContent).toMatch(/comes later/);
+    // D7-A2 step 9: a disclosure that says how documents arrive, and no promise of what comes later.
+    expect(note.textContent).toMatch(/^How documents reach this sequence/);
+    expect(note.textContent).not.toMatch(/comes later/);
     fireEvent.click(screen.getByRole('button', { name: 'Open documents' }));
     expect(onNav).toHaveBeenLastCalledWith('document-authoring');
     fireEvent.click(screen.getByRole('button', { name: 'Open the Vault' }));

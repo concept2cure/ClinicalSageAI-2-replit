@@ -312,3 +312,34 @@ describe('independent check mutation reconciliation and session fencing', () => 
     expect(screen.queryByText('Retired actor finding canary')).toBeNull();
   });
 });
+
+/* J3 human test R10 (docs/evidence/HUMAN-TEST/J3/README.md): the receipt read "Revision not recorded" on every
+   authoring document, because nothing writes authoring_documents.version. The verdict is bound to the saved text by
+   its digest, which the receipt already says, so a missing revision number is left unsaid, not called unrecorded. */
+describe('a document with no revision number (J3 R10)', () => {
+  const unversioned = { ...peerContext, snapshot: { ...peerContext.snapshot, version: null } };
+  it('names no revision before or after the decision, and says nothing was left unrecorded', async () => {
+    const receipt = peerReceipt();
+    answer = { ...receipt, review: { ...receipt.review, reviewed_snapshot: unversioned.snapshot } };
+    mocks.apiRequest.mockImplementation(async (method: string, url: string) => ({ ok: true, status: 200,
+      json: async () => method === 'POST' ? answer : url.startsWith('/api/review/board') ? { success: true, data: peerBoard }
+        : url.endsWith('/reviews') ? peerRead(unversioned) : { success: true, data: { threads: [], tasks: [] } },
+    }));
+    await open();
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.textContent).toContain('M2 · en · TEST');
+    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'approved' } });
+    fireEvent.click(screen.getByRole('button', { name: /Record approval/ }));
+    const recorded = await screen.findByLabelText('Your recorded decision');
+    expect(recorded.textContent).toMatch(/Recorded/);
+    expect(dialog.textContent).not.toMatch(/Revision|not recorded/);
+  });
+
+  it('still names the revision when the document carries one', async () => {
+    answer = peerReceipt();
+    await open();
+    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'approved' } });
+    fireEvent.click(screen.getByRole('button', { name: /Record approval/ }));
+    expect((await screen.findByLabelText('Your recorded decision')).textContent).toMatch(/Revision 3 · Recorded/);
+  });
+});

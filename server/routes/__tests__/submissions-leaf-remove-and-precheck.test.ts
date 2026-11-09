@@ -21,13 +21,14 @@ vi.hoisted(() => {
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'submissions-leaf-remove-precheck-secret-32c';
 });
 
-const svc = vi.hoisted(() => ({ removeLeaf: vi.fn(), precheckGovernedStep: vi.fn() }));
+const svc = vi.hoisted(() => ({ removeLeaf: vi.fn(), precheckGovernedStep: vi.fn(), precheckSequenceRetirement: vi.fn() }));
 vi.mock('../../services/submission-service/submission-service', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/submission-service/submission-service')>();
   return {
     ...actual,
     removeLeaf: (...a: unknown[]) => svc.removeLeaf(...a),
     precheckGovernedStep: (...a: unknown[]) => svc.precheckGovernedStep(...a),
+    precheckSequenceRetirement: (...a: unknown[]) => svc.precheckSequenceRetirement(...a),
   };
 });
 
@@ -48,6 +49,7 @@ app.use('/api/submissions', submissionsRouter);
 beforeEach(() => {
   svc.removeLeaf.mockReset();
   svc.precheckGovernedStep.mockReset();
+  svc.precheckSequenceRetirement.mockReset();
   svc.removeLeaf.mockResolvedValue({ leafId: 63, auditTrail: { persisted: true, chained: true } });
 });
 
@@ -122,9 +124,20 @@ describe('a governed step can be asked before it is signed', () => {
     });
   });
 
+  it("hands a retirement precheck (P-86) to the retirement's own rule, with nothing else from the body", async () => {
+    const answer = { step: 'retire', cleared: true, refusal: null, retirement: { sequenceNumber: '0000', stagingSends: [], numberFreed: true, statement: 'S' } };
+    svc.precheckSequenceRetirement.mockResolvedValue(answer);
+    const res = await request(app).post('/api/submissions/sequences/6/governed-precheck').send({ step: 'retire', environment: 'production' });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(answer);
+    expect(svc.precheckSequenceRetirement.mock.calls).toEqual([[6, { userId: 3, organizationId: 7, ipAddress: '192.0.2.17' }]]);
+    expect(svc.precheckGovernedStep).not.toHaveBeenCalled();
+  });
+
   it('refuses an unknown step', async () => {
     const res = await request(app).post('/api/submissions/sequences/6/governed-precheck').send({ step: 'publish' });
     expect(res.status).toBe(400);
     expect(svc.precheckGovernedStep).not.toHaveBeenCalled();
+    expect(svc.precheckSequenceRetirement).not.toHaveBeenCalled();
   });
 });

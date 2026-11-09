@@ -188,7 +188,9 @@ describe('POST /:id/submit — a submitted status needs a filing behind it', () 
     const res = await submit({ reason: REASON, sequenceId: SEQ_DRAFT });
 
     expect(res.status).toBe(409);
-    expect(res.body.error).toBe('SEQUENCE_NOT_DISPATCHED');
+    // b6793c57ca: one filed rule (isFiledDispatchStatus), and the refusal says so in a sentence.
+    expect(res.body.error).toBe('SEQUENCE_NOT_FILED');
+    expect(res.body.message).toMatch(/Nothing was submitted\.$/);
     expect((await docState()).status).toBe('approved');
     expect(await ledger()).toHaveLength(0);
   }, 60_000);
