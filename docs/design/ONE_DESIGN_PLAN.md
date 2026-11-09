@@ -829,7 +829,10 @@ Evidence: `docs/evidence/SPINE/S4/2026-11-09-spike-joined-run/README.md`, with `
 - **Added**, each shown failing first:
   - check 4: the rules and memory stores isolate tenants as the runtime role (`ec177edd06`);
   - check 1: rework and rejection are rebuilt from the decision audit (`d4b82abc94`);
-  - check 2: a credential use is audited by grant, revision and purpose, never its value (`64e3346363`).
+  - check 2: a credential use is audited by grant, revision and purpose, never its value (`64e3346363`);
+  - check 2: the tenant's export carries a vault-captured card but neither its key nor the stored ciphertext
+    (`4d99bddc52`);
+  - check 1: a child's transmit, signature, filing and version overwrite are refused by name (`ce1451297c`).
 - **Verdict: acceptance pending.** Every check has named open items in the evidence. Some are test-only, for S4. One
   is RIM's (check 3, reapproval after the one-byte change). Some are product decisions for the founder:
   - a "never again" trigger;
@@ -839,7 +842,8 @@ Evidence: `docs/evidence/SPINE/S4/2026-11-09-spike-joined-run/README.md`, with `
   - qualified local weights.
 
   No check is marked passed in full.
-- **Next.** The S4 test-only items for checks 1 and 2, then the founder's decisions on the product items.
+- **Next.** Two S4 test-only items remain: a joined child → parent merge → lock case, and one canary across the prompt
+  bundle, outbound body and turn trace. Then the founder's decisions on the product items.
 
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
