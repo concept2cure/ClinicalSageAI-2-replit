@@ -542,8 +542,8 @@
    bottom row: a pointer resting there unhovered it, it dropped back under the
    pointer and was hovered again, every frame, so it jittered by 1px and never
    settled. A button's content is clipped to the button, so nothing inside it
-   can keep that row. The lift is the cards' motion, not the buttons'
-   (design-system/README.md, "Animation & motion"). */
+   can keep that row. Nothing new lifts on hover; the older card lifts are counted and
+   only fall (design-system/README.md, "Animation & motion"; foundationsReadmeClaims). */
 .c2c-v2 .de-btn.primary:hover{background:color-mix(in srgb,var(--accent-strong) 88%,var(--text-100));}
 .c2c-v2 .de-btn.primary:disabled{opacity:.5;pointer-events:none;}
 .c2c-v2 .de-btn.ghost{border-color:var(--border);color:var(--text-200);}
