@@ -98,7 +98,7 @@ Seed content is drawn from `config/domain-prompts.ts` — 106 prompts across 19 
 ### Spacing, radius, borders
 - **4px grid.** Tokens: 2/4/6/8/12/16/20/24/32/40/48/64/80.
 - **Radius**: 6px chips (`--radius-md`) / 8px buttons, inputs and tabs' focus (`--radius-lg`) / 10px the segmented track, its items 8px / 12px cards, menus and the artifact panel (`--radius-xl`) / 16px the centered dialog (`--radius-2xl`) / 20px the composer / full (avatars).
-- **Borders are barely visible** — `--border` (`#dad9d4`) for hairlines, `--border-strong` on a hover. A control's edge is `--border-control` (`#7f7d75`), which clears 3:1. The content is the interface; frames don't compete with it.
+- **Borders are barely visible** — `--border` (`#dad9d4`) for hairlines, `--border-strong` on a hover. A control's edge is `--border-control` (`#7f7d75`), which clears 3:1; the composer rests on it too (D0.md §8.4). The content is the interface; frames don't compete with it.
 
 ### Shadows & elevation
 - Warm, subtle, never dramatic. Cards have none: a hairline only, and they do not lift on hover (38 `:hover` rules still declare a transform, 2026-11-09; see *Animation & motion*).
@@ -122,7 +122,8 @@ Per the `motion-discipline` skill: **200ms ease-out by default. No bounce. No sp
 - **Hover**: background shifts one stone step darker (`--canvas` → `--canvas-muted`), or ink lightens one step. Never opacity-based.
 - **Press** (buttons): no visible down-state beyond `:active` darker-bg. No scale.
 - **Focus**: a button takes a 2px `--accent-200` outline, offset 2px. A field shows **one** ring: its own `--border-focus` edge plus a 3px `--accent-000` halo, and the global outline steps aside. The composer shows its `--border-focus` edge alone. Never removed.
-- **Disabled**: a button at `opacity: .5` with `cursor: not-allowed`; a field at `.6`; the composer's send button at `.4`.
+- **Disabled**: a primary turns grey and stays opaque (`--bg-200` fill, `--text-400` ink; D0.md §8.2), so it is never read as the view's one orange action; any other button at `opacity: .5` with `cursor: not-allowed`; a field at `.6`; the composer's send button at `.4`.
+- **Touch**: on a coarse pointer, tabs, segmented items, the composer's send and a drawer's close reach 44px (D0.md §8.5).
 
 ### Iconography
 See **ICONOGRAPHY** section below.
