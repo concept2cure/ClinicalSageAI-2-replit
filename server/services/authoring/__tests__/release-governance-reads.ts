@@ -20,10 +20,17 @@
  *    receipt covering it is refused WORKFLOW_ORIGIN_UNVERIFIED, so a fake that
  *    answers with whatever row it returns for everything is refused. The
  *    answer here is: no build was imported into this document.
+ * 4. Must an independent check clear it? A document AnA drafted, or one
+ *    already checked, carries INDEPENDENT_CHECK_* rows in its trail, and a
+ *    release refuses INDEPENDENT_CHECK_REQUIRED unless the latest receipt is
+ *    current (workflow-import-governance.ts assertIndependentCheckRelease,
+ *    2026-11-06). A fake that answers the ledger read with a row of nothing is
+ *    refused. The answer here is: no AnA draft and no independent check, so
+ *    none is owed.
  *
- * The CSR case and the independence refusals have their own suites
- * (csr-scientific-release-order.test.ts, workflow-import-governance.pglite.test.ts,
- * authoring-approval-independence.test.ts).
+ * The CSR case, the independence refusals and the independent check have their
+ * own suites (csr-scientific-release-order.test.ts,
+ * workflow-import-governance.pglite.test.ts, authoring-approval-independence.test.ts).
  */
 export const DOC_ID = 'd0c0d0c0-0000-4000-8000-0000000000d1';
 export const AUTHOR_ID = '9';
@@ -37,5 +44,6 @@ export function releaseGovernanceRead(sql: unknown): Answer | null {
   if (/SELECT DISTINCT r\.created_by FROM doc_revisions/.test(s)) return { rowCount: 0, rows: [] };
   if (/SELECT actor_id, operation_type, metadata FROM authoring_audit_trail/.test(s)) return { rowCount: 0, rows: [] };
   if (/FROM authoring_audit_trail/.test(s) && /'csrBuildImport'/.test(s)) return { rowCount: 0, rows: [] };
+  if (/WITH trails AS \(SELECT \* FROM authoring_audit_trail/.test(s)) return { rowCount: 0, rows: [] };
   return null;
 }
