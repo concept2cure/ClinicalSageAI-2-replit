@@ -220,9 +220,12 @@ router.post('/validate', authenticateToken, async (req: Request, res: Response) 
 
 async function saveStatisticalWorkbenchDocument(req: Request, res: Response, document: GovernedStatisticalDocument,
   context: { orgId: number; userId: number }) {
-  const [{ pool }, { saveStatisticalDocumentToAuthoring }] = await Promise.all([
-    import('../db'), import('../services/ana-biostats/statistical-document-save'),
+  // The writer's transaction and its chained audit row run on the request's pinned,
+  // tenant-scoped connection, as mdx-qms's authoring context does (ci:requestdb-coverage, 2026-11-09).
+  const [{ requestConnectable }, { saveStatisticalDocumentToAuthoring }] = await Promise.all([
+    import('../db/requestDb'), import('../services/ana-biostats/statistical-document-save'),
   ]);
+  const pool = requestConnectable(req);
   const { orgId, userId } = context;
   const actorId = String(userId), email = typeof req.user?.email === 'string' ? req.user.email.toLowerCase() : null;
   const outcome = await saveStatisticalDocumentToAuthoring({ pool, tenantId: orgId, actor: { id: actorId, email },

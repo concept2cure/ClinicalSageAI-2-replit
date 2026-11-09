@@ -7,9 +7,12 @@
  * sent-package-archive.ts). This reads it under the project's own access,
  * verifies it against the digest the row records as sent, and records the
  * download before delivering it, as the acknowledgement is.
+ *
+ * The read runs on the request's pinned, tenant-scoped client (requestPgClient),
+ * not the shared pool: ci:requestdb-coverage, 2026-11-09.
  */
 import type { Request, Response } from 'express';
-import { pool } from '../db';
+import { requestPgClient } from '../db/requestDb';
 import { clientError, orgRequired, serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/export/governedExportConsequence';
@@ -31,7 +34,7 @@ export async function downloadSentPackage(req: Request, res: Response): Promise<
   if (userId === null) return clientError(res, 401, 'A signed-in actor is required.');
   if (transmittalId === null) return clientError(res, 422, 'A positive transmittal identifier is required.');
   try {
-    const kept = await readSentPackage(pool, { organizationId, userId, transmittalId });
+    const kept = await readSentPackage(requestPgClient(req), { organizationId, userId, transmittalId });
     await sendAuditedDownload(res, {
       organizationId,
       userId,

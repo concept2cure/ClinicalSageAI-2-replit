@@ -316,3 +316,59 @@ describe('every write needs a project the person can open, then its edit right',
     expect(h.ledger).toHaveLength(WRITES.length);
   });
 });
+
+/* F1 (the coordinating session, 2026-11-02): a submit names a FILED sequence as its evidence, by the one filed rule
+   (isFiledDispatchStatus, server/services/submission-service/filed-dispatch.ts: 'sent', 'acknowledged'). A sequence
+   frozen and dispatched but never received by the agency — its send pending, in flight or rejected, or never made —
+   is not a filing, and 'submitted' is a regulatory claim. */
+describe('a submit takes a sequence as evidence only once the agency has received it', () => {
+  const NOT_FILED = (n: string, status: string | null) =>
+    `Sequence ${n} has not been received by the agency (its send is ${status ?? 'not recorded'}), so it is not ` +
+    'evidence of a filing. A sequence is filed once its send is sent or acknowledged. Nothing was submitted.';
+  const CASES = [
+    { id: 31, number: '0001', dispatchStatus: 'pending' },
+    { id: 32, number: '0002', dispatchStatus: 'transmitting' },
+    { id: 33, number: '0003', dispatchStatus: 'rejected' },
+    { id: 34, number: '0004', dispatchStatus: null },
+  ];
+  const submitWith = (sequenceId: number) =>
+    request(app()).post('/api/c2c/documents/doc_file/submit').send({ reason: 'Filed in the sequence.', sequenceId });
+
+  beforeAll(async () => {
+    await h.pg.exec(`
+      CREATE TABLE IF NOT EXISTS ectd_sequences (id integer PRIMARY KEY, organization_id integer NOT NULL, status text,
+        dispatch_status text, sequence_number text, region text, deleted_at timestamptz);
+      INSERT INTO c2c_documents (id, org_id, project_id, doc_type, agency, rule_pack_version, title)
+        VALUES ('doc_file', 1, '${P_EDIT}', 'ind', 'fda', 'ich-m4-v2.0', 'IND to file');`);
+    for (const c of CASES) {
+      await h.pg.query(`INSERT INTO ectd_sequences VALUES ($1, 1, 'dispatched', $2, $3, 'us', NULL)`,
+        [c.id, c.dispatchStatus, c.number]);
+    }
+    await h.pg.query(`INSERT INTO ectd_sequences VALUES (35, 1, 'dispatched', 'acknowledged', '0005', 'us', NULL)`);
+    initialStatus = ((await documentState('doc_file'))[0] as { status: string }).status;
+  });
+  // Each case starts from the document as it was made, so no case reads another's outcome.
+  let initialStatus = '';
+  beforeEach(async () => {
+    await h.pg.query(`UPDATE c2c_documents SET status = $1, submitted_at = NULL WHERE id = 'doc_file'`, [initialStatus]);
+  });
+
+  for (const c of CASES) {
+    it(`refuses a dispatched sequence whose send is ${c.dispatchStatus ?? 'not recorded'}, and nothing changes`, async () => {
+      const before = await documentState('doc_file');
+      const res = await submitWith(c.id);
+      expect(res.status, JSON.stringify(res.body)).toBe(409);
+      expect(res.body).toMatchObject({ error: 'SEQUENCE_NOT_FILED', message: NOT_FILED(c.number, c.dispatchStatus) });
+      expect(await documentState('doc_file')).toEqual(before);
+      expect(h.ledger).toEqual([]);
+    });
+  }
+
+  it('takes a sequence the agency acknowledged, and records it as the filing', async () => {
+    const res = await submitWith(35);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body).toMatchObject({ status: 'submitted', filing: { sequence: { sequenceId: 35, dispatchStatus: 'acknowledged' } } });
+    expect(((await documentState('doc_file'))[0] as { status: string }).status).toBe('submitted');
+    expect(h.ledger).toEqual(['document:doc_file']);
+  });
+});
