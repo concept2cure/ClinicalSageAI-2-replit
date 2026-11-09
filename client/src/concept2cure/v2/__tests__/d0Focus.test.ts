@@ -138,8 +138,10 @@ describe('fix 7: a focused tab or segment shows its whole ring inside a scrollin
   const ITEMS = [TAB, SEG].flatMap((r) => (r ? subjects(r.selector) : []));
   const INSET = APP.filter((r) => decl(r.body, 'outline-offset') !== undefined && ITEMS.some((i) => subjects(r.selector).includes(`${i}:focus-visible`)));
 
-  it('reads the items from the tab and segmented primitives: the six the review names, all still in use', () => {
-    expect(ITEMS).toEqual(expect.arrayContaining(['.tab', '.reg-tab', '.sc-ws', '.cc-tab', '.seg-b', '.ml-seg-btn']));
+  // D7-A1 (2026-11-09) retired `.sc-ws`: Submission Center's tabs are `.tab` now, so five of the review's six remain.
+  it('reads the items from the tab and segmented primitives: the five of the review\'s six still in use', () => {
+    expect(ITEMS).toEqual(expect.arrayContaining(['.tab', '.reg-tab', '.cc-tab', '.seg-b', '.ml-seg-btn']));
+    expect(ITEMS).not.toContain('.sc-ws');
   });
 
   it.each(ITEMS)('%s:focus-visible draws the ring 2px inside its edge, where the scroller cannot clip it', (item) => {

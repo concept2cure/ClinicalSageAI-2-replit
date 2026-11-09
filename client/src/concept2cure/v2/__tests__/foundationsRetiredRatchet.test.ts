@@ -91,7 +91,7 @@ const RETIRED: Retired[] = [
   cls('reg-tabs', 11),
   cls('reg-tab', 13),
   cls('cm-subtab', 0),
-  cls('sc-ws', 1),
+  cls('sc-ws', 0), // D7-A1 (2026-11-09): Submission Center's workspace tabs are `.tabs`/`.tab`; the alias is gone.
   cls('cc-tab', 1),
   cls('pj-seg', 2),
   cls('ml-seg', 4),
