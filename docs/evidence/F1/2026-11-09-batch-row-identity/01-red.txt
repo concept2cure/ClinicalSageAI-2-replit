@@ -1,0 +1,10 @@
+ × client/src/concept2cure/v2/__tests__/cmcBatchRowIdentity.test.ts > a batch row carries the id the server gave it > keeps a uuid whole — the shape cmc_batch_records actually uses 10ms
+   → the uuid was coerced to a number: expected NaN to be 'a977568a-e924-48c9-95e9-4d5f7006503d' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/cmcBatchRowIdentity.test.ts > a batch row carries the id the server gave it > never produces NaN, which is what broke Release 4ms
+   → expected true to be false // Object.is equality
+ × client/src/concept2cure/v2/__tests__/cmcBatchRowIdentity.test.ts > a batch row carries the id the server gave it > gives each row a DISTINCT key, so React neither duplicates nor omits one 2ms
+   → two batches shared a React key: expected 1 to be 3 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/cmcBatchRowIdentity.test.ts > a batch row carries the id the server gave it > leaves dbId absent on a row the server has not given one, so the guard still fires 1ms
+   → expected NaN to be undefined
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 2 passed (6)
