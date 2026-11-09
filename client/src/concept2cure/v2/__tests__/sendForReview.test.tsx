@@ -209,16 +209,17 @@ describe('a current partial canvas preserves a sent review request', () => {
     expect(within(dialog).queryByTestId('sfr-result')).toBeNull();
   });
 
+  // D4-5b: the card became a chip; Send for review is opened from the open document's More menu (canvas open), and held there.
   it('blocks new confirmation and retains the actual pending review/task receipt', async () => {
     let release!: (response: Response) => void;
     const pending = new Promise<Response>(resolve => { release = resolve; });
     answerRequest = () => pending;
     const canvas = (refreshKey: number) => <DocumentCanvas docId={DOC} programId={PID} conversationId={null}
-      fromThisConversation={false} expanded={false} onExpandedChange={vi.fn()} onNav={vi.fn()} onAsk={vi.fn()}
+      fromThisConversation={false} expanded onExpandedChange={vi.fn()} onNav={vi.fn()} onAsk={vi.fn()}
       fireToast={vi.fn()} refreshKey={refreshKey} />;
     const view = render(canvas(0));
-    await screen.findByText('The product rationale.');
-    fireEvent.click(screen.getByTestId('dc-assign-review'));
+    await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('The product rationale.'));
+    fireEvent.click(openEditorControl('Send for review…'));
     const dialog = await screen.findByTestId('send-for-review-dialog');
     await within(dialog).findByTestId('sfr-reviewer-42');
     fill(dialog,['42']); fireEvent.click(within(dialog).getByTestId('sfr-submit'));

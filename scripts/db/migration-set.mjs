@@ -3801,6 +3801,10 @@ export const C2C_MIGRATION_FILES = [
   // dropped and created again by name). A future backfill of ectd_sequences
   // must carry WHERE deleted_at IS NULL: a removed row refuses every change.
   'migrations/20261109_ectd_sequence_removal_guard.sql',
+  // P-111 item 4 (founder, 2026-11-09): one level of subtasks in unified_tasks. A nullable integer
+  // parent_task_id with its FK, a not-self check (each added only when absent, by name) and an index. Additive,
+  // replay-safe, drops nothing; no new table, so the sweeps below have nothing new to policy.
+  'migrations/20261109_unified_tasks_parent_task.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

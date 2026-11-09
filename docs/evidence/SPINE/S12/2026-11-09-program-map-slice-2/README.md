@@ -129,3 +129,16 @@ A third list of a program's Vault documents is not to be added. A later picker r
 
   The walk's first run caught the picker widening the row by 418px at 390. It was sized by its longest option. The D3
   rule above fixes that, and the walk now checks there is no sideways scroll.
+
+## After the D0 §8.6 page frame (`35f5fb4747`, re-walked 2026-11-09)
+
+The coordinating session's one page frame changed the project page's width and padding: max 1120, padding 32/40.
+`walk.cjs` was run again unchanged, on trunk with the frame (`walk-after-frame.log`). All six steps pass:
+- a code from outside the program is refused (409);
+- the picker lists the program's families by title, code and version;
+- Assign files the chosen family;
+- the row reads it back;
+- at 390 dark the picker starts from the assigned family, with no sideways scroll.
+
+The screenshots and `walk.json` in this folder are now from this run. The family picker stays inside its row in the
+frame's right column at 1440 (`assigned-to-produce-1440-light.png`) and at 390 (`assigned-to-produce-390-dark.png`).

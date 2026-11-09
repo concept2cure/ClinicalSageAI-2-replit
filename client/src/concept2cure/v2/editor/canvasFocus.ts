@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent, type RefObject } from 'react';
 import { escapeBelongsToInner, outlineOverlays } from './DocumentWorkbench';
 
 /** The existing section-open nonce serves both a saved arrival and a clicked draft. */
@@ -51,11 +51,32 @@ export function useCanvasRegionFocus({ expanded, cardless, returnFocus, focusOnO
  * from the canvas's own bar is still the canvas's. D4-4: an outline floating over the page is closed first the same way.
  */
 function workbenchTakesEscape(region: HTMLElement | null, target: KeyboardEvent['target']): boolean {
+  /* The bar's own close (D4-5) sits inside the workbench, and an Escape from it is still the canvas's. */
+  if (target instanceof Element && target.closest('[data-host-close]')) return false;
   const within = (el: Element | null | undefined) =>
     !!el && (target === document.body || (target instanceof Node && el.contains(target)));
   if (within(region?.querySelector('.ed[data-rail]:not([data-rail="ana"])'))) return true;
   const ed = region?.querySelector('.ed');
   return !!ed && outlineOverlays(ed) && within(ed);
+}
+
+/**
+ * D4-5: until the record is read the canvas draws a placeholder bar, and the editor's one bar replaces it when it
+ * arrives. Focus on the placeholder's close moves to the editor's close instead of dropping to the page. Spread the
+ * returned handlers on the placeholder's close; `close` is the ref both closes share.
+ */
+export function useCloseFocusHandoff(arrived: boolean, close: RefObject<HTMLButtonElement | null>) {
+  const focused = useRef(false);
+  useLayoutEffect(() => {
+    if (!arrived || !focused.current) return;
+    focused.current = false;
+    const active = document.activeElement;
+    if (!active || active === document.body) close.current?.focus({ preventScroll: true });
+  }, [arrived, close]);
+  return {
+    onFocus: () => { focused.current = true; },
+    onBlur: (e: FocusEvent<HTMLButtonElement>) => { if (e.currentTarget.isConnected) focused.current = false; },
+  };
 }
 
 /** Keep the existing canvas Escape ownership beside its focus behavior. */

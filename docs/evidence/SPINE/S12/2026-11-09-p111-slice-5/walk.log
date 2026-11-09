@@ -1,0 +1,4 @@
+ok  a task is added in the work project
+ok  the subtask is filed with its parent and listed under it, one level only
+ok  a parent from another project is refused, nothing written
+ok  the same at 390 dark

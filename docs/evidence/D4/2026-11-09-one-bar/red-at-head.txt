@@ -1,0 +1,11 @@
+ × client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > one bar for the document in the conversation (D4-5) > the expanded document has one bar, which carries the way back, the status and "Open full width" 140ms
+   → expected null to be 'inline' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > one bar for the document in the conversation (D4-5) > the card no longer carries "Edit in the editor": "Open full width" is in the open document 17ms
+   → expected <button type="button" …(3)>…(1)</button> to be null
+ × client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the conversation beside an open document (D4-5) > keeps a 420 to 560 px column 9ms
+   → expected '0 0 clamp(340px, 34%, 520px)' to be '0 0 clamp(420px, 38%, 560px)' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected null to be 'inline' // Object.is equality
+AssertionError: expected <button type="button" …(3)>…(1)</button> to be null
+AssertionError: expected '0 0 clamp(340px, 34%, 520px)' to be '0 0 clamp(420px, 38%, 560px)' // Object.is equality
+      Tests  3 failed | 25 passed (28)

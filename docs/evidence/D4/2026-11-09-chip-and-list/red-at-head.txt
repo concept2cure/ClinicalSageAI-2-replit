@@ -1,0 +1,4 @@
+ × client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx > the document under the turn is a chip (D4-5b) > one row of icon, title, meta and Open, with the progress, the project and where it came from 89ms
+   → expected null not to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed | 13 skipped (15)

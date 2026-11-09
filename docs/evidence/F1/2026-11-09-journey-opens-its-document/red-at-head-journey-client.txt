@@ -1,0 +1,39 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > the stylesheet gate measures what it claims > flags the orphaned rules and the hover highlights it exists to catch
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > the stylesheet gate measures what it claims > does not flag a class the surface genuinely renders
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > states that it is read-only and names where the document is edited
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > carries none of the nine formatting controls
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > leaves no inert control anywhere in the preview
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > does not present the page as editable
+ ↓ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > DocJourney preview offers no control it cannot honour > the stylesheet matches — no orphaned toolbar rule, no hover highlight
+ × client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > The journey opens its own document in the editor > opens this document, in its project, not the editor list 227ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx > The journey opens its own document in the editor > opens this document, in its project, not the editor list
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Number of calls: 0
+
+ ❯ client/src/concept2cure/v2/__tests__/docJourneyPreviewIsHonest.test.tsx:269:29
+    267|     );
+    268|     (await screen.findByRole('button', { name: /Open in editor/ })).cl…
+    269|     expect(setEditorTarget).toHaveBeenCalledWith(expect.objectContaini…
+       |                             ^
+    270|       docType: null,
+    271|       docId: '3f2c1a10-0000-4000-8000-000000000055',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  14:51:44
+   Duration  1.53s (transform 546ms, setup 130ms, import 655ms, tests 231ms, environment 387ms)
+

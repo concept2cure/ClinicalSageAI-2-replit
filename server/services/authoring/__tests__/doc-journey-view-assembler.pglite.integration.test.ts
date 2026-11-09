@@ -33,7 +33,7 @@ const OTHER = 9;
 // Minimal DDL — only the columns the assembler reads (mirrors the authoring loop tables).
 const DDL = `
 CREATE TABLE users (id serial PRIMARY KEY, name text, email text);
-CREATE TABLE authoring_documents (id text PRIMARY KEY, title text, module text, product_code text, status text, version text, created_by text, created_at timestamptz, updated_at timestamptz, submitted_at timestamptz, approved_at timestamptz, frozen_at timestamptz, tenant_id int);
+CREATE TABLE authoring_documents (id text PRIMARY KEY, title text, module text, product_code text, status text, version text, created_by text, created_at timestamptz, updated_at timestamptz, submitted_at timestamptz, approved_at timestamptz, frozen_at timestamptz, tenant_id int, client_program_id text);
 CREATE TABLE authoring_sections (id text PRIMARY KEY, doc_id text, code text, title text, content text, order_index int, updated_at timestamptz, tenant_id int);
 CREATE TABLE doc_revisions (id text PRIMARY KEY, section_id text, content text, created_by text, created_at timestamptz, tenant_id int);
 CREATE TABLE authoring_comments (id text PRIMARY KEY, section_id text, doc_id text, body text, status text, created_by text, user_name text, user_email text, created_at timestamptz, resolved_at timestamptz, resolved_by text, tenant_id int);
@@ -68,12 +68,13 @@ async function doc(o: {
   id: string; org: number; title: string; status: string; createdBy: string;
   version?: string | null; module?: string | null; product?: string | null;
   createdAt: string; updatedAt?: string; submittedAt?: string | null; approvedAt?: string | null; frozenAt?: string | null;
+  program?: string | null;
 }): Promise<void> {
   await pglite.query(
-    `INSERT INTO authoring_documents (id, title, module, product_code, status, version, created_by, created_at, updated_at, submitted_at, approved_at, frozen_at, tenant_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+    `INSERT INTO authoring_documents (id, title, module, product_code, status, version, created_by, created_at, updated_at, submitted_at, approved_at, frozen_at, tenant_id, client_program_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
     [o.id, o.title, o.module ?? null, o.product ?? null, o.status, o.version ?? null, o.createdBy,
-     o.createdAt, o.updatedAt ?? o.createdAt, o.submittedAt ?? null, o.approvedAt ?? null, o.frozenAt ?? null, o.org],
+     o.createdAt, o.updatedAt ?? o.createdAt, o.submittedAt ?? null, o.approvedAt ?? null, o.frozenAt ?? null, o.org, o.program ?? null],
   );
 }
 async function section(id: string, docId: string, org: number, code: string, title: string, content: string, order: number, updatedAt: string): Promise<void> {
@@ -189,5 +190,22 @@ describe('assembleOrgDocJourney', () => {
     await doc({ id: 'new', org: ORG, title: 'Newer doc', status: 'draft', createdBy: '101', createdAt: daysAgo(10), updatedAt: daysAgo(1) });
     const stages = await assembleOrgDocJourney(ORG) as any[];
     expect((stages[0].snap.lines as [string, string][])).toContainEqual(['Document', 'Newer doc']);
+  });
+
+  /* The screen's "Open in editor" opened the editor's document list, not this document: no row named the document.
+     Each row now carries the document's id and its project, read from the same row, so the screen opens it. */
+  it('names the document and its project on every row, so the screen can open that document', async () => {
+    await user(101, 'Dana Okafor', 'dana@example.com');
+    await doc({ id: 'doc-1', org: ORG, title: 'Clinical overview', status: 'in_review', createdBy: '101', createdAt: daysAgo(10), submittedAt: daysAgo(2), program: '6f1c2a10-0000-4000-8000-000000000001' });
+    const stages = await assembleOrgDocJourney(ORG) as any[];
+    expect(stages.length).toBeGreaterThan(1);
+    for (const s of stages) expect(s.doc).toMatchObject({ id: 'doc-1', programId: '6f1c2a10-0000-4000-8000-000000000001' });
+  });
+
+  it('says a document filed under no project has none, rather than inventing one', async () => {
+    await user(101, 'Dana Okafor', 'dana@example.com');
+    await doc({ id: 'doc-2', org: ORG, title: 'Loose draft', status: 'draft', createdBy: '101', createdAt: daysAgo(3) });
+    const stages = await assembleOrgDocJourney(ORG) as any[];
+    expect(stages[0].doc).toMatchObject({ id: 'doc-2', programId: null });
   });
 });

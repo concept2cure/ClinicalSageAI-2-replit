@@ -1,0 +1,30 @@
+# The P-95 Q2 cases against HEAD 6556caae64's four sources:
+# artifact-approval-act.ts, routes/c2c/artifacts.ts, ana/document-spine.ts, ana-ri/command-executor.ts
+# npx vitest run server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts -t 'P-95 Q2'
+
+ × server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > P-95 Q2: placing a reviewed document voids its review, as an edit does; the signature binds the version at its new place 44ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a Module 3 section bridged from a compile > stores sha256 of its text, so the signed act approves it after two independent reviews (placed: P-95 Q2) 107ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > placed in a CTD section, one independent reviewer: refused 409 REVIEW_REQUIRED, naming the count, before the password 48ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > placed in Module 1 too (any module): one reviewer is refused, two are approved 50ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > not placed: one independent reviewer still approves 44ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > a section AnA writes to mean "none" (unassigned) is not a placement: one reviewer approves 39ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > a section AnA writes to mean "none" (ana-ri.risk_memo) is not a placement: one reviewer approves 38ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > type section, not placed: one reviewer is refused 34ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > review status says not ready, with the same sentence, while the floor is unmet; ready once it is met 17ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > moving the document through placement voids its review: the version moves on, and the approval is refused until it is reviewed again 30ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > moving it through the ctd-section route voids its review the same way 14ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > moving it through the editor's save (PUT …/artifacts/:id with ctdSection) voids its review 17ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > an edit and a move in one save, with decisions on the current version, move the version on once 17ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > a move with no review decisions, or to the same section, does not move the version on 22ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > moving an approved document (unplaced, one reviewer) into a filing: the approval no longer covers the version 40ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > AnA's placement writers use the same increment: a section change with a decision on the current version moves it on once; a locked document is not moved on 7ms
+ Test Files  2 failed (2)
+      Tests  10 failed | 6 passed | 76 skipped (92)
+
+# The spine's placement step (setPlacementTx) against HEAD's ana/document-spine.ts
+# npx vitest run server/services/ana/__tests__/document-spine.pglite.integration.test.ts -t 'P-95 Q2'
+
+ × server/services/ana/__tests__/document-spine.pglite.integration.test.ts > setPlacementTx: a move voids review, as an edit does (P-95 Q2) > a move with a decision on the current version moves the version on 2041ms
+ ✓ server/services/ana/__tests__/document-spine.pglite.integration.test.ts > setPlacementTx: a move voids review, as an edit does (P-95 Q2) > the same section, or decisions only on an earlier version, leave the version as it is 1512ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 4 skipped (6)

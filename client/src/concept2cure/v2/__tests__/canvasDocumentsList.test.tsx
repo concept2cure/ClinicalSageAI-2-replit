@@ -171,6 +171,10 @@ function CurrentList({ refreshKey = 0 }: { refreshKey?: number }) {
 const AUTHOR: AuthUser = { id:'15',organizationId:'15',organizationName:'Synthetic sponsor',firstName:'Test',lastName:'Owner',
   displayName:'Owner',email:'owner@example.invalid',roles:['member'],permissions:[],mfaEnabled:false,mfaMethods:[],mustChangePassword:false };
 
+/** D4-5: the canvas draws a placeholder bar until the record is read, and the editor's one bar then replaces it.
+ *  A person acts on the bar they see; the cases below wait for the editor's. */
+const editorBarReady = () => waitFor(() => expect(screen.getByTestId('dc-back').closest('.ed')).not.toBeNull());
+
 describe('the saved conversation list belongs to the current session and read', () => {
   it('rejects an old same-URL deferred body after the canonical session is replaced', async () => {
     authService.setToken('synthetic-owner-before',AUTHOR,'synthetic-refresh-before');
@@ -275,6 +279,7 @@ describe('The canvas lists the documents this conversation built, from the serve
   it('an open document reaches the list from its bar, "← Documents (2)", and focus lands on the list', async () => {
     render(<ConversationThread {...OWNED_PROPS} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Open Clinical Overview' }));
+    await editorBarReady();
     const back = await screen.findByTestId('dc-documents');
     expect(back.textContent).toContain('Documents (2)');
     fireEvent.click(back);
@@ -287,6 +292,9 @@ describe('The canvas lists the documents this conversation built, from the serve
   it('closing a document the list opened hands focus back to its row', async () => {
     render(<ConversationThread {...OWNED_PROPS} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Open Clinical Overview' }));
+    await editorBarReady();
+    // D4-5: focus on the way back survives the editor's bar replacing the placeholder bar.
+    expect(document.activeElement).toBe(screen.getByTestId('dc-back'));
     fireEvent.click(await screen.findByTestId('dc-back'));
     await screen.findByTestId('ct-documents');
     await waitFor(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Open Clinical Overview'));
@@ -434,7 +442,7 @@ describe('At 1100px and narrower, closing a document the list opened shows the c
   it('"Back to conversation" shows the conversation, and focus goes to the header\'s Documents', async () => {
     const { container } = await openFromListNarrow();
     const back = await screen.findByTestId('dc-back');
-    expect(back.textContent).toContain('Back to conversation');
+    expect(back.getAttribute('aria-label')).toBe('Back to conversation');
     fireEvent.click(back);
     await waitFor(() => expect(pane().getAttribute('data-state')).toBe('closed'));
     // `.ct-main[data-canvas-open] > .ct-conv { display: none }` at this width (authoring-v2.css).
@@ -469,6 +477,7 @@ describe('At 1100px and narrower, closing a document the list opened shows the c
   it('beside the conversation (wider than 1100px), closing it still hands focus back to its row in the list', async () => {
     const { container } = render(<ConversationThread {...OWNED_PROPS} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Open Clinical Overview' }));
+    await editorBarReady();
     fireEvent.click(await screen.findByTestId('dc-back'));
     await screen.findByTestId('ct-documents');
     expect(main(container).getAttribute('data-canvas-open')).toBe('true');
@@ -524,6 +533,7 @@ describe('The count beside "Documents" is of the list it opens', () => {
     await waitFor(() => expect(rows()).toHaveLength(3));
     expect(screen.getByTestId('ct-documents-toggle').textContent).toContain('Documents (3)');
     fireEvent.click(screen.getByRole('button', { name: 'Open Quality Overall Summary' }));
+    await editorBarReady();
     const back = await screen.findByTestId('dc-documents');
     expect(back.textContent).toContain('Documents (3)');
     fireEvent.click(back);

@@ -1,0 +1,11 @@
+# eslint: warnings at HEAD 6556caae64 -> with this change (errors in brackets)
+server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts: 1 -> 1 [0 -> 0]
+server/routes/c2c/artifacts.ts: 23 -> 23 [0 -> 0]
+server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts: 0 -> 0 [0 -> 0]
+server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts: 0 -> 0 [0 -> 0]
+server/services/ana-ri/command-executor.ts: 17 -> 17 [0 -> 0]
+server/services/ana/__tests__/document-spine.pglite.integration.test.ts: 0 -> 0 [0 -> 0]
+server/services/ana/document-spine.ts: 3 -> 3 [0 -> 0]
+server/services/artifact-approval-act.ts: 0 -> 0 [0 -> 0]
+tests/artifact-status-lock-covers-approval.test.ts: 0 -> 0 [0 -> 0]
+server/services/ana-ri/__tests__/ana-governed-command-signature.fixture.ts (split out, new): 0 [0]

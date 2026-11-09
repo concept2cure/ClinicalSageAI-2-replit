@@ -1,0 +1,1015 @@
+
+> concept2cure-riai@1.0.0 test:db
+> vitest run --config vitest.db.config.ts tests/db/request-parent-boundary.dbtest.ts tests/db/review-route-vault-rr2.dbtest.ts tests/db/review-route-vault-rr3.dbtest.ts tests/db/task-assignment-delegation.dbtest.ts tests/db/task-board-every-store.dbtest.ts tests/db/task-filing-home.dbtest.ts tests/db/work-projects.dbtest.ts tests/db/workflow-project-admission.dbtest.ts tests/db/task-link-completion-lock-order.dbtest.ts tests/db/tenant-purge-blocking-keys.dbtest.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > stores each step with its own due date; only the first step is open, and only it is told
+ ↓ tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > a later step is waiting: it cannot sign, is not overdue in Tasks, and the due sweep leaves it alone
+ ↓ tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > opens each step when the one before signs, telling only that step; the review completes on the last
+ ↓ tests/db/review-route-vault-rr2.dbtest.ts > reviewers one after another (RR2, §3, §2.11) > refuses a sequential route whose steps lack dates, whose dates run backwards, or whose approval is due before the last step, with nothing written
+ ↓ tests/db/review-route-vault-rr2.dbtest.ts > more than one approver (RR2, NEW-4: every named approver) > an earlier approver leaves the version in review; /advance→approved is refused; the last approves and supersedes
+ ↓ tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > blocks the approvers again and tells them; the new reviewer signs, then the approver approves
+ ↓ tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > on a sequential route the new reviewer is the next step, and the approvers move after it
+ ↓ tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > is refused, with nothing written: no reason, neither sender nor admin, someone named, an author, another organization, a date after the approval, and once an approval is signed
+ ↓ tests/db/review-route-vault-rr2.dbtest.ts > adding a reviewer to an open route (RR2, §2.10) > the add picker's read is the reassignment's: the sender, the reader and everyone named are refused
+ ↓ tests/db/review-route-vault-rr2.dbtest.ts > an earlier Vault approval is its own record (RR2 records, Part 11 §11.50) > is its own signature type carrying k of n, and the audit trail never reads it as the approval
+ ↓ tests/db/review-route-vault-rr2.dbtest.ts > the version’s sign-off lines name every signer on a routed version (RR2 records, §2.12) > two reviewers and two approvers: each line names everyone who signed, with printed name and UTC time
+ ↓ tests/db/review-route-vault-rr2.dbtest.ts > the version’s sign-off lines name every signer on a routed version (RR2 records, §2.12) > a reviewer added after the review was signed off is on the line too; review_signature is not rewritten
+{"level":30,"time":"2026-11-09T13:08:47.992Z","pid":7115,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-09T13:08:47.993Z","pid":7115,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T13:08:47.993Z","pid":7115,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-11-09T13:08:49.049Z","pid":7128,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-09T13:08:49.050Z","pid":7128,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T13:08:49.050Z","pid":7128,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/workflow-project-admission.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/workflow-project-admission.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > current workflow project admission counterexamples > refuses the same-organization private project outsider without any workflow write 70ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > current workflow project admission counterexamples > records the actual project workspace on every created workflow task 67ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary task project admission counterexamples > refuses an explicit private project the ordinary task creator cannot edit 45ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary task project admission counterexamples > persists the explicit project actual workspace on an ordinary task 44ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary task project admission counterexamples > refuses stale claimed write permission on an unfiled ordinary task 34ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified task project admission counterexamples > refuses the unified creator outside the private explicit project 37ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified task project admission counterexamples > saves the admitted project actual workspace when the body omits it 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified task project admission counterexamples > rejects the actual viewer despite claimed write permission on unfiled work 34ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified task project admission counterexamples > rejects an explicitly supplied foreign workspace for unfiled work 34ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project null 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project 0 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project -1 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project 1.5 28ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project "11" 30ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project "11x" 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project true 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project undefined 24ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project {} 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project 2147483648 27ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects foreign or missing unified project 13 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects foreign or missing unified project 999999 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects the actual archived unified parent 34ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects the actual deleted unified parent 31ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rechecks actual membership for unified unfiled work 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rechecks actual user for unified unfiled work 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rechecks actual organization for unified unfiled work 30ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > does not promote a project use share into unified create authority 40ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > refuses an actually inactive unified edit share 44ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > admits the actual active project editor 37ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > refuses mismatched body workspace on a project 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > refuses mismatched request workspace on a project 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > refuses an explicit workspace on an actual null-workspace parent 35ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > keeps an actual null project workspace null 46ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > refuses a parent whose actual workspace is foreign 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > refuses a parent whose recorded workspace is missing 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > accepts a supplied actual project workspace without a request claim 43ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > does not invent unfiled scope from request claim 71 alone 34ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > does not invent unfiled scope from request claim 81 alone 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > does not invent unfiled scope from request claim "malformed" alone 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > retains an admitted workspace-only task with request claim 71 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > retains an admitted workspace-only task with request claim null 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > retains an admitted workspace-only task with request claim "71" 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > refuses a missing explicit unfiled workspace 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > refuses a request claim that redirects explicit workspace-only work 37ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope null 26ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope 0 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope -1 27ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope 1.5 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope "71" 30ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope "71x" 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope true 24ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope undefined 23ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope {} 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope 2147483648 31ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > sanitizes a real workspace read failure and creates nothing 43ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > keeps unfiled authoring_document metadata without deriving a project 43ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > keeps unfiled canonical_document metadata without deriving a project 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > keeps explicit unified scope independent of source metadata 35ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves CMC module defaults 36ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves IND module defaults 41ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves MedicalDevice module defaults 47ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves eCTD module defaults 46ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves Vault module defaults 43ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves ProtocolDesign module defaults 35ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves unified fields and atomic lineage through /api/regulatory/tasks 42ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves unified fields and atomic lineage through /api/unified-tasks 36ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > refuses unified RR1 input reviewRouteId before writes 27ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > refuses unified RR1 input reviewRole before writes 27ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > refuses unified RR1 input reviewStep before writes 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > refuses unified RR1 input routeSignatureId before writes 22ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > refuses unified RR1 input routeActId before writes 22ms
+stderr | tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > rolls back actual unified task/action when its audit insert fails
+{
+  "timestamp": "2026-11-09T13:08:52.538Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "b6139b7e-23cd-4286-8601-fc06c04b2c0e",
+    "err": "Failed query: INSERT INTO audit_logs\n       (id, tenant_id, user_id, action, table_name, record_id,\n        actor_id, target, target_type, target_id, reason, payload_hash,\n        ana_action_id, sha256_chain, occurred_at, hmac_seal)\n     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\nparams: 7055328b-d3a6-4197-be41-0053b53d5162,9,7,c2c.work.task.create,task,b6139b7e-23cd-4286-8601-fc06c04b2c0e,7,task:b6139b7e-23cd-4286-8601-fc06c04b2c0e,task,b6139b7e-23cd-4286-8601-fc06c04b2c0e,,126a7b87561db4121eff1ee75a34fe36c2f443713c3185dd668550e24cdb53cc,act_5a93cc5d1bdf49afb2d90721c7b929ff,f36f2f7a5f7a72a8d8a4826b2946f291d146b2ed8f2fed14770d9ccd05d6ed0f,2026-11-09T13:08:52.535Z,7f77a70467596b8b3027723e1f8766e4c4472ad3b4512fed53cf8de6315fadcb"
+  }
+}
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > refuses unified RR1 input routeAuthoringSignatureId before writes 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > rolls back actual unified task/action when its audit insert fails 55ms
+{"level":50,"time":"2026-11-09T13:08:52.593Z","pid":7128,"hostname":"vm","context":{"err":"Failed query: commit\nparams: "},"msg":"[unified-tasks] creating the task: COMMIT lost, outcome unknown"}
+stderr | tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project null
+Error creating task: ZodError: [
+  {
+    "expected": "number",
+    "code": "invalid_type",
+    "path": [
+      "projectId"
+    ],
+    "message": "Invalid input: expected number, received null"
+  }
+]
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:257:44
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/home/user/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > reports a committed but lost unified COMMIT and discards the uncertain request lease 52ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project null 34ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project 0 24ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project -1 25ms
+stderr | tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project "11"
+Error creating task: ZodError: [
+  {
+    "expected": "number",
+    "code": "invalid_type",
+    "path": [
+      "projectId"
+    ],
+    "message": "Invalid input: expected number, received string"
+  }
+]
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:257:44
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/home/user/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+stderr | tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project "11x"
+Error creating task: ZodError: [
+  {
+    "expected": "number",
+    "code": "invalid_type",
+    "path": [
+      "projectId"
+    ],
+    "message": "Invalid input: expected number, received string"
+  }
+]
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:257:44
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/home/user/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+stderr | tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project true
+Error creating task: ZodError: [
+  {
+    "expected": "number",
+    "code": "invalid_type",
+    "path": [
+      "projectId"
+    ],
+    "message": "Invalid input: expected number, received boolean"
+  }
+]
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:257:44
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/home/user/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project 1.5 23ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project "11" 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project "11x" 28ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project true 25ms
+stderr | tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project undefined
+Error creating task: ZodError: [
+  {
+    "expected": "number",
+    "code": "invalid_type",
+    "path": [
+      "projectId"
+    ],
+    "message": "Invalid input: expected number, received array"
+  }
+]
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:257:44
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/home/user/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+stderr | tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project {}
+Error creating task: ZodError: [
+  {
+    "expected": "number",
+    "code": "invalid_type",
+    "path": [
+      "projectId"
+    ],
+    "message": "Invalid input: expected number, received object"
+  }
+]
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:257:44
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/home/user/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project undefined 26ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project {} 24ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project 2147483648 23ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses foreign or missing ordinary parent 13 37ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses foreign or missing ordinary parent 999999 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses the actual archived ordinary parent 31ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses the actual deleted ordinary parent 33ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > does not turn a use share into ordinary create permission 33ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > rejects the current revoked edit share 31ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > rejects a different workspace claim on an ordinary task 30ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > rejects a workspace claim on a parent with actual null workspace 28ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > rechecks actual membership for unfiled work 28ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > rechecks actual user for unfiled work 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > rechecks actual organization for unfiled work 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > admits and stamps the actual authoring_document source project 41ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > admits and stamps the actual canonical_document source project 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > refuses a private authoring_document source project before writes 35ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > refuses a private canonical_document source project before writes 40ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > keeps valid unfiled intake {} without inventing workspace 36ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > keeps valid unfiled intake {"sourceEntityType":"unknown_kind","sourceEntityId":"11111111-1111-4111-8111-111111111111"} without inventing workspace 34ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > keeps valid unfiled intake {"sourceEntityType":"authoring_document","sourceEntityId":"33333333-3333-4333-8333-333333333333"} without inventing workspace 33ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > preserves explicit project precedence over source metadata 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > refuses ordinary protected input reviewRouteId before writes 35ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > refuses ordinary protected input reviewRole before writes 27ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > refuses ordinary protected input reviewStep before writes 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > refuses ordinary protected input routeSignatureId before writes 24ms
+stderr | tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > rolls back the task and action when actual audit persistence fails
+{
+  "timestamp": "2026-11-09T13:08:53.696Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "TASK-1794229733683-177c9fae",
+    "err": "Failed query: INSERT INTO audit_logs\n       (id, tenant_id, user_id, action, table_name, record_id,\n        actor_id, target, target_type, target_id, reason, payload_hash,\n        ana_action_id, sha256_chain, occurred_at, hmac_seal)\n     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\nparams: 27463a00-666e-4bac-a791-5c05254c0458,9,7,c2c.work.task.create,task,TASK-1794229733683-177c9fae,7,task:TASK-1794229733683-177c9fae,task,TASK-1794229733683-177c9fae,,a83018171cb736776f4167c2d32cadeafaebf75868cb501b589f1963717da41a,act_ed8ab8b97d494b559e5bb83ea88244e7,9f25a1cacba621c7c130e658ef448007664eca94f1d4546ec920498491295957,2026-11-09T13:08:53.694Z,36adbea0586630aaf156a70af1b2517940ed2f3b89c93f8483aa516c0393fa86"
+  }
+}
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > refuses ordinary protected input routeActId before writes 24ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > refuses ordinary protected input routeAuthoringSignatureId before writes 26ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > rolls back the task and action when actual audit persistence fails 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > notifies another named assignee only after confirmed COMMIT 35ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > discards an actually committed lost acknowledgement and sends no success notice 36ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > keeps ordinary metadata, provenance and atomic lineage through /api/task-management 44ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > keeps ordinary metadata, provenance and atomic lineage through /api/tasks 45ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project undefined without writes 31ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project null without writes 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project 0 without writes 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project -1 without writes 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project 1.5 without writes 34ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project "11" without writes 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project "11x" without writes 30ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project true without writes 33ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project undefined without writes 30ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project {} without writes 27ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project 2147483648 without writes 33ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses foreign or missing project 13 31ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses foreign or missing project 999999 36ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses the actual archived parent 33ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses the actual deleted parent 35ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > does not trust a claimed administrator whose actual organization role is viewer 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > does not trust a removed organization member 35ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses the actual inactive actor even with a claimed administrator role 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses an inactive organization 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses a project use/read share as task-create authority 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses an inactive edit share 36ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > uses the actual current edit share, recording its real creator and parent 44ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > keeps the existing authenticated viewer role gate 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim 72 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim "71x" 35ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim 0 34ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim -1 33ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim 1.5 50ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim true 33ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim {} 35ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim 2147483648 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > records actual workspace with an absent or normalized claim null 45ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > records actual workspace with an absent or normalized claim "71" 44ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > keeps an actually unfiled project workspace null 46ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses an explicit client claim on a project with no workspace 40ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses a project whose actual workspace belongs to another organization 40ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses a project whose recorded workspace is missing 34ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > does not let body client, organization or creator values redirect admitted tasks 45ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > keeps the existing legacy envelope and atomic lineage through /api/task-management 48ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > keeps the existing legacy envelope and atomic lineage through /api/tasks 47ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > still refuses protected request column reviewRouteId before project or workflow writes 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > still refuses protected request column reviewRole before project or workflow writes 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > still refuses protected request column reviewStep before project or workflow writes 28ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > still refuses protected request column routeSignatureId before project or workflow writes 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > still refuses protected request column routeActId before project or workflow writes 24ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > still refuses protected request column routeAuthoringSignatureId before project or workflow writes 23ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > still refuses a stored task definition naming a protected review column 27ms
+stderr | tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual unified_tasks persistence fails
+Error creating tasks from template: DrizzleQueryError: Failed query: insert into "unified_tasks" ("id", "task_id", "organization_id", "client_workspace_id", "project_id", "parent_task_id", "module_type", "module_icon", "module_color", "source_entity_id", "source_entity_type", "title", "description", "category", "task_type", "assignee_id", "assignee_name", "assigned_by", "assigned_at", "team_id", "status", "priority", "progress", "completion_percentage", "start_date", "due_date", "completed_at", "estimated_hours", "actual_hours", "linked_tasks", "dependencies", "blocked_by", "blocks", "module_source", "module_data", "cross_module_links", "automation_rules", "escalation_path", "approval_required", "approvers", "approval_status", "approval_history", "impact_score", "risk_level", "critical_path", "regulatory_impact", "notification_settings", "automation_enabled", "ai_suggestions", "tags", "attachments", "comments", "metadata", "lifecycle_phase", "market", "filing_type", "study_id", "deliverable_id", "client_visibility", "created_by_id", "last_modified_by", "created_at", "updated_at", "deleted_at", "deleted_by", "review_route_id", "review_role", "review_step", "route_signature_id", "route_act_id", "route_authoring_signature_id") values (default, $1, $2, $3, $4, default, $5, default, default, $6, $7, $8, default, default, default, default, default, default, default, default, $9, $10, $11, $12, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, $13, default, default, default, default, default, default, default, default, default, default, default) returning "id", "task_id", "organization_id", "client_workspace_id", "project_id", "parent_task_id", "module_type", "module_icon", "module_color", "source_entity_id", "source_entity_type", "title", "description", "category", "task_type", "assignee_id", "assignee_name", "assigned_by", "assigned_at", "team_id", "status", "priority", "progress", "completion_percentage", "start_date", "due_date", "completed_at", "estimated_hours", "actual_hours", "linked_tasks", "dependencies", "blocked_by", "blocks", "module_source", "module_data", "cross_module_links", "automation_rules", "escalation_path", "approval_required", "approvers", "approval_status", "approval_history", "impact_score", "risk_level", "critical_path", "regulatory_impact", "notification_settings", "automation_enabled", "ai_suggestions", "tags", "attachments", "comments", "metadata", "lifecycle_phase", "market", "filing_type", "study_id", "deliverable_id", "client_visibility", "created_by_id", "last_modified_by", "created_at", "updated_at", "deleted_at", "deleted_by", "review_route_id", "review_role", "review_step", "route_signature_id", "route_act_id", "route_authoring_signature_id"
+params: TASK-1794229735475-c986cc77,9,71,11,general,NATIVE-PROJECT-WORKFLOW,taskTemplate,Record the conclusion,pending,medium,0,0,7
+    at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:117:22
+    ... 2 lines matching cause stack trace ...
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:898:26 {
+  query: 'insert into "unified_tasks" ("id", "task_id", "organization_id", "client_workspace_id", "project_id", "parent_task_id", "module_type", "module_icon", "module_color", "source_entity_id", "source_entity_type", "title", "description", "category", "task_type", "assignee_id", "assignee_name", "assigned_by", "assigned_at", "team_id", "status", "priority", "progress", "completion_percentage", "start_date", "due_date", "completed_at", "estimated_hours", "actual_hours", "linked_tasks", "dependencies", "blocked_by", "blocks", "module_source", "module_data", "cross_module_links", "automation_rules", "escalation_path", "approval_required", "approvers", "approval_status", "approval_history", "impact_score", "risk_level", "critical_path", "regulatory_impact", "notification_settings", "automation_enabled", "ai_suggestions", "tags", "attachments", "comments", "metadata", "lifecycle_phase", "market", "filing_type", "study_id", "deliverable_id", "client_visibility", "created_by_id", "last_modified_by", "created_at", "updated_at", "deleted_at", "deleted_by", "review_route_id", "review_role", "review_step", "route_signature_id", "route_act_id", "route_authoring_signature_id") values (default, $1, $2, $3, $4, default, $5, default, default, $6, $7, $8, default, default, default, default, default, default, default, default, $9, $10, $11, $12, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, $13, default, default, default, default, default, default, default, default, default, default, default) returning "id", "task_id", "organization_id", "client_workspace_id", "project_id", "parent_task_id", "module_type", "module_icon", "module_color", "source_entity_id", "source_entity_type", "title", "description", "category", "task_type", "assignee_id", "assignee_name", "assigned_by", "assigned_at", "team_id", "status", "priority", "progress", "completion_percentage", "start_date", "due_date", "completed_at", "estimated_hours", "actual_hours", "linked_tasks", "dependencies", "blocked_by", "blocks", "module_source", "module_data", "cross_module_links", "automation_rules", "escalation_path", "approval_required", "approvers", "approval_status", "approval_history", "impact_score", "risk_level", "critical_path", "regulatory_impact", "notification_settings", "automation_enabled", "ai_suggestions", "tags", "attachments", "comments", "metadata", "lifecycle_phase", "market", "filing_type", "study_id", "deliverable_id", "client_visibility", "created_by_id", "last_modified_by", "created_at", "updated_at", "deleted_at", "deleted_by", "review_route_id", "review_role", "review_step", "route_signature_id", "route_act_id", "route_authoring_signature_id"',
+  params: [
+    'TASK-1794229735475-c986cc77',
+    9,
+    71,
+    11,
+    'general',
+    'NATIVE-PROJECT-WORKFLOW',
+    'taskTemplate',
+    'Record the conclusion',
+    'pending',
+    'medium',
+    0,
+    0,
+    7
+  ],
+  cause: error: new row for relation "unified_tasks" violates check constraint "native_workflow_failure"
+      at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+      at processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at Object.query (/home/user/ClinicalSageAI-2-replit/tests/db/workflow-project-native-fixture.ts:87:26)
+      at file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:124:18
+      at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:39:16)
+      at file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:117:22
+      at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:935:27
+      at NodePgSession.transaction (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:186:22)
+      at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:898:26 {
+    length: 218,
+    severity: 'ERROR',
+    code: '23514',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'dbwfproject_7128_mw9a1z47',
+    table: 'unified_tasks',
+    column: undefined,
+    dataType: undefined,
+    constraint: 'native_workflow_failure',
+    file: 'execMain.c',
+    line: '2109',
+    routine: 'ExecConstraints'
+  }
+}
+
+stderr | tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual task_dependencies persistence fails
+Error creating tasks from template: DrizzleQueryError: Failed query: insert into "task_dependencies" ("id", "dependency_id", "organization_id", "predecessor_task_id", "successor_task_id", "dependency_type", "lag_time", "status", "is_critical", "is_blocking", "impact_score", "risk_level", "cascade_effect", "validation_rules", "violation_reason", "bypass_reason", "bypassed_by", "bypassed_at", "metadata", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, $7, default, default, default, default, default, default, default, default, default, default, default, default, default)
+params: DEP-1794229735523-5b5d9862,9,TASK-1794229735517-0b6bcc49,TASK-1794229735521-51f011ce,finish-to-start,0,active
+    at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:988:13
+    at NodePgSession.transaction (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:186:22)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:898:26 {
+  query: 'insert into "task_dependencies" ("id", "dependency_id", "organization_id", "predecessor_task_id", "successor_task_id", "dependency_type", "lag_time", "status", "is_critical", "is_blocking", "impact_score", "risk_level", "cascade_effect", "validation_rules", "violation_reason", "bypass_reason", "bypassed_by", "bypassed_at", "metadata", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, $7, default, default, default, default, default, default, default, default, default, default, default, default, default)',
+  params: [
+    'DEP-1794229735523-5b5d9862',
+    9,
+    'TASK-1794229735517-0b6bcc49',
+    'TASK-1794229735521-51f011ce',
+    'finish-to-start',
+    0,
+    'active'
+  ],
+  cause: error: new row for relation "task_dependencies" violates check constraint "native_workflow_failure"
+      at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+      at processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at Object.query (/home/user/ClinicalSageAI-2-replit/tests/db/workflow-project-native-fixture.ts:87:26)
+      at file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:113:20
+      at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:39:16)
+      at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:988:13
+      at NodePgSession.transaction (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:186:22)
+      at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:898:26 {
+    length: 226,
+    severity: 'ERROR',
+    code: '23514',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'dbwfproject_7128_mw9a1z47',
+    table: 'task_dependencies',
+    column: undefined,
+    dataType: undefined,
+    constraint: 'native_workflow_failure',
+    file: 'execMain.c',
+    line: '2109',
+    routine: 'ExecConstraints'
+  }
+}
+
+stderr | tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual c2c_ana_actions persistence fails
+{
+  "timestamp": "2026-11-09T13:08:55.565Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "TASK-1794229735561-b589e336",
+    "err": "Failed query: INSERT INTO c2c_ana_actions\n       (id, org_id, domain, surface, command, target, risk, payload,\n        agentic_mode, state, proposed_at, proposed_by,\n        decided_at, decided_by, decision_reason,\n        executed_at, audit_row_id, idempotency_key)\n     VALUES ($1, $2, $3, $4, $5, $6, $7, $8,\n             $9, $10, $11, $12,\n             $13, $14, $15,\n             $16, $17, $18)\nparams: act_056f48bc2f4a432b9033324abde2c3ee,9,tasking,tasking-api,task.create,task:TASK-1794229735561-b589e336,low,{\"moduleType\":\"general\",\"title\":\"Review source data\",\"priority\":\"medium\",\"status\":\"pending\",\"templateId\":\"NATIVE-PROJECT-WORKFLOW\",\"summary\":\"Created from workflow template \\\"Native project workflow\\\"\"},suggest,executed,2026-11-09T13:08:55.562Z,7,2026-11-09T13:08:55.562Z,7,,2026-11-09T13:08:55.562Z,bf99dfbb-a747-4c91-bfc7-63692d96845c,"
+  }
+}
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual unified_tasks persistence fails 46ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual task_dependencies persistence fails 45ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual c2c_ana_actions persistence fails 39ms
+stderr | tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual task_templates persistence fails
+Error creating tasks from template: DrizzleQueryError: Failed query: update "task_templates" set "usage_count" = "task_templates"."usage_count" + 1, "last_used_at" = $1, "updated_at" = $2 where ("task_templates"."template_id" = $3 and "task_templates"."organization_id" = $4)
+params: 2026-11-09T13:08:55.598Z,2026-11-09T13:08:55.598Z,NATIVE-PROJECT-WORKFLOW,9
+    at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:905:9
+    at NodePgSession.transaction (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:186:22)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:898:26 {
+  query: 'update "task_templates" set "usage_count" = "task_templates"."usage_count" + 1, "last_used_at" = $1, "updated_at" = $2 where ("task_templates"."template_id" = $3 and "task_templates"."organization_id" = $4)',
+  params: [
+    '2026-11-09T13:08:55.598Z',
+    '2026-11-09T13:08:55.598Z',
+    'NATIVE-PROJECT-WORKFLOW',
+    9
+  ],
+  cause: error: new row for relation "task_templates" violates check constraint "native_workflow_failure"
+      at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+      at processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at Object.query (/home/user/ClinicalSageAI-2-replit/tests/db/workflow-project-native-fixture.ts:87:26)
+      at file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:113:20
+      at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:39:16)
+      at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:905:9
+      at NodePgSession.transaction (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:186:22)
+      at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:898:26 {
+    length: 220,
+    severity: 'ERROR',
+    code: '23514',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'dbwfproject_7128_mw9a1z47',
+    table: 'task_templates',
+    column: undefined,
+    dataType: undefined,
+    constraint: 'native_workflow_failure',
+    file: 'execMain.c',
+    line: '2109',
+    routine: 'ExecConstraints'
+  }
+}
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual task_templates persistence fails 35ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > reports an actually committed lost acknowledgement as unknown and discards its request connection 55ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > keeps built-in template creation on the admitted parent without inventing stored usage 61ms
+ × tests/db/workflow-project-admission.dbtest.ts > workflow admission retains current project permissions > rechecks the edit membership after a real parent-lock wait instead of retaining an earlier grant 5060ms
+   → expected false to be true // Object.is equality
+stderr | tests/db/workflow-project-admission.dbtest.ts
+[dbsched] runtime role left behind: permission denied to reassign objects
+
+ × tests/db/workflow-project-admission.dbtest.ts > workflow admission retains current project permissions > retains actual edit membership until its workflow transaction commits, before a waiting revocation 5054ms
+   → expected false to be true // Object.is equality
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > keeps the task id, role and step, clears the reminder markers, and records task.assign and review-route.reassign with both names
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > tells the new member and the old one; the task leaves the old tray and enters the new one; the new member signs, the old one cannot
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > reassign an unsigned member (RR3, §2.10, B11, M3) > an administrator who did not send it reassigns the waiting approver, who then approves once the review is complete
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > the reassign picker's read: whom the reassignment would admit (RR3, §2.5) > an administrator's read refuses the route's sender, the reader, and everyone already named; another member is offered
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > without a reason (REASON_REQUIRED)
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > by someone who is neither the sender nor an administrator
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > for a member who has signed
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > for a task that is not on this route
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > the reassigning actor naming themselves
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > an author of the version
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > a reviewer of this content named as the approver
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > someone already named on this route
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > another organization's account
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > from another organization: the version is not found
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > reassign is refused, with nothing written (RR3, §2.5, §2.10, B9, M2) > once the route was returned: a returner, and every member, is no longer reassigned
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > needs a reason, notifies the sender, leaves the member named and unable to sign; the sender reassigns and the new member signs
+ ↓ tests/db/review-route-vault-rr3.dbtest.ts > hand back: a member returns their own assignment to the sender (RR3, §2.10, M6) > is refused for someone not named, for a member who signed, and from another organization
+{"level":30,"time":"2026-11-09T13:09:09.085Z","pid":7152,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-09T13:09:09.086Z","pid":7152,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T13:09:09.086Z","pid":7152,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-11-09T13:09:09.992Z","pid":7164,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+stderr | tests/db/tenant-purge-blocking-keys.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-11-09T13:09:09.993Z","pid":7164,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T13:09:09.993Z","pid":7164,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ↓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > has that row, and so does the other tenant: every such table is seeded for both
+ ↓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is exported from every table the purge erases: by its tenant column, or through its parent
+ ↓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+ ↓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > is purged, the way the route runs it, once custody of its export is signed
+ ↓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant with a row in every table that names a purged row with no delete action > A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+ ↓ tests/db/tenant-purge-blocking-keys.dbtest.ts > a tenant holding a row the purge does not erase, or a held record without custody > is not purged, and keeps everything; with the retained rows gone and custody signed, it purges
+{"level":30,"time":"2026-11-09T13:09:10.727Z","pid":7179,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-09T13:09:10.728Z","pid":7179,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T13:09:10.728Z","pid":7179,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ↓ tests/db/task-link-completion-lock-order.dbtest.ts > a link and a completion over the same two tasks > queue one behind the other — neither is aborted as a deadlock victim
+{"level":30,"time":"2026-11-09T13:09:11.671Z","pid":7192,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-09T13:09:11.672Z","pid":7192,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T13:09:11.672Z","pid":7192,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/task-filing-home.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/task-filing-home.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ↓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > uses canonical auth, async tenant scope and a lazy pinned non-superuser request connection
+ ↓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refreshes the exact retained record and separates its real integer project from its actual programme UUID
+ ↓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > retains unattached, unanchored and deleted-programme records without guessing a programme
+ ↓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > refuses malformed identifiers, foreign/missing filings and invalid recorded project ownership
+ ↓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > honors actual private-project grant, revocation and read recovery for a regular organization member
+ ↓ tests/db/task-filing-home.dbtest.ts > exact native filing handoff under authenticated FORCE RLS > rechecks persisted organization membership after genuine authentication and recovers after restoration
+ ↓ tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > resolves actual task and saved-report notifications through both programme helper callers with fresh sharing
+ ↓ tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > keeps the existing populated task board connected to the same canonical programme bridge
+ ↓ tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > rechecks active account status after genuine authentication and recovers after restoration
+ ↓ tests/db/task-filing-home.dbtest.ts > native filing access failure and recovery > reports a failed pinned filing query as unavailable and recovers to the same exact record
+{"level":30,"time":"2026-11-09T13:09:12.884Z","pid":7205,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-09T13:09:12.885Z","pid":7205,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T13:09:12.885Z","pid":7205,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > adds the child under the anchor with no program id of its own, its kind, and its audit row in one transaction 74ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > is idempotent: the same name and kind under the same parent is the existing child, with no second audit row 71ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > adds a Quality work project (P-111 item 5): quality is a work kind 53ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > nests under one of the program's work projects, and refuses a fourth level by name 103ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > refuses, by name, a parent that is not the program's project or below it, and writes nothing 57ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > under row-level security, refuses a child of another organisation's anchor and reads none of it 61ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > refuses a viewer, an unknown kind and an empty name 51ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > has one door: the project hierarchy no longer creates a project 46ms
+stderr | tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > rolls the child back if its chained audit row cannot be written
+{
+  "timestamp": "2026-11-09T13:09:15.855Z",
+  "level": "error",
+  "message": "[c2c-projects] Work project not added",
+  "context": {
+    "err": {
+      "length": 219,
+      "name": "error",
+      "severity": "ERROR",
+      "code": "23514",
+      "schema": "public",
+      "table": "audit_logs",
+      "constraint": "synthetic_work_project_audit_failure",
+      "file": "execMain.c",
+      "line": "2109",
+      "routine": "ExecConstraints"
+    }
+  }
+}
+
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > rolls the child back if its chained audit row cannot be written 65ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > lists the anchor's work projects with their kind, admitted as the project page is 130ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > refuses a project outside the program, another organisation's member, and a member not on a private project 70ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > needs the program named 37ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project's tasks admit its filing project's writers, one direction only (P-111) > admits a writer on the filing project to add on its work project 81ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project's tasks admit its filing project's writers, one direction only (P-111) > gives a work project's own member nothing on its filing project or on a sibling 91ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project's tasks admit its filing project's writers, one direction only (P-111) > gives another organisation nothing on a work project 67ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project's tasks admit its filing project's writers, one direction only (P-111) > respects a work project's own private visibility: the filing project's writer is refused there 64ms
+{"level":50,"time":"2026-11-09T13:09:16.543Z","pid":7205,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.544Z","pid":7205,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.545Z","pid":7205,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.648Z","pid":7205,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.649Z","pid":7205,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.650Z","pid":7205,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > shows a parent writer each work project's tasks, marked with where it lives; the filing project's own are unchanged 135ms
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > leaves a private work project's tasks out for the parent writer 97ms
+{"level":50,"time":"2026-11-09T13:09:16.745Z","pid":7205,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.746Z","pid":7205,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.747Z","pid":7205,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.762Z","pid":7205,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.762Z","pid":7205,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.763Z","pid":7205,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.865Z","pid":7205,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.866Z","pid":7205,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.866Z","pid":7205,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > gives a reader who is not a writer exactly what the exact rule gives: a non-private work project, never a private one 112ms
+{"level":50,"time":"2026-11-09T13:09:16.961Z","pid":7205,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.961Z","pid":7205,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:16.962Z","pid":7205,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > gives a work project's own member its tasks directly, and nothing of its siblings 102ms
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > gives another organisation nothing 94ms
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > admits a subtask under a task of the same project, and refuses every other parent the same way (P-111 item 4) 95ms
+{"level":50,"time":"2026-11-09T13:09:17.155Z","pid":7205,"hostname":"vm","context":{"table":"project_tasks","reason":"42P01: relation \"project_tasks\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:17.156Z","pid":7205,"hostname":"vm","context":{"table":"c2c_project_work_items","reason":"42P01: relation \"c2c_project_work_items\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+{"level":50,"time":"2026-11-09T13:09:17.156Z","pid":7205,"hostname":"vm","context":{"table":"estar_submissions","reason":"42P01: relation \"estar_submissions\" does not exist"},"msg":"[unified-work-view] unified work source could not be read"}
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > rolls a work project's subtask up with the task it belongs to 102ms
+ ✓ tests/db/work-projects.dbtest.ts > a filing project's work rolls up its work projects' tasks for the admitted reader (P-111 item 3) > holds the column in the database: a task is not its own parent, and a deleted parent leaves its subtask a task 113ms
+{"level":30,"time":"2026-11-09T13:09:19.915Z","pid":7224,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-09T13:09:19.916Z","pid":7224,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T13:09:19.916Z","pid":7224,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/task-assignment-delegation.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/task-assignment-delegation.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > scopes real active candidates by project and disambiguates duplicate names 58ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > atomically saves assignment, both ledger rows and exact human reason while preserving task history 72ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > can assign a genuinely unassigned saved task 67ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > does not trust claimed admin role or use-only/read-only owner actor 8 66ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > does not trust claimed admin role or use-only/read-only owner actor 12 63ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 10 without creating access or lineage 54ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 11 without creating access or lineage 53ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 12 without creating access or lineage 50ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses recipient 13 without creating access or lineage 49ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > refuses another claimed client and a corrupt recorded task/client link 52ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > retains terminal completed task and lets bulk auto report a genuine skip 53ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > retains terminal cancelled task and lets bulk auto report a genuine skip 58ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > existing task delegation with actual PostgreSQL assignment and chained ledger > rejects an old version even after A to B to A returns to the old assignee 77ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > retains a recorded client-wide task scope without inventing a project 50ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > does not stamp the selected client onto an organization-wide task 45ms
+stderr | tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > rolls the task and first ledger insert back when the second ledger insert fails
+{
+  "timestamp": "2026-11-09T13:09:21.212Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.assign",
+    "taskId": "TASK-DELEGATE",
+    "err": "new row for relation \"c2c_ana_actions\" violates check constraint \"synthetic_ledger_failure\""
+  }
+}
+
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > rolls the task and first ledger insert back when the second ledger insert fails 61ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > reports lost actual COMMIT acknowledgement as unknown, discards once and permits a safe reread 68ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > allows only one concurrent independent HTTP writer for the same observed version 58ms
+ ✓ tests/db/task-assignment-delegation.dbtest.ts > native assignment atomicity and independent-session conflicts > verifies the real sequenced chain and HMAC seals after two native assignment transactions 75ms
+stderr | tests/db/task-assignment-delegation.dbtest.ts
+[dbsched] runtime role left behind: permission denied to reassign objects
+
+{"level":30,"time":"2026-11-09T13:09:24.842Z","pid":7245,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-09T13:09:24.843Z","pid":7245,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T13:09:24.843Z","pid":7245,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/task-board-every-store.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/task-board-every-store.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > shows the schedule's, correspondence's and filings' work, each labelled, read-only, with the screen that owns it
+{
+  "timestamp": "2026-11-09T13:09:25.155Z",
+  "level": "error",
+  "message": "[task-board-routes] task board error",
+  "context": {
+    "err": "Failed query: select \"id\", \"task_id\", \"organization_id\", \"client_workspace_id\", \"project_id\", \"parent_task_id\", \"module_type\", \"module_icon\", \"module_color\", \"source_entity_id\", \"source_entity_type\", \"title\", \"description\", \"category\", \"task_type\", \"assignee_id\", \"assignee_name\", \"assigned_by\", \"assigned_at\", \"team_id\", \"status\", \"priority\", \"progress\", \"completion_percentage\", \"start_date\", \"due_date\", \"completed_at\", \"estimated_hours\", \"actual_hours\", \"linked_tasks\", \"dependencies\", \"blocked_by\", \"blocks\", \"module_source\", \"module_data\", \"cross_module_links\", \"automation_rules\", \"escalation_path\", \"approval_required\", \"approvers\", \"approval_status\", \"approval_history\", \"impact_score\", \"risk_level\", \"critical_path\", \"regulatory_impact\", \"notification_settings\", \"automation_enabled\", \"ai_suggestions\", \"tags\", \"attachments\", \"comments\", \"metadata\", \"lifecycle_phase\", \"market\", \"filing_type\", \"study_id\", \"deliverable_id\", \"client_visibility\", \"created_by_id\", \"last_modified_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"deleted_by\", \"review_route_id\", \"review_role\", \"review_step\", \"route_signature_id\", \"route_act_id\", \"route_authoring_signature_id\" from \"unified_tasks\" where (\"unified_tasks\".\"organization_id\" = $1 and \"unified_tasks\".\"deleted_at\" is null) order by \"unified_tasks\".\"due_date\" asc\nparams: 91910"
+  }
+}
+
+stderr | tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > keeps the board's own tasks editable, and shows a task AnA created once, as its editable board card
+{
+  "timestamp": "2026-11-09T13:09:25.175Z",
+  "level": "error",
+  "message": "[task-board-routes] task board error",
+  "context": {
+    "err": "Failed query: select \"id\", \"task_id\", \"organization_id\", \"client_workspace_id\", \"project_id\", \"parent_task_id\", \"module_type\", \"module_icon\", \"module_color\", \"source_entity_id\", \"source_entity_type\", \"title\", \"description\", \"category\", \"task_type\", \"assignee_id\", \"assignee_name\", \"assigned_by\", \"assigned_at\", \"team_id\", \"status\", \"priority\", \"progress\", \"completion_percentage\", \"start_date\", \"due_date\", \"completed_at\", \"estimated_hours\", \"actual_hours\", \"linked_tasks\", \"dependencies\", \"blocked_by\", \"blocks\", \"module_source\", \"module_data\", \"cross_module_links\", \"automation_rules\", \"escalation_path\", \"approval_required\", \"approvers\", \"approval_status\", \"approval_history\", \"impact_score\", \"risk_level\", \"critical_path\", \"regulatory_impact\", \"notification_settings\", \"automation_enabled\", \"ai_suggestions\", \"tags\", \"attachments\", \"comments\", \"metadata\", \"lifecycle_phase\", \"market\", \"filing_type\", \"study_id\", \"deliverable_id\", \"client_visibility\", \"created_by_id\", \"last_modified_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"deleted_by\", \"review_route_id\", \"review_role\", \"review_step\", \"route_signature_id\", \"route_act_id\", \"route_authoring_signature_id\" from \"unified_tasks\" where (\"unified_tasks\".\"organization_id\" = $1 and \"unified_tasks\".\"deleted_at\" is null) order by \"unified_tasks\".\"due_date\" asc\nparams: 91910"
+  }
+}
+
+stderr | tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > counts blocked work from every store, and never another organisation's
+{
+  "timestamp": "2026-11-09T13:09:25.184Z",
+  "level": "error",
+  "message": "[task-board-routes] task board error",
+  "context": {
+    "err": "Failed query: select \"id\", \"task_id\", \"organization_id\", \"client_workspace_id\", \"project_id\", \"parent_task_id\", \"module_type\", \"module_icon\", \"module_color\", \"source_entity_id\", \"source_entity_type\", \"title\", \"description\", \"category\", \"task_type\", \"assignee_id\", \"assignee_name\", \"assigned_by\", \"assigned_at\", \"team_id\", \"status\", \"priority\", \"progress\", \"completion_percentage\", \"start_date\", \"due_date\", \"completed_at\", \"estimated_hours\", \"actual_hours\", \"linked_tasks\", \"dependencies\", \"blocked_by\", \"blocks\", \"module_source\", \"module_data\", \"cross_module_links\", \"automation_rules\", \"escalation_path\", \"approval_required\", \"approvers\", \"approval_status\", \"approval_history\", \"impact_score\", \"risk_level\", \"critical_path\", \"regulatory_impact\", \"notification_settings\", \"automation_enabled\", \"ai_suggestions\", \"tags\", \"attachments\", \"comments\", \"metadata\", \"lifecycle_phase\", \"market\", \"filing_type\", \"study_id\", \"deliverable_id\", \"client_visibility\", \"created_by_id\", \"last_modified_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"deleted_by\", \"review_route_id\", \"review_role\", \"review_step\", \"route_signature_id\", \"route_act_id\", \"route_authoring_signature_id\" from \"unified_tasks\" where (\"unified_tasks\".\"organization_id\" = $1 and \"unified_tasks\".\"deleted_at\" is null) order by \"unified_tasks\".\"due_date\" asc\nparams: 91910"
+  }
+}
+
+stderr | tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > says it read every store
+{
+  "timestamp": "2026-11-09T13:09:25.195Z",
+  "level": "error",
+  "message": "[task-board-routes] task board error",
+  "context": {
+    "err": "Failed query: select \"id\", \"task_id\", \"organization_id\", \"client_workspace_id\", \"project_id\", \"parent_task_id\", \"module_type\", \"module_icon\", \"module_color\", \"source_entity_id\", \"source_entity_type\", \"title\", \"description\", \"category\", \"task_type\", \"assignee_id\", \"assignee_name\", \"assigned_by\", \"assigned_at\", \"team_id\", \"status\", \"priority\", \"progress\", \"completion_percentage\", \"start_date\", \"due_date\", \"completed_at\", \"estimated_hours\", \"actual_hours\", \"linked_tasks\", \"dependencies\", \"blocked_by\", \"blocks\", \"module_source\", \"module_data\", \"cross_module_links\", \"automation_rules\", \"escalation_path\", \"approval_required\", \"approvers\", \"approval_status\", \"approval_history\", \"impact_score\", \"risk_level\", \"critical_path\", \"regulatory_impact\", \"notification_settings\", \"automation_enabled\", \"ai_suggestions\", \"tags\", \"attachments\", \"comments\", \"metadata\", \"lifecycle_phase\", \"market\", \"filing_type\", \"study_id\", \"deliverable_id\", \"client_visibility\", \"created_by_id\", \"last_modified_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"deleted_by\", \"review_route_id\", \"review_role\", \"review_step\", \"route_signature_id\", \"route_act_id\", \"route_authoring_signature_id\" from \"unified_tasks\" where (\"unified_tasks\".\"organization_id\" = $1 and \"unified_tasks\".\"deleted_at\" is null) order by \"unified_tasks\".\"due_date\" asc\nparams: 91910"
+  }
+}
+
+stderr | tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > names a store it could not read and says it is partial, instead of showing less without a word
+{
+  "timestamp": "2026-11-09T13:09:25.207Z",
+  "level": "error",
+  "message": "[task-board-routes] task board error",
+  "context": {
+    "err": "Failed query: select \"id\", \"task_id\", \"organization_id\", \"client_workspace_id\", \"project_id\", \"parent_task_id\", \"module_type\", \"module_icon\", \"module_color\", \"source_entity_id\", \"source_entity_type\", \"title\", \"description\", \"category\", \"task_type\", \"assignee_id\", \"assignee_name\", \"assigned_by\", \"assigned_at\", \"team_id\", \"status\", \"priority\", \"progress\", \"completion_percentage\", \"start_date\", \"due_date\", \"completed_at\", \"estimated_hours\", \"actual_hours\", \"linked_tasks\", \"dependencies\", \"blocked_by\", \"blocks\", \"module_source\", \"module_data\", \"cross_module_links\", \"automation_rules\", \"escalation_path\", \"approval_required\", \"approvers\", \"approval_status\", \"approval_history\", \"impact_score\", \"risk_level\", \"critical_path\", \"regulatory_impact\", \"notification_settings\", \"automation_enabled\", \"ai_suggestions\", \"tags\", \"attachments\", \"comments\", \"metadata\", \"lifecycle_phase\", \"market\", \"filing_type\", \"study_id\", \"deliverable_id\", \"client_visibility\", \"created_by_id\", \"last_modified_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"deleted_by\", \"review_route_id\", \"review_role\", \"review_step\", \"route_signature_id\", \"route_act_id\", \"route_authoring_signature_id\" from \"unified_tasks\" where (\"unified_tasks\".\"organization_id\" = $1 and \"unified_tasks\".\"deleted_at\" is null) order by \"unified_tasks\".\"due_date\" asc\nparams: 91910"
+  }
+}
+
+stderr | tests/db/task-board-every-store.dbtest.ts
+[dbtbes] runtime role left behind: permission denied to reassign objects
+
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > runs as a role that RLS binds (the posture these results depend on) 3ms
+ × tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > shows the schedule's, correspondence's and filings' work, each labelled, read-only, with the screen that owns it 29ms
+   → expected 500 to be 200 // Object.is equality
+ × tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > keeps the board's own tasks editable, and shows a task AnA created once, as its editable board card 12ms
+   → expected undefined to be defined
+ × tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > counts blocked work from every store, and never another organisation's 11ms
+   → expected [] to deeply equal [ …(2) ]
+ × tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > says it read every store 12ms
+   → expected undefined to match object { partial: false, unreadSources: [] }
+ × tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > names a store it could not read and says it is partial, instead of showing less without a word 10ms
+   → expected 500 to be 200 // Object.is equality
+{"level":30,"time":"2026-11-09T13:09:28.653Z","pid":7265,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-09T13:09:28.656Z","pid":7265,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T13:09:28.656Z","pid":7265,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/request-parent-boundary.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/request-parent-boundary.dbtest.ts
+[database] Database connection successful
+
+ ↓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an MDR event cannot be sourced from another tenant's complaint
+ ↓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an MDR event is still sourced from the caller's own complaint, under the complaint and MDR policies
+ ↓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > notification preferences are written for the caller, whatever userId the body names
+ ↓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > an AnA profile edit writes the caller's profile, never a colleague's
+ ↓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > a task cannot be filed under another tenant's task
+ ↓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > a CRO study cannot be filed against another tenant's client
+ ↓ tests/db/request-parent-boundary.dbtest.ts > A request cannot name another tenant's parent, or write another user's row (D3, L195) > the GSPR mapping tool cannot write against another tenant's program
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/request-parent-boundary.dbtest.ts [ tests/db/request-parent-boundary.dbtest.ts ]
+Error: [wo03] APP_DATABASE_URL is required; owner execution is not an isolation proof
+ ❯ provisionTwoTenantFixture tests/db/two-tenant-fixture.ts:103:11
+    101| export async function provisionTwoTenantFixture(): Promise<void> {
+    102|   if (!process.env.APP_DATABASE_URL) {
+    103|     throw new Error(
+       |           ^
+    104|       '[wo03] APP_DATABASE_URL is required; owner execution is not an …
+    105|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  tests/db/review-route-vault-rr2.dbtest.ts [ tests/db/review-route-vault-rr2.dbtest.ts ]
+Error: A restricted APP_DATABASE_URL is required.
+ ❯ assertVaultFixtureDatabase tests/db/vault-current-access-fixture.ts:11:26
+      9| export async function assertVaultFixtureDatabase(owner: Pool): Promise…
+     10|   const configured = process.env.APP_DATABASE_URL?.trim();
+     11|   if (!configured) throw new Error('A restricted APP_DATABASE_URL is r…
+       |                          ^
+     12|   const target = new URL(databaseUrl);
+     13|   const runtime = new URL(configured);
+ ❯ tests/db/review-route-vault-rr2.dbtest.ts:196:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  tests/db/review-route-vault-rr3.dbtest.ts [ tests/db/review-route-vault-rr3.dbtest.ts ]
+Error: A restricted APP_DATABASE_URL is required.
+ ❯ assertVaultFixtureDatabase tests/db/vault-current-access-fixture.ts:11:26
+      9| export async function assertVaultFixtureDatabase(owner: Pool): Promise…
+     10|   const configured = process.env.APP_DATABASE_URL?.trim();
+     11|   if (!configured) throw new Error('A restricted APP_DATABASE_URL is r…
+       |                          ^
+     12|   const target = new URL(databaseUrl);
+     13|   const runtime = new URL(configured);
+ ❯ tests/db/review-route-vault-rr3.dbtest.ts:179:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  tests/db/task-filing-home.dbtest.ts [ tests/db/task-filing-home.dbtest.ts ]
+Error: APP_DATABASE_URL is required for the native non-superuser filing handoff proof.
+ ❯ tests/db/task-filing-home.dbtest.ts:112:44
+    110|
+    111| beforeAll(async () => {
+    112|   if (!process.env.APP_DATABASE_URL) throw new Error('APP_DATABASE_URL…
+       |                                            ^
+    113|   owner = new Pool({ connectionString: databaseUrl, max: 2 });
+    114|   runtime = new Pool({ connectionString: process.env.APP_DATABASE_URL,…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  tests/db/task-link-completion-lock-order.dbtest.ts [ tests/db/task-link-completion-lock-order.dbtest.ts ]
+error: permission denied for schema d5_link_lock_7179_mw9a2g42
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ tests/db/task-link-completion-lock-order.dbtest.ts:82:3
+     80|   await owner.query(`CREATE SCHEMA ${SCHEMA}`);
+     81|   await owner.query(`SET search_path TO ${SCHEMA}`);
+     82|   await owner.query(DDL);
+       |   ^
+     83| });
+     84|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 290, severity: 'ERROR', code: '42501', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'SQL statement "ALTER FUNCTION review_route_enlist_member(integer,uuid,text,text,integer) OWNER TO review_route_writer"\nPL/pgSQL function inline_code_block line 16 at EXECUTE', schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'aclchk.c', routine: 'aclcheck_error' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts [ tests/db/tenant-purge-blocking-keys.dbtest.ts ]
+error: duplicate key value violates unique constraint "organizations_pkey"
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/db/tenant-purge-blocking-keys.dbtest.ts:241:5
+    239|   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+    240|   for (const org of [A, B, C]) {
+    241|     await owner.query(`INSERT INTO organizations (id, name, slug, stat…
+       |     ^
+    242|     const u = await owner.query(
+    243|       `INSERT INTO users (email, name, password_hash, default_organiza…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 174, severity: 'ERROR', code: '23505', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: 'public', table: 'organizations', dataType: undefined, constraint: 'organizations_pkey', file: 'nbtinsert.c', routine: '_bt_check_unique' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  tests/db/tenant-purge-blocking-keys.dbtest.ts [ tests/db/tenant-purge-blocking-keys.dbtest.ts ]
+error: permission denied to set parameter "session_replication_role"
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ removeSeeded tests/db/tenant-purge-row-seeder.ts:263:5
+    261|   const client = await pool.connect();
+    262|   try {
+    263|     await client.query("SET session_replication_role = 'replica'");
+       |     ^
+    264|     for (const row of [...rows].reverse()) {
+    265|       const cols = Object.keys(row.key);
+ ❯ tests/db/tenant-purge-blocking-keys.dbtest.ts:290:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 125, severity: 'ERROR', code: '42501', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'guc.c', routine: 'set_config_option_ext' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > shows the schedule's, correspondence's and filings' work, each labelled, read-only, with the screen that owns it
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/db/task-board-every-store.dbtest.ts:234:20
+    232|   it("shows the schedule's, correspondence's and filings' work, each l…
+    233|     const { status, cards } = await board();
+    234|     expect(status).toBe(200);
+       |                    ^
+    235|     const byId = new Map(cards.map((c) => [c.taskId, c]));
+    236|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > keeps the board's own tasks editable, and shows a task AnA created once, as its editable board card
+AssertionError: expected undefined to be defined
+ ❯ tests/db/task-board-every-store.dbtest.ts:253:17
+    251|     const { cards } = await board();
+    252|     const own = cards.find((c) => c.taskId === ids.boardOwn);
+    253|     expect(own).toBeDefined();
+       |                 ^
+    254|     expect(own!.readOnly ?? false).toBe(false);
+    255|     const anaCards = cards.filter((c) => c.title === `${TAG} task AnA …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > counts blocked work from every store, and never another organisation's
+AssertionError: expected [] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+- [
+-   "filing:feaa781b-101d-498c-9ef6-6588499d3d32",
+-   "schedule:194741",
+- ]
++ []
+
+ ❯ tests/db/task-board-every-store.dbtest.ts:262:72
+    260|   it("counts blocked work from every store, and never another organisa…
+    261|     const { cards } = await board();
+    262|     expect(cards.filter((c) => c.blocked).map((c) => c.taskId).sort())…
+       |                                                                        ^
+    263|       [`filing:${ids.filing}`, `schedule:${ids.blockedSchedule}`].sort…
+    264|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > says it read every store
+AssertionError: expected undefined to match object { partial: false, unreadSources: [] }
+
+- Expected:
+{
+  "partial": false,
+  "unreadSources": [],
+}
+
++ Received:
+undefined
+
+ ❯ tests/db/task-board-every-store.dbtest.ts:270:18
+    268|   it('says it read every store', async () => {
+    269|     const { meta } = await board();
+    270|     expect(meta).toMatchObject({ partial: false, unreadSources: [] });
+       |                  ^
+    271|   });
+    272|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > names a store it could not read and says it is partial, instead of showing less without a word
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/db/task-board-every-store.dbtest.ts:277:22
+    275|     try {
+    276|       const { status, cards, meta } = await board();
+    277|       expect(status).toBe(200);
+       |                      ^
+    278|       expect(meta).toMatchObject({ partial: true, unreadSources: ['est…
+    279|       expect(cards.some((c) => c.taskId === `filing:${ids.filing}`)).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  tests/db/workflow-project-admission.dbtest.ts > workflow admission retains current project permissions > rechecks the edit membership after a real parent-lock wait instead of retaining an earlier grant
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/workflow-project-admission.dbtest.ts:421:148
+    419|       pending = create({ projectId: 11 }, 8).then(answer => answer);
+    420|       expect(await waitFor(async () => (await env.owner.query(`SELECT …
+    421|         WHERE usename=$1 AND wait_event_type='Lock' AND $2::int=ANY(pg…
+       |                                                                                                                                                    ^
+    422|       await holder.query(`DELETE FROM ${env.t('project_members')} WHER…
+    423|       await holder.query('COMMIT'); open = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  tests/db/workflow-project-admission.dbtest.ts > workflow admission retains current project permissions > retains actual edit membership until its workflow transaction commits, before a waiting revocation
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/workflow-project-admission.dbtest.ts:446:18
+    444|           WHERE usename=$1 AND wait_event_type='Lock' AND $2::int=ANY(…
+    445|         requestPid = Number(rows[0]?.pid ?? 0); return requestPid > 0;
+    446|       }, 5_000)).toBe(true);
+       |                  ^
+    447|       await revoker.query('BEGIN'); revokerOpen = true;
+    448|       const revokerPid = Number((await revoker.query('SELECT pg_backen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  8 failed | 2 passed (10)
+      Tests  7 failed | 211 passed | 53 skipped (271)
+   Start at  13:08:46
+   Duration  44.58s (transform 4.74s, setup 204ms, import 6.76s, tests 36.60s, environment 1ms)
+

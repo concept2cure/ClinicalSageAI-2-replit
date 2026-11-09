@@ -5,7 +5,7 @@ import { useAuthUser } from '@/services/portal/authService';
 import { useTenant } from '@/contexts/TenantContext';
 import { capturedActorHeaders } from '@/utils/authToken';
 import { projectIntakeId, type ProjectIntakeActor } from '@shared/project-intake-workspace';
-import { createProjectIntake, readProjectIntakeWorkspaces, recordIntakeObjective, type IntakeOptionsAnswer } from './projectIntakeRequest';
+import { createProjectIntake, readProjectIntakeWorkspaces, type IntakeOptionsAnswer } from './projectIntakeRequest';
 import { ClientChoicesNote, ProjectClientFilter, portfolioClients, portfolioClientContext } from './ProjectClientFilter';
 import { PortfolioLine, PortfolioLinesNote, usePortfolioLines } from './PyramidProject';
 import { PortfolioPagedNote, ProjectPortfolioFilters, WS_LABEL, countFloor, daysUntil, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices, readIsPaged, searchPlaceholder } from './ProjectPortfolioFilters';
@@ -555,6 +555,9 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
         targetSubmissionDate: target || null,
         teamMembers: team,
         riskBasedMonitoring,
+        /* The objective is recorded with the project, as version 1 of its charter, in the creation's own transaction
+           (S1, 505449d7a): one write, so a refused objective refuses the creation in the server's words. */
+        ...(objective.trim() ? { objective: objective.trim() } : {}),
       };
       const answer = await createProjectIntake(actor, verifiedWorkspace, body, currentSession);
       if (!mountedSession()) return;
@@ -590,15 +593,6 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
         ws: created.ws || SEG2WS[uiSeg] || 'Biotech',
         status: created.status || 'active',
       });
-      if (objective.trim()) {
-        const stated = await recordIntakeObjective(actor, verifiedWorkspace, created.id, objective.trim(), currentSession);
-        if (!mountedSession()) return;
-        if (stated.kind === 'retired') { setRetired(true); return; }
-        if (stated.kind === 'not-recorded') {
-          setOutcome({ kind: 'notice', message: `The project is created and open. Its objective was not recorded: ${stated.message}. Set it in the project's About card.` });
-          return;
-        }
-      }
       onClose();
       onNav('project-home');
     } finally { pendingCreate.current = false; }

@@ -1,0 +1,10 @@
+# Mutant: the editor's save adds the move increment to an edit's version too
+# in server/routes/c2c/artifacts.ts
+# -         version: contentChanged
+          ? newVersion
+          : sql`${concept2cureArtifacts.version} + ${moveVoidsReview(newCtdSection)}`,
+# +         version: sql`${newVersion} + ${moveVoidsReview(newCtdSection)}`,
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: moving a reviewed document voids its review, as an edit does > an edit and a move in one save, with decisions on the current version, move the version on once 24ms
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 17 passed | 80 skipped (98)

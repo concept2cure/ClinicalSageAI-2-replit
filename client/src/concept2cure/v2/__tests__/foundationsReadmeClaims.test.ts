@@ -51,7 +51,7 @@ export function countClaims(sheets: Record<string, string>): ClaimCounts {
 }
 
 /** Measured at 37f520f3be, 2026-11-09. May only fall: lower each in the commit that removes cases. */
-const BASELINE: ClaimCounts = { smallType: 1200, hoverMotion: 38, easelessTransition: 110, titleCase: 25 };
+const BASELINE: ClaimCounts = { smallType: 1185, hoverMotion: 38, easelessTransition: 110, titleCase: 25 };
 
 const WHAT: Record<keyof ClaimCounts, string> = {
   smallType: 'text below the 12px floor (use --fs-caption or larger)',

@@ -54,6 +54,7 @@ const DDL = [
     'migrations/20261005_cmc_core_registers_project.sql',
     'migrations/20261019_stability_shelf_life_signature.sql',
     'migrations/20261023_review_routes.sql',
+    'migrations/20261109_unified_tasks_parent_task.sql', // P-111: unified_tasks.parent_task_id, which the Drizzle model names
   ].map(f => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8')),
   // The code guard alone: the backstop is proved by its own database test.
   `DROP TRIGGER unified_tasks_route_rows_guard ON unified_tasks;

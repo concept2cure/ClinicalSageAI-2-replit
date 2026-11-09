@@ -27,8 +27,10 @@ import {
   ARTIFACT_ACT_MEANING,
   allowedArtifactTransitions,
   artifactStatusUpdate,
+  moveVoidsReview,
   refuseArtifactTransition,
   refuseSignedArtifactAct,
+  reviewQuorumVerdict,
 } from '../../services/artifact-approval-act';
 import { ArtifactActConflictError, ArtifactActContractError, commitSignedArtifactAct, type ArtifactTx } from '../../services/artifact-signed-act';
 import { SignerNotAttributableError } from '../../services/part11/resolve-signer-identity';
@@ -37,7 +39,7 @@ import { actorLabel, resolveActorNames } from '../../services/tenant/actor-names
 import { evaluateAndInterceptGovernedDocument } from '../../src/control-plane/governed-document-evaluator';
 import { governedDecisionPersisted } from '../../services/governed-decision-ledger';
 import * as crypto from 'crypto';
-import { and, desc, eq, inArray, ne } from 'drizzle-orm';
+import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { createScopedLogger } from '../../utils/logger';
 import { authMiddleware } from '../../auth';
@@ -955,7 +957,11 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         title: newTitle,
         content: newContent,
         contentHash: newContentHash,
-        version: newVersion,
+        // P-95 Q2: a move voids review decisions, as an edit does. An edit has
+        // already moved the version on; a move alone moves it here.
+        version: contentChanged
+          ? newVersion
+          : sql`${concept2cureArtifacts.version} + ${moveVoidsReview(newCtdSection)}`,
         ctdSection: newCtdSection,
         metadata: {
           ...existingMetadata,
@@ -1243,6 +1249,8 @@ router.put(
         .update(concept2cureArtifacts)
         .set({
           ctdSection: toSection,
+          // P-95 Q2: a move voids review decisions, as an edit does.
+          version: sql`${concept2cureArtifacts.version} + ${moveVoidsReview(toSection)}`,
           updatedAt: new Date(),
           metadata: {
             ...existingMetadata,
@@ -3002,6 +3010,8 @@ router.put(
         .update(concept2cureArtifacts)
         .set({
           ctdSection,
+          // P-95 Q2: a move voids review decisions, as an edit does.
+          version: sql`${concept2cureArtifacts.version} + ${moveVoidsReview(ctdSection ?? null)}`,
           updatedAt: new Date(),
           metadata: {
             ...existingMetadata,
@@ -4396,6 +4406,15 @@ router.get(
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
+      /* P-95 Q2 (2026-11-09): ready for approval is the one quorum's answer
+         (reviewQuorumVerdict), not a second count beside it. The count here
+         ignored the version reviewed, independence and the two-reviewer floor,
+         so a review step could say "ready" while approval was refused. Read
+         with no signer: ready means ready for an approver who did not review
+         it. When it is not ready, its sentence says why. */
+      const readiness = await reviewQuorumVerdict(pool, artifact.id, organizationId, artifact.version);
+      const notReady = readiness.met ? {} : { notReadyReason: readiness.message };
+
       // Get all assignments for the latest round
       const allAssignments = await db
         .select()
@@ -4416,6 +4435,7 @@ router.get(
           currentRound: 0,
           reviewers: [],
           readyForApproval: false,
+          ...notReady,
         });
       }
 
@@ -4461,7 +4481,8 @@ router.get(
         completedCount,
         pendingCount: totalAssigned - completedCount,
         allApproved,
-        readyForApproval: allApproved,
+        readyForApproval: readiness.met,
+        ...notReady,
         reviewers: roundAssignments.map(a => {
           const reviewer = reviewerMap.get(a.reviewerId);
           const dec = decisionMap.get(a.reviewerId);
