@@ -1,0 +1,224 @@
+{
+  "1440-light": {
+    "result": "The schedule covers the 5 projects you can open, each from its own plan’s dates and its agency’s published review clock.",
+    "title": "Global schedule",
+    "rows": [
+      {
+        "text": "WALK IND · FDA 21 tasks past due · Planning by Sep 3, 2026",
+        "marks": [
+          "milestone: Planning complete, Sep 3, 2026",
+          "submission: Submission (target date), Feb 1, 2027",
+          "decision: Study may proceed (day 30), Mar 3, 2027"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      },
+      {
+        "text": "WALK-GS-510K 510K · FDA (CDRH) On schedule · Project Planning by Apr 9, 2027",
+        "marks": [
+          "milestone: Project Planning complete, Apr 9, 2027",
+          "submission: Submission (target date), Apr 30, 2027",
+          "decision: MDUFA decision (day 90), Jul 29, 2027"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      },
+      {
+        "text": "C2C-101 Investigational New Drug Application · FDA On schedule · Planning by Dec 2, 2026",
+        "marks": [
+          "milestone: Planning complete, Dec 2, 2026",
+          "submission: Submission (target date), May 1, 2027",
+          "decision: Study may proceed (day 30), May 31, 2027"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      },
+      {
+        "text": "WALK-4YHD NDA · FDA (CDER/CBER) On schedule · Planning by Aug 20, 2027",
+        "marks": [
+          "milestone: Planning complete, Aug 20, 2027",
+          "submission: Submission (target date), Sep 15, 2027",
+          "decision: PDUFA action date (day 304), Jul 15, 2028"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      }
+    ],
+    "caption": "From Aug 20, 2026 to Jul 15, 2028; today is Nov 9, 2026, the thin mark. Each line runs from the work’s start to the target submission (the filled dot); the dashed part is the agency’s review clock to its decision goal, and the open dot is the next phase to complete. The dates are the engine’s schedule back from each target date and the agencies’ published clocks, which exclude clock stops where they apply.",
+    "off": "Not on the schedule: WALK-4YKW (no target date).",
+    "overflow": 0,
+    "docOverflow": 0,
+    "orange": 1,
+    "errors": [],
+    "failed": [],
+    "fromField": "Global schedule",
+    "opened": {
+      "url": "/concept2cure/project-home?program=e89b7009-bb05-4060-8bc0-6da509648e95",
+      "back": "All projects"
+    }
+  },
+  "1440-dark": {
+    "result": "The schedule covers the 5 projects you can open, each from its own plan’s dates and its agency’s published review clock.",
+    "title": "Global schedule",
+    "rows": [
+      {
+        "text": "WALK IND · FDA 21 tasks past due · Planning by Sep 3, 2026",
+        "marks": [
+          "milestone: Planning complete, Sep 3, 2026",
+          "submission: Submission (target date), Feb 1, 2027",
+          "decision: Study may proceed (day 30), Mar 3, 2027"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      },
+      {
+        "text": "WALK-GS-510K 510K · FDA (CDRH) On schedule · Project Planning by Apr 9, 2027",
+        "marks": [
+          "milestone: Project Planning complete, Apr 9, 2027",
+          "submission: Submission (target date), Apr 30, 2027",
+          "decision: MDUFA decision (day 90), Jul 29, 2027"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      },
+      {
+        "text": "C2C-101 Investigational New Drug Application · FDA On schedule · Planning by Dec 2, 2026",
+        "marks": [
+          "milestone: Planning complete, Dec 2, 2026",
+          "submission: Submission (target date), May 1, 2027",
+          "decision: Study may proceed (day 30), May 31, 2027"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      },
+      {
+        "text": "WALK-4YHD NDA · FDA (CDER/CBER) On schedule · Planning by Aug 20, 2027",
+        "marks": [
+          "milestone: Planning complete, Aug 20, 2027",
+          "submission: Submission (target date), Sep 15, 2027",
+          "decision: PDUFA action date (day 304), Jul 15, 2028"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      }
+    ],
+    "caption": "From Aug 20, 2026 to Jul 15, 2028; today is Nov 9, 2026, the thin mark. Each line runs from the work’s start to the target submission (the filled dot); the dashed part is the agency’s review clock to its decision goal, and the open dot is the next phase to complete. The dates are the engine’s schedule back from each target date and the agencies’ published clocks, which exclude clock stops where they apply.",
+    "off": "Not on the schedule: WALK-4YKW (no target date).",
+    "overflow": 0,
+    "docOverflow": 0,
+    "orange": 0,
+    "errors": [],
+    "failed": []
+  },
+  "390-light": {
+    "result": "The schedule covers the 5 projects you can open, each from its own plan’s dates and its agency’s published review clock.",
+    "title": "Global schedule",
+    "rows": [
+      {
+        "text": "WALK IND · FDA 21 tasks past due · Planning by Sep 3, 2026",
+        "marks": [
+          "milestone: Planning complete, Sep 3, 2026",
+          "submission: Submission (target date), Feb 1, 2027",
+          "decision: Study may proceed (day 30), Mar 3, 2027"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      },
+      {
+        "text": "WALK-GS-510K 510K · FDA (CDRH) On schedule · Project Planning by Apr 9, 2027",
+        "marks": [
+          "milestone: Project Planning complete, Apr 9, 2027",
+          "submission: Submission (target date), Apr 30, 2027",
+          "decision: MDUFA decision (day 90), Jul 29, 2027"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      },
+      {
+        "text": "C2C-101 Investigational New Drug Application · FDA On schedule · Planning by Dec 2, 2026",
+        "marks": [
+          "milestone: Planning complete, Dec 2, 2026",
+          "submission: Submission (target date), May 1, 2027",
+          "decision: Study may proceed (day 30), May 31, 2027"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      },
+      {
+        "text": "WALK-4YHD NDA · FDA (CDER/CBER) On schedule · Planning by Aug 20, 2027",
+        "marks": [
+          "milestone: Planning complete, Aug 20, 2027",
+          "submission: Submission (target date), Sep 15, 2027",
+          "decision: PDUFA action date (day 304), Jul 15, 2028"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      }
+    ],
+    "caption": "From Aug 20, 2026 to Jul 15, 2028; today is Nov 9, 2026, the thin mark. Each line runs from the work’s start to the target submission (the filled dot); the dashed part is the agency’s review clock to its decision goal, and the open dot is the next phase to complete. The dates are the engine’s schedule back from each target date and the agencies’ published clocks, which exclude clock stops where they apply.",
+    "off": "Not on the schedule: WALK-4YKW (no target date).",
+    "overflow": 0,
+    "docOverflow": 0,
+    "orange": 1,
+    "errors": [],
+    "failed": [],
+    "fromField": "Global schedule",
+    "opened": {
+      "url": "/concept2cure/project-home?program=e89b7009-bb05-4060-8bc0-6da509648e95",
+      "back": "All projects"
+    }
+  },
+  "390-dark": {
+    "result": "The schedule covers the 5 projects you can open, each from its own plan’s dates and its agency’s published review clock.",
+    "title": "Global schedule",
+    "rows": [
+      {
+        "text": "WALK IND · FDA 21 tasks past due · Planning by Sep 3, 2026",
+        "marks": [
+          "milestone: Planning complete, Sep 3, 2026",
+          "submission: Submission (target date), Feb 1, 2027",
+          "decision: Study may proceed (day 30), Mar 3, 2027"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      },
+      {
+        "text": "WALK-GS-510K 510K · FDA (CDRH) On schedule · Project Planning by Apr 9, 2027",
+        "marks": [
+          "milestone: Project Planning complete, Apr 9, 2027",
+          "submission: Submission (target date), Apr 30, 2027",
+          "decision: MDUFA decision (day 90), Jul 29, 2027"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      },
+      {
+        "text": "C2C-101 Investigational New Drug Application · FDA On schedule · Planning by Dec 2, 2026",
+        "marks": [
+          "milestone: Planning complete, Dec 2, 2026",
+          "submission: Submission (target date), May 1, 2027",
+          "decision: Study may proceed (day 30), May 31, 2027"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      },
+      {
+        "text": "WALK-4YHD NDA · FDA (CDER/CBER) On schedule · Planning by Aug 20, 2027",
+        "marks": [
+          "milestone: Planning complete, Aug 20, 2027",
+          "submission: Submission (target date), Sep 15, 2027",
+          "decision: PDUFA action date (day 304), Jul 15, 2028"
+        ],
+        "clock": true,
+        "today": "11.65%"
+      }
+    ],
+    "caption": "From Aug 20, 2026 to Jul 15, 2028; today is Nov 9, 2026, the thin mark. Each line runs from the work’s start to the target submission (the filled dot); the dashed part is the agency’s review clock to its decision goal, and the open dot is the next phase to complete. The dates are the engine’s schedule back from each target date and the agencies’ published clocks, which exclude clock stops where they apply.",
+    "off": "Not on the schedule: WALK-4YKW (no target date).",
+    "overflow": 0,
+    "docOverflow": 0,
+    "orange": 0,
+    "errors": [],
+    "failed": []
+  }
+}
