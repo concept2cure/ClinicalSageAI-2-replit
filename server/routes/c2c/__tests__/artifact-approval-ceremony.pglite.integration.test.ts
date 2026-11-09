@@ -656,10 +656,10 @@ const decisionRows = async () =>
   (await run(`SELECT reviewer_id, review_round, decision, version_reviewed FROM concept2cure_review_decisions ORDER BY review_round, reviewer_id`)).rows;
 const lastAssignmentEvent = async () =>
   (await run(`SELECT source_description, details FROM concept2cure_provenance_events WHERE event_action = 'reviewer_assigned' ORDER BY id DESC LIMIT 1`)).rows[0];
-/** The production quorum, read as both approval doors read it. */
-const quorum = async (currentVersion: number) => {
+/** The production quorum, read as both approval doors read it, optionally for a signer (P-95 Q1). */
+const quorum = async (currentVersion: number, signerId?: number) => {
   const [{ id }] = (await run(`SELECT id FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT])).rows;
-  return reviewQuorumVerdict({ query: (text, params) => run(text, params ?? []) }, id, ORG, currentVersion);
+  return reviewQuorumVerdict({ query: (text, params) => run(text, params ?? []) }, id, ORG, currentVersion, signerId);
 };
 /** The author revises the document under review: a new version, as the race case above edits it. */
 const editToVersion = (version: number) => run(`UPDATE concept2cure_artifacts SET version = $2 WHERE artifact_id = $1`, [ARTIFACT, version]);
@@ -917,5 +917,100 @@ describe('F1: the latest review round is open, so an assignment joins it and the
       { reviewer_id: BEN, review_round: 1, status: 'pending' },
       { reviewer_id: CAM, review_round: 1, status: 'pending' },
     ]);
+  });
+});
+
+/**
+ * 2026-11-09 (F1, P-95 Q1, under the founder's delegation): what counts as a
+ * review. The reviewer is neither the approving signer nor an author, read as
+ * P-18 reads authors (the artifact's creator and every version's writer). An
+ * approver who recorded a decision on a version, in any round, cannot sign that
+ * version's approval. The routes refused only the creator as a reviewer, and
+ * nothing compared the reviewer with the signer.
+ */
+describe('P-95 Q1: the reviewer is neither the approving signer nor an author', () => {
+  beforeAll(addReviewers);
+  /** Makes `userId` a version writer: a version row numbered by their id, so it never collides. The current version is unchanged. */
+  const writeVersionAs = (userId: number) =>
+    run(
+      `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash, created_by_id)
+       SELECT id, organization_id, $2::int, 'draft', 'h-' || $2::text, $2::int FROM concept2cure_artifacts WHERE artifact_id = $1`,
+      [ARTIFACT, userId],
+    );
+
+  it('the signer reviewed and approved this version: their approval is refused before the password is verified, nothing written', async () => {
+    await seed('review');
+    ok(await assign([USER]));
+    ok(await decide(USER, 'approve'));
+    let reauthAsked = false;
+    holder.duringReauth = async () => { reauthAsked = true; };
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(JSON.stringify(res.body)).toMatch(/you reviewed this version in review round 1/);
+    expect(reauthAsked, 'the password was verified for an act that cannot be signed').toBe(false);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+  });
+
+  it('the signer reviewed this version in a closed round, and a colleague in a new one: still refused', async () => {
+    await seed('review');
+    ok(await assign([USER]));
+    ok(await decide(USER, 'approve'));
+    expect(ok(await assign([ADA])), 'the assignment opened round 2').toMatchObject({ reviewRound: 2, previousRound: 1 });
+    ok(await decide(ADA, 'approve'));
+    expect(await quorum(2, USER)).toMatchObject({ met: false, message: expect.stringMatching(/you reviewed this version in review round 1/) });
+
+    const res = await putStatus(APPROVE);
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+  });
+
+  it('the signer becomes a reviewer of the round while signing: refused on the signing transaction, nothing written', async () => {
+    await seed('review');
+    ok(await assign([ADA]));
+    ok(await decide(ADA, 'approve'));
+    holder.duringReauth = () =>
+      run(
+        `WITH a AS (
+           INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, review_round, status)
+           SELECT 'asgn_signer', id, organization_id, $2, $2, 1, 'completed' FROM concept2cure_artifacts WHERE artifact_id = $1
+           RETURNING id, artifact_id, organization_id)
+         INSERT INTO concept2cure_review_decisions (decision_id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
+         SELECT 'dec_signer', a.id, a.artifact_id, a.organization_id, $2, 1, 'approve', 2 FROM a`,
+        [ARTIFACT, USER],
+      );
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).not.toBe(200);
+    expect(JSON.stringify(res.body)).toMatch(/you reviewed this version in review round 1/);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+  });
+
+  it('a reviewer who wrote a version is not assigned (400), and cannot decide once they have written one (403)', async () => {
+    await seed('review');
+    await writeVersionAs(ADA);
+    const assigned = await assign([ADA]);
+    expect(assigned.status, JSON.stringify(assigned.body)).toBe(400);
+    expect(JSON.stringify(assigned.body)).toMatch(/wrote this document/);
+
+    ok(await assign([BEN]));
+    await writeVersionAs(BEN);
+    const decided = await decide(BEN, 'approve');
+    expect(decided.status, JSON.stringify(decided.body)).toBe(403);
+    expect(await decisionRows()).toEqual([]);
+  });
+
+  it('a decision by someone who is now an author does not meet the quorum', async () => {
+    await seed('review');
+    ok(await assign([ADA]));
+    ok(await decide(ADA, 'approve'));
+    expect(await quorum(2)).toEqual({ met: true });
+    await writeVersionAs(ADA);
+    expect(await quorum(2)).toMatchObject({ met: false, message: expect.stringMatching(/wrote this document/) });
+    expect((await putStatus(APPROVE)).status).not.toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
   });
 });

@@ -61,7 +61,7 @@ import { authorizedProjectId, loadProjectArtifact, urlProjectId } from './artifa
 import { projectAdmissionMiddleware, ProjectAdmissionRefusal, requireCurrentProjectActor } from './project-access';
 import { getAccessibleReportProjectIds } from '../../services/report-os/project-access';
 import { verifyReauth } from './actions';
-import { separationOfDutiesRefusal } from '../../services/governance/separation-of-duties';
+import { resolveTargetAuthors, separationOfDutiesRefusal } from '../../services/governance/separation-of-duties';
 import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
 import { isSigningAuthorized } from '../../services/part11/signing-authority';
 import { clientIpKey } from '../../utils/client-ip';
@@ -3745,6 +3745,17 @@ async function insertReviewAssignments(input: {
 }
 
 /**
+ * Those of `userIds` who wrote the artifact, read as P-18 reads its authors
+ * (resolveTargetAuthors, `artifact:` target): its creator and every version's
+ * writer. 2026-11-09 (F1, P-95 Q1): the reviewer is not an author.
+ */
+async function reviewersWhoWroteIt(artifactId: string, organizationId: number, userIds: number[]): Promise<number[]> {
+  const { authors } = await resolveTargetAuthors(`artifact:${artifactId}`, organizationId);
+  const written = new Set(authors.map(Number));
+  return userIds.filter(id => written.has(Number(id)));
+}
+
+/**
  * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers
  * Assign one or more reviewers to an artifact: into the open review round, or
  * into a new round when the latest is closed (reviewRoundForNewAssignment,
@@ -3818,6 +3829,10 @@ router.post(
           );
         }
       }
+      // 2026-11-09 (F1, P-95 Q1): no author either, as P-18 reads them (creator and version writers). The quorum
+      // refuses an author's decision too; this says so before assigning.
+      const writers = await reviewersWhoWroteIt(artifact.artifactId, organizationId, numericIds);
+      if (writers.length > 0) return sendError(res, 400, `Cannot assign ${writers.length} reviewer(s): they wrote this document, and an author's review does not count. Assign a reviewer who did not write it.`);
 
       const parsedDueDate = dueDate ? new Date(dueDate) : null;
 
@@ -4220,11 +4235,11 @@ router.post(
 
       // Self-review prevention: author cannot review their own artifact
       if (artifact.createdById && artifact.createdById === userId) {
-        return sendError(
-          res,
-          403,
-          'You cannot review an artifact you authored (GxP separation of duties)'
-        );
+        return sendError(res, 403, 'You cannot review an artifact you authored (GxP separation of duties)');
+      }
+      // 2026-11-09 (F1, P-95 Q1): nor one they wrote a version of.
+      if ((await reviewersWhoWroteIt(artifact.artifactId, organizationId, [userId])).length > 0) {
+        return sendError(res, 403, 'You cannot review an artifact you wrote a version of (GxP separation of duties)');
       }
 
       // Find this user's pending assignment for the current round

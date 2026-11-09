@@ -48,7 +48,7 @@
 
 import type { GovernedSignMeaning } from './part11/signature-meanings';
 import { artifactApproval } from './ectd/package-content-fingerprint';
-import { assertSignerIsNotAuthor, separationOfDutiesRefusal } from './governance/separation-of-duties';
+import { assertSignerIsNotAuthor, resolveTargetAuthors, separationOfDutiesRefusal } from './governance/separation-of-duties';
 
 /**
  * The meaning each signed act of the status route is signed with (§11.50(a)(3)).
@@ -91,7 +91,9 @@ export async function reviewQuorumVerdict(
   q: ApprovalActQueryable,
   artifactPk: number,
   organizationId: number,
-  currentVersion: number
+  currentVersion: number,
+  /** Who would sign the approval. Both approval doors pass it (P-95 Q1). */
+  signerId?: number
 ): Promise<ReviewQuorumVerdict> {
   // Invalid scope/version must not become an empty query and a clearance.
   const validId = (value: number) => Number.isSafeInteger(value) && value > 0 && value <= 2_147_483_647;
@@ -189,6 +191,55 @@ export async function reviewQuorumVerdict(
     return {
       met: false,
       message: `Cannot approve: ${stale.length} reviewer decision(s) were recorded against version ${seen}; the artifact is now version ${currentVersion}. Route it for review again so reviewers decide on what would be approved.`,
+    };
+  }
+  return reviewIndependenceVerdict(q, { artifactPk, organizationId, currentVersion }, active, signerId);
+}
+
+/**
+ * What counts as a review (P-95 Q1, decided 2026-11-09 under the founder's
+ * delegation): the reviewer is neither the approving signer nor an author, read
+ * as P-18 reads authors (the creator and every version's writer:
+ * resolveTargetAuthors, `artifact:` target). So an approver who recorded a
+ * decision on this version, in any round, cannot sign its approval: a closed
+ * round followed by a colleague's new one does not launder their review. And an
+ * author's decision in the latest round does not count, including one recorded
+ * before its reviewer wrote a version. Asked once the round would otherwise be
+ * met, so every earlier refusal keeps its words. Met when the review is
+ * independent.
+ */
+async function reviewIndependenceVerdict(
+  q: ApprovalActQueryable,
+  { artifactPk, organizationId, currentVersion }: { artifactPk: number; organizationId: number; currentVersion: number },
+  active: Array<{ reviewer_id: number }>,
+  signerId: number | undefined
+): Promise<ReviewQuorumVerdict> {
+  if (signerId !== undefined) {
+    const [reviewedBySigner] = (
+      await q.query(
+        `SELECT review_round FROM concept2cure_review_decisions
+          WHERE artifact_id = $1 AND organization_id = $2 AND reviewer_id = $3 AND version_reviewed = $4
+          ORDER BY review_round DESC LIMIT 1`,
+        [artifactPk, organizationId, signerId, currentVersion]
+      )
+    ).rows as Array<{ review_round: number }>;
+    if (reviewedBySigner) {
+      return {
+        met: false,
+        message: `Cannot approve: you reviewed this version in review round ${reviewedBySigner.review_round}, and an approval is signed by someone who did not review it. Ask another approver to sign.`,
+      };
+    }
+  }
+  const [artifact] = (
+    await q.query(`SELECT artifact_id FROM concept2cure_artifacts WHERE id = $1 AND organization_id = $2`, [artifactPk, organizationId])
+  ).rows as Array<{ artifact_id: string }>;
+  if (!artifact) return { met: false, message: 'Cannot approve: the artifact could not be read in this organization.' };
+  const { authors } = await resolveTargetAuthors(`artifact:${artifact.artifact_id}`, organizationId, q);
+  const authorReviewers = active.filter(a => authors.map(Number).includes(Number(a.reviewer_id)));
+  if (authorReviewers.length > 0) {
+    return {
+      met: false,
+      message: `Cannot approve: ${authorReviewers.length} reviewer(s) in the latest review round wrote this document, and an author's review does not count. Assign a reviewer who did not write it.`,
     };
   }
   return { met: true };
@@ -363,7 +414,7 @@ export async function refuseSignedArtifactAct(input: {
   if (author) return author;
 
   if (previousStatus === 'review' && status === 'approved') {
-    const quorum = await reviewQuorumVerdict(input.q, artifact.id, organizationId, artifact.version);
+    const quorum = await reviewQuorumVerdict(input.q, artifact.id, organizationId, artifact.version, input.signerId);
     if (!quorum.met) return { httpStatus: 400, message: quorum.message };
   }
   return null;
